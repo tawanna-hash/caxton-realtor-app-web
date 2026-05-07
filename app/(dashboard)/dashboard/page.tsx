@@ -1729,6 +1729,11 @@ function cleanArticleHtml(raw: string | undefined): string {
     /<div[^>]*data-elementor-type="[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
     '$1'
   );
+  // Strip Elementor's heading widget that duplicates the article title in the body
+  html = html.replace(
+    /<h1[^>]*class="[^"]*elementor-heading-title[^"]*"[^>]*>[\s\S]*?<\/h1>/gi,
+    ''
+  );
   const cleaned = html.trim();
   // Defensive: if cleaning destroyed >80% of content, return raw.
   // The Elementor regex chain occasionally over-matches and eats the body.
@@ -2205,6 +2210,9 @@ function ArticleReader({ pub, article, allArticles, onBack, onSelectArticle }: A
       )}
 
       <div className="px-5 pt-6 pb-32 max-w-2xl mx-auto">
+        {/* Top leaderboard ad — first thing in the article column */}
+        <AdLeaderboard pub={pub} articleId={articleId} />
+
         {/* Eyebrow */}
         {(article.cat || article.category) && (
           <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: info.color }}>
@@ -2238,9 +2246,6 @@ function ArticleReader({ pub, article, allArticles, onBack, onSelectArticle }: A
             </div>
           </div>
         )}
-
-        {/* Top leaderboard ad */}
-        <AdLeaderboard pub={pub} articleId={articleId} />
 
         {/* Article body — chunked with mid-article ads if long enough */}
         {cleanedHtml ? (
