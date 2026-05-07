@@ -712,8 +712,8 @@ function Feed({ pub, user, onSwitch }: { pub: string; user: any; onSwitch: (id: 
   const pubAds = ADS.filter((a) => a.pub === pub);
   const CATS = pub === 'realtyline' ? RL_CATS : NS_CATS;
   const filt = cat === 'All' ? NEWS : NEWS.filter((n) => n.cat === cat);
-  const tOn = 'flex-1 py-4 text-base font-medium uppercase tracking-[0.12em] text-center border-b-2 border-[#1a2a44] text-[#1a2a44]';
-  const tOff = 'flex-1 py-4 text-base font-medium uppercase tracking-[0.12em] text-center text-gray-400 border-b-2 border-transparent';
+  const tOn = 'flex-1 py-4 text-sm font-medium uppercase tracking-[0.12em] text-center border-b-2 border-[#1a2a44] text-[#1a2a44]';
+  const tOff = 'flex-1 py-4 text-sm font-medium uppercase tracking-[0.12em] text-center text-gray-400 border-b-2 border-transparent';
 
   const feed: { t: 'n' | 'a' | 'c' | 's' | 'e'; d?: any }[] = [];
   const isLoadingFirstFetch = newsLoading && liveNews === null;
@@ -839,7 +839,7 @@ function Feed({ pub, user, onSwitch }: { pub: string; user: any; onSwitch: (id: 
         <div>
           <div className="flex gap-2 overflow-x-auto px-4 py-3 bg-white border-b border-gray-200" style={{ scrollbarWidth: 'none' }}>
             {CATS.map((c) => (
-              <button key={c} onClick={() => setCat(c)} className={cat === c ? 'whitespace-nowrap px-3 py-1.5 text-base font-medium uppercase tracking-wider border border-[#1a2a44] bg-[#1a2a44] text-white' : 'whitespace-nowrap px-3 py-1.5 text-base font-medium uppercase tracking-wider border border-gray-300 bg-white text-gray-500'}>{c}</button>
+              <button key={c} onClick={() => setCat(c)} className={cat === c ? 'whitespace-nowrap px-3 py-1.5 text-sm font-medium uppercase tracking-wider border border-[#1a2a44] bg-[#1a2a44] text-white' : 'whitespace-nowrap px-3 py-1.5 text-sm font-medium uppercase tracking-wider border border-gray-300 bg-white text-gray-500'}>{c}</button>
             ))}
           </div>
           <div>
@@ -872,12 +872,12 @@ function Feed({ pub, user, onSwitch }: { pub: string; user: any; onSwitch: (id: 
                 <div className="px-4 py-5 flex gap-4">
                   <div className="flex-shrink-0 w-16 h-16 flex flex-col items-center justify-center rounded" style={{ backgroundColor: info.color }}>
                     <span className="text-xs uppercase text-white/60 font-medium leading-none tracking-wider">{mo}</span>
-                    <span className="text-2xl font-medium text-white leading-none">{dy}</span>
+                    <span className="text-xl font-medium text-white leading-none">{dy}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-xl text-gray-900 leading-snug mb-1 font-semibold">{ev.title}</h3>
-                    <p className="text-base text-gray-500 font-light">{ev.time}</p>
-                    <p className="text-base text-gray-500 font-light">{ev.loc}</p>
+                    <h3 className="text-base text-gray-900 leading-snug mb-1 font-semibold">{ev.title}</h3>
+                    <p className="text-sm text-gray-500 font-light">{ev.time}</p>
+                    <p className="text-sm text-gray-500 font-light">{ev.loc}</p>
                     <p className="text-sm font-medium mt-2 uppercase tracking-wider" style={{ color: info.color }}>{ev.org}</p>
                   </div>
                 </div>
@@ -991,10 +991,10 @@ function ArticleCard({ item }: { item: any }) {
   const body = (
     <div className="flex items-start gap-4">
       <div className="flex-1 min-w-0">
-        <span className="text-sm uppercase tracking-[0.15em] font-medium text-[#1a2a44] mb-2 block">{item.cat}</span>
-        <h3 className="text-2xl text-gray-900 leading-snug mb-2 font-semibold">{item.head}</h3>
-        <p className="text-lg text-gray-500 leading-relaxed mb-3 font-light">{item.sum}</p>
-        <span className="text-base text-gray-400 font-light">{item.time}</span>
+        <span className="text-xs uppercase tracking-[0.15em] font-medium text-[#1a2a44] mb-2 block">{item.cat}</span>
+        <h3 className="text-lg text-gray-900 leading-snug mb-2 font-semibold">{item.head}</h3>
+        <p className="text-sm text-gray-500 leading-relaxed mb-3 font-light">{item.sum}</p>
+        <span className="text-xs text-gray-400 font-light">{item.time}</span>
       </div>
       {item.imageUrl && (
         <div className="flex-shrink-0 w-32 h-28 bg-gray-100 border border-gray-200 overflow-hidden">
