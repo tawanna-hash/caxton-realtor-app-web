@@ -1,10 +1,11 @@
+// caxton-suspense-wrapper
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api-client';
 
-export default function VerifyPage() {
+function VerifyContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
@@ -42,7 +43,7 @@ export default function VerifyPage() {
     >
       <div className="w-full max-w-md mx-auto text-center">
         <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium mb-2">
-          Caxton Publications
+          Caxton Publications, Inc.
         </p>
         <h2 className="text-2xl text-gray-900 font-semibold mb-8">Verifying your account</h2>
 
@@ -82,5 +83,30 @@ export default function VerifyPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function VerifyFallback() {
+  return (
+    <div
+      className="min-h-screen bg-white flex flex-col justify-center py-12 px-6"
+      style={{ fontFamily: 'Switzer, system-ui, sans-serif' }}
+    >
+      <div className="w-full max-w-md mx-auto text-center">
+        <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium mb-2">
+          Caxton Publications, Inc.
+        </p>
+        <h2 className="text-2xl text-gray-900 font-semibold mb-8">Verifying your account</h2>
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-[#1a2a44] mx-auto" />
+      </div>
+    </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={<VerifyFallback />}>
+      <VerifyContent />
+    </Suspense>
   );
 }
