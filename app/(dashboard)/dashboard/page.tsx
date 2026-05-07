@@ -2211,13 +2211,6 @@ function ArticleReader({ pub, article, allArticles, onBack, onSelectArticle }: A
           {headline}
         </h1>
 
-        {/* Dek */}
-        {dek && dek !== headline && (
-          <p className="text-lg text-gray-600 leading-relaxed font-light mb-5">
-            {dek}
-          </p>
-        )}
-
         {/* Byline */}
         {(author?.name || dateLong) && (
           <div className="flex items-center gap-3 mb-2 pb-6 border-b border-gray-200">
