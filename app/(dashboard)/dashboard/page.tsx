@@ -772,7 +772,7 @@ function Feed({ pub, user, onSwitch }: { pub: string; user: any; onSwitch: (id: 
         </button>
       </div>
       {menuOpen && (
-        <div className="fixed inset-0 bg-black z-50 overflow-y-auto" style={SW}>
+        <div className="fixed inset-0 z-50 overflow-y-auto" style={{ ...SW, backgroundColor: info.color }}>
           <div className="sticky top-0 bg-black px-3 py-3 flex items-center justify-between border-b border-white/10 z-10">
             <button onClick={() => setMenuOpen(false)} aria-label="Close menu" className="text-white p-2">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
