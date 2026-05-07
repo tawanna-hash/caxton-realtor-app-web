@@ -1729,7 +1729,13 @@ function cleanArticleHtml(raw: string | undefined): string {
     /<div[^>]*data-elementor-type="[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
     '$1'
   );
-  return html.trim();
+  const cleaned = html.trim();
+  // Defensive: if cleaning destroyed >80% of content, return raw.
+  // The Elementor regex chain occasionally over-matches and eats the body.
+  if (raw.trim() && cleaned.length < raw.trim().length * 0.2) {
+    return raw.trim();
+  }
+  return cleaned;
 }
 
 // Split article HTML into chunks at paragraph boundaries.
