@@ -1091,7 +1091,7 @@ interface CalendarEvent {
 }
 
 const PUB_META: Record<string, { name: string; city: string; color: string }> = {
-  realtyline: { name: 'RealtyLine', city: 'Austin', color: '#a8243f' },
+  realtyline: { name: 'RealtyLine', city: 'Austin', color: '#021D40' },
   newsline: { name: 'Newsline San Antonio', city: 'San Antonio', color: '#3D0740' },
 };
 
@@ -1648,7 +1648,7 @@ const PUB_META_AR: Record<string, { name: string; city: string; color: string; t
   realtyline: {
     name: 'RealtyLine',
     city: 'Austin',
-    color: '#a8243f',
+    color: '#021D40',
     tagline: 'Reach 71,000+ Texas real estate professionals',
     reach: '71,000+ Texas REALTORS',
     email: 'ads@myrealtyline.com',
