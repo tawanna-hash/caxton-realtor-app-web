@@ -2168,7 +2168,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onSelectArticle }: A
   const dek = decodeHtmlEntities(article.excerpt || article.sum || '');
   const author = article.author;
   const dateLong = formatArticleDate(article.dateIso || article.publishedAt);
-  const cleanedHtml = cleanArticleHtml(article.contentHtml);
+  const cleanedHtml = cleanArticleHtml(article.contentHtml || article.content || "");
   const articleId = String(article.id || '');
 
   // Split body into 3 chunks for two mid-article rectangle ad slots.
