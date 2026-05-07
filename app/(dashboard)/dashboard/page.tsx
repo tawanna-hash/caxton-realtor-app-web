@@ -1155,11 +1155,18 @@ function dayOfMonth(iso: string | null): { mo: string; dy: string } {
   return { mo: CAXTON_EV_MONTHS_SHORT[d.getMonth()].toUpperCase(), dy: String(d.getDate()) };
 }
 
-// Group events by month-year for the list rendering
+// Group events by month-year for the list rendering.
+// Drops expired events first (anything whose end date is before today's midnight).
 function groupByMonth(events: CalendarEvent[]): Array<{ key: string; events: CalendarEvent[] }> {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const liveEvents = events.filter((ev) => {
+    const lastDay = new Date(ev.endDate || ev.startDate);
+    return !isNaN(lastDay.getTime()) && lastDay >= todayStart;
+  });
   const groups: Record<string, CalendarEvent[]> = {};
   const order: string[] = [];
-  events.forEach((ev) => {
+  liveEvents.forEach((ev) => {
     const k = monthKey(ev.startDate);
     if (!(k in groups)) {
       groups[k] = [];
