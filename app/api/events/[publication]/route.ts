@@ -32,7 +32,9 @@ export async function GET(
       {
         status: 200,
         headers: {
-          'Cache-Control': 'public, max-age=300, stale-while-revalidate=600',
+          // No public caching: data is small (~60 rows), cron updates daily,
+          // and stale cache made debugging painful. Each request hits the DB.
+          'Cache-Control': 'private, no-store, max-age=0, must-revalidate',
         },
       },
     );
