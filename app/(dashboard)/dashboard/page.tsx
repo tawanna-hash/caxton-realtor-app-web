@@ -595,7 +595,7 @@ export default function DashboardPage() {
     setEventsLoading(true);
     setEventsError(false);
     const market = pub === 'realtyline' ? 'austin' : 'san_antonio';
-    fetch(`${API}/events/${market}`, { credentials: 'include' })
+    fetch(`/api/events/${market}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((data) => {
         if (cancelled) return;
@@ -1161,7 +1161,7 @@ function groupByMonth(events: CalendarEvent[]): Array<{ key: string; events: Cal
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const liveEvents = events.filter((ev) => {
-    const lastDay = new Date(ev.endDate || ev.startDate);
+    const lastDay = new Date(ev.endDate || ev.startDate || '');
     return !isNaN(lastDay.getTime()) && lastDay >= todayStart;
   });
   const groups: Record<string, CalendarEvent[]> = {};
