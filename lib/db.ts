@@ -61,6 +61,8 @@ export async function ensureSchema(): Promise<void> {
       nonmember_price TEXT,
       image_url TEXT,
       image_thumb TEXT,
+      instructor_name TEXT,
+      instructor_bio TEXT,
       lat DOUBLE PRECISION,
       lng DOUBLE PRECISION,
       last_synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -71,5 +73,8 @@ export async function ensureSchema(): Promise<void> {
   `;
   await sql`CREATE INDEX IF NOT EXISTS events_pub_start_idx ON events (publication, start_date)`;
   await sql`CREATE INDEX IF NOT EXISTS events_synced_idx ON events (last_synced_at)`;
+  // Idempotent column adds for tables created before instructor support.
+  await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS instructor_name TEXT`;
+  await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS instructor_bio TEXT`;
   schemaEnsured = true;
 }
