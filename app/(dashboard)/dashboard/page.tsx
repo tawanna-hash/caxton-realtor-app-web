@@ -1539,7 +1539,7 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
 
         {/* DESCRIPTION section */}
         {description && description.length > 0 && (
-          <DetailSection label="About">
+          <DetailSection label="Description">
             <p className="text-base text-gray-700 leading-relaxed font-light whitespace-pre-wrap">{description}</p>
           </DetailSection>
         )}
