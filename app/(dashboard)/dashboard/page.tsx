@@ -1309,12 +1309,7 @@ function EventCard({ event, pubColor, onClick }: EventCardProps) {
           )}
         </div>
 
-        {/* Thumbnail */}
-        {event.imageThumb && (
-          <div className="flex-shrink-0 w-16 h-16 rounded overflow-hidden bg-gray-100">
-            <img src={event.imageThumb} alt="" className="w-full h-full object-cover" />
-          </div>
-        )}
+      
       </div>
     </button>
   );
