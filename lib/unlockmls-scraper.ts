@@ -80,6 +80,27 @@ function to24h(hour: number, minute: number, ampm: string): [number, number] {
   return [hour === 12 ? 12 : hour + 12, minute];
 }
 
+/**
+ * Get the IANA `America/Chicago` UTC offset for a given local date as an
+ * ISO-8601 offset string (`-05:00` for CDT, `-06:00` for CST). Uses
+ * Intl.DateTimeFormat so DST transitions are handled correctly with no
+ * library dependency.
+ */
+function getCentralOffset(year: number, month: number, day: number): string {
+  // Pick noon Central-ish in UTC to dodge DST-boundary ambiguity at midnight.
+  const probe = new Date(Date.UTC(year, month - 1, day, 18, 0, 0));
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Chicago',
+    timeZoneName: 'shortOffset',
+  });
+  const tzPart = fmt.formatToParts(probe).find((p) => p.type === 'timeZoneName');
+  const raw = tzPart?.value || 'GMT-6';
+  // raw is like "GMT-5" or "GMT-6:00"; coerce to "-HH:MM"
+  const m = /GMT([+-])(\d{1,2})(?::(\d{2}))?/.exec(raw);
+  if (!m) return '-06:00';
+  return `${m[1]}${m[2].padStart(2, '0')}:${m[3] || '00'}`;
+}
+
 function parseStartEnd(
   dateStr: string,
   timeStr: string,
@@ -92,17 +113,18 @@ function parseStartEnd(
   const month = MONTHS[monthName];
   const day = parseInt(dateMatch[3], 10);
   const dateIso = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  const offset = getCentralOffset(year, month, day);
 
-  if (!timeStr) return [`${dateIso}T00:00:00`, null];
+  if (!timeStr) return [`${dateIso}T00:00:00${offset}`, null];
 
   const tm = TIME_RANGE_RE.exec(timeStr);
-  if (!tm) return [`${dateIso}T00:00:00`, null];
+  if (!tm) return [`${dateIso}T00:00:00${offset}`, null];
 
   const [sh, sm] = to24h(parseInt(tm[1], 10), parseInt(tm[2], 10), tm[3]);
   const [eh, em] = to24h(parseInt(tm[4], 10), parseInt(tm[5], 10), tm[6]);
   return [
-    `${dateIso}T${String(sh).padStart(2, '0')}:${String(sm).padStart(2, '0')}:00`,
-    `${dateIso}T${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}:00`,
+    `${dateIso}T${String(sh).padStart(2, '0')}:${String(sm).padStart(2, '0')}:00${offset}`,
+    `${dateIso}T${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}:00${offset}`,
   ];
 }
 
@@ -227,11 +249,16 @@ export function parseDetail(html: string, _sourceUrl: string): Detail {
   const h1 = $('h1').first();
   if (h1.length) detail.title = clean(h1.text());
 
-  const metaDesc = $('meta[name="description"]').attr('content');
-  if (metaDesc) detail.description = clean(metaDesc);
-  if (!detail.description && h1.length) {
+  // Description: prefer a paragraph from the body (cleaner, fuller text) and
+  // fall back to the meta description tag, which is often truncated with "..."
+  // and missing whitespace between the headline and body chunks.
+  if (h1.length) {
     const p = h1.nextAll('p').first();
     if (p.length) detail.description = clean(p.text());
+  }
+  if (!detail.description) {
+    const metaDesc = $('meta[name="description"]').attr('content');
+    if (metaDesc) detail.description = clean(metaDesc);
   }
 
   // Register link — the first anchor whose text is "Register Now"
@@ -242,42 +269,59 @@ export function parseDetail(html: string, _sourceUrl: string): Detail {
     }
   });
 
-  // Location block — typically venue name + room. Take first 1-2 non-empty lines
-  // following the "Location" header, stopping at the next section.
-  let locFound = false;
-  const locationLines: string[] = [];
+  // Location block — typically venue name + room. Walk descendants of the
+  // section that follows the "Location" header, collecting text from each
+  // leaf node so cheerio's text() doesn't smush adjacent elements together.
+  const rawLocationParts: string[] = [];
   $('*').each((_, el) => {
-    if (locFound) return false;
     const text = clean($(el).contents().filter((_, n) => n.type === 'text').text());
-    if (text === 'Location') {
-      // Walk siblings of the parent collecting up to 2 lines
-      let cursor: cheerio.Cheerio<AnyNode> | null = $(el);
-      while (cursor && cursor.length && locationLines.length < 3) {
-        let sib = cursor.next();
-        while (sib.length && locationLines.length < 3) {
-          const t = clean(sib.text());
-          if (t) {
-            if (/^(Details|Availability|Instructors?)\b/i.test(t)) {
-              locFound = true;
-              return false;
-            }
-            if (t.toLowerCase() !== 'location') locationLines.push(t);
-          }
-          sib = sib.next();
+    if (text !== 'Location') return undefined;
+    // Walk siblings of this element collecting per-leaf text
+    let cursor: cheerio.Cheerio<AnyNode> = $(el);
+    let scanned = 0;
+    while (cursor.length && scanned < 6) {
+      let sib = cursor.next();
+      while (sib.length && scanned < 6) {
+        const sibText = clean(sib.text());
+        if (sibText && /^(Details|Availability|Instructors?|Date|Provider)\b/i.test(sibText)) {
+          scanned = 99;
+          break;
         }
-        const parent: cheerio.Cheerio<AnyNode> = cursor.parent();
-        if (!parent.length || (parent[0] as DomElement).tagName === 'body') break;
-        cursor = parent;
+        // Pull each leaf-text descendant of this sibling individually
+        sib.find('*').addBack().each((_, leaf) => {
+          const $leaf = $(leaf);
+          if ($leaf.children().length > 0) return;
+          const t = clean($leaf.text());
+          if (!t) return;
+          rawLocationParts.push(t);
+        });
+        scanned += 1;
+        sib = sib.next();
       }
-      locFound = true;
-      return false;
+      const parent: cheerio.Cheerio<AnyNode> = cursor.parent();
+      if (!parent.length || (parent[0] as DomElement).tagName === 'body') break;
+      cursor = parent;
     }
-    return undefined;
+    return false;
   });
-  detail.location = locationLines.slice(0, 2).join(' \u2014 ');
+
+  // De-noise the collected fragments: drop labels/buttons, collapse repeats,
+  // join on em-dash for readability.
+  const NOISE = /^(location|address|get directions|directions|map|view map)$/i;
+  const seen = new Set<string>();
+  const cleanLocation: string[] = [];
+  for (const part of rawLocationParts) {
+    if (NOISE.test(part)) continue;
+    if (seen.has(part)) continue;
+    seen.add(part);
+    cleanLocation.push(part);
+  }
+  detail.location = cleanLocation.join(' \u2014 ');
 
   detail.date = labelValue($, 'Date');
-  detail.courseNumber = labelValue($, 'Course Number');
+  const rawCourse = labelValue($, 'Course Number');
+  // Filter "TREC #N/A" / "N/A" / blank — let the dashboard hide the field.
+  detail.courseNumber = /\bN\/A\b/i.test(rawCourse) || !rawCourse ? '' : rawCourse;
   detail.provider = labelValue($, 'Provider');
   detail.memberPrice = labelValue($, 'Member/Subscriber Price');
   detail.nonmemberPrice = labelValue($, 'Non-Member Price');
