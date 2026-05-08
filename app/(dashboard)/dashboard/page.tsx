@@ -1082,6 +1082,8 @@ interface CalendarEvent {
   nonmemberPrice: string | null;
   imageUrl: string | null;
   imageThumb: string | null;
+  instructor: string | null;
+  instructorBio: string | null;
   lat: number | null;
   lng: number | null;
   // Sponsored support — populated from WP _event_sponsored, _event_sponsor_tier, _event_sponsor_advertiser
@@ -1458,11 +1460,17 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
           </p>
         )}
 
-        {/* WHEN section */}
+        {/* DATE section */}
         {event.startDate && (
-          <DetailSection label="When">
+          <DetailSection label="Date">
             <p className="text-base text-gray-900">{formatEventDateLong(event.startDate)}</p>
-            <p className="text-base text-gray-500 font-light">{formatEventTimeRange(event.startDate, event.endDate)}</p>
+          </DetailSection>
+        )}
+
+        {/* TIME section */}
+        {event.startDate && (
+          <DetailSection label="Time">
+            <p className="text-base text-gray-900">{formatEventTimeRange(event.startDate, event.endDate)}</p>
           </DetailSection>
         )}
 
@@ -1475,7 +1483,7 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
 
         {/* ORGANIZER section */}
         {event.organizer && (
-          <DetailSection label="Organizer">
+          <DetailSection label="Provider">
             <p className="text-base text-gray-900">{event.organizer}</p>
             {event.organizerEmail && (
               <a href={`mailto:${event.organizerEmail}`} className="text-sm text-gray-500 font-light underline">
@@ -1502,6 +1510,30 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
             {event.nonmemberPrice && (
               <p className="text-base text-gray-900"><span className="text-gray-500 text-sm font-light mr-2">Non-members</span>{event.nonmemberPrice}</p>
             )}
+          </DetailSection>
+        )}
+
+        {/* INSTRUCTOR section */}
+        {(event.instructor || event.instructorBio || event.imageThumb) && (
+          <DetailSection label="Instructor">
+            <div className="flex items-start gap-3">
+              {event.imageThumb && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={event.imageThumb}
+                  alt={event.instructor || 'Instructor'}
+                  className="w-16 h-16 rounded-full object-cover flex-shrink-0"
+                />
+              )}
+              <div className="flex-1 min-w-0">
+                {event.instructor && <p className="text-base text-gray-900">{event.instructor}</p>}
+                {event.instructorBio && (
+                  <p className="text-sm text-gray-700 font-light leading-relaxed whitespace-pre-wrap mt-2">
+                    {event.instructorBio}
+                  </p>
+                )}
+              </div>
+            </div>
           </DetailSection>
         )}
 

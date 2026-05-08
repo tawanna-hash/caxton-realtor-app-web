@@ -194,6 +194,7 @@ interface Detail {
   memberPrice: string;
   nonmemberPrice: string;
   instructor: string;
+  instructorBio: string;
   instructorImage: string;
   registerUrl: string;
 }
@@ -242,6 +243,7 @@ export function parseDetail(html: string, _sourceUrl: string): Detail {
     memberPrice: '',
     nonmemberPrice: '',
     instructor: '',
+    instructorBio: '',
     instructorImage: '',
     registerUrl: '',
   };
@@ -249,12 +251,18 @@ export function parseDetail(html: string, _sourceUrl: string): Detail {
   const h1 = $('h1').first();
   if (h1.length) detail.title = clean(h1.text());
 
-  // Description: prefer a paragraph from the body (cleaner, fuller text) and
-  // fall back to the meta description tag, which is often truncated with "..."
-  // and missing whitespace between the headline and body chunks.
+  // Description: collect every <p> sibling that follows the h1 and join them
+  // with blank lines. UnlockMLS detail pages render the body as multiple
+  // sibling paragraphs right after the h1; later sections (Location, Details,
+  // Instructors) are inside <section> wrappers, so they're not <p> siblings of
+  // the h1 and won't get picked up here.
   if (h1.length) {
-    const p = h1.nextAll('p').first();
-    if (p.length) detail.description = clean(p.text());
+    const paragraphs: string[] = [];
+    h1.nextAll('p').each((_, p) => {
+      const t = clean($(p).text());
+      if (t) paragraphs.push(t);
+    });
+    if (paragraphs.length) detail.description = paragraphs.join('\n\n');
   }
   if (!detail.description) {
     const metaDesc = $('meta[name="description"]').attr('content');
@@ -332,6 +340,22 @@ export function parseDetail(html: string, _sourceUrl: string): Detail {
   if (instructorImg) detail.instructorImage = new URL(instructorImg, BASE).toString();
   detail.instructor = labelValue($, 'Instructor');
 
+  // Instructor bio: find the "Instructors" section heading and collect every
+  // <p> inside it. Multiple paragraphs get joined with blank lines.
+  $('h1, h2, h3, h4, h5, h6').each((_, h) => {
+    if (detail.instructorBio) return false;
+    const text = clean($(h).text());
+    if (!/^Instructors?$/i.test(text)) return undefined;
+    const section: cheerio.Cheerio<AnyNode> = $(h).parent();
+    const bioParts: string[] = [];
+    section.find('p').each((_, p) => {
+      const t = clean($(p).text());
+      if (t && t !== detail.instructor) bioParts.push(t);
+    });
+    if (bioParts.length) detail.instructorBio = bioParts.join('\n\n');
+    return false;
+  });
+
   return detail;
 }
 
@@ -396,6 +420,8 @@ export async function enrichListings(listings: Listing[]): Promise<EventInput[]>
         nonmemberPrice: d.nonmemberPrice || null,
         imageUrl: null,
         imageThumb: d.instructorImage || null,
+        instructorName: d.instructor || null,
+        instructorBio: d.instructorBio || null,
         lat: null,
         lng: null,
       });

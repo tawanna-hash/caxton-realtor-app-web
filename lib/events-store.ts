@@ -28,6 +28,8 @@ export interface CalendarEvent {
   nonmemberPrice: string | null;
   imageUrl: string | null;
   imageThumb: string | null;
+  instructor: string | null;
+  instructorBio: string | null;
   lat: number | null;
   lng: number | null;
 }
@@ -53,6 +55,8 @@ export interface EventInput {
   nonmemberPrice?: string | null;
   imageUrl?: string | null;
   imageThumb?: string | null;
+  instructorName?: string | null;
+  instructorBio?: string | null;
   lat?: number | null;
   lng?: number | null;
 }
@@ -76,6 +80,8 @@ interface EventRow {
   nonmember_price: string | null;
   image_url: string | null;
   image_thumb: string | null;
+  instructor_name: string | null;
+  instructor_bio: string | null;
   lat: number | string | null;
   lng: number | string | null;
 }
@@ -114,6 +120,8 @@ function rowToEvent(r: EventRow): CalendarEvent {
     nonmemberPrice: r.nonmember_price,
     imageUrl: r.image_url,
     imageThumb: r.image_thumb,
+    instructor: r.instructor_name,
+    instructorBio: r.instructor_bio,
     lat: toNumber(r.lat),
     lng: toNumber(r.lng),
   };
@@ -154,7 +162,8 @@ export async function upsertEvents(
         external_source, external_id, publication, title, description, link,
         start_date, end_date, location, organizer, organizer_email, website,
         tags, format, course_number, member_price, nonmember_price,
-        image_url, image_thumb, lat, lng, last_synced_at, updated_at
+        image_url, image_thumb, instructor_name, instructor_bio, lat, lng,
+        last_synced_at, updated_at
       ) VALUES (
         ${ev.externalSource}, ${ev.externalId}, ${ev.publication}, ${ev.title},
         ${ev.description ?? null}, ${ev.link ?? null},
@@ -163,6 +172,7 @@ export async function upsertEvents(
         ${ev.website ?? null}, ${ev.tags ?? null}, ${ev.format ?? null},
         ${ev.courseNumber ?? null}, ${ev.memberPrice ?? null}, ${ev.nonmemberPrice ?? null},
         ${ev.imageUrl ?? null}, ${ev.imageThumb ?? null},
+        ${ev.instructorName ?? null}, ${ev.instructorBio ?? null},
         ${ev.lat ?? null}, ${ev.lng ?? null},
         NOW(), NOW()
       )
@@ -184,6 +194,8 @@ export async function upsertEvents(
         nonmember_price  = EXCLUDED.nonmember_price,
         image_url        = EXCLUDED.image_url,
         image_thumb      = EXCLUDED.image_thumb,
+        instructor_name  = EXCLUDED.instructor_name,
+        instructor_bio   = EXCLUDED.instructor_bio,
         lat              = EXCLUDED.lat,
         lng              = EXCLUDED.lng,
         last_synced_at   = NOW(),
