@@ -1460,6 +1460,13 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
           </p>
         )}
 
+        {/* DESCRIPTION section */}
+        {description && description.length > 0 && (
+          <DetailSection label="Description">
+            <p className="text-base text-gray-700 leading-relaxed font-light whitespace-pre-wrap">{description}</p>
+          </DetailSection>
+        )}
+
         {/* DATE section */}
         {event.startDate && (
           <DetailSection label="Date">
@@ -1534,13 +1541,6 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
                 )}
               </div>
             </div>
-          </DetailSection>
-        )}
-
-        {/* DESCRIPTION section */}
-        {description && description.length > 0 && (
-          <DetailSection label="Description">
-            <p className="text-base text-gray-700 leading-relaxed font-light whitespace-pre-wrap">{description}</p>
           </DetailSection>
         )}
 
