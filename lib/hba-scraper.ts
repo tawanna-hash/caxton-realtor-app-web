@@ -227,7 +227,7 @@ export function cleanDescription(raw: string | null): string | null {
   let text = raw
     .replace(/<\s*br\s*\/?>/gi, '\n')
     .replace(/<li[^>]*>/gi, '\n- ')
-    .replace(/<\/(p|li|h[1-6]|div)>/gi, '\n\n')
+    .replace(/<\/(p|li|h[1-6]|div)>/gi, '\n')
     .replace(/<[^>]+>/g, '');
 
   text = text
@@ -323,7 +323,7 @@ function toEventInput(ev: RawEvent, description: string | null): EventInput | nu
     courseNumber: null,
     memberPrice: null,
     nonmemberPrice: null,
-    imageUrl: clean(ev.ImageUrl) || null,
+    imageUrl: null,
     imageThumb: clean(ev.ImageUrl) || null,
     instructorName: null,
     instructorBio: null,
