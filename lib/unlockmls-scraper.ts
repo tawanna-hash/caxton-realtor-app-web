@@ -251,18 +251,40 @@ export function parseDetail(html: string, _sourceUrl: string): Detail {
   const h1 = $('h1').first();
   if (h1.length) detail.title = clean(h1.text());
 
-  // Description: collect every <p> sibling that follows the h1 and join them
-  // with blank lines. UnlockMLS detail pages render the body as multiple
-  // sibling paragraphs right after the h1; later sections (Location, Details,
-  // Instructors) are inside <section> wrappers, so they're not <p> siblings of
-  // the h1 and won't get picked up here.
-  if (h1.length) {
-    const paragraphs: string[] = [];
-    h1.nextAll('p').each((_, p) => {
-      const t = clean($(p).text());
-      if (t) paragraphs.push(t);
-    });
-    if (paragraphs.length) detail.description = paragraphs.join('\n\n');
+  // Description: find the parent container holding the largest cluster of
+  // substantial <p> elements. UnlockMLS typically renders the body as 3-5
+  // sibling paragraphs in a single content container; sidebar/related/footer
+  // areas only contain short isolated paragraphs which lose the contest. This
+  // works regardless of where the h1 sits in the DOM (banner, hero, etc.).
+  const pGroups = new Map<DomElement, string[]>();
+  const pOrder = new Map<DomElement, number>();
+  let pIndex = 0;
+  $('p').each((_, p) => {
+    const text = clean($(p).text());
+    if (text.length < 30) return;
+    const parent = $(p).parent()[0] as DomElement | undefined;
+    if (!parent) return;
+    let group = pGroups.get(parent);
+    if (!group) {
+      group = [];
+      pGroups.set(parent, group);
+      pOrder.set(parent, pIndex++);
+    }
+    group.push(text);
+  });
+  let bestParagraphs: string[] = [];
+  let bestParentOrder = Number.MAX_SAFE_INTEGER;
+  for (const [parent, arr] of pGroups.entries()) {
+    if (
+      arr.length > bestParagraphs.length ||
+      (arr.length === bestParagraphs.length && (pOrder.get(parent) ?? Infinity) < bestParentOrder)
+    ) {
+      bestParagraphs = arr;
+      bestParentOrder = pOrder.get(parent) ?? Infinity;
+    }
+  }
+  if (bestParagraphs.length) {
+    detail.description = bestParagraphs.join('\n\n');
   }
   if (!detail.description) {
     const metaDesc = $('meta[name="description"]').attr('content');
