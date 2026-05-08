@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/scrape-fpr",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-hba",
+      "schedule": "0 13 * * *"
     }
   ]
 }
