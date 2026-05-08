@@ -139,7 +139,7 @@ interface RawEvent {
   Zip: string | null;
   Email: string | null;
   RelatedWebsite: string | null;
-  ImageUrl: string | null;
+  imageUrl: null,
   StartDateTimeUtc: string;
   EndDateTimeUtc: string | null;
   IsAllDay: boolean;
@@ -324,7 +324,7 @@ function toEventInput(ev: RawEvent, description: string | null): EventInput | nu
     memberPrice: null,
     nonmemberPrice: null,
     imageUrl: null,
-    imageThumb: clean(ev.ImageUrl) || null,
+    imageThumb: null,
     instructorName: null,
     instructorBio: null,
     lat: null,
