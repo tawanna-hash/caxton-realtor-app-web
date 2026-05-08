@@ -63,6 +63,10 @@ export async function ensureSchema(): Promise<void> {
       image_thumb TEXT,
       instructor_name TEXT,
       instructor_bio TEXT,
+      hidden BOOLEAN NOT NULL DEFAULT false,
+      edited_fields TEXT[] NOT NULL DEFAULT '{}'::text[],
+      edited_by TEXT,
+      edited_at TIMESTAMPTZ,
       lat DOUBLE PRECISION,
       lng DOUBLE PRECISION,
       last_synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -76,5 +80,10 @@ export async function ensureSchema(): Promise<void> {
   // Idempotent column adds for tables created before instructor support.
   await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS instructor_name TEXT`;
   await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS instructor_bio TEXT`;
+  // Manual-events admin support (DECISIONS.md #5 — May 8, 2026).
+  await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT false`;
+  await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS edited_fields TEXT[] NOT NULL DEFAULT '{}'::text[]`;
+  await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS edited_by TEXT`;
+  await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ`;
   schemaEnsured = true;
 }
