@@ -4,6 +4,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 type FetchOpts = {
   method?: string;
   body?: unknown;
+  signal?: AbortSignal;
 };
 
 async function adminFetch(path: string, opts: FetchOpts = {}) {
@@ -12,6 +13,7 @@ async function adminFetch(path: string, opts: FetchOpts = {}) {
     credentials: 'include',
     headers: opts.body ? { 'Content-Type': 'application/json' } : {},
     body: opts.body ? JSON.stringify(opts.body) : undefined,
+    signal: opts.signal,
   });
 
   if (res.status === 401) {
@@ -116,9 +118,9 @@ export const adminApi = {
     price_total: number | null;
     price_notes: string | null;
     notes: string | null;
-  }) => adminFetch('/admin/ads/campaigns', { method: 'POST', body: data }),
-  updateAdCampaign: (id: string, data: Record<string, unknown>) =>
-    adminFetch(`/admin/ads/campaigns/${id}`, { method: 'PATCH', body: data }),
+  }, signal?: AbortSignal) => adminFetch('/admin/ads/campaigns', { method: 'POST', body: data, signal }),
+  updateAdCampaign: (id: string, data: Record<string, unknown>, signal?: AbortSignal) =>
+    adminFetch(`/admin/ads/campaigns/${id}`, { method: 'PATCH', body: data, signal }),
   deleteAdCampaign: (id: string) =>
     adminFetch(`/admin/ads/campaigns/${id}`, { method: 'DELETE' }),
   toggleAdCampaign: (id: string) =>

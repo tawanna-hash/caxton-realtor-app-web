@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/admin-api';
 import { CreativeUpload } from './CreativeUpload';
@@ -62,6 +62,15 @@ export function CampaignForm({ initial }: Props) {
       });
   }, []);
 
+  // Abort in-flight save when the form unmounts (prevents leaked connections
+  // that exhaust Chrome's 6-per-host connection limit).
+  const abortRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
   function handleCreativeUploaded(c: AdCreative) {
     setCreatives((prev) => [c, ...prev]);
     setCreativeId(c.id);
@@ -85,36 +94,45 @@ export function CampaignForm({ initial }: Props) {
       return setError('Price must be a positive number or blank');
     }
 
+    // Cancel any prior in-flight save (prevents connection-pool exhaustion
+    // and double-submits via React StrictMode double-render in production).
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    // Safety-net timeout — if the request stalls for any reason (browser
+    // connection limit, droplet hang, network hiccup), abort + show an error
+    // rather than spin "Saving..." forever.
+    const timeoutId = setTimeout(() => controller.abort(new Error('Request timed out after 30s')), 30000);
+
     setSubmitting(true);
     try {
+      const payload = {
+        advertiser_name: advertiserName.trim(),
+        ad_space_slug: adSpaceSlug,
+        creative_id: creativeId,
+        publication,
+        start_date: startDate,
+        end_date: endDate,
+        price_total: priceNum,
+        price_notes: priceNotes.trim() || null,
+        notes: notes.trim() || null,
+      };
       if (isEdit) {
-        await adminApi.updateAdCampaign(initial!.id, {
-          advertiser_name: advertiserName.trim(),
-          ad_space_slug: adSpaceSlug,
-          creative_id: creativeId,
-          publication,
-          start_date: startDate,
-          end_date: endDate,
-          price_total: priceNum,
-          price_notes: priceNotes.trim() || null,
-          notes: notes.trim() || null,
-        });
+        await adminApi.updateAdCampaign(initial!.id, payload, controller.signal);
       } else {
-        await adminApi.createAdCampaign({
-          advertiser_name: advertiserName.trim(),
-          ad_space_slug: adSpaceSlug,
-          creative_id: creativeId,
-          publication,
-          start_date: startDate,
-          end_date: endDate,
-          price_total: priceNum,
-          price_notes: priceNotes.trim() || null,
-          notes: notes.trim() || null,
-        });
+        await adminApi.createAdCampaign(payload, controller.signal);
       }
+      clearTimeout(timeoutId);
       // Hard navigation — router.push has been hanging, see GOTCHAS.md
       window.location.href = '/admin/ads?tab=campaigns';
     } catch (err) {
+      clearTimeout(timeoutId);
+      // Ignore aborts caused by the user navigating away or re-submitting
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setSubmitting(false);
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Save failed');
       setSubmitting(false);
     }
