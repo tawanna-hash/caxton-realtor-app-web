@@ -85,5 +85,206 @@ export async function ensureSchema(): Promise<void> {
   await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS edited_fields TEXT[] NOT NULL DEFAULT '{}'::text[]`;
   await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS edited_by TEXT`;
   await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ`;
+
+  // ============================================================
+  // Ads dashboard (Phase 1 — May 9, 2026)
+  // 15-slot ad inventory catalog, uploaded creatives, scheduled
+  // campaigns. See DECISIONS.md #10 (ads dashboard scope).
+  // ============================================================
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS ad_spaces (
+      slug TEXT PRIMARY KEY,
+      display_name TEXT NOT NULL,
+      zone TEXT NOT NULL,
+      tier TEXT NOT NULL,
+      sizes_json JSONB NOT NULL,
+      notes TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS ad_creatives (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      advertiser_name TEXT NOT NULL,
+      blob_url TEXT NOT NULL,
+      width INTEGER,
+      height INTEGER,
+      click_url TEXT NOT NULL,
+      alt_text TEXT,
+      uploaded_by TEXT NOT NULL,
+      uploaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS ad_campaigns (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      advertiser_name TEXT NOT NULL,
+      ad_space_slug TEXT NOT NULL REFERENCES ad_spaces(slug),
+      creative_id UUID NOT NULL REFERENCES ad_creatives(id),
+      publication TEXT NOT NULL,
+      start_date DATE NOT NULL,
+      end_date DATE NOT NULL,
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      price_total NUMERIC(10,2),
+      price_notes TEXT,
+      notes TEXT,
+      created_by TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_ad_campaigns_lookup
+      ON ad_campaigns (ad_space_slug, publication, active, start_date, end_date)
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_ad_creatives_advertiser
+      ON ad_creatives (advertiser_name)
+  `;
+
+  // Pre-populate the 15 ad spaces (catalog). Idempotent: ON CONFLICT DO NOTHING
+  // means re-running ensureSchema() doesn't disturb anything.
+  const adSpaceCatalog = [
+    {
+      slug: 'article_top_leaderboard',
+      display_name: 'Article Top Leaderboard',
+      zone: 'article',
+      tier: 'premium',
+      sizes: [{w:728,h:90,context:'desktop'},{w:320,h:50,context:'mobile'},{w:300,h:250,context:'fallback'}],
+      notes: '100% of article opens, above-the-fold',
+    },
+    {
+      slug: 'article_mid_inline',
+      display_name: 'Article Mid-Inline',
+      zone: 'article',
+      tier: 'standard',
+      sizes: [{w:300,h:250,context:'all'},{w:320,h:100,context:'mobile-large'}],
+      notes: 'Inserted at 40% scroll depth on articles >600 words',
+    },
+    {
+      slug: 'article_bottom',
+      display_name: 'Article Bottom',
+      zone: 'article',
+      tier: 'standard',
+      sizes: [{w:300,h:250,context:'all'},{w:728,h:90,context:'desktop'}],
+      notes: '100% of article completions',
+    },
+    {
+      slug: 'article_sidebar_desktop',
+      display_name: 'Article Sidebar (Desktop)',
+      zone: 'article',
+      tier: 'premium',
+      sizes: [{w:300,h:600,context:'desktop'},{w:300,h:250,context:'desktop-stacked'}],
+      notes: 'Desktop only (≥1024px). Long dwell time placement.',
+    },
+    {
+      slug: 'article_interstitial',
+      display_name: 'Article Interstitial',
+      zone: 'article',
+      tier: 'premium',
+      sizes: [{w:1080,h:1920,context:'mobile-fullscreen'},{w:970,h:250,context:'desktop'}],
+      notes: 'Every 4th article tap; never on first session. High friction.',
+    },
+    {
+      slug: 'feed_inline_card',
+      display_name: 'Feed Inline Card (Native)',
+      zone: 'feed',
+      tier: 'standard',
+      sizes: [{w:1080,h:600,context:'native'}],
+      notes: 'Every 6th feed card. Marked SPONSORED.',
+    },
+    {
+      slug: 'feed_top_banner',
+      display_name: 'Feed Top Banner',
+      zone: 'feed',
+      tier: 'standard',
+      sizes: [{w:728,h:90,context:'desktop'},{w:320,h:50,context:'mobile'}],
+      notes: 'Top of feed, both pubs.',
+    },
+    {
+      slug: 'feed_sticky_bottom',
+      display_name: 'Feed Sticky Bottom (Mobile)',
+      zone: 'feed',
+      tier: 'standard',
+      sizes: [{w:320,h:50,context:'mobile'},{w:320,h:100,context:'mobile-large'}],
+      notes: 'Persistent at bottom while scrolling feed; dismissable.',
+    },
+    {
+      slug: 'calendar_top_banner',
+      display_name: 'Calendar Top Banner',
+      zone: 'calendar',
+      tier: 'standard',
+      sizes: [{w:728,h:90,context:'desktop'},{w:320,h:50,context:'mobile'}],
+      notes: 'Top of calendar tab, both pubs.',
+    },
+    {
+      slug: 'calendar_event_sponsor',
+      display_name: 'Calendar Event Sponsor',
+      zone: 'calendar',
+      tier: 'premium',
+      sizes: [{w:0,h:0,context:'native-event-card'}],
+      notes: 'Pinned to top of calendar list. Gold border, "PRESENTED BY" tag. Limit 1-2 per pub per week.',
+    },
+    {
+      slug: 'newsletter_banner',
+      display_name: 'Newsletter Banner',
+      zone: 'newsletter',
+      tier: 'premium',
+      sizes: [{w:600,h:200,context:'email'},{w:600,h:100,context:'email-slim'}],
+      notes: 'Top of every send. Ships when newsletter ships (FOLLOW_UPS.md #10).',
+    },
+    {
+      slug: 'splash_welcome',
+      display_name: 'Splash / Welcome',
+      zone: 'app',
+      tier: 'premium',
+      sizes: [{w:1080,h:1920,context:'mobile-fullscreen'}],
+      notes: 'First session of the day, never twice in 12h.',
+    },
+    {
+      slug: 'push_sponsorship',
+      display_name: 'Push Notification Sponsor',
+      zone: 'app',
+      tier: 'premium',
+      sizes: [{w:256,h:256,context:'icon'}],
+      notes: '1 sponsored push per week max. Use sparingly.',
+    },
+    {
+      slug: 'account_splash',
+      display_name: 'Account Page Splash',
+      zone: 'account',
+      tier: 'premium',
+      sizes: [{w:1080,h:400,context:'banner'},{w:970,h:250,context:'desktop'},{w:320,h:250,context:'mobile'}],
+      notes: 'Top of /account or /profile, every visit. Rotates per session.',
+    },
+    {
+      slug: 'house_fallback',
+      display_name: 'House Ad Fallback',
+      zone: 'misc',
+      tier: 'house',
+      sizes: [{w:0,h:0,context:'any'}],
+      notes: 'Fills any unsold inventory. No revenue.',
+    },
+  ];
+
+  for (const space of adSpaceCatalog) {
+    await sql`
+      INSERT INTO ad_spaces (slug, display_name, zone, tier, sizes_json, notes)
+      VALUES (
+        ${space.slug},
+        ${space.display_name},
+        ${space.zone},
+        ${space.tier},
+        ${JSON.stringify(space.sizes)}::jsonb,
+        ${space.notes}
+      )
+      ON CONFLICT (slug) DO NOTHING
+    `;
+  }
+
   schemaEnsured = true;
 }
