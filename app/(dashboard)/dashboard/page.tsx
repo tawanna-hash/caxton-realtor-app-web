@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSwipeBack } from '@/hooks/use-swipe-back';
-import { ArticleToolbar } from '@/components/ArticleToolbar';
 
 const SW = { fontFamily: 'Switzer, system-ui, sans-serif' };
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -2097,50 +2096,40 @@ function TagsRow({ article, pubColor }: { article: any; pubColor: string }) {
 // Sticky bottom action bar — Save / Share / Copy
 // ─────────────────────────────────────────────────────────────────────────
 
-function ArticleActionBar({ article, pubColor, saved, onSaveToggle, onShare, onCopy }: { article: any; pubColor: string; saved: boolean; onSaveToggle: () => void; onShare: () => void; onCopy: () => void }) {
+function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onMagazine, onLatest }: { article: any; pubColor: string; saved: boolean; onBack: () => void; onSaveToggle: () => void; onShare: () => void; onCopy: () => void; onMagazine?: () => void; onLatest?: () => void }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40">
-      <div className="flex items-center px-4 py-3 gap-2 max-w-2xl mx-auto">
-        <button
-          onClick={onSaveToggle}
-          className="flex-1 py-3 border-2 text-sm font-semibold uppercase tracking-wider rounded flex items-center justify-center gap-2"
-          style={{
-            borderColor: pubColor,
-            color: saved ? '#ffffff' : pubColor,
-            backgroundColor: saved ? pubColor : 'transparent',
-          }}
-          aria-pressed={saved}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-          </svg>
-          {saved ? 'Saved' : 'Save'}
-        </button>
-        <button
-          onClick={onShare}
-          className="flex-1 py-3 border-2 text-sm font-semibold uppercase tracking-wider rounded flex items-center justify-center gap-2"
-          style={{ borderColor: pubColor, color: pubColor }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-            <polyline points="16 6 12 2 8 6"/>
-            <line x1="12" y1="2" x2="12" y2="15"/>
-          </svg>
-          Share
-        </button>
-        <button
-          onClick={onCopy}
-          className="px-4 py-3 border-2 text-sm font-semibold uppercase tracking-wider rounded"
-          style={{ borderColor: pubColor, color: pubColor }}
-          aria-label="Copy link"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-          </svg>
-        </button>
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+      <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-full px-2 py-1.5 shadow-lg">
+        <ActionPillButton onClick={onBack} label="Back">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </ActionPillButton>
+        <ActionPillButton onClick={onSaveToggle} label={saved ? 'Saved' : 'Save'} active={saved}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </ActionPillButton>
+        <ActionPillButton onClick={onMagazine} label="Magazine">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </ActionPillButton>
+        <ActionPillButton onClick={onLatest} label="Latest">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8M10 10h8"/></svg>
+        </ActionPillButton>
+        <ActionPillButton onClick={onShare} label="Share">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v13"/><path d="M16 6l-4-4-4 4"/><rect x="4" y="9" width="16" height="13" rx="2"/></svg>
+        </ActionPillButton>
       </div>
     </div>
+  );
+}
+
+function ActionPillButton({ children, label, onClick, active }: { children: React.ReactNode; label: string; onClick?: () => void; active?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      className={`flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-full transition-colors ${active ? 'text-white bg-white/15' : 'text-white/85 hover:text-white active:bg-white/10'}`}
+    >
+      {children}
+      <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">{label}</span>
+    </button>
   );
 }
 
@@ -2240,21 +2229,6 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
         </div>
       </div>
 
-      {/* Bottom toolbar (mobile only) */}
-      <ArticleToolbar
-        onBack={onBack}
-        onMagazine={() => { /* placeholder for future magazine feature */ }}
-        onLatest={() => { if (onLatest) onLatest(); else onBack(); }}
-        onShare={async () => {
-          const url = article?.link || (typeof window !== 'undefined' ? window.location.href : '');
-          const title = article?.head || article?.title || 'Caxton Publications';
-          if (typeof navigator !== 'undefined' && (navigator as any).share) {
-            try { await (navigator as any).share({ title, url }); } catch { /* user cancelled */ }
-          } else if (typeof navigator !== 'undefined' && navigator.clipboard && url) {
-            try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
-          }
-        }}
-      />
 
       {/* Featured image */}
       {article.imageUrl && (
@@ -2358,9 +2332,12 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
         article={article}
         pubColor={info.color}
         saved={saved}
+        onBack={onBack}
         onSaveToggle={onSaveToggle}
         onShare={onShare}
         onCopy={onCopy}
+        onMagazine={() => { /* placeholder for future magazine feature */ }}
+        onLatest={() => { if (onLatest) onLatest(); else onBack(); }}
       />
 
       {/* Corner pop-up ad */}
