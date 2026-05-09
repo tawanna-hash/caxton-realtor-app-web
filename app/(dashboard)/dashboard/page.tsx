@@ -1826,16 +1826,52 @@ function splitHtmlIntoChunks(html: string, chunks: number): string[] {
   return result.filter(Boolean);
 }
 
-// Pick an ad from the inventory, or build a house ad if inventory is empty.
-function pickAd(slot: 'leaderboard' | 'rectangle' | 'popup', pub: string, key: string): AdSlot {
-  const inv = pub === 'newsline' ? ADS_NS : ADS_RL;
-  const list = inv[slot];
-  if (list.length > 0) {
-    // Stable rotation by article id hash so the same article shows the same ad
-    const idx = Math.abs(hashString(key)) % list.length;
-    return list[idx];
-  }
-  return { id: 'house', headline: 'house-ad' };
+// Per-session cache: key = `${slot}:${pub}`. First fetch picks one campaign at
+// random (server-side via ORDER BY RANDOM). All subsequent renders of the same
+// slot+pub return the cached choice. Survives until tab close.
+const __adCache = new Map<string, AdSlot | null>();
+const __adInflight = new Map<string, Promise<AdSlot | null>>();
+
+async function fetchAd(slot: 'leaderboard' | 'rectangle' | 'popup', pub: string): Promise<AdSlot | null> {
+  const cacheKey = `${slot}:${pub}`;
+  if (__adCache.has(cacheKey)) return __adCache.get(cacheKey) ?? null;
+  const inflight = __adInflight.get(cacheKey);
+  if (inflight) return inflight;
+  const promise = (async () => {
+    try {
+      const r = await fetch(`${API}/ads/active?slot=${slot}&pub=${pub}`, { credentials: 'omit' });
+      if (!r.ok) {
+        __adCache.set(cacheKey, null);
+        return null;
+      }
+      const data = await r.json();
+      const ad = data?.ad ? (data.ad as AdSlot) : null;
+      __adCache.set(cacheKey, ad);
+      return ad;
+    } catch {
+      __adCache.set(cacheKey, null);
+      return null;
+    } finally {
+      __adInflight.delete(cacheKey);
+    }
+  })();
+  __adInflight.set(cacheKey, promise);
+  return promise;
+}
+
+function useAd(slot: 'leaderboard' | 'rectangle' | 'popup', pub: string, _key: string): AdSlot {
+  const cacheKey = `${slot}:${pub}`;
+  const cached = __adCache.get(cacheKey);
+  const [ad, setAd] = useState<AdSlot>(cached || { id: 'house', headline: 'house-ad' });
+  useEffect(() => {
+    let cancelled = false;
+    fetchAd(slot, pub).then((result) => {
+      if (cancelled) return;
+      if (result) setAd(result);
+    });
+    return () => { cancelled = true; };
+  }, [slot, pub]);
+  return ad;
 }
 
 function hashString(s: string): number {
@@ -1878,7 +1914,7 @@ function HouseAd({ slot, pub }: { slot: 'leaderboard' | 'rectangle' | 'popup'; p
 }
 
 function AdLeaderboard({ pub, articleId }: { pub: string; articleId: string }) {
-  const ad = pickAd('leaderboard', pub, articleId);
+  const ad = useAd('leaderboard', pub, articleId);
   return (
     <div className="my-6 -mx-5">
       <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center mb-2 font-medium">
@@ -1897,7 +1933,7 @@ function AdLeaderboard({ pub, articleId }: { pub: string; articleId: string }) {
 }
 
 function AdRectangle({ pub, articleId, idx }: { pub: string; articleId: string; idx: number }) {
-  const ad = pickAd('rectangle', pub, articleId + ':' + idx);
+  const ad = useAd('rectangle', pub, articleId + ':' + idx);
   return (
     <div className="my-8">
       <div className="border-t border-gray-200 pt-4">
@@ -1938,7 +1974,7 @@ function AdPopup({ pub, articleId }: { pub: string; articleId: string }) {
 
   if (dismissed || !show) return null;
 
-  const ad = pickAd('popup', pub, articleId);
+  const ad = useAd('popup', pub, articleId);
   const onClose = () => {
     setShow(false);
     setDismissed(true);
