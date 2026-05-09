@@ -135,6 +135,7 @@ export async function listEvents(publication: Publication): Promise<CalendarEven
     SELECT *
       FROM events
      WHERE publication = ${publication}
+       AND hidden = false
        AND (end_date IS NULL OR end_date >= NOW() - INTERVAL '1 day')
      ORDER BY (start_date IS NULL), start_date ASC, id ASC
   `) as unknown as EventRow[];
@@ -177,27 +178,31 @@ export async function upsertEvents(
         NOW(), NOW()
       )
       ON CONFLICT (external_source, external_id) DO UPDATE SET
-        publication      = EXCLUDED.publication,
-        title            = EXCLUDED.title,
-        description      = EXCLUDED.description,
-        link             = EXCLUDED.link,
-        start_date       = EXCLUDED.start_date,
-        end_date         = EXCLUDED.end_date,
-        location         = EXCLUDED.location,
-        organizer        = EXCLUDED.organizer,
-        organizer_email  = EXCLUDED.organizer_email,
-        website          = EXCLUDED.website,
-        tags             = EXCLUDED.tags,
-        format           = EXCLUDED.format,
-        course_number    = EXCLUDED.course_number,
-        member_price     = EXCLUDED.member_price,
-        nonmember_price  = EXCLUDED.nonmember_price,
-        image_url        = EXCLUDED.image_url,
-        image_thumb      = EXCLUDED.image_thumb,
-        instructor_name  = EXCLUDED.instructor_name,
-        instructor_bio   = EXCLUDED.instructor_bio,
-        lat              = EXCLUDED.lat,
-        lng              = EXCLUDED.lng,
+        -- Per-field merge: admin-edited columns survive scraper re-runs.
+        -- Each column reads the existing row's edited_fields array; if the
+        -- column name is in there, we keep events.<col>, otherwise we take
+        -- the new EXCLUDED.<col>. See DECISIONS.md #5.
+        publication      = CASE WHEN 'publication'      = ANY(events.edited_fields) THEN events.publication      ELSE EXCLUDED.publication      END,
+        title            = CASE WHEN 'title'            = ANY(events.edited_fields) THEN events.title            ELSE EXCLUDED.title            END,
+        description      = CASE WHEN 'description'      = ANY(events.edited_fields) THEN events.description      ELSE EXCLUDED.description      END,
+        link             = CASE WHEN 'link'             = ANY(events.edited_fields) THEN events.link             ELSE EXCLUDED.link             END,
+        start_date       = CASE WHEN 'start_date'       = ANY(events.edited_fields) THEN events.start_date       ELSE EXCLUDED.start_date       END,
+        end_date         = CASE WHEN 'end_date'         = ANY(events.edited_fields) THEN events.end_date         ELSE EXCLUDED.end_date         END,
+        location         = CASE WHEN 'location'         = ANY(events.edited_fields) THEN events.location         ELSE EXCLUDED.location         END,
+        organizer        = CASE WHEN 'organizer'        = ANY(events.edited_fields) THEN events.organizer        ELSE EXCLUDED.organizer        END,
+        organizer_email  = CASE WHEN 'organizer_email'  = ANY(events.edited_fields) THEN events.organizer_email  ELSE EXCLUDED.organizer_email  END,
+        website          = CASE WHEN 'website'          = ANY(events.edited_fields) THEN events.website          ELSE EXCLUDED.website          END,
+        tags             = CASE WHEN 'tags'             = ANY(events.edited_fields) THEN events.tags             ELSE EXCLUDED.tags             END,
+        format           = CASE WHEN 'format'           = ANY(events.edited_fields) THEN events.format           ELSE EXCLUDED.format           END,
+        course_number    = CASE WHEN 'course_number'    = ANY(events.edited_fields) THEN events.course_number    ELSE EXCLUDED.course_number    END,
+        member_price     = CASE WHEN 'member_price'     = ANY(events.edited_fields) THEN events.member_price     ELSE EXCLUDED.member_price     END,
+        nonmember_price  = CASE WHEN 'nonmember_price'  = ANY(events.edited_fields) THEN events.nonmember_price  ELSE EXCLUDED.nonmember_price  END,
+        image_url        = CASE WHEN 'image_url'        = ANY(events.edited_fields) THEN events.image_url        ELSE EXCLUDED.image_url        END,
+        image_thumb      = CASE WHEN 'image_thumb'      = ANY(events.edited_fields) THEN events.image_thumb      ELSE EXCLUDED.image_thumb      END,
+        instructor_name  = CASE WHEN 'instructor_name'  = ANY(events.edited_fields) THEN events.instructor_name  ELSE EXCLUDED.instructor_name  END,
+        instructor_bio   = CASE WHEN 'instructor_bio'   = ANY(events.edited_fields) THEN events.instructor_bio   ELSE EXCLUDED.instructor_bio   END,
+        lat              = CASE WHEN 'lat'              = ANY(events.edited_fields) THEN events.lat              ELSE EXCLUDED.lat              END,
+        lng              = CASE WHEN 'lng'              = ANY(events.edited_fields) THEN events.lng              ELSE EXCLUDED.lng              END,
         last_synced_at   = NOW(),
         updated_at       = NOW()
       RETURNING (xmax = 0) AS inserted
@@ -229,4 +234,249 @@ export async function pruneStale(
      RETURNING id
   `) as unknown as { id: number }[];
   return result.length;
+}
+
+// ============================================================
+// Admin API — manual events dashboard (DECISIONS.md #5).
+// These functions are NOT used by the public dashboard. They power
+// the /admin/events route. Public listEvents() above filters out
+// hidden rows; this admin layer sees everything.
+// ============================================================
+
+/** Admin-facing event shape. Includes provenance + edit metadata. */
+export interface AdminCalendarEvent extends CalendarEvent {
+  externalSource: EventSource;
+  externalId: string;
+  hidden: boolean;
+  editedFields: string[];
+  editedBy: string | null;
+  editedAt: string | null;
+}
+
+interface AdminEventRow extends EventRow {
+  external_source: EventSource;
+  external_id: string;
+  hidden: boolean;
+  edited_fields: string[];
+  edited_by: string | null;
+  edited_at: string | Date | null;
+}
+
+function rowToAdminEvent(r: AdminEventRow): AdminCalendarEvent {
+  return {
+    ...rowToEvent(r),
+    externalSource: r.external_source,
+    externalId: r.external_id,
+    hidden: r.hidden,
+    editedFields: r.edited_fields ?? [],
+    editedBy: r.edited_by,
+    editedAt: toIso(r.edited_at),
+  };
+}
+
+/**
+ * Admin: list ALL events (including hidden, including past) for one or both
+ * publications. Sorted newest-first by start date so admins see what's
+ * currently live at the top.
+ */
+export async function listAllEventsForAdmin(
+  publication?: Publication,
+): Promise<AdminCalendarEvent[]> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = publication
+    ? ((await sql`
+        SELECT *
+          FROM events
+         WHERE publication = ${publication}
+         ORDER BY (start_date IS NULL), start_date DESC, id DESC
+      `) as unknown as AdminEventRow[])
+    : ((await sql`
+        SELECT *
+          FROM events
+         ORDER BY (start_date IS NULL), start_date DESC, id DESC
+      `) as unknown as AdminEventRow[]);
+  return rows.map(rowToAdminEvent);
+}
+
+/**
+ * Admin: create a manual event. Generates a UUID for external_id and
+ * stamps external_source='manual'. The createdBy email lands in edited_by
+ * so we have an audit trail of who created what.
+ */
+export async function createManualEvent(
+  input: Omit<EventInput, 'externalSource' | 'externalId'>,
+  createdBy: string,
+): Promise<AdminCalendarEvent> {
+  await ensureSchema();
+  const sql = getSql();
+  const externalId = crypto.randomUUID();
+
+  const rows = (await sql`
+    INSERT INTO events (
+      external_source, external_id, publication, title, description, link,
+      start_date, end_date, location, organizer, organizer_email, website,
+      tags, format, course_number, member_price, nonmember_price,
+      image_url, image_thumb, instructor_name, instructor_bio, lat, lng,
+      edited_by, edited_at, last_synced_at, updated_at
+    ) VALUES (
+      'manual', ${externalId}, ${input.publication}, ${input.title},
+      ${input.description ?? null}, ${input.link ?? null},
+      ${input.startDate ?? null}, ${input.endDate ?? null},
+      ${input.location ?? null}, ${input.organizer ?? null}, ${input.organizerEmail ?? null},
+      ${input.website ?? null}, ${input.tags ?? null}, ${input.format ?? null},
+      ${input.courseNumber ?? null}, ${input.memberPrice ?? null}, ${input.nonmemberPrice ?? null},
+      ${input.imageUrl ?? null}, ${input.imageThumb ?? null},
+      ${input.instructorName ?? null}, ${input.instructorBio ?? null},
+      ${input.lat ?? null}, ${input.lng ?? null},
+      ${createdBy}, NOW(), NOW(), NOW()
+    )
+    RETURNING *
+  `) as unknown as AdminEventRow[];
+
+  return rowToAdminEvent(rows[0]);
+}
+
+/**
+ * Admin: partial update of an event. Any field passed in `fields` is
+ * written; any field omitted is left as-is. The set of column names being
+ * updated gets unioned (deduped) into edited_fields, so on the next scraper
+ * upsert the per-field merge will preserve these values.
+ *
+ * Implementation note: building dynamic SET clauses with the Neon tagged-
+ * template client is awkward. Instead we read the row, merge in JS, and do
+ * a single full UPDATE. Two queries per edit — fine for admin volume.
+ */
+export async function updateEvent(
+  id: number,
+  fields: Partial<Omit<EventInput, 'externalSource' | 'externalId'>>,
+  editedBy: string,
+): Promise<AdminCalendarEvent | null> {
+  await ensureSchema();
+  const sql = getSql();
+
+  const existingRows = (await sql`
+    SELECT * FROM events WHERE id = ${id}
+  `) as unknown as AdminEventRow[];
+  if (existingRows.length === 0) return null;
+  const existing = existingRows[0];
+
+  // Map EventInput keys → DB column names.
+  const colMap: Record<string, string> = {
+    publication: 'publication',
+    title: 'title',
+    description: 'description',
+    link: 'link',
+    startDate: 'start_date',
+    endDate: 'end_date',
+    location: 'location',
+    organizer: 'organizer',
+    organizerEmail: 'organizer_email',
+    website: 'website',
+    tags: 'tags',
+    format: 'format',
+    courseNumber: 'course_number',
+    memberPrice: 'member_price',
+    nonmemberPrice: 'nonmember_price',
+    imageUrl: 'image_url',
+    imageThumb: 'image_thumb',
+    instructorName: 'instructor_name',
+    instructorBio: 'instructor_bio',
+    lat: 'lat',
+    lng: 'lng',
+  };
+
+  // Compute which columns are actually being changed (key exists AND value
+  // differs from existing). No-op fields don't get added to edited_fields.
+  const newEditedFields = new Set(existing.edited_fields ?? []);
+  const merged: Record<string, unknown> = {};
+  for (const [key, dbCol] of Object.entries(colMap)) {
+    if (key in fields) {
+      const incoming = (fields as Record<string, unknown>)[key];
+      const current = (existing as unknown as Record<string, unknown>)[dbCol];
+      merged[dbCol] = incoming ?? null;
+      if (incoming !== current) {
+        newEditedFields.add(dbCol);
+      }
+    } else {
+      merged[dbCol] = (existing as unknown as Record<string, unknown>)[dbCol];
+    }
+  }
+
+  const editedFieldsArr = Array.from(newEditedFields);
+
+  const rows = (await sql`
+    UPDATE events SET
+      publication      = ${merged.publication as string},
+      title            = ${merged.title as string},
+      description      = ${(merged.description as string | null) ?? null},
+      link             = ${(merged.link as string | null) ?? null},
+      start_date       = ${(merged.start_date as string | null) ?? null},
+      end_date         = ${(merged.end_date as string | null) ?? null},
+      location         = ${(merged.location as string | null) ?? null},
+      organizer        = ${(merged.organizer as string | null) ?? null},
+      organizer_email  = ${(merged.organizer_email as string | null) ?? null},
+      website          = ${(merged.website as string | null) ?? null},
+      tags             = ${(merged.tags as string | null) ?? null},
+      format           = ${(merged.format as string | null) ?? null},
+      course_number    = ${(merged.course_number as string | null) ?? null},
+      member_price     = ${(merged.member_price as string | null) ?? null},
+      nonmember_price  = ${(merged.nonmember_price as string | null) ?? null},
+      image_url        = ${(merged.image_url as string | null) ?? null},
+      image_thumb      = ${(merged.image_thumb as string | null) ?? null},
+      instructor_name  = ${(merged.instructor_name as string | null) ?? null},
+      instructor_bio   = ${(merged.instructor_bio as string | null) ?? null},
+      lat              = ${(merged.lat as number | null) ?? null},
+      lng              = ${(merged.lng as number | null) ?? null},
+      edited_fields    = ${editedFieldsArr},
+      edited_by        = ${editedBy},
+      edited_at        = NOW(),
+      updated_at       = NOW()
+    WHERE id = ${id}
+    RETURNING *
+  `) as unknown as AdminEventRow[];
+
+  return rows.length > 0 ? rowToAdminEvent(rows[0]) : null;
+}
+
+/**
+ * Admin: hide or unhide an event. Hide is the right operation for scraped
+ * events because the next scraper run would just recreate a deleted row.
+ * Doesn't touch edited_fields — hidden is metadata, not content.
+ */
+export async function setHidden(
+  id: number,
+  hidden: boolean,
+  editedBy: string,
+): Promise<AdminCalendarEvent | null> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = (await sql`
+    UPDATE events SET
+      hidden     = ${hidden},
+      edited_by  = ${editedBy},
+      edited_at  = NOW(),
+      updated_at = NOW()
+    WHERE id = ${id}
+    RETURNING *
+  `) as unknown as AdminEventRow[];
+
+  return rows.length > 0 ? rowToAdminEvent(rows[0]) : null;
+}
+
+/**
+ * Admin: hard-delete a manual event. Refuses to delete scraped events
+ * (use setHidden(id, true) instead — scrapers would just recreate a delete).
+ * Returns false if the event doesn't exist or isn't manual.
+ */
+export async function deleteEvent(id: number): Promise<boolean> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = (await sql`
+    DELETE FROM events
+     WHERE id = ${id}
+       AND external_source = 'manual'
+     RETURNING id
+  `) as unknown as { id: number }[];
+  return rows.length > 0;
 }
