@@ -26,7 +26,7 @@ export const runtime = 'nodejs';
 async function verifyAdmin(cookieHeader: string | null): Promise<boolean> {
   if (!cookieHeader) return false;
   try {
-    const r = await fetch(`${API_URL}/admin/me`, {
+    const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET',
       headers: { cookie: cookieHeader },
       cache: 'no-store',
