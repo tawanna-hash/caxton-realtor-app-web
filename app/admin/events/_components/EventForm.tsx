@@ -147,7 +147,7 @@ export function EventForm({
   };
 
   const fieldClass =
-    'w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a2a44]/20 focus:border-[#1a2a44]';
+    'w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1a2a44]/20 focus:border-[#1a2a44]';
   const labelClass = 'block text-xs font-medium text-gray-700 mb-1';
   const sectionClass = 'bg-white border border-gray-200 rounded-lg p-6';
   const sectionTitleClass = 'text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide';
