@@ -112,8 +112,8 @@ export function CampaignForm({ initial }: Props) {
           notes: notes.trim() || null,
         });
       }
-      router.push('/admin/ads?tab=campaigns');
-      router.refresh();
+      // Hard navigation — router.push has been hanging, see GOTCHAS.md
+      window.location.href = '/admin/ads?tab=campaigns';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
       setSubmitting(false);
