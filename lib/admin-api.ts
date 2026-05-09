@@ -67,4 +67,20 @@ export const adminApi = {
     adminFetch(`/admin/giveaways/${giveawayId}/entries?page=${page}`),
   drawWinner: (giveawayId: string) =>
     adminFetch(`/admin/giveaways/${giveawayId}/draw`, { method: 'POST' }),
+
+  // Events (manual events admin — Phase 3 endpoints on droplet)
+  listEvents: (publication?: 'austin' | 'san_antonio') => {
+    const qs = publication ? `?publication=${publication}` : '';
+    return adminFetch(`/admin/events${qs}`);
+  },
+  createEvent: (data: Record<string, unknown>) =>
+    adminFetch('/admin/events', { method: 'POST', body: data }),
+  updateEvent: (id: number, data: Record<string, unknown>) =>
+    adminFetch(`/admin/events/${id}`, { method: 'PATCH', body: data }),
+  deleteEvent: (id: number) =>
+    adminFetch(`/admin/events/${id}`, { method: 'DELETE' }),
+  hideEvent: (id: number) =>
+    adminFetch(`/admin/events/${id}/hide`, { method: 'POST' }),
+  unhideEvent: (id: number) =>
+    adminFetch(`/admin/events/${id}/unhide`, { method: 'POST' }),
 };

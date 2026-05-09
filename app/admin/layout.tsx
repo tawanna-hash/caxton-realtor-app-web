@@ -39,6 +39,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               Giveaways
             </Link>
+            <Link
+              href="/admin/events"
+              className={`hover:text-white transition-colors ${pathname.startsWith('/admin/events') ? 'text-white' : 'text-white/70'}`}
+            >
+              Events
+            </Link>
             <button onClick={handleLogout} className="text-white/70 hover:text-white text-sm">
               Logout
             </button>
