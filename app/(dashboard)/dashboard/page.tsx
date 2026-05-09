@@ -862,6 +862,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
       </div>
       {tab === 'n' && (
         <div>
+          <FeedTopBanner pub={pub} />
           <div className="flex gap-2 overflow-x-auto px-4 py-3 bg-white border-b border-gray-200" style={{ scrollbarWidth: 'none' }}>
             {CATS.map((c) => (
               <button key={c} onClick={() => setCat(c)} className={cat === c ? 'whitespace-nowrap px-3 py-1.5 text-sm font-medium uppercase tracking-wider border border-[#1a2a44] bg-[#1a2a44] text-white' : 'whitespace-nowrap px-3 py-1.5 text-sm font-medium uppercase tracking-wider border border-gray-300 bg-white text-gray-500'}>{c}</button>
@@ -1832,7 +1833,7 @@ function splitHtmlIntoChunks(html: string, chunks: number): string[] {
 const __adCache = new Map<string, AdSlot | null>();
 const __adInflight = new Map<string, Promise<AdSlot | null>>();
 
-async function fetchAd(slot: 'leaderboard' | 'rectangle' | 'popup', pub: string): Promise<AdSlot | null> {
+async function fetchAd(slot: 'leaderboard' | 'rectangle' | 'popup' | 'feed_top', pub: string): Promise<AdSlot | null> {
   const cacheKey = `${slot}:${pub}`;
   if (__adCache.has(cacheKey)) return __adCache.get(cacheKey) ?? null;
   const inflight = __adInflight.get(cacheKey);
@@ -1859,7 +1860,7 @@ async function fetchAd(slot: 'leaderboard' | 'rectangle' | 'popup', pub: string)
   return promise;
 }
 
-function useAd(slot: 'leaderboard' | 'rectangle' | 'popup', pub: string, _key: string): AdSlot {
+function useAd(slot: 'leaderboard' | 'rectangle' | 'popup' | 'feed_top', pub: string, _key: string): AdSlot {
   const cacheKey = `${slot}:${pub}`;
   const cached = __adCache.get(cacheKey);
   const [ad, setAd] = useState<AdSlot>(cached || { id: 'house', headline: 'house-ad' });
@@ -1909,6 +1910,24 @@ function HouseAd({ slot, pub }: { slot: 'leaderboard' | 'rectangle' | 'popup'; p
       >
         {info.email}
       </a>
+    </div>
+  );
+}
+
+function FeedTopBanner({ pub }: { pub: string }) {
+  const ad = useAd('feed_top' as any, pub, 'feed');
+  if (!ad?.image || !ad?.href) return null;
+  return (
+    <div className="bg-white border-b border-gray-200">
+      <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center pt-3 pb-2 font-medium">
+        Advertisement
+      </p>
+      <div className="pb-3 px-4">
+        <a href={ad.href} target="_blank" rel="noopener noreferrer" className="block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={ad.image} alt={ad.alt || ''} className="w-full h-auto" />
+        </a>
+      </div>
     </div>
   );
 }
