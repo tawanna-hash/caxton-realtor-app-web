@@ -658,10 +658,24 @@ export default function DashboardPage() {
         onBack={() => setPhase('events')}
       />
     );
-  return <Feed pub={pub} user={user} onSwitch={(id) => { setPub(id); }} newsRefreshNonce={newsRefreshNonce} />;
+  const handleLogout = async () => {
+    if (!confirm("Are you sure you want to log out?")) return;
+    try {
+      await fetch(`${API}/auth/logout`, { method: "POST", credentials: "include" });
+    } catch {}
+    try {
+      localStorage.removeItem("caxton_pub");
+      localStorage.removeItem("caxton_phase");
+    } catch {}
+    setUser(null);
+    setPub("");
+    setPhase("splash");
+  };
+
+  return <Feed pub={pub} user={user} onSwitch={(id) => { setPub(id); }} newsRefreshNonce={newsRefreshNonce} onLogout={handleLogout} />;
 }
 
-function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number }) {
+function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number; onLogout: () => void }) {
   const [tab, setTab] = useState('n');
   const [cat, setCat] = useState('All');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -822,6 +836,14 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
               <div className="space-y-5">
                 <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">My Profile</a>
                 <a href="/admin/login" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">Admin Login</a>
+                {user && (
+                  <button
+                    onClick={() => { setMenuOpen(false); onLogout(); }}
+                    className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit text-left"
+                  >
+                    Logout
+                  </button>
+                )}
               </div>
             </div>
             <p className="text-xs text-white/30 font-light text-center pt-4">{'\u00A9'} 2026 Caxton Publications, Inc.</p>
