@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { adminApi } from '@/lib/admin-api';
 
 export default function AdminLoginPage() {
@@ -75,6 +76,11 @@ export default function AdminLoginPage() {
           >
             {submitting ? 'Signing in...' : 'Sign In'}
           </button>
+          <div className="text-center pt-1">
+            <Link href="/admin/forgot-password" className="text-sm text-gray-500 hover:text-[#1a2a44]">
+              Forgot password?
+            </Link>
+          </div>
         </form>
       </div>
     </div>
