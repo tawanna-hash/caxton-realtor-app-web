@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSwipeBack } from '@/hooks/use-swipe-back';
+import { ArticleToolbar } from '@/components/ArticleToolbar';
 
 const SW = { fontFamily: 'Switzer, system-ui, sans-serif' };
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -499,6 +500,7 @@ export default function DashboardPage() {
   const [selectedArticle, setSelectedArticle] = useState<any | null>(null);
   // caxton-article-reader-b2a-fix
   const [globalArticles, setGlobalArticles] = useState<any[]>([]);
+  const [newsRefreshNonce, setNewsRefreshNonce] = useState(0);
   const [pub, setPub] = useState('');
   const [user, setUser] = useState<any>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -645,6 +647,7 @@ export default function DashboardPage() {
         article={selectedArticle}
         allArticles={globalArticles}
         onBack={() => setPhase('feed')}
+        onLatest={() => { setNewsRefreshNonce((n) => n + 1); setPhase('feed'); }}
         onSelectArticle={(a: any) => setSelectedArticle(a)}
       />
     );
@@ -656,10 +659,10 @@ export default function DashboardPage() {
         onBack={() => setPhase('events')}
       />
     );
-  return <Feed pub={pub} user={user} onSwitch={(id) => { setPub(id); }} />;
+  return <Feed pub={pub} user={user} onSwitch={(id) => { setPub(id); }} newsRefreshNonce={newsRefreshNonce} />;
 }
 
-function Feed({ pub, user, onSwitch }: { pub: string; user: any; onSwitch: (id: string) => void }) {
+function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number }) {
   const [tab, setTab] = useState('n');
   const [cat, setCat] = useState('All');
   const [menuOpen, setMenuOpen] = useState(false);
@@ -702,7 +705,7 @@ function Feed({ pub, user, onSwitch }: { pub: string; user: any; onSwitch: (id: 
     return () => {
       cancelled = true;
     };
-  }, [pub]);
+  }, [pub, newsRefreshNonce]);
 
   const fallbackNews = pub === 'realtyline' ? RL_NEWS : NS_NEWS;
   // While first fetch is in flight, NEWS is empty -> skeletons render below.
@@ -1676,6 +1679,7 @@ interface ArticleReaderProps {
   article: any | null;
   allArticles?: any[];
   onBack: () => void;
+  onLatest?: () => void;
   onSelectArticle?: (a: any) => void;
 }
 
@@ -2144,7 +2148,7 @@ function ArticleActionBar({ article, pubColor, saved, onSaveToggle, onShare, onC
 // ArticleReader — the polished v2a top-level component
 // ─────────────────────────────────────────────────────────────────────────
 
-function ArticleReader({ pub, article, allArticles, onBack, onSelectArticle }: ArticleReaderProps) {
+function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectArticle }: ArticleReaderProps) {
   const info = PUB_META_AR[pub] || PUB_META_AR.realtyline;
   const [saved, setSaved] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -2231,16 +2235,26 @@ function ArticleReader({ pub, article, allArticles, onBack, onSelectArticle }: A
     >
       {/* Header */}
       <div className="sticky top-0 bg-white z-10 border-b border-gray-200">
-        <div className="flex items-center justify-between px-4 py-4">
-          <button onClick={onBack} className="flex items-center gap-2 text-gray-600">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
-            </svg>
-            <span className="text-sm font-medium">Back</span>
-          </button>
+        <div className="flex items-center justify-end px-4 py-4">
           <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.name}</span>
         </div>
       </div>
+
+      {/* Bottom toolbar (mobile only) */}
+      <ArticleToolbar
+        onBack={onBack}
+        onMagazine={() => { /* placeholder for future magazine feature */ }}
+        onLatest={() => { if (onLatest) onLatest(); else onBack(); }}
+        onShare={async () => {
+          const url = article?.link || (typeof window !== 'undefined' ? window.location.href : '');
+          const title = article?.head || article?.title || 'Caxton Publications';
+          if (typeof navigator !== 'undefined' && (navigator as any).share) {
+            try { await (navigator as any).share({ title, url }); } catch { /* user cancelled */ }
+          } else if (typeof navigator !== 'undefined' && navigator.clipboard && url) {
+            try { await navigator.clipboard.writeText(url); } catch { /* ignore */ }
+          }
+        }}
+      />
 
       {/* Featured image */}
       {article.imageUrl && (
@@ -2250,7 +2264,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onSelectArticle }: A
         </div>
       )}
 
-      <div className="px-5 pt-6 pb-32 max-w-2xl mx-auto">
+      <div className="px-5 pt-6 pb-44 max-w-2xl mx-auto">
         {/* Top leaderboard ad — first thing in the article column */}
         <AdLeaderboard pub={pub} articleId={articleId} />
 
