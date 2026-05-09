@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSwipeBack } from '@/hooks/use-swipe-back';
 
 const SW = { fontFamily: 'Switzer, system-ui, sans-serif' };
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -2220,8 +2221,14 @@ function ArticleReader({ pub, article, allArticles, onBack, onSelectArticle }: A
   const chunks = splitHtmlIntoChunks(cleanedHtml, 3);
   const showMidAds = chunks.length >= 3;
 
+  const { ref: swipeRef, style: swipeStyle } = useSwipeBack({ onBack });
+
   return (
-    <div className="fixed inset-0 bg-white z-30 overflow-y-auto" style={SW}>
+    <div
+      ref={swipeRef as React.Ref<HTMLDivElement>}
+      className="fixed inset-0 bg-white z-30 overflow-y-auto"
+      style={{ ...SW, ...swipeStyle }}
+    >
       {/* Header */}
       <div className="sticky top-0 bg-white z-10 border-b border-gray-200">
         <div className="flex items-center justify-between px-4 py-4">
