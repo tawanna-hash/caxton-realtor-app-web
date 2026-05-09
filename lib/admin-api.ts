@@ -83,4 +83,44 @@ export const adminApi = {
     adminFetch(`/admin/events/${id}/hide`, { method: 'POST' }),
   unhideEvent: (id: number) =>
     adminFetch(`/admin/events/${id}/unhide`, { method: 'POST' }),
+
+  // Ads dashboard (Phase 1 — May 9, 2026)
+  // Spaces: read-only catalog of 15 ad slots
+  listAdSpaces: () => adminFetch('/admin/ads/spaces'),
+
+  // Creatives: uploaded ad images stored on Vercel Blob
+  listAdCreatives: () => adminFetch('/admin/ads/creatives'),
+  // Note: actual file upload happens client-direct to Vercel Blob via
+  // /api/admin/ads/upload-token. This method only RECORDS the resulting
+  // blob_url + metadata into ad_creatives.
+  recordAdCreative: (data: {
+    advertiser_name: string;
+    blob_url: string;
+    width: number | null;
+    height: number | null;
+    click_url: string;
+    alt_text: string | null;
+  }) => adminFetch('/admin/ads/creatives', { method: 'POST', body: data }),
+  deleteAdCreative: (id: string) =>
+    adminFetch(`/admin/ads/creatives/${id}`, { method: 'DELETE' }),
+
+  // Campaigns: scheduled placements (advertiser × slot × pub × dates)
+  listAdCampaigns: () => adminFetch('/admin/ads/campaigns'),
+  createAdCampaign: (data: {
+    advertiser_name: string;
+    ad_space_slug: string;
+    creative_id: string;
+    publication: 'austin' | 'san_antonio' | 'both';
+    start_date: string;
+    end_date: string;
+    price_total: number | null;
+    price_notes: string | null;
+    notes: string | null;
+  }) => adminFetch('/admin/ads/campaigns', { method: 'POST', body: data }),
+  updateAdCampaign: (id: string, data: Record<string, unknown>) =>
+    adminFetch(`/admin/ads/campaigns/${id}`, { method: 'PATCH', body: data }),
+  deleteAdCampaign: (id: string) =>
+    adminFetch(`/admin/ads/campaigns/${id}`, { method: 'DELETE' }),
+  toggleAdCampaign: (id: string) =>
+    adminFetch(`/admin/ads/campaigns/${id}/toggle`, { method: 'POST' }),
 };
