@@ -1244,6 +1244,7 @@ function EventsList({ pub, events, loading, error, onBack, onSelect }: EventsLis
 
       {/* Body */}
       <div className="pb-24">
+        <CalendarTopBanner pub={pub} />
         {loading && (
           <div className="px-4 py-6">
             <EventSkeleton />
@@ -1833,7 +1834,7 @@ function splitHtmlIntoChunks(html: string, chunks: number): string[] {
 const __adCache = new Map<string, AdSlot | null>();
 const __adInflight = new Map<string, Promise<AdSlot | null>>();
 
-async function fetchAd(slot: 'leaderboard' | 'rectangle' | 'popup' | 'feed_top', pub: string): Promise<AdSlot | null> {
+async function fetchAd(slot: 'leaderboard' | 'rectangle' | 'popup' | 'feed_top' | 'calendar_top', pub: string): Promise<AdSlot | null> {
   const cacheKey = `${slot}:${pub}`;
   if (__adCache.has(cacheKey)) return __adCache.get(cacheKey) ?? null;
   const inflight = __adInflight.get(cacheKey);
@@ -1860,7 +1861,7 @@ async function fetchAd(slot: 'leaderboard' | 'rectangle' | 'popup' | 'feed_top',
   return promise;
 }
 
-function useAd(slot: 'leaderboard' | 'rectangle' | 'popup' | 'feed_top', pub: string, _key: string): AdSlot {
+function useAd(slot: 'leaderboard' | 'rectangle' | 'popup' | 'feed_top' | 'calendar_top', pub: string, _key: string): AdSlot {
   const cacheKey = `${slot}:${pub}`;
   const cached = __adCache.get(cacheKey);
   const [ad, setAd] = useState<AdSlot>(cached || { id: 'house', headline: 'house-ad' });
@@ -1916,6 +1917,24 @@ function HouseAd({ slot, pub }: { slot: 'leaderboard' | 'rectangle' | 'popup'; p
 
 function FeedTopBanner({ pub }: { pub: string }) {
   const ad = useAd('feed_top' as any, pub, 'feed');
+  if (!ad?.image || !ad?.href) return null;
+  return (
+    <div className="bg-white border-b border-gray-200">
+      <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center pt-3 pb-2 font-medium">
+        Advertisement
+      </p>
+      <div className="pb-3 px-4">
+        <a href={ad.href} target="_blank" rel="noopener noreferrer" className="block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={ad.image} alt={ad.alt || ''} className="w-full h-auto" />
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function CalendarTopBanner({ pub }: { pub: string }) {
+  const ad = useAd('calendar_top' as any, pub, 'calendar');
   if (!ad?.image || !ad?.href) return null;
   return (
     <div className="bg-white border-b border-gray-200">
