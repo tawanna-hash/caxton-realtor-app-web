@@ -523,14 +523,21 @@ export default function DashboardPage() {
       }
     } catch {}
 
-    // Check if we already have a server session — if so, jump straight to feed.
+    // Check if we already have a server session.
     fetch(`${API}/auth/me`, { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled) return;
         if (data?.realtor) {
           setUser(data.realtor);
-          setPhase('feed');
+          // Only force feed when there's no real content phase to restore.
+          // Auth-flow phases (splash/select/auth) should fall through to feed;
+          // content phases (feed/article/events/event_detail/magazines) stay put.
+          const savedPhaseForAuth = (() => { try { return localStorage.getItem('caxton_phase'); } catch { return null; } })();
+          const contentPhases = ['feed', 'article', 'events', 'event_detail', 'magazines'];
+          if (!savedPhaseForAuth || !contentPhases.includes(savedPhaseForAuth)) {
+            setPhase('feed');
+          }
         }
       })
       .catch(() => {});
