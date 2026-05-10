@@ -84,7 +84,15 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   }
 
   const current = magazines[0];
-  const display = tab === 'current' ? [current] : magazines;
+  // Reorder so current issue sits in the middle of the carousel,
+  // with older issues fanning out to both sides (Texas Monthly style).
+  function centerCurrent(mags: Magazine[]): Magazine[] {
+    if (mags.length <= 1) return mags;
+    const [first, ...rest] = mags;
+    const mid = Math.floor(rest.length / 2);
+    return [...rest.slice(0, mid), first, ...rest.slice(mid)];
+  }
+  const display = tab === 'current' ? [current] : centerCurrent(magazines);
 
   return (
     <div className="bg-stone-50 pt-10 pb-12">
