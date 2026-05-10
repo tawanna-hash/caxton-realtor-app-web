@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSwipeBack } from '@/hooks/use-swipe-back';
 import MagazineCarousel from '@/components/MagazineCarousel';
+import MagazineReader from '@/components/MagazineReader';
+import { useState as useStateForMag } from 'react';
 import type { Magazine } from '@/lib/magazines';
 
 const SW = { fontFamily: 'Switzer, system-ui, sans-serif' };
@@ -2529,6 +2531,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
 // brand color. Batch 2 will swap the alert() for a real MagazineReader modal.
 function MagazinePhase({ pub, onBack }: { pub: string; onBack: () => void }) {
   const info = PUBS.find((p) => p.id === pub) || PUBS[0];
+  const [openMag, setOpenMag] = useStateForMag<Magazine | null>(null);
   return (
     <div className="min-h-screen bg-white" style={{ paddingBottom: 96 }}>
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-3 py-3 flex items-center">
@@ -2540,11 +2543,15 @@ function MagazinePhase({ pub, onBack }: { pub: string; onBack: () => void }) {
       <MagazineCarousel
         publication={pub}
         brandColor={info.color}
-        onOpen={(m: Magazine) => {
-          // Batch 2: replace with setOpenMag(m) and render <MagazineReader />
-          alert(`Open ${m.issue_label} — flipbook reader coming in next step (${m.page_count} pages ready)`);
-        }}
+        onOpen={(m: Magazine) => setOpenMag(m)}
       />
+      {openMag && (
+        <MagazineReader
+          magazine={openMag}
+          brandColor={info.color}
+          onClose={() => setOpenMag(null)}
+        />
+      )}
     </div>
   );
 }
