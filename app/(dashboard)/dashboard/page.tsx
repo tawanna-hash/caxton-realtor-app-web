@@ -2450,7 +2450,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
         onSaveToggle={onSaveToggle}
         onShare={onShare}
         onCopy={onCopy}
-        onMagazine={() => { /* placeholder for future magazine feature */ }}
+        onMagazine={() => { window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'magazines' })); }}
         onLatest={() => { if (onLatest) onLatest(); else onBack(); }}
       />
 
