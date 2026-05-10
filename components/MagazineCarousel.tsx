@@ -146,13 +146,16 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
               <div key={m.id} className="flex-shrink-0 flex flex-col items-center">
                 <button
                   onClick={() => onOpen(m)}
-                  className="group block transition-transform"
+                  className="group block"
                   aria-label={`Open ${m.issue_label}`}
-                  style={{ transform: isCurrent ? 'scale(1.1)' : 'scale(1)', transformOrigin: 'bottom center' }}
                 >
                   <div
-                    className={isCurrent ? 'relative w-52 h-72 overflow-hidden shadow-xl' : 'relative w-44 h-60 overflow-hidden shadow-md'}
-                    style={{ backgroundColor: brandColor }}
+                    className={
+                      isCurrent
+                        ? 'relative w-52 h-72 overflow-hidden shadow-xl transition-transform duration-300 ease-out origin-bottom hover:-translate-y-2 hover:shadow-2xl active:scale-95'
+                        : 'relative w-44 h-60 overflow-hidden shadow-md transition-transform duration-300 ease-out origin-bottom hover:-translate-y-2 hover:shadow-xl active:scale-95'
+                    }
+                    style={{ backgroundColor: brandColor, transform: isCurrent ? 'scale(1.1)' : 'scale(1)' }}
                   >
                     {m.cover_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
