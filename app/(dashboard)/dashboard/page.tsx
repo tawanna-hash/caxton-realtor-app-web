@@ -803,49 +803,41 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
               <span className="text-white/60">{'\u2192'}</span>
             </button>
             <div className="mb-10">
-              <h3 className="text-3xl text-white font-semibold mb-6">Read</h3>
               <div className="space-y-5">
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">Latest Issue</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">All Issues</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">Search</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">Calendar</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">Giveaways</a>
+                <button onClick={() => { setMenuOpen(false); window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'magazines' })); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Magazine</button>
+                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Calendar</a>
+                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Giveaway</a>
+                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Builder Inventory</a>
+                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Builder Promotions</a>
               </div>
             </div>
-            <div className="mb-10">
-              <h3 className="text-3xl text-white font-semibold mb-6">Stay Connected</h3>
+            <div className="mb-10 pt-6 border-t border-white/20">
               <div className="space-y-5">
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">Newsletters</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">Submit a Story Tip</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">Suggest an Event</a>
+                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Digital Newsletters</a>
+                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Subscribe to Print</a>
+                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Manage Subscriptions</a>
+                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">FAQs</a>
+                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Site Map</a>
               </div>
             </div>
-            <div className="mb-10">
-              <h3 className="text-3xl text-white font-semibold mb-6">About</h3>
+            <div className="mb-10 pt-6 border-t border-white/20">
               <div className="space-y-5">
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">Advertise</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">Subscribe to Print</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">FAQs</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">Privacy Notice</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">User Agreement</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">Site Map</a>
+                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">About Us</a>
+                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Advertise</a>
+                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">My Profile</a>
+                <a href="/admin/login" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Admin Login</a>
               </div>
             </div>
-            <div className="mb-10 pt-6 border-t border-white/10">
-              <h3 className="text-3xl text-white font-semibold mb-6">Account</h3>
-              <div className="space-y-5">
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">My Profile</a>
-                <a href="/admin/login" className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit">Admin Login</a>
-                {user && (
-                  <button
-                    onClick={() => { setMenuOpen(false); onLogout(); }}
-                    className="block text-sm uppercase tracking-[0.15em] text-white font-medium pb-1.5 border-b border-white/30 w-fit text-left"
-                  >
-                    Logout
-                  </button>
-                )}
+            {user && (
+              <div className="mb-10 pt-6 border-t border-white/20">
+                <button
+                  onClick={() => { setMenuOpen(false); onLogout(); }}
+                  className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left"
+                >
+                  Logout
+                </button>
               </div>
-            </div>
+            )}
             <p className="text-xs text-white/30 font-light text-center pt-4">{'\u00A9'} 2026 Caxton Publications, Inc.</p>
           </div>
         </div>
