@@ -25,8 +25,8 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
   useEffect(() => {
     function calcSize() {
       const isPhone = window.innerWidth < 768;
-      const reservedTop = 56;
-      const reservedBottom = 64;
+      const reservedTop = 44;
+      const reservedBottom = 48;
       const availH = window.innerHeight - reservedTop - reservedBottom;
       const availW = window.innerWidth;
       // Magazine page aspect: roughly 17:22 (matches our 922x1024 covers).
@@ -158,17 +158,15 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
   return (
     <div className="fixed inset-0 z-[60] bg-black flex flex-col" style={{ touchAction: 'none' }}>
       {/* Top chrome */}
-      <div className="flex-shrink-0 flex items-center justify-between px-3 py-3 border-b border-white/10" style={{ backgroundColor: brandColor }}>
-        <button onClick={onClose} aria-label="Close" className="text-white p-2 -ml-2">
+      <div className="flex-shrink-0 flex items-center justify-between px-3 py-2 border-b border-white/10" style={{ backgroundColor: brandColor }}>
+        <button onClick={onClose} aria-label="Close" className="text-white p-1.5 -ml-1.5">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
-        <div className="text-center flex-1 px-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-white/60 font-medium">{magazine.issue_label}</p>
-          <p className="text-[10px] text-white/40 mt-0.5">
-            Page {currentPage + 1} of {magazine.page_count}
-          </p>
+        <div className="text-center flex-1 px-2 flex items-baseline justify-center gap-3">
+          <p className="text-xs uppercase tracking-[0.2em] text-white/70 font-medium">{magazine.issue_label}</p>
+          <span className="text-[10px] text-white/40">Page {currentPage + 1} / {magazine.page_count}</span>
         </div>
-        <div className="w-9" />
+        <div className="w-8" />
       </div>
 
       {/* Flipbook canvas */}
@@ -216,7 +214,7 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
       </div>
 
       {/* Bottom action bar */}
-      <div className="flex-shrink-0 flex items-center justify-around px-2 py-3 border-t border-white/10" style={{ backgroundColor: brandColor }}>
+      <div className="flex-shrink-0 flex items-center justify-around px-2 py-2 border-t border-white/10" style={{ backgroundColor: brandColor }}>
         <ActionButton label="Share" onClick={handleShare} icon={ICONS.share} />
         <ActionButton label="QR" onClick={() => setActionMode('qr')} icon={ICONS.qr} />
         <ActionButton label="Download" onClick={handleDownload} icon={ICONS.download} />

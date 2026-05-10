@@ -152,14 +152,14 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
                   <div
                     className={
                       isCurrent
-                        ? 'relative w-52 h-72 overflow-hidden shadow-xl transition-transform duration-300 ease-out origin-bottom hover:-translate-y-2 hover:shadow-2xl active:scale-95'
-                        : 'relative w-44 h-60 overflow-hidden shadow-md transition-transform duration-300 ease-out origin-bottom hover:-translate-y-2 hover:shadow-xl active:scale-95'
+                        ? 'relative w-52 h-72 overflow-hidden shadow-xl transition-transform duration-300 ease-out origin-bottom hover:-translate-y-2 hover:shadow-2xl active:scale-95 bg-white'
+                        : 'relative w-44 h-60 overflow-hidden shadow-md transition-transform duration-300 ease-out origin-bottom hover:-translate-y-2 hover:shadow-xl active:scale-95 bg-white'
                     }
-                    style={{ backgroundColor: brandColor, transform: isCurrent ? 'scale(1.1)' : 'scale(1)' }}
+                    style={{ transform: isCurrent ? 'scale(1.1)' : 'scale(1)' }}
                   >
                     {m.cover_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={m.cover_url} alt={`${m.issue_label} cover`} className="w-full h-full object-cover" loading="lazy" />
+                      <img src={m.cover_url} alt={`${m.issue_label} cover`} className="w-full h-full object-contain" loading="lazy" />
                     ) : (
                       <div className="flex items-center justify-center w-full h-full text-white/60 text-xs uppercase tracking-wider">No cover</div>
                     )}
