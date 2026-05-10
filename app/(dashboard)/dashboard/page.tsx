@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSwipeBack } from '@/hooks/use-swipe-back';
 import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReader from '@/components/MagazineReader';
+import MagazineFeatured from '@/components/MagazineFeatured';
 import { useState as useStateForMag } from 'react';
 import type { Magazine } from '@/lib/magazines';
 
@@ -669,6 +670,7 @@ export default function DashboardPage() {
       <MagazinePhase
         pub={pub}
         onBack={() => setPhase('feed')}
+        onOpenArticle={(a: any) => { setSelectedArticle(a); setPhase('article'); }}
       />
     );
   const handleLogout = async () => {
@@ -2529,9 +2531,10 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
 // caxton-magazine-phase-b1
 // Standalone phase component that wraps the carousel with a back button and
 // brand color. Batch 2 will swap the alert() for a real MagazineReader modal.
-function MagazinePhase({ pub, onBack }: { pub: string; onBack: () => void }) {
+function MagazinePhase({ pub, onBack, onOpenArticle }: { pub: string; onBack: () => void; onOpenArticle: (a: any) => void }) {
   const info = PUBS.find((p) => p.id === pub) || PUBS[0];
   const [openMag, setOpenMag] = useStateForMag<Magazine | null>(null);
+  const [currentMag, setCurrentMag] = useStateForMag<Magazine | null>(null);
   return (
     <div className="min-h-screen bg-white" style={{ paddingBottom: 96 }}>
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-3 py-3 flex items-center">
@@ -2540,10 +2543,19 @@ function MagazinePhase({ pub, onBack }: { pub: string; onBack: () => void }) {
         </button>
         <p className="text-sm uppercase tracking-[0.25em] text-gray-900 font-medium ml-2">Magazine</p>
       </div>
+      {currentMag && (
+        <MagazineFeatured
+          magazine={currentMag}
+          brandColor={info.color}
+          onOpenMagazine={() => setOpenMag(currentMag)}
+          onOpenArticle={onOpenArticle}
+        />
+      )}
       <MagazineCarousel
         publication={pub}
         brandColor={info.color}
         onOpen={(m: Magazine) => setOpenMag(m)}
+        onMagazinesLoaded={(mags: Magazine[]) => { if (mags.length > 0) setCurrentMag(mags[0]); }}
       />
       {openMag && (
         <MagazineReader
