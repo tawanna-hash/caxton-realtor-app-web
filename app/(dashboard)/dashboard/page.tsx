@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSwipeBack } from '@/hooks/use-swipe-back';
+import MagazineCarousel from '@/components/MagazineCarousel';
+import type { Magazine } from '@/lib/magazines';
 
 const SW = { fontFamily: 'Switzer, system-ui, sans-serif' };
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -585,6 +587,7 @@ export default function DashboardPage() {
       const target = e?.detail;
       if (target === 'events') setPhase('events');
       else if (target === 'feed') setPhase('feed');
+      else if (target === 'magazines') setPhase('magazines');
     };
     window.addEventListener('caxton:nav', onNav as EventListener);
     return () => window.removeEventListener('caxton:nav', onNav as EventListener);
@@ -656,6 +659,14 @@ export default function DashboardPage() {
         pub={pub}
         event={selectedEvent}
         onBack={() => setPhase('events')}
+      />
+    );
+  // caxton-magazine-phase-b1
+  if (phase === 'magazines')
+    return (
+      <MagazinePhase
+        pub={pub}
+        onBack={() => setPhase('feed')}
       />
     );
   const handleLogout = async () => {
@@ -2509,6 +2520,31 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
           color: #4b5563;
         }
       `}</style>
+    </div>
+  );
+}
+
+// caxton-magazine-phase-b1
+// Standalone phase component that wraps the carousel with a back button and
+// brand color. Batch 2 will swap the alert() for a real MagazineReader modal.
+function MagazinePhase({ pub, onBack }: { pub: string; onBack: () => void }) {
+  const info = PUBS.find((p) => p.id === pub) || PUBS[0];
+  return (
+    <div className="min-h-screen bg-white" style={{ paddingBottom: 96 }}>
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-3 py-3 flex items-center">
+        <button onClick={onBack} aria-label="Back" className="text-gray-900 p-2 -ml-2">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <p className="text-sm uppercase tracking-[0.25em] text-gray-900 font-medium ml-2">Magazine</p>
+      </div>
+      <MagazineCarousel
+        publication={pub}
+        brandColor={info.color}
+        onOpen={(m: Magazine) => {
+          // Batch 2: replace with setOpenMag(m) and render <MagazineReader />
+          alert(`Open ${m.issue_label} — flipbook reader coming in next step (${m.page_count} pages ready)`);
+        }}
+      />
     </div>
   );
 }
