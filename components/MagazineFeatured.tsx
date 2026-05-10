@@ -13,22 +13,29 @@ interface MagazineFeaturedProps {
 export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine, onOpenArticle }: MagazineFeaturedProps) {
   const [liveNews, setLiveNews] = useState<any[] | null>(null);
 
-  // Listen for the news list dispatched by Feed (caxton:newsList event).
+  // Fetch news directly. Feed isn't mounted on the magazines phase,
+  // so we cannot rely on its caxton:newsList event firing.
   useEffect(() => {
-    const handler = (e: any) => {
-      if (Array.isArray(e?.detail)) {
-        setLiveNews(e.detail);
-      }
-    };
-    window.addEventListener('caxton:newsList', handler as EventListener);
-    return () => {
-      window.removeEventListener('caxton:newsList', handler as EventListener);
-    };
-  }, []);
+    const market = magazine.publication; // 'austin' or 'san_antonio'
+    if (!market) return;
+    const API = process.env.NEXT_PUBLIC_API_URL || '';
+    let cancelled = false;
+    fetch(`${API}/news/${market}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        const items = Array.isArray(data?.articles) ? data.articles : Array.isArray(data) ? data : [];
+        setLiveNews(items);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [magazine.publication]);
 
-  // Most recent article tagged "Editor's Choice" (curly apostrophe matches CATS array)
+  // Most recent article tagged "Editor's Choice". Normalize apostrophes so
+  // straight (U+0027) and curly (U+2019) both match the API value.
+  const normalizeApostrophe = (str: string) => str.replace(/’/g, "'");
   const editorsChoice = (liveNews || []).find((a: any) => {
-    const cat = a?.cat || a?.category || '';
+    const cat = normalizeApostrophe(String(a?.cat || a?.category || ''));
     return cat === "Editor's Choice";
   });
 
