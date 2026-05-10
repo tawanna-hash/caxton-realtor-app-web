@@ -20,6 +20,12 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   const [tab, setTab] = useState<Tab>('all');
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
+  // Stable ref to the callback so it doesn't retrigger the fetch effect each render.
+  const loadedCbRef = useRef(onMagazinesLoaded);
+  useEffect(() => {
+    loadedCbRef.current = onMagazinesLoaded;
+  }, [onMagazinesLoaded]);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -29,7 +35,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
         if (!cancelled) {
           setMagazines(data);
           setLoading(false);
-          if (onMagazinesLoaded) onMagazinesLoaded(data);
+          if (loadedCbRef.current) loadedCbRef.current(data);
         }
       })
       .catch((err) => {
@@ -41,7 +47,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
     return () => {
       cancelled = true;
     };
-  }, [publication, onMagazinesLoaded]);
+  }, [publication]);
 
   function scrollByCards(direction: 1 | -1) {
     const el = scrollerRef.current;
