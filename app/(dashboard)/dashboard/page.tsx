@@ -828,16 +828,24 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
                 <a href="/admin/login" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Admin Login</a>
               </div>
             </div>
-            {user && (
-              <div className="mb-10 pt-6 border-t border-white/20">
+            <div className="mb-10 pt-6 border-t border-white/20">
+              {user ? (
                 <button
                   onClick={() => { setMenuOpen(false); onLogout(); }}
                   className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left"
                 >
                   Logout
                 </button>
-              </div>
-            )}
+              ) : (
+                <a
+                  href="/"
+                  onClick={() => setMenuOpen(false)}
+                  className="block text-sm uppercase tracking-[0.15em] text-white font-medium"
+                >
+                  Login
+                </a>
+              )}
+            </div>
             <p className="text-xs text-white/30 font-light text-center pt-4">{'\u00A9'} 2026 Caxton Publications, Inc.</p>
           </div>
         </div>
