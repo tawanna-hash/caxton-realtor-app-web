@@ -5,7 +5,7 @@ import { useSwipeBack } from '@/hooks/use-swipe-back';
 import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReader from '@/components/MagazineReader';
 import MagazineFeatured from '@/components/MagazineFeatured';
-import { useState as useStateForMag } from 'react';
+import { useState as useStateForMag, useEffect as useEffectForMag } from 'react';
 import type { Magazine } from '@/lib/magazines';
 
 const SW = { fontFamily: 'Switzer, system-ui, sans-serif' };
@@ -944,8 +944,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
           </div>
         </a>
         <div className="flex justify-around py-2 pb-3">
-          <button className="flex flex-col items-center text-[#1a2a44] flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Latest Issue</span></button>
-          <button className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">All Issues</span></button>
+          <button onClick={() => { if (typeof window !== "undefined") { window.dispatchEvent(new CustomEvent("caxton:nav", { detail: "magazines" })); window.dispatchEvent(new CustomEvent("caxton:openLatestMagazine")); } }} className="flex flex-col items-center text-[#1a2a44] flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Latest Issue</span></button>
+          <button onClick={() => { if (typeof window !== "undefined") { window.dispatchEvent(new CustomEvent("caxton:nav", { detail: "magazines" })); } }} className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">All Issues</span></button>
           <button className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Inventory</span></button>
           <button onClick={() => { if (typeof window !== "undefined") { window.dispatchEvent(new CustomEvent("caxton:nav", { detail: "events" })); } }} className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Calendar</span></button> {/* caxton-events-frontend-v1-footer */}
           <button className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Giveaways</span></button>
@@ -2535,6 +2535,20 @@ function MagazinePhase({ pub, onBack, onOpenArticle }: { pub: string; onBack: ()
   const info = PUBS.find((p) => p.id === pub) || PUBS[0];
   const [openMag, setOpenMag] = useStateForMag<Magazine | null>(null);
   const [currentMag, setCurrentMag] = useStateForMag<Magazine | null>(null);
+  const [autoOpenLatest, setAutoOpenLatest] = useStateForMag<boolean>(false);
+  // Listen for the Latest Issue footer button.
+  useEffectForMag(() => {
+    const handler = () => setAutoOpenLatest(true);
+    window.addEventListener('caxton:openLatestMagazine', handler);
+    return () => window.removeEventListener('caxton:openLatestMagazine', handler);
+  }, []);
+  // When auto-open is requested AND the current magazine loads, open it.
+  useEffectForMag(() => {
+    if (autoOpenLatest && currentMag) {
+      setOpenMag(currentMag);
+      setAutoOpenLatest(false);
+    }
+  }, [autoOpenLatest, currentMag]);
   return (
     <div className="min-h-screen bg-white" style={{ paddingBottom: 96 }}>
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-3 py-3 flex items-center">
