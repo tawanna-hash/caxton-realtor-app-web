@@ -1287,20 +1287,14 @@ function EventsList({ pub, events, loading, error, onBack, onSelect }: EventsLis
   return (
     <div className="fixed inset-0 bg-white z-30 overflow-y-auto" style={SW}>
       {/* Header */}
-      <div className="sticky top-0 bg-white z-10 border-b border-gray-200">
-        <div className="flex items-center justify-between px-4 py-4">
-          <button onClick={onBack} className="flex items-center gap-2 text-gray-600">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
-            </svg>
-            <span className="text-sm font-medium">Back</span>
+      <div className="sticky top-0 bg-white z-10 border-b border-gray-200 px-3 py-3 flex items-center justify-between">
+        <div className="flex items-center">
+          <button onClick={onBack} aria-label="Back" className="text-gray-900 p-2 -ml-2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
+          <p className="text-sm uppercase tracking-[0.25em] text-gray-900 font-medium ml-2">Events</p>
         </div>
-        <div className="px-4 pb-5">
-          <h1 className="text-4xl font-bold text-gray-900 tracking-tight leading-tight">Events</h1>
-          <p className="text-sm text-gray-500 mt-1 font-light">Upcoming in {info.city}</p>
-        </div>
+        <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
       </div>
 
       {/* Body */}
@@ -1500,16 +1494,14 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
   return (
     <div className="fixed inset-0 bg-white z-30 overflow-y-auto" style={SW}>
       {/* Header */}
-      <div className="sticky top-0 bg-white z-10 border-b border-gray-200">
-        <div className="flex items-center justify-between px-4 py-4">
-          <button onClick={onBack} className="flex items-center gap-2 text-gray-600">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
-            </svg>
-            <span className="text-sm font-medium">Events</span>
+      <div className="sticky top-0 bg-white z-10 border-b border-gray-200 px-3 py-3 flex items-center justify-between">
+        <div className="flex items-center">
+          <button onClick={onBack} aria-label="Back" className="text-gray-900 p-2 -ml-2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
+          <p className="text-sm uppercase tracking-[0.25em] text-gray-900 font-medium ml-2">Events</p>
         </div>
+        <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
       </div>
 
       {/* Featured image */}
@@ -1640,49 +1632,31 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
         {event.website && (
           <button
             onClick={onRegister}
-            className="flex-1 py-3 text-white text-sm font-semibold uppercase tracking-wider rounded"
+            className="w-full py-3 text-white text-sm font-semibold uppercase tracking-wider rounded-full"
             style={{ backgroundColor: info.color }}
           >
             Register
           </button>
         )}
-        {event.location && (
-          <button
-            onClick={onDirections}
-            className="px-4 py-3 border-2 text-sm font-semibold uppercase tracking-wider rounded"
-            style={{ borderColor: info.color, color: info.color }}
-            title="Get directions"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-              <circle cx="12" cy="10" r="3"/>
-            </svg>
-          </button>
-        )}
-        <button
-          onClick={onAddToCalendar}
-          className="px-4 py-3 border-2 text-sm font-semibold uppercase tracking-wider rounded"
-          style={{ borderColor: info.color, color: info.color }}
-          title="Add to calendar"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="18" height="18" x="3" y="4" rx="2"/>
-            <path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>
-            <path d="M12 14v4"/><path d="M10 16h4"/>
-          </svg>
-        </button>
-        <button
-          onClick={onShare}
-          className="px-4 py-3 border-2 text-sm font-semibold uppercase tracking-wider rounded"
-          style={{ borderColor: info.color, color: info.color }}
-          title="Share"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-            <polyline points="16 6 12 2 8 6"/>
-            <line x1="12" y1="2" x2="12" y2="15"/>
-          </svg>
-        </button>
+        {/* Floating action pill — Map / Calendar / Share, matches article reader aesthetic */}
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+          <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-full px-2 py-1.5 shadow-lg">
+            {event.location && (
+              <button onClick={onDirections} aria-label="Directions" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-full transition-colors text-white/85 hover:text-white active:bg-white/10">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Map</span>
+              </button>
+            )}
+            <button onClick={onAddToCalendar} aria-label="Add to calendar" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-full transition-colors text-white/85 hover:text-white active:bg-white/10">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+              <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Calendar</span>
+            </button>
+            <button onClick={onShare} aria-label="Share" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-full transition-colors text-white/85 hover:text-white active:bg-white/10">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Share</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
