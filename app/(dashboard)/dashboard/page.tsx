@@ -866,7 +866,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
             <div className="mb-10">
               <div className="space-y-5">
                 <button onClick={() => { setMenuOpen(false); window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'magazines' })); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Magazine</button>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Calendar</a>
+                <button onClick={() => { setMenuOpen(false); window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'events' })); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Calendar</button>
                 <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Giveaway</a>
                 <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Builder Inventory</a>
                 <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Builder Promotions</a>
