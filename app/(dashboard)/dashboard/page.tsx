@@ -146,7 +146,7 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-3">Select a Publication</h2>
         <p className="text-lg text-gray-400 font-light text-center mb-8">Welcome, we are happy you are here!</p>
         <div className="relative">
-          <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 py-4 border border-gray-300 bg-white text-left">
+          <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 py-4 border border-gray-300 bg-white text-left rounded-lg">
             <span className="text-lg text-gray-500 font-light">Choose your market...</span>
             <span className="text-gray-400 text-base">{open ? '\u25B2' : '\u25BC'}</span>
           </button>
@@ -315,9 +315,9 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
               <p className="text-base text-gray-600 font-light text-center leading-relaxed mb-5">Sign up now and you{"\u2019"}ll automatically be entered in our Fuel Giveaway.</p>
               <p className="text-base text-gray-800 font-medium text-center mb-3">Triple Your Chances By Connecting With Us</p>
               <div className="space-y-2 mb-5">
-                <a href={SOCIALS[pub]?.fb || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light">Facebook · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.fbHandle}</span></a>
-                <a href={SOCIALS[pub]?.ig || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light">Instagram · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.igHandle}</span></a>
-                <a href={SOCIALS[pub]?.li || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light">LinkedIn · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.liHandle}</span></a>
+                <a href={SOCIALS[pub]?.fb || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-full">Facebook · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.fbHandle}</span></a>
+                <a href={SOCIALS[pub]?.ig || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-full">Instagram · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.igHandle}</span></a>
+                <a href={SOCIALS[pub]?.li || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-full">LinkedIn · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.liHandle}</span></a>
               </div>
               <button onClick={dismissGiveaway} className="w-full py-3.5 text-base font-medium uppercase tracking-[0.15em] text-white" style={{ backgroundColor: info.color }}>Continue Signup</button>
               <p className="text-center text-[11px] text-gray-400 mt-4 font-light leading-relaxed px-2">Winner will be notified via email. By entering, winner agrees to be photographed and featured in an upcoming issue.</p>
@@ -379,7 +379,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 </div>
 
                 <div className="flex gap-2 mt-2">
-                  <button onClick={() => setStep(1)} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500">Back</button>
+                  <button onClick={() => setStep(1)} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-full">Back</button>
                   <button onClick={() => setStep(3)} disabled={!email} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider text-white disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
                 </div>
               </div>
@@ -392,7 +392,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <p className="text-sm text-gray-400 font-light mb-3">Choose which lists you want to receive. You can change these anytime.</p>
                 <div className="space-y-2 mb-6">
                   {SUBS.map((s) => (
-                    <label key={s.id} className="flex items-start gap-3 p-3 border border-gray-200 cursor-pointer">
+                    <label key={s.id} className="flex items-start gap-3 p-3 border border-gray-200 cursor-pointer rounded-lg">
                       <input
                         type="checkbox"
                         checked={subs.includes(s.id)}
@@ -432,7 +432,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 </div>
 
                 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">Review Your Info</p>
-                <div className="bg-gray-50 border border-gray-200 p-4 mb-4 space-y-2">
+                <div className="bg-gray-50 border border-gray-200 p-4 mb-4 space-y-2 rounded-lg">
                   <p className="text-base text-gray-900 font-medium">{fullName}</p>
                   <p className="text-sm text-gray-500 font-light">{title || 'No title selected'}</p>
                   <p className="text-sm text-gray-500 font-light">{licenseType} {licenseNum}</p>
@@ -452,7 +452,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <p className="text-xs text-gray-400 font-light mb-4">By creating an account, you agree to receive communications from Caxton Publications, Inc. We will send a magic link to your email - no password needed.</p>
 
                 <div className="flex gap-2">
-                  <button onClick={() => setStep(2)} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500">Back</button>
+                  <button onClick={() => setStep(2)} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-full">Back</button>
                   <button onClick={handleSignup} disabled={loading} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider text-white disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Sending...' : 'Create Account'}</button>
                 </div>
               </div>
@@ -485,7 +485,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         <p className="text-sm uppercase tracking-[0.25em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Sign In to Continue</h2>
         <button onClick={() => setMode('signup')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3" style={{ backgroundColor: info.color }}>Create Your Account</button>
-        <button onClick={() => setMode('login')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-6">I Already Have an Account</button>
+        <button onClick={() => setMode('login')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-6 rounded-full">I Already Have an Account</button>
         <button onClick={handleSkip} className="w-full text-center py-2 text-sm text-gray-300 font-light">Continue as Guest</button>
         <p className="text-xs text-gray-300 text-center mt-4 font-light">Guest access has limited features</p>
       </div>
@@ -790,7 +790,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
   return (
     <div className="min-h-screen bg-white pb-36" style={SW}>
       <div className="px-3 py-3 flex items-center justify-between bg-white border-b border-gray-200">
-        <button onClick={() => setMenuOpen(true)} aria-label="Open menu" className="text-gray-900 p-2">
+        <button onClick={() => setMenuOpen(true)} aria-label="Open menu" className="text-gray-900 p-2 border border-gray-300 rounded-full hover:border-gray-400 transition-colors">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
         </button>
         <p className="text-base font-semibold text-gray-900 tracking-tight">Caxton Publications, Inc.</p>

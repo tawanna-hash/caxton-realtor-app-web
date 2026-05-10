@@ -147,7 +147,7 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
         <p className="text-white/70 text-sm">This issue isn't available yet.</p>
         <button
           onClick={onClose}
-          className="mt-6 px-6 py-3 bg-white/10 text-white text-sm uppercase tracking-wider"
+          className="mt-6 px-6 py-3 bg-white/10 text-white text-sm uppercase tracking-wider rounded-full"
         >
           Close
         </button>
@@ -227,9 +227,9 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
         <ActionPopup title="Scan to share" onClose={() => setActionMode(null)}>
           {qrDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={qrDataUrl} alt="QR code" className="w-64 h-64 mx-auto bg-white p-2" />
+            <img src={qrDataUrl} alt="QR code" className="w-64 h-64 mx-auto bg-white p-2 rounded-lg" />
           ) : (
-            <div className="w-64 h-64 mx-auto bg-white/5 animate-pulse" />
+            <div className="w-64 h-64 mx-auto bg-white/5 animate-pulse rounded-lg" />
           )}
           <p className="text-xs text-white/60 text-center mt-3 break-all">{shareUrl}</p>
         </ActionPopup>

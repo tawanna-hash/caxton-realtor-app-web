@@ -60,7 +60,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
       <div className="px-4 py-12 bg-stone-50">
         <div className="flex gap-4 justify-center">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex-shrink-0 w-44 h-60 bg-gray-200 animate-pulse" />
+            <div key={i} className="flex-shrink-0 w-44 h-60 bg-gray-200 animate-pulse rounded-lg" />
           ))}
         </div>
       </div>
