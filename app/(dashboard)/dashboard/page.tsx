@@ -772,9 +772,13 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
         </button>
         <p className="text-base font-semibold text-gray-900 tracking-tight">Caxton Publications, Inc.</p>
-        <button aria-label="Search" className="text-gray-700 p-2">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        </button>
+        {user ? (
+          <button onClick={() => onLogout()} aria-label="Logout" className="text-gray-700 p-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        ) : (
+          <div className="w-9" aria-hidden="true" />
+        )}
       </div>
       <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: info.color }}>
         <div className="min-w-0 flex-1">
