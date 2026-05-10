@@ -772,13 +772,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
         </button>
         <p className="text-base font-semibold text-gray-900 tracking-tight">Caxton Publications, Inc.</p>
-        {user ? (
-          <button onClick={() => onLogout()} aria-label="Logout" className="text-gray-700 p-2">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </button>
-        ) : (
-          <div className="w-9" aria-hidden="true" />
-        )}
+        <button aria-label="Search" className="text-gray-700 p-2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
       </div>
       <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: info.color }}>
         <div className="min-w-0 flex-1">
@@ -2242,6 +2238,11 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
   const [saved, setSaved] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  // useSwipeBack must be called unconditionally, before any early returns,
+  // to satisfy React's Rules of Hooks (otherwise hook count varies across
+  // renders when `article` toggles null/non-null, throwing React #310).
+  const { ref: swipeRef, style: swipeStyle } = useSwipeBack({ onBack });
+
   // Restore saved state from sessionStorage (placeholder until B2b adds backend)
   useEffect(() => {
     if (!article || typeof window === 'undefined') return;
@@ -2313,8 +2314,6 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
   // Split body into 3 chunks for two mid-article rectangle ad slots.
   const chunks = splitHtmlIntoChunks(cleanedHtml, 3);
   const showMidAds = chunks.length >= 3;
-
-  const { ref: swipeRef, style: swipeStyle } = useSwipeBack({ onBack });
 
   return (
     <div
