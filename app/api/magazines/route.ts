@@ -9,9 +9,17 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
-  const publication = req.nextUrl.searchParams.get('publication') || 'austin';
+  const raw = req.nextUrl.searchParams.get('publication') || 'austin';
+  // Dashboard uses 'realtyline'/'newsline'; DB uses 'austin'/'san_antonio'. Accept both.
+  const PUB_ALIAS: Record<string, string> = {
+    realtyline: 'austin',
+    newsline: 'san_antonio',
+    austin: 'austin',
+    san_antonio: 'san_antonio',
+  };
+  const publication = PUB_ALIAS[raw];
 
-  if (!['austin', 'san_antonio'].includes(publication)) {
+  if (!publication) {
     return NextResponse.json({ error: 'invalid publication' }, { status: 400 });
   }
 
