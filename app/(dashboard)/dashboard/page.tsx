@@ -515,11 +515,27 @@ export default function DashboardPage() {
     try {
       const savedPub = localStorage.getItem('caxton_pub');
       const savedPhase = localStorage.getItem('caxton_phase');
+      const savedArticle = localStorage.getItem('caxton_selected_article');
+      const savedEvent = localStorage.getItem('caxton_selected_event');
       if (savedPub === 'realtyline' || savedPub === 'newsline') {
         setPub(savedPub);
       }
+      // Restore selections BEFORE phase so the phase render has its data.
+      if (savedArticle) {
+        try { setSelectedArticle(JSON.parse(savedArticle)); } catch {}
+      }
+      if (savedEvent) {
+        try { setSelectedEvent(JSON.parse(savedEvent)); } catch {}
+      }
       if (savedPhase && savedPhase !== 'splash') {
-        setPhase(savedPhase);
+        // Stale-data guard: don't restore article/event_detail phase if its data is missing.
+        if (savedPhase === 'article' && !savedArticle) {
+          setPhase('feed');
+        } else if (savedPhase === 'event_detail' && !savedEvent) {
+          setPhase('events');
+        } else {
+          setPhase(savedPhase);
+        }
       }
     } catch {}
 
@@ -564,6 +580,29 @@ export default function DashboardPage() {
       }
     } catch {}
   }, [phase, pub, hydrated]);
+
+  // Persist selected article + event so refresh on those phases restores them.
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      if (selectedArticle) {
+        localStorage.setItem('caxton_selected_article', JSON.stringify(selectedArticle));
+      } else {
+        localStorage.removeItem('caxton_selected_article');
+      }
+    } catch {}
+  }, [selectedArticle, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      if (selectedEvent) {
+        localStorage.setItem('caxton_selected_event', JSON.stringify(selectedEvent));
+      } else {
+        localStorage.removeItem('caxton_selected_event');
+      }
+    } catch {}
+  }, [selectedEvent, hydrated]);
 
 
 
