@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { trackEvent, identifyUser } from "../../posthog-provider";
+import { useRouter } from 'next/navigation';
 import { useSwipeBack } from '@/hooks/use-swipe-back';
 import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReader from '@/components/MagazineReader';
@@ -752,6 +753,7 @@ export default function DashboardPage() {
 function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number; onLogout: () => void }) {
   const [tab, setTab] = useState('n');
   const [cat, setCat] = useState('All');
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const track = useMetrics(user?.id || null);
   const info = PUBS.find((p) => p.id === pub) || PUBS[0];
@@ -880,9 +882,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
               <div className="space-y-5">
                 <button onClick={() => { setMenuOpen(false); window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'magazines' })); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Magazine</button>
                 <button onClick={() => { setMenuOpen(false); window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'events' })); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Calendar</button>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Giveaway</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Builder Inventory</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Builder Promotions</a>
+                <button onClick={() => { setMenuOpen(false); router.push("/giveaways"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Giveaway</button>
+                <button onClick={() => { setMenuOpen(false); router.push("/inventory"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Builder Inventory</button>
+                <button onClick={() => { setMenuOpen(false); router.push("/builder-promotions"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Builder Promotions</button>
               </div>
             </div>
             <div className="mb-10 pt-6 border-t border-white/20">
@@ -890,16 +892,22 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
                 <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Digital Newsletters</a>
                 <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Subscribe to Print</a>
                 <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Manage Subscriptions</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">FAQs</a>
+                <button onClick={() => { setMenuOpen(false); router.push("/faq"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">FAQs</button>
                 <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Site Map</a>
               </div>
             </div>
             <div className="mb-10 pt-6 border-t border-white/20">
               <div className="space-y-5">
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">About Us</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Advertise</a>
+                <button onClick={() => { setMenuOpen(false); router.push("/about"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">About Us</button>
+                <button onClick={() => { setMenuOpen(false); router.push("/advertise"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Advertise</button>
                 <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">My Profile</a>
                 <a href="/admin/login" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Admin Login</a>
+              </div>
+            </div>
+            <div className="mb-10 pt-6 border-t border-white/20">
+              <div className="space-y-5">
+                <button onClick={() => { setMenuOpen(false); router.push("/privacy"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Privacy Notice</button>
+                <button onClick={() => { setMenuOpen(false); router.push("/terms"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">User Agreement</button>
               </div>
             </div>
             <div className="mb-10 pt-6 border-t border-white/20">
@@ -1005,9 +1013,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
         <div className="flex justify-around py-2 pb-3">
           <button onClick={() => { if (typeof window !== "undefined") { window.dispatchEvent(new CustomEvent("caxton:nav", { detail: "magazines" })); window.dispatchEvent(new CustomEvent("caxton:openLatestMagazine")); } }} className="flex flex-col items-center text-[#1a2a44] flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Latest Issue</span></button>
           <button onClick={() => { if (typeof window !== "undefined") { window.dispatchEvent(new CustomEvent("caxton:nav", { detail: "magazines" })); } }} className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">All Issues</span></button>
-          <button className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Inventory</span></button>
+          <button onClick={() => router.push("/inventory")} className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Inventory</span></button>
           <button onClick={() => { if (typeof window !== "undefined") { window.dispatchEvent(new CustomEvent("caxton:nav", { detail: "events" })); } }} className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Calendar</span></button> {/* caxton-events-frontend-v1-footer */}
-          <button className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Giveaways</span></button>
+          <button onClick={() => router.push("/giveaways")} className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Giveaways</span></button>
         </div>
       </nav>
     </div>
