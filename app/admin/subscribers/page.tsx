@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 
@@ -50,6 +51,7 @@ function formatDate(s: string | null) {
 
 export default function SubscribersPage() {
   const { admin, loading: authLoading } = useAdmin();
+  const router = useRouter();
   const [data, setData] = useState<ListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -170,7 +172,7 @@ export default function SubscribersPage() {
                   <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">No subscribers found.</td></tr>
                 )}
                 {data.subscribers.map((s) => (
-                  <tr key={s.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={s.id} onClick={() => router.push(`/admin/subscribers/${s.id}`)} className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
                     <td className="px-4 py-3 text-gray-900">{s.first_name} {s.last_name}</td>
                     <td className="px-4 py-3 text-gray-700">{s.email}</td>
                     <td className="px-4 py-3 text-gray-600">{MARKET_LABEL[s.market] || s.market}</td>

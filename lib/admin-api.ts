@@ -94,6 +94,8 @@ export const adminApi = {
   listAdCreatives: () => adminFetch('/admin/ads/creatives'),
 
   // Subscribers (realtors)
+  getSubscriber: (id: string) => adminFetch('/admin/subscribers/' + encodeURIComponent(id)),
+
   listSubscribers: (params: { page?: number; pageSize?: number; market?: 'austin' | 'san_antonio'; q?: string } = {}) => {
     const qs = new URLSearchParams();
     if (params.page) qs.set('page', String(params.page));
