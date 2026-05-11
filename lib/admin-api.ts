@@ -96,6 +96,18 @@ export const adminApi = {
   // Subscribers (realtors)
   getSubscriber: (id: string) => adminFetch('/admin/subscribers/' + encodeURIComponent(id)),
 
+  updateSubscriber: (id: string, patch: Record<string, any>) =>
+    adminFetch(`/admin/subscribers/${encodeURIComponent(id)}`, { method: 'PATCH', body: patch }),
+
+  deactivateSubscriber: (id: string) =>
+    adminFetch(`/admin/subscribers/${encodeURIComponent(id)}/deactivate`, { method: 'POST' }),
+
+  sendMagicLinkToSubscriber: (id: string) =>
+    adminFetch(`/admin/subscribers/${encodeURIComponent(id)}/send-magic-link`, { method: 'POST' }),
+
+  deleteSubscriber: (id: string) =>
+    adminFetch(`/admin/subscribers/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
   listSubscribers: (params: { page?: number; pageSize?: number; market?: 'austin' | 'san_antonio'; q?: string } = {}) => {
     const qs = new URLSearchParams();
     if (params.page) qs.set('page', String(params.page));
