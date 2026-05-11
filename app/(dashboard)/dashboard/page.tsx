@@ -1869,40 +1869,9 @@ function splitHtmlIntoChunks(html: string, chunks: number): string[] {
 const __adCache = new Map<string, AdSlot | null>();
 const __adInflight = new Map<string, Promise<AdSlot | null>>();
 
-// HARDCODED AD TABLE — temporary until /admin/ads backend is built.
-// Each entry maps a `${slot}:${pub}` key to the ad to show. Add more entries
-// to extend coverage. When the real backend is ready, delete this and restore
-// the fetch-based version below.
-const __hardcodedAds: Record<string, AdSlot> = {
-  'feed_top:realtyline': {
-    id: 'champions-feed-top',
-    headline: 'Champions School of Real Estate',
-    image: 'https://b2lqsyyhvbkewrwf.public.blob.vercel-storage.com/ads/Champions_digital_ad.jpg',
-    href: 'https://championsschool.com',
-  },
-  'feed_top:newsline': {
-    id: 'la-cima-feed-top',
-    headline: 'La Cima — New Homes Available Now',
-    image: 'https://b2lqsyyhvbkewrwf.public.blob.vercel-storage.com/ads/la-cima/1778354149723-Digital%20Ads-LC-0430-2026-LC-MAY_728%20x%2090.jpg',
-    href: 'https://lacimasanmarcos.com',
-  },
-  'rectangle:realtyline': {
-    id: 'realtyline-house-george',
-    headline: 'Advertise in RealtyLine',
-    image: 'https://b2lqsyyhvbkewrwf.public.blob.vercel-storage.com/ads/house-ad/1778380496535-RealtyLine%20George%20Ad.jpg',
-    href: 'mailto:info@myrealtyline.com?subject=Request%20Media%20Kit',
-  },
-};
-
 async function fetchAd(slot: 'leaderboard' | 'rectangle' | 'popup' | 'feed_top' | 'calendar_top', pub: string): Promise<AdSlot | null> {
   const cacheKey = `${slot}:${pub}`;
-  // Hardcoded table wins. Cache it on first hit so we don't re-resolve every render.
   if (__adCache.has(cacheKey)) return __adCache.get(cacheKey) ?? null;
-  const hardcoded = __hardcodedAds[cacheKey];
-  if (hardcoded) {
-    __adCache.set(cacheKey, hardcoded);
-    return hardcoded;
-  }
   const inflight = __adInflight.get(cacheKey);
   if (inflight) return inflight;
   const promise = (async () => {
