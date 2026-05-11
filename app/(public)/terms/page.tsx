@@ -7,24 +7,6 @@ export const metadata = {
 export default function TermsPage() {
   return (
     <main className="max-w-3xl mx-auto px-6 py-12 md:py-16">
-      <div className="mb-8 bg-amber-50 border border-amber-200 px-5 py-4 rounded-sm">
-        <p className="text-sm font-semibold text-amber-900 mb-1">
-          Working draft — pending legal review
-        </p>
-        <p className="text-sm text-amber-800 font-light leading-relaxed">
-          These Terms of Use are a good-faith working draft and will be
-          replaced with a counsel-reviewed version. If you have specific
-          questions about these terms, please email us at{' '}
-          <a
-            href="mailto:hello@myrealtyline.com"
-            className="font-medium underline underline-offset-2"
-          >
-            hello@myrealtyline.com
-          </a>
-          .
-        </p>
-      </div>
-
       <header className="mb-10">
         <p className="text-sm uppercase tracking-[0.25em] text-gray-500 font-medium mb-3">
           Terms of Use
