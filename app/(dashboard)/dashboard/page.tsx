@@ -2580,6 +2580,12 @@ function MagazinePhase({ pub, onBack, onOpenArticle }: { pub: string; onBack: ()
         </div>
         <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
       </div>
+      <MagazineCarousel
+        publication={pub}
+        brandColor={info.color}
+        onOpen={(m: Magazine) => setOpenMag(m)}
+        onMagazinesLoaded={(mags: Magazine[]) => { if (mags.length > 0) setCurrentMag(mags[0]); }}
+      />
       {currentMag && (
         <MagazineFeatured
           magazine={currentMag}
@@ -2588,12 +2594,6 @@ function MagazinePhase({ pub, onBack, onOpenArticle }: { pub: string; onBack: ()
           onOpenArticle={onOpenArticle}
         />
       )}
-      <MagazineCarousel
-        publication={pub}
-        brandColor={info.color}
-        onOpen={(m: Magazine) => setOpenMag(m)}
-        onMagazinesLoaded={(mags: Magazine[]) => { if (mags.length > 0) setCurrentMag(mags[0]); }}
-      />
       {openMag && (
         <MagazineReader
           magazine={openMag}
