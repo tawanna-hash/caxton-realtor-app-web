@@ -2045,9 +2045,10 @@ function AdPopup({ pub, articleId }: { pub: string; articleId: string }) {
     return () => clearTimeout(t);
   }, []);
 
+  const ad = useAd('popup', pub, articleId);
+
   if (dismissed || !show) return null;
 
-  const ad = useAd('popup', pub, articleId);
   const onClose = () => {
     setShow(false);
     setDismissed(true);
