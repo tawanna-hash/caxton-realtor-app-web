@@ -1,7 +1,7 @@
 export const metadata = {
   title: 'About Us — Caxton Publications',
   description:
-    'Caxton Publications has been putting a face on real estate since 1995. Publishers of RealtyLine (Austin) and Newsline San Antonio.',
+    'Caxton Publications puts a face on real estate. Publishers of RealtyLine (Austin) and Newsline San Antonio.',
 };
 
 export default function AboutPage() {
@@ -12,7 +12,7 @@ export default function AboutPage() {
           About Us
         </p>
         <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight">
-          Putting A Face on Real Estate since 1995.
+          Putting A Face On Real Estate.
         </h1>
       </header>
 
