@@ -11,7 +11,7 @@ export default function SubscribePage() {
   const newslineActive = selection === 'newslinesa' || selection === 'both';
 
   return (
-    <main className="max-w-3xl mx-auto px-6 py-12 md:py-16">
+    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16">
       <header className="mb-10">
         <p className="text-sm uppercase tracking-[0.25em] text-gray-500 font-medium mb-3">
           Subscribe to Print
@@ -59,25 +59,25 @@ export default function SubscribePage() {
         )}
       </section>
 
-      <SubscribeForm
-        publication="RealtyLine"
-        market="Austin"
-        accentColor="#1a2a44"
-        formId="realtyline"
-        active={realtylineActive}
-        onActivate={() => setSelection(selection === 'newslinesa' ? 'both' : 'realtyline')}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+        <SubscribeForm
+          publication="RealtyLine"
+          market="Austin"
+          accentColor="#1a2a44"
+          formId="realtyline"
+          active={realtylineActive}
+          onActivate={() => setSelection(selection === 'newslinesa' ? 'both' : 'realtyline')}
+        />
 
-      <hr className="border-gray-200 my-12" />
-
-      <SubscribeForm
-        publication="Newsline"
-        market="San Antonio"
-        accentColor="#3D0740"
-        formId="newslinesa"
-        active={newslineActive}
-        onActivate={() => setSelection(selection === 'realtyline' ? 'both' : 'newslinesa')}
-      />
+        <SubscribeForm
+          publication="Newsline"
+          market="San Antonio"
+          accentColor="#3D0740"
+          formId="newslinesa"
+          active={newslineActive}
+          onActivate={() => setSelection(selection === 'realtyline' ? 'both' : 'newslinesa')}
+        />
+      </div>
 
       <footer className="mt-12 pt-8 border-t border-gray-200">
         <p className="text-sm text-gray-500 font-light">
