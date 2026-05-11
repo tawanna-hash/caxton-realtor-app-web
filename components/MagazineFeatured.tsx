@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { Magazine } from '@/lib/magazines';
+import { trackEvent } from '../app/posthog-provider';
 
 interface MagazineFeaturedProps {
   magazine: Magazine;
@@ -52,7 +53,7 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
     const summary = article.sum || article.excerpt || article.summary;
     return (
       <button
-        onClick={() => onOpenArticle(article)}
+        onClick={() => { trackEvent('magazine_featured_article_clicked', { magazine_id: magazine.id, article_id: article?.id, label }); onOpenArticle(article); }}
         className="block w-full text-left group"
         aria-label={`Open ${title}`}
       >

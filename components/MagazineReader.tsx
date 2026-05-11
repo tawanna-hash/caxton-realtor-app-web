@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import QRCode from 'qrcode';
 import type { Magazine } from '@/lib/magazines';
+import { trackEvent } from '../app/posthog-provider';
 
 interface MagazineReaderProps {
   magazine: Magazine;
@@ -47,6 +48,11 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
     calcSize();
     window.addEventListener('resize', calcSize);
     return () => window.removeEventListener('resize', calcSize);
+  }, []);
+
+  // Fire open event once per mount
+  useEffect(() => {
+    trackEvent('flipbook_opened', { magazine_id: magazine.id, issue_label: magazine.issue_label, publication: magazine.publication, page_count: magazine.page_count });
   }, []);
 
   // Lock body scroll while the modal is open.
@@ -94,6 +100,7 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share(shareData);
+        trackEvent('flipbook_shared', { magazine_id: magazine.id, channel: 'native' });
         return;
       } catch {
         // User cancelled — fall through to copy.
@@ -102,6 +109,7 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(shareUrl);
+        trackEvent('flipbook_shared', { magazine_id: magazine.id, channel: 'copy' });
         setActionMode('share');
         return;
       } catch {
@@ -112,10 +120,12 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
   }
 
   function handleDownload() {
+    trackEvent('flipbook_download_clicked', { magazine_id: magazine.id });
     window.open(downloadUrl, '_blank', 'noopener,noreferrer');
   }
 
   function handleEmail() {
+    trackEvent('flipbook_email_clicked', { magazine_id: magazine.id });
     const subject = encodeURIComponent(`${magazine.issue_label} from RealtyLine`);
     const body = encodeURIComponent(
       `Thought you'd enjoy this issue:\n\n${shareUrl}\n\n— Sent from RealtyLine`,
@@ -124,6 +134,7 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
   }
 
   async function handleCopyEmbed() {
+    trackEvent('flipbook_embed_copied', { magazine_id: magazine.id });
     const embedCode = `<iframe src="${shareUrl}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`;
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       try {
@@ -135,7 +146,12 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
   }
 
   function onFlip(e: any) {
-    if (typeof e?.data === 'number') setCurrentPage(e.data);
+    if (typeof e?.data === 'number') {
+      const prev = currentPage;
+      const next = e.data;
+      setCurrentPage(next);
+      trackEvent('flipbook_page_turned', { magazine_id: magazine.id, from_page: prev, to_page: next, direction: next > prev ? 'forward' : 'back' });
+    }
   }
 
   // ---- Render ----

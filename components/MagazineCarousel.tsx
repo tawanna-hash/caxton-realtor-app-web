@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Magazine } from '@/lib/magazines';
 import { fetchMagazines } from '@/lib/magazines';
+import { trackEvent } from '../app/posthog-provider';
 
 interface MagazineCarouselProps {
   publication: string;
@@ -50,6 +51,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   }, [publication]);
 
   function scrollByCards(direction: 1 | -1) {
+    trackEvent('magazine_carousel_arrow_clicked', { direction: direction === 1 ? 'next' : 'prev', publication });
     const el = scrollerRef.current;
     if (!el) return;
     el.scrollBy({ left: direction * 650, behavior: 'smooth' });

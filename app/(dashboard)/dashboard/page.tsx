@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { trackEvent, identifyUser } from "../../posthog-provider";
 import { useSwipeBack } from '@/hooks/use-swipe-back';
 import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReader from '@/components/MagazineReader';
@@ -112,8 +113,11 @@ const GIVEAWAY: Record<string, Giveaway> = {
 
 function useMetrics(userId: string | null) {
   const track = useCallback((event: string, data: Record<string, any>) => {
-    const payload = { event, userId, timestamp: new Date().toISOString(), ...data };
-    console.log('[Metrics]', payload);
+    const payload = { userId, timestamp: new Date().toISOString(), ...data };
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[Metrics]', event, payload);
+    }
+    trackEvent(event, payload);
   }, [userId]);
   return track;
 }
@@ -202,6 +206,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   useEffect(() => {
     if (typeof window !== 'undefined' && !window.localStorage.getItem('caxton_giveaway_seen')) {
       setShowGiveaway(true);
+      trackEvent('giveaway_popup_shown', { pub });
     }
   }, []);
   const ic = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#1a2a44] mb-3 placeholder:text-[#C7C7CD]';
@@ -246,6 +251,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         }),
       });
       if (res.ok) {
+        trackEvent('magic_link_requested', { mode: 'signup', email, pub });
         setMode('sent');
       } else {
         const data = await res.json().catch(() => ({}));
@@ -268,6 +274,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         body: JSON.stringify({ email }),
       });
       if (res.ok) {
+        trackEvent('magic_link_requested', { mode: 'login', email, pub });
         setMode('sent');
       } else {
         const data = await res.json().catch(() => ({}));
@@ -280,6 +287,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   }
 
   function handleSkip() {
+    trackEvent('auth_guest_skip', { pub });
     onAuth({ id: 'guest', firstName: 'Guest', email: '', guest: true });
   }
 
@@ -319,7 +327,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <a href={SOCIALS[pub]?.ig || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-full">Instagram · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.igHandle}</span></a>
                 <a href={SOCIALS[pub]?.li || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-full">LinkedIn · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.liHandle}</span></a>
               </div>
-              <button onClick={dismissGiveaway} className="w-full py-3.5 text-base font-medium uppercase tracking-[0.15em] text-white" style={{ backgroundColor: info.color }}>Continue Signup</button>
+              <button onClick={() => { trackEvent('giveaway_continue_signup', { pub }); dismissGiveaway(); }} className="w-full py-3.5 text-base font-medium uppercase tracking-[0.15em] text-white" style={{ backgroundColor: info.color }}>Continue Signup</button>
               <p className="text-center text-[11px] text-gray-400 mt-4 font-light leading-relaxed px-2">Winner will be notified via email. By entering, winner agrees to be photographed and featured in an upcoming issue.</p>
             </div>
           </div>
@@ -545,7 +553,7 @@ export default function DashboardPage() {
       .then((data) => {
         if (cancelled) return;
         if (data?.realtor) {
-          setUser(data.realtor);
+          setUser(data.realtor); identifyUser(data.realtor?.id || null, { email: data.realtor?.email });
           // Only force feed when there's no real content phase to restore.
           // Auth-flow phases (splash/select/auth) should fall through to feed;
           // content phases (feed/article/events/event_detail/magazines) stay put.
@@ -612,6 +620,7 @@ export default function DashboardPage() {
     const onOpenArticle = (e: any) => {
       const article = e?.detail;
       if (article && typeof article === 'object') {
+        trackEvent('article_opened', { article_id: article?.id, article_title: article?.title, article_cat: article?.cat, pub: article?.pub });
         setSelectedArticle(article);
         setPhase('article');
       }
@@ -634,6 +643,9 @@ export default function DashboardPage() {
   useEffect(() => {
     const onNav = (e: any) => {
       const target = e?.detail;
+      if (target === 'events' || target === 'feed' || target === 'magazines') {
+        trackEvent('nav', { target });
+      }
       if (target === 'events') setPhase('events');
       else if (target === 'feed') setPhase('feed');
       else if (target === 'magazines') setPhase('magazines');
@@ -669,9 +681,9 @@ export default function DashboardPage() {
     };
   }, [pub]);
 
-  if (phase === 'splash') return <SplashScreen onDone={() => setPhase('select')} />;
-  if (phase === 'select') return <PubSelector onSelect={(id) => { setPub(id); setPhase('auth'); }} />;
-  if (phase === 'auth') return <AuthGate pub={pub} onAuth={(u) => { setUser(u); setPhase('feed'); }} />;
+  if (phase === 'splash') return <SplashScreen onDone={() => { trackEvent('splash_dismissed'); setPhase('select'); }} />;
+  if (phase === 'select') return <PubSelector onSelect={(id) => { trackEvent('pub_selected', { pub: id }); setPub(id); setPhase('auth'); }} />;
+  if (phase === 'auth') return <AuthGate pub={pub} onAuth={(u) => { setUser(u); identifyUser(u?.id || null, { email: u?.email }); trackEvent('auth_completed', { is_guest: !!u?.guest, pub }); setPhase('feed'); }} />;
 
   // caxton-events-frontend-v1-phases
   if (phase === 'events')
@@ -729,6 +741,7 @@ export default function DashboardPage() {
       localStorage.removeItem("caxton_phase");
     } catch {}
     setUser(null);
+    identifyUser(null);
     setPub("");
     setPhase("splash");
   };
@@ -829,7 +842,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
   return (
     <div className="min-h-screen bg-white pb-36" style={SW}>
       <div className="px-3 py-3 flex items-center justify-between bg-white border-b border-gray-200">
-        <button onClick={() => setMenuOpen(true)} aria-label="Open menu" className="text-gray-900 p-2 border border-gray-300 rounded-full hover:border-gray-400 transition-colors">
+        <button onClick={() => { trackEvent('menu_opened'); setMenuOpen(true); }} aria-label="Open menu" className="text-gray-900 p-2 border border-gray-300 rounded-full hover:border-gray-400 transition-colors">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
         </button>
         <p className="text-base font-semibold text-gray-900 tracking-tight">Caxton Publications, Inc.</p>
@@ -859,7 +872,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
             <div className="w-10" />
           </div>
           <div className="px-6 py-8 pb-32">
-            <button onClick={() => { setMenuOpen(false); handleSwitch(); }} className="w-full flex items-center justify-between border border-white/30 px-4 py-3.5 text-white text-sm uppercase tracking-wider font-medium mb-10">
+            <button onClick={() => { trackEvent('publication_switch_clicked'); setMenuOpen(false); handleSwitch(); }} className="w-full flex items-center justify-between border border-white/30 px-4 py-3.5 text-white text-sm uppercase tracking-wider font-medium mb-10">
               <span>Switch to {other.name}</span>
               <span className="text-white/60">{'\u2192'}</span>
             </button>
@@ -892,7 +905,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
             <div className="mb-10 pt-6 border-t border-white/20">
               {user ? (
                 <button
-                  onClick={() => { setMenuOpen(false); onLogout(); }}
+                  onClick={() => { trackEvent('logout_clicked'); setMenuOpen(false); onLogout(); }}
                   className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left"
                 >
                   Logout
@@ -900,7 +913,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
               ) : (
                 <a
                   href="/"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => { trackEvent('login_link_clicked'); setMenuOpen(false); }}
                   className="block text-sm uppercase tracking-[0.15em] text-white font-medium"
                 >
                   Login
@@ -1327,7 +1340,7 @@ function EventsList({ pub, events, loading, error, onBack, onSelect }: EventsLis
               <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold">{group.key}</p>
             </div>
             {group.events.map((ev) => (
-              <EventCard key={ev.id} event={ev} pubColor={info.color} onClick={() => onSelect(ev)} />
+              <EventCard key={ev.id} event={ev} pubColor={info.color} onClick={() => { trackEvent('event_card_clicked', { event_id: ev.id, event_title: ev.title, pub }); onSelect(ev); }} />
             ))}
           </div>
         ))}
@@ -1447,6 +1460,7 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
 
   // Action handlers
   const onAddToCalendar = () => {
+    trackEvent('event_added_to_calendar', { event_id: event.id, pub });
     const ics = generateICS(event);
     const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -1461,6 +1475,7 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
 
   const onRegister = () => {
     if (!event.website) return;
+    trackEvent('event_register_clicked', { event_id: event.id, event_title: event.title, website: event.website, pub });
     window.open(event.website, '_blank', 'noopener,noreferrer');
   };
 
@@ -1473,9 +1488,11 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
     try {
       if (navigator.share) {
         await navigator.share(shareData);
+        trackEvent('event_shared', { event_id: event.id, channel: 'native', pub });
       } else {
         await navigator.clipboard.writeText(event.link);
         alert('Event link copied to clipboard');
+        trackEvent('event_shared', { event_id: event.id, channel: 'copy', pub });
       }
     } catch (err) {
       // User cancelled or share failed
@@ -1485,6 +1502,7 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
 
   const onDirections = () => {
     if (!event.location) return;
+    trackEvent('event_directions_clicked', { event_id: event.id, pub });
     const isApple = /iPhone|iPad|iPod|Mac/.test(navigator.userAgent);
     const q = encodeURIComponent(event.location);
     const url = isApple ? `https://maps.apple.com/?q=${q}` : `https://www.google.com/maps/search/?api=1&query=${q}`;
@@ -2298,10 +2316,12 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
       sessionStorage.removeItem(key);
       setSaved(false);
       flashToast('Removed from saves');
+      trackEvent('article_unsaved', { article_id: article.id, pub });
     } else {
       sessionStorage.setItem(key, '1');
       setSaved(true);
       flashToast('Saved (this session)');
+      trackEvent('article_saved', { article_id: article.id, pub });
     }
   };
 
@@ -2312,9 +2332,11 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
     try {
       if (navigator.share) {
         await navigator.share({ title, url });
+        trackEvent('article_shared', { article_id: article.id, channel: 'native', pub });
       } else {
         await navigator.clipboard.writeText(url);
         flashToast('Link copied');
+        trackEvent('article_shared', { article_id: article.id, channel: 'copy', pub });
       }
     } catch {}
   };
@@ -2471,8 +2493,8 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
         onSaveToggle={onSaveToggle}
         onShare={onShare}
         onCopy={onCopy}
-        onMagazine={() => { window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'magazines' })); }}
-        onLatest={() => { if (onLatest) onLatest(); else onBack(); }}
+        onMagazine={() => { trackEvent('article_magazine_pill_clicked', { article_id: article.id, pub }); window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'magazines' })); }}
+        onLatest={() => { trackEvent('article_latest_pill_clicked', { article_id: article.id, pub }); if (onLatest) onLatest(); else onBack(); }}
       />
 
       {/* Corner pop-up ad */}
@@ -2584,7 +2606,7 @@ function MagazinePhase({ pub, onBack, onOpenArticle }: { pub: string; onBack: ()
       <MagazineCarousel
         publication={pub}
         brandColor={info.color}
-        onOpen={(m: Magazine) => setOpenMag(m)}
+        onOpen={(m: Magazine) => { trackEvent('magazine_cover_opened', { magazine_id: m.id, issue_label: m.issue_label, publication: m.publication }); setOpenMag(m); }}
         onMagazinesLoaded={(mags: Magazine[]) => { if (mags.length > 0) setCurrentMag(mags[0]); }}
       />
       {currentMag && (
