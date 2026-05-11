@@ -51,6 +51,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               Ads
             </Link>
+            <Link
+              href="/admin/subscribers"
+              className={`hover:text-white transition-colors ${pathname.startsWith('/admin/subscribers') ? 'text-white' : 'text-white/70'}`}
+            >
+              Subscribers
+            </Link>
             <button onClick={handleLogout} className="text-white/70 hover:text-white text-sm">
               Logout
             </button>

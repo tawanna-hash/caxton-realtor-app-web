@@ -92,6 +92,35 @@ export const adminApi = {
 
   // Creatives: uploaded ad images stored on Vercel Blob
   listAdCreatives: () => adminFetch('/admin/ads/creatives'),
+
+  // Subscribers (realtors)
+  listSubscribers: (params: { page?: number; pageSize?: number; market?: 'austin' | 'san_antonio'; q?: string } = {}) => {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set('page', String(params.page));
+    if (params.pageSize) qs.set('pageSize', String(params.pageSize));
+    if (params.market) qs.set('market', params.market);
+    if (params.q) qs.set('q', params.q);
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return adminFetch(`/admin/subscribers${suffix}`);
+  },
+
+  exportSubscribersCsv: async () => {
+    const API_BASE_LOCAL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    const res = await fetch(`${API_BASE_LOCAL}/admin/subscribers/export.csv`, { credentials: 'include' });
+    if (!res.ok) throw new Error(`Export failed (HTTP ${res.status})`);
+    const blob = await res.blob();
+    const cd = res.headers.get('content-disposition') || '';
+    const match = cd.match(/filename="([^"]+)"/);
+    const filename = match ? match[1] : `caxton_subscribers_${new Date().toISOString().slice(0, 10)}.csv`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
   // Note: actual file upload happens client-direct to Vercel Blob via
   // /api/admin/ads/upload-token. This method only RECORDS the resulting
   // blob_url + metadata into ad_creatives.
