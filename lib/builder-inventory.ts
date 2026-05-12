@@ -173,6 +173,31 @@ const MIGRATIONS: Migration[] = [
                 ON builder_inventory (created_at DESC)`;
     },
   },
+  {
+    name: '2026_05_12__create_thumbnail_jobs',
+    up: async () => {
+      await sql`
+        CREATE TABLE IF NOT EXISTS thumbnail_jobs (
+          id              SERIAL PRIMARY KEY,
+          created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          started_at      TIMESTAMPTZ,
+          completed_at    TIMESTAMPTZ,
+          inventory_id    INT NOT NULL REFERENCES builder_inventory(id) ON DELETE CASCADE,
+          pdf_url         TEXT NOT NULL,
+          status          TEXT NOT NULL DEFAULT 'pending'
+                          CHECK (status IN ('pending','processing','done','failed')),
+          attempts        INT NOT NULL DEFAULT 0,
+          last_error      TEXT,
+          worker_id       TEXT
+        )
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS idx_thumb_jobs_pending
+                ON thumbnail_jobs (created_at)
+                WHERE status = 'pending'`;
+      await sql`CREATE INDEX IF NOT EXISTS idx_thumb_jobs_inventory
+                ON thumbnail_jobs (inventory_id)`;
+    },
+  },
 ];
 
 // In-memory cache of "we already verified migrations are current this process"
