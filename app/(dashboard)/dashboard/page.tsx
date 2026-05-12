@@ -890,7 +890,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
             <div className="mb-10 pt-6 border-t border-white/20">
               <div className="space-y-5">
                 <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Digital Newsletters</a>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Subscribe to Print</a>
+                <button onClick={() => { setMenuOpen(false); router.push("/subscribe"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Subscribe to Print</button>
                 <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Manage Subscriptions</a>
                 <button onClick={() => { setMenuOpen(false); router.push("/faq"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">FAQs</button>
                 <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Site Map</a>
