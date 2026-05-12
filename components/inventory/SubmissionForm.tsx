@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, ChangeEvent } from 'react';
-import { BUILDER_CLIENTS } from '@/lib/builder-inventory';
+import { BUILDER_CLIENTS } from '@/lib/builder-clients';
 
 type Kind = 'listing' | 'promotion';
 type Publication = 'realtyline' | 'newsline' | 'both';
