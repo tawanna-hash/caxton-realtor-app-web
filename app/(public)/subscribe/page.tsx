@@ -153,7 +153,8 @@ function PickerButton({
 // -----------------------------------------------------------------------------
 
 type FormData = {
-  name: string;
+  firstName: string;
+  lastName: string;
   company: string;
   email: string;
   mobile: string;
@@ -170,7 +171,8 @@ type FormData = {
 };
 
 const emptyForm: FormData = {
-  name: '',
+  firstName: '',
+  lastName: '',
   company: '',
   email: '',
   mobile: '',
@@ -282,7 +284,7 @@ function SubscribeForm({
           You&apos;re on the list.
         </h2>
         <p className="text-base text-gray-700 font-light leading-relaxed mb-3">
-          Thanks, {data.name.split(' ')[0]}. We&apos;ve received your
+          Thanks, {data.firstName}. We&apos;ve received your
           subscription request for delivery to:
         </p>
         <div className="text-base text-gray-900 font-light pl-4 border-l-2 border-gray-300 mb-4">
@@ -347,13 +349,25 @@ function SubscribeForm({
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <FormField
-            id={`${formId}-name`}
-            label="Full name"
-            value={data.name}
-            onChange={(v) => update('name', v)}
+            id={`${formId}-firstName`}
+            label="First name"
+            value={data.firstName}
+            onChange={(v) => update('firstName', v)}
             required
             disabled={!active}
-            autoComplete="name"
+            autoComplete="given-name"
+            focusBorder={focusBorder}
+            blurBorder={blurBorder}
+          />
+
+          <FormField
+            id={`${formId}-lastName`}
+            label="Last name"
+            value={data.lastName}
+            onChange={(v) => update('lastName', v)}
+            required
+            disabled={!active}
+            autoComplete="family-name"
             focusBorder={focusBorder}
             blurBorder={blurBorder}
           />

@@ -69,7 +69,7 @@ export default function HamburgerMenu({
           </svg>
         </button>
         <p className="text-sm uppercase tracking-[0.25em] text-white/50 font-medium">
-          Caxton Publications, Inc.
+          HarmonyOne
         </p>
         <div className="w-10" />
       </div>

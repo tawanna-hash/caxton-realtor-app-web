@@ -14,7 +14,9 @@ export const runtime = 'nodejs';
 
 type SubscribePayload = {
   publication: 'realtyline' | 'newsline';
-  name: string;
+  firstName: string;
+  lastName: string;
+  name: string;            // server-derived: firstName + ' ' + lastName
   company: string;
   email: string;
   mobile: string;
@@ -54,7 +56,7 @@ function validatePayload(body: unknown): { ok: true; data: SubscribePayload } | 
   const b = body as Record<string, unknown>;
 
   const requiredStrings = [
-    'publication', 'name', 'company', 'email', 'mobile', 'title',
+    'publication', 'firstName', 'lastName', 'company', 'email', 'mobile', 'title',
     'street', 'city', 'state', 'zip', 'birthdayMonth', 'birthdayDay',
   ];
   for (const k of requiredStrings) {
@@ -84,11 +86,16 @@ function validatePayload(body: unknown): { ok: true; data: SubscribePayload } | 
     return { ok: false, error: 'Invalid birthday day' };
   }
 
+  const firstName = (b.firstName as string).trim();
+  const lastName = (b.lastName as string).trim();
+
   return {
     ok: true,
     data: {
       publication: b.publication as 'realtyline' | 'newsline',
-      name: (b.name as string).trim(),
+      firstName,
+      lastName,
+      name: `${firstName} ${lastName}`,
       company: (b.company as string).trim(),
       email: (b.email as string).trim().toLowerCase(),
       mobile: (b.mobile as string).trim(),
@@ -229,6 +236,10 @@ async function ensurePrintSubscribersTable() {
       user_agent      TEXT
     )
   `;
+  // Backward-compatible split: name column stays NOT NULL for existing rows;
+  // first_name / last_name added as nullable. New inserts populate all three.
+  await sql`ALTER TABLE print_subscribers ADD COLUMN IF NOT EXISTS first_name TEXT`;
+  await sql`ALTER TABLE print_subscribers ADD COLUMN IF NOT EXISTS last_name  TEXT`;
   await sql`CREATE INDEX IF NOT EXISTS idx_print_subscribers_email ON print_subscribers (email)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_print_subscribers_pub_status ON print_subscribers (publication, status)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_print_subscribers_created ON print_subscribers (created_at DESC)`;
@@ -334,7 +345,7 @@ function confirmationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): str
   return `
 <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px;">
   <p style="color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 8px;">${escapeHtml(pubLabel(p.publication))}</p>
-  <h1 style="color: #111827; margin: 0 0 20px; font-size: 28px;">You're on the list, ${escapeHtml(p.name.split(' ')[0])}.</h1>
+  <h1 style="color: #111827; margin: 0 0 20px; font-size: 28px;">You're on the list, ${escapeHtml(p.firstName)}.</h1>
   <p style="color: #374151; font-size: 16px; line-height: 1.6;">
     Thanks for subscribing to <strong>${escapeHtml(pubLabel(p.publication))}</strong>. We've received your request and we'll mail your first issue within the next few weeks.
   </p>
@@ -393,15 +404,16 @@ export async function POST(req: NextRequest) {
 
     await sql`
       INSERT INTO print_subscribers (
-        publication, name, company, email, mobile, title,
+        publication, first_name, last_name, name,
+        company, email, mobile, title,
         license_type, license_number,
         street, address2, city, state, zip,
         birthday_month, birthday_day,
         usps_verified, usps_response,
         source_ip, user_agent
       ) VALUES (
-        ${payload.publication}, ${payload.name}, ${payload.company},
-        ${payload.email}, ${payload.mobile}, ${payload.title},
+        ${payload.publication}, ${payload.firstName}, ${payload.lastName}, ${payload.name},
+        ${payload.company}, ${payload.email}, ${payload.mobile}, ${payload.title},
         ${payload.licenseType || null}, ${payload.licenseNumber || null},
         ${payload.street}, ${payload.address2 || null}, ${payload.city},
         ${payload.state}, ${payload.zip},
