@@ -939,8 +939,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
         </div>
       )}
       <div className="flex bg-white sticky top-0 z-10 border-b border-gray-200">
-        <button onClick={() => setTab('n')} className={tab === 'n' ? tOn : tOff}>Latest News</button>
-        <button onClick={() => setTab('e')} className={tab === 'e' ? tOn : tOff}>Upcoming Events</button>
+        <button onClick={() => setTab('n')} className={tab === 'n' ? tOn : tOff}>Latest Columns</button>
+        <button onClick={() => router.push('/inventory')} className={tOff}>Builder Inventory &amp; Promos</button>
       </div>
       {tab === 'n' && (
         <div>
