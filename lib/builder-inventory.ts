@@ -182,14 +182,22 @@ const MIGRATIONS: Migration[] = [
   },
 ];
 
-// In-memory cache of "we already verified migrations are current this process"
-// — purely a per-instance optimization. Source of truth is the DB table; this
-// flag just skips the SELECT on subsequent requests within the same warm
-// function instance.
-let migrationsVerified = false;
+// Per-process cache: "the current MIGRATIONS array is fully applied in the DB."
+// Source of truth is the schema_migrations table; this just skips the SELECT.
+//
+// Why a cache KEY (string) instead of a boolean (FOLLOW_UPS #31, #40):
+// A permanent boolean=true short-circuits forever once set. Any migration added
+// by a subsequent deploy is silently skipped on warm Vercel instances that
+// already cached true. This bug bit twice in Sessions 9 and 10. The cache key
+// here is derived from the current MIGRATIONS array contents, so it invalidates
+// automatically when the array changes (i.e., when a new deploy adds entries),
+// forcing re-verification. Zero overhead on warm hits when the schema is
+// already current.
+let migrationsVerifiedKey = '';
 
 export async function ensureBuilderInventorySchema(): Promise<void> {
-  if (migrationsVerified) return;
+  const currentKey = MIGRATIONS.map((m) => m.name).join('|');
+  if (migrationsVerifiedKey === currentKey) return;
 
   // Bootstrap: create schema_migrations if it doesn't exist.
   await MIGRATIONS[0].up();
@@ -206,7 +214,7 @@ export async function ensureBuilderInventorySchema(): Promise<void> {
               ON CONFLICT (name) DO NOTHING`;
   }
 
-  migrationsVerified = true;
+  migrationsVerifiedKey = currentKey;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
