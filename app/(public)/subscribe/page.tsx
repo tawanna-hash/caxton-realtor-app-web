@@ -196,7 +196,7 @@ const US_STATES = [
 ];
 
 const fieldStyle =
-  'w-full border border-gray-300 px-4 py-2.5 text-base focus:outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed';
+  'w-full border border-gray-300 px-4 py-2.5 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed';
 
 function SubscribeForm({
   publication,
