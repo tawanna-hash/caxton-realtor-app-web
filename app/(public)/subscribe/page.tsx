@@ -214,6 +214,7 @@ function SubscribeForm({
   const [data, setData] = useState<FormData>(emptyForm);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   function update(field: keyof FormData, value: string) {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -231,15 +232,38 @@ function SubscribeForm({
     e.preventDefault();
     if (!active) return;
     setSubmitting(true);
+    setErrorMessage(null);
 
-    // Phase 1: no backend wiring yet. Phase 2 will replace this with a fetch()
-    // POST that performs USPS address validation and sends confirmation emails.
-    console.log(`[Phase 1] ${publication} subscription submission:`, data);
+    try {
+      const res = await fetch('/api/print-subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          publication: publication.toLowerCase(),
+          ...data,
+        }),
+      });
 
-    await new Promise((res) => setTimeout(res, 400));
+      const body = (await res.json().catch(() => null)) as
+        | { ok: boolean; error?: string }
+        | null;
 
-    setSubmitted(true);
-    setSubmitting(false);
+      if (!res.ok || !body?.ok) {
+        setErrorMessage(
+          body?.error ||
+            'Something went wrong on our end. Please try again in a moment.',
+        );
+        return;
+      }
+
+      setSubmitted(true);
+    } catch {
+      setErrorMessage(
+        'We could not reach the server. Check your connection and try again.',
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -591,6 +615,15 @@ function SubscribeForm({
               We don&apos;t need the year — just month and day.
             </p>
           </fieldset>
+
+          {errorMessage && (
+            <div
+              role="alert"
+              className="border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-900"
+            >
+              {errorMessage}
+            </div>
+          )}
 
           {/* Submit */}
           <div className="pt-4">
