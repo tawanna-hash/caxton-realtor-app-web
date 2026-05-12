@@ -114,7 +114,7 @@ export default function InventoryClient({ initialRows }: Props) {
             {PUB_LABEL[pub]} · Builders &amp; Developers
           </p>
           <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mb-3">
-            Builder inventory &amp; promotions
+            Builder Inventory &amp; Promotions
           </h1>
           <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
             New home listings, quick move-ins, model home events, and limited-time promotions from builders and developers in your market. Tap any card to view the full flyer.

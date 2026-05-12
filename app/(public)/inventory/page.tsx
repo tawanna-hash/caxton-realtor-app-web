@@ -11,7 +11,7 @@ import InventoryClient from '@/components/inventory/InventoryClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Builder inventory & promotions — HarmonyOne',
+  title: 'Builder Inventory & Promotions — HarmonyOne',
   description:
     'New home listings, quick move-ins, and limited-time promotions from Austin and San Antonio builders and developers.',
 };
