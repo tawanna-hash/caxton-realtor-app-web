@@ -56,6 +56,7 @@ export type BuilderInventoryRow = {
   sourceIp: string | null;
   userAgent: string | null;
   reviewedBy: string | null;
+  externalId: string | null;
 };
 
 export type CreateBuilderInventoryInput = {
@@ -84,6 +85,7 @@ export type CreateBuilderInventoryInput = {
   thumbnailUrl?: string | null;
   sourceIp?: string | null;
   userAgent?: string | null;
+  externalId?: string | null;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -180,6 +182,18 @@ const MIGRATIONS: Migration[] = [
                 ON thumbnail_jobs (inventory_id)`;
     },
   },
+  {
+    name: '2026_05_12__add_builder_inventory_external_id',
+    up: async () => {
+      await sql`ALTER TABLE builder_inventory
+                ADD COLUMN IF NOT EXISTS external_id TEXT`;
+      // Partial unique index: human-submitted rows have NULL external_id
+      // (no collision possible); scraper rows must be unique per builder.
+      await sql`CREATE UNIQUE INDEX IF NOT EXISTS uq_builder_inventory_external
+                ON builder_inventory (builder_name, external_id)
+                WHERE external_id IS NOT NULL`;
+    },
+  },
 ];
 
 // Per-process cache: "the current MIGRATIONS array is fully applied in the DB."
@@ -254,6 +268,7 @@ function rowToBuilderInventoryRow(r: Record<string, unknown>): BuilderInventoryR
     sourceIp: (r.source_ip as string) ?? null,
     userAgent: (r.user_agent as string) ?? null,
     reviewedBy: (r.reviewed_by as string) ?? null,
+    externalId: (r.external_id as string) ?? null,
   };
 }
 
@@ -271,7 +286,8 @@ export async function createBuilderInventory(
       sqft_min, sqft_max, price_min, price_max,
       promo_type, expires_at, tags,
       flyer_pdf_url, thumbnail_url,
-      source_ip, user_agent
+      source_ip, user_agent,
+      external_id
     ) VALUES (
       ${input.kind}, ${input.publication},
       ${input.submittedByName}, ${input.submittedByEmail}, ${input.submittedByPhone ?? null},
@@ -280,7 +296,8 @@ export async function createBuilderInventory(
       ${input.sqftMin ?? null}, ${input.sqftMax ?? null}, ${input.priceMin ?? null}, ${input.priceMax ?? null},
       ${input.promoType ?? null}, ${input.expiresAt ?? null}, ${input.tags ?? null},
       ${input.flyerPdfUrl ?? null}, ${input.thumbnailUrl ?? null},
-      ${input.sourceIp ?? null}, ${input.userAgent ?? null}
+      ${input.sourceIp ?? null}, ${input.userAgent ?? null},
+      ${input.externalId ?? null}
     )
     RETURNING *
   `) as Record<string, unknown>[];
@@ -423,3 +440,102 @@ export async function deleteBuilderInventory(id: number): Promise<boolean> {
   `) as Record<string, unknown>[];
   return rows.length > 0;
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Upsert by (builder_name, external_id) — used by scrapers
+// ─────────────────────────────────────────────────────────────────────────
+
+export type UpsertScrapedInput = {
+  externalId: string;
+  kind: Kind;
+  publication: Publication;
+  submittedByName: string;
+  submittedByEmail: string;
+  builderName: string;
+  title: string;
+  city: string;
+  state: string;
+  description: string | null;
+  bedsMin: number | null;
+  bedsMax: number | null;
+  bathsMin: number | null;
+  bathsMax: number | null;
+  sqftMin: number | null;
+  sqftMax: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
+  flyerPdfUrl: string | null;
+  thumbnailUrl: string | null;
+};
+
+/**
+ * Upserts a builder_inventory row keyed on (builder_name, external_id).
+ *
+ * - No match: INSERT a pending row with the scraper as submitter.
+ * - Match found: UPDATE only data-driven fields (title/city/desc/ranges).
+ *   Does NOT touch status, featured, reviewedBy, or reviewedAt — those
+ *   are admin decisions and the scraper has no business overwriting them.
+ */
+export async function upsertBuilderInventoryByExternalId(
+  input: UpsertScrapedInput,
+): Promise<{ row: BuilderInventoryRow; created: boolean }> {
+  await ensureBuilderInventorySchema();
+
+  const existing = (await sql`
+    SELECT * FROM builder_inventory
+    WHERE builder_name = ${input.builderName}
+      AND external_id  = ${input.externalId}
+    LIMIT 1
+  `) as Record<string, unknown>[];
+
+  if (existing[0]) {
+    const existingRow = rowToBuilderInventoryRow(existing[0]);
+    const updated = await updateBuilderInventory(existingRow.id, {
+      title: input.title,
+      city: input.city,
+      state: input.state,
+      publication: input.publication,
+      description: input.description,
+      bedsMin: input.bedsMin,
+      bedsMax: input.bedsMax,
+      bathsMin: input.bathsMin,
+      bathsMax: input.bathsMax,
+      sqftMin: input.sqftMin,
+      sqftMax: input.sqftMax,
+      priceMin: input.priceMin,
+      priceMax: input.priceMax,
+    });
+    if (!updated) {
+      throw new Error(`Upsert: row ${existingRow.id} vanished mid-update`);
+    }
+    return { row: updated, created: false };
+  }
+
+  const created = await createBuilderInventory({
+    kind: input.kind,
+    publication: input.publication,
+    submittedByName: input.submittedByName,
+    submittedByEmail: input.submittedByEmail,
+    submittedByPhone: null,
+    builderName: input.builderName,
+    title: input.title,
+    city: input.city,
+    state: input.state,
+    description: input.description,
+    bedsMin: input.bedsMin,
+    bedsMax: input.bedsMax,
+    bathsMin: input.bathsMin,
+    bathsMax: input.bathsMax,
+    sqftMin: input.sqftMin,
+    sqftMax: input.sqftMax,
+    priceMin: input.priceMin,
+    priceMax: input.priceMax,
+    flyerPdfUrl: input.flyerPdfUrl,
+    thumbnailUrl: input.thumbnailUrl,
+    externalId: input.externalId,
+  });
+  return { row: created, created: true };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Upsert by (builder_name, external_id) — used by scrapers
