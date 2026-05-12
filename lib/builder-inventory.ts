@@ -380,6 +380,8 @@ export type UpdateBuilderInventoryInput = {
   priceMax?: number | null;
   promoType?: PromoType | null;
   expiresAt?: string | null;
+  thumbnailUrl?: string | null;
+  flyerPdfUrl?: string | null;
 };
 
 export async function updateBuilderInventory(
@@ -425,7 +427,9 @@ export async function updateBuilderInventory(
       price_min     = ${m.priceMin},
       price_max     = ${m.priceMax},
       promo_type    = ${m.promoType},
-      expires_at    = ${m.expiresAt}
+      expires_at    = ${m.expiresAt},
+      thumbnail_url = ${m.thumbnailUrl},
+      flyer_pdf_url = ${m.flyerPdfUrl}
     WHERE id = ${id}
     RETURNING *
   `) as Record<string, unknown>[];

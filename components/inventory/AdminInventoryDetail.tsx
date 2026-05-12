@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { upload } from '@vercel/blob/client';
 import type {
   BuilderInventoryRow,
   Publication,
@@ -51,7 +52,11 @@ export default function AdminInventoryDetail({ row }: Props) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Edit form state — initialized from the row.
+  const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
+  const [uploadingFlyer, setUploadingFlyer] = useState(false);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const flyerInputRef = useRef<HTMLInputElement>(null);
+
   const [edit, setEdit] = useState({
     publication: row.publication,
     builderName: row.builderName,
@@ -106,6 +111,58 @@ export default function AdminInventoryDetail({ row }: Props) {
 
   async function toggleFeatured() {
     await patch({ featured: !row.featured }, row.featured ? 'Unfeatured.' : 'Featured.');
+  }
+
+  async function onPickThumbnail(file: File | undefined) {
+    if (!file) return;
+    setUploadingThumbnail(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const blob = await upload(
+        `inventory-thumbs/${row.id}/${file.name}`,
+        file,
+        {
+          access: 'public',
+          handleUploadUrl: '/api/admin/inventory/upload-token',
+          contentType: file.type,
+        },
+      );
+      await patch({ thumbnailUrl: blob.url }, 'Thumbnail replaced.');
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Thumbnail upload failed.',
+      );
+    } finally {
+      setUploadingThumbnail(false);
+      if (thumbnailInputRef.current) thumbnailInputRef.current.value = '';
+    }
+  }
+
+  async function onPickFlyer(file: File | undefined) {
+    if (!file) return;
+    setUploadingFlyer(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const blob = await upload(
+        `inventory-flyers/${row.id}/${file.name}`,
+        file,
+        {
+          access: 'public',
+          handleUploadUrl: '/api/admin/inventory/upload-token',
+          contentType: file.type,
+        },
+      );
+      await patch({ flyerPdfUrl: blob.url }, 'Flyer replaced.');
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Flyer upload failed.',
+      );
+    } finally {
+      setUploadingFlyer(false);
+      if (flyerInputRef.current) flyerInputRef.current.value = '';
+    }
   }
 
   async function saveEdits() {
@@ -172,7 +229,6 @@ export default function AdminInventoryDetail({ row }: Props) {
         ← Back to queue
       </Link>
 
-      {/* Header */}
       <div className="mb-6">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Admin · Review submission
@@ -183,7 +239,6 @@ export default function AdminInventoryDetail({ row }: Props) {
         <p className="text-lg text-gray-700 font-light mt-1">{row.title}</p>
       </div>
 
-      {/* Feedback */}
       {errorMessage && (
         <div
           role="alert"
@@ -202,13 +257,11 @@ export default function AdminInventoryDetail({ row }: Props) {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* LEFT: Submission summary */}
         <div className="lg:col-span-1 space-y-4">
-          {/* Thumbnail + flyer */}
           <div className="border border-gray-200 bg-white">
             <div className="relative aspect-[3/4] bg-gray-100">
               {row.thumbnailUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
+                /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={row.thumbnailUrl}
                   alt={`${row.builderName} thumbnail`}
@@ -232,7 +285,49 @@ export default function AdminInventoryDetail({ row }: Props) {
             )}
           </div>
 
-          {/* Read-only details */}
+          <section className="border border-gray-200 bg-white px-4 py-4">
+            <h3 className="text-xs uppercase tracking-wide text-gray-500 font-medium mb-3">
+              Replace files
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Thumbnail (JPG / PNG / WebP, max 10 MB)
+                </label>
+                <input
+                  ref={thumbnailInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={busy || uploadingThumbnail || uploadingFlyer}
+                  onChange={(e) => onPickThumbnail(e.target.files?.[0])}
+                  className="block w-full text-xs text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:border file:border-gray-300 file:bg-white file:text-gray-700 hover:file:bg-gray-50 file:cursor-pointer"
+                />
+                {uploadingThumbnail && (
+                  <p className="text-xs text-gray-500 mt-1.5">Uploading thumbnail…</p>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Flyer PDF (max 25 MB)
+                </label>
+                <input
+                  ref={flyerInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  disabled={busy || uploadingThumbnail || uploadingFlyer}
+                  onChange={(e) => onPickFlyer(e.target.files?.[0])}
+                  className="block w-full text-xs text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:border file:border-gray-300 file:bg-white file:text-gray-700 hover:file:bg-gray-50 file:cursor-pointer"
+                />
+                {uploadingFlyer && (
+                  <p className="text-xs text-gray-500 mt-1.5">Uploading flyer…</p>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 font-light pt-1">
+                The previous file is not deleted from storage automatically.
+              </p>
+            </div>
+          </section>
+
           <dl className="text-sm space-y-2 border border-gray-200 bg-white px-4 py-4">
             <div>
               <dt className="text-xs uppercase tracking-wide text-gray-500 font-medium">Submitted</dt>
@@ -258,9 +353,7 @@ export default function AdminInventoryDetail({ row }: Props) {
           </dl>
         </div>
 
-        {/* RIGHT: Actions + edit form */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Status actions */}
           <section className="border border-gray-200 bg-white px-5 py-5">
             <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-3">
               Status
@@ -309,7 +402,6 @@ export default function AdminInventoryDetail({ row }: Props) {
             </div>
           </section>
 
-          {/* Edit form */}
           <section className="border border-gray-200 bg-white px-5 py-5">
             <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-4">
               Edit details
@@ -488,7 +580,6 @@ export default function AdminInventoryDetail({ row }: Props) {
             </div>
           </section>
 
-          {/* Delete (destructive) */}
           <section className="border border-red-200 bg-red-50 px-5 py-5">
             <h2 className="text-sm uppercase tracking-[0.15em] text-red-700 font-medium mb-2">
               Danger zone

@@ -148,6 +148,12 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   if ('expiresAt' in body) {
     updates.expiresAt = coerceStr(body.expiresAt) ?? null;
   }
+  if ('thumbnailUrl' in body) {
+    updates.thumbnailUrl = coerceStr(body.thumbnailUrl) ?? null;
+  }
+  if ('flyerPdfUrl' in body) {
+    updates.flyerPdfUrl = coerceStr(body.flyerPdfUrl) ?? null;
+  }
 
   // Nullable numeric fields
   for (const key of [
