@@ -2,11 +2,9 @@
 // Admin endpoint: list builder_inventory rows filtered by status.
 // Returns rows + counts per status (for the tab indicators).
 //
-// Auth: mirrors the existing admin route pattern. The actual auth wiring
-// (cookie check, admin role validation) is done by the route middleware /
-// admin layout — this route assumes the request is already authenticated
-// if it reaches here. If the project's admin auth pattern requires inline
-// validation, this route should be updated to match.
+// Auth: forwards the session cookie to the droplet GET /admin/auth/me,
+// matching the pattern in app/api/admin/ads/upload-token/route.ts.
+// Page layouts do NOT gate API routes in Next.js — auth must be inline.
 
 import { NextRequest, NextResponse } from 'next/server';
 import {
@@ -16,12 +14,33 @@ import {
 } from '@/lib/builder-inventory';
 import { neon } from '@neondatabase/serverless';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
 const sql = neon(process.env.DATABASE_URL!);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+async function verifyAdmin(cookieHeader: string | null): Promise<boolean> {
+  if (!cookieHeader) return false;
+  try {
+    const r = await fetch(`${API_URL}/admin/auth/me`, {
+      method: 'GET',
+      headers: { cookie: cookieHeader },
+      cache: 'no-store',
+    });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(req: NextRequest) {
+  const cookieHeader = req.headers.get('cookie');
+  const isAdmin = await verifyAdmin(cookieHeader);
+  if (!isAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     await ensureBuilderInventorySchema();
 
