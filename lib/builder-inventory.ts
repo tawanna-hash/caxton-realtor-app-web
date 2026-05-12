@@ -342,9 +342,27 @@ export async function getBuilderInventoryById(
 }
 
 export type UpdateBuilderInventoryInput = {
+  // Status + workflow
   status?: Status;
   featured?: boolean;
   reviewedBy?: string;
+  // Editable content
+  publication?: Publication;
+  builderName?: string;
+  title?: string;
+  city?: string;
+  state?: string;
+  description?: string | null;
+  bedsMin?: number | null;
+  bedsMax?: number | null;
+  bathsMin?: number | null;
+  bathsMax?: number | null;
+  sqftMin?: number | null;
+  sqftMax?: number | null;
+  priceMin?: number | null;
+  priceMax?: number | null;
+  promoType?: PromoType | null;
+  expiresAt?: string | null;
 };
 
 export async function updateBuilderInventory(
@@ -353,18 +371,44 @@ export async function updateBuilderInventory(
 ): Promise<BuilderInventoryRow | null> {
   await ensureBuilderInventorySchema();
 
-  // Set reviewed_at to NOW() when status changes from pending.
+  // Two-pass merge: fetch current row, JS-merge input on top, write back the
+  // full row. This lets us cleanly distinguish "field not provided"
+  // (undefined) from "field set to null" — which COALESCE cannot do.
+  const current = await getBuilderInventoryById(id);
+  if (!current) return null;
+
+  const m = { ...current, ...input };
+
+  // Stamp reviewed_at when status transitions from pending to anything else.
+  const reviewedAt =
+    input.status !== undefined &&
+    current.status === 'pending' &&
+    input.status !== 'pending'
+      ? new Date().toISOString()
+      : current.reviewedAt;
+
   const rows = (await sql`
-    UPDATE builder_inventory
-    SET
-      status      = COALESCE(${input.status ?? null}::text, status),
-      featured    = COALESCE(${input.featured ?? null}::boolean, featured),
-      reviewed_by = COALESCE(${input.reviewedBy ?? null}::text, reviewed_by),
-      reviewed_at = CASE
-                      WHEN ${input.status ?? null}::text IS NOT NULL AND status = 'pending'
-                      THEN NOW()
-                      ELSE reviewed_at
-                    END
+    UPDATE builder_inventory SET
+      status        = ${m.status},
+      featured      = ${m.featured},
+      publication   = ${m.publication},
+      reviewed_by   = ${m.reviewedBy ?? null},
+      reviewed_at   = ${reviewedAt},
+      builder_name  = ${m.builderName},
+      title         = ${m.title},
+      city          = ${m.city},
+      state         = ${m.state},
+      description   = ${m.description},
+      beds_min      = ${m.bedsMin},
+      beds_max      = ${m.bedsMax},
+      baths_min     = ${m.bathsMin},
+      baths_max     = ${m.bathsMax},
+      sqft_min      = ${m.sqftMin},
+      sqft_max      = ${m.sqftMax},
+      price_min     = ${m.priceMin},
+      price_max     = ${m.priceMax},
+      promo_type    = ${m.promoType},
+      expires_at    = ${m.expiresAt}
     WHERE id = ${id}
     RETURNING *
   `) as Record<string, unknown>[];
