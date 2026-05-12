@@ -59,7 +59,7 @@ export default function AdminInventoryPage() {
             Admin
           </p>
           <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
-            Builder inventory &amp; promotions
+            Builder Inventory &amp; Promotions
           </h1>
           <p className="text-sm text-gray-600 font-light mt-2">
             Submissions from builder and developer clients. Approve, reject, or
@@ -114,6 +114,7 @@ export default function AdminInventoryPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr className="text-left text-xs uppercase tracking-wider text-gray-500">
+                  <th className="px-4 py-3 font-medium w-20" />
                   <th className="px-4 py-3 font-medium">Submitted</th>
                   <th className="px-4 py-3 font-medium">Builder / Title</th>
                   <th className="px-4 py-3 font-medium">Kind</th>
@@ -125,6 +126,23 @@ export default function AdminInventoryPage() {
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.id} className="border-b border-gray-200 last:border-b-0">
+                    <td className="px-4 py-3">
+                      <div className="w-16 h-16 bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
+                        {r.thumbnailUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={r.thumbnailUrl}
+                            alt=""
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <span className="text-gray-300 text-2xl" aria-hidden="true">
+                            &#x1F3E0;
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-gray-700">
                       {new Date(r.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
