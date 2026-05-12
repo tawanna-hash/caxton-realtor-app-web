@@ -126,7 +126,7 @@ export default function HamburgerMenu({
             <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white/60 font-medium">
               Digital Newsletters
             </a>
-            <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white/60 font-medium">
+            <a href="/subscribe" className="block text-sm uppercase tracking-[0.15em] text-white/60 font-medium">
               Subscribe to Print
             </a>
             <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white/60 font-medium">
