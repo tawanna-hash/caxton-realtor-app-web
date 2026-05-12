@@ -1,17 +1,25 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent } from 'react';
 
 type Selection = 'realtyline' | 'newslinesa' | 'both' | null;
 
 export default function SubscribePage() {
   const [selection, setSelection] = useState<Selection>(null);
+  const formsRef = useRef<HTMLDivElement>(null);
 
   const realtylineActive = selection === 'realtyline' || selection === 'both';
   const newslineActive = selection === 'newslinesa' || selection === 'both';
 
+  // When user makes a selection, smooth-scroll to the form section
+  useEffect(() => {
+    if (selection !== null && formsRef.current) {
+      formsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selection]);
+
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16">
+    <main className="max-w-3xl mx-auto px-6 py-12 md:py-16">
       <header className="mb-10">
         <p className="text-sm uppercase tracking-[0.25em] text-gray-500 font-medium mb-3">
           Subscribe to Print
@@ -59,24 +67,32 @@ export default function SubscribePage() {
         )}
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-        <SubscribeForm
-          publication="RealtyLine"
-          market="Austin"
-          accentColor="#1a2a44"
-          formId="realtyline"
-          active={realtylineActive}
-          onActivate={() => setSelection(selection === 'newslinesa' ? 'both' : 'realtyline')}
-        />
+      <div ref={formsRef} className="scroll-mt-8">
+        {realtylineActive && (
+          <SubscribeForm
+            publication="RealtyLine"
+            market="Austin"
+            accentColor="#1a2a44"
+            formId="realtyline"
+            active={true}
+            onActivate={() => {}}
+          />
+        )}
 
-        <SubscribeForm
-          publication="Newsline"
-          market="San Antonio"
-          accentColor="#3D0740"
-          formId="newslinesa"
-          active={newslineActive}
-          onActivate={() => setSelection(selection === 'realtyline' ? 'both' : 'newslinesa')}
-        />
+        {realtylineActive && newslineActive && (
+          <hr className="border-gray-200 my-12" />
+        )}
+
+        {newslineActive && (
+          <SubscribeForm
+            publication="Newsline"
+            market="San Antonio"
+            accentColor="#3D0740"
+            formId="newslinesa"
+            active={true}
+            onActivate={() => {}}
+          />
+        )}
       </div>
 
       <footer className="mt-12 pt-8 border-t border-gray-200">
