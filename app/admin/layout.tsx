@@ -52,6 +52,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               Ads
             </Link>
             <Link
+              href="/admin/inventory"
+              className={`hover:text-white transition-colors ${pathname.startsWith('/admin/inventory') ? 'text-white' : 'text-white/70'}`}
+            >
+              Inventory
+            </Link>
+            <Link
               href="/admin/subscribers"
               className={`hover:text-white transition-colors ${pathname.startsWith('/admin/subscribers') ? 'text-white' : 'text-white/70'}`}
             >
