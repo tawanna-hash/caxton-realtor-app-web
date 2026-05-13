@@ -5,6 +5,14 @@
 // Migrations are tracked in a `schema_migrations` table (per Session 9 GOTCHAS:
 // don't use module-level "*Ensured" boolean flags — they short-circuit on warm
 // function instances when the migration code changes between deploys).
+//
+// Session 13 (per-home pivot): added address, ready_date, plan_name,
+// community_name, home_type columns. A row in this table can now represent
+// either a specific home (home_type='showcase' or 'plan') or a community
+// summary (home_type='community') or a human-submitted listing
+// (home_type='listing' or NULL, for backward compat with rows pre-S13).
+// The public listing groups rows by community_name when set, falling back
+// to title-only when null.
 
 import { neon } from '@neondatabase/serverless';
 
@@ -23,6 +31,14 @@ export type PromoType =
   | 'event'
   | 'broker_bonus'
   | 'other';
+
+// What kind of row this represents (S13):
+// - 'showcase'  → a specific move-in-ready inventory home with an address
+// - 'plan'      → a build-to-order floor plan offered at a community
+// - 'community' → an aggregated community summary (the pre-S13 design;
+//                 still used by builders whose APIs only expose this level)
+// - 'listing'   → a human-submitted listing through the admin form
+export type HomeType = 'plan' | 'showcase' | 'community' | 'listing';
 
 export type BuilderInventoryRow = {
   id: number;
@@ -57,6 +73,12 @@ export type BuilderInventoryRow = {
   userAgent: string | null;
   reviewedBy: string | null;
   externalId: string | null;
+  // S13 per-home additions:
+  address: string | null;
+  readyDate: string | null;
+  planName: string | null;
+  communityName: string | null;
+  homeType: HomeType | null;
 };
 
 export type CreateBuilderInventoryInput = {
@@ -86,6 +108,12 @@ export type CreateBuilderInventoryInput = {
   sourceIp?: string | null;
   userAgent?: string | null;
   externalId?: string | null;
+  // S13 per-home additions:
+  address?: string | null;
+  readyDate?: string | null;
+  planName?: string | null;
+  communityName?: string | null;
+  homeType?: HomeType | null;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -194,6 +222,39 @@ const MIGRATIONS: Migration[] = [
                 WHERE external_id IS NOT NULL`;
     },
   },
+  {
+    name: '2026_05_13__add_per_home_fields',
+    up: async () => {
+      // S13 per-home pivot. Existing rows get NULLs; new scraper runs
+      // will populate. CHECK constraint added separately so it can be
+      // tolerant of legacy NULL values.
+      await sql`ALTER TABLE builder_inventory
+                ADD COLUMN IF NOT EXISTS address        TEXT`;
+      await sql`ALTER TABLE builder_inventory
+                ADD COLUMN IF NOT EXISTS ready_date     DATE`;
+      await sql`ALTER TABLE builder_inventory
+                ADD COLUMN IF NOT EXISTS plan_name      TEXT`;
+      await sql`ALTER TABLE builder_inventory
+                ADD COLUMN IF NOT EXISTS community_name TEXT`;
+      await sql`ALTER TABLE builder_inventory
+                ADD COLUMN IF NOT EXISTS home_type      TEXT`;
+
+      // Add CHECK separately to allow NULLs for legacy rows.
+      // Drop-then-add pattern means the migration is idempotent if rerun
+      // against a partial state (e.g., constraint dropped manually).
+      await sql`ALTER TABLE builder_inventory
+                DROP CONSTRAINT IF EXISTS chk_builder_inv_home_type`;
+      await sql`ALTER TABLE builder_inventory
+                ADD CONSTRAINT chk_builder_inv_home_type
+                CHECK (home_type IS NULL OR
+                       home_type IN ('plan','showcase','community','listing'))`;
+
+      // Index supports the public listing's GROUP BY community_name.
+      await sql`CREATE INDEX IF NOT EXISTS idx_builder_inv_community
+                ON builder_inventory (builder_name, community_name)
+                WHERE community_name IS NOT NULL`;
+    },
+  },
 ];
 
 // Per-process cache: "the current MIGRATIONS array is fully applied in the DB."
@@ -269,6 +330,12 @@ function rowToBuilderInventoryRow(r: Record<string, unknown>): BuilderInventoryR
     userAgent: (r.user_agent as string) ?? null,
     reviewedBy: (r.reviewed_by as string) ?? null,
     externalId: (r.external_id as string) ?? null,
+    // S13 per-home additions:
+    address: (r.address as string) ?? null,
+    readyDate: (r.ready_date as string) ?? null,
+    planName: (r.plan_name as string) ?? null,
+    communityName: (r.community_name as string) ?? null,
+    homeType: (r.home_type as HomeType) ?? null,
   };
 }
 
@@ -287,7 +354,8 @@ export async function createBuilderInventory(
       promo_type, expires_at, tags,
       flyer_pdf_url, thumbnail_url,
       source_ip, user_agent,
-      external_id
+      external_id,
+      address, ready_date, plan_name, community_name, home_type
     ) VALUES (
       ${input.kind}, ${input.publication},
       ${input.submittedByName}, ${input.submittedByEmail}, ${input.submittedByPhone ?? null},
@@ -297,7 +365,10 @@ export async function createBuilderInventory(
       ${input.promoType ?? null}, ${input.expiresAt ?? null}, ${input.tags ?? null},
       ${input.flyerPdfUrl ?? null}, ${input.thumbnailUrl ?? null},
       ${input.sourceIp ?? null}, ${input.userAgent ?? null},
-      ${input.externalId ?? null}
+      ${input.externalId ?? null},
+      ${input.address ?? null}, ${input.readyDate ?? null},
+      ${input.planName ?? null}, ${input.communityName ?? null},
+      ${input.homeType ?? null}
     )
     RETURNING *
   `) as Record<string, unknown>[];
@@ -341,6 +412,8 @@ export async function listBuilderInventory(
       AND (${featured}::boolean IS NULL OR featured = ${featured}::boolean)
     ORDER BY
       featured DESC NULLS LAST,
+      builder_name ASC,
+      community_name ASC NULLS LAST,
       created_at DESC
     LIMIT ${limit}
   `) as Record<string, unknown>[];
@@ -382,6 +455,12 @@ export type UpdateBuilderInventoryInput = {
   expiresAt?: string | null;
   thumbnailUrl?: string | null;
   flyerPdfUrl?: string | null;
+  // S13 per-home additions:
+  address?: string | null;
+  readyDate?: string | null;
+  planName?: string | null;
+  communityName?: string | null;
+  homeType?: HomeType | null;
 };
 
 export async function updateBuilderInventory(
@@ -408,28 +487,33 @@ export async function updateBuilderInventory(
 
   const rows = (await sql`
     UPDATE builder_inventory SET
-      status        = ${m.status},
-      featured      = ${m.featured},
-      publication   = ${m.publication},
-      reviewed_by   = ${m.reviewedBy ?? null},
-      reviewed_at   = ${reviewedAt},
-      builder_name  = ${m.builderName},
-      title         = ${m.title},
-      city          = ${m.city},
-      state         = ${m.state},
-      description   = ${m.description},
-      beds_min      = ${m.bedsMin},
-      beds_max      = ${m.bedsMax},
-      baths_min     = ${m.bathsMin},
-      baths_max     = ${m.bathsMax},
-      sqft_min      = ${m.sqftMin},
-      sqft_max      = ${m.sqftMax},
-      price_min     = ${m.priceMin},
-      price_max     = ${m.priceMax},
-      promo_type    = ${m.promoType},
-      expires_at    = ${m.expiresAt},
-      thumbnail_url = ${m.thumbnailUrl},
-      flyer_pdf_url = ${m.flyerPdfUrl}
+      status         = ${m.status},
+      featured       = ${m.featured},
+      publication    = ${m.publication},
+      reviewed_by    = ${m.reviewedBy ?? null},
+      reviewed_at    = ${reviewedAt},
+      builder_name   = ${m.builderName},
+      title          = ${m.title},
+      city           = ${m.city},
+      state          = ${m.state},
+      description    = ${m.description},
+      beds_min       = ${m.bedsMin},
+      beds_max       = ${m.bedsMax},
+      baths_min      = ${m.bathsMin},
+      baths_max      = ${m.bathsMax},
+      sqft_min       = ${m.sqftMin},
+      sqft_max       = ${m.sqftMax},
+      price_min      = ${m.priceMin},
+      price_max      = ${m.priceMax},
+      promo_type     = ${m.promoType},
+      expires_at     = ${m.expiresAt},
+      thumbnail_url  = ${m.thumbnailUrl},
+      flyer_pdf_url  = ${m.flyerPdfUrl},
+      address        = ${m.address},
+      ready_date     = ${m.readyDate},
+      plan_name      = ${m.planName},
+      community_name = ${m.communityName},
+      home_type      = ${m.homeType}
     WHERE id = ${id}
     RETURNING *
   `) as Record<string, unknown>[];
@@ -470,6 +554,12 @@ export type UpsertScrapedInput = {
   priceMax: number | null;
   flyerPdfUrl: string | null;
   thumbnailUrl: string | null;
+  // S13 per-home additions:
+  address?: string | null;
+  readyDate?: string | null;
+  planName?: string | null;
+  communityName?: string | null;
+  homeType?: HomeType | null;
 };
 
 /**
@@ -508,6 +598,13 @@ export async function upsertBuilderInventoryByExternalId(
       sqftMax: input.sqftMax,
       priceMin: input.priceMin,
       priceMax: input.priceMax,
+      flyerPdfUrl: input.flyerPdfUrl,
+      thumbnailUrl: input.thumbnailUrl,
+      address: input.address ?? null,
+      readyDate: input.readyDate ?? null,
+      planName: input.planName ?? null,
+      communityName: input.communityName ?? null,
+      homeType: input.homeType ?? null,
     });
     if (!updated) {
       throw new Error(`Upsert: row ${existingRow.id} vanished mid-update`);
@@ -537,9 +634,11 @@ export async function upsertBuilderInventoryByExternalId(
     flyerPdfUrl: input.flyerPdfUrl,
     thumbnailUrl: input.thumbnailUrl,
     externalId: input.externalId,
+    address: input.address ?? null,
+    readyDate: input.readyDate ?? null,
+    planName: input.planName ?? null,
+    communityName: input.communityName ?? null,
+    homeType: input.homeType ?? null,
   });
   return { row: created, created: true };
 }
-
-// ─────────────────────────────────────────────────────────────────────────
-// Upsert by (builder_name, external_id) — used by scrapers
