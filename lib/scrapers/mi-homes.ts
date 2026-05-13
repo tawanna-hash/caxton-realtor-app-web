@@ -1,100 +1,117 @@
 // lib/scrapers/mi-homes.ts
 //
-// Fetches the M/I Homes Austin communities from their public Sitecore API
-// and normalizes each result into a shape our upsert function accepts.
+// M/I Homes Austin — per-home scraper (S13).
 //
-// API details (discovered via DevTools on www.mihomes.com):
-//   Backend: Sitecore CMS
-//   Endpoint: /sitecore/api/ssc/MIHomes-Project-Website-Api/Search
-//   Method: GET
-//   Auth: none (anonymous, public consumer API)
-//   Response: JSON with a `results` array of community objects
+// Emits ONE ROW per move-in-ready inventory home, not per community.
+// Each row has a specific address, ready date, plan name, and exact price.
 //
-// We do NOT scrape HTML — this is a clean JSON API call. The endpoint
-// uses a bounding-box search; the lat/lng below cover greater Austin.
-// If M/I rearranges Texas markets, the bbox may need adjustment.
+// API: GET /sitecore/api/ssc/MIHomes-Project-Website-Api/Search
+//       ?search=Greater%20Austin
+//       &searchtype=inventory          ← KEY: filters to specific homes
+//       &latCenter=30.47452&lngCenter=-97.896
+//       &x1=30.60861&x2=29.919&y1=-97.570&y2=-97.915&zoom=10
 //
-// Per-community fields (defensively read from SEOModel which is the
-// canonical source, with fallback to top-level):
-//   id              → externalId (for dedup)
-//   Name            → title
-//   City            → city
-//   State           → state ("Texas" → "TX")
-//   StartingPrice   → priceMin (skip if 0)
-//   MaxPrice        → priceMax (skip if 0)
-//   MinSqft/MaxSqft → sqftMin/sqftMax (skip if 0)
-//   MinNumberOfBedrooms/MaxNumberOfBedrooms → bedsMin/bedsMax (skip if 0)
-//   MinNumberOfBathrooms/MaxNumberOfBathrooms → bathsMin/bathsMax (skip if 0)
-//   Description     → stripped + truncated to ~400 chars
-//   image (top)     → thumbnailUrl
-//   url (top)       → flyerPdfUrl (semantic hack: M/I has no per-community
-//                     PDF in this API, so we stuff the community page URL
-//                     here; "View flyer" lands realtors on M/I's page)
+// Without `searchtype=inventory`, the same endpoint returns 8 community
+// cards (CardType='community'). With it, returns 93+ inventory cards
+// (CardType='inventory') — one per buyable lot.
 //
-// Communities with maxPrice=0 are pre-launch ("Get the First Look") — we
-// still import them with null prices since they're useful for tracking
-// upcoming inventory. The admin can reject in the queue if not relevant.
+// Per-home fields (from the inventory CardType response):
+//   id            → externalId (already a Sitecore item ID)
+//   JdeLotId      → secondary unique key (JD Edwards lot id)
+//   displayname   → plan name with elevation (e.g., "Abilene - C")
+//   PlanElevation → elevation letter only
+//   plan          → plan name root
+//   CommunityName → friendly community name (for UI grouping)
+//   streetaddress → street part only
+//   city/Zipcode/state → for assembling full address
+//   maxPrice      → list price (minPrice == maxPrice for inventory)
+//   readyDate     → ISO 8601, e.g. "2026-05-28T04:00:00Z"
+//   bedrooms      → scalar number
+//   bathrooms     → scalar number (already combined full+0.5*half; can be 2.5)
+//   square        → STRING with thousands comma, e.g. "1,640" — must strip
+//   image         → thumbnail URL
+//   url           → home detail page path
+//   HomeType      → "Single Family Home" — not super useful, kept for fallback
+//
+// Discovered via Chrome DevTools Network tab (S13). The same Sitecore
+// endpoint serves both community cards and per-home cards based on the
+// `searchtype` parameter (note: lowercase, not camelCase — `searchType` 500s).
 
 const SEARCH_URL =
   'https://www.mihomes.com/sitecore/api/ssc/MIHomes-Project-Website-Api/Search' +
-  '?latCenter=30.47452&lngCenter=-97.896' +
-  '&search=Austin&typeahead_type=cities' +
+  '?search=Greater%20Austin' +
+  '&searchtype=inventory' +
+  '&latCenter=30.47452&lngCenter=-97.896' +
   '&x1=30.60861280653204&x2=29.919479479343455' +
   '&y1=-97.57071277753901&y2=-97.91540882246089' +
   '&zoom=10';
 
 const MI_BASE_URL = 'https://www.mihomes.com';
 
-// Standard browser UA — the M/I API serves anonymous traffic but doesn't
-// hurt to look like a real browser. Avoids bot heuristics that some CMSes
-// (and Cloudflare in front of them) bolt on.
 const USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +
   'AppleWebKit/537.36 (KHTML, like Gecko) ' +
   'Chrome/124.0.0.0 Safari/537.36';
 
+const COMMON_HEADERS = {
+  'User-Agent': USER_AGENT,
+  Accept: 'application/json, text/javascript, */*; q=0.01',
+  'Accept-Language': 'en-US,en;q=0.9',
+  Referer: 'https://www.mihomes.com/new-homes/texas/greater-austin/quick-move-in-homes',
+} as const;
+
 // ─────────────────────────────────────────────────────────────────────────
-// Response types (just what we read — the API returns much more)
+// Response types — just what we read.
 // ─────────────────────────────────────────────────────────────────────────
 
-type SEOModel = {
-  Name?: string | null;
-  CommunityName?: string | null;
-  Description?: string | null;
-  City?: string | null;
-  State?: string | null;
-  StartingPrice?: number | null;
-  MaxPrice?: number | null;
-  MinSqft?: number | null;
-  MaxSqft?: number | null;
-  MinNumberOfBedrooms?: number | null;
-  MaxNumberOfBedrooms?: number | null;
-  MinNumberOfBathrooms?: number | null;
-  MaxNumberOfBathrooms?: number | null;
-  Url?: string | null;
+type MILocation = {
+  Latitude?: number | null;
+  Longitude?: number | null;
 };
 
-type SearchResult = {
+type MISeries = {
+  Id?: string | null;
+  Name?: string | null;
+};
+
+type MIInventoryItem = {
   id?: string | null;
-  name?: string | null;
+  JdeLotId?: string | null;
+  LotItemId?: string | null;
+  CardType?: string | null;
+  HomeType?: string | null;
+  CommunityName?: string | null;
   displayname?: string | null;
+  name?: string | null;
+  plan?: string | null;
+  PlanElevation?: string | null;
+  streetaddress?: string | null;
   city?: string | null;
   state?: string | null;
-  image?: string | null;
-  url?: string | null;
+  Zipcode?: string | null;
   minPrice?: number | null;
   maxPrice?: number | null;
-  CardType?: string | null;
-  SEOModel?: SEOModel | null;
+  price?: number | null;
+  readyDate?: string | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  square?: string | null; // e.g., "1,640" — strings with commas
+  garage?: string | null;
+  stories?: number | null;
+  image?: string | null;
+  url?: string | null;
+  series?: MISeries[] | null;
+  Location?: MILocation | null;
 };
 
-type SearchResponse = {
-  results?: SearchResult[] | null;
+type MISearchResponse = {
+  results?: MIInventoryItem[] | null;
   outOfRange?: boolean | null;
+  communities?: unknown[] | null;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
-// Output shape — what the cron route hands to upsertBuilderInventoryByExternalId
+// Output shape — one row per move-in-ready home.
 // ─────────────────────────────────────────────────────────────────────────
 
 export type ScrapedMIHomesRow = {
@@ -114,132 +131,145 @@ export type ScrapedMIHomesRow = {
   priceMax: number | null;
   thumbnailUrl: string | null;
   flyerPdfUrl: string | null;
+  // S13 per-home additions:
+  address: string | null;
+  readyDate: string | null; // YYYY-MM-DD
+  planName: string | null;
+  communityName: string | null;
+  homeType: 'showcase';
 };
 
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────
 
-const STATE_ABBREV: Record<string, string> = {
-  Texas: 'TX',
-  Florida: 'FL',
-  Ohio: 'OH',
-  'North Carolina': 'NC',
-  Illinois: 'IL',
-  Indiana: 'IN',
-  Michigan: 'MI',
-  Tennessee: 'TN',
-  Minnesota: 'MN',
-};
-
-function normalizeState(s: string | null | undefined): string {
-  if (!s) return 'TX'; // we're scraping Austin, default is reasonable
-  const trimmed = s.trim();
-  if (trimmed.length === 2) return trimmed.toUpperCase();
-  return STATE_ABBREV[trimmed] ?? trimmed.slice(0, 2).toUpperCase();
-}
-
 function nonZeroOrNull(n: number | null | undefined): number | null {
   if (n == null || !Number.isFinite(n) || n === 0) return null;
   return n;
 }
 
-function stripHtml(html: string | null | undefined, maxLen = 400): string | null {
-  if (!html) return null;
-
-  let s = html;
-
-  // Drop <style> and <script> blocks WITH their contents.
-  s = s.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' ');
-  s = s.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, ' ');
-
-  // Block-level tags → newlines so paragraphs separate cleanly.
-  s = s.replace(/<\/?(p|div|h[1-6]|br|li|tr|ul|ol|blockquote)[^>]*>/gi, '\n');
-
-  // All other tags → strip entirely.
-  s = s.replace(/<[^>]+>/g, '');
-
-  // Decode the common HTML entities M/I uses.
-  s = s
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&ndash;/g, '–')
-    .replace(/&mdash;/g, '—')
-    .replace(/&rsquo;/g, "'")
-    .replace(/&lsquo;/g, "'")
-    .replace(/&rdquo;/g, '"')
-    .replace(/&ldquo;/g, '"')
-    .replace(/&hellip;/g, '…')
-    .replace(/&reg;/g, '®')
-    .replace(/&copy;/g, '©')
-    .replace(/&trade;/g, '™');
-
-  // Collapse whitespace.
-  s = s.replace(/\s+/g, ' ').trim();
-
-  if (s.length === 0) return null;
-  if (s.length <= maxLen) return s;
-
-  // Truncate at word boundary, append ellipsis.
-  const cut = s.slice(0, maxLen);
-  const lastSpace = cut.lastIndexOf(' ');
-  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + '…';
-}
-
-function normalizeUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  if (url.startsWith('/')) return MI_BASE_URL + url;
+function normalizeUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  if (path.startsWith('/')) return MI_BASE_URL + path;
   return null;
 }
 
+// Parse "1,640" → 1640. Returns null on malformed input.
+function parseSqftString(s: string | null | undefined): number | null {
+  if (!s) return null;
+  const cleaned = s.replace(/,/g, '').trim();
+  if (!cleaned) return null;
+  const n = parseInt(cleaned, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+// "Texas" → "TX". Leaves unknown values alone in case M/I expands.
+function stateToAbbrev(state: string | null | undefined): string {
+  if (!state) return 'TX';
+  const s = state.trim();
+  if (s.length === 2) return s.toUpperCase();
+  if (s.toLowerCase() === 'texas') return 'TX';
+  return s.toUpperCase();
+}
+
+// "2026-05-28T04:00:00Z" → "2026-05-28"
+function dateOnly(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const trimmed = iso.trim();
+  if (trimmed.length < 10) return null;
+  const candidate = trimmed.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(candidate)) return null;
+  return candidate;
+}
+
+// Assemble street + city + state + zip into a display address.
+// Falls back to whatever pieces we have.
+function fullAddress(item: MIInventoryItem): string | null {
+  const street = item.streetaddress?.trim() || '';
+  const city = item.city?.trim() || '';
+  const state = stateToAbbrev(item.state);
+  const zip = item.Zipcode?.trim() || '';
+
+  if (!street) return null;
+
+  const parts = [street];
+  if (city) {
+    const cityState = state ? `${city}, ${state}` : city;
+    parts.push(zip ? `${cityState} ${zip}` : cityState);
+  } else if (state) {
+    parts.push(zip ? `${state} ${zip}` : state);
+  } else if (zip) {
+    parts.push(zip);
+  }
+  return parts.join(', ');
+}
+
 // ─────────────────────────────────────────────────────────────────────────
-// Per-result normalization
+// Per-inventory normalization
 // ─────────────────────────────────────────────────────────────────────────
 
-function normalize(r: SearchResult): ScrapedMIHomesRow | null {
-  // Must have a stable ID for dedup, otherwise skip.
-  if (!r.id || typeof r.id !== 'string' || r.id.trim().length === 0) {
-    return null;
+function normalize(item: MIInventoryItem): ScrapedMIHomesRow | null {
+  // Need a stable unique id. Sitecore item id is best; JdeLotId as fallback.
+  const externalId =
+    item.id?.trim() ||
+    (item.JdeLotId ? `jde/${item.JdeLotId}` : null);
+  if (!externalId) return null;
+
+  const communityName = item.CommunityName?.trim() || null;
+  const planName = item.displayname?.trim() || item.plan?.trim() || null;
+
+  // Title: "Abilene - C at Cascades at Onion Creek"
+  let title: string;
+  if (planName && communityName) {
+    title = `${planName} at ${communityName}`;
+  } else if (planName) {
+    title = planName;
+  } else if (communityName) {
+    title = `Inventory home at ${communityName}`;
+  } else if (item.streetaddress) {
+    title = item.streetaddress;
+  } else {
+    title = 'M/I inventory home';
   }
 
-  const seo = r.SEOModel ?? {};
-  const title = (seo.Name || seo.CommunityName || r.displayname || r.name || '').trim();
-  if (!title) return null;
+  const city = item.city?.trim() || 'Austin';
+  const state = stateToAbbrev(item.state);
 
-  const city = (seo.City || r.city || '').trim();
-  if (!city) return null;
-
-  const state = normalizeState(seo.State || r.state);
-
-  const url = normalizeUrl(seo.Url || r.url);
+  // Scalars on a specific home. Store min=max so range-aware UI still works.
+  const beds = item.bedrooms != null && Number.isFinite(item.bedrooms) ? item.bedrooms : null;
+  const baths = item.bathrooms != null && Number.isFinite(item.bathrooms) ? item.bathrooms : null;
+  const sqft = parseSqftString(item.square);
+  // For inventory cards, maxPrice == minPrice. Either works.
+  const price = nonZeroOrNull(item.maxPrice) ?? nonZeroOrNull(item.minPrice) ?? nonZeroOrNull(item.price);
 
   return {
-    externalId: r.id,
+    externalId,
     builderName: 'M/I Homes',
     title,
     city,
     state,
-    description: stripHtml(seo.Description),
-    bedsMin: nonZeroOrNull(seo.MinNumberOfBedrooms),
-    bedsMax: nonZeroOrNull(seo.MaxNumberOfBedrooms),
-    bathsMin: nonZeroOrNull(seo.MinNumberOfBathrooms),
-    bathsMax: nonZeroOrNull(seo.MaxNumberOfBathrooms),
-    sqftMin: nonZeroOrNull(seo.MinSqft),
-    sqftMax: nonZeroOrNull(seo.MaxSqft),
-    priceMin: nonZeroOrNull(seo.StartingPrice ?? r.minPrice),
-    priceMax: nonZeroOrNull(seo.MaxPrice ?? r.maxPrice),
-    thumbnailUrl: r.image ?? null,
-    flyerPdfUrl: url, // see file header for why we put the community URL here
+    description: null,
+    bedsMin: beds,
+    bedsMax: beds,
+    bathsMin: baths,
+    bathsMax: baths,
+    sqftMin: sqft,
+    sqftMax: sqft,
+    priceMin: price,
+    priceMax: price,
+    thumbnailUrl: item.image?.trim() || null,
+    flyerPdfUrl: normalizeUrl(item.url),
+    address: fullAddress(item),
+    readyDate: dateOnly(item.readyDate),
+    planName,
+    communityName,
+    homeType: 'showcase',
   };
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Public: fetch + normalize
+// Public entry
 // ─────────────────────────────────────────────────────────────────────────
 
 export async function fetchMIHomesAustin(): Promise<{
@@ -251,49 +281,50 @@ export async function fetchMIHomesAustin(): Promise<{
   try {
     res = await fetch(SEARCH_URL, {
       method: 'GET',
-      headers: {
-        'User-Agent': USER_AGENT,
-        Accept: 'application/json, text/javascript, */*; q=0.01',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-      // 30 second timeout via AbortSignal (Vercel functions have their own
-      // hard limits but we want to fail fast if M/I is slow).
+      headers: COMMON_HEADERS,
+      redirect: 'follow',
       signal: AbortSignal.timeout(30_000),
       cache: 'no-store',
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(`M/I Homes fetch failed: ${msg}`);
+    throw new Error(`M/I Homes Search fetch failed: ${msg}`);
   }
 
   if (!res.ok) {
-    throw new Error(`M/I Homes returned HTTP ${res.status}`);
+    throw new Error(`M/I Homes Search returned HTTP ${res.status}`);
   }
 
-  let body: SearchResponse;
+  let body: MISearchResponse;
   try {
-    body = (await res.json()) as SearchResponse;
+    body = (await res.json()) as MISearchResponse;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(`M/I Homes returned non-JSON body: ${msg}`);
+    throw new Error(`M/I Homes Search non-JSON body: ${msg}`);
   }
 
-  if (body.outOfRange === true) {
-    // Bounding box returned no results — either we have a bad bbox or M/I
-    // restructured. Surface as an error so the cron run shows up red rather
-    // than silently importing zero rows.
-    throw new Error('M/I Homes API returned outOfRange=true (bounding box stale?)');
-  }
+  // Filter to inventory CardType. Defensive — endpoint should already
+  // honor the searchtype filter, but if M/I changes routing we want
+  // to ignore community/plan cards that might leak in.
+  const all = Array.isArray(body.results) ? body.results : [];
+  const inventoryOnly = all.filter((r) => r.CardType === 'inventory');
+  const rawCount = inventoryOnly.length;
 
-  const results = Array.isArray(body.results) ? body.results : [];
-  const rawCount = results.length;
+  if (rawCount === 0) {
+    // Not necessarily an error — Austin inventory may genuinely be zero.
+    // Return empty rather than throw, so the cron logs success.
+    return { rows: [], rawCount: 0, skipped: 0 };
+  }
 
   const rows: ScrapedMIHomesRow[] = [];
   let skipped = 0;
-  for (const r of results) {
-    const normalized = normalize(r);
-    if (normalized) rows.push(normalized);
-    else skipped++;
+  for (const item of inventoryOnly) {
+    const normalized = normalize(item);
+    if (normalized) {
+      rows.push(normalized);
+    } else {
+      skipped++;
+    }
   }
 
   return { rows, rawCount, skipped };
