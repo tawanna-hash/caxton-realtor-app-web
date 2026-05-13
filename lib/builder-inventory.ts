@@ -383,6 +383,10 @@ export type ListBuilderInventoryFilters = {
   builderName?: string;
   featured?: boolean;
   limit?: number;
+  // S13: filter by home_type. Either an exact match, or the special
+  // 'isNullOrCommunity' which matches legacy NULL rows + community summaries
+  // (use this for the /communities public page).
+  homeType?: HomeType | 'isNullOrCommunity';
 };
 
 export async function listBuilderInventory(
@@ -400,6 +404,12 @@ export async function listBuilderInventory(
   const featured = filters.featured ?? null;
   const limit = Math.min(filters.limit ?? 100, 500);
 
+  // S13: home_type filter dispatch.
+  const homeType = filters.homeType ?? null;
+  const homeTypeIsNullOrCommunity = homeType === 'isNullOrCommunity';
+  const homeTypeExact =
+    homeType && homeType !== 'isNullOrCommunity' ? homeType : null;
+
   const rows = (await sql`
     SELECT * FROM builder_inventory
     WHERE
@@ -410,6 +420,9 @@ export async function listBuilderInventory(
       AND (${status}::text IS NULL OR status = ${status}::text)
       AND (${builder}::text IS NULL OR builder_name = ${builder}::text)
       AND (${featured}::boolean IS NULL OR featured = ${featured}::boolean)
+      AND (${homeTypeIsNullOrCommunity}::boolean = false
+           OR home_type IS NULL OR home_type = 'community')
+      AND (${homeTypeExact}::text IS NULL OR home_type = ${homeTypeExact}::text)
     ORDER BY
       featured DESC NULLS LAST,
       builder_name ASC,
