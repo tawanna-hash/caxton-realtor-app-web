@@ -943,6 +943,16 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
         <button onClick={() => router.push('/inventory?kind=listing')} className={tOff}>Move-In Ready Homes</button>
         <button onClick={() => router.push('/inventory?kind=promotion')} className={tOff}>REALTOR Promos</button>
       </div>
+      {/* S13: By-builder directional strip */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-medium whitespace-nowrap pr-1">By Builder</span>
+          <button onClick={() => router.push('/builders/david-weekley-homes')} className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-full">David Weekley Homes</button>
+          <button onClick={() => router.push('/builders/giddens-homes')} className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-full">Giddens Homes</button>
+          <button onClick={() => router.push('/builders/kb-home')} className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-full">KB Home</button>
+          <button onClick={() => router.push('/builders/mi-homes')} className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-full">M/I Homes</button>
+        </div>
+      </div>
       {tab === 'n' && (
         <div>
           <FeedTopBanner pub={pub} />
