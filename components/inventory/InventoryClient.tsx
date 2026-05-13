@@ -87,9 +87,10 @@ export default function InventoryClient({ initialRows }: Props) {
     router.replace(qs ? `/inventory?${qs}` : '/inventory', { scroll: false });
   }
 
-  // Filter rows by pub + kind.
+  // Filter rows by pub + kind. Exclude community summaries — those live on /communities.
   const filteredRows = useMemo(() => {
     return initialRows.filter((r) => {
+      if (r.homeType === 'community') return false;
       if (r.publication !== pub && r.publication !== 'both') return false;
       if (activeKind !== 'all' && r.kind !== activeKind) return false;
       return true;

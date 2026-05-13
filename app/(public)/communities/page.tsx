@@ -21,7 +21,7 @@ export const metadata = {
 export default async function Page() {
   const rows = await listBuilderInventory({
     status: 'active',
-    homeType: 'isNullOrCommunity',
+    homeType: 'community',
     limit: 200,
   });
   return <CommunitiesClient initialRows={rows} />;

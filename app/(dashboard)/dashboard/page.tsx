@@ -939,9 +939,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
         </div>
       )}
       <div className="flex bg-white sticky top-0 z-10 border-b border-gray-200">
-        <button onClick={() => router.push('/communities')} className={tOff}>Builder/Developer Communities</button>
-        <button onClick={() => router.push('/inventory?kind=listing')} className={tOff}>Builder/Developer Move-in Ready Inventory</button>
-        <button onClick={() => router.push('/inventory?kind=promotion')} className={tOff}>Builder/Developer Promotions</button>
+        <button onClick={() => router.push('/communities')} className={tOff}>New Home Communities</button>
+        <button onClick={() => router.push('/inventory?kind=listing')} className={tOff}>Move-In Ready Homes</button>
+        <button onClick={() => router.push('/inventory?kind=promotion')} className={tOff}>REALTOR Promos</button>
       </div>
       {tab === 'n' && (
         <div>
