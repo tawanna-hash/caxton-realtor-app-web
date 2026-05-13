@@ -1,52 +1,65 @@
 // lib/scrapers/david-weekley.ts
 //
-// Fetches David Weekley Homes Austin communities from their public
-// CommunityData JSON API and enriches per-community fields (beds/baths/sqft
-// /price max) using the FloorPlanData JSON API.
+// Fetches David Weekley Homes Austin communities from THREE public JSON APIs
+// and aggregates per-community fields by unioning the data:
+//   1. CommunityData    — 26 community headers (name/city/sqft/priceMin/thumbnail)
+//   2. FloorPlanData    — 156 plan templates with Bedrooms.Min/Max ranges
+//   3. ShowcaseData     —  77 specific inventory homes ("Quick Move-ins")
 //
-// API details (CommunityData discovered Session 12, FloorPlanData added
-// Session 13 to fill in null beds/baths/etc fields):
-//   Endpoint 1: GET /Search/CommunityData?marketId=markets%2F4
-//     Returns: 26 community objects with Name/City/BasePrice/SqFootage/Thumbnail
-//     Does NOT include beds/baths data, no description, no priceMax
-//   Endpoint 2: GET /Search/FloorPlanData?marketId=markets%2F4&pageNumber=1
-//     Returns: 156 floor-plan objects, each tagged with CommunityId.
-//     Has the missing fields: Bedrooms.Min/Max, FullBaths.Min/Max,
-//     HalfBaths.Min/Max, SquareFootage.Min/Max, BasePrice.
-//   Both URLs use case-sensitive uppercase Search; server 301-redirects to
-//   lowercase. `redirect: 'follow'` is required.
+// Why both Plan and Showcase: some communities (~6 of 26) have stopped offering
+// build-to-order floor plans and only sell inventory homes. ShowcaseData
+// covers them. Conversely some communities have plans but no inventory.
+// Most have both. Union gives full coverage.
 //
-// Austin's market ID is "markets/4" — confirmed Session 12 from the
-// listing page's `<input id="MarketId" value="markets/4" />` field.
+// API details:
+//   GET /Search/CommunityData?marketId=markets%2F4
+//     Returns: { Communities: [{Id, Name, City, BasePrice, MinSqFootage, ...}] }
+//   GET /Search/FloorPlanData?marketId=markets%2F4&pageNumber=1
+//     Returns: { Items: [{Id: "FloorPlans/...", CommunityId, BasePrice,
+//                Bedrooms:{Min,Max}, FullBaths:{Min,Max}, ...}] }
+//   GET /Search/ShowcaseData?marketId=markets%2F4
+//     Returns: { Items: [{Id: "showcases/...", CommunityId, BasePrice,
+//                Bedrooms: 4 (scalar), FullBaths: 3 (scalar),
+//                SquareFootage: 3993, ...}] }
 //
-// Per-community fields we read (after enrichment merge):
+// All three use case-sensitive uppercase `Search` and 301-redirect to
+// lowercase; `redirect: 'follow'` required.
+//
+// Austin's market ID is "markets/4". URL-encode the slash.
+//
+// Bath convention: FullBaths + 0.5 * HalfBaths (e.g. "3 full + 1 half" = 3.5).
+// Decimal column required in DB.
+//
+// Aggregation pattern: for each community Id, collect data points from both
+// FloorPlans (use Min and Max of each ranged field) and Showcases (use the
+// scalar value). Take min/max across all collected points. Empty if neither
+// source has data for that community.
+//
+// Per-community fields after aggregation merge:
 //   Id              → externalId
 //   Name            → title
 //   City.Name       → city
-//   City.StateAbbreviation → state
-//   BasePrice       → priceMin  (CommunityData)
-//                     OR min(plan.BasePrice) where set  (FloorPlanData fallback)
-//   priceMax        → max(plan.BasePrice) across plans  (FloorPlanData)
+//   BasePrice/OverrideBasePrice  → priceMin
+//                                  OR min across plan+showcase BasePrice if null
+//   priceMax        → max across plan+showcase BasePrice
 //   MinSqFootage    → sqftMin (CommunityData)
-//                     OR min(plan.SquareFootage.Min)  (FloorPlanData fallback)
-//   MaxSqFootage    → sqftMax (CommunityData)
-//                     OR max(plan.SquareFootage.Max)  (FloorPlanData fallback)
+//                     OR min from FloorPlan.SquareFootage.Min + Showcase.SquareFootage
+//   MaxSqFootage    → sqftMax  (CommunityData)
+//                     OR max from same sources
 //   Thumbnail       → thumbnailUrl
 //   Token           → flyerPdfUrl (community page URL)
-//   beds/baths     → aggregated from FloorPlanData
-//                     bathsTotal per plan = FullBaths + 0.5 * HalfBaths
-//                     so values like 2.5 / 3.5 are expected
-//
-// Communities without listed floor plans (e.g. pre-launch, sold out) appear
-// in CommunityData but have zero plans in FloorPlanData — those stay with
-// null beds/baths/priceMax fields and the existing CommunityData values for
-// sqft/priceMin.
+//   bedsMin/Max    → from FloorPlan.Bedrooms.{Min,Max} + Showcase.Bedrooms scalar
+//   bathsMin/Max   → from FloorPlan.{FullBaths+0.5*HalfBaths}{Min,Max} +
+//                       Showcase.{FullBaths + 0.5*HalfBaths} scalar
 
 const COMMUNITY_DATA_URL =
   'https://www.davidweekleyhomes.com/Search/CommunityData?marketId=markets%2F4';
 
 const FLOOR_PLAN_DATA_URL =
   'https://www.davidweekleyhomes.com/Search/FloorPlanData?marketId=markets%2F4&pageNumber=1';
+
+const SHOWCASE_DATA_URL =
+  'https://www.davidweekleyhomes.com/Search/ShowcaseData?marketId=markets%2F4';
 
 const DW_BASE_URL = 'https://www.davidweekleyhomes.com';
 
@@ -130,7 +143,34 @@ type FloorPlanDataResponse = {
   Items?: DWFloorPlan[] | null;
 };
 
-// Per-community aggregate after grouping floor plans
+// Showcase fields are scalars, not nested Min/Max ranges — each showcase
+// is a specific home, not a plan template with variants.
+type DWShowcase = {
+  Id?: string | null;
+  CommunityId?: string | null;
+  PlanMasterName?: string | null;
+  BasePrice?: number | null;
+  Bedrooms?: number | null;
+  FullBaths?: number | null;
+  HalfBaths?: number | null;
+  SquareFootage?: number | null;
+  Stories?: number | null;
+  Garages?: number | null;
+  ReadyDate?: string | null;
+  FullAddress?: string | null;
+  CommunityPhoneNumber?: string | null;
+};
+
+type ShowcaseDataResponse = {
+  PageSize?: number | null;
+  PageNumber?: number | null;
+  TotalResults?: number | null;
+  TotalPages?: number | null;
+  MoreResults?: boolean | null;
+  Items?: DWShowcase[] | null;
+};
+
+// Per-community aggregate combining FloorPlan + Showcase data
 type CommunityAggregate = {
   bedsMin: number | null;
   bedsMax: number | null;
@@ -196,122 +236,143 @@ function maxOfDefined(arr: Array<number | null | undefined>): number | null {
   return valid.length > 0 ? Math.max(...valid) : null;
 }
 
+function bathsFor(fullBaths: number | null | undefined, halfBaths: number | null | undefined): number | null {
+  if (fullBaths == null || !Number.isFinite(fullBaths)) return null;
+  const halves = halfBaths != null && Number.isFinite(halfBaths) ? halfBaths : 0;
+  return fullBaths + 0.5 * halves;
+}
+
 // ─────────────────────────────────────────────────────────────────────────
-// FloorPlanData fetch + aggregation
+// FloorPlanData + ShowcaseData fetch and combined aggregation
 // ─────────────────────────────────────────────────────────────────────────
 
-async function fetchFloorPlanAggregates(): Promise<
-  Map<string, CommunityAggregate>
-> {
-  let res: Response;
+// Per-community pools of data points across both endpoints. We collect raw
+// values into arrays then compute min/max once at the end.
+type CommunityPool = {
+  beds: number[];
+  baths: number[];
+  sqftMins: number[];
+  sqftMaxes: number[];
+  prices: number[];
+};
+
+async function fetchFloorPlans(): Promise<DWFloorPlan[]> {
   try {
-    res = await fetch(FLOOR_PLAN_DATA_URL, {
+    const res = await fetch(FLOOR_PLAN_DATA_URL, {
       method: 'GET',
       headers: COMMON_HEADERS,
       redirect: 'follow',
       signal: AbortSignal.timeout(30_000),
       cache: 'no-store',
     });
+    if (!res.ok) {
+      console.warn(`DW FloorPlanData HTTP ${res.status} (non-fatal)`);
+      return [];
+    }
+    const body = (await res.json()) as FloorPlanDataResponse;
+    return Array.isArray(body.Items) ? body.Items : [];
   } catch (err) {
-    // FloorPlanData failure is non-fatal — we still want the CommunityData
-    // rows even without enrichment. Log and return empty aggregates.
     const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`David Weekley FloorPlanData fetch failed (non-fatal): ${msg}`);
-    return new Map();
+    console.warn(`DW FloorPlanData failed (non-fatal): ${msg}`);
+    return [];
   }
+}
 
-  if (!res.ok) {
-    console.warn(
-      `David Weekley FloorPlanData returned HTTP ${res.status} (non-fatal)`,
-    );
-    return new Map();
-  }
-
-  let body: FloorPlanDataResponse;
+async function fetchShowcases(): Promise<DWShowcase[]> {
   try {
-    body = (await res.json()) as FloorPlanDataResponse;
+    const res = await fetch(SHOWCASE_DATA_URL, {
+      method: 'GET',
+      headers: COMMON_HEADERS,
+      redirect: 'follow',
+      signal: AbortSignal.timeout(30_000),
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      console.warn(`DW ShowcaseData HTTP ${res.status} (non-fatal)`);
+      return [];
+    }
+    const body = (await res.json()) as ShowcaseDataResponse;
+    return Array.isArray(body.Items) ? body.Items : [];
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.warn(
-      `David Weekley FloorPlanData non-JSON body (non-fatal): ${msg}`,
-    );
-    return new Map();
+    console.warn(`DW ShowcaseData failed (non-fatal): ${msg}`);
+    return [];
+  }
+}
+
+function buildAggregates(
+  plans: DWFloorPlan[],
+  showcases: DWShowcase[],
+): Map<string, CommunityAggregate> {
+  const pools = new Map<string, CommunityPool>();
+
+  function getPool(cid: string): CommunityPool {
+    let p = pools.get(cid);
+    if (!p) {
+      p = { beds: [], baths: [], sqftMins: [], sqftMaxes: [], prices: [] };
+      pools.set(cid, p);
+    }
+    return p;
   }
 
-  const plans = Array.isArray(body.Items) ? body.Items : [];
-  if (plans.length === 0) return new Map();
+  // FloorPlan: each plan has Min/Max ranges. Push both endpoints.
+  for (const plan of plans) {
+    if (!plan.CommunityId) continue;
+    const pool = getPool(plan.CommunityId);
 
-  // Group plans by CommunityId
-  const grouped = new Map<string, DWFloorPlan[]>();
-  for (const p of plans) {
-    if (!p.CommunityId) continue;
-    const existing = grouped.get(p.CommunityId);
-    if (existing) {
-      existing.push(p);
-    } else {
-      grouped.set(p.CommunityId, [p]);
+    const bMin = plan.Bedrooms?.Minimum;
+    const bMax = plan.Bedrooms?.Maximum;
+    if (bMin != null && Number.isFinite(bMin)) pool.beds.push(bMin);
+    if (bMax != null && Number.isFinite(bMax)) pool.beds.push(bMax);
+
+    const baMin = bathsFor(plan.FullBaths?.Minimum, plan.HalfBaths?.Minimum ?? 0);
+    const baMax = bathsFor(plan.FullBaths?.Maximum, plan.HalfBaths?.Maximum ?? 0);
+    if (baMin != null) pool.baths.push(baMin);
+    if (baMax != null) pool.baths.push(baMax);
+
+    const sMin = plan.SquareFootage?.Minimum;
+    const sMax = plan.SquareFootage?.Maximum;
+    if (sMin != null && Number.isFinite(sMin) && sMin > 0) pool.sqftMins.push(sMin);
+    if (sMax != null && Number.isFinite(sMax) && sMax > 0) pool.sqftMaxes.push(sMax);
+
+    if (plan.BasePrice != null && Number.isFinite(plan.BasePrice) && plan.BasePrice > 0) {
+      pool.prices.push(plan.BasePrice);
     }
   }
 
-  // Aggregate min/max per community.
-  // Convention: bathsTotal = FullBaths + 0.5 * HalfBaths (industry standard,
-  // produces decimals like 2.5, 3.5). If the DB column is integer-only, this
-  // will fail and need to be reduced to integers or written to a different
-  // column.
+  // Showcase: each home has scalar values. Push as a single data point.
+  for (const sc of showcases) {
+    if (!sc.CommunityId) continue;
+    const pool = getPool(sc.CommunityId);
+
+    if (sc.Bedrooms != null && Number.isFinite(sc.Bedrooms)) {
+      pool.beds.push(sc.Bedrooms);
+    }
+    const baths = bathsFor(sc.FullBaths, sc.HalfBaths);
+    if (baths != null) pool.baths.push(baths);
+
+    if (sc.SquareFootage != null && Number.isFinite(sc.SquareFootage) && sc.SquareFootage > 0) {
+      pool.sqftMins.push(sc.SquareFootage);
+      pool.sqftMaxes.push(sc.SquareFootage);
+    }
+
+    if (sc.BasePrice != null && Number.isFinite(sc.BasePrice) && sc.BasePrice > 0) {
+      pool.prices.push(sc.BasePrice);
+    }
+  }
+
+  // Reduce pools to aggregates
   const aggregates = new Map<string, CommunityAggregate>();
-  for (const [communityId, communityPlans] of grouped) {
-    const beds: number[] = [];
-    const bathsTotals: number[] = [];
-    const sqftMins: number[] = [];
-    const sqftMaxes: number[] = [];
-    const prices: number[] = [];
-
-    for (const p of communityPlans) {
-      // Beds: take both endpoints of the plan's range
-      const bMin = p.Bedrooms?.Minimum;
-      const bMax = p.Bedrooms?.Maximum;
-      if (bMin != null && Number.isFinite(bMin)) beds.push(bMin);
-      if (bMax != null && Number.isFinite(bMax)) beds.push(bMax);
-
-      // Baths: compute total per endpoint, then push.
-      // FullBaths.Min + 0.5 * HalfBaths.Min for the lower bound,
-      // FullBaths.Max + 0.5 * HalfBaths.Max for the upper bound.
-      const fbMin = p.FullBaths?.Minimum;
-      const fbMax = p.FullBaths?.Maximum;
-      const hbMin = p.HalfBaths?.Minimum ?? 0;
-      const hbMax = p.HalfBaths?.Maximum ?? 0;
-      if (fbMin != null && Number.isFinite(fbMin)) {
-        bathsTotals.push(fbMin + 0.5 * hbMin);
-      }
-      if (fbMax != null && Number.isFinite(fbMax)) {
-        bathsTotals.push(fbMax + 0.5 * hbMax);
-      }
-
-      // SqFt: keep separate min and max
-      const sfMin = p.SquareFootage?.Minimum;
-      const sfMax = p.SquareFootage?.Maximum;
-      if (sfMin != null && Number.isFinite(sfMin) && sfMin > 0) {
-        sqftMins.push(sfMin);
-      }
-      if (sfMax != null && Number.isFinite(sfMax) && sfMax > 0) {
-        sqftMaxes.push(sfMax);
-      }
-
-      // Prices
-      if (p.BasePrice != null && Number.isFinite(p.BasePrice) && p.BasePrice > 0) {
-        prices.push(p.BasePrice);
-      }
-    }
-
-    aggregates.set(communityId, {
-      bedsMin: beds.length > 0 ? Math.min(...beds) : null,
-      bedsMax: beds.length > 0 ? Math.max(...beds) : null,
-      bathsMin: bathsTotals.length > 0 ? Math.min(...bathsTotals) : null,
-      bathsMax: bathsTotals.length > 0 ? Math.max(...bathsTotals) : null,
-      sqftMin: minOfDefined(sqftMins),
-      sqftMax: maxOfDefined(sqftMaxes),
-      priceMin: minOfDefined(prices),
-      priceMax: maxOfDefined(prices),
+  for (const [cid, pool] of pools) {
+    aggregates.set(cid, {
+      bedsMin: pool.beds.length > 0 ? Math.min(...pool.beds) : null,
+      bedsMax: pool.beds.length > 0 ? Math.max(...pool.beds) : null,
+      bathsMin: pool.baths.length > 0 ? Math.min(...pool.baths) : null,
+      bathsMax: pool.baths.length > 0 ? Math.max(...pool.baths) : null,
+      sqftMin: minOfDefined(pool.sqftMins),
+      sqftMax: maxOfDefined(pool.sqftMaxes),
+      priceMin: minOfDefined(pool.prices),
+      priceMax: maxOfDefined(pool.prices),
     });
   }
 
@@ -326,7 +387,6 @@ function normalize(
   c: DWCommunity,
   aggregates: Map<string, CommunityAggregate>,
 ): ScrapedDavidWeekleyRow | null {
-  // Must have a stable ID for dedup.
   if (!c.Id || typeof c.Id !== 'string' || c.Id.trim().length === 0) {
     return null;
   }
@@ -339,8 +399,7 @@ function normalize(
 
   const agg = aggregates.get(c.Id) ?? null;
 
-  // Price: CommunityData's BasePrice takes precedence; fallback to plan
-  // aggregate priceMin if CommunityData has it null/zero.
+  // Price: CommunityData first, then aggregate fallback.
   let priceMin: number | null = null;
   if (c.IsOverrideBasePrice && c.OverrideBasePrice) {
     priceMin = nonZeroOrNull(c.OverrideBasePrice);
@@ -349,10 +408,9 @@ function normalize(
   }
   if (priceMin == null && agg) priceMin = agg.priceMin;
 
-  // priceMax: only available via plan aggregation
   const priceMax = agg?.priceMax ?? null;
 
-  // Sqft: CommunityData first, then plan aggregate
+  // Sqft: CommunityData first, then aggregate fallback.
   let sqftMin: number | null = null;
   let sqftMax: number | null = null;
   if (c.IsOverrideSqFootage && c.OverrideSqFootage) {
@@ -366,7 +424,7 @@ function normalize(
   if (sqftMin == null && agg) sqftMin = agg.sqftMin;
   if (sqftMax == null && agg) sqftMax = agg.sqftMax;
 
-  // Beds/baths: ONLY from FloorPlanData aggregate (CommunityData has no fields)
+  // Beds/baths come ONLY from aggregates (CommunityData has no fields).
   const bedsMin = agg?.bedsMin ?? null;
   const bedsMax = agg?.bedsMax ?? null;
   const bathsMin = agg?.bathsMin ?? null;
@@ -434,12 +492,12 @@ export async function fetchDavidWeekleyAustin(): Promise<{
   rawCount: number;
   skipped: number;
 }> {
-  // Fetch both endpoints in parallel. CommunityData is required; if it
-  // fails the whole scrape fails. FloorPlanData is enrichment-only; if it
-  // fails we proceed with null bed/bath/priceMax fields (same state as S12).
-  const [communities, aggregates] = await Promise.all([
+  // Fetch all three endpoints in parallel. CommunityData is required; the
+  // other two are enrichment-only and degrade gracefully if they fail.
+  const [communities, plans, showcases] = await Promise.all([
     fetchCommunityData(),
-    fetchFloorPlanAggregates(),
+    fetchFloorPlans(),
+    fetchShowcases(),
   ]);
 
   const rawCount = communities.length;
@@ -449,6 +507,8 @@ export async function fetchDavidWeekleyAustin(): Promise<{
       'David Weekley CommunityData returned zero communities (marketId stale?)',
     );
   }
+
+  const aggregates = buildAggregates(plans, showcases);
 
   const rows: ScrapedDavidWeekleyRow[] = [];
   let skipped = 0;
