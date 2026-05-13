@@ -1,27 +1,10 @@
 // app/api/cron/scrape-mi-homes/route.ts
 //
-// Vercel Cron endpoint. Runs daily, fetches M/I Homes Austin communities
-// from their Sitecore API (no HTML scraping), and upserts each into
-// builder_inventory keyed on (builder_name, external_id).
+// Vercel Cron endpoint. Daily M/I Homes Austin inventory scrape.
 //
-// Auth: in production we require `Authorization: Bearer ${CRON_SECRET}`,
-// which Vercel automatically attaches to scheduled invocations when the
-// CRON_SECRET env var is set. In dev/preview we allow unauthenticated
-// access for testing — set CRON_SECRET in Vercel before enabling the
-// cron in vercel.json to harden production.
-//
-// Behavior on upsert:
-//   - NEW community (no row with matching external_id): INSERT as
-//     status='pending' so it lands in the admin queue for review.
-//   - EXISTING community: UPDATE only data-driven fields (title, city,
-//     description, beds/baths/sqft/price). Does NOT touch status,
-//     featured, reviewedBy, or reviewedAt — those are admin decisions
-//     and the scraper has no business overwriting them.
-//
-// Errors:
-//   - Whole-scraper failure (M/I down, malformed response): returns 500.
-//   - Per-row failure (one community errors during upsert): logs and
-//     continues with the rest. Vercel logs surface the bad rows.
+// S13: switched from per-community to per-home rows.
+// Each inventory home becomes its own row with address, ready_date,
+// plan_name, community_name. Same pattern as scrape-david-weekley.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchMIHomesAustin } from '@/lib/scrapers/mi-homes';
@@ -29,12 +12,9 @@ import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Allow up to 60s — single fetch + ~8 upserts should be well under this,
-// but Vercel's default is 10s and we want headroom for Neon cold starts.
+// Single HTTP call ~1s + ~93 upserts at ~50ms each = ~5s. 60s for headroom.
 export const maxDuration = 60;
 
-// Sentinel identity for scraper-submitted rows. Admin queue shows these
-// alongside human submissions; the email pattern makes them easy to filter.
 const SCRAPER_SUBMITTER_NAME = 'M/I Homes Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-mi-homes@harmonyone.system';
 
@@ -44,11 +24,9 @@ function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
   const got = req.headers.get('authorization');
 
   if (!isProduction) {
-    // Dev/preview: allow without auth so curl + browser testing works.
     return { ok: true };
   }
 
-  // Production: require CRON_SECRET to be set AND match the bearer.
   if (!expected) {
     return { ok: false, reason: 'CRON_SECRET not configured' };
   }
@@ -90,6 +68,12 @@ async function runScrape() {
         priceMax: row.priceMax,
         flyerPdfUrl: row.flyerPdfUrl,
         thumbnailUrl: row.thumbnailUrl,
+        // S13 per-home additions:
+        address: row.address,
+        readyDate: row.readyDate,
+        planName: row.planName,
+        communityName: row.communityName,
+        homeType: row.homeType,
       });
       if (result.created) inserted++;
       else updated++;
@@ -143,7 +127,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// Some Vercel deployments hit cron endpoints via POST. Accept both.
+// Vercel cron may invoke as POST. Accept both.
 export async function POST(req: NextRequest) {
   return GET(req);
 }
