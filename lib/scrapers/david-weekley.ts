@@ -1,62 +1,51 @@
 // lib/scrapers/david-weekley.ts
 //
-// Fetches David Weekley Homes Austin communities from THREE public JSON APIs
-// and aggregates per-community fields by unioning the data:
-//   1. CommunityData    — 26 community headers (name/city/sqft/priceMin/thumbnail)
-//   2. FloorPlanData    — 156 plan templates with Bedrooms.Min/Max ranges
-//   3. ShowcaseData     —  77 specific inventory homes ("Quick Move-ins")
+// David Weekley Homes Austin — per-home scraper (S13).
 //
-// Why both Plan and Showcase: some communities (~6 of 26) have stopped offering
-// build-to-order floor plans and only sell inventory homes. ShowcaseData
-// covers them. Conversely some communities have plans but no inventory.
-// Most have both. Union gives full coverage.
+// Emits ONE ROW per move-in-ready showcase home (their "Quick Move-ins"),
+// not per community. Each row has a specific address, ready date, plan
+// name, and exact price — what realtors actually need to share with buyers.
 //
-// API details:
-//   GET /Search/CommunityData?marketId=markets%2F4
-//     Returns: { Communities: [{Id, Name, City, BasePrice, MinSqFootage, ...}] }
-//   GET /Search/FloorPlanData?marketId=markets%2F4&pageNumber=1
-//     Returns: { Items: [{Id: "FloorPlans/...", CommunityId, BasePrice,
-//                Bedrooms:{Min,Max}, FullBaths:{Min,Max}, ...}] }
-//   GET /Search/ShowcaseData?marketId=markets%2F4
-//     Returns: { Items: [{Id: "showcases/...", CommunityId, BasePrice,
-//                Bedrooms: 4 (scalar), FullBaths: 3 (scalar),
-//                SquareFootage: 3993, ...}] }
+// API: GET /Search/ShowcaseData?marketId=markets%2F4
 //
-// All three use case-sensitive uppercase `Search` and 301-redirect to
-// lowercase; `redirect: 'follow'` required.
+// Field schema (each Showcase represents a SPECIFIC built home):
+//   Id              "showcases/103806"
+//   CommunityId     "communities/19971"
+//   PlanMasterName  "Markham"
+//   PlanMasterNumber "B367"
+//   BasePrice       519990
+//   SquareFootage   2382 (scalar)
+//   Bedrooms        4    (scalar)
+//   FullBaths       3
+//   HalfBaths       1
+//   Stories         2.0
+//   Garages         2.0
+//   ReadyDate       "2026-04-23T00:00:00"
+//   FullAddress     "819 Perry Pass Unit 45, Round Rock, TX 78664"
+//   CommunityPhoneNumber "(512) 821-8818"
+//   Thumbnail       (presigned image URL)
+//   Token           "/homes-ready-soon/tx/austin/round-rock/double-creek-crossing-craftsman-series/22230022"
+//   VirtualTour     (matterport URL or null)
+//   Latitude/Longitude
 //
-// Austin's market ID is "markets/4". URL-encode the slash.
+// To get community NAME (not just CommunityId), we also fetch CommunityData
+// in parallel and build a CommunityId → name lookup. ShowcaseData alone
+// doesn't include the friendly community name.
 //
-// Bath convention: FullBaths + 0.5 * HalfBaths (e.g. "3 full + 1 half" = 3.5).
-// Decimal column required in DB.
+// Bath convention: FullBaths + 0.5 * HalfBaths (decimals like 3.5).
 //
-// Aggregation pattern: for each community Id, collect data points from both
-// FloorPlans (use Min and Max of each ranged field) and Showcases (use the
-// scalar value). Take min/max across all collected points. Empty if neither
-// source has data for that community.
+// HTTP details:
+//   - Case-sensitive uppercase /Search/; 301-redirects to lowercase
+//   - redirect: 'follow' required
+//   - Referer header required, else 302 to /
+//   - Austin's market ID is "markets/4" (URL-encode the slash)
 //
-// Per-community fields after aggregation merge:
-//   Id              → externalId
-//   Name            → title
-//   City.Name       → city
-//   BasePrice/OverrideBasePrice  → priceMin
-//                                  OR min across plan+showcase BasePrice if null
-//   priceMax        → max across plan+showcase BasePrice
-//   MinSqFootage    → sqftMin (CommunityData)
-//                     OR min from FloorPlan.SquareFootage.Min + Showcase.SquareFootage
-//   MaxSqFootage    → sqftMax  (CommunityData)
-//                     OR max from same sources
-//   Thumbnail       → thumbnailUrl
-//   Token           → flyerPdfUrl (community page URL)
-//   bedsMin/Max    → from FloorPlan.Bedrooms.{Min,Max} + Showcase.Bedrooms scalar
-//   bathsMin/Max   → from FloorPlan.{FullBaths+0.5*HalfBaths}{Min,Max} +
-//                       Showcase.{FullBaths + 0.5*HalfBaths} scalar
+// Why no FloorPlanData here: plans are build-to-order templates, not
+// buyable inventory. Per S13 design decision, we surface only specific
+// homes (showcases) since those are what realtors share with buyers.
 
 const COMMUNITY_DATA_URL =
   'https://www.davidweekleyhomes.com/Search/CommunityData?marketId=markets%2F4';
-
-const FLOOR_PLAN_DATA_URL =
-  'https://www.davidweekleyhomes.com/Search/FloorPlanData?marketId=markets%2F4&pageNumber=1';
 
 const SHOWCASE_DATA_URL =
   'https://www.davidweekleyhomes.com/Search/ShowcaseData?marketId=markets%2F4';
@@ -83,72 +72,24 @@ const COMMON_HEADERS = {
 type DWCity = {
   Id?: string | null;
   Name?: string | null;
-  Token?: string | null;
   StateAbbreviation?: string | null;
-  Title?: string | null;
 };
 
 type DWCommunity = {
   Id?: string | null;
-  Token?: string | null;
   Name?: string | null;
-  CommunityNumber?: string | null;
   City?: DWCity | null;
-  BasePrice?: number | null;
-  OverrideBasePrice?: number | null;
-  IsOverrideBasePrice?: boolean | null;
-  MinSqFootage?: number | null;
-  MaxSqFootage?: number | null;
-  OverrideSqFootage?: number | null;
-  IsOverrideSqFootage?: boolean | null;
-  Thumbnail?: string | null;
-  CallForPricing?: boolean | null;
-  HidePlans?: boolean | null;
-  HideShowcases?: boolean | null;
-  FloorPlanCount?: number | null;
-  ShowcaseCount?: number | null;
-  CommunityType?: string | null;
 };
 
 type CommunityDataResponse = {
   Communities?: DWCommunity[] | null;
-  NeighborhoodGroups?: unknown[] | null;
-  CurrentMarketName?: string | null;
 };
 
-type DWMinMax = {
-  Minimum?: number | null;
-  Maximum?: number | null;
-};
-
-type DWFloorPlan = {
-  Id?: string | null;
-  CommunityId?: string | null;
-  PlanMasterName?: string | null;
-  BasePrice?: number | null;
-  Bedrooms?: DWMinMax | null;
-  FullBaths?: DWMinMax | null;
-  HalfBaths?: DWMinMax | null;
-  SquareFootage?: DWMinMax | null;
-  Stories?: DWMinMax | null;
-  Garages?: DWMinMax | null;
-};
-
-type FloorPlanDataResponse = {
-  PageSize?: number | null;
-  PageNumber?: number | null;
-  TotalResults?: number | null;
-  TotalPages?: number | null;
-  MoreResults?: boolean | null;
-  Items?: DWFloorPlan[] | null;
-};
-
-// Showcase fields are scalars, not nested Min/Max ranges — each showcase
-// is a specific home, not a plan template with variants.
 type DWShowcase = {
   Id?: string | null;
   CommunityId?: string | null;
   PlanMasterName?: string | null;
+  PlanMasterNumber?: string | null;
   BasePrice?: number | null;
   Bedrooms?: number | null;
   FullBaths?: number | null;
@@ -159,32 +100,18 @@ type DWShowcase = {
   ReadyDate?: string | null;
   FullAddress?: string | null;
   CommunityPhoneNumber?: string | null;
+  Thumbnail?: string | null;
+  Token?: string | null;
+  VirtualTour?: string | null;
+  CallForPricing?: boolean | null;
 };
 
 type ShowcaseDataResponse = {
-  PageSize?: number | null;
-  PageNumber?: number | null;
-  TotalResults?: number | null;
-  TotalPages?: number | null;
-  MoreResults?: boolean | null;
   Items?: DWShowcase[] | null;
 };
 
-// Per-community aggregate combining FloorPlan + Showcase data
-type CommunityAggregate = {
-  bedsMin: number | null;
-  bedsMax: number | null;
-  bathsMin: number | null;
-  bathsMax: number | null;
-  sqftMin: number | null;
-  sqftMax: number | null;
-  priceMin: number | null;
-  priceMax: number | null;
-};
-
 // ─────────────────────────────────────────────────────────────────────────
-// Output shape — same as ScrapedKBHomeRow / ScrapedMIHomesRow with
-// builderName narrowed to 'David Weekley Homes'.
+// Output shape — one row per move-in-ready home.
 // ─────────────────────────────────────────────────────────────────────────
 
 export type ScrapedDavidWeekleyRow = {
@@ -204,6 +131,12 @@ export type ScrapedDavidWeekleyRow = {
   priceMax: number | null;
   thumbnailUrl: string | null;
   flyerPdfUrl: string | null;
+  // S13 per-home additions:
+  address: string | null;
+  readyDate: string | null; // YYYY-MM-DD
+  planName: string | null;
+  communityName: string | null;
+  homeType: 'showcase';
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -222,239 +155,42 @@ function normalizeUrl(path: string | null | undefined): string | null {
   return null;
 }
 
-function minOfDefined(arr: Array<number | null | undefined>): number | null {
-  const valid = arr.filter(
-    (n): n is number => n != null && Number.isFinite(n) && n > 0,
-  );
-  return valid.length > 0 ? Math.min(...valid) : null;
-}
-
-function maxOfDefined(arr: Array<number | null | undefined>): number | null {
-  const valid = arr.filter(
-    (n): n is number => n != null && Number.isFinite(n) && n > 0,
-  );
-  return valid.length > 0 ? Math.max(...valid) : null;
-}
-
-function bathsFor(fullBaths: number | null | undefined, halfBaths: number | null | undefined): number | null {
+function bathsFor(
+  fullBaths: number | null | undefined,
+  halfBaths: number | null | undefined,
+): number | null {
   if (fullBaths == null || !Number.isFinite(fullBaths)) return null;
   const halves = halfBaths != null && Number.isFinite(halfBaths) ? halfBaths : 0;
   return fullBaths + 0.5 * halves;
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// FloorPlanData + ShowcaseData fetch and combined aggregation
-// ─────────────────────────────────────────────────────────────────────────
-
-// Per-community pools of data points across both endpoints. We collect raw
-// values into arrays then compute min/max once at the end.
-type CommunityPool = {
-  beds: number[];
-  baths: number[];
-  sqftMins: number[];
-  sqftMaxes: number[];
-  prices: number[];
-};
-
-async function fetchFloorPlans(): Promise<DWFloorPlan[]> {
-  try {
-    const res = await fetch(FLOOR_PLAN_DATA_URL, {
-      method: 'GET',
-      headers: COMMON_HEADERS,
-      redirect: 'follow',
-      signal: AbortSignal.timeout(30_000),
-      cache: 'no-store',
-    });
-    if (!res.ok) {
-      console.warn(`DW FloorPlanData HTTP ${res.status} (non-fatal)`);
-      return [];
-    }
-    const body = (await res.json()) as FloorPlanDataResponse;
-    return Array.isArray(body.Items) ? body.Items : [];
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`DW FloorPlanData failed (non-fatal): ${msg}`);
-    return [];
-  }
+// Parse city from a FullAddress like:
+//   "819 Perry Pass Unit 45, Round Rock, TX 78664"
+//                            ^^^^^^^^^^
+// Splits on commas, takes the second-to-last (city is always before
+// state+zip). Returns null on malformed input.
+function cityFromFullAddress(addr: string | null | undefined): string | null {
+  if (!addr) return null;
+  const parts = addr.split(',').map((s) => s.trim()).filter(Boolean);
+  // Need at least: street, city, state+zip → 3 parts.
+  if (parts.length < 3) return null;
+  return parts[parts.length - 2] || null;
 }
 
-async function fetchShowcases(): Promise<DWShowcase[]> {
-  try {
-    const res = await fetch(SHOWCASE_DATA_URL, {
-      method: 'GET',
-      headers: COMMON_HEADERS,
-      redirect: 'follow',
-      signal: AbortSignal.timeout(30_000),
-      cache: 'no-store',
-    });
-    if (!res.ok) {
-      console.warn(`DW ShowcaseData HTTP ${res.status} (non-fatal)`);
-      return [];
-    }
-    const body = (await res.json()) as ShowcaseDataResponse;
-    return Array.isArray(body.Items) ? body.Items : [];
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`DW ShowcaseData failed (non-fatal): ${msg}`);
-    return [];
-  }
-}
-
-function buildAggregates(
-  plans: DWFloorPlan[],
-  showcases: DWShowcase[],
-): Map<string, CommunityAggregate> {
-  const pools = new Map<string, CommunityPool>();
-
-  function getPool(cid: string): CommunityPool {
-    let p = pools.get(cid);
-    if (!p) {
-      p = { beds: [], baths: [], sqftMins: [], sqftMaxes: [], prices: [] };
-      pools.set(cid, p);
-    }
-    return p;
-  }
-
-  // FloorPlan: each plan has Min/Max ranges. Push both endpoints.
-  for (const plan of plans) {
-    if (!plan.CommunityId) continue;
-    const pool = getPool(plan.CommunityId);
-
-    const bMin = plan.Bedrooms?.Minimum;
-    const bMax = plan.Bedrooms?.Maximum;
-    if (bMin != null && Number.isFinite(bMin)) pool.beds.push(bMin);
-    if (bMax != null && Number.isFinite(bMax)) pool.beds.push(bMax);
-
-    const baMin = bathsFor(plan.FullBaths?.Minimum, plan.HalfBaths?.Minimum ?? 0);
-    const baMax = bathsFor(plan.FullBaths?.Maximum, plan.HalfBaths?.Maximum ?? 0);
-    if (baMin != null) pool.baths.push(baMin);
-    if (baMax != null) pool.baths.push(baMax);
-
-    const sMin = plan.SquareFootage?.Minimum;
-    const sMax = plan.SquareFootage?.Maximum;
-    if (sMin != null && Number.isFinite(sMin) && sMin > 0) pool.sqftMins.push(sMin);
-    if (sMax != null && Number.isFinite(sMax) && sMax > 0) pool.sqftMaxes.push(sMax);
-
-    if (plan.BasePrice != null && Number.isFinite(plan.BasePrice) && plan.BasePrice > 0) {
-      pool.prices.push(plan.BasePrice);
-    }
-  }
-
-  // Showcase: each home has scalar values. Push as a single data point.
-  for (const sc of showcases) {
-    if (!sc.CommunityId) continue;
-    const pool = getPool(sc.CommunityId);
-
-    if (sc.Bedrooms != null && Number.isFinite(sc.Bedrooms)) {
-      pool.beds.push(sc.Bedrooms);
-    }
-    const baths = bathsFor(sc.FullBaths, sc.HalfBaths);
-    if (baths != null) pool.baths.push(baths);
-
-    if (sc.SquareFootage != null && Number.isFinite(sc.SquareFootage) && sc.SquareFootage > 0) {
-      pool.sqftMins.push(sc.SquareFootage);
-      pool.sqftMaxes.push(sc.SquareFootage);
-    }
-
-    if (sc.BasePrice != null && Number.isFinite(sc.BasePrice) && sc.BasePrice > 0) {
-      pool.prices.push(sc.BasePrice);
-    }
-  }
-
-  // Reduce pools to aggregates
-  const aggregates = new Map<string, CommunityAggregate>();
-  for (const [cid, pool] of pools) {
-    aggregates.set(cid, {
-      bedsMin: pool.beds.length > 0 ? Math.min(...pool.beds) : null,
-      bedsMax: pool.beds.length > 0 ? Math.max(...pool.beds) : null,
-      bathsMin: pool.baths.length > 0 ? Math.min(...pool.baths) : null,
-      bathsMax: pool.baths.length > 0 ? Math.max(...pool.baths) : null,
-      sqftMin: minOfDefined(pool.sqftMins),
-      sqftMax: maxOfDefined(pool.sqftMaxes),
-      priceMin: minOfDefined(pool.prices),
-      priceMax: maxOfDefined(pool.prices),
-    });
-  }
-
-  return aggregates;
+// Convert "2026-04-23T00:00:00" to "2026-04-23".
+function dateOnly(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const trimmed = iso.trim();
+  if (trimmed.length < 10) return null;
+  // First 10 chars are YYYY-MM-DD regardless of timezone suffix.
+  const candidate = trimmed.slice(0, 10);
+  // Sanity-check format.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(candidate)) return null;
+  return candidate;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Per-community normalization
-// ─────────────────────────────────────────────────────────────────────────
-
-function normalize(
-  c: DWCommunity,
-  aggregates: Map<string, CommunityAggregate>,
-): ScrapedDavidWeekleyRow | null {
-  if (!c.Id || typeof c.Id !== 'string' || c.Id.trim().length === 0) {
-    return null;
-  }
-
-  const title = (c.Name || '').trim();
-  if (!title) return null;
-
-  const cityName = (c.City?.Name || 'Austin').trim();
-  const stateAbbrev = (c.City?.StateAbbreviation || 'TX').toUpperCase();
-
-  const agg = aggregates.get(c.Id) ?? null;
-
-  // Price: CommunityData first, then aggregate fallback.
-  let priceMin: number | null = null;
-  if (c.IsOverrideBasePrice && c.OverrideBasePrice) {
-    priceMin = nonZeroOrNull(c.OverrideBasePrice);
-  } else {
-    priceMin = nonZeroOrNull(c.BasePrice);
-  }
-  if (priceMin == null && agg) priceMin = agg.priceMin;
-
-  const priceMax = agg?.priceMax ?? null;
-
-  // Sqft: CommunityData first, then aggregate fallback.
-  let sqftMin: number | null = null;
-  let sqftMax: number | null = null;
-  if (c.IsOverrideSqFootage && c.OverrideSqFootage) {
-    const overrideVal = nonZeroOrNull(c.OverrideSqFootage);
-    sqftMin = overrideVal;
-    sqftMax = overrideVal;
-  } else {
-    sqftMin = nonZeroOrNull(c.MinSqFootage);
-    sqftMax = nonZeroOrNull(c.MaxSqFootage);
-  }
-  if (sqftMin == null && agg) sqftMin = agg.sqftMin;
-  if (sqftMax == null && agg) sqftMax = agg.sqftMax;
-
-  // Beds/baths come ONLY from aggregates (CommunityData has no fields).
-  const bedsMin = agg?.bedsMin ?? null;
-  const bedsMax = agg?.bedsMax ?? null;
-  const bathsMin = agg?.bathsMin ?? null;
-  const bathsMax = agg?.bathsMax ?? null;
-
-  const thumbnailUrl = c.Thumbnail?.trim() || null;
-  const flyerPdfUrl = normalizeUrl(c.Token);
-
-  return {
-    externalId: c.Id,
-    builderName: 'David Weekley Homes',
-    title,
-    city: cityName,
-    state: stateAbbrev,
-    description: null,
-    bedsMin,
-    bedsMax,
-    bathsMin,
-    bathsMax,
-    sqftMin,
-    sqftMax,
-    priceMin,
-    priceMax,
-    thumbnailUrl,
-    flyerPdfUrl,
-  };
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// Public: fetch + normalize
+// Fetchers
 // ─────────────────────────────────────────────────────────────────────────
 
 async function fetchCommunityData(): Promise<DWCommunity[]> {
@@ -471,11 +207,9 @@ async function fetchCommunityData(): Promise<DWCommunity[]> {
     const msg = err instanceof Error ? err.message : String(err);
     throw new Error(`David Weekley CommunityData fetch failed: ${msg}`);
   }
-
   if (!res.ok) {
     throw new Error(`David Weekley CommunityData returned HTTP ${res.status}`);
   }
-
   let body: CommunityDataResponse;
   try {
     body = (await res.json()) as CommunityDataResponse;
@@ -483,37 +217,157 @@ async function fetchCommunityData(): Promise<DWCommunity[]> {
     const msg = err instanceof Error ? err.message : String(err);
     throw new Error(`David Weekley CommunityData non-JSON body: ${msg}`);
   }
-
   return Array.isArray(body.Communities) ? body.Communities : [];
 }
+
+async function fetchShowcases(): Promise<DWShowcase[]> {
+  let res: Response;
+  try {
+    res = await fetch(SHOWCASE_DATA_URL, {
+      method: 'GET',
+      headers: COMMON_HEADERS,
+      redirect: 'follow',
+      signal: AbortSignal.timeout(30_000),
+      cache: 'no-store',
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`David Weekley ShowcaseData fetch failed: ${msg}`);
+  }
+  if (!res.ok) {
+    throw new Error(`David Weekley ShowcaseData returned HTTP ${res.status}`);
+  }
+  let body: ShowcaseDataResponse;
+  try {
+    body = (await res.json()) as ShowcaseDataResponse;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`David Weekley ShowcaseData non-JSON body: ${msg}`);
+  }
+  return Array.isArray(body.Items) ? body.Items : [];
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Per-showcase normalization
+// ─────────────────────────────────────────────────────────────────────────
+
+type CommunityLookup = Map<
+  string,
+  { name: string; city: string; state: string }
+>;
+
+function buildCommunityLookup(communities: DWCommunity[]): CommunityLookup {
+  const map: CommunityLookup = new Map();
+  for (const c of communities) {
+    if (!c.Id) continue;
+    map.set(c.Id, {
+      name: (c.Name || '').trim() || 'Unknown community',
+      city: (c.City?.Name || 'Austin').trim(),
+      state: (c.City?.StateAbbreviation || 'TX').toUpperCase(),
+    });
+  }
+  return map;
+}
+
+function normalize(
+  s: DWShowcase,
+  lookup: CommunityLookup,
+): ScrapedDavidWeekleyRow | null {
+  if (!s.Id || typeof s.Id !== 'string' || s.Id.trim().length === 0) {
+    return null;
+  }
+
+  const community = s.CommunityId ? lookup.get(s.CommunityId) ?? null : null;
+  const communityName = community?.name ?? null;
+
+  const planName = s.PlanMasterName?.trim() || null;
+
+  // Title: "The Markham at Double Creek Crossing"
+  // Fallback chain: plan+community → plan only → community only → generic.
+  let title: string;
+  if (planName && communityName) {
+    title = `The ${planName} at ${communityName}`;
+  } else if (planName) {
+    title = `The ${planName}`;
+  } else if (communityName) {
+    title = `Inventory home at ${communityName}`;
+  } else {
+    title = `David Weekley inventory home`;
+  }
+
+  // City: from FullAddress if parseable, else from community lookup, else default.
+  const cityFromAddr = cityFromFullAddress(s.FullAddress);
+  const city = cityFromAddr ?? community?.city ?? 'Austin';
+  const state = community?.state ?? 'TX';
+
+  // Beds/baths/sqft/price are SCALAR on a showcase (specific home, not range).
+  // Store as min=max so range-aware UI continues to work without changes.
+  const beds = s.Bedrooms != null && Number.isFinite(s.Bedrooms) ? s.Bedrooms : null;
+  const baths = bathsFor(s.FullBaths, s.HalfBaths);
+  const sqft =
+    s.SquareFootage != null && Number.isFinite(s.SquareFootage) && s.SquareFootage > 0
+      ? s.SquareFootage
+      : null;
+  const price = s.CallForPricing ? null : nonZeroOrNull(s.BasePrice);
+
+  return {
+    externalId: s.Id,
+    builderName: 'David Weekley Homes',
+    title,
+    city,
+    state,
+    description: null,
+    bedsMin: beds,
+    bedsMax: beds,
+    bathsMin: baths,
+    bathsMax: baths,
+    sqftMin: sqft,
+    sqftMax: sqft,
+    priceMin: price,
+    priceMax: price,
+    thumbnailUrl: s.Thumbnail?.trim() || null,
+    flyerPdfUrl: normalizeUrl(s.Token),
+    address: s.FullAddress?.trim() || null,
+    readyDate: dateOnly(s.ReadyDate),
+    planName,
+    communityName,
+    homeType: 'showcase',
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Public entry
+// ─────────────────────────────────────────────────────────────────────────
 
 export async function fetchDavidWeekleyAustin(): Promise<{
   rows: ScrapedDavidWeekleyRow[];
   rawCount: number;
   skipped: number;
 }> {
-  // Fetch all three endpoints in parallel. CommunityData is required; the
-  // other two are enrichment-only and degrade gracefully if they fail.
-  const [communities, plans, showcases] = await Promise.all([
-    fetchCommunityData(),
-    fetchFloorPlans(),
+  // Fetch both endpoints in parallel. CommunityData is non-fatal — if it
+  // fails we still produce showcase rows, just without friendly community
+  // names (will fall back to "Inventory home").
+  const [communities, showcases] = await Promise.all([
+    fetchCommunityData().catch((err) => {
+      console.warn(`DW CommunityData lookup failed (non-fatal): ${err.message}`);
+      return [] as DWCommunity[];
+    }),
     fetchShowcases(),
   ]);
 
-  const rawCount = communities.length;
+  const lookup = buildCommunityLookup(communities);
+  const rawCount = showcases.length;
 
   if (rawCount === 0) {
     throw new Error(
-      'David Weekley CommunityData returned zero communities (marketId stale?)',
+      'David Weekley ShowcaseData returned zero showcases (no inventory?)',
     );
   }
 
-  const aggregates = buildAggregates(plans, showcases);
-
   const rows: ScrapedDavidWeekleyRow[] = [];
   let skipped = 0;
-  for (const c of communities) {
-    const normalized = normalize(c, aggregates);
+  for (const sc of showcases) {
+    const normalized = normalize(sc, lookup);
     if (normalized) {
       rows.push(normalized);
     } else {

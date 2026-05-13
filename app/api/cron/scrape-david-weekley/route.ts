@@ -1,11 +1,14 @@
 // app/api/cron/scrape-david-weekley/route.ts
 //
 // Vercel Cron endpoint. Runs daily, fetches David Weekley Homes Austin
-// communities by enumerating their sitemap and parsing the JSON data blob
-// embedded in each community page, and upserts each into builder_inventory
-// keyed on (builder_name, external_id).
+// Quick Move-in inventory (showcases) from /Search/ShowcaseData and
+// upserts one row per home into builder_inventory, keyed on
+// (builder_name, external_id).
 //
 // Auth and upsert behavior identical to scrape-mi-homes / scrape-kb-home.
+//
+// S13: switched from per-community to per-home rows. Each showcase becomes
+// its own row with address, ready_date, plan_name, community_name.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchDavidWeekleyAustin } from '@/lib/scrapers/david-weekley';
@@ -13,9 +16,9 @@ import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Sitemap + up to ~8 community fetches = 9 sequential HTTP calls.
-// ~500ms each on happy path = ~4.5s. 60s gives headroom for Neon cold starts
-// and per-page parsing of the large data blobs.
+// Two parallel HTTP calls (CommunityData + ShowcaseData) ~1s each.
+// Plus 77 upserts at ~50ms each = ~4s. 60s gives headroom for Neon cold
+// starts and any individual upsert retry.
 export const maxDuration = 60;
 
 const SCRAPER_SUBMITTER_NAME = 'David Weekley Auto-Importer';
@@ -71,6 +74,12 @@ async function runScrape() {
         priceMax: row.priceMax,
         flyerPdfUrl: row.flyerPdfUrl,
         thumbnailUrl: row.thumbnailUrl,
+        // S13 per-home additions:
+        address: row.address,
+        readyDate: row.readyDate,
+        planName: row.planName,
+        communityName: row.communityName,
+        homeType: row.homeType,
       });
       if (result.created) inserted++;
       else updated++;
