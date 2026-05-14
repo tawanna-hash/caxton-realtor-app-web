@@ -52,12 +52,6 @@ export interface AdCampaign {
   creative: AdCreative;
 }
 
-export const PUBLICATION_LABELS: Record<AdPublication, string> = {
-  austin: 'RealtyLine (Austin)',
-  san_antonio: 'Newsline (SA)',
-  both: 'Both publications',
-};
-
 export const ZONE_LABELS: Record<AdZone, string> = {
   article: 'Article',
   feed: 'Feed',

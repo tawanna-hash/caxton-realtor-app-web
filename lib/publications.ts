@@ -73,3 +73,12 @@ export const PUBLICATION_FILTER_LABELS: Record<PublicationId, string> = {
   austin: 'RealtyLine',
   san_antonio: 'Newsline SA',
 };
+
+// Variant for surfaces that also support "both publications" scope.
+// Currently used by ads campaigns where a campaign can target one or both pubs.
+// (Builder inventory uses a different legacy scheme — see FOLLOW_UP #84.)
+export const PUBLICATION_LABELS_WITH_BOTH: Record<PublicationId | 'both', string> = {
+  austin: 'RealtyLine (Austin)',
+  san_antonio: 'Newsline (SA)',
+  both: 'Both publications',
+};

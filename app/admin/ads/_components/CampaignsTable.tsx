@@ -7,7 +7,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { adminApi } from '@/lib/admin-api';
 import type { AdCampaign } from './types';
-import { PUBLICATION_LABELS, campaignStatus } from './types';
+import { campaignStatus } from './types';
+import { PUBLICATION_LABELS_WITH_BOTH as PUBLICATION_LABELS } from '@/lib/publications';
 
 interface Props {
   campaigns: AdCampaign[];

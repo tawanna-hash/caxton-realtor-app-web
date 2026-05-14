@@ -12,7 +12,8 @@ import { CreativeUpload } from './CreativeUpload';
 import type {
   AdSpace, AdCreative, AdCampaign, AdPublication,
 } from './types';
-import { PUBLICATION_LABELS, ZONE_LABELS, formatSizes } from './types';
+import { ZONE_LABELS, formatSizes } from './types';
+import { PUBLICATION_LABELS_WITH_BOTH as PUBLICATION_LABELS } from '@/lib/publications';
 
 interface Props {
   initial?: AdCampaign;  // edit mode if present, create mode if not
