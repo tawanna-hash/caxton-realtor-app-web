@@ -2,6 +2,8 @@
 
 import { useMemo, useState, useSyncExternalStore } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { builderNameToSlug } from '@/lib/builder-slug';
 import type { BuilderInventoryRow, Kind, Publication } from '@/lib/builder-inventory';
 import InventoryCard from './InventoryCard';
 import FeaturedHero from './FeaturedHero';
@@ -87,9 +89,10 @@ export default function InventoryClient({ initialRows }: Props) {
     router.replace(qs ? `/inventory?${qs}` : '/inventory', { scroll: false });
   }
 
-  // Filter rows by pub + kind.
+  // Filter rows by pub + kind. Exclude community summaries — those live on /communities.
   const filteredRows = useMemo(() => {
     return initialRows.filter((r) => {
+      if (r.homeType === 'community') return false;
       if (r.publication !== pub && r.publication !== 'both') return false;
       if (activeKind !== 'all' && r.kind !== activeKind) return false;
       return true;
@@ -105,9 +108,29 @@ export default function InventoryClient({ initialRows }: Props) {
   const [featuredIdxRaw, setFeaturedIdxRaw] = useState(0);
   const featuredIdx = featured.length > 0 ? featuredIdxRaw % featured.length : 0;
 
+  // S13: derive unique builder list for the directional chip strip
+  const buildersForStrip = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of initialRows) set.add(r.builderName);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [initialRows]);
+
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
+        {/* S13: By-builder directional strip */}
+        {buildersForStrip.length > 0 && (
+          <div className="mb-4 -mx-4 sm:-mx-0">
+            <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-medium whitespace-nowrap pr-1">By Builder</span>
+              {buildersForStrip.map((b) => (
+                <Link key={b} href={`/builders/${builderNameToSlug(b)}`} className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-full">
+                  {b}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Header */}
         <div className="mb-6">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">

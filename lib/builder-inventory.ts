@@ -653,5 +653,18 @@ export async function upsertBuilderInventoryByExternalId(
     communityName: input.communityName ?? null,
     homeType: input.homeType ?? null,
   });
-  return { row: created, created: true };
+
+  // S13: Scraper-produced rows (external_id IS NOT NULL) auto-publish to
+  // 'active'. Human form submissions go through the moderation queue as
+  // 'pending'. Since this function is only called from scraper code paths,
+  // we flip the new row's status here.
+  await sql`
+    UPDATE builder_inventory
+    SET status = 'active',
+        reviewed_at = NOW(),
+        reviewed_by = 'system:scraper-trusted'
+    WHERE id = ${created.id}
+  `;
+  const activated = await getBuilderInventoryById(created.id);
+  return { row: activated ?? created, created: true };
 }
