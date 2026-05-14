@@ -196,6 +196,28 @@ export default function AdminInventoryDetail({ row }: Props) {
   }
 
   async function saveEdits() {
+    if (row.kind === 'listing') {
+      const violations: string[] = [];
+      const pairs: { label: string; min: string; max: string }[] = [
+        { label: 'Beds', min: edit.bedsMin, max: edit.bedsMax },
+        { label: 'Baths', min: edit.bathsMin, max: edit.bathsMax },
+        { label: 'Sqft', min: edit.sqftMin, max: edit.sqftMax },
+        { label: 'Price', min: edit.priceMin, max: edit.priceMax },
+      ];
+      for (const { label, min, max } of pairs) {
+        if (min.trim() === '' || max.trim() === '') continue;
+        const minN = Number(min);
+        const maxN = Number(max);
+        if (Number.isFinite(minN) && Number.isFinite(maxN) && minN > maxN) {
+          violations.push(`${label} min (${min}) must not exceed max (${max}).`);
+        }
+      }
+      if (violations.length > 0) {
+        setErrorMessage(violations.join(' '));
+        setSuccessMessage(null);
+        return;
+      }
+    }
     const body: Record<string, unknown> = {
       publication: edit.publication,
       builderName: edit.builderName.trim(),
