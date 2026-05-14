@@ -87,6 +87,12 @@ export default function AdminInventoryPage() {
                 {count != null && (
                   <span className="ml-2 text-xs text-gray-400">{count}</span>
                 )}
+                {t === 'pending' && !active && count != null && count > 0 && (
+                  <span
+                    aria-label={`${count} pending review`}
+                    className="ml-1.5 inline-block w-2 h-2 rounded-full bg-red-600 align-middle"
+                  />
+                )}
               </button>
             );
           })}
