@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { upload } from '@vercel/blob/client';
@@ -51,6 +51,36 @@ export default function AdminInventoryDetail({ row }: Props) {
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const [neighbors, setNeighbors] = useState<{ prevId: number | null; nextId: number | null }>({
+    prevId: null,
+    nextId: null,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/admin/inventory?status=${row.status}`, {
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const body = (await res.json()) as { rows: BuilderInventoryRow[] };
+        if (cancelled) return;
+        const idx = body.rows.findIndex((r) => r.id === row.id);
+        if (idx < 0) return;
+        setNeighbors({
+          prevId: idx > 0 ? body.rows[idx - 1].id : null,
+          nextId: idx < body.rows.length - 1 ? body.rows[idx + 1].id : null,
+        });
+      } catch {
+        // silent — non-critical UX
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [row.id, row.status]);
 
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [uploadingFlyer, setUploadingFlyer] = useState(false);
@@ -222,12 +252,37 @@ export default function AdminInventoryDetail({ row }: Props) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <Link
-        href="/admin/inventory"
-        className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mb-4"
-      >
-        ← Back to queue
-      </Link>
+      <div className="flex items-center justify-between mb-4">
+        <Link
+          href="/admin/inventory"
+          className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+        >
+          ← Back to queue
+        </Link>
+        <div className="flex items-center gap-3 text-sm">
+          {neighbors.prevId !== null ? (
+            <Link
+              href={`/admin/inventory/${neighbors.prevId}`}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              ← Prev
+            </Link>
+          ) : (
+            <span className="text-gray-300 cursor-not-allowed">← Prev</span>
+          )}
+          <span className="text-gray-300">|</span>
+          {neighbors.nextId !== null ? (
+            <Link
+              href={`/admin/inventory/${neighbors.nextId}`}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              Next →
+            </Link>
+          ) : (
+            <span className="text-gray-300 cursor-not-allowed">Next →</span>
+          )}
+        </div>
+      </div>
 
       <div className="mb-6">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
