@@ -16,7 +16,7 @@ const TAB_LABELS: Record<Tab, string> = {
 };
 
 export default function AdminInventoryPage() {
-  const [tab, setTab] = useState<Tab>('pending');
+  const [tab, setTab] = useState<Tab>('active');
   const [rows, setRows] = useState<BuilderInventoryRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [counts, setCounts] = useState<Record<Status, number> | null>(null);
