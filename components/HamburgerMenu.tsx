@@ -55,10 +55,14 @@ export default function HamburgerMenu({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-y-auto"
+      className="fixed inset-0 z-[60] overflow-y-auto"
       style={{ backgroundColor: info.color }}
     >
       <div className="sticky top-0 bg-black px-3 py-3 flex items-center justify-between border-b border-white/10 z-10">
+        <div className="w-10" />
+        <p className="text-sm uppercase tracking-[0.25em] text-white/50 font-medium">
+          HarmonyOne
+        </p>
         <button
           onClick={onClose}
           aria-label="Close menu"
@@ -68,10 +72,6 @@ export default function HamburgerMenu({
             <path d="M18 6 6 18M6 6l12 12"/>
           </svg>
         </button>
-        <p className="text-sm uppercase tracking-[0.25em] text-white/50 font-medium">
-          HarmonyOne
-        </p>
-        <div className="w-10" />
       </div>
 
       <div className="px-6 py-8 pb-32">
