@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
+import { PUBLICATIONS, PUBLICATION_LABELS } from '@/lib/publications';
 
 type Subscriber = {
   id: string;
@@ -37,11 +38,6 @@ type ListResponse = {
   total: number;
   totalPages: number;
   subscribers: Subscriber[];
-};
-
-const MARKET_LABEL: Record<string, string> = {
-  austin: 'RealtyLine (Austin)',
-  san_antonio: 'Newsline (SA)',
 };
 
 function formatDate(s: string | null) {
@@ -145,8 +141,9 @@ export default function SubscribersPage() {
           className="px-3 py-2 border border-gray-300 rounded text-sm text-gray-900"
         >
           <option value="">All markets</option>
-          <option value="austin">RealtyLine (Austin)</option>
-          <option value="san_antonio">Newsline (SA)</option>
+          {PUBLICATIONS.map((p) => (
+            <option key={p.id} value={p.id}>{p.label}</option>
+          ))}
         </select>
       </div>
 
@@ -177,7 +174,7 @@ export default function SubscribersPage() {
                   <tr key={s.id} onClick={() => router.push(`/admin/subscribers/${s.id}`)} className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
                     <td className="px-4 py-3 text-gray-900">{s.first_name} {s.last_name}</td>
                     <td className="px-4 py-3 text-gray-700">{s.email}</td>
-                    <td className="px-4 py-3 text-gray-600">{MARKET_LABEL[s.market] || s.market}</td>
+                    <td className="px-4 py-3 text-gray-600">{PUBLICATION_LABELS[s.market as keyof typeof PUBLICATION_LABELS] || s.market}</td>
                     <td className="px-4 py-3 text-gray-600">
                       {s.license_type === 'TREC' && s.trec_license_number ? `TREC ${s.trec_license_number}` :
                        s.license_type === 'NMLS' && s.nmls_license_number ? `NMLS ${s.nmls_license_number}` :
