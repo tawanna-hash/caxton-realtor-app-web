@@ -17,8 +17,6 @@
 
 export type PublicationId = 'austin' | 'san_antonio';
 
-export type PublicationScope = 'both' | 'austin' | 'san_antonio';
-
 export interface Publication {
   id: PublicationId;
   name: string;
@@ -61,14 +59,6 @@ export function getPublication(id: PublicationId): Publication {
   }
   return found;
 }
-
-// Scope labels for forms that ask "which publication(s) does this apply to?"
-// Used by Inventory review Publication dropdown and Campaigns form radio.
-export const PUBLICATION_SCOPE_LABELS: Record<PublicationScope, string> = {
-  both: 'Both publications',
-  austin: 'RealtyLine only',
-  san_antonio: 'Newsline only',
-};
 
 // Legacy compatibility shim: callers that previously had a local
 // PUB_LABELS or PUBLICATION_LABELS map keyed by id can use this directly.
