@@ -20,6 +20,8 @@ type AdminEvent = {
   editedAt: string | null;
 };
 
+type SortKey = 'title' | 'pub' | 'when' | 'source' | 'status';
+
 const PUB_LABELS: Record<string, string> = {
   austin: 'RealtyLine',
   san_antonio: 'Newsline SA',
@@ -56,6 +58,33 @@ export default function EventsPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'austin' | 'san_antonio'>('all');
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>('when');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sorted = [...items].sort((a, b) => {
+    const dir = sortDir === 'asc' ? 1 : -1;
+    switch (sortKey) {
+      case 'title': return a.title.localeCompare(b.title) * dir;
+      case 'pub': return a.publication.localeCompare(b.publication) * dir;
+      case 'when': {
+        const aT = a.startDate ? new Date(a.startDate).getTime() : 0;
+        const bT = b.startDate ? new Date(b.startDate).getTime() : 0;
+        return (aT - bT) * dir;
+      }
+      case 'source': return a.externalSource.localeCompare(b.externalSource) * dir;
+      case 'status': return (Number(a.hidden) - Number(b.hidden)) * dir;
+      default: return 0;
+    }
+  });
 
   const reload = () => {
     setLoading(true);
@@ -166,16 +195,16 @@ export default function EventsPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Title</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Pub</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">When</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Source</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Status</th>
+                <SortTh label="Title" k="title" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortTh label="Pub" k="pub" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortTh label="When" k="when" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortTh label="Source" k="source" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortTh label="Status" k="status" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                 <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {items.map((ev) => {
+              {sorted.map((ev) => {
                 const isManual = ev.externalSource === 'manual';
                 const hasEdits = ev.editedFields.length > 0;
                 return (
@@ -236,5 +265,33 @@ export default function EventsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function SortTh({
+  label,
+  k,
+  sortKey,
+  sortDir,
+  onSort,
+}: {
+  label: string;
+  k: SortKey;
+  sortKey: SortKey;
+  sortDir: 'asc' | 'desc';
+  onSort: (k: SortKey) => void;
+}) {
+  const active = sortKey === k;
+  return (
+    <th className="text-left px-4 py-3 font-medium text-gray-700">
+      <button
+        type="button"
+        onClick={() => onSort(k)}
+        className="inline-flex items-center gap-1 hover:text-gray-900"
+      >
+        {label}
+        {active && <span className="text-gray-500">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+      </button>
+    </th>
   );
 }
