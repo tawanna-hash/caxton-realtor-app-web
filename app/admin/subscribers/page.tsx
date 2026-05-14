@@ -112,7 +112,7 @@ export default function SubscribersPage() {
           disabled={exporting}
           className="bg-[#1a2a44] text-white px-4 py-2 text-sm font-medium hover:bg-[#243556] transition-colors disabled:opacity-50"
         >
-          {exporting ? 'Exporting...' : 'Export CSV (all)'}
+          {exporting ? 'Exporting...' : 'Export CSV'}
         </button>
       </div>
 
