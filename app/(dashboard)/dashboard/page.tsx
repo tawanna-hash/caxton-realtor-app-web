@@ -805,8 +805,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
   const pubAds = ADS.filter((a) => a.pub === pub);
   const CATS = pub === 'realtyline' ? RL_CATS : NS_CATS;
   const filt = cat === 'All' ? NEWS : NEWS.filter((n) => n.cat === cat);
-  const tOn = 'flex-1 py-4 text-sm font-medium uppercase tracking-[0.12em] text-center border-b-2 border-[#1a2a44] text-[#1a2a44]';
-  const tOff = 'flex-1 py-4 text-sm font-medium uppercase tracking-[0.12em] text-center text-gray-400 border-b-2 border-transparent';
+  const tOn = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full border border-[#1a2a44] bg-[#1a2a44] text-white';
+  const tOff = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full border border-gray-300 bg-white text-gray-700 hover:border-gray-500';
 
   const feed: { t: 'n' | 'a' | 'c' | 's' | 'e'; d?: any }[] = [];
   const isLoadingFirstFetch = newsLoading && liveNews === null;
@@ -938,10 +938,13 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
           <button onClick={() => window.location.reload()} className="text-sm text-amber-700 font-medium underline">Sign In</button>
         </div>
       )}
-      <div className="flex bg-white sticky top-0 z-10 border-b border-gray-200">
-        <button onClick={() => router.push('/communities')} className={tOff}>New Home Communities</button>
-        <button onClick={() => router.push('/inventory?kind=listing')} className={tOff}>Move-In Ready Homes</button>
-        <button onClick={() => router.push('/inventory?kind=promotion')} className={tOff}>REALTOR Promos</button>
+      <div className="bg-white sticky top-0 z-10 border-b border-gray-200 px-4 py-4">
+        <h2 className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">Builder / Developer Advertisers</h2>
+        <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <button onClick={() => router.push('/communities')} className={tOff}>New Home Communities</button>
+          <button onClick={() => router.push('/inventory?kind=listing')} className={tOff}>Move-in Ready Homes</button>
+          <button onClick={() => router.push('/inventory?kind=promotion')} className={tOff}>Promotions</button>
+        </div>
       </div>
       {tab === 'n' && (
         <div>

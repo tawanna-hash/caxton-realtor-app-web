@@ -85,8 +85,8 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
     tab === 'moveIn' ? moveIn :
     promos;
 
-  const tOn = 'flex-1 py-3 text-sm font-medium text-center border-b-2 border-[#1a2a44] text-[#1a2a44] uppercase tracking-wider';
-  const tOff = 'flex-1 py-3 text-sm font-medium text-center border-b-2 border-transparent text-gray-500 uppercase tracking-wider';
+  const tOn = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full border border-[#1a2a44] bg-[#1a2a44] text-white';
+  const tOff = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full border border-gray-300 bg-white text-gray-700 hover:border-gray-500';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -113,17 +113,19 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
         </p>
       </div>
 
-      {/* Mini-tabs */}
-      <div className="flex bg-white sticky top-0 z-10 border-b border-gray-200">
-        <button onClick={() => setTab('communities')} className={tab === 'communities' ? tOn : tOff}>
-          Communities
-        </button>
-        <button onClick={() => setTab('moveIn')} className={tab === 'moveIn' ? tOn : tOff}>
-          Move-In Ready
-        </button>
-        <button onClick={() => setTab('promos')} className={tab === 'promos' ? tOn : tOff}>
-          Promos
-        </button>
+      {/* Mini-tabs (pills) */}
+      <div className="bg-white sticky top-0 z-10 border-b border-gray-200 px-4 py-3">
+        <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <button onClick={() => setTab('communities')} className={tab === 'communities' ? tOn : tOff}>
+            New Home Communities
+          </button>
+          <button onClick={() => setTab('moveIn')} className={tab === 'moveIn' ? tOn : tOff}>
+            Move-in Ready Homes
+          </button>
+          <button onClick={() => setTab('promos')} className={tab === 'promos' ? tOn : tOff}>
+            Promotions
+          </button>
+        </div>
       </div>
 
       {/* List */}

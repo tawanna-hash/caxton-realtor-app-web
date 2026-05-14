@@ -138,7 +138,7 @@ export default function CommunitiesClient({ initialRows }: Props) {
                 ({rows.length})
               </span>
             </h2>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
               {rows.map((row) => (
                 <InventoryCard key={row.id} row={row} />
               ))}
