@@ -234,9 +234,9 @@ export default function AdminInventoryDetail({ row }: Props) {
           Admin · Review submission
         </p>
         <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
-          {row.builderName}
+          {row.title}
         </h1>
-        <p className="text-lg text-gray-700 font-light mt-1">{row.title}</p>
+        <p className="text-lg text-gray-700 font-light mt-1">{row.builderName}</p>
       </div>
 
       {errorMessage && (
