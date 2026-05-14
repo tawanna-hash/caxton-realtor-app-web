@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
+import {
+  PUBLICATION_FILTER_LABELS,
+  type PublicationId,
+} from '@/lib/publications';
 
 type AdminEvent = {
   id: number;
@@ -22,12 +26,7 @@ type AdminEvent = {
 
 type SortKey = 'title' | 'pub' | 'when' | 'source' | 'status';
 
-const PUB_LABELS: Record<string, string> = {
-  austin: 'RealtyLine',
-  san_antonio: 'Newsline SA',
-};
-
-const PUB_STYLES: Record<string, string> = {
+const PUB_STYLES: Record<PublicationId, string> = {
   austin: 'bg-[#021D40]/10 text-[#021D40] border-[#021D40]/20',
   san_antonio: 'bg-[#3D0740]/10 text-[#3D0740] border-[#3D0740]/20',
 };
@@ -221,7 +220,7 @@ export default function EventsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded border ${PUB_STYLES[ev.publication] || ''}`}>
-                        {PUB_LABELS[ev.publication] || ev.publication}
+                        {PUBLICATION_FILTER_LABELS[ev.publication] || ev.publication}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
