@@ -76,11 +76,16 @@ export default function SubscribersPage() {
       });
   }, [admin, page, pageSize, market, q]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPage(1);
-    setQ(qInput.trim());
-  };
+  // Debounce: live-update committed query 300ms after user stops typing.
+  useEffect(() => {
+    const trimmed = qInput.trim();
+    if (trimmed === q) return;
+    const handle = setTimeout(() => {
+      setPage(1);
+      setQ(trimmed);
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [qInput, q]);
 
   const handleExport = async () => {
     setExporting(true);
@@ -116,7 +121,7 @@ export default function SubscribersPage() {
       </div>
 
       <div className="bg-white border border-gray-200 rounded p-4 mb-4 flex items-center gap-3">
-        <form onSubmit={handleSearch} className="flex items-center gap-2 flex-1">
+        <div className="flex items-center gap-2 flex-1">
           <input
             type="text"
             value={qInput}
@@ -124,9 +129,6 @@ export default function SubscribersPage() {
             placeholder="Search email or name..."
             className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
           />
-          <button type="submit" className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-sm rounded text-gray-700">
-            Search
-          </button>
           {q && (
             <button
               type="button"
