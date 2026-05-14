@@ -203,9 +203,9 @@ export default function EventsPage() {
                     </td>
                     <td className="px-4 py-3">
                       {ev.hidden ? (
-                        <span className="text-xs text-gray-500">Hidden</span>
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">Hidden</span>
                       ) : (
-                        <span className="text-xs text-green-700">Visible</span>
+                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Visible</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
