@@ -88,46 +88,48 @@ export default function CommunitiesClient({ initialRows }: Props) {
   }, [initialRows]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      {/* S13: By-builder directional strip */}
-      {buildersForStrip.length > 0 && (
-        <div className="bg-white border-b border-gray-200">
-          <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-            <span className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-medium whitespace-nowrap pr-1">By Builder</span>
-            {buildersForStrip.map((b) => (
-              <Link key={b} href={`/builders/${builderNameToSlug(b)}`} className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-full">
-                {b}
-              </Link>
-            ))}
+    <main className="min-h-screen bg-white">
+      <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
+        {/* S13: By-builder directional strip */}
+        {buildersForStrip.length > 0 && (
+          <div className="mb-4 -mx-4 sm:-mx-0">
+            <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-medium whitespace-nowrap pr-1">By Builder</span>
+              {buildersForStrip.map((b) => (
+                <Link key={b} href={`/builders/${builderNameToSlug(b)}`} className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-full">
+                  {b}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-      <div className="bg-white border-b border-gray-200 px-4 py-6">
-        <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium">
-          {PUB_LABEL[pub]}
-        </p>
-        <h1 className="text-2xl font-light text-gray-900 mt-1">
-          Builder &amp; Developer Communities
-        </h1>
-        <p className="text-sm text-gray-500 mt-2 font-light">
-          {filtered.length} {filtered.length === 1 ? 'community' : 'communities'} from{' '}
-          {byBuilder.length} {byBuilder.length === 1 ? 'builder' : 'builders'}.
-          {' '}For specific move-in-ready homes, see Builder Inventory.
-        </p>
-      </div>
+        )}
 
-      {/* Empty state */}
-      {filtered.length === 0 && (
-        <div className="px-4 py-20 text-center">
-          <p className="text-gray-500 font-light">
-            No communities to show for {PUB_LABEL[pub]}.
+        {/* Header */}
+        <div className="mb-6">
+          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
+            {PUB_LABEL[pub]} · Builders &amp; Developers
+          </p>
+          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mb-3">
+            New Home Communities
+          </h1>
+          <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
+            {filtered.length} {filtered.length === 1 ? 'community' : 'communities'} from{' '}
+            {byBuilder.length} {byBuilder.length === 1 ? 'builder' : 'builders'}.
+            {' '}For specific move-in-ready homes, see Builder Inventory.
           </p>
         </div>
-      )}
 
-      {/* Grouped by builder */}
-      <div className="px-4 py-4 space-y-8">
+        {/* Empty state */}
+        {filtered.length === 0 && (
+          <div className="py-20 text-center">
+            <p className="text-gray-500 font-light">
+              No communities to show for {PUB_LABEL[pub]}.
+            </p>
+          </div>
+        )}
+
+        {/* Grouped by builder */}
+        <div className="space-y-8">
         {byBuilder.map(([builder, rows]) => (
           <section key={builder}>
             <h2 className="text-sm uppercase tracking-[0.2em] text-gray-700 font-medium mb-3">
@@ -143,7 +145,8 @@ export default function CommunitiesClient({ initialRows }: Props) {
             </div>
           </section>
         ))}
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
