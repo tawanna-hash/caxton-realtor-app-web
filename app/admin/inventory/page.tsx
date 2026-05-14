@@ -106,7 +106,7 @@ export default function AdminInventoryPage() {
         )}
 
         {rows != null && rows.length === 0 && !error && (
-          <EmptyState tab={tab} />
+          <EmptyState tab={tab} onSwitchTab={setTab} />
         )}
 
         {rows != null && rows.length > 0 && (
@@ -182,15 +182,29 @@ export default function AdminInventoryPage() {
   );
 }
 
-function EmptyState({ tab }: { tab: Tab }) {
+function EmptyState({ tab, onSwitchTab }: { tab: Tab; onSwitchTab: (t: Tab) => void }) {
   const messages: Record<Tab, string> = {
     pending: 'No submissions waiting for review.',
     active: 'No active submissions yet.',
     rejected: 'No rejected submissions.',
   };
+  const cta: Partial<Record<Tab, { label: string; target: Tab }>> = {
+    pending: { label: 'View active submissions →', target: 'active' },
+    rejected: { label: 'View active submissions →', target: 'active' },
+  };
+  const action = cta[tab];
   return (
     <div className="bg-white border border-gray-200 rounded-md p-12 text-center">
-      <p className="text-gray-500 font-light">{messages[tab]}</p>
+      <p className="text-gray-500 font-light mb-4">{messages[tab]}</p>
+      {action && (
+        <button
+          type="button"
+          onClick={() => onSwitchTab(action.target)}
+          className="text-sm font-medium text-[#1a2a44] underline"
+        >
+          {action.label}
+        </button>
+      )}
     </div>
   );
 }
