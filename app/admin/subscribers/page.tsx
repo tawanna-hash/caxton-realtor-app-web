@@ -138,7 +138,7 @@ export default function SubscribersPage() {
               Clear
             </button>
           )}
-        </form>
+        </div>
         <select
           value={market}
           onChange={(e) => { setMarket(e.target.value as any); setPage(1); }}
