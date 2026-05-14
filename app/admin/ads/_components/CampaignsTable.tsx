@@ -16,6 +16,20 @@ interface Props {
 
 type SortKey = 'advertiser' | 'slot' | 'start' | 'end' | 'price' | 'status';
 
+// Format an ISO date string (e.g. "2026-05-09T00:00:00.000Z") as "May 9, 2026".
+// Returns the original string if parsing fails.
+function fmtDate(iso: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
 export function CampaignsTable({ campaigns, onChange }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('start');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -101,8 +115,8 @@ export function CampaignsTable({ campaigns, onChange }: Props) {
                 <td className="px-3 py-2 text-gray-900 font-medium">{c.advertiser_name}</td>
                 <td className="px-3 py-2 text-gray-700">{c.ad_space.display_name}</td>
                 <td className="px-3 py-2 text-gray-700 text-xs">{PUBLICATION_LABELS[c.publication]}</td>
-                <td className="px-3 py-2 text-gray-700 font-mono text-xs">{c.start_date}</td>
-                <td className="px-3 py-2 text-gray-700 font-mono text-xs">{c.end_date}</td>
+                <td className="px-3 py-2 text-gray-700 text-xs whitespace-nowrap">{fmtDate(c.start_date)}</td>
+                <td className="px-3 py-2 text-gray-700 text-xs whitespace-nowrap">{fmtDate(c.end_date)}</td>
                 <td className="px-3 py-2">
                   <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${status.className}`}>
                     {status.label}
