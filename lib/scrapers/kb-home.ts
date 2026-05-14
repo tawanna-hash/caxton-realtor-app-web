@@ -77,6 +77,7 @@ export type ScrapedKBHomeRow = {
   priceMin: number | null;
   priceMax: number | null;
   thumbnailUrl: string | null;
+  galleryUrls: string[] | null;
   flyerPdfUrl: string | null;
 };
 
@@ -205,11 +206,57 @@ function parseCommunityPage(
     $('meta[name="description"]').attr('content'),
   );
 
-  // og:image is absolute and uses ?preset=large. Some pages also have a
-  // relative <meta itemprop="image"> later in <body>; we prefer the head
-  // og:image since it's the hero used for sharing.
-  const thumbnailUrl =
-    $('meta[property="og:image"]').attr('content')?.trim() || null;
+  // KB ships a broken og:image — they concatenate the COMMUNITY page URL
+  // with the relative image path, producing URLs like
+  //   https://www.kbhome.com/new-homes-austin/{slug}/globalassets/images/...
+  // which 404 on their CDN. The real image lives at
+  //   https://www.kbhome.com/globalassets/images/...
+  // So we sanitize by stripping the /new-homes-austin/{slug}/ segment.
+  // We also collect ALL hero <img> tags as a gallery for visual variety
+  // across cards from the same community URL (KB sells multiple
+  // collections under one community page, e.g. Watermill Heritage/Hallmark/
+  // Classic — all share the same og:image otherwise).
+  const sanitizeKBUrl = (u: string | undefined): string | null => {
+    if (!u) return null;
+    const trimmed = u.trim();
+    if (!trimmed) return null;
+    // Strip /new-homes-austin/{anything-but-slash}/ before /globalassets/
+    return trimmed.replace(
+      /^https:\/\/www\.kbhome\.com\/new-homes-austin\/[^\/]+\/globalassets\//,
+      'https://www.kbhome.com/globalassets/',
+    );
+  };
+
+  const thumbnailUrl = sanitizeKBUrl(
+    $('meta[property="og:image"]').attr('content'),
+  );
+
+  // Gallery: every <img> within <section class="container hero">. Resolve
+  // relative paths against the bare domain (NOT the community URL — same
+  // bug class as og:image).
+  const galleryUrlsRaw: string[] = [];
+  $('section.container.hero img').each((_, el) => {
+    const rawSrc = $(el).attr('src')?.trim();
+    if (!rawSrc) return;
+    let abs: string;
+    if (rawSrc.startsWith('http://') || rawSrc.startsWith('https://')) {
+      abs = rawSrc;
+    } else if (rawSrc.startsWith('/')) {
+      abs = 'https://www.kbhome.com' + rawSrc;
+    } else {
+      return; // skip data: URIs and anything weird
+    }
+    // Only keep KB CDN images (filter chat-widget icons, etc.)
+    if (!abs.includes('/globalassets/')) return;
+    // Sanitize defensively in case any embed has the same path bug
+    const clean = sanitizeKBUrl(abs) || abs;
+    if (!galleryUrlsRaw.includes(clean)) galleryUrlsRaw.push(clean);
+  });
+  // Prepend thumbnail to gallery (de-duped) so it's index 0
+  if (thumbnailUrl && !galleryUrlsRaw.includes(thumbnailUrl)) {
+    galleryUrlsRaw.unshift(thumbnailUrl);
+  }
+  const galleryUrls = galleryUrlsRaw.length > 0 ? galleryUrlsRaw : null;
 
   // Each plan in a community renders as:
   //   <div class="price-item">
@@ -242,6 +289,7 @@ function parseCommunityPage(
     priceMin,
     priceMax,
     thumbnailUrl,
+    galleryUrls,
     flyerPdfUrl: url, // same hack as M/I: "View flyer" → community page URL
   };
 }

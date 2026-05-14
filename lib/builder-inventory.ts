@@ -79,6 +79,8 @@ export type BuilderInventoryRow = {
   planName: string | null;
   communityName: string | null;
   homeType: HomeType | null;
+  // S13 gallery (KB Home multi-image rotation):
+  galleryUrls: string[] | null;
 };
 
 export type CreateBuilderInventoryInput = {
@@ -114,6 +116,8 @@ export type CreateBuilderInventoryInput = {
   planName?: string | null;
   communityName?: string | null;
   homeType?: HomeType | null;
+  // S13 gallery:
+  galleryUrls?: string[] | null;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -255,6 +259,17 @@ const MIGRATIONS: Migration[] = [
                 WHERE community_name IS NOT NULL`;
     },
   },
+  {
+    name: '2026_05_13__add_gallery_urls',
+    up: async () => {
+      // S13: multi-image gallery for visual variety on cards.
+      // KB Home sells multiple collections under one community URL — they
+      // all share og:image, so we collect every hero <img> as a gallery
+      // and pick a different one per card via deterministic hash.
+      await sql`ALTER TABLE builder_inventory
+                ADD COLUMN IF NOT EXISTS gallery_urls TEXT[]`;
+    },
+  },
 ];
 
 // Per-process cache: "the current MIGRATIONS array is fully applied in the DB."
@@ -336,6 +351,7 @@ function rowToBuilderInventoryRow(r: Record<string, unknown>): BuilderInventoryR
     planName: (r.plan_name as string) ?? null,
     communityName: (r.community_name as string) ?? null,
     homeType: (r.home_type as HomeType) ?? null,
+    galleryUrls: (r.gallery_urls as string[]) ?? null,
   };
 }
 
@@ -355,7 +371,8 @@ export async function createBuilderInventory(
       flyer_pdf_url, thumbnail_url,
       source_ip, user_agent,
       external_id,
-      address, ready_date, plan_name, community_name, home_type
+      address, ready_date, plan_name, community_name, home_type,
+      gallery_urls
     ) VALUES (
       ${input.kind}, ${input.publication},
       ${input.submittedByName}, ${input.submittedByEmail}, ${input.submittedByPhone ?? null},
@@ -368,7 +385,8 @@ export async function createBuilderInventory(
       ${input.externalId ?? null},
       ${input.address ?? null}, ${input.readyDate ?? null},
       ${input.planName ?? null}, ${input.communityName ?? null},
-      ${input.homeType ?? null}
+${input.homeType ?? null},
+      ${(input.galleryUrls ?? null) as string[] | null}
     )
     RETURNING *
   `) as Record<string, unknown>[];
@@ -474,6 +492,8 @@ export type UpdateBuilderInventoryInput = {
   planName?: string | null;
   communityName?: string | null;
   homeType?: HomeType | null;
+  // S13 gallery:
+  galleryUrls?: string[] | null;
 };
 
 export async function updateBuilderInventory(
@@ -526,7 +546,8 @@ export async function updateBuilderInventory(
       ready_date     = ${m.readyDate},
       plan_name      = ${m.planName},
       community_name = ${m.communityName},
-      home_type      = ${m.homeType}
+      home_type      = ${m.homeType},
+      gallery_urls   = ${(m.galleryUrls ?? null) as string[] | null}
     WHERE id = ${id}
     RETURNING *
   `) as Record<string, unknown>[];
@@ -573,6 +594,8 @@ export type UpsertScrapedInput = {
   planName?: string | null;
   communityName?: string | null;
   homeType?: HomeType | null;
+  // S13 gallery:
+  galleryUrls?: string[] | null;
 };
 
 /**
@@ -618,6 +641,7 @@ export async function upsertBuilderInventoryByExternalId(
       planName: input.planName ?? null,
       communityName: input.communityName ?? null,
       homeType: input.homeType ?? null,
+      galleryUrls: input.galleryUrls ?? null,
     });
     if (!updated) {
       throw new Error(`Upsert: row ${existingRow.id} vanished mid-update`);
@@ -652,6 +676,7 @@ export async function upsertBuilderInventoryByExternalId(
     planName: input.planName ?? null,
     communityName: input.communityName ?? null,
     homeType: input.homeType ?? null,
+    galleryUrls: input.galleryUrls ?? null,
   });
 
   // S13: Scraper-produced rows (external_id IS NOT NULL) auto-publish to

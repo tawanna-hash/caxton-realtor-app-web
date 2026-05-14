@@ -83,6 +83,7 @@ async function runScrape() {
         priceMax: row.priceMax,
         flyerPdfUrl: row.flyerPdfUrl,
         thumbnailUrl: row.thumbnailUrl,
+        galleryUrls: row.galleryUrls,
       });
       if (result.created) inserted++;
       else updated++;
