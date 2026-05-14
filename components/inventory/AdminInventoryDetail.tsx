@@ -413,6 +413,26 @@ export default function AdminInventoryDetail({ row }: Props) {
             <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-3">
               Status
             </h2>
+            {row.status === 'pending' && (
+              <div className="mb-4 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => changeStatus('active')}
+                  disabled={busy}
+                  className="px-4 py-3 text-sm font-semibold border-2 border-green-700 bg-green-700 text-white hover:bg-green-800 hover:border-green-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  &#10003; Approve
+                </button>
+                <button
+                  type="button"
+                  onClick={() => changeStatus('rejected')}
+                  disabled={busy}
+                  className="px-4 py-3 text-sm font-semibold border-2 border-red-700 bg-white text-red-700 hover:bg-red-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  &#10007; Reject
+                </button>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               {STATUS_BUTTONS.map((btn) => {
                 const isActive = row.status === btn.value;
