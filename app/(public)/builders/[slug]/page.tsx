@@ -7,7 +7,7 @@
 
 import { notFound } from 'next/navigation';
 import { listBuilderInventory } from '@/lib/builder-inventory';
-import { slugToBuilderName } from '@/lib/builder-slug';
+import { slugToBuilderName } from '@/lib/builder-slug-server';
 import BuilderPageClient from '@/components/builders/BuilderPageClient';
 
 export const dynamic = 'force-dynamic';
