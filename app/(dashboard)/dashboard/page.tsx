@@ -865,13 +865,13 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
         </button>
       </div>
       {menuOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto" style={{ ...SW, backgroundColor: info.color }}>
+        <div className="fixed inset-0 z-[60] overflow-y-auto" style={{ ...SW, backgroundColor: info.color }}>
           <div className="sticky top-0 bg-black px-3 py-3 flex items-center justify-between border-b border-white/10 z-10">
+            <div className="w-10" />
+            <p className="text-sm uppercase tracking-[0.25em] text-white/50 font-medium">Caxton Publications, Inc.</p>
             <button onClick={() => setMenuOpen(false)} aria-label="Close menu" className="text-white p-2">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
-            <p className="text-sm uppercase tracking-[0.25em] text-white/50 font-medium">Caxton Publications, Inc.</p>
-            <div className="w-10" />
           </div>
           <div className="px-6 py-8 pb-32">
             <button onClick={() => { trackEvent('publication_switch_clicked'); setMenuOpen(false); handleSwitch(); }} className="w-full flex items-center justify-between border border-white/30 px-4 py-3.5 text-white text-sm uppercase tracking-wider font-medium mb-10">
