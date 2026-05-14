@@ -56,13 +56,19 @@ function formatExpires(iso: string | null): string | null {
 // based on row.id. Same card always shows the same image (no flicker on
 // re-render), different cards get different images. Falls back to
 // thumbnailUrl when gallery_urls is null/empty (DW, M/I, Giddens).
-function pickCardImage(row: { id: number; thumbnailUrl: string | null; galleryUrls: string[] | null }): string | null {
+function pickCardImage(row: { id: number; externalId: string | null; thumbnailUrl: string | null; galleryUrls: string[] | null }): string | null {
   const gallery = row.galleryUrls;
   if (gallery && gallery.length >= 2) {
-    // Simple djb2-ish hash of the numeric id, modulo gallery length.
-    // Deterministic + stable across renders + spreads cards from the same
-    // community across different gallery slots.
-    const idx = Math.abs(row.id * 2654435761) % gallery.length;
+    // djb2 hash of externalId (string) — much better distribution than
+    // hashing the sequential numeric id, which can collide for cards
+    // created in sequence (e.g., Watermill Heritage/Hallmark/Classic).
+    // Falls back to id-based hash when externalId is null (legacy rows).
+    const key = row.externalId ?? String(row.id);
+    let h = 5381;
+    for (let i = 0; i < key.length; i++) {
+      h = ((h << 5) + h + key.charCodeAt(i)) | 0;
+    }
+    const idx = Math.abs(h) % gallery.length;
     return gallery[idx] ?? gallery[0] ?? row.thumbnailUrl;
   }
   return row.thumbnailUrl;

@@ -84,6 +84,7 @@ async function runScrape() {
         flyerPdfUrl: row.flyerPdfUrl,
         thumbnailUrl: row.thumbnailUrl,
         galleryUrls: row.galleryUrls,
+        homeType: 'community',
       });
       if (result.created) inserted++;
       else updated++;
