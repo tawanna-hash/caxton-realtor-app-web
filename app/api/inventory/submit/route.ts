@@ -25,6 +25,23 @@ export const maxDuration = 30; // seconds — covers the PDF upload + DB inserts
 
 const NOTIFY_TO = process.env.INVENTORY_NOTIFY_TO || 'tawanna@myrealtyline.com';
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
+const MAX_IMG_BYTES = 10 * 1024 * 1024;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
+const ADMIN_EMAIL = 'admin:tawanna@myrealtyline.com';
+
+async function verifyAdmin(cookieHeader: string | null): Promise<boolean> {
+  if (!cookieHeader) return false;
+  try {
+    const r = await fetch(`${API_URL}/admin/auth/me`, {
+      method: 'GET',
+      headers: { cookie: cookieHeader },
+      cache: 'no-store',
+    });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
 
 function readStr(fd: FormData, key: string): string | null {
   const v = fd.get(key);
@@ -50,6 +67,20 @@ function readFloat(fd: FormData, key: string): number | null {
 export async function POST(req: NextRequest) {
   try {
     const fd = await req.formData();
+
+    // Admin mode: gated by cookie auth, allows image-only promotions
+    // and bypasses the pending queue (auto-active on insert).
+    const isAdminMode = readStr(fd, 'mode') === 'admin';
+    if (isAdminMode) {
+      const cookieHeader = req.headers.get('cookie');
+      const ok = await verifyAdmin(cookieHeader);
+      if (!ok) {
+        return NextResponse.json(
+          { ok: false, error: 'Admin authentication required.' },
+          { status: 403 },
+        );
+      }
+    }
 
     // Parse + validate required fields
     const kind = readStr(fd, 'kind') as Kind | null;
@@ -108,35 +139,64 @@ export async function POST(req: NextRequest) {
       promoType = pt;
     }
 
-    // PDF
+    // PDF — required in public mode, optional in admin mode
     const pdfEntry = fd.get('flyerPdf');
-    if (!(pdfEntry instanceof Blob)) {
-      return NextResponse.json(
-        { ok: false, error: 'Flyer PDF is required.' },
-        { status: 400 },
-      );
+    const hasPdf = pdfEntry instanceof Blob && pdfEntry.size > 0;
+    if (!isAdminMode) {
+      if (!(pdfEntry instanceof Blob)) {
+        return NextResponse.json(
+          { ok: false, error: 'Flyer PDF is required.' },
+          { status: 400 },
+        );
+      }
+      if (pdfEntry.size === 0) {
+        return NextResponse.json(
+          { ok: false, error: 'Flyer PDF is empty.' },
+          { status: 400 },
+        );
+      }
     }
-    if (pdfEntry.size === 0) {
-      return NextResponse.json(
-        { ok: false, error: 'Flyer PDF is empty.' },
-        { status: 400 },
-      );
-    }
-    if (pdfEntry.size > MAX_PDF_BYTES) {
-      return NextResponse.json(
-        { ok: false, error: 'Flyer PDF exceeds 25 MB.' },
-        { status: 400 },
-      );
-    }
-    if (pdfEntry.type !== 'application/pdf') {
-      return NextResponse.json(
-        { ok: false, error: 'Flyer must be a PDF.' },
-        { status: 400 },
-      );
+    if (hasPdf) {
+      if (pdfEntry.size > MAX_PDF_BYTES) {
+        return NextResponse.json(
+          { ok: false, error: 'Flyer PDF exceeds 25 MB.' },
+          { status: 400 },
+        );
+      }
+      if (pdfEntry.type !== 'application/pdf') {
+        return NextResponse.json(
+          { ok: false, error: 'Flyer must be a PDF.' },
+          { status: 400 },
+        );
+      }
     }
 
-    // Upload PDF to Vercel Blob
-    // Path scheme: inventory-flyers/<timestamp>-<random>.pdf
+    // Image — admin-only field. Accepted formats: jpg, png, webp.
+    const imgEntry = fd.get('image');
+    const hasImg = imgEntry instanceof Blob && imgEntry.size > 0;
+    if (isAdminMode && !hasPdf && !hasImg) {
+      return NextResponse.json(
+        { ok: false, error: 'Admin submissions require either an image or a PDF.' },
+        { status: 400 },
+      );
+    }
+    if (hasImg) {
+      if (imgEntry.size > MAX_IMG_BYTES) {
+        return NextResponse.json(
+          { ok: false, error: 'Image exceeds 10 MB.' },
+          { status: 400 },
+        );
+      }
+      const validImgTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!validImgTypes.includes(imgEntry.type)) {
+        return NextResponse.json(
+          { ok: false, error: 'Image must be jpg, png, or webp.' },
+          { status: 400 },
+        );
+      }
+    }
+
+    // Upload media to Vercel Blob (PDF and/or image, depending on mode)
     const ts = Date.now();
     const rand = Math.random().toString(36).slice(2, 10);
     const safeBuilderSlug = required
@@ -145,12 +205,27 @@ export async function POST(req: NextRequest) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '')
       .slice(0, 40);
-    const blobPath = `inventory-flyers/${ts}-${rand}-${safeBuilderSlug}.pdf`;
 
-    const blob = await put(blobPath, pdfEntry, {
-      access: 'public',
-      contentType: 'application/pdf',
-    });
+    let pdfUrl: string | null = null;
+    if (hasPdf) {
+      const pdfBlobPath = `inventory-flyers/${ts}-${rand}-${safeBuilderSlug}.pdf`;
+      const pdfBlob = await put(pdfBlobPath, pdfEntry, {
+        access: 'public',
+        contentType: 'application/pdf',
+      });
+      pdfUrl = pdfBlob.url;
+    }
+
+    let imgUrl: string | null = null;
+    if (hasImg) {
+      const ext = imgEntry.type === 'image/png' ? 'png' : imgEntry.type === 'image/webp' ? 'webp' : 'jpg';
+      const imgBlobPath = `inventory-thumbs/${ts}-${rand}-${safeBuilderSlug}.${ext}`;
+      const imgBlob = await put(imgBlobPath, imgEntry, {
+        access: 'public',
+        contentType: imgEntry.type,
+      });
+      imgUrl = imgBlob.url;
+    }
 
     // Build CreateBuilderInventoryInput
     const sourceIp =
@@ -180,8 +255,8 @@ export async function POST(req: NextRequest) {
       priceMax: kind === 'listing' ? readInt(fd, 'priceMax') : null,
       promoType,
       expiresAt: kind === 'promotion' ? readStr(fd, 'expiresAt') : null,
-      flyerPdfUrl: blob.url,
-      thumbnailUrl: null,
+      flyerPdfUrl: pdfUrl,
+      thumbnailUrl: imgUrl,
       sourceIp,
       userAgent,
     };
@@ -189,11 +264,25 @@ export async function POST(req: NextRequest) {
     // INSERT inventory row
     const row = await createBuilderInventory(input);
 
-    // INSERT thumbnail job
+    // Admin mode: immediately mark active + skip queue / email / thumb job
+    if (isAdminMode) {
+      await ensureBuilderInventorySchema();
+      await sql`
+        UPDATE builder_inventory
+        SET status = 'active',
+            reviewed_by = ${ADMIN_EMAIL},
+            reviewed_at = NOW(),
+            updated_at = NOW()
+        WHERE id = ${row.id}
+      `;
+      return NextResponse.json({ ok: true, id: row.id });
+    }
+
+    // Public mode: enqueue thumbnail extraction job
     await ensureBuilderInventorySchema();
     await sql`
       INSERT INTO thumbnail_jobs (inventory_id, pdf_url)
-      VALUES (${row.id}, ${blob.url})
+      VALUES (${row.id}, ${pdfUrl})
     `;
 
     // Send admin notification email (best-effort; failure does not roll back)
@@ -211,7 +300,7 @@ export async function POST(req: NextRequest) {
 <p style="margin: 0 0 8px; font-size: 14px;"><strong>Submitter:</strong> ${escape(row.submittedByName)} &lt;${escape(row.submittedByEmail)}&gt;</p>
 ${row.submittedByPhone ? `<p style="margin: 0 0 8px; font-size: 14px;"><strong>Phone:</strong> ${escape(row.submittedByPhone)}</p>` : ''}
 ${row.description ? `<p style="margin: 16px 0 8px; font-size: 14px;"><strong>Description:</strong></p><p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5;">${escape(row.description)}</p>` : ''}
-<p style="margin: 20px 0 8px;"><a href="${escape(blob.url)}" style="color: #185FA5; font-weight: 500;">View flyer PDF →</a></p>
+<p style="margin: 20px 0 8px;"><a href="${escape(pdfUrl ?? '')}" style="color: #185FA5; font-weight: 500;">View flyer PDF →</a></p>
 <p style="margin: 24px 0 0; font-size: 13px; color: #6b7280;">Review at <a href="https://app.myrealtyline.com/admin/inventory" style="color: #185FA5;">/admin/inventory</a></p>
 </body></html>`;
 
