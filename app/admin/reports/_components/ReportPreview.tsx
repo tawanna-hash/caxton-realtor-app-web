@@ -114,9 +114,8 @@ export function buildReportHtml(report: ArticleReport, overrides: ReportOverride
 
     <hr style=\"border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;\" />
     <p style=\"margin: 0; font-size: 11px; color: #9ca3af; line-height: 1.5;\">
-      ${brand.pub_display} • ${brand.tagline}<br/>
-      © ${new Date().getFullYear()} Caxton Publications Inc<br/>
-      Report generated ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+      ${brand.pub_display} • © ${new Date().getFullYear()} Caxton Publications Inc<br/>
+      ${brand.tagline} • Report generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
     </p>
   </div>
 </div>`.trim();
@@ -162,9 +161,8 @@ Time on article:
   Average ${avgTime} across ${report.sessions_with_time.toLocaleString()} ${pluralize(report.sessions_with_time, 'session')}
 
 ${report.net_saves !== 0 ? `Saves: ${report.saves.toLocaleString()} saves, ${report.unsaves.toLocaleString()} unsaves (net ${report.net_saves.toLocaleString()})\n\n` : ''}---
-${brand.pub_display} • ${brand.tagline}
-© ${new Date().getFullYear()} Caxton Publications Inc
-Report generated ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+${brand.pub_display} • © ${new Date().getFullYear()} Caxton Publications Inc
+${brand.tagline} • Report generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 `.trim();
 }
 
