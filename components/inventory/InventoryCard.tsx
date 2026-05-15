@@ -1,6 +1,7 @@
 'use client';
 
 import type { BuilderInventoryRow, Kind, PromoType } from '@/lib/builder-inventory';
+import { trackEvent } from '@/app/posthog-provider';
 
 type Props = {
   row: BuilderInventoryRow;
@@ -85,6 +86,14 @@ export default function InventoryCard({ row }: Props) {
     // Promotions: open the builder's authoritative source page (legal text lives there)
     // Listings:   open the flyer PDF if present
     const target = row.flyerPdfUrl ?? row.sourceUrl;
+    const destination = row.flyerPdfUrl ? 'flyer' : (row.sourceUrl ? 'source' : 'none');
+    trackEvent('inventory_card_clicked', {
+      row_id: row.id,
+      kind: row.kind,
+      builder_name: row.builderName,
+      publication: row.publication,
+      destination,
+    });
     if (target) {
       window.open(target, '_blank', 'noopener,noreferrer');
     }

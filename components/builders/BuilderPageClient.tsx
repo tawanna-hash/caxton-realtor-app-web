@@ -6,6 +6,7 @@
 // Promotions. Each tab filters the same row set differently.
 
 import { useMemo, useState, useSyncExternalStore } from 'react';
+import { trackEvent } from '@/app/posthog-provider';
 import Link from 'next/link';
 import type { BuilderInventoryRow, Publication } from '@/lib/builder-inventory';
 import InventoryCard from '@/components/inventory/InventoryCard';
@@ -120,13 +121,13 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
       {/* Mini-tabs (pills) */}
       <div className="bg-white sticky top-0 z-10 border-b border-gray-200 px-4 py-3">
         <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <button onClick={() => setTab('communities')} className={tab === 'communities' ? tOn : tOff}>
+          <button onClick={() => { trackEvent('builder_tab_clicked', { tab: 'communities', builder_name: builderName }); setTab('communities'); }} className={tab === 'communities' ? tOn : tOff}>
             New Home Communities
           </button>
-          <button onClick={() => setTab('moveIn')} className={tab === 'moveIn' ? tOn : tOff}>
+          <button onClick={() => { trackEvent('builder_tab_clicked', { tab: 'moveIn', builder_name: builderName }); setTab('moveIn'); }} className={tab === 'moveIn' ? tOn : tOff}>
             Move-in Ready Homes
           </button>
-          <button onClick={() => setTab('promos')} className={tab === 'promos' ? tOn : tOff}>
+          <button onClick={() => { trackEvent('builder_tab_clicked', { tab: 'promos', builder_name: builderName }); setTab('promos'); }} className={tab === 'promos' ? tOn : tOff}>
             Promotions
           </button>
         </div>

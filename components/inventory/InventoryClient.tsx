@@ -7,6 +7,7 @@ import { builderNameToSlug } from '@/lib/builder-slug';
 import type { BuilderInventoryRow, Kind, Publication } from '@/lib/builder-inventory';
 import InventoryCard from './InventoryCard';
 import FeaturedHero from './FeaturedHero';
+import { trackEvent } from '@/app/posthog-provider';
 
 type Props = {
   initialRows: BuilderInventoryRow[];
@@ -124,7 +125,7 @@ export default function InventoryClient({ initialRows }: Props) {
             <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
               <span className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-medium whitespace-nowrap pr-1">By Builder</span>
               {buildersForStrip.map((b) => (
-                <Link key={b} href={`/builders/${builderNameToSlug(b)}`} className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-md">
+                <Link key={b} href={`/builders/${builderNameToSlug(b)}`} onClick={() => trackEvent('builder_chip_clicked', { builder_name: b, source_page: '/inventory', pub })} className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-md">
                   {b}
                 </Link>
               ))}
@@ -173,7 +174,10 @@ export default function InventoryClient({ initialRows }: Props) {
               <button
                 key={chip.value}
                 type="button"
-                onClick={() => setKind(chip.value)}
+                onClick={() => {
+                  trackEvent('inventory_filter_clicked', { filter: chip.value, previous_filter: activeKind, pub });
+                  setKind(chip.value);
+                }}
                 className={
                   'px-3.5 py-1.5 text-sm font-medium border rounded-md transition-colors ' +
                   (isActive
