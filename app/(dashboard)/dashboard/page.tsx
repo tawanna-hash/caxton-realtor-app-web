@@ -963,7 +963,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
               <NewsletterCTA key={'c' + idx} info={info} />
             ) : item.t === 'n' ? (
               <article key={'n' + item.d.id} className="bg-white border-b border-gray-200">
-                <ArticleCard item={item.d} />
+                <ArticleCard item={item.d} pub={pub} />
               </article>
             ) : (
               <AdCardTracked key={'a' + item.d.id} ad={item.d} onClick={handleAdClick} track={track} pub={pub} />
@@ -1099,7 +1099,7 @@ function NewsletterCTA({ info }: { info: typeof PUBS[0] }) {
 }
 
 
-function ArticleCard({ item }: { item: any }) {
+function ArticleCard({ item, pub }: { item: any; pub: string }) {
   const body = (
     <div className="flex items-start gap-4">
       <div className="flex-1 min-w-0">
@@ -1121,7 +1121,10 @@ function ArticleCard({ item }: { item: any }) {
   if (item) {
     const onTap = () => {
       if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('caxton:openArticle', { detail: item }));
+        // Enrich the dispatched item with title (mapped from head) and pub
+        // so the article_opened tracker captures the right fields.
+        const enriched = { ...item, title: item.head, pub };
+        window.dispatchEvent(new CustomEvent('caxton:openArticle', { detail: enriched }));
       }
     };
     return (
