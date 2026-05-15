@@ -107,9 +107,13 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
           {builderName}
         </h1>
         <p className="text-sm text-gray-500 mt-2 font-light">
-          {communities.length} {communities.length === 1 ? 'community' : 'communities'} ·{' '}
-          {moveIn.length} move-in {moveIn.length === 1 ? 'home' : 'homes'} ·{' '}
-          {promos.length} {promos.length === 1 ? 'promotion' : 'promotions'}
+          {(() => {
+            const parts: string[] = [];
+            if (communities.length > 0) parts.push(`${communities.length} ${communities.length === 1 ? 'community' : 'communities'}`);
+            if (moveIn.length > 0) parts.push(`${moveIn.length} move-in ${moveIn.length === 1 ? 'home' : 'homes'}`);
+            if (promos.length > 0) parts.push(`${promos.length} ${promos.length === 1 ? 'promotion' : 'promotions'}`);
+            return parts.length > 0 ? parts.join(' · ') : 'No active listings right now';
+          })()}
         </p>
       </div>
 
