@@ -1,29 +1,6 @@
 
 ---
 
-## [S15+] Fix article_opened tracking — title and pub are null in PostHog
-
-**Severity:** High — blocks usable client reports
-**Discovered:** S14, 2026-05-15 14:10 via /admin/reports smoke test
-**File:** `app/(dashboard)/dashboard/page.tsx:624`
-
-**Symptom:** Every article in `/admin/reports` dropdown shows as `[?] (untitled) · N opens`. The `article_opened` event in PostHog records `article_id` and `article_cat` correctly, but `article_title` and `pub` always come through as null.
-
-**Probable cause:** The article object passed to `trackEvent('article_opened', ...)` is a truncated card-shape (just `{ id, cat }`) rather than the full article (`{ id, title, pub, cat, ... }`). The tracker fires before the full article data is hydrated, OR the article-list components pass a stripped-down article object to the open handler.
-
-**Verification needed:**
-- Check `components/articles/ArticleCard.tsx` for what shape it passes to its `onOpen` handler
-- Check the `article` object scope at `page.tsx:624` — is it the full record or a card summary?
-- Verify in PostHog Live Events: trigger one article open and check the event payload
-
-**Fix:** Either pass the full article record to the tracker, or do a lookup at tracker-fire time to get the full record before calling `trackEvent`.
-
-**Backfill:** Not possible — existing events stay null. New events after the fix will populate. Reports for historical articles will need manual title/pub override (which the override fields handle).
-
-**Workaround in place:** R3b in `/admin/reports` provides title + pub override text inputs so reports work despite null PostHog data.
-
----
-
 ## [S15+] Security: rotate Mailchimp API key
 
 **Severity:** Medium
@@ -44,3 +21,30 @@ should never appear in chat — only set in Vercel UI.
 
 **Workaround in place:** None. Risk is accepted while key remains
 active.
+
+---
+
+## [S15+] Add biometric authentication option for returning users
+
+**Severity:** Low — UX enhancement, not blocking
+**Created:** S14, 2026-05-15
+
+**Idea:** Currently users authenticate via magic link sent to email. Consider adding biometric authentication (Face ID, Touch ID, fingerprint) as an alternative or supplement to magic link for returning users who have already created an account.
+
+**Why:** Magic links require email roundtrip every login — friction-heavy for daily users. Biometrics is one-tap on supported devices and feels native.
+
+**Implementation path (WebAuthn / Passkeys):**
+- WebAuthn API is the web standard for biometric auth (Apple Passkeys, Android device biometrics, hardware security keys all use it)
+- Flow: user creates account via magic link first time → on next login, prompt to register a passkey → subsequent logins use passkey (Face ID / Touch ID prompt)
+- Magic link remains as fallback for new devices, lost passkeys, recovery
+
+**Considerations:**
+- Requires backend changes to `/api/auth/*` routes to handle WebAuthn registration + assertion challenges
+- Need a new `webauthn_credentials` table (user_id, credential_id, public_key, counter, transports)
+- Magic link must stay functional as fallback / new-device flow
+- iOS Safari and modern Android both support this natively — no app install needed
+- Native app wrapper would benefit later: native biometric APIs (e.g. expo-local-authentication) are simpler than WebAuthn for native
+
+**Recommended approach:** WebAuthn for the web app, add it as an opt-in setting under user profile. Magic link stays the primary "first login" path.
+
+**Estimated effort:** Medium — ~6-10 hours for a working WebAuthn flow including migration, registration endpoint, assertion endpoint, settings UI, and graceful fallback when biometrics fail.
