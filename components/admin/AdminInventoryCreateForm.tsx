@@ -5,21 +5,6 @@ import { useRouter } from 'next/navigation';
 
 type Kind = 'listing' | 'promotion';
 type Publication = 'realtyline' | 'newsline' | 'both';
-type PromoType =
-  | 'rate_buydown'
-  | 'incentive'
-  | 'event'
-  | 'broker_bonus'
-  | 'other';
-
-const PROMO_TYPES: { value: PromoType; label: string }[] = [
-  { value: 'incentive', label: 'Closing-cost or financial incentive' },
-  { value: 'rate_buydown', label: 'Interest rate buydown' },
-  { value: 'event', label: 'Model home event or open house' },
-  { value: 'broker_bonus', label: 'Broker bonus or commission incentive' },
-  { value: 'other', label: 'Other promotion' },
-];
-
 const PUBLICATION_OPTIONS: { value: Publication; label: string }[] = [
   { value: 'realtyline', label: 'RealtyLine (Austin)' },
   { value: 'newsline', label: 'Newsline (San Antonio)' },
@@ -61,7 +46,6 @@ export default function AdminInventoryCreateForm() {
   const [priceMax, setPriceMax] = useState<string>('');
 
   // Promotion fields
-  const [promoType, setPromoType] = useState<PromoType>('incentive');
   const [startsAt, setStartsAt] = useState<string>('');
   const [expiresAt, setExpiresAt] = useState<string>('');
 
@@ -161,7 +145,6 @@ export default function AdminInventoryCreateForm() {
         if (priceMin) fd.append('priceMin', priceMin);
         if (priceMax) fd.append('priceMax', priceMax);
       } else {
-        fd.append('promoType', promoType);
         if (startsAt) fd.append('startsAt', startsAt);
         if (expiresAt) fd.append('expiresAt', expiresAt);
       }
@@ -392,21 +375,7 @@ export default function AdminInventoryCreateForm() {
       {/* Promotion-specific fields */}
       {kind === 'promotion' && (
         <div className="space-y-6 border-t border-gray-200 pt-6">
-          <div>
-            <label htmlFor="promoType" className={labelStyle}>Promotion type</label>
-            <select
-              id="promoType"
-              value={promoType}
-              onChange={(e) => setPromoType(e.target.value as PromoType)}
-              disabled={submitting}
-              className={fieldStyle}
-            >
-              {PROMO_TYPES.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="startsAt" className={labelStyle}>Starts (optional)</label>
               <input
@@ -481,7 +450,7 @@ export default function AdminInventoryCreateForm() {
           disabled={submitting}
           className="bg-[#1a2a44] text-white px-4 py-2 text-sm font-medium hover:bg-[#243556] disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
         >
-          {submitting ? 'Publishing…' : kind === 'promotion' ? 'Publish promotion' : 'Publish listing'}
+          {submitting ? 'Publishing…' : kind === 'promotion' ? 'Publish Promotion' : 'Publish Listing'}
         </button>
         <button
           type="button"

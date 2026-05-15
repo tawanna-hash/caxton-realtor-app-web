@@ -125,19 +125,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Promotion-specific required
-    let promoType: PromoType | null = null;
-    if (kind === 'promotion') {
-      const pt = readStr(fd, 'promoType') as PromoType | null;
-      const VALID: PromoType[] = ['rate_buydown', 'incentive', 'event', 'broker_bonus', 'other'];
-      if (!pt || !VALID.includes(pt)) {
-        return NextResponse.json(
-          { ok: false, error: 'Promotion type is required for a promotion.' },
-          { status: 400 },
-        );
-      }
-      promoType = pt;
-    }
+    // Promotion type field removed — promoType is always null in current UI.
+    // The column remains in the schema for backward compat with old rows.
+    const promoType: PromoType | null = null;
 
     // PDF — required in public mode, optional in admin mode
     const pdfEntry = fd.get('flyerPdf');

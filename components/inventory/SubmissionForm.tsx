@@ -5,21 +5,6 @@ import { BUILDER_CLIENTS } from '@/lib/builder-clients';
 
 type Kind = 'listing' | 'promotion';
 type Publication = 'realtyline' | 'newsline' | 'both';
-type PromoType =
-  | 'rate_buydown'
-  | 'incentive'
-  | 'event'
-  | 'broker_bonus'
-  | 'other';
-
-const PROMO_TYPES: { value: PromoType; label: string }[] = [
-  { value: 'rate_buydown', label: 'Interest rate buydown' },
-  { value: 'incentive', label: 'Closing-cost or financial incentive' },
-  { value: 'event', label: 'Model home event or open house' },
-  { value: 'broker_bonus', label: 'Broker bonus or commission incentive' },
-  { value: 'other', label: 'Other promotion' },
-];
-
 const fieldStyle =
   'w-full border border-gray-300 px-4 py-2.5 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none transition-colors disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed';
 const labelStyle = 'block text-sm font-medium text-gray-900 mb-1.5';
@@ -58,7 +43,6 @@ export default function SubmissionForm() {
   const [priceMax, setPriceMax] = useState<string>('');
 
   // Promotion fields
-  const [promoType, setPromoType] = useState<PromoType>('rate_buydown');
   const [expiresAt, setExpiresAt] = useState<string>('');
 
   // PDF
@@ -125,7 +109,6 @@ export default function SubmissionForm() {
         if (priceMin) fd.append('priceMin', priceMin);
         if (priceMax) fd.append('priceMax', priceMax);
       } else {
-        fd.append('promoType', promoType);
         if (expiresAt) fd.append('expiresAt', expiresAt);
       }
 
@@ -393,24 +376,6 @@ export default function SubmissionForm() {
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium">
             Promotion details
           </p>
-
-          <div>
-            <label htmlFor="promoType" className={labelStyle}>
-              Promotion type <span className="text-red-600">*</span>
-            </label>
-            <select
-              id="promoType"
-              required
-              disabled={submitting}
-              value={promoType}
-              onChange={(e) => setPromoType(e.target.value as PromoType)}
-              className={fieldStyle}
-            >
-              {PROMO_TYPES.map((p) => (
-                <option key={p.value} value={p.value}>{p.label}</option>
-              ))}
-            </select>
-          </div>
 
           <div>
             <label htmlFor="expiresAt" className={labelStyle}>

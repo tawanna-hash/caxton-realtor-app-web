@@ -7,7 +7,6 @@ import { upload } from '@vercel/blob/client';
 import type {
   BuilderInventoryRow,
   Publication,
-  PromoType,
   Status,
 } from '@/lib/builder-inventory';
 
@@ -106,7 +105,6 @@ export default function AdminInventoryDetail({ row }: Props) {
     sqftMax: row.sqftMax?.toString() ?? '',
     priceMin: row.priceMin?.toString() ?? '',
     priceMax: row.priceMax?.toString() ?? '',
-    promoType: row.promoType ?? 'rate_buydown',
     expiresAt: row.expiresAt ?? '',
   });
 
@@ -244,7 +242,6 @@ export default function AdminInventoryDetail({ row }: Props) {
       });
     } else {
       Object.assign(body, {
-        promoType: edit.promoType,
         expiresAt: edit.expiresAt.trim() || null,
       });
     }
@@ -643,21 +640,7 @@ export default function AdminInventoryDetail({ row }: Props) {
                   <p className="text-xs uppercase tracking-wide text-gray-500 font-medium">
                     Promotion details
                   </p>
-                  <div>
-                    <label htmlFor="promoType" className={labelStyle}>Promotion type</label>
-                    <select
-                      id="promoType"
-                      disabled={busy}
-                      value={edit.promoType}
-                      onChange={(e) => setEdit({ ...edit, promoType: e.target.value as PromoType })}
-                      className={fieldStyle}
-                    >
-                      {PROMO_TYPES.map((p) => (
-                        <option key={p.value} value={p.value}>{p.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
+<div>
                     <label htmlFor="expiresAt" className={labelStyle}>Expires</label>
                     <input
                       id="expiresAt"

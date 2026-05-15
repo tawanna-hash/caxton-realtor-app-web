@@ -1,18 +1,10 @@
 'use client';
 
-import type { BuilderInventoryRow, Kind, PromoType } from '@/lib/builder-inventory';
+import type { BuilderInventoryRow, Kind } from '@/lib/builder-inventory';
 import { trackEvent } from '@/app/posthog-provider';
 
 type Props = {
   row: BuilderInventoryRow;
-};
-
-const PROMO_TYPE_LABEL: Record<PromoType, string> = {
-  rate_buydown: 'Rate buydown',
-  incentive: 'Incentive',
-  event: 'Event',
-  broker_bonus: 'Broker bonus',
-  other: 'Promotion',
 };
 
 const KIND_BADGE_STYLE: Record<Kind, string> = {
@@ -171,10 +163,7 @@ export default function InventoryCard({ row }: Props) {
           )}
           {row.kind === 'promotion' && (
             <>
-              {row.promoType && (
-                <p className="font-medium text-gray-900">{PROMO_TYPE_LABEL[row.promoType]}</p>
-              )}
-              {expiresLabel && <p className="text-gray-600">{expiresLabel}</p>}
+{expiresLabel && <p className="text-gray-600">{expiresLabel}</p>}
             </>
           )}
         </div>
