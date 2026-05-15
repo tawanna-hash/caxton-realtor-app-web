@@ -6,33 +6,42 @@ import type { Metrics } from './_types';
 import { EVENT_LABELS } from './_types';
 import { TimeSeriesChart } from './_components/TimeSeriesChart';
 import { KPITile } from './_components/KPITile';
+import { DateRangePicker } from './_components/DateRangePicker';
+import type { DaysOption } from './_components/DateRangePicker';
 
 export default function AdminMetricsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [days, setDays] = useState<DaysOption>(7);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     (async () => {
       try {
-        const res = await fetch('/api/admin/metrics', { credentials: 'include' });
+        const res = await fetch(`/api/admin/metrics?days=${days}`, { credentials: 'include' });
         const body = (await res.json().catch(() => null)) as
           | { ok: boolean; metrics?: Metrics; error?: string }
           | null;
         if (cancelled) return;
         if (!res.ok || !body?.ok || !body.metrics) {
           setError(body?.error || 'Failed to load metrics.');
+          setLoading(false);
           return;
         }
+        setError(null);
         setMetrics(body.metrics);
+        setLoading(false);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Network error');
+          setLoading(false);
         }
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [days]);
 
   const grandTotalLast7 = metrics
     ? metrics.event_totals.reduce((s, e) => s + e.total, 0)
@@ -51,6 +60,13 @@ export default function AdminMetricsPage() {
           Engagement on builder/developer surfaces. Filter pills,
           builder chips, inventory cards, and per-builder tabs.
         </p>
+      </div>
+
+      <div className="mb-6 flex items-center gap-4">
+        <DateRangePicker value={days} onChange={setDays} disabled={loading} />
+        {loading && (
+          <span className="text-xs text-gray-500">Loading…</span>
+        )}
       </div>
 
       {error && (
