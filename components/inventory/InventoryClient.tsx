@@ -175,7 +175,7 @@ export default function InventoryClient({ initialRows }: Props) {
                 type="button"
                 onClick={() => setKind(chip.value)}
                 className={
-                  'px-3.5 py-1.5 text-sm font-medium border transition-colors ' +
+                  'px-3.5 py-1.5 text-sm font-medium border rounded-md transition-colors ' +
                   (isActive
                     ? 'border-gray-900 bg-gray-900 text-white'
                     : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500')
