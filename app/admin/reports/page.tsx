@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { ArticleListItem, ArticleReport, EventListItem, EventReport, ReportOverrides } from './_types';
+import type { ArticleListItem, ArticleReport, EventListItem, EventReport, MailchimpCampaignReportData, MailchimpCampaignSummary, ReportOverrides } from './_types';
 import { ReportPreview, buildReportHtml, buildReportPlainText } from './_components/ReportPreview';
 import { EventReportPreview, buildEventReportHtml, buildEventReportPlainText } from './_components/EventReportPreview';
+import { MailchimpReportPreview, buildMailchimpReportHtml, buildMailchimpReportPlainText } from './_components/MailchimpReportPreview';
 
 type DaysOption = 7 | 30 | 90 | 180;
 
@@ -30,7 +31,20 @@ export default function AdminReportsPage() {
   const [pubOverride, setPubOverride] = useState('');
   const [noteOverride, setNoteOverride] = useState('');
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'articles' | 'events'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'events' | 'mailchimp'>('articles');
+
+  // Mailchimp tab state (parallel to articles + events)
+  const [mailchimpCampaigns, setMailchimpCampaigns] = useState<MailchimpCampaignSummary[]>([]);
+  const [mailchimpListLoading, setMailchimpListLoading] = useState(true);
+  const [mailchimpListError, setMailchimpListError] = useState<string | null>(null);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string>('');
+  const [mailchimpReport, setMailchimpReport] = useState<MailchimpCampaignReportData | null>(null);
+  const [mailchimpReportLoading, setMailchimpReportLoading] = useState(false);
+  const [mailchimpReportError, setMailchimpReportError] = useState<string | null>(null);
+  const [mailchimpTitleOverride, setMailchimpTitleOverride] = useState('');
+  const [mailchimpPubOverride, setMailchimpPubOverride] = useState('');
+  const [mailchimpNoteOverride, setMailchimpNoteOverride] = useState('');
+  const [mailchimpCopyStatus, setMailchimpCopyStatus] = useState<string | null>(null);
 
   // Events tab state (parallel to the articles tab state above)
   const [eventsList, setEventsList] = useState<EventListItem[]>([]);
@@ -103,6 +117,61 @@ export default function AdminReportsPage() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Load Mailchimp campaigns list on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setMailchimpListLoading(true);
+      try {
+        const res = await fetch('/api/admin/reports/mailchimp/campaigns-list', {
+          credentials: 'include',
+        });
+        const body = (await res.json().catch(() => null)) as
+          | { ok: boolean; campaigns?: MailchimpCampaignSummary[]; error?: string }
+          | null;
+        if (cancelled) return;
+        if (!res.ok || !body?.ok || !body.campaigns) {
+          setMailchimpListError(body?.error || 'Failed to load Mailchimp campaigns.');
+          return;
+        }
+        setMailchimpCampaigns(body.campaigns);
+      } catch (err) {
+        if (!cancelled) {
+          setMailchimpListError(err instanceof Error ? err.message : 'Network error');
+        }
+      } finally {
+        if (!cancelled) setMailchimpListLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  async function generateMailchimpReport() {
+    if (!selectedCampaignId) return;
+    setMailchimpReportLoading(true);
+    setMailchimpReportError(null);
+    setMailchimpReport(null);
+    try {
+      const params = new URLSearchParams({ campaign_id: selectedCampaignId });
+      const res = await fetch(`/api/admin/reports/mailchimp/campaign?${params}`, {
+        credentials: 'include',
+      });
+      const body = (await res.json().catch(() => null)) as
+        | { ok: boolean; report?: MailchimpCampaignReportData; error?: string }
+        | null;
+      if (!res.ok || !body?.ok || !body.report) {
+        setMailchimpReportError(body?.error || 'Failed to generate Mailchimp report.');
+        setMailchimpReportLoading(false);
+        return;
+      }
+      setMailchimpReport(body.report);
+    } catch (err) {
+      setMailchimpReportError(err instanceof Error ? err.message : 'Network error');
+    } finally {
+      setMailchimpReportLoading(false);
+    }
+  }
 
   async function generateEventReport() {
     if (!selectedEventId) return;
@@ -184,6 +253,7 @@ export default function AdminReportsPage() {
           {([
             { key: 'articles', label: 'Articles' },
             { key: 'events', label: 'Events' },
+            { key: 'mailchimp', label: 'Mailchimp' },
           ] as const).map((tab) => {
             const isActive = activeTab === tab.key;
             return (
@@ -560,6 +630,165 @@ export default function AdminReportsPage() {
             <div>
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">Preview</p>
               <EventReportPreview report={r} overrides={overrides} />
+            </div>
+          </div>
+        );
+      })()}
+      </>
+      )}
+
+      {activeTab === 'mailchimp' && (
+      <>
+      {/* Mailchimp controls */}
+      <div className="bg-white border border-gray-200 rounded-md p-6 mb-6 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Campaign
+          </label>
+          {mailchimpListLoading ? (
+            <div className="text-sm text-gray-500">Loading campaigns…</div>
+          ) : mailchimpListError ? (
+            <div className="text-sm text-red-700">{mailchimpListError}</div>
+          ) : mailchimpCampaigns.length === 0 ? (
+            <div className="text-sm text-gray-500">
+              No sent campaigns found in this Mailchimp account.
+            </div>
+          ) : (
+            <select
+              value={selectedCampaignId}
+              onChange={(e) => setSelectedCampaignId(e.target.value)}
+              className="w-full max-w-2xl border border-gray-300 rounded-md px-3 py-2 text-sm"
+            >
+              <option value="">— Select a campaign —</option>
+              {mailchimpCampaigns.map((c) => {
+                const sentDate = c.send_time
+                  ? new Date(c.send_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                  : '?';
+                return (
+                  <option key={c.campaign_id} value={c.campaign_id}>
+                    {sentDate} · {c.subject_line} · {c.emails_sent.toLocaleString()} sent
+                  </option>
+                );
+              })}
+            </select>
+          )}
+        </div>
+
+        <div>
+          <button
+            type="button"
+            onClick={generateMailchimpReport}
+            disabled={!selectedCampaignId || mailchimpReportLoading}
+            className="bg-[#1a2a44] hover:bg-[#243556] text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {mailchimpReportLoading ? 'Generating…' : 'Generate report'}
+          </button>
+        </div>
+      </div>
+
+      {mailchimpReportError && (
+        <div className="border border-red-300 bg-red-50 px-4 py-3 rounded-md mb-6">
+          <p className="text-sm text-red-900">{mailchimpReportError}</p>
+        </div>
+      )}
+
+      {mailchimpReport && (() => {
+        const r = mailchimpReport;
+        const overrides: ReportOverrides = {
+          title: mailchimpTitleOverride,
+          pub_display: mailchimpPubOverride,
+          editorial_note: mailchimpNoteOverride,
+        };
+        async function copyHtml() {
+          try {
+            await navigator.clipboard.writeText(buildMailchimpReportHtml(r, overrides));
+            setMailchimpCopyStatus('HTML copied to clipboard');
+            setTimeout(() => setMailchimpCopyStatus(null), 2500);
+          } catch {
+            setMailchimpCopyStatus('Copy failed — select and copy manually');
+            setTimeout(() => setMailchimpCopyStatus(null), 3500);
+          }
+        }
+        async function copyPlain() {
+          try {
+            await navigator.clipboard.writeText(buildMailchimpReportPlainText(r, overrides));
+            setMailchimpCopyStatus('Plain text copied to clipboard');
+            setTimeout(() => setMailchimpCopyStatus(null), 2500);
+          } catch {
+            setMailchimpCopyStatus('Copy failed — select and copy manually');
+            setTimeout(() => setMailchimpCopyStatus(null), 3500);
+          }
+        }
+        return (
+          <div className="space-y-6">
+            <div className="bg-white border border-gray-200 rounded-md p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Customize report</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Campaign title <span className="text-gray-400 font-normal">(override)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={mailchimpTitleOverride}
+                    onChange={(e) => setMailchimpTitleOverride(e.target.value)}
+                    placeholder={r.campaign.title || r.campaign.subject_line || 'Untitled campaign'}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Leave blank to use the Mailchimp campaign title.</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Publication <span className="text-gray-400 font-normal">(override)</span>
+                  </label>
+                  <select
+                    value={mailchimpPubOverride}
+                    onChange={(e) => setMailchimpPubOverride(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
+                  >
+                    <option value="">— Default (Caxton) —</option>
+                    <option value="RealtyLine Austin">RealtyLine Austin</option>
+                    <option value="Newsline San Antonio">Newsline San Antonio</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Drives header branding and colors.</p>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Editorial note <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <textarea
+                  value={mailchimpNoteOverride}
+                  onChange={(e) => setMailchimpNoteOverride(e.target.value)}
+                  placeholder="e.g. This newsletter promoted your spring lineup and the upcoming open house."
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={copyHtml}
+                  className="bg-[#1a2a44] hover:bg-[#243556] text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Copy HTML
+                </button>
+                <button
+                  type="button"
+                  onClick={copyPlain}
+                  className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Copy plain text
+                </button>
+                {mailchimpCopyStatus && (
+                  <span className="text-xs text-gray-600">{mailchimpCopyStatus}</span>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">Preview</p>
+              <MailchimpReportPreview report={r} overrides={overrides} />
             </div>
           </div>
         );
