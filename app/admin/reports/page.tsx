@@ -29,6 +29,7 @@ export default function AdminReportsPage() {
   const [pubOverride, setPubOverride] = useState('');
   const [noteOverride, setNoteOverride] = useState('');
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'articles' | 'events'>('articles');
 
   // Load articles list on mount
   useEffect(() => {
@@ -104,6 +105,36 @@ export default function AdminReportsPage() {
         </p>
       </div>
 
+      {/* Tabs */}
+      <div className="mb-6 border-b border-gray-200">
+        <nav className="flex gap-6">
+          {([
+            { key: 'articles', label: 'Articles' },
+            { key: 'events', label: 'Events' },
+          ] as const).map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={[
+                  'px-1 pb-3 text-sm font-medium border-b-2 transition-colors',
+                  isActive
+                    ? 'border-[#1a2a44] text-gray-900'
+                    : 'border-transparent text-gray-500 hover:text-gray-700',
+                ].join(' ')}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {activeTab === 'articles' && (
+      <>
       {/* Controls */}
       <div className="bg-white border border-gray-200 rounded-md p-6 mb-6 space-y-4">
         <div>
@@ -280,6 +311,17 @@ export default function AdminReportsPage() {
           </div>
         );
       })()}
+      </>
+      )}
+
+      {activeTab === 'events' && (
+        <div className="bg-white border border-gray-200 rounded-md p-8 text-center">
+          <p className="text-sm text-gray-500">
+            Events report coming up next — same shape as articles,
+            with registrations, calendar adds, and directions clicks.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
