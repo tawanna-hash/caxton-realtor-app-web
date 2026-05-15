@@ -47,7 +47,7 @@ function formatExpires(iso: string | null): string | null {
   if (!iso) return null;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  return `Through ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  return `Through ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 }
 
 // S13: Deterministic gallery image picker. When a row has a multi-image
