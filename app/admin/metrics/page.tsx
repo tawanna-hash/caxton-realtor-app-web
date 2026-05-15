@@ -2,29 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-type EventTotal = { event: string; total: number };
-type FilterUsage = { filter: string; total: number };
-type TopBuilder = { builder_name: string; source_page: string; total: number };
-type TopInventory = {
-  builder_name: string;
-  row_id: string;
-  kind: string;
-  destination: string;
-  total: number;
-};
-type Metrics = {
-  event_totals: EventTotal[];
-  filter_usage: FilterUsage[];
-  top_builders: TopBuilder[];
-  top_inventory: TopInventory[];
-};
-
-const EVENT_LABELS: Record<string, string> = {
-  inventory_filter_clicked: 'Filter pill clicks',
-  builder_chip_clicked: 'Builder chip clicks',
-  inventory_card_clicked: 'Inventory card clicks',
-  builder_tab_clicked: 'Builder tab clicks',
-};
+import type { Metrics } from './_types';
+import { EVENT_LABELS } from './_types';
 
 export default function AdminMetricsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
