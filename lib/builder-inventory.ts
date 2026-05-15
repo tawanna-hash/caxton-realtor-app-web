@@ -65,7 +65,9 @@ export type BuilderInventoryRow = {
   priceMin: number | null;
   priceMax: number | null;
   promoType: PromoType | null;
+  startsAt: string | null;
   expiresAt: string | null;
+  sourceUrl: string | null;
   tags: string[] | null;
   flyerPdfUrl: string | null;
   thumbnailUrl: string | null;
@@ -103,7 +105,9 @@ export type CreateBuilderInventoryInput = {
   priceMin?: number | null;
   priceMax?: number | null;
   promoType?: PromoType | null;
+  startsAt?: string | null;
   expiresAt?: string | null;
+  sourceUrl?: string | null;
   tags?: string[] | null;
   flyerPdfUrl?: string | null;
   thumbnailUrl?: string | null;
@@ -260,6 +264,15 @@ const MIGRATIONS: Migration[] = [
     },
   },
   {
+    name: '2026_05_14__add_promo_fields',
+    up: async () => {
+      await sql`ALTER TABLE builder_inventory
+                ADD COLUMN IF NOT EXISTS starts_at DATE`;
+      await sql`ALTER TABLE builder_inventory
+                ADD COLUMN IF NOT EXISTS source_url TEXT`;
+    },
+  },
+  {
     name: '2026_05_13__add_gallery_urls',
     up: async () => {
       // S13: multi-image gallery for visual variety on cards.
@@ -337,7 +350,9 @@ function rowToBuilderInventoryRow(r: Record<string, unknown>): BuilderInventoryR
     priceMin: (r.price_min as number) ?? null,
     priceMax: (r.price_max as number) ?? null,
     promoType: (r.promo_type as PromoType) ?? null,
+    startsAt: (r.starts_at as string) ?? null,
     expiresAt: (r.expires_at as string) ?? null,
+    sourceUrl: (r.source_url as string) ?? null,
     tags: (r.tags as string[]) ?? null,
     flyerPdfUrl: (r.flyer_pdf_url as string) ?? null,
     thumbnailUrl: (r.thumbnail_url as string) ?? null,
@@ -367,7 +382,7 @@ export async function createBuilderInventory(
       builder_name, title, city, state, description,
       beds_min, beds_max, baths_min, baths_max,
       sqft_min, sqft_max, price_min, price_max,
-      promo_type, expires_at, tags,
+      promo_type, starts_at, expires_at, source_url, tags,
       flyer_pdf_url, thumbnail_url,
       source_ip, user_agent,
       external_id,
@@ -379,7 +394,7 @@ export async function createBuilderInventory(
       ${input.builderName}, ${input.title}, ${input.city}, ${input.state ?? 'TX'}, ${input.description ?? null},
       ${input.bedsMin ?? null}, ${input.bedsMax ?? null}, ${input.bathsMin ?? null}, ${input.bathsMax ?? null},
       ${input.sqftMin ?? null}, ${input.sqftMax ?? null}, ${input.priceMin ?? null}, ${input.priceMax ?? null},
-      ${input.promoType ?? null}, ${input.expiresAt ?? null}, ${input.tags ?? null},
+      ${input.promoType ?? null}, ${input.startsAt ?? null}, ${input.expiresAt ?? null}, ${input.sourceUrl ?? null}, ${input.tags ?? null},
       ${input.flyerPdfUrl ?? null}, ${input.thumbnailUrl ?? null},
       ${input.sourceIp ?? null}, ${input.userAgent ?? null},
       ${input.externalId ?? null},
@@ -483,7 +498,9 @@ export type UpdateBuilderInventoryInput = {
   priceMin?: number | null;
   priceMax?: number | null;
   promoType?: PromoType | null;
+  startsAt?: string | null;
   expiresAt?: string | null;
+  sourceUrl?: string | null;
   thumbnailUrl?: string | null;
   flyerPdfUrl?: string | null;
   // S13 per-home additions:
@@ -539,7 +556,9 @@ export async function updateBuilderInventory(
       price_min      = ${m.priceMin},
       price_max      = ${m.priceMax},
       promo_type     = ${m.promoType},
+      starts_at      = ${m.startsAt},
       expires_at     = ${m.expiresAt},
+      source_url     = ${m.sourceUrl},
       thumbnail_url  = ${m.thumbnailUrl},
       flyer_pdf_url  = ${m.flyerPdfUrl},
       address        = ${m.address},
@@ -593,6 +612,11 @@ export type UpsertScrapedInput = {
   readyDate?: string | null;
   planName?: string | null;
   communityName?: string | null;
+  // S14 promotion-scraper additions:
+  promoType?: PromoType | null;
+  startsAt?: string | null;
+  expiresAt?: string | null;
+  sourceUrl?: string | null;
   homeType?: HomeType | null;
   // S13 gallery:
   galleryUrls?: string[] | null;
@@ -636,6 +660,10 @@ export async function upsertBuilderInventoryByExternalId(
       priceMax: input.priceMax,
       flyerPdfUrl: input.flyerPdfUrl,
       thumbnailUrl: input.thumbnailUrl,
+      promoType: input.promoType ?? null,
+      startsAt: input.startsAt ?? null,
+      expiresAt: input.expiresAt ?? null,
+      sourceUrl: input.sourceUrl ?? null,
       address: input.address ?? null,
       readyDate: input.readyDate ?? null,
       planName: input.planName ?? null,
@@ -670,6 +698,10 @@ export async function upsertBuilderInventoryByExternalId(
     priceMax: input.priceMax,
     flyerPdfUrl: input.flyerPdfUrl,
     thumbnailUrl: input.thumbnailUrl,
+    promoType: input.promoType ?? null,
+    startsAt: input.startsAt ?? null,
+    expiresAt: input.expiresAt ?? null,
+    sourceUrl: input.sourceUrl ?? null,
     externalId: input.externalId,
     address: input.address ?? null,
     readyDate: input.readyDate ?? null,
@@ -679,17 +711,19 @@ export async function upsertBuilderInventoryByExternalId(
     galleryUrls: input.galleryUrls ?? null,
   });
 
-  // S13: Scraper-produced rows (external_id IS NOT NULL) auto-publish to
-  // 'active'. Human form submissions go through the moderation queue as
-  // 'pending'. Since this function is only called from scraper code paths,
-  // we flip the new row's status here.
-  await sql`
-    UPDATE builder_inventory
-    SET status = 'active',
-        reviewed_at = NOW(),
-        reviewed_by = 'system:scraper-trusted'
-    WHERE id = ${created.id}
-  `;
+  // S13: Scraper-produced LISTING rows auto-publish to 'active'.
+  // S14: Scraper-produced PROMOTION rows stay 'pending' so a human reviews
+  // legal text / dates / participating-community claims before publishing.
+  // Human form submissions (no external_id) always go through moderation.
+  if (input.kind === 'listing') {
+    await sql`
+      UPDATE builder_inventory
+      SET status = 'active',
+          reviewed_at = NOW(),
+          reviewed_by = 'system:scraper-trusted'
+      WHERE id = ${created.id}
+    `;
+  }
   const activated = await getBuilderInventoryById(created.id);
   return { row: activated ?? created, created: true };
 }
