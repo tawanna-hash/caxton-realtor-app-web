@@ -2132,8 +2132,10 @@ function ShareRow({ article, pubColor, onCopied }: { article: any; pubColor: str
     try {
       if (navigator.share) {
         await navigator.share({ title, url });
+        trackEvent('article_shared', { article_id: article?.id, channel: 'native_sharerow' });
       } else {
         await navigator.clipboard.writeText(url);
+        trackEvent('article_shared', { article_id: article?.id, channel: 'copy_fallback' });
         onCopied();
       }
     } catch {
@@ -2144,6 +2146,7 @@ function ShareRow({ article, pubColor, onCopied }: { article: any; pubColor: str
   const onCopy = async () => {
     try {
       await navigator.clipboard.writeText(url);
+      trackEvent('article_shared', { article_id: article?.id, channel: 'copy_link' });
       onCopied();
     } catch {}
   };
@@ -2159,6 +2162,7 @@ function ShareRow({ article, pubColor, onCopied }: { article: any; pubColor: str
         rel="noopener noreferrer"
         aria-label="Share on X"
         className={iconClass}
+        onClick={() => trackEvent('article_shared', { article_id: article?.id, channel: 'twitter' })}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill={iconColor}><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
       </a>
@@ -2168,6 +2172,7 @@ function ShareRow({ article, pubColor, onCopied }: { article: any; pubColor: str
         rel="noopener noreferrer"
         aria-label="Share on LinkedIn"
         className={iconClass}
+        onClick={() => trackEvent('article_shared', { article_id: article?.id, channel: 'linkedin' })}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill={iconColor}><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.95v5.66H9.37V9h3.41v1.56h.05c.47-.9 1.64-1.85 3.37-1.85 3.61 0 4.27 2.37 4.27 5.46zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.55C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg>
       </a>
@@ -2177,6 +2182,7 @@ function ShareRow({ article, pubColor, onCopied }: { article: any; pubColor: str
         rel="noopener noreferrer"
         aria-label="Share on Facebook"
         className={iconClass}
+        onClick={() => trackEvent('article_shared', { article_id: article?.id, channel: 'facebook' })}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill={iconColor}><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
       </a>
@@ -2184,6 +2190,7 @@ function ShareRow({ article, pubColor, onCopied }: { article: any; pubColor: str
         href={`mailto:?subject=${enc(title)}&body=${enc(url)}`}
         aria-label="Share via email"
         className={iconClass}
+        onClick={() => trackEvent('article_shared', { article_id: article?.id, channel: 'email' })}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
       </a>
@@ -2213,6 +2220,7 @@ function ReadNext({ allArticles, currentId, onSelect, pubColor }: { allArticles:
             <button
               type="button"
               onClick={() => {
+                trackEvent('article_related_clicked', { from_article_id: currentId, to_article_id: a.id });
                 if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
                 onSelect(a);
               }}
