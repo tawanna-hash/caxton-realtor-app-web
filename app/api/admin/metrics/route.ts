@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     const eventTotalsRaw = await runHogQL(`
       SELECT event, count() AS total
       FROM events
-      WHERE timestamp >= now() - INTERVAL ${days} DAY
+      WHERE timestamp >= now() - INTERVAL 7 DAY
         AND event IN (
           'inventory_filter_clicked',
           'builder_chip_clicked',
@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
     const filterUsageRaw = await runHogQL(`
       SELECT properties.filter AS filter, count() AS total
       FROM events
-      WHERE timestamp >= now() - INTERVAL ${days} DAY
+      WHERE timestamp >= now() - INTERVAL 7 DAY
         AND event = 'inventory_filter_clicked'
       GROUP BY filter
       ORDER BY total DESC
@@ -156,7 +156,7 @@ export async function GET(req: NextRequest) {
         event,
         count() AS total
       FROM events
-      WHERE timestamp >= now() - INTERVAL ${days} DAY
+      WHERE timestamp >= now() - INTERVAL 7 DAY
         AND event IN (
           'inventory_filter_clicked',
           'builder_chip_clicked',
@@ -187,7 +187,7 @@ export async function GET(req: NextRequest) {
     `);
     const kpiWeek = await runHogQL(`
       SELECT count() FROM events
-      WHERE timestamp >= now() - INTERVAL ${days} DAY
+      WHERE timestamp >= now() - INTERVAL 7 DAY
         AND event IN ('inventory_filter_clicked', 'builder_chip_clicked',
                       'inventory_card_clicked', 'builder_tab_clicked')
     `);
