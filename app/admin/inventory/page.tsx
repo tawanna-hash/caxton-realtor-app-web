@@ -54,18 +54,26 @@ export default function AdminInventoryPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
-            Admin
-          </p>
-          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
-            Builder Inventory &amp; Promotions
-          </h1>
-          <p className="text-sm text-gray-600 font-light mt-2">
-            Submissions from builder and developer clients. Approve, reject, or
-            feature each entry. Approved items appear on the public /inventory
-            page in the publication they were tagged for.
-          </p>
+        <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div>
+            <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
+              Admin
+            </p>
+            <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
+              Builder Inventory &amp; Promotions
+            </h1>
+            <p className="text-sm text-gray-600 font-light mt-2 max-w-2xl">
+              Submissions from builder and developer clients. Approve, reject, or
+              feature each entry. Approved items appear on the public /inventory
+              page in the publication they were tagged for.
+            </p>
+          </div>
+          <Link
+            href="/admin/inventory/new"
+            className="shrink-0 inline-flex items-center justify-center px-5 py-2.5 bg-[#021D40] text-white text-sm font-medium uppercase tracking-wider hover:bg-[#021D40]/90 rounded-md transition-colors whitespace-nowrap"
+          >
+            + Create promotion
+          </Link>
         </div>
 
         <div className="flex gap-1 border-b border-gray-200 mb-6">
