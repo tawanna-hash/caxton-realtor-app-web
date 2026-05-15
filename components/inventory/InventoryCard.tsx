@@ -82,8 +82,11 @@ export default function InventoryCard({ row }: Props) {
   const expiresLabel = formatExpires(row.expiresAt);
 
   const handleClick = () => {
-    if (row.flyerPdfUrl) {
-      window.open(row.flyerPdfUrl, '_blank', 'noopener,noreferrer');
+    // Promotions: open the builder's authoritative source page (legal text lives there)
+    // Listings:   open the flyer PDF if present
+    const target = row.flyerPdfUrl ?? row.sourceUrl;
+    if (target) {
+      window.open(target, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -103,7 +106,7 @@ export default function InventoryCard({ row }: Props) {
       className="group flex flex-col border border-gray-200 bg-white hover:border-gray-400 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
     >
       {/* Thumbnail */}
-      <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden">
+      <div className={`relative ${row.kind === 'promotion' ? 'aspect-video' : 'aspect-[3/4]'} bg-gray-100 overflow-hidden`}>
         {(() => {
           const imgSrc = pickCardImage(row);
           return imgSrc ? (
