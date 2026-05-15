@@ -70,7 +70,7 @@ export default function AdminInventoryPage() {
           </div>
           <Link
             href="/admin/inventory/new"
-            className="shrink-0 inline-flex items-center justify-center px-5 py-2.5 bg-[#021D40] text-white text-sm font-medium uppercase tracking-wider hover:bg-[#021D40]/90 rounded-md transition-colors whitespace-nowrap"
+            className="shrink-0 bg-[#1a2a44] text-white px-4 py-2 text-sm font-medium hover:bg-[#243556] rounded-md transition-colors whitespace-nowrap"
           >
             + Create promotion
           </Link>
