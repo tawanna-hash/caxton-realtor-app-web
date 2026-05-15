@@ -58,6 +58,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               Inventory
             </Link>
             <Link
+              href="/admin/metrics"
+              className={`hover:text-white transition-colors ${pathname.startsWith('/admin/metrics') ? 'text-white' : 'text-white/70'}`}
+            >
+              Metrics
+            </Link>
+            <Link
               href="/admin/subscribers"
               className={`hover:text-white transition-colors ${pathname.startsWith('/admin/subscribers') ? 'text-white' : 'text-white/70'}`}
             >
