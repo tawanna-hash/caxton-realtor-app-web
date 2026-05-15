@@ -24,14 +24,6 @@ const STATUS_BUTTONS: { value: Status; label: string }[] = [
   { value: 'rejected', label: 'Rejected' },
 ];
 
-const PROMO_TYPES: { value: PromoType; label: string }[] = [
-  { value: 'rate_buydown', label: 'Rate buydown' },
-  { value: 'incentive', label: 'Incentive' },
-  { value: 'event', label: 'Event' },
-  { value: 'broker_bonus', label: 'Broker bonus' },
-  { value: 'other', label: 'Other' },
-];
-
 const fieldStyle =
   'w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-900 transition-colors disabled:bg-gray-50 disabled:text-gray-400';
 const labelStyle = 'block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1';
