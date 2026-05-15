@@ -171,9 +171,42 @@ export async function GET(req: NextRequest) {
       return { day: r[0], event: r[1], total: Number(r[2]) };
     });
 
+    // 6. KPI summary — today / yesterday / last 7 days totals.
+    //    Used by the KPITile components at the top of the dashboard.
+    const kpiToday = await runHogQL(`
+      SELECT count() FROM events
+      WHERE toDate(timestamp) = today()
+        AND event IN ('inventory_filter_clicked', 'builder_chip_clicked',
+                      'inventory_card_clicked', 'builder_tab_clicked')
+    `);
+    const kpiYesterday = await runHogQL(`
+      SELECT count() FROM events
+      WHERE toDate(timestamp) = today() - 1
+        AND event IN ('inventory_filter_clicked', 'builder_chip_clicked',
+                      'inventory_card_clicked', 'builder_tab_clicked')
+    `);
+    const kpiWeek = await runHogQL(`
+      SELECT count() FROM events
+      WHERE timestamp >= now() - INTERVAL 7 DAY
+        AND event IN ('inventory_filter_clicked', 'builder_chip_clicked',
+                      'inventory_card_clicked', 'builder_tab_clicked')
+    `);
+    const todayCount = Number((kpiToday[0] as [number])?.[0] ?? 0);
+    const yesterdayCount = Number((kpiYesterday[0] as [number])?.[0] ?? 0);
+    const weekCount = Number((kpiWeek[0] as [number])?.[0] ?? 0);
+    const trendPct = yesterdayCount === 0
+      ? (todayCount > 0 ? 100 : 0)
+      : Math.round(((todayCount - yesterdayCount) / yesterdayCount) * 100);
+    const kpi_summary = {
+      today: todayCount,
+      yesterday: yesterdayCount,
+      week: weekCount,
+      trend_pct: trendPct,
+    };
+
     return NextResponse.json({
       ok: true,
-      metrics: { event_totals, filter_usage, top_builders, top_inventory, time_series },
+      metrics: { event_totals, filter_usage, top_builders, top_inventory, time_series, kpi_summary },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

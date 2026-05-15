@@ -19,6 +19,7 @@ export type Metrics = {
   top_builders: TopBuilder[];
   top_inventory: TopInventory[];
   time_series: TimeSeriesPoint[];
+  kpi_summary?: KPISummary;
 };
 
 export const EVENT_LABELS: Record<string, string> = {
@@ -38,4 +39,11 @@ export const EVENT_COLORS: Record<string, string> = {
   builder_chip_clicked: '#021D40',
   inventory_card_clicked: '#2d1a44',
   builder_tab_clicked: '#185FA5',
+};
+
+export type KPISummary = {
+  today: number;
+  yesterday: number;
+  week: number;
+  trend_pct: number;
 };
