@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import type { Metrics } from './_types';
 import { EVENT_LABELS } from './_types';
 import { TimeSeriesChart } from './_components/TimeSeriesChart';
+import { KPITile } from './_components/KPITile';
 
 export default function AdminMetricsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -64,6 +65,33 @@ export default function AdminMetricsPage() {
 
       {metrics && (
         <div className="space-y-10">
+          {metrics.kpi_summary && (
+            <section>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <KPITile
+                  label="Today"
+                  value={metrics.kpi_summary.today}
+                  trendPct={metrics.kpi_summary.trend_pct}
+                  showTrend
+                  sublabel="vs yesterday"
+                />
+                <KPITile
+                  label="Yesterday"
+                  value={metrics.kpi_summary.yesterday}
+                />
+                <KPITile
+                  label="Last 7 days"
+                  value={metrics.kpi_summary.week}
+                />
+                <KPITile
+                  label="Avg / day"
+                  value={Math.round(metrics.kpi_summary.week / 7)}
+                  sublabel="7-day average"
+                />
+              </div>
+            </section>
+          )}
+
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Activity · last 7 days
