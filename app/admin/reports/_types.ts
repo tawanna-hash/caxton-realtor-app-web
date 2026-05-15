@@ -76,19 +76,19 @@ export const BRANDS: Record<string, BrandConfig> = {
     pub_key: 'realtyline',
     pub_display: 'RealtyLine Austin',
     primary_hex: '#021D40',
-    tagline: 'Austin\'s Real Estate Magazine',
+    tagline: 'Putting A Face On Real Estate',
   },
   newsline: {
     pub_key: 'newsline',
     pub_display: 'Newsline San Antonio',
     primary_hex: '#2d1a44',
-    tagline: 'San Antonio\'s Real Estate Newsletter',
+    tagline: 'Putting A Face On Real Estate',
   },
   caxton: {
     pub_key: 'caxton',
     pub_display: 'Caxton Publications',
     primary_hex: '#1a2a44',
-    tagline: 'Real Estate Trade Publications',
+    tagline: 'Putting A Face On Real Estate',
   },
 };
 
