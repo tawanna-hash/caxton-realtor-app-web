@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import type { Metrics } from './_types';
 import { EVENT_LABELS } from './_types';
+import { TimeSeriesChart } from './_components/TimeSeriesChart';
 
 export default function AdminMetricsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -63,6 +64,13 @@ export default function AdminMetricsPage() {
 
       {metrics && (
         <div className="space-y-10">
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
+              Activity · last 7 days
+            </h2>
+            <TimeSeriesChart data={metrics.time_series ?? []} />
+          </section>
+
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">
               Last 7 days · {grandTotalLast7.toLocaleString()} total clicks
