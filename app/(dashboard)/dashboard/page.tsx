@@ -1670,18 +1670,18 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
         )}
         {/* Floating action pill — Map / Calendar / Share, matches article reader aesthetic */}
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
-          <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-full px-2 py-1.5 shadow-lg">
+          <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1.5 shadow-lg">
             {event.location && (
-              <button onClick={onDirections} aria-label="Directions" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-full transition-colors text-white/85 hover:text-white active:bg-white/10">
+              <button onClick={onDirections} aria-label="Directions" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Map</span>
               </button>
             )}
-            <button onClick={onAddToCalendar} aria-label="Add to calendar" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-full transition-colors text-white/85 hover:text-white active:bg-white/10">
+            <button onClick={onAddToCalendar} aria-label="Add to calendar" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
               <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Calendar</span>
             </button>
-            <button onClick={onShare} aria-label="Share" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-full transition-colors text-white/85 hover:text-white active:bg-white/10">
+            <button onClick={onShare} aria-label="Share" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
               <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Share</span>
             </button>
@@ -2261,7 +2261,7 @@ function TagsRow({ article, pubColor }: { article: any; pubColor: string }) {
 function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onMagazine, onLatest }: { article: any; pubColor: string; saved: boolean; onBack: () => void; onSaveToggle: () => void; onShare: () => void; onCopy: () => void; onMagazine?: () => void; onLatest?: () => void }) {
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
-      <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-full px-2 py-1.5 shadow-lg">
+      <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1.5 shadow-lg">
         <ActionPillButton onClick={onBack} label="Back">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </ActionPillButton>
@@ -2287,7 +2287,7 @@ function ActionPillButton({ children, label, onClick, active }: { children: Reac
     <button
       onClick={onClick}
       aria-label={label}
-      className={`flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-full transition-colors ${active ? 'text-white bg-white/15' : 'text-white/85 hover:text-white active:bg-white/10'}`}
+      className={`flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors ${active ? 'text-white bg-white/15' : 'text-white/85 hover:text-white active:bg-white/10'}`}
     >
       {children}
       <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">{label}</span>
