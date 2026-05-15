@@ -261,8 +261,7 @@ export async function POST(req: NextRequest) {
         UPDATE builder_inventory
         SET status = 'active',
             reviewed_by = ${ADMIN_EMAIL},
-            reviewed_at = NOW(),
-            updated_at = NOW()
+            reviewed_at = NOW()
         WHERE id = ${row.id}
       `;
       return NextResponse.json({ ok: true, id: row.id });
