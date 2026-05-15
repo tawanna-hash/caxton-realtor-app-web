@@ -124,7 +124,7 @@ export default function InventoryClient({ initialRows }: Props) {
             <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
               <span className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-medium whitespace-nowrap pr-1">By Builder</span>
               {buildersForStrip.map((b) => (
-                <Link key={b} href={`/builders/${builderNameToSlug(b)}`} className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-full">
+                <Link key={b} href={`/builders/${builderNameToSlug(b)}`} className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-md">
                   {b}
                 </Link>
               ))}
@@ -190,7 +190,7 @@ export default function InventoryClient({ initialRows }: Props) {
 
         {/* Grid */}
         {regular.length === 0 ? (
-          <div className="border border-gray-200 bg-gray-50 px-6 py-12 text-center">
+          <div className="border border-gray-200 bg-gray-50 px-6 py-12 text-center rounded-md">
             <p className="text-base text-gray-700 font-light">
               {filteredRows.length === 0
                 ? `No inventory available for ${PUB_LABEL[pub]} right now. Check back soon.`

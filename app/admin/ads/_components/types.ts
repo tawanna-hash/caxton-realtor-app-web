@@ -63,9 +63,9 @@ export const ZONE_LABELS: Record<AdZone, string> = {
 };
 
 export const TIER_COLORS: Record<AdTier, string> = {
-  premium: 'bg-amber-100 text-amber-800 ring-1 ring-amber-300',
+  premium: 'bg-amber-100 text-amber-800 ring-1 ring-amber-300 rounded-md',
   standard: 'bg-blue-100 text-blue-800 ring-1 ring-blue-300',
-  house: 'bg-gray-100 text-gray-700 ring-1 ring-gray-300',
+  house: 'bg-gray-100 text-gray-700 ring-1 ring-gray-300 rounded-md',
 };
 
 export function formatSizes(sizes: AdSize[]): string {
@@ -86,14 +86,14 @@ export function campaignStatus(c: AdCampaign): {
   className: string;
 } {
   if (!c.active) {
-    return { label: 'Paused', className: 'bg-gray-100 text-gray-700' };
+    return { label: 'Paused', className: 'bg-gray-100 text-gray-700 rounded-md' };
   }
   const today = new Date().toISOString().slice(0, 10);
   if (today < c.start_date) {
     return { label: 'Scheduled', className: 'bg-blue-100 text-blue-800' };
   }
   if (today > c.end_date) {
-    return { label: 'Expired', className: 'bg-red-100 text-red-700' };
+    return { label: 'Expired', className: 'bg-red-100 text-red-700 rounded-md' };
   }
-  return { label: 'Live', className: 'bg-green-100 text-green-800' };
+  return { label: 'Live', className: 'bg-green-100 text-green-800 rounded-md' };
 }

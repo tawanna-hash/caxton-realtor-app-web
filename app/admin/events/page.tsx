@@ -178,7 +178,7 @@ export default function EventsPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded mb-4">
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-md mb-4">
           {error}
         </div>
       )}
@@ -190,7 +190,7 @@ export default function EventsPage() {
           No events found. <Link href="/admin/events/new" className="text-[#1a2a44] underline">Create one</Link>.
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -231,9 +231,9 @@ export default function EventsPage() {
                     </td>
                     <td className="px-4 py-3">
                       {ev.hidden ? (
-                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">Hidden</span>
+                        <span className="inline-block px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700">Hidden</span>
                       ) : (
-                        <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Visible</span>
+                        <span className="inline-block px-2 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-800">Visible</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">

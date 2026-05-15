@@ -348,7 +348,7 @@ return (
             <button
               onClick={cancelEdit}
               disabled={saving}
-              className="text-sm font-medium px-4 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="text-sm font-medium px-4 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               Cancel
             </button>
@@ -373,7 +373,7 @@ return (
         </div>
       )}
       {saveError && (
-        <div className="mb-4 px-4 py-2 rounded text-sm border bg-red-50 border-red-200 text-red-800">
+        <div className="mb-4 px-4 py-2 rounded-md text-sm border bg-red-50 border-red-200 text-red-800">
           Save error: {saveError}
         </div>
       )}
@@ -553,7 +553,7 @@ return (
                       <button
                         onClick={() => setMagicLinkConfirm(false)}
                         disabled={sendingLink}
-                        className="text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
                       >
                         Cancel
                       </button>
@@ -568,7 +568,7 @@ return (
                   ) : (
                     <button
                       onClick={() => { setMagicLinkConfirm(true); setActionMsg(null); }}
-                      className="text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
                     >
                       Send magic link
                     </button>
@@ -590,7 +590,7 @@ return (
                       <button
                         onClick={() => setDeactivateConfirm(false)}
                         disabled={deactivating}
-                        className="text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
                       >
                         Cancel
                       </button>
@@ -605,7 +605,7 @@ return (
                   ) : (
                     <button
                       onClick={() => { setDeactivateConfirm(true); setActionMsg(null); }}
-                      className="text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      className="text-sm px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
                     >
                       Deactivate
                     </button>
@@ -657,7 +657,7 @@ return (
               <button
                 onClick={() => { setDeleteModalOpen(false); setDeleteConfirmText(''); }}
                 disabled={deleting}
-                className="text-sm px-4 py-1.5 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="text-sm px-4 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
               >
                 Cancel
               </button>

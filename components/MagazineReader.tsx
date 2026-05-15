@@ -163,7 +163,7 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
         <p className="text-white/70 text-sm">This issue isn't available yet.</p>
         <button
           onClick={onClose}
-          className="mt-6 px-6 py-3 bg-white/10 text-white text-sm uppercase tracking-wider rounded-full"
+          className="mt-6 px-6 py-3 bg-white/10 text-white text-sm uppercase tracking-wider rounded-md"
         >
           Close
         </button>

@@ -15,8 +15,8 @@ const PROMO_TYPE_LABEL: Record<PromoType, string> = {
 };
 
 const KIND_BADGE_STYLE: Record<Kind, string> = {
-  listing: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-  promotion: 'border-amber-200 bg-amber-50 text-amber-800',
+  listing: 'border-emerald-200 bg-emerald-50 text-emerald-800 rounded-md',
+  promotion: 'border-amber-200 bg-amber-50 text-amber-800 rounded-md',
 };
 
 function fmtCurrency(n: number): string {
@@ -103,7 +103,7 @@ export default function InventoryCard({ row }: Props) {
       tabIndex={0}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      className="group flex flex-col border border-gray-200 bg-white hover:border-gray-400 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
+      className="group flex flex-col border border-gray-200 bg-white hover:border-gray-400 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 rounded-md overflow-hidden"
     >
       {/* Thumbnail */}
       <div className={`relative ${row.kind === 'promotion' ? 'aspect-video' : 'aspect-[3/4]'} bg-gray-100 overflow-hidden`}>

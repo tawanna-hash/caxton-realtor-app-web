@@ -684,7 +684,7 @@ export default function AdminInventoryDetail({ row }: Props) {
             </div>
           </section>
 
-          <section className="border border-red-200 bg-red-50 px-5 py-5">
+          <section className="border border-red-200 bg-red-50 px-5 py-5 rounded-md">
             <h2 className="text-sm uppercase tracking-[0.15em] text-red-700 font-medium mb-2">
               Danger zone
             </h2>

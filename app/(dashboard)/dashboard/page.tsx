@@ -324,9 +324,9 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
               <p className="text-base text-gray-600 font-light text-center leading-relaxed mb-5">Sign up now and you{"\u2019"}ll automatically be entered in our Fuel Giveaway.</p>
               <p className="text-base text-gray-800 font-medium text-center mb-3">Triple Your Chances By Connecting With Us</p>
               <div className="space-y-2 mb-5">
-                <a href={SOCIALS[pub]?.fb || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-full">Facebook · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.fbHandle}</span></a>
-                <a href={SOCIALS[pub]?.ig || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-full">Instagram · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.igHandle}</span></a>
-                <a href={SOCIALS[pub]?.li || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-full">LinkedIn · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.liHandle}</span></a>
+                <a href={SOCIALS[pub]?.fb || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-md">Facebook · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.fbHandle}</span></a>
+                <a href={SOCIALS[pub]?.ig || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-md">Instagram · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.igHandle}</span></a>
+                <a href={SOCIALS[pub]?.li || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-md">LinkedIn · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.liHandle}</span></a>
               </div>
               <button onClick={() => { trackEvent('giveaway_continue_signup', { pub }); dismissGiveaway(); }} className="w-full py-3.5 text-base font-medium uppercase tracking-[0.15em] text-white" style={{ backgroundColor: info.color }}>Continue Signup</button>
               <p className="text-center text-[11px] text-gray-400 mt-4 font-light leading-relaxed px-2">Winner will be notified via email. By entering, winner agrees to be photographed and featured in an upcoming issue.</p>
@@ -388,7 +388,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 </div>
 
                 <div className="flex gap-2 mt-2">
-                  <button onClick={() => setStep(1)} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-full">Back</button>
+                  <button onClick={() => setStep(1)} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
                   <button onClick={() => setStep(3)} disabled={!email} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider text-white disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
                 </div>
               </div>
@@ -461,7 +461,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <p className="text-xs text-gray-400 font-light mb-4">By creating an account, you agree to receive communications from Caxton Publications, Inc. We will send a magic link to your email - no password needed.</p>
 
                 <div className="flex gap-2">
-                  <button onClick={() => setStep(2)} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-full">Back</button>
+                  <button onClick={() => setStep(2)} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
                   <button onClick={handleSignup} disabled={loading} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider text-white disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Sending...' : 'Create Account'}</button>
                 </div>
               </div>
@@ -494,7 +494,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         <p className="text-sm uppercase tracking-[0.25em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Sign In to Continue</h2>
         <button onClick={() => setMode('signup')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3" style={{ backgroundColor: info.color }}>Create Your Account</button>
-        <button onClick={() => setMode('login')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-6 rounded-full">I Already Have an Account</button>
+        <button onClick={() => setMode('login')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-6 rounded-md">I Already Have an Account</button>
         <button onClick={handleSkip} className="w-full text-center py-2 text-sm text-gray-300 font-light">Continue as Guest</button>
         <p className="text-xs text-gray-300 text-center mt-4 font-light">Guest access has limited features</p>
       </div>
@@ -805,8 +805,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
   const pubAds = ADS.filter((a) => a.pub === pub);
   const CATS = pub === 'realtyline' ? RL_CATS : NS_CATS;
   const filt = cat === 'All' ? NEWS : NEWS.filter((n) => n.cat === cat);
-  const tOn = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full border border-[#1a2a44] bg-[#1a2a44] text-white';
-  const tOff = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full border border-gray-300 bg-white text-gray-700 hover:border-gray-500';
+  const tOn = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-md border border-[#1a2a44] bg-[#1a2a44] text-white';
+  const tOff = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:border-gray-500';
 
   const feed: { t: 'n' | 'a' | 'c' | 's' | 'e'; d?: any }[] = [];
   const isLoadingFirstFetch = newsLoading && liveNews === null;
@@ -1662,7 +1662,7 @@ function EventDetail({ pub, event, onBack }: EventDetailProps) {
         {event.website && (
           <button
             onClick={onRegister}
-            className="w-full py-3 text-white text-sm font-semibold uppercase tracking-wider rounded-full"
+            className="w-full py-3 text-white text-sm font-semibold uppercase tracking-wider rounded-md"
             style={{ backgroundColor: info.color }}
           >
             Register

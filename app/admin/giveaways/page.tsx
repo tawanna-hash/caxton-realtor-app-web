@@ -19,9 +19,9 @@ type Giveaway = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-700 border-gray-200',
-  active: 'bg-green-50 text-green-700 border-green-200',
-  closed: 'bg-amber-50 text-amber-700 border-amber-200',
+  draft: 'bg-gray-100 text-gray-700 border-gray-200 rounded-md',
+  active: 'bg-green-50 text-green-700 border-green-200 rounded-md',
+  closed: 'bg-amber-50 text-amber-700 border-amber-200 rounded-md',
   announced: 'bg-blue-50 text-blue-700 border-blue-200',
 };
 
@@ -82,7 +82,7 @@ export default function GiveawaysPage() {
       )}
 
       {!loading && items.length === 0 && (
-        <div className="bg-white border border-gray-200 p-12 text-center">
+        <div className="bg-white border border-gray-200 p-12 text-center rounded-md">
           <p className="text-gray-500 mb-4">No giveaways yet.</p>
           <Link href="/admin/giveaways/new" className="text-sm font-medium text-[#1a2a44] underline">
             Create your first giveaway
@@ -95,7 +95,7 @@ export default function GiveawaysPage() {
           <Link
             key={g.id}
             href={`/admin/giveaways/${g.id}`}
-            className="bg-white border border-gray-200 p-5 hover:border-[#1a2a44] transition-colors block"
+            className="bg-white border border-gray-200 p-5 hover:border-[#1a2a44] transition-colors block rounded-md"
           >
             <div className="flex items-start justify-between gap-3 mb-3">
               <h2 className="font-semibold text-[#1a2a44] leading-tight">{g.title}</h2>

@@ -85,8 +85,8 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
     tab === 'moveIn' ? moveIn :
     promos;
 
-  const tOn = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full border border-[#1a2a44] bg-[#1a2a44] text-white';
-  const tOff = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-full border border-gray-300 bg-white text-gray-700 hover:border-gray-500';
+  const tOn = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-md border border-[#1a2a44] bg-[#1a2a44] text-white';
+  const tOff = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:border-gray-500';
 
   return (
     <div className="min-h-screen bg-gray-50">

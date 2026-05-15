@@ -133,7 +133,7 @@ export default function AdminInventoryPage() {
                 {rows.map((r) => (
                   <tr key={r.id} className="border-b border-gray-200 last:border-b-0">
                     <td className="px-4 py-3">
-                      <div className="w-16 h-16 bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
+                      <div className="w-16 h-16 bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center rounded-md">
                         {r.thumbnailUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -218,8 +218,8 @@ function EmptyState({ tab, onSwitchTab }: { tab: Tab; onSwitchTab: (t: Tab) => v
 function KindBadge({ kind }: { kind: 'listing' | 'promotion' }) {
   const styles =
     kind === 'listing'
-      ? 'bg-green-50 text-green-900'
-      : 'bg-amber-50 text-amber-900';
+      ? 'bg-green-50 text-green-900 rounded-md'
+      : 'bg-amber-50 text-amber-900 rounded-md';
   return (
     <span
       className={

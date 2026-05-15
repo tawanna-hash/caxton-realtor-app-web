@@ -190,7 +190,7 @@ export default function GiveawayDetailPage() {
         <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-3">{error}</div>
       )}
 
-      <section className="bg-white border border-gray-200 p-6">
+      <section className="bg-white border border-gray-200 p-6 rounded-md">
         <h2 className="text-sm uppercase tracking-wider text-gray-500 mb-5">Details</h2>
         <form onSubmit={handleSave} className="space-y-5">
           <FieldRow label="Title" required>
@@ -199,7 +199,7 @@ export default function GiveawayDetailPage() {
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
             />
           </FieldRow>
           <FieldRow label="Description">
@@ -207,7 +207,7 @@ export default function GiveawayDetailPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
             />
           </FieldRow>
           <FieldRow label="Prize" required>
@@ -216,7 +216,7 @@ export default function GiveawayDetailPage() {
               required
               value={prize}
               onChange={(e) => setPrize(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
             />
           </FieldRow>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -224,7 +224,7 @@ export default function GiveawayDetailPage() {
               <select
                 value={publication}
                 onChange={(e) => setPublication(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#1a2a44] bg-white"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#1a2a44] bg-white rounded-md"
               >
                 <option value="both">Both Publications</option>
                 <option value="austin">RealtyLine (Austin)</option>
@@ -235,7 +235,7 @@ export default function GiveawayDetailPage() {
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#1a2a44] bg-white"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#1a2a44] bg-white rounded-md"
               >
                 <option value="draft">Draft</option>
                 <option value="active">Active</option>
@@ -250,7 +250,7 @@ export default function GiveawayDetailPage() {
                 type="datetime-local"
                 value={startsAt}
                 onChange={(e) => setStartsAt(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
               />
             </FieldRow>
             <FieldRow label="Ends At">
@@ -258,7 +258,7 @@ export default function GiveawayDetailPage() {
                 type="datetime-local"
                 value={endsAt}
                 onChange={(e) => setEndsAt(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
               />
             </FieldRow>
             <FieldRow label="Draw At">
@@ -266,7 +266,7 @@ export default function GiveawayDetailPage() {
                 type="datetime-local"
                 value={drawAt}
                 onChange={(e) => setDrawAt(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
               />
             </FieldRow>
           </div>
@@ -369,7 +369,7 @@ function RulesSection({
   };
 
   return (
-    <section className="bg-white border border-gray-200 p-6">
+    <section className="bg-white border border-gray-200 p-6 rounded-md">
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-sm uppercase tracking-wider text-gray-500">Rules ({rules.length})</h2>
         {!adding && (
@@ -396,7 +396,7 @@ function RulesSection({
           const tix = (r.tickets as number) ?? 0;
           const isRequired = r.required as boolean;
           return (
-            <div key={ruleId} className="flex items-center justify-between gap-3 border border-gray-100 px-4 py-3 text-sm">
+            <div key={ruleId} className="flex items-center justify-between gap-3 border border-gray-100 px-4 py-3 text-sm rounded-md">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-xs uppercase tracking-wider text-gray-500 min-w-[140px]">{action}</span>
                 <span className="text-[#1a2a44] truncate">{lbl || '-'}</span>
@@ -409,7 +409,7 @@ function RulesSection({
               <div className="flex items-center gap-3 flex-shrink-0">
                 <span className="text-xs text-gray-500">{tix} ticket{tix === 1 ? '' : 's'}</span>
                 {isRequired && (
-                  <span className="text-[10px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-100 px-2 py-0.5">
+                  <span className="text-[10px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-100 px-2 py-0.5 rounded-md">
                     Required
                   </span>
                 )}
@@ -430,7 +430,7 @@ function RulesSection({
               <select
                 value={actionType}
                 onChange={(e) => setActionType(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#1a2a44] bg-white"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#1a2a44] bg-white rounded-md"
               >
                 {RULE_ACTIONS.map((a) => (
                   <option key={a.value} value={a.value}>{a.label}</option>
@@ -444,7 +444,7 @@ function RulesSection({
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 placeholder="e.g. Follow @myrealtyline"
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
               />
             </div>
           </div>
@@ -456,7 +456,7 @@ function RulesSection({
                 value={targetUrl}
                 onChange={(e) => setTargetUrl(e.target.value)}
                 placeholder="https://"
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
               />
             </div>
             <div>
@@ -466,7 +466,7 @@ function RulesSection({
                 min={1}
                 value={tickets}
                 onChange={(e) => setTickets(parseInt(e.target.value) || 1)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
               />
             </div>
           </div>
@@ -526,7 +526,7 @@ function EntriesSection({ giveawayId }: { giveawayId: string }) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <section className="bg-white border border-gray-200 p-6">
+    <section className="bg-white border border-gray-200 p-6 rounded-md">
       <h2 className="text-sm uppercase tracking-wider text-gray-500 mb-5">
         Entries {total > 0 && <span className="text-[#1a2a44] normal-case">({total})</span>}
       </h2>
@@ -543,7 +543,7 @@ function EntriesSection({ giveawayId }: { giveawayId: string }) {
 
       {!loading && entries.length > 0 && (
         <>
-          <div className="border border-gray-100 divide-y divide-gray-100">
+          <div className="border border-gray-100 divide-y divide-gray-100 rounded-md">
             {entries.map((e, i) => {
               const name = (e.realtor_name || e.name || e.email || '-') as string;
               const email = (e.realtor_email || e.email) as string | undefined;

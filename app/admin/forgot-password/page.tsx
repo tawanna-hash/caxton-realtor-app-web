@@ -40,7 +40,7 @@ export default function AdminForgotPasswordPage() {
           <p className="text-sm text-gray-500 mt-1">Enter your admin email</p>
         </div>
         {submitted ? (
-          <div className="bg-white border border-gray-200 p-6">
+          <div className="bg-white border border-gray-200 p-6 rounded-md">
             <p className="text-sm text-[#1a2a44] mb-3">
               If that email is registered as an admin, we&apos;ve sent a password reset link. Check your inbox.
             </p>
@@ -55,7 +55,7 @@ export default function AdminForgotPasswordPage() {
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="bg-white border border-gray-200 p-6 space-y-4">
+          <form onSubmit={handleSubmit} className="bg-white border border-gray-200 p-6 rounded-md space-y-4">
             <div>
               <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Email</label>
               <input
