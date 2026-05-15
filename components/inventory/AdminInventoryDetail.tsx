@@ -489,7 +489,7 @@ export default function AdminInventoryDetail({ row }: Props) {
                 className={
                   'px-4 py-2 text-sm font-medium border transition-colors disabled:opacity-60 disabled:cursor-not-allowed ' +
                   (row.featured
-                    ? 'border-amber-600 bg-amber-50 text-amber-900'
+                    ? 'border-[#021D40] bg-[#021D40]/5 text-[#021D40]'
                     : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500')
                 }
               >
