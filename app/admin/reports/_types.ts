@@ -103,3 +103,37 @@ export type ReportOverrides = {
   pub_display: string;
   editorial_note: string;
 };
+
+
+// ─── Events report types ───
+
+export type EventListItem = {
+  event_id: string;
+  title: string;
+  pub: string | null;
+  card_clicks: number;
+  registrations: number;
+};
+
+export type EventMeta = {
+  event_id: string;
+  title: string | null;
+  pub: string | null;
+};
+
+export type EventReport = {
+  event: EventMeta;
+  range_days: number;
+  card_clicks: number;
+  registrations: number;
+  calendar_adds: number;
+  directions_clicks: number;
+  shares: ShareChannel[];
+  shares_total: number;
+};
+
+// Event-share channel labels (smaller set than articles)
+export const EVENT_CHANNEL_LABELS: Record<string, string> = {
+  native: 'Native share',
+  copy: 'Copy link',
+};
