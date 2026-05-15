@@ -60,3 +60,46 @@ export function formatDuration(ms: number): string {
   const s = totalSec % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
+
+
+// Per-pub brand configuration. The pub override on the report drives
+// which brand renders.
+export type BrandConfig = {
+  pub_key: string;          // 'realtyline' | 'newsline' | 'caxton'
+  pub_display: string;      // 'RealtyLine Austin' etc.
+  primary_hex: string;      // navy or accent color used in HTML
+  tagline: string;
+};
+
+export const BRANDS: Record<string, BrandConfig> = {
+  realtyline: {
+    pub_key: 'realtyline',
+    pub_display: 'RealtyLine Austin',
+    primary_hex: '#021D40',
+    tagline: 'Austin\'s Real Estate Magazine',
+  },
+  newsline: {
+    pub_key: 'newsline',
+    pub_display: 'Newsline San Antonio',
+    primary_hex: '#2d1a44',
+    tagline: 'San Antonio\'s Real Estate Newsletter',
+  },
+  caxton: {
+    pub_key: 'caxton',
+    pub_display: 'Caxton Publications',
+    primary_hex: '#1a2a44',
+    tagline: 'Real Estate Trade Publications',
+  },
+};
+
+export function resolveBrand(pubGuess: string | null): BrandConfig {
+  if (!pubGuess) return BRANDS.caxton;
+  const key = pubGuess.toLowerCase();
+  return BRANDS[key] ?? BRANDS.caxton;
+}
+
+export type ReportOverrides = {
+  title: string;
+  pub_display: string;
+  editorial_note: string;
+};

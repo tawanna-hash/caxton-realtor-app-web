@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { ArticleListItem, ArticleReport } from './_types';
+import type { ArticleListItem, ArticleReport, ReportOverrides } from './_types';
+import { ReportPreview, buildReportHtml, buildReportPlainText } from './_components/ReportPreview';
 
 type DaysOption = 7 | 30 | 90 | 180;
 
@@ -23,6 +24,11 @@ export default function AdminReportsPage() {
   const [report, setReport] = useState<ArticleReport | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
+
+  const [titleOverride, setTitleOverride] = useState('');
+  const [pubOverride, setPubOverride] = useState('');
+  const [noteOverride, setNoteOverride] = useState('');
+  const [copyStatus, setCopyStatus] = useState<string | null>(null);
 
   // Load articles list on mount
   useEffect(() => {
@@ -173,16 +179,105 @@ export default function AdminReportsPage() {
         </div>
       )}
 
-      {report && (
-        <div className="bg-white border border-gray-200 rounded-md p-6">
-          <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
-            Report preview (raw — branded view in next commit)
-          </p>
-          <pre className="text-xs bg-gray-50 border border-gray-200 rounded p-4 overflow-x-auto">
-            {JSON.stringify(report, null, 2)}
-          </pre>
-        </div>
-      )}
+      {report && (() => {
+        const r = report;
+        const overrides: ReportOverrides = {
+          title: titleOverride,
+          pub_display: pubOverride,
+          editorial_note: noteOverride,
+        };
+        async function copyHtml() {
+          try {
+            await navigator.clipboard.writeText(buildReportHtml(r, overrides));
+            setCopyStatus('HTML copied to clipboard');
+            setTimeout(() => setCopyStatus(null), 2500);
+          } catch {
+            setCopyStatus('Copy failed — select and copy manually');
+            setTimeout(() => setCopyStatus(null), 3500);
+          }
+        }
+        async function copyPlain() {
+          try {
+            await navigator.clipboard.writeText(buildReportPlainText(r, overrides));
+            setCopyStatus('Plain text copied to clipboard');
+            setTimeout(() => setCopyStatus(null), 2500);
+          } catch {
+            setCopyStatus('Copy failed — select and copy manually');
+            setTimeout(() => setCopyStatus(null), 3500);
+          }
+        }
+        return (
+          <div className="space-y-6">
+            <div className="bg-white border border-gray-200 rounded-md p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Customize report</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Article title <span className="text-gray-400 font-normal">(override)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={titleOverride}
+                    onChange={(e) => setTitleOverride(e.target.value)}
+                    placeholder={r.article.title || 'Untitled article'}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Leave blank to use the article's tracked title (often missing for older articles).</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Publication <span className="text-gray-400 font-normal">(override)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={pubOverride}
+                    onChange={(e) => setPubOverride(e.target.value)}
+                    placeholder="e.g. RealtyLine Austin"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Type 'realtyline', 'newsline', or any display name. Drives header branding.</p>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Editorial note <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <textarea
+                  value={noteOverride}
+                  onChange={(e) => setNoteOverride(e.target.value)}
+                  placeholder="e.g. This article was featured in your June newsletter and on the RealtyLine homepage May 10–12."
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={copyHtml}
+                  className="bg-[#1a2a44] hover:bg-[#243556] text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Copy HTML
+                </button>
+                <button
+                  type="button"
+                  onClick={copyPlain}
+                  className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Copy plain text
+                </button>
+                {copyStatus && (
+                  <span className="text-xs text-gray-600">{copyStatus}</span>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">Preview</p>
+              <ReportPreview report={r} overrides={overrides} />
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
