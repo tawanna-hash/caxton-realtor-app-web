@@ -2317,62 +2317,6 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
   // renders when `article` toggles null/non-null, throwing React #310).
   const { ref: swipeRef, style: swipeStyle } = useSwipeBack({ onBack });
 
-  // Scroll milestone telemetry + time-on-article on unmount.
-  // The article being viewed is identified by `article?.id`; if it changes,
-  // this effect re-runs (fires the previous article's back event in cleanup,
-  // then sets up tracking for the new one).
-  useEffect(() => {
-    const articleId = article?.id;
-    if (articleId == null) return;
-    const openedAt = Date.now();
-    const fired = new Set<number>();
-    const MILESTONES = [25, 50, 75, 100];
-
-    // The reader's scrollable container is the outermost div with
-    // overflow-y-auto rendered by ArticleReader.
-    let scroller: HTMLElement | Window = typeof window !== 'undefined' ? window : ({} as Window);
-    // Try to find the actual reader container (more accurate than window scroll)
-    if (typeof document !== 'undefined') {
-      const candidate = document.querySelector<HTMLDivElement>('div.fixed.inset-0.bg-white.z-30.overflow-y-auto');
-      if (candidate) scroller = candidate;
-    }
-
-    const onScroll = () => {
-      let pct: number;
-      if (scroller instanceof Window) {
-        const top = window.scrollY || window.pageYOffset;
-        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        pct = docHeight > 0 ? (top / docHeight) * 100 : 100;
-      } else {
-        const el = scroller as HTMLElement;
-        const max = el.scrollHeight - el.clientHeight;
-        pct = max > 0 ? (el.scrollTop / max) * 100 : 100;
-      }
-      for (const m of MILESTONES) {
-        if (pct >= m && !fired.has(m)) {
-          fired.add(m);
-          trackEvent('article_scroll_milestone', { article_id: articleId, milestone: m });
-        }
-      }
-    };
-
-    // Initial check — short articles may already be 100% visible.
-    onScroll();
-    (scroller as HTMLElement).addEventListener?.('scroll', onScroll, { passive: true });
-    if (scroller instanceof Window) window.addEventListener('scroll', onScroll, { passive: true });
-
-    return () => {
-      (scroller as HTMLElement).removeEventListener?.('scroll', onScroll);
-      if (scroller instanceof Window) window.removeEventListener('scroll', onScroll);
-      trackEvent('article_back_clicked', {
-        article_id: articleId,
-        time_on_article_ms: Date.now() - openedAt,
-        max_milestone_reached: fired.size > 0 ? Math.max(...Array.from(fired)) : 0,
-      });
-    };
-  }, [article?.id]);
-
-
   // Restore saved state from sessionStorage (placeholder until B2b adds backend)
   useEffect(() => {
     if (!article || typeof window === 'undefined') return;
