@@ -148,9 +148,32 @@ export async function GET(req: NextRequest) {
       };
     });
 
+    // 5. Time series — events per day, last 7 days, grouped by event.
+    //    Used by the TimeSeriesChart component (Commit 4).
+    const timeSeriesRaw = await runHogQL(`
+      SELECT
+        toDate(timestamp) AS day,
+        event,
+        count() AS total
+      FROM events
+      WHERE timestamp >= now() - INTERVAL 7 DAY
+        AND event IN (
+          'inventory_filter_clicked',
+          'builder_chip_clicked',
+          'inventory_card_clicked',
+          'builder_tab_clicked'
+        )
+      GROUP BY day, event
+      ORDER BY day ASC
+    `);
+    const time_series = timeSeriesRaw.map((row) => {
+      const r = row as [string, string, number];
+      return { day: r[0], event: r[1], total: Number(r[2]) };
+    });
+
     return NextResponse.json({
       ok: true,
-      metrics: { event_totals, filter_usage, top_builders, top_inventory },
+      metrics: { event_totals, filter_usage, top_builders, top_inventory, time_series },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
