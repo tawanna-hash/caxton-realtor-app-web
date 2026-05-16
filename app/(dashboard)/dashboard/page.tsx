@@ -11,9 +11,10 @@ import ProfilePanel from '@/components/ProfilePanel';
 import { startAuthentication } from '@/components/PasskeysPanel';
 import { useState as useStateForMag, useEffect as useEffectForMag } from 'react';
 import type { Magazine } from '@/lib/magazines';
+import { getApiBase } from '@/lib/api-base';
 
 const SW = { fontFamily: 'Switzer, system-ui, sans-serif' };
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API = getApiBase();
 
 const PUBS = [
   { id: 'realtyline', name: 'RealtyLine', city: 'Austin', tagline: 'Putting A Face on Real Estate since 1995', color: '#1a2a44' },

@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import HamburgerMenu from './HamburgerMenu';
+import { getApiBase } from '@/lib/api-base';
 
 type User = { id?: string; email?: string; guest?: boolean } | null;
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
+const API = getApiBase();
 
 export default function SiteHeader() {
   const router = useRouter();

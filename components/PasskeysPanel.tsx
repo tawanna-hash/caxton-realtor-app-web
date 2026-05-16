@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
 import { trackEvent } from '../app/posthog-provider';
+import { getApiBase } from '@/lib/api-base';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API = getApiBase();
 
 type Credential = {
   id: string;

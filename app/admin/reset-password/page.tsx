@@ -3,8 +3,9 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { getApiBase } from '@/lib/api-base';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
+const API_URL = getApiBase();
 
 function ResetPasswordForm() {
   const router = useRouter();

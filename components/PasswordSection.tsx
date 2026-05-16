@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from 'react';
+import { getApiBase } from '@/lib/api-base';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API = getApiBase();
 
 type Props = {
   /** Brand color for the primary button. */

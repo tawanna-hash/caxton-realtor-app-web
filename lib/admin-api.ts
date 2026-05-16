@@ -1,5 +1,6 @@
+import { getApiBase } from '@/lib/api-base';
 // Admin API client - thin fetch wrapper for /admin/* endpoints
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_BASE = getApiBase();
 
 type FetchOpts = {
   method?: string;
@@ -119,7 +120,7 @@ export const adminApi = {
   },
 
   exportSubscribersCsv: async () => {
-    const API_BASE_LOCAL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    const API_BASE_LOCAL = getApiBase();
     const res = await fetch(`${API_BASE_LOCAL}/admin/subscribers/export.csv`, { credentials: 'include' });
     if (!res.ok) throw new Error(`Export failed (HTTP ${res.status})`);
     const blob = await res.blob();

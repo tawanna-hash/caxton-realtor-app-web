@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { getApiBase } from '@/lib/api-base';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
+const API_URL = getApiBase();
 
 export default function AdminForgotPasswordPage() {
   const [email, setEmail] = useState('');

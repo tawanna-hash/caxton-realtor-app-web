@@ -2,9 +2,10 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { getApiBase } from '@/lib/api-base';
 
 const SW = { fontFamily: 'Switzer, system-ui, sans-serif' };
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API = getApiBase();
 
 function ResetPasswordInner() {
   const router = useRouter();
