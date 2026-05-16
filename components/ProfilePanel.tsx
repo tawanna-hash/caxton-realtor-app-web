@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import PasskeysPanel from './PasskeysPanel';
+import PasswordSection from './PasswordSection';
 
 type User = {
   email?: string;
@@ -9,6 +10,7 @@ type User = {
   last_name?: string;
   firstName?: string;
   lastName?: string;
+  hasPassword?: boolean;
 };
 
 type Props = {
@@ -70,6 +72,7 @@ export default function ProfilePanel({ user, accentColor = '#1a2a44', onClose }:
         </div>
 
         <div className="p-5 space-y-5">
+          <PasswordSection accentColor={accentColor} hasPassword={!!user?.hasPassword} />
           <PasskeysPanel accentColor={accentColor} />
 
           <p className="text-xs text-gray-400 font-light text-center">
