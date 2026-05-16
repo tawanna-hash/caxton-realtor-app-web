@@ -13,7 +13,7 @@ import CommunitiesClient from '@/components/communities/CommunitiesClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Builder & Developer Communities — HarmonyOne',
+  title: 'Builder & Developer Communities — SnapNews24',
   description:
     'New home communities and master-planned developments from Austin and San Antonio builders and developers.',
 };

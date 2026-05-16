@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: PageProps) {
   const builderName = await slugToBuilderName(slug);
   if (!builderName) return { title: 'Builder not found' };
   return {
-    title: `${builderName} — HarmonyOne`,
+    title: `${builderName} — SnapNews24`,
     description: `Communities, move-in-ready homes, and promotions from ${builderName}.`,
   };
 }

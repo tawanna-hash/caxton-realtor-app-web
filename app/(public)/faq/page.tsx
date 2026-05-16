@@ -1,7 +1,7 @@
 export const metadata = {
-  title: 'Frequently Asked Questions — HarmonyOne',
+  title: 'Frequently Asked Questions — SnapNews24',
   description:
-    'Common questions about signing in, notifications, account, and troubleshooting for HarmonyOne by Caxton Publications.',
+    'Common questions about signing in, notifications, account, and troubleshooting for SnapNews24 by Caxton Publications.',
 };
 
 export default function FaqPage() {
@@ -35,7 +35,7 @@ export default function FaqPage() {
           <div>
             <p className="font-semibold text-gray-900 mb-1">Who can use this app?</p>
             <p className="text-gray-700 font-light leading-relaxed">
-              Anyone can sign up. HarmonyOne is built for the Austin and San
+              Anyone can sign up. SnapNews24 is built for the Austin and San
               Antonio real estate community — REALTORS®, brokers, lenders,
               title professionals, builders, homebuyers, and anyone who wants
               to follow the local market. Some features (like REALTOR®-only

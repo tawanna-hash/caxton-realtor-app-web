@@ -1,7 +1,7 @@
 export const metadata = {
-  title: 'Terms of Use — HarmonyOne',
+  title: 'Terms of Use — SnapNews24',
   description:
-    'The terms under which you may use HarmonyOne, operated by Caxton Publications, Inc.',
+    'The terms under which you may use SnapNews24, operated by Caxton Publications, Inc.',
 };
 
 export default function TermsPage() {
@@ -26,7 +26,7 @@ export default function TermsPage() {
           </h2>
           <p>
             These Terms of Use (&ldquo;Terms&rdquo;) govern your use of the
-            HarmonyOne and any services we provide through it
+            SnapNews24 and any services we provide through it
             (collectively, the &ldquo;Service&rdquo;). The Service is operated
             by Caxton Publications, Inc. (&ldquo;Caxton,&rdquo; &ldquo;we,&rdquo;
             &ldquo;us&rdquo;). By creating an account or otherwise using the
@@ -39,7 +39,7 @@ export default function TermsPage() {
             2. Eligibility
           </h2>
           <p>
-            HarmonyOne is open to anyone interested in real estate news,
+            SnapNews24 is open to anyone interested in real estate news,
             content, and events in the markets we cover. To use the Service,
             you must:
           </p>

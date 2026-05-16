@@ -63,7 +63,7 @@ export default function SiteHeader() {
             </svg>
           </button>
           <Link href="/" className="text-base font-semibold text-gray-900 tracking-tight">
-            HarmonyOne
+            SnapNews24
           </Link>
           {user ? (
             <button

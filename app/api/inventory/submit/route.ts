@@ -300,7 +300,7 @@ ${row.description ? `<p style="margin: 16px 0 8px; font-size: 14px;"><strong>Des
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'HarmonyOne <noreply@myrealtyline.com>',
+          from: 'SnapNews24 <noreply@myrealtyline.com>',
           to: NOTIFY_TO,
           subject: `New ${kind} submission — ${row.builderName} / ${row.title}`,
           html: emailHtml,

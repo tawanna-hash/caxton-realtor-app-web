@@ -61,7 +61,7 @@ export default function HamburgerMenu({
       <div className="sticky top-0 bg-black px-3 py-3 flex items-center justify-between border-b border-white/10 z-10">
         <div className="w-10" />
         <p className="text-sm uppercase tracking-[0.25em] text-white/50 font-medium">
-          HarmonyOne
+          SnapNews24
         </p>
         <button
           onClick={onClose}
