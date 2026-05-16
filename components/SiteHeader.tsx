@@ -62,7 +62,7 @@ export default function SiteHeader() {
               <line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
           </button>
-          <Link href="/" className="text-base font-semibold text-gray-900 tracking-tight">
+          <Link href="/" className="text-sm uppercase tracking-[0.25em] text-gray-900 font-medium">
             SnapNews24
           </Link>
           {user ? (
