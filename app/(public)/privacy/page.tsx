@@ -1,7 +1,7 @@
 export const metadata = {
-  title: 'Privacy Notice — SnapNews24',
+  title: 'Privacy Notice — RealtyNewsNow',
   description:
-    'How Caxton Publications collects, uses, and protects information in SnapNews24.',
+    'How Caxton Publications collects, uses, and protects information in RealtyNewsNow.',
 };
 
 export default function PrivacyPage() {
@@ -24,7 +24,7 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-3">Who we are</h2>
           <p>
             Caxton Publications, Inc. (&ldquo;Caxton,&rdquo; &ldquo;we,&rdquo;
-            &ldquo;us&rdquo;) operates SnapNews24 (the &ldquo;app&rdquo;) and publishes
+            &ldquo;us&rdquo;) operates RealtyNewsNow (the &ldquo;app&rdquo;) and publishes
             RealtyLine (Austin) and Newsline San Antonio. We are based in
             Texas. This notice describes the information we collect through the
             app and how we use it.
@@ -203,7 +203,7 @@ export default function PrivacyPage() {
             Children
           </h2>
           <p>
-            SnapNews24 is intended for adults interested in real estate news,
+            RealtyNewsNow is intended for adults interested in real estate news,
             content, and events in Austin and San Antonio.
             Children under 18 should not use the app without parental
             supervision. We do not knowingly collect personal information from
@@ -226,7 +226,7 @@ export default function PrivacyPage() {
             Cookies and similar technology
           </h2>
           <p>
-            SnapNews24 uses cookies and similar technology only for what&apos;s
+            RealtyNewsNow uses cookies and similar technology only for what&apos;s
             needed to operate the app — keeping you signed in, remembering
             your notification preferences, and basic analytics to understand
             which content is useful. We do not use cookies to track you across

@@ -1,7 +1,7 @@
 export const metadata = {
-  title: 'Terms of Use — SnapNews24',
+  title: 'Terms of Use — RealtyNewsNow',
   description:
-    'The terms under which you may use SnapNews24, operated by Caxton Publications, Inc.',
+    'The terms under which you may use RealtyNewsNow, operated by Caxton Publications, Inc.',
 };
 
 export default function TermsPage() {
@@ -26,7 +26,7 @@ export default function TermsPage() {
           </h2>
           <p>
             These Terms of Use (&ldquo;Terms&rdquo;) govern your use of the
-            SnapNews24 and any services we provide through it
+            RealtyNewsNow and any services we provide through it
             (collectively, the &ldquo;Service&rdquo;). The Service is operated
             by Caxton Publications, Inc. (&ldquo;Caxton,&rdquo; &ldquo;we,&rdquo;
             &ldquo;us&rdquo;). By creating an account or otherwise using the
@@ -39,7 +39,7 @@ export default function TermsPage() {
             2. Eligibility
           </h2>
           <p>
-            SnapNews24 is open to anyone interested in real estate news,
+            RealtyNewsNow is open to anyone interested in real estate news,
             content, and events in the markets we cover. To use the Service,
             you must:
           </p>

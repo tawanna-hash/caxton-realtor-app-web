@@ -11,7 +11,7 @@ import InventoryClient from '@/components/inventory/InventoryClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Builder Inventory & Promotions — SnapNews24',
+  title: 'Builder Inventory & Promotions — RealtyNewsNow',
   description:
     'New home listings, quick move-ins, and limited-time promotions from Austin and San Antonio builders and developers.',
 };
