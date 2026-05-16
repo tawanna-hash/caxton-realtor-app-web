@@ -12,6 +12,7 @@
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
     "@radix-ui/react-slot": "^1.2.4",
+    "@simplewebauthn/browser": "^10.0.0",
     "@vercel/blob": "^2.3.3",
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",

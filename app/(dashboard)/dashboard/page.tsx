@@ -7,6 +7,7 @@ import { useSwipeBack } from '@/hooks/use-swipe-back';
 import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReader from '@/components/MagazineReader';
 import MagazineFeatured from '@/components/MagazineFeatured';
+import ProfilePanel from '@/components/ProfilePanel';
 import { useState as useStateForMag, useEffect as useEffectForMag } from 'react';
 import type { Magazine } from '@/lib/magazines';
 
@@ -755,6 +756,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
   const [cat, setCat] = useState('All');
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const track = useMetrics(user?.id || null);
   const info = PUBS.find((p) => p.id === pub) || PUBS[0];
   const other = PUBS.find((p) => p.id !== pub) || PUBS[1];
@@ -900,7 +902,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
               <div className="space-y-5">
                 <button onClick={() => { setMenuOpen(false); router.push("/about"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">About Us</button>
                 <button onClick={() => { setMenuOpen(false); router.push("/advertise"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Advertise</button>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">My Profile</a>
+                <button onClick={() => { setMenuOpen(false); setProfileOpen(true); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">My Profile</button>
                 <a href="/admin/login" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Admin Login</a>
               </div>
             </div>
@@ -1022,6 +1024,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
           <button onClick={() => router.push("/giveaways")} className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Giveaways</span></button>
         </div>
       </nav>
+      {profileOpen && (
+        <ProfilePanel user={user} accentColor={info.color} onClose={() => setProfileOpen(false)} />
+      )}
     </div>
   );
 }
@@ -2703,7 +2708,7 @@ function MagazinePhase({ pub, onBack, onOpenArticle }: { pub: string; onBack: ()
           onClose={() => setOpenMag(null)}
         />
       )}
-    </div>
+        </div>
   );
 }
 
