@@ -8,6 +8,7 @@ import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReader from '@/components/MagazineReader';
 import MagazineFeatured from '@/components/MagazineFeatured';
 import ProfilePanel from '@/components/ProfilePanel';
+import { startAuthentication } from '@/components/PasskeysPanel';
 import { useState as useStateForMag, useEffect as useEffectForMag } from 'react';
 import type { Magazine } from '@/lib/magazines';
 
@@ -182,6 +183,12 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
 
 function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void }) {
   const [mode, setMode] = useState<'choice' | 'signup' | 'login' | 'sent'>('choice');
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [passkeySupported, setPasskeySupported] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setPasskeySupported(typeof window.PublicKeyCredential === 'function');
+  }, []);
   const [step, setStep] = useState(1);
   const [licenseType, setLicenseType] = useState('TREC #');
   const [licenseNum, setLicenseNum] = useState('');
@@ -288,6 +295,67 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
     setLoading(false);
   }
 
+
+  async function handlePasskeyLogin() {
+    setError('');
+    setPasskeyLoading(true);
+    try {
+      // Step 1: get authentication options
+      const beginRes = await fetch(API + '/auth/webauthn/authenticate/begin', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(email ? { email } : {}),
+      });
+      if (!beginRes.ok) {
+        const data = await beginRes.json().catch(() => ({}));
+        throw new Error(data.error || `Could not start sign-in (HTTP ${beginRes.status})`);
+      }
+      const { options } = await beginRes.json();
+
+      // Step 2: invoke browser ceremony — triggers Touch ID / Face ID / Windows Hello
+      const assertion = await startAuthentication(options);
+
+      // Step 3: verify on server, session cookie is set by the response
+      const finishRes = await fetch(API + '/auth/webauthn/authenticate/finish', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ response: assertion }),
+      });
+      if (!finishRes.ok) {
+        const data = await finishRes.json().catch(() => ({}));
+        throw new Error(data.error || `Sign-in failed (HTTP ${finishRes.status})`);
+      }
+
+      // Step 4: hydrate user via /auth/me
+      const meRes = await fetch(API + '/auth/me', { credentials: 'include' });
+      if (!meRes.ok) {
+        throw new Error('Signed in but could not load your account');
+      }
+      const meData = await meRes.json();
+      const realtor = meData.realtor || meData;
+
+      trackEvent('passkey_signin_succeeded', { pub });
+      onAuth({
+        id: realtor.id,
+        email: realtor.email,
+        firstName: realtor.first_name,
+        lastName: realtor.last_name,
+        ...realtor,
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Sign-in failed';
+      if (/cancell|abort|NotAllow/i.test(msg)) {
+        setError('Sign-in cancelled');
+      } else {
+        setError(msg);
+      }
+      trackEvent('passkey_signin_failed', { reason: msg.slice(0, 200), pub });
+    } finally {
+      setPasskeyLoading(false);
+    }
+  }
   function handleSkip() {
     trackEvent('auth_guest_skip', { pub });
     onAuth({ id: 'guest', firstName: 'Guest', email: '', guest: true });
@@ -480,6 +548,31 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
           <p className="text-sm uppercase tracking-[0.25em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
           <h2 className="text-2xl text-gray-900 font-semibold text-center mb-6">Welcome Back</h2>
           {error && <p className="text-base text-red-500 text-center mb-4 font-light">{error}</p>}
+          {passkeySupported && (
+            <>
+              <button
+                onClick={handlePasskeyLogin}
+                disabled={passkeyLoading}
+                className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 disabled:opacity-40 flex items-center justify-center gap-2"
+                style={{ backgroundColor: info.color }}
+              >
+                {passkeyLoading ? 'Verifying…' : (
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    Sign in with Passkey
+                  </>
+                )}
+              </button>
+              <div className="flex items-center gap-3 my-4">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs text-gray-400 uppercase tracking-wider">or email me a link</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+            </>
+          )}
           <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className={ic} />
           <p className="text-sm text-gray-400 font-light mb-4">We will send you a magic link. No password needed.</p>
           <button onClick={handleLogin} disabled={loading || !email} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Sending...' : 'Send Magic Link'}</button>
