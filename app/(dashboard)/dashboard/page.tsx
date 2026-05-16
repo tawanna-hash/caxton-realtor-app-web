@@ -206,6 +206,9 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   const [fbHandle, setFbHandle] = useState('');
   const [igHandle, setIgHandle] = useState('');
   const [liHandle, setLiHandle] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [showGiveaway, setShowGiveaway] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -256,6 +259,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
           fbHandle: fbHandle || undefined,
           igHandle: igHandle || undefined,
           liHandle: liHandle || undefined,
+          password: password || undefined,
           consentText: 'I agree to receive communications from Caxton Publications, Inc.',
         }),
       });
@@ -356,6 +360,41 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       setPasskeyLoading(false);
     }
   }
+  async function handlePasswordLogin() {
+    setError('');
+    setLoading(true);
+    try {
+      const res = await fetch(API + '/auth/password-login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Sign-in failed');
+      }
+      const meRes = await fetch(API + '/auth/me', { credentials: 'include' });
+      if (!meRes.ok) throw new Error('Signed in but could not load your account');
+      const meData = await meRes.json();
+      const realtor = meData.realtor || meData;
+      trackEvent('password_signin_succeeded', { pub });
+      onAuth({
+        id: realtor.id,
+        email: realtor.email,
+        firstName: realtor.first_name,
+        lastName: realtor.last_name,
+        ...realtor,
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Sign-in failed';
+      setError(msg);
+      trackEvent('password_signin_failed', { reason: msg.slice(0, 200), pub });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function handleSkip() {
     trackEvent('auth_guest_skip', { pub });
     onAuth({ id: 'guest', firstName: 'Guest', email: '', guest: true });
@@ -447,6 +486,14 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className={ic} />
                 <input type="tel" placeholder="Mobile Phone" value={mobile} onChange={(e) => setMobile(e.target.value)} className={ic} />
 
+                <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3 mt-4">Create a Password</p>
+                <div className="relative mb-3">
+                  <input type={showPassword ? 'text' : 'password'} placeholder="Password (at least 8 characters)" value={password} onChange={(e) => setPassword(e.target.value)} className={ic + ' pr-16'} autoComplete="new-password" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-xs uppercase tracking-wider text-gray-400">{showPassword ? 'Hide' : 'Show'}</button>
+                </div>
+                <input type={showPassword ? 'text' : 'password'} placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={ic} autoComplete="new-password" />
+                <p className="text-xs text-gray-400 font-light mb-2">Used for sign-in. You can also use Touch ID / Face ID after signing in.</p>
+
                 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3 mt-4">Mailing Address</p>
                 <input type="text" placeholder="Street Address" value={addr1} onChange={(e) => setAddr1(e.target.value)} className={ic} />
                 <input type="text" placeholder="Suite / Unit (optional)" value={addr2} onChange={(e) => setAddr2(e.target.value)} className={ic} />
@@ -458,7 +505,12 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
                 <div className="flex gap-2 mt-2">
                   <button onClick={() => setStep(1)} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
-                  <button onClick={() => setStep(3)} disabled={!email} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider text-white disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
+                  <button onClick={() => {
+                    if (!password || password.length < 8) { setError('Password must be at least 8 characters'); return; }
+                    if (password !== confirmPassword) { setError('Passwords do not match'); return; }
+                    setError('');
+                    setStep(3);
+                  }} disabled={!email || !password || !confirmPassword} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider text-white disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
                 </div>
               </div>
             )}
@@ -548,7 +600,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
           <p className="text-sm uppercase tracking-[0.25em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
           <h2 className="text-2xl text-gray-900 font-semibold text-center mb-6">Welcome Back</h2>
           {error && <p className="text-base text-red-500 text-center mb-4 font-light">{error}</p>}
-          {false && passkeySupported && (
+          {passkeySupported && (
             <>
               <button
                 onClick={handlePasskeyLogin}
@@ -562,20 +614,24 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                       <rect x="3" y="11" width="18" height="11" rx="2" />
                       <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                     </svg>
-                    Sign in with Passkey
+                    Use Face ID / Touch ID
                   </>
                 )}
               </button>
               <div className="flex items-center gap-3 my-4">
                 <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-xs text-gray-400 uppercase tracking-wider">or email me a link</span>
+                <span className="text-xs text-gray-400 uppercase tracking-wider">or with password</span>
                 <div className="flex-1 h-px bg-gray-200" />
               </div>
             </>
           )}
-          <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className={ic} />
-          <p className="text-sm text-gray-400 font-light mb-4">We will send you a magic link. No password needed.</p>
-          <button onClick={handleLogin} disabled={loading || !email} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Sending...' : 'Send Magic Link'}</button>
+          <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className={ic} autoComplete="email" />
+          <div className="relative mb-3">
+            <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className={ic + ' pr-16'} autoComplete="current-password" onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordLogin(); }} />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-xs uppercase tracking-wider text-gray-400">{showPassword ? 'Hide' : 'Show'}</button>
+          </div>
+          <button onClick={handlePasswordLogin} disabled={loading || !email || !password} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Signing in…' : 'Sign In'}</button>
+          <button onClick={() => { if (typeof window !== 'undefined') window.location.href = '/auth/forgot-password'; }} className="w-full text-center py-2 text-sm text-gray-500 font-light">Forgot password?</button>
           <button onClick={() => setMode('choice')} className="w-full text-center py-2 text-base text-gray-400 font-light">Back</button>
         </div>
       </div>
