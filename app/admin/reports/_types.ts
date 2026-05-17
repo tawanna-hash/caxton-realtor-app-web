@@ -137,39 +137,3 @@ export const EVENT_CHANNEL_LABELS: Record<string, string> = {
   native: 'Native share',
   copy: 'Copy link',
 };
-
-
-// ─── Mailchimp report types (client-facing shape) ───
-// These are the trimmed types the page consumes — not the raw
-// Mailchimp API response. The API endpoints transform the
-// Mailchimp shape into these.
-
-export type MailchimpCampaignSummary = {
-  campaign_id: string;
-  subject_line: string;
-  title: string;
-  send_time: string;          // ISO 8601 — used to display "Sent on May 5, 2026"
-  emails_sent: number;
-  list_name: string;
-};
-
-export type MailchimpClickedLink = {
-  url: string;
-  total_clicks: number;
-  unique_clicks: number;
-  click_percentage: number;
-};
-
-export type MailchimpCampaignReportData = {
-  campaign: MailchimpCampaignSummary;
-  emails_sent: number;
-  opens_total: number;
-  unique_opens: number;
-  open_rate: number;             // 0..1
-  clicks_total: number;
-  unique_clicks: number;
-  click_rate: number;            // 0..1
-  bounces: number;               // hard + soft + syntax
-  unsubscribes: number;
-  top_links: MailchimpClickedLink[];
-};
