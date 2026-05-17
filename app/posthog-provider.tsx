@@ -34,7 +34,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export function identifyUser(userId: string | null, traits?: Record<string, any>) {
+export function identifyUser(userId: string | null, traits?: Record<string, unknown>) {
   if (typeof window === "undefined") return;
   if (!initialized) return;
   if (userId) {
@@ -44,7 +44,7 @@ export function identifyUser(userId: string | null, traits?: Record<string, any>
   }
 }
 
-export function trackEvent(event: string, properties?: Record<string, any>) {
+export function trackEvent(event: string, properties?: Record<string, unknown>) {
   if (typeof window === "undefined") return;
   if (!initialized) return;
   posthog.capture(event, properties);
