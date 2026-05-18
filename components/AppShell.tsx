@@ -203,7 +203,7 @@ export default function AppShell({
           {/* Center: brand + badge */}
           <div className="flex items-center gap-2">
             <Link href={isAdmin ? '/admin/giveaways' : '/'} className="text-sm sm:text-base font-semibold tracking-tight">
-              {isAdmin ? 'Caxton Admin' : 'RealtyNewsNow'}
+              {isAdmin ? 'RealtyNewsNow Admin' : 'RealtyNewsNow'}
             </Link>
             {isAdmin ? (
               <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-white/60">
@@ -370,7 +370,7 @@ export default function AppShell({
               </div>
 
               <p className="text-[10px] text-white/25 font-light text-center pt-4">
-                {'\u00A9'} 2026 Caxton Publications, Inc.
+                {'\u00A9'} 2026 RealtyNewsNow
               </p>
             </div>
           </div>
