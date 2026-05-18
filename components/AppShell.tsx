@@ -257,18 +257,20 @@ export default function AppShell({
         </div>
       </header>
 
-      {/* ======== DRAWER OVERLAY ======== */}
-      {drawerOpen ? (
-        <div className="fixed inset-0 z-50">
+      {/* ======== DRAWER OVERLAY (animated) ======== */}
+      <div
+        className={`fixed inset-0 z-50 ${drawerOpen ? "visible" : "invisible"}`}
+        style={{ transitionDelay: drawerOpen ? "0ms" : "300ms", transitionProperty: "visibility", transitionDuration: "0ms" }}
+      >
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/40 transition-opacity"
+            className={`absolute inset-0 bg-black transition-opacity duration-300 ${drawerOpen ? "opacity-40" : "opacity-0"}`}
             onClick={() => setDrawerOpen(false)}
           />
 
           {/* Drawer panel */}
           <div
-            className="absolute inset-y-0 left-0 w-80 max-w-[85vw] overflow-y-auto shadow-2xl"
+            className={`absolute inset-y-0 left-0 w-80 max-w-[85vw] overflow-y-auto shadow-2xl transition-transform duration-300 ease-out ${drawerOpen ? "translate-x-0" : "-translate-x-full"}`}
             style={{ backgroundColor: drawerBg }}
           >
             {/* Drawer header */}
@@ -373,7 +375,6 @@ export default function AppShell({
             </div>
           </div>
         </div>
-      ) : null}
 
       {/* ======== MAIN CONTENT ======== */}
       <main>{children}</main>
