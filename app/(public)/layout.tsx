@@ -1,10 +1,9 @@
-import SiteHeader from '@/components/SiteHeader';
+import AppShell from '@/components/AppShell';
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-white">
-      <SiteHeader />
-      <main>{children}</main>
-    </div>
+    <AppShell variant="public">
+      {children}
+    </AppShell>
   );
 }
