@@ -31,6 +31,8 @@ import { unstable_cache } from 'next/cache';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
+
 const POSTHOG_HOST = 'https://us.posthog.com';
 const POSTHOG_PROJECT_ID = '418339';
 
