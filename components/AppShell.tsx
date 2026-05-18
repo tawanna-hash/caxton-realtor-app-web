@@ -22,6 +22,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getApiBase } from '@/lib/api-base';
 import { Footer } from '@/components/footer';
+import NavDrawer from '@/components/NavDrawer';
 
 // ============================================================
 // Types + constants
@@ -29,33 +30,13 @@ import { Footer } from '@/components/footer';
 
 type User = { id?: string; email?: string } | null;
 
-interface NavItem {
-  label: string;
-  href: string;
-  /** If true, link is a placeholder (renders dimmed, no navigation) */
-  placeholder?: boolean;
-  /** Only show when user has admin role */
-  adminOnly?: boolean;
-}
-
-interface NavSection {
-  title?: string;
-  items: NavItem[];
-  adminOnly?: boolean;
-}
-
 const PUB_COLORS: Record<string, string> = {
   realtyline: '#021D40',
   newsline: '#3D0740',
   realtynewsnow: '#1a2a44',
 };
 
-const PUB_NAMES: Record<string, string> = {
-  realtyline: 'RealtyLine',
-  newsline: 'Newsline',
-};
-
-const ADMIN_LINKS: NavItem[] = [
+const ADMIN_LINKS = [
   { label: 'Giveaways', href: '/admin/giveaways', adminOnly: true },
   { label: 'Events', href: '/admin/events', adminOnly: true },
   { label: 'Ads', href: '/admin/ads', adminOnly: true },
@@ -64,48 +45,6 @@ const ADMIN_LINKS: NavItem[] = [
   { label: 'Reports', href: '/admin/reports', adminOnly: true },
   { label: 'Analytics', href: '/admin/analytics', adminOnly: true },
   { label: 'Subscribers', href: '/admin/subscribers', adminOnly: true },
-];
-
-const DRAWER_SECTIONS: NavSection[] = [
-  {
-    title: 'Content',
-    items: [
-      { label: 'Magazine', href: '/dashboard' },
-      { label: 'Calendar', href: '/dashboard' },
-      { label: 'Giveaways', href: '/giveaways' },
-      { label: 'Builder Inventory', href: '/inventory' },
-      { label: 'Communities', href: '/communities' },
-    ],
-  },
-  {
-    title: 'Subscribe',
-    items: [
-      { label: 'Digital Newsletters', href: '#', placeholder: true },
-      { label: 'Subscribe to Print', href: '/subscribe' },
-      { label: 'Manage Subscriptions', href: '#', placeholder: true },
-      { label: 'FAQs', href: '/faq' },
-    ],
-  },
-  {
-    title: 'About',
-    items: [
-      { label: 'About Us', href: '/about' },
-      { label: 'Advertise', href: '/advertise' },
-      { label: 'My Profile', href: '#', placeholder: true },
-    ],
-  },
-  {
-    title: 'Admin',
-    adminOnly: true,
-    items: ADMIN_LINKS,
-  },
-  {
-    title: 'Legal',
-    items: [
-      { label: 'Privacy Notice', href: '/privacy' },
-      { label: 'User Agreement', href: '/terms' },
-    ],
-  },
 ];
 
 const API = getApiBase();
@@ -258,124 +197,17 @@ export default function AppShell({
         </div>
       </header>
 
-      {/* ======== DRAWER OVERLAY (animated) ======== */}
-      <div
-        className={`fixed inset-0 z-50 ${drawerOpen ? "visible" : "invisible"}`}
-        style={{ transitionDelay: drawerOpen ? "0ms" : "300ms", transitionProperty: "visibility", transitionDuration: "0ms" }}
-      >
-          {/* Backdrop */}
-          <div
-            className={`absolute inset-0 bg-black transition-opacity duration-300 ${drawerOpen ? "opacity-40" : "opacity-0"}`}
-            onClick={() => setDrawerOpen(false)}
-          />
-
-          {/* Drawer panel */}
-          <div
-            className={`absolute inset-y-0 left-0 w-80 max-w-[85vw] overflow-y-auto shadow-2xl transition-transform duration-300 ease-out ${drawerOpen ? "translate-x-0" : "-translate-x-full"}`}
-            style={{ backgroundColor: drawerBg }}
-          >
-            {/* Drawer header */}
-            <div className="sticky top-0 bg-black/30 backdrop-blur-sm px-4 py-3 flex items-center justify-between border-b border-white/10 z-10">
-              <span className="text-xs uppercase tracking-[0.2em] text-white/50 font-medium">
-                Realty News Now
-              </span>
-              <button
-                onClick={() => setDrawerOpen(false)}
-                aria-label="Close menu"
-                className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Publication switcher */}
-            {!isAdmin && pub !== 'realtynewsnow' ? (
-              <div className="px-5 pt-6">
-                <button
-                  onClick={handlePubSwitch}
-                  className="w-full flex items-center justify-between border border-white/25 rounded-lg px-4 py-3 text-white text-sm uppercase tracking-wider font-medium hover:bg-white/5 transition"
-                >
-                  <span>Switch to {PUB_NAMES[pub === 'realtyline' ? 'newsline' : 'realtyline']}</span>
-                  <span className="text-white/50">{'\u2192'}</span>
-                </button>
-              </div>
-            ) : null}
-
-            {/* Sections */}
-            <div className="px-5 py-6 space-y-1">
-              {DRAWER_SECTIONS.map((section) => {
-                if (section.adminOnly && !isAdmin) return null;
-                return (
-                  <div key={section.title ?? 'root'} className="py-4 border-b border-white/10 last:border-b-0">
-                    {section.title ? (
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-4">
-                        {section.title}
-                      </p>
-                    ) : null}
-                    <div className="space-y-1">
-                      {section.items.map((item) => {
-                        if (item.adminOnly && !isAdmin) return null;
-                        const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-
-                        if (item.placeholder) {
-                          return (
-                            <span
-                              key={item.label}
-                              className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/30 font-medium cursor-default"
-                            >
-                              {item.label}
-                            </span>
-                          );
-                        }
-
-                        return (
-                          <Link
-                            key={item.href + item.label}
-                            href={item.href}
-                            onClick={() => setDrawerOpen(false)}
-                            className={`block px-3 py-2.5 text-sm uppercase tracking-[0.1em] font-medium rounded-lg transition ${
-                              isActive
-                                ? 'text-white bg-white/15'
-                                : 'text-white/80 hover:text-white hover:bg-white/10'
-                            }`}
-                          >
-                            {item.label}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Auth section */}
-              <div className="py-4 border-t border-white/10">
-                {user || isAdmin ? (
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/80 font-medium rounded-lg hover:text-white hover:bg-white/10 transition"
-                  >
-                    Logout
-                  </button>
-                ) : (
-                  <Link
-                    href="/"
-                    onClick={() => setDrawerOpen(false)}
-                    className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white font-medium rounded-lg hover:bg-white/10 transition"
-                  >
-                    Login
-                  </Link>
-                )}
-              </div>
-
-              <p className="text-[10px] text-white/25 font-light text-center pt-4">
-                {'\u00A9'} 2026 Realty News Now
-              </p>
-            </div>
-          </div>
-        </div>
+      {/* ======== DRAWER (extracted to NavDrawer in S18) ======== */}
+      <NavDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        pub={pub}
+        drawerBg={drawerBg}
+        isAdmin={isAdmin}
+        user={user}
+        onLogout={handleLogout}
+        onPubSwitch={handlePubSwitch}
+      />
 
       {/* ======== MAIN CONTENT ======== */}
       <main className="flex-1">{children}</main>
