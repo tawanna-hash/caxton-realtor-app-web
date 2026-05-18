@@ -22,12 +22,14 @@
 //
 //   - 'All' applies no filter.
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
 
 // ============================================================
 // CONFIG
 // ============================================================
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
 
 const POSTHOG_HOST = 'https://us.posthog.com';
 const POSTHOG_PROJECT_ID = '418339';
@@ -401,17 +403,15 @@ const getCachedReport = unstable_cache(
 // Auth
 // ============================================================
 
-async function isAdmin(request: Request): Promise<boolean> {
+async function verifyAdmin(cookieHeader: string | null): Promise<boolean> {
+  if (!cookieHeader) return false;
   try {
-    const cookieHeader = request.headers.get('cookie');
-    if (!cookieHeader) return false;
-
-    const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.myrealtyline.com';
-    const res = await fetch(`${apiBase}/admin/auth/me`, {
+    const r = await fetch(`${API_URL}/admin/auth/me`, {
+      method: 'GET',
       headers: { cookie: cookieHeader },
       cache: 'no-store',
     });
-    return res.ok;
+    return r.ok;
   } catch {
     return false;
   }
@@ -421,8 +421,8 @@ async function isAdmin(request: Request): Promise<boolean> {
 // Handler
 // ============================================================
 
-export async function POST(request: Request) {
-  const authorized = await isAdmin(request);
+export async function POST(request: NextRequest) {
+  const authorized = await verifyAdmin(request.headers.get('cookie'));
   if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
