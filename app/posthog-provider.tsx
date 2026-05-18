@@ -32,6 +32,12 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       },
     });
     initialized = true;
+    registerActivePublication();
+    const onPubChange = () => registerActivePublication();
+    window.addEventListener('savedPubChange', onPubChange);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'caxton_pub') registerActivePublication();
+    });
   }, []);
 
   useEffect(() => {
@@ -58,4 +64,23 @@ export function trackEvent(event: string, properties?: Record<string, unknown>) 
   if (typeof window === "undefined") return;
   if (!initialized) return;
   posthog.capture(event, properties);
+}
+
+const PUB_STORAGE_KEY = 'caxton_pub';
+
+export function registerActivePublication(): void {
+  if (typeof window === 'undefined') return;
+  if (!initialized) return;
+
+  if (window.location.hostname.endsWith('realtynewsnow.app')) {
+    posthog.register({ publication: 'realtynewsnow' });
+    return;
+  }
+
+  const saved = window.localStorage.getItem(PUB_STORAGE_KEY);
+  if (saved === 'realtyline' || saved === 'newsline') {
+    posthog.register({ publication: saved });
+  } else {
+    posthog.register({ publication: 'unknown' });
+  }
 }
