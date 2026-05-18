@@ -82,6 +82,23 @@ export default function InventoryClient({ initialRows }: Props) {
   const activeKind: Kind | 'all' =
     kindParam === 'listing' || kindParam === 'promotion' ? kindParam : 'all';
 
+  // S18 c-proper: URL pub param overrides localStorage. When present, also
+  // sync localStorage + dispatch savedPubChange so AppShell drawer color
+  // matches the page content. GOTCHA: AppShell uses 'caxton_pub' key, this
+  // file historically used 'savedPub'. Write both during transition; file
+  // follow-up to unify on one key.
+  const pubParam = searchParams.get('pub');
+  const urlPub: Publication | null =
+    pubParam === 'realtyline' || pubParam === 'newsline' ? pubParam : null;
+  if (typeof window !== 'undefined' && urlPub && urlPub !== pub) {
+    try {
+      window.localStorage.setItem('savedPub', urlPub);
+      window.localStorage.setItem('caxton_pub', urlPub);
+      window.dispatchEvent(new Event('savedPubChange'));
+    } catch {}
+  }
+  const activePub: Publication = urlPub ?? pub;
+
   function setKind(next: Kind | 'all') {
     const params = new URLSearchParams(searchParams.toString());
     if (next === 'all') params.delete('kind');
@@ -94,11 +111,11 @@ export default function InventoryClient({ initialRows }: Props) {
   const filteredRows = useMemo(() => {
     return initialRows.filter((r) => {
       if (r.homeType === 'community') return false;
-      if (r.publication !== pub && r.publication !== 'both') return false;
+      if (r.publication !== activePub && r.publication !== 'both') return false;
       if (activeKind !== 'all' && r.kind !== activeKind) return false;
       return true;
     });
-  }, [initialRows, pub, activeKind]);
+  }, [initialRows, activePub, activeKind]);
 
   // Split featured + regular.
   const featured = useMemo(() => filteredRows.filter((r) => r.featured), [filteredRows]);
