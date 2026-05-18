@@ -40,7 +40,7 @@ export function DashboardHero({ pub, eyebrow, headline }: Props) {
         fill
         priority
         sizes="100vw"
-        className="object-contain object-bottom"
+        className="object-cover object-bottom"
       />
       {(eyebrow || headline) && (
         <div className="absolute inset-0 flex flex-col justify-start p-6 sm:p-8 pointer-events-none">
