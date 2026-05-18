@@ -135,7 +135,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
   }, [onDone]);
   return (
     <div className="fixed inset-0 bg-[#1a2a44] flex flex-col items-center justify-center z-50 transition-opacity duration-500" style={{ ...SW, opacity: fade ? 0 : 1 }}>
-      <p className="text-3xl text-white font-semibold tracking-wide text-center px-8">Caxton Publications, Inc.</p>
+      <p className="text-3xl text-white font-semibold tracking-wide text-center px-8">RealtyNewsNow</p>
       <div className="mt-4 flex gap-1">
         <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-pulse" style={{ animationDelay: '0s' }} />
         <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-pulse" style={{ animationDelay: '0.3s' }} />
@@ -150,7 +150,7 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
   return (
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
       <div className="w-full max-w-md px-8">
-        <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium mb-2 text-center">Caxton Publications, Inc.</p>
+        <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium mb-2 text-center">RealtyNewsNow</p>
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-3">Select a Publication</h2>
         <p className="text-lg text-gray-400 font-light text-center mb-8">Welcome, we are happy you are here!</p>
         <div className="relative">
@@ -999,7 +999,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
         <button onClick={() => { trackEvent('menu_opened'); setMenuOpen(true); }} aria-label="Open menu" className="text-gray-900 p-2 border border-gray-300 rounded-full hover:border-gray-400 transition-colors">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
         </button>
-        <p className="text-base font-semibold text-gray-900 tracking-tight">Caxton Publications, Inc.</p>
+        <p className="text-base font-semibold text-gray-900 tracking-tight">RealtyNewsNow</p>
         <button aria-label="Search" className="text-gray-700 p-2">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         </button>
@@ -1020,7 +1020,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
         <div className="fixed inset-0 z-[60] overflow-y-auto" style={{ ...SW, backgroundColor: info.color }}>
           <div className="sticky top-0 bg-black px-3 py-3 flex items-center justify-between border-b border-white/10 z-10">
             <div className="w-10" />
-            <p className="text-sm uppercase tracking-[0.25em] text-white/50 font-medium">Caxton Publications, Inc.</p>
+            <p className="text-sm uppercase tracking-[0.25em] text-white/50 font-medium">RealtyNewsNow</p>
             <button onClick={() => setMenuOpen(false)} aria-label="Close menu" className="text-white p-2">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
@@ -1080,7 +1080,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
                 </a>
               )}
             </div>
-            <p className="text-xs text-white/30 font-light text-center pt-4">{'\u00A9'} 2026 Caxton Publications, Inc.</p>
+            <p className="text-xs text-white/30 font-light text-center pt-4">{'\u00A9'} 2026 RealtyNewsNow</p>
           </div>
         </div>
       )}
