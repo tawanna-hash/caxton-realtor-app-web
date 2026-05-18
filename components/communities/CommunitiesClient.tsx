@@ -10,6 +10,7 @@
 //     `savedPub` with useSyncExternalStore for SSR-safe hydration)
 
 import { useMemo, useSyncExternalStore } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { trackEvent } from '@/app/posthog-provider';
 import Link from 'next/link';
 import { builderNameToSlug } from '@/lib/builder-slug';
@@ -62,13 +63,30 @@ export default function CommunitiesClient({ initialRows }: Props) {
     getServerPubSnapshot,
   );
 
+  // S18 c-proper: URL pub param overrides localStorage. When present, also
+  // sync localStorage + dispatch savedPubChange so AppShell drawer color
+  // matches the page content. GOTCHA: AppShell uses 'caxton_pub' key, this
+  // file uses 'savedPub'. Write both during transition; follow-up to unify.
+  const searchParams = useSearchParams();
+  const pubParam = searchParams.get('pub');
+  const urlPub: Publication | null =
+    pubParam === 'realtyline' || pubParam === 'newsline' ? pubParam : null;
+  if (typeof window !== 'undefined' && urlPub && urlPub !== pub) {
+    try {
+      window.localStorage.setItem('savedPub', urlPub);
+      window.localStorage.setItem('caxton_pub', urlPub);
+      window.dispatchEvent(new Event('savedPubChange'));
+    } catch {}
+  }
+  const activePub: Publication = urlPub ?? pub;
+
   // Filter rows by publication scope. 'both' rows always show.
   const filtered = useMemo(() => {
     return initialRows.filter((r) => {
       if (r.publication === 'both') return true;
-      return r.publication === pub;
+      return r.publication === activePub;
     });
-  }, [initialRows, pub]);
+  }, [initialRows, activePub]);
 
   // Group by builder for display
   const byBuilder = useMemo(() => {
