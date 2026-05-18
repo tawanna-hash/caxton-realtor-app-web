@@ -23,6 +23,7 @@ import Link from 'next/link';
 import { getApiBase } from '@/lib/api-base';
 import { Footer } from '@/components/footer';
 import NavDrawer from '@/components/NavDrawer';
+import BottomNav from '@/components/BottomNav';
 
 // ============================================================
 // Types + constants
@@ -65,10 +66,30 @@ export default function AppShell({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [user, setUser] = useState<User>(null);
   const isAdmin = variant === 'admin';
-  const [pub, setPub] = useState<string>(() => {
-    if (typeof window === 'undefined') return 'realtynewsnow';
-    try { return localStorage.getItem('caxton_pub') || 'realtynewsnow'; } catch { return 'realtynewsnow'; }
-  });
+  // Server + first client render agree on 'realtynewsnow' to avoid hydration mismatch.
+  // Actual pub is read from localStorage post-mount in the useEffect below.
+  const [pub, setPub] = useState<string>('realtynewsnow');
+
+  useEffect(() => {
+    // Defer the localStorage read into a microtask so the first commit lands
+    // before this setState — avoids react-hooks/set-state-in-effect.
+    queueMicrotask(() => {
+      try {
+        const saved = localStorage.getItem('caxton_pub');
+        if (saved) setPub(saved);
+      } catch {}
+    });
+
+    // Listen for cross-tab pub changes (NavDrawer's pub switch dispatches this event)
+    function onPubChange() {
+      try {
+        const saved = localStorage.getItem('caxton_pub');
+        if (saved) setPub(saved);
+      } catch {}
+    }
+    window.addEventListener('savedPubChange', onPubChange);
+    return () => window.removeEventListener('savedPubChange', onPubChange);
+  }, []);
 
   // Hydrate user + pub
   useEffect(() => {
@@ -210,7 +231,10 @@ export default function AppShell({
       />
 
       {/* ======== MAIN CONTENT ======== */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pb-20">{children}</main>
+      {!isAdmin ? (
+        <BottomNav info={null} onMoreClick={() => setDrawerOpen(true)} />
+      ) : null}
       <Footer />
     </div>
   );
