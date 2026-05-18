@@ -277,7 +277,7 @@ export default function AppShell({
             {/* Drawer header */}
             <div className="sticky top-0 bg-black/30 backdrop-blur-sm px-4 py-3 flex items-center justify-between border-b border-white/10 z-10">
               <span className="text-xs uppercase tracking-[0.2em] text-white/50 font-medium">
-                RealtyNewsNow
+                Realty News Now
               </span>
               <button
                 onClick={() => setDrawerOpen(false)}
