@@ -11,9 +11,9 @@ const BRAND: Record<Pub, string> = {
   newsline: "transparent",
 };
 
-// Skyline assets per pub. Only Newsline ships today.
-// Add an Austin equivalent here when one is sourced.
+// Skyline assets per pub.
 const SKYLINE: Partial<Record<Pub, { src: string; w: number; h: number }>> = {
+  realtyline: { src: "/hero/austin-skyline.jpg", w: 1024, h: 515 },
   newsline: { src: "/hero/san-antonio-skyline.png", w: 1525, h: 791 },
 };
 
