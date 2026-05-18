@@ -122,11 +122,11 @@ interface PostHogQueryResult {
 // ============================================================
 
 async function runHogQL(name: string, sql: string): Promise<PostHogQueryResult> {
-  // S17 NAMING NOTE: Vercel env var is POSTHOG_PERSONAL_API_KEY_2 (the original
+  // S17 NAMING NOTE: Vercel env var is POSTHOG_PERSONAL_API_KEY (the original
   // POSTHOG_PERSONAL_API_KEY slot was occupied at the time of provisioning).
-  const key = process.env.POSTHOG_PERSONAL_API_KEY_2;
+  const key = process.env.POSTHOG_PERSONAL_API_KEY;
   if (!key) {
-    throw new Error('POSTHOG_PERSONAL_API_KEY_2 is not set');
+    throw new Error('POSTHOG_PERSONAL_API_KEY is not set');
   }
   const res = await fetch(`${POSTHOG_HOST}/api/projects/${POSTHOG_PROJECT_ID}/query/`, {
     method: 'POST',
