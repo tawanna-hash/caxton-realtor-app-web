@@ -24,7 +24,6 @@
 
 import { NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
-import { cookies } from 'next/headers';
 
 // ============================================================
 // CONFIG
@@ -402,10 +401,9 @@ const getCachedReport = unstable_cache(
 // Auth
 // ============================================================
 
-async function isAdmin(): Promise<boolean> {
+async function isAdmin(request: Request): Promise<boolean> {
   try {
-    const cookieStore = await cookies();
-    const cookieHeader = cookieStore.getAll().map((c) => `${c.name}=${c.value}`).join('; ');
+    const cookieHeader = request.headers.get('cookie');
     if (!cookieHeader) return false;
 
     const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.myrealtyline.com';
@@ -424,7 +422,7 @@ async function isAdmin(): Promise<boolean> {
 // ============================================================
 
 export async function POST(request: Request) {
-  const authorized = await isAdmin();
+  const authorized = await isAdmin(request);
   if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
