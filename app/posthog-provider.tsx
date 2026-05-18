@@ -2,10 +2,13 @@
 
 import { useEffect } from "react";
 import posthog from "posthog-js";
+import { usePathname } from "next/navigation";
 
 let initialized = false;
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+
   useEffect(() => {
     if (initialized) return;
     if (typeof window === "undefined") return;
@@ -30,6 +33,13 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     });
     initialized = true;
   }, []);
+
+  useEffect(() => {
+    if (!initialized) return;
+    posthog.capture('$pageview', {
+      $current_url: window.location.href,
+    });
+  }, [pathname]);
 
   return <>{children}</>;
 }
