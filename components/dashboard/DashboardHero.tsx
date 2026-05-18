@@ -8,7 +8,7 @@ type Pub = "realtyline" | "newsline";
 // blends with the pub-color bar above it.
 const BRAND: Record<Pub, string> = {
   realtyline: "#1a2a44",
-  newsline: "#2d1a44",
+  newsline: "transparent",
 };
 
 // Skyline assets per pub. Only Newsline ships today.
