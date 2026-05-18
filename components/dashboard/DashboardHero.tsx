@@ -7,7 +7,7 @@ type Pub = "realtyline" | "newsline";
 // Colors match PUBS in app/(dashboard)/dashboard/page.tsx so the hero
 // blends with the pub-color bar above it.
 const BRAND: Record<Pub, string> = {
-  realtyline: "#1a2a44",
+  realtyline: "transparent",
   newsline: "transparent",
 };
 
