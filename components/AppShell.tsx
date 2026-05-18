@@ -21,6 +21,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getApiBase } from '@/lib/api-base';
+import { Footer } from '@/components/footer';
 
 // ============================================================
 // Types + constants
@@ -175,7 +176,7 @@ export default function AppShell({
 
   // Admin login page — no nav
   if (isLoginPage) {
-    return <div className="min-h-screen bg-gray-50">{children}</div>;
+    return <div className="min-h-screen bg-gray-50 flex flex-col">{children}</div>;
   }
 
   return (
@@ -377,7 +378,8 @@ export default function AppShell({
         </div>
 
       {/* ======== MAIN CONTENT ======== */}
-      <main>{children}</main>
+      <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   );
 }
