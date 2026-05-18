@@ -12,6 +12,7 @@ import { startAuthentication } from '@/components/PasskeysPanel';
 import { useState as useStateForMag, useEffect as useEffectForMag } from 'react';
 import type { Magazine } from '@/lib/magazines';
 import { getApiBase } from '@/lib/api-base';
+import { DashboardHero } from '@/components/dashboard/DashboardHero';
 
 const SW = { fontFamily: 'Switzer, system-ui, sans-serif' };
 const API = getApiBase();
@@ -1016,6 +1017,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
           <span className="text-white/50">{'\u2192'}</span>
         </button>
       </div>
+      <DashboardHero pub={pub as "realtyline" | "newsline"} />
       {menuOpen && (
         <div className="fixed inset-0 z-[60] overflow-y-auto" style={{ ...SW, backgroundColor: info.color }}>
           <div className="sticky top-0 bg-black px-3 py-3 flex items-center justify-between border-b border-white/10 z-10">
