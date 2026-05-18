@@ -4,7 +4,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { trackEvent, identifyUser } from "../../posthog-provider";
-import { useRouter } from 'next/navigation';
 import { useSwipeBack } from '@/hooks/use-swipe-back';
 import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReader from '@/components/MagazineReader';
@@ -14,8 +13,9 @@ import { startAuthentication } from '@/components/PasskeysPanel';
 import { useState as useStateForMag, useEffect as useEffectForMag } from 'react';
 import type { Magazine } from '@/lib/magazines';
 import { getApiBase } from '@/lib/api-base';
-import Link from 'next/link';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
+import BottomNav from '@/components/BottomNav';
+import NavDrawer from '@/components/NavDrawer';
 
 const SW = { fontFamily: 'Switzer, system-ui, sans-serif' };
 const API = getApiBase();
@@ -916,7 +916,6 @@ export default function DashboardPage() {
 function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number; onLogout: () => void }) {
   const [tab, setTab] = useState('n');
   const [cat, setCat] = useState('All');
-  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const track = useMetrics(user?.id || null);
@@ -970,7 +969,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
   const pubAds = ADS.filter((a) => a.pub === pub);
   const CATS = pub === 'realtyline' ? RL_CATS : NS_CATS;
   const filt = cat === 'All' ? NEWS : NEWS.filter((n) => n.cat === cat);
-  const tOff = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:border-gray-500';
 
   const feed: { t: 'n' | 'a' | 'c' | 's' | 'e'; d?: any }[] = [];
   const isLoadingFirstFetch = newsLoading && liveNews === null;
@@ -1029,88 +1027,22 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
         </button>
       </div>
       <DashboardHero pub={pub as "realtyline" | "newsline"} />
-      {menuOpen && (
-        <div className="fixed inset-0 z-[60] overflow-y-auto" style={{ ...SW, backgroundColor: info.color }}>
-          <div className="sticky top-0 bg-black px-3 py-3 flex items-center justify-between border-b border-white/10 z-10">
-            <div className="w-10" />
-            <p className="text-sm uppercase tracking-[0.25em] text-white/50 font-medium">Realty News Now</p>
-            <button onClick={() => setMenuOpen(false)} aria-label="Close menu" className="text-white p-2">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
-          </div>
-          <div className="px-6 py-8 pb-32">
-            <button onClick={() => { trackEvent('publication_switch_clicked'); setMenuOpen(false); handleSwitch(); }} className="w-full flex items-center justify-between border border-white/30 px-4 py-3.5 text-white text-sm uppercase tracking-wider font-medium mb-10">
-              <span>Switch to {other.name}</span>
-              <span className="text-white/60">{'\u2192'}</span>
-            </button>
-            <div className="mb-10">
-              <div className="space-y-5">
-                <button onClick={() => { setMenuOpen(false); window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'magazines' })); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Magazine</button>
-                <button onClick={() => { setMenuOpen(false); window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'events' })); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Calendar</button>
-                <button onClick={() => { setMenuOpen(false); router.push("/giveaways"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Giveaway</button>
-                <button onClick={() => { setMenuOpen(false); router.push("/inventory"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Builder Inventory</button>
-                <button onClick={() => { setMenuOpen(false); router.push("/builder-promotions"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Builder Promotions</button>
-              </div>
-            </div>
-            <div className="mb-10 pt-6 border-t border-white/20">
-              <div className="space-y-5">
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Digital Newsletters</a>
-                <button onClick={() => { setMenuOpen(false); router.push("/subscribe"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Subscribe to Print</button>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Manage Subscriptions</a>
-                <button onClick={() => { setMenuOpen(false); router.push("/faq"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">FAQs</button>
-                <a href="#" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Site Map</a>
-              </div>
-            </div>
-            <div className="mb-10 pt-6 border-t border-white/20">
-              <div className="space-y-5">
-                <button onClick={() => { setMenuOpen(false); router.push("/about"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">About Us</button>
-                <button onClick={() => { setMenuOpen(false); router.push("/advertise"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Advertise</button>
-                <button onClick={() => { setMenuOpen(false); setProfileOpen(true); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">My Profile</button>
-                <a href="/admin/login" className="block text-sm uppercase tracking-[0.15em] text-white font-medium">Admin Login</a>
-              </div>
-            </div>
-            <div className="mb-10 pt-6 border-t border-white/20">
-              <div className="space-y-5">
-                <button onClick={() => { setMenuOpen(false); router.push("/privacy"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">Privacy Notice</button>
-                <button onClick={() => { setMenuOpen(false); router.push("/terms"); }} className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left">User Agreement</button>
-              </div>
-            </div>
-            <div className="mb-10 pt-6 border-t border-white/20">
-              {user ? (
-                <button
-                  onClick={() => { trackEvent('logout_clicked'); setMenuOpen(false); onLogout(); }}
-                  className="block text-sm uppercase tracking-[0.15em] text-white font-medium text-left"
-                >
-                  Logout
-                </button>
-              ) : (
-                <Link
-                  href="/"
-                  onClick={() => { trackEvent('login_link_clicked'); setMenuOpen(false); }}
-                  className="block text-sm uppercase tracking-[0.15em] text-white font-medium"
-                >
-                  Login
-                </Link>
-              )}
-            </div>
-            <p className="text-xs text-white/30 font-light text-center pt-4">{'\u00A9'} 2026 Realty News Now</p>
-          </div>
-        </div>
-      )}
+      <NavDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        pub={pub}
+        drawerBg={info.color}
+        isAdmin={false}
+        user={user}
+        onLogout={onLogout}
+        onPubSwitch={handleSwitch}
+      />
       {user?.guest && (
         <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
           <p className="text-sm text-amber-700 font-light">Browsing as Guest</p>
           <button onClick={() => window.location.reload()} className="text-sm text-amber-700 font-medium underline">Sign In</button>
         </div>
       )}
-      <div className="bg-white sticky top-0 z-10 border-b border-gray-200 px-4 py-4">
-        <h2 className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">Builder / Developer Advertisers</h2>
-        <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <button onClick={() => router.push('/communities')} className={tOff}>New Home Communities</button>
-          <button onClick={() => router.push('/inventory?kind=listing')} className={tOff}>Move-in Ready Homes</button>
-          <button onClick={() => router.push('/inventory?kind=promotion')} className={tOff}>Promotions</button>
-        </div>
-      </div>
       {tab === 'n' && (
         <div>
           <FeedTopBanner pub={pub} />
@@ -1163,30 +1095,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
           })}
         </div>
       )}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 z-50">
-        <a href="#" className="block px-4 py-3 border-b border-gray-100 hover:bg-gray-50">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-11 h-11 flex-shrink-0 flex flex-col items-center justify-center" style={{ backgroundColor: info.color }}>
-                <span className="text-[8px] uppercase tracking-wider text-white/70 leading-none">House</span>
-                <span className="text-[10px] uppercase tracking-wider text-white font-semibold leading-none mt-0.5">Ad</span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-900 leading-tight truncate">Advertise in {info.name}</p>
-                <p className="text-xs text-gray-500 font-light leading-snug truncate">Reach 50,000+ Texas real estate pros</p>
-              </div>
-            </div>
-            <span className="text-xs uppercase tracking-wider font-medium flex-shrink-0" style={{ color: info.color }}>Learn More {'\u2192'}</span>
-          </div>
-        </a>
-        <div className="flex justify-around py-2 pb-3">
-          <button onClick={() => { if (typeof window !== "undefined") { window.dispatchEvent(new CustomEvent("caxton:nav", { detail: "magazines" })); window.dispatchEvent(new CustomEvent("caxton:openLatestMagazine")); } }} className="flex flex-col items-center text-[#1a2a44] flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Latest Issue</span></button>
-          <button onClick={() => { if (typeof window !== "undefined") { window.dispatchEvent(new CustomEvent("caxton:nav", { detail: "magazines" })); } }} className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">All Issues</span></button>
-          <button onClick={() => router.push("/dashboard")} className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Latest Columns</span></button>
-          <button onClick={() => { if (typeof window !== "undefined") { window.dispatchEvent(new CustomEvent("caxton:nav", { detail: "events" })); } }} className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Calendar</span></button> {/* caxton-events-frontend-v1-footer */}
-          <button onClick={() => router.push("/giveaways")} className="flex flex-col items-center text-gray-400 flex-1 px-1 gap-1"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg><span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">Giveaways</span></button>
-        </div>
-      </nav>
+      <BottomNav info={{ name: info.name, color: info.color }} onMoreClick={() => setMenuOpen(true)} />
       {profileOpen && (
         <ProfilePanel user={user} accentColor={info.color} onClose={() => setProfileOpen(false)} />
       )}

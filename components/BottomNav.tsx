@@ -56,6 +56,7 @@ export default function BottomNav({ info, onMoreClick }: Props) {
   function goMagazine() {
     if (pathname === '/dashboard') {
       window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'magazines' }));
+      window.dispatchEvent(new CustomEvent('caxton:openLatestMagazine'));
       history.replaceState(null, '', '/dashboard#magazines');
     } else {
       router.push('/dashboard#magazines');
