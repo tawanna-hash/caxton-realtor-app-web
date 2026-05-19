@@ -17,8 +17,6 @@ import { DashboardHero } from '@/components/dashboard/DashboardHero';
 import BottomNav from '@/components/BottomNav';
 import NavDrawer from '@/components/NavDrawer';
 import { SW } from '@/lib/style-constants';
-import { EventsList } from '@/components/events/EventsList';
-import { EventDetail } from '@/components/events/EventDetail';
 
 const API = getApiBase();
 
@@ -667,11 +665,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
 export default function DashboardPage() {
   const [phase, setPhase] = useState('splash');
-  // caxton-events-frontend-v1-state
-  const [events, setEvents] = useState<any[] | null>(null);
-  const [eventsLoading, setEventsLoading] = useState(false);
-  const [eventsError, setEventsError] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   // caxton-article-reader-b1-state
   const [selectedArticle, setSelectedArticle] = useState<any | null>(null);
   // caxton-article-reader-b2a-fix
@@ -688,7 +681,6 @@ export default function DashboardPage() {
       const savedPub = localStorage.getItem('caxton_pub');
       const savedPhase = localStorage.getItem('caxton_phase');
       const savedArticle = localStorage.getItem('caxton_selected_article');
-      const savedEvent = localStorage.getItem('caxton_selected_event');
       if (savedPub === 'realtyline' || savedPub === 'newsline') {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO(S18-lint-debt): restructure rehydration effect
         setPub(savedPub);
@@ -697,15 +689,14 @@ export default function DashboardPage() {
       if (savedArticle) {
         try { setSelectedArticle(JSON.parse(savedArticle)); } catch {}
       }
-      if (savedEvent) {
-        try { setSelectedEvent(JSON.parse(savedEvent)); } catch {}
-      }
       if (savedPhase && savedPhase !== 'splash') {
         // Stale-data guard: don't restore article/event_detail phase if its data is missing.
         if (savedPhase === 'article' && !savedArticle) {
           setPhase('feed');
-        } else if (savedPhase === 'event_detail' && !savedEvent) {
-          setPhase('events');
+        } else if (savedPhase === 'events' || savedPhase === 'event_detail') {
+          // Legacy phases — events lives at /calendar now. Land on feed; the
+          // user can re-navigate via BottomNav.
+          setPhase('feed');
         } else {
           setPhase(savedPhase);
         }
@@ -723,7 +714,7 @@ export default function DashboardPage() {
           // Auth-flow phases (splash/select/auth) should fall through to feed;
           // content phases (feed/article/events/event_detail/magazines) stay put.
           const savedPhaseForAuth = (() => { try { return localStorage.getItem('caxton_phase'); } catch { return null; } })();
-          const contentPhases = ['feed', 'article', 'events', 'event_detail', 'magazines'];
+          const contentPhases = ['feed', 'article', 'magazines'];
           if (!savedPhaseForAuth || !contentPhases.includes(savedPhaseForAuth)) {
             setPhase('feed');
           }
@@ -766,17 +757,6 @@ export default function DashboardPage() {
     } catch {}
   }, [selectedArticle, hydrated]);
 
-  useEffect(() => {
-    if (!hydrated) return;
-    try {
-      if (selectedEvent) {
-        localStorage.setItem('caxton_selected_event', JSON.stringify(selectedEvent));
-      } else {
-        localStorage.removeItem('caxton_selected_event');
-      }
-    } catch {}
-  }, [selectedEvent, hydrated]);
-
 
 
 
@@ -808,11 +788,10 @@ export default function DashboardPage() {
   useEffect(() => {
     const onNav = (e: any) => {
       const target = e?.detail;
-      if (target === 'events' || target === 'feed' || target === 'magazines') {
+      if (target === 'feed' || target === 'magazines') {
         trackEvent('nav', { target });
       }
-      if (target === 'events') setPhase('events');
-      else if (target === 'feed') setPhase('feed');
+      if (target === 'feed') setPhase('feed');
       else if (target === 'magazines') setPhase('magazines');
     };
     window.addEventListener('caxton:nav', onNav as EventListener);
@@ -829,66 +808,26 @@ export default function DashboardPage() {
     if (phase !== 'feed') return;
     if (typeof window === 'undefined') return;
     const hash = window.location.hash.replace(/^#/, '').toLowerCase();
-    if (hash === 'magazines' || hash === 'events') {
+    if (hash === 'events') {
+      // Redirect old /dashboard#events shares to the new /calendar route.
       hashConsumedRef.current = true;
-      window.dispatchEvent(new CustomEvent('caxton:nav', { detail: hash }));
-      if (hash === 'magazines') {
-        window.dispatchEvent(new Event('caxton:openLatestMagazine'));
-      }
+      window.location.replace('/calendar');
+      return;
+    }
+    if (hash === 'magazines') {
+      hashConsumedRef.current = true;
+      window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'magazines' }));
+      window.dispatchEvent(new Event('caxton:openLatestMagazine'));
       history.replaceState(null, '', window.location.pathname + window.location.search);
     } else if (hash === 'feed' || hash === '') {
       hashConsumedRef.current = true;
     }
   }, [phase]);
 
-  // caxton-events-frontend-v1-fetch
-  useEffect(() => {
-    if (!pub) return;
-    let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO(S18-lint-debt): restructure fetch-with-loading-state
-    setEventsLoading(true);
-    setEventsError(false);
-    const market = pub === 'realtyline' ? 'austin' : 'san_antonio';
-    fetch(`/api/events/${market}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then((data) => {
-        if (cancelled) return;
-        const arr = Array.isArray(data?.events) ? data.events : [];
-        console.log(`[Events] Loaded ${arr.length} events for ${market}`);
-        setEvents(arr);
-        setEventsLoading(false);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error('[Events] Failed to load:', err);
-        setEventsError(true);
-        setEventsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [pub]);
-
   if (phase === 'splash') return <SplashScreen onDone={() => { trackEvent('splash_dismissed'); setPhase('select'); }} />;
   if (phase === 'select') return <PubSelector onSelect={(id) => { trackEvent('pub_selected', { pub: id }); setPub(id); setPhase('auth'); }} />;
   if (phase === 'auth') return <AuthGate pub={pub} onAuth={(u) => { setUser(u); identifyUser(u?.id || null, { email: u?.email }); trackEvent('auth_completed', { is_guest: !!u?.guest, pub }); setPhase('feed'); }} />;
 
-  // caxton-events-frontend-v1-phases
-  if (phase === 'events')
-    return (
-      <EventsList
-        pub={pub}
-        events={events}
-        loading={eventsLoading}
-        error={eventsError}
-        onBack={() => setPhase('feed')}
-        onSelect={(ev: any) => {
-          setSelectedEvent(ev);
-          setPhase('event_detail');
-        }}
-        topBanner={<CalendarTopBanner pub={pub} />}
-      />
-    );
   
   // caxton-article-reader-b1-phase
   // caxton-article-reader-b2a (passes news list for Read Next)
@@ -901,14 +840,6 @@ export default function DashboardPage() {
         onBack={() => setPhase('feed')}
         onLatest={() => { setNewsRefreshNonce((n) => n + 1); setPhase('feed'); }}
         onSelectArticle={(a: any) => setSelectedArticle(a)}
-      />
-    );
-  if (phase === 'event_detail')
-    return (
-      <EventDetail
-        pub={pub}
-        event={selectedEvent}
-        onBack={() => setPhase('events')}
       />
     );
   // caxton-magazine-phase-b1
@@ -1521,24 +1452,6 @@ function HouseAd({ slot, pub }: { slot: 'leaderboard' | 'rectangle' | 'popup'; p
 
 function FeedTopBanner({ pub }: { pub: string }) {
   const ad = useAd('feed_top' as any, pub, 'feed');
-  if (!ad?.image || !ad?.href) return null;
-  return (
-    <div className="bg-white border-b border-gray-200">
-      <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center pt-3 pb-2 font-medium">
-        Advertisement
-      </p>
-      <div className="pb-3 px-4">
-        <a href={ad.href} target="_blank" rel="noopener noreferrer" className="block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={ad.image} alt={ad.alt || ''} className="w-full h-auto" />
-        </a>
-      </div>
-    </div>
-  );
-}
-
-function CalendarTopBanner({ pub }: { pub: string }) {
-  const ad = useAd('calendar_top' as any, pub, 'calendar');
   if (!ad?.image || !ad?.href) return null;
   return (
     <div className="bg-white border-b border-gray-200">
