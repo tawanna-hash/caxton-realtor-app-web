@@ -86,7 +86,7 @@ export const BRANDS: Record<string, BrandConfig> = {
   },
   caxton: {
     pub_key: 'caxton',
-    pub_display: 'Caxton Publications',
+    pub_display: 'Realty News Now',
     primary_hex: '#1a2a44',
     tagline: 'Putting A Face On Real Estate',
   },

@@ -101,7 +101,7 @@ export function buildEventReportHtml(report: EventReport, overrides: ReportOverr
 
     <hr style=\"border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;\" />
     <p style=\"margin: 0; font-size: 11px; color: #9ca3af; line-height: 1.5;\">
-      ${brand.pub_display} \u2022 \u00a9 ${new Date().getFullYear()} Caxton Publications Inc<br/>
+      ${brand.pub_display} \u2022 \u00a9 ${new Date().getFullYear()} Realty News Now<br/>
       ${brand.tagline} \u2022 Report generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
     </p>
   </div>
@@ -137,7 +137,7 @@ Engagement actions:
   Total shares: ${report.shares_total.toLocaleString()}
 ${report.shares_total > 0 ? `\nShares by channel:\n${sharesLines}\n` : ''}
 ---
-${brand.pub_display} \u2022 \u00a9 ${new Date().getFullYear()} Caxton Publications Inc
+${brand.pub_display} \u2022 \u00a9 ${new Date().getFullYear()} Realty News Now
 ${brand.tagline} \u2022 Report generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 `.trim();
 }

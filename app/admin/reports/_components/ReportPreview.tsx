@@ -24,10 +24,6 @@ function pluralize(n: number, singular: string, plural?: string): string {
   return n === 1 ? singular : (plural ?? `${singular}s`);
 }
 
-// Inline-style helper for email-friendly HTML
-const style = (s: Record<string, string>) =>
-  Object.entries(s).map(([k, v]) => `${k.replace(/[A-Z]/g, m => '-' + m.toLowerCase())}: ${v}`).join('; ');
-
 export function buildReportHtml(report: ArticleReport, overrides: ReportOverrides): string {
   const brand = buildBrand(report, overrides);
   const title = resolveTitle(report, overrides);
@@ -114,7 +110,7 @@ export function buildReportHtml(report: ArticleReport, overrides: ReportOverride
 
     <hr style=\"border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;\" />
     <p style=\"margin: 0; font-size: 11px; color: #9ca3af; line-height: 1.5;\">
-      ${brand.pub_display} • © ${new Date().getFullYear()} Caxton Publications Inc<br/>
+      ${brand.pub_display} • © ${new Date().getFullYear()} Realty News Now<br/>
       ${brand.tagline} • Report generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
     </p>
   </div>
@@ -161,7 +157,7 @@ Time on article:
   Average ${avgTime} across ${report.sessions_with_time.toLocaleString()} ${pluralize(report.sessions_with_time, 'session')}
 
 ${report.net_saves !== 0 ? `Saves: ${report.saves.toLocaleString()} saves, ${report.unsaves.toLocaleString()} unsaves (net ${report.net_saves.toLocaleString()})\n\n` : ''}---
-${brand.pub_display} • © ${new Date().getFullYear()} Caxton Publications Inc
+${brand.pub_display} • © ${new Date().getFullYear()} Realty News Now
 ${brand.tagline} • Report generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
 `.trim();
 }

@@ -1,7 +1,7 @@
 export const metadata = {
-  title: 'About Us — Caxton Publications',
+  title: 'About Us — Realty News Now',
   description:
-    'Caxton Publications puts a face on real estate. Publishers of RealtyLine (Austin) and Newsline San Antonio.',
+    'Realty News Now puts a face on real estate. Publishers of RealtyLine (Austin) and Newsline San Antonio.',
 };
 
 export default function AboutPage() {

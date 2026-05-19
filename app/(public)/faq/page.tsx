@@ -1,7 +1,7 @@
 export const metadata = {
-  title: 'Frequently Asked Questions — RealtyNewsNow',
+  title: 'Frequently Asked Questions — Realty News Now',
   description:
-    'Common questions about signing in, notifications, account, and troubleshooting for RealtyNewsNow by Caxton Publications.',
+    'Common questions about signing in, notifications, account, and troubleshooting for Realty News Now by Caxton Publications.',
 };
 
 export default function FaqPage() {

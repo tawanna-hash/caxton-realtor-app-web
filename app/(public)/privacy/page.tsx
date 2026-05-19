@@ -1,7 +1,7 @@
 export const metadata = {
-  title: 'Privacy Notice — RealtyNewsNow',
+  title: 'Privacy Notice — Realty News Now',
   description:
-    'How Caxton Publications collects, uses, and protects information in RealtyNewsNow.',
+    'How Caxton Publications collects, uses, and protects information in Realty News Now.',
 };
 
 export default function PrivacyPage() {

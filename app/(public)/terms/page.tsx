@@ -1,7 +1,7 @@
 export const metadata = {
-  title: 'Terms of Use — RealtyNewsNow',
+  title: 'Terms of Use — Realty News Now',
   description:
-    'The terms under which you may use RealtyNewsNow, operated by Caxton Publications, Inc.',
+    'The terms under which you may use Realty News Now, operated by Caxton Publications, Inc.',
 };
 
 export default function TermsPage() {

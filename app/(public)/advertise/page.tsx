@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Advertise with Us — Caxton Publications',
+  title: 'Advertise with Us — Realty News Now',
   description:
     'Print and digital advertising across RealtyLine (Austin) and Newsline San Antonio — reaching 89,000+ Texas real estate professionals.',
 };

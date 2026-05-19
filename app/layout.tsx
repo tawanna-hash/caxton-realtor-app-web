@@ -3,7 +3,7 @@ import "./globals.css";
 import { PostHogProvider } from "./posthog-provider";
 
 export const metadata: Metadata = {
-  title: "Caxton Publications | RealtyLine · Newsline San Antonio",
+  title: "Realty News Now | RealtyLine · Newsline San Antonio",
   description: "Free REALTOR® app for Texas real estate professionals",
 };
 
