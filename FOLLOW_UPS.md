@@ -1,29 +1,3 @@
-
----
-
-## [S15+] Security: rotate Mailchimp API key
-
-**Severity:** Medium
-**Created:** S14, 2026-05-15
-
-Mailchimp API key for the reports tool was created and shared in
-S14 chat history. User chose to proceed without rotation despite
-guidance. Conversation logs at Anthropic contain the full key.
-
-**Risk:** Anyone with access to the conversation log can read
-subscriber data (names, emails, possibly addresses/phones), send
-campaigns, and modify lists.
-
-**Action:** At earliest convenience, log into Mailchimp → Account
-→ Extras → API keys, disable the existing key, generate a new
-one, and update MAILCHIMP_API_KEY env var in Vercel. The new key
-should never appear in chat — only set in Vercel UI.
-
-**Workaround in place:** None. Risk is accepted while key remains
-active.
-
----
-
 ## [S15+] Add biometric authentication option for returning users
 
 **Severity:** Low — UX enhancement, not blocking
