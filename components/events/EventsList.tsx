@@ -4,6 +4,9 @@ import { PUB_META, type PubKey } from '@/lib/pub-meta';
 import { SW } from '@/lib/style-constants';
 import type { CalendarEvent } from '@/lib/events-store';
 import { groupByMonth } from '@/lib/events/dates';
+import { MonthGrid } from './MonthGrid';
+import { DayEventList } from './DayEventList';
+import { EventsViewToggle } from './EventsViewToggle';
 import { trackEvent } from '@/app/posthog-provider';
 import { EventCard } from './EventCard';
 import { EventSkeleton } from './EventSkeleton';
@@ -11,6 +14,16 @@ import { EventSkeleton } from './EventSkeleton';
 export interface EventsListProps {
   pub: string;
   topBanner?: React.ReactNode;
+  // S22 hybrid view: when these are passed, EventsList renders the
+  // month-grid + day-event-list composite instead of the date-grouped list.
+  view?: 'month' | 'upcoming';
+  displayMonth?: Date;
+  selectedDay?: Date | null;
+  eventsByDate?: Map<string, import('@/lib/events-store').CalendarEvent[]>;
+  onViewChange?: (v: 'month' | 'upcoming') => void;
+  onSelectDay?: (d: Date | null) => void;
+  onPrevMonth?: () => void;
+  onNextMonth?: () => void;
   events: CalendarEvent[] | null;
   loading: boolean;
   error: boolean;
@@ -18,7 +31,7 @@ export interface EventsListProps {
   onSelect: (ev: CalendarEvent) => void;
 }
 
-export function EventsList({ pub, events, loading, error, onBack, onSelect, topBanner }: EventsListProps) {
+export function EventsList({ pub, events, loading, error, onBack, onSelect, topBanner, view, displayMonth, selectedDay, eventsByDate, onViewChange, onSelectDay, onPrevMonth, onNextMonth }: EventsListProps) {
   const info = PUB_META[pub as PubKey] || PUB_META.realtyline;
   const list = events ?? [];
   const groups = groupByMonth(list);
@@ -39,6 +52,42 @@ export function EventsList({ pub, events, loading, error, onBack, onSelect, topB
       {/* Body */}
       <div className="pb-24">
         {topBanner}
+        {/* S22 view toggle — only render if month-view props are wired */}
+        {view !== undefined && onViewChange && (
+          <EventsViewToggle pub={pub as PubKey} value={view} onChange={onViewChange} />
+        )}
+
+        {/* S22 month-view branch */}
+        {view === 'month' && displayMonth && eventsByDate && onSelectDay && onPrevMonth && onNextMonth && (
+          <>
+            <MonthGrid
+              pub={pub as PubKey}
+              month={displayMonth}
+              eventsByDate={new Map(Array.from(eventsByDate.entries()).map(([k, v]) => [k, v.length]))}
+              selectedDay={selectedDay ?? null}
+              onSelectDay={onSelectDay}
+              onPrevMonth={onPrevMonth}
+              onNextMonth={onNextMonth}
+            />
+            {selectedDay && (
+              <DayEventList
+                pub={pub as PubKey}
+                date={selectedDay}
+                events={eventsByDate.get(`${selectedDay.getFullYear()}-${String(selectedDay.getMonth() + 1).padStart(2, '0')}-${String(selectedDay.getDate()).padStart(2, '0')}`) ?? []}
+                onSelect={onSelect}
+              />
+            )}
+            {!selectedDay && !loading && (
+              <div className="px-4 py-10 text-center">
+                <p className="text-sm text-gray-400 font-light">Tap a day to see events.</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Legacy/upcoming view (existing behavior) — only when not in month view */}
+        {view !== 'month' && (
+          <>
         {loading && (
           <div className="px-4 py-6">
             <EventSkeleton />
@@ -70,6 +119,8 @@ export function EventsList({ pub, events, loading, error, onBack, onSelect, topB
             ))}
           </div>
         ))}
+          </>
+        )}
       </div>
     </div>
   );
