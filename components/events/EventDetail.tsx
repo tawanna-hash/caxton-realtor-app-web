@@ -10,6 +10,27 @@ import { generateICS } from '@/lib/events/ics';
 import { trackEvent } from '@/app/posthog-provider';
 import { DetailSection } from './DetailSection';
 
+/**
+ * Returns true only when the location string looks like a real physical
+ * address — not a virtual/zoom/online label. Used to gate the Map button
+ * and onDirections handler so users don't get bounced into a maps app with
+ * a meaningless query.
+ *
+ * TODO: this is a frontend bandaid. The scraper writes virtual labels into
+ * the `location` field; ideally those events should have `location: null`
+ * and the descriptive text should live in `format` or similar. Filed as a
+ * follow-up: 'audit Unlock MLS scraper virtual-event handling'.
+ */
+function isMappable(location: string | null | undefined): location is string {
+  if (!location) return false;
+  const lower = location.toLowerCase();
+  if (lower.startsWith('virtual')) return false;
+  if (lower.includes('zoom')) return false;
+  if (lower.includes('webinar')) return false;
+  if (lower.startsWith('online')) return false;
+  return true;
+}
+
 export interface EventDetailProps {
   pub: string;
   event: CalendarEvent | null;
@@ -78,7 +99,7 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
   };
 
   const onDirections = () => {
-    if (!event.location) return;
+    if (!isMappable(event.location)) return;
     trackEvent('event_directions_clicked', { event_id: event.id, pub });
     const isApple = /iPhone|iPad|iPod|Mac/.test(navigator.userAgent);
     const q = encodeURIComponent(event.location);
@@ -237,7 +258,7 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
         {/* Floating action pill — Map / Calendar / Share, matches article reader aesthetic */}
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
           <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1.5 shadow-lg">
-            {event.location && (
+            {isMappable(event.location) && (
               <button onClick={onDirections} aria-label="Directions" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Map</span>
