@@ -259,7 +259,7 @@ async function sendEmail(opts: {
   const key = process.env.RESEND_API_KEY;
   if (!key) return { ok: false, error: 'RESEND_API_KEY not configured' };
 
-  const from = process.env.RESEND_FROM_ADDRESS || 'RealtyNewsNow <noreply@myrealtyline.com>';
+  const from = process.env.RESEND_FROM_ADDRESS || 'Realty News Now <noreply@myrealtyline.com>';
 
   try {
     const resp = await fetch('https://api.resend.com/emails', {
@@ -334,7 +334,7 @@ function notificationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): str
     </td></tr>
   </table>
   <p style="color: #9ca3af; font-size: 12px; margin: 32px 0 0; padding-top: 16px; border-top: 1px solid #e5e7eb;">
-    RealtyNewsNow subscription system — Caxton Publications, Inc.
+    Realty News Now subscription system — Caxton Publications, Inc.
   </p>
 </div>`.trim();
 }
@@ -361,7 +361,7 @@ function confirmationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): str
     Need to update your information or unsubscribe? Just reply to this email and we'll take care of it.
   </p>
   <p style="color: #9ca3af; font-size: 12px; margin: 40px 0 0; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-    RealtyNewsNow<br/>
+    Realty News Now<br/>
     a Caxton Publications, Inc. brand<br/>
     P.O. Box 81366, Austin, TX 78708-1366<br/>
     (512) 965-0057
