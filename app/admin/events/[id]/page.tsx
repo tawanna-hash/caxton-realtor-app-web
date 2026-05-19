@@ -6,12 +6,13 @@ import { useParams } from 'next/navigation';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import { EventForm, isoToLocalInput, type EventFormData } from '../_components/EventForm';
+import type { PublicationId } from '@/lib/publications';
 
 type AdminEvent = {
   id: number;
   externalSource: string;
   externalId: string;
-  publication: 'austin' | 'san_antonio';
+  publication: PublicationId;
   title: string;
   description: string;
   link: string;

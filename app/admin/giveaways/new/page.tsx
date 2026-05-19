@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
+import type { PublicationId } from '@/lib/publications';
 
 export default function NewGiveawayPage() {
   const router = useRouter();
@@ -12,7 +13,7 @@ export default function NewGiveawayPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [prize, setPrize] = useState('');
-  const [publication, setPublication] = useState<'austin' | 'san_antonio' | 'both'>('both');
+  const [publication, setPublication] = useState<PublicationId | 'both'>('both');
   const [startsAt, setStartsAt] = useState('');
   const [endsAt, setEndsAt] = useState('');
   const [drawAt, setDrawAt] = useState('');
@@ -90,7 +91,7 @@ export default function NewGiveawayPage() {
         <Field label="Publication" required>
           <select
             value={publication}
-            onChange={(e) => setPublication(e.target.value as 'austin' | 'san_antonio' | 'both')}
+            onChange={(e) => setPublication(e.target.value as PublicationId | 'both')}
             className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#1a2a44] bg-white rounded-md"
           >
             <option value="both">Both Publications</option>

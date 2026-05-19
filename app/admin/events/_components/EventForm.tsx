@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/admin-api';
+import type { PublicationId } from '@/lib/publications';
 
 export type EventFormData = {
   id?: number;
-  publication: 'austin' | 'san_antonio';
+  publication: PublicationId;
   title: string;
   description: string;
   link: string;
@@ -178,7 +179,7 @@ export function EventForm({
             <label className={labelClass}>Publication</label>
             <select
               value={data.publication}
-              onChange={(e) => update('publication', e.target.value as 'austin' | 'san_antonio')}
+              onChange={(e) => update('publication', e.target.value as PublicationId)}
               className={fieldClass}
             >
               <option value="austin">RealtyLine (Austin)</option>

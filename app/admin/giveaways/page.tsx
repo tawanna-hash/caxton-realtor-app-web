@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
+import { PUBLICATION_LABELS_WITH_BOTH, type PublicationId } from '@/lib/publications';
 
 type Giveaway = {
   id: string;
   title: string;
   prize: string;
-  publication: 'austin' | 'san_antonio' | 'both';
+  publication: PublicationId | 'both';
   status: 'draft' | 'active' | 'closed' | 'announced';
   starts_at: string;
   ends_at: string;
@@ -23,12 +24,6 @@ const STATUS_STYLES: Record<string, string> = {
   active: 'bg-green-50 text-green-700 border-green-200 rounded-md',
   closed: 'bg-amber-50 text-amber-700 border-amber-200 rounded-md',
   announced: 'bg-blue-50 text-blue-700 border-blue-200',
-};
-
-const PUB_LABELS: Record<string, string> = {
-  austin: 'RealtyLine (Austin)',
-  san_antonio: 'Newsline SA',
-  both: 'Both Publications',
 };
 
 function formatDate(s?: string) {
@@ -104,7 +99,7 @@ export default function GiveawaysPage() {
               </span>
             </div>
             <div className="text-sm text-gray-700 mb-1">{g.prize}</div>
-            <div className="text-xs text-gray-500 mb-3">{PUB_LABELS[g.publication] || g.publication}</div>
+            <div className="text-xs text-gray-500 mb-3">{PUBLICATION_LABELS_WITH_BOTH[g.publication] || g.publication}</div>
             <div className="text-xs text-gray-500 mb-3">
               {formatDate(g.starts_at)} - {formatDate(g.ends_at)}
             </div>
