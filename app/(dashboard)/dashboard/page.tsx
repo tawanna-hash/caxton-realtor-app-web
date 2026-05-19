@@ -17,6 +17,7 @@ import { DashboardHero } from '@/components/dashboard/DashboardHero';
 import BottomNav from '@/components/BottomNav';
 import NavDrawer from '@/components/NavDrawer';
 import { SW } from '@/lib/style-constants';
+import { PUB_META, type PubKey } from '@/lib/pub-meta';
 
 const API = getApiBase();
 
@@ -1251,24 +1252,6 @@ interface ArticleReaderProps {
   onSelectArticle?: (a: any) => void;
 }
 
-const PUB_META_AR: Record<string, { name: string; city: string; color: string; tagline: string; reach: string; email: string }> = {
-  realtyline: {
-    name: 'RealtyLine',
-    city: 'Austin',
-    color: '#021D40',
-    tagline: 'Reach 71,000+ Texas real estate professionals',
-    reach: '71,000+ Texas REALTORS',
-    email: 'ads@myrealtyline.com',
-  },
-  newsline: {
-    name: 'Newsline San Antonio',
-    city: 'San Antonio',
-    color: '#3D0740',
-    tagline: 'Reach 24,000+ San Antonio real estate professionals',
-    reach: '24,000+ San Antonio REALTORS',
-    email: 'ads@newslinesa.com',
-  },
-};
 
 // CAXTON ADS — House ads rotate when slot is empty. To add a real campaign
 // for a publication and slot, push to the appropriate array.
@@ -1422,7 +1405,7 @@ function useAd(slot: 'leaderboard' | 'rectangle' | 'popup' | 'feed_top' | 'calen
 // ─────────────────────────────────────────────────────────────────────────
 
 function HouseAd({ slot, pub }: { slot: 'leaderboard' | 'rectangle' | 'popup'; pub: string }) {
-  const info = PUB_META_AR[pub] || PUB_META_AR.realtyline;
+  const info = PUB_META[pub as PubKey] || PUB_META.realtyline;
   const headline = slot === 'leaderboard' ? 'Get featured here' : 'Advertise in ' + info.name;
   const sub = `Reach ${info.reach}`;
   const isRect = slot === 'rectangle';
@@ -1761,7 +1744,7 @@ function ActionPillButton({ children, label, onClick, active }: { children: Reac
 // ─────────────────────────────────────────────────────────────────────────
 
 function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectArticle }: ArticleReaderProps) {
-  const info = PUB_META_AR[pub] || PUB_META_AR.realtyline;
+  const info = PUB_META[pub as PubKey] || PUB_META.realtyline;
   const [saved, setSaved] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
