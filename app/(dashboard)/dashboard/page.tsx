@@ -16,8 +16,14 @@ import { getApiBase } from '@/lib/api-base';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
 import BottomNav from '@/components/BottomNav';
 import NavDrawer from '@/components/NavDrawer';
+import { SW } from '@/lib/style-constants';
+import { PUB_META, type PubKey } from '@/lib/pub-meta';
+import type { CalendarEvent } from '@/lib/events-store';
+import { decodeEntities } from '@/lib/events/text';
+import { isSponsored } from '@/lib/events/sponsorship';
+import { formatEventDateLong, formatEventTimeRange, dayOfMonth, groupByMonth } from '@/lib/events/dates';
+import { generateICS } from '@/lib/events/ics';
 
-const SW = { fontFamily: 'Switzer, system-ui, sans-serif' };
 const API = getApiBase();
 
 const PUBS = [
@@ -1277,122 +1283,6 @@ function EmptyState({ cat }: { cat: string }) {
 // Events feature: full-screen list page + detail page + supporting helpers
 // ─────────────────────────────────────────────────────────────────────────
 
-interface CalendarEvent {
-  id: number;
-  title: string;
-  description: string;
-  link: string;
-  publication: 'austin' | 'san_antonio';
-  startDate: string | null;
-  endDate: string | null;
-  location: string | null;
-  organizer: string | null;
-  organizerEmail: string | null;
-  website: string | null;
-  tags: string | null;
-  format: string | null;
-  courseNumber: string | null;
-  memberPrice: string | null;
-  nonmemberPrice: string | null;
-  imageUrl: string | null;
-  imageThumb: string | null;
-  instructor: string | null;
-  instructorBio: string | null;
-  lat: number | null;
-  lng: number | null;
-  // Sponsored support — populated from WP _event_sponsored, _event_sponsor_tier, _event_sponsor_advertiser
-  sponsored?: string;        // "1" or "" from WP
-  sponsor_tier?: string;     // "standard" | "featured" | "hero"
-  sponsor_advertiser?: string;
-}
-
-const PUB_META: Record<string, { name: string; city: string; color: string }> = {
-  realtyline: { name: 'RealtyLine', city: 'Austin', color: '#021D40' },
-  newsline: { name: 'Newsline San Antonio', city: 'San Antonio', color: '#3D0740' },
-};
-
-const CAXTON_EV_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-const CAXTON_EV_MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-function decodeEntities(s: string | null | undefined): string {
-  if (!s) return '';
-  return s
-    .replace(/&#038;/g, '&')
-    .replace(/&amp;/g, '&')
-    .replace(/&#8211;/g, '–')
-    .replace(/&#8212;/g, '—')
-    .replace(/&#8217;/g, "’")
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'");
-}
-
-function isSponsored(ev: CalendarEvent): boolean {
-  return ev.sponsored === '1' || ev.sponsored === 'true' || ev.sponsored === 'yes';
-}
-
-function formatEventDateLong(iso: string | null): string {
-  if (!iso) return 'Date TBD';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  return `${CAXTON_EV_MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-}
-
-function formatEventTime(iso: string | null): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
-  let hr = d.getHours();
-  const min = d.getMinutes();
-  const ampm = hr >= 12 ? 'PM' : 'AM';
-  hr = hr % 12 || 12;
-  return min === 0 ? `${hr}:00 ${ampm}` : `${hr}:${String(min).padStart(2, '0')} ${ampm}`;
-}
-
-function formatEventTimeRange(start: string | null, end: string | null): string {
-  if (!start) return '';
-  const s = formatEventTime(start);
-  if (!end) return s;
-  const e = formatEventTime(end);
-  if (!e || e === s) return s;
-  return `${s} – ${e}`;
-}
-
-function monthKey(iso: string | null): string {
-  if (!iso) return 'TBD';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return 'TBD';
-  return `${CAXTON_EV_MONTHS[d.getMonth()].toUpperCase()} ${d.getFullYear()}`;
-}
-
-function dayOfMonth(iso: string | null): { mo: string; dy: string } {
-  if (!iso) return { mo: 'TBD', dy: '?' };
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return { mo: 'TBD', dy: '?' };
-  return { mo: CAXTON_EV_MONTHS_SHORT[d.getMonth()].toUpperCase(), dy: String(d.getDate()) };
-}
-
-// Group events by month-year for the list rendering.
-// Drops expired events first (anything whose end date is before today's midnight).
-function groupByMonth(events: CalendarEvent[]): Array<{ key: string; events: CalendarEvent[] }> {
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-  const liveEvents = events.filter((ev) => {
-    const lastDay = new Date(ev.endDate || ev.startDate || '');
-    return !isNaN(lastDay.getTime()) && lastDay >= todayStart;
-  });
-  const groups: Record<string, CalendarEvent[]> = {};
-  const order: string[] = [];
-  liveEvents.forEach((ev) => {
-    const k = monthKey(ev.startDate);
-    if (!(k in groups)) {
-      groups[k] = [];
-      order.push(k);
-    }
-    groups[k].push(ev);
-  });
-  return order.map((k) => ({ key: k, events: groups[k] }));
-}
-
 // ─────────────────────────────────────────────────────────────────────────
 // EventsList — full-screen list page
 // ─────────────────────────────────────────────────────────────────────────
@@ -1407,7 +1297,7 @@ interface EventsListProps {
 }
 
 function EventsList({ pub, events, loading, error, onBack, onSelect }: EventsListProps) {
-  const info = PUB_META[pub] || PUB_META.realtyline;
+  const info = PUB_META[pub as PubKey] || PUB_META.realtyline;
   const list = events ?? [];
   const groups = groupByMonth(list);
 
@@ -1554,7 +1444,7 @@ interface EventDetailProps {
 }
 
 function EventDetail({ pub, event, onBack }: EventDetailProps) {
-  const info = PUB_META[pub] || PUB_META.realtyline;
+  const info = PUB_META[pub as PubKey] || PUB_META.realtyline;
   if (!event) {
     return (
       <div className="fixed inset-0 bg-white z-30 flex items-center justify-center" style={SW}>
@@ -1811,52 +1701,6 @@ function DetailSection({ label, children }: { label: string; children: React.Rea
 // ─────────────────────────────────────────────────────────────────────────
 // generateICS — build an iCalendar (.ics) text from a CalendarEvent
 // ─────────────────────────────────────────────────────────────────────────
-
-function pad2(n: number): string {
-  return n < 10 ? `0${n}` : String(n);
-}
-
-function isoToICS(iso: string | null): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
-  // Format: YYYYMMDDTHHMMSS (local time, no Z)
-  return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}T${pad2(d.getHours())}${pad2(d.getMinutes())}${pad2(d.getSeconds())}`;
-}
-
-function escapeICS(s: string): string {
-  return (s || '')
-    .replace(/\\/g, '\\\\')
-    .replace(/;/g, '\\;')
-    .replace(/,/g, '\\,')
-    .replace(/\n/g, '\\n');
-}
-
-function generateICS(event: CalendarEvent): string {
-  const dtstart = isoToICS(event.startDate);
-  const dtend = isoToICS(event.endDate || event.startDate);
-  const uid = `event-${event.id}@caxton`;
-  const now = isoToICS(new Date().toISOString().replace('Z', ''));
-  const lines = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//Caxton Publications, Inc.//Realtor App//EN',
-    'CALSCALE:GREGORIAN',
-    'METHOD:PUBLISH',
-    'BEGIN:VEVENT',
-    `UID:${uid}`,
-    `DTSTAMP:${now}`,
-    dtstart ? `DTSTART:${dtstart}` : '',
-    dtend ? `DTEND:${dtend}` : '',
-    `SUMMARY:${escapeICS(decodeEntities(event.title))}`,
-    event.location ? `LOCATION:${escapeICS(event.location)}` : '',
-    event.description ? `DESCRIPTION:${escapeICS(decodeEntities(event.description))}` : '',
-    event.link ? `URL:${event.link}` : '',
-    'END:VEVENT',
-    'END:VCALENDAR',
-  ].filter(Boolean);
-  return lines.join('\r\n');
-}
 
 // caxton-article-reader-b1-component
 // caxton-article-reader-b2a
