@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { Home, Building2, Tag, ArrowRight } from 'lucide-react';
 
 export const metadata = {
-  title: 'Builder & Developer Advertisers \u2014 RealtyNewsNow',
+  title: 'Builder & Developer Advertisers \u2014 Realty News Now',
   description:
     'New home communities, move-in ready homes, and promotions from Austin and San Antonio builders and developers.',
 };

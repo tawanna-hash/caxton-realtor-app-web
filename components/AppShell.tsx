@@ -164,7 +164,7 @@ export default function AppShell({
           {/* Center: brand + badge */}
           <div className="flex items-center gap-2">
             <Link href={isAdmin ? '/admin/giveaways' : '/'} className="text-sm sm:text-base font-semibold tracking-tight">
-              {isAdmin ? 'Realty News Now Admin' : 'RealtyNewsNow'}
+              {isAdmin ? 'Realty News Now Admin' : 'Realty News Now'}
             </Link>
             {isAdmin ? (
               <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-white/60">

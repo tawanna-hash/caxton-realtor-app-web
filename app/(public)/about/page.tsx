@@ -38,7 +38,7 @@ export default function AboutPage() {
         </p>
 
         <p>
-          <strong className="font-semibold text-gray-900">RealtyNewsNow</strong>{' '}
+          <strong className="font-semibold text-gray-900">Realty News Now</strong>{' '}
           — launched in May 2026 — is the next chapter. It brings everything
           our print readers love about RealtyLine and Newsline into a single
           mobile experience: latest news, upcoming events, our digital

@@ -15,7 +15,7 @@ import AdminInventoryDetail from '@/components/inventory/AdminInventoryDetail';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Review submission — Admin — RealtyNewsNow',
+  title: 'Review submission — Admin — Realty News Now',
 };
 
 type PageProps = {

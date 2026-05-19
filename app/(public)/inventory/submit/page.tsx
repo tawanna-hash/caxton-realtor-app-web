@@ -6,7 +6,7 @@
 import SubmissionForm from '@/components/inventory/SubmissionForm';
 
 export const metadata = {
-  title: 'Submit inventory — RealtyNewsNow',
+  title: 'Submit inventory — Realty News Now',
   description:
     'Builders and developers: submit a new home listing or promotion for publication in RealtyLine and Newsline.',
 };
