@@ -47,8 +47,8 @@ const DRAWER_SECTIONS: NavSection[] = [
   {
     title: 'Content',
     items: [
-      { label: 'Magazine', href: '/dashboard' },
-      { label: 'Calendar', href: '/dashboard' },
+      { label: 'Magazine', href: '/dashboard#magazines' },
+      { label: 'Calendar', href: '/calendar' },
       { label: 'Giveaways', href: '/giveaways' },
       { label: 'Builder Inventory', href: '/inventory' },
       { label: 'Communities', href: '/communities' },
