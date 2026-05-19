@@ -14,7 +14,7 @@ const BRAND: Record<Pub, string> = {
 // Skyline assets per pub.
 const SKYLINE: Partial<Record<Pub, { src: string; w: number; h: number }>> = {
   realtyline: { src: "/hero/austin-skyline.jpg", w: 2560, h: 1440 },
-  newsline: { src: "/hero/san-antonio-skyline.jpg", w: 1024, h: 589 },
+  newsline: { src: "/hero/san-antonio-skyline.jpg", w: 1040, h: 585 },
 };
 
 type Props = {
