@@ -235,7 +235,7 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
           </button>
         )}
         {/* Floating action pill — Map / Calendar / Share, matches article reader aesthetic */}
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
           <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1.5 shadow-lg">
             {event.location && (
               <button onClick={onDirections} aria-label="Directions" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10">
