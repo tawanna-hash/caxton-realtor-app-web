@@ -111,13 +111,23 @@ export function MonthGrid({ month, pub, eventsByDate, selectedDay, onSelectDay, 
                 : "text-gray-900"
             : "text-gray-300";
 
+          // Today-but-not-selected gets a pub-color inset ring; selected state
+          // overrides via background fill. Focus styling uses focus-visible so
+          // mouse clicks don't leave a sticky outline (keyboard tabs still do).
+          const todayRingStyle = cell.isToday && !cell.isSelected
+            ? { boxShadow: `inset 0 0 0 2px ${info.color}` }
+            : undefined;
+          const cellStyle = cell.isSelected
+            ? { backgroundColor: info.color }
+            : todayRingStyle;
+
           return (
             <button
               key={idx}
               onClick={() => handleDayClick(cell.date)}
-              className={`${baseClass} ${cell.isSelected ? '' : 'hover:bg-gray-100 active:bg-gray-200'}`}
-              style={cell.isSelected ? { backgroundColor: info.color } : undefined}
-              aria-label={`${MONTH_NAMES[cell.date.getMonth()]} ${cell.date.getDate()}, ${cell.date.getFullYear()}${cell.hasEvents ? ' (has events)' : ''}`}
+              className={`${baseClass} focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 ${cell.isSelected ? '' : 'hover:bg-gray-100 active:bg-gray-200'}`}
+              style={cellStyle}
+              aria-label={`${MONTH_NAMES[cell.date.getMonth()]} ${cell.date.getDate()}, ${cell.date.getFullYear()}${cell.hasEvents ? ' (has events)' : ''}${cell.isToday ? ' (today)' : ''}`}
               aria-pressed={cell.isSelected}
             >
               <span className={`text-sm leading-none ${textClass}`}>{cell.date.getDate()}</span>
