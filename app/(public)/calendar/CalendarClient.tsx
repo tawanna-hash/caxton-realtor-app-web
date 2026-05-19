@@ -72,7 +72,7 @@ export default function CalendarClient() {
       loading={loading}
       error={error}
       onBack={() => router.push('/dashboard')}
-      onSelect={(ev: CalendarEvent) => router.push(`/calendar/${ev.id}`)}
+      onSelect={(ev: CalendarEvent) => router.push(`/calendar/${ev.publication}/${ev.id}`)}
     />
   );
 }

@@ -148,6 +148,30 @@ export async function listEvents(publication: Publication): Promise<CalendarEven
 }
 
 /**
+ * Look up a single event by id within a publication.
+ * Returns null if the event doesn't exist, is hidden, or belongs to a
+ * different publication. Past events ARE returned (shareable URLs may
+ * outlive the event date).
+ */
+export async function getEventById(
+  publication: Publication,
+  id: number,
+): Promise<CalendarEvent | null> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT *
+      FROM events
+     WHERE id = ${id}
+       AND publication = ${publication}
+       AND hidden = false
+     LIMIT 1
+  `) as unknown as EventRow[];
+  if (rows.length === 0) return null;
+  return rowToEvent(rows[0]);
+}
+
+/**
  * Insert or update a batch of events keyed by (external_source, external_id).
  * Sets last_synced_at to NOW() so callers can prune stale rows afterwards.
  */
