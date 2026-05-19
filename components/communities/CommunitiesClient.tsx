@@ -7,7 +7,7 @@
 //   - No kind chips (no Listings/Promotions distinction here)
 //   - Reuses the existing InventoryCard for visual consistency
 //   - Same publication-scope external store pattern (reads localStorage
-//     `savedPub` with useSyncExternalStore for SSR-safe hydration)
+//     `caxton_pub` with useSyncExternalStore for SSR-safe hydration)
 
 import { useMemo, useSyncExternalStore } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -31,10 +31,8 @@ const PUB_LABEL: Record<Publication, string> = {
 function readSavedPub(): Publication {
   if (typeof window === 'undefined') return 'realtyline';
   try {
-    const v = window.localStorage.getItem('savedPub');
+    const v = window.localStorage.getItem('caxton_pub');
     if (v === 'realtyline' || v === 'newsline') return v;
-    if (v === 'RealtyLine') return 'realtyline';
-    if (v === 'Newsline') return 'newsline';
   } catch {
     // localStorage unavailable
   }
@@ -63,17 +61,16 @@ export default function CommunitiesClient({ initialRows }: Props) {
     getServerPubSnapshot,
   );
 
-  // S18 c-proper: URL pub param overrides localStorage. When present, also
-  // sync localStorage + dispatch savedPubChange so AppShell drawer color
-  // matches the page content. GOTCHA: AppShell uses 'caxton_pub' key, this
-  // file uses 'savedPub'. Write both during transition; follow-up to unify.
+  // S18 c-proper: URL pub param overrides localStorage. When present, sync
+  // localStorage + dispatch savedPubChange so AppShell drawer color matches
+  // the page content. (S19: unified on caxton_pub; legacy savedPub key
+  // dropped — migration handled by posthog-provider on app init.)
   const searchParams = useSearchParams();
   const pubParam = searchParams.get('pub');
   const urlPub: Publication | null =
     pubParam === 'realtyline' || pubParam === 'newsline' ? pubParam : null;
   if (typeof window !== 'undefined' && urlPub && urlPub !== pub) {
     try {
-      window.localStorage.setItem('savedPub', urlPub);
       window.localStorage.setItem('caxton_pub', urlPub);
       window.dispatchEvent(new Event('savedPubChange'));
     } catch {}

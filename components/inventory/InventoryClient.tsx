@@ -27,17 +27,15 @@ const PUB_LABEL: Record<Publication, string> = {
 
 // ─────────────────────────────────────────────────────────────────────────
 // Publication-state external store (useSyncExternalStore pattern)
-// Reads localStorage `savedPub` (handles both lowercase and capitalized
-// forms for backward compat). Avoids set-state-in-effect lint rule.
+// Reads localStorage `caxton_pub`. Avoids set-state-in-effect lint rule.
+// (Legacy `savedPub` key migrated to `caxton_pub` in posthog-provider init.)
 // ─────────────────────────────────────────────────────────────────────────
 
 function readSavedPub(): Publication {
   if (typeof window === 'undefined') return 'realtyline';
   try {
-    const v = window.localStorage.getItem('savedPub');
+    const v = window.localStorage.getItem('caxton_pub');
     if (v === 'realtyline' || v === 'newsline') return v;
-    if (v === 'RealtyLine') return 'realtyline';
-    if (v === 'Newsline') return 'newsline';
   } catch {
     // localStorage unavailable
   }
@@ -82,17 +80,15 @@ export default function InventoryClient({ initialRows }: Props) {
   const activeKind: Kind | 'all' =
     kindParam === 'listing' || kindParam === 'promotion' ? kindParam : 'all';
 
-  // S18 c-proper: URL pub param overrides localStorage. When present, also
-  // sync localStorage + dispatch savedPubChange so AppShell drawer color
-  // matches the page content. GOTCHA: AppShell uses 'caxton_pub' key, this
-  // file historically used 'savedPub'. Write both during transition; file
-  // follow-up to unify on one key.
+  // S18 c-proper: URL pub param overrides localStorage. When present, sync
+  // localStorage + dispatch savedPubChange so AppShell drawer color matches
+  // the page content. (S19: unified on caxton_pub; legacy savedPub key
+  // dropped — migration handled by posthog-provider on app init.)
   const pubParam = searchParams.get('pub');
   const urlPub: Publication | null =
     pubParam === 'realtyline' || pubParam === 'newsline' ? pubParam : null;
   if (typeof window !== 'undefined' && urlPub && urlPub !== pub) {
     try {
-      window.localStorage.setItem('savedPub', urlPub);
       window.localStorage.setItem('caxton_pub', urlPub);
       window.dispatchEvent(new Event('savedPubChange'));
     } catch {}

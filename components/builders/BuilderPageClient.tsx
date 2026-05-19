@@ -27,10 +27,8 @@ const PUB_LABEL: Record<Publication, string> = {
 function readSavedPub(): Publication {
   if (typeof window === 'undefined') return 'realtyline';
   try {
-    const v = window.localStorage.getItem('savedPub');
+    const v = window.localStorage.getItem('caxton_pub');
     if (v === 'realtyline' || v === 'newsline') return v;
-    if (v === 'RealtyLine') return 'realtyline';
-    if (v === 'Newsline') return 'newsline';
   } catch {}
   return 'realtyline';
 }

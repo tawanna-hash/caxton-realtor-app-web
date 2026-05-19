@@ -32,6 +32,24 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       },
     });
     initialized = true;
+    // S19 one-time migration: legacy 'savedPub' -> 'caxton_pub'.
+    // Runs once per browser; no-op afterwards.
+    try {
+      if (!window.localStorage.getItem('caxton_pub')) {
+        const legacy = window.localStorage.getItem('savedPub');
+        if (legacy) {
+          const normalized =
+            legacy === 'realtyline' || legacy === 'RealtyLine' ? 'realtyline' :
+            legacy === 'newsline' || legacy === 'Newsline' ? 'newsline' : null;
+          if (normalized) {
+            window.localStorage.setItem('caxton_pub', normalized);
+          }
+        }
+      }
+      window.localStorage.removeItem('savedPub');
+    } catch {
+      // localStorage unavailable; ignore
+    }
     registerActivePublication();
     const onPubChange = () => registerActivePublication();
     window.addEventListener('savedPubChange', onPubChange);
