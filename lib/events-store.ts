@@ -32,6 +32,11 @@ export interface CalendarEvent {
   instructorBio: string | null;
   lat: number | null;
   lng: number | null;
+  // Sponsored support — populated from WP _event_sponsored, _event_sponsor_tier, _event_sponsor_advertiser.
+  // Optional because columns may not exist on all rows; SELECT * passes them through when present.
+  sponsored?: string;        // "1" or "" from WP
+  sponsor_tier?: string;     // "standard" | "featured" | "hero"
+  sponsor_advertiser?: string;
 }
 
 /** Input shape for upsertEvents — what scrapers produce. */
