@@ -482,7 +482,7 @@ function toEventInput(ev: RapamsEvent): EventInput | null {
     link: ev.registrationUrl || ev.detailUrl || null,
     startDate: ev.startIso,
     endDate: ev.endIso,
-    location: loc.locationString || null,
+    location: loc.isVirtual ? null : (loc.locationString || null),
     organizer: null,
     organizerEmail: null,
     website: ev.registrationUrl || null,

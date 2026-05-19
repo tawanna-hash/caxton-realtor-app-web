@@ -447,7 +447,7 @@ export async function enrichListings(listings: Listing[]): Promise<EventInput[]>
         organizerEmail: null,
         website: d.registerUrl || null,
         tags: null,
-        format: d.location && isVirtualLocation(d.location) ? d.location : null,
+        format: d.location && isVirtualLocation(d.location) ? 'Virtual' : null,
         courseNumber: d.courseNumber || null,
         memberPrice: d.memberPrice || null,
         nonmemberPrice: d.nonmemberPrice || null,

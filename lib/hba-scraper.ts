@@ -305,6 +305,8 @@ function toEventInput(ev: RawEvent, description: string | null): EventInput | nu
   const title = normalizeTitle(ev.EventName || '');
   if (!title || !ev.StartDateTimeUtc) return null;
 
+  const format = deriveFormat(ev);
+
   return {
     externalSource: SOURCE,
     externalId: `hba:${ev.EventId}`,
@@ -314,12 +316,12 @@ function toEventInput(ev: RawEvent, description: string | null): EventInput | nu
     link: registrationUrl(ev) || detailUrl(ev.EventId),
     startDate: ev.StartDateTimeUtc,
     endDate: ev.EndDateTimeUtc || null,
-    location: buildLocation(ev),
+    location: format === 'Virtual' ? null : buildLocation(ev),
     organizer: 'Home Builders Association of Greater Austin',
     organizerEmail: clean(ev.Email) || null,
     website: registrationUrl(ev) || detailUrl(ev.EventId),
     tags: clean(ev.EventType) || null,
-    format: deriveFormat(ev),
+    format,
     courseNumber: null,
     memberPrice: null,
     nonmemberPrice: null,
