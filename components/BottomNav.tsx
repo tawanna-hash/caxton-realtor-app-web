@@ -8,7 +8,7 @@
 //
 // Tab semantics:
 //   Home      route-then-dispatch to /dashboard news phase
-//   Magazine  route-then-dispatch to /dashboard magazines phase (via hash)
+//   Magazine  push to /magazine (real route, built in S23)
 //   Calendar  push to /calendar (real list route, built in S20)
 //   Builders  push to /builders (real hub route, built in Stage C)
 //   More      callback to parent which opens NavDrawer
@@ -37,7 +37,7 @@ export default function BottomNav({ info, onMoreClick }: Props) {
   const router = useRouter();
 
   const isHome = pathname === '/dashboard' && !hasHash('magazines', 'events');
-  const isMagazine = pathname === '/dashboard' && hasHash('magazines');
+  const isMagazine = pathname === '/magazine' || pathname.startsWith('/magazine/');
   const isCalendar = pathname === '/calendar' || pathname.startsWith('/calendar/');
   const isBuilders = pathname === '/builders' || pathname.startsWith('/builders/');
 
@@ -54,13 +54,7 @@ export default function BottomNav({ info, onMoreClick }: Props) {
   }
 
   function goMagazine() {
-    if (pathname === '/dashboard') {
-      window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'magazines' }));
-      window.dispatchEvent(new CustomEvent('caxton:openLatestMagazine'));
-      history.replaceState(null, '', '/dashboard#magazines');
-    } else {
-      router.push('/dashboard#magazines');
-    }
+    router.push('/magazine');
   }
 
   function goCalendar() {

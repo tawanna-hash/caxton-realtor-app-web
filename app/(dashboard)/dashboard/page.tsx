@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { trackEvent, identifyUser } from "../../posthog-provider";
+import { useRouter } from 'next/navigation';
 import { useSwipeBack } from '@/hooks/use-swipe-back';
 import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReader from '@/components/MagazineReader';
@@ -816,10 +817,10 @@ export default function DashboardPage() {
       return;
     }
     if (hash === 'magazines') {
+      // Redirect legacy /dashboard#magazines shares to the new /magazine route (S23).
       hashConsumedRef.current = true;
-      window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'magazines' }));
-      window.dispatchEvent(new Event('caxton:openLatestMagazine'));
-      history.replaceState(null, '', window.location.pathname + window.location.search);
+      window.location.replace('/magazine');
+      return;
     } else if (hash === 'feed' || hash === '') {
       hashConsumedRef.current = true;
     }
@@ -1744,6 +1745,7 @@ function ActionPillButton({ children, label, onClick, active }: { children: Reac
 // ─────────────────────────────────────────────────────────────────────────
 
 function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectArticle }: ArticleReaderProps) {
+  const router = useRouter();
   const info = PUB_META[pub as PubKey] || PUB_META.realtyline;
   const [saved, setSaved] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -2007,7 +2009,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
         onSaveToggle={onSaveToggle}
         onShare={onShare}
         onCopy={onCopy}
-        onMagazine={() => { trackEvent('article_magazine_pill_clicked', { article_id: article.id, pub }); window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'magazines' })); }}
+        onMagazine={() => { trackEvent('article_magazine_pill_clicked', { article_id: article.id, pub }); router.push('/magazine'); }}
         onLatest={() => { trackEvent('article_latest_pill_clicked', { article_id: article.id, pub }); if (onLatest) onLatest(); else onBack(); }}
       />
 
