@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- TODO(S18-lint-debt): retype dashboard properly. 34 `any` types remain pending a proper types pass. */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { trackEvent, identifyUser } from "../../posthog-provider";
 import { useSwipeBack } from '@/hooks/use-swipe-back';
 import MagazineCarousel from '@/components/MagazineCarousel';
@@ -816,6 +816,28 @@ export default function DashboardPage() {
     window.addEventListener('caxton:nav', onNav as EventListener);
     return () => window.removeEventListener('caxton:nav', onNav as EventListener);
   }, []);
+
+  // S19: Hash routing for external links (e.g. /dashboard#magazines from email).
+  // Fires once when phase first reaches 'feed' (post-auth). Clears the hash so
+  // refreshing the same URL doesn't re-trigger. Dispatches the same caxton:nav
+  // event the BottomNav uses — single code path for in-app and external nav.
+  const hashConsumedRef = useRef(false);
+  useEffect(() => {
+    if (hashConsumedRef.current) return;
+    if (phase !== 'feed') return;
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash.replace(/^#/, '').toLowerCase();
+    if (hash === 'magazines' || hash === 'events') {
+      hashConsumedRef.current = true;
+      window.dispatchEvent(new CustomEvent('caxton:nav', { detail: hash }));
+      if (hash === 'magazines') {
+        window.dispatchEvent(new Event('caxton:openLatestMagazine'));
+      }
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    } else if (hash === 'feed' || hash === '') {
+      hashConsumedRef.current = true;
+    }
+  }, [phase]);
 
   // caxton-events-frontend-v1-fetch
   useEffect(() => {
