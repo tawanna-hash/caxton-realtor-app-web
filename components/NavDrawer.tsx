@@ -68,7 +68,7 @@ const DRAWER_SECTIONS: NavSection[] = [
     items: [
       { label: 'About Us', href: '/about' },
       { label: 'Advertise', href: '/advertise' },
-      { label: 'My Profile', href: '#', placeholder: true },
+      { label: 'My Profile', href: '/profile' },
     ],
   },
   {
