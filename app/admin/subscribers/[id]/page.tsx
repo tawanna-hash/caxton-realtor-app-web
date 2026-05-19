@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- TODO(S22-lint-debt):
+   define a real Subscriber type + properly type helper fns
+   (fmtDate, fmtVal, subToForm, formToPatch, Field). Catch handlers and
+   the patch local are already narrowed -- this disable covers structural
+   any-typing only. */
 'use client';
 
 import { use, useEffect, useState } from 'react';
@@ -5,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
+import { PUBLICATION_LABELS, type PublicationId } from '@/lib/publications';
 
 type Subscriber = Record<string, any> & { id: string };
 
@@ -32,10 +38,9 @@ type EditableState = {
   subscriptions: string;
 };
 
-const MARKET_LABEL: Record<string, string> = {
-  austin: 'RealtyLine (Austin)',
-  san_antonio: 'Newsline (SA)',
-};
+function isPublicationId(v: unknown): v is PublicationId {
+  return v === 'austin' || v === 'san_antonio';
+}
 
 function fmtDate(s: any): string {
   if (!s) return '—';
@@ -228,7 +233,7 @@ export default function SubscriberDetailPage({ params }: { params: Promise<{ id:
 
   useEffect(() => {
     if (!admin) return;
-    setLoading(true);
+    queueMicrotask(() => setLoading(true));
     adminApi.getSubscriber(id)
       .then((res: { subscriber: Subscriber }) => { setSub(res.subscriber); setLoading(false); })
       .catch((err) => { setError(err.message); setLoading(false); });
@@ -251,9 +256,9 @@ export default function SubscriberDetailPage({ params }: { params: Promise<{ id:
     if (!form || !sub) return;
     setSaveError(null);
 
-    let patch: Record<string, any>;
+    let patch: ReturnType<typeof formToPatch>;
     try { patch = formToPatch(form, sub); }
-    catch (e: any) { setSaveError(e.message || 'Invalid input'); return; }
+    catch (e: unknown) { setSaveError(e instanceof Error ? e.message : 'Invalid input'); return; }
 
     if (Object.keys(patch).length === 0) { cancelEdit(); return; }
 
@@ -269,8 +274,8 @@ export default function SubscriberDetailPage({ params }: { params: Promise<{ id:
           ? 'No changes to save.'
           : `Saved: ${res.changed.join(', ')}`,
       });
-    } catch (err: any) {
-      setSaveError(err.message || 'Save failed');
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : 'Save failed');
     } finally {
       setSaving(false);
     }
@@ -282,8 +287,8 @@ export default function SubscriberDetailPage({ params }: { params: Promise<{ id:
     try {
       await adminApi.sendMagicLinkToSubscriber(id);
       setActionMsg({ kind: 'ok', text: `Magic link sent to ${sub.email}.` });
-    } catch (err: any) {
-      setActionMsg({ kind: 'err', text: err.message || 'Failed to send magic link' });
+    } catch (err: unknown) {
+      setActionMsg({ kind: 'err', text: err instanceof Error ? err.message : 'Failed to send magic link' });
     } finally {
       setSendingLink(false); setMagicLinkConfirm(false);
     }
@@ -300,8 +305,8 @@ export default function SubscriberDetailPage({ params }: { params: Promise<{ id:
         kind: 'ok',
         text: res.changed ? 'Subscriber deactivated.' : 'Subscriber was already inactive.',
       });
-    } catch (err: any) {
-      setActionMsg({ kind: 'err', text: err.message || 'Failed to deactivate' });
+    } catch (err: unknown) {
+      setActionMsg({ kind: 'err', text: err instanceof Error ? err.message : 'Failed to deactivate' });
     } finally {
       setDeactivating(false); setDeactivateConfirm(false);
     }
@@ -313,8 +318,8 @@ export default function SubscriberDetailPage({ params }: { params: Promise<{ id:
     try {
       await adminApi.deleteSubscriber(id);
       router.push('/admin/subscribers');
-    } catch (err: any) {
-      setActionMsg({ kind: 'err', text: err.message || 'Failed to delete' });
+    } catch (err: unknown) {
+      setActionMsg({ kind: 'err', text: err instanceof Error ? err.message : 'Failed to delete' });
       setDeleting(false);
       setDeleteModalOpen(false);
       setDeleteConfirmText('');
@@ -423,7 +428,7 @@ return (
                 <Field label="Last name" value={sub.last_name} />
                 <Field label="Email" value={sub.email} />
                 <Field label="Email verified" value={sub.email_verified_at ? fmtDate(sub.email_verified_at) : null} />
-                <Field label="Market" value={MARKET_LABEL[sub.market] || sub.market} />
+                <Field label="Market" value={isPublicationId(sub.market) ? PUBLICATION_LABELS[sub.market] : sub.market} />
                 <Field label="Status" value={sub.status} />
                 <Field label="Title" value={sub.title} />
               </>
@@ -643,7 +648,7 @@ return (
               will be preserved with the realtor_id nulled. <strong>This cannot be undone.</strong>
             </p>
             <p className="text-sm text-gray-700 mt-4">
-              Type the subscriber's email to confirm:
+              Type the subscriber&apos;s email to confirm:
             </p>
             <input
               type="text"
