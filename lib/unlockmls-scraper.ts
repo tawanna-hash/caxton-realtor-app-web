@@ -44,6 +44,17 @@ function clean(s: string | null | undefined): string {
   return s.replace(/\s+/g, ' ').trim();
 }
 
+/**
+ * Detect virtual/online events from scraped location strings. UnlockMLS
+ * renders these inline in the Location section (e.g. "Virtual",
+ * "Virtual \u2014 Zoom", "Online webinar"). When detected, the row
+ * should write location=null and put the descriptive label in `format`.
+ */
+function isVirtualLocation(loc: string): boolean {
+  if (!loc) return false;
+  return /\b(virtual|online|zoom|webinar|teams|google\s*meet|livestream|live\s*stream)\b/i.test(loc);
+}
+
 async function fetchHtml(url: string): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -231,7 +242,7 @@ function labelValue($: cheerio.CheerioAPI, label: string): string {
   return result;
 }
 
-export function parseDetail(html: string, _sourceUrl: string): Detail {
+export function parseDetail(html: string): Detail {
   const $ = cheerio.load(html);
   const detail: Detail = {
     title: '',
@@ -416,7 +427,7 @@ export async function enrichListings(listings: Listing[]): Promise<EventInput[]>
   for (const l of listings) {
     try {
       const html = await fetchHtml(l.url);
-      const d = parseDetail(html, l.url);
+      const d = parseDetail(html);
       if (!d.title) {
         await sleep(REQUEST_DELAY_MS);
         continue;
@@ -431,12 +442,12 @@ export async function enrichListings(listings: Listing[]): Promise<EventInput[]>
         link: d.registerUrl || l.url || null,
         startDate: startIso,
         endDate: endIso,
-        location: d.location || null,
+        location: d.location && !isVirtualLocation(d.location) ? d.location : null,
         organizer: d.provider || null,
         organizerEmail: null,
         website: d.registerUrl || null,
         tags: null,
-        format: null,
+        format: d.location && isVirtualLocation(d.location) ? d.location : null,
         courseNumber: d.courseNumber || null,
         memberPrice: d.memberPrice || null,
         nonmemberPrice: d.nonmemberPrice || null,
