@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
     // breaks Vercel builds (the package's auto-init tries to load @napi-rs/canvas
     // and falls back to PDF.js polyfills that need DOMMatrix in Node).
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfParse: (buf: Buffer, opts?: PdfParseOptions) => Promise<PdfParseResult> = require('pdf-parse/lib/pdf-parse');
+    const pdfParse: (buf: Buffer, opts?: PdfParseOptions) => Promise<PdfParseResult> = require('pdf-parse');
     await pdfParse(pdfBuffer, {
       pagerender: async (pageData) => {
         const textContent = await pageData.getTextContent({
