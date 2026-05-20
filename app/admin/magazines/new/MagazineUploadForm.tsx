@@ -57,10 +57,22 @@ interface PdfJsDoc {
   getPage: (pageNum: number) => Promise<PdfJsPage>;
 }
 interface PdfJsLib {
-  getDocument: (src: { data: ArrayBuffer }) => { promise: Promise<PdfJsDoc> };
+  getDocument: (src: {
+    data: ArrayBuffer;
+    wasmUrl?: string;
+    cMapUrl?: string;
+    cMapPacked?: boolean;
+    standardFontDataUrl?: string;
+  }) => { promise: Promise<PdfJsDoc> };
   GlobalWorkerOptions: { workerSrc: string };
   version: string;
 }
+
+// pdfjs CDN base for ancillary assets (worker, wasm, cMaps, fonts).
+// cdnjs serves individual static files reliably even when its full-module
+// mjs imports fail (which is why we npm-installed the main lib).
+const PDFJS_VERSION = '4.0.379';
+const CDNJS_BASE = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
 
 export default function MagazineUploadForm() {
   const router = useRouter();
@@ -115,18 +127,14 @@ export default function MagazineUploadForm() {
     return `${ts}-${rand}`;
   }
 
-  // Load pdfjs-dist from npm bundle (dynamic import — lazy-loaded only when admin
-  // submits the form with PDF-render mode, doesn't add to initial admin chunk).
+  // Load pdfjs-dist as a dynamic import. Worker is loaded from cdnjs (a
+  // separate URL strategy that works reliably for individual files even when
+  // the cdnjs full-module mjs imports were failing earlier in this session).
   async function loadPdfJs(): Promise<PdfJsLib> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mod = await import('pdfjs-dist/legacy/build/pdf.mjs' as any);
-    const lib = mod as unknown as PdfJsLib;
-    // Use the inline worker version so we don't need to ship a separate file.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const workerMod = await import('pdfjs-dist/legacy/build/pdf.worker.mjs' as any);
-    const blob = new Blob([workerMod.default ?? ''], { type: 'application/javascript' });
-    lib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
-    return lib;
+    const mod = (await import('pdfjs-dist/legacy/build/pdf.mjs' as any)) as unknown as PdfJsLib;
+    mod.GlobalWorkerOptions.workerSrc = `${CDNJS_BASE}/pdf.worker.min.js`;
+    return mod;
   }
 
   // Render a PDF File to N JPEG Blobs (one per page).
@@ -137,7 +145,15 @@ export default function MagazineUploadForm() {
   ): Promise<Blob[]> {
     const pdfjs = await loadPdfJs();
     const buf = await file.arrayBuffer();
-    const doc = await pdfjs.getDocument({ data: buf }).promise;
+    const doc = await pdfjs.getDocument({
+      data: buf,
+      // wasmUrl: required for PDFs that use JBig2 or CCITTFax compression.
+      // cMapUrl / standardFontDataUrl: fallbacks for non-embedded fonts.
+      wasmUrl: `${CDNJS_BASE}/wasm/`,
+      cMapUrl: `${CDNJS_BASE}/cmaps/`,
+      cMapPacked: true,
+      standardFontDataUrl: `${CDNJS_BASE}/standard_fonts/`,
+    }).promise;
     const scale = dpi / 72; // PDF native is 72dpi
     const out: Blob[] = [];
     for (let i = 1; i <= doc.numPages; i++) {
