@@ -69,10 +69,11 @@ interface PdfJsLib {
 }
 
 // pdfjs CDN base for ancillary assets (worker, wasm, cMaps, fonts).
-// cdnjs serves individual static files reliably even when its full-module
-// mjs imports fail (which is why we npm-installed the main lib).
-const PDFJS_VERSION = '4.0.379';
-const CDNJS_BASE = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
+// unpkg mirrors npm exactly, so whatever pdfjs-dist version is installed,
+// the file URLs match without hardcoding a version constant.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const PDFJS_VERSION: string = require('pdfjs-dist/package.json').version;
+const PDFJS_CDN = `https://unpkg.com/pdfjs-dist@${PDFJS_VERSION}`;
 
 export default function MagazineUploadForm() {
   const router = useRouter();
@@ -133,7 +134,7 @@ export default function MagazineUploadForm() {
   async function loadPdfJs(): Promise<PdfJsLib> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mod = (await import('pdfjs-dist/legacy/build/pdf.mjs' as any)) as unknown as PdfJsLib;
-    mod.GlobalWorkerOptions.workerSrc = `${CDNJS_BASE}/pdf.worker.min.js`;
+    mod.GlobalWorkerOptions.workerSrc = `${PDFJS_CDN}/build/pdf.worker.min.mjs`;
     return mod;
   }
 
@@ -149,10 +150,10 @@ export default function MagazineUploadForm() {
       data: buf,
       // wasmUrl: required for PDFs that use JBig2 or CCITTFax compression.
       // cMapUrl / standardFontDataUrl: fallbacks for non-embedded fonts.
-      wasmUrl: `${CDNJS_BASE}/wasm/`,
-      cMapUrl: `${CDNJS_BASE}/cmaps/`,
+      wasmUrl: `${PDFJS_CDN}/wasm/`,
+      cMapUrl: `${PDFJS_CDN}/cmaps/`,
       cMapPacked: true,
-      standardFontDataUrl: `${CDNJS_BASE}/standard_fonts/`,
+      standardFontDataUrl: `${PDFJS_CDN}/standard_fonts/`,
     }).promise;
     const scale = dpi / 72; // PDF native is 72dpi
     const out: Blob[] = [];
