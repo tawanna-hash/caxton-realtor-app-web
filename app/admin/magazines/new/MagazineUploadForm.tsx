@@ -115,27 +115,18 @@ export default function MagazineUploadForm() {
     return `${ts}-${rand}`;
   }
 
-  // Load pdfjs-dist on demand from CDN (avoids bundling 2MB into the admin chunk).
+  // Load pdfjs-dist from npm bundle (dynamic import — lazy-loaded only when admin
+  // submits the form with PDF-render mode, doesn't add to initial admin chunk).
   async function loadPdfJs(): Promise<PdfJsLib> {
-    const w = window as unknown as { pdfjsLib?: PdfJsLib };
-    if (w.pdfjsLib) return w.pdfjsLib;
-    await new Promise<void>((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs';
-      script.type = 'module';
-      // The mjs build exposes pdfjsLib on window when imported as a module.
-      // Workaround: use the .js (legacy) build instead which sets window.pdfjsLib.
-      const legacy = document.createElement('script');
-      legacy.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js';
-      legacy.onload = () => resolve();
-      legacy.onerror = () => reject(new Error('Failed to load pdfjs-dist from CDN'));
-      document.head.appendChild(legacy);
-    });
-    const w2 = window as unknown as { pdfjsLib?: PdfJsLib };
-    if (!w2.pdfjsLib) throw new Error('pdfjs-dist loaded but window.pdfjsLib not set');
-    w2.pdfjsLib.GlobalWorkerOptions.workerSrc =
-      `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js`;
-    return w2.pdfjsLib;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mod = await import('pdfjs-dist/legacy/build/pdf.mjs' as any);
+    const lib = mod as unknown as PdfJsLib;
+    // Use the inline worker version so we don't need to ship a separate file.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const workerMod = await import('pdfjs-dist/legacy/build/pdf.worker.mjs' as any);
+    const blob = new Blob([workerMod.default ?? ''], { type: 'application/javascript' });
+    lib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+    return lib;
   }
 
   // Render a PDF File to N JPEG Blobs (one per page).
