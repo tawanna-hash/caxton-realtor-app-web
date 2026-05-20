@@ -27,9 +27,6 @@ interface PdfParseOptions {
 }
 type PdfParseResult = Record<string, unknown>;
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse: (buf: Buffer, opts?: PdfParseOptions) => Promise<PdfParseResult> = require('pdf-parse');
-
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -113,6 +110,11 @@ export async function POST(req: NextRequest) {
 
   const pages: string[] = [];
   try {
+    // Lazy-load pdf-parse to avoid evaluating it at module-load time, which
+    // breaks Vercel builds (the package's auto-init tries to load @napi-rs/canvas
+    // and falls back to PDF.js polyfills that need DOMMatrix in Node).
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const pdfParse: (buf: Buffer, opts?: PdfParseOptions) => Promise<PdfParseResult> = require('pdf-parse/lib/pdf-parse');
     await pdfParse(pdfBuffer, {
       pagerender: async (pageData) => {
         const textContent = await pageData.getTextContent({
