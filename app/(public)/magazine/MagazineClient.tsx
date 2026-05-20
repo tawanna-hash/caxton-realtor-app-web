@@ -3,7 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import MagazineCarousel from '@/components/MagazineCarousel';
-import MagazineReader from '@/components/MagazineReader';
+import MagazineReaderRouter from '@/components/MagazineReaderRouter';
 import MagazineFeatured from '@/components/MagazineFeatured';
 import type { Magazine } from '@/lib/magazines';
 
@@ -96,7 +96,7 @@ export default function MagazineClient() {
         />
       )}
       {openMag && (
-        <MagazineReader
+        <MagazineReaderRouter
           magazine={openMag}
           brandColor={info.color}
           onClose={() => setOpenMag(null)}
