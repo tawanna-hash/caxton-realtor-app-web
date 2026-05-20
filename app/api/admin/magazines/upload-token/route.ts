@@ -1,25 +1,14 @@
 // app/api/admin/magazines/upload-token/route.ts
 //
-// Issues a Vercel Blob upload token for admin magazine file uploads.
-// Mirrors app/api/admin/inventory/upload-token/route.ts (same handleUpload
-// pattern, same admin-auth gate, same two-step upload flow):
-//   1. Client POSTs here to get a signed token
-//   2. Client PUTs file bytes directly to Vercel Blob's edge endpoint
-//   3. File never passes through this serverless function (avoids the 4.5MB
-//      body limit and egress cost)
+// Admin-gated Vercel Blob upload-token issuer for magazine files.
 //
-// Pathname conventions (admins can only write under these prefixes):
-//   magazine-covers/{id}/{filename}  — cover image (jpg/png/webp), up to 10MB
-//   magazine-pdfs/{id}/{filename}    — full-issue PDF, up to 100MB
-//   magazine-pages/{id}/{filename}   — individual page images, up to 10MB each
-//
-// After upload, the client receives the public blob URL and PATCHes the
-// magazine row via /api/admin/magazines/[id] to attach the URL(s). This
-// route never touches the DB.
-//
-// Orphan blobs (uploads that never get attached, or replaced URLs) are
-// not garbage collected here. Filed as a future cleanup task — same
-// pattern as inventory orphan blobs.
+// Pathname conventions:
+//   magazine-staging/{stagingId}/{filename} — pre-create uploads (no DB row yet),
+//                                              stagingId is a client-generated id like
+//                                              "2026-05-20T15-23-45-abc123"
+//   magazine-covers/{id}/{filename}         — edits to existing magazine cover
+//   magazine-pdfs/{id}/{filename}           — full-issue PDF, up to 100MB
+//   magazine-pages/{id}/{filename}          — individual page images
 
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse, type NextRequest } from 'next/server';
@@ -33,6 +22,8 @@ const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_PDF_TYPES = ['application/pdf'];
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_PDF_BYTES = 100 * 1024 * 1024;
+// Staging accepts either type since it covers cover + pdf + pages at create time.
+const ALLOWED_STAGING_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_PDF_TYPES];
 
 async function isAdmin(cookieHeader: string | null): Promise<boolean> {
   if (!cookieHeader) return false;
@@ -67,6 +58,13 @@ export async function POST(request: NextRequest) {
       body,
       request,
       onBeforeGenerateToken: async (pathname) => {
+        if (pathname.startsWith('magazine-staging/')) {
+          return {
+            allowedContentTypes: ALLOWED_STAGING_TYPES,
+            maximumSizeInBytes: MAX_PDF_BYTES, // permissive — staging may hold PDFs
+            addRandomSuffix: true,
+          };
+        }
         if (pathname.startsWith('magazine-covers/')) {
           return {
             allowedContentTypes: ALLOWED_IMAGE_TYPES,
@@ -91,15 +89,13 @@ export async function POST(request: NextRequest) {
         throw new Error(`Invalid upload path prefix: ${pathname}`);
       },
       onUploadCompleted: async ({ blob }) => {
-        // Client receives the blob URL from the upload() call and
-        // PATCHes the magazine row separately.
         console.log(
           `[admin/magazines/upload-token] blob ready: ${blob.url} (pathname=${blob.pathname})`,
         );
       },
     });
     return NextResponse.json(jsonResponse);
-  } catch (err) {
+  } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
     console.error('[admin/magazines/upload-token] error:', msg);
     return NextResponse.json({ error: msg }, { status: 400 });

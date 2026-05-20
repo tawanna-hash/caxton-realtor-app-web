@@ -2,18 +2,25 @@
 
 // app/admin/magazines/new/MagazineUploadForm.tsx
 //
-// New-issue upload form. Full flow:
-//   1. Admin fills in metadata (publication, year, month, label, sort date)
-//   2. Selects cover image, PDF (optional), and page images (multiple)
-//   3. Clicks "Create Issue" → form posts metadata to /api/admin/magazines
-//      which returns { id }
-//   4. With the new id, the form uploads each file via @vercel/blob/client
-//      upload() with pathnames under magazine-covers/{id}/, magazine-pdfs/{id}/,
-//      magazine-pages/{id}/
-//   5. If a PDF was uploaded, /api/admin/magazines/extract-text is called
-//      with the blob URL to get per-page text
-//   6. PATCH /api/admin/magazines/{id} attaches all URLs + page_texts
-//   7. Redirect to /admin/magazines
+// New magazine upload — upload-first, then DB-create.
+//
+// Two page-source modes:
+//   1. Render from PDF (default) — browser uses pdfjs-dist to render each
+//      PDF page to a canvas, exports as JPEG, uploads to Vercel Blob.
+//      Admin only needs cover + PDF; no manual JPEG export.
+//   2. Manual JPEG selection — admin uploads pre-exported per-page JPEGs.
+//      Fallback when the PDF has unrenderable content or admin wants
+//      pixel-perfect control.
+//
+// Flow:
+//   1. Admin fills metadata + selects cover + PDF (and/or page images)
+//   2. Submit:
+//      a. Upload cover to magazine-staging/{stagingId}/
+//      b. Upload PDF (optional) to magazine-staging/{stagingId}/
+//      c. Render or upload page images to magazine-staging/{stagingId}/
+//      d. Extract per-page text from PDF (optional, non-fatal failure)
+//      e. POST /api/admin/magazines with all URLs to create the row
+//   3. Redirect to /admin/magazines on success
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -30,8 +37,29 @@ interface StepState {
   detail?: string;
 }
 
+type PageSource = 'pdf-render' | 'manual';
+
 function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+// pdfjs-dist types we use
+interface PdfJsViewport {
+  width: number;
+  height: number;
+}
+interface PdfJsPage {
+  getViewport: (opts: { scale: number }) => PdfJsViewport;
+  render: (ctx: { canvasContext: CanvasRenderingContext2D; viewport: PdfJsViewport }) => { promise: Promise<void> };
+}
+interface PdfJsDoc {
+  numPages: number;
+  getPage: (pageNum: number) => Promise<PdfJsPage>;
+}
+interface PdfJsLib {
+  getDocument: (src: { data: ArrayBuffer }) => { promise: Promise<PdfJsDoc> };
+  GlobalWorkerOptions: { workerSrc: string };
+  version: string;
 }
 
 export default function MagazineUploadForm() {
@@ -49,11 +77,12 @@ export default function MagazineUploadForm() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pageFiles, setPageFiles] = useState<File[]>([]);
+  const [pageSource, setPageSource] = useState<PageSource>('pdf-render');
+  const [renderDpi, setRenderDpi] = useState<number>(150);
 
   const [running, setRunning] = useState(false);
   const [steps, setSteps] = useState<StepState[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [createdId, setCreatedId] = useState<number | null>(null);
 
   const sortedPageFiles = useMemo(() => {
     return [...pageFiles].sort((a, b) =>
@@ -68,10 +97,81 @@ export default function MagazineUploadForm() {
   function validate(): string | null {
     if (!issueLabel.trim()) return 'Issue label is required.';
     if (!coverFile) return 'Cover image is required.';
-    if (pageFiles.length === 0) return 'At least one page image is required.';
     if (year < 2000 || year > 2100) return 'Year must be 2000–2100.';
     if (month < 1 || month > 12) return 'Month must be 1–12.';
+    if (pageSource === 'pdf-render' && !pdfFile) {
+      return 'PDF is required when rendering pages from PDF.';
+    }
+    if (pageSource === 'manual' && pageFiles.length === 0) {
+      return 'At least one page image is required (or switch to "Render from PDF").';
+    }
     return null;
+  }
+
+  // Generate a staging id used for the magazine-staging/{id}/ pathname.
+  function makeStagingId(): string {
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const rand = Math.random().toString(36).slice(2, 8);
+    return `${ts}-${rand}`;
+  }
+
+  // Load pdfjs-dist on demand from CDN (avoids bundling 2MB into the admin chunk).
+  async function loadPdfJs(): Promise<PdfJsLib> {
+    const w = window as unknown as { pdfjsLib?: PdfJsLib };
+    if (w.pdfjsLib) return w.pdfjsLib;
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs';
+      script.type = 'module';
+      // The mjs build exposes pdfjsLib on window when imported as a module.
+      // Workaround: use the .js (legacy) build instead which sets window.pdfjsLib.
+      const legacy = document.createElement('script');
+      legacy.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js';
+      legacy.onload = () => resolve();
+      legacy.onerror = () => reject(new Error('Failed to load pdfjs-dist from CDN'));
+      document.head.appendChild(legacy);
+    });
+    const w2 = window as unknown as { pdfjsLib?: PdfJsLib };
+    if (!w2.pdfjsLib) throw new Error('pdfjs-dist loaded but window.pdfjsLib not set');
+    w2.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js`;
+    return w2.pdfjsLib;
+  }
+
+  // Render a PDF File to N JPEG Blobs (one per page).
+  async function renderPdfToImages(
+    file: File,
+    dpi: number,
+    onProgress: (pageNum: number, total: number) => void,
+  ): Promise<Blob[]> {
+    const pdfjs = await loadPdfJs();
+    const buf = await file.arrayBuffer();
+    const doc = await pdfjs.getDocument({ data: buf }).promise;
+    const scale = dpi / 72; // PDF native is 72dpi
+    const out: Blob[] = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas 2D context unavailable');
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      const blob: Blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (b) => (b ? resolve(b) : reject(new Error('canvas.toBlob returned null'))),
+          'image/jpeg',
+          0.85,
+        );
+      });
+      out.push(blob);
+      onProgress(i, doc.numPages);
+      // Free canvas memory between pages (helps iOS Safari).
+      canvas.width = 0;
+      canvas.height = 0;
+    }
+    return out;
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -84,54 +184,30 @@ export default function MagazineUploadForm() {
     }
 
     setRunning(true);
+    const stagingId = makeStagingId();
+
     const stepList: StepState[] = [
-      { label: 'Create magazine record', status: 'pending' },
-      { label: `Upload cover image`, status: 'pending' },
+      { label: 'Upload cover image', status: 'pending' },
       ...(pdfFile ? [{ label: 'Upload PDF', status: 'pending' as StepStatus }] : []),
-      { label: `Upload ${sortedPageFiles.length} page image(s)`, status: 'pending' },
+      {
+        label:
+          pageSource === 'pdf-render'
+            ? `Render pages from PDF (${renderDpi} DPI)`
+            : `Upload ${sortedPageFiles.length} page image(s)`,
+        status: 'pending',
+      },
+      { label: 'Upload page images', status: 'pending' },
       ...(pdfFile ? [{ label: 'Extract page text from PDF', status: 'pending' as StepStatus }] : []),
-      { label: 'Attach URLs to magazine record', status: 'pending' },
+      { label: 'Create magazine record', status: 'pending' },
     ];
     setSteps(stepList);
+    let stepIdx = 0;
 
-    // Step 1: create the row
-    updateStep(0, { status: 'running' });
-    let id: number;
-    try {
-      const r = await fetch('/api/admin/magazines', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          publication,
-          year,
-          month,
-          issue_label: issueLabel.trim(),
-          sort_date: sortDate,
-        }),
-      });
-      if (!r.ok) {
-        const body = await r.json().catch(() => ({}));
-        throw new Error(body.error || `create failed (${r.status})`);
-      }
-      const data = await r.json();
-      id = data.magazine.id;
-      setCreatedId(id);
-      updateStep(0, { status: 'done', detail: `id=${id}` });
-    } catch (err: unknown) {
-      const msg = errMessage(err);
-      updateStep(0, { status: 'error', detail: msg });
-      setError(msg);
-      setRunning(false);
-      return;
-    }
-
-    let stepIdx = 1;
-
-    // Step 2: upload cover
+    // Step: cover
     updateStep(stepIdx, { status: 'running' });
     let coverUrl: string;
     try {
-      const blob = await upload(`magazine-covers/${id}/${coverFile!.name}`, coverFile!, {
+      const blob = await upload(`magazine-staging/${stagingId}/${coverFile!.name}`, coverFile!, {
         access: 'public',
         handleUploadUrl: '/api/admin/magazines/upload-token',
       });
@@ -146,12 +222,12 @@ export default function MagazineUploadForm() {
     }
     stepIdx++;
 
-    // Step 3: upload PDF (optional)
+    // Step: PDF (optional)
     let pdfUrl: string | null = null;
     if (pdfFile) {
       updateStep(stepIdx, { status: 'running' });
       try {
-        const blob = await upload(`magazine-pdfs/${id}/${pdfFile.name}`, pdfFile, {
+        const blob = await upload(`magazine-staging/${stagingId}/${pdfFile.name}`, pdfFile, {
           access: 'public',
           handleUploadUrl: '/api/admin/magazines/upload-token',
         });
@@ -167,20 +243,45 @@ export default function MagazineUploadForm() {
       stepIdx++;
     }
 
-    // Step 4: upload page images
+    // Step: produce page-image Blobs (either rendered from PDF or from manual files)
+    updateStep(stepIdx, { status: 'running' });
+    let pageBlobs: { name: string; data: Blob }[] = [];
+    try {
+      if (pageSource === 'pdf-render') {
+        const blobs = await renderPdfToImages(pdfFile!, renderDpi, (n, total) => {
+          updateStep(stepIdx, { status: 'running', detail: `${n} / ${total}` });
+        });
+        pageBlobs = blobs.map((b, i) => ({
+          name: `page-${String(i + 1).padStart(3, '0')}.jpg`,
+          data: b,
+        }));
+      } else {
+        pageBlobs = sortedPageFiles.map((f) => ({ name: f.name, data: f }));
+      }
+      updateStep(stepIdx, { status: 'done', detail: `${pageBlobs.length} page(s)` });
+    } catch (err: unknown) {
+      const msg = errMessage(err);
+      updateStep(stepIdx, { status: 'error', detail: msg });
+      setError(`Page generation failed: ${msg}`);
+      setRunning(false);
+      return;
+    }
+    stepIdx++;
+
+    // Step: upload page images
     updateStep(stepIdx, { status: 'running' });
     const pageUrls: string[] = [];
-    for (let i = 0; i < sortedPageFiles.length; i++) {
-      const f = sortedPageFiles[i];
+    for (let i = 0; i < pageBlobs.length; i++) {
+      const { name, data } = pageBlobs[i];
       try {
-        const blob = await upload(`magazine-pages/${id}/${f.name}`, f, {
+        const blob = await upload(`magazine-staging/${stagingId}/${name}`, data, {
           access: 'public',
           handleUploadUrl: '/api/admin/magazines/upload-token',
         });
         pageUrls.push(blob.url);
         updateStep(stepIdx, {
           status: 'running',
-          detail: `${i + 1} / ${sortedPageFiles.length}`,
+          detail: `${i + 1} / ${pageBlobs.length}`,
         });
       } catch (err: unknown) {
         const msg = errMessage(err);
@@ -193,10 +294,10 @@ export default function MagazineUploadForm() {
         return;
       }
     }
-    updateStep(stepIdx, { status: 'done', detail: `${pageUrls.length} pages` });
+    updateStep(stepIdx, { status: 'done', detail: `${pageUrls.length} pages uploaded` });
     stepIdx++;
 
-    // Step 5: extract text (only if PDF was uploaded)
+    // Step: extract text (only if PDF was uploaded)
     let pageTexts: string[] | null = null;
     if (pdfUrl) {
       updateStep(stepIdx, { status: 'running' });
@@ -218,7 +319,6 @@ export default function MagazineUploadForm() {
         });
       } catch (err: unknown) {
         const msg = errMessage(err);
-        // Extraction failure is non-fatal — search just won't work for this issue.
         updateStep(stepIdx, {
           status: 'error',
           detail: `${msg} (continuing without search)`,
@@ -228,30 +328,38 @@ export default function MagazineUploadForm() {
       stepIdx++;
     }
 
-    // Step 6: PATCH everything onto the row
+    // Step: create magazine record
     updateStep(stepIdx, { status: 'running' });
+    let createdId: number;
     try {
-      const patchBody: Record<string, unknown> = {
+      const createBody: Record<string, unknown> = {
+        publication,
+        year,
+        month,
+        issue_label: issueLabel.trim(),
+        sort_date: sortDate,
         cover_url: coverUrl,
         page_urls: pageUrls,
         page_count: pageUrls.length,
       };
-      if (pdfUrl) patchBody.reader_url = pdfUrl;
-      if (pageTexts) patchBody.page_texts = pageTexts;
-      const r = await fetch(`/api/admin/magazines/${id}`, {
-        method: 'PATCH',
+      if (pdfUrl) createBody.reader_url = pdfUrl;
+      if (pageTexts) createBody.page_texts = pageTexts;
+      const r = await fetch('/api/admin/magazines', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patchBody),
+        body: JSON.stringify(createBody),
       });
       if (!r.ok) {
         const body = await r.json().catch(() => ({}));
-        throw new Error(body.error || `patch failed (${r.status})`);
+        throw new Error(body.error || `create failed (${r.status})`);
       }
-      updateStep(stepIdx, { status: 'done' });
+      const data = await r.json();
+      createdId = data.magazine.id;
+      updateStep(stepIdx, { status: 'done', detail: `id=${createdId}` });
     } catch (err: unknown) {
       const msg = errMessage(err);
       updateStep(stepIdx, { status: 'error', detail: msg });
-      setError(`Final attach failed: ${msg}. The magazine record and uploaded files exist; you can edit the record manually.`);
+      setError(`Create failed: ${msg}. Files uploaded to magazine-staging/${stagingId}/ but no DB row.`);
       setRunning(false);
       return;
     }
@@ -314,23 +422,19 @@ export default function MagazineUploadForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Issue label
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Issue label</label>
             <input
               type="text"
               value={issueLabel}
               onChange={(e) => setIssueLabel(e.target.value)}
               disabled={running}
-              placeholder="e.g. February 2026"
+              placeholder="e.g. May 2026"
               className="w-full border border-gray-300 rounded-md px-3 py-2"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sort date (controls feed order)
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Sort date (controls feed order)</label>
             <input
               type="date"
               value={sortDate}
@@ -355,9 +459,7 @@ export default function MagazineUploadForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              PDF (optional — enables in-issue text search)
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">PDF</label>
             <input
               type="file"
               accept="application/pdf"
@@ -368,25 +470,83 @@ export default function MagazineUploadForm() {
             {pdfFile && (
               <p className="text-xs text-gray-500 mt-1">{pdfFile.name} ({Math.round(pdfFile.size / 1024 / 1024)} MB)</p>
             )}
+            <p className="text-xs text-gray-500 mt-1">
+              Used for both in-issue text search AND, when selected below, as the source for page images.
+            </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Page images (multi-select; will be sorted by filename)
-            </label>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              onChange={(e) => setPageFiles(e.target.files ? Array.from(e.target.files) : [])}
-              disabled={running}
-              className="block w-full text-sm"
-            />
-            {pageFiles.length > 0 && (
-              <p className="text-xs text-gray-500 mt-1">
-                {pageFiles.length} file(s) selected · order: {sortedPageFiles.slice(0, 3).map((f) => f.name).join(', ')}
-                {sortedPageFiles.length > 3 ? ` … ${sortedPageFiles[sortedPageFiles.length - 1].name}` : ''}
-              </p>
+          <div className="border-t border-gray-100 pt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Page images</label>
+            <div className="space-y-2">
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="pageSource"
+                  value="pdf-render"
+                  checked={pageSource === 'pdf-render'}
+                  onChange={() => setPageSource('pdf-render')}
+                  disabled={running}
+                  className="mt-0.5"
+                />
+                <div>
+                  <p className="text-sm text-gray-900">Render from PDF (recommended)</p>
+                  <p className="text-xs text-gray-500">
+                    Each PDF page rendered to a JPEG in your browser. No separate image upload needed.
+                  </p>
+                </div>
+              </label>
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="pageSource"
+                  value="manual"
+                  checked={pageSource === 'manual'}
+                  onChange={() => setPageSource('manual')}
+                  disabled={running}
+                  className="mt-0.5"
+                />
+                <div>
+                  <p className="text-sm text-gray-900">Upload pre-exported page images</p>
+                  <p className="text-xs text-gray-500">
+                    For when you want pixel-perfect control or the PDF doesn&apos;t render cleanly.
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            {pageSource === 'pdf-render' && (
+              <div className="mt-3 pl-6">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Render DPI</label>
+                <select
+                  value={renderDpi}
+                  onChange={(e) => setRenderDpi(Number(e.target.value))}
+                  disabled={running}
+                  className="border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+                >
+                  <option value={100}>100 DPI (small, fast)</option>
+                  <option value={150}>150 DPI (recommended)</option>
+                  <option value={200}>200 DPI (high)</option>
+                  <option value={300}>300 DPI (print-quality, large)</option>
+                </select>
+              </div>
+            )}
+
+            {pageSource === 'manual' && (
+              <div className="mt-3 pl-6">
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  onChange={(e) => setPageFiles(e.target.files ? Array.from(e.target.files) : [])}
+                  disabled={running}
+                  className="block w-full text-sm"
+                />
+                {pageFiles.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {pageFiles.length} file(s) selected · sorted by filename
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
@@ -404,14 +564,6 @@ export default function MagazineUploadForm() {
             >
               {running ? 'Uploading…' : 'Create Issue'}
             </button>
-            {createdId && !running && (
-              <Link
-                href={`/admin/magazines/${createdId}`}
-                className="text-sm text-blue-600 hover:underline"
-              >
-                Edit this issue →
-              </Link>
-            )}
           </div>
 
           {steps.length > 0 && (
@@ -419,9 +571,7 @@ export default function MagazineUploadForm() {
               {steps.map((s, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm">
                   <StatusDot status={s.status} />
-                  <span className={s.status === 'error' ? 'text-red-700' : 'text-gray-700'}>
-                    {s.label}
-                  </span>
+                  <span className={s.status === 'error' ? 'text-red-700' : 'text-gray-700'}>{s.label}</span>
                   {s.detail && (
                     <span className={`text-xs ${s.status === 'error' ? 'text-red-600' : 'text-gray-400'}`}>
                       · {s.detail}

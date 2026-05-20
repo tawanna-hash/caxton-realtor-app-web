@@ -3,8 +3,10 @@
 // Admin CRUD for magazines (list + create).
 //
 //   GET  /api/admin/magazines           — list all, newest first
-//   POST /api/admin/magazines           — create new row with metadata; file
-//                                          URLs attach later via PATCH
+//   POST /api/admin/magazines           — create new row with ALL fields populated
+//                                          (uploads happen client-side first via the
+//                                          magazine-staging/ pathname, then this POST
+//                                          writes the row in one shot)
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
@@ -72,6 +74,11 @@ export async function POST(req: NextRequest) {
     month?: number;
     issue_label?: string;
     sort_date?: string;
+    cover_url?: string;
+    reader_url?: string | null;
+    page_urls?: string[];
+    page_count?: number;
+    page_texts?: string[];
   };
   try {
     body = await req.json();
@@ -100,19 +107,48 @@ export async function POST(req: NextRequest) {
       ? body.sort_date.slice(0, 10)
       : `${year}-${String(month).padStart(2, '0')}-01`;
 
+  // Required: cover_url
+  const coverUrl = String(body.cover_url || '').trim();
+  if (!coverUrl) {
+    return NextResponse.json({ error: 'cover_url is required' }, { status: 400 });
+  }
+
+  // Optional fields with defaults.
+  const readerUrl =
+    body.reader_url !== undefined && body.reader_url !== null
+      ? String(body.reader_url).trim() || null
+      : null;
+  const pageUrls = Array.isArray(body.page_urls) ? body.page_urls : [];
+  if (!pageUrls.every((u) => typeof u === 'string')) {
+    return NextResponse.json({ error: 'page_urls must be string[]' }, { status: 400 });
+  }
+  const pageCount =
+    typeof body.page_count === 'number' && Number.isInteger(body.page_count) && body.page_count >= 0
+      ? body.page_count
+      : pageUrls.length;
+  const pageTexts = Array.isArray(body.page_texts)
+    ? JSON.stringify(body.page_texts)
+    : '[]';
+
   try {
     const sql = getSql();
     const rows = await sql`
       INSERT INTO magazines (
-        publication, year, month, issue_label, sort_date, page_count, page_urls
+        publication, year, month, issue_label, sort_date,
+        cover_url, reader_url, page_urls, page_count, page_texts
       ) VALUES (
-        ${publication}, ${year}, ${month}, ${issueLabel}, ${sortDate}, 0, ${[]}::text[]
+        ${publication}, ${year}, ${month}, ${issueLabel}, ${sortDate},
+        ${coverUrl}, ${readerUrl}, ${pageUrls}::text[], ${pageCount}, ${pageTexts}::jsonb
       )
-      RETURNING id, publication, year, month, issue_label, sort_date
+      RETURNING id, publication, year, month, issue_label, sort_date,
+                cover_url, reader_url, page_urls, page_count
     `;
     return NextResponse.json({ magazine: rows[0] }, { status: 201 });
   } catch (err: unknown) {
     console.error('[admin/magazines POST] insert failed:', errMessage(err));
-    return NextResponse.json({ error: 'database error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'database error', detail: errMessage(err) },
+      { status: 500 },
+    );
   }
 }
