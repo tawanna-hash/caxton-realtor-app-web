@@ -1,13 +1,16 @@
 // app/admin/magazines/page.tsx
 //
-// Admin magazines list page. Server component — fetches the list of all
-// magazines (both publications) and hands it off to the client for
-// rendering, deletion, and navigation to new/edit pages.
+// Admin magazines list page. Server component — queries the database
+// directly and hands the result to the client component for rendering.
 //
-// Matches the pattern used by other admin pages (events, subscribers).
+// Direct DB query (no self-fetch) — server-side fetch from a Next.js
+// server component back to its own API route hangs on Vercel's runtime
+// because the deployment-specific URL doesn't share the admin session
+// cookie. Querying the DB directly is faster and more reliable.
 
 import { cookies } from 'next/headers';
 import MagazinesAdminClient from './MagazinesAdminClient';
+import { getSql } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,26 +29,37 @@ type Magazine = {
   sort_date: string;
 };
 
-async function fetchMagazines(): Promise<Magazine[]> {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  // Same-origin fetch — Next.js resolves this server-side.
-  // We use a relative-style absolute URL constructed from the VERCEL_URL
-  // env if available, or fall back to localhost (dev).
-  const base =
-    process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
+
+async function isAdmin(cookieHeader: string): Promise<boolean> {
   try {
-    const r = await fetch(`${base}/api/admin/magazines`, {
+    const r = await fetch(`${API_URL}/admin/auth/me`, {
+      method: 'GET',
       headers: { cookie: cookieHeader },
       cache: 'no-store',
     });
-    if (!r.ok) return [];
-    const data = await r.json();
-    return data.magazines ?? [];
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function fetchMagazines(): Promise<Magazine[]> {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+  if (!cookieHeader) return [];
+  if (!(await isAdmin(cookieHeader))) return [];
+  try {
+    const sql = getSql();
+    const rows = (await sql`
+      SELECT id, publication, year, month, issue_label,
+             cover_url, reader_url, page_urls, page_count, sort_date
+      FROM magazines
+      ORDER BY sort_date DESC NULLS LAST, id DESC
+    `) as Magazine[];
+    return rows;
   } catch (err) {
-    console.error('[admin/magazines page] fetch failed:', err);
+    console.error('[admin/magazines page] query failed:', err);
     return [];
   }
 }
