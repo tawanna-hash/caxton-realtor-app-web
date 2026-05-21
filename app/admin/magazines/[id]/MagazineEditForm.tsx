@@ -233,7 +233,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
             <select
               value={publication}
               onChange={(e) => setPublication(e.target.value as Pub)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900"
             >
               <option value="austin">RealtyLine (Austin)</option>
               <option value="san_antonio">Newsline (San Antonio)</option>
@@ -248,7 +248,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
                 max={2100}
                 value={year}
                 onChange={(e) => setYear(Number(e.target.value))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900"
               />
             </div>
             <div>
@@ -256,7 +256,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
               <select
                 value={month}
                 onChange={(e) => setMonth(Number(e.target.value))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900"
               >
                 {Array.from({ length: 12 }).map((_, i) => (
                   <option key={i + 1} value={i + 1}>
@@ -272,7 +272,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
               type="text"
               value={issueLabel}
               onChange={(e) => setIssueLabel(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900"
             />
           </div>
           <div>
@@ -281,7 +281,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
               type="date"
               value={sortDate}
               onChange={(e) => setSortDate(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900"
             />
           </div>
           <button

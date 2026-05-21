@@ -113,15 +113,15 @@ function Column({
             >
               {m.cover_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={m.cover_url} alt="" className="w-16 h-20 object-cover bg-gray-100 rounded flex-shrink-0" />
+                <img src={m.cover_url} alt="" className="w-32 h-40 object-cover bg-gray-100 rounded flex-shrink-0 border border-gray-200" />
               ) : (
-                <div className="w-16 h-20 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-xs flex-shrink-0">
+                <div className="w-32 h-40 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-xs flex-shrink-0 border border-gray-200">
                   No cover
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-base font-semibold text-gray-900">{m.issue_label}</p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-lg font-semibold text-gray-900">{m.issue_label}</p>
+                <p className="text-sm text-gray-700 mt-1">
                   {m.page_count} {m.page_count === 1 ? 'page' : 'pages'} · sort {m.sort_date?.slice(0, 10)}
                 </p>
                 {(!m.cover_url || !m.page_urls || m.page_urls.length === 0) && (
@@ -130,17 +130,17 @@ function Column({
                     {!m.page_urls || m.page_urls.length === 0 ? 'no pages uploaded' : ''}
                   </p>
                 )}
-                <div className="flex items-center gap-3 mt-2">
+                <div className="flex items-center gap-4 mt-3">
                   <Link
                     href={`/admin/magazines/${m.id}`}
-                    className="text-xs text-blue-600 hover:underline"
+                    className="text-sm text-blue-600 hover:underline"
                   >
                     Edit
                   </Link>
                   <button
                     onClick={() => onDelete(m.id, m.issue_label)}
                     disabled={deletingId === m.id}
-                    className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                    className="text-sm text-red-600 hover:underline disabled:opacity-50"
                   >
                     {deletingId === m.id ? 'Deleting…' : 'Delete'}
                   </button>
