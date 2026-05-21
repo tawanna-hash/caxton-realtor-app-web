@@ -1,28 +1,71 @@
 // app/admin/magazines/[id]/page.tsx
 //
-// Server wrapper for editing a single magazine. Fetches the current row,
-// passes it to the client edit form.
+// Server wrapper for editing a single magazine. Queries the DB directly
+// (no self-fetch to /api/admin/magazines/[id]) because the self-fetch
+// pattern fails on Vercel's runtime — VERCEL_URL is the deployment-
+// specific hostname, not the production domain where the admin session
+// cookie was set.
 
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import MagazineEditForm from './MagazineEditForm';
+import { getSql } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Admin · Edit Magazine' };
 
-async function fetchOne(id: string) {
+type Magazine = {
+  id: number;
+  publication: 'austin' | 'san_antonio';
+  year: number;
+  month: number;
+  issue_label: string;
+  cover_url: string | null;
+  reader_url: string | null;
+  page_urls: string[] | null;
+  page_count: number;
+  sort_date: string;
+  page_texts: string[] | null;
+};
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
+
+async function isAdmin(cookieHeader: string): Promise<boolean> {
+  try {
+    const r = await fetch(`${API_URL}/admin/auth/me`, {
+      method: 'GET',
+      headers: { cookie: cookieHeader },
+      cache: 'no-store',
+    });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function fetchOne(id: string): Promise<Magazine | null> {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
-  const base = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000';
-  const r = await fetch(`${base}/api/admin/magazines/${id}`, {
-    headers: { cookie: cookieHeader },
-    cache: 'no-store',
-  });
-  if (!r.ok) return null;
-  const data = await r.json();
-  return data.magazine ?? null;
+  if (!cookieHeader) return null;
+  if (!(await isAdmin(cookieHeader))) return null;
+  const numericId = Number(id);
+  if (!Number.isInteger(numericId) || numericId <= 0) return null;
+  try {
+    const sql = getSql();
+    const rows = (await sql`
+      SELECT id, publication, year, month, issue_label,
+             cover_url, reader_url, page_urls, page_count,
+             to_char(sort_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS sort_date,
+             page_texts
+      FROM magazines
+      WHERE id = ${numericId}
+      LIMIT 1
+    `) as Magazine[];
+    return rows[0] ?? null;
+  } catch (err) {
+    console.error('[admin/magazines/[id] page] query failed:', err);
+    return null;
+  }
 }
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
