@@ -159,8 +159,6 @@ export default function InteractiveMagazineReader({
   const rightCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const renderTaskLeftRef = useRef<{ promise: Promise<void>; cancel?: () => void } | null>(null);
-  const renderTaskRightRef = useRef<{ promise: Promise<void>; cancel?: () => void } | null>(null);
   const dragStateRef = useRef<{ startX: number; startY: number; scrollLeft: number; scrollTop: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -225,10 +223,8 @@ export default function InteractiveMagazineReader({
   useEffect(() => {
     if (!doc || !currentSpread) return;
     let cancelled = false;
-
-    // Cancel any in-flight renders.
-    try { renderTaskLeftRef.current?.cancel?.(); } catch { /* noop */ }
-    try { renderTaskRightRef.current?.cancel?.(); } catch { /* noop */ }
+    let leftTask: { promise: Promise<void>; cancel?: () => void } | null = null;
+    let rightTask: { promise: Promise<void>; cancel?: () => void } | null = null;
 
     async function renderInto(
       canvas: HTMLCanvasElement | null,
@@ -238,46 +234,57 @@ export default function InteractiveMagazineReader({
       if (!canvas || pageNum === null) {
         if (isLeft) setLeftOverlays([]);
         else setRightOverlays([]);
+        // Clear the canvas only when there's intentionally no page (e.g. cover spread left side).
+        if (canvas) {
+          const c = canvas.getContext('2d');
+          if (c) c.clearRect(0, 0, canvas.width, canvas.height);
+        }
         return;
       }
       try {
         const page = await doc!.getPage(pageNum + 1);
         if (cancelled) return;
-        // Stage size for sizing the canvas to fit the available area.
         const stage = stageRef.current;
         if (!stage) return;
         const stageH = stage.clientHeight - 16;
         const stageW = stage.clientWidth - 16;
-        // Get a "natural" viewport at scale=1 to compute aspect ratio.
         const natural = page.getViewport({ scale: 1 });
         const aspect = natural.width / natural.height;
-        // Available width per page in spread mode is half (minus a small gap).
         const perPageWidth = spreadMode ? Math.floor((stageW - 8) / 2) : stageW;
-        // Fit either by height or width, whichever is more constraining.
         const fitByHeight = stageH * aspect;
         const cssWidth = Math.min(perPageWidth, fitByHeight);
         const cssHeight = cssWidth / aspect;
-        // Apply the user's zoom level on top of the fit-to-stage size.
         const displayWidth = cssWidth * zoom;
         const displayHeight = cssHeight * zoom;
-        // Compute the scale that produces a viewport of `displayWidth` pixels.
         const displayScale = displayWidth / natural.width;
-        // Render at 2x for crispness (or devicePixelRatio if higher).
         const dpr = Math.max(window.devicePixelRatio || 1, 2);
         const renderScale = displayScale * dpr;
         const renderViewport = page.getViewport({ scale: renderScale });
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        canvas.width = Math.floor(renderViewport.width);
-        canvas.height = Math.floor(renderViewport.height);
-        canvas.style.width = `${displayWidth}px`;
-        canvas.style.height = `${displayHeight}px`;
-        const task = page.render({ canvasContext: ctx, viewport: renderViewport });
-        if (isLeft) renderTaskLeftRef.current = task;
-        else renderTaskRightRef.current = task;
+
+        // Render offscreen first so the visible canvas keeps showing the
+        // previous page until the new one is fully painted. Atomic swap via
+        // drawImage eliminates both the blank-canvas gap and the stale-task
+        // overwrite race.
+        const offscreen = document.createElement('canvas');
+        offscreen.width = Math.floor(renderViewport.width);
+        offscreen.height = Math.floor(renderViewport.height);
+        const offCtx = offscreen.getContext('2d');
+        if (!offCtx) return;
+        const task = page.render({ canvasContext: offCtx, viewport: renderViewport });
+        if (isLeft) leftTask = task;
+        else rightTask = task;
         await task.promise;
         if (cancelled) return;
-        // Build link overlays at the *displayed* scale (not the render scale).
+
+        // Atomic visual swap onto the visible canvas.
+        canvas.width = offscreen.width;
+        canvas.height = offscreen.height;
+        canvas.style.width = `${displayWidth}px`;
+        canvas.style.height = `${displayHeight}px`;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(offscreen, 0, 0);
+
         const annots = await page.getAnnotations();
         if (cancelled) return;
         const overlays: LinkOverlay[] = [];
@@ -307,6 +314,8 @@ export default function InteractiveMagazineReader({
 
     return () => {
       cancelled = true;
+      try { leftTask?.cancel?.(); } catch { /* noop */ }
+      try { rightTask?.cancel?.(); } catch { /* noop */ }
     };
   }, [doc, currentSpread, spreadMode, zoom]);
 
