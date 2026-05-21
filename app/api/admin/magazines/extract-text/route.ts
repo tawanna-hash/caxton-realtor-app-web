@@ -5,27 +5,13 @@
 //   POST /api/admin/magazines/extract-text
 //        body: { pdf_url: string }
 //        returns: { pages: string[] }
+//
+// Uses pdfjs-dist (which we already have for the client reader) instead
+// of pdf-parse. pdf-parse depends on browser globals like DOMMatrix that
+// don't exist in Vercel's Node runtime, causing intermittent failures.
+// pdfjs-dist's legacy/node build works in pure Node.
 
 import { NextRequest, NextResponse } from 'next/server';
-
-// pdf-parse is a Node-only library. We narrow its surface to what we use.
-// Install: npm install pdf-parse @types/pdf-parse
-interface PdfTextItem {
-  str?: string;
-}
-interface PdfTextContent {
-  items: PdfTextItem[];
-}
-interface PdfPageData {
-  getTextContent: (opts: {
-    normalizeWhitespace: boolean;
-    disableCombineTextItems: boolean;
-  }) => Promise<PdfTextContent>;
-}
-interface PdfParseOptions {
-  pagerender?: (pageData: PdfPageData) => Promise<string>;
-}
-type PdfParseResult = Record<string, unknown>;
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,6 +35,20 @@ async function isAdmin(cookieHeader: string | null): Promise<boolean> {
 
 function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown';
+}
+
+// Minimal pdfjs types — surface we use.
+interface PdfJsTextItem { str?: string }
+interface PdfJsTextContent { items: PdfJsTextItem[] }
+interface PdfJsPage {
+  getTextContent: () => Promise<PdfJsTextContent>;
+}
+interface PdfJsDoc {
+  numPages: number;
+  getPage: (n: number) => Promise<PdfJsPage>;
+}
+interface PdfJsLib {
+  getDocument: (src: { data: Uint8Array; useSystemFonts?: boolean }) => { promise: Promise<PdfJsDoc> };
 }
 
 export async function POST(req: NextRequest) {
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let pdfBuffer: Buffer;
+  let pdfBuffer: Uint8Array;
   try {
     const r = await fetch(url, { cache: 'no-store' });
     if (!r.ok) {
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       );
     }
     const arr = await r.arrayBuffer();
-    pdfBuffer = Buffer.from(arr);
+    pdfBuffer = new Uint8Array(arr);
   } catch (err: unknown) {
     return NextResponse.json(
       { error: `fetch error: ${errMessage(err)}` },
@@ -110,29 +110,24 @@ export async function POST(req: NextRequest) {
 
   const pages: string[] = [];
   try {
-    // Lazy-load pdf-parse to avoid evaluating it at module-load time, which
-    // breaks Vercel builds (the package's auto-init tries to load @napi-rs/canvas
-    // and falls back to PDF.js polyfills that need DOMMatrix in Node).
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfParse: (buf: Buffer, opts?: PdfParseOptions) => Promise<PdfParseResult> = require('pdf-parse');
-    await pdfParse(pdfBuffer, {
-      pagerender: async (pageData) => {
-        const textContent = await pageData.getTextContent({
-          normalizeWhitespace: true,
-          disableCombineTextItems: false,
-        });
-        const strings: string[] = [];
-        for (const item of textContent.items) {
-          if (typeof item.str === 'string') strings.push(item.str);
-        }
-        const pageText = strings.join(' ').replace(/\s+/g, ' ').trim();
-        pages.push(pageText);
-        return pageText;
-      },
-    });
+    // Load pdfjs-dist's legacy Node build. The "legacy" entry is the
+    // ESM/CommonJS dual-build that works in older Node + Vercel runtimes.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pdfjs = (await import('pdfjs-dist/legacy/build/pdf.mjs' as any)) as unknown as PdfJsLib;
+    const doc = await pdfjs.getDocument({ data: pdfBuffer, useSystemFonts: true }).promise;
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const tc = await page.getTextContent();
+      const text = tc.items
+        .map((item) => (typeof item.str === 'string' ? item.str : ''))
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      pages.push(text);
+    }
   } catch (err: unknown) {
     const msg = errMessage(err);
-    console.error('[extract-text] pdf-parse failed:', msg);
+    console.error('[extract-text] pdfjs extraction failed:', msg);
     return NextResponse.json(
       { error: `pdf parse failed: ${msg}` },
       { status: 500 },
