@@ -13,6 +13,50 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+// DOMMatrix shim for Node runtime. pdfjs-dist (even the legacy/node build)
+// references DOMMatrix when parsing certain PDF content streams. The actual
+// math operations don't need fidelity for text-only extraction — we just
+// need the class to exist with the right method shapes so pdfjs doesn't
+// throw ReferenceError. This shim provides a basic identity-matrix
+// implementation that satisfies pdfjs's usage.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+if (typeof (globalThis as any).DOMMatrix === 'undefined') {
+  class DOMMatrixShim {
+    a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
+    m11 = 1; m12 = 0; m13 = 0; m14 = 0;
+    m21 = 0; m22 = 1; m23 = 0; m24 = 0;
+    m31 = 0; m32 = 0; m33 = 1; m34 = 0;
+    m41 = 0; m42 = 0; m43 = 0; m44 = 1;
+    is2D = true;
+    isIdentity = true;
+    constructor(init?: number[] | string) {
+      if (Array.isArray(init) && init.length >= 6) {
+        this.a = this.m11 = init[0];
+        this.b = this.m12 = init[1];
+        this.c = this.m21 = init[2];
+        this.d = this.m22 = init[3];
+        this.e = this.m41 = init[4];
+        this.f = this.m42 = init[5];
+        this.isIdentity = false;
+      }
+    }
+    multiply() { return new DOMMatrixShim(); }
+    multiplySelf() { return this; }
+    translate() { return new DOMMatrixShim(); }
+    translateSelf() { return this; }
+    scale() { return new DOMMatrixShim(); }
+    scaleSelf() { return this; }
+    rotate() { return new DOMMatrixShim(); }
+    rotateSelf() { return this; }
+    invertSelf() { return this; }
+    transformPoint(p?: { x?: number; y?: number; z?: number; w?: number }) {
+      return { x: p?.x ?? 0, y: p?.y ?? 0, z: p?.z ?? 0, w: p?.w ?? 1 };
+    }
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).DOMMatrix = DOMMatrixShim;
+}
+
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
