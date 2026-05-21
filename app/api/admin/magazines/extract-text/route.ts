@@ -48,7 +48,7 @@ interface PdfJsDoc {
   getPage: (n: number) => Promise<PdfJsPage>;
 }
 interface PdfJsLib {
-  getDocument: (src: { data: Uint8Array; useSystemFonts?: boolean }) => { promise: Promise<PdfJsDoc> };
+  getDocument: (src: { data: Uint8Array; disableFontFace?: boolean; isEvalSupported?: boolean; verbosity?: number }) => { promise: Promise<PdfJsDoc> };
 }
 
 export async function POST(req: NextRequest) {
@@ -114,7 +114,12 @@ export async function POST(req: NextRequest) {
     // ESM/CommonJS dual-build that works in older Node + Vercel runtimes.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdfjs = (await import('pdfjs-dist/legacy/build/pdf.mjs' as any)) as unknown as PdfJsLib;
-    const doc = await pdfjs.getDocument({ data: pdfBuffer, useSystemFonts: true }).promise;
+    const doc = await pdfjs.getDocument({
+      data: pdfBuffer,
+      disableFontFace: true,  // avoid DOMMatrix dependency in Node
+      isEvalSupported: false, // safer in serverless
+      verbosity: 0,           // suppress noisy logs
+    }).promise;
     for (let i = 1; i <= doc.numPages; i++) {
       const page = await doc.getPage(i);
       const tc = await page.getTextContent();
