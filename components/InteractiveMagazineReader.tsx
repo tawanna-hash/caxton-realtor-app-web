@@ -319,6 +319,39 @@ export default function InteractiveMagazineReader({
     };
   }, [doc, currentSpread, spreadMode, zoom]);
 
+  // Prefetch adjacent spreads' pages so getPage() returns from cache when
+  // the user navigates. Pure cache-warming via pdfjs's internal page cache;
+  // we do not render or store anything ourselves, so this is safe to misfire.
+  useEffect(() => {
+    if (!doc || !spreads.length) return;
+    let cancelled = false;
+    const adj: number[] = [];
+    const prev = spreads[currentSpreadIdx - 1];
+    const next = spreads[currentSpreadIdx + 1];
+    if (prev) {
+      if (prev.left !== null) adj.push(prev.left);
+      if (prev.right !== null) adj.push(prev.right);
+    }
+    if (next) {
+      if (next.left !== null) adj.push(next.left);
+      if (next.right !== null) adj.push(next.right);
+    }
+    // Stagger with a small delay so the active render gets the main thread
+    // first. Yield so the current spread paint finishes before we start
+    // warming neighbors.
+    const t = setTimeout(() => {
+      if (cancelled) return;
+      for (const pageIdx of adj) {
+        // Fire-and-forget. pdfjs caches the result internally.
+        doc.getPage(pageIdx + 1).catch(() => { /* noop */ });
+      }
+    }, 100);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [doc, currentSpreadIdx, spreads]);
+
   // ---- Lock body scroll ----
   useEffect(() => {
     const original = document.body.style.overflow;
