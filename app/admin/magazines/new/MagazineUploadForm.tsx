@@ -26,6 +26,7 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { upload } from '@vercel/blob/client';
+import MagazineDropZone from '@/components/MagazineDropZone';
 
 type Pub = 'austin' | 'san_antonio';
 
@@ -375,6 +376,30 @@ export default function MagazineUploadForm() {
     setTimeout(() => router.push('/admin/magazines'), 800);
   }
 
+  // __DROPZONE_HANDLER_V2__
+  // Called by MagazineDropZone when a PDF is dropped and the cover has been
+  // auto-rendered from page 1. Sets pdf, cover, and any metadata parsed from
+  // the filename (e.g. "RealtyLine May 2026.pdf" -> year=2026, month=5).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function handleDropZoneFiles(result: any) {
+    setPdfFile(result.pdfFile);
+    setCoverFile(result.coverFile);
+    if (result.parsed?.label) setIssueLabel(result.parsed.label);
+    if (result.parsed?.year) setYear(result.parsed.year);
+    if (result.parsed?.month) setMonth(result.parsed.month);
+    if (result.parsed?.year && result.parsed?.month) {
+      setSortDate(`${result.parsed.year}-${String(result.parsed.month).padStart(2, '0')}-01`);
+    }
+  }
+  function handleDropZoneReset() {
+    setPdfFile(null);
+    setCoverFile(null);
+    setIssueLabel('');
+    setYear(0);
+    setMonth(0);
+    setSortDate('');
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-3xl mx-auto">
@@ -386,6 +411,16 @@ export default function MagazineUploadForm() {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-md p-6 space-y-5">
+      {/* __DROPZONE_JSX_INSERTED__ */}
+      <div className="mb-6">
+        <MagazineDropZone
+          onFilesReady={handleDropZoneFiles}
+          onReset={handleDropZoneReset}
+          hasFiles={!!coverFile && !!pdfFile}
+          stagedFilename={pdfFile?.name}
+        />
+      </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Publication</label>
             <select
