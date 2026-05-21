@@ -367,7 +367,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
             <button
               onClick={handleReExtract}
               disabled={busy !== null || !readerUrl}
-              className="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded disabled:opacity-50"
+              className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-900 px-3 py-1.5 rounded disabled:opacity-50 font-medium"
             >
               {busy === 'extract' ? 'Extracting…' : hasTexts ? 'Re-extract page text' : 'Extract page text from PDF'}
             </button>
