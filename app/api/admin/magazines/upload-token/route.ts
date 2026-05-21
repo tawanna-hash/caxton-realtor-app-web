@@ -21,7 +21,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_PDF_TYPES = ['application/pdf'];
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
-const MAX_PDF_BYTES = 100 * 1024 * 1024;
+const MAX_PDF_BYTES = 5 * 1024 * 1024 * 1024; // 5 GB — multipart upload from client
 // Staging accepts either type since it covers cover + pdf + pages at create time.
 const ALLOWED_STAGING_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_PDF_TYPES];
 

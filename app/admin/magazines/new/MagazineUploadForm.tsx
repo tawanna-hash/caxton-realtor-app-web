@@ -239,6 +239,7 @@ export default function MagazineUploadForm() {
         const blob = await upload(`magazine-staging/${stagingId}/${pdfFile.name}`, pdfFile, {
           access: 'public',
           handleUploadUrl: '/api/admin/magazines/upload-token',
+          multipart: true,
         });
         pdfUrl = blob.url;
         updateStep(stepIdx, { status: 'done' });
