@@ -2,17 +2,12 @@
 
 // components/InteractiveMagazineReader.tsx
 //
-// Renders the original PDF directly using pdfjs-dist (no pre-rasterized JPEGs).
-// Native PDF features work:
-//   - Clickable links (URL annotations, email, phone)
-//   - Text selection / copy
-//   - Crisp rendering at any zoom level
+// V4 — desktop spread view + viewport-filling layout.
 //
-// Used when magazine.reader_url points to a directly-fetchable PDF
-// (Vercel Blob URL). Older magazines using WP /pdfviewer/ URLs fall back
-// to the JPEG flipbook via MagazineReader.tsx.
-//
-// Library: pdfjs-dist (already installed for the admin upload flow).
+// Renders the original PDF directly using pdfjs-dist. On desktop (>= 1024px)
+// two pages are shown side-by-side as a spread; on mobile one page at a time.
+// Top and bottom chrome float over the spread instead of stacking vertically,
+// so the page content uses the full available viewport.
 
 import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
@@ -29,6 +24,8 @@ type ActionMode = null | 'share' | 'qr' | 'download' | 'email' | 'embed' | 'sear
 
 const ZOOM_LEVELS = [0.75, 1, 1.25, 1.5, 2, 3];
 const DEFAULT_ZOOM_IDX = 1; // 1.0x
+
+const SPREAD_BREAKPOINT_PX = 1024;
 
 // pdfjs types we use
 interface PdfJsViewport {
@@ -50,7 +47,7 @@ interface PdfJsPage {
   render: (ctx: {
     canvasContext: CanvasRenderingContext2D;
     viewport: PdfJsViewport;
-  }) => { promise: Promise<void> };
+  }) => { promise: Promise<void>; cancel?: () => void };
   getAnnotations: () => Promise<PdfJsAnnotation[]>;
   getTextContent: () => Promise<PdfJsTextContent>;
 }
@@ -87,7 +84,6 @@ async function loadPdfJs(): Promise<PdfJsLib> {
 
 interface LinkOverlay {
   url: string;
-  // CSS coords (px) relative to the rendered canvas's top-left.
   x: number;
   y: number;
   w: number;
@@ -95,8 +91,46 @@ interface LinkOverlay {
 }
 
 interface SearchMatch {
-  pageIdx: number; // zero-indexed
+  pageIdx: number;
   snippet: string;
+}
+
+// ---- Spread pairing ----
+// A spread is one or two pages shown together. zero-indexed page numbers.
+// Layout pattern (typical magazine):
+//   spread 0 -> [page 0]          (cover, solo)
+//   spread 1 -> [page 1, page 2]
+//   spread 2 -> [page 3, page 4]
+//   spread N -> [last]            (solo if total is even after cover)
+interface Spread {
+  left: number | null;  // null if solo-right
+  right: number | null; // null if solo-left
+}
+
+function pageToSpreadIdx(pageIdx: number, spreadMode: boolean): number {
+  if (!spreadMode) return pageIdx;
+  if (pageIdx === 0) return 0;
+  // Pages 1,2 -> spread 1; 3,4 -> spread 2; etc.
+  return Math.floor((pageIdx + 1) / 2);
+}
+
+function buildSpreads(pageCount: number, spreadMode: boolean): Spread[] {
+  if (!spreadMode) {
+    return Array.from({ length: pageCount }, (_, i) => ({ left: null, right: i }));
+  }
+  if (pageCount === 0) return [];
+  const spreads: Spread[] = [];
+  // Cover spread
+  spreads.push({ left: null, right: 0 });
+  // Interior spreads — pair up subsequent pages
+  let p = 1;
+  while (p < pageCount) {
+    const left = p;
+    const right = p + 1 < pageCount ? p + 1 : null;
+    spreads.push({ left, right });
+    p += 2;
+  }
+  return spreads;
 }
 
 export default function InteractiveMagazineReader({
@@ -114,16 +148,39 @@ export default function InteractiveMagazineReader({
   const [searchResults, setSearchResults] = useState<SearchMatch[]>([]);
   const [searching, setSearching] = useState(false);
   const [jumpInput, setJumpInput] = useState('');
-  const [overlays, setOverlays] = useState<LinkOverlay[]>([]);
+  const [leftOverlays, setLeftOverlays] = useState<LinkOverlay[]>([]);
+  const [rightOverlays, setRightOverlays] = useState<LinkOverlay[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadProgress, setLoadProgress] = useState<string>('Loading PDF…');
+  const [spreadMode, setSpreadMode] = useState(false); // becomes true on desktop
+  const [chromeVisible, setChromeVisible] = useState(true);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const leftCanvasRef = useRef<HTMLCanvasElement>(null);
+  const rightCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const renderTaskRef = useRef<{ promise: Promise<void>; cancel?: () => void } | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const renderTaskLeftRef = useRef<{ promise: Promise<void>; cancel?: () => void } | null>(null);
+  const renderTaskRightRef = useRef<{ promise: Promise<void>; cancel?: () => void } | null>(null);
+  const dragStateRef = useRef<{ startX: number; startY: number; scrollLeft: number; scrollTop: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const zoom = ZOOM_LEVELS[zoomIdx];
   const pageCount = doc?.numPages ?? magazine.page_count ?? 0;
+
+  const spreads = buildSpreads(pageCount, spreadMode);
+  const currentSpreadIdx = pageToSpreadIdx(currentPage, spreadMode);
+  const currentSpread: Spread | undefined = spreads[currentSpreadIdx];
+
+  // ---- Detect spread mode based on viewport ----
+  useEffect(() => {
+    function update() {
+      setSpreadMode(window.innerWidth >= SPREAD_BREAKPOINT_PX);
+    }
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   // ---- Load PDF on mount ----
   useEffect(() => {
@@ -149,7 +206,7 @@ export default function InteractiveMagazineReader({
           issue_label: magazine.issue_label,
           publication: magazine.publication,
           page_count: loaded.numPages,
-          reader: 'interactive',
+          reader: 'interactive_v4',
         });
       } catch (err) {
         if (cancelled) return;
@@ -164,77 +221,96 @@ export default function InteractiveMagazineReader({
     };
   }, [magazine.id, magazine.reader_url, magazine.issue_label, magazine.publication]);
 
-  // ---- Render current page when doc, page, or zoom changes ----
-  // The effect runs renderPage as fire-and-forget work; React's
-  // set-state-in-effect rule is satisfied because we only setState in
-  // async response to external work (PDF rendering, annotation fetch).
+  // ---- Render current spread ----
   useEffect(() => {
-    if (!doc) return;
+    if (!doc || !currentSpread) return;
     let cancelled = false;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    // Cancel any in-flight render before starting a new one.
-    if (renderTaskRef.current?.cancel) {
-      try { renderTaskRef.current.cancel(); } catch { /* noop */ }
-    }
-    (async () => {
+
+    // Cancel any in-flight renders.
+    try { renderTaskLeftRef.current?.cancel?.(); } catch { /* noop */ }
+    try { renderTaskRightRef.current?.cancel?.(); } catch { /* noop */ }
+
+    async function renderInto(
+      canvas: HTMLCanvasElement | null,
+      pageNum: number | null,
+      isLeft: boolean,
+    ) {
+      if (!canvas || pageNum === null) {
+        if (isLeft) setLeftOverlays([]);
+        else setRightOverlays([]);
+        return;
+      }
       try {
-        const page = await doc.getPage(currentPage + 1);
+        const page = await doc!.getPage(pageNum + 1);
         if (cancelled) return;
-        const viewport = page.getViewport({ scale: zoom });
+        // Stage size for sizing the canvas to fit the available area.
+        const stage = stageRef.current;
+        if (!stage) return;
+        const stageH = stage.clientHeight - 16;
+        const stageW = stage.clientWidth - 16;
+        // Get a "natural" viewport at scale=1 to compute aspect ratio.
+        const natural = page.getViewport({ scale: 1 });
+        const aspect = natural.width / natural.height;
+        // Available width per page in spread mode is half (minus a small gap).
+        const perPageWidth = spreadMode ? Math.floor((stageW - 8) / 2) : stageW;
+        // Fit either by height or width, whichever is more constraining.
+        const fitByHeight = stageH * aspect;
+        const cssWidth = Math.min(perPageWidth, fitByHeight);
+        const cssHeight = cssWidth / aspect;
+        // Apply the user's zoom level on top of the fit-to-stage size.
+        const displayWidth = cssWidth * zoom;
+        const displayHeight = cssHeight * zoom;
+        // Compute the scale that produces a viewport of `displayWidth` pixels.
+        const displayScale = displayWidth / natural.width;
+        // Render at 2x for crispness (or devicePixelRatio if higher).
+        const dpr = Math.max(window.devicePixelRatio || 1, 2);
+        const renderScale = displayScale * dpr;
+        const renderViewport = page.getViewport({ scale: renderScale });
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
-        // Account for devicePixelRatio so render is crisp on retina.
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = Math.floor(viewport.width * dpr);
-        canvas.height = Math.floor(viewport.height * dpr);
-        canvas.style.width = `${viewport.width}px`;
-        canvas.style.height = `${viewport.height}px`;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        const task = page.render({ canvasContext: ctx, viewport });
-        renderTaskRef.current = task;
+        canvas.width = Math.floor(renderViewport.width);
+        canvas.height = Math.floor(renderViewport.height);
+        canvas.style.width = `${displayWidth}px`;
+        canvas.style.height = `${displayHeight}px`;
+        const task = page.render({ canvasContext: ctx, viewport: renderViewport });
+        if (isLeft) renderTaskLeftRef.current = task;
+        else renderTaskRightRef.current = task;
         await task.promise;
         if (cancelled) return;
-        // Build link overlays from annotations.
+        // Build link overlays at the *displayed* scale (not the render scale).
         const annots = await page.getAnnotations();
         if (cancelled) return;
-        const nextOverlays: LinkOverlay[] = [];
+        const overlays: LinkOverlay[] = [];
         for (const a of annots) {
           if (a.subtype !== 'Link') continue;
           const url = a.url || a.unsafeUrl;
           if (!url) continue;
-          // pdfjs rect is [x1, y1, x2, y2] in PDF coords (origin bottom-left).
-          // Convert to CSS coords (origin top-left) at the current viewport.
           const [x1, y1, x2, y2] = a.rect;
-          const scale = zoom;
-          const left = Math.min(x1, x2) * scale;
-          const right = Math.max(x1, x2) * scale;
-          // Flip Y: PDF y=0 is bottom; CSS y=0 is top.
-          const top = viewport.height - Math.max(y1, y2) * scale;
-          const bottom = viewport.height - Math.min(y1, y2) * scale;
-          nextOverlays.push({
-            url,
-            x: left,
-            y: top,
-            w: right - left,
-            h: bottom - top,
-          });
+          const left = Math.min(x1, x2) * displayScale;
+          const right = Math.max(x1, x2) * displayScale;
+          const top = displayHeight - Math.max(y1, y2) * displayScale;
+          const bottom = displayHeight - Math.min(y1, y2) * displayScale;
+          overlays.push({ url, x: left, y: top, w: right - left, h: bottom - top });
         }
         if (cancelled) return;
-        setOverlays(nextOverlays);
+        if (isLeft) setLeftOverlays(overlays);
+        else setRightOverlays(overlays);
       } catch (err) {
-        // RenderingCancelledException is normal when zoom/page changes mid-render.
         const msg = err instanceof Error ? err.message : '';
         if (msg.includes('Cancelled') || msg.includes('cancelled')) return;
         console.error('[InteractiveMagazineReader] render failed:', err);
       }
-    })();
+    }
+
+    renderInto(leftCanvasRef.current, currentSpread.left, true);
+    renderInto(rightCanvasRef.current, currentSpread.right, false);
+
     return () => {
       cancelled = true;
     };
-  }, [doc, currentPage, zoom]);
+  }, [doc, currentSpread, spreadMode, zoom]);
 
-  // ---- Lock body scroll while modal is open ----
+  // ---- Lock body scroll ----
   useEffect(() => {
     const original = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -255,7 +331,7 @@ export default function InteractiveMagazineReader({
   // ---- Keyboard navigation ----
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (actionMode) return; // don't hijack while popup open
+      if (actionMode) return;
       if (e.key === 'ArrowRight') {
         e.preventDefault();
         goNext();
@@ -279,7 +355,7 @@ export default function InteractiveMagazineReader({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionMode, currentPage, pageCount, zoomIdx]);
+  }, [actionMode, currentPage, pageCount, zoomIdx, spreadMode]);
 
   // ---- Share URL + QR ----
   const shareUrl =
@@ -295,23 +371,30 @@ export default function InteractiveMagazineReader({
     }
   }, [actionMode, qrDataUrl, shareUrl]);
 
-  // ---- Navigation ----
+  // ---- Navigation by spread ----
   function goPrev() {
-    if (currentPage > 0) {
-      setCurrentPage(currentPage - 1);
-      trackEvent('flipbook_button_nav', { magazine_id: magazine.id, dir: 'prev', reader: 'interactive' });
-    }
+    if (!spreads.length) return;
+    const newSpreadIdx = currentSpreadIdx - 1;
+    if (newSpreadIdx < 0) return;
+    const newSpread = spreads[newSpreadIdx];
+    // Land on the "first" page of that spread (left if present, else right).
+    const target = newSpread.left ?? newSpread.right ?? 0;
+    setCurrentPage(target);
+    trackEvent('flipbook_button_nav', { magazine_id: magazine.id, dir: 'prev', reader: 'interactive_v4' });
   }
   function goNext() {
-    if (currentPage < pageCount - 1) {
-      setCurrentPage(currentPage + 1);
-      trackEvent('flipbook_button_nav', { magazine_id: magazine.id, dir: 'next', reader: 'interactive' });
-    }
+    if (!spreads.length) return;
+    const newSpreadIdx = currentSpreadIdx + 1;
+    if (newSpreadIdx >= spreads.length) return;
+    const newSpread = spreads[newSpreadIdx];
+    const target = newSpread.left ?? newSpread.right ?? 0;
+    setCurrentPage(target);
+    trackEvent('flipbook_button_nav', { magazine_id: magazine.id, dir: 'next', reader: 'interactive_v4' });
   }
   function jumpTo(pageIdx: number) {
     if (pageIdx < 0 || pageIdx >= pageCount) return;
     setCurrentPage(pageIdx);
-    trackEvent('flipbook_jump_to', { magazine_id: magazine.id, page: pageIdx, reader: 'interactive' });
+    trackEvent('flipbook_jump_to', { magazine_id: magazine.id, page: pageIdx, reader: 'interactive_v4' });
   }
   function handleJumpSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -322,17 +405,16 @@ export default function InteractiveMagazineReader({
     setJumpInput('');
   }
 
-  // ---- Zoom ----
   function zoomIn() {
     if (zoomIdx < ZOOM_LEVELS.length - 1) {
       setZoomIdx(zoomIdx + 1);
-      trackEvent('flipbook_zoom', { magazine_id: magazine.id, level: ZOOM_LEVELS[zoomIdx + 1], reader: 'interactive' });
+      trackEvent('flipbook_zoom', { magazine_id: magazine.id, level: ZOOM_LEVELS[zoomIdx + 1], reader: 'interactive_v4' });
     }
   }
   function zoomOut() {
     if (zoomIdx > 0) {
       setZoomIdx(zoomIdx - 1);
-      trackEvent('flipbook_zoom', { magazine_id: magazine.id, level: ZOOM_LEVELS[zoomIdx - 1], reader: 'interactive' });
+      trackEvent('flipbook_zoom', { magazine_id: magazine.id, level: ZOOM_LEVELS[zoomIdx - 1], reader: 'interactive_v4' });
     }
   }
   function zoomReset() {
@@ -344,17 +426,17 @@ export default function InteractiveMagazineReader({
     try {
       if (!document.fullscreenElement) {
         await containerRef.current.requestFullscreen();
-        trackEvent('flipbook_fullscreen', { magazine_id: magazine.id, on: true, reader: 'interactive' });
+        trackEvent('flipbook_fullscreen', { magazine_id: magazine.id, on: true, reader: 'interactive_v4' });
       } else {
         await document.exitFullscreen();
-        trackEvent('flipbook_fullscreen', { magazine_id: magazine.id, on: false, reader: 'interactive' });
+        trackEvent('flipbook_fullscreen', { magazine_id: magazine.id, on: false, reader: 'interactive_v4' });
       }
     } catch (err) {
       console.error('[InteractiveMagazineReader] fullscreen failed:', err);
     }
   }
 
-  // ---- Search across all pages ----
+  // ---- Search ----
   async function runSearch(query: string) {
     if (!doc) return;
     const q = query.trim().toLowerCase();
@@ -384,7 +466,7 @@ export default function InteractiveMagazineReader({
         magazine_id: magazine.id,
         query_len: q.length,
         matches: results.length,
-        reader: 'interactive',
+        reader: 'interactive_v4',
       });
     } catch (err) {
       console.error('[InteractiveMagazineReader] search failed:', err);
@@ -393,7 +475,6 @@ export default function InteractiveMagazineReader({
     }
   }
 
-  // Debounced search trigger
   useEffect(() => {
     if (actionMode !== 'search') return;
     const t = setTimeout(() => {
@@ -403,7 +484,7 @@ export default function InteractiveMagazineReader({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, actionMode]);
 
-  // ---- Action handlers (share/QR/download/email/embed) ----
+  // ---- Action handlers ----
   async function handleShare() {
     const shareData = {
       title: magazine.issue_label,
@@ -431,12 +512,10 @@ export default function InteractiveMagazineReader({
     }
     setActionMode('share');
   }
-
   function handleDownload() {
     trackEvent('flipbook_download_clicked', { magazine_id: magazine.id });
     if (magazine.reader_url) window.open(magazine.reader_url, '_blank', 'noopener,noreferrer');
   }
-
   function handleEmail() {
     trackEvent('flipbook_email_clicked', { magazine_id: magazine.id });
     const subject = encodeURIComponent(`${magazine.issue_label} from RealtyLine`);
@@ -445,7 +524,6 @@ export default function InteractiveMagazineReader({
     );
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   }
-
   async function handleCopyEmbed() {
     trackEvent('flipbook_embed_copied', { magazine_id: magazine.id });
     const embedCode = `<iframe src="${shareUrl}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`;
@@ -458,8 +536,32 @@ export default function InteractiveMagazineReader({
     }
   }
 
-  // ---- Render ----
+  // ---- Pan/grab handlers ----
+  function handleMouseDown(e: React.MouseEvent) {
+    if ((e.target as HTMLElement).tagName === 'A') return;
+    if (!scrollRef.current) return;
+    dragStateRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      scrollLeft: scrollRef.current.scrollLeft,
+      scrollTop: scrollRef.current.scrollTop,
+    };
+    setIsDragging(true);
+    e.preventDefault();
+  }
+  function handleMouseMove(e: React.MouseEvent) {
+    if (!dragStateRef.current || !scrollRef.current) return;
+    const dx = e.clientX - dragStateRef.current.startX;
+    const dy = e.clientY - dragStateRef.current.startY;
+    scrollRef.current.scrollLeft = dragStateRef.current.scrollLeft - dx;
+    scrollRef.current.scrollTop = dragStateRef.current.scrollTop - dy;
+  }
+  function handleMouseUp() {
+    dragStateRef.current = null;
+    setIsDragging(false);
+  }
 
+  // ---- Render ----
   if (loadError) {
     return (
       <div className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center p-6">
@@ -475,175 +577,182 @@ export default function InteractiveMagazineReader({
     );
   }
 
+  // Page label e.g. "2-3 / 11" in spread mode, "3 / 11" in single mode.
+  const pageLabel = (() => {
+    if (!currentSpread) return '';
+    const l = currentSpread.left;
+    const r = currentSpread.right;
+    if (l !== null && r !== null) return `${l + 1}–${r + 1} / ${pageCount}`;
+    const n = (l ?? r ?? 0) + 1;
+    return `${n} / ${pageCount}`;
+  })();
+
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[60] bg-black flex flex-col"
-      style={{ touchAction: 'pan-x pan-y' }}
+      className="fixed inset-0 z-[60] bg-neutral-900 flex flex-col select-none"
     >
-      {/* Top chrome */}
+      {/* Stage — the page area */}
       <div
-        className="flex-shrink-0 flex items-center justify-between px-3 py-2 border-b border-white/10"
-        style={{ backgroundColor: brandColor }}
+        ref={scrollRef}
+        className="absolute inset-0 overflow-auto flex items-center justify-center"
+        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onClick={(e) => {
+          // Tapping the empty area toggles chrome visibility (mobile friendly).
+          // Only fire if click was directly on this element (not bubbled from canvas/link).
+          if (e.target === e.currentTarget) {
+            setChromeVisible((v) => !v);
+          }
+        }}
       >
-        <button onClick={onClose} aria-label="Close" className="text-white p-1.5 -ml-1.5">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-        </button>
-        <div className="text-center flex-1 px-2 flex items-baseline justify-center gap-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-white/70 font-medium">{magazine.issue_label}</p>
-          <span className="text-[10px] text-white/40">
-            {doc ? `Page ${currentPage + 1} / ${pageCount}` : loadProgress}
-          </span>
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setActionMode('search')}
-            aria-label="Search"
-            className="text-white/80 hover:text-white p-1.5"
-            title="Search (S)"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
-          </button>
-          <button
-            onClick={zoomOut}
-            disabled={zoomIdx === 0}
-            aria-label="Zoom out"
-            className="text-white/80 hover:text-white p-1.5 disabled:opacity-30"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3M8 11h6" />
-            </svg>
-          </button>
-          <button
-            onClick={zoomReset}
-            aria-label={`Zoom ${zoom}x — click to reset`}
-            className="text-white/80 hover:text-white px-2 text-[10px] uppercase tracking-wider"
-          >
-            {zoom}x
-          </button>
-          <button
-            onClick={zoomIn}
-            disabled={zoomIdx === ZOOM_LEVELS.length - 1}
-            aria-label="Zoom in"
-            className="text-white/80 hover:text-white p-1.5 disabled:opacity-30"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3M11 8v6M8 11h6" />
-            </svg>
-          </button>
-          <button
-            onClick={toggleFullscreen}
-            aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-            className="text-white/80 hover:text-white p-1.5"
-            title="Fullscreen (F)"
-          >
-            {isFullscreen ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M8 3v4H4M16 3v4h4M8 21v-4H4M16 21v-4h4" />
-              </svg>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4" />
-              </svg>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Canvas + link overlays */}
-      <div className="flex-1 flex items-center justify-center overflow-auto bg-neutral-900">
         {!doc ? (
           <p className="text-white/40 text-sm">{loadProgress}</p>
         ) : (
-          <div className="relative inline-block my-4">
-            <canvas ref={canvasRef} className="block bg-white shadow-2xl" />
-            {/* Link overlays — transparent buttons positioned over the canvas */}
-            {overlays.map((o, i) => (
-              <a
-                key={i}
-                href={o.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="absolute hover:bg-blue-400/20 focus:bg-blue-400/30 transition-colors"
-                style={{
-                  left: `${o.x}px`,
-                  top: `${o.y}px`,
-                  width: `${o.w}px`,
-                  height: `${o.h}px`,
-                }}
-                onClick={() =>
-                  trackEvent('flipbook_link_clicked', {
-                    magazine_id: magazine.id,
-                    page: currentPage + 1,
-                    url: o.url,
-                    reader: 'interactive',
-                  })
-                }
-                aria-label={`Open link: ${o.url}`}
+          <div
+            ref={stageRef}
+            className="flex items-center justify-center gap-2"
+            style={{
+              minWidth: '100%',
+              minHeight: '100%',
+              padding: chromeVisible ? '64px 16px' : '16px',
+            }}
+          >
+            {/* Left page (or placeholder for cover) */}
+            {currentSpread?.left !== null && currentSpread?.left !== undefined ? (
+              <PageCanvas
+                canvasRef={leftCanvasRef}
+                overlays={leftOverlays}
+                pageNum={currentSpread.left}
+                trackContext={{ magazine_id: magazine.id, side: 'left' }}
               />
-            ))}
+            ) : spreadMode && currentSpread?.right !== null && currentSpread?.right !== 0 ? (
+              <div style={{ visibility: 'hidden' }}>
+                <canvas style={{ width: 0, height: 0 }} />
+              </div>
+            ) : null}
+            {/* Right page */}
+            {currentSpread?.right !== null && currentSpread?.right !== undefined ? (
+              <PageCanvas
+                canvasRef={rightCanvasRef}
+                overlays={rightOverlays}
+                pageNum={currentSpread.right}
+                trackContext={{ magazine_id: magazine.id, side: 'right' }}
+              />
+            ) : null}
           </div>
         )}
       </div>
 
-      {/* Nav bar */}
-      <div
-        className="flex-shrink-0 flex items-center justify-between px-3 py-2 border-t border-white/10"
-        style={{ backgroundColor: brandColor }}
-      >
-        <button
-          onClick={goPrev}
-          disabled={currentPage === 0}
-          aria-label="Previous page"
-          className="text-white/80 hover:text-white p-1.5 disabled:opacity-30"
+      {/* Top chrome — floating */}
+      {chromeVisible && (
+        <div
+          className="absolute top-0 left-0 right-0 flex items-center justify-between px-3 py-2 z-10"
+          style={{ background: `linear-gradient(to bottom, ${brandColor}EE, ${brandColor}00)` }}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-        </button>
-        <form onSubmit={handleJumpSubmit} className="flex items-center gap-1">
-          <input
-            type="number"
-            min={1}
-            max={pageCount || 1}
-            value={jumpInput}
-            onChange={(e) => setJumpInput(e.target.value)}
-            placeholder={`${currentPage + 1}`}
-            className="w-14 bg-white/10 text-white text-center text-sm rounded px-2 py-1 placeholder-white/40 border border-white/10"
-            aria-label="Jump to page"
-          />
-          <span className="text-xs text-white/40">/ {pageCount || '…'}</span>
-        </form>
-        <button
-          onClick={goNext}
-          disabled={currentPage >= pageCount - 1}
-          aria-label="Next page"
-          className="text-white/80 hover:text-white p-1.5 disabled:opacity-30"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m9 18 6-6-6-6" />
-          </svg>
-        </button>
-      </div>
+          <button onClick={onClose} aria-label="Close" className="text-white p-1.5 -ml-1.5">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+          <div className="text-center flex-1 px-2 flex items-baseline justify-center gap-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/90 font-medium">{magazine.issue_label}</p>
+            <span className="text-[10px] text-white/60">
+              {doc ? pageLabel : loadProgress}
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setActionMode('search')} aria-label="Search" className="text-white/80 hover:text-white p-1.5" title="Search">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+            </button>
+            <button onClick={zoomOut} disabled={zoomIdx === 0} aria-label="Zoom out" className="text-white/80 hover:text-white p-1.5 disabled:opacity-30">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3M8 11h6" />
+              </svg>
+            </button>
+            <button onClick={zoomReset} aria-label={`Zoom ${zoom}x — click to reset`} className="text-white/80 hover:text-white px-2 text-[10px] uppercase tracking-wider">
+              {zoom}x
+            </button>
+            <button onClick={zoomIn} disabled={zoomIdx === ZOOM_LEVELS.length - 1} aria-label="Zoom in" className="text-white/80 hover:text-white p-1.5 disabled:opacity-30">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3M11 8v6M8 11h6" />
+              </svg>
+            </button>
+            <button onClick={toggleFullscreen} aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} className="text-white/80 hover:text-white p-1.5" title="Fullscreen (F)">
+              {isFullscreen ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v4H4M16 3v4h4M8 21v-4H4M16 21v-4h4" /></svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4" /></svg>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
-      {/* Action bar */}
-      <div
-        className="flex-shrink-0 flex items-center justify-around px-2 py-2 border-t border-white/10"
-        style={{ backgroundColor: brandColor }}
-      >
-        <ActionButton label="Share" onClick={handleShare} icon={ICONS.share} />
-        <ActionButton label="QR" onClick={() => setActionMode('qr')} icon={ICONS.qr} />
-        <ActionButton label="Download" onClick={handleDownload} icon={ICONS.download} />
-        <ActionButton label="Email" onClick={handleEmail} icon={ICONS.email} />
-        <ActionButton label="Embed" onClick={() => setActionMode('embed')} icon={ICONS.embed} />
-      </div>
+      {/* Side arrows — floating, vertically centered */}
+      {chromeVisible && doc && (
+        <>
+          <button
+            onClick={goPrev}
+            disabled={currentSpreadIdx === 0}
+            aria-label="Previous spread"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-black/50 text-white/90 hover:bg-black/70 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center backdrop-blur"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+          <button
+            onClick={goNext}
+            disabled={currentSpreadIdx >= spreads.length - 1}
+            aria-label="Next spread"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-black/50 text-white/90 hover:bg-black/70 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center backdrop-blur"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m9 18 6-6-6-6" />
+            </svg>
+          </button>
+        </>
+      )}
+
+      {/* Bottom chrome — floating */}
+      {chromeVisible && (
+        <div
+          className="absolute bottom-0 left-0 right-0 flex flex-col items-center z-10"
+          style={{ background: `linear-gradient(to top, ${brandColor}EE, ${brandColor}00)` }}
+        >
+          {/* Page jump input */}
+          <form onSubmit={handleJumpSubmit} className="flex items-center gap-2 pt-3 pb-2">
+            <input
+              type="number"
+              min={1}
+              max={pageCount || 1}
+              value={jumpInput}
+              onChange={(e) => setJumpInput(e.target.value)}
+              placeholder={`${currentPage + 1}`}
+              className="w-16 bg-black/40 text-white text-center text-sm rounded px-2 py-1 placeholder-white/40 border border-white/20 backdrop-blur"
+              aria-label="Jump to page"
+            />
+            <span className="text-xs text-white/70">of {pageCount || '…'}</span>
+          </form>
+          {/* Action row */}
+          <div className="flex items-center justify-around w-full max-w-xl px-2 pb-2">
+            <ActionButton label="Share" onClick={handleShare} icon={ICONS.share} />
+            <ActionButton label="QR" onClick={() => setActionMode('qr')} icon={ICONS.qr} />
+            <ActionButton label="Download" onClick={handleDownload} icon={ICONS.download} />
+            <ActionButton label="Email" onClick={handleEmail} icon={ICONS.email} />
+            <ActionButton label="Embed" onClick={() => setActionMode('embed')} icon={ICONS.embed} />
+          </div>
+        </div>
+      )}
 
       {/* Popups */}
       {actionMode === 'qr' && (
@@ -666,10 +775,7 @@ export default function InteractiveMagazineReader({
       {actionMode === 'embed' && (
         <ActionPopup title="Embed code" onClose={() => setActionMode(null)}>
           <pre className="text-xs text-white/80 bg-white/5 p-3 overflow-x-auto whitespace-pre-wrap break-all">{`<iframe src="${shareUrl}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`}</pre>
-          <button
-            onClick={handleCopyEmbed}
-            className="mt-3 w-full py-2.5 bg-white/10 text-white text-sm uppercase tracking-wider"
-          >
+          <button onClick={handleCopyEmbed} className="mt-3 w-full py-2.5 bg-white/10 text-white text-sm uppercase tracking-wider">
             Copy Embed Code
           </button>
         </ActionPopup>
@@ -716,6 +822,47 @@ export default function InteractiveMagazineReader({
   );
 }
 
+// ---- Subcomponents ----
+
+interface PageCanvasProps {
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  overlays: LinkOverlay[];
+  pageNum: number;
+  trackContext: { magazine_id: number; side: string };
+}
+
+function PageCanvas({ canvasRef, overlays, pageNum, trackContext }: PageCanvasProps) {
+  return (
+    <div className="relative inline-block shadow-2xl">
+      <canvas ref={canvasRef} className="block bg-white" />
+      {overlays.map((o, i) => (
+        <a
+          key={i}
+          href={o.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute hover:bg-blue-400/20 focus:bg-blue-400/30 transition-colors"
+          style={{
+            left: `${o.x}px`,
+            top: `${o.y}px`,
+            width: `${o.w}px`,
+            height: `${o.h}px`,
+          }}
+          onClick={() =>
+            trackEvent('flipbook_link_clicked', {
+              ...trackContext,
+              page: pageNum + 1,
+              url: o.url,
+              reader: 'interactive_v4',
+            })
+          }
+          aria-label={`Open link: ${o.url}`}
+        />
+      ))}
+    </div>
+  );
+}
+
 const ICONS = {
   share: 'M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8 M16 6l-4-4-4 4 M12 2v13',
   qr: 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h2v2h-2z M18 14h3v3h-3z M14 18h2v3h-2z M18 18h3v3h-3z',
@@ -726,11 +873,7 @@ const ICONS = {
 
 function ActionButton({ label, onClick, icon }: { label: string; onClick: () => void; icon: string }) {
   return (
-    <button
-      onClick={onClick}
-      className="flex flex-col items-center gap-1 px-2 py-1 text-white/80 active:text-white"
-      aria-label={label}
-    >
+    <button onClick={onClick} className="flex flex-col items-center gap-1 px-2 py-1 text-white/90 hover:text-white" aria-label={label}>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d={icon} />
       </svg>
@@ -742,7 +885,7 @@ function ActionButton({ label, onClick, icon }: { label: string; onClick: () => 
 function ActionPopup({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-[61] bg-black/80 flex items-center justify-center p-6" onClick={onClose}>
-      <div className="bg-black border border-white/20 max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-black border border-white/20 max-w-sm w-full p-6 rounded" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm uppercase tracking-[0.2em] text-white/80 font-medium">{title}</p>
           <button onClick={onClose} aria-label="Close" className="text-white/60 hover:text-white">
