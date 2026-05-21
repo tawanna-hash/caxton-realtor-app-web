@@ -565,7 +565,7 @@ export default function MagazineUploadForm() {
                   value={renderDpi}
                   onChange={(e) => setRenderDpi(Number(e.target.value))}
                   disabled={running}
-                  className="border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+                  className="border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-900"
                 >
                   <option value={100}>100 DPI (small, fast)</option>
                   <option value={150}>150 DPI (recommended)</option>

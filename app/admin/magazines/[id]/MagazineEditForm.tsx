@@ -112,6 +112,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
       const blob = await upload(`magazine-pdfs/${id}/${file.name}`, file, {
         access: 'public',
         handleUploadUrl: '/api/admin/magazines/upload-token',
+          multipart: true,
       });
       await patch({ reader_url: blob.url });
       setReaderUrl(blob.url);
