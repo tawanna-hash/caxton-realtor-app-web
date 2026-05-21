@@ -187,17 +187,41 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
     setError(null);
     setBusy('extract');
     try {
-      const r = await fetch('/api/admin/magazines/extract-text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pdf_url: readerUrl }),
-      });
-      if (!r.ok) {
-        const b = await r.json().catch(() => ({}));
-        throw new Error(b.error || `extract failed (${r.status})`);
+      // Extract text client-side using pdfjs. Server-side pdfjs in Vercel's
+      // Node runtime hit a cascade of issues (DOMMatrix, worker resolution,
+      // canvas polyfills) — moving to the client where pdfjs already runs
+      // natively for the reader.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdfjs: any = await import('pdfjs-dist/legacy/build/pdf.mjs' as any);
+      const pdfjsVersion: string = (await import('pdfjs-dist/package.json')).version;
+      pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
+
+      // Fetch the PDF as ArrayBuffer.
+      const pdfRes = await fetch(readerUrl);
+      if (!pdfRes.ok) throw new Error(`PDF fetch failed (${pdfRes.status})`);
+      const buf = await pdfRes.arrayBuffer();
+
+      // Load and walk pages, collecting per-page text.
+      const doc = await pdfjs.getDocument({
+        data: buf,
+        cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/cmaps/`,
+        cMapPacked: true,
+        standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/standard_fonts/`,
+      }).promise;
+      const pages: string[] = [];
+      for (let i = 1; i <= doc.numPages; i++) {
+        const page = await doc.getPage(i);
+        const tc = await page.getTextContent();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const text = (tc.items as any[])
+          .map((it) => (typeof it.str === 'string' ? it.str : ''))
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        pages.push(text);
       }
-      const data = await r.json();
-      await patch({ page_texts: data.pages });
+
+      await patch({ page_texts: pages });
       setHasTexts(true);
     } catch (err: unknown) {
       setError(errMessage(err));
