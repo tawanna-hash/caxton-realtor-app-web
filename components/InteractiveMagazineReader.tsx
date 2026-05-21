@@ -234,10 +234,15 @@ export default function InteractiveMagazineReader({
       if (!canvas || pageNum === null) {
         if (isLeft) setLeftOverlays([]);
         else setRightOverlays([]);
-        // Clear the canvas only when there's intentionally no page (e.g. cover spread left side).
+        // Collapse the canvas to zero size so the cover-spread side
+        // doesn't leave a leftover-sized rectangle visible on screen.
         if (canvas) {
           const c = canvas.getContext('2d');
           if (c) c.clearRect(0, 0, canvas.width, canvas.height);
+          canvas.width = 0;
+          canvas.height = 0;
+          canvas.style.width = '0px';
+          canvas.style.height = '0px';
         }
         return;
       }
