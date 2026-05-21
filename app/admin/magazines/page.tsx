@@ -53,7 +53,8 @@ async function fetchMagazines(): Promise<Magazine[]> {
     const sql = getSql();
     const rows = (await sql`
       SELECT id, publication, year, month, issue_label,
-             cover_url, reader_url, page_urls, page_count, sort_date
+             cover_url, reader_url, page_urls, page_count,
+             to_char(sort_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS sort_date
       FROM magazines
       ORDER BY sort_date DESC NULLS LAST, id DESC
     `) as Magazine[];
