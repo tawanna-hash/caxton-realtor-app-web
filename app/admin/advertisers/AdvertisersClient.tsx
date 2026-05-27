@@ -6,6 +6,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import Link from 'next/link';
 import type { AdvertiserWithStats } from '@/lib/advertisers';
 
 interface Props {
@@ -177,7 +178,12 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
               {advertisers.map((a) => (
                 <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900">{a.name}</div>
+                    <Link
+                      href={`/admin/advertisers/${a.id}`}
+                      className="font-medium text-gray-900 hover:text-blue-700"
+                    >
+                      {a.name}
+                    </Link>
                     <div className="text-xs text-gray-500">{a.slug}</div>
                   </td>
                   <td className="px-4 py-3 text-gray-700">{a.hotspot_count}</td>
