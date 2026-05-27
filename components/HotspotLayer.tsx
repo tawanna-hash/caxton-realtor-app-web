@@ -131,7 +131,8 @@ export default function HotspotLayer({
               className={`${baseClass} hover:bg-blue-400/30 focus:bg-blue-400/40`}
               style={style}
               aria-label={ariaLabel}
-              onClick={() => trackClick(h.id)}
+              onPointerDown={() => trackClick(h.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter') trackClick(h.id); }}
             />
           );
         }
@@ -145,7 +146,8 @@ export default function HotspotLayer({
               className={`${baseClass} hover:bg-indigo-400/30 focus:bg-indigo-400/40`}
               style={style}
               aria-label={ariaLabel}
-              onClick={() => trackClick(h.id)}
+              onPointerDown={() => trackClick(h.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter') trackClick(h.id); }}
             />
           );
         }
@@ -157,7 +159,8 @@ export default function HotspotLayer({
               className={`${baseClass} hover:bg-green-400/30 focus:bg-green-400/40`}
               style={style}
               aria-label={ariaLabel}
-              onClick={() => trackClick(h.id)}
+              onPointerDown={() => trackClick(h.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter') trackClick(h.id); }}
             />
           );
         }
@@ -175,7 +178,8 @@ export default function HotspotLayer({
               className={`${baseClass} hover:bg-amber-400/30 focus:bg-amber-400/40`}
               style={style}
               aria-label={ariaLabel}
-              onClick={() => trackClick(h.id)}
+              onPointerDown={() => trackClick(h.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter') trackClick(h.id); }}
             />
           );
         }
