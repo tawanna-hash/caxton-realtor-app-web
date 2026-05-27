@@ -14,22 +14,23 @@ export const dynamic = 'force-dynamic';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
 
-async function getAdminEmail(cookieHeader: string): Promise<string | null> {
+async function isAdmin(cookieHeader: string): Promise<boolean> {
   try {
     const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET', headers: { cookie: cookieHeader }, cache: 'no-store',
+      method: 'GET',
+      headers: { cookie: cookieHeader },
+      cache: 'no-store',
     });
-    if (!r.ok) return null;
-    const data = await r.json();
-    return typeof data?.email === 'string' ? data.email : null;
-  } catch { return null; }
+    return r.ok;
+  } catch {
+    return false;
+  }
 }
 
 export default async function AdvertisersPage() {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
-  const adminEmail = await getAdminEmail(cookieHeader);
-  if (!adminEmail) {
+  if (!cookieHeader || !(await isAdmin(cookieHeader))) {
     redirect('/admin/login');
   }
 
