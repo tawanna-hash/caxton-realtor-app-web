@@ -43,6 +43,7 @@ const ADMIN_LINKS = [
   { label: 'Ads', href: '/admin/ads', adminOnly: true },
   { label: 'Inventory', href: '/admin/inventory', adminOnly: true },
   { label: 'Magazines', href: '/admin/magazines', adminOnly: true },
+  { label: 'Advertisers', href: '/admin/advertisers', adminOnly: true },
   { label: 'Metrics', href: '/admin/metrics', adminOnly: true },
   { label: 'Reports', href: '/admin/reports', adminOnly: true },
   { label: 'Analytics', href: '/admin/analytics', adminOnly: true },
