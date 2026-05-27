@@ -18,10 +18,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import type { Hotspot } from '@/lib/hotspots';
+import { PDFDocument, PDFDict, PDFArray, PDFName, PDFString, PDFNumber, PDFRef } from 'pdf-lib';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // up to 60s for big PDFs
+export const maxDuration = 60;
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
 
@@ -55,7 +56,7 @@ function errMessage(err: unknown): string {
 }
 
 // ============================================================
-// PDF extraction
+// PDF extraction using pdf-lib (pure JS, no DOM dependencies)
 // ============================================================
 interface ExtractedLink {
   page_idx: number;
@@ -66,85 +67,102 @@ interface ExtractedLink {
   url: string;
 }
 
+/** Get a number from a PDF dict value, or null. */
+function numFromPdfValue(v: unknown): number | null {
+  if (v instanceof PDFNumber) return v.asNumber();
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  return null;
+}
+
+/** Get a string from a PDF dict value, or null. */
+function stringFromPdfValue(v: unknown): string | null {
+  if (v instanceof PDFString) return v.decodeText();
+  if (typeof v === 'string') return v;
+  return null;
+}
+
 async function extractLinksFromPdf(pdfBuffer: ArrayBuffer): Promise<ExtractedLink[]> {
-  // Legacy build for Node.js compatibility — runs without a worker.
-  // The .mjs file is an ES module; Next.js handles the dynamic import.
-
-  const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
-
-  // Suppress the worker requirement. The legacy build can run inline.
-  try {
-    (pdfjsLib as unknown as { GlobalWorkerOptions: { workerSrc: string } })
-      .GlobalWorkerOptions.workerSrc = '';
-  } catch {
-    /* not fatal if this fails */
-  }
-
-  const loadingTask = pdfjsLib.getDocument({
-    data: new Uint8Array(pdfBuffer),
-    // Defensive flags for serverless: skip font loading, no system fonts.
-    useSystemFonts: false,
-    disableFontFace: true,
-    // We don't render, so don't need to download standard fonts.
-    standardFontDataUrl: undefined,
-    verbosity: 0,
+  // updateMetadata: false avoids modifying the doc, faster load.
+  const pdfDoc = await PDFDocument.load(new Uint8Array(pdfBuffer), {
+    updateMetadata: false,
+    ignoreEncryption: true,
   });
 
-  const pdf = await loadingTask.promise;
   const links: ExtractedLink[] = [];
+  const pages = pdfDoc.getPages();
 
-  try {
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const annotations = await page.getAnnotations();
-      const viewport = page.getViewport({ scale: 1 });
-      const pageWidth = viewport.width;
-      const pageHeight = viewport.height;
+  for (let pageIdx = 0; pageIdx < pages.length; pageIdx++) {
+    const page = pages[pageIdx];
+    const { width: pageWidth, height: pageHeight } = page.getSize();
+    const pageNode = page.node;
 
-      for (const ann of annotations) {
-        // We only care about Link annotations with a URI action.
-        if (ann.subtype !== 'Link') continue;
-        const url = typeof ann.url === 'string' ? ann.url.trim() : '';
-        if (!url) continue;
-
-        // Rect is [x1, y1, x2, y2] in PDF user space; origin is bottom-left.
-        if (!Array.isArray(ann.rect) || ann.rect.length !== 4) continue;
-        const [r1, r2, r3, r4] = ann.rect.map(Number);
-        if ([r1, r2, r3, r4].some((n) => !Number.isFinite(n))) continue;
-
-        const left = Math.min(r1, r3);
-        const right = Math.max(r1, r3);
-        const bottom = Math.min(r2, r4);
-        const top = Math.max(r2, r4);
-
-        const w = right - left;
-        const h = top - bottom;
-        if (w < 1 || h < 1) continue; // skip tiny / degenerate rects
-
-        // Convert to top-left-origin fractions [0, 1].
-        let x_frac = left / pageWidth;
-        let y_frac = (pageHeight - top) / pageHeight;
-        let w_frac = w / pageWidth;
-        let h_frac = h / pageHeight;
-
-        // Clamp defensively so DB CHECK constraints don't fail on stray pixels.
-        x_frac = Math.max(0, Math.min(1, x_frac));
-        y_frac = Math.max(0, Math.min(1, y_frac));
-        w_frac = Math.max(0.001, Math.min(1 - x_frac, w_frac));
-        h_frac = Math.max(0.001, Math.min(1 - y_frac, h_frac));
-
-        links.push({
-          page_idx: pageNum - 1,
-          x_frac, y_frac, w_frac, h_frac,
-          url,
-        });
-      }
-
-      // Release page resources promptly to keep memory low on big PDFs.
-      page.cleanup();
+    // Get the Annots array. May be a direct array or a ref to one.
+    let annotsArr: PDFArray | undefined;
+    const annotsRaw = pageNode.lookup(PDFName.of('Annots'));
+    if (annotsRaw instanceof PDFArray) {
+      annotsArr = annotsRaw;
     }
-  } finally {
-    try { await pdf.destroy(); } catch { /* noop */ }
+    if (!annotsArr) continue;
+
+    for (let i = 0; i < annotsArr.size(); i++) {
+      const annotEntry = annotsArr.get(i);
+      // Annotations may be direct dicts or references to dicts.
+      let annotDict: PDFDict | undefined;
+      if (annotEntry instanceof PDFDict) {
+        annotDict = annotEntry;
+      } else if (annotEntry instanceof PDFRef) {
+        const resolved = pdfDoc.context.lookup(annotEntry);
+        if (resolved instanceof PDFDict) annotDict = resolved;
+      }
+      if (!annotDict) continue;
+
+      // Must be subtype Link.
+      const subtype = annotDict.lookup(PDFName.of('Subtype'));
+      if (!(subtype instanceof PDFName) || subtype.asString() !== '/Link') continue;
+
+      // Extract URL from /A /URI or /A /D (we only care about URI links).
+      const action = annotDict.lookup(PDFName.of('A'));
+      if (!(action instanceof PDFDict)) continue;
+      const actionType = action.lookup(PDFName.of('S'));
+      if (!(actionType instanceof PDFName) || actionType.asString() !== '/URI') continue;
+      const uriValue = action.lookup(PDFName.of('URI'));
+      const url = stringFromPdfValue(uriValue);
+      if (!url || !url.trim()) continue;
+
+      // Extract /Rect [x1 y1 x2 y2].
+      const rectVal = annotDict.lookup(PDFName.of('Rect'));
+      if (!(rectVal instanceof PDFArray) || rectVal.size() !== 4) continue;
+      const r1 = numFromPdfValue(rectVal.get(0));
+      const r2 = numFromPdfValue(rectVal.get(1));
+      const r3 = numFromPdfValue(rectVal.get(2));
+      const r4 = numFromPdfValue(rectVal.get(3));
+      if (r1 === null || r2 === null || r3 === null || r4 === null) continue;
+
+      const left = Math.min(r1, r3);
+      const right = Math.max(r1, r3);
+      const bottom = Math.min(r2, r4);
+      const top = Math.max(r2, r4);
+      const w = right - left;
+      const h = top - bottom;
+      if (w < 1 || h < 1) continue;
+
+      // PDF coordinate space has origin at bottom-left. Flip to top-left.
+      let x_frac = left / pageWidth;
+      let y_frac = (pageHeight - top) / pageHeight;
+      let w_frac = w / pageWidth;
+      let h_frac = h / pageHeight;
+
+      x_frac = Math.max(0, Math.min(1, x_frac));
+      y_frac = Math.max(0, Math.min(1, y_frac));
+      w_frac = Math.max(0.001, Math.min(1 - x_frac, w_frac));
+      h_frac = Math.max(0.001, Math.min(1 - y_frac, h_frac));
+
+      links.push({
+        page_idx: pageIdx,
+        x_frac, y_frac, w_frac, h_frac,
+        url: url.trim(),
+      });
+    }
   }
 
   return links;
