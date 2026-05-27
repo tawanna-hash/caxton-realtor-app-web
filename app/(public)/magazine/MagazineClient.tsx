@@ -42,9 +42,19 @@ function getServerPubSnapshot(): Pub {
   return SERVER_PUB;
 }
 
-export default function MagazineClient() {
+interface MagazineClientProps {
+  /** When set, opens the reader directly to this magazine and locks pub to its publication. Used by /magazine/[id] share links. */
+  initialMagazine?: Magazine;
+}
+
+export default function MagazineClient({ initialMagazine }: MagazineClientProps = {}) {
   const router = useRouter();
-  const pub = useSyncExternalStore(subscribePub, readPub, getServerPubSnapshot);
+  const storedPub = useSyncExternalStore(subscribePub, readPub, getServerPubSnapshot);
+  // When opened via a share link, lock pub to the magazine's actual publication
+  // so a Newsline subscriber clicking a RealtyLine share link still sees correct branding.
+  const pub: Pub = initialMagazine
+    ? (initialMagazine.publication === 'austin' ? 'realtyline' : 'newsline')
+    : storedPub;
   const info = PUBS_INFO[pub];
 
   const [openMag, setOpenMag] = useState<Magazine | null>(null);
@@ -67,6 +77,16 @@ export default function MagazineClient() {
       setAutoOpenLatest(false);
     }
   }, [autoOpenLatest, currentMag]);
+
+  // When opened via /magazine/[id], auto-open the reader on mount.
+  useEffect(() => {
+    if (initialMagazine) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time on mount, matches autoOpenLatest pattern above
+      setOpenMag(initialMagazine);
+    }
+    // initialMagazine is a server-passed prop, never changes after mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-white" style={{ paddingBottom: 96 }}>
