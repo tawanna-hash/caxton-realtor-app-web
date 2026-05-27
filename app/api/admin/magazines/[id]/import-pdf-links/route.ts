@@ -70,7 +70,7 @@ async function extractLinksFromPdf(pdfBuffer: ArrayBuffer): Promise<ExtractedLin
   // Legacy build for Node.js compatibility — runs without a worker.
   // The .mjs file is an ES module; Next.js handles the dynamic import.
 
-  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
 
   // Suppress the worker requirement. The legacy build can run inline.
   try {
