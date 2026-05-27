@@ -319,6 +319,14 @@ export async function ensureSchema(): Promise<void> {
     )
   `;
 
+  // Phase 2.5: track how each hotspot was created.
+  // 'manual' = drawn in the editor; 'pdf_import' = extracted from embedded PDF links.
+  // Re-importing PDF links deletes existing 'pdf_import' rows but never touches 'manual'.
+  await sql`
+    ALTER TABLE magazine_hotspots
+    ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'manual'
+  `;
+
   // Fast lookup of published hotspots for a given magazine page.
   await sql`
     CREATE INDEX IF NOT EXISTS idx_hotspots_magazine_page

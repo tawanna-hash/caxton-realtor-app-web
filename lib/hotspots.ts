@@ -51,6 +51,8 @@ export interface Hotspot {
   created_at: string;
   updated_by: string | null;
   updated_at: string;
+  /** Phase 2.5: how the hotspot was created. */
+  source?: 'manual' | 'pdf_import';
 }
 
 /** Lighter shape returned to the public reader. No admin / tracking metadata. */

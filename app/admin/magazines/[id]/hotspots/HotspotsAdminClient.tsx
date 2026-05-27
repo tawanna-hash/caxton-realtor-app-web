@@ -60,6 +60,11 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
   // ----- Copy-from-previous dialog -----
   const [showCopyDialog, setShowCopyDialog] = useState(false);
 
+  // ----- PDF import state -----
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ imported: number; total: number } | null>(null);
+
   // Tick every 10s so the "saved Xs ago" indicator updates.
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 10_000);
@@ -192,6 +197,31 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
     }
   }, [magazine.id]);
 
+  // Phase 2.5: import embedded PDF links as draft hotspots.
+  // Deletes existing source='pdf_import' rows then inserts fresh ones.
+  // Manual hotspots are preserved.
+  const importPdfLinks = useCallback(async () => {
+    setImporting(true);
+    setSaveState('saving');
+    try {
+      const res = await fetch(`/api/admin/magazines/${magazine.id}/import-pdf-links`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setHotspots(sortHotspots(data.hotspots as Hotspot[]));
+      setImportResult({ imported: data.imported_count, total: data.total_links_in_pdf });
+      setSaveState('saved');
+      setLastSavedAt(new Date());
+    } catch (err) {
+      console.error('[hotspot-editor] PDF import failed:', err);
+      setSaveState('error');
+      setImportResult(null);
+    } finally {
+      setImporting(false);
+    }
+  }, [magazine.id]);
+
   // Copy hotspots from a previous issue.
   const copyFromPrevious = useCallback(async (sourceMagazineId: number, publishedOnly: boolean) => {
     setSaveState('saving');
@@ -265,6 +295,15 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
               Copy from previous
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => setShowImportDialog(true)}
+            disabled={importing}
+            className="px-3 py-1.5 text-sm font-medium text-white bg-blue-700 rounded-md hover:bg-blue-800 disabled:opacity-50"
+            title="Extract clickable links embedded in the magazine PDF and import them as draft hotspots."
+          >
+            {importing ? 'Importing…' : 'Import PDF links'}
+          </button>
         </div>
 
         {/* Drafts banner */}
@@ -369,6 +408,34 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
           }}
           onCancel={() => setPendingDeleteId(null)}
         />
+      )}
+
+      {/* ===== IMPORT-PDF-LINKS DIALOG ===== */}
+      {showImportDialog && (
+        <ImportPdfLinksDialog
+          existingPdfImportCount={hotspots.filter((h) => h.source === 'pdf_import').length}
+          onConfirm={async () => {
+            setShowImportDialog(false);
+            await importPdfLinks();
+          }}
+          onCancel={() => setShowImportDialog(false)}
+        />
+      )}
+
+      {/* ===== IMPORT RESULT TOAST ===== */}
+      {importResult && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 bg-gray-900 text-white text-sm rounded shadow-xl flex items-center gap-3">
+          <span>
+            Imported <strong>{importResult.imported}</strong> of {importResult.total} embedded link{importResult.total === 1 ? '' : 's'} from the PDF.
+          </span>
+          <button
+            type="button"
+            onClick={() => setImportResult(null)}
+            className="text-white/70 hover:text-white text-xs"
+          >
+            Dismiss
+          </button>
+        </div>
       )}
 
       {/* ===== COPY-FROM-PREVIOUS DIALOG ===== */}
@@ -617,6 +684,52 @@ function DeleteConfirmDialog({
 // ============================================================
 // Copy-from-previous-issue dialog
 // ============================================================
+// ============================================================
+// PDF link import confirmation dialog
+// ============================================================
+function ImportPdfLinksDialog({
+  existingPdfImportCount, onConfirm, onCancel,
+}: {
+  existingPdfImportCount: number;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6" onClick={onCancel}>
+      <div className="bg-white rounded shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Import embedded PDF links</h2>
+        <p className="text-sm text-gray-700 mb-4">
+          This will download the magazine PDF, extract every clickable link, and create a draft hotspot for each one. You can then review and publish them.
+        </p>
+        {existingPdfImportCount > 0 && (
+          <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded p-3 mb-4">
+            <strong>{existingPdfImportCount}</strong> existing PDF-imported hotspot{existingPdfImportCount === 1 ? '' : 's'} will be replaced. Manually-drawn hotspots are preserved.
+          </p>
+        )}
+        <p className="text-xs text-gray-500 mb-4">
+          PDFs with many links can take 30&ndash;60 seconds to process. The page may appear unresponsive during import.
+        </p>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-700 rounded hover:bg-blue-800"
+          >
+            Start import
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CopyFromPreviousDialog({
   prevIssues, existingCount, onConfirm, onCancel,
 }: {
