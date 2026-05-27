@@ -2,14 +2,30 @@
 
 // components/InteractiveMagazineReader.tsx
 //
-// V4 — desktop spread view + viewport-filling layout.
+// V5 — desktop spread view + viewport-filling layout + mobile gestures + a11y.
 //
 // Renders the original PDF directly using pdfjs-dist. On desktop (>= 1024px)
 // two pages are shown side-by-side as a spread; on mobile one page at a time.
 // Top and bottom chrome float over the spread instead of stacking vertically,
 // so the page content uses the full available viewport.
+//
+// V5 changes over V4:
+// - Memoized spreads/currentSpread so the render effect only re-runs on
+//   actual spread changes (not on every parent re-render). This fixes the
+//   stale-page bug where the right canvas could get stuck on a neighbor.
+// - Per-side latest-page guard refs as a second layer of defense.
+// - DPR capped at 2 (was forced minimum 2) for ~2x mobile perf win.
+// - Bitmap dims rounded and CSS dims derived from them, no sub-pixel blur.
+// - Touch gestures: swipe to nav, pinch to zoom, double-tap to toggle zoom,
+//   one-finger drag to pan when zoomed in. Single tap (no drag) toggles chrome.
+// - Focus trap + focus restore + role=dialog + aria-modal + aria-live page
+//   announcer for accessibility.
+// - prefers-reduced-motion respected (no zoom animations).
+// - currentPage clamped on spread-mode change so orientation flips never land
+//   on an out-of-range spread.
+// - reader_url validated before fetch.
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import QRCode from 'qrcode';
 import type { Magazine } from '@/lib/magazines';
 import { trackEvent } from '../app/posthog-provider';
@@ -24,8 +40,11 @@ type ActionMode = null | 'share' | 'qr' | 'download' | 'email' | 'embed' | 'sear
 
 const ZOOM_LEVELS = [0.75, 1, 1.25, 1.5, 2, 3];
 const DEFAULT_ZOOM_IDX = 1; // 1.0x
-
 const SPREAD_BREAKPOINT_PX = 1024;
+const SWIPE_THRESHOLD_PX = 50;       // min horizontal swipe to count as page nav
+const TAP_MAX_MOVE_PX = 10;          // movement above this = not a tap
+const TAP_MAX_DURATION_MS = 300;     // press above this = not a tap
+const DOUBLE_TAP_WINDOW_MS = 300;    // taps within this = double-tap
 
 // pdfjs types we use
 interface PdfJsViewport {
@@ -133,6 +152,24 @@ function buildSpreads(pageCount: number, spreadMode: boolean): Spread[] {
   return spreads;
 }
 
+// ---- prefers-reduced-motion hook ----
+function usePrefersReducedMotion(): boolean {
+  // Initialize from the media query directly so we don't need a setState
+  // inside an effect (which would cascade renders and fail strict lint).
+  const [reduced, setReduced] = useState<boolean>(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return reduced;
+}
+
 export default function InteractiveMagazineReader({
   magazine,
   brandColor,
@@ -154,26 +191,66 @@ export default function InteractiveMagazineReader({
   const [loadProgress, setLoadProgress] = useState<string>('Loading PDF…');
   const [spreadMode, setSpreadMode] = useState(false); // becomes true on desktop
   const [chromeVisible, setChromeVisible] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
 
   const leftCanvasRef = useRef<HTMLCanvasElement>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const dragStateRef = useRef<{ startX: number; startY: number; scrollLeft: number; scrollTop: number } | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Generation guards — paints check these before committing, so a stale
+  // render that completes after navigation can't overwrite a fresh page.
+  const leftLatestPageRef = useRef<number | null>(null);
+  const rightLatestPageRef = useRef<number | null>(null);
+
+  // Mouse pan state (existing).
+  const dragStateRef = useRef<{ startX: number; startY: number; scrollLeft: number; scrollTop: number } | null>(null);
+
+  // Touch gesture state.
+  const touchStateRef = useRef<{
+    startX: number;
+    startY: number;
+    startTime: number;
+    startScrollLeft: number;
+    startScrollTop: number;
+    moved: boolean;
+    // Pinch
+    pinching: boolean;
+    pinchStartDistance: number;
+    pinchStartZoomIdx: number;
+  } | null>(null);
+  const lastTapTimeRef = useRef<number>(0);
+
+  // Focus restore — remember what was focused when the reader opened.
+  const triggerFocusRef = useRef<HTMLElement | null>(null);
+
+  const reducedMotion = usePrefersReducedMotion();
 
   const zoom = ZOOM_LEVELS[zoomIdx];
   const pageCount = doc?.numPages ?? magazine.page_count ?? 0;
 
-  const spreads = buildSpreads(pageCount, spreadMode);
-  const currentSpreadIdx = pageToSpreadIdx(currentPage, spreadMode);
+  // ---- Memoized derived values ----
+  // CRITICAL: these used to be recomputed every render, creating new object
+  // references that re-triggered the render effect on every state change
+  // anywhere in the component. That cancelled in-flight renders constantly
+  // and was the root cause of the stale-page bug.
+  const spreads = useMemo(
+    () => buildSpreads(pageCount, spreadMode),
+    [pageCount, spreadMode],
+  );
+  const currentSpreadIdx = useMemo(
+    () => Math.min(pageToSpreadIdx(currentPage, spreadMode), Math.max(spreads.length - 1, 0)),
+    [currentPage, spreadMode, spreads.length],
+  );
   const currentSpread: Spread | undefined = spreads[currentSpreadIdx];
 
   // ---- Detect spread mode based on viewport ----
+  // Also clamp currentPage if a mode flip would land us past the last spread.
   useEffect(() => {
     function update() {
-      setSpreadMode(window.innerWidth >= SPREAD_BREAKPOINT_PX);
+      const next = window.innerWidth >= SPREAD_BREAKPOINT_PX;
+      setSpreadMode((prev) => (prev === next ? prev : next));
     }
     update();
     window.addEventListener('resize', update);
@@ -185,12 +262,15 @@ export default function InteractiveMagazineReader({
     let cancelled = false;
     async function load() {
       try {
+        if (!magazine.reader_url) {
+          throw new Error('No PDF URL available for this issue.');
+        }
         setLoadProgress('Loading PDF reader…');
         const pdfjs = await loadPdfJs();
         if (cancelled) return;
         setLoadProgress('Fetching magazine…');
         const task = pdfjs.getDocument({
-          url: magazine.reader_url ?? '',
+          url: magazine.reader_url,
           wasmUrl: `${PDFJS_CDN}/wasm/`,
           cMapUrl: `${PDFJS_CDN}/cmaps/`,
           cMapPacked: true,
@@ -222,6 +302,12 @@ export default function InteractiveMagazineReader({
   // ---- Render current spread ----
   useEffect(() => {
     if (!doc || !currentSpread) return;
+    // Record what each side should currently be showing. In-flight renders
+    // that complete after navigation will see a different value here and
+    // skip their paint step.
+    leftLatestPageRef.current = currentSpread.left;
+    rightLatestPageRef.current = currentSpread.right;
+
     let cancelled = false;
     let leftTask: { promise: Promise<void>; cancel?: () => void } | null = null;
     let rightTask: { promise: Promise<void>; cancel?: () => void } | null = null;
@@ -246,23 +332,27 @@ export default function InteractiveMagazineReader({
         }
         return;
       }
+      const latestRef = isLeft ? leftLatestPageRef : rightLatestPageRef;
       try {
         const page = await doc!.getPage(pageNum + 1);
         if (cancelled) return;
+        if (latestRef.current !== pageNum) return;
+
         const stage = stageRef.current;
         if (!stage) return;
-        const stageH = stage.clientHeight - 16;
-        const stageW = stage.clientWidth - 16;
+        const stageH = Math.max(stage.clientHeight - 16, 100);
+        const stageW = Math.max(stage.clientWidth - 16, 100);
         const natural = page.getViewport({ scale: 1 });
         const aspect = natural.width / natural.height;
-        const perPageWidth = spreadMode ? Math.floor((stageW - 8) / 2) : stageW;
+        const perPageWidth = spreadMode ? Math.max(Math.floor((stageW - 8) / 2), 100) : stageW;
         const fitByHeight = stageH * aspect;
         const cssWidth = Math.min(perPageWidth, fitByHeight);
         const cssHeight = cssWidth / aspect;
         const displayWidth = cssWidth * zoom;
         const displayHeight = cssHeight * zoom;
         const displayScale = displayWidth / natural.width;
-        const dpr = Math.max(window.devicePixelRatio || 1, 2);
+        // Cap DPR at 2 so 3x phone screens don't render at 4x cost.
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
         const renderScale = displayScale * dpr;
         const renderViewport = page.getViewport({ scale: renderScale });
 
@@ -271,8 +361,11 @@ export default function InteractiveMagazineReader({
         // drawImage eliminates both the blank-canvas gap and the stale-task
         // overwrite race.
         const offscreen = document.createElement('canvas');
-        offscreen.width = Math.floor(renderViewport.width);
-        offscreen.height = Math.floor(renderViewport.height);
+        // Round (not floor) so bitmap dims are exact integers and the CSS
+        // display size derived from them produces a clean 1/dpr ratio with
+        // no sub-pixel scaling blur.
+        offscreen.width = Math.round(renderViewport.width);
+        offscreen.height = Math.round(renderViewport.height);
         const offCtx = offscreen.getContext('2d');
         if (!offCtx) return;
         const task = page.render({ canvasContext: offCtx, viewport: renderViewport });
@@ -280,18 +373,15 @@ export default function InteractiveMagazineReader({
         else rightTask = task;
         await task.promise;
         if (cancelled) return;
+        if (latestRef.current !== pageNum) return;
 
-        // Atomic visual swap onto the visible canvas.
-        canvas.width = offscreen.width;
-        canvas.height = offscreen.height;
-        canvas.style.width = `${displayWidth}px`;
-        canvas.style.height = `${displayHeight}px`;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        ctx.drawImage(offscreen, 0, 0);
-
+        // Compute overlays before the visual swap so the canvas resize and
+        // overlay update apply in the same frame. Otherwise there's a brief
+        // window where the canvas shows the new page but overlays are still
+        // positioned for the old one.
         const annots = await page.getAnnotations();
         if (cancelled) return;
+        if (latestRef.current !== pageNum) return;
         const overlays: LinkOverlay[] = [];
         for (const a of annots) {
           if (a.subtype !== 'Link') continue;
@@ -304,7 +394,17 @@ export default function InteractiveMagazineReader({
           const bottom = displayHeight - Math.min(y1, y2) * displayScale;
           overlays.push({ url, x: left, y: top, w: right - left, h: bottom - top });
         }
-        if (cancelled) return;
+
+        // Atomic visual swap + overlay update.
+        const cssDisplayW = offscreen.width / dpr;
+        const cssDisplayH = offscreen.height / dpr;
+        canvas.width = offscreen.width;
+        canvas.height = offscreen.height;
+        canvas.style.width = `${cssDisplayW}px`;
+        canvas.style.height = `${cssDisplayH}px`;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(offscreen, 0, 0);
         if (isLeft) setLeftOverlays(overlays);
         else setRightOverlays(overlays);
       } catch (err) {
@@ -324,9 +424,7 @@ export default function InteractiveMagazineReader({
     };
   }, [doc, currentSpread, spreadMode, zoom]);
 
-  // Prefetch adjacent spreads' pages so getPage() returns from cache when
-  // the user navigates. Pure cache-warming via pdfjs's internal page cache;
-  // we do not render or store anything ourselves, so this is safe to misfire.
+  // ---- Prefetch adjacent spreads ----
   useEffect(() => {
     if (!doc || !spreads.length) return;
     let cancelled = false;
@@ -341,13 +439,9 @@ export default function InteractiveMagazineReader({
       if (next.left !== null) adj.push(next.left);
       if (next.right !== null) adj.push(next.right);
     }
-    // Stagger with a small delay so the active render gets the main thread
-    // first. Yield so the current spread paint finishes before we start
-    // warming neighbors.
     const t = setTimeout(() => {
       if (cancelled) return;
       for (const pageIdx of adj) {
-        // Fire-and-forget. pdfjs caches the result internally.
         doc.getPage(pageIdx + 1).catch(() => { /* noop */ });
       }
     }, 100);
@@ -357,7 +451,7 @@ export default function InteractiveMagazineReader({
     };
   }, [doc, currentSpreadIdx, spreads]);
 
-  // ---- Lock body scroll ----
+  // ---- Lock body scroll while reader is open ----
   useEffect(() => {
     const original = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -374,6 +468,124 @@ export default function InteractiveMagazineReader({
     document.addEventListener('fullscreenchange', onFsChange);
     return () => document.removeEventListener('fullscreenchange', onFsChange);
   }, []);
+
+  // ---- Focus management ----
+  // Remember what had focus before we opened, restore it on close.
+  useEffect(() => {
+    triggerFocusRef.current = document.activeElement as HTMLElement | null;
+    // Move focus into the dialog so screen readers and keyboard users land here.
+    requestAnimationFrame(() => {
+      containerRef.current?.focus();
+    });
+    return () => {
+      // Restore focus on unmount.
+      const t = triggerFocusRef.current;
+      if (t && typeof t.focus === 'function') {
+        try { t.focus(); } catch { /* element may be gone */ }
+      }
+    };
+  }, []);
+
+  // ---- Focus trap ----
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return;
+      const root = containerRef.current;
+      if (!root) return;
+      const focusable = root.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  // ---- Navigation callbacks (stable refs so the keyboard effect can include them in deps) ----
+  const goPrev = useCallback(() => {
+    if (!spreads.length) return;
+    const newSpreadIdx = currentSpreadIdx - 1;
+    if (newSpreadIdx < 0) return;
+    const newSpread = spreads[newSpreadIdx];
+    const target = newSpread.left ?? newSpread.right ?? 0;
+    setCurrentPage(target);
+    trackEvent('flipbook_button_nav', { magazine_id: magazine.id, dir: 'prev', reader: 'interactive_v4' });
+  }, [spreads, currentSpreadIdx, magazine.id]);
+
+  const goNext = useCallback(() => {
+    if (!spreads.length) return;
+    const newSpreadIdx = currentSpreadIdx + 1;
+    if (newSpreadIdx >= spreads.length) return;
+    const newSpread = spreads[newSpreadIdx];
+    const target = newSpread.left ?? newSpread.right ?? 0;
+    setCurrentPage(target);
+    trackEvent('flipbook_button_nav', { magazine_id: magazine.id, dir: 'next', reader: 'interactive_v4' });
+  }, [spreads, currentSpreadIdx, magazine.id]);
+
+  const jumpTo = useCallback((pageIdx: number) => {
+    if (pageIdx < 0 || pageIdx >= pageCount) return;
+    setCurrentPage(pageIdx);
+    trackEvent('flipbook_jump_to', { magazine_id: magazine.id, page: pageIdx, reader: 'interactive_v4' });
+  }, [pageCount, magazine.id]);
+
+  const zoomIn = useCallback(() => {
+    setZoomIdx((idx) => {
+      if (idx >= ZOOM_LEVELS.length - 1) return idx;
+      const next = idx + 1;
+      trackEvent('flipbook_zoom', { magazine_id: magazine.id, level: ZOOM_LEVELS[next], reader: 'interactive_v4' });
+      return next;
+    });
+  }, [magazine.id]);
+
+  const zoomOut = useCallback(() => {
+    setZoomIdx((idx) => {
+      if (idx <= 0) return idx;
+      const next = idx - 1;
+      trackEvent('flipbook_zoom', { magazine_id: magazine.id, level: ZOOM_LEVELS[next], reader: 'interactive_v4' });
+      return next;
+    });
+  }, [magazine.id]);
+
+  const zoomReset = useCallback(() => {
+    setZoomIdx(DEFAULT_ZOOM_IDX);
+  }, []);
+
+  // Double-tap: toggle between 1x and 2x.
+  const zoomToggle = useCallback(() => {
+    setZoomIdx((idx) => {
+      const target = idx === DEFAULT_ZOOM_IDX ? ZOOM_LEVELS.indexOf(2) : DEFAULT_ZOOM_IDX;
+      return target >= 0 ? target : idx;
+    });
+  }, []);
+
+  const setZoomIdxClamped = useCallback((next: number) => {
+    setZoomIdx(Math.max(0, Math.min(ZOOM_LEVELS.length - 1, next)));
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return;
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current.requestFullscreen();
+        trackEvent('flipbook_fullscreen', { magazine_id: magazine.id, on: true, reader: 'interactive_v4' });
+      } else {
+        await document.exitFullscreen();
+        trackEvent('flipbook_fullscreen', { magazine_id: magazine.id, on: false, reader: 'interactive_v4' });
+      }
+    } catch (err) {
+      console.error('[InteractiveMagazineReader] fullscreen failed:', err);
+    }
+  }, [magazine.id]);
 
   // ---- Keyboard navigation ----
   useEffect(() => {
@@ -401,8 +613,7 @@ export default function InteractiveMagazineReader({
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionMode, currentPage, pageCount, zoomIdx, spreadMode]);
+  }, [actionMode, goNext, goPrev, onClose, zoomIn, zoomOut, toggleFullscreen]);
 
   // ---- Share URL + QR ----
   const shareUrl =
@@ -418,31 +629,6 @@ export default function InteractiveMagazineReader({
     }
   }, [actionMode, qrDataUrl, shareUrl]);
 
-  // ---- Navigation by spread ----
-  function goPrev() {
-    if (!spreads.length) return;
-    const newSpreadIdx = currentSpreadIdx - 1;
-    if (newSpreadIdx < 0) return;
-    const newSpread = spreads[newSpreadIdx];
-    // Land on the "first" page of that spread (left if present, else right).
-    const target = newSpread.left ?? newSpread.right ?? 0;
-    setCurrentPage(target);
-    trackEvent('flipbook_button_nav', { magazine_id: magazine.id, dir: 'prev', reader: 'interactive_v4' });
-  }
-  function goNext() {
-    if (!spreads.length) return;
-    const newSpreadIdx = currentSpreadIdx + 1;
-    if (newSpreadIdx >= spreads.length) return;
-    const newSpread = spreads[newSpreadIdx];
-    const target = newSpread.left ?? newSpread.right ?? 0;
-    setCurrentPage(target);
-    trackEvent('flipbook_button_nav', { magazine_id: magazine.id, dir: 'next', reader: 'interactive_v4' });
-  }
-  function jumpTo(pageIdx: number) {
-    if (pageIdx < 0 || pageIdx >= pageCount) return;
-    setCurrentPage(pageIdx);
-    trackEvent('flipbook_jump_to', { magazine_id: magazine.id, page: pageIdx, reader: 'interactive_v4' });
-  }
   function handleJumpSubmit(e: React.FormEvent) {
     e.preventDefault();
     const n = Number(jumpInput);
@@ -450,37 +636,6 @@ export default function InteractiveMagazineReader({
       jumpTo(n - 1);
     }
     setJumpInput('');
-  }
-
-  function zoomIn() {
-    if (zoomIdx < ZOOM_LEVELS.length - 1) {
-      setZoomIdx(zoomIdx + 1);
-      trackEvent('flipbook_zoom', { magazine_id: magazine.id, level: ZOOM_LEVELS[zoomIdx + 1], reader: 'interactive_v4' });
-    }
-  }
-  function zoomOut() {
-    if (zoomIdx > 0) {
-      setZoomIdx(zoomIdx - 1);
-      trackEvent('flipbook_zoom', { magazine_id: magazine.id, level: ZOOM_LEVELS[zoomIdx - 1], reader: 'interactive_v4' });
-    }
-  }
-  function zoomReset() {
-    setZoomIdx(DEFAULT_ZOOM_IDX);
-  }
-
-  async function toggleFullscreen() {
-    if (!containerRef.current) return;
-    try {
-      if (!document.fullscreenElement) {
-        await containerRef.current.requestFullscreen();
-        trackEvent('flipbook_fullscreen', { magazine_id: magazine.id, on: true, reader: 'interactive_v4' });
-      } else {
-        await document.exitFullscreen();
-        trackEvent('flipbook_fullscreen', { magazine_id: magazine.id, on: false, reader: 'interactive_v4' });
-      }
-    } catch (err) {
-      console.error('[InteractiveMagazineReader] fullscreen failed:', err);
-    }
   }
 
   // ---- Search ----
@@ -583,7 +738,7 @@ export default function InteractiveMagazineReader({
     }
   }
 
-  // ---- Pan/grab handlers ----
+  // ---- Mouse pan handlers (desktop) ----
   function handleMouseDown(e: React.MouseEvent) {
     if ((e.target as HTMLElement).tagName === 'A') return;
     if (!scrollRef.current) return;
@@ -608,10 +763,164 @@ export default function InteractiveMagazineReader({
     setIsDragging(false);
   }
 
+  // ---- Touch handlers (mobile gestures) ----
+  function distance(t1: React.Touch | Touch, t2: React.Touch | Touch): number {
+    const dx = t1.clientX - t2.clientX;
+    const dy = t1.clientY - t2.clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  function handleTouchStart(e: React.TouchEvent) {
+    const scroll = scrollRef.current;
+    if (!scroll) return;
+    if (e.touches.length === 2) {
+      // Pinch start
+      const dist = distance(e.touches[0], e.touches[1]);
+      touchStateRef.current = {
+        startX: 0, startY: 0, startTime: Date.now(),
+        startScrollLeft: scroll.scrollLeft, startScrollTop: scroll.scrollTop,
+        moved: true, // pinch always "moves"
+        pinching: true,
+        pinchStartDistance: dist,
+        pinchStartZoomIdx: zoomIdx,
+      };
+      return;
+    }
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      touchStateRef.current = {
+        startX: t.clientX, startY: t.clientY, startTime: Date.now(),
+        startScrollLeft: scroll.scrollLeft, startScrollTop: scroll.scrollTop,
+        moved: false,
+        pinching: false,
+        pinchStartDistance: 0,
+        pinchStartZoomIdx: zoomIdx,
+      };
+    }
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    const state = touchStateRef.current;
+    const scroll = scrollRef.current;
+    if (!state || !scroll) return;
+
+    // Pinch zoom
+    if (state.pinching && e.touches.length === 2) {
+      const dist = distance(e.touches[0], e.touches[1]);
+      const ratio = dist / state.pinchStartDistance;
+      // Map ratio to discrete zoom index changes. Each 25% growth/shrink = 1 step.
+      const stepsDelta = Math.round(Math.log(ratio) / Math.log(1.25));
+      const targetIdx = state.pinchStartZoomIdx + stepsDelta;
+      if (targetIdx !== zoomIdx) {
+        setZoomIdxClamped(targetIdx);
+      }
+      e.preventDefault();
+      return;
+    }
+
+    // One-finger drag
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      const dx = t.clientX - state.startX;
+      const dy = t.clientY - state.startY;
+      if (Math.hypot(dx, dy) > TAP_MAX_MOVE_PX) {
+        state.moved = true;
+      }
+      // If zoomed in, pan. Otherwise let the swipe-on-end logic handle nav.
+      if (zoom > 1) {
+        scroll.scrollLeft = state.startScrollLeft - dx;
+        scroll.scrollTop = state.startScrollTop - dy;
+        e.preventDefault();
+      }
+    }
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    const state = touchStateRef.current;
+    if (!state) return;
+
+    // Pinch end: just clear state.
+    if (state.pinching) {
+      // Only clear when all fingers are off; if 1 finger remains, convert
+      // to a single-touch session starting from current position.
+      if (e.touches.length === 0) {
+        touchStateRef.current = null;
+      } else if (e.touches.length === 1) {
+        const scroll = scrollRef.current;
+        const t = e.touches[0];
+        touchStateRef.current = {
+          startX: t.clientX, startY: t.clientY, startTime: Date.now(),
+          startScrollLeft: scroll?.scrollLeft ?? 0,
+          startScrollTop: scroll?.scrollTop ?? 0,
+          moved: false,
+          pinching: false, pinchStartDistance: 0, pinchStartZoomIdx: zoomIdx,
+        };
+      }
+      return;
+    }
+
+    if (e.touches.length > 0) {
+      // Still touching; wait.
+      return;
+    }
+
+    const elapsed = Date.now() - state.startTime;
+    const changed = e.changedTouches[0];
+    const dx = changed ? changed.clientX - state.startX : 0;
+    const dy = changed ? changed.clientY - state.startY : 0;
+    touchStateRef.current = null;
+
+    // Swipe (horizontal, larger than vertical, not zoomed in).
+    if (
+      !state.pinching &&
+      Math.abs(dx) > SWIPE_THRESHOLD_PX &&
+      Math.abs(dx) > Math.abs(dy) * 1.5 &&
+      zoom <= 1
+    ) {
+      if (dx < 0) goNext();
+      else goPrev();
+      return;
+    }
+
+    // Tap detection.
+    if (!state.moved && elapsed < TAP_MAX_DURATION_MS) {
+      const now = Date.now();
+      const since = now - lastTapTimeRef.current;
+      lastTapTimeRef.current = now;
+      // Double-tap?
+      if (since < DOUBLE_TAP_WINDOW_MS) {
+        zoomToggle();
+        return;
+      }
+      // Single-tap (delayed slightly so we can detect a follow-up double-tap).
+      const target = e.target as HTMLElement;
+      // Don't toggle chrome if tap was on a link or button.
+      if (target.tagName === 'A' || target.closest('button') || target.closest('a')) {
+        return;
+      }
+      setTimeout(() => {
+        if (Date.now() - lastTapTimeRef.current >= DOUBLE_TAP_WINDOW_MS - 20) {
+          setChromeVisible((v) => !v);
+        }
+      }, DOUBLE_TAP_WINDOW_MS);
+    }
+  }
+
+  function handleTouchCancel() {
+    touchStateRef.current = null;
+  }
+
   // ---- Render ----
   if (loadError) {
     return (
-      <div className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center p-6">
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${magazine.issue_label} — error`}
+        tabIndex={-1}
+        className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center p-6 outline-none"
+      >
         <p className="text-white/80 text-sm mb-3">Couldn&apos;t load this issue.</p>
         <p className="text-white/40 text-xs mb-6">{loadError}</p>
         <button
@@ -634,23 +943,42 @@ export default function InteractiveMagazineReader({
     return `${n} / ${pageCount}`;
   })();
 
+  const transitionClass = reducedMotion ? '' : 'transition-colors';
+
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[60] bg-neutral-900 flex flex-col select-none"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${magazine.issue_label} — interactive magazine`}
+      tabIndex={-1}
+      className="fixed inset-0 z-[60] bg-neutral-900 flex flex-col select-none outline-none"
     >
+      {/* Screen-reader-only live announcement of current page */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {doc ? `Showing ${pageLabel}` : loadProgress}
+      </div>
+
       {/* Stage — the page area */}
       <div
         ref={scrollRef}
         className="absolute inset-0 overflow-auto flex items-center justify-center"
-        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        style={{
+          cursor: isDragging ? 'grabbing' : 'grab',
+          touchAction: zoom > 1 ? 'none' : 'pan-y',
+          WebkitOverflowScrolling: 'touch',
+        }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
         onClick={(e) => {
-          // Tapping the empty area toggles chrome visibility (mobile friendly).
-          // Only fire if click was directly on this element (not bubbled from canvas/link).
+          // Tapping the empty area toggles chrome visibility (desktop).
+          // Mobile uses the touch handler above so taps and drags aren't confused.
           if (e.target === e.currentTarget) {
             setChromeVisible((v) => !v);
           }
@@ -675,6 +1003,7 @@ export default function InteractiveMagazineReader({
                 overlays={leftOverlays}
                 pageNum={currentSpread.left}
                 trackContext={{ magazine_id: magazine.id, side: 'left' }}
+                transitionClass={transitionClass}
               />
             ) : spreadMode && currentSpread?.right !== null && currentSpread?.right !== 0 ? (
               <div style={{ visibility: 'hidden' }}>
@@ -688,6 +1017,7 @@ export default function InteractiveMagazineReader({
                 overlays={rightOverlays}
                 pageNum={currentSpread.right}
                 trackContext={{ magazine_id: magazine.id, side: 'right' }}
+                transitionClass={transitionClass}
               />
             ) : null}
           </div>
@@ -698,7 +1028,10 @@ export default function InteractiveMagazineReader({
       {chromeVisible && (
         <div
           className="absolute top-0 left-0 right-0 flex items-center justify-between px-3 py-2 z-10"
-          style={{ background: `linear-gradient(to bottom, ${brandColor}EE, ${brandColor}00)` }}
+          style={{
+            background: `linear-gradient(to bottom, ${brandColor}EE, ${brandColor}00)`,
+            paddingTop: 'max(0.5rem, env(safe-area-inset-top))',
+          }}
         >
           <button onClick={onClose} aria-label="Close" className="text-white p-1.5 -ml-1.5">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -774,7 +1107,10 @@ export default function InteractiveMagazineReader({
       {chromeVisible && (
         <div
           className="absolute bottom-0 left-0 right-0 flex flex-col items-center z-10"
-          style={{ background: `linear-gradient(to top, ${brandColor}EE, ${brandColor}00)` }}
+          style={{
+            background: `linear-gradient(to top, ${brandColor}EE, ${brandColor}00)`,
+            paddingBottom: 'env(safe-area-inset-bottom)',
+          }}
         >
           {/* Page jump input */}
           <form onSubmit={handleJumpSubmit} className="flex items-center gap-2 pt-3 pb-2">
@@ -846,8 +1182,8 @@ export default function InteractiveMagazineReader({
               <p className="text-xs text-white/40">No matches.</p>
             ) : (
               <ul className="space-y-2">
-                {searchResults.map((r) => (
-                  <li key={r.pageIdx}>
+                {searchResults.map((r, i) => (
+                  <li key={`${r.pageIdx}-${i}`}>
                     <button
                       onClick={() => {
                         setActionMode(null);
@@ -876,9 +1212,10 @@ interface PageCanvasProps {
   overlays: LinkOverlay[];
   pageNum: number;
   trackContext: { magazine_id: number; side: string };
+  transitionClass: string;
 }
 
-function PageCanvas({ canvasRef, overlays, pageNum, trackContext }: PageCanvasProps) {
+function PageCanvas({ canvasRef, overlays, pageNum, trackContext, transitionClass }: PageCanvasProps) {
   return (
     <div className="relative inline-block shadow-2xl">
       <canvas ref={canvasRef} className="block bg-white" />
@@ -888,7 +1225,7 @@ function PageCanvas({ canvasRef, overlays, pageNum, trackContext }: PageCanvasPr
           href={o.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute hover:bg-blue-400/20 focus:bg-blue-400/30 transition-colors"
+          className={`absolute hover:bg-blue-400/20 focus:bg-blue-400/30 ${transitionClass}`}
           style={{
             left: `${o.x}px`,
             top: `${o.y}px`,
