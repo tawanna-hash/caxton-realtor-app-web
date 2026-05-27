@@ -60,6 +60,21 @@ function trackClick(hotspotId: number): void {
   }).catch(() => { /* noop */ });
 }
 
+// Fire a fire-and-forget GET to an advertiser-supplied tracking URL
+// (typically a shortener like bit.ly). The browser issues a real GET,
+// the shortener counts the click in its dashboard via the redirect,
+// and the browser then tries to interpret the eventual response as
+// an image and silently fails. We don't care about the response.
+function fireTrackingPixel(url: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const img = new window.Image();
+    img.src = url;
+  } catch {
+    /* noop */
+  }
+}
+
 // Color hint per hotspot type. Used only for hover affordance in the reader;
 // the editor (Phase 2) will use the same palette for the draw tool.
 const TYPE_COLOR: Record<HotspotType, string> = {
@@ -132,8 +147,16 @@ export default function HotspotLayer({
               className={`${baseClass} hover:bg-blue-400/30 focus:bg-blue-400/40`}
               style={style}
               aria-label={ariaLabel}
-              onPointerDown={() => trackClick(h.id)}
-              onKeyDown={(e) => { if (e.key === 'Enter') trackClick(h.id); }}
+              onPointerDown={() => {
+                trackClick(h.id);
+                if (cfg.tracking_url) fireTrackingPixel(cfg.tracking_url);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  trackClick(h.id);
+                  if (cfg.tracking_url) fireTrackingPixel(cfg.tracking_url);
+                }
+              }}
             />
           );
         }

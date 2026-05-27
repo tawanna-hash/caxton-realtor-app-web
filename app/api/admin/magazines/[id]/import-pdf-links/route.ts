@@ -19,6 +19,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import type { Hotspot } from '@/lib/hotspots';
 import { PDFDocument, PDFDict, PDFArray, PDFName, PDFString, PDFNumber, PDFRef } from 'pdf-lib';
+import { isShortenerUrl, resolveUrl } from '@/lib/url-resolver';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -231,15 +232,41 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       WHERE magazine_id = ${idNum} AND source = 'pdf_import'
     `;
 
-    // 5. Insert new rows as drafts.
+    // 5a. Pre-resolve known shortener URLs in parallel so the user-facing
+    // href goes straight to the destination (no bit.ly interstitial). The
+    // original shortener URL is preserved as tracking_url so the advertiser
+    // still gets their click stats via a tracking pixel at click time.
+    let resolvedCount = 0;
+    const resolved = await Promise.all(links.map(async (link) => {
+      if (!isShortenerUrl(link.url)) {
+        return { ...link, final_url: link.url, tracking_url: null as string | null };
+      }
+      try {
+        const r = await resolveUrl(link.url, { maxHops: 8, timeoutMs: 5000 });
+        resolvedCount++;
+        return { ...link, final_url: r.resolved, tracking_url: link.url };
+      } catch (err) {
+        console.warn(
+          '[admin/import-pdf-links] could not resolve shortener:',
+          link.url, '-', errMessage(err),
+        );
+        return { ...link, final_url: link.url, tracking_url: null as string | null };
+      }
+    }));
+    console.log(`[admin/import-pdf-links] resolved ${resolvedCount} shortener URL(s)`);
+
+    // 5b. Insert new rows as drafts.
     let inserted = 0;
-    for (const link of links) {
-      // Guard against off-by-one if PDF has more pages than the
-      // magazine record claims (shouldn't happen, but cheap to check).
+    for (const link of resolved) {
       const pageCount = Number(mags[0].page_count) || 0;
       if (pageCount > 0 && link.page_idx >= pageCount) continue;
 
-      const configJson = JSON.stringify({ type: 'link', url: link.url, open_in: 'new_tab' });
+      const config: Record<string, unknown> = {
+        type: 'link', url: link.final_url, open_in: 'new_tab',
+      };
+      if (link.tracking_url) config.tracking_url = link.tracking_url;
+      const configJson = JSON.stringify(config);
+
       await sql`
         INSERT INTO magazine_hotspots (
           magazine_id, page_idx,

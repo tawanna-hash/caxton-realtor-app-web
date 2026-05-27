@@ -23,7 +23,7 @@ export type HotspotType =
 // Per-type config shapes. Stored as JSONB. The discriminated union keeps the
 // type-checker honest when we render or edit a hotspot.
 export type HotspotConfig =
-  | { type: 'link'; url: string; open_in?: 'new_tab' | 'same_tab' }
+  | { type: 'link'; url: string; tracking_url?: string; open_in?: 'new_tab' | 'same_tab' }
   | { type: 'video'; source: 'upload' | 'embed'; upload_url?: string; embed_url?: string; autoplay?: boolean; poster_url?: string }
   | { type: 'image'; images: Array<{ url: string; caption?: string }> }
   | { type: 'phone'; number: string; label?: string }
