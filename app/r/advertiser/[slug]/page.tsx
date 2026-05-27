@@ -1,21 +1,14 @@
 // app/r/advertiser/[slug]/page.tsx
 //
-// Public advertiser report. URL: /r/advertiser/<slug>?t=<share_token>
-//
-// Access rules:
-//   - UNGATED advertiser: valid share_token in ?t= OR valid cookie → dashboard
-//   - GATED advertiser:
-//       valid cookie → dashboard
-//       valid share_token (no cookie) → email gate form
-//       neither → 404
-//
-// We use notFound() for all access denials to avoid leaking which
-// slugs exist or whether the token is valid.
+// Public advertiser report — server component. Looks up the advertiser,
+// decides between dashboard / email gate / 404, and passes publication
+// to the client component so the UI themes correctly.
 
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { getSql, ensureSchema } from '@/lib/db';
 import { grantCookieName, isCookieGrantValid } from '@/lib/advertiser-grants';
+import { ensurePublicationColumn, getPublicationTheme } from '@/lib/publication-theme';
 import type { Advertiser } from '@/lib/advertisers';
 import PublicReportClient from './PublicReportClient';
 
@@ -37,11 +30,11 @@ export default async function PublicAdvertiserPage({ params, searchParams }: Pag
   const { t } = await searchParams;
 
   await ensureSchema();
+  await ensurePublicationColumn();
   const sql = getSql();
 
   const rows = (await sql`
-    SELECT id, name, slug, share_token, contact_email, requires_email_gate
-    FROM advertisers WHERE slug = ${slug}
+    SELECT * FROM advertisers WHERE slug = ${slug}
   `) as unknown as Advertiser[];
   if (rows.length === 0) notFound();
   const advertiser = rows[0];
@@ -65,6 +58,8 @@ export default async function PublicAdvertiserPage({ params, searchParams }: Pag
     notFound();
   }
 
+  const theme = getPublicationTheme(advertiser.publication);
+
   return (
     <PublicReportClient
       advertiser={{
@@ -73,6 +68,7 @@ export default async function PublicAdvertiserPage({ params, searchParams }: Pag
         slug: advertiser.slug,
         requires_email_gate: advertiser.requires_email_gate,
       }}
+      theme={theme}
       mode={mode}
       shareToken={shareTokenMatches ? t : undefined}
     />

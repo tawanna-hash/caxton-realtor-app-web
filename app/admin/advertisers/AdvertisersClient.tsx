@@ -1,141 +1,97 @@
 // app/admin/advertisers/AdvertisersClient.tsx
 //
-// Interactive UI for the advertiser management page.
-// Handles: list, create, edit, delete, regenerate token, copy share URL.
+// Admin UI for advertisers. Handles:
+//   - List table with publication badge, hotspot/click counts, gate state
+//   - Click advertiser name → drill-down analytics page
+//   - "New advertiser" modal with publication selector
+//   - Edit modal (same fields)
+//   - Copy share URL, Regenerate share token, Delete
+//
+// Publication branding is set per-advertiser and drives the public
+// dashboard + email theming downstream.
 
 'use client';
 
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import type { AdvertiserWithStats } from '@/lib/advertisers';
+import type { Publication } from '@/lib/publication-theme';
+import { PUBLICATION_OPTIONS, getPublicationTheme } from '@/lib/publication-theme';
 
-interface Props {
+type Props = {
   initialAdvertisers: AdvertiserWithStats[];
-}
+};
 
 export default function AdvertisersClient({ initialAdvertisers }: Props) {
   const [advertisers, setAdvertisers] = useState<AdvertiserWithStats[]>(initialAdvertisers);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<AdvertiserWithStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
+  const reload = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/advertisers', { cache: 'no-store' });
-      if (!res.ok) return;
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      setAdvertisers(data.advertisers as AdvertiserWithStats[]);
+      setAdvertisers(data.advertisers || []);
     } catch (err) {
-      console.warn('[advertisers] refresh failed:', err);
+      setError(err instanceof Error ? err.message : 'reload failed');
     }
   }, []);
 
-  const create = useCallback(async (payload: {
-    name: string; contact_email?: string; requires_email_gate: boolean;
-  }) => {
-    setError(null);
-    try {
-      const res = await fetch('/api/admin/advertisers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || 'Create failed');
-        return false;
-      }
-      await refresh();
-      return true;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'unknown error');
-      return false;
-    }
-  }, [refresh]);
+  const openCreate = () => { setEditing(null); setModalOpen(true); };
+  const openEdit = (a: AdvertiserWithStats) => { setEditing(a); setModalOpen(true); };
 
-  const update = useCallback(async (id: number, payload: Partial<{
-    name: string; contact_email: string | null; requires_email_gate: boolean;
-  }>) => {
-    setError(null);
-    try {
-      const res = await fetch(`/api/admin/advertisers/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || 'Update failed');
-        return false;
-      }
-      await refresh();
-      return true;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'unknown error');
-      return false;
-    }
-  }, [refresh]);
-
-  const remove = useCallback(async (id: number, name: string) => {
-    if (!confirm(`Delete advertiser "${name}"? Their hotspots will remain but be unlinked.`)) return;
-    try {
-      const res = await fetch(`/api/admin/advertisers/${id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || 'Delete failed');
-        return;
-      }
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'unknown error');
-    }
-  }, [refresh]);
-
-  const regenerateToken = useCallback(async (id: number, name: string) => {
-    if (!confirm(`Regenerate share token for "${name}"? Any links already sent will stop working.`)) return;
-    try {
-      const res = await fetch(`/api/admin/advertisers/${id}/regenerate-token`, { method: 'POST' });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || 'Regenerate failed');
-        return;
-      }
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'unknown error');
-    }
-  }, [refresh]);
-
-  const buildShareUrl = (a: AdvertiserWithStats) => {
+  const copyShareUrl = async (a: AdvertiserWithStats) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    return `${origin}/r/advertiser/${a.slug}?t=${a.share_token}`;
+    const url = `${origin}/r/advertiser/${a.slug}?t=${a.share_token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      window.prompt('Copy this URL:', url);
+    }
   };
 
-  const copyShareUrl = useCallback(async (a: AdvertiserWithStats) => {
-    try {
-      await navigator.clipboard.writeText(buildShareUrl(a));
-      setCopiedId(a.id);
-      setTimeout(() => setCopiedId(null), 2000);
-    } catch {
-      setError('Copy failed; select and copy manually');
+  const regenerateToken = async (a: AdvertiserWithStats) => {
+    if (!window.confirm(`Rotate the share token for "${a.name}"? Old share URLs will stop working.`)) {
+      return;
     }
-  }, []);
+    try {
+      const res = await fetch(`/api/admin/advertisers/${a.id}/regenerate-token`, { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'regenerate failed');
+    }
+  };
+
+  const deleteAdvertiser = async (a: AdvertiserWithStats) => {
+    if (!window.confirm(`Delete "${a.name}"? Their hotspot links will be unlinked (hotspots remain).`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/advertisers/${a.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'delete failed');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-2xl font-semibold text-gray-900">Advertisers</h1>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-500 mt-1">
               Manage advertisers, share analytics links, and configure access.
             </p>
           </div>
           <button
             type="button"
-            onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-blue-700 text-white text-sm font-medium rounded hover:bg-blue-800"
+            onClick={openCreate}
+            className="bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700"
           >
             New advertiser
           </button>
@@ -144,23 +100,17 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded">
             {error}
-            <button
-              type="button"
-              onClick={() => setError(null)}
-              className="ml-3 text-red-600 underline text-xs"
-            >
-              dismiss
-            </button>
           </div>
         )}
 
-        <div className="bg-white shadow-sm rounded border border-gray-200 overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr className="text-left text-xs uppercase tracking-wider text-gray-600">
                 <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Hotspots</th>
-                <th className="px-4 py-3">Clicks (30d)</th>
+                <th className="px-4 py-3">Publication</th>
+                <th className="px-4 py-3 text-right">Hotspots</th>
+                <th className="px-4 py-3 text-right">Clicks (30d)</th>
                 <th className="px-4 py-3">Contact email</th>
                 <th className="px-4 py-3">Gate</th>
                 <th className="px-4 py-3 text-right">Actions</th>
@@ -169,9 +119,8 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
             <tbody>
               {advertisers.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
-                    No advertisers yet. Create one above, or they&apos;ll be backfilled
-                    from existing hotspots&apos; advertiser_name fields automatically.
+                  <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
+                    No advertisers yet. Click &ldquo;New advertiser&rdquo; to add one.
                   </td>
                 </tr>
               )}
@@ -186,43 +135,44 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
                     </Link>
                     <div className="text-xs text-gray-500">{a.slug}</div>
                   </td>
-                  <td className="px-4 py-3 text-gray-700">{a.hotspot_count}</td>
-                  <td className="px-4 py-3 text-gray-700">{a.clicks_30d}</td>
+                  <td className="px-4 py-3">
+                    <PublicationBadge publication={a.publication} />
+                  </td>
+                  <td className="px-4 py-3 text-right text-gray-700">{a.hotspot_count}</td>
+                  <td className="px-4 py-3 text-right text-gray-700">{a.clicks_30d}</td>
                   <td className="px-4 py-3 text-gray-700">{a.contact_email || '—'}</td>
                   <td className="px-4 py-3">
                     {a.requires_email_gate
-                      ? <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-800 rounded">email</span>
+                      ? <span className="text-xs text-amber-700">email gate</span>
                       : <span className="text-xs text-gray-500">open</span>}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="inline-flex gap-2">
+                  <td className="px-4 py-3 text-right text-xs">
+                    <div className="inline-flex gap-1.5">
                       <button
                         type="button"
                         onClick={() => copyShareUrl(a)}
-                        className="text-xs px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
-                        title="Copy share URL"
+                        className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
                       >
-                        {copiedId === a.id ? 'Copied!' : 'Copy link'}
+                        Copy link
                       </button>
                       <button
                         type="button"
-                        onClick={() => setEditingId(a.id)}
-                        className="text-xs px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
+                        onClick={() => openEdit(a)}
+                        className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
-                        onClick={() => regenerateToken(a.id, a.name)}
-                        className="text-xs px-2 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50"
-                        title="Regenerate share token (invalidates old links)"
+                        onClick={() => regenerateToken(a)}
+                        className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
                       >
                         Rotate token
                       </button>
                       <button
                         type="button"
-                        onClick={() => remove(a.id, a.name)}
-                        className="text-xs px-2 py-1 text-red-700 border border-red-300 rounded hover:bg-red-50"
+                        onClick={() => deleteAdvertiser(a)}
+                        className="px-2 py-1 border border-red-200 text-red-700 rounded hover:bg-red-50"
                       >
                         Delete
                       </button>
@@ -234,105 +184,144 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
           </table>
         </div>
 
-        <div className="mt-6 text-xs text-gray-500">
-          <p>
-            <strong>Tip:</strong> Share URL gives the advertiser a read-only dashboard.
-            If <em>email gate</em> is on, the advertiser must verify the contact email
-            via magic link before viewing.
-          </p>
-        </div>
+        <p className="text-xs text-gray-500 mt-4">
+          <strong>Tip:</strong> Share URL gives the advertiser a read-only dashboard.
+          If <em>email gate</em> is on, the advertiser must verify the contact email via magic link before viewing.
+          The dashboard&apos;s colors and email branding follow the advertiser&apos;s publication.
+        </p>
       </div>
 
-      {showCreateModal && (
-        <AdvertiserFormModal
-          mode="create"
-          onSave={async (payload) => {
-            const ok = await create(payload);
-            if (ok) setShowCreateModal(false);
-          }}
-          onClose={() => setShowCreateModal(false)}
-        />
-      )}
-
-      {editingId !== null && (
-        <AdvertiserFormModal
-          mode="edit"
-          initial={advertisers.find((a) => a.id === editingId)!}
-          onSave={async (payload) => {
-            const ok = await update(editingId, payload);
-            if (ok) setEditingId(null);
-          }}
-          onClose={() => setEditingId(null)}
+      {modalOpen && (
+        <EditModal
+          advertiser={editing}
+          onClose={() => setModalOpen(false)}
+          onSaved={async () => { setModalOpen(false); await reload(); }}
+          onError={(msg) => setError(msg)}
         />
       )}
     </div>
   );
 }
 
-// ============================================================
-// Create/edit form modal
-// ============================================================
-function AdvertiserFormModal({
-  mode, initial, onSave, onClose,
+function PublicationBadge({ publication }: { publication?: Publication }) {
+  const theme = getPublicationTheme(publication);
+  const bg =
+    theme.id === 'san_antonio' ? 'bg-purple-50 text-purple-800 border-purple-200'
+      : theme.id === 'both' ? 'bg-gray-100 text-gray-700 border-gray-200'
+      : 'bg-blue-50 text-blue-800 border-blue-200';
+  return (
+    <span className={`inline-block px-2 py-0.5 text-xs rounded border ${bg}`}>
+      {theme.shortName}
+    </span>
+  );
+}
+
+function EditModal({
+  advertiser, onClose, onSaved, onError,
 }: {
-  mode: 'create' | 'edit';
-  initial?: AdvertiserWithStats;
-  onSave: (payload: { name: string; contact_email?: string; requires_email_gate: boolean }) => Promise<void>;
+  advertiser: AdvertiserWithStats | null;
   onClose: () => void;
+  onSaved: () => Promise<void> | void;
+  onError: (msg: string) => void;
 }) {
-  const [name, setName] = useState(initial?.name ?? '');
-  const [contactEmail, setContactEmail] = useState(initial?.contact_email ?? '');
-  const [requiresEmailGate, setRequiresEmailGate] = useState(initial?.requires_email_gate ?? false);
-  const [submitting, setSubmitting] = useState(false);
+  const [name, setName] = useState(advertiser?.name || '');
+  const [publication, setPublication] = useState<Publication>(advertiser?.publication || 'austin');
+  const [contactEmail, setContactEmail] = useState(advertiser?.contact_email || '');
+  const [requiresGate, setRequiresGate] = useState(advertiser?.requires_email_gate || false);
+  const [saving, setSaving] = useState(false);
+
+  const onSave = useCallback(async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      const url = advertiser
+        ? `/api/admin/advertisers/${advertiser.id}`
+        : '/api/admin/advertisers';
+      const method = advertiser ? 'PATCH' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          contact_email: contactEmail.trim() || null,
+          requires_email_gate: requiresGate,
+          publication,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `HTTP ${res.status}`);
+      }
+      await onSaved();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'save failed');
+    } finally {
+      setSaving(false);
+    }
+  }, [name, publication, contactEmail, requiresGate, advertiser, onSaved, onError]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6" onClick={onClose}>
-      <div
-        className="bg-white rounded shadow-xl max-w-md w-full p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div
+      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          {mode === 'create' ? 'New advertiser' : 'Edit advertiser'}
+          {advertiser ? 'Edit advertiser' : 'New advertiser'}
         </h2>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-xs uppercase tracking-wider text-gray-600 mb-1">Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              required
               className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g. La Cima"
-              autoFocus
+              disabled={saving}
             />
           </div>
+
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">
-              Contact email <span className="text-gray-400">(optional)</span>
-            </label>
+            <label className="block text-xs uppercase tracking-wider text-gray-600 mb-1">Publication</label>
+            <select
+              value={publication}
+              onChange={(e) => setPublication(e.target.value as Publication)}
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={saving}
+            >
+              {PUBLICATION_OPTIONS.map((opt) => (
+                <option key={opt.id} value={opt.id}>{opt.label}</option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Drives branding on the advertiser&apos;s public dashboard and outbound emails.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-gray-600 mb-1">Contact email</label>
             <input
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="marketing@example.com"
+              placeholder="contact@example.com"
+              disabled={saving}
             />
           </div>
-          <div className="flex items-start gap-3">
-            <input
-              type="checkbox"
-              id="requires_email_gate"
-              checked={requiresEmailGate}
-              onChange={(e) => setRequiresEmailGate(e.target.checked)}
-              className="mt-1"
-            />
-            <label htmlFor="requires_email_gate" className="text-sm text-gray-700">
-              Require email verification before viewing analytics
-              <p className="text-xs text-gray-500 mt-0.5">
-                Advertisers will need to enter their email and click a magic link before
-                seeing reports. Useful for sensitive accounts.
-              </p>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={requiresGate}
+                onChange={(e) => setRequiresGate(e.target.checked)}
+                disabled={saving}
+              />
+              <span>Requires email gate (advertiser must verify email before viewing)</span>
             </label>
           </div>
         </div>
@@ -341,29 +330,18 @@ function AdvertiserFormModal({
           <button
             type="button"
             onClick={onClose}
-            disabled={submitting}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+            disabled={saving}
+            className="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             type="button"
-            disabled={submitting || !name.trim()}
-            onClick={async () => {
-              setSubmitting(true);
-              try {
-                await onSave({
-                  name: name.trim(),
-                  contact_email: contactEmail.trim() || undefined,
-                  requires_email_gate: requiresEmailGate,
-                });
-              } finally {
-                setSubmitting(false);
-              }
-            }}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-700 rounded hover:bg-blue-800 disabled:opacity-50"
+            onClick={onSave}
+            disabled={saving || !name.trim()}
+            className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
           >
-            {submitting ? 'Saving…' : (mode === 'create' ? 'Create' : 'Save')}
+            {saving ? 'Saving…' : (advertiser ? 'Save' : 'Create')}
           </button>
         </div>
       </div>

@@ -1,7 +1,9 @@
 // app/r/advertiser/[slug]/PublicReportClient.tsx
 //
-// Renders either the email-gate form (when GATED + no cookie yet) or the
-// full performance dashboard. Single client component, two views.
+// Publication-themed advertiser dashboard. Header bar, gate button,
+// and chart gradient all read from `theme.primaryColor`, so the
+// same component renders RealtyLine navy for Austin advertisers
+// and Newsline purple for San Antonio.
 
 'use client';
 
@@ -10,6 +12,7 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
   Tooltip, CartesianGrid,
 } from 'recharts';
+import type { PublicationTheme } from '@/lib/publication-theme';
 
 interface PublicAdvertiser {
   id: number;
@@ -41,6 +44,7 @@ interface PublicAnalyticsResponse {
 
 type Props = {
   advertiser: PublicAdvertiser;
+  theme: PublicationTheme;
   mode: 'dashboard' | 'email_gate';
   shareToken?: string;
 };
@@ -71,22 +75,23 @@ function rangeLabel(p: RangePreset): string {
   return 'Last 90 days';
 }
 
-export default function PublicReportClient({ advertiser, mode, shareToken }: Props) {
+export default function PublicReportClient({ advertiser, theme, mode, shareToken }: Props) {
   if (mode === 'email_gate') {
     if (!shareToken) {
-      // Defensive — server should never get here without share_token.
       return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <p className="text-sm text-gray-500">Invalid access link.</p>
         </div>
       );
     }
-    return <EmailGate advertiser={advertiser} shareToken={shareToken} />;
+    return <EmailGate advertiser={advertiser} theme={theme} shareToken={shareToken} />;
   }
-  return <Dashboard advertiser={advertiser} shareToken={shareToken} />;
+  return <Dashboard advertiser={advertiser} theme={theme} shareToken={shareToken} />;
 }
 
-function EmailGate({ advertiser, shareToken }: { advertiser: PublicAdvertiser; shareToken: string }) {
+function EmailGate({
+  advertiser, theme, shareToken,
+}: { advertiser: PublicAdvertiser; theme: PublicationTheme; shareToken: string }) {
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -122,7 +127,7 @@ function EmailGate({ advertiser, shareToken }: { advertiser: PublicAdvertiser; s
         <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
           <h1 className="text-xl font-semibold text-gray-900 mb-2">{advertiser.name}</h1>
           <p className="text-sm text-gray-600 mb-6">
-            Performance report — sign in with your email to view.
+            Performance report &mdash; sign in with your email to view.
           </p>
 
           {success ? (
@@ -159,7 +164,8 @@ function EmailGate({ advertiser, shareToken }: { advertiser: PublicAdvertiser; s
               <button
                 type="submit"
                 disabled={submitting || !email.trim()}
-                className="w-full bg-[#021D40] text-white py-2 rounded font-medium disabled:opacity-50 hover:bg-[#03285a] transition"
+                style={{ backgroundColor: theme.primaryColor }}
+                className="w-full text-white py-2 rounded font-medium disabled:opacity-50 transition hover:brightness-110"
               >
                 {submitting ? 'Sending…' : 'Email me a link'}
               </button>
@@ -167,14 +173,16 @@ function EmailGate({ advertiser, shareToken }: { advertiser: PublicAdvertiser; s
           )}
         </div>
         <p className="text-xs text-gray-500 text-center mt-4">
-          Powered by Realty News Now
+          Powered by {theme.name}
         </p>
       </div>
     </div>
   );
 }
 
-function Dashboard({ advertiser, shareToken }: { advertiser: PublicAdvertiser; shareToken?: string }) {
+function Dashboard({
+  advertiser, theme, shareToken,
+}: { advertiser: PublicAdvertiser; theme: PublicationTheme; shareToken?: string }) {
   const [preset, setPreset] = useState<RangePreset>('30d');
   const [data, setData] = useState<PublicAnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -207,11 +215,14 @@ function Dashboard({ advertiser, shareToken }: { advertiser: PublicAdvertiser; s
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(preset); }, [load, preset]);
 
+  // Unique gradient ID per publication to avoid SVG defs collisions
+  const gradientId = `clicksGradient-${theme.id}`;
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#021D40] text-white">
+      <div style={{ backgroundColor: theme.primaryColor }} className="text-white">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="text-sm font-medium">Realty News Now · Advertiser Report</div>
+          <div className="text-sm font-medium">{theme.name} &middot; Advertiser Report</div>
           <div className="text-xs opacity-75">{advertiser.name}</div>
         </div>
       </div>
@@ -272,9 +283,9 @@ function Dashboard({ advertiser, shareToken }: { advertiser: PublicAdvertiser; s
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={data.daily_clicks} margin={{ top: 4, right: 12, bottom: 4, left: -10 }}>
                     <defs>
-                      <linearGradient id="publicClicksGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#021D40" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="#021D40" stopOpacity={0} />
+                      <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={theme.primaryColor} stopOpacity={0.4} />
+                        <stop offset="100%" stopColor={theme.primaryColor} stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -300,9 +311,9 @@ function Dashboard({ advertiser, shareToken }: { advertiser: PublicAdvertiser; s
                     <Area
                       type="monotone"
                       dataKey="clicks"
-                      stroke="#021D40"
+                      stroke={theme.primaryColor}
                       strokeWidth={2}
-                      fill="url(#publicClicksGradient)"
+                      fill={`url(#${gradientId})`}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -361,7 +372,7 @@ function Dashboard({ advertiser, shareToken }: { advertiser: PublicAdvertiser; s
             </div>
 
             <p className="text-xs text-gray-500 text-center mt-8">
-              Powered by Realty News Now · Data updates in real time as ads are viewed.
+              Powered by {theme.name} · Data updates in real time as ads are viewed.
             </p>
           </>
         )}

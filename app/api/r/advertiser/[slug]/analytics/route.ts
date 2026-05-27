@@ -2,14 +2,11 @@
 //
 // Public analytics endpoint. Returns same shape as the admin one
 // but only includes PUBLISHED hotspots (drafts hidden from advertisers).
-//
-// Authorization:
-//   - GATED advertiser: requires valid cookie (set by /verify after magic link)
-//   - UNGATED advertiser: requires valid share_token in ?t=  OR valid cookie
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { grantCookieName, isCookieGrantValid } from '@/lib/advertiser-grants';
+import { ensurePublicationColumn } from '@/lib/publication-theme';
 import type { Advertiser } from '@/lib/advertisers';
 
 export const runtime = 'nodejs';
@@ -28,18 +25,17 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
 
   try {
     await ensureSchema();
+    await ensurePublicationColumn();
     const sql = getSql();
 
     const advRows = (await sql`
-      SELECT id, name, slug, share_token, contact_email, requires_email_gate
-      FROM advertisers WHERE slug = ${slug}
+      SELECT * FROM advertisers WHERE slug = ${slug}
     `) as unknown as Advertiser[];
     if (advRows.length === 0) {
       return NextResponse.json({ error: 'not found' }, { status: 404 });
     }
     const advertiser = advRows[0];
 
-    // ---- Auth ----
     const cookieValue = req.cookies.get(grantCookieName(advertiser.id))?.value;
     const cookieOk = await isCookieGrantValid(advertiser.id, cookieValue);
     const tokenOk = !!t && t === advertiser.share_token;
@@ -51,7 +47,6 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
     }
 
-    // ---- Date range ----
     const today = new Date();
     today.setUTCHours(23, 59, 59, 999);
     const defaultFrom = new Date(today);
@@ -79,7 +74,6 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     const fromIso = from.toISOString();
     const toIso = to.toISOString();
 
-    // ---- Queries — only published hotspots ----
     const summaryRows = (await sql`
       SELECT
         COUNT(c.id)::int AS total_clicks,
@@ -167,7 +161,12 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     const avgClicksPerDay = Math.round((totalClicks / dayCount) * 10) / 10;
 
     return NextResponse.json({
-      advertiser: { id: advertiser.id, name: advertiser.name, slug: advertiser.slug },
+      advertiser: {
+        id: advertiser.id,
+        name: advertiser.name,
+        slug: advertiser.slug,
+        publication: advertiser.publication,
+      },
       range: { from: fromIso, to: toIso },
       summary: {
         total_clicks: totalClicks,

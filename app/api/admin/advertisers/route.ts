@@ -1,12 +1,21 @@
 // app/api/admin/advertisers/route.ts
 //
-// GET  /api/admin/advertisers           → list all advertisers + computed stats
-// POST /api/admin/advertisers           → create a new advertiser
+// Admin endpoints:
+//   GET  — list all advertisers with hotspot_count + clicks_30d stats
+//   POST — create new advertiser (handles slug collision with -2/-3 suffix)
+//
+// Auth: must hit /admin/auth/me with valid admin cookie.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
-import { slugify, generateShareToken } from '@/lib/advertisers';
-import type { Advertiser, AdvertiserWithStats } from '@/lib/advertisers';
+import {
+  slugify, generateShareToken,
+  type Advertiser, type AdvertiserWithStats,
+} from '@/lib/advertisers';
+import {
+  ensurePublicationColumn,
+  type Publication,
+} from '@/lib/publication-theme';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,93 +36,99 @@ function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
 }
 
+function normalizePublication(value: unknown): Publication {
+  if (value === 'san_antonio' || value === 'both') return value;
+  return 'austin';
+}
+
 export async function GET(req: NextRequest) {
-  const cookieHeader = req.headers.get('cookie');
-  if (!(await isAdmin(cookieHeader))) {
+  if (!(await isAdmin(req.headers.get('cookie')))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   try {
     await ensureSchema();
+    await ensurePublicationColumn();
     const sql = getSql();
-
     const rows = (await sql`
       SELECT
-        a.id, a.name, a.slug, a.share_token, a.contact_email,
-        a.requires_email_gate, a.created_at, a.updated_at,
-        (SELECT COUNT(*) FROM magazine_hotspots h WHERE h.advertiser_id = a.id) AS hotspot_count,
-        (SELECT COUNT(*) FROM magazine_hotspot_clicks c
-           JOIN magazine_hotspots h ON c.hotspot_id = h.id
+        a.*,
+        (SELECT COUNT(*)::int FROM magazine_hotspots WHERE advertiser_id = a.id) AS hotspot_count,
+        (SELECT COUNT(*)::int FROM magazine_hotspot_clicks c
+          JOIN magazine_hotspots h ON c.hotspot_id = h.id
           WHERE h.advertiser_id = a.id
-            AND c.occurred_at > NOW() - INTERVAL '30 days') AS clicks_30d
+            AND c.occurred_at >= NOW() - INTERVAL '30 days'
+        ) AS clicks_30d
       FROM advertisers a
       ORDER BY a.name ASC
     `) as unknown as AdvertiserWithStats[];
-
     return NextResponse.json({ advertisers: rows });
   } catch (err) {
-    console.error('[admin/advertisers] GET failed:', errMessage(err));
-    return NextResponse.json(
-      { error: 'db error', detail: errMessage(err) },
-      { status: 500 },
-    );
+    console.error('[admin/advertisers GET]', errMessage(err));
+    return NextResponse.json({ error: 'list failed', detail: errMessage(err) }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
-  const cookieHeader = req.headers.get('cookie');
-  if (!(await isAdmin(cookieHeader))) {
+  if (!(await isAdmin(req.headers.get('cookie')))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { name?: string; contact_email?: string; requires_email_gate?: boolean };
-  try { body = await req.json(); }
-  catch {
-    return NextResponse.json({ error: 'invalid JSON' }, { status: 400 });
+  let body: {
+    name?: string;
+    contact_email?: string;
+    requires_email_gate?: boolean;
+    publication?: string;
+  };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'invalid json' }, { status: 400 });
   }
 
-  const name = String(body.name ?? '').trim();
-  if (!name) return NextResponse.json({ error: 'name required' }, { status: 400 });
-
-  const contactEmail = body.contact_email ? String(body.contact_email).trim() : null;
-  const requiresEmailGate = Boolean(body.requires_email_gate);
+  const name = (body.name || '').trim();
+  if (!name) {
+    return NextResponse.json({ error: 'name required' }, { status: 400 });
+  }
+  const contactEmail = (body.contact_email || '').trim() || null;
+  const requiresGate = !!body.requires_email_gate;
+  const publication = normalizePublication(body.publication);
 
   try {
     await ensureSchema();
+    await ensurePublicationColumn();
     const sql = getSql();
 
-    // Find a unique slug. Append -2, -3, ... if base slug is taken.
-    const baseSlug = slugify(name);
-    if (!baseSlug) {
-      return NextResponse.json({ error: 'name produces empty slug' }, { status: 400 });
-    }
-
+    // Find a free slug
+    const baseSlug = slugify(name) || `advertiser-${Date.now()}`;
     let slug = baseSlug;
-    let n = 1;
+    let suffix = 2;
     while (true) {
-      const dup = await sql`SELECT id FROM advertisers WHERE slug = ${slug} LIMIT 1`;
-      if (dup.length === 0) break;
-      n++;
-      slug = `${baseSlug}-${n}`;
-      if (n > 100) {
-        return NextResponse.json({ error: 'could not generate unique slug' }, { status: 500 });
+      const existing = (await sql`
+        SELECT id FROM advertisers WHERE slug = ${slug} LIMIT 1
+      `) as unknown as Array<{ id: number }>;
+      if (existing.length === 0) break;
+      slug = `${baseSlug}-${suffix}`;
+      suffix += 1;
+      if (suffix > 50) {
+        return NextResponse.json({ error: 'could not allocate slug' }, { status: 500 });
       }
     }
 
-    const token = generateShareToken();
-
+    const shareToken = generateShareToken();
     const inserted = (await sql`
-      INSERT INTO advertisers (name, slug, share_token, contact_email, requires_email_gate)
-      VALUES (${name}, ${slug}, ${token}, ${contactEmail}, ${requiresEmailGate})
-      RETURNING id, name, slug, share_token, contact_email,
-                requires_email_gate, created_at, updated_at
+      INSERT INTO advertisers (
+        name, slug, share_token, contact_email,
+        requires_email_gate, publication, created_at, updated_at
+      ) VALUES (
+        ${name}, ${slug}, ${shareToken}, ${contactEmail},
+        ${requiresGate}, ${publication}, NOW(), NOW()
+      )
+      RETURNING *
     `) as unknown as Advertiser[];
 
     return NextResponse.json({ advertiser: inserted[0] }, { status: 201 });
   } catch (err) {
-    console.error('[admin/advertisers] POST failed:', errMessage(err));
-    return NextResponse.json(
-      { error: 'create failed', detail: errMessage(err) },
-      { status: 500 },
-    );
+    console.error('[admin/advertisers POST]', errMessage(err));
+    return NextResponse.json({ error: 'create failed', detail: errMessage(err) }, { status: 500 });
   }
 }
