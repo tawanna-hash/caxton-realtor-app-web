@@ -36,7 +36,8 @@ function getOrCreateSessionId(): string {
 
 function trackClick(hotspotId: number): void {
   const sessionId = getOrCreateSessionId();
-  if (!sessionId) return;
+  console.log('[HotspotLayer] trackClick fired', { hotspotId, sessionId });
+  if (!sessionId) { console.warn('[HotspotLayer] no session id, aborting'); return; }
   // Fire and forget. sendBeacon survives navigation away from the page —
   // important for link hotspots where the user is leaving.
   const payload = JSON.stringify({ session_id: sessionId });
