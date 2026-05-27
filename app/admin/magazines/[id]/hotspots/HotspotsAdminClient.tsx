@@ -85,13 +85,17 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
   const createHotspot = useCallback(async (pageIdx: number) => {
     setSaveState('saving');
     try {
+      // New hotspots default to a "Link" draft with a placeholder URL.
+      // The user replaces these values via the config modal that opens
+      // immediately after creation. Server-side validation requires every
+      // type's config to have its required fields, so we cannot send an
+      // empty config — the placeholder satisfies validation but is
+      // obviously a placeholder for the editor to replace.
       const res = await fetch(`/api/admin/magazines/${magazine.id}/hotspots`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           page_idx: pageIdx,
-          ...DEFAULT_NEW_RECT,
-          // Internal API expects x/y/w/h not x_frac etc.
           x: DEFAULT_NEW_RECT.x_frac,
           y: DEFAULT_NEW_RECT.y_frac,
           w: DEFAULT_NEW_RECT.w_frac,
