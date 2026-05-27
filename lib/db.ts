@@ -286,5 +286,73 @@ export async function ensureSchema(): Promise<void> {
     `;
   }
 
+  // ============================================================
+  // Magazine hotspots (Phase 1 — May 27, 2026)
+  // Clickable regions overlaid on magazine pages. Position stored
+  // as fractions of natural page dims so they scale correctly
+  // regardless of zoom, reader, or device. See lib/hotspots.ts
+  // for type definitions. Click tracking feeds advertiser
+  // performance reports (Phase 4).
+  // ============================================================
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS magazine_hotspots (
+      id              BIGSERIAL PRIMARY KEY,
+      magazine_id     INTEGER NOT NULL REFERENCES magazines(id) ON DELETE CASCADE,
+      page_idx        INTEGER NOT NULL,
+      x_frac          REAL NOT NULL CHECK (x_frac >= 0 AND x_frac <= 1),
+      y_frac          REAL NOT NULL CHECK (y_frac >= 0 AND y_frac <= 1),
+      w_frac          REAL NOT NULL CHECK (w_frac > 0 AND w_frac <= 1),
+      h_frac          REAL NOT NULL CHECK (h_frac > 0 AND h_frac <= 1),
+      type            TEXT NOT NULL CHECK (type IN (
+                        'link', 'video', 'image', 'phone', 'email',
+                        'form', 'mls', 'audio', 'reveal'
+                      )),
+      config          JSONB NOT NULL DEFAULT '{}'::jsonb,
+      label           TEXT,
+      advertiser_name TEXT,
+      is_published    BOOLEAN NOT NULL DEFAULT false,
+      created_by      TEXT,
+      created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_by      TEXT,
+      updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  // Fast lookup of published hotspots for a given magazine page.
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_hotspots_magazine_page
+      ON magazine_hotspots(magazine_id, page_idx)
+      WHERE is_published = true
+  `;
+  // For advertiser performance reports.
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_hotspots_advertiser
+      ON magazine_hotspots(advertiser_name)
+      WHERE advertiser_name IS NOT NULL
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS magazine_hotspot_clicks (
+      id              BIGSERIAL PRIMARY KEY,
+      hotspot_id      BIGINT NOT NULL REFERENCES magazine_hotspots(id) ON DELETE CASCADE,
+      magazine_id     INTEGER NOT NULL REFERENCES magazines(id) ON DELETE CASCADE,
+      page_idx        INTEGER NOT NULL,
+      session_id      TEXT NOT NULL,
+      user_agent      TEXT,
+      referrer        TEXT,
+      occurred_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_clicks_hotspot
+      ON magazine_hotspot_clicks(hotspot_id, occurred_at DESC)
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_clicks_magazine
+      ON magazine_hotspot_clicks(magazine_id, occurred_at DESC)
+  `;
+
   schemaEnsured = true;
 }

@@ -29,6 +29,8 @@ import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import QRCode from 'qrcode';
 import type { Magazine } from '@/lib/magazines';
 import { trackEvent } from '../app/posthog-provider';
+import HotspotLayer from './HotspotLayer';
+import type { PublicHotspot } from '@/lib/hotspots';
 
 interface InteractiveMagazineReaderProps {
   magazine: Magazine;
@@ -193,6 +195,13 @@ export default function InteractiveMagazineReader({
   const [chromeVisible, setChromeVisible] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Hotspots fetched once on mount. Filtered per-page in the render below.
+  const [hotspots, setHotspots] = useState<PublicHotspot[]>([]);
+  // Track the actual rendered canvas sizes so HotspotLayer can position
+  // overlays in pixel space. Updated by the render effect after each paint.
+  const [leftCanvasSize, setLeftCanvasSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  const [rightCanvasSize, setRightCanvasSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+
   const leftCanvasRef = useRef<HTMLCanvasElement>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -298,6 +307,27 @@ export default function InteractiveMagazineReader({
       cancelled = true;
     };
   }, [magazine.id, magazine.reader_url, magazine.issue_label, magazine.publication]);
+
+  // ---- Fetch hotspots once the PDF is loaded ----
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchHotspots() {
+      try {
+        const res = await fetch(`/api/magazines/${magazine.id}/hotspots`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        if (Array.isArray(data.hotspots)) {
+          setHotspots(data.hotspots as PublicHotspot[]);
+        }
+      } catch (err) {
+        // Hotspots are non-essential — don't surface to user if they fail.
+        console.warn('[InteractiveMagazineReader] hotspot fetch failed:', err);
+      }
+    }
+    fetchHotspots();
+    return () => { cancelled = true; };
+  }, [magazine.id]);
 
   // ---- Render current spread ----
   useEffect(() => {
@@ -405,8 +435,13 @@ export default function InteractiveMagazineReader({
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
         ctx.drawImage(offscreen, 0, 0);
-        if (isLeft) setLeftOverlays(overlays);
-        else setRightOverlays(overlays);
+        if (isLeft) {
+          setLeftOverlays(overlays);
+          setLeftCanvasSize({ w: cssDisplayW, h: cssDisplayH });
+        } else {
+          setRightOverlays(overlays);
+          setRightCanvasSize({ w: cssDisplayW, h: cssDisplayH });
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : '';
         if (msg.includes('Cancelled') || msg.includes('cancelled')) return;
@@ -1004,6 +1039,9 @@ export default function InteractiveMagazineReader({
                 pageNum={currentSpread.left}
                 trackContext={{ magazine_id: magazine.id, side: 'left' }}
                 transitionClass={transitionClass}
+                hotspots={hotspots.filter((h) => h.page_idx === currentSpread.left)}
+                displayWidth={leftCanvasSize.w}
+                displayHeight={leftCanvasSize.h}
               />
             ) : spreadMode && currentSpread?.right !== null && currentSpread?.right !== 0 ? (
               <div style={{ visibility: 'hidden' }}>
@@ -1018,6 +1056,9 @@ export default function InteractiveMagazineReader({
                 pageNum={currentSpread.right}
                 trackContext={{ magazine_id: magazine.id, side: 'right' }}
                 transitionClass={transitionClass}
+                hotspots={hotspots.filter((h) => h.page_idx === currentSpread.right)}
+                displayWidth={rightCanvasSize.w}
+                displayHeight={rightCanvasSize.h}
               />
             ) : null}
           </div>
@@ -1213,12 +1254,19 @@ interface PageCanvasProps {
   pageNum: number;
   trackContext: { magazine_id: number; side: string };
   transitionClass: string;
+  hotspots: PublicHotspot[];
+  displayWidth: number;
+  displayHeight: number;
 }
 
-function PageCanvas({ canvasRef, overlays, pageNum, trackContext, transitionClass }: PageCanvasProps) {
+function PageCanvas({
+  canvasRef, overlays, pageNum, trackContext, transitionClass,
+  hotspots, displayWidth, displayHeight,
+}: PageCanvasProps) {
   return (
     <div className="relative inline-block shadow-2xl">
       <canvas ref={canvasRef} className="block bg-white" />
+      <HotspotLayer hotspots={hotspots} displayWidth={displayWidth} displayHeight={displayHeight} />
       {overlays.map((o, i) => (
         <a
           key={i}

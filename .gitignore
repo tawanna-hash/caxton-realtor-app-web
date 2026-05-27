@@ -53,3 +53,4 @@ next-env.d.ts
 *.backup.ts
 *.bak_*
 .env*.local
+*.bak.*
