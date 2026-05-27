@@ -219,18 +219,9 @@ export default function InteractiveMagazineReader({
     };
   }, [magazine.id, magazine.reader_url, magazine.issue_label, magazine.publication]);
 
-  // Track the page each side should currently be showing. The render
-  // effect updates these on every spread change; in-flight renders that
-  // started for an older spread see a mismatched pageNum here and bail
-  // before painting, so the canvas can no longer get stuck on a neighbor.
-  const leftLatestPageRef = useRef<number | null>(null);
-  const rightLatestPageRef = useRef<number | null>(null);
-
   // ---- Render current spread ----
   useEffect(() => {
     if (!doc || !currentSpread) return;
-    leftLatestPageRef.current = currentSpread.left;
-    rightLatestPageRef.current = currentSpread.right;
     let cancelled = false;
     let leftTask: { promise: Promise<void>; cancel?: () => void } | null = null;
     let rightTask: { promise: Promise<void>; cancel?: () => void } | null = null;
@@ -255,11 +246,9 @@ export default function InteractiveMagazineReader({
         }
         return;
       }
-      const latestRef = isLeft ? leftLatestPageRef : rightLatestPageRef;
       try {
         const page = await doc!.getPage(pageNum + 1);
         if (cancelled) return;
-        if (latestRef.current !== pageNum) return;
         const stage = stageRef.current;
         if (!stage) return;
         const stageH = stage.clientHeight - 16;
@@ -273,8 +262,7 @@ export default function InteractiveMagazineReader({
         const displayWidth = cssWidth * zoom;
         const displayHeight = cssHeight * zoom;
         const displayScale = displayWidth / natural.width;
-        // Cap DPR at 2 so 3x phone screens don't render at 4x cost.
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const dpr = Math.max(window.devicePixelRatio || 1, 2);
         const renderScale = displayScale * dpr;
         const renderViewport = page.getViewport({ scale: renderScale });
 
@@ -283,10 +271,8 @@ export default function InteractiveMagazineReader({
         // drawImage eliminates both the blank-canvas gap and the stale-task
         // overwrite race.
         const offscreen = document.createElement('canvas');
-        // Round (not floor) so bitmap and CSS display size stay in an exact
-        // 1/dpr ratio. Floor caused sub-pixel scaling and mild text blur.
-        offscreen.width = Math.round(renderViewport.width);
-        offscreen.height = Math.round(renderViewport.height);
+        offscreen.width = Math.floor(renderViewport.width);
+        offscreen.height = Math.floor(renderViewport.height);
         const offCtx = offscreen.getContext('2d');
         if (!offCtx) return;
         const task = page.render({ canvasContext: offCtx, viewport: renderViewport });
@@ -294,17 +280,18 @@ export default function InteractiveMagazineReader({
         else rightTask = task;
         await task.promise;
         if (cancelled) return;
-        // Stale-render guard: bail if the user has navigated to a
-        // different page on this side while we were rendering.
-        if (latestRef.current !== pageNum) return;
 
-        // Compute overlays *before* the visual swap so the canvas resize
-        // and overlay update apply together. Otherwise there's a frame
-        // where the canvas shows the new page but link overlays are still
-        // sized/positioned for the old one.
+        // Atomic visual swap onto the visible canvas.
+        canvas.width = offscreen.width;
+        canvas.height = offscreen.height;
+        canvas.style.width = `${displayWidth}px`;
+        canvas.style.height = `${displayHeight}px`;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(offscreen, 0, 0);
+
         const annots = await page.getAnnotations();
         if (cancelled) return;
-        if (latestRef.current !== pageNum) return;
         const overlays: LinkOverlay[] = [];
         for (const a of annots) {
           if (a.subtype !== 'Link') continue;
@@ -317,17 +304,7 @@ export default function InteractiveMagazineReader({
           const bottom = displayHeight - Math.min(y1, y2) * displayScale;
           overlays.push({ url, x: left, y: top, w: right - left, h: bottom - top });
         }
-
-        // Atomic visual swap + overlay update.
-        const cssDisplayW = offscreen.width / dpr;
-        const cssDisplayH = offscreen.height / dpr;
-        canvas.width = offscreen.width;
-        canvas.height = offscreen.height;
-        canvas.style.width = `${cssDisplayW}px`;
-        canvas.style.height = `${cssDisplayH}px`;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        ctx.drawImage(offscreen, 0, 0);
+        if (cancelled) return;
         if (isLeft) setLeftOverlays(overlays);
         else setRightOverlays(overlays);
       } catch (err) {
