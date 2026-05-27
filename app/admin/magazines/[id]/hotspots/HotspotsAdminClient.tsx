@@ -16,7 +16,6 @@ import { Rnd } from 'react-rnd';
 import type { Magazine } from '@/lib/magazines';
 import type { Hotspot, HotspotConfig } from '@/lib/hotspots';
 import {
-  defaultConfigForType,
   DEFAULT_NEW_RECT,
   TYPE_LABELS,
   TYPE_COLORS,
@@ -98,7 +97,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
           w: DEFAULT_NEW_RECT.w_frac,
           h: DEFAULT_NEW_RECT.h_frac,
           type: 'link',
-          config: defaultConfigForType('link'),
+          config: { type: 'link', url: 'https://example.com', open_in: 'new_tab' },
           label: '',
           advertiser_name: '',
           is_published: false,
