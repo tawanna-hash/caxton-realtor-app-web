@@ -362,5 +362,88 @@ export async function ensureSchema(): Promise<void> {
       ON magazine_hotspot_clicks(magazine_id, occurred_at DESC)
   `;
 
+  // ============================================================
+  // -- Advertisers (Phase 3a) --
+  // Normalizes the magazine_hotspots.advertiser_name string into a
+  // first-class entity with stable slug + share token. Enables
+  // per-advertiser analytics dashboards and link-shareable reports.
+  // ============================================================
+  await sql`
+    CREATE TABLE IF NOT EXISTS advertisers (
+      id                  SERIAL PRIMARY KEY,
+      name                TEXT NOT NULL,
+      slug                TEXT NOT NULL UNIQUE,
+      share_token         TEXT NOT NULL UNIQUE,
+      contact_email       TEXT,
+      requires_email_gate BOOLEAN NOT NULL DEFAULT false,
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS idx_advertisers_slug ON advertisers(slug)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_advertisers_share_token ON advertisers(share_token)`;
+
+  await sql`
+    ALTER TABLE magazine_hotspots
+    ADD COLUMN IF NOT EXISTS advertiser_id INT REFERENCES advertisers(id) ON DELETE SET NULL
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_magazine_hotspots_advertiser
+    ON magazine_hotspots(advertiser_id)
+  `;
+
+  // Backfill: link existing hotspots' advertiser_name to advertisers rows.
+  // Idempotent — runs on every cold start, but only does work when there
+  // are orphans (hotspots with a name string but no advertiser_id).
+  try {
+    const orphans = await sql`
+      SELECT DISTINCT advertiser_name
+      FROM magazine_hotspots
+      WHERE advertiser_name IS NOT NULL
+        AND TRIM(advertiser_name) != ''
+        AND advertiser_id IS NULL
+    `;
+    for (const row of orphans as { advertiser_name: string }[]) {
+      const name = (row.advertiser_name || '').trim();
+      if (!name) continue;
+      const slug = name
+        .toLowerCase()
+        .replace(/['"]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .replace(/-{2,}/g, '-')
+        .slice(0, 80);
+      if (!slug) continue;
+
+      const existing = (await sql`
+        SELECT id FROM advertisers WHERE slug = ${slug} LIMIT 1
+      `) as unknown as { id: number }[];
+      let advertiserId: number;
+      if (existing.length > 0) {
+        advertiserId = existing[0].id;
+      } else {
+        // Cheap token: 24 url-safe base64 chars. Crypto module imported lazily
+        // to avoid bundling overhead on routes that don't need it.
+        const { randomBytes } = await import('crypto');
+        const token = randomBytes(18).toString('base64url');
+        const inserted = (await sql`
+          INSERT INTO advertisers (name, slug, share_token)
+          VALUES (${name}, ${slug}, ${token})
+          RETURNING id
+        `) as unknown as { id: number }[];
+        advertiserId = inserted[0].id;
+      }
+      await sql`
+        UPDATE magazine_hotspots
+        SET advertiser_id = ${advertiserId}
+        WHERE advertiser_name = ${name} AND advertiser_id IS NULL
+      `;
+    }
+  } catch (err) {
+    // Don't fail schema ensure if backfill stumbles — log and continue.
+    console.warn('[ensureSchema] advertiser backfill failed:', err);
+  }
+
+
   schemaEnsured = true;
 }
