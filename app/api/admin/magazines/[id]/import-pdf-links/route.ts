@@ -11,8 +11,15 @@
 //   - Insert fresh rows as drafts (is_published=false, source='pdf_import')
 //   - Manual hotspots (source='manual') are NEVER touched, regardless of position
 //
-// PDF parsing uses pdfjs-dist's legacy build, which runs without a
-// web worker (necessary for Vercel serverless). PDFs up to ~50MB
+// Phase 6d-import: each imported link is auto-matched against EXISTING
+// advertisers by domain. A match sets advertiser_id + advertiser_name so the
+// hotspot is tracked from the moment it's imported — no manual picker step,
+// no duplicate advertisers. Links with no matching advertiser stay unlinked
+// drafts (assign via the editor picker if worth tracking). Own-domains, social,
+// and mailto links never match. We never CREATE advertisers here — only link
+// to ones already curated in /admin/advertisers.
+//
+// PDF parsing uses pdf-lib (pure JS, no DOM dependencies). PDFs up to ~50MB
 // process comfortably within the 60-second function timeout.
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -57,6 +64,62 @@ function errMessage(err: unknown): string {
 }
 
 // ============================================================
+// Phase 6d-import: advertiser auto-matching by domain.
+// ============================================================
+
+// Own-domains, social, link aggregators — never an advertiser.
+const ADVERTISER_MATCH_SKIPLIST = [
+  'realtyline', 'myrealtyline', 'realtynewsnow',
+  'facebook', 'instagram', 'linkedin', 'youtube', 'twitter',
+  'tiktok', 'pinterest', 'bit', 'tinyurl', 'goo', 'ow',
+];
+
+function coreAlnum(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+// Extract the registrable label from a URL host: strip protocol, www., path,
+// then take the label before the final TLD. e.g. https://www.stewart.com/en -> "stewart"
+function domainCoreFromUrl(url: string): string | null {
+  if (!url || url.startsWith('mailto:') || url.startsWith('tel:')) return null;
+  let host = url.toLowerCase().replace(/^https?:\/\//, '');
+  host = host.split('/')[0].split('?')[0].split('#')[0];
+  host = host.replace(/^www\./, '');
+  if (!host) return null;
+  const parts = host.split('.');
+  const label = parts.length >= 2 ? parts[parts.length - 2] : parts[0];
+  return coreAlnum(label);
+}
+
+interface AdvertiserLite { id: number; name: string; slug: string }
+
+// Match a URL to an existing advertiser. Rules:
+//   - skip own/social domains
+//   - domain-core must be >= 5 chars
+//   - advertiser slug-core (>=5) is contained in domain-core OR vice versa,
+//     OR they share a >=6-char common prefix (catches stewart.com vs
+//     stewart-title-austin). First match wins.
+function matchAdvertiser(url: string, advertisers: AdvertiserLite[]): AdvertiserLite | null {
+  const dc = domainCoreFromUrl(url);
+  if (!dc || dc.length < 5) return null;
+  if (ADVERTISER_MATCH_SKIPLIST.includes(dc)) return null;
+
+  for (const adv of advertisers) {
+    const sc = coreAlnum(adv.slug.replace(/-/g, ''));
+    if (sc.length < 5) continue;
+    if (sc.includes(dc) || dc.includes(sc)) return adv;
+    // shared-prefix fallback
+    let plen = 0;
+    const max = Math.min(sc.length, dc.length);
+    for (let i = 0; i < max; i++) {
+      if (sc[i] === dc[i]) plen++; else break;
+    }
+    if (plen >= 6) return adv;
+  }
+  return null;
+}
+
+// ============================================================
 // PDF extraction using pdf-lib (pure JS, no DOM dependencies)
 // ============================================================
 interface ExtractedLink {
@@ -68,14 +131,12 @@ interface ExtractedLink {
   url: string;
 }
 
-/** Get a number from a PDF dict value, or null. */
 function numFromPdfValue(v: unknown): number | null {
   if (v instanceof PDFNumber) return v.asNumber();
   if (typeof v === 'number' && Number.isFinite(v)) return v;
   return null;
 }
 
-/** Get a string from a PDF dict value, or null. */
 function stringFromPdfValue(v: unknown): string | null {
   if (v instanceof PDFString) return v.decodeText();
   if (typeof v === 'string') return v;
@@ -83,7 +144,6 @@ function stringFromPdfValue(v: unknown): string | null {
 }
 
 async function extractLinksFromPdf(pdfBuffer: ArrayBuffer): Promise<ExtractedLink[]> {
-  // updateMetadata: false avoids modifying the doc, faster load.
   const pdfDoc = await PDFDocument.load(new Uint8Array(pdfBuffer), {
     updateMetadata: false,
     ignoreEncryption: true,
@@ -97,7 +157,6 @@ async function extractLinksFromPdf(pdfBuffer: ArrayBuffer): Promise<ExtractedLin
     const { width: pageWidth, height: pageHeight } = page.getSize();
     const pageNode = page.node;
 
-    // Get the Annots array. May be a direct array or a ref to one.
     let annotsArr: PDFArray | undefined;
     const annotsRaw = pageNode.lookup(PDFName.of('Annots'));
     if (annotsRaw instanceof PDFArray) {
@@ -107,7 +166,6 @@ async function extractLinksFromPdf(pdfBuffer: ArrayBuffer): Promise<ExtractedLin
 
     for (let i = 0; i < annotsArr.size(); i++) {
       const annotEntry = annotsArr.get(i);
-      // Annotations may be direct dicts or references to dicts.
       let annotDict: PDFDict | undefined;
       if (annotEntry instanceof PDFDict) {
         annotDict = annotEntry;
@@ -117,11 +175,9 @@ async function extractLinksFromPdf(pdfBuffer: ArrayBuffer): Promise<ExtractedLin
       }
       if (!annotDict) continue;
 
-      // Must be subtype Link.
       const subtype = annotDict.lookup(PDFName.of('Subtype'));
       if (!(subtype instanceof PDFName) || subtype.asString() !== '/Link') continue;
 
-      // Extract URL from /A /URI or /A /D (we only care about URI links).
       const action = annotDict.lookup(PDFName.of('A'));
       if (!(action instanceof PDFDict)) continue;
       const actionType = action.lookup(PDFName.of('S'));
@@ -130,7 +186,6 @@ async function extractLinksFromPdf(pdfBuffer: ArrayBuffer): Promise<ExtractedLin
       const url = stringFromPdfValue(uriValue);
       if (!url || !url.trim()) continue;
 
-      // Extract /Rect [x1 y1 x2 y2].
       const rectVal = annotDict.lookup(PDFName.of('Rect'));
       if (!(rectVal instanceof PDFArray) || rectVal.size() !== 4) continue;
       const r1 = numFromPdfValue(rectVal.get(0));
@@ -147,7 +202,6 @@ async function extractLinksFromPdf(pdfBuffer: ArrayBuffer): Promise<ExtractedLin
       const h = top - bottom;
       if (w < 1 || h < 1) continue;
 
-      // PDF coordinate space has origin at bottom-left. Flip to top-left.
       let x_frac = left / pageWidth;
       let y_frac = (pageHeight - top) / pageHeight;
       let w_frac = w / pageWidth;
@@ -226,16 +280,19 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       );
     }
 
+    // 3b. Load existing advertisers for auto-matching (Phase 6d-import).
+    //     We only ever LINK to advertisers that already exist — never create.
+    const advertisers = (await sql`
+      SELECT id, name, slug FROM advertisers
+    `) as unknown as AdvertiserLite[];
+
     // 4. Replace existing pdf_import rows (manual rows preserved).
     await sql`
       DELETE FROM magazine_hotspots
       WHERE magazine_id = ${idNum} AND source = 'pdf_import'
     `;
 
-    // 5a. Pre-resolve known shortener URLs in parallel so the user-facing
-    // href goes straight to the destination (no bit.ly interstitial). The
-    // original shortener URL is preserved as tracking_url so the advertiser
-    // still gets their click stats via a tracking pixel at click time.
+    // 5a. Pre-resolve known shortener URLs in parallel.
     let resolvedCount = 0;
     const resolved = await Promise.all(links.map(async (link) => {
       if (!isShortenerUrl(link.url)) {
@@ -255,8 +312,9 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     }));
     console.log(`[admin/import-pdf-links] resolved ${resolvedCount} shortener URL(s)`);
 
-    // 5b. Insert new rows as drafts.
+    // 5b. Insert new rows as drafts, auto-linking advertisers where matched.
     let inserted = 0;
+    let autoLinked = 0;
     for (const link of resolved) {
       const pageCount = Number(mags[0].page_count) || 0;
       if (pageCount > 0 && link.page_idx >= pageCount) continue;
@@ -267,28 +325,39 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       if (link.tracking_url) config.tracking_url = link.tracking_url;
       const configJson = JSON.stringify(config);
 
+      // Match against an existing advertiser. Try the resolved (final) URL
+      // first, then the original shortener target if any (the destination is
+      // what identifies the advertiser, not the bit.ly host).
+      const matched =
+        matchAdvertiser(link.final_url, advertisers) ||
+        (link.tracking_url ? matchAdvertiser(link.tracking_url, advertisers) : null);
+      const advId = matched ? matched.id : null;
+      const advName = matched ? matched.name : null;
+      if (matched) autoLinked++;
+
       await sql`
         INSERT INTO magazine_hotspots (
           magazine_id, page_idx,
           x_frac, y_frac, w_frac, h_frac,
-          type, config, label, advertiser_name,
+          type, config, label, advertiser_name, advertiser_id,
           is_published, source, created_by, updated_by
         ) VALUES (
           ${idNum}, ${link.page_idx},
           ${link.x_frac}, ${link.y_frac}, ${link.w_frac}, ${link.h_frac},
           'link', ${configJson}::jsonb,
-          null, null,
+          null, ${advName}, ${advId},
           false, 'pdf_import', ${adminEmail}, ${adminEmail}
         )
       `;
       inserted++;
     }
+    console.log(`[admin/import-pdf-links] auto-linked ${autoLinked} of ${inserted} imported hotspot(s) to advertisers`);
 
     // 6. Return the full updated hotspot list.
     const all = (await sql`
       SELECT id, magazine_id, page_idx,
              x_frac, y_frac, w_frac, h_frac,
-             type, config, label, advertiser_name,
+             type, config, label, advertiser_name, advertiser_id,
              is_published, source, created_by, created_at, updated_by, updated_at
       FROM magazine_hotspots
       WHERE magazine_id = ${idNum}
@@ -298,6 +367,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     return NextResponse.json({
       hotspots: all,
       imported_count: inserted,
+      auto_linked_count: autoLinked,
       total_links_in_pdf: links.length,
     });
   } catch (err) {
