@@ -1,11 +1,11 @@
 // app/admin/advertisers/AdvertisersClient.tsx
 //
 // Admin UI for advertisers. Handles:
-//   - List table with publication badge, hotspot/click counts, gate state
-//   - Click advertiser name → drill-down analytics page
-//   - "New advertiser" modal with publication selector
-//   - Edit modal (same fields)
-//   - Copy share URL, Regenerate share token, Delete
+// - List table with publication badge, hotspot/click counts, gate state
+// - Click advertiser name → drill-down analytics page
+// - "New advertiser" modal with publication selector
+// - Edit modal (same fields)
+// - Copy share URL, Regenerate share token, Delete
 //
 // Publication branding is set per-advertiser and drives the public
 // dashboard + email theming downstream.
@@ -24,27 +24,47 @@ type Props = {
 };
 
 export default function AdvertisersClient({ initialAdvertisers }: Props) {
-  const [advertisers, setAdvertisers] = useState<AdvertiserWithStats[]>(initialAdvertisers);
+  const [advertisers, setAdvertisers] = useState(initialAdvertisers);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AdvertiserWithStats | null>(null);
   const [error, setError] = useState<string | null>(null);
-
+  const [authExpired, setAuthExpired] = useState(false);
   const router = useRouter();
 
   const reload = useCallback(async () => {
     try {
+      setError(null);
+
       const res = await fetch('/api/admin/advertisers', { cache: 'no-store' });
-      if (res.status === 401) { router.push('/admin/login'); return; }
+
+      if (res.status === 401) {
+        setAuthExpired(true);
+        setAdvertisers([]);
+        setEditing(null);
+        setError('Your session expired. Please log in again.');
+        router.push('/admin/login');
+        return;
+      }
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
       const data = await res.json();
+      setAuthExpired(false);
       setAdvertisers(data.advertisers || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'reload failed');
     }
   }, [router]);
 
-  const openCreate = () => { setEditing(null); setModalOpen(true); };
-  const openEdit = (a: AdvertiserWithStats) => { setEditing(a); setModalOpen(true); };
+  const openCreate = () => {
+    setEditing(null);
+    setModalOpen(true);
+  };
+
+  const openEdit = (a: AdvertiserWithStats) => {
+    setEditing(a);
+    setModalOpen(true);
+  };
 
   const copyShareUrl = async (a: AdvertiserWithStats) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -60,8 +80,21 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
     if (!window.confirm(`Rotate the share token for "${a.name}"? Old share URLs will stop working.`)) {
       return;
     }
+
     try {
-      const res = await fetch(`/api/admin/advertisers/${a.id}/regenerate-token`, { method: 'POST' });
+      const res = await fetch(`/api/admin/advertisers/${a.id}/regenerate-token`, {
+        method: 'POST',
+      });
+
+      if (res.status === 401) {
+        setAuthExpired(true);
+        setAdvertisers([]);
+        setEditing(null);
+        setError('Your session expired. Please log in again.');
+        router.push('/admin/login');
+        return;
+      }
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await reload();
     } catch (err) {
@@ -73,8 +106,21 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
     if (!window.confirm(`Delete "${a.name}"? Their hotspot links will be unlinked (hotspots remain).`)) {
       return;
     }
+
     try {
-      const res = await fetch(`/api/admin/advertisers/${a.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/advertisers/${a.id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.status === 401) {
+        setAuthExpired(true);
+        setAdvertisers([]);
+        setEditing(null);
+        setError('Your session expired. Please log in again.');
+        router.push('/admin/login');
+        return;
+      }
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await reload();
     } catch (err) {
@@ -83,98 +129,102 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Advertisers</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              Manage advertisers, share analytics links, and configure access.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700"
-          >
-            New advertiser
-          </button>
+    <div className="max-w-6xl mx-auto p-6 space-y-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Advertisers</h1>
+          <p className="text-sm text-gray-600 mt-1">
+            Manage advertisers, share analytics links, and configure access.
+          </p>
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded">
-            {error}
-          </div>
-        )}
+        <button
+          onClick={openCreate}
+          disabled={authExpired}
+          className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          New advertiser
+        </button>
+      </div>
 
-        <div className="bg-white border border-gray-200 rounded overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr className="text-left text-xs uppercase tracking-wider text-gray-600">
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Publication</th>
-                <th className="px-4 py-3 text-right">Hotspots</th>
-                <th className="px-4 py-3 text-right">Clicks (30d)</th>
-                <th className="px-4 py-3">Contact email</th>
-                <th className="px-4 py-3">Gate</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+      {authExpired && (
+        <div className="rounded border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
+          Your session expired. Please log in again.
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-50 text-left text-gray-600">
+            <tr>
+              <th className="px-4 py-3 font-medium">Name</th>
+              <th className="px-4 py-3 font-medium">Publication</th>
+              <th className="px-4 py-3 font-medium">Hotspots</th>
+              <th className="px-4 py-3 font-medium">Clicks (30d)</th>
+              <th className="px-4 py-3 font-medium">Contact email</th>
+              <th className="px-4 py-3 font-medium">Gate</th>
+              <th className="px-4 py-3 font-medium">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody className="divide-y divide-gray-100">
+            {advertisers.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-6 text-gray-500">
+                  No advertisers yet. Click “New advertiser” to add one.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {advertisers.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
-                    No advertisers yet. Click &ldquo;New advertiser&rdquo; to add one.
-                  </td>
-                </tr>
-              )}
-              {advertisers.map((a) => (
-                <tr key={a.id} className="border-b border-gray-100 hover:bg-gray-50">
+            ) : (
+              advertisers.map((a) => (
+                <tr key={a.id} className="align-top">
                   <td className="px-4 py-3">
                     <Link
-                      href={`/admin/advertisers/${a.id}`}
-                      className="font-medium text-gray-900 hover:text-blue-700"
+                      href={`/admin/analytics/advertiser/${a.id}`}
+                      className="font-medium text-gray-900 hover:underline"
                     >
                       {a.name}
                     </Link>
                     <div className="text-xs text-gray-500">{a.slug}</div>
                   </td>
+
                   <td className="px-4 py-3">
                     <PublicationBadge publication={a.publication} />
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-700">{a.hotspot_count}</td>
-                  <td className="px-4 py-3 text-right text-gray-700">{a.clicks_30d}</td>
+
+                  <td className="px-4 py-3 text-gray-700">{a.hotspot_count}</td>
+                  <td className="px-4 py-3 text-gray-700">{a.clicks_30d}</td>
                   <td className="px-4 py-3 text-gray-700">{a.contact_email || '—'}</td>
-                  <td className="px-4 py-3">
-                    {a.requires_email_gate
-                      ? <span className="text-xs text-amber-700">email gate</span>
-                      : <span className="text-xs text-gray-500">open</span>}
+                  <td className="px-4 py-3 text-gray-700">
+                    {a.requires_email_gate ? 'email gate' : 'open'}
                   </td>
-                  <td className="px-4 py-3 text-right text-xs">
-                    <div className="inline-flex gap-1.5">
+
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-2">
                       <button
-                        type="button"
                         onClick={() => copyShareUrl(a)}
                         className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
                       >
                         Copy link
                       </button>
                       <button
-                        type="button"
                         onClick={() => openEdit(a)}
                         className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
                       >
                         Edit
                       </button>
                       <button
-                        type="button"
                         onClick={() => regenerateToken(a)}
                         className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
                       >
                         Rotate token
                       </button>
                       <button
-                        type="button"
                         onClick={() => deleteAdvertiser(a)}
                         className="px-2 py-1 border border-red-200 text-red-700 rounded hover:bg-red-50"
                       >
@@ -183,23 +233,27 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <p className="text-xs text-gray-500 mt-4">
-          <strong>Tip:</strong> Share URL gives the advertiser a read-only dashboard.
-          If <em>email gate</em> is on, the advertiser must verify the contact email via magic link before viewing.
-          The dashboard&apos;s colors and email branding follow the advertiser&apos;s publication.
-        </p>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
+
+      <p className="text-xs text-gray-500">
+        <strong>Tip:</strong> Share URL gives the advertiser a read-only dashboard. If{' '}
+        <em>email gate</em> is on, the advertiser must verify the contact email via magic
+        link before viewing. The dashboard&apos;s colors and email branding follow the
+        advertiser&apos;s publication.
+      </p>
 
       {modalOpen && (
         <EditModal
           advertiser={editing}
           onClose={() => setModalOpen(false)}
-          onSaved={async () => { setModalOpen(false); await reload(); }}
+          onSaved={async () => {
+            setModalOpen(false);
+            await reload();
+          }}
           onError={(msg) => setError(msg)}
         />
       )}
@@ -209,19 +263,26 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
 
 function PublicationBadge({ publication }: { publication?: Publication }) {
   const theme = getPublicationTheme(publication);
+
   const bg =
-    theme.id === 'san_antonio' ? 'bg-purple-50 text-purple-800 border-purple-200'
-      : theme.id === 'both' ? 'bg-gray-100 text-gray-700 border-gray-200'
-      : 'bg-blue-50 text-blue-800 border-blue-200';
+    theme.id === 'san_antonio'
+      ? 'bg-purple-50 text-purple-800 border-purple-200'
+      : theme.id === 'both'
+        ? 'bg-gray-100 text-gray-700 border-gray-200'
+        : 'bg-blue-50 text-blue-800 border-blue-200';
+
   return (
-    <span className={`inline-block px-2 py-0.5 text-xs rounded border ${bg}`}>
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${bg}`}>
       {theme.shortName}
     </span>
   );
 }
 
 function EditModal({
-  advertiser, onClose, onSaved, onError,
+  advertiser,
+  onClose,
+  onSaved,
+  onError,
 }: {
   advertiser: AdvertiserWithStats | null;
   onClose: () => void;
@@ -236,12 +297,14 @@ function EditModal({
 
   const onSave = useCallback(async () => {
     if (!name.trim()) return;
+
     setSaving(true);
     try {
       const url = advertiser
         ? `/api/admin/advertisers/${advertiser.id}`
         : '/api/admin/advertisers';
       const method = advertiser ? 'PATCH' : 'POST';
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -252,14 +315,17 @@ function EditModal({
           publication,
         }),
       });
+
       if (res.status === 401) {
         onError('Your session expired. Please log in again.');
         return;
       }
+
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || `HTTP ${res.status}`);
       }
+
       await onSaved();
     } catch (err) {
       onError(err instanceof Error ? err.message : 'save failed');
@@ -270,17 +336,21 @@ function EditModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          {advertiser ? 'Edit advertiser' : 'New advertiser'}
-        </h2>
+      <div className="w-full max-w-lg rounded-xl bg-white shadow-xl border border-gray-200">
+        <div className="px-5 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">
+            {advertiser ? 'Edit advertiser' : 'New advertiser'}
+          </h2>
+        </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs uppercase tracking-wider text-gray-600 mb-1">Name</label>
+        <div className="p-5 space-y-4">
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-gray-700">Name</span>
             <input
               type="text"
               value={name}
@@ -290,10 +360,10 @@ function EditModal({
               placeholder="e.g. La Cima"
               disabled={saving}
             />
-          </div>
+          </label>
 
-          <div>
-            <label className="block text-xs uppercase tracking-wider text-gray-600 mb-1">Publication</label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-gray-700">Publication</span>
             <select
               value={publication}
               onChange={(e) => setPublication(e.target.value as Publication)}
@@ -301,16 +371,19 @@ function EditModal({
               disabled={saving}
             >
               {PUBLICATION_OPTIONS.map((opt) => (
-                <option key={opt.id} value={opt.id}>{opt.label}</option>
+                <option key={opt.id} value={opt.id}>
+                  {opt.label}
+                </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500 mt-1">
-              Drives branding on the advertiser&apos;s public dashboard and outbound emails.
-            </p>
-          </div>
+          </label>
 
-          <div>
-            <label className="block text-xs uppercase tracking-wider text-gray-600 mb-1">Contact email</label>
+          <p className="text-xs text-gray-500">
+            Drives branding on the advertiser&apos;s public dashboard and outbound emails.
+          </p>
+
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-gray-700">Contact email</span>
             <input
               type="email"
               value={contactEmail}
@@ -319,37 +392,33 @@ function EditModal({
               placeholder="contact@example.com"
               disabled={saving}
             />
-          </div>
+          </label>
 
-          <div>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={requiresGate}
-                onChange={(e) => setRequiresGate(e.target.checked)}
-                disabled={saving}
-              />
-              <span>Requires email gate (advertiser must verify email before viewing)</span>
-            </label>
-          </div>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={requiresGate}
+              onChange={(e) => setRequiresGate(e.target.checked)}
+              disabled={saving}
+            />
+            Requires email gate (advertiser must verify email before viewing)
+          </label>
         </div>
 
-        <div className="flex justify-end gap-2 mt-6">
+        <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
           <button
-            type="button"
             onClick={onClose}
+            className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
             disabled={saving}
-            className="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
-            type="button"
             onClick={onSave}
+            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
             disabled={saving || !name.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
           >
-            {saving ? 'Saving…' : (advertiser ? 'Save' : 'Create')}
+            {saving ? 'Saving…' : advertiser ? 'Save' : 'Create'}
           </button>
         </div>
       </div>
