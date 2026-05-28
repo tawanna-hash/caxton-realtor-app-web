@@ -13,6 +13,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { AdvertiserWithStats } from '@/lib/advertisers';
 import type { Publication } from '@/lib/publication-theme';
@@ -28,16 +29,19 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
   const [editing, setEditing] = useState<AdvertiserWithStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const router = useRouter();
+
   const reload = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/advertisers', { cache: 'no-store' });
+      if (res.status === 401) { router.push('/admin/login'); return; }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setAdvertisers(data.advertisers || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'reload failed');
     }
-  }, []);
+  }, [router]);
 
   const openCreate = () => { setEditing(null); setModalOpen(true); };
   const openEdit = (a: AdvertiserWithStats) => { setEditing(a); setModalOpen(true); };
@@ -248,6 +252,10 @@ function EditModal({
           publication,
         }),
       });
+      if (res.status === 401) {
+        onError('Your session expired. Please log in again.');
+        return;
+      }
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || `HTTP ${res.status}`);

@@ -14,8 +14,8 @@ import type { Magazine } from '@/lib/magazines';
 type Pub = 'realtyline' | 'newsline';
 
 const PUBS_INFO: Record<Pub, { name: string; city: string; color: string }> = {
-  realtyline: { name: 'RealtyLine', city: 'Austin', color: '#1a2a44' },
-  newsline: { name: 'Newsline San Antonio', city: 'San Antonio', color: '#2d1a44' },
+  realtyline: { name: 'RealtyLine', city: 'Austin', color: '#021D40' },
+  newsline: { name: 'Newsline San Antonio', city: 'San Antonio', color: '#3D0740' },
 };
 
 function readPub(): Pub {
