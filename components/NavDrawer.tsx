@@ -207,7 +207,7 @@ export default function NavDrawer({
           })}
 
           {/* Auth section */}
-          <div className="py-4 border-t border-white/10">
+          <div className="py-4 border-t border-white/10 space-y-1">
             {user || isAdmin ? (
               <button
                 onClick={onLogout}
@@ -216,13 +216,22 @@ export default function NavDrawer({
                 Logout
               </button>
             ) : (
-              <Link
-                href="/"
-                onClick={onClose}
-                className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white font-medium rounded-lg hover:bg-white/10 transition"
-              >
-                Login
-              </Link>
+              <>
+                <Link
+                  href="/"
+                  onClick={onClose}
+                  className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white font-medium rounded-lg hover:bg-white/10 transition"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/admin/login"
+                  onClick={onClose}
+                  className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/60 font-medium rounded-lg hover:text-white hover:bg-white/10 transition"
+                >
+                  Admin Login
+                </Link>
+              </>
             )}
           </div>
 
