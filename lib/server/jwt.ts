@@ -1,8 +1,8 @@
 /**
  * JWT signing and verification. Two payload shapes:
  *
- *   - Realtor session: { realtorId, email }                — cookie caxton_session
- *   - Admin session:   { adminId,   email, type:'admin' }  — cookie caxton_admin_session
+ *   - Realtor session: { realtorId, email }                — cookie caxton_session_v2
+ *   - Admin session:   { adminId,   email, type:'admin' }  — cookie caxton_admin_session_v2
  *
  * One secret (JWT_SECRET) signs both. The admin verifier additionally checks
  * `type === 'admin'` so a realtor token can never be used as an admin token.

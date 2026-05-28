@@ -31,7 +31,8 @@ Required:
 Remove **after** Step 4 verification:
 
 - `DO_DATABASE_URL` (used to be set; no longer referenced in code)
-- Anything pointing at `api.realtynewsnow.app`
+- `NEXT_PUBLIC_API_URL` (was used by `MagazineFeatured.tsx`; component now uses same-origin)
+- Anything else pointing at `api.realtynewsnow.app`
 
 ## Step 2 — Data migration (DigitalOcean Postgres → Neon)
 
@@ -39,17 +40,30 @@ Remove **after** Step 4 verification:
 export DO_DATABASE_URL="postgres://..."     # from DO managed-pg console
 export NEON_DATABASE_URL="postgres://..."   # from Neon project, with write access
 
+# 2a. Audit first — list which candidate tables actually exist on DO,
+# and which DO tables are not in the candidate set.
+./scripts/migrate-do-to-neon.sh --audit
+
+# 2b. Review the audit output. If anything in the "present on DO but NOT in
+# candidate set" list is data we still care about, stop and add it to
+# CANDIDATE_TABLES in the script before running for real.
+
+# 2c. Run the migration.
 ./scripts/migrate-do-to-neon.sh
 ```
 
 The script:
 
-1. `pg_dump`s 14 tables from the droplet
-2. `psql`-restores into Neon
-3. Compares row counts side-by-side and prints a status table
+1. Probes DO for each table in `CANDIDATE_TABLES` (27 candidates, generated
+   by grepping every table referenced from `lib/server/*.ts` and
+   `app/api/**/route.ts`). Tables missing on DO are skipped (some are
+   Next.js-era additions that only live in Neon).
+2. `pg_dump`s the existing tables from the droplet
+3. `psql`-restores into Neon
+4. Compares row counts side-by-side and prints a status table
 
-**Verification:** every table should show `✓` (matching row counts). If any
-shows `✗ MISMATCH`, abort cutover and investigate before continuing.
+**Verification:** every migrated table should show `✓` (matching row counts).
+If any shows `✗ MISMATCH`, abort cutover and investigate before continuing.
 
 ### Minimizing live-write drift during dump
 
@@ -118,7 +132,8 @@ After Step 6 is complete:
 
 ```
 # Vercel project settings → environment variables
-- DO_DATABASE_URL  (delete)
+- DO_DATABASE_URL       (delete)
+- NEXT_PUBLIC_API_URL   (delete — component now uses same-origin /api/news/)
 ```
 
 ## Step 8 — Archive `caxton-realtor-api` repo

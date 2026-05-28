@@ -4,28 +4,48 @@ import { useEffect, useState } from 'react';
 import type { Magazine } from '@/lib/magazines';
 import { trackEvent } from '../app/posthog-provider';
 
+// Loose shape — the news feed comes from WordPress via /api/news/[publication]
+// and uses inconsistent field names (head/title, sum/excerpt/summary, etc.).
+type NewsArticle = {
+  id?: string | number;
+  cat?: string;
+  category?: string;
+  head?: string;
+  title?: string;
+  sum?: string;
+  excerpt?: string;
+  summary?: string;
+  image?: string;
+  imageUrl?: string;
+  thumbnail?: string;
+  [key: string]: unknown;
+};
+
 interface MagazineFeaturedProps {
   magazine: Magazine;
   brandColor: string;
   onOpenMagazine: () => void;
-  onOpenArticle: (a: any) => void;
+  onOpenArticle: (a: NewsArticle) => void;
 }
 
 export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine, onOpenArticle }: MagazineFeaturedProps) {
-  const [liveNews, setLiveNews] = useState<any[] | null>(null);
+  const [liveNews, setLiveNews] = useState<NewsArticle[] | null>(null);
 
   // Fetch news directly. Feed isn't mounted on the magazines phase,
   // so we cannot rely on its caxton:newsList event firing.
   useEffect(() => {
     const market = magazine.publication; // 'austin' or 'san_antonio'
     if (!market) return;
-    const API = process.env.NEXT_PUBLIC_API_URL || '';
     let cancelled = false;
-    fetch(`${API}/news/${market}`)
+    fetch(`/api/news/${market}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled || !data) return;
-        const items = Array.isArray(data?.articles) ? data.articles : Array.isArray(data) ? data : [];
+        const items: NewsArticle[] = Array.isArray(data?.articles)
+          ? (data.articles as NewsArticle[])
+          : Array.isArray(data)
+            ? (data as NewsArticle[])
+            : [];
         setLiveNews(items);
       })
       .catch(() => {});
@@ -36,18 +56,18 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
   const normalizeApostrophe = (str: string) => str.replace(/\u2019/g, "'");
   const items = liveNews || [];
 
-  const editorsChoice = items.find((a: any) => {
+  const editorsChoice = items.find((a: NewsArticle) => {
     const cat = normalizeApostrophe(String(a?.cat || a?.category || ''));
     return cat === "Editor's Choice";
   });
 
   // Note: API uses plural "Featured Advertisers"; UI label is singular.
-  const featuredAdvertiser = items.find((a: any) => {
+  const featuredAdvertiser = items.find((a: NewsArticle) => {
     const cat = normalizeApostrophe(String(a?.cat || a?.category || ''));
     return cat === 'Featured Advertisers';
   });
 
-  const renderArticleCard = (article: any, label: string, sizeClass: string, summaryClamp: string) => {
+  const renderArticleCard = (article: NewsArticle, label: string, sizeClass: string, summaryClamp: string) => {
     const img = article.image || article.imageUrl || article.thumbnail;
     const title = article.head || article.title || 'Featured article';
     const summary = article.sum || article.excerpt || article.summary;

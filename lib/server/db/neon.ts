@@ -22,9 +22,12 @@ function getConnectionString(): string {
     process.env.POSTGRES_PRISMA_URL ||
     process.env.POSTGRES_URL_NON_POOLING;
   if (!url) {
-    throw new Error(
-      'No Postgres connection string found. Expected DATABASE_URL or POSTGRES_URL.',
+    // Don't echo env var names back to clients via 500 bodies.
+    // The real reason is logged for operators.
+    console.error(
+      '[neon] No Postgres connection string found. Expected DATABASE_URL or POSTGRES_URL.',
     );
+    throw new Error('Database not configured');
   }
   return url;
 }
@@ -36,7 +39,20 @@ declare global {
 
 export function getPool(): Pool {
   if (globalThis.__neonPool) return globalThis.__neonPool;
-  const pool = new Pool({ connectionString: getConnectionString() });
+  const pool = new Pool({
+    connectionString: getConnectionString(),
+    // Fail fast on cold-boot if Neon is slow to wake; better a 500 than a
+    // hung serverless function eating a full Vercel timeout.
+    connectionTimeoutMillis: 5_000,
+    idleTimeoutMillis: 30_000,
+    max: 10,
+  });
+  // Without this listener, an emitted pool-level 'error' (e.g. an idle
+  // client dropped by Neon during a brownout) becomes an unhandled
+  // EventEmitter error and crashes the function.
+  pool.on('error', (err: Error) => {
+    console.error('[neon-pool] idle client error', err);
+  });
   globalThis.__neonPool = pool;
   return pool;
 }

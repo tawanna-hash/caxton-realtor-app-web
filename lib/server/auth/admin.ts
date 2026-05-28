@@ -12,7 +12,12 @@ import { cookies, headers } from 'next/headers';
 import { ApiError } from '../error';
 import { verifyAdminSessionToken, type AdminSessionPayload } from '../jwt';
 
-export const ADMIN_SESSION_COOKIE_NAME = 'caxton_admin_session';
+// Renamed during the Express → Next.js cutover for symmetry with the realtor
+// cookie. Admin cookie attrs already matched (SameSite=Lax both sides), so
+// the rename here is cosmetic but keeps the two cookie families versioned
+// together — makes future audits simpler.
+export const ADMIN_SESSION_COOKIE_NAME = 'caxton_admin_session_v2';
+export const LEGACY_ADMIN_SESSION_COOKIE_NAME = 'caxton_admin_session';
 
 export async function getCurrentAdmin(): Promise<AdminSessionPayload | null> {
   // Prefer cookie; fall back to Authorization: Bearer header for legacy
