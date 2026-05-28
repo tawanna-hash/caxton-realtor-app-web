@@ -16,20 +16,24 @@ import {
   ensurePublicationColumn,
   type Publication,
 } from '@/lib/publication-theme';
+import { getServerApiBase } from '@/lib/server-api-base';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
-
 async function isAdmin(cookieHeader: string | null): Promise<boolean> {
   if (!cookieHeader) return false;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET', headers: { cookie: cookieHeader }, cache: 'no-store',
+      method: 'GET',
+      headers: { cookie: cookieHeader },
+      cache: 'no-store',
     });
     return r.ok;
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 function errMessage(err: unknown): string {
@@ -98,7 +102,6 @@ export async function POST(req: NextRequest) {
     await ensurePublicationColumn();
     const sql = getSql();
 
-    // Find a free slug
     const baseSlug = slugify(name) || `advertiser-${Date.now()}`;
     let slug = baseSlug;
     let suffix = 2;

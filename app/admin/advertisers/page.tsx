@@ -8,14 +8,14 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { ensureSchema, getSql } from '@/lib/db';
 import type { AdvertiserWithStats } from '@/lib/advertisers';
+import { getServerApiBase } from '@/lib/server-api-base';
 import AdvertisersClient from './AdvertisersClient';
 
 export const dynamic = 'force-dynamic';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
-
 async function isAdmin(cookieHeader: string): Promise<boolean> {
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET',
       headers: { cookie: cookieHeader },
@@ -40,7 +40,7 @@ export default async function AdvertisersPage() {
   const advertisers = (await sql`
     SELECT
       a.id, a.name, a.slug, a.share_token, a.contact_email,
-      a.requires_email_gate, a.created_at, a.updated_at,
+      a.requires_email_gate, a.created_at, a.updated_at, a.publication,
       (SELECT COUNT(*) FROM magazine_hotspots h WHERE h.advertiser_id = a.id) AS hotspot_count,
       (SELECT COUNT(*) FROM magazine_hotspot_clicks c
          JOIN magazine_hotspots h ON c.hotspot_id = h.id
