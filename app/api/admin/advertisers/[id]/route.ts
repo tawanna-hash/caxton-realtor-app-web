@@ -10,20 +10,24 @@ import { slugify, type Advertiser } from '@/lib/advertisers';
 import {
   ensurePublicationColumn, type Publication,
 } from '@/lib/publication-theme';
+import { getServerApiBase } from '@/lib/server-api-base';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
-
 async function isAdmin(cookieHeader: string | null): Promise<boolean> {
   if (!cookieHeader) return false;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET', headers: { cookie: cookieHeader }, cache: 'no-store',
+      method: 'GET',
+      headers: { cookie: cookieHeader },
+      cache: 'no-store',
     });
     return r.ok;
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 function errMessage(err: unknown): string {
@@ -98,12 +102,10 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     }
     const current = existing[0];
 
-    // Compute next values
     const nextName = typeof body.name === 'string' && body.name.trim()
       ? body.name.trim()
       : current.name;
 
-    // Contact email: allow explicit null/'' to clear
     let nextContactEmail: string | null = current.contact_email;
     if (body.contact_email !== undefined) {
       const trimmed = (body.contact_email || '').trim();
@@ -117,7 +119,6 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     const normalizedPub = normalizePublication(body.publication);
     const nextPublication = normalizedPub ?? (current.publication || 'austin');
 
-    // If name changed, recompute slug (collision-safe).
     let nextSlug = current.slug;
     if (nextName !== current.name) {
       const baseSlug = slugify(nextName) || `advertiser-${Date.now()}`;
