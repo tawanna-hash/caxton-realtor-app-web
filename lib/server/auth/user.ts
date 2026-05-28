@@ -11,13 +11,14 @@
 import { cookies, headers } from 'next/headers';
 import { ApiError } from '../error';
 import { verifySessionToken, type RealtorSessionPayload } from '../jwt';
+import {
+  SESSION_COOKIE_NAME,
+  LEGACY_SESSION_COOKIE_NAME,
+} from '@/lib/auth/cookie-names';
 
-// Renamed from `caxton_session` during the Express → Next.js cutover. The old
-// cookie was set with SameSite=None; the new one is SameSite=Lax. Renaming
-// avoids ambiguous "two cookies, same name" behavior in Safari/Firefox where
-// the browser may keep both copies and send the wrong one.
-export const SESSION_COOKIE_NAME = 'caxton_session_v2';
-export const LEGACY_SESSION_COOKIE_NAME = 'caxton_session';
+// Re-exported so existing call sites keep working. Canonical declarations
+// live in lib/auth/cookie-names.ts (see admin.ts for the same pattern).
+export { SESSION_COOKIE_NAME, LEGACY_SESSION_COOKIE_NAME };
 
 export async function getCurrentUser(): Promise<RealtorSessionPayload | null> {
   const cookieStore = await cookies();

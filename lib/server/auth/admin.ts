@@ -11,13 +11,15 @@
 import { cookies, headers } from 'next/headers';
 import { ApiError } from '../error';
 import { verifyAdminSessionToken, type AdminSessionPayload } from '../jwt';
+import {
+  ADMIN_SESSION_COOKIE_NAME,
+  LEGACY_ADMIN_SESSION_COOKIE_NAME,
+} from '@/lib/auth/cookie-names';
 
-// Renamed during the Express → Next.js cutover for symmetry with the realtor
-// cookie. Admin cookie attrs already matched (SameSite=Lax both sides), so
-// the rename here is cosmetic but keeps the two cookie families versioned
-// together — makes future audits simpler.
-export const ADMIN_SESSION_COOKIE_NAME = 'caxton_admin_session_v2';
-export const LEGACY_ADMIN_SESSION_COOKIE_NAME = 'caxton_admin_session';
+// Re-exported so existing call sites (`from '@/lib/server/auth/admin'`)
+// keep working. The canonical declarations live in lib/auth/cookie-names.ts
+// so that Edge middleware can import them without dragging in `next/headers`.
+export { ADMIN_SESSION_COOKIE_NAME, LEGACY_ADMIN_SESSION_COOKIE_NAME };
 
 export async function getCurrentAdmin(): Promise<AdminSessionPayload | null> {
   // Prefer cookie; fall back to Authorization: Bearer header for legacy

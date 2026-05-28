@@ -1,12 +1,42 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi } from '@/lib/admin-api';
 
+// Only allow same-origin relative paths under /admin to land in `next`.
+// Anything else (absolute URLs, protocol-relative, or non-admin paths)
+// falls back to the default landing page. This blocks open-redirect
+// abuse where an attacker crafts /admin/login?next=https://evil.com.
+function safeNext(raw: string | null): string {
+  const fallback = '/admin/giveaways';
+  if (!raw) return fallback;
+  if (!raw.startsWith('/')) return fallback;
+  if (raw.startsWith('//')) return fallback; // protocol-relative
+  if (!raw.startsWith('/admin/') && raw !== '/admin') return fallback;
+  // Block returning to the login/forgot/reset pages themselves.
+  if (raw === '/admin/login' || raw.startsWith('/admin/login?')) return fallback;
+  if (raw.startsWith('/admin/forgot-password')) return fallback;
+  if (raw.startsWith('/admin/reset-password')) return fallback;
+  return raw;
+}
+
+// useSearchParams() requires a Suspense boundary in app router. Splitting
+// the form into a child component keeps the boundary tight (the form is
+// the only thing that depends on the query string).
 export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminLoginForm />
+    </Suspense>
+  );
+}
+
+function AdminLoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = safeNext(searchParams.get('next'));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -19,7 +49,7 @@ export default function AdminLoginPage() {
     setSubmitting(true);
     try {
       await adminApi.login(email, password);
-      router.push('/admin/giveaways');
+      router.push(next);
     } catch (err) {
       const e = err as Error & { status?: number };
       setError(e.status === 401 ? 'Invalid email or password' : e.message);

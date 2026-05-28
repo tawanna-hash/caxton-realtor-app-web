@@ -28,7 +28,13 @@ export function useAdmin() {
         if (cancelled) return;
         setLoading(false);
         if (err.status === 401 && pathname !== '/admin/login') {
-          router.replace('/admin/login');
+          // Preserve the page they tried to load so login can bounce them
+          // back. The middleware does the same for navigations; this covers
+          // the case where the page renders shell HTML before the client
+          // fetch fails.
+          const search = typeof window !== 'undefined' ? window.location.search : '';
+          const next = encodeURIComponent((pathname ?? '') + search);
+          router.replace(`/admin/login?next=${next}`);
         }
       });
     return () => { cancelled = true; };
