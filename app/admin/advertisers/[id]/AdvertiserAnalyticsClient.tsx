@@ -1,15 +1,17 @@
 // app/admin/advertisers/[id]/AdvertiserAnalyticsClient.tsx
 //
-// Interactive analytics dashboard for one advertiser. Reads the
-// /api/admin/analytics/advertiser/:id endpoint, lets the admin
-// switch date ranges, and renders:
-//  - Four headline stat cards
-//  - Daily clicks area chart (recharts)
-//  - Per-hotspot breakdown table
+// Per-advertiser drill-down dashboard with:
+//   - 4 stat cards
+//   - Recharts area chart (daily clicks)
+//   - Hotspot breakdown table
+//   - "Send report email" button → modal with preview + send
+//
+// The Send-report feature sends a branded HTML email to the advertiser's
+// contact_email via Resend, scoped to the date range currently displayed.
 
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
@@ -73,6 +75,7 @@ export default function AdvertiserAnalyticsClient({ advertiser }: { advertiser: 
   const [data, setData] = useState<AnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   const load = useCallback(async (p: RangePreset) => {
     setLoading(true);
@@ -96,14 +99,12 @@ export default function AdvertiserAnalyticsClient({ advertiser }: { advertiser: 
     }
   }, [advertiser.id]);
 
-  // Data-fetch effect; setLoading inside `load` is intentional.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(preset); }, [load, preset]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Header */}
         <div className="mb-6">
           <Link
             href="/admin/advertisers"
@@ -119,22 +120,31 @@ export default function AdvertiserAnalyticsClient({ advertiser }: { advertiser: 
                 {advertiser.contact_email ? ` · ${advertiser.contact_email}` : ''}
               </p>
             </div>
-            <div className="flex gap-1">
-              {(['7d', '30d', '90d', 'all'] as const).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPreset(p)}
-                  className={
-                    'px-3 py-1.5 text-sm font-medium rounded ' +
-                    (preset === p
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50')
-                  }
-                >
-                  {rangeLabel(p)}
-                </button>
-              ))}
+            <div className="flex gap-2 items-center flex-wrap">
+              <div className="flex gap-1">
+                {(['7d', '30d', '90d', 'all'] as const).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPreset(p)}
+                    className={
+                      'px-3 py-1.5 text-sm font-medium rounded ' +
+                      (preset === p
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50')
+                    }
+                  >
+                    {rangeLabel(p)}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setReportModalOpen(true)}
+                className="px-3 py-1.5 text-sm font-medium rounded bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Send report email
+              </button>
             </div>
           </div>
         </div>
@@ -151,7 +161,6 @@ export default function AdvertiserAnalyticsClient({ advertiser }: { advertiser: 
 
         {data && (
           <>
-            {/* Stat cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <StatCard label="Total clicks" value={data.summary.total_clicks.toLocaleString()} />
               <StatCard label="Unique sessions" value={data.summary.unique_sessions.toLocaleString()} />
@@ -165,7 +174,6 @@ export default function AdvertiserAnalyticsClient({ advertiser }: { advertiser: 
               />
             </div>
 
-            {/* Chart */}
             <div className="bg-white border border-gray-200 rounded p-4 mb-6">
               <h2 className="text-sm font-medium text-gray-700 mb-3">Clicks per day</h2>
               <div className="w-full h-64">
@@ -212,7 +220,6 @@ export default function AdvertiserAnalyticsClient({ advertiser }: { advertiser: 
               </div>
             </div>
 
-            {/* Hotspot breakdown */}
             <div className="bg-white border border-gray-200 rounded overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-200">
                 <h2 className="text-sm font-medium text-gray-700">Hotspot breakdown</h2>
@@ -272,6 +279,15 @@ export default function AdvertiserAnalyticsClient({ advertiser }: { advertiser: 
           </>
         )}
       </div>
+
+      {reportModalOpen && (
+        <SendReportModal
+          advertiser={advertiser}
+          rangePreset={preset}
+          rangeLabel={rangeLabel(preset)}
+          onClose={() => setReportModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -282,6 +298,205 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
       <div className="text-xs uppercase tracking-wider text-gray-500 mb-1">{label}</div>
       <div className="text-2xl font-semibold text-gray-900">{value}</div>
       {sub && <div className="text-xs text-gray-500 mt-1">{sub}</div>}
+    </div>
+  );
+}
+
+/**
+ * Modal for previewing + sending an advertiser performance report email.
+ * Inherits the date range from the parent dashboard view.
+ */
+function SendReportModal({
+  advertiser, rangePreset, rangeLabel: rangeLabelText, onClose,
+}: {
+  advertiser: Advertiser;
+  rangePreset: RangePreset;
+  rangeLabel: string;
+  onClose: () => void;
+}) {
+  const [personalMessage, setPersonalMessage] = useState('');
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<{ kind: 'idle' | 'error' | 'sent'; text?: string }>({ kind: 'idle' });
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  const hasRecipient = !!(advertiser.contact_email && advertiser.contact_email.trim());
+
+  const callApi = useCallback(async (preview: boolean): Promise<{
+    html?: string; text?: string; sent?: boolean; recipient?: string | null; error?: string;
+  }> => {
+    const { from, to } = getRangeDates(rangePreset);
+    const res = await fetch(`/api/admin/advertisers/${advertiser.id}/send-report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to, message: personalMessage, preview }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || body.detail || `HTTP ${res.status}`);
+    return body;
+  }, [advertiser.id, rangePreset, personalMessage]);
+
+  const onPreview = useCallback(async () => {
+    setBusy(true);
+    setStatus({ kind: 'idle' });
+    try {
+      const body = await callApi(true);
+      setPreviewHtml(body.html || '');
+    } catch (err) {
+      setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'preview failed' });
+    } finally {
+      setBusy(false);
+    }
+  }, [callApi]);
+
+  const onCopyHtml = useCallback(async () => {
+    setBusy(true);
+    setStatus({ kind: 'idle' });
+    try {
+      const body = await callApi(true);
+      await navigator.clipboard.writeText(body.html || '');
+      setStatus({ kind: 'sent', text: 'HTML copied to clipboard' });
+    } catch (err) {
+      setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'copy failed' });
+    } finally {
+      setBusy(false);
+    }
+  }, [callApi]);
+
+  const onSend = useCallback(async () => {
+    if (!hasRecipient) return;
+    if (!window.confirm(`Send report to ${advertiser.contact_email}?`)) return;
+    setBusy(true);
+    setStatus({ kind: 'idle' });
+    try {
+      await callApi(false);
+      setStatus({ kind: 'sent', text: `Sent to ${advertiser.contact_email}` });
+    } catch (err) {
+      setStatus({ kind: 'error', text: err instanceof Error ? err.message : 'send failed' });
+    } finally {
+      setBusy(false);
+    }
+  }, [callApi, hasRecipient, advertiser.contact_email]);
+
+  // Write previewHtml into the iframe whenever it updates
+  useEffect(() => {
+    if (!previewHtml || !iframeRef.current) return;
+    const doc = iframeRef.current.contentDocument;
+    if (!doc) return;
+    doc.open();
+    doc.write(previewHtml);
+    doc.close();
+  }, [previewHtml]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">Send performance report</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="px-6 py-4 overflow-y-auto flex-1">
+          <div className="space-y-4">
+            <div className="text-sm">
+              <span className="text-gray-500">To:</span>{' '}
+              {hasRecipient
+                ? <span className="text-gray-900 font-medium">{advertiser.contact_email}</span>
+                : <span className="text-amber-700">No contact email set &mdash; edit the advertiser to add one before sending.</span>}
+            </div>
+
+            <div className="text-sm">
+              <span className="text-gray-500">Range:</span>{' '}
+              <span className="text-gray-900">{rangeLabelText}</span>
+              <span className="text-xs text-gray-400 ml-2">(matches the dashboard view)</span>
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-gray-600 mb-1">
+                Personal note <span className="text-gray-400 normal-case">(optional)</span>
+              </label>
+              <textarea
+                value={personalMessage}
+                onChange={(e) => setPersonalMessage(e.target.value)}
+                rows={3}
+                disabled={busy}
+                placeholder="e.g. Hi — here's your monthly performance snapshot. Let me know if you'd like to discuss results."
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {status.kind === 'error' && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded">
+                {status.text}
+              </div>
+            )}
+            {status.kind === 'sent' && (
+              <div className="p-3 bg-green-50 border border-green-200 text-green-800 text-sm rounded">
+                ✓ {status.text}
+              </div>
+            )}
+
+            {previewHtml && (
+              <div>
+                <div className="text-xs uppercase tracking-wider text-gray-600 mb-1">Preview</div>
+                <div className="border border-gray-300 rounded overflow-hidden bg-gray-100">
+                  <iframe
+                    ref={iframeRef}
+                    title="Report preview"
+                    className="w-full h-96 bg-white"
+                    sandbox=""
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-200 flex flex-wrap gap-2 justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            onClick={onPreview}
+            disabled={busy}
+            className="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
+          >
+            {busy ? 'Working…' : 'Preview'}
+          </button>
+          <button
+            type="button"
+            onClick={onCopyHtml}
+            disabled={busy}
+            className="px-4 py-2 border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50"
+          >
+            Copy HTML
+          </button>
+          <button
+            type="button"
+            onClick={onSend}
+            disabled={busy || !hasRecipient}
+            className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+          >
+            {busy ? 'Sending…' : 'Send email'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
