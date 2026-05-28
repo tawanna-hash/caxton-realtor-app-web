@@ -53,6 +53,18 @@ export async function doQuery<T = Record<string, unknown>>(
   return result.rows as T[];
 }
 
+/**
+ * Like `doQuery` but also returns the affected row count. Use this for
+ * UPDATE/DELETE/INSERT when you need to detect 'not found' / 'no-op'.
+ */
+export async function doExec<T = Record<string, unknown>>(
+  text: string,
+  values?: readonly unknown[],
+): Promise<{ rows: T[]; rowCount: number }> {
+  const result = await getDoPool().query(text, values as unknown[] | undefined);
+  return { rows: result.rows as T[], rowCount: result.rowCount ?? 0 };
+}
+
 export async function withDoTransaction<T>(
   fn: (client: pg.PoolClient) => Promise<T>,
 ): Promise<T> {
