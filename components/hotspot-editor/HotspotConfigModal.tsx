@@ -1,28 +1,58 @@
 // components/hotspot-editor/HotspotConfigModal.tsx
 //
 // Modal for editing one hotspot's type, config, label, advertiser, and
-// published state. Per-type forms are co-located here for simplicity —
-// in Phase 3 if any one grows complex we can extract it.
+// published state.
+//
+// Phase 6: the free-text "Advertiser name" input was replaced with a real
+// AdvertiserPicker. The picker lists existing advertisers from
+// /api/admin/advertisers/picker, lets the editor select one (setting
+// hotspot.advertiser_id immediately so click tracking/reports work), and
+// has an inline "+ New advertiser…" form that POSTs to
+// /api/admin/advertisers and re-selects the new row.
+//
+// advertiser_name is still kept in sync with the selected advertiser's
+// display name for backward compatibility with any code that still reads
+// the legacy column. If no advertiser is selected, advertiser_name is
+// left alone — that preserves legacy free-text from older imports.
 
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { upload } from '@vercel/blob/client';
 import type { Hotspot, HotspotType, HotspotConfig } from '@/lib/hotspots';
 import { defaultConfigForType, TYPE_LABELS } from '@/lib/hotspot-editor-helpers';
 
+type PickerAdvertiser = {
+  id: number;
+  name: string;
+  slug: string;
+  publication: 'austin' | 'san_antonio' | 'both';
+};
+
 interface Props {
   hotspot: Hotspot;
-  onSave: (updates: { type?: HotspotType; config?: HotspotConfig; label?: string; advertiser_name?: string; is_published?: boolean }) => Promise<void>;
+  onSave: (updates: {
+    type?: HotspotType;
+    config?: HotspotConfig;
+    label?: string;
+    advertiser_name?: string;
+    advertiser_id?: number | null;
+    is_published?: boolean;
+  }) => Promise<void>;
   onClose: () => void;
   onRequestDelete: () => void;
+  /** Default publication for the inline "+ New advertiser" form. */
+  defaultPublication?: 'austin' | 'san_antonio' | 'both';
 }
 
-export default function HotspotConfigModal({ hotspot, onSave, onClose, onRequestDelete }: Props) {
+export default function HotspotConfigModal({
+  hotspot, onSave, onClose, onRequestDelete, defaultPublication = 'austin',
+}: Props) {
   const [type, setType] = useState<HotspotType>(hotspot.type);
   const [config, setConfig] = useState<HotspotConfig>(hotspot.config);
   const [label, setLabel] = useState(hotspot.label ?? '');
-  const [advertiser, setAdvertiser] = useState(hotspot.advertiser_name ?? '');
+  const [advertiserId, setAdvertiserId] = useState<number | null>(hotspot.advertiser_id ?? null);
+  const [advertiserName, setAdvertiserName] = useState(hotspot.advertiser_name ?? '');
   const [isPublished, setIsPublished] = useState(hotspot.is_published);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +86,11 @@ export default function HotspotConfigModal({ hotspot, onSave, onClose, onRequest
         type,
         config,
         label: label.trim() || undefined,
-        advertiser_name: advertiser.trim() || undefined,
+        // advertiser_name stays in sync with the selected advertiser's display
+        // name when one is linked. When not linked, we still pass whatever's
+        // in the state field — preserves legacy PDF-imported strings.
+        advertiser_name: advertiserName.trim() || undefined,
+        advertiser_id: advertiserId,
         is_published: isPublished,
       });
     } catch (err) {
@@ -64,6 +98,19 @@ export default function HotspotConfigModal({ hotspot, onSave, onClose, onRequest
       setSaving(false);
     }
   };
+
+  // Picker callback: when the editor picks (or creates) an advertiser, update
+  // both id and name so they stay in sync. When they explicitly choose "— None —",
+  // clear the id but keep advertiser_name (in case it's legacy data the editor
+  // wants to retain).
+  const handleAdvertiserChange = useCallback((adv: PickerAdvertiser | null) => {
+    if (adv) {
+      setAdvertiserId(adv.id);
+      setAdvertiserName(adv.name);
+    } else {
+      setAdvertiserId(null);
+    }
+  }, []);
 
   return (
     <div
@@ -124,17 +171,17 @@ export default function HotspotConfigModal({ hotspot, onSave, onClose, onRequest
               />
               <p className="text-xs text-gray-500 mt-1">Shown to admins and as aria-label for accessibility. Not displayed to public readers.</p>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Advertiser name (optional)</label>
-              <input
-                type="text"
-                value={advertiser}
-                onChange={(e) => setAdvertiser(e.target.value)}
-                placeholder="e.g. Chicago Title"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
-              />
-              <p className="text-xs text-gray-500 mt-1">Used for advertiser performance reports.</p>
-            </div>
+
+            {/* Phase 6: real advertiser picker (replaces the old free-text input).
+                Wires hotspot.advertiser_id immediately so click tracking and
+                advertiser reports link up without a 5-minute backfill wait. */}
+            <AdvertiserPicker
+              selectedId={advertiserId}
+              legacyName={advertiserName}
+              defaultPublication={defaultPublication}
+              onChange={handleAdvertiserChange}
+              onError={setError}
+            />
 
             <label className="flex items-center gap-2 pt-2">
               <input
@@ -186,6 +233,198 @@ export default function HotspotConfigModal({ hotspot, onSave, onClose, onRequest
 }
 
 // ============================================================
+// AdvertiserPicker — dropdown of existing advertisers with an
+// inline "+ New advertiser…" form. Phase 6.
+// ============================================================
+function AdvertiserPicker({
+  selectedId, legacyName, defaultPublication, onChange, onError,
+}: {
+  selectedId: number | null;
+  legacyName: string;
+  defaultPublication: 'austin' | 'san_antonio' | 'both';
+  onChange: (adv: PickerAdvertiser | null) => void;
+  onError: (err: string | null) => void;
+}) {
+  const [advertisers, setAdvertisers] = useState<PickerAdvertiser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newPublication, setNewPublication] = useState<'austin' | 'san_antonio' | 'both'>(defaultPublication);
+  const [newEmail, setNewEmail] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/advertisers/picker', { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to load advertisers');
+        const data = await res.json() as { advertisers: PickerAdvertiser[] };
+        if (!cancelled) setAdvertisers(data.advertisers ?? []);
+      } catch (err) {
+        if (!cancelled) onError(err instanceof Error ? err.message : 'Failed to load advertisers');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+    // We deliberately omit onError from deps — it's referentially unstable
+    // and re-running this effect would re-fetch and reset selection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSelect = (value: string) => {
+    if (value === '') {
+      onChange(null);
+    } else {
+      const id = Number(value);
+      const adv = advertisers.find((a) => a.id === id) ?? null;
+      onChange(adv);
+    }
+  };
+
+  const handleCreate = async () => {
+    const name = newName.trim();
+    if (!name) {
+      onError('Advertiser name is required');
+      return;
+    }
+    setCreating(true);
+    onError(null);
+    try {
+      const res = await fetch('/api/admin/advertisers', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          publication: newPublication,
+          contact_email: newEmail.trim() || undefined,
+          requires_email_gate: false,
+        }),
+      });
+      if (!res.ok) {
+        const errBody = (await res.json().catch(() => ({}))) as { error?: string; detail?: string };
+        throw new Error(errBody.detail ?? errBody.error ?? 'Failed to create advertiser');
+      }
+      const data = (await res.json()) as { advertiser?: PickerAdvertiser };
+      const created = data.advertiser;
+      if (!created) throw new Error('No advertiser returned');
+      setAdvertisers((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      onChange(created);
+      setShowNewForm(false);
+      setNewName('');
+      setNewEmail('');
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'Create failed');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // Legacy hint: if advertiser_name has free-text data but no advertiser is linked
+  // (typical for PDF-imported hotspots before Phase 6), surface it as a hint so
+  // the editor knows what to look for in the dropdown.
+  const showLegacyHint = selectedId === null && legacyName.trim().length > 0;
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Advertiser</label>
+      <select
+        value={selectedId === null ? '' : String(selectedId)}
+        onChange={(e) => handleSelect(e.target.value)}
+        disabled={loading}
+        className="w-full px-3 py-2 text-sm border border-gray-300 rounded bg-white"
+      >
+        <option value="">— None —</option>
+        {advertisers.map((a) => (
+          <option key={a.id} value={String(a.id)}>
+            {a.name} {a.publication === 'san_antonio' ? '(Newsline SA)' : a.publication === 'both' ? '(Both)' : '(RealtyLine)'}
+          </option>
+        ))}
+      </select>
+
+      <div className="mt-1 flex items-start justify-between gap-2">
+        <p className="text-xs text-gray-500 flex-1">
+          {showLegacyHint ? (
+            <>Legacy text: <em>{legacyName}</em>. Pick an advertiser above (or create one) to link click tracking and reports.</>
+          ) : (
+            'Used for advertiser performance reports and dashboard access.'
+          )}
+        </p>
+        {!showNewForm && (
+          <button
+            type="button"
+            onClick={() => setShowNewForm(true)}
+            className="text-xs text-blue-600 hover:underline whitespace-nowrap"
+          >
+            + New advertiser…
+          </button>
+        )}
+      </div>
+
+      {showNewForm && (
+        <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded space-y-2">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
+            <input
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="e.g. Chicago Title"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded"
+              autoFocus
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Publication</label>
+              <select
+                value={newPublication}
+                onChange={(e) => setNewPublication(e.target.value as 'austin' | 'san_antonio' | 'both')}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded bg-white"
+              >
+                <option value="austin">RealtyLine (Austin)</option>
+                <option value="san_antonio">Newsline SA</option>
+                <option value="both">Both</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Contact email</label>
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="ads@example.com"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => { setShowNewForm(false); setNewName(''); setNewEmail(''); }}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={creating || !newName.trim()}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded hover:bg-gray-800 disabled:opacity-40"
+            >
+              {creating ? 'Creating…' : 'Create + link'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ============================================================
 // Per-type config form. Co-located for now; extract per-type
 // if any one grows past ~40 lines.
 // ============================================================
@@ -197,7 +436,6 @@ function TypeSpecificForm({
   onChange: (cfg: HotspotConfig) => void;
   onError: (err: string | null) => void;
 }) {
-  // Each subform is intentionally simple — keyed by `type` it remounts on switch.
   if (type === 'link' && config.type === 'link') {
     return (
       <div className="space-y-3">
@@ -532,7 +770,7 @@ function BlobUpload({
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) handleFile(file);
-            e.target.value = ''; // allow re-upload of same file
+            e.target.value = '';
           }}
         />
         <button

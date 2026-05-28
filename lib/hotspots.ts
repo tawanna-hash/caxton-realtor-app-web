@@ -46,6 +46,8 @@ export interface Hotspot {
   config: HotspotConfig;
   label: string | null;
   advertiser_name: string | null;
+  /** Phase 6: explicit FK link to advertisers table. Null = unlinked. */
+  advertiser_id: number | null;
   is_published: boolean;
   created_by: string | null;
   created_at: string;

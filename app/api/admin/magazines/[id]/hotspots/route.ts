@@ -4,6 +4,10 @@
 // Admin GET: lists all hotspots on a magazine (including drafts).
 // Mirrors the auth pattern in app/api/admin/magazines/route.ts —
 // session cookie is forwarded to the back-end API's /admin/auth/me.
+//
+// Phase 6: accepts and persists `advertiser_id` so the hotspot editor
+// can link directly to an advertisers row without waiting for the
+// name-matching backfill.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
@@ -71,7 +75,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     const rows = (await sql`
       SELECT id, magazine_id, page_idx,
              x_frac, y_frac, w_frac, h_frac,
-             type, config, label, advertiser_name,
+             type, config, label, advertiser_name, advertiser_id,
              is_published, created_by, created_at, updated_by, updated_at
       FROM magazine_hotspots
       WHERE magazine_id = ${idNum}
@@ -104,6 +108,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     config?: unknown;
     label?: string;
     advertiser_name?: string;
+    advertiser_id?: number | null;
     is_published?: boolean;
   };
   try {
@@ -137,6 +142,15 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
   const advertiserName = typeof body.advertiser_name === 'string'
     ? body.advertiser_name.trim().slice(0, 200) || null
     : null;
+  // Phase 6: advertiser_id is null OR a positive integer pointing at an
+  // existing advertisers row. We trust the Postgres FK constraint to
+  // reject bad ids rather than doing a SELECT first.
+  const advertiserId: number | null = (() => {
+    const v = body.advertiser_id;
+    if (v === undefined || v === null) return null;
+    if (typeof v !== 'number' || !Number.isInteger(v) || v < 1) return null;
+    return v;
+  })();
   const isPublished = body.is_published === true;
 
   try {
@@ -155,17 +169,17 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const rows = (await sql`
       INSERT INTO magazine_hotspots (
         magazine_id, page_idx, x_frac, y_frac, w_frac, h_frac,
-        type, config, label, advertiser_name, is_published,
+        type, config, label, advertiser_name, advertiser_id, is_published,
         created_by, updated_by
       ) VALUES (
         ${magazineId}, ${pageIdx}, ${x}, ${y}, ${w}, ${h},
         ${type}, ${JSON.stringify(body.config)}::jsonb,
-        ${label}, ${advertiserName}, ${isPublished},
+        ${label}, ${advertiserName}, ${advertiserId}, ${isPublished},
         ${adminEmail}, ${adminEmail}
       )
       RETURNING id, magazine_id, page_idx,
                 x_frac, y_frac, w_frac, h_frac,
-                type, config, label, advertiser_name,
+                type, config, label, advertiser_name, advertiser_id,
                 is_published, created_by, created_at, updated_by, updated_at
     `) as unknown as Hotspot[];
     return NextResponse.json({ hotspot: rows[0] }, { status: 201 });

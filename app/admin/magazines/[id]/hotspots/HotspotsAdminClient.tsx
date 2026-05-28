@@ -110,6 +110,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
           label: '',
           advertiser_name: '',
           is_published: false,
+          advertiser_id: null,
         }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -145,6 +146,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
       if (updates.label !== undefined) apiBody.label = updates.label;
       if (updates.advertiser_name !== undefined) apiBody.advertiser_name = updates.advertiser_name;
       if (updates.is_published !== undefined) apiBody.is_published = updates.is_published;
+      if (updates.advertiser_id !== undefined) apiBody.advertiser_id = updates.advertiser_id;
 
       const res = await fetch(`/api/admin/hotspots/${id}`, {
         method: 'PATCH',
@@ -386,6 +388,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
       {editingHotspot && (
         <HotspotConfigModal
           hotspot={editingHotspot}
+          defaultPublication={magazine.publication}
           onSave={async (updates) => {
             await updateHotspot(editingHotspot.id, updates);
             setEditingHotspot(null);

@@ -3,6 +3,9 @@
 // Admin PATCH: update a hotspot (position, config, publish state, etc.)
 // Admin DELETE: delete a hotspot.
 // Same auth pattern as the rest of /api/admin/*.
+//
+// Phase 6: accepts and updates `advertiser_id`. Setting it to null
+// explicitly clears the link; omitting it leaves the current value alone.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
@@ -74,6 +77,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     config?: unknown;
     label?: string | null;
     advertiser_name?: string | null;
+    advertiser_id?: number | null;
     is_published?: boolean;
     page_idx?: number;
   };
@@ -90,7 +94,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     // Load current row to merge against.
     const existing = (await sql`
       SELECT id, magazine_id, page_idx, x_frac, y_frac, w_frac, h_frac,
-             type, config, label, advertiser_name, is_published
+             type, config, label, advertiser_name, advertiser_id, is_published
       FROM magazine_hotspots WHERE id = ${idNum}
     `) as unknown as Hotspot[];
     if (existing.length === 0) {
@@ -137,6 +141,15 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     const nextAdv = body.advertiser_name === undefined
       ? cur.advertiser_name
       : (body.advertiser_name === null ? null : String(body.advertiser_name).trim().slice(0, 200) || null);
+    // Phase 6: advertiser_id. `undefined` = leave alone; `null` = clear link;
+    // positive integer = set link. Postgres FK enforces validity.
+    const nextAdvId: number | null = body.advertiser_id === undefined
+      ? cur.advertiser_id
+      : (body.advertiser_id === null
+          ? null
+          : (typeof body.advertiser_id === 'number' && Number.isInteger(body.advertiser_id) && body.advertiser_id > 0
+              ? body.advertiser_id
+              : null));
     const nextPublished = body.is_published === undefined ? cur.is_published : !!body.is_published;
     const nextPageIdx = body.page_idx === undefined
       ? cur.page_idx
@@ -152,13 +165,14 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         config = ${JSON.stringify(nextConfig)}::jsonb,
         label = ${nextLabel},
         advertiser_name = ${nextAdv},
+        advertiser_id = ${nextAdvId},
         is_published = ${nextPublished},
         updated_by = ${adminEmail},
         updated_at = NOW()
       WHERE id = ${idNum}
       RETURNING id, magazine_id, page_idx,
                 x_frac, y_frac, w_frac, h_frac,
-                type, config, label, advertiser_name,
+                type, config, label, advertiser_name, advertiser_id,
                 is_published, created_by, created_at, updated_by, updated_at
     `) as unknown as Hotspot[];
     return NextResponse.json({ hotspot: rows[0] });
