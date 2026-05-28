@@ -14,6 +14,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import KpiStrip from '@/components/KpiStrip';
+import HotspotPerformance from '@/components/HotspotPerformance';
 
 // ============================================================
 // Types
@@ -638,6 +639,10 @@ export default function AdminAnalyticsPage() {
             </table>
           )}
         </Card>
+
+        {/* Phase 6c: hotspot performance — top advertisers + top hotspots (30d).
+            Self-contained fetch, independent of the PostHog report. */}
+        <HotspotPerformance />
 
         {/* Conversion event toggles */}
         <Card
