@@ -98,36 +98,36 @@ export async function POST(req: NextRequest) {
   if (!Number.isInteger(month) || month < 1 || month > 12) {
     return NextResponse.json({ error: 'invalid month' }, { status: 400 });
   }
-  const issueLabel = String(body.issue_label ?? body.issuelabel || '').trim();
+  const issueLabel = String((body.issue_label ?? body.issuelabel) || '').trim();
   if (!issueLabel) {
     return NextResponse.json({ error: 'issue_label is required' }, { status: 400 });
   }
   const sortDate =
-    body.sort_date ?? body.sortdate && /^\d{4}-\d{2}-\d{2}/.test(body.sort_date ?? body.sortdate)
-      ? body.sort_date ?? body.sortdate.slice(0, 10)
+    (body.sort_date ?? body.sortdate) && /^\d{4}-\d{2}-\d{2}/.test((body.sort_date ?? body.sortdate))
+      ? (body.sort_date ?? body.sortdate).slice(0, 10)
       : `${year}-${String(month).padStart(2, '0')}-01`;
 
   // Required: cover_url
-  const coverUrl = String(body.cover_url ?? body.coverurl || '').trim();
+  const coverUrl = String((body.cover_url ?? body.coverurl) || '').trim();
   if (!coverUrl) {
     return NextResponse.json({ error: 'cover_url is required' }, { status: 400 });
   }
 
   // Optional fields with defaults.
   const readerUrl =
-    body.reader_url ?? body.readerurl !== undefined && body.reader_url ?? body.readerurl !== null
-      ? String(body.reader_url ?? body.readerurl).trim() || null
+    (body.reader_url ?? body.readerurl) !== undefined && (body.reader_url ?? body.readerurl) !== null
+      ? String((body.reader_url ?? body.readerurl)).trim() || null
       : null;
-  const pageUrls = Array.isArray(body.page_urls ?? body.pageurls) ? body.page_urls ?? body.pageurls : [];
+  const pageUrls = Array.isArray((body.page_urls ?? body.pageurls)) ? (body.page_urls ?? body.pageurls) : [];
   if (!pageUrls.every((u) => typeof u === 'string')) {
     return NextResponse.json({ error: 'page_urls must be string[]' }, { status: 400 });
   }
   const pageCount =
-    typeof body.page_count ?? body.pagecount === 'number' && Number.isInteger(body.page_count ?? body.pagecount) && body.page_count ?? body.pagecount >= 0
-      ? body.page_count ?? body.pagecount
+    typeof (body.page_count ?? body.pagecount) === 'number' && Number.isInteger((body.page_count ?? body.pagecount)) && (body.page_count ?? body.pagecount) >= 0
+      ? (body.page_count ?? body.pagecount)
       : pageUrls.length;
-  const pageTexts = Array.isArray(body.page_texts ?? body.pagetexts)
-    ? JSON.stringify(body.page_texts ?? body.pagetexts)
+  const pageTexts = Array.isArray((body.page_texts ?? body.pagetexts))
+    ? JSON.stringify((body.page_texts ?? body.pagetexts))
     : '[]';
 
   try {
