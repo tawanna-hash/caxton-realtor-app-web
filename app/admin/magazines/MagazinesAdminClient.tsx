@@ -3,7 +3,7 @@
 // app/admin/magazines/MagazinesAdminClient.tsx
 //
 // Two-column list of magazines (austin + san_antonio), newest first.
-// Each card shows the cover, issue label, page count, and edit/delete actions.
+// Each card shows the cover, issue label, page count, and edit/hotspots/delete actions.
 // Top has a "+ New Issue" button that navigates to /admin/magazines/new.
 
 import { useState } from 'react';
@@ -130,12 +130,18 @@ function Column({
                     {!m.page_urls || m.page_urls.length === 0 ? 'no pages uploaded' : ''}
                   </p>
                 )}
-                <div className="flex items-center gap-4 mt-3">
+                <div className="flex items-center gap-4 mt-3 flex-wrap">
                   <Link
                     href={`/admin/magazines/${m.id}`}
                     className="text-sm text-blue-600 hover:underline"
                   >
                     Edit
+                  </Link>
+                  <Link
+                    href={`/admin/magazines/${m.id}/hotspots`}
+                    className="text-sm text-blue-600 hover:underline"
+                  >
+                    Hotspots
                   </Link>
                   <button
                     onClick={() => onDelete(m.id, m.issue_label)}

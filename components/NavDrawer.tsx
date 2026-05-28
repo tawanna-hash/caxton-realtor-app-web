@@ -33,6 +33,7 @@ const PUB_NAMES: Record<string, string> = {
 };
 
 const ADMIN_LINKS: NavItem[] = [
+  { label: 'Magazines', href: '/admin/magazines', adminOnly: true },
   { label: 'Giveaways', href: '/admin/giveaways', adminOnly: true },
   { label: 'Events', href: '/admin/events', adminOnly: true },
   { label: 'Ads', href: '/admin/ads', adminOnly: true },
