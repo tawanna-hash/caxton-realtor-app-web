@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { getServerApiBase } from '@/lib/server-api-base';
+import { neon } from '@neondatabase/serverless';
 import {
   createBuilderInventory,
   ensureBuilderInventorySchema,
@@ -16,6 +17,8 @@ import {
   type Publication,
   type PromoType,
 } from '@/lib/builder-inventory';
+
+const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL || '');
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

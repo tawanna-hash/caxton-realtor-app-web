@@ -51,6 +51,7 @@ async function fetchSubscriberCounts(cookieHeader: string): Promise<{
 }> {
   async function countFor(market?: 'austin' | 'san_antonio'): Promise<number | null> {
     try {
+      const API_URL = await getServerApiBase();
       const qs = new URLSearchParams({ page: '1', pageSize: '1' });
       if (market) qs.set('market', market);
       const r = await fetch(`${API_URL}/admin/subscribers?${qs.toString()}`, {
