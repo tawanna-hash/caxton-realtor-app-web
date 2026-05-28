@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { ArticleListItem, ArticleReport, EventListItem, EventReport, ReportOverrides } from './_types';
 import { ReportPreview, buildReportHtml, buildReportPlainText } from './_components/ReportPreview';
 import { EventReportPreview, buildEventReportHtml, buildEventReportPlainText } from './_components/EventReportPreview';
+import AdvertisersReportTab from './_components/AdvertisersReportTab';
 
 type DaysOption = 7 | 30 | 90 | 180;
 
@@ -30,7 +31,7 @@ export default function AdminReportsPage() {
   const [pubOverride, setPubOverride] = useState('');
   const [noteOverride, setNoteOverride] = useState('');
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'articles' | 'events'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'events' | 'advertisers'>('articles');
 
   // Events tab state (parallel to the articles tab state above)
   const [eventsList, setEventsList] = useState<EventListItem[]>([]);
@@ -184,6 +185,7 @@ export default function AdminReportsPage() {
           {([
             { key: 'articles', label: 'Articles' },
             { key: 'events', label: 'Events' },
+            { key: 'advertisers', label: 'Advertisers' },
           ] as const).map((tab) => {
             const isActive = activeTab === tab.key;
             return (
@@ -565,6 +567,10 @@ export default function AdminReportsPage() {
         );
       })()}
       </>
+      )}
+
+      {activeTab === 'advertisers' && (
+        <AdvertisersReportTab />
       )}
 
     </div>
