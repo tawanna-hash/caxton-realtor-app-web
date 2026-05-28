@@ -36,12 +36,15 @@ MODE="${1:-run}"
 
 DUMP=/tmp/do_dump.sql
 
-# Candidate set: every table that the Next.js app reads or writes.
-# Sourced from `grep -rnE "FROM|INTO|UPDATE|DELETE FROM" lib/server app/api`.
-# Some of these tables may not exist on DO (added later, Neon-only) — the
-# pre-flight probe will skip those.
+# Candidate set: every table that the Next.js app reads or writes that lives
+# ONLY on DO. Tables that already exist on Neon with DIFFERENT schemas
+# (events, advertisers) are explicitly excluded — they'd corrupt Neon's
+# Next.js-era data. DO copies of those are empty anyway.
+#
+# Sourced from `grep -rnE "FROM|INTO|UPDATE|DELETE FROM" lib/server app/api`,
+# minus the exclusions above.
 CANDIDATE_TABLES=(
-  # --- core auth / identity ---
+  # --- core auth / identity (DO-only) ---
   admins
   realtors
   admin_audit_log
@@ -52,29 +55,24 @@ CANDIDATE_TABLES=(
   webauthn_challenges
   notification_preferences
   email_log
-  # --- giveaways ---
+  # --- giveaways (DO-only) ---
   giveaways
   giveaway_rules
   giveaway_entries
-  # --- events ---
-  events
-  event_rsvps
-  # --- ads ---
-  ad_spaces
-  ad_creatives
-  ad_campaigns
-  advertisers
-  advertiser_email_grants
-  # --- magazines ---
-  magazines
-  magazine_hotspots
-  magazine_hotspot_clicks
-  thumbnail_jobs
-  # --- misc ---
-  builder_inventory
-  print_subscribers
-  notification_deliveries
 )
+
+# Tables explicitly NOT migrated from DO because Neon owns them with a
+# different schema or the FK target doesn't match. The migration must not
+# touch these.
+# - events       : Neon = event listings (177 rows, INT id); DO = empty UUID schema
+# - advertisers  : Neon = advertiser directory (20 rows, INT id); DO = empty UUID schema
+# - event_rsvps  : 0 rows on DO; FK targets DO events(UUID id) which can't be
+#                  resolved on Neon. If event RSVP feature is rebuilt, it'll
+#                  need a fresh schema against Neon's events table.
+# - notifications, notification_deliveries: 0 rows on DO; have FKs to DO
+#                  advertisers(UUID). Created manually below WITHOUT those
+#                  FKs since the Next.js code only does DELETE cascades on
+#                  realtor removal.
 
 # Probe DO: split CANDIDATE_TABLES into EXISTING and MISSING.
 echo "==> Probing DO for ${#CANDIDATE_TABLES[@]} candidate tables..."
@@ -133,11 +131,42 @@ for t in "${EXISTING[@]}"; do
   TBL_FLAGS+=("-t" "$t")
 done
 
+# Ensure required extensions and enum types exist on Neon BEFORE the dump
+# tries to reference them. pg_dump -t doesn't include type definitions, so
+# we extract them manually.
+echo "==> Ensuring citext extension on Neon..."
+psql "$NEON_DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL' > /dev/null
+SET search_path TO public;
+CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
+SQL
+
+echo "==> Extracting enum types from DO..."
+ENUM_DDL=$(psql "$DO_DATABASE_URL" -t -A <<'SQL'
+SELECT 'CREATE TYPE public.' || t.typname || ' AS ENUM (' ||
+  string_agg(quote_literal(e.enumlabel), ',' ORDER BY e.enumsortorder) || ');' AS ddl
+FROM pg_type t
+JOIN pg_enum e ON t.oid = e.enumtypid
+JOIN pg_namespace n ON n.oid = t.typnamespace
+WHERE n.nspname = 'public'
+GROUP BY t.typname
+ORDER BY t.typname;
+SQL
+)
+echo "    $(echo "$ENUM_DDL" | wc -l | tr -d ' ') enum type(s) found"
+
+echo "==> Creating enum types on Neon (skipped if already present)..."
+psql "$NEON_DATABASE_URL" <<EOF > /dev/null 2>&1 || true
+SET search_path TO public;
+$ENUM_DDL
+EOF
+
+# CRITICAL: do NOT use --clean. Earlier versions used --clean which generated
+# DROP TABLE statements that would have wiped Neon's existing Next.js-era
+# tables (magazines, advertisers, events, builder_inventory, etc.). Since the
+# candidate set is now restricted to DO-only tables, we just append.
 pg_dump \
   --no-owner \
   --no-privileges \
-  --if-exists \
-  --clean \
   "${TBL_FLAGS[@]}" \
   "$DO_DATABASE_URL" \
   > "$DUMP"
@@ -146,6 +175,40 @@ echo "    Dump size: $(du -h "$DUMP" | cut -f1)"
 
 echo "==> Restoring into Neon..."
 psql "$NEON_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$DUMP"
+
+echo "==> Creating notifications + notification_deliveries (FK-stripped, empty)..."
+psql "$NEON_DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL' > /dev/null
+SET search_path TO public;
+CREATE TABLE IF NOT EXISTS notifications (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  category        notification_category_enum NOT NULL,
+  title           text NOT NULL,
+  body            text NOT NULL,
+  deep_link_url   text,
+  target_audience jsonb NOT NULL DEFAULT '{}'::jsonb,
+  advertiser_id   uuid,                          -- no FK; DO advertisers schema not migrated
+  scheduled_for   timestamptz,
+  sent_at         timestamptz,
+  status          notification_status_enum NOT NULL DEFAULT 'draft',
+  created_by      uuid,                          -- soft-ref to admins(id)
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS notification_deliveries (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  notification_id uuid NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
+  realtor_id      uuid NOT NULL REFERENCES realtors(id)     ON DELETE CASCADE,
+  channel         notification_channel_enum NOT NULL,
+  delivered_at    timestamptz,
+  opened_at       timestamptz,
+  clicked_at      timestamptz,
+  failure_reason  text,
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS notification_deliveries_notification_id_index
+  ON notification_deliveries(notification_id);
+CREATE INDEX IF NOT EXISTS notification_deliveries_realtor_id_index
+  ON notification_deliveries(realtor_id);
+SQL
 
 echo "==> Comparing row counts..."
 printf "%-30s %12s %12s %s\n" TABLE DO NEON STATUS
