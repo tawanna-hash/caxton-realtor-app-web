@@ -4,6 +4,11 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* The app's components are built for a light surface (bg-white, text-gray-900,
+     etc). Pin the color scheme to light so the OS/browser dark mode doesn't
+     recolor inherited text, form controls, or scrollbars into an unreadable
+     hybrid. */
+  color-scheme: light;
 }
 
 @theme inline {
@@ -13,15 +18,29 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* NOTE: the previous @media (prefers-color-scheme: dark) override was removed.
+   It flipped --background to near-black and --foreground to near-white, but no
+   component was styled for a dark surface, so dark-mode users saw white panels
+   with washed-out text and faded input values. The app is intentionally
+   light-only for now. */
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Belt-and-suspenders: ensure native form controls always render with readable
+   dark text on their (light) backgrounds, regardless of OS dark mode. Tailwind
+   utilities on individual fields still override these where set. */
+input,
+textarea,
+select {
+  color: #171717;
+  background-color: #ffffff;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af; /* gray-400 — visible but clearly a placeholder */
 }
