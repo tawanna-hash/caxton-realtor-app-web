@@ -38,13 +38,8 @@ export function handleApiError(err: unknown): NextResponse {
   // Anything else → 500, log details, expose only generic message in prod
   logger.error({ err }, 'Unhandled API error');
   const body: Record<string, unknown> = { error: 'Internal server error' };
-  // On preview/dev (anywhere VERCEL_ENV !== 'production'), surface the real
-  // error message + name to aid debugging. Production responses stay generic.
-  const isProd =
-    process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production';
-  if (!isProd && err instanceof Error) {
+  if (process.env.NODE_ENV !== 'production' && err instanceof Error) {
     body.message = err.message;
-    body.errorName = err.name;
   }
   return NextResponse.json(body, { status: 500 });
 }
