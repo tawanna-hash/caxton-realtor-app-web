@@ -12,7 +12,7 @@
 
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse, type NextRequest } from 'next/server';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,24 +24,16 @@ const MAX_PDF_BYTES = 5 * 1024 * 1024 * 1024; // 5 GB — multipart upload from 
 // Staging accepts either type since it covers cover + pdf + pages at create time.
 const ALLOWED_STAGING_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_PDF_TYPES];
 
-async function isAdmin(cookieHeader: string | null): Promise<boolean> {
-  if (!cookieHeader) return false;
+async function isAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    return r.ok;
+    const admin = await getCurrentAdmin();
+    return admin !== null;
   } catch {
     return false;
   }
 }
 
-export async function POST(request: NextRequest) {
-  const cookieHeader = request.headers.get('cookie');
-  const ok = await isAdmin(cookieHeader);
+export async function POST(request: NextRequest) {  const ok = await isAdmin();
   if (!ok) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

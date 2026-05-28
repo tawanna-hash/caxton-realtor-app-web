@@ -1,17 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest) {
-  const cookieHeader = req.headers.get('cookie');
-  const API_URL = await getServerApiBase();
-  const auth = await fetch(`${API_URL}/admin/auth/me`, {
-    method: 'GET', headers: { cookie: cookieHeader || '' }, cache: 'no-store',
-  });
-  if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function POST() {
+  const admin = await getCurrentAdmin();
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const sql = getSql();
   const results: string[] = [];

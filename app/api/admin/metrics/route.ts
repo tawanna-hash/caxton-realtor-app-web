@@ -10,7 +10,7 @@
 // the other /api/admin/* routes).
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 const POSTHOG_API_KEY = process.env.POSTHOG_PERSONAL_API_KEY;
 const POSTHOG_PROJECT_ID = process.env.POSTHOG_PROJECT_ID;
@@ -20,16 +20,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-async function verifyAdmin(cookieHeader: string | null): Promise<boolean> {
-  if (!cookieHeader) return false;
+async function verifyAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    return r.ok;
+    const admin = await getCurrentAdmin();
+    return admin !== null;
   } catch {
     return false;
   }
@@ -66,7 +60,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const isAdmin = await verifyAdmin(req.headers.get('cookie'));
+  const isAdmin = await verifyAdmin();
   if (!isAdmin) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
   }

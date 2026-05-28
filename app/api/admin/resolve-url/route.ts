@@ -8,21 +8,19 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveUrl } from '@/lib/url-resolver';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 15;
 
-async function isAdmin(cookieHeader: string | null): Promise<boolean> {
-  if (!cookieHeader) return false;
+async function isAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET', headers: { cookie: cookieHeader }, cache: 'no-store',
-    });
-    return r.ok;
-  } catch { return false; }
+    const admin = await getCurrentAdmin();
+    return admin !== null;
+  } catch {
+    return false;
+  }
 }
 
 function errMessage(err: unknown): string {
@@ -30,8 +28,7 @@ function errMessage(err: unknown): string {
 }
 
 export async function POST(req: NextRequest) {
-  const cookieHeader = req.headers.get('cookie');
-  if (!(await isAdmin(cookieHeader))) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

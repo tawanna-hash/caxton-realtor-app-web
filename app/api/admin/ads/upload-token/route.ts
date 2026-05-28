@@ -18,28 +18,20 @@
 
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse } from 'next/server';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const runtime = 'nodejs';
 
-async function verifyAdmin(cookieHeader: string | null): Promise<boolean> {
-  if (!cookieHeader) return false;
+async function verifyAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    return r.ok;
+    const admin = await getCurrentAdmin();
+    return admin !== null;
   } catch {
     return false;
   }
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
-  const cookieHeader = request.headers.get('cookie');
-  const isAdmin = await verifyAdmin(cookieHeader);
+export async function POST(request: Request): Promise<NextResponse> {  const isAdmin = await verifyAdmin();
   if (!isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

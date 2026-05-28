@@ -14,24 +14,19 @@
 // Auth: forwards the admin cookie to the droplet /admin/auth/me, same as the
 // rest of /api/admin/*.
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { listSubscribers } from '@/lib/server/subscribers-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 15;
 
-async function isAdmin(cookieHeader: string | null): Promise<boolean> {
-  if (!cookieHeader) return false;
+async function isAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    return r.ok;
+    const admin = await getCurrentAdmin();
+    return admin !== null;
   } catch {
     return false;
   }
@@ -44,24 +39,15 @@ function errMessage(err: unknown): string {
 // Fetch subscriber total from the droplet. pageSize=1 keeps the payload tiny;
 // the response still carries the full `total`. Per-market counts come from two
 // more cheap calls (market filter is supported by the list endpoint).
-async function fetchSubscriberCounts(cookieHeader: string): Promise<{
+async function fetchSubscriberCounts(): Promise<{
   total: number | null;
   austin: number | null;
   san_antonio: number | null;
 }> {
   async function countFor(market?: 'austin' | 'san_antonio'): Promise<number | null> {
     try {
-      const API_URL = await getServerApiBase();
-      const qs = new URLSearchParams({ page: '1', pageSize: '1' });
-      if (market) qs.set('market', market);
-      const r = await fetch(`${API_URL}/admin/subscribers?${qs.toString()}`, {
-        method: 'GET',
-        headers: { cookie: cookieHeader },
-        cache: 'no-store',
-      });
-      if (!r.ok) return null;
-      const data = (await r.json()) as { total?: number };
-      return typeof data.total === 'number' ? data.total : null;
+      const result = await listSubscribers({ page: 1, pageSize: 1, market });
+      return result.total;
     } catch {
       return null;
     }
@@ -74,9 +60,8 @@ async function fetchSubscriberCounts(cookieHeader: string): Promise<{
   return { total, austin, san_antonio };
 }
 
-export async function GET(req: NextRequest) {
-  const cookieHeader = req.headers.get('cookie');
-  if (!(await isAdmin(cookieHeader))) {
+export async function GET() {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -117,7 +102,7 @@ export async function GET(req: NextRequest) {
         ORDER BY clicks DESC
         LIMIT 1
       ` as unknown as Promise<Array<{ name: string; clicks: number }>>,
-      fetchSubscriberCounts(cookieHeader || ''),
+      fetchSubscriberCounts(),
     ]);
 
     const topAdvertiser = topAdvRows.length > 0

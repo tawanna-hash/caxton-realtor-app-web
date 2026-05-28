@@ -6,11 +6,10 @@
 // specific hostname, not the production domain where the admin session
 // cookie was set.
 
-import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import MagazineEditForm from './MagazineEditForm';
 import { getSql } from '@/lib/db';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Admin · Edit Magazine' };
@@ -29,25 +28,17 @@ type Magazine = {
   page_texts: string[] | null;
 };
 
-async function isAdmin(cookieHeader: string): Promise<boolean> {
+async function isAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    return r.ok;
+    const admin = await getCurrentAdmin();
+    return admin !== null;
   } catch {
     return false;
   }
 }
 
 async function fetchOne(id: string): Promise<Magazine | null> {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  if (!cookieHeader) return null;
-  if (!(await isAdmin(cookieHeader))) return null;
+  if (!(await isAdmin())) return null;
   const numericId = Number(id);
   if (!Number.isInteger(numericId) || numericId <= 0) return null;
   try {

@@ -24,7 +24,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 // ============================================================
 // CONFIG
@@ -403,16 +403,10 @@ const getCachedReport = unstable_cache(
 // Auth
 // ============================================================
 
-async function verifyAdmin(cookieHeader: string | null): Promise<boolean> {
-  if (!cookieHeader) return false;
+async function verifyAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    return r.ok;
+    const admin = await getCurrentAdmin();
+    return admin !== null;
   } catch {
     return false;
   }
@@ -423,7 +417,7 @@ async function verifyAdmin(cookieHeader: string | null): Promise<boolean> {
 // ============================================================
 
 export async function POST(request: NextRequest) {
-  const authorized = await verifyAdmin(request.headers.get('cookie'));
+  const authorized = await verifyAdmin();
   if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

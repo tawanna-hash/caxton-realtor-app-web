@@ -27,7 +27,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import type { Hotspot } from '@/lib/hotspots';
 import { PDFDocument, PDFDict, PDFArray, PDFName, PDFString, PDFNumber, PDFRef } from 'pdf-lib';
 import { isShortenerUrl, resolveUrl } from '@/lib/url-resolver';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,27 +36,19 @@ export const maxDuration = 60;
 // ============================================================
 // Auth (mirrors the pattern in other /admin routes)
 // ============================================================
-async function isAdmin(cookieHeader: string | null): Promise<boolean> {
-  if (!cookieHeader) return false;
+async function isAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET', headers: { cookie: cookieHeader }, cache: 'no-store',
-    });
-    return r.ok;
-  } catch { return false; }
+    const admin = await getCurrentAdmin();
+    return admin !== null;
+  } catch {
+    return false;
+  }
 }
 
-async function getAdminEmail(cookieHeader: string | null): Promise<string | null> {
-  if (!cookieHeader) return null;
+async function getAdminEmail(): Promise<string | null> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET', headers: { cookie: cookieHeader }, cache: 'no-store',
-    });
-    if (!r.ok) return null;
-    const data = await r.json();
-    return typeof data?.email === 'string' ? data.email : null;
+    const admin = await getCurrentAdmin();
+    return admin?.email ?? null;
   } catch { return null; }
 }
 
@@ -230,11 +222,10 @@ async function extractLinksFromPdf(pdfBuffer: ArrayBuffer): Promise<ExtractedLin
 type RouteCtx = { params: Promise<{ id: string }> };
 
 export async function POST(req: NextRequest, ctx: RouteCtx) {
-  const cookieHeader = req.headers.get('cookie');
-  if (!(await isAdmin(cookieHeader))) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const adminEmail = await getAdminEmail(cookieHeader);
+  const adminEmail = await getAdminEmail();
 
   const { id } = await ctx.params;
   const idNum = Number(id);

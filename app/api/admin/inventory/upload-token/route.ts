@@ -26,7 +26,7 @@
 
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse, type NextRequest } from 'next/server';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,16 +36,10 @@ const ALLOWED_FLYER_TYPES = ['application/pdf'];
 const MAX_THUMBNAIL_BYTES = 10 * 1024 * 1024; // 10MB
 const MAX_FLYER_BYTES = 25 * 1024 * 1024; // 25MB
 
-async function isAdmin(cookieHeader: string | null): Promise<boolean> {
-  if (!cookieHeader) return false;
+async function isAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    return r.ok;
+    const admin = await getCurrentAdmin();
+    return admin !== null;
   } catch {
     return false;
   }
@@ -53,8 +47,7 @@ async function isAdmin(cookieHeader: string | null): Promise<boolean> {
 
 export async function POST(request: NextRequest) {
   // Auth check — fail-closed before we even parse the body.
-  const cookieHeader = request.headers.get('cookie');
-  const ok = await isAdmin(cookieHeader);
+  const ok = await isAdmin();
   if (!ok) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

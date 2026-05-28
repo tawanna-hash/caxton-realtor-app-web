@@ -5,24 +5,18 @@
 // data on mount and renders charts + tables.
 
 import { redirect, notFound } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { ensureSchema, getSql } from '@/lib/db';
 import type { Advertiser } from '@/lib/advertisers';
 import AdvertiserAnalyticsClient from './AdvertiserAnalyticsClient';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Admin · Advertiser Analytics' };
 
-async function isAdmin(cookieHeader: string): Promise<boolean> {
+async function isAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    return r.ok;
+    const admin = await getCurrentAdmin();
+    return admin !== null;
   } catch {
     return false;
   }
@@ -34,10 +28,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
   const { id } = await params;
   const idNum = Number(id);
   if (!Number.isInteger(idNum) || idNum < 1) notFound();
-
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  if (!cookieHeader || !(await isAdmin(cookieHeader))) {
+  if (!(await isAdmin())) {
     redirect('/admin/login');
   }
 

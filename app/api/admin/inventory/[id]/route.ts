@@ -9,7 +9,7 @@
 // admin email which we record as reviewed_by on status changes.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import {
   updateBuilderInventory,
   deleteBuilderInventory,
@@ -24,23 +24,13 @@ export const dynamic = 'force-dynamic';
 
 type AdminInfo = { email: string; fullName: string };
 
-async function fetchAdmin(cookieHeader: string | null): Promise<AdminInfo | null> {
-  if (!cookieHeader) return null;
+async function fetchAdmin(): Promise<AdminInfo | null> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    if (!r.ok) return null;
-    const body = (await r.json()) as {
-      admin?: { email?: string; fullName?: string };
-    };
-    if (!body.admin?.email) return null;
+    const admin = await getCurrentAdmin();
+    if (!admin?.email) return null;
     return {
-      email: body.admin.email,
-      fullName: body.admin.fullName ?? body.admin.email,
+      email: admin.email,
+      fullName: admin.email,
     };
   } catch {
     return null;
@@ -80,8 +70,7 @@ function coerceReqStr(v: unknown): string | undefined {
 }
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {
-  const cookieHeader = req.headers.get('cookie');
-  const admin = await fetchAdmin(cookieHeader);
+  const admin = await fetchAdmin();
   if (!admin) {
     return NextResponse.json(
       { ok: false, error: 'Unauthorized' },
@@ -215,8 +204,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
 }
 
 export async function DELETE(req: NextRequest, ctx: Ctx) {
-  const cookieHeader = req.headers.get('cookie');
-  const admin = await fetchAdmin(cookieHeader);
+  const admin = await fetchAdmin();
   if (!admin) {
     return NextResponse.json(
       { ok: false, error: 'Unauthorized' },

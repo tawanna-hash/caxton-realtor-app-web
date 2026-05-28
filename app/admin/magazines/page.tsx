@@ -8,10 +8,9 @@
 // because the deployment-specific URL doesn't share the admin session
 // cookie. Querying the DB directly is faster and more reliable.
 
-import { cookies } from 'next/headers';
 import MagazinesAdminClient from './MagazinesAdminClient';
 import { getSql } from '@/lib/db';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,25 +29,17 @@ type Magazine = {
   sort_date: string;
 };
 
-async function isAdmin(cookieHeader: string): Promise<boolean> {
+async function isAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    return r.ok;
+    const admin = await getCurrentAdmin();
+    return admin !== null;
   } catch {
     return false;
   }
 }
 
 async function fetchMagazines(): Promise<Magazine[]> {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-  if (!cookieHeader) return [];
-  if (!(await isAdmin(cookieHeader))) return [];
+  if (!(await isAdmin())) return [];
   try {
     const sql = getSql();
     const rows = (await sql`

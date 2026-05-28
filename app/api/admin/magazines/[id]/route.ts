@@ -4,21 +4,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
-import { getServerApiBase } from '@/lib/server-api-base';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-async function isAdmin(cookieHeader: string | null): Promise<boolean> {
-  if (!cookieHeader) return false;
+async function isAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    return r.ok;
+    const admin = await getCurrentAdmin();
+    return admin !== null;
   } catch {
     return false;
   }
@@ -44,8 +38,7 @@ type NeonClient = {
 };
 
 export async function GET(req: NextRequest, ctx: RouteCtx) {
-  const cookieHeader = req.headers.get('cookie');
-  if (!(await isAdmin(cookieHeader))) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { id } = await ctx.params;
@@ -72,8 +65,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
 }
 
 export async function PATCH(req: NextRequest, ctx: RouteCtx) {
-  const cookieHeader = req.headers.get('cookie');
-  if (!(await isAdmin(cookieHeader))) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { id } = await ctx.params;
@@ -187,8 +179,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
 }
 
 export async function DELETE(req: NextRequest, ctx: RouteCtx) {
-  const cookieHeader = req.headers.get('cookie');
-  if (!(await isAdmin(cookieHeader))) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { id } = await ctx.params;

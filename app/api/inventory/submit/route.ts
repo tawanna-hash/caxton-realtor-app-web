@@ -7,7 +7,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
-import { getServerApiBase } from '@/lib/server-api-base';
 import { neon } from '@neondatabase/serverless';
 import {
   createBuilderInventory,
@@ -17,6 +16,7 @@ import {
   type Publication,
   type PromoType,
 } from '@/lib/builder-inventory';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL || '');
 
@@ -29,16 +29,10 @@ const MAX_PDF_BYTES = 25 * 1024 * 1024;
 const MAX_IMG_BYTES = 10 * 1024 * 1024;
 const ADMIN_EMAIL = 'admin:tawanna@myrealtyline.com';
 
-async function verifyAdmin(cookieHeader: string | null): Promise<boolean> {
-  if (!cookieHeader) return false;
+async function verifyAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    return r.ok;
+    const admin = await getCurrentAdmin();
+    return admin !== null;
   } catch {
     return false;
   }
@@ -73,8 +67,7 @@ export async function POST(req: NextRequest) {
     // and bypasses the pending queue (auto-active on insert).
     const isAdminMode = readStr(fd, 'mode') === 'admin';
     if (isAdminMode) {
-      const cookieHeader = req.headers.get('cookie');
-      const ok = await verifyAdmin(cookieHeader);
+      const ok = await verifyAdmin();
       if (!ok) {
         return NextResponse.json(
           { ok: false, error: 'Admin authentication required.' },

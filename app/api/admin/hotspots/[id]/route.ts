@@ -9,7 +9,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
-import { getServerApiBase } from '@/lib/server-api-base';
 import {
   isHotspotType,
   validatePosition,
@@ -17,39 +16,26 @@ import {
   type Hotspot,
   type HotspotType,
 } from '@/lib/hotspots';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type RouteCtx = { params: Promise<{ id: string }> };
 
-async function isAdmin(cookieHeader: string | null): Promise<boolean> {
-  if (!cookieHeader) return false;
+async function isAdmin(): Promise<boolean> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    return r.ok;
+    const admin = await getCurrentAdmin();
+    return admin !== null;
   } catch {
     return false;
   }
 }
 
-async function getAdminEmail(cookieHeader: string | null): Promise<string | null> {
-  if (!cookieHeader) return null;
+async function getAdminEmail(): Promise<string | null> {
   try {
-    const API_URL = await getServerApiBase();
-    const r = await fetch(`${API_URL}/admin/auth/me`, {
-      method: 'GET',
-      headers: { cookie: cookieHeader },
-      cache: 'no-store',
-    });
-    if (!r.ok) return null;
-    const data = await r.json();
-    return (typeof data?.email === 'string' ? data.email : null);
+    const admin = await getCurrentAdmin();
+    return admin?.email ?? null;
   } catch {
     return null;
   }
@@ -60,11 +46,10 @@ function errMessage(err: unknown): string {
 }
 
 export async function PATCH(req: NextRequest, ctx: RouteCtx) {
-  const cookieHeader = req.headers.get('cookie');
-  if (!(await isAdmin(cookieHeader))) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const adminEmail = await getAdminEmail(cookieHeader);
+  const adminEmail = await getAdminEmail();
 
   const { id } = await ctx.params;
   const idNum = Number(id);
@@ -184,8 +169,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
 }
 
 export async function DELETE(req: NextRequest, ctx: RouteCtx) {
-  const cookieHeader = req.headers.get('cookie');
-  if (!(await isAdmin(cookieHeader))) {
+  if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { id } = await ctx.params;
