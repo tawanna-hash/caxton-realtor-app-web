@@ -1,18 +1,6 @@
-// app/admin/advertisers/AdvertisersClient.tsx
-//
-// Admin UI for advertisers. Handles:
-// - List table with publication badge, hotspot/click counts, gate state
-// - Click advertiser name → drill-down analytics page
-// - "New advertiser" modal with publication selector
-// - Edit modal (same fields)
-// - Copy share URL, Regenerate share token, Delete
-//
-// Publication branding is set per-advertiser and drives the public
-// dashboard + email theming downstream.
-
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { AdvertiserWithStats } from '@/lib/advertisers';
@@ -30,6 +18,16 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [authExpired, setAuthExpired] = useState(false);
   const router = useRouter();
+
+  const realtyLineAdvertisers = useMemo(
+    () => advertisers.filter((a) => (a.publication ?? 'austin') === 'austin'),
+    [advertisers],
+  );
+
+  const newslineAdvertisers = useMemo(
+    () => advertisers.filter((a) => (a.publication ?? 'austin') === 'san_antonio'),
+    [advertisers],
+  );
 
   const reload = useCallback(async () => {
     try {
@@ -69,6 +67,7 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
   const copyShareUrl = async (a: AdvertiserWithStats) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const url = `${origin}/r/advertiser/${a.slug}?t=${a.share_token}`;
+
     try {
       await navigator.clipboard.writeText(url);
     } catch {
@@ -129,7 +128,7 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-5">
+    <div className="max-w-7xl mx-auto p-6 space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Advertisers</h1>
@@ -159,84 +158,26 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-left text-gray-600">
-            <tr>
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Publication</th>
-              <th className="px-4 py-3 font-medium">Hotspots</th>
-              <th className="px-4 py-3 font-medium">Clicks (30d)</th>
-              <th className="px-4 py-3 font-medium">Contact email</th>
-              <th className="px-4 py-3 font-medium">Gate</th>
-              <th className="px-4 py-3 font-medium">Actions</th>
-            </tr>
-          </thead>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <AdvertiserColumn
+          title="RealtyLine"
+          advertisers={realtyLineAdvertisers}
+          emptyText="No RealtyLine advertisers yet. Click “New advertiser” to add one."
+          onCopyShareUrl={copyShareUrl}
+          onEdit={openEdit}
+          onRegenerateToken={regenerateToken}
+          onDelete={deleteAdvertiser}
+        />
 
-          <tbody className="divide-y divide-gray-100">
-            {advertisers.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-6 text-gray-500">
-                  No advertisers yet. Click “New advertiser” to add one.
-                </td>
-              </tr>
-            ) : (
-              advertisers.map((a) => (
-                <tr key={a.id} className="align-top">
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/admin/analytics/advertiser/${a.id}`}
-                      className="font-medium text-gray-900 hover:underline"
-                    >
-                      {a.name}
-                    </Link>
-                    <div className="text-xs text-gray-500">{a.slug}</div>
-                  </td>
-
-                  <td className="px-4 py-3">
-                    <PublicationBadge publication={a.publication} />
-                  </td>
-
-                  <td className="px-4 py-3 text-gray-700">{a.hotspot_count}</td>
-                  <td className="px-4 py-3 text-gray-700">{a.clicks_30d}</td>
-                  <td className="px-4 py-3 text-gray-700">{a.contact_email || '—'}</td>
-                  <td className="px-4 py-3 text-gray-700">
-                    {a.requires_email_gate ? 'email gate' : 'open'}
-                  </td>
-
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => copyShareUrl(a)}
-                        className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
-                      >
-                        Copy link
-                      </button>
-                      <button
-                        onClick={() => openEdit(a)}
-                        className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => regenerateToken(a)}
-                        className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
-                      >
-                        Rotate token
-                      </button>
-                      <button
-                        onClick={() => deleteAdvertiser(a)}
-                        className="px-2 py-1 border border-red-200 text-red-700 rounded hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <AdvertiserColumn
+          title="Newsline"
+          advertisers={newslineAdvertisers}
+          emptyText="No Newsline advertisers yet. Click “New advertiser” to add one."
+          onCopyShareUrl={copyShareUrl}
+          onEdit={openEdit}
+          onRegenerateToken={regenerateToken}
+          onDelete={deleteAdvertiser}
+        />
       </div>
 
       <p className="text-xs text-gray-500">
@@ -261,10 +202,111 @@ export default function AdvertisersClient({ initialAdvertisers }: Props) {
   );
 }
 
+function AdvertiserColumn({
+  title,
+  advertisers,
+  emptyText,
+  onCopyShareUrl,
+  onEdit,
+  onRegenerateToken,
+  onDelete,
+}: {
+  title: string;
+  advertisers: AdvertiserWithStats[];
+  emptyText: string;
+  onCopyShareUrl: (a: AdvertiserWithStats) => void | Promise<void>;
+  onEdit: (a: AdvertiserWithStats) => void;
+  onRegenerateToken: (a: AdvertiserWithStats) => void | Promise<void>;
+  onDelete: (a: AdvertiserWithStats) => void | Promise<void>;
+}) {
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="border-b border-gray-200 px-4 py-3">
+        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+      </div>
+
+      {advertisers.length === 0 ? (
+        <div className="px-4 py-6 text-sm text-gray-500">{emptyText}</div>
+      ) : (
+        <div className="divide-y divide-gray-100">
+          {advertisers.map((a) => (
+            <div key={a.id} className="px-4 py-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <Link
+                    href={`/admin/analytics/advertiser/${a.id}`}
+                    className="font-medium text-gray-900 hover:underline"
+                  >
+                    {a.name}
+                  </Link>
+                  <div className="text-xs text-gray-500">{a.slug}</div>
+                </div>
+
+                <PublicationBadge publication={a.publication ?? 'austin'} />
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-gray-700">
+                <Metric label="Hotspots" value={String(a.hotspot_count)} />
+                <Metric label="Clicks (30d)" value={String(a.clicks_30d)} />
+                <Metric label="Contact email" value={a.contact_email || '—'} breakAll />
+                <Metric label="Gate" value={a.requires_email_gate ? 'email gate' : 'open'} />
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  onClick={() => onCopyShareUrl(a)}
+                  className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  Copy link
+                </button>
+                <button
+                  onClick={() => onEdit(a)}
+                  className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => onRegenerateToken(a)}
+                  className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  Rotate token
+                </button>
+                <button
+                  onClick={() => onDelete(a)}
+                  className="px-2 py-1 border border-red-200 text-red-700 rounded hover:bg-red-50"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  breakAll = false,
+}: {
+  label: string;
+  value: string;
+  breakAll?: boolean;
+}) {
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className={breakAll ? 'break-all' : undefined}>{value}</div>
+    </div>
+  );
+}
+
 function PublicationBadge({ publication }: { publication?: Publication }) {
   const theme = getPublicationTheme(publication);
 
-  const bg =
+  const tone =
     theme.id === 'san_antonio'
       ? 'bg-purple-50 text-purple-800 border-purple-200'
       : theme.id === 'both'
@@ -272,7 +314,9 @@ function PublicationBadge({ publication }: { publication?: Publication }) {
         : 'bg-blue-50 text-blue-800 border-blue-200';
 
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${bg}`}>
+    <span
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${tone}`}
+    >
       {theme.shortName}
     </span>
   );
@@ -286,23 +330,22 @@ function EditModal({
 }: {
   advertiser: AdvertiserWithStats | null;
   onClose: () => void;
-  onSaved: () => Promise<void> | void;
+  onSaved: () => Promise<void>;
   onError: (msg: string) => void;
 }) {
-  const [name, setName] = useState(advertiser?.name || '');
-  const [publication, setPublication] = useState<Publication>(advertiser?.publication || 'austin');
-  const [contactEmail, setContactEmail] = useState(advertiser?.contact_email || '');
-  const [requiresGate, setRequiresGate] = useState(advertiser?.requires_email_gate || false);
+  const [name, setName] = useState(advertiser?.name ?? '');
+  const [publication, setPublication] = useState<Publication>(advertiser?.publication ?? 'austin');
+  const [contactEmail, setContactEmail] = useState(advertiser?.contact_email ?? '');
+  const [requiresGate, setRequiresGate] = useState(advertiser?.requires_email_gate ?? false);
   const [saving, setSaving] = useState(false);
 
   const onSave = useCallback(async () => {
     if (!name.trim()) return;
 
     setSaving(true);
+
     try {
-      const url = advertiser
-        ? `/api/admin/advertisers/${advertiser.id}`
-        : '/api/admin/advertisers';
+      const url = advertiser ? `/api/admin/advertisers/${advertiser.id}` : '/api/admin/advertisers';
       const method = advertiser ? 'PATCH' : 'POST';
 
       const res = await fetch(url, {
@@ -322,8 +365,8 @@ function EditModal({
       }
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `HTTP ${res.status}`);
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error || `HTTP ${res.status}`);
       }
 
       await onSaved();
@@ -401,7 +444,7 @@ function EditModal({
               onChange={(e) => setRequiresGate(e.target.checked)}
               disabled={saving}
             />
-            Requires email gate (advertiser must verify email before viewing)
+            Require email gate (advertiser must verify email before viewing)
           </label>
         </div>
 
