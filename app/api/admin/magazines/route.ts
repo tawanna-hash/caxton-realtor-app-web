@@ -1,12 +1,11 @@
 // app/api/admin/magazines/route.ts
 //
-// Admin CRUD for magazines (list + create).
+// Admin endpoints:
+//   GET  — list all magazines, newest first
+//   POST — create a new magazine row (uploads happen client-side first)
 //
-//   GET  /api/admin/magazines           — list all, newest first
-//   POST /api/admin/magazines           — create new row with ALL fields populated
-//                                          (uploads happen client-side first via the
-//                                          magazine-staging/ pathname, then this POST
-//                                          writes the row in one shot)
+// The upload form sends camelCase keys (issuelabel, sortdate, etc.)
+// This route accepts both camelCase and snake_case for each field.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
@@ -36,6 +35,10 @@ const PUB_ALIAS: Record<string, string> = {
   austin: 'austin',
   san_antonio: 'san_antonio',
 };
+
+function str(v: unknown): string {
+  return String(v ?? '').trim();
+}
 
 function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
@@ -68,68 +71,70 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let rawBody: Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let raw: any;
   try {
-    rawBody = await req.json();
+    raw = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
-  // Accept both snake_case (route standard) and camelCase (form sends camelCase)
-  const body = {
-    publication: rawBody.publication,
-    year: rawBody.year,
-    month: rawBody.month,
-    issue_label: rawBody.issue_label ?? rawBody.issuelabel,
-    sort_date: rawBody.sort_date ?? rawBody.sortdate,
-    cover_url: rawBody.cover_url ?? rawBody.coverurl,
-    reader_url: rawBody.reader_url ?? rawBody.readerurl,
-    page_urls: rawBody.page_urls ?? rawBody.pageurls,
-    page_count: rawBody.page_count ?? rawBody.pagecount,
-    page_texts: rawBody.page_texts ?? rawBody.pagetexts,
-  };
 
-  const publication = PUB_ALIAS[String(body.publication || '').toLowerCase()];
+  // Accept both camelCase (form) and snake_case (API standard)
+  const pubRaw = str(raw.publication);
+  const publication = PUB_ALIAS[pubRaw.toLowerCase()];
   if (!publication) {
     return NextResponse.json({ error: 'invalid publication' }, { status: 400 });
   }
-  const year = Number(body.year);
-  const month = Number(body.month);
+
+  const year = Number(raw.year);
+  const month = Number(raw.month);
   if (!Number.isInteger(year) || year < 2000 || year > 2100) {
     return NextResponse.json({ error: 'invalid year' }, { status: 400 });
   }
   if (!Number.isInteger(month) || month < 1 || month > 12) {
     return NextResponse.json({ error: 'invalid month' }, { status: 400 });
   }
-  const issueLabel = String(body.issue_label || '').trim();
+
+  // issue_label or issuelabel
+  const issueLabel = str(raw.issue_label ?? raw.issuelabel);
   if (!issueLabel) {
     return NextResponse.json({ error: 'issue_label is required' }, { status: 400 });
   }
-  const sortDate =
-    body.sort_date && /^\d{4}-\d{2}-\d{2}/.test(String(body.sort_date))
-      ? String(body.sort_date).slice(0, 10)
-      : `${year}-${String(month).padStart(2, '0')}-01`;
 
-  // Required: cover_url
-  const coverUrl = String(body.cover_url || '').trim();
+  // sort_date or sortdate
+  const sortDateRaw = str(raw.sort_date ?? raw.sortdate);
+  const sortDate = /^\d{4}-\d{2}-\d{2}/.test(sortDateRaw)
+    ? sortDateRaw.slice(0, 10)
+    : `${year}-${String(month).padStart(2, '0')}-01`;
+
+  // cover_url or coverurl
+  const coverUrl = str(raw.cover_url ?? raw.coverurl);
   if (!coverUrl) {
     return NextResponse.json({ error: 'cover_url is required' }, { status: 400 });
   }
 
-  // Optional fields with defaults.
-  const readerUrl =
-    body.reader_url !== undefined && body.reader_url !== null
-      ? String(body.reader_url).trim() || null
-      : null;
-  const pageUrls = Array.isArray(body.page_urls) ? body.page_urls : [];
+  // reader_url or readerurl (optional)
+  const readerUrlRaw = raw.reader_url ?? raw.readerurl;
+  const readerUrl = readerUrlRaw != null ? str(readerUrlRaw) || null : null;
+
+  // page_urls or pageurls
+  const pageUrlsRaw = raw.page_urls ?? raw.pageurls;
+  const pageUrls: string[] = Array.isArray(pageUrlsRaw) ? pageUrlsRaw : [];
   if (!pageUrls.every((u) => typeof u === 'string')) {
     return NextResponse.json({ error: 'page_urls must be string[]' }, { status: 400 });
   }
+
+  // page_count or pagecount
+  const pageCountRaw = raw.page_count ?? raw.pagecount;
   const pageCount =
-    typeof body.page_count === 'number' && Number.isInteger(body.page_count) && body.page_count >= 0
-      ? body.page_count
+    typeof pageCountRaw === 'number' && Number.isInteger(pageCountRaw) && pageCountRaw >= 0
+      ? pageCountRaw
       : pageUrls.length;
-  const pageTexts = Array.isArray(body.page_texts)
-    ? JSON.stringify(body.page_texts)
+
+  // page_texts or pagetexts (optional, stored as JSONB)
+  const pageTextsRaw = raw.page_texts ?? raw.pagetexts;
+  const pageTexts = Array.isArray(pageTextsRaw)
+    ? JSON.stringify(pageTextsRaw)
     : '[]';
 
   try {
