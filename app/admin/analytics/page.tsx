@@ -13,6 +13,7 @@
 // - Row-filter resets happen inside select onChange handlers, not an effect.
 
 import { useCallback, useEffect, useState } from 'react';
+import KpiStrip from '@/components/KpiStrip';
 
 // ============================================================
 // Types
@@ -378,6 +379,13 @@ export default function AdminAnalyticsPage() {
     <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-6 p-4 sm:p-6">
 
       <main className="space-y-5 min-w-0">
+
+        {/* Phase 6b: cross-system at-a-glance KPIs. Self-contained fetch —
+            renders instantly, independent of the slow PostHog report below. */}
+        <div>
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">At a glance</h2>
+          <KpiStrip />
+        </div>
 
         {/* Data freshness banner */}
         {report && !error ? (
