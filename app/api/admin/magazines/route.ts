@@ -68,23 +68,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: {
-    publication?: string;
-    year?: number;
-    month?: number;
-    issue_label?: string;
-    sort_date?: string;
-    cover_url?: string;
-    reader_url?: string | null;
-    page_urls?: string[];
-    page_count?: number;
-    page_texts?: string[];
-  };
+  let rawBody: Record<string, unknown>;
   try {
-    body = await req.json();
+    rawBody = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
+  // Accept both snake_case (route standard) and camelCase (form sends camelCase)
+  const body = {
+    publication: rawBody.publication,
+    year: rawBody.year,
+    month: rawBody.month,
+    issue_label: rawBody.issue_label ?? rawBody.issuelabel,
+    sort_date: rawBody.sort_date ?? rawBody.sortdate,
+    cover_url: rawBody.cover_url ?? rawBody.coverurl,
+    reader_url: rawBody.reader_url ?? rawBody.readerurl,
+    page_urls: rawBody.page_urls ?? rawBody.pageurls,
+    page_count: rawBody.page_count ?? rawBody.pagecount,
+    page_texts: rawBody.page_texts ?? rawBody.pagetexts,
+  };
 
   const publication = PUB_ALIAS[String(body.publication || '').toLowerCase()];
   if (!publication) {
