@@ -32,6 +32,81 @@ import { trackEvent } from '../app/posthog-provider';
 import HotspotLayer from './HotspotLayer';
 import type { PublicHotspot } from '@/lib/hotspots';
 
+// ---- Phase 6 (Option C): PDF-annotation link click tracking ----
+// PDF link annotations render as overlay <a> tags in PageCanvas. Those are a
+// separate click surface from HotspotLayer and were never tracked, so clicks on
+// designer-embedded InDesign links never reached magazine_hotspot_clicks. We
+// match each overlay link to its page's hotspot by normalized URL and fire the
+// same beacon HotspotLayer uses.
+const MZ_SESSION_COOKIE = 'mz_session';
+const MZ_SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+
+function mzGetOrCreateSessionId(): string {
+  if (typeof document === 'undefined') return '';
+  const existing = document.cookie
+    .split('; ')
+    .find((c) => c.startsWith(`${MZ_SESSION_COOKIE}=`));
+  if (existing) return existing.split('=')[1];
+  const id = 'sx_' +
+    Math.random().toString(36).slice(2) +
+    Math.random().toString(36).slice(2);
+  document.cookie = `${MZ_SESSION_COOKIE}=${id}; path=/; max-age=${MZ_SESSION_MAX_AGE}; samesite=lax`;
+  return id;
+}
+
+function trackHotspotClick(hotspotId: number): void {
+  const sessionId = mzGetOrCreateSessionId();
+  if (!sessionId) return;
+  const payload = JSON.stringify({ session_id: sessionId });
+  const url = `/api/hotspots/${hotspotId}/click`;
+  if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+    try {
+      const blob = new Blob([payload], { type: 'application/json' });
+      if (navigator.sendBeacon(url, blob)) return;
+    } catch {
+      /* fall through to fetch */
+    }
+  }
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: payload,
+    keepalive: true,
+  }).catch(() => { /* noop */ });
+}
+
+// Normalize for loose matching: lowercase, drop protocol, leading www., and
+// trailing slash. Keeps path + query so UTM-tagged links stay distinct.
+function mzNormalizeUrl(u: string): string {
+  return (u || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/^www\./, '')
+    .replace(/\/+$/, '');
+}
+
+// Match a PDF overlay URL to a hotspot (already filtered to this page).
+// Tries config.url then config.tracking_url for link hotspots, and url for mls.
+function matchHotspotByUrl(
+  overlayUrl: string,
+  pageHotspots: PublicHotspot[],
+): PublicHotspot | null {
+  const target = mzNormalizeUrl(overlayUrl);
+  if (!target) return null;
+  for (const h of pageHotspots) {
+    if (h.config.type === 'link') {
+      if (mzNormalizeUrl(h.config.url) === target) return h;
+      if (h.config.tracking_url && mzNormalizeUrl(h.config.tracking_url) === target) return h;
+    } else if (h.config.type === 'mls') {
+      if (mzNormalizeUrl(h.config.url) === target) return h;
+    }
+  }
+  return null;
+}
+// ---- end Phase 6 (Option C) helpers ----
+
+
 interface InteractiveMagazineReaderProps {
   magazine: Magazine;
   brandColor: string;
@@ -1280,14 +1355,16 @@ function PageCanvas({
             width: `${o.w}px`,
             height: `${o.h}px`,
           }}
-          onClick={() =>
+          onClick={() => {
             trackEvent('flipbook_link_clicked', {
               ...trackContext,
               page: pageNum + 1,
               url: o.url,
               reader: 'interactive_v4',
-            })
-          }
+            });
+            const matched = matchHotspotByUrl(o.url, hotspots);
+            if (matched) trackHotspotClick(matched.id);
+          }}
           aria-label={`Open link: ${o.url}`}
         />
       ))}
