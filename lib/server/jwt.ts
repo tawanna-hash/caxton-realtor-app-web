@@ -45,9 +45,17 @@ export function signAdminSessionToken(payload: Omit<AdminSessionPayload, 'type'>
   return jwt.sign({ ...payload, type: 'admin' }, getSecret(), { expiresIn: getExpiry() });
 }
 
+// Pin the verification algorithm. jsonwebtoken's default behavior trusts the
+// `alg` field in the token header, which historically opened the door to
+// alg-confusion attacks (e.g. `alg=none` or swapping HS↔RS keys). We only
+// ever sign with HS256 — reject anything else outright. Matches the
+// `algorithms: ['HS256']` lock in proxy.ts so the cookie verifier and the
+// edge gate stay in agreement.
+const VERIFY_OPTIONS = { algorithms: ['HS256' as const] };
+
 export function verifySessionToken(token: string): RealtorSessionPayload | null {
   try {
-    const decoded = jwt.verify(token, getSecret()) as Partial<RealtorSessionPayload>;
+    const decoded = jwt.verify(token, getSecret(), VERIFY_OPTIONS) as Partial<RealtorSessionPayload>;
     if (typeof decoded.realtorId !== 'string' || typeof decoded.email !== 'string') return null;
     return { realtorId: decoded.realtorId, email: decoded.email };
   } catch {
@@ -57,7 +65,7 @@ export function verifySessionToken(token: string): RealtorSessionPayload | null 
 
 export function verifyAdminSessionToken(token: string): AdminSessionPayload | null {
   try {
-    const decoded = jwt.verify(token, getSecret()) as Partial<AdminSessionPayload>;
+    const decoded = jwt.verify(token, getSecret(), VERIFY_OPTIONS) as Partial<AdminSessionPayload>;
     if (
       decoded.type !== 'admin' ||
       typeof decoded.adminId !== 'string' ||
