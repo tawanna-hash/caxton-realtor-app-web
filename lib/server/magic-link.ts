@@ -6,7 +6,7 @@
 
 import crypto from 'node:crypto';
 import { headers } from 'next/headers';
-import { doQuery } from './db/do';
+import { query } from './db/neon';
 import { getEmailProvider } from './email';
 import { renderMagicLinkEmail } from './email/templates';
 import { logger } from './logger';
@@ -42,7 +42,7 @@ export async function createAndSendMagicLink(input: CreateMagicLinkInput): Promi
   const { raw, hash } = generateToken();
   const expiresAt = new Date(Date.now() + magicLinkExpiryMinutes() * 60 * 1000);
 
-  await doQuery(
+  await query(
     `INSERT INTO magic_links (email, token_hash, purpose, expires_at, ip_address, user_agent)
      VALUES ($1, $2, $3, $4, $5, $6)`,
     [
@@ -78,7 +78,7 @@ export async function createAndSendMagicLink(input: CreateMagicLinkInput): Promi
     throw new Error('Failed to send magic link email');
   }
 
-  await doQuery(
+  await query(
     `INSERT INTO email_log (email_type, provider, provider_message_id, to_address, subject)
      VALUES ($1, $2, $3, $4, $5)`,
     [
@@ -106,7 +106,7 @@ interface VerifyMagicLinkResult {
 export async function verifyMagicLink(rawToken: string): Promise<VerifyMagicLinkResult> {
   const hash = crypto.createHash('sha256').update(rawToken).digest('hex');
 
-  const rows = await doQuery<{
+  const rows = await query<{
     id: string;
     email: string;
     purpose: string;
@@ -126,7 +126,7 @@ export async function verifyMagicLink(rawToken: string): Promise<VerifyMagicLink
     return { valid: false, reason: 'expired' };
   }
 
-  const consumed = await doQuery<{ id: string }>(
+  const consumed = await query<{ id: string }>(
     `UPDATE magic_links
      SET consumed_at = NOW()
      WHERE id = $1 AND consumed_at IS NULL

@@ -13,7 +13,7 @@ import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { rateLimit } from '@/lib/server/rate-limit';
 import { requireUser } from '@/lib/server/auth/user';
 import {
-  withDoTransaction,
+  withNeonTransaction,
   lockOpenChallengeForRegistrationTx,
   insertCredentialTx,
   consumeChallengeTx,
@@ -30,7 +30,7 @@ export const POST = withErrorHandling(async (req: Request) => {
 
   const input = finishRegistrationSchema.parse(await req.json());
 
-  const result = await withDoTransaction(async (client) => {
+  const result = await withNeonTransaction(async (client) => {
     const challengeRow = await lockOpenChallengeForRegistrationTx(
       client,
       session.realtorId,

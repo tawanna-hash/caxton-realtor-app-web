@@ -9,8 +9,8 @@
  *   webauthn_challenges  — short-lived (5 min) one-time challenges
  */
 
-import type { PoolClient } from 'pg';
-import { doQuery, doExec, withDoTransaction } from './db/do';
+import type { PoolClient } from '@neondatabase/serverless';
+import { query, exec, withNeonTransaction } from './db/neon';
 
 // -----------------------------------------------------------------------------
 // Types
@@ -55,7 +55,7 @@ export interface CredentialListRow {
 export async function getRealtorIdentity(
   realtorId: string,
 ): Promise<RealtorIdentityRow | null> {
-  const rows = await doQuery<RealtorIdentityRow>(
+  const rows = await query<RealtorIdentityRow>(
     `SELECT email, first_name, last_name FROM realtors WHERE id = $1`,
     [realtorId],
   );
@@ -65,7 +65,7 @@ export async function getRealtorIdentity(
 export async function listExistingCredentials(
   realtorId: string,
 ): Promise<ExistingCredentialRow[]> {
-  return doQuery<ExistingCredentialRow>(
+  return query<ExistingCredentialRow>(
     `SELECT credential_id, transports FROM webauthn_credentials WHERE realtor_id = $1`,
     [realtorId],
   );
@@ -74,7 +74,7 @@ export async function listExistingCredentials(
 export async function lookupCredentialsForEmail(
   email: string,
 ): Promise<{ realtorId: string; credentials: ExistingCredentialRow[] } | null> {
-  const rows = await doQuery<{
+  const rows = await query<{
     id: string;
     credential_id: string;
     transports: string[];
@@ -103,7 +103,7 @@ export async function insertChallenge(
   ipAddress: string | null,
   userAgent: string | null,
 ): Promise<void> {
-  await doQuery(
+  await query(
     `INSERT INTO webauthn_challenges
        (realtor_id, challenge, purpose, expires_at, ip_address, user_agent)
      VALUES ($1, $2, $3,
@@ -116,7 +116,7 @@ export async function insertChallenge(
 export async function listCredentials(
   realtorId: string,
 ): Promise<CredentialListRow[]> {
-  return doQuery<CredentialListRow>(
+  return query<CredentialListRow>(
     `SELECT id, device_name, authenticator_type, created_at, last_used_at
      FROM webauthn_credentials
      WHERE realtor_id = $1
@@ -129,7 +129,7 @@ export async function deleteCredential(
   realtorId: string,
   credentialId: string,
 ): Promise<number> {
-  const { rowCount } = await doExec(
+  const { rowCount } = await exec(
     `DELETE FROM webauthn_credentials WHERE id = $1 AND realtor_id = $2`,
     [credentialId, realtorId],
   );
@@ -263,4 +263,4 @@ export async function bumpRealtorLoginTx(
   return rows[0] ?? null;
 }
 
-export { withDoTransaction };
+export { withNeonTransaction };

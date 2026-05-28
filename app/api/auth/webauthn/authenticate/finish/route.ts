@@ -20,7 +20,7 @@ import type {
 import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { rateLimit } from '@/lib/server/rate-limit';
 import {
-  withDoTransaction,
+  withNeonTransaction,
   lookupCredentialTx,
   lockOpenChallengeForAuthTx,
   consumeChallengeTx,
@@ -47,7 +47,7 @@ export const POST = withErrorHandling(async (req: Request) => {
     throw new ApiError(400, 'Invalid assertion');
   }
 
-  const result = await withDoTransaction(async (client) => {
+  const result = await withNeonTransaction(async (client) => {
     const cred = await lookupCredentialTx(client, assertionId);
     if (!cred) throw new ApiError(400, 'Passkey not recognized');
 

@@ -12,7 +12,7 @@ import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { rateLimit } from '@/lib/server/rate-limit';
 import { resetPasswordSchema } from '@/lib/server/schemas/auth';
 import {
-  withDoTransaction,
+  withNeonTransaction,
   lockResetTokenTx,
   applyPasswordResetTx,
   consumeResetTokenTx,
@@ -31,7 +31,7 @@ export const POST = withErrorHandling(async (req: Request) => {
   const input = resetPasswordSchema.parse(await req.json());
   const tokenHash = crypto.createHash('sha256').update(input.token).digest('hex');
 
-  const result = await withDoTransaction(async (client) => {
+  const result = await withNeonTransaction(async (client) => {
     const tokenRow = await lockResetTokenTx(client, tokenHash);
     if (!tokenRow) {
       throw new ApiError(400, 'Invalid or expired reset link');

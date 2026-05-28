@@ -10,7 +10,7 @@
  * deleted in favor of the generic logAudit() with a string entity id.
  */
 
-import { doQuery } from './db/do';
+import { query } from './db/neon';
 import { getRequestIp } from './auth/admin';
 
 interface LogAuditInput {
@@ -26,7 +26,7 @@ interface LogAuditInput {
 
 export async function logAudit(input: LogAuditInput): Promise<void> {
   const ip = input.ipAddress ?? (await getRequestIp());
-  await doQuery(
+  await query(
     `INSERT INTO admin_audit_log
        (admin_id, action, entity_type, entity_id, before_state, after_state, ip_address)
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,

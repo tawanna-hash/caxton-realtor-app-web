@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
-import { doQuery } from '@/lib/server/db/do';
+import { query } from '@/lib/server/db/neon';
 import { withErrorHandling } from '@/lib/server/error';
 import { getRequestIp, getRequestUserAgent } from '@/lib/server/auth/admin';
 import { rateLimit } from '@/lib/server/rate-limit';
@@ -28,7 +28,7 @@ export const POST = withErrorHandling(async (req: Request) => {
   await rateLimit('auth');
   const input = forgotPasswordSchema.parse(await req.json());
 
-  const rows = await doQuery<{
+  const rows = await query<{
     id: string;
     email: string;
     full_name: string;
@@ -52,7 +52,7 @@ export const POST = withErrorHandling(async (req: Request) => {
   const ip = await getRequestIp();
   const userAgent = await getRequestUserAgent();
 
-  await doQuery(
+  await query(
     `INSERT INTO admin_password_resets (admin_id, token_hash, expires_at, ip_address, user_agent)
      VALUES ($1, $2, $3, $4, $5)`,
     [admin.id, tokenHash, expiresAt, ip, userAgent],
@@ -86,7 +86,7 @@ export const POST = withErrorHandling(async (req: Request) => {
       'Failed to send admin password reset email',
     );
   } else {
-    await doQuery(
+    await query(
       `INSERT INTO email_log (email_type, provider, provider_message_id, to_address, subject)
        VALUES ($1, $2, $3, $4, $5)`,
       [
@@ -99,7 +99,7 @@ export const POST = withErrorHandling(async (req: Request) => {
     );
   }
 
-  await doQuery(
+  await query(
     `INSERT INTO admin_audit_log (admin_id, action, ip_address, user_agent)
      VALUES ($1, 'admin.password_reset_requested', $2, $3)`,
     [admin.id, ip, userAgent],

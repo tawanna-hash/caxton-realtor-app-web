@@ -19,7 +19,7 @@ import {
   findRealtorByEmailTx,
   markVerifiedAndLogin,
   autoEnrollSignupGiveaways,
-  withDoTransaction,
+  withNeonTransaction,
 } from '@/lib/server/realtors-store';
 import { signSessionToken } from '@/lib/server/jwt';
 import { setRealtorSessionCookie } from '@/lib/server/auth/cookies';
@@ -37,7 +37,7 @@ export const POST = withErrorHandling(async (req: Request) => {
     throw new ApiError(400, `Invalid or expired link (${result.reason ?? 'unknown'})`);
   }
 
-  const txResult = await withDoTransaction(async (client) => {
+  const txResult = await withNeonTransaction(async (client) => {
     const realtor = await findRealtorByEmailTx(client, result.email!);
     if (!realtor) throw new ApiError(400, 'Account not found');
 

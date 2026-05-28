@@ -17,7 +17,7 @@ import { createAndSendMagicLink } from '@/lib/server/magic-link';
 import {
   findRealtorByEmailTx,
   insertRealtor,
-  withDoTransaction,
+  withNeonTransaction,
   type SignupRow,
 } from '@/lib/server/realtors-store';
 import { getRequestIp } from '@/lib/server/auth/admin';
@@ -76,7 +76,7 @@ export const POST = withErrorHandling(async (req: Request) => {
   // bcrypt CPU work. Password is optional during the rollout.
   const passwordHash = input.password ? await bcrypt.hash(input.password, 12) : null;
 
-  await withDoTransaction(async (client) => {
+  await withNeonTransaction(async (client) => {
     const existing = await findRealtorByEmailTx(client, input.email);
 
     if (existing) {

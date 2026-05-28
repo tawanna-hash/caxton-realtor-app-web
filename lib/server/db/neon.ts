@@ -73,3 +73,15 @@ export async function query<T = Record<string, unknown>>(
   const result = await getPool().query(text, values as unknown[] | undefined);
   return result.rows as T[];
 }
+
+/**
+ * Like `query` but also returns the affected row count. Use this for
+ * UPDATE/DELETE/INSERT when you need to detect 'not found' / 'no-op'.
+ */
+export async function exec<T = Record<string, unknown>>(
+  text: string,
+  values?: readonly unknown[],
+): Promise<{ rows: T[]; rowCount: number }> {
+  const result = await getPool().query(text, values as unknown[] | undefined);
+  return { rows: result.rows as T[], rowCount: result.rowCount ?? 0 };
+}

@@ -6,7 +6,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { doQuery } from '@/lib/server/db/do';
+import { query } from '@/lib/server/db/neon';
 import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { signAdminSessionToken } from '@/lib/server/jwt';
 import { setAdminSessionCookie } from '@/lib/server/auth/cookies';
@@ -29,7 +29,7 @@ export const POST = withErrorHandling(async (req: Request) => {
   await rateLimit('auth');
   const input = loginSchema.parse(await req.json());
 
-  const rows = await doQuery<{
+  const rows = await query<{
     id: string;
     email: string;
     password_hash: string;
@@ -49,12 +49,12 @@ export const POST = withErrorHandling(async (req: Request) => {
     throw new ApiError(401, 'Invalid credentials');
   }
 
-  await doQuery(
+  await query(
     `UPDATE admins SET last_login_at = NOW() WHERE id = $1`,
     [admin.id],
   );
 
-  await doQuery(
+  await query(
     `INSERT INTO admin_audit_log (admin_id, action, ip_address, user_agent)
      VALUES ($1, 'admin.login', $2, $3)`,
     [admin.id, await getRequestIp(), await getRequestUserAgent()],

@@ -1,9 +1,9 @@
 /**
  * Subscribers (realtors) store — DO Postgres (transient).
- * Migrate to Neon by swapping doQuery / doExec / withDoTransaction.
+ * Migrate to Neon by swapping query / exec / withNeonTransaction.
  */
 
-import { doQuery, withDoTransaction } from './db/do';
+import { query, withNeonTransaction } from './db/neon';
 import { EDITABLE_FIELDS } from './schemas/subscribers';
 
 // -----------------------------------------------------------------------------
@@ -42,7 +42,7 @@ export async function listSubscribers(
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const offset = (opts.page - 1) * opts.pageSize;
 
-  const countRows = await doQuery<{ total: number }>(
+  const countRows = await query<{ total: number }>(
     `SELECT COUNT(*)::int AS total FROM realtors ${whereSql}`,
     params,
   );
@@ -63,7 +63,7 @@ export async function listSubscribers(
     ORDER BY created_at DESC
     LIMIT $${params.length - 1} OFFSET $${params.length}
   `;
-  const rows = await doQuery(listSql, params);
+  const rows = await query(listSql, params);
 
   return {
     page: opts.page,
@@ -111,7 +111,7 @@ export const EXPORT_COLUMNS = [
 ] as const;
 
 export async function listAllSubscribersForExport(): Promise<Record<string, unknown>[]> {
-  return doQuery(
+  return query(
     `SELECT ${EXPORT_COLUMNS.join(', ')} FROM realtors ORDER BY created_at DESC`,
   );
 }
@@ -119,14 +119,14 @@ export async function listAllSubscribersForExport(): Promise<Record<string, unkn
 export async function getSubscriberById(
   id: string,
 ): Promise<Record<string, unknown> | null> {
-  const rows = await doQuery('SELECT * FROM realtors WHERE id = $1', [id]);
+  const rows = await query('SELECT * FROM realtors WHERE id = $1', [id]);
   return rows[0] ?? null;
 }
 
 export async function getSubscriberLoginInfo(
   id: string,
 ): Promise<{ id: string; email: string; first_name: string | null } | null> {
-  const rows = await doQuery<{ id: string; email: string; first_name: string | null }>(
+  const rows = await query<{ id: string; email: string; first_name: string | null }>(
     'SELECT id, email, first_name FROM realtors WHERE id = $1',
     [id],
   );
@@ -146,7 +146,7 @@ export async function patchSubscriber(
   id: string,
   updates: Record<string, unknown>,
 ): Promise<{ ok: true; result: PatchSubscriberResult } | { ok: false; reason: 'not_found' }> {
-  const existingRows = await doQuery('SELECT * FROM realtors WHERE id = $1', [id]);
+  const existingRows = await query('SELECT * FROM realtors WHERE id = $1', [id]);
   if (existingRows.length === 0) return { ok: false, reason: 'not_found' };
   const before = existingRows[0]!;
 
@@ -166,7 +166,7 @@ export async function patchSubscriber(
   setClauses.push('updated_at = NOW()');
   params.push(id);
   const updateSql = `UPDATE realtors SET ${setClauses.join(', ')} WHERE id = $${params.length} RETURNING *`;
-  const updatedRows = await doQuery(updateSql, params);
+  const updatedRows = await query(updateSql, params);
   const after = updatedRows[0]!;
 
   const changed: Record<string, { before: unknown; after: unknown }> = {};
@@ -191,7 +191,7 @@ export async function deactivateSubscriber(id: string): Promise<
   | { ok: true; subscriber: Record<string, unknown>; changed: boolean }
   | { ok: false; reason: 'not_found' }
 > {
-  const existingRows = await doQuery<{ id: string; status: string }>(
+  const existingRows = await query<{ id: string; status: string }>(
     'SELECT id, status FROM realtors WHERE id = $1',
     [id],
   );
@@ -202,7 +202,7 @@ export async function deactivateSubscriber(id: string): Promise<
     return { ok: true, subscriber: before, changed: false };
   }
 
-  const updatedRows = await doQuery(
+  const updatedRows = await query(
     `UPDATE realtors SET status = 'inactive', updated_at = NOW() WHERE id = $1 RETURNING *`,
     [id],
   );
@@ -230,7 +230,7 @@ export interface DeleteSubscriberSuccess {
 export async function deleteSubscriberCascade(
   id: string,
 ): Promise<DeleteSubscriberSuccess | { ok: false; reason: 'not_found' }> {
-  return withDoTransaction(async (client) => {
+  return withNeonTransaction(async (client) => {
     const { rows: existingRows } = await client.query<{ id: string; email: string }>(
       'SELECT id, email FROM realtors WHERE id = $1 FOR UPDATE',
       [id],

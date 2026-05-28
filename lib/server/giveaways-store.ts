@@ -2,12 +2,12 @@
  * Giveaways store — DO Postgres (transient).
  *
  * Reads/writes `giveaways`, `giveaway_rules`, `giveaway_entries`. After data
- * migration, swap `doQuery` / `doExec` / `withDoTransaction` for the Neon
+ * migration, swap `query` / `exec` / `withNeonTransaction` for the Neon
  * equivalents from `lib/server/db/neon.ts` — column names and shapes are
  * unchanged.
  */
 
-import { doQuery, doExec, withDoTransaction } from './db/do';
+import { query, exec, withNeonTransaction } from './db/neon';
 import type {
   CreateGiveawayInput,
   UpdateGiveawayInput,
@@ -50,7 +50,7 @@ export interface GiveawayDetail {
 // -----------------------------------------------------------------------------
 
 export async function listGiveaways(): Promise<GiveawayListRow[]> {
-  const rows = await doQuery<
+  const rows = await query<
     Omit<GiveawayListRow, 'ticket_count' | 'participant_count'> & {
       ticket_count: string;
       participant_count: string;
@@ -72,7 +72,7 @@ export async function listGiveaways(): Promise<GiveawayListRow[]> {
 }
 
 export async function getGiveawayDetail(id: string): Promise<GiveawayDetail | null> {
-  const giveawayRows = await doQuery(
+  const giveawayRows = await query(
     `SELECT g.*, r.first_name AS winner_first_name, r.last_name AS winner_last_name, r.email AS winner_email
      FROM giveaways g
      LEFT JOIN realtors r ON r.id = g.winner_realtor_id
@@ -83,7 +83,7 @@ export async function getGiveawayDetail(id: string): Promise<GiveawayDetail | nu
   const giveaway = giveawayRows[0];
   if (!giveaway) return null;
 
-  const rules = await doQuery(
+  const rules = await query(
     `SELECT id, action_type, label, target_url, tickets, sort_order, required, created_at
      FROM giveaway_rules
      WHERE giveaway_id = $1
@@ -91,7 +91,7 @@ export async function getGiveawayDetail(id: string): Promise<GiveawayDetail | nu
     [id],
   );
 
-  const stats = await doQuery<{ ticket_count: string; participant_count: string }>(
+  const stats = await query<{ ticket_count: string; participant_count: string }>(
     `SELECT COUNT(*) AS ticket_count, COUNT(DISTINCT realtor_id) AS participant_count
      FROM giveaway_entries WHERE giveaway_id = $1`,
     [id],
@@ -115,7 +115,7 @@ export async function createGiveaway(
   input: CreateGiveawayInput,
   adminId: string,
 ): Promise<string> {
-  const rows = await doQuery<{ id: string }>(
+  const rows = await query<{ id: string }>(
     `INSERT INTO giveaways
        (title, description, prize, publication, starts_at, ends_at, draw_at, created_by_admin_id)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -166,7 +166,7 @@ export async function updateGiveaway(
   setClauses.push(`updated_at = NOW()`);
   values.push(id);
 
-  const { rowCount } = await doExec(
+  const { rowCount } = await exec(
     `UPDATE giveaways SET ${setClauses.join(', ')} WHERE id = $${i}`,
     values,
   );
@@ -177,14 +177,14 @@ export async function updateGiveaway(
 export async function deleteDraftGiveaway(
   id: string,
 ): Promise<{ ok: true } | { ok: false; reason: 'not_found' | 'not_draft' }> {
-  const rows = await doQuery<{ status: string }>(
+  const rows = await query<{ status: string }>(
     `SELECT status FROM giveaways WHERE id = $1`,
     [id],
   );
   if (!rows[0]) return { ok: false, reason: 'not_found' };
   if (rows[0].status !== 'draft') return { ok: false, reason: 'not_draft' };
 
-  await doExec(`DELETE FROM giveaways WHERE id = $1`, [id]);
+  await exec(`DELETE FROM giveaways WHERE id = $1`, [id]);
   return { ok: true };
 }
 
@@ -196,10 +196,10 @@ export async function createGiveawayRule(
   giveawayId: string,
   input: RuleInput,
 ): Promise<{ ok: true; id: string } | { ok: false; reason: 'giveaway_not_found' }> {
-  const g = await doQuery(`SELECT id FROM giveaways WHERE id = $1`, [giveawayId]);
+  const g = await query(`SELECT id FROM giveaways WHERE id = $1`, [giveawayId]);
   if (!g[0]) return { ok: false, reason: 'giveaway_not_found' };
 
-  const rows = await doQuery<{ id: string }>(
+  const rows = await query<{ id: string }>(
     `INSERT INTO giveaway_rules
        (giveaway_id, action_type, label, target_url, tickets, sort_order, required)
      VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -245,7 +245,7 @@ export async function updateGiveawayRule(
   if (setClauses.length === 0) return { ok: false, reason: 'no_fields' };
 
   values.push(ruleId, giveawayId);
-  const { rowCount } = await doExec(
+  const { rowCount } = await exec(
     `UPDATE giveaway_rules SET ${setClauses.join(', ')}
      WHERE id = $${i++} AND giveaway_id = $${i}`,
     values,
@@ -258,7 +258,7 @@ export async function deleteGiveawayRule(
   giveawayId: string,
   ruleId: string,
 ): Promise<{ ok: true } | { ok: false; reason: 'not_found' }> {
-  const { rowCount } = await doExec(
+  const { rowCount } = await exec(
     `DELETE FROM giveaway_rules WHERE id = $1 AND giveaway_id = $2`,
     [ruleId, giveawayId],
   );
@@ -286,7 +286,7 @@ export async function listGiveawayEntries(
   limit: number,
   offset: number,
 ): Promise<GiveawayEntryRow[]> {
-  const rows = await doQuery<Omit<GiveawayEntryRow, 'tickets'> & { tickets: string }>(
+  const rows = await query<Omit<GiveawayEntryRow, 'tickets'> & { tickets: string }>(
     `SELECT
        r.id AS realtor_id,
        r.email,
@@ -331,7 +331,7 @@ export async function drawGiveawayWinner(
   giveawayId: string,
   adminId: string,
 ): Promise<{ ok: true; result: DrawResult } | { ok: false; error: DrawError }> {
-  return withDoTransaction(async (client) => {
+  return withNeonTransaction(async (client) => {
     const { rows: g } = await client.query<{
       id: string;
       status: string;

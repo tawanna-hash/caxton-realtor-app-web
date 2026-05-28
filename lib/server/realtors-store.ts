@@ -1,11 +1,11 @@
 /**
  * Realtor (subscriber) store — DO Postgres (transient). Underlies the
- * /api/auth/* endpoints. Replace doQuery / withDoTransaction with Neon
+ * /api/auth/* endpoints. Replace query / withNeonTransaction with Neon
  * equivalents after data migration.
  */
 
-import type { PoolClient } from 'pg';
-import { doQuery, withDoTransaction } from './db/do';
+import type { PoolClient } from '@neondatabase/serverless';
+import { query, withNeonTransaction } from './db/neon';
 
 // -----------------------------------------------------------------------------
 // Types
@@ -37,7 +37,7 @@ export interface RealtorMeRow {
 // -----------------------------------------------------------------------------
 
 export async function findRealtorByEmail(email: string): Promise<RealtorBasic | null> {
-  const rows = await doQuery<RealtorBasic>(
+  const rows = await query<RealtorBasic>(
     `SELECT id, email, email_verified_at FROM realtors WHERE email = $1`,
     [email],
   );
@@ -47,7 +47,7 @@ export async function findRealtorByEmail(email: string): Promise<RealtorBasic | 
 export async function findRealtorForLogin(
   email: string,
 ): Promise<{ first_name: string; email_verified_at: Date | null } | null> {
-  const rows = await doQuery<{ first_name: string; email_verified_at: Date | null }>(
+  const rows = await query<{ first_name: string; email_verified_at: Date | null }>(
     `SELECT first_name, email_verified_at FROM realtors WHERE email = $1`,
     [email],
   );
@@ -55,7 +55,7 @@ export async function findRealtorForLogin(
 }
 
 export async function getRealtorMe(realtorId: string): Promise<RealtorMeRow | null> {
-  const rows = await doQuery<RealtorMeRow>(
+  const rows = await query<RealtorMeRow>(
     `SELECT id, email, first_name, last_name, market,
             trec_license_number, trec_license_status, license_verified_at,
             brokerage_name, email_verified_at, created_at,
@@ -67,7 +67,7 @@ export async function getRealtorMe(realtorId: string): Promise<RealtorMeRow | nu
 }
 
 export async function bumpLastAppOpen(realtorId: string): Promise<void> {
-  await doQuery(`UPDATE realtors SET last_app_open_at = NOW() WHERE id = $1`, [realtorId]);
+  await query(`UPDATE realtors SET last_app_open_at = NOW() WHERE id = $1`, [realtorId]);
 }
 
 // -----------------------------------------------------------------------------
@@ -242,7 +242,7 @@ export interface RealtorLoginRow {
 export async function findRealtorForPasswordLogin(
   email: string,
 ): Promise<RealtorLoginRow | null> {
-  const rows = await doQuery<RealtorLoginRow>(
+  const rows = await query<RealtorLoginRow>(
     `SELECT id, email, password_hash, email_verified_at
      FROM realtors
      WHERE email = $1`,
@@ -252,13 +252,13 @@ export async function findRealtorForPasswordLogin(
 }
 
 export async function bumpLoginNow(realtorId: string): Promise<void> {
-  await doQuery(`UPDATE realtors SET last_login_at = NOW() WHERE id = $1`, [realtorId]);
+  await query(`UPDATE realtors SET last_login_at = NOW() WHERE id = $1`, [realtorId]);
 }
 
 export async function getPasswordHash(
   realtorId: string,
 ): Promise<{ password_hash: string | null } | null> {
-  const rows = await doQuery<{ password_hash: string | null }>(
+  const rows = await query<{ password_hash: string | null }>(
     `SELECT password_hash FROM realtors WHERE id = $1`,
     [realtorId],
   );
@@ -269,7 +269,7 @@ export async function updatePasswordHash(
   realtorId: string,
   newHash: string,
 ): Promise<void> {
-  await doQuery(
+  await query(
     `UPDATE realtors SET password_hash = $1, password_set_at = NOW() WHERE id = $2`,
     [newHash, realtorId],
   );
@@ -278,7 +278,7 @@ export async function updatePasswordHash(
 export async function findVerifiedRealtorForReset(
   email: string,
 ): Promise<{ id: string; first_name: string; email: string } | null> {
-  const rows = await doQuery<{ id: string; first_name: string; email: string }>(
+  const rows = await query<{ id: string; first_name: string; email: string }>(
     `SELECT id, first_name, email
      FROM realtors
      WHERE email = $1 AND email_verified_at IS NOT NULL`,
@@ -294,7 +294,7 @@ export async function insertPasswordResetToken(
   ipAddress: string | null,
   userAgent: string | null,
 ): Promise<void> {
-  await doQuery(
+  await query(
     `INSERT INTO password_reset_tokens (realtor_id, token, expires_at, ip_address, user_agent)
      VALUES ($1, $2, $3, $4, $5)`,
     [realtorId, tokenHash, expiresAt, ipAddress, userAgent],
@@ -308,7 +308,7 @@ export async function logEmailSent(
   toAddress: string,
   subject: string,
 ): Promise<void> {
-  await doQuery(
+  await query(
     `INSERT INTO email_log (email_type, provider, provider_message_id, to_address, subject)
      VALUES ($1, $2, $3, $4, $5)`,
     [emailType, providerName, messageId, toAddress, subject],
@@ -362,4 +362,4 @@ export async function consumeResetTokenTx(
 }
 
 // Re-export for callers that want a transaction.
-export { withDoTransaction };
+export { withNeonTransaction };

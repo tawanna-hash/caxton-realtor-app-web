@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { withDoTransaction } from '@/lib/server/db/do';
+import { withNeonTransaction } from '@/lib/server/db/neon';
 import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { getRequestIp, getRequestUserAgent } from '@/lib/server/auth/admin';
 import { rateLimit } from '@/lib/server/rate-limit';
@@ -27,7 +27,7 @@ export const POST = withErrorHandling(async (req: Request) => {
   const ip = await getRequestIp();
   const userAgent = await getRequestUserAgent();
 
-  await withDoTransaction(async (client) => {
+  await withNeonTransaction(async (client) => {
     const { rows } = await client.query<{
       id: string;
       admin_id: string;

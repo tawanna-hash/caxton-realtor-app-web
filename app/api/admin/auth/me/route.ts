@@ -10,13 +10,13 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { withErrorHandling, ApiError } from '@/lib/server/error';
-import { doQuery } from '@/lib/server/db/do';
+import { query } from '@/lib/server/db/neon';
 
 export const runtime = 'nodejs';
 
 export const GET = withErrorHandling(async () => {
   const session = await requireAdmin();
-  const rows = await doQuery<{ id: string; email: string; full_name: string }>(
+  const rows = await query<{ id: string; email: string; full_name: string }>(
     `SELECT id, email, full_name FROM admins WHERE id = $1`,
     [session.adminId],
   );
