@@ -86,6 +86,10 @@ export const adminApi = {
     adminFetch(`/admin/events/${id}/hide`, { method: 'POST' }),
   unhideEvent: (id: number) =>
     adminFetch(`/admin/events/${id}/unhide`, { method: 'POST' }),
+  // Bulk soft-hide all events whose start date is in the past.
+  // Returns { hiddenCount: number }.
+  hideExpiredEvents: () =>
+    adminFetch('/admin/events/hide-expired', { method: 'POST' }),
 
   // Ads dashboard (Phase 1 — May 9, 2026)
   // Spaces: read-only catalog of 15 ad slots
@@ -97,7 +101,7 @@ export const adminApi = {
   // Subscribers (realtors)
   getSubscriber: (id: string) => adminFetch('/admin/subscribers/' + encodeURIComponent(id)),
 
-  updateSubscriber: (id: string, patch: Record<string, any>) =>
+  updateSubscriber: (id: string, patch: Record<string, unknown>) =>
     adminFetch(`/admin/subscribers/${encodeURIComponent(id)}`, { method: 'PATCH', body: patch }),
 
   deactivateSubscriber: (id: string) =>

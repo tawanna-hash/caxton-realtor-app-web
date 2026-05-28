@@ -57,8 +57,15 @@ export default function EventsPage() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'austin' | 'san_antonio'>('all');
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('when');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  // "Expired" = start_date is in the past. Mirrors the server-side
+  // criterion in POST /admin/events/hide-expired. Stored as state and
+  // computed in the loader (see `reload`) so Date.now() never runs
+  // during render — keeps react-hooks/purity happy.
+  const [expiredVisibleCount, setExpiredVisibleCount] = useState(0);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -91,7 +98,15 @@ export default function EventsPage() {
     adminApi
       .listEvents(pub)
       .then((data) => {
-        setItems(data?.events || []);
+        const events: AdminEvent[] = data?.events || [];
+        setItems(events);
+        const now = Date.now();
+        const expired = events.reduce((n, ev) => {
+          if (ev.hidden) return n;
+          if (!ev.startDate) return n;
+          return new Date(ev.startDate).getTime() < now ? n + 1 : n;
+        }, 0);
+        setExpiredVisibleCount(expired);
         setLoading(false);
       })
       .catch((err) => {
@@ -102,6 +117,7 @@ export default function EventsPage() {
 
   useEffect(() => {
     if (!admin) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reload() is the load-on-mount/filter-change effect; pre-existing pattern
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [admin, filter]);
@@ -136,6 +152,29 @@ export default function EventsPage() {
     }
   };
 
+  const handleHideExpired = async () => {
+    if (expiredVisibleCount === 0) {
+      alert('No expired events to hide.');
+      return;
+    }
+    const msg =
+      `Hide ${expiredVisibleCount} expired event${expiredVisibleCount === 1 ? '' : 's'} ` +
+      `(start date in the past)? They will no longer appear on the public calendar. ` +
+      `You can unhide any of them individually afterwards.`;
+    if (!window.confirm(msg)) return;
+    setBulkBusy(true);
+    try {
+      const res = await adminApi.hideExpiredEvents();
+      const n = res?.hiddenCount ?? 0;
+      reload();
+      alert(`Hid ${n} expired event${n === 1 ? '' : 's'}.`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   if (authLoading || !admin) {
     return <div className="max-w-6xl mx-auto px-6 py-12 text-sm text-gray-500">Loading...</div>;
   }
@@ -163,12 +202,29 @@ export default function EventsPage() {
             Manage scraped + manual events. Manual events appear in the public calendar; scraped events can be hidden.
           </p>
         </div>
-        <Link
-          href="/admin/events/new"
-          className="px-4 py-2 bg-[#1a2a44] text-white text-sm font-medium rounded hover:bg-[#021D40] transition-colors"
-        >
-          + New Event
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleHideExpired}
+            disabled={bulkBusy || expiredVisibleCount === 0}
+            title={
+              expiredVisibleCount === 0
+                ? 'No expired events to hide'
+                : `Hide ${expiredVisibleCount} event${expiredVisibleCount === 1 ? '' : 's'} whose start date is in the past`
+            }
+            className="px-4 py-2 bg-white text-[#1a2a44] text-sm font-medium rounded border border-[#1a2a44] hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {bulkBusy
+              ? 'Hiding\u2026'
+              : `Hide expired${expiredVisibleCount > 0 ? ` (${expiredVisibleCount})` : ''}`}
+          </button>
+          <Link
+            href="/admin/events/new"
+            className="px-4 py-2 bg-[#1a2a44] text-white text-sm font-medium rounded hover:bg-[#021D40] transition-colors"
+          >
+            + New Event
+          </Link>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 mb-4">
