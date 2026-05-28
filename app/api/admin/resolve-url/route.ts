@@ -8,16 +8,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { resolveUrl } from '@/lib/url-resolver';
+import { getServerApiBase } from '@/lib/server-api-base';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 15;
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
-
 async function isAdmin(cookieHeader: string | null): Promise<boolean> {
   if (!cookieHeader) return false;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET', headers: { cookie: cookieHeader }, cache: 'no-store',
     });

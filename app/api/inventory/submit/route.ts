@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
-import { neon } from '@neondatabase/serverless';
+import { getServerApiBase } from '@/lib/server-api-base';
 import {
   createBuilderInventory,
   ensureBuilderInventorySchema,
@@ -17,8 +17,6 @@ import {
   type PromoType,
 } from '@/lib/builder-inventory';
 
-const sql = neon(process.env.DATABASE_URL!);
-
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30; // seconds — covers the PDF upload + DB inserts
@@ -26,12 +24,12 @@ export const maxDuration = 30; // seconds — covers the PDF upload + DB inserts
 const NOTIFY_TO = process.env.INVENTORY_NOTIFY_TO || 'tawanna@myrealtyline.com';
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
 const MAX_IMG_BYTES = 10 * 1024 * 1024;
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
 const ADMIN_EMAIL = 'admin:tawanna@myrealtyline.com';
 
 async function verifyAdmin(cookieHeader: string | null): Promise<boolean> {
   if (!cookieHeader) return false;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET',
       headers: { cookie: cookieHeader },

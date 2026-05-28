@@ -26,11 +26,10 @@
 
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse, type NextRequest } from 'next/server';
+import { getServerApiBase } from '@/lib/server-api-base';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
 
 const ALLOWED_THUMBNAIL_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_FLYER_TYPES = ['application/pdf'];
@@ -40,6 +39,7 @@ const MAX_FLYER_BYTES = 25 * 1024 * 1024; // 25MB
 async function isAdmin(cookieHeader: string | null): Promise<boolean> {
   if (!cookieHeader) return false;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET',
       headers: { cookie: cookieHeader },

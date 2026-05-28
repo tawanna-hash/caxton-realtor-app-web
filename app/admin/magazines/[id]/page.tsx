@@ -10,6 +10,7 @@ import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import MagazineEditForm from './MagazineEditForm';
 import { getSql } from '@/lib/db';
+import { getServerApiBase } from '@/lib/server-api-base';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Admin · Edit Magazine' };
@@ -28,10 +29,9 @@ type Magazine = {
   page_texts: string[] | null;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
-
 async function isAdmin(cookieHeader: string): Promise<boolean> {
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET',
       headers: { cookie: cookieHeader },

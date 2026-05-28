@@ -10,8 +10,8 @@
 // the other /api/admin/* routes).
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerApiBase } from '@/lib/server-api-base';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
 const POSTHOG_API_KEY = process.env.POSTHOG_PERSONAL_API_KEY;
 const POSTHOG_PROJECT_ID = process.env.POSTHOG_PROJECT_ID;
 const POSTHOG_HOST = 'https://us.posthog.com';
@@ -23,6 +23,7 @@ export const maxDuration = 30;
 async function verifyAdmin(cookieHeader: string | null): Promise<boolean> {
   if (!cookieHeader) return false;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET',
       headers: { cookie: cookieHeader },

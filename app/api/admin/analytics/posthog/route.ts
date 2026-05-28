@@ -24,12 +24,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
+import { getServerApiBase } from '@/lib/server-api-base';
 
 // ============================================================
 // CONFIG
 // ============================================================
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
 
 
 const POSTHOG_HOST = 'https://us.posthog.com';
@@ -407,6 +406,7 @@ const getCachedReport = unstable_cache(
 async function verifyAdmin(cookieHeader: string | null): Promise<boolean> {
   if (!cookieHeader) return false;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET',
       headers: { cookie: cookieHeader },

@@ -17,11 +17,11 @@ import {
   renderAdvertiserReportText,
 } from '@/lib/advertiser-report';
 import type { Advertiser } from '@/lib/advertisers';
+import { getServerApiBase } from '@/lib/server-api-base';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
 const RESEND_KEY = process.env.RESEND_API_KEY || process.env.RESEND_KEY;
 const FROM_EMAIL = process.env.MAGIC_LINK_FROM_EMAIL
   || process.env.RESEND_FROM_EMAIL
@@ -30,6 +30,7 @@ const FROM_EMAIL = process.env.MAGIC_LINK_FROM_EMAIL
 async function isAdmin(cookieHeader: string | null): Promise<boolean> {
   if (!cookieHeader) return false;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET', headers: { cookie: cookieHeader }, cache: 'no-store',
     });

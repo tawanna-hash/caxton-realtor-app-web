@@ -13,14 +13,14 @@ import { getSql, ensureSchema } from '@/lib/db';
 import type { Magazine } from '@/lib/magazines';
 import type { Hotspot } from '@/lib/hotspots';
 import HotspotsAdminClient from './HotspotsAdminClient';
+import { getServerApiBase } from '@/lib/server-api-base';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Admin · Hotspot Editor' };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
-
 async function isAdmin(cookieHeader: string): Promise<boolean> {
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET',
       headers: { cookie: cookieHeader },

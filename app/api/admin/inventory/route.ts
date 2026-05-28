@@ -13,8 +13,8 @@ import {
   type Status,
 } from '@/lib/builder-inventory';
 import { neon } from '@neondatabase/serverless';
+import { getServerApiBase } from '@/lib/server-api-base';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
 const sql = neon(process.env.DATABASE_URL!);
 
 export const runtime = 'nodejs';
@@ -23,6 +23,7 @@ export const dynamic = 'force-dynamic';
 async function verifyAdmin(cookieHeader: string | null): Promise<boolean> {
   if (!cookieHeader) return false;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET',
       headers: { cookie: cookieHeader },

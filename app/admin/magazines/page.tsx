@@ -11,6 +11,7 @@
 import { cookies } from 'next/headers';
 import MagazinesAdminClient from './MagazinesAdminClient';
 import { getSql } from '@/lib/db';
+import { getServerApiBase } from '@/lib/server-api-base';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,10 +30,9 @@ type Magazine = {
   sort_date: string;
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
-
 async function isAdmin(cookieHeader: string): Promise<boolean> {
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET',
       headers: { cookie: cookieHeader },

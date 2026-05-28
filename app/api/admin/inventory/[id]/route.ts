@@ -9,6 +9,7 @@
 // admin email which we record as reviewed_by on status changes.
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerApiBase } from '@/lib/server-api-base';
 import {
   updateBuilderInventory,
   deleteBuilderInventory,
@@ -18,8 +19,6 @@ import {
   type Status,
 } from '@/lib/builder-inventory';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
-
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +27,7 @@ type AdminInfo = { email: string; fullName: string };
 async function fetchAdmin(cookieHeader: string | null): Promise<AdminInfo | null> {
   if (!cookieHeader) return null;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET',
       headers: { cookie: cookieHeader },

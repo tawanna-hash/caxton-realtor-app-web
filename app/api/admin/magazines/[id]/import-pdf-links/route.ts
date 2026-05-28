@@ -27,12 +27,11 @@ import { getSql, ensureSchema } from '@/lib/db';
 import type { Hotspot } from '@/lib/hotspots';
 import { PDFDocument, PDFDict, PDFArray, PDFName, PDFString, PDFNumber, PDFRef } from 'pdf-lib';
 import { isShortenerUrl, resolveUrl } from '@/lib/url-resolver';
+import { getServerApiBase } from '@/lib/server-api-base';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
 
 // ============================================================
 // Auth (mirrors the pattern in other /admin routes)
@@ -40,6 +39,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com
 async function isAdmin(cookieHeader: string | null): Promise<boolean> {
   if (!cookieHeader) return false;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET', headers: { cookie: cookieHeader }, cache: 'no-store',
     });
@@ -50,6 +50,7 @@ async function isAdmin(cookieHeader: string | null): Promise<boolean> {
 async function getAdminEmail(cookieHeader: string | null): Promise<string | null> {
   if (!cookieHeader) return null;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET', headers: { cookie: cookieHeader }, cache: 'no-store',
     });

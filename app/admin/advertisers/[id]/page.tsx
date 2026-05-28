@@ -9,14 +9,14 @@ import { cookies } from 'next/headers';
 import { ensureSchema, getSql } from '@/lib/db';
 import type { Advertiser } from '@/lib/advertisers';
 import AdvertiserAnalyticsClient from './AdvertiserAnalyticsClient';
+import { getServerApiBase } from '@/lib/server-api-base';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Admin · Advertiser Analytics' };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
-
 async function isAdmin(cookieHeader: string): Promise<boolean> {
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET',
       headers: { cookie: cookieHeader },

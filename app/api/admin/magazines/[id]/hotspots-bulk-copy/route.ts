@@ -8,17 +8,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import type { Hotspot } from '@/lib/hotspots';
+import { getServerApiBase } from '@/lib/server-api-base';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.myrealtyline.com';
 
 type RouteCtx = { params: Promise<{ id: string }> };
 
 async function isAdmin(cookieHeader: string | null): Promise<boolean> {
   if (!cookieHeader) return false;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET',
       headers: { cookie: cookieHeader },
@@ -33,6 +33,7 @@ async function isAdmin(cookieHeader: string | null): Promise<boolean> {
 async function getAdminEmail(cookieHeader: string | null): Promise<string | null> {
   if (!cookieHeader) return null;
   try {
+    const API_URL = await getServerApiBase();
     const r = await fetch(`${API_URL}/admin/auth/me`, {
       method: 'GET', headers: { cookie: cookieHeader }, cache: 'no-store',
     });
