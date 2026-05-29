@@ -59,6 +59,18 @@
     {
       "path": "/api/cron/scrape-giddens-communities",
       "schedule": "30 18 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-giddens-realtors",
+      "schedule": "0 19 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-santa-rita-ranch",
+      "schedule": "15 19 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-santa-rita-ranch-promotions",
+      "schedule": "30 19 * * *"
     }
   ]
 }

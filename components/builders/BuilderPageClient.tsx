@@ -129,6 +129,17 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
     tab === 'moveIn' ? moveIn :
     promos;
 
+  // Giddens Homes uses 'Realtors' as the label for their broker-bonus
+  // commission program instead of the generic 'Promotions'. Match casing
+  // (lower) so the empty-state copy reads naturally too.
+  const isGiddens = builderName === 'Giddens Homes';
+  const promosTabLabel = isGiddens ? 'Realtors' : 'Promotions';
+  const promosCountWord = (n: number) =>
+    isGiddens
+      ? n === 1 ? 'realtor offer' : 'realtor offers'
+      : n === 1 ? 'promotion' : 'promotions';
+  const promosEmptyLabel = isGiddens ? 'realtor offers' : 'promotions';
+
   const tOn = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-md border border-[#1a2a44] bg-[#1a2a44] text-white';
   const tOff = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:border-gray-500';
 
@@ -155,7 +166,7 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
             const parts: string[] = [];
             if (communities.length > 0) parts.push(`${communities.length} ${communities.length === 1 ? 'community' : 'communities'}`);
             if (moveIn.length > 0) parts.push(`${moveIn.length} move-in ${moveIn.length === 1 ? 'home' : 'homes'}`);
-            if (promos.length > 0) parts.push(`${promos.length} ${promos.length === 1 ? 'promotion' : 'promotions'}`);
+            if (promos.length > 0) parts.push(`${promos.length} ${promosCountWord(promos.length)}`);
             return parts.length > 0 ? parts.join(' · ') : 'No active listings right now';
           })()}
         </p>
@@ -171,7 +182,7 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
             Move-in Ready Homes
           </button>
           <button onClick={() => { trackEvent('builder_tab_clicked', { tab: 'promos', builder_name: builderName }); setTab('promos'); }} className={tab === 'promos' ? tOn : tOff}>
-            Promotions
+            {promosTabLabel}
           </button>
         </div>
       </div>
@@ -180,7 +191,7 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
       <div className="px-4 py-4 pb-32">
         {currentRows.length === 0 ? (
           <p className="text-center text-gray-500 font-light py-20">
-            No {tab === 'communities' ? 'communities' : tab === 'moveIn' ? 'move-in-ready homes' : 'promotions'} for {builderName} in {PUB_LABEL[pub]} right now.
+            No {tab === 'communities' ? 'communities' : tab === 'moveIn' ? 'move-in-ready homes' : promosEmptyLabel} for {builderName} in {PUB_LABEL[pub]} right now.
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
