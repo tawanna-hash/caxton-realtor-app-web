@@ -9,13 +9,14 @@
 //   - Same publication-scope external store pattern (reads localStorage
 //     `caxton_pub` with useSyncExternalStore for SSR-safe hydration)
 
-import { useMemo, useSyncExternalStore } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import type { BuilderInventoryRow, Publication } from '@/lib/builder-inventory';
 import InventoryCard from '@/components/inventory/InventoryCard';
 import { builderNameToSlug } from '@/lib/builder-slug';
 import { trackEvent } from '@/app/posthog-provider';
+import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
 
 type Props = {
   initialRows: BuilderInventoryRow[];
@@ -55,6 +56,7 @@ function getServerPubSnapshot(): Publication {
 }
 
 export default function CommunitiesClient({ initialRows }: Props) {
+  const router = useRouter();
   const pub = useSyncExternalStore<Publication>(
     subscribePub,
     readSavedPub,
@@ -103,6 +105,47 @@ export default function CommunitiesClient({ initialRows }: Props) {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [initialRows]);
 
+  // Floater handlers
+  const onBack = useCallback(() => {
+    trackEvent('communities_back_pill_clicked', {});
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/builders');
+    }
+  }, [router]);
+
+  const onShare = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    const url = window.location.href;
+    const shareData = {
+      title: 'New Home Communities — Realty News Now',
+      text: 'Master-planned developments and active community listings.',
+      url,
+    };
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share(shareData);
+        trackEvent('communities_shared', { channel: 'native' });
+      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+        window.alert('Link copied to clipboard');
+        trackEvent('communities_shared', { channel: 'copy' });
+      }
+    } catch (err) {
+      console.log('[CommunitiesClient] share cancelled or failed:', err);
+    }
+  }, []);
+
+  const onDownload = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    trackEvent('communities_download_pill_clicked', {});
+    const a = document.createElement('a');
+    a.href = '/api/communities/pdf';
+    a.rel = 'noopener noreferrer';
+    a.click();
+  }, []);
+
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
@@ -148,6 +191,42 @@ export default function CommunitiesClient({ initialRows }: Props) {
             </p>
           </div>
         )}
+
+        {/* Floating action pill — Back / Share / Download */}
+        <FloaterPill
+          actions={[
+            {
+              key: 'back',
+              label: 'Back',
+              onClick: onBack,
+              icon: <path d="m15 18-6-6 6-6" />,
+            },
+            {
+              key: 'share',
+              label: 'Share',
+              onClick: onShare,
+              icon: (
+                <>
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </>
+              ),
+            },
+            {
+              key: 'download',
+              label: 'Download',
+              onClick: onDownload,
+              icon: (
+                <>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </>
+              ),
+            },
+          ] satisfies FloaterAction[]}
+        />
 
         {/* Grouped by builder */}
         <div className="space-y-8">

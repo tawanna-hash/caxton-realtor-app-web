@@ -10,6 +10,8 @@ import { trackEvent } from '@/app/posthog-provider';
 import { useRouter } from 'next/navigation';
 import type { BuilderInventoryRow, Publication } from '@/lib/builder-inventory';
 import InventoryCard from '@/components/inventory/InventoryCard';
+import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
+import { builderNameToSlug } from '@/lib/builder-slug';
 
 type Props = {
   builderName: string;
@@ -95,10 +97,16 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
     }
   }, [builderName]);
 
-  const onPrint = useCallback(() => {
+  const onDownload = useCallback(() => {
     if (typeof window === 'undefined') return;
-    trackEvent('builder_print_pill_clicked', { builder_name: builderName, tab });
-    window.print();
+    trackEvent('builder_download_pill_clicked', { builder_name: builderName, tab });
+    // Trigger the browser's native download flow. Using a hidden <a download>
+    // here (rather than window.location) keeps the current page navigation
+    // intact and respects the Content-Disposition: attachment header.
+    const a = document.createElement('a');
+    a.href = `/api/builders/${builderNameToSlug(builderName)}/pdf`;
+    a.rel = 'noopener noreferrer';
+    a.click();
   }, [builderName, tab]);
 
   const filtered = useMemo(() => {
@@ -193,38 +201,42 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
         )}
       </div>
 
-      {/* Floating action pill — Back / Share / Print. Same aesthetic as
-          EventDetail's pill. Hidden in print output so it doesn't show up
-          on the printed page itself. bottom-[80px] sits above the global
-          BottomNav rendered by AppShell. */}
-      <div className="fixed bottom-[80px] left-1/2 -translate-x-1/2 z-50 pointer-events-none print:hidden">
-        <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1.5 shadow-lg">
-          <button
-            onClick={onBack}
-            aria-label="Back"
-            className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Back</span>
-          </button>
-          <button
-            onClick={onShare}
-            aria-label="Share"
-            className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-            <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Share</span>
-          </button>
-          <button
-            onClick={onPrint}
-            aria-label="Print"
-            className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
-            <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Print</span>
-          </button>
-        </div>
-      </div>
+      {/* Floating action pill — unified across the app via <FloaterPill>.
+          bottom-[80px] sits above the global BottomNav rendered by AppShell. */}
+      <FloaterPill
+        actions={[
+          {
+            key: 'back',
+            label: 'Back',
+            onClick: onBack,
+            icon: <path d="m15 18-6-6 6-6" />,
+          },
+          {
+            key: 'share',
+            label: 'Share',
+            onClick: onShare,
+            icon: (
+              <>
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </>
+            ),
+          },
+          {
+            key: 'download',
+            label: 'Download',
+            onClick: onDownload,
+            icon: (
+              <>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </>
+            ),
+          },
+        ] satisfies FloaterAction[]}
+      />
     </div>
   );
 }
