@@ -164,7 +164,12 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
         </Link>
       </nav>
 
-      <div className="grid lg:grid-cols-[1fr_360px] gap-8">
+      {/* Use minmax(0,1fr) for the gallery column so the column can shrink
+          below its content's intrinsic width. Without this, the gallery's
+          high-resolution image (1500px+ natural width) pushes the
+          implicit `1fr` track past the container and the right-side
+          sidebar overflows the viewport. */}
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-8">
         {/* Left column: gallery + description */}
         <div>
           <InventoryGallery
