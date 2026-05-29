@@ -163,7 +163,7 @@ export default function InventoryClient({ initialRows, allBuilders }: Props) {
         {/* Header */}
         <div className="mb-6">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-            {PUB_LABEL[pub]} · Builders &amp; Developers
+            Advertisers · Builders &amp; Developers
           </p>
           <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mb-3">
             Builder Inventory &amp; Promotions
