@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import type { Metrics } from './_types';
-import { EVENT_LABELS } from './_types';
+import { EVENT_LABELS, SURFACE_LABELS, ACTION_LABELS } from './_types';
 import { TimeSeriesChart } from './_components/TimeSeriesChart';
 import { KPITile } from './_components/KPITile';
 import { DateRangePicker } from './_components/DateRangePicker';
@@ -17,6 +17,7 @@ export default function AdminMetricsPage() {
 
   useEffect(() => {
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     (async () => {
       try {
@@ -234,6 +235,76 @@ export default function AdminMetricsPage() {
                         <td className="py-2 text-gray-500 text-xs tabular-nums">#{row.row_id}</td>
                         <td className="py-2 text-gray-700 capitalize">{row.kind}</td>
                         <td className="py-2 text-gray-500 text-xs">{row.destination}</td>
+                        <td className="py-2 text-right tabular-nums text-gray-700">
+                          {row.total.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
+              Pill engagement · last {days} days
+            </h2>
+            <div className="bg-white border border-gray-200 rounded-md p-4">
+              {!metrics.pill_engagement || metrics.pill_engagement.length === 0 ? (
+                <p className="text-sm text-gray-500">No pill clicks recorded yet.</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-xs uppercase tracking-wide text-gray-500">
+                      <th className="text-left pb-2 font-medium">Surface</th>
+                      <th className="text-left pb-2 font-medium">Action</th>
+                      <th className="text-right pb-2 font-medium">Clicks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metrics.pill_engagement.map((row, i) => (
+                      <tr key={`${row.surface}-${row.action}-${i}`} className="border-t border-gray-100">
+                        <td className="py-2 text-gray-900">
+                          {SURFACE_LABELS[row.surface] ?? row.surface}
+                        </td>
+                        <td className="py-2 text-gray-700">
+                          {ACTION_LABELS[row.action] ?? row.action}
+                        </td>
+                        <td className="py-2 text-right tabular-nums text-gray-700">
+                          {row.total.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
+              Share channel breakdown · last {days} days
+            </h2>
+            <div className="bg-white border border-gray-200 rounded-md p-4">
+              {!metrics.share_breakdown || metrics.share_breakdown.length === 0 ? (
+                <p className="text-sm text-gray-500">No shares recorded yet.</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-xs uppercase tracking-wide text-gray-500">
+                      <th className="text-left pb-2 font-medium">Surface</th>
+                      <th className="text-left pb-2 font-medium">Channel</th>
+                      <th className="text-right pb-2 font-medium">Shares</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metrics.share_breakdown.map((row, i) => (
+                      <tr key={`${row.surface}-${row.channel}-${i}`} className="border-t border-gray-100">
+                        <td className="py-2 text-gray-900">
+                          {SURFACE_LABELS[row.surface] ?? row.surface}
+                        </td>
+                        <td className="py-2 text-gray-700 capitalize">{row.channel}</td>
                         <td className="py-2 text-right tabular-nums text-gray-700">
                           {row.total.toLocaleString()}
                         </td>

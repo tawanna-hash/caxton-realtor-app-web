@@ -206,9 +206,90 @@ export async function GET(req: NextRequest) {
       trend_pct: trendPct,
     };
 
+    // 7. Pill engagement — Back/Share/Download/etc. across every surface
+    //    that has a floating action pill (builder, communities,
+    //    inventory, event, inventory_detail, magazine).
+    //
+    //    The events are surfaced under different names per surface; we
+    //    map each to a (surface, action) tuple via a UNION query so the
+    //    admin can see one consolidated table.
+    const pillEngagementRaw = await runHogQL(`
+      SELECT surface, action, count() AS total FROM (
+        SELECT 'inventory'         AS surface, 'back'         AS action FROM events WHERE event = 'inventory_back_pill_clicked'        AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'inventory'         AS surface, 'share'        AS action FROM events WHERE event = 'inventory_shared'                   AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'inventory'         AS surface, 'download'     AS action FROM events WHERE event = 'inventory_download_pill_clicked'    AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'communities'       AS surface, 'back'         AS action FROM events WHERE event = 'communities_back_pill_clicked'      AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'communities'       AS surface, 'share'        AS action FROM events WHERE event = 'communities_shared'                 AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'communities'       AS surface, 'download'     AS action FROM events WHERE event = 'communities_download_pill_clicked'  AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'builders'          AS surface, 'back'         AS action FROM events WHERE event = 'builder_back_pill_clicked'          AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'builders'          AS surface, 'share'        AS action FROM events WHERE event = 'builder_shared'                     AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'builders'          AS surface, 'download'     AS action FROM events WHERE event = 'builder_download_pill_clicked'      AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'event'             AS surface, 'back'         AS action FROM events WHERE event = 'event_back_pill_clicked'            AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'event'             AS surface, 'share'        AS action FROM events WHERE event = 'event_shared'                       AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'event'             AS surface, 'add_calendar' AS action FROM events WHERE event = 'event_added_to_calendar'            AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'event'             AS surface, 'directions'   AS action FROM events WHERE event = 'event_directions_clicked'           AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'event'             AS surface, 'register'     AS action FROM events WHERE event = 'event_register_clicked'             AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'inventory_detail'  AS surface, properties.action AS action FROM events WHERE event = 'inventory_floater_clicked'      AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'magazine'          AS surface, 'share'        AS action FROM events WHERE event = 'flipbook_shared'                    AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'magazine'          AS surface, 'download'     AS action FROM events WHERE event = 'flipbook_download_clicked'         AND timestamp >= now() - INTERVAL ${days} DAY
+      )
+      GROUP BY surface, action
+      ORDER BY total DESC
+    `);
+    const pill_engagement = pillEngagementRaw.map((row) => {
+      const r = row as [string, string, number];
+      return { surface: r[0] ?? '?', action: r[1] ?? '?', total: Number(r[2]) };
+    });
+
+    // 8. Share breakdown — native vs copy across every share surface.
+    const shareBreakdownRaw = await runHogQL(`
+      SELECT surface, channel, count() AS total FROM (
+        SELECT 'inventory'   AS surface, properties.channel AS channel FROM events WHERE event = 'inventory_shared'   AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'communities' AS surface, properties.channel AS channel FROM events WHERE event = 'communities_shared' AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'builders'    AS surface, properties.channel AS channel FROM events WHERE event = 'builder_shared'     AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'event'       AS surface, properties.channel AS channel FROM events WHERE event = 'event_shared'       AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'magazine'    AS surface, properties.channel AS channel FROM events WHERE event = 'flipbook_shared'    AND timestamp >= now() - INTERVAL ${days} DAY
+      )
+      GROUP BY surface, channel
+      ORDER BY total DESC
+    `);
+    const share_breakdown = shareBreakdownRaw.map((row) => {
+      const r = row as [string, string, number];
+      return { surface: r[0] ?? '?', channel: r[1] ?? 'unknown', total: Number(r[2]) };
+    });
+
     return NextResponse.json({
       ok: true,
-      metrics: { event_totals, filter_usage, top_builders, top_inventory, time_series, kpi_summary },
+      metrics: {
+        event_totals,
+        filter_usage,
+        top_builders,
+        top_inventory,
+        time_series,
+        kpi_summary,
+        pill_engagement,
+        share_breakdown,
+      },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
