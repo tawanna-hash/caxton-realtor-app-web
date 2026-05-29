@@ -32,7 +32,7 @@ export default function PageTitle({
   const alignCls = align === 'center' ? 'text-center' : '';
   return (
     <h1
-      className={`${sizeCls} text-gray-900 tracking-tight ${alignCls} ${className}`.trim()}
+      className={`${sizeCls} text-gray-900 tracking-tight mb-3 ${alignCls} ${className}`.trim()}
       style={{ fontFamily: SERIF_FONT, fontWeight: 500 }}
     >
       {children}
