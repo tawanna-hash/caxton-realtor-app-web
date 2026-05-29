@@ -155,7 +155,7 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
       {/* Builder header */}
       <div className="bg-white border-b border-gray-200 px-4 py-6">
         <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium">
-          {PUB_LABEL[pub]}
+          {PUB_LABEL[pub]} • Advertiser
         </p>
         <h1 className="text-2xl font-light text-gray-900 mt-1">
           {builderName}
