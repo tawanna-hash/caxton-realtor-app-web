@@ -43,6 +43,27 @@ function formatExpires(iso: string | null): string | null {
   return `Through ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 }
 
+// Santa Rita Ranch is a master-planned developer (builderName='Santa Rita
+// Ranch') whose inventory comes from many homebuilders. The actual builder
+// is embedded in the title after an em-dash (e.g. "141 Burke St at Eldorado
+// — Perry Homes"). For SRR cards we surface that builder in the top-right
+// pill instead of the generic city, since the city alone is much less
+// useful here — all SRR homes are in Georgetown/Liberty Hill anyway.
+function extractEmbeddedBuilder(title: string): string | null {
+  // Match the last " — X" segment (em dash variants —, -, – with optional
+  // surrounding spaces). The actual scraper uses U+2014.
+  const m = title.match(/\s+[\u2014\u2013-]\s+([^\u2014\u2013-]+?)\s*$/);
+  return m ? m[1].trim() : null;
+}
+
+function pillLabelForListing(row: BuilderInventoryRow): string {
+  if (row.builderName === 'Santa Rita Ranch') {
+    const embedded = extractEmbeddedBuilder(row.title);
+    if (embedded) return embedded;
+  }
+  return row.city?.trim() || 'Listing';
+}
+
 // S13: Deterministic gallery image picker. When a row has a multi-image
 // gallery (KB Home — multiple collections share one community URL, so
 // without this they'd all render the same hero), pick one consistently
@@ -139,7 +160,7 @@ export default function InventoryCard({ row }: Props) {
             className={`inline-block text-[10px] uppercase tracking-[0.1em] font-medium px-2 py-1 border ${KIND_BADGE_STYLE[row.kind]}`}
           >
             {row.kind === 'listing'
-              ? (row.city?.trim() || 'Listing')
+              ? pillLabelForListing(row)
               : 'Promotion'}
           </span>
         </div>
