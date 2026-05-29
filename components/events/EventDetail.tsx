@@ -261,6 +261,10 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
             Stacked above the Register bar (which itself sits above the BottomNav). */}
         <div className="fixed bottom-[148px] left-1/2 -translate-x-1/2 z-50 pointer-events-none">
           <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1.5 shadow-lg">
+            <button onClick={() => { trackEvent('event_back_pill_clicked', { event_id: event.id, pub }); onBack(); }} aria-label="Back to events" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Back</span>
+            </button>
             {isMappable(event.location) && (
               <button onClick={onDirections} aria-label="Directions" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
