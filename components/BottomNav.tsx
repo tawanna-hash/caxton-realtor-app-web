@@ -2,12 +2,12 @@
 
 // components/BottomNav.tsx
 //
-// Fixed bottom tab bar: Home / Magazine / Calendar / Builders / More.
+// Fixed bottom tab bar: Feed / Magazine / Calendar / Builders / More.
 // Rendered by AppShell on every public-variant page and by the dashboard
 // (which doesn't use AppShell) in place of its prior inline nav.
 //
 // Tab semantics:
-//   Home      route-then-dispatch to /dashboard news phase
+//   Feed      route-then-dispatch to /dashboard news phase
 //   Magazine  push to /magazine (real route, built in S23)
 //   Calendar  push to /calendar (real list route, built in S20)
 //   Builders  push to /builders (real hub route, built in Stage C)
@@ -105,7 +105,7 @@ export default function BottomNav({ info, onMoreClick }: Props) {
 
       {/* Tab row */}
       <div className="flex justify-around py-2 pb-3">
-        <Tab label="Home" active={isHome} accent={accent} onClick={goHome}>
+        <Tab label="Feed" active={isHome} accent={accent} onClick={goHome}>
           <Home strokeWidth={1.75} size={22} />
         </Tab>
         <Tab label="Magazine" active={isMagazine} accent={accent} onClick={goMagazine}>
