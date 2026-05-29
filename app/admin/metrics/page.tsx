@@ -8,6 +8,7 @@ import { TimeSeriesChart } from './_components/TimeSeriesChart';
 import { KPITile } from './_components/KPITile';
 import { DateRangePicker } from './_components/DateRangePicker';
 import type { DaysOption } from './_components/DateRangePicker';
+import { NewsletterMetrics } from './_components/NewsletterMetrics';
 
 export default function AdminMetricsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -316,8 +317,10 @@ export default function AdminMetricsPage() {
             </div>
           </section>
 
+          <NewsletterMetrics days={days} />
+
           <p className="text-xs text-gray-400 pt-4">
-            Source: PostHog · refreshes on page load
+            Source: PostHog (click metrics) + Neon (newsletter) · refreshes on page load
           </p>
         </div>
       )}

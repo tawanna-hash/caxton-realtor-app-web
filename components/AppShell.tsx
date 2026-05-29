@@ -25,6 +25,7 @@ import { Footer } from '@/components/footer';
 import NavDrawer from '@/components/NavDrawer';
 import BottomNav from '@/components/BottomNav';
 import { AdSlot } from '@/components/ads/AdSlot';
+import NewsletterCTA from '@/components/NewsletterCTA';
 
 // ============================================================
 // Types + constants
@@ -237,6 +238,8 @@ export default function AppShell({
       <main className="flex-1 pb-20">{children}</main>
       {!isAdmin ? (
         <>
+          {/* Inline newsletter signup — shown on every public page above the footer. */}
+          <NewsletterCTA source="public_footer" variant="flush" />
           {/* Sticky footer banner (paid placement) — sits above bottom nav */}
           <div className="fixed bottom-16 left-0 right-0 z-20 pointer-events-none px-3">
             <div className="max-w-3xl mx-auto pointer-events-auto">
