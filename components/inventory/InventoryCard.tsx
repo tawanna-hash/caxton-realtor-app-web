@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import type { BuilderInventoryRow, Kind } from '@/lib/builder-inventory';
 import { trackEvent } from '@/app/posthog-provider';
 
@@ -95,36 +96,24 @@ export default function InventoryCard({ row }: Props) {
   const sqftRange = formatNumRange(row.sqftMin, row.sqftMax, 'sqft');
   const expiresLabel = formatExpires(row.expiresAt);
 
+  // Cards now navigate to our in-app detail page (/inventory/<id>) which
+  // hosts the full gallery, description, stats, and source/flyer links.
+  // The old behavior (opening flyerPdfUrl in a new tab) lives on as the
+  // primary CTA inside the detail view.
   const handleClick = () => {
-    // Promotions: open the builder's authoritative source page (legal text lives there)
-    // Listings:   open the flyer PDF if present
-    const target = row.flyerPdfUrl ?? row.sourceUrl;
-    const destination = row.flyerPdfUrl ? 'flyer' : (row.sourceUrl ? 'source' : 'none');
     trackEvent('inventory_card_clicked', {
       row_id: row.id,
       kind: row.kind,
       builder_name: row.builderName,
       publication: row.publication,
-      destination,
+      destination: 'detail',
     });
-    if (target) {
-      window.open(target, '_blank', 'noopener,noreferrer');
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleClick();
-    }
   };
 
   return (
-    <article
-      role="button"
-      tabIndex={0}
+    <Link
+      href={`/inventory/${row.id}`}
       onClick={handleClick}
-      onKeyDown={handleKeyDown}
       className="group flex flex-col border border-gray-200 bg-white hover:border-gray-400 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 rounded-md overflow-hidden"
     >
       {/* Thumbnail */}
@@ -197,6 +186,6 @@ export default function InventoryCard({ row }: Props) {
           )}
         </div>
       </div>
-    </article>
+    </Link>
   );
 }
