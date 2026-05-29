@@ -51,7 +51,7 @@ export default function InventoryGallery({ galleryUrls, thumbnailUrl, alt }: Pro
 
   if (images.length === 0) {
     return (
-      <div className="relative aspect-[4/3] w-full bg-gray-100 flex items-center justify-center text-gray-400 rounded-md border border-gray-200">
+      <div className="relative aspect-[3/2] w-full max-w-3xl bg-gray-100 flex items-center justify-center text-gray-400 rounded-md border border-gray-200">
         <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path
             strokeLinecap="round"
@@ -80,8 +80,10 @@ export default function InventoryGallery({ galleryUrls, thumbnailUrl, alt }: Pro
 
   return (
     <div>
+      {/* Hero: narrower (max ~768px) and shorter (3:2 instead of 4:3) so it
+          doesn't dominate the page above the description. */}
       <div
-        className="relative w-full aspect-[4/3] bg-gray-100 overflow-hidden rounded-md border border-gray-200"
+        className="relative w-full max-w-3xl aspect-[3/2] bg-gray-100 overflow-hidden rounded-md border border-gray-200"
         tabIndex={0}
         onKeyDown={onKey}
         role="region"
@@ -126,7 +128,7 @@ export default function InventoryGallery({ galleryUrls, thumbnailUrl, alt }: Pro
       {showControls && (
         <div
           ref={thumbStripRef}
-          className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-thin"
+          className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-thin max-w-3xl"
         >
           {images.map((src, idx) => (
             <button
