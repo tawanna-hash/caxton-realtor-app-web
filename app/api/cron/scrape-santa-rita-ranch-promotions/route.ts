@@ -6,12 +6,19 @@
 // Auth: Authorization: Bearer ${CRON_SECRET} in production.
 // Dev/preview: open (so we can test from local without setting the secret).
 //
-// Output rows land as kind='promotion', status='pending' so a human reviews
-// builder incentive flyer text before publishing.
+// Output rows land as kind='promotion'. Unlike the generic S14 review
+// policy (promos → status='pending'), newly-imported SRR promos are
+// auto-activated here: the developer page already curates participating
+// builders and per-builder review adds no signal. Existing rows keep
+// whatever status they already have — admin decisions are never
+// overwritten.
 
 import { NextResponse } from 'next/server';
+import { neon } from '@neondatabase/serverless';
 import { fetchSantaRitaRanchPromotions } from '../../../../lib/scrapers/santa-rita-ranch-promotions';
 import { upsertBuilderInventoryByExternalId } from '../../../../lib/builder-inventory';
+
+const sql = neon(process.env.DATABASE_URL!);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,12 +53,33 @@ async function handle(req: Request) {
 
   let created = 0;
   let updated = 0;
+  let autoActivated = 0;
   const upsertErrors: { externalId: string; reason: string }[] = [];
 
   for (const row of scrape.rows) {
     try {
       const result = await upsertBuilderInventoryByExternalId(row);
-      if (result.created) created++; else updated++;
+      if (result.created) {
+        created++;
+        // SRR builder-incentive flyers are pulled from a curated developer
+        // page that already vets participating builders. Auto-activate
+        // newly-imported promos instead of leaving them in 'pending' —
+        // the per-builder review burden adds friction without catching
+        // anything our source page hasn't already filtered.
+        // Existing rows are NOT touched here: once a human (or this same
+        // policy) sets a status, the scraper has no business overwriting it.
+        await sql`
+          UPDATE builder_inventory
+          SET status = 'active',
+              reviewed_at = NOW(),
+              reviewed_by = 'system:scraper-trusted-srr-promotions'
+          WHERE id = ${result.row.id}
+            AND status = 'pending'
+        `;
+        autoActivated++;
+      } else {
+        updated++;
+      }
     } catch (err) {
       upsertErrors.push({
         externalId: row.externalId,
@@ -67,6 +95,7 @@ async function handle(req: Request) {
     upserted: scrape.rows.length,
     created,
     updated,
+    autoActivated,
     skipped: scrape.skipped,
     upsertErrors,
   });
