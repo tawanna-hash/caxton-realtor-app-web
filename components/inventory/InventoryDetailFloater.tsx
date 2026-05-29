@@ -2,17 +2,18 @@
 
 // components/inventory/InventoryDetailFloater.tsx
 //
-// Fixed floater pill rendered on the inventory detail page.
-// Three actions, left to right:
-//   1. Back        — browser back (router.back), with a graceful fallback to
-//                    /inventory when there's no history (e.g. opened in a
-//                    new tab from a shared link).
-//   2. Visit site  — opens row.flyerPdfUrl or row.sourceUrl in a new tab.
-//                    Hidden when neither is present.
-//   3. Promotions  — navigates to /builder-promotions.
+// Fixed floater pill rendered on the inventory detail page. Matches the
+// existing event-detail floater aesthetic (components/events/EventDetail.tsx):
+//   - bg-black/85 + backdrop-blur, rounded-md (not a full pill)
+//   - Each action is a stacked icon + uppercase label, ~60px min-width
+//   - Pinned bottom-center, above the BottomNav
 //
-// Pinned to the bottom-center of the viewport, hovering above the
-// site's bottom nav (which is ~64px tall + safe-area inset).
+// Actions, left to right:
+//   1. Back        — router.back() with a fallback to /inventory when
+//                    there is no history (shared/direct links).
+//   2. Builder     — opens the builder's site (sourceUrl or flyerPdfUrl)
+//                    in a new tab. Hidden when neither is present.
+//   3. Promotions  — navigates to /builder-promotions.
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -23,6 +24,13 @@ type Props = {
   builderName: string;
   externalUrl: string | null;
 };
+
+const BTN_CLS =
+  'flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md ' +
+  'transition-colors text-white/85 hover:text-white active:bg-white/10 ' +
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60';
+
+const LABEL_CLS = 'text-[10px] uppercase tracking-wider mt-0.5 font-medium';
 
 export default function InventoryDetailFloater({
   rowId,
@@ -53,22 +61,24 @@ export default function InventoryDetailFloater({
   };
 
   return (
-    // Bottom-center; pb-safe-area + clears the app's ~64px bottom nav.
+    // bottom: ~80px above the viewport edge clears the app's BottomNav
+    // (~64px) and respects the iOS safe area. pointer-events-none on the
+    // wrapper so dead space around the pill doesn't block underlying clicks.
     <div
-      className="fixed left-1/2 -translate-x-1/2 z-40 px-3"
+      className="fixed left-1/2 -translate-x-1/2 z-50 pointer-events-none"
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)' }}
     >
-      <div className="flex items-center gap-1 bg-gray-900/95 backdrop-blur-sm text-white rounded-full shadow-xl border border-white/10 px-1.5 py-1.5">
+      <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1.5 shadow-lg">
         <button
           type="button"
           onClick={handleBack}
           aria-label="Back"
-          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-full hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors"
+          className={BTN_CLS}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m15 18-6-6 6-6" />
           </svg>
-          <span className="hidden sm:inline">Back</span>
+          <span className={LABEL_CLS}>Back</span>
         </button>
 
         {externalUrl && (
@@ -77,25 +87,29 @@ export default function InventoryDetailFloater({
             target="_blank"
             rel="noopener noreferrer"
             onClick={handleBuilder}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-full hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors"
+            aria-label="Visit builder site"
+            className={BTN_CLS}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
             </svg>
-            <span>Visit builder site</span>
+            <span className={LABEL_CLS}>Builder</span>
           </a>
         )}
 
         <Link
           href="/builder-promotions"
           onClick={handlePromotions}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-full hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 transition-colors"
+          aria-label="Promotions"
+          className={BTN_CLS}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+            <line x1="7" y1="7" x2="7.01" y2="7" />
           </svg>
-          <span>Promotions</span>
+          <span className={LABEL_CLS}>Promotions</span>
         </Link>
       </div>
     </div>
