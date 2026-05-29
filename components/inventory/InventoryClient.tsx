@@ -13,10 +13,12 @@ type Props = {
   initialRows: BuilderInventoryRow[];
 };
 
+// Promotions are now a separate destination (/builder-promotions),
+// surfaced via the inventory-detail floater pill. The chip filter on
+// this page only switches between All and Listings.
 const KIND_CHIPS: { value: Kind | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'listing', label: 'Listings' },
-  { value: 'promotion', label: 'Promotions' },
 ];
 
 const PUB_LABEL: Record<Publication, string> = {

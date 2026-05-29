@@ -18,6 +18,7 @@ import { notFound } from 'next/navigation';
 import { getBuilderInventoryById, type BuilderInventoryRow } from '@/lib/builder-inventory';
 import { builderNameToSlug } from '@/lib/builder-slug';
 import InventoryGallery from '@/components/inventory/InventoryGallery';
+import InventoryDetailFloater from '@/components/inventory/InventoryDetailFloater';
 
 export const dynamic = 'force-dynamic';
 
@@ -266,33 +267,44 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
             </div>
           )}
 
-          {/* Action buttons */}
-          <div className="border-t border-gray-200 pt-4 space-y-2">
-            {row.flyerPdfUrl && (
+          {/* Action buttons live in the bottom floater pill (see below)
+              so the right-side summary stays compact. The floater hosts:
+              Back · Visit builder site · Promotions. */}
+          {row.flyerPdfUrl && row.flyerPdfUrl.toLowerCase().endsWith('.pdf') && (
+            <div className="border-t border-gray-200 pt-4">
               <a
                 href={row.flyerPdfUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center px-4 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
               >
-                {row.flyerPdfUrl.toLowerCase().endsWith('.pdf')
-                  ? 'Download flyer'
-                  : 'View on builder site'}
+                Download flyer
               </a>
-            )}
-            {row.sourceUrl && row.sourceUrl !== row.flyerPdfUrl && (
-              <a
-                href={row.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full text-center px-4 py-2.5 border border-gray-300 text-gray-900 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
-              >
-                {row.kind === 'promotion' ? 'View promotion details' : 'View on builder site'}
-              </a>
-            )}
-          </div>
+            </div>
+          )}
         </aside>
       </div>
+
+      {/* Floater pill: Back · Visit builder site · Promotions. The
+          builder URL prefers a non-PDF source URL (the actual listing
+          page on the builder's site) over the flyerPdfUrl; PDFs stay
+          available as the dedicated Download flyer button above. */}
+      <InventoryDetailFloater
+        rowId={row.id}
+        builderName={row.builderName}
+        externalUrl={pickBuilderSiteUrl(row)}
+      />
     </main>
   );
+}
+
+// Choose which URL to send users to when they click "Visit builder site"
+// in the floater. Prefer a non-PDF page so the link feels like a real
+// destination; fall back to the PDF flyer if that's all we have.
+function pickBuilderSiteUrl(row: BuilderInventoryRow): string | null {
+  const isPdf = (u: string | null | undefined) =>
+    !!u && u.toLowerCase().endsWith('.pdf');
+  if (row.sourceUrl && !isPdf(row.sourceUrl)) return row.sourceUrl;
+  if (row.flyerPdfUrl && !isPdf(row.flyerPdfUrl)) return row.flyerPdfUrl;
+  return row.sourceUrl ?? row.flyerPdfUrl ?? null;
 }
