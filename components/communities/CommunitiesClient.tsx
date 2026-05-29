@@ -11,8 +11,11 @@
 
 import { useMemo, useSyncExternalStore } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import type { BuilderInventoryRow, Publication } from '@/lib/builder-inventory';
 import InventoryCard from '@/components/inventory/InventoryCard';
+import { builderNameToSlug } from '@/lib/builder-slug';
+import { trackEvent } from '@/app/posthog-provider';
 
 type Props = {
   initialRows: BuilderInventoryRow[];
@@ -93,9 +96,35 @@ export default function CommunitiesClient({ initialRows }: Props) {
     return Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [filtered]);
 
+  // Unique builder list for the navigational chip strip
+  const buildersForStrip = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of initialRows) set.add(r.builderName);
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [initialRows]);
+
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
+        {/* Navigational builder pills (the 'By Builder' label was removed
+            but the pills themselves still anchor jump-to-builder navigation). */}
+        {buildersForStrip.length > 0 && (
+          <div className="mb-4 -mx-4 sm:-mx-0">
+            <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              {buildersForStrip.map((b) => (
+                <Link
+                  key={b}
+                  href={`/builders/${builderNameToSlug(b)}`}
+                  onClick={() => trackEvent('builder_chip_clicked', { builder_name: b, source_page: '/communities' })}
+                  className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-md"
+                >
+                  {b}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-6">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
