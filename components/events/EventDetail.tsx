@@ -128,7 +128,7 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
         </div>
       )}
 
-      <div className="px-5 pt-6 pb-32">
+      <div className="px-5 pt-6 pb-48">
         {/* Sponsored tag */}
         {sponsored && (
           <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: info.color }}>
@@ -244,8 +244,10 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
         )}
       </div>
 
-      {/* Sticky action bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex gap-2 z-20" style={SW}>
+      {/* Sticky action bar — sits ABOVE the AppShell BottomNav (~68px tall, z-40).
+          We anchor at bottom-[68px] and use z-50 so the Register CTA stays
+          tappable on event detail pages. */}
+      <div className="fixed bottom-[68px] left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex gap-2 z-50" style={SW}>
         {event.website && (
           <button
             onClick={onRegister}
@@ -255,8 +257,9 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
             Register
           </button>
         )}
-        {/* Floating action pill — Map / Calendar / Share, matches article reader aesthetic */}
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+        {/* Floating action pill — Map / Calendar / Share, matches article reader aesthetic.
+            Stacked above the Register bar (which itself sits above the BottomNav). */}
+        <div className="fixed bottom-[148px] left-1/2 -translate-x-1/2 z-50 pointer-events-none">
           <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1.5 shadow-lg">
             {isMappable(event.location) && (
               <button onClick={onDirections} aria-label="Directions" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10">
