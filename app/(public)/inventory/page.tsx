@@ -5,10 +5,7 @@
 // client component, which handles publication filtering (from localStorage)
 // and kind filtering (from URL query params).
 
-import {
-  listBuilderInventory,
-  listActiveBuilderNames,
-} from '@/lib/builder-inventory';
+import { listBuilderInventory } from '@/lib/builder-inventory';
 import InventoryClient from '@/components/inventory/InventoryClient';
 
 export const dynamic = 'force-dynamic';
@@ -20,12 +17,8 @@ export const metadata = {
 };
 
 export default async function Page() {
-  // listBuilderInventory caps at 500 rows; the by-builder chip strip must
-  // reflect every builder with active inventory regardless of that cap, so
-  // fetch the distinct builder names separately.
-  const [rows, allBuilders] = await Promise.all([
-    listBuilderInventory({ status: 'active', limit: 500 }),
-    listActiveBuilderNames('all'),
-  ]);
-  return <InventoryClient initialRows={rows} allBuilders={allBuilders} />;
+  // Pull up to the function's hard cap (500). The by-builder chip strip
+  // that previously needed a separate distinct-name query was removed.
+  const rows = await listBuilderInventory({ status: 'active', limit: 500 });
+  return <InventoryClient initialRows={rows} />;
 }

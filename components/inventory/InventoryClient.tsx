@@ -2,8 +2,6 @@
 
 import { useMemo, useState, useSyncExternalStore } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { builderNameToSlug } from '@/lib/builder-slug';
 import type { BuilderInventoryRow, Kind, Publication } from '@/lib/builder-inventory';
 import InventoryCard from './InventoryCard';
 import FeaturedHero from './FeaturedHero';
@@ -11,10 +9,6 @@ import { trackEvent } from '@/app/posthog-provider';
 
 type Props = {
   initialRows: BuilderInventoryRow[];
-  // Full list of builders with active inventory (any pub). Server-derived so
-  // the chip strip can't be silently truncated by listBuilderInventory's
-  // 500-row cap. Optional for backward compatibility.
-  allBuilders?: string[];
 };
 
 // Promotions are now a separate destination (/builder-promotions),
@@ -69,7 +63,7 @@ function getServerPubSnapshot(): Publication {
 
 // ─────────────────────────────────────────────────────────────────────────
 
-export default function InventoryClient({ initialRows, allBuilders }: Props) {
+export default function InventoryClient({ initialRows }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -128,33 +122,9 @@ export default function InventoryClient({ initialRows, allBuilders }: Props) {
   const [featuredIdxRaw, setFeaturedIdxRaw] = useState(0);
   const featuredIdx = featured.length > 0 ? featuredIdxRaw % featured.length : 0;
 
-  // S13: derive unique builder list for the directional chip strip. Prefer
-  // the server-supplied full list so we can't be truncated by the row cap.
-  const buildersForStrip = useMemo(() => {
-    if (allBuilders && allBuilders.length > 0) {
-      return [...allBuilders].sort((a, b) => a.localeCompare(b));
-    }
-    const set = new Set<string>();
-    for (const r of initialRows) set.add(r.builderName);
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [initialRows, allBuilders]);
-
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
-        {/* S13: By-builder directional strip */}
-        {buildersForStrip.length > 0 && (
-          <div className="mb-4 -mx-4 sm:-mx-0">
-            <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-              <span className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-medium whitespace-nowrap pr-1">By Builder</span>
-              {buildersForStrip.map((b) => (
-                <Link key={b} href={`/builders/${builderNameToSlug(b)}`} onClick={() => trackEvent('builder_chip_clicked', { builder_name: b, source_page: '/inventory', pub })} className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-md">
-                  {b}
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
         {/* Header */}
         <div className="mb-6">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
