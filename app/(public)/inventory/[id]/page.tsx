@@ -158,13 +158,6 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-      {/* Breadcrumb / back-link */}
-      <nav className="mb-4 text-sm text-gray-600">
-        <Link href="/inventory" className="hover:text-gray-900 hover:underline">
-          ← All inventory
-        </Link>
-      </nav>
-
       {/* Use minmax(0,1fr) for the gallery column so the column can shrink
           below its content's intrinsic width. Without this, the gallery's
           high-resolution image (1500px+ natural width) pushes the
