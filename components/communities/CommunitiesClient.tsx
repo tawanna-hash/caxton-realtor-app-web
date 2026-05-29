@@ -159,7 +159,7 @@ export default function CommunitiesClient({ initialRows }: Props) {
                   key={b}
                   href={`/builders/${builderNameToSlug(b)}`}
                   onClick={() => trackEvent('builder_chip_clicked', { builder_name: b, source_page: '/communities' })}
-                  className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-md"
+                  className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors"
                 >
                   {b}
                 </Link>

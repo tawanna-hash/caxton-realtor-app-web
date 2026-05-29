@@ -147,11 +147,13 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
       : n === 1 ? 'promotion' : 'promotions';
   const promosEmptyLabel = isGiddens ? 'realtor offers' : 'promotions';
 
-  const tOn = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-md border border-[#1a2a44] bg-[#1a2a44] text-white';
-  const tOff = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:border-gray-500';
+  // Unified pill style (used app-wide). Active = thin gray-900 outline on
+  // white. Idle hover = subtle gray-400 — no heavy outline, no dark fill.
+  const tOn = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-md border border-gray-900 bg-white text-gray-900 transition-colors';
+  const tOff = 'whitespace-nowrap px-4 py-2 text-sm font-medium rounded-md border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 transition-colors';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Builder header */}
       <div className="bg-white border-b border-gray-200 px-4 py-6">
         <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium">

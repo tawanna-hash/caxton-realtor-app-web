@@ -37,8 +37,8 @@ export default function BuilderChipStrip({ builders, activeBuilder }: Props) {
               href={`/builders/${slug}`}
               className={
                 isActive
-                  ? 'whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-[#1a2a44] bg-[#1a2a44] text-white rounded-md'
-                  : 'whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-md'
+                  ? 'whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-900 bg-white text-gray-900 rounded-md transition-colors'
+                  : 'whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
               }
             >
               {b}

@@ -151,7 +151,7 @@ export default function InventoryClient({ initialRows, allBuilders }: Props) {
                   key={b}
                   href={`/builders/${builderNameToSlug(b)}`}
                   onClick={() => trackEvent('builder_chip_clicked', { builder_name: b, source_page: '/inventory', pub })}
-                  className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-500 rounded-md"
+                  className="whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors"
                 >
                   {b}
                 </Link>
@@ -209,8 +209,8 @@ export default function InventoryClient({ initialRows, allBuilders }: Props) {
                 className={
                   'px-3.5 py-1.5 text-sm font-medium border rounded-md transition-colors ' +
                   (isActive
-                    ? 'border-gray-900 bg-gray-900 text-white'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500')
+                    ? 'border-gray-900 bg-white text-gray-900'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900')
                 }
                 aria-pressed={isActive}
               >

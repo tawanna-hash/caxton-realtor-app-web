@@ -70,7 +70,7 @@ export default function BuildersHubPage() {
                 href={href}
                 className="flex items-center gap-4 px-1 py-5 group"
               >
-                <span className="flex-shrink-0 w-10 h-10 rounded-md border border-gray-300 flex items-center justify-center text-gray-700 group-hover:border-gray-500 transition-colors">
+                <span className="flex-shrink-0 w-10 h-10 rounded-md border border-gray-300 flex items-center justify-center text-gray-700 group-hover:border-gray-400 group-hover:text-gray-900 transition-colors">
                   <Icon strokeWidth={1.75} size={20} />
                 </span>
                 <span className="flex-1 min-w-0">
