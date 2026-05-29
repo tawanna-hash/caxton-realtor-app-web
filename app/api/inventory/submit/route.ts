@@ -17,6 +17,7 @@ import {
   type PromoType,
 } from '@/lib/builder-inventory';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { getEmailProvider } from '@/lib/server/email';
 
 const sql = neon(process.env.DATABASE_URL || process.env.POSTGRES_URL || '');
 
@@ -287,22 +288,15 @@ ${row.description ? `<p style="margin: 16px 0 8px; font-size: 14px;"><strong>Des
 <p style="margin: 24px 0 0; font-size: 13px; color: #6b7280;">Review at <a href="https://app.myrealtyline.com/admin/inventory" style="color: #185FA5;">/admin/inventory</a></p>
 </body></html>`;
 
-      const emailResp = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'Realty News Now <noreply@myrealtyline.com>',
-          to: NOTIFY_TO,
-          subject: `New ${kind} submission — ${row.builderName} / ${row.title}`,
-          html: emailHtml,
-        }),
+      const emailResult = await getEmailProvider().send({
+        to: { email: NOTIFY_TO },
+        subject: `New ${kind} submission — ${row.builderName} / ${row.title}`,
+        html: emailHtml,
+        text: `New ${kind} submission from ${row.builderName} (${row.title}). View at ${pdfUrl ?? '(no PDF)'}`,
+        emailType: 'inventory_submission_notification',
       });
-      if (!emailResp.ok) {
-        const text = await emailResp.text().catch(() => '');
-        console.error('[inventory/submit] notification email send failed:', emailResp.status, text);
+      if (!emailResult.success) {
+        console.error('[inventory/submit] notification email send failed:', emailResult.error);
       }
     } catch (emailErr) {
       console.error('[inventory/submit] notification email failed:', emailErr);

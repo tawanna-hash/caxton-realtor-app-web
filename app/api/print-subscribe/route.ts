@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
+import { getEmailProvider } from '@/lib/server/email';
 
 export const runtime = 'nodejs';
 
@@ -247,45 +248,33 @@ async function ensurePrintSubscribersTable() {
 }
 
 // ----------------------------------------------------------------------------
-// Resend — email sender
+// Email sender (delegates to shared EmailProvider — honors EMAIL_PROVIDER,
+// EMAIL_FROM_ADDRESS, EMAIL_FROM_NAME). Wrapped so the call sites below keep
+// their existing ok/error shape.
 // ----------------------------------------------------------------------------
 
 async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
+  text?: string;
   replyTo?: string;
+  emailType: string;
 }): Promise<{ ok: boolean; error?: string }> {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return { ok: false, error: 'RESEND_API_KEY not configured' };
-
-  const from = process.env.RESEND_FROM_ADDRESS || 'Realty News Now <noreply@myrealtyline.com>';
-
-  try {
-    const resp = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from,
-        to: opts.to,
-        subject: opts.subject,
-        html: opts.html,
-        ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
-      }),
-    });
-    if (!resp.ok) {
-      const text = await resp.text();
-      console.error('[Resend] Send failed:', resp.status, text);
-      return { ok: false, error: `Resend HTTP ${resp.status}` };
-    }
-    return { ok: true };
-  } catch (err) {
-    console.error('[Resend] Send error:', err);
-    return { ok: false, error: err instanceof Error ? err.message : 'unknown' };
+  const provider = getEmailProvider();
+  const result = await provider.send({
+    to: { email: opts.to },
+    subject: opts.subject,
+    html: opts.html,
+    text: opts.text ?? '',
+    replyTo: opts.replyTo,
+    emailType: opts.emailType,
+  });
+  if (!result.success) {
+    console.error('[print-subscribe] email send failed:', result.error);
+    return { ok: false, error: result.error };
   }
+  return { ok: true };
 }
 
 // ----------------------------------------------------------------------------
@@ -439,11 +428,13 @@ export async function POST(req: NextRequest) {
       subject: `New ${pubLabel(payload.publication)} subscriber: ${payload.name}`,
       html: notificationEmailHtml(payload, uspsResult),
       replyTo: payload.email,
+      emailType: 'print_subscribe_notification',
     }),
     sendEmail({
       to: payload.email,
       subject: `You're subscribed to ${pubLabel(payload.publication)}`,
       html: confirmationEmailHtml(payload, uspsResult),
+      emailType: 'print_subscribe_confirmation',
     }),
   ]);
 

@@ -19,15 +19,17 @@ import {
 } from '@/lib/advertiser-report';
 import type { Advertiser } from '@/lib/advertisers';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { getEmailProvider } from '@/lib/server/email';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const RESEND_KEY = process.env.RESEND_API_KEY || process.env.RESEND_KEY;
-const FROM_EMAIL = process.env.MAGIC_LINK_FROM_EMAIL
+// Per-publication from-address override (see send-report/route.ts for context).
+const FROM_EMAIL_OVERRIDE = process.env.MAGIC_LINK_FROM_EMAIL
   || process.env.RESEND_FROM_EMAIL
-  || 'hello@myrealtyline.com';
+  || undefined;
 
 async function isAdmin(): Promise<boolean> {
   try {
@@ -107,7 +109,7 @@ export async function POST(req: NextRequest) {
   const fromIso = from.toISOString();
   const toIso = to.toISOString();
 
-  if (!RESEND_KEY) {
+  if (!RESEND_KEY && process.env.EMAIL_PROVIDER === 'resend') {
     return NextResponse.json(
       { error: 'Resend not configured', detail: 'RESEND_API_KEY env var missing' },
       { status: 500 },
@@ -228,23 +230,22 @@ export async function POST(req: NextRequest) {
         const subject = `Your ${advertiser.name} performance report — ${theme.name}`;
         const fromName = process.env.MAGIC_LINK_FROM_NAME || theme.fromEmailDisplayName;
 
-        const resp = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${RESEND_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: `${fromName} <${FROM_EMAIL}>`,
-            to: [recipient],
-            subject,
-            html,
-            text,
-          }),
+        const sendResult = await getEmailProvider().send({
+          to: { email: recipient },
+          subject,
+          html,
+          text,
+          emailType: 'advertiser_report_batch',
+          from: { email: FROM_EMAIL_OVERRIDE, name: fromName },
         });
-        if (!resp.ok) {
-          const errText = await resp.text();
-          results.push({ id: idNum, name: advertiser.name, sent: false, recipient, error: `Resend ${resp.status}: ${errText.slice(0, 120)}` });
+        if (!sendResult.success) {
+          results.push({
+            id: idNum,
+            name: advertiser.name,
+            sent: false,
+            recipient,
+            error: (sendResult.error || 'send failed').slice(0, 200),
+          });
           continue;
         }
         results.push({ id: idNum, name: advertiser.name, sent: true, recipient });

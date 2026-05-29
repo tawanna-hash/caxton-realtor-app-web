@@ -18,8 +18,8 @@ export class ResendEmailProvider implements EmailProvider {
   async send(input: EmailSendInput): Promise<EmailSendResult> {
     const recipients = Array.isArray(input.to) ? input.to : [input.to];
 
-    const fromEmail = process.env.EMAIL_FROM_ADDRESS;
-    const fromName = process.env.EMAIL_FROM_NAME;
+    const fromEmail = input.from?.email ?? process.env.EMAIL_FROM_ADDRESS;
+    const fromName = input.from?.name ?? process.env.EMAIL_FROM_NAME;
     if (!fromEmail) {
       return { success: false, error: 'EMAIL_FROM_ADDRESS is not set' };
     }

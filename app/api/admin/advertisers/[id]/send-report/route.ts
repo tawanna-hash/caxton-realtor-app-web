@@ -18,14 +18,19 @@ import {
 } from '@/lib/advertiser-report';
 import type { Advertiser } from '@/lib/advertisers';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { getEmailProvider } from '@/lib/server/email';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const RESEND_KEY = process.env.RESEND_API_KEY || process.env.RESEND_KEY;
-const FROM_EMAIL = process.env.MAGIC_LINK_FROM_EMAIL
+// Per-publication from-address override. The default sender is
+// EMAIL_FROM_ADDRESS (read inside the provider). Set MAGIC_LINK_FROM_EMAIL
+// (or legacy RESEND_FROM_EMAIL) to override the address on these advertiser
+// touchpoints without touching the global identity.
+const FROM_EMAIL_OVERRIDE = process.env.MAGIC_LINK_FROM_EMAIL
   || process.env.RESEND_FROM_EMAIL
-  || 'hello@myrealtyline.com';
+  || undefined;
 
 async function isAdmin(): Promise<boolean> {
   try {
@@ -214,9 +219,9 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json({ html, text, recipient: recipient || null });
     }
 
-    // Send via Resend
+    // Send via shared email provider (honors EMAIL_PROVIDER + EMAIL_FROM_*)
     const subject = `Your ${advertiser.name} performance report — ${theme.name}`;
-    if (!RESEND_KEY) {
+    if (!RESEND_KEY && process.env.EMAIL_PROVIDER === 'resend') {
       console.warn('[advertiser-report] RESEND_API_KEY not configured');
       console.log('[advertiser-report] would have sent to:', recipient);
       console.log('[advertiser-report] subject:', subject);
@@ -226,26 +231,22 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       );
     }
 
+    // Per-publication branding: display name comes from the theme (or env
+    // override); the address falls back to EMAIL_FROM_ADDRESS inside the
+    // provider when FROM_EMAIL_OVERRIDE is unset.
     const fromName = process.env.MAGIC_LINK_FROM_NAME || theme.fromEmailDisplayName;
-    const resp = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${RESEND_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: `${fromName} <${FROM_EMAIL}>`,
-        to: [recipient],
-        subject,
-        html,
-        text,
-      }),
+    const result = await getEmailProvider().send({
+      to: { email: recipient },
+      subject,
+      html,
+      text,
+      emailType: 'advertiser_report',
+      from: { email: FROM_EMAIL_OVERRIDE, name: fromName },
     });
-    if (!resp.ok) {
-      const errText = await resp.text();
-      console.error('[advertiser-report] Resend failed:', resp.status, errText);
+    if (!result.success) {
+      console.error('[advertiser-report] send failed:', result.error);
       return NextResponse.json(
-        { error: 'send failed', detail: errText },
+        { error: 'send failed', detail: result.error },
         { status: 502 },
       );
     }

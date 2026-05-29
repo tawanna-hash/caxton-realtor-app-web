@@ -15,14 +15,17 @@ import {
   ensurePublicationColumn, getPublicationTheme,
 } from '@/lib/publication-theme';
 import type { Advertiser } from '@/lib/advertisers';
+import { getEmailProvider } from '@/lib/server/email';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const RESEND_KEY = process.env.RESEND_API_KEY || process.env.RESEND_KEY;
-const FROM_EMAIL = process.env.MAGIC_LINK_FROM_EMAIL
+// Optional per-publication from-address override; falls back to
+// EMAIL_FROM_ADDRESS inside the provider when unset.
+const FROM_EMAIL_OVERRIDE = process.env.MAGIC_LINK_FROM_EMAIL
   || process.env.RESEND_FROM_EMAIL
-  || 'hello@myrealtyline.com';
+  || undefined;
 
 function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
@@ -136,31 +139,26 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       const origin = getOrigin(req);
       const magicLink = `${origin}/api/r/advertiser/${slug}/verify?g=${encodeURIComponent(grantToken)}`;
 
-      if (RESEND_KEY) {
+      const providerMode = (process.env.EMAIL_PROVIDER ?? 'console').toLowerCase();
+      if (providerMode !== 'resend' || RESEND_KEY) {
         // Per-publication from-display overrides MAGIC_LINK_FROM_NAME env var.
         // (Env var stays as a fallback for one-off sends without an advertiser context.)
         const fromName = process.env.MAGIC_LINK_FROM_NAME || theme.fromEmailDisplayName;
         try {
-          const resp = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${RESEND_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              from: `${fromName} <${FROM_EMAIL}>`,
-              to: [email],
-              subject: `Your ${advertiser.name} performance report — ${theme.name}`,
-              html: renderMagicLinkHtml(theme.name, advertiser.name, magicLink, theme.primaryColor),
-            }),
+          const result = await getEmailProvider().send({
+            to: { email },
+            subject: `Your ${advertiser.name} performance report — ${theme.name}`,
+            html: renderMagicLinkHtml(theme.name, advertiser.name, magicLink, theme.primaryColor),
+            text: `Open your ${advertiser.name} performance report: ${magicLink}`,
+            emailType: 'advertiser_grant_magic_link',
+            from: { email: FROM_EMAIL_OVERRIDE, name: fromName },
           });
-          if (!resp.ok) {
-            const errText = await resp.text();
-            console.error('[advertiser-grant] Resend failed:', resp.status, errText);
-            console.log('[advertiser-grant] magic link (resend fallback):', magicLink);
+          if (!result.success) {
+            console.error('[advertiser-grant] send failed:', result.error);
+            console.log('[advertiser-grant] magic link (send fallback):', magicLink);
           }
         } catch (err) {
-          console.error('[advertiser-grant] Resend exception:', errMessage(err));
+          console.error('[advertiser-grant] send exception:', errMessage(err));
           console.log('[advertiser-grant] magic link (exception fallback):', magicLink);
         }
       } else {
