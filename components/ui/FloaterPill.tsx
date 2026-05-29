@@ -48,7 +48,8 @@ const BTN_CLS =
   'transition-colors text-white/85 hover:text-white active:bg-white/10 ' +
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60';
 
-const LABEL_CLS = 'text-[9px] uppercase tracking-wider mt-0.5 font-medium';
+const LABEL_CLS =
+  'text-[9px] uppercase tracking-wider mt-0.5 font-medium whitespace-nowrap';
 
 function IconSvg({ children }: { children: React.ReactNode }) {
   return (
