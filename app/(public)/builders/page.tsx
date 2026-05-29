@@ -2,9 +2,10 @@
 //
 // Builder / Developer Advertisers hub.
 // Reached from the new BottomNav "Builders" tab (S18 Stage B).
-// Two-column layout: RealtyLine Austin on the left, Newsline San Antonio
-// on the right. Each column links to the three sub-destinations with
-// publication scoping via ?pub= query param (S18 c-proper, C.1 + C.2).
+// Single-column layout: RealtyLine (Austin). Newsline (San Antonio)
+// removed per product direction. Each row links to the three
+// sub-destinations with publication scoping via ?pub= query param
+// (S18 c-proper, C.1 + C.2).
 //
 // Server component — pure static markup. No client state needed; the
 // destination pages handle pub state via URL params.
@@ -19,7 +20,6 @@ export const metadata = {
 };
 
 const REALTYLINE_COLOR = '#021D40';
-const NEWSLINE_COLOR = '#3D0740';
 
 type Pub = 'realtyline' | 'newsline';
 
@@ -124,18 +124,12 @@ export default function BuildersHubPage() {
           </p>
         </header>
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="max-w-2xl">
           <Column
             pub="realtyline"
             title="RealtyLine"
             subtitle="Austin"
             color={REALTYLINE_COLOR}
-          />
-          <Column
-            pub="newsline"
-            title="Newsline"
-            subtitle="San Antonio"
-            color={NEWSLINE_COLOR}
           />
         </div>
       </div>
