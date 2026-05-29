@@ -167,10 +167,10 @@ export default function InventoryClient({ initialRows, allBuilders }: Props) {
             Advertisers · Builders &amp; Developers
           </p>
           <PageTitle size="md">
-            Builder Inventory &amp; Promotions
+            Inventory &amp; Promotions
           </PageTitle>
           <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
-            New home listings, quick move-ins, model home events, and limited-time promotions from builders and developers in your market. Tap any card to view the full flyer.
+            Move-in ready inventory and limited-time promotions from every builder and developer in your market. Tap any card to view the full flyer.
           </p>
         </div>
 

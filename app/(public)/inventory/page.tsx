@@ -14,9 +14,9 @@ import InventoryClient from '@/components/inventory/InventoryClient';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Builder Inventory & Promotions — Realty News Now',
+  title: 'Inventory & Promotions — Realty News Now',
   description:
-    'New home listings, quick move-ins, and limited-time promotions from Austin and San Antonio builders and developers.',
+    'Move-in ready inventory and limited-time promotions from every builder and developer in Austin and San Antonio.',
 };
 
 export default async function Page() {

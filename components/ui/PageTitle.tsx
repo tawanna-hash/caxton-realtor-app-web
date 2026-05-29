@@ -1,7 +1,8 @@
 // components/ui/PageTitle.tsx
 //
 // Unified page-title style for the app. Matches the look of the
-// Magazine Archive header: serif (Georgia), large, bold, gray-900.
+// Magazine Archive header: serif (Georgia), large, medium weight (500),
+// gray-900.
 //
 // Use this for all top-level page titles (H1s) so type stays consistent
 // app-wide.
@@ -31,8 +32,8 @@ export default function PageTitle({
   const alignCls = align === 'center' ? 'text-center' : '';
   return (
     <h1
-      className={`${sizeCls} font-bold text-gray-900 tracking-tight ${alignCls} ${className}`.trim()}
-      style={{ fontFamily: SERIF_FONT }}
+      className={`${sizeCls} text-gray-900 tracking-tight ${alignCls} ${className}`.trim()}
+      style={{ fontFamily: SERIF_FONT, fontWeight: 500 }}
     >
       {children}
     </h1>

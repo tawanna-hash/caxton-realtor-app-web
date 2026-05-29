@@ -180,7 +180,7 @@ export default function CommunitiesClient({ initialRows }: Props) {
           <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
             {filtered.length} {filtered.length === 1 ? 'community' : 'communities'} from{' '}
             {byBuilder.length} {byBuilder.length === 1 ? 'builder' : 'builders'}.
-            {' '}For specific move-in-ready homes, see Builder Inventory.
+            {' '}For specific move-in-ready homes, see Inventory &amp; Promotions.
           </p>
         </div>
 
