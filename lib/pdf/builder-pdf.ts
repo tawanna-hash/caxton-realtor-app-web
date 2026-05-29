@@ -382,3 +382,101 @@ export async function generateCommunitiesPdf(
 
   return await doc.save();
 }
+
+// ─── Inventory (move-in homes + promotions across all builders) ──────────
+
+export type InventoryPdfInput = {
+  rows: BuilderInventoryRow[];
+};
+
+export async function generateInventoryPdf(
+  input: InventoryPdfInput,
+): Promise<Uint8Array> {
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  const ctx: Ctx = {
+    doc, font, fontBold,
+    page: doc.addPage([PAGE_W, PAGE_H]),
+    y: PAGE_H - MARGIN,
+    pageNum: 1,
+  };
+
+  // Inventory page surfaces move-in ready homes + promotions across
+  // every builder. Communities are not included (they live on a
+  // separate destination).
+  const moveIn = input.rows.filter((r) => r.homeType !== 'community' && r.kind === 'listing');
+  const promos = input.rows.filter((r) => r.kind === 'promotion');
+
+  // Group both sections by builder for readability.
+  function groupByBuilder(rows: BuilderInventoryRow[]): Array<[string, BuilderInventoryRow[]]> {
+    const m = new Map<string, BuilderInventoryRow[]>();
+    for (const r of rows) {
+      const list = m.get(r.builderName) ?? [];
+      list.push(r);
+      m.set(r.builderName, list);
+    }
+    return Array.from(m.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }
+
+  const builders = new Set<string>();
+  for (const r of [...moveIn, ...promos]) builders.add(r.builderName);
+
+  const parts: string[] = [];
+  if (moveIn.length > 0) parts.push(`${moveIn.length} move-in ${moveIn.length === 1 ? 'home' : 'homes'}`);
+  if (promos.length > 0) parts.push(`${promos.length} ${promos.length === 1 ? 'promotion' : 'promotions'}`);
+  if (builders.size > 0) parts.push(`${builders.size} ${builders.size === 1 ? 'builder' : 'builders'}`);
+
+  drawHeader(ctx, {
+    eyebrow: 'Advertisers · Builders & Developers',
+    title: 'Inventory & Promotions',
+    subtitle: parts.length > 0 ? parts.join('  ·  ') : 'No active listings',
+  });
+
+  const sections: Array<{ label: string; rows: BuilderInventoryRow[] }> = [
+    { label: 'Move-in Ready Homes', rows: moveIn },
+    { label: 'Promotions', rows: promos },
+  ];
+
+  for (const section of sections) {
+    if (section.rows.length === 0) continue;
+    ensureSpace(ctx, 40);
+    drawText(ctx, `${section.label.toUpperCase()}  (${section.rows.length})`, {
+      size: 12,
+      font: ctx.fontBold,
+      color: C_TITLE,
+    });
+    gap(ctx, 8);
+    for (const [builder, rows] of groupByBuilder(section.rows)) {
+      ensureSpace(ctx, 30);
+      drawText(ctx, `${builder.toUpperCase()}  (${rows.length})`, {
+        size: 10,
+        font: ctx.fontBold,
+        color: C_TITLE,
+      });
+      gap(ctx, 6);
+      for (const row of rows) {
+        drawRow(ctx, row, { showBuilder: false });
+      }
+      gap(ctx, 6);
+    }
+    gap(ctx, 8);
+  }
+
+  // Page footers
+  const pages = doc.getPages();
+  pages.forEach((p, i) => {
+    const text = `Realty News Now  ·  Inventory & Promotions  ·  Page ${i + 1} of ${pages.length}`;
+    const width = font.widthOfTextAtSize(text, 8);
+    p.drawText(text, {
+      x: PAGE_W - MARGIN - width,
+      y: MARGIN / 2,
+      font,
+      size: 8,
+      color: C_MUTED,
+    });
+  });
+
+  return await doc.save();
+}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useSyncExternalStore } from 'react';
+import { useCallback, useMemo, useState, useSyncExternalStore } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { builderNameToSlug } from '@/lib/builder-slug';
@@ -9,6 +9,7 @@ import InventoryCard from './InventoryCard';
 import FeaturedHero from './FeaturedHero';
 import { trackEvent } from '@/app/posthog-provider';
 import PageTitle from '@/components/ui/PageTitle';
+import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
 
 type Props = {
   initialRows: BuilderInventoryRow[];
@@ -128,6 +129,47 @@ export default function InventoryClient({ initialRows, allBuilders }: Props) {
   const [featuredIdxRaw, setFeaturedIdxRaw] = useState(0);
   const featuredIdx = featured.length > 0 ? featuredIdxRaw % featured.length : 0;
 
+  // Floater handlers — Back / Share / Download (matches communities pattern)
+  const onBack = useCallback(() => {
+    trackEvent('inventory_back_pill_clicked', {});
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/builders');
+    }
+  }, [router]);
+
+  const onShare = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    const url = window.location.href;
+    const shareData = {
+      title: 'Inventory & Promotions — Realty News Now',
+      text: 'Move-in ready inventory and limited-time promotions from every builder and developer.',
+      url,
+    };
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share(shareData);
+        trackEvent('inventory_shared', { channel: 'native' });
+      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+        window.alert('Link copied to clipboard');
+        trackEvent('inventory_shared', { channel: 'copy' });
+      }
+    } catch (err) {
+      console.log('[InventoryClient] share cancelled or failed:', err);
+    }
+  }, []);
+
+  const onDownload = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    trackEvent('inventory_download_pill_clicked', {});
+    const a = document.createElement('a');
+    a.href = '/api/inventory/pdf';
+    a.rel = 'noopener noreferrer';
+    a.click();
+  }, []);
+
   // Unique builder list for the navigational chip strip. Prefer the
   // server-supplied full list so it's not truncated by the row cap.
   const buildersForStrip = useMemo(() => {
@@ -173,6 +215,42 @@ export default function InventoryClient({ initialRows, allBuilders }: Props) {
             Move-in ready inventory and limited-time promotions from every builder and developer in your market. Tap any card to view the full flyer.
           </p>
         </div>
+
+        {/* Floating action pill — Back / Share / Download */}
+        <FloaterPill
+          actions={[
+            {
+              key: 'back',
+              label: 'Back',
+              onClick: onBack,
+              icon: <path d="m15 18-6-6 6-6" />,
+            },
+            {
+              key: 'share',
+              label: 'Share',
+              onClick: onShare,
+              icon: (
+                <>
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </>
+              ),
+            },
+            {
+              key: 'download',
+              label: 'Download',
+              onClick: onDownload,
+              icon: (
+                <>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </>
+              ),
+            },
+          ] satisfies FloaterAction[]}
+        />
 
         {/* Featured carousel */}
         {featured.length > 0 && (
