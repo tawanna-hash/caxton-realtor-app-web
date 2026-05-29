@@ -33,8 +33,16 @@
       "schedule": "30 14 * * *"
     },
     {
+      "path": "/api/cron/scrape-drees",
+      "schedule": "45 14 * * *"
+    },
+    {
       "path": "/api/cron/scrape-mi-homes",
       "schedule": "0 15 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-drees-move-in-ready",
+      "schedule": "45 15 * * *"
     },
     {
       "path": "/api/cron/scrape-kb-home",
