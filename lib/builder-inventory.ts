@@ -467,6 +467,29 @@ export async function listBuilderInventory(
   return rows.map(rowToBuilderInventoryRow);
 }
 
+/**
+ * Return the distinct list of builder_name values for active rows in a
+ * publication. Used to render builder chip strips (e.g. on /inventory and
+ * /communities) so the strip can't be silently truncated by a row-LIMIT.
+ */
+export async function listActiveBuilderNames(
+  publication: 'all' | Publication = 'all',
+): Promise<string[]> {
+  await ensureBuilderInventorySchema();
+  const rows = (await sql`
+    SELECT DISTINCT builder_name
+    FROM builder_inventory
+    WHERE status = 'active'
+      AND (${publication} = 'all'
+        OR publication = ${publication}::text
+        OR publication = 'both')
+    ORDER BY builder_name ASC
+  `) as Record<string, unknown>[];
+  return rows
+    .map((r) => String(r.builder_name ?? ''))
+    .filter((s) => s.length > 0 && s.toLowerCase() !== 'test');
+}
+
 export async function getBuilderInventoryById(
   id: number,
 ): Promise<BuilderInventoryRow | null> {

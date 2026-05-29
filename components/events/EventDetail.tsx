@@ -9,6 +9,7 @@ import { formatEventDateLong, formatEventTimeRange } from '@/lib/events/dates';
 import { generateICS } from '@/lib/events/ics';
 import { trackEvent } from '@/app/posthog-provider';
 import { DetailSection } from './DetailSection';
+import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
 
 /**
  * Returns true only when the location string looks like a real physical
@@ -257,31 +258,69 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
             Register
           </button>
         )}
-        {/* Floating action pill — Map / Calendar / Share, matches article reader aesthetic.
-            Stacked above the Register bar (which itself sits above the BottomNav). */}
-        <div className="fixed bottom-[148px] left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-          <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1.5 shadow-lg">
-            <button onClick={() => { trackEvent('event_back_pill_clicked', { event_id: event.id, pub }); onBack(); }} aria-label="Back to events" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-              <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Back</span>
-            </button>
-            {isMappable(event.location) && (
-              <button onClick={onDirections} aria-label="Directions" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Map</span>
-              </button>
-            )}
-            <button onClick={onAddToCalendar} aria-label="Add to calendar" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
-              <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Calendar</span>
-            </button>
-            <button onClick={onShare} aria-label="Share" className="flex flex-col items-center justify-center min-w-[60px] px-2 py-1.5 rounded-md transition-colors text-white/85 hover:text-white active:bg-white/10">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-              <span className="text-[10px] uppercase tracking-wider mt-0.5 font-medium">Share</span>
-            </button>
-          </div>
-        </div>
       </div>
+      {/* Floating action pill — shared <FloaterPill>. Stacked above the
+          Register bar (which itself sits above the BottomNav), so we offset
+          by ~148px. */}
+      <FloaterPill
+        bottomOffsetClass="bottom-[148px]"
+        actions={(() => {
+          const acts: FloaterAction[] = [
+            {
+              key: 'back',
+              label: 'Back',
+              ariaLabel: 'Back to events',
+              onClick: () => {
+                trackEvent('event_back_pill_clicked', { event_id: event.id, pub });
+                onBack();
+              },
+              icon: <path d="m15 18-6-6 6-6" />,
+            },
+          ];
+          if (isMappable(event.location)) {
+            acts.push({
+              key: 'map',
+              label: 'Map',
+              ariaLabel: 'Directions',
+              onClick: onDirections,
+              icon: (
+                <>
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </>
+              ),
+            });
+          }
+          acts.push({
+            key: 'calendar',
+            label: 'Calendar',
+            ariaLabel: 'Add to calendar',
+            onClick: onAddToCalendar,
+            icon: (
+              <>
+                <rect width="18" height="18" x="3" y="4" rx="2" />
+                <path d="M16 2v4" />
+                <path d="M8 2v4" />
+                <path d="M3 10h18" />
+              </>
+            ),
+          });
+          acts.push({
+            key: 'share',
+            label: 'Share',
+            ariaLabel: 'Share',
+            onClick: onShare,
+            icon: (
+              <>
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </>
+            ),
+          });
+          return acts;
+        })()}
+      />
     </div>
   );
 }

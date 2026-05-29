@@ -11,6 +11,10 @@ import { trackEvent } from '@/app/posthog-provider';
 
 type Props = {
   initialRows: BuilderInventoryRow[];
+  // Full list of builders with active inventory (any pub). Server-derived so
+  // the chip strip can't be silently truncated by listBuilderInventory's
+  // 500-row cap. Optional for backward compatibility.
+  allBuilders?: string[];
 };
 
 // Promotions are now a separate destination (/builder-promotions),
@@ -65,7 +69,7 @@ function getServerPubSnapshot(): Publication {
 
 // ─────────────────────────────────────────────────────────────────────────
 
-export default function InventoryClient({ initialRows }: Props) {
+export default function InventoryClient({ initialRows, allBuilders }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -124,12 +128,16 @@ export default function InventoryClient({ initialRows }: Props) {
   const [featuredIdxRaw, setFeaturedIdxRaw] = useState(0);
   const featuredIdx = featured.length > 0 ? featuredIdxRaw % featured.length : 0;
 
-  // S13: derive unique builder list for the directional chip strip
+  // S13: derive unique builder list for the directional chip strip. Prefer
+  // the server-supplied full list so we can't be truncated by the row cap.
   const buildersForStrip = useMemo(() => {
+    if (allBuilders && allBuilders.length > 0) {
+      return [...allBuilders].sort((a, b) => a.localeCompare(b));
+    }
     const set = new Set<string>();
     for (const r of initialRows) set.add(r.builderName);
     return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [initialRows]);
+  }, [initialRows, allBuilders]);
 
   return (
     <main className="min-h-screen bg-white">
