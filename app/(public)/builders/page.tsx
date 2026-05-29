@@ -52,10 +52,10 @@ export default function BuildersHubPage() {
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
         <header className="mb-8 sm:mb-10">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium">
-            Builders &amp; Developers
+            Advertisers
           </p>
           <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mt-2">
-            Builder &amp; Developer Advertisers
+            Builders &amp; Developers
           </h1>
           <p className="text-base text-gray-700 font-light leading-relaxed mt-3">
             Explore communities, move-in ready homes, and current promotions
