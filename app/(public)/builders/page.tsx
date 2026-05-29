@@ -1,14 +1,13 @@
 // app/(public)/builders/page.tsx
 //
 // Builder / Developer Advertisers hub.
-// Reached from the new BottomNav "Builders" tab (S18 Stage B).
-// Single-column layout: RealtyLine (Austin). Newsline (San Antonio)
-// removed per product direction. Each row links to the three
-// sub-destinations with publication scoping via ?pub= query param
-// (S18 c-proper, C.1 + C.2).
+// Reached from the BottomNav "Builders" tab.
 //
-// Server component — pure static markup. No client state needed; the
-// destination pages handle pub state via URL params.
+// Clean, minimal design matching the rest of the app:
+// white background, gray-700 typography, simple section header,
+// list of three navigational rows (Communities, Move-in Ready, Promotions).
+//
+// Server component — pure static markup.
 
 import Link from 'next/link';
 import { Home, Building2, Tag, ArrowRight } from 'lucide-react';
@@ -16,17 +15,13 @@ import { Home, Building2, Tag, ArrowRight } from 'lucide-react';
 export const metadata = {
   title: 'Builder & Developer Advertisers \u2014 Realty News Now',
   description:
-    'New home communities, move-in ready homes, and promotions from Austin and San Antonio builders and developers.',
+    'New home communities, move-in ready homes, and promotions from Austin builders and developers.',
 };
-
-const REALTYLINE_COLOR = '#021D40';
-
-type Pub = 'realtyline' | 'newsline';
 
 type LinkItem = {
   label: string;
   description: string;
-  href: (pub: Pub) => string;
+  href: string;
   Icon: typeof Home;
 };
 
@@ -34,104 +29,67 @@ const LINKS: LinkItem[] = [
   {
     label: 'New Home Communities',
     description: 'Master-planned developments and active community listings.',
-    href: (pub) => `/communities?pub=${pub}`,
+    href: '/communities?pub=realtyline',
     Icon: Building2,
   },
   {
     label: 'Move-in Ready Homes',
     description: 'Specific homes available now from builder partners.',
-    href: (pub) => `/inventory?kind=listing&pub=${pub}`,
+    href: '/inventory?kind=listing&pub=realtyline',
     Icon: Home,
   },
   {
     label: 'Promotions',
     description: 'Current incentives, rate buy-downs, and limited-time offers.',
-    href: (pub) => `/inventory?kind=promotion&pub=${pub}`,
+    href: '/inventory?kind=promotion&pub=realtyline',
     Icon: Tag,
   },
 ];
 
-function Column({
-  pub,
-  title,
-  subtitle,
-  color,
-}: {
-  pub: Pub;
-  title: string;
-  subtitle: string;
-  color: string;
-}) {
-  return (
-    <div className="flex-1 min-w-0">
-      <div
-        className="px-5 py-6 text-white rounded-t-lg"
-        style={{ backgroundColor: color }}
-      >
-        <p className="text-[10px] uppercase tracking-[0.25em] font-medium text-white/60">
-          {subtitle}
-        </p>
-        <h2 className="text-xl sm:text-2xl font-semibold mt-1">{title}</h2>
-      </div>
-      <ul className="border border-t-0 border-gray-200 rounded-b-lg overflow-hidden divide-y divide-gray-200 bg-white">
-        {LINKS.map(({ label, description, href, Icon }) => (
-          <li key={label}>
-            <Link
-              href={href(pub)}
-              className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition group"
-            >
-              <span
-                className="flex-shrink-0 w-10 h-10 rounded-md flex items-center justify-center"
-                style={{ backgroundColor: color + '12', color: color }}
-              >
-                <Icon strokeWidth={1.75} size={20} />
-              </span>
-              <span className="flex-1 min-w-0">
-                <span className="block text-base font-semibold text-gray-900 leading-tight">
-                  {label}
-                </span>
-                <span className="block text-sm text-gray-500 font-light leading-snug mt-0.5">
-                  {description}
-                </span>
-              </span>
-              <ArrowRight
-                className="flex-shrink-0 text-gray-300 group-hover:text-gray-500 transition"
-                strokeWidth={1.75}
-                size={18}
-              />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 export default function BuildersHubPage() {
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-10 sm:py-14">
+    <main className="min-h-screen bg-white">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
         <header className="mb-8 sm:mb-10">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-gray-500 font-medium">
-            Hub
+          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium">
+            Builders &amp; Developers
           </p>
-          <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 mt-1">
+          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mt-2">
             Builder &amp; Developer Advertisers
           </h1>
-          <p className="text-base text-gray-600 mt-3 max-w-2xl">
-            Choose a publication to explore communities, move-in ready homes,
-            and current promotions from our builder and developer partners.
+          <p className="text-base text-gray-700 font-light leading-relaxed mt-3">
+            Explore communities, move-in ready homes, and current promotions
+            from our builder and developer partners.
           </p>
         </header>
 
-        <div className="max-w-2xl">
-          <Column
-            pub="realtyline"
-            title="RealtyLine"
-            subtitle="Austin"
-            color={REALTYLINE_COLOR}
-          />
-        </div>
+        <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">
+          {LINKS.map(({ label, description, href, Icon }) => (
+            <li key={label}>
+              <Link
+                href={href}
+                className="flex items-center gap-4 px-1 py-5 group"
+              >
+                <span className="flex-shrink-0 w-10 h-10 rounded-md border border-gray-300 flex items-center justify-center text-gray-700 group-hover:border-gray-500 transition-colors">
+                  <Icon strokeWidth={1.75} size={20} />
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-base font-medium text-gray-900 leading-tight">
+                    {label}
+                  </span>
+                  <span className="block text-sm text-gray-600 font-light leading-snug mt-1">
+                    {description}
+                  </span>
+                </span>
+                <ArrowRight
+                  className="flex-shrink-0 text-gray-400 group-hover:text-gray-700 transition-colors"
+                  strokeWidth={1.75}
+                  size={18}
+                />
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
     </main>
   );
