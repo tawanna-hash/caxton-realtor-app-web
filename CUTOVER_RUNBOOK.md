@@ -1,5 +1,12 @@
 # Cutover Runbook — Retire api.realtynewsnow.app
 
+> **Status (2026-05-28): COMPLETE.** The DO droplet `caxton-api-prod`
+> (104.131.176.86, id 569469670) and the managed Postgres `caxton-prod-db`
+> (id ab225e15-005d-4506-ba39-23f4f3dde568) have both been destroyed via the
+> DO API. The runbook below is preserved as a historical reference; nothing
+> here is actionable anymore. All production traffic and data are on Neon
+> + Vercel.
+
 This document describes the steps to decommission the DigitalOcean Droplet
 (`api.realtynewsnow.app` running `caxton-realtor-api`) now that all 46 Express
 endpoints have been ported into this Next.js app under `/api/*`.
