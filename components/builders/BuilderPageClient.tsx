@@ -7,7 +7,6 @@
 
 import { useMemo, useState, useSyncExternalStore, useCallback } from 'react';
 import { trackEvent } from '@/app/posthog-provider';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { BuilderInventoryRow, Publication } from '@/lib/builder-inventory';
 import InventoryCard from '@/components/inventory/InventoryCard';
@@ -145,14 +144,6 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Back link */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
-        <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900 font-light inline-flex items-center gap-1">
-          <span>{'\u2190'}</span>
-          <span>Back to Dashboard</span>
-        </Link>
-      </div>
-
       {/* Builder header */}
       <div className="bg-white border-b border-gray-200 px-4 py-6">
         <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium">
