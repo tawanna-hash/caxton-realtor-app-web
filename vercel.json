@@ -17,6 +17,10 @@
       "schedule": "30 13 * * *"
     },
     {
+      "path": "/api/cron/scrape-sabuilders",
+      "schedule": "45 13 * * *"
+    },
+    {
       "path": "/api/cron/scrape-mi-homes-incentives",
       "schedule": "0 14 * * *"
     },
