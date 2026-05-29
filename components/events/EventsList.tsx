@@ -3,6 +3,7 @@
 import { PUB_META, type PubKey } from '@/lib/pub-meta';
 import { SW } from '@/lib/style-constants';
 import type { CalendarEvent } from '@/lib/events-store';
+import PageTitle from '@/components/ui/PageTitle';
 import { groupByMonth } from '@/lib/events/dates';
 import { MonthGrid } from './MonthGrid';
 import { DayEventList } from './DayEventList';
@@ -51,6 +52,18 @@ export function EventsList({ pub, events, loading, error, onBack, onSelect, topB
 
       {/* Body */}
       <div className="pb-24">
+        {/* Page header — Title + deck (matches inventory pattern) */}
+        <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
+          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
+            RealtyLine Austin
+          </p>
+          <PageTitle size="md">
+            Calendar of Events
+          </PageTitle>
+          <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
+            Explore Austin&rsquo;s most complete guide to real estate events with RealtyLine Austin. Our calendar highlights the best industry happenings &mdash; from networking mixers and training sessions to open houses, expos, and association meetings. Stay connected to the people, trends, and opportunities shaping the local real estate market. Whether you&rsquo;re an agent, broker, or industry partner, our calendar helps you make the most of every event that matters.
+          </p>
+        </div>
         {topBanner}
         {/* S22 view toggle — only render if month-view props are wired */}
         {view !== undefined && onViewChange && (

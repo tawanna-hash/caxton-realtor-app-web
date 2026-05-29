@@ -9,7 +9,7 @@ export default function AboutPage() {
   return (
     <main className="max-w-3xl mx-auto px-6 py-12 md:py-16">
       <header className="mb-10">
-        <p className="text-sm uppercase tracking-[0.25em] text-gray-500 font-medium mb-3">
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           About Us
         </p>
         <PageTitle>

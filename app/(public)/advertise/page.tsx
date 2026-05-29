@@ -9,13 +9,13 @@ export default function AdvertisePage() {
   return (
     <main className="max-w-3xl mx-auto px-6 py-12 md:py-16">
       <header className="mb-10">
-        <p className="text-sm uppercase tracking-[0.25em] text-gray-500 font-medium mb-3">
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Advertise
         </p>
         <PageTitle>
           Reach Texas real estate where it actually pays attention.
         </PageTitle>
-        <p className="mt-4 text-lg text-gray-600 font-light leading-relaxed">
+        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
           RealtyLine and Newsline San Antonio put your business in front of the
           agents, brokers, and builders who drive Central and South Texas
           transactions every month.

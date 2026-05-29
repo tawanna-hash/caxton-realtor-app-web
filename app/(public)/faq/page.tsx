@@ -9,13 +9,13 @@ export default function FaqPage() {
   return (
     <main className="max-w-3xl mx-auto px-6 py-12 md:py-16">
       <header className="mb-10">
-        <p className="text-sm uppercase tracking-[0.25em] text-gray-500 font-medium mb-3">
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Frequently Asked Questions
         </p>
         <PageTitle>
           Common questions, quick answers.
         </PageTitle>
-        <p className="mt-4 text-base text-gray-600 font-light leading-relaxed">
+        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
           Don&apos;t see your question?{' '}
           <a
             href="mailto:hello@myrealtyline.com?subject=App%20Question"

@@ -22,13 +22,13 @@ export default function SubscribePage() {
   return (
     <main className="max-w-3xl mx-auto px-6 py-12 md:py-16">
       <header className="mb-10">
-        <p className="text-sm uppercase tracking-[0.25em] text-gray-500 font-medium mb-3">
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Subscribe to Print
         </p>
         <PageTitle>
           Subscribe to Print. It&apos;s free!
         </PageTitle>
-        <p className="mt-4 text-base text-gray-600 font-light leading-relaxed">
+        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
           Pick your publication and we&apos;ll mail you every issue, no charge.
         </p>
       </header>

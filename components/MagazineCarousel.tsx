@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Magazine } from '@/lib/magazines';
 import { fetchMagazines } from '@/lib/magazines';
 import { trackEvent } from '../app/posthog-provider';
+import PageTitle from '@/components/ui/PageTitle';
 
 interface MagazineCarouselProps {
   publication: string;
@@ -29,6 +30,10 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
 
   useEffect(() => {
     let cancelled = false;
+    // setState calls are batched inside an async chain (not
+    // synchronously in the effect body) which is the recommended
+    // pattern; suppress the over-eager rule for this hook.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(null);
     fetchMagazines(publication)
@@ -72,7 +77,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   if (error) {
     return (
       <div className="px-4 py-12 bg-stone-50">
-        <p className="text-sm text-red-600 text-center">Couldn't load magazines: {error}</p>
+        <p className="text-sm text-red-600 text-center">Couldn&apos;t load magazines: {error}</p>
       </div>
     );
   }
@@ -98,9 +103,9 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
 
   return (
     <div className="bg-stone-50 pt-10 pb-12">
-      <h2 className="text-center text-4xl md:text-5xl font-serif text-gray-900 mb-6 px-4" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
-        Magazine Archive
-      </h2>
+      <div className="px-4 mb-6">
+        <PageTitle align="center">Magazine Archive</PageTitle>
+      </div>
 
       <div className="flex items-center justify-center gap-8 mb-8 text-xs uppercase tracking-[0.2em] font-medium">
         <button
