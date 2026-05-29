@@ -7,20 +7,28 @@ or treat it as a known silent-failure path._
 
 ## TL;DR
 
-Twenty-one variables are referenced in the code but unset in the Vercel
-project. **None of them are silently breaking a feature on
-`realtynewsnow.app` right now.** Each one falls into one of three buckets:
+Seventeen variables remain referenced in the code but unset in the Vercel
+project after the legacy email-override vars were removed. **None of them
+are silently breaking a feature on `realtynewsnow.app` right now.** Each one
+falls into one of three buckets:
 
 | Bucket | Count | Action |
 |---|---:|---|
-| **Has a safe in-code default** | 12 | Leave unset unless you want to override |
+| **Has a safe in-code default** | 11 | Leave unset unless you want to override |
 | **Auto-injected by Vercel runtime** | 2 | Never set manually |
-| **Alternate-name alias for a var that IS set** | 7 | Leave unset (the primary alias is already in Vercel) |
+| **Alternate-name alias for a var that IS set** | 4 | Leave unset (the primary alias is already in Vercel) |
 
 The earlier silent-failure path — `EMAIL_PROVIDER` defaulting to `console` —
 was fixed in commit `26102d8`'s follow-up: `EMAIL_PROVIDER=resend`,
 `EMAIL_FROM_ADDRESS`, and `EMAIL_FROM_NAME` are now set in production and
 preview, and live Resend sends are verified in `email_log`.
+
+The legacy `MAGIC_LINK_FROM_EMAIL`, `MAGIC_LINK_FROM_NAME`,
+`RESEND_FROM_EMAIL`, and `RESEND_FROM_ADDRESS` env-var reads were removed
+from the code so there is one source of truth for the sender identity
+(`EMAIL_FROM_ADDRESS` + `EMAIL_FROM_NAME`). Per-publication branding on
+advertiser routes is still applied as a display-NAME-only override
+(`theme.fromEmailDisplayName`); the address is always `EMAIL_FROM_ADDRESS`.
 
 ---
 
@@ -59,13 +67,6 @@ unset. Set one only when you want to deviate from the default.
 - **Default**: `15`
 - **Sources**: `lib/server/magic-link.ts:21`, `app/api/auth/signup/route.ts:27`.
 - **When to set**: To make magic links shorter-lived (e.g. `'5'`) or longer.
-- **Verdict**: ✅ Safe to leave unset.
-
-### `MAGIC_LINK_FROM_NAME`
-- **Default**: `theme.fromEmailDisplayName` from `lib/pub-meta.ts` (currently `"Realty Line"` or per-publication).
-- **Sources**: `app/api/admin/advertisers/[id]/send-report/route.ts:229`, `batch-report/route.ts:229`, `r/advertiser/[slug]/request-access/route.ts:142`.
-- **Scope**: Only the advertiser-report and request-access routes use this. Auth magic links and password resets read `EMAIL_FROM_NAME` instead, which is already set to `"Tawanna Verock, publisher"`.
-- **When to set**: If you want a consistent display name across both flows. Recommended for consistency.
 - **Verdict**: ✅ Safe to leave unset.
 
 ### `APP_URL` / `NEXT_PUBLIC_APP_URL`
@@ -135,15 +136,6 @@ primary name is already set; the alias is redundant.
 - **Source**: `app/api/admin/advertisers/{[id]/send-report,batch-report}/route.ts:25/27`, `r/advertiser/[slug]/request-access/route.ts:22` — `const RESEND_KEY = process.env.RESEND_API_KEY || process.env.RESEND_KEY`.
 - **Verdict**: ✅ Leave unset.
 
-### `RESEND_FROM_ADDRESS`
-- **Alias of**: `EMAIL_FROM_ADDRESS` semantically, but **only consulted by `app/api/print-subscribe/route.ts:262`** which has its own hard-coded fallback `'Realty News Now <noreply@myrealtyline.com>'`.
-- **Verdict**: ✅ Safe to leave unset. If you want print-subscribe notifications to come from `tawanna@myrealtyline.com` like everything else, set this to `Tawanna Verock, publisher <tawanna@myrealtyline.com>`.
-
-### `RESEND_FROM_EMAIL`
-- **Alias of**: `MAGIC_LINK_FROM_EMAIL` (which IS set in production + preview).
-- **Source**: Advertiser routes fall back through `MAGIC_LINK_FROM_EMAIL || RESEND_FROM_EMAIL || 'hello@myrealtyline.com'`.
-- **Verdict**: ✅ Leave unset.
-
 ---
 
 ## 4. What changed in this branch
@@ -152,6 +144,15 @@ primary name is already set; the alias is redundant.
   `EMAIL_FROM_NAME="Tawanna Verock, publisher"` to Vercel (production + preview).
   Verified with a real password-reset send recorded as `provider=resend` in
   `email_log` at `2026-05-29 01:10:36 UTC`.
+- Refactored 5 routes that were bypassing the shared email provider
+  (`print-subscribe`, `inventory/submit`, advertiser `send-report`,
+  `batch-report`, `request-access`) to go through `getEmailProvider()` so
+  `EMAIL_PROVIDER` + `EMAIL_FROM_ADDRESS` + `EMAIL_FROM_NAME` are honored
+  everywhere. Per-publication branding kept as a display-name-only override.
+- Removed legacy `MAGIC_LINK_FROM_EMAIL`, `MAGIC_LINK_FROM_NAME`,
+  `RESEND_FROM_EMAIL`, `RESEND_FROM_ADDRESS` env-var reads from code. The
+  stale `MAGIC_LINK_FROM_EMAIL=hello@myrealtyline.com` in Vercel was deleted
+  so all sends now use the canonical `EMAIL_FROM_ADDRESS`.
 - Removed the orphan `REDIS_URL` env var (it was an Upstash-integration
   artefact that blocked the marketplace install, since re-injected by the
   integration during the project-connect step).
@@ -170,12 +171,6 @@ WEBAUTHN_RP_NAME=Realty News Now
 
 # Pin the magic-link host (helps when triggered from cron/webhook contexts)
 NEXT_PUBLIC_SITE_URL=https://realtynewsnow.app
-
-# Consistent display name across advertiser-report and auth flows
-MAGIC_LINK_FROM_NAME=Tawanna Verock, publisher
-
-# Tidy print-subscribe sender (match auth-flow sender)
-RESEND_FROM_ADDRESS=Tawanna Verock, publisher <tawanna@myrealtyline.com>
 ```
 
 None of these are required. They make production behavior deterministic

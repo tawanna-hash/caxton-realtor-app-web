@@ -26,10 +26,6 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 const RESEND_KEY = process.env.RESEND_API_KEY || process.env.RESEND_KEY;
-// Per-publication from-address override (see send-report/route.ts for context).
-const FROM_EMAIL_OVERRIDE = process.env.MAGIC_LINK_FROM_EMAIL
-  || process.env.RESEND_FROM_EMAIL
-  || undefined;
 
 async function isAdmin(): Promise<boolean> {
   try {
@@ -228,7 +224,8 @@ export async function POST(req: NextRequest) {
         const html = renderAdvertiserReportHtml(reportInput);
         const text = renderAdvertiserReportText(reportInput);
         const subject = `Your ${advertiser.name} performance report — ${theme.name}`;
-        const fromName = process.env.MAGIC_LINK_FROM_NAME || theme.fromEmailDisplayName;
+        // Per-publication display name only; address always uses EMAIL_FROM_ADDRESS.
+        const fromName = theme.fromEmailDisplayName;
 
         const sendResult = await getEmailProvider().send({
           to: { email: recipient },
@@ -236,7 +233,7 @@ export async function POST(req: NextRequest) {
           html,
           text,
           emailType: 'advertiser_report_batch',
-          from: { email: FROM_EMAIL_OVERRIDE, name: fromName },
+          from: { name: fromName },
         });
         if (!sendResult.success) {
           results.push({

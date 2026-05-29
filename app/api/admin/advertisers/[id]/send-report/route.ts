@@ -24,13 +24,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const RESEND_KEY = process.env.RESEND_API_KEY || process.env.RESEND_KEY;
-// Per-publication from-address override. The default sender is
-// EMAIL_FROM_ADDRESS (read inside the provider). Set MAGIC_LINK_FROM_EMAIL
-// (or legacy RESEND_FROM_EMAIL) to override the address on these advertiser
-// touchpoints without touching the global identity.
-const FROM_EMAIL_OVERRIDE = process.env.MAGIC_LINK_FROM_EMAIL
-  || process.env.RESEND_FROM_EMAIL
-  || undefined;
 
 async function isAdmin(): Promise<boolean> {
   try {
@@ -231,17 +224,17 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       );
     }
 
-    // Per-publication branding: display name comes from the theme (or env
-    // override); the address falls back to EMAIL_FROM_ADDRESS inside the
-    // provider when FROM_EMAIL_OVERRIDE is unset.
-    const fromName = process.env.MAGIC_LINK_FROM_NAME || theme.fromEmailDisplayName;
+    // Per-publication branding: only the display NAME is overridden so the
+    // advertiser sees the publication’s brand. The from-address always comes
+    // from EMAIL_FROM_ADDRESS — single source of truth for the sender identity.
+    const fromName = theme.fromEmailDisplayName;
     const result = await getEmailProvider().send({
       to: { email: recipient },
       subject,
       html,
       text,
       emailType: 'advertiser_report',
-      from: { email: FROM_EMAIL_OVERRIDE, name: fromName },
+      from: { name: fromName },
     });
     if (!result.success) {
       console.error('[advertiser-report] send failed:', result.error);

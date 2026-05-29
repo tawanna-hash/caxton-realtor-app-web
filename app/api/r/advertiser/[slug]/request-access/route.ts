@@ -21,11 +21,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const RESEND_KEY = process.env.RESEND_API_KEY || process.env.RESEND_KEY;
-// Optional per-publication from-address override; falls back to
-// EMAIL_FROM_ADDRESS inside the provider when unset.
-const FROM_EMAIL_OVERRIDE = process.env.MAGIC_LINK_FROM_EMAIL
-  || process.env.RESEND_FROM_EMAIL
-  || undefined;
 
 function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
@@ -141,9 +136,9 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
 
       const providerMode = (process.env.EMAIL_PROVIDER ?? 'console').toLowerCase();
       if (providerMode !== 'resend' || RESEND_KEY) {
-        // Per-publication from-display overrides MAGIC_LINK_FROM_NAME env var.
-        // (Env var stays as a fallback for one-off sends without an advertiser context.)
-        const fromName = process.env.MAGIC_LINK_FROM_NAME || theme.fromEmailDisplayName;
+        // Per-publication display name only; address always comes from
+        // EMAIL_FROM_ADDRESS inside the provider.
+        const fromName = theme.fromEmailDisplayName;
         try {
           const result = await getEmailProvider().send({
             to: { email },
@@ -151,7 +146,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
             html: renderMagicLinkHtml(theme.name, advertiser.name, magicLink, theme.primaryColor),
             text: `Open your ${advertiser.name} performance report: ${magicLink}`,
             emailType: 'advertiser_grant_magic_link',
-            from: { email: FROM_EMAIL_OVERRIDE, name: fromName },
+            from: { name: fromName },
           });
           if (!result.success) {
             console.error('[advertiser-grant] send failed:', result.error);
