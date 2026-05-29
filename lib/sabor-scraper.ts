@@ -275,19 +275,22 @@ async function fetchAllIcs(): Promise<MergedIcs> {
 }
 
 /**
- * Build a registration URL for the event. The SABOR calendar UI dispatches
- * on event type:
- *   - meetings -> https://ramco.sabor.com/Meetings/Registration/MeetingDetails.aspx?mid=<id>
- *   - classes  -> RAMCO Education portal (the SABOR JS prepends an account
- *                 login redirect). We point the user at the calendar page
- *                 instead so the click goes through their normal flow.
- *   - closings -> no detail page; link back to the calendar.
+ * Build a registration URL for the event. Per Tawanna (2026-05-28), every
+ * SABOR event and class should link through the sabor.com account login
+ * wrapper, which then redirects the authenticated user to the RAMCO
+ * MeetingDetails page for that event's `mid`. Office closings have no
+ * registration page, so they link back to the calendar.
  */
 function buildLink(ev: SaborApiEvent): string {
-  if (ev.type === 'meeting') {
-    return `${REGISTRATION_BASE}/Meetings/Registration/MeetingDetails.aspx?mid=${encodeURIComponent(ev.id)}`;
+  if (ev.type === 'closing') {
+    return `${BASE}/news-events-and-education/events/calendar-of-events/`;
   }
-  return `${BASE}/news-events-and-education/events/calendar-of-events/`;
+  // Note: cobaltsrc is intentionally NOT percent-encoded. SABOR's login page
+  // expects the raw URL as the query value (matches their `onEventClick`
+  // handler and the format the user supplied). Event ids are UUIDs so they
+  // contain no characters that require escaping.
+  const target = `${REGISTRATION_BASE}/Meetings/Registration/MeetingDetails.aspx?mid=${ev.id}`;
+  return `${BASE}/account/login/?cobaltsrc=${target}`;
 }
 
 /**
