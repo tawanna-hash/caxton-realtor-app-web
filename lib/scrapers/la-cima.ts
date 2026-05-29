@@ -69,9 +69,10 @@ const REQ_HEADERS = {
 // don't need every shot in the database row.
 const MAX_GALLERY = 24;
 
-// Hero image for the synthetic community summary row.
+// Hero image for the synthetic community summary row. Pool / amenity
+// center photo from the lacimatx.com homepage slider.
 const COMMUNITY_HERO_IMAGE =
-  'https://lacimatx.com/wp-content/uploads/v6-LaCima-Refresh2017_Horizontal-CMYK.png';
+  'https://lacimatx.com/wp-content/uploads/LaCima_9424.jpg';
 
 export type LaCimaScrapeResult = {
   rows: UpsertScrapedInput[];
