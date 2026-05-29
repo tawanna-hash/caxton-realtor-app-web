@@ -95,7 +95,7 @@ export default function InventoryDetailFloater({
               <polyline points="15 3 21 3 21 9" />
               <line x1="10" y1="14" x2="21" y2="3" />
             </svg>
-            <span className={LABEL_CLS}>Builder</span>
+            <span className={LABEL_CLS}>Builder Site</span>
           </a>
         )}
 
@@ -109,7 +109,7 @@ export default function InventoryDetailFloater({
             <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
             <line x1="7" y1="7" x2="7.01" y2="7" />
           </svg>
-          <span className={LABEL_CLS}>Promotions</span>
+          <span className={LABEL_CLS}>Promos</span>
         </Link>
       </div>
     </div>
