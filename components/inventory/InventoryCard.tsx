@@ -127,12 +127,20 @@ export default function InventoryCard({ row }: Props) {
           );
         })()}
 
-        {/* Kind badge — top-right */}
+        {/* Top-right badge.
+            Listings now show the city instead of the generic "Listing" label
+            — much more useful at-a-glance when scanning a grid of cards.
+            Promotions keep the "Promotion" label since they aren't
+            geographically scoped to a single city the way a community or
+            move-in-ready home is. Falls back to the kind label when city
+            happens to be empty (defensive — every scraped row has a city). */}
         <div className="absolute top-2 right-2">
           <span
             className={`inline-block text-[10px] uppercase tracking-[0.1em] font-medium px-2 py-1 border ${KIND_BADGE_STYLE[row.kind]}`}
           >
-            {row.kind === 'listing' ? 'Listing' : 'Promotion'}
+            {row.kind === 'listing'
+              ? (row.city?.trim() || 'Listing')
+              : 'Promotion'}
           </span>
         </div>
       </div>
