@@ -6,7 +6,7 @@
 import { ensureSchema, getSql } from './db';
 
 export type Publication = 'austin' | 'san_antonio';
-export type EventSource = 'unlockmls' | 'wordpress' | 'manual' | 'fpr' | 'hba' | 'sabor' | 'sabuilders' | 'tmbsa';
+export type EventSource = 'unlockmls' | 'wordpress' | 'manual' | 'fpr' | 'hba' | 'sabor' | 'sabuilders' | 'tmbsa' | 'nahrep';
 
 /** Public-facing shape — must match `CalendarEvent` in the dashboard. */
 export interface CalendarEvent {

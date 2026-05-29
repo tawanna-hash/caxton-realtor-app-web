@@ -29,6 +29,10 @@
       "schedule": "15 14 * * *"
     },
     {
+      "path": "/api/cron/scrape-nahrep",
+      "schedule": "30 14 * * *"
+    },
+    {
       "path": "/api/cron/scrape-mi-homes",
       "schedule": "0 15 * * *"
     },
