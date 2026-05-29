@@ -1082,18 +1082,57 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
 
 function NewsletterCTA({ info }: { info: typeof PUBS[0] }) {
   const [email, setEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  function handleSubmit() {
-    if (!email) return;
-    // TODO: wire to /newsletter/subscribe API endpoint
-    setSubmitted(true);
+  const [already, setAlready] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit() {
+    if (!email || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          publication: info.id,
+          source: 'dashboard_feed',
+        }),
+      });
+      const body = (await res.json().catch(() => null)) as
+        | { ok: boolean; already?: boolean; error?: string }
+        | null;
+      if (!res.ok || !body?.ok) {
+        setError(body?.error || 'Sorry, something went wrong. Please try again.');
+        setSubmitting(false);
+        return;
+      }
+      setAlready(Boolean(body.already));
+      setSubmitted(true);
+      setSubmitting(false);
+    } catch {
+      setError('Network error. Please try again.');
+      setSubmitting(false);
+    }
   }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit();
+    }
+  }
+
   return (
     <div className="bg-gray-100 border-y border-gray-200 px-5 py-8">
       <p className="text-center text-2xl font-bold text-gray-900 leading-tight mb-2">Get All Our Content in One Weekly Email</p>
       <p className="text-center text-base text-gray-500 font-light mb-6">It{'\u2019'}s free. It{'\u2019'}s weekly. And it{'\u2019'}s full of great resources.</p>
       {submitted ? (
-        <p className="text-center text-base text-gray-700 font-medium py-4">{'\u2713'} You{'\u2019'}re subscribed. Watch your inbox.</p>
+        <p className="text-center text-base text-gray-700 font-medium py-4">
+          {'\u2713'} {already ? `You${'\u2019'}re already subscribed. Welcome back.` : `You${'\u2019'}re subscribed. Watch your inbox.`}
+        </p>
       ) : (
         <>
           <div className="flex max-w-md mx-auto">
@@ -1102,15 +1141,25 @@ function NewsletterCTA({ info }: { info: typeof PUBS[0] }) {
               placeholder="Email Address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] placeholder:text-[#C7C7CD]"
+              onKeyDown={onKeyDown}
+              disabled={submitting}
+              className="flex-1 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] placeholder:text-[#C7C7CD] disabled:opacity-60"
             />
-            <button onClick={handleSubmit} className="px-6 py-3.5 text-base font-medium uppercase tracking-wider text-white whitespace-nowrap" style={{ backgroundColor: info.color }}>
-              Sign Up
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="px-6 py-3.5 text-base font-medium uppercase tracking-wider text-white whitespace-nowrap disabled:opacity-60"
+              style={{ backgroundColor: info.color }}
+            >
+              {submitting ? 'Signing\u2026' : 'Sign Up'}
             </button>
           </div>
+          {error && (
+            <p className="text-center text-sm text-red-600 mt-3">{error}</p>
+          )}
           <div className="flex items-center justify-center gap-6 mt-4 text-xs uppercase tracking-wider text-gray-600 font-medium">
-            <a href="#" className="border-b border-gray-400 pb-0.5">All Newsletters</a>
-            <a href="#" className="border-b border-gray-400 pb-0.5">Privacy Policy</a>
+            <a href="/subscribe" className="border-b border-gray-400 pb-0.5">All Newsletters</a>
+            <a href="/privacy" className="border-b border-gray-400 pb-0.5">Privacy Policy</a>
           </div>
         </>
       )}
