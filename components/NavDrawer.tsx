@@ -43,6 +43,7 @@ const ADMIN_LINKS: NavItem[] = [
   { label: 'Reports', href: '/admin/reports', adminOnly: true },
   { label: 'Analytics', href: '/admin/analytics', adminOnly: true },
   { label: 'Subscribers', href: '/admin/subscribers', adminOnly: true },
+  { label: 'Newsletter', href: '/admin/newsletter', adminOnly: true },
 ];
 
 const DRAWER_SECTIONS: NavSection[] = [
