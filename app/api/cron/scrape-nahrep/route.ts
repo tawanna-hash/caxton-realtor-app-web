@@ -1,11 +1,14 @@
 // caxton-events-v1
 // Vercel Cron triggers this route once a day (see vercel.json). Scrapes the
-// NAHREP San Antonio chapter events from MemberClicks/JEvents, upserts events
-// into Postgres, and prunes stale rows.
+// NAHREP San Antonio AND Austin chapter events from MemberClicks/JEvents,
+// upserts them into Postgres, and prunes stale rows. Both chapters share
+// external_source='nahrep' and route to different publications, so they MUST
+// be scraped together — otherwise pruneStale('nahrep') would delete the
+// chapter that wasn't refreshed in the same run.
 // Auth: Vercel includes `Authorization: Bearer <CRON_SECRET>` on cron pings.
 
 import { upsertEvents, pruneStale } from '@/lib/events-store';
-import { scrapeNahrep } from '@/lib/nahrep-scraper';
+import { scrapeNahrepAll } from '@/lib/nahrep-scraper';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -33,7 +36,7 @@ export async function GET(req: Request) {
     const monthsParam = new URL(req.url).searchParams.get('months');
     const months = Math.max(1, Math.min(parseInt(monthsParam || '12', 10) || 12, 12));
 
-    const events = await scrapeNahrep(months);
+    const events = await scrapeNahrepAll(months);
     const counts = await upsertEvents(events);
     const pruned = await pruneStale('nahrep', 30);
 

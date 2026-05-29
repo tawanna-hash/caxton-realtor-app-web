@@ -28,14 +28,40 @@
 //
 // publication='san_antonio', source='nahrep', prefix 'NAHREP: '.
 
-import type { EventInput } from './events-store';
+import type { EventInput, Publication } from './events-store';
 
 const BASE = 'https://nahrep.memberclicks.net';
-const PUBLICATION = 'san_antonio' as const;
 const SOURCE = 'nahrep' as const;
 const EVENT_NAME_PREFIX = 'NAHREP: ';
-const ORGANIZER = 'NAHREP San Antonio';
-const CHAPTER_PREFIX_RE = /^nahrep\s+san\s+antonio\b/i;
+
+interface ChapterConfig {
+  /** Newsline publication this chapter feeds (san_antonio or austin). */
+  publication: Publication;
+  /** Human-readable chapter name, e.g. "NAHREP San Antonio". */
+  organizer: string;
+  /** Regex that matches event titles belonging to this chapter (case-insensitive). */
+  prefixRe: RegExp;
+  /** Regex used to strip the chapter prefix from event titles. */
+  stripRe: RegExp;
+  /** Short log tag, e.g. 'san_antonio' or 'austin'. */
+  logTag: string;
+}
+
+const CHAPTER_SAN_ANTONIO: ChapterConfig = {
+  publication: 'san_antonio',
+  organizer: 'NAHREP San Antonio',
+  prefixRe: /^nahrep\s+san\s+antonio\b/i,
+  stripRe: /^nahrep\s+san\s+antonio\s*[:\-–—]\s*/i,
+  logTag: 'san_antonio',
+};
+
+const CHAPTER_AUSTIN: ChapterConfig = {
+  publication: 'austin',
+  organizer: 'NAHREP Austin',
+  prefixRe: /^nahrep\s+austin\b/i,
+  stripRe: /^nahrep\s+austin\s*[:\-–—]\s*/i,
+  logTag: 'austin',
+};
 
 const FETCH_TIMEOUT_MS = 20_000;
 const REQUEST_DELAY_MS = 150;
@@ -320,7 +346,7 @@ function parseDetail(html: string): DetailExtras {
 
 // ---------------------------- main scraper ---------------------------------
 
-export async function scrapeNahrep(months = 12): Promise<EventInput[]> {
+async function scrapeNahrepChapter(chapter: ChapterConfig, months = 12): Promise<EventInput[]> {
   const monthsClamped = Math.max(1, Math.min(months, 12));
   const today = new Date();
   // year.listevents anchors a rolling 12 months at year/month/day; just pass today.
@@ -334,22 +360,22 @@ export async function scrapeNahrep(months = 12): Promise<EventInput[]> {
   try {
     listHtml = await fetchText(url);
   } catch (err) {
-    console.warn('[nahrep] year list fetch failed', err);
+    console.warn(`[nahrep:${chapter.logTag}] year list fetch failed`, err);
     return [];
   }
 
   const all = parseYearList(listHtml);
-  const sa = all.filter((e) => CHAPTER_PREFIX_RE.test(e.title));
-  console.log(`[nahrep] list=${all.length} san_antonio=${sa.length}`);
+  const matched = all.filter((e) => chapter.prefixRe.test(e.title));
+  console.log(`[nahrep:${chapter.logTag}] list=${all.length} matched=${matched.length}`);
 
-  if (sa.length === 0) return [];
+  if (matched.length === 0) return [];
 
   // Cutoff: drop events more than `monthsClamped` months past today.
   const cutoff = new Date(today);
   cutoff.setUTCMonth(cutoff.getUTCMonth() + monthsClamped);
 
   const out: EventInput[] = [];
-  for (const link of sa) {
+  for (const link of matched) {
     const eventDate = new Date(Date.UTC(link.year, link.month - 1, link.day));
     if (eventDate > cutoff) continue;
     if (eventDate < new Date(today.getTime() - 24 * 3600 * 1000)) {
@@ -365,11 +391,11 @@ export async function scrapeNahrep(months = 12): Promise<EventInput[]> {
     let ics: string | null = null;
     let detailHtml: string | null = null;
     try { ics = await fetchText(icsUrl); } catch (err) {
-      console.warn(`[nahrep] ics fetch failed evid=${link.evid}`, err);
+      console.warn(`[nahrep:${chapter.logTag}] ics fetch failed evid=${link.evid}`, err);
     }
     await sleep(REQUEST_DELAY_MS);
     try { detailHtml = await fetchText(link.url); } catch (err) {
-      console.warn(`[nahrep] detail fetch failed evid=${link.evid}`, err);
+      console.warn(`[nahrep:${chapter.logTag}] detail fetch failed evid=${link.evid}`, err);
     }
     await sleep(REQUEST_DELAY_MS);
 
@@ -387,8 +413,8 @@ export async function scrapeNahrep(months = 12): Promise<EventInput[]> {
         if (ev.description) icsDescription = ev.description;
         if (ev.start) {
           // NAHREP labels the timezone America/Denver on every event, but the
-          // wall-clock is the *chapter's* local time. For SA we treat it as
-          // America/Chicago.
+          // wall-clock is the *chapter's* local time. Austin and San Antonio
+          // are both America/Chicago.
           const s = ev.start;
           if (ev.allDay) {
             startIso = new Date(Date.UTC(s.y, s.m0, s.d)).toISOString();
@@ -418,7 +444,8 @@ export async function scrapeNahrep(months = 12): Promise<EventInput[]> {
 
     // Title: strip the chapter prefix so the UI prefix doesn't repeat.
     // "NAHREP San Antonio: San Antonio Top 100 Gala" → "San Antonio Top 100 Gala"
-    const stripped = summary.replace(/^nahrep\s+san\s+antonio\s*[:\-–—]\s*/i, '').trim() || summary;
+    // "NAHREP Austin: Wealth and Business Rally" → "Wealth and Business Rally"
+    const stripped = summary.replace(chapter.stripRe, '').trim() || summary;
     const title = `${EVENT_NAME_PREFIX}${stripped}`;
 
     const location = clean(detail.location || icsLocation || '') || null;
@@ -431,14 +458,14 @@ export async function scrapeNahrep(months = 12): Promise<EventInput[]> {
     out.push({
       externalSource: SOURCE,
       externalId: `nahrep-${link.evid}-${link.year}-${String(link.month).padStart(2, '0')}-${String(link.day).padStart(2, '0')}`,
-      publication: PUBLICATION,
+      publication: chapter.publication,
       title,
       description,
       link: detail.registerUrl || link.url,
       startDate: startIso,
       endDate: endIso,
       location,
-      organizer: ORGANIZER,
+      organizer: chapter.organizer,
       website: link.url,
       tags: 'NAHREP',
       format: isVirtual ? 'Virtual' : 'In-Person',
@@ -446,6 +473,29 @@ export async function scrapeNahrep(months = 12): Promise<EventInput[]> {
     });
   }
 
-  console.log(`[nahrep] produced ${out.length} events`);
+  console.log(`[nahrep:${chapter.logTag}] produced ${out.length} events`);
   return out;
+}
+
+/** NAHREP San Antonio chapter (Newsline San Antonio). */
+export async function scrapeNahrep(months = 12): Promise<EventInput[]> {
+  return scrapeNahrepChapter(CHAPTER_SAN_ANTONIO, months);
+}
+
+/** NAHREP Austin chapter (RealtyLine Austin). */
+export async function scrapeNahrepAustin(months = 12): Promise<EventInput[]> {
+  return scrapeNahrepChapter(CHAPTER_AUSTIN, months);
+}
+
+/**
+ * Scrape ALL configured NAHREP chapters (San Antonio + Austin) in one pass.
+ * The cron route uses this so pruneStale('nahrep') can run safely without
+ * accidentally deleting one chapter's rows after only the other was refreshed.
+ */
+export async function scrapeNahrepAll(months = 12): Promise<EventInput[]> {
+  const [sa, austin] = await Promise.all([
+    scrapeNahrepChapter(CHAPTER_SAN_ANTONIO, months),
+    scrapeNahrepChapter(CHAPTER_AUSTIN, months),
+  ]);
+  return [...sa, ...austin];
 }
