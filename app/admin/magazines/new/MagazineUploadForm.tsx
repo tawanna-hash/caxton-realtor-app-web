@@ -49,9 +49,18 @@ interface PdfJsViewport {
   width: number;
   height: number;
 }
+interface PdfJsTextItem {
+  str: string;
+  // pdfjs returns additional fields (transform, width, height, dir, fontName)
+  // but we only need str to concatenate page text.
+}
+interface PdfJsTextContent {
+  items: PdfJsTextItem[];
+}
 interface PdfJsPage {
   getViewport: (opts: { scale: number }) => PdfJsViewport;
   render: (ctx: { canvasContext: CanvasRenderingContext2D; viewport: PdfJsViewport }) => { promise: Promise<void> };
+  getTextContent: () => Promise<PdfJsTextContent>;
 }
 interface PdfJsDoc {
   numPages: number;
@@ -137,6 +146,35 @@ export default function MagazineUploadForm() {
     const mod = (await import('pdfjs-dist/legacy/build/pdf.mjs' as any)) as unknown as PdfJsLib;
     mod.GlobalWorkerOptions.workerSrc = `${PDFJS_CDN}/build/pdf.worker.min.mjs`;
     return mod;
+  }
+
+  // Extract per-page text from a PDF File using pdfjs in the browser.
+  // We previously POSTed to /api/admin/magazines/extract-text but that route
+  // never existed — Next.js returned 405 for it. Doing extraction client-side
+  // keeps everything in-browser (no server CPU, no extra round-trip) and uses
+  // the same pdfjs we already load for cover/page rendering.
+  async function extractPdfText(
+    file: File,
+    onProgress: (pageNum: number, total: number) => void,
+  ): Promise<string[]> {
+    const pdfjs = await loadPdfJs();
+    const buf = await file.arrayBuffer();
+    const doc = await pdfjs.getDocument({
+      data: buf,
+      wasmUrl: `${PDFJS_CDN}/wasm/`,
+      cMapUrl: `${PDFJS_CDN}/cmaps/`,
+      cMapPacked: true,
+      standardFontDataUrl: `${PDFJS_CDN}/standard_fonts/`,
+    }).promise;
+    const pages: string[] = [];
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const content = await page.getTextContent();
+      const text = content.items.map((it) => it.str).join(' ').replace(/\s+/g, ' ').trim();
+      pages.push(text);
+      onProgress(i, doc.numPages);
+    }
+    return pages;
   }
 
   // Render a PDF File to N JPEG Blobs (one per page).
@@ -307,25 +345,19 @@ export default function MagazineUploadForm() {
     updateStep(stepIdx, { status: 'done', detail: `${pageUrls.length} pages uploaded` });
     stepIdx++;
 
-    // Step: extract text (only if PDF was uploaded)
+    // Step: extract text (only if PDF was uploaded). Done client-side via
+    // pdfjs so it works even when the file lives only in browser memory and
+    // doesn't require a server endpoint.
     let pageTexts: string[] | null = null;
-    if (pdfUrl) {
+    if (pdfFile) {
       updateStep(stepIdx, { status: 'running' });
       try {
-        const r = await fetch('/api/admin/magazines/extract-text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pdf_url: pdfUrl }),
+        pageTexts = await extractPdfText(pdfFile, (n, total) => {
+          updateStep(stepIdx, { status: 'running', detail: `${n} / ${total}` });
         });
-        if (!r.ok) {
-          const body = await r.json().catch(() => ({}));
-          throw new Error(body.error || `extract failed (${r.status})`);
-        }
-        const data = await r.json();
-        pageTexts = data.pages;
         updateStep(stepIdx, {
           status: 'done',
-          detail: `${pageTexts?.length ?? 0} pages extracted`,
+          detail: `${pageTexts.length} pages extracted`,
         });
       } catch (err: unknown) {
         const msg = errMessage(err);
@@ -361,7 +393,14 @@ export default function MagazineUploadForm() {
       });
       if (!r.ok) {
         const body = await r.json().catch(() => ({}));
-        throw new Error(body.error || `create failed (${r.status})`);
+        // Prefer the actionable `error` message from the API, then fall back
+        // to `detail` (raw pg error) so the user always sees *something*
+        // specific instead of "create failed (500)".
+        const apiMsg: string =
+          (typeof body.error === 'string' && body.error) ||
+          (typeof body.detail === 'string' && body.detail) ||
+          `create failed (${r.status})`;
+        throw new Error(apiMsg);
       }
       const data = await r.json();
       createdId = data.magazine.id;
@@ -369,7 +408,7 @@ export default function MagazineUploadForm() {
     } catch (err: unknown) {
       const msg = errMessage(err);
       updateStep(stepIdx, { status: 'error', detail: msg });
-      setError(`Create failed: ${msg}. Files uploaded to magazine-staging/${stagingId}/ but no DB row.`);
+      setError(`${msg} (files uploaded to magazine-staging/${stagingId}/ but no DB row was created)`);
       setRunning(false);
       return;
     }

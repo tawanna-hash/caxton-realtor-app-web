@@ -129,6 +129,16 @@ export async function POST(req: NextRequest) {
     ? JSON.stringify(pageTextsRaw)
     : '[]';
 
+  // reader_url is NOT NULL in the schema. If the form didn't upload a PDF we
+  // can't satisfy that constraint — catch it here with a useful message
+  // instead of letting Postgres throw a generic 23502.
+  if (!readerUrl) {
+    return NextResponse.json(
+      { error: 'reader_url is required (upload a PDF in the form)' },
+      { status: 400 },
+    );
+  }
+
   try {
     const sql = getSql();
     const rows = await sql`
@@ -144,7 +154,44 @@ export async function POST(req: NextRequest) {
     `;
     return NextResponse.json({ magazine: rows[0] }, { status: 201 });
   } catch (err: unknown) {
-    console.error('[admin/magazines POST] insert failed:', errMessage(err));
+    // Postgres returns structured errors via node-postgres / @neondatabase/serverless.
+    // Pull the code + constraint name off the error so the UI can surface
+    // something the user can act on (e.g. "this issue already exists").
+    const e = err as { code?: string; constraint?: string; detail?: string; message?: string };
+    const code = e?.code ?? '';
+    const constraint = e?.constraint ?? '';
+    console.error(
+      '[admin/magazines POST] insert failed:',
+      JSON.stringify({ code, constraint, detail: e?.detail, message: e?.message }),
+    );
+
+    // 23505 = unique_violation. magazines_pub_ym_uniq guards
+    // (publication, year, month) — the most common dupe.
+    if (code === '23505') {
+      if (constraint === 'magazines_pub_ym_uniq') {
+        return NextResponse.json(
+          {
+            error: `A magazine for ${publication} ${year}-${String(month).padStart(2, '0')} already exists. Delete the existing issue from /admin/magazines first, or pick a different month.`,
+            code: 'duplicate_issue',
+          },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json(
+        { error: `Duplicate value violates ${constraint || 'unique constraint'}`, code: 'duplicate' },
+        { status: 409 },
+      );
+    }
+
+    // 23502 = not_null_violation. Should be unreachable given the validation
+    // above, but if a future column gets added with NOT NULL we want a hint.
+    if (code === '23502') {
+      return NextResponse.json(
+        { error: `Required field missing: ${e?.message ?? 'unknown column'}`, code: 'missing_required' },
+        { status: 400 },
+      );
+    }
+
     return NextResponse.json(
       { error: 'database error', detail: errMessage(err) },
       { status: 500 },
