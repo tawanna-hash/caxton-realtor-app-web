@@ -13,9 +13,9 @@
 //   Builders  push to /builders (real hub route, built in Stage C)
 //   More      callback to parent which opens NavDrawer
 //
-// House Ad strip: optional, only renders when info is provided (publication-
-// specific surfaces — i.e. dashboard in realtyline/newsline mode). Public
-// routes pass info={null} and only get the tab row.
+// `info` is used only to derive the active-tab accent color from the current
+// publication. Paid ad inventory is rendered separately via <AdSlot> from
+// AppShell so it can be slot-aware and per-page.
 
 import { usePathname, useRouter } from 'next/navigation';
 import { Home, BookOpen, Calendar, Building2, MoreHorizontal } from 'lucide-react';
@@ -26,7 +26,7 @@ type PubInfo = {
 } | null;
 
 type Props = {
-  /** Pub info for the House Ad strip. Pass null to hide the strip. */
+  /** Pub info used to tint the active tab. Pass null for default navy. */
   info?: PubInfo;
   /** Called when the More tab is tapped. Parent opens NavDrawer. */
   onMoreClick: () => void;
@@ -69,40 +69,6 @@ export default function BottomNav({ info, onMoreClick }: Props) {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 z-40">
-      {/* House Ad strip — only when a specific publication is active */}
-      {info ? (
-        <a
-          href="/advertise"
-          className="block px-4 py-3 border-b border-gray-100 hover:bg-gray-50"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div
-                className="w-11 h-11 flex-shrink-0 flex flex-col items-center justify-center"
-                style={{ backgroundColor: info.color }}
-              >
-                <span className="text-[8px] uppercase tracking-wider text-white/70 leading-none">House</span>
-                <span className="text-[10px] uppercase tracking-wider text-white font-semibold leading-none mt-0.5">Ad</span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-900 leading-tight truncate">
-                  Advertise in {info.name}
-                </p>
-                <p className="text-xs text-gray-500 font-light leading-snug truncate">
-                  Reach 50,000+ Texas real estate pros
-                </p>
-              </div>
-            </div>
-            <span
-              className="text-xs uppercase tracking-wider font-medium flex-shrink-0"
-              style={{ color: info.color }}
-            >
-              Learn More →
-            </span>
-          </div>
-        </a>
-      ) : null}
-
       {/* Tab row */}
       <div className="flex justify-around py-2 pb-3">
         <Tab label="Feed" active={isHome} accent={accent} onClick={goHome}>
