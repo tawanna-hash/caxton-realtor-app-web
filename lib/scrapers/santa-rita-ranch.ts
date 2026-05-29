@@ -437,5 +437,43 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
     offset = res.nextPage;
   }
 
+  // Prepend a synthetic community-summary row so Santa Rita Ranch surfaces
+  // on the public /communities page (which filters home_type='community').
+  // The actual move-in-ready inventory uses home_type='showcase' and would
+  // otherwise leave SRR invisible on that hub.
+  rows.unshift({
+    externalId: 'srr-developer/santa-rita-ranch',
+    kind: 'listing',
+    publication: 'realtyline',
+    submittedByName: 'Santa Rita Ranch Auto-Importer',
+    submittedByEmail: 'scraper-santa-rita-ranch@harmonyone.system',
+    builderName: 'Santa Rita Ranch',
+    title: 'Santa Rita Ranch',
+    city: 'Liberty Hill',
+    state: 'TX',
+    description:
+      'Santa Rita Ranch is a master-planned new home community in Liberty Hill near the greater Austin area. ' +
+      'Homes are available from top builders including Pulte, Perry, Toll Brothers, Highland, Chesmar, ' +
+      'Scott Felder, Taylor Morrison, Coventry, Westin, CastleRock, GFO, and Sitterle, across neighborhoods ' +
+      'like Homestead and Tierra Rosa.',
+    bedsMin: null,
+    bedsMax: null,
+    bathsMin: null,
+    bathsMax: null,
+    sqftMin: null,
+    sqftMax: null,
+    priceMin: null,
+    priceMax: null,
+    flyerPdfUrl: 'https://santaritaranchaustin.com/',
+    thumbnailUrl:
+      'https://santaritaranchaustin.com/wp-content/uploads/2021/10/SRR-Slides-Balloon-Photo.png',
+    address: null,
+    readyDate: null,
+    planName: null,
+    communityName: 'Santa Rita Ranch',
+    homeType: 'community',
+  });
+  rawCount += 1;
+
   return { rows, rawCount, skipped };
 }
