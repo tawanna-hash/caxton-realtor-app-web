@@ -25,6 +25,10 @@
       "schedule": "0 14 * * *"
     },
     {
+      "path": "/api/cron/scrape-tmbsa",
+      "schedule": "15 14 * * *"
+    },
+    {
       "path": "/api/cron/scrape-mi-homes",
       "schedule": "0 15 * * *"
     },
