@@ -61,6 +61,9 @@ export const EVENT_LABELS: Record<string, string> = {
   inventory_floater_clicked: 'Inventory detail — Floater',
   flipbook_shared: 'Magazine — Share',
   flipbook_download_clicked: 'Magazine — Download',
+  // Ad slot tracking (paid placements rendered via <AdSlot>)
+  ad_impression: 'Ad impressions',
+  ad_click: 'Ad clicks',
 };
 
 export const SURFACE_LABELS: Record<string, string> = {

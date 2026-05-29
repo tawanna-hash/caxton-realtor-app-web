@@ -9,6 +9,7 @@ import InventoryCard from './InventoryCard';
 import FeaturedHero from './FeaturedHero';
 import { trackEvent } from '@/app/posthog-provider';
 import PageTitle from '@/components/ui/PageTitle';
+import { AdSlot } from '@/components/ads/AdSlot';
 import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
 
 type Props = {
@@ -269,6 +270,9 @@ export default function InventoryClient({ initialRows, allBuilders }: Props) {
             />
           </div>
         )}
+
+        {/* Featured Builder strip (paid placement) */}
+        <AdSlot slug="featured_builder_strip" className="mb-6" />
 
         {/* Filter chips */}
         <div className="mb-6 flex flex-wrap items-center gap-2">

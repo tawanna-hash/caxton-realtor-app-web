@@ -12,6 +12,7 @@
 import Link from 'next/link';
 import { Home, Building2, Tag, ArrowRight } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
+import { AdSlot } from '@/components/ads/AdSlot';
 
 export const metadata = {
   title: 'Builder & Developer Advertisers \u2014 Realty News Now',
@@ -63,6 +64,8 @@ export default function BuildersHubPage() {
             from our builder and developer partners.
           </p>
         </header>
+
+        <AdSlot slug="featured_builder_strip" className="mb-6" />
 
         <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">
           {LINKS.map(({ label, description, href, Icon }) => (

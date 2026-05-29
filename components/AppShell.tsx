@@ -24,6 +24,7 @@ import { getApiBase } from '@/lib/api-base';
 import { Footer } from '@/components/footer';
 import NavDrawer from '@/components/NavDrawer';
 import BottomNav from '@/components/BottomNav';
+import { AdSlot } from '@/components/ads/AdSlot';
 
 // ============================================================
 // Types + constants
@@ -235,7 +236,15 @@ export default function AppShell({
       {/* ======== MAIN CONTENT ======== */}
       <main className="flex-1 pb-20">{children}</main>
       {!isAdmin ? (
-        <BottomNav info={null} onMoreClick={() => setDrawerOpen(true)} />
+        <>
+          {/* Sticky footer banner (paid placement) — sits above bottom nav */}
+          <div className="fixed bottom-16 left-0 right-0 z-20 pointer-events-none px-3">
+            <div className="max-w-3xl mx-auto pointer-events-auto">
+              <AdSlot slug="feed_sticky_bottom" variant="bare" />
+            </div>
+          </div>
+          <BottomNav info={null} onMoreClick={() => setDrawerOpen(true)} />
+        </>
       ) : null}
       <Footer />
     </div>
