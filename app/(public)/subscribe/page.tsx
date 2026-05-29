@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, FormEvent } from 'react';
+import PageTitle from '@/components/ui/PageTitle';
 
 type Selection = 'realtyline' | 'newslinesa' | 'both' | null;
 
@@ -24,9 +25,9 @@ export default function SubscribePage() {
         <p className="text-sm uppercase tracking-[0.25em] text-gray-500 font-medium mb-3">
           Subscribe to Print
         </p>
-        <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight">
+        <PageTitle>
           Subscribe to Print. It&apos;s free!
-        </h1>
+        </PageTitle>
         <p className="mt-4 text-base text-gray-600 font-light leading-relaxed">
           Pick your publication and we&apos;ll mail you every issue, no charge.
         </p>

@@ -1,3 +1,4 @@
+import PageTitle from '@/components/ui/PageTitle';
 export const metadata = {
   title: 'Advertise with Us — Realty News Now',
   description:
@@ -11,9 +12,9 @@ export default function AdvertisePage() {
         <p className="text-sm uppercase tracking-[0.25em] text-gray-500 font-medium mb-3">
           Advertise
         </p>
-        <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight">
+        <PageTitle>
           Reach Texas real estate where it actually pays attention.
-        </h1>
+        </PageTitle>
         <p className="mt-4 text-lg text-gray-600 font-light leading-relaxed">
           RealtyLine and Newsline San Antonio put your business in front of the
           agents, brokers, and builders who drive Central and South Texas

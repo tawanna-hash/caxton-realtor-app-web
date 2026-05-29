@@ -4,6 +4,7 @@
 // Wraps the client-side SubmissionForm component with standard page chrome.
 
 import SubmissionForm from '@/components/inventory/SubmissionForm';
+import PageTitle from '@/components/ui/PageTitle';
 
 export const metadata = {
   title: 'Submit inventory — Realty News Now',
@@ -19,9 +20,9 @@ export default function Page() {
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             For Builder &amp; Developer Clients
           </p>
-          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mb-3">
+          <PageTitle size="md">
             Submit inventory or a promotion
-          </h1>
+          </PageTitle>
           <p className="text-base text-gray-700 font-light leading-relaxed">
             Share a new home listing, quick move-in, model home event, or limited-time promotion. Submissions go to our editorial team for review before publication.
           </p>

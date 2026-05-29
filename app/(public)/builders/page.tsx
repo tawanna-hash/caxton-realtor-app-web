@@ -11,6 +11,7 @@
 
 import Link from 'next/link';
 import { Home, Building2, Tag, ArrowRight } from 'lucide-react';
+import PageTitle from '@/components/ui/PageTitle';
 
 export const metadata = {
   title: 'Builder & Developer Advertisers \u2014 Realty News Now',
@@ -54,9 +55,9 @@ export default function BuildersHubPage() {
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium">
             Advertisers
           </p>
-          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mt-2">
+          <PageTitle size="md">
             Builders &amp; Developers
-          </h1>
+          </PageTitle>
           <p className="text-base text-gray-700 font-light leading-relaxed mt-3">
             Explore communities, move-in ready homes, and current promotions
             from our builder and developer partners.

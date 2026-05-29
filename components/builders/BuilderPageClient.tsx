@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import type { BuilderInventoryRow, Publication } from '@/lib/builder-inventory';
 import InventoryCard from '@/components/inventory/InventoryCard';
 import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
+import PageTitle from '@/components/ui/PageTitle';
 import { builderNameToSlug } from '@/lib/builder-slug';
 
 type Props = {
@@ -159,9 +160,9 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
         <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium">
           {PUB_LABEL[pub]} • Advertiser
         </p>
-        <h1 className="text-2xl font-light text-gray-900 mt-1">
+        <PageTitle size="md" className="mt-1">
           {builderName}
-        </h1>
+        </PageTitle>
         <p className="text-sm text-gray-500 mt-2 font-light">
           {(() => {
             const parts: string[] = [];

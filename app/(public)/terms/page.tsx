@@ -1,3 +1,4 @@
+import PageTitle from '@/components/ui/PageTitle';
 export const metadata = {
   title: 'Terms of Use — Realty News Now',
   description:
@@ -11,9 +12,9 @@ export default function TermsPage() {
         <p className="text-sm uppercase tracking-[0.25em] text-gray-500 font-medium mb-3">
           Terms of Use
         </p>
-        <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight">
+        <PageTitle>
           The rules of the road.
-        </h1>
+        </PageTitle>
         <p className="mt-4 text-sm text-gray-500 font-light">
           Effective date: May 11, 2026
         </p>

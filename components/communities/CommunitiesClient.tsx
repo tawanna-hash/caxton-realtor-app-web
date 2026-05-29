@@ -17,6 +17,7 @@ import InventoryCard from '@/components/inventory/InventoryCard';
 import { builderNameToSlug } from '@/lib/builder-slug';
 import { trackEvent } from '@/app/posthog-provider';
 import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
+import PageTitle from '@/components/ui/PageTitle';
 
 type Props = {
   initialRows: BuilderInventoryRow[];
@@ -173,9 +174,9 @@ export default function CommunitiesClient({ initialRows }: Props) {
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             Advertisers · Builders &amp; Developers
           </p>
-          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mb-3">
+          <PageTitle size="md">
             New Home Communities
-          </h1>
+          </PageTitle>
           <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
             {filtered.length} {filtered.length === 1 ? 'community' : 'communities'} from{' '}
             {byBuilder.length} {byBuilder.length === 1 ? 'builder' : 'builders'}.

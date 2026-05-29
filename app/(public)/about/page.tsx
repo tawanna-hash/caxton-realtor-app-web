@@ -1,3 +1,4 @@
+import PageTitle from '@/components/ui/PageTitle';
 export const metadata = {
   title: 'About Us — Realty News Now',
   description:
@@ -11,9 +12,9 @@ export default function AboutPage() {
         <p className="text-sm uppercase tracking-[0.25em] text-gray-500 font-medium mb-3">
           About Us
         </p>
-        <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight">
+        <PageTitle>
           Putting A Face On Real Estate.
-        </h1>
+        </PageTitle>
       </header>
 
       <section className="space-y-6 text-gray-700 text-base md:text-lg leading-relaxed font-light">

@@ -8,6 +8,7 @@ import type { BuilderInventoryRow, Kind, Publication } from '@/lib/builder-inven
 import InventoryCard from './InventoryCard';
 import FeaturedHero from './FeaturedHero';
 import { trackEvent } from '@/app/posthog-provider';
+import PageTitle from '@/components/ui/PageTitle';
 
 type Props = {
   initialRows: BuilderInventoryRow[];
@@ -165,9 +166,9 @@ export default function InventoryClient({ initialRows, allBuilders }: Props) {
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             Advertisers · Builders &amp; Developers
           </p>
-          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mb-3">
+          <PageTitle size="md">
             Builder Inventory &amp; Promotions
-          </h1>
+          </PageTitle>
           <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
             New home listings, quick move-ins, model home events, and limited-time promotions from builders and developers in your market. Tap any card to view the full flyer.
           </p>

@@ -1,3 +1,4 @@
+import PageTitle from '@/components/ui/PageTitle';
 export const metadata = {
   title: 'Frequently Asked Questions — Realty News Now',
   description:
@@ -11,9 +12,9 @@ export default function FaqPage() {
         <p className="text-sm uppercase tracking-[0.25em] text-gray-500 font-medium mb-3">
           Frequently Asked Questions
         </p>
-        <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 tracking-tight">
+        <PageTitle>
           Common questions, quick answers.
-        </h1>
+        </PageTitle>
         <p className="mt-4 text-base text-gray-600 font-light leading-relaxed">
           Don&apos;t see your question?{' '}
           <a
