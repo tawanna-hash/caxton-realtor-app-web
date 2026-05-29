@@ -341,11 +341,18 @@ function parseCard(html: string): { row: UpsertScrapedInput | null; reason?: str
   const sqft = extractSqftDisplay(html) ?? parseInt0(getAttr(html, 'data-sqft'));
   const readyDate = extractReadyDate(html);
 
-  const title = addressLine
+  // Santa Rita Ranch is a master-planned developer that aggregates homes
+  // from many builders. We attribute the listing to the developer in the
+  // builder_name column (so it surfaces as a single "Santa Rita Ranch"
+  // entry on the public builder/developer hub) and preserve the actual
+  // homebuilder in the title + description.
+  const titleBase = addressLine
     ? neighborhood
       ? `${addressLine} at ${neighborhood}`
       : addressLine
-    : `${builderName} inventory home at Santa Rita Ranch`;
+    : `Inventory home at Santa Rita Ranch`;
+  const title = `${titleBase} — ${builderName}`;
+  const description = `Built by ${builderName}.`;
 
   // Skip cards missing price entirely — those aren't actionable listings.
   if (price == null) {
@@ -358,11 +365,11 @@ function parseCard(html: string): { row: UpsertScrapedInput | null; reason?: str
     publication: 'realtyline',
     submittedByName: 'Santa Rita Ranch Auto-Importer',
     submittedByEmail: 'scraper-santa-rita-ranch@harmonyone.system',
-    builderName,
+    builderName: 'Santa Rita Ranch',
     title,
     city,
     state,
-    description: null,
+    description,
     bedsMin: beds != null ? Math.round(beds) : null,
     bedsMax: beds != null ? Math.round(beds) : null,
     bathsMin: baths,

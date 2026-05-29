@@ -212,6 +212,10 @@ export async function fetchSantaRitaRanchPromotions(): Promise<SRRPromoScrapeRes
       }
       seenBuilders.add(builderSlug);
 
+      // Santa Rita Ranch is a master-planned developer; we attribute all
+      // its promo cards to builder_name='Santa Rita Ranch' so the developer
+      // surfaces as a single entry on the public hub. The actual builder
+      // running the incentive is preserved in the title + description.
       rows.push({
         externalId: `srr-promotion/${builderSlug}`,
         kind: 'promotion',
@@ -219,11 +223,11 @@ export async function fetchSantaRitaRanchPromotions(): Promise<SRRPromoScrapeRes
         submittedByName: 'Santa Rita Ranch Promotions Auto-Importer',
         submittedByEmail:
           'scraper-santa-rita-ranch-promotions@harmonyone.system',
-        builderName: c.builderName,
+        builderName: 'Santa Rita Ranch',
         title: `${c.builderName} incentive at Santa Rita Ranch`,
         city: SRR_CITY,
         state: SRR_STATE,
-        description: null,
+        description: `Builder incentive from ${c.builderName} at Santa Rita Ranch.`,
         bedsMin: null,
         bedsMax: null,
         bathsMin: null,
