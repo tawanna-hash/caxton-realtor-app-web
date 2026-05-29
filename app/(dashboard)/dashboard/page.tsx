@@ -922,13 +922,13 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
   } else if (isEmptyAfterLoad) {
     feed.push({ t: 'e', d: { cat } });
   } else {
-    let ai = 0;
+    // Mock inline ad cards (Austin Title, Cornerstone, Alamo, SWBC) were
+    // removed — paid inventory now flows through <AdSlot> + ad_campaigns.
+    // `pubAds` retained above only so the constant declaration doesn't
+    // become an unused-variable lint error in case future code wants it.
+    void pubAds;
     filt.forEach((item, i) => {
       feed.push({ t: 'n', d: item });
-      if ((i + 1) % 2 === 0 && ai < pubAds.length) {
-        feed.push({ t: 'a', d: pubAds[ai] });
-        ai++;
-      }
       if (i === 2) {
         feed.push({ t: 'c' });
       }
