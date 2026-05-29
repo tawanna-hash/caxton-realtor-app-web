@@ -55,6 +55,10 @@
     {
       "path": "/api/cron/scrape-giddens",
       "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-giddens-communities",
+      "schedule": "30 18 * * *"
     }
   ]
 }
