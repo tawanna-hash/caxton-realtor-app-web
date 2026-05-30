@@ -129,10 +129,18 @@ export default function InventoryCard({ row }: Props) {
               loading="lazy"
             />
           ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-gray-400 bg-gray-50">
+              {/* Photo placeholder: an outlined image-frame icon over a soft
+                  neutral background, paired with a small "Photo coming soon"
+                  caption. Reads as intentional rather than broken. */}
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <rect x="3" y="4.5" width="18" height="15" rx="1.5" />
+                <circle cx="8.5" cy="10" r="1.5" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 17.25 15.75 12 6 19.5" />
               </svg>
+              <p className="text-[11px] uppercase tracking-[0.15em] font-medium text-gray-500">
+                Photo coming soon
+              </p>
             </div>
           );
         })()}
