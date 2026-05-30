@@ -2,7 +2,7 @@
 
 // components/BottomNav.tsx
 //
-// Fixed bottom tab bar: Feed / Magazine / Calendar / Builders / More.
+// Fixed bottom tab bar: Feed / Magazine / Calendar / Builders / Advertisers / More.
 // Rendered by AppShell on every public-variant page and by the dashboard
 // (which doesn't use AppShell) in place of its prior inline nav.
 //
@@ -11,6 +11,7 @@
 //   Magazine  push to /magazine (real route, built in S23)
 //   Calendar  push to /calendar (real list route, built in S20)
 //   Builders  push to /builders (real hub route, built in Stage C)
+//   Advertisers push to /advertisers (public directory)
 //   More      callback to parent which opens NavDrawer
 //
 // `info` is used only to derive the active-tab accent color from the current
@@ -18,7 +19,7 @@
 // AppShell so it can be slot-aware and per-page.
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, BookOpen, Calendar, Building2, MoreHorizontal } from 'lucide-react';
+import { Home, BookOpen, Calendar, Building2, Megaphone, MoreHorizontal } from 'lucide-react';
 
 type PubInfo = {
   name: string;
@@ -40,6 +41,7 @@ export default function BottomNav({ info, onMoreClick }: Props) {
   const isMagazine = pathname === '/magazine' || pathname.startsWith('/magazine/');
   const isCalendar = pathname === '/calendar' || pathname.startsWith('/calendar/');
   const isBuilders = pathname === '/builders' || pathname.startsWith('/builders/');
+  const isAdvertisers = pathname === '/advertisers' || pathname.startsWith('/advertisers/');
 
   function goHome() {
     if (pathname === '/dashboard') {
@@ -65,6 +67,10 @@ export default function BottomNav({ info, onMoreClick }: Props) {
     router.push('/builders');
   }
 
+  function goAdvertisers() {
+    router.push('/advertisers');
+  }
+
   const accent = info?.color ?? '#1a2a44';
 
   return (
@@ -82,6 +88,9 @@ export default function BottomNav({ info, onMoreClick }: Props) {
         </Tab>
         <Tab label="Builders" active={isBuilders} accent={accent} onClick={goBuilders}>
           <Building2 strokeWidth={1.75} size={22} />
+        </Tab>
+        <Tab label="Advertisers" active={isAdvertisers} accent={accent} onClick={goAdvertisers}>
+          <Megaphone strokeWidth={1.75} size={22} />
         </Tab>
         <Tab label="More" active={false} accent={accent} onClick={onMoreClick}>
           <MoreHorizontal strokeWidth={1.75} size={22} />
