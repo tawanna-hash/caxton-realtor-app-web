@@ -416,4 +416,56 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       ON portal_form_assignments(form_id, advertiser_id)
       WHERE submitted_at IS NULL
   `);
+
+  // ============================================================
+  // Mailing list (ported from PressBook CRM /mailing module).
+  // Single-tenant flat table — `segment` mirrors PressBook's
+  // tags-based discriminator. Optional `advertiser_id` FK so rows
+  // that originated from an advertiser can self-update when the
+  // advertiser changes.
+  // ============================================================
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS mailing_contacts (
+      id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+      segment         text        NOT NULL DEFAULT 'non-advertiser'
+                                   CHECK (segment IN ('advertiser','non-advertiser','realtor')),
+      first_name      text        NOT NULL,
+      last_name       text,
+      email           text,
+      phone           text,
+      company         text,
+      title           text,
+      license_number  text,
+      address         text,
+      address_2       text,
+      city            text,
+      state           text,
+      zip             text,
+      website         text,
+      notes           text,
+      tags            jsonb       NOT NULL DEFAULT '[]'::jsonb,
+      source          text,
+      advertiser_id   integer     REFERENCES advertisers(id) ON DELETE SET NULL,
+      unsubscribed_at timestamptz,
+      created_at      timestamptz NOT NULL DEFAULT NOW(),
+      updated_at      timestamptz NOT NULL DEFAULT NOW()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mailing_segment       ON mailing_contacts(segment)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mailing_email_lower   ON mailing_contacts(LOWER(email))`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mailing_advertiser    ON mailing_contacts(advertiser_id) WHERE advertiser_id IS NOT NULL`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mailing_company_lower ON mailing_contacts(LOWER(company))`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mailing_name_lower    ON mailing_contacts(LOWER(first_name), LOWER(COALESCE(last_name, '')))`);
+
+  await step(() => sql`
+    CREATE OR REPLACE FUNCTION trg_mailing_set_updated_at()
+    RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql
+  `);
+  await step(() => sql`DROP TRIGGER IF EXISTS mailing_set_updated_at ON mailing_contacts`);
+  await step(() => sql`
+    CREATE TRIGGER mailing_set_updated_at
+      BEFORE UPDATE ON mailing_contacts
+      FOR EACH ROW EXECUTE FUNCTION trg_mailing_set_updated_at()
+  `);
 }

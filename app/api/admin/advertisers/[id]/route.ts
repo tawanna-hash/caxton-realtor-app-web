@@ -11,6 +11,7 @@ import {
   ensurePublicationColumn, type Publication,
 } from '@/lib/publication-theme';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { upsertAdvertiserMailingByAdvertiserId } from '@/lib/mailing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -182,6 +183,16 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     if (rows.length === 0) {
       return NextResponse.json({ error: 'not found' }, { status: 404 });
     }
+
+    // Flow advertiser edits into the Advertisers mailing segment so the
+    // mailing list stays in sync without waiting for the next cron run.
+    // Best-effort — don't fail the advertiser update if this hiccups.
+    try {
+      await upsertAdvertiserMailingByAdvertiserId(idNum);
+    } catch (err) {
+      console.warn('[admin/advertisers PATCH] mailing upsert failed:', err);
+    }
+
     return NextResponse.json({ advertiser: rows[0], updated_fields: updates });
   } catch (err) {
     console.error('[admin/advertisers PATCH]', errMessage(err));

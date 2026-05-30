@@ -25,6 +25,7 @@ interface NavSection {
   title?: string;
   items: NavItem[];
   adminOnly?: boolean;
+  groups?: { label: string; links: NavItem[] }[];
 }
 
 const PUB_NAMES: Record<string, string> = {
@@ -32,18 +33,43 @@ const PUB_NAMES: Record<string, string> = {
   newsline: 'Newsline',
 };
 
-const ADMIN_LINKS: NavItem[] = [
-  { label: 'Magazines', href: '/admin/magazines', adminOnly: true },
-  { label: 'Giveaways', href: '/admin/giveaways', adminOnly: true },
-  { label: 'Events', href: '/admin/events', adminOnly: true },
-  { label: 'Ads', href: '/admin/ads', adminOnly: true },
-  { label: 'Inventory', href: '/admin/inventory', adminOnly: true },
-  { label: 'Advertisers', href: '/admin/advertisers', adminOnly: true },
-  { label: 'Metrics', href: '/admin/metrics', adminOnly: true },
-  { label: 'Reports', href: '/admin/reports', adminOnly: true },
-  { label: 'Analytics', href: '/admin/analytics', adminOnly: true },
-  { label: 'Subscribers', href: '/admin/subscribers', adminOnly: true },
-  { label: 'Newsletter', href: '/admin/newsletter', adminOnly: true },
+// Mirrors AppShell.tsx ADMIN_GROUPS so the drawer renders the same workspace
+// structure on mobile (with subheaders) that the desktop top bar uses.
+const ADMIN_GROUPS: { label: string; links: NavItem[] }[] = [
+  {
+    label: 'CRM & Audience',
+    links: [
+      { label: 'CRM', href: '/admin/crm', adminOnly: true },
+      { label: 'Mailing', href: '/admin/mailing', adminOnly: true },
+      { label: 'Advertisers', href: '/admin/advertisers', adminOnly: true },
+      { label: 'Subscribers', href: '/admin/subscribers', adminOnly: true },
+    ],
+  },
+  {
+    label: 'Revenue',
+    links: [
+      { label: 'Billing', href: '/admin/billing', adminOnly: true },
+      { label: 'Ads', href: '/admin/ads', adminOnly: true },
+      { label: 'Marketing', href: '/admin/marketing', adminOnly: true },
+    ],
+  },
+  {
+    label: 'Content',
+    links: [
+      { label: 'Magazines', href: '/admin/magazines', adminOnly: true },
+      { label: 'Events', href: '/admin/events', adminOnly: true },
+      { label: 'Giveaways', href: '/admin/giveaways', adminOnly: true },
+      { label: 'Inventory', href: '/admin/inventory', adminOnly: true },
+    ],
+  },
+  {
+    label: 'Insights',
+    links: [
+      { label: 'Metrics', href: '/admin/metrics', adminOnly: true },
+      { label: 'Reports', href: '/admin/reports', adminOnly: true },
+      { label: 'Analytics', href: '/admin/analytics', adminOnly: true },
+    ],
+  },
 ];
 
 const DRAWER_SECTIONS: NavSection[] = [
@@ -78,7 +104,8 @@ const DRAWER_SECTIONS: NavSection[] = [
   {
     title: 'Admin',
     adminOnly: true,
-    items: ADMIN_LINKS,
+    items: [],
+    groups: ADMIN_GROUPS,
   },
   {
     title: 'Legal',
@@ -165,45 +192,64 @@ export default function NavDrawer({
         <div className="px-5 py-6 space-y-1">
           {DRAWER_SECTIONS.map((section) => {
             if (section.adminOnly && !isAdmin) return null;
+
+            const renderItem = (item: NavItem) => {
+              if (item.adminOnly && !isAdmin) return null;
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + '/');
+
+              if (item.placeholder) {
+                return (
+                  <span
+                    key={item.label}
+                    className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/30 font-medium cursor-default"
+                  >
+                    {item.label}
+                  </span>
+                );
+              }
+
+              return (
+                <Link
+                  key={item.href + item.label}
+                  href={item.href}
+                  onClick={onClose}
+                  className={`block px-3 py-2.5 text-sm uppercase tracking-[0.1em] font-medium rounded-lg transition ${
+                    isActive
+                      ? 'text-white bg-white/15'
+                      : 'text-white/80 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            };
+
             return (
-              <div key={section.title ?? 'root'} className="py-4 border-b border-white/10 last:border-b-0">
+              <div
+                key={section.title ?? 'root'}
+                className="py-4 border-b border-white/10 last:border-b-0"
+              >
                 {section.title ? (
                   <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-semibold mb-4">
                     {section.title}
                   </p>
                 ) : null}
-                <div className="space-y-1">
-                  {section.items.map((item) => {
-                    if (item.adminOnly && !isAdmin) return null;
-                    const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
 
-                    if (item.placeholder) {
-                      return (
-                        <span
-                          key={item.label}
-                          className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/30 font-medium cursor-default"
-                        >
-                          {item.label}
-                        </span>
-                      );
-                    }
-
-                    return (
-                      <Link
-                        key={item.href + item.label}
-                        href={item.href}
-                        onClick={onClose}
-                        className={`block px-3 py-2.5 text-sm uppercase tracking-[0.1em] font-medium rounded-lg transition ${
-                          isActive
-                            ? 'text-white bg-white/15'
-                            : 'text-white/80 hover:text-white hover:bg-white/10'
-                        }`}
-                      >
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
+                {section.groups ? (
+                  <div className="space-y-4">
+                    {section.groups.map((group) => (
+                      <div key={group.label}>
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-white/30 font-medium mb-2 px-3">
+                          {group.label}
+                        </p>
+                        <div className="space-y-1">{group.links.map(renderItem)}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-1">{section.items.map(renderItem)}</div>
+                )}
               </div>
             );
           })}

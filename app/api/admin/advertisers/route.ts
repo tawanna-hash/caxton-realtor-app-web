@@ -17,6 +17,7 @@ import {
   type Publication,
 } from '@/lib/publication-theme';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { upsertAdvertiserMailingByAdvertiserId } from '@/lib/mailing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -122,6 +123,17 @@ export async function POST(req: NextRequest) {
       )
       RETURNING *
     `) as unknown as Advertiser[];
+
+    // Mirror the new advertiser into the Advertisers mailing segment
+    // so they're immediately reachable from /admin/mailing. Best-effort.
+    try {
+      const newId = inserted[0]?.id;
+      if (typeof newId === 'number') {
+        await upsertAdvertiserMailingByAdvertiserId(newId);
+      }
+    } catch (err) {
+      console.warn('[admin/advertisers POST] mailing upsert failed:', err);
+    }
 
     return NextResponse.json({ advertiser: inserted[0] }, { status: 201 });
   } catch (err) {

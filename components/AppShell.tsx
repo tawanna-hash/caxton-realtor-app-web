@@ -39,20 +39,44 @@ const PUB_COLORS: Record<string, string> = {
   realtynewsnow: '#1a2a44',
 };
 
-const ADMIN_LINKS = [
-  { label: 'CRM', href: '/admin/crm', adminOnly: true },
-  { label: 'Billing', href: '/admin/billing', adminOnly: true },
-  { label: 'Marketing', href: '/admin/marketing', adminOnly: true },
-  { label: 'Giveaways', href: '/admin/giveaways', adminOnly: true },
-  { label: 'Events', href: '/admin/events', adminOnly: true },
-  { label: 'Ads', href: '/admin/ads', adminOnly: true },
-  { label: 'Inventory', href: '/admin/inventory', adminOnly: true },
-  { label: 'Magazines', href: '/admin/magazines', adminOnly: true },
-  { label: 'Advertisers', href: '/admin/advertisers', adminOnly: true },
-  { label: 'Metrics', href: '/admin/metrics', adminOnly: true },
-  { label: 'Reports', href: '/admin/reports', adminOnly: true },
-  { label: 'Analytics', href: '/admin/analytics', adminOnly: true },
-  { label: 'Subscribers', href: '/admin/subscribers', adminOnly: true },
+// Admin nav is grouped into logical sections so the top bar reads as a
+// workspace rather than a flat list. Each group renders in order with a
+// subtle divider between them on desktop and a section header on mobile.
+const ADMIN_GROUPS: { label: string; links: { label: string; href: string }[] }[] = [
+  {
+    label: 'CRM & Audience',
+    links: [
+      { label: 'CRM',         href: '/admin/crm' },
+      { label: 'Mailing',     href: '/admin/mailing' },
+      { label: 'Advertisers', href: '/admin/advertisers' },
+      { label: 'Subscribers', href: '/admin/subscribers' },
+    ],
+  },
+  {
+    label: 'Revenue',
+    links: [
+      { label: 'Billing',   href: '/admin/billing' },
+      { label: 'Ads',       href: '/admin/ads' },
+      { label: 'Marketing', href: '/admin/marketing' },
+    ],
+  },
+  {
+    label: 'Content',
+    links: [
+      { label: 'Magazines', href: '/admin/magazines' },
+      { label: 'Events',    href: '/admin/events' },
+      { label: 'Giveaways', href: '/admin/giveaways' },
+      { label: 'Inventory', href: '/admin/inventory' },
+    ],
+  },
+  {
+    label: 'Insights',
+    links: [
+      { label: 'Metrics',   href: '/admin/metrics' },
+      { label: 'Reports',   href: '/admin/reports' },
+      { label: 'Analytics', href: '/admin/analytics' },
+    ],
+  },
 ];
 
 const API = getApiBase();
@@ -185,18 +209,26 @@ export default function AppShell({
             {/* Desktop admin links */}
             {isAdmin ? (
               <nav className="hidden lg:flex items-center gap-1 mr-2">
-                {ADMIN_LINKS.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`px-2.5 py-1.5 text-xs rounded-md transition ${
-                      pathname.startsWith(link.href)
-                        ? 'text-white bg-white/15'
-                        : 'text-white/60 hover:text-white hover:bg-white/10'
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
+                {ADMIN_GROUPS.map((group, gi) => (
+                  <div key={group.label} className="flex items-center gap-1">
+                    {gi > 0 && (
+                      <span aria-hidden className="mx-1 h-4 w-px bg-white/15" />
+                    )}
+                    {group.links.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        title={`${group.label} · ${link.label}`}
+                        className={`px-2.5 py-1.5 text-xs rounded-md transition ${
+                          pathname.startsWith(link.href)
+                            ? 'text-white bg-white/15'
+                            : 'text-white/60 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
                 ))}
               </nav>
             ) : null}
