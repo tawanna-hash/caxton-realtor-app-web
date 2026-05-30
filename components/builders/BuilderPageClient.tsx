@@ -137,6 +137,31 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
     tab === 'moveIn' ? moveIn :
     promos;
 
+  // Blur paywall: on La Cima and Santa Rita Ranch builder pages, the
+  // Move-in Ready and Promotions tabs show advertiser (featured) listings
+  // fully, plus one non-advertiser teaser. Remaining non-advertiser entries
+  // render visually blurred and non-interactive — no CTA, no overlay.
+  const isPaywalled =
+    (builderName === 'La Cima' || builderName === 'Santa Rita Ranch') &&
+    (tab === 'moveIn' || tab === 'promos');
+
+  const displayRows: Array<{ row: BuilderInventoryRow; blurred: boolean }> = useMemo(() => {
+    if (!isPaywalled) {
+      return currentRows.map((row) => ({ row, blurred: false }));
+    }
+    // Featured (advertiser) rows are always fully visible. Among the
+    // remaining non-featured rows, the first one stays visible as a teaser;
+    // everything after that is blurred.
+    const featuredRows = currentRows.filter((r) => r.featured);
+    const nonFeaturedRows = currentRows.filter((r) => !r.featured);
+    const result: Array<{ row: BuilderInventoryRow; blurred: boolean }> = [];
+    for (const r of featuredRows) result.push({ row: r, blurred: false });
+    nonFeaturedRows.forEach((r, idx) => {
+      result.push({ row: r, blurred: idx > 0 });
+    });
+    return result;
+  }, [currentRows, isPaywalled]);
+
   // Giddens Homes uses 'Realtors' as the label for their broker-bonus
   // commission program instead of the generic 'Promotions'. Match casing
   // (lower) so the empty-state copy reads naturally too.
@@ -197,9 +222,20 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
           </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {currentRows.map((row) => (
-              <InventoryCard key={row.id} row={row} />
-            ))}
+            {displayRows.map(({ row, blurred }) =>
+              blurred ? (
+                <div
+                  key={row.id}
+                  className="pointer-events-none select-none [filter:blur(8px)]"
+                  aria-hidden="true"
+                  tabIndex={-1}
+                >
+                  <InventoryCard row={row} />
+                </div>
+              ) : (
+                <InventoryCard key={row.id} row={row} />
+              ),
+            )}
           </div>
         )}
       </div>
