@@ -161,11 +161,16 @@ export default function HoldingClient() {
       const s = j.signals as {
         disposable?: boolean; roleAccount?: boolean;
         freeProvider?: boolean; catchAll?: boolean | null;
+        smtpTimedOut?: boolean; smtpConnected?: boolean;
+        mxAttempts?: number;
       } | undefined;
       if (s?.disposable)   extras.push('disposable provider');
       if (s?.catchAll)     extras.push('catch-all domain');
       if (s?.freeProvider) extras.push('free-mail provider');
       if (s?.roleAccount)  extras.push('role account');
+      if (s?.smtpTimedOut && !s?.smtpConnected) {
+        extras.push(`mail server timed out${s.mxAttempts ? ` (${s.mxAttempts} MX)` : ''}`);
+      }
       if (j.suggestion)    extras.push(`did you mean @${j.suggestion}?`);
       const tag = extras.length ? ` · ${extras.join(' · ')}` : '';
       showToast(`Email: ${j.verdict ?? 'Unknown'}${j.detail ? ` — ${j.detail}` : ''}${tag}`);
@@ -647,6 +652,20 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
       label: `⇒ @${row.email_suggestion}`,
       cls:   'bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200',
       title: `Likely typo — did you mean @${row.email_suggestion}?`,
+    });
+  }
+  // Surface SMTP timeout signal from the persisted email_check JSONB so
+  // the user can see at-a-glance which addresses are stuck on slow MX hosts.
+  const check = row.email_check as
+    | { signals?: { smtpTimedOut?: boolean; smtpConnected?: boolean; mxAttempts?: number } }
+    | null
+    | undefined;
+  const sig = check?.signals;
+  if (sig?.smtpTimedOut && !sig?.smtpConnected) {
+    flags.push({
+      label: '⏱ Timed out',
+      cls:   'bg-orange-100 text-orange-800 ring-1 ring-orange-200',
+      title: `Mail server did not respond${sig.mxAttempts ? ` across ${sig.mxAttempts} MX host${sig.mxAttempts === 1 ? '' : 's'}` : ''} — domain may be misconfigured or rate-limiting us`,
     });
   }
   if (row.email_notes) {

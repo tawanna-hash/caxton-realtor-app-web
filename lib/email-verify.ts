@@ -50,6 +50,10 @@ export interface EmailVerifySignals {
   smtpConnected:  boolean;
   mailboxExists:  boolean | null;   // null = unknown (probe didn't run)
   catchAll:       boolean | null;   // null = unknown
+  /** True if at least one MX probe hit the hard timeout / socket idle. */
+  smtpTimedOut:   boolean;
+  /** Number of MX hosts we attempted to probe (0 if skipped). */
+  mxAttempts:     number;
 }
 
 export interface EmailVerifyResult {
@@ -72,8 +76,21 @@ export interface EmailVerifyResult {
 }
 
 export interface VerifyOpts {
-  /** Hard timeout for the whole SMTP probe per MX (ms). Default 8000. */
+  /**
+   * Hard timeout for the whole SMTP probe per MX (ms). Default 15000.
+   * Real-estate brokerage domains often sit on slow Microsoft 365 / GoDaddy /
+   * regional ISP mail relays that take 8-12s just to finish the EHLO+TLS
+   * handshake from a cold IP, so the original 8s budget gave too many
+   * false-Pendings. 15s is generous enough for slow MXes but still bounded.
+   */
   timeoutMs?:   number;
+  /**
+   * Per-MX TCP connect timeout (ms). Default 6000. If the initial socket
+   * can't even reach SYN-ACK in this window we cut our losses and move to
+   * the next MX instead of burning the whole `timeoutMs` budget on a dead
+   * host. Must be less than `timeoutMs`.
+   */
+  connectTimeoutMs?: number;
   /** MAIL FROM envelope. Default uses EMAIL_VERIFY_SENDER. */
   fromAddress?: string;
   /** HELO/EHLO host. Default uses EMAIL_VERIFY_HELO_HOST. */
@@ -254,6 +271,8 @@ function blankSignals(): EmailVerifySignals {
     smtpConnected:  false,
     mailboxExists:  null,
     catchAll:       null,
+    smtpTimedOut:   false,
+    mxAttempts:     0,
   };
 }
 
@@ -267,6 +286,10 @@ function computeRisk(s: EmailVerifySignals): number {
   if (s.roleAccount) r += 20;
   if (s.freeProvider && s.mailboxExists === null) r += 25;
   if (!s.smtpConnected) r += 30;
+  // Persistent SMTP timeout on every MX is a real signal — either the
+  // mail server is overloaded / firewalling us, or the domain is no
+  // longer actively accepting mail. Either way, bump risk.
+  if (s.smtpTimedOut && !s.smtpConnected) r += 15;
   if (s.mailboxExists === true) r = Math.max(0, r - 20);
   return Math.min(100, Math.max(0, r));
 }
@@ -398,12 +421,41 @@ export async function verifyEmail(
   // ---- 6. SMTP probe across MXes (try next on conn-level failure) ----
   let lastResult: EmailVerifyResult | null = null;
   for (const mx of mxRecords) {
+    signals.mxAttempts += 1;
     const r = await smtpProbe(normalized, domain, mx.exchange, opts, signals);
     lastResult = r;
     // If we got a definitive Valid/Invalid OR an SMTP-level Pending
-    // (mailbox-related), stop trying further MXes.
+    // (mailbox-related, meaning we at least connected), stop trying.
     if (r.verdict !== 'Pending' || signals.smtpConnected) break;
   }
+
+  // ---- 7. Definitive fallback when EVERY MX timed out / refused ----
+  // If we never got a 220 banner from any MX *and* every attempt hit a
+  // timeout, the domain's mail infrastructure is effectively dead from
+  // our vantage point. Three+ MX timeouts is no longer a "maybe try
+  // again later" — it's an Invalid verdict so the user can prune the
+  // address without it sitting in Pending forever.
+  if (
+    lastResult &&
+    !signals.smtpConnected &&
+    signals.smtpTimedOut &&
+    signals.mxAttempts >= 1
+  ) {
+    return {
+      verdict:    'Invalid',
+      detail:
+        signals.mxAttempts === 1
+          ? `Mail server unreachable — ${lastResult.mx ?? mxRecords[0].exchange} did not respond within ${(opts.timeoutMs ?? 15000) / 1000}s.`
+          : `Mail server unresponsive — all ${signals.mxAttempts} MX hosts timed out within ${(opts.timeoutMs ?? 15000) / 1000}s each.`,
+      risk:       computeRisk(signals),
+      mx:         lastResult.mx,
+      code:       lastResult.code,
+      signals,
+      suggestion,
+      normalized,
+    };
+  }
+
   const final = lastResult ?? {
     verdict:    'Pending' as const,
     detail:     'No MX could be probed.',
@@ -426,7 +478,14 @@ function smtpProbe(
   opts:    VerifyOpts,
   signals: EmailVerifySignals,
 ): Promise<EmailVerifyResult> {
-  const timeoutMs = opts.timeoutMs ?? 8000;
+  const timeoutMs = opts.timeoutMs ?? 15000;
+  // Connect phase gets its own (shorter) budget so a single dead MX can't
+  // burn 15s. Capped at timeoutMs - 2s to leave room for the protocol
+  // dance even if the user passes a tiny custom timeout.
+  const connectTimeoutMs = Math.min(
+    opts.connectTimeoutMs ?? 6000,
+    Math.max(2000, timeoutMs - 2000),
+  );
   const from = fromAddr(opts);
   const helo = heloHost(opts);
   const skipCatchAll = !!opts.skipCatchAll;
@@ -447,6 +506,7 @@ function smtpProbe(
       try { socket.end('QUIT\r\n'); } catch { /* ignore */ }
       try { socket.destroy(); } catch { /* ignore */ }
       clearTimeout(deadline);
+      clearTimeout(connectDeadline);
       resolve({
         ...r,
         mx:      mxHost,
@@ -457,16 +517,36 @@ function smtpProbe(
 
     const socket = net.createConnection({ host: mxHost, port: 25 });
     socket.setEncoding('utf8');
+    // Use timeoutMs as the post-connect idle timeout; the connect phase
+    // gets its own faster guard below.
     socket.setTimeout(timeoutMs);
 
+    // Hard overall deadline — nothing should run longer than timeoutMs.
     const deadline = setTimeout(() => {
-      finish({ verdict: 'Pending', detail: 'SMTP probe timed out.', code: lastCode });
+      signals.smtpTimedOut = true;
+      finish({ verdict: 'Pending', detail: `SMTP probe timed out after ${timeoutMs}ms.`, code: lastCode });
     }, timeoutMs);
+
+    // Faster connect-phase deadline: if we can't even reach SYN-ACK on
+    // this MX in connectTimeoutMs, bail so the caller can try the next.
+    const connectDeadline = setTimeout(() => {
+      if (signals.smtpConnected) return; // already past banner; ignore
+      signals.smtpTimedOut = true;
+      finish({
+        verdict: 'Pending',
+        detail:  `MX ${mxHost} did not connect within ${connectTimeoutMs}ms.`,
+        code:    lastCode,
+      });
+    }, connectTimeoutMs);
+    socket.once('connect', () => {
+      clearTimeout(connectDeadline);
+    });
 
     socket.on('error', (err: NodeJS.ErrnoException) => {
       // Connection refused / no route / DNS fail at host level — try
       // next MX. We return Pending; the caller decides whether to
       // escalate to Invalid based on whether ANY MX worked.
+      clearTimeout(connectDeadline);
       finish({
         verdict: 'Pending',
         detail:  `SMTP connect error (${err.code ?? 'ERR'}): ${err.message}`,
@@ -474,7 +554,8 @@ function smtpProbe(
       });
     });
     socket.on('timeout', () => {
-      finish({ verdict: 'Pending', detail: 'SMTP socket timeout.', code: lastCode });
+      signals.smtpTimedOut = true;
+      finish({ verdict: 'Pending', detail: `SMTP socket idle ${timeoutMs}ms.`, code: lastCode });
     });
 
     // ─── State machine ───

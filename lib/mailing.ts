@@ -1428,6 +1428,8 @@ export interface EmailVerifyPayload {
     smtpConnected: boolean;
     mailboxExists: boolean | null;
     catchAll:      boolean | null;
+    smtpTimedOut?: boolean;
+    mxAttempts?:   number;
   };
   mx?:         string;
   code?:       number;
@@ -1458,7 +1460,8 @@ export async function persistEmailVerification(
       `${payload.verdict} — ${payload.detail}` +
       (payload.code ? ` [code ${payload.code}]` : '') +
       (s.catchAll ? ' [catch-all]' : '') +
-      (s.disposable ? ' [disposable]' : '');
+      (s.disposable ? ' [disposable]' : '') +
+      (s.smtpTimedOut && !s.smtpConnected ? ' [timed out]' : '');
     const rows = (await sql`
       UPDATE mailing_contacts
          SET email_status        = ${status},
