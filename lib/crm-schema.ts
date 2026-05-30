@@ -1,0 +1,419 @@
+// lib/crm-schema.ts
+//
+// Idempotent CRM schema bootstrap. Pulls together every CREATE TABLE
+// IF NOT EXISTS / ALTER TABLE ADD COLUMN IF NOT EXISTS statement from
+// the four migrate-* admin routes (Steps 1, 3, 4, 5 of the PressBook
+// CRM integration) so that admin pages self-heal on first request
+// instead of requiring a manual POST to /api/admin/migrate-*.
+//
+// Step 2 (`/admin/crm`) is purely UI on top of the Step 1 columns, so
+// it needs no DDL of its own — just Step 1's advertisers extension.
+//
+// Every statement here MUST be idempotent. If a step fails we swallow
+// the error and continue (matching the migrate routes' `step` helper)
+// so a single bad statement can't keep the whole app down.
+//
+// The originating migrate-* routes still work as-is; they remain the
+// authoritative manual migration entry points and the only place we
+// write a row into `schema_migrations`. This helper does not touch
+// `schema_migrations` — it's just a runtime safety net.
+//
+// Called from lib/db.ts :: ensureSchema().
+
+import type { NeonQueryFunction } from '@neondatabase/serverless';
+
+type Sql = NeonQueryFunction<false, false>;
+
+/**
+ * Run every CRM DDL statement, swallowing per-statement errors so one
+ * failure doesn't abort the rest. Safe to call repeatedly.
+ */
+export async function ensureCrmSchema(sql: Sql): Promise<void> {
+  const step = async (fn: () => Promise<unknown>) => {
+    try {
+      await fn();
+    } catch (err) {
+      // Match the migrate-* routes: log and continue so a single
+      // broken statement (e.g. a backfill referencing an optional
+      // column) never blocks the app.
+      console.warn(
+        '[ensureCrmSchema] step failed:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  };
+
+  // ============================================================
+  // Step 1 — Extend advertisers as the canonical CRM contacts table.
+  // Mirrors app/api/admin/migrate-advertisers-extend/route.ts.
+  // ============================================================
+
+  // Classification + lifecycle
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS type text NOT NULL DEFAULT 'advertiser'`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'active'`);
+
+  // Identity
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS first_name text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS last_name text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS company text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS title text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS industry text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS license_number text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS avatar_url text`);
+
+  // Channels
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS portal_email text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS phone text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS office_phone text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS website text`);
+
+  // Verification
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS email_status text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS email_verified_at timestamptz`);
+
+  // Address
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS address text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS address_2 text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS city text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS state text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS zip text`);
+
+  // Portal linkage
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS portal_activated_at timestamptz`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS portal_onboarded_at timestamptz`);
+
+  // Free-form
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS additional_contacts jsonb NOT NULL DEFAULT '[]'::jsonb`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS notes text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS tags jsonb NOT NULL DEFAULT '[]'::jsonb`);
+
+  // Indexes
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_type   ON advertisers(type)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_status ON advertisers(status)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_email  ON advertisers(lower(contact_email))`);
+
+  // ============================================================
+  // Step 3 — agreements + invoices, plus ad_campaigns linkage.
+  // Mirrors app/api/admin/migrate-agreements-invoices/route.ts.
+  // ============================================================
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS agreements (
+      id                       uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      advertiser_id            integer REFERENCES advertisers(id) ON DELETE SET NULL,
+      company_name             text,
+      rep_name                 text,
+      advertiser_email         text,
+      advertiser_phone         text,
+      advertiser_address       text,
+      type                     text,
+      status                   text NOT NULL DEFAULT 'draft'
+                                 CHECK (status IN ('draft','sent','signed','active','expired','cancelled')),
+      start_date               date,
+      end_date                 date,
+      ad_size                  text,
+      frequency                text,
+      ad_rate_cents            integer,
+      ad_timing                jsonb,
+      eblast_packages          jsonb NOT NULL DEFAULT '[]'::jsonb,
+      amount_cents             integer,
+      sign_date                date,
+      exp_date                 date,
+      renewal_notice_date      date,
+      signed_at                timestamptz,
+      signed_document          text,
+      sent_to_email            text,
+      is_uploaded              boolean NOT NULL DEFAULT false,
+      billing_name             text,
+      billing_email            text,
+      payment_mode             text CHECK (payment_mode IN ('card','link','invoice','check')),
+      stripe_customer_id       text,
+      stripe_invoice_id        text,
+      stripe_payment_intent_id text,
+      stripe_payment_link_url  text,
+      paid_at                  timestamptz,
+      notes                    text,
+      audit_log                jsonb NOT NULL DEFAULT '[]'::jsonb,
+      created_by               text,
+      created_at               timestamptz NOT NULL DEFAULT now(),
+      updated_at               timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_advertiser_id ON agreements(advertiser_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_status        ON agreements(status)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_end_date      ON agreements(end_date)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_cust   ON agreements(stripe_customer_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_inv    ON agreements(stripe_invoice_id)`);
+
+  await step(() => sql`
+    CREATE OR REPLACE FUNCTION trg_agreements_set_updated_at()
+    RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql
+  `);
+  await step(() => sql`DROP TRIGGER IF EXISTS agreements_set_updated_at ON agreements`);
+  await step(() => sql`
+    CREATE TRIGGER agreements_set_updated_at
+      BEFORE UPDATE ON agreements
+      FOR EACH ROW EXECUTE FUNCTION trg_agreements_set_updated_at()
+  `);
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS invoices (
+      id                       uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      advertiser_id            integer NOT NULL REFERENCES advertisers(id) ON DELETE RESTRICT,
+      agreement_id             uuid    REFERENCES agreements(id) ON DELETE SET NULL,
+      number                   text UNIQUE,
+      amount_cents             integer NOT NULL,
+      tax_cents                integer NOT NULL DEFAULT 0,
+      total_cents              integer GENERATED ALWAYS AS (amount_cents + tax_cents) STORED,
+      status                   text NOT NULL DEFAULT 'draft'
+                                 CHECK (status IN ('draft','sent','paid','overdue','void')),
+      stripe_invoice_id        text,
+      stripe_payment_intent_id text,
+      stripe_payment_link_url  text,
+      issued_at                timestamptz,
+      due_date                 date,
+      paid_at                  timestamptz,
+      voided_at                timestamptz,
+      bill_to_name             text,
+      bill_to_email            text,
+      bill_to_address          text,
+      memo                     text,
+      line_items               jsonb NOT NULL DEFAULT '[]'::jsonb,
+      created_by               text,
+      created_at               timestamptz NOT NULL DEFAULT now(),
+      updated_at               timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_advertiser_id ON invoices(advertiser_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_agreement_id  ON invoices(agreement_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_status        ON invoices(status)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_due_date      ON invoices(due_date)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_stripe_inv    ON invoices(stripe_invoice_id)`);
+
+  await step(() => sql`
+    CREATE OR REPLACE FUNCTION trg_invoices_set_updated_at()
+    RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql
+  `);
+  await step(() => sql`DROP TRIGGER IF EXISTS invoices_set_updated_at ON invoices`);
+  await step(() => sql`
+    CREATE TRIGGER invoices_set_updated_at
+      BEFORE UPDATE ON invoices
+      FOR EACH ROW EXECUTE FUNCTION trg_invoices_set_updated_at()
+  `);
+
+  // ad_campaigns linkage
+  await step(() => sql`
+    ALTER TABLE ad_campaigns
+      ADD COLUMN IF NOT EXISTS advertiser_id integer
+        REFERENCES advertisers(id) ON DELETE SET NULL
+  `);
+  await step(() => sql`
+    ALTER TABLE ad_campaigns
+      ADD COLUMN IF NOT EXISTS agreement_id uuid
+        REFERENCES agreements(id) ON DELETE SET NULL
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_ad_campaigns_advertiser_id ON ad_campaigns(advertiser_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_ad_campaigns_agreement_id  ON ad_campaigns(agreement_id)`);
+
+  // ============================================================
+  // Step 4 — Marketing campaigns / tasks / outreach.
+  // Mirrors app/api/admin/migrate-marketing-campaigns/route.ts.
+  // ============================================================
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS marketing_campaigns (
+      id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      name            text NOT NULL,
+      status          text NOT NULL DEFAULT 'draft'
+                       CHECK (status IN ('draft','planning','active','completed','archived')),
+      type            text,
+      audience_filter jsonb NOT NULL DEFAULT '{}'::jsonb,
+      brief           text,
+      goal            text,
+      start_date      date,
+      end_date        date,
+      publication     text,
+      created_by      text,
+      created_at      timestamptz NOT NULL DEFAULT now(),
+      updated_at      timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mc_status      ON marketing_campaigns(status)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mc_publication ON marketing_campaigns(publication)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mc_dates       ON marketing_campaigns(start_date, end_date)`);
+
+  await step(() => sql`
+    CREATE OR REPLACE FUNCTION trg_mc_set_updated_at()
+    RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql
+  `);
+  await step(() => sql`DROP TRIGGER IF EXISTS mc_set_updated_at ON marketing_campaigns`);
+  await step(() => sql`
+    CREATE TRIGGER mc_set_updated_at
+      BEFORE UPDATE ON marketing_campaigns
+      FOR EACH ROW EXECUTE FUNCTION trg_mc_set_updated_at()
+  `);
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS marketing_campaign_tasks (
+      id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      campaign_id uuid NOT NULL REFERENCES marketing_campaigns(id) ON DELETE CASCADE,
+      title       text NOT NULL,
+      description text,
+      status      text NOT NULL DEFAULT 'to_do'
+                   CHECK (status IN ('to_do','in_progress','done')),
+      priority    text DEFAULT 'medium'
+                   CHECK (priority IN ('low','medium','high')),
+      due_date    date,
+      assignee    text,
+      done_at     timestamptz,
+      sort_order  integer NOT NULL DEFAULT 0,
+      created_at  timestamptz NOT NULL DEFAULT now(),
+      updated_at  timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mct_campaign ON marketing_campaign_tasks(campaign_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mct_status   ON marketing_campaign_tasks(status)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mct_due_date ON marketing_campaign_tasks(due_date)`);
+
+  await step(() => sql`
+    CREATE OR REPLACE FUNCTION trg_mct_set_updated_at()
+    RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql
+  `);
+  await step(() => sql`DROP TRIGGER IF EXISTS mct_set_updated_at ON marketing_campaign_tasks`);
+  await step(() => sql`
+    CREATE TRIGGER mct_set_updated_at
+      BEFORE UPDATE ON marketing_campaign_tasks
+      FOR EACH ROW EXECUTE FUNCTION trg_mct_set_updated_at()
+  `);
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS marketing_campaign_outreach (
+      id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      campaign_id     uuid NOT NULL REFERENCES marketing_campaigns(id) ON DELETE CASCADE,
+      channel         text NOT NULL DEFAULT 'email'
+                       CHECK (channel IN ('email','sms','drip')),
+      subject         text,
+      body            text,
+      template_id     text,
+      status          text NOT NULL DEFAULT 'draft'
+                       CHECK (status IN ('draft','scheduled','sending','sent','failed','cancelled')),
+      scheduled_for   timestamptz,
+      sent_at         timestamptz,
+      recipient_ids   jsonb NOT NULL DEFAULT '[]'::jsonb,
+      recipient_count integer,
+      stats           jsonb NOT NULL DEFAULT '{}'::jsonb,
+      error_message   text,
+      created_by      text,
+      created_at      timestamptz NOT NULL DEFAULT now(),
+      updated_at      timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mco_campaign  ON marketing_campaign_outreach(campaign_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mco_status    ON marketing_campaign_outreach(status)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mco_scheduled ON marketing_campaign_outreach(scheduled_for) WHERE status = 'scheduled'`);
+
+  await step(() => sql`
+    CREATE OR REPLACE FUNCTION trg_mco_set_updated_at()
+    RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql
+  `);
+  await step(() => sql`DROP TRIGGER IF EXISTS mco_set_updated_at ON marketing_campaign_outreach`);
+  await step(() => sql`
+    CREATE TRIGGER mco_set_updated_at
+      BEFORE UPDATE ON marketing_campaign_outreach
+      FOR EACH ROW EXECUTE FUNCTION trg_mco_set_updated_at()
+  `);
+
+  // ============================================================
+  // Step 5 — Client portal: magic links, files, forms, assignments.
+  // Mirrors app/api/admin/migrate-portal/route.ts.
+  // ============================================================
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      name        text PRIMARY KEY,
+      applied_at  timestamptz NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS portal_magic_links (
+      id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+      advertiser_id       integer     NOT NULL REFERENCES advertisers(id) ON DELETE CASCADE,
+      token_hash          text        NOT NULL UNIQUE,
+      purpose             text        NOT NULL DEFAULT 'login',
+      link_expires_at     timestamptz NOT NULL,
+      consumed_at         timestamptz,
+      session_expires_at  timestamptz,
+      ip_consumed         text,
+      user_agent_consumed text,
+      sent_to_email       text,
+      sent_at             timestamptz NOT NULL DEFAULT NOW(),
+      created_by          text,
+      revoked_at          timestamptz,
+      revoked_reason      text
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_magic_links_advertiser ON portal_magic_links(advertiser_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_magic_links_session    ON portal_magic_links(session_expires_at) WHERE session_expires_at IS NOT NULL`);
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS portal_files (
+      id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+      advertiser_id   integer     NOT NULL REFERENCES advertisers(id) ON DELETE CASCADE,
+      agreement_id    uuid        REFERENCES agreements(id) ON DELETE SET NULL,
+      invoice_id      uuid        REFERENCES invoices(id) ON DELETE SET NULL,
+      title           text        NOT NULL,
+      description     text,
+      file_url        text        NOT NULL,
+      file_name       text,
+      file_mime       text,
+      file_size_bytes integer,
+      category        text        NOT NULL DEFAULT 'document',
+      visibility      text        NOT NULL DEFAULT 'visible',
+      uploaded_by     text,
+      created_at      timestamptz NOT NULL DEFAULT NOW(),
+      updated_at      timestamptz NOT NULL DEFAULT NOW()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_files_advertiser ON portal_files(advertiser_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_files_agreement  ON portal_files(agreement_id) WHERE agreement_id IS NOT NULL`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_files_invoice    ON portal_files(invoice_id) WHERE invoice_id IS NOT NULL`);
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS portal_forms (
+      id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+      slug        text        NOT NULL UNIQUE,
+      title       text        NOT NULL,
+      description text,
+      schema      jsonb       NOT NULL DEFAULT '{"fields":[]}'::jsonb,
+      active      boolean     NOT NULL DEFAULT true,
+      created_by  text,
+      created_at  timestamptz NOT NULL DEFAULT NOW(),
+      updated_at  timestamptz NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS portal_form_assignments (
+      id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+      form_id       uuid        NOT NULL REFERENCES portal_forms(id) ON DELETE CASCADE,
+      advertiser_id integer     NOT NULL REFERENCES advertisers(id) ON DELETE CASCADE,
+      status        text        NOT NULL DEFAULT 'pending',
+      answers       jsonb       NOT NULL DEFAULT '{}'::jsonb,
+      assigned_by   text,
+      assigned_at   timestamptz NOT NULL DEFAULT NOW(),
+      submitted_at  timestamptz,
+      due_at        timestamptz,
+      notes         text,
+      created_at    timestamptz NOT NULL DEFAULT NOW(),
+      updated_at    timestamptz NOT NULL DEFAULT NOW()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_form_assignments_advertiser ON portal_form_assignments(advertiser_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_form_assignments_form       ON portal_form_assignments(form_id)`);
+  await step(() => sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS uniq_portal_form_assignment_pair
+      ON portal_form_assignments(form_id, advertiser_id)
+      WHERE submitted_at IS NULL
+  `);
+}

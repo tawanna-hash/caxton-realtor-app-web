@@ -4,6 +4,7 @@
 // var. Schema is created on first read/write — no separate migration step.
 
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
+import { ensureCrmSchema } from './crm-schema';
 
 let cached: NeonQueryFunction<false, false> | null = null;
 let schemaEnsured = false;
@@ -444,6 +445,15 @@ export async function ensureSchema(): Promise<void> {
     console.warn('[ensureSchema] advertiser backfill failed:', err);
   }
 
+  // ============================================================
+  // CRM bootstrap (Steps 1, 3, 4, 5 of PressBook CRM integration).
+  // Idempotent: ALTER … ADD COLUMN IF NOT EXISTS, CREATE TABLE
+  // IF NOT EXISTS, ON CONFLICT DO NOTHING. Pulled into a separate
+  // module to keep this file readable. Self-heals admin pages so
+  // they don't crash when the migrate-* POST routes haven't been
+  // hit yet on a given environment.
+  // ============================================================
+  await ensureCrmSchema(sql);
 
   schemaEnsured = true;
 }
