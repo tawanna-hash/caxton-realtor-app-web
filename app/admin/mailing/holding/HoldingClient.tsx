@@ -295,7 +295,20 @@ export default function HoldingClient() {
         <KpiCard label="Total members"  value={counts?.total    ?? 0} sub="awaiting review" />
         <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#10B981" />
         <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#F59E0B" />
-        <KpiCard label="Within 60 mi"   value={counts?.near     ?? 0} sub="near ABoR or Five Points" accent="#059669" />
+        <KpiCard
+          label="Within 60 mi"
+          value={counts?.near ?? 0}
+          sub="near ABoR or Five Points"
+          accent="#059669"
+          action={(counts?.near ?? 0) > 0 ? {
+            label: 'Export CSV',
+            onClick: () => {
+              // Same-origin GET hits the export endpoint, browser
+              // handles the download via Content-Disposition.
+              window.location.href = '/api/admin/mailing/holding/export-near';
+            },
+          } : undefined}
+        />
         <KpiCard label="Outside 60 mi"  value={counts?.far      ?? 0} sub="out of both radii" accent="#9CA3AF" />
       </div>
 
@@ -487,16 +500,40 @@ export default function HoldingClient() {
 // ============================================================
 
 function KpiCard({
-  label, value, sub, accent,
-}: { label: string; value: number; sub: string; accent?: string }) {
+  label, value, sub, accent, action,
+}: {
+  label:  string;
+  value:  number;
+  sub:    string;
+  accent?: string;
+  action?: { label: string; onClick: () => void };
+}) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
+    <div className={`relative rounded-lg border border-gray-200 bg-white p-4 ${action ? 'transition-shadow hover:shadow-md' : ''}`}>
       <div className="h-7 w-7 rounded-md mb-3" style={{ backgroundColor: accent ? `${accent}15` : '#F3F4F6' }} />
       <div className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</div>
       <div className="mt-1">
         <div className="text-xs font-semibold text-gray-900">{label}</div>
         <div className="text-[11px] text-gray-500">{sub}</div>
       </div>
+      {action && (
+        <button
+          type="button"
+          onClick={action.onClick}
+          title={action.label}
+          aria-label={action.label}
+          className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-white shadow-sm hover:opacity-90"
+          style={{ backgroundColor: accent ?? '#3D0740' }}
+        >
+          {/* Download glyph (inline SVG, no icon lib dep) */}
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          <span>CSV</span>
+        </button>
+      )}
     </div>
   );
 }
