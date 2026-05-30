@@ -139,8 +139,9 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
 
   // Blur paywall: on La Cima and Santa Rita Ranch builder pages, the
   // Move-in Ready and Promotions tabs show advertiser (featured) listings
-  // fully, plus one non-advertiser teaser. Remaining non-advertiser entries
-  // render visually blurred and non-interactive — no CTA, no overlay.
+  // fully, plus one non-advertiser teaser per underlying builder. Remaining
+  // non-advertiser entries render visually blurred and non-interactive —
+  // no CTA, no overlay. Unblurred items float to the top of the grid.
   const isPaywalled =
     (builderName === 'La Cima' || builderName === 'Santa Rita Ranch') &&
     (tab === 'moveIn' || tab === 'promos');
@@ -149,18 +150,66 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
     if (!isPaywalled) {
       return currentRows.map((row) => ({ row, blurred: false }));
     }
-    // Featured (advertiser) rows are always fully visible. Among the
-    // remaining non-featured rows, the first one stays visible as a teaser;
-    // everything after that is blurred.
+    // SRR/La Cima are master-planned developers — every row is attributed
+    // to the developer in row.builderName, with the underlying homebuilder
+    // embedded in the title after an em-dash (e.g. "141 Burke St — Perry
+    // Homes"). Rows without that em-dash suffix are the developer's own
+    // (e.g. SRR's own promotions, community summaries).
+    const extractUnderlyingBuilder = (title: string): string | null => {
+      const m = title.match(/\s+[\u2014\u2013-]\s+([^\u2014\u2013-]+?)\s*$/);
+      return m ? m[1].trim() : null;
+    };
+
+    // Santa Rita Ranch promotions: keep ONLY the developer's own promos
+    // unblurred. Every underlying-builder promo is blurred regardless of
+    // count. Featured (advertiser) rows still bypass the paywall.
+    if (builderName === 'Santa Rita Ranch' && tab === 'promos') {
+      const visible: BuilderInventoryRow[] = [];
+      const blurred: BuilderInventoryRow[] = [];
+      for (const r of currentRows) {
+        if (r.featured) {
+          visible.push(r);
+          continue;
+        }
+        const ub = extractUnderlyingBuilder(r.title);
+        if (ub === null) {
+          // Santa Rita Ranch's own promotion — keep visible.
+          visible.push(r);
+        } else {
+          // Builder-attributed promotion — blur.
+          blurred.push(r);
+        }
+      }
+      return [
+        ...visible.map((row) => ({ row, blurred: false })),
+        ...blurred.map((row) => ({ row, blurred: true })),
+      ];
+    }
+
+    // Default paywall (La Cima, plus SRR Move-in Ready): keep advertiser
+    // rows visible, plus one non-advertiser teaser per underlying builder.
+    // Blur the rest. Unblurred items float to the top.
     const featuredRows = currentRows.filter((r) => r.featured);
     const nonFeaturedRows = currentRows.filter((r) => !r.featured);
-    const result: Array<{ row: BuilderInventoryRow; blurred: boolean }> = [];
-    for (const r of featuredRows) result.push({ row: r, blurred: false });
-    nonFeaturedRows.forEach((r, idx) => {
-      result.push({ row: r, blurred: idx > 0 });
-    });
-    return result;
-  }, [currentRows, isPaywalled]);
+
+    const seenBuilders = new Set<string>();
+    const visible: BuilderInventoryRow[] = [...featuredRows];
+    const blurred: BuilderInventoryRow[] = [];
+    for (const r of nonFeaturedRows) {
+      const ub = extractUnderlyingBuilder(r.title) ?? '__developer__';
+      if (!seenBuilders.has(ub)) {
+        seenBuilders.add(ub);
+        visible.push(r);
+      } else {
+        blurred.push(r);
+      }
+    }
+
+    return [
+      ...visible.map((row) => ({ row, blurred: false })),
+      ...blurred.map((row) => ({ row, blurred: true })),
+    ];
+  }, [currentRows, isPaywalled, builderName, tab]);
 
   // Giddens Homes uses 'Realtors' as the label for their broker-bonus
   // commission program instead of the generic 'Promotions'. Match casing
