@@ -51,7 +51,7 @@ const ADMIN_GROUPS: AdminGroup[] = [
     links: [
       { label: 'CRM',              href: '/admin/crm',             description: 'Advertisers / clients pipeline' },
       { label: 'Mailing List',     href: '/admin/mailing',         description: 'Segment lists & exports' },
-      { label: 'Holding Contacts', href: '/admin/mailing/holding', description: 'Scraped contacts awaiting review' },
+      { label: 'ABOR Members',     href: '/admin/mailing/holding', description: 'Scraped agents awaiting review' },
       { label: 'Advertisers',      href: '/admin/advertisers',     description: 'Active accounts' },
       { label: 'Subscribers',      href: '/admin/subscribers',     description: 'Newsletter signups' },
     ],

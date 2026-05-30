@@ -51,6 +51,7 @@ export async function GET(req: Request) {
         last_name: r.last_name,
         email: r.email,
         phone: r.phone,
+        mobile_phone: r.mobile,
         company: r.company,
         title: r.title,
         license_number: r.license_number,

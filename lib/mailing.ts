@@ -96,6 +96,14 @@ export type MailingContactRow = {
   external_id: string | null;
   external_source: string | null;
   unsubscribed_at: string | null;
+  // ABOR Members extensions
+  mobile_phone: string | null;
+  lat: number | null;
+  lon: number | null;
+  geocoded_at: string | null;
+  distance_abor_mi: number | null;
+  distance_fivepoints_mi: number | null;
+  addr_usps_normalized: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -1068,6 +1076,7 @@ export interface ExternalContactInput {
   last_name?: string | null;
   email?: string | null;
   phone?: string | null;
+  mobile_phone?: string | null;
   company?: string | null;
   title?: string | null;
   license_number?: string | null;
@@ -1102,7 +1111,7 @@ export async function upsertHoldingContacts(
 
     // Look up by external_source+external_id first.
     let existing = (await sql`
-      SELECT id, email, address, phone, company, title, license_number,
+      SELECT id, email, address, phone, mobile_phone, company, title, license_number,
              city, state, zip, website, address_2
         FROM mailing_contacts
        WHERE external_source = ${inp.external_source}
@@ -1113,6 +1122,7 @@ export async function upsertHoldingContacts(
       email: string | null;
       address: string | null;
       phone: string | null;
+      mobile_phone: string | null;
       company: string | null;
       title: string | null;
       license_number: string | null;
@@ -1126,7 +1136,7 @@ export async function upsertHoldingContacts(
     // Fallback: license number (case-insensitive)
     if (existing.length === 0 && inp.license_number) {
       existing = (await sql`
-        SELECT id, email, address, phone, company, title, license_number,
+        SELECT id, email, address, phone, mobile_phone, company, title, license_number,
                city, state, zip, website, address_2
           FROM mailing_contacts
          WHERE LOWER(license_number) = LOWER(${inp.license_number})
@@ -1137,7 +1147,7 @@ export async function upsertHoldingContacts(
     // Fallback: email (case-insensitive)
     if (existing.length === 0 && inp.email) {
       existing = (await sql`
-        SELECT id, email, address, phone, company, title, license_number,
+        SELECT id, email, address, phone, mobile_phone, company, title, license_number,
                city, state, zip, website, address_2
           FROM mailing_contacts
          WHERE LOWER(email) = LOWER(${inp.email})
@@ -1158,6 +1168,7 @@ export async function upsertHoldingContacts(
       };
       maybeSet('email',          cur.email,          inp.email);
       maybeSet('phone',          cur.phone,          inp.phone);
+      maybeSet('mobile_phone',   cur.mobile_phone,   inp.mobile_phone);
       maybeSet('company',        cur.company,        inp.company);
       maybeSet('title',          cur.title,          inp.title);
       maybeSet('license_number', cur.license_number, inp.license_number);
@@ -1177,6 +1188,7 @@ export async function upsertHoldingContacts(
         switch (u.field) {
           case 'email':          await sql`UPDATE mailing_contacts SET email          = ${u.value} WHERE id = ${cur.id}`; break;
           case 'phone':          await sql`UPDATE mailing_contacts SET phone          = ${u.value} WHERE id = ${cur.id}`; break;
+          case 'mobile_phone':   await sql`UPDATE mailing_contacts SET mobile_phone   = ${u.value} WHERE id = ${cur.id}`; break;
           case 'company':        await sql`UPDATE mailing_contacts SET company        = ${u.value} WHERE id = ${cur.id}`; break;
           case 'title':          await sql`UPDATE mailing_contacts SET title          = ${u.value} WHERE id = ${cur.id}`; break;
           case 'license_number': await sql`UPDATE mailing_contacts SET license_number = ${u.value} WHERE id = ${cur.id}`; break;
@@ -1204,7 +1216,7 @@ export async function upsertHoldingContacts(
       const emailPending = inp.email ? 'Pending' : null;
       await sql`
         INSERT INTO mailing_contacts
-          (segment, stage, first_name, last_name, email, phone, company, title,
+          (segment, stage, first_name, last_name, email, phone, mobile_phone, company, title,
            license_number, address, address_2, city, state, zip, website,
            source, external_id, external_source, addr_status, email_status, tags)
         VALUES
@@ -1213,6 +1225,7 @@ export async function upsertHoldingContacts(
            ${normString(inp.last_name)},
            ${normString(inp.email)},
            ${normString(inp.phone)},
+           ${normString(inp.mobile_phone)},
            ${normString(inp.company)},
            ${normString(inp.title)},
            ${normString(inp.license_number)},
@@ -1234,4 +1247,176 @@ export async function upsertHoldingContacts(
   }
 
   return { inserted, updated, unchanged };
+}
+
+// ============================================================
+// ABOR Members helpers — edit row, persist verification results,
+// geocode + store distances. These piggyback on the same
+// mailing_contacts table; "ABOR Members" is simply the user-facing
+// label for stage='holding' rows.
+// ============================================================
+
+export interface HoldingEditInput {
+  first_name?:    string | null;
+  last_name?:     string | null;
+  title?:         string | null;
+  email?:         string | null;
+  company?:       string | null;
+  address?:       string | null;
+  address_2?:     string | null;
+  city?:          string | null;
+  state?:         string | null;
+  zip?:           string | null;
+  license_number?: string | null;
+  phone?:         string | null;
+  mobile_phone?:  string | null;
+}
+
+/**
+ * Update editable fields on a holding-stage row. Any non-undefined
+ * field in the input is written; undefined fields are left untouched.
+ * If address/city/state/zip change, the address verification status and
+ * geocode are wiped so the user knows to re-verify.
+ */
+export async function updateHoldingContact(
+  id: string,
+  input: HoldingEditInput,
+): Promise<MailingContactRow | null> {
+  const sql = getSql();
+
+  // Pull the existing row so we can detect address changes
+  const existingRows = (
+    await sql`SELECT * FROM mailing_contacts WHERE id = ${id} AND stage = 'holding'`
+  ) as unknown as MailingContactRow[];
+  const existing = existingRows[0];
+  if (!existing) return null;
+
+  const next = {
+    first_name:     input.first_name     !== undefined ? input.first_name     : existing.first_name,
+    last_name:      input.last_name      !== undefined ? input.last_name      : existing.last_name,
+    title:          input.title          !== undefined ? input.title          : existing.title,
+    email:          input.email          !== undefined ? input.email          : existing.email,
+    company:        input.company        !== undefined ? input.company        : existing.company,
+    address:        input.address        !== undefined ? input.address        : existing.address,
+    address_2:      input.address_2      !== undefined ? input.address_2      : existing.address_2,
+    city:           input.city           !== undefined ? input.city           : existing.city,
+    state:          input.state          !== undefined ? input.state          : existing.state,
+    zip:            input.zip            !== undefined ? input.zip            : existing.zip,
+    license_number: input.license_number !== undefined ? input.license_number : existing.license_number,
+    phone:          input.phone          !== undefined ? input.phone          : existing.phone,
+    mobile_phone:   input.mobile_phone   !== undefined ? input.mobile_phone   : existing.mobile_phone,
+  };
+
+  // Did any address part change?
+  const addressChanged =
+    (input.address    !== undefined && input.address    !== existing.address) ||
+    (input.address_2  !== undefined && input.address_2  !== existing.address_2) ||
+    (input.city       !== undefined && input.city       !== existing.city) ||
+    (input.state      !== undefined && input.state      !== existing.state) ||
+    (input.zip        !== undefined && input.zip        !== existing.zip);
+
+  // Did the email change?
+  const emailChanged =
+    input.email !== undefined && input.email !== existing.email;
+
+  const rows = (await sql`
+    UPDATE mailing_contacts
+       SET first_name             = ${next.first_name},
+           last_name              = ${next.last_name},
+           title                  = ${next.title},
+           email                  = ${next.email},
+           company                = ${next.company},
+           address                = ${next.address},
+           address_2              = ${next.address_2},
+           city                   = ${next.city},
+           state                  = ${next.state},
+           zip                    = ${next.zip},
+           license_number         = ${next.license_number},
+           phone                  = ${next.phone},
+           mobile_phone           = ${next.mobile_phone},
+           addr_status            = CASE WHEN ${addressChanged} THEN 'Pending' ELSE addr_status END,
+           addr_verified_at       = CASE WHEN ${addressChanged} THEN NULL      ELSE addr_verified_at END,
+           addr_usps_normalized   = CASE WHEN ${addressChanged} THEN NULL      ELSE addr_usps_normalized END,
+           lat                    = CASE WHEN ${addressChanged} THEN NULL      ELSE lat END,
+           lon                    = CASE WHEN ${addressChanged} THEN NULL      ELSE lon END,
+           geocoded_at            = CASE WHEN ${addressChanged} THEN NULL      ELSE geocoded_at END,
+           distance_abor_mi       = CASE WHEN ${addressChanged} THEN NULL      ELSE distance_abor_mi END,
+           distance_fivepoints_mi = CASE WHEN ${addressChanged} THEN NULL      ELSE distance_fivepoints_mi END,
+           email_status           = CASE WHEN ${emailChanged}   THEN 'Pending' ELSE email_status END,
+           email_verified_at      = CASE WHEN ${emailChanged}   THEN NULL      ELSE email_verified_at END,
+           updated_at             = NOW()
+     WHERE id = ${id}
+       AND stage = 'holding'
+     RETURNING *
+  `) as unknown as MailingContactRow[];
+  return rows[0] ?? null;
+}
+
+/**
+ * Persist the result of a USPS address verification on a holding row.
+ * Stores the normalized address string and (when Valid) leaves geocoding
+ * to a separate step.
+ */
+export async function persistAddressVerification(
+  id: string,
+  status: VerifyStatus,
+  normalizedAddress: string | null,
+): Promise<MailingContactRow | null> {
+  const sql = getSql();
+  const rows = (await sql`
+    UPDATE mailing_contacts
+       SET addr_status          = ${status},
+           addr_verified_at     = NOW(),
+           addr_usps_normalized = ${normalizedAddress},
+           updated_at           = NOW()
+     WHERE id = ${id}
+       AND stage = 'holding'
+     RETURNING *
+  `) as unknown as MailingContactRow[];
+  return rows[0] ?? null;
+}
+
+/**
+ * Persist the result of an email verification probe on a holding row.
+ */
+export async function persistEmailVerification(
+  id: string,
+  status: VerifyStatus,
+): Promise<MailingContactRow | null> {
+  const sql = getSql();
+  const rows = (await sql`
+    UPDATE mailing_contacts
+       SET email_status      = ${status},
+           email_verified_at = NOW(),
+           updated_at        = NOW()
+     WHERE id = ${id}
+       AND stage = 'holding'
+     RETURNING *
+  `) as unknown as MailingContactRow[];
+  return rows[0] ?? null;
+}
+
+/**
+ * Persist a successful geocode (lat/lon + pre-computed distances).
+ */
+export async function persistGeocode(
+  id: string,
+  lat: number,
+  lon: number,
+  distAbor: number,
+  distFivePoints: number,
+): Promise<MailingContactRow | null> {
+  const sql = getSql();
+  const rows = (await sql`
+    UPDATE mailing_contacts
+       SET lat                    = ${lat},
+           lon                    = ${lon},
+           geocoded_at            = NOW(),
+           distance_abor_mi       = ${distAbor},
+           distance_fivepoints_mi = ${distFivePoints},
+           updated_at             = NOW()
+     WHERE id = ${id}
+     RETURNING *
+  `) as unknown as MailingContactRow[];
+  return rows[0] ?? null;
 }

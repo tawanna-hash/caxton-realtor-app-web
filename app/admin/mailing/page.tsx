@@ -46,7 +46,7 @@ export default async function MailingHubPage() {
         <KpiCard label="Advertisers"        value={counts.advertiser}     sub="paying clients"  accent="#10B981" />
         <KpiCard label="Non-Advertisers"    value={counts['non-advertiser']} sub="prospects"   accent="#F59E0B" />
         <KpiCard label="REALTORS"           value={counts.realtor}        sub="licensed agents" accent="#3D0740" />
-        <KpiCard label="Holding"            value={holding.total}         sub="awaiting review" accent="#6B7280" />
+        <KpiCard label="ABOR Members"       value={holding.total}         sub="awaiting review" accent="#6B7280" />
       </div>
 
       {/* Segment tiles */}
@@ -111,9 +111,9 @@ export default async function MailingHubPage() {
               {holding.total.toLocaleString()}
             </span>
           </div>
-          <div className="font-serif text-lg text-gray-900">Holding Contacts</div>
+          <div className="font-serif text-lg text-gray-900">ABOR Members</div>
           <p className="mt-1 text-sm text-gray-600">
-            Scraped or imported contacts awaiting verification.{' '}
+            Scraped Austin Board of REALTORS agents awaiting verification.{' '}
             {holding.verified > 0 ? (
               <span className="text-green-700 font-medium">
                 {holding.verified.toLocaleString()} ready to promote.

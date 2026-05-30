@@ -519,4 +519,44 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       ON mailing_contacts(external_source, external_id)
       WHERE external_source IS NOT NULL AND external_id IS NOT NULL
   `);
+
+  // ----------------------------------------------------------------
+  // ABOR Members: mobile phone + geocoding columns. Distance fields
+  // are pre-computed at geocode time so we can sort/filter cheaply
+  // and render "Near ABoR" / "Near Five Points" badges without
+  // re-running haversine on every render.
+  // ----------------------------------------------------------------
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS mobile_phone           text
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS lat                    double precision
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS lon                    double precision
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS geocoded_at            timestamptz
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS distance_abor_mi       double precision
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS distance_fivepoints_mi double precision
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS addr_usps_normalized   text
+  `);
+  await step(() => sql`
+    CREATE INDEX IF NOT EXISTS idx_mailing_distance_abor
+      ON mailing_contacts(distance_abor_mi)
+      WHERE distance_abor_mi IS NOT NULL
+  `);
 }
