@@ -55,6 +55,7 @@ const DRAWER_SECTIONS: NavSection[] = [
       { label: 'Giveaways', href: '/giveaways' },
       { label: 'Inventory & Promotions', href: '/inventory' },
       { label: 'Communities', href: '/communities' },
+      { label: 'Advertisers', href: '/advertisers' },
     ],
   },
   {
@@ -70,7 +71,6 @@ const DRAWER_SECTIONS: NavSection[] = [
     title: 'About',
     items: [
       { label: 'About Us', href: '/about' },
-      { label: 'Advertisers', href: '/advertisers' },
       { label: 'Advertise', href: '/advertise' },
       { label: 'My Profile', href: '/profile' },
     ],
