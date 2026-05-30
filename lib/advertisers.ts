@@ -5,6 +5,19 @@
 import { randomBytes } from 'crypto';
 import type { Publication } from '@/lib/publication-theme';
 
+// ── CRM enums (mirror migration CHECK constraints) ────────────────
+export type AdvertiserType   = 'advertiser' | 'client' | 'prospect' | 'mailing';
+export type AdvertiserStatus = 'active' | 'prospect' | 'paused' | 'archived';
+export type EmailStatus      = 'valid' | 'invalid' | 'risk' | 'unknown';
+
+export type AdditionalContact = {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+};
+
 export interface Advertiser {
   id: number;
   name: string;
@@ -22,12 +35,75 @@ export interface Advertiser {
   publication?: Publication;
   created_at: string;
   updated_at: string;
+
+  // ── CRM additions (post 2026_05_29 migration) ───────────────────
+  type?: AdvertiserType;
+  status?: AdvertiserStatus;
+
+  // Identity
+  first_name?: string | null;
+  last_name?: string | null;
+  company?: string | null;
+  title?: string | null;
+  industry?: string | null;
+  license_number?: string | null;
+  avatar_url?: string | null;
+
+  // Channels
+  portal_email?: string | null;
+  phone?: string | null;
+  office_phone?: string | null;
+  website?: string | null;
+
+  // Verification
+  email_status?: EmailStatus | null;
+  email_verified_at?: string | null;
+
+  // Mailing address
+  address?: string | null;
+  address_2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+
+  // Portal linkage (magic-link client portal)
+  portal_activated_at?: string | null;
+  portal_onboarded_at?: string | null;
+
+  // Free-form
+  additional_contacts?: AdditionalContact[];
+  notes?: string | null;
+  tags?: string[];
 }
 
 export interface AdvertiserWithStats extends Advertiser {
   hotspot_count: number;
   clicks_30d: number;
 }
+
+// ── CRM-only stats shape (used by /admin/crm) ─────────────────────
+export interface AdvertiserCrmRow extends Advertiser {
+  hotspot_count: number;
+  clicks_30d: number;
+  /** Most recent click timestamp across all of this advertiser's hotspots. */
+  last_click_at: string | null;
+}
+
+// ── Allow-list of patchable CRM fields ────────────────────────────
+// Used by PATCH /api/admin/advertisers/[id] to gate which columns
+// clients may write.
+export const CRM_PATCHABLE_FIELDS = [
+  'type', 'status',
+  'first_name', 'last_name', 'company', 'title', 'industry',
+  'license_number', 'avatar_url',
+  'portal_email', 'phone', 'office_phone', 'website',
+  'email_status', 'email_verified_at',
+  'address', 'address_2', 'city', 'state', 'zip',
+  'portal_activated_at', 'portal_onboarded_at',
+  'additional_contacts', 'notes', 'tags',
+] as const;
+
+export type CrmPatchableField = (typeof CRM_PATCHABLE_FIELDS)[number];
 
 /** Generate a URL-safe slug from a free-form name. */
 export function slugify(name: string): string {

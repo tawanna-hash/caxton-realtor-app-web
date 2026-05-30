@@ -40,6 +40,9 @@ const PUB_COLORS: Record<string, string> = {
 };
 
 const ADMIN_LINKS = [
+  { label: 'CRM', href: '/admin/crm', adminOnly: true },
+  { label: 'Billing', href: '/admin/billing', adminOnly: true },
+  { label: 'Marketing', href: '/admin/marketing', adminOnly: true },
   { label: 'Giveaways', href: '/admin/giveaways', adminOnly: true },
   { label: 'Events', href: '/admin/events', adminOnly: true },
   { label: 'Ads', href: '/admin/ads', adminOnly: true },

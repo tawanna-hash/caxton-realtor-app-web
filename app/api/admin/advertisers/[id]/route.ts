@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
-import { slugify, type Advertiser } from '@/lib/advertisers';
+import { slugify, CRM_PATCHABLE_FIELDS, type Advertiser } from '@/lib/advertisers';
 import {
   ensurePublicationColumn, type Publication,
 } from '@/lib/publication-theme';
@@ -61,25 +61,22 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
   }
 }
 
+const STATUS_VALUES = new Set(['active', 'prospect', 'paused', 'archived']);
+const TYPE_VALUES   = new Set(['advertiser', 'client', 'prospect', 'mailing']);
+const EMAIL_STATUS  = new Set(['valid', 'invalid', 'risk', 'unknown']);
+
 export async function PATCH(req: NextRequest, ctx: RouteCtx) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const admin = await getCurrentAdmin();
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const { id } = await ctx.params;
   const idNum = Number(id);
   if (!Number.isInteger(idNum) || idNum < 1) {
     return NextResponse.json({ error: 'invalid id' }, { status: 400 });
   }
 
-  let body: {
-    name?: string;
-    contact_email?: string | null;
-    requires_email_gate?: boolean;
-    publication?: string;
-  };
-  try {
-    body = await req.json();
-  } catch {
+  let body: Record<string, unknown>;
+  try { body = await req.json(); } catch {
     return NextResponse.json({ error: 'invalid json' }, { status: 400 });
   }
 
@@ -88,63 +85,104 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     await ensurePublicationColumn();
     const sql = getSql();
 
-    const existing = (await sql`
-      SELECT * FROM advertisers WHERE id = ${idNum}
-    `) as unknown as Advertiser[];
-    if (existing.length === 0) {
+    const updates: string[] = [];
+    const setClauses: { col: string; val: unknown }[] = [];
+
+    // Legacy fields
+    if (typeof body.name === 'string' && body.name.trim()) {
+      const name = body.name.trim();
+      const baseSlug = slugify(name) || `advertiser-${idNum}`;
+      setClauses.push({ col: 'name', val: name });
+      setClauses.push({ col: 'slug', val: baseSlug });
+    }
+    if ('contact_email' in body) {
+      const v = body.contact_email;
+      setClauses.push({ col: 'contact_email', val: typeof v === 'string' && v.trim() ? v.trim() : null });
+    }
+    if ('requires_email_gate' in body) {
+      setClauses.push({ col: 'requires_email_gate', val: !!body.requires_email_gate });
+    }
+    if ('publication' in body) {
+      const pub = normalizePublication(body.publication);
+      if (pub) setClauses.push({ col: 'publication', val: pub });
+    }
+
+    // CRM fields (allow-listed + validated)
+    for (const field of CRM_PATCHABLE_FIELDS) {
+      if (!(field in body)) continue;
+      const raw = body[field as keyof typeof body];
+
+      if (field === 'type'         && typeof raw === 'string' && !TYPE_VALUES.has(raw)) continue;
+      if (field === 'status'       && typeof raw === 'string' && !STATUS_VALUES.has(raw)) continue;
+      if (field === 'email_status' && raw !== null && typeof raw === 'string' && !EMAIL_STATUS.has(raw)) continue;
+
+      if (field === 'additional_contacts' || field === 'tags') {
+        if (raw === null || Array.isArray(raw)) {
+          setClauses.push({ col: field, val: JSON.stringify(raw ?? []) });
+        }
+        continue;
+      }
+
+      if (field === 'email_verified_at' || field === 'portal_activated_at' || field === 'portal_onboarded_at') {
+        if (raw === null || typeof raw === 'string') {
+          setClauses.push({ col: field, val: raw || null });
+        }
+        continue;
+      }
+
+      if (raw === null || typeof raw === 'string') {
+        const v = typeof raw === 'string' ? raw.trim() : null;
+        setClauses.push({ col: field, val: v === '' ? null : v });
+      }
+    }
+
+    if (setClauses.length === 0) {
+      return NextResponse.json({ error: 'no patchable fields provided' }, { status: 400 });
+    }
+
+    for (const { col, val } of setClauses) {
+      switch (col) {
+        case 'name':                await sql`UPDATE advertisers SET name = ${val}                       WHERE id = ${idNum}`; break;
+        case 'slug':                await sql`UPDATE advertisers SET slug = ${val}                       WHERE id = ${idNum}`; break;
+        case 'contact_email':       await sql`UPDATE advertisers SET contact_email = ${val}              WHERE id = ${idNum}`; break;
+        case 'requires_email_gate': await sql`UPDATE advertisers SET requires_email_gate = ${val}        WHERE id = ${idNum}`; break;
+        case 'publication':         await sql`UPDATE advertisers SET publication = ${val}                WHERE id = ${idNum}`; break;
+        case 'type':                await sql`UPDATE advertisers SET type = ${val}                       WHERE id = ${idNum}`; break;
+        case 'status':              await sql`UPDATE advertisers SET status = ${val}                     WHERE id = ${idNum}`; break;
+        case 'first_name':          await sql`UPDATE advertisers SET first_name = ${val}                 WHERE id = ${idNum}`; break;
+        case 'last_name':           await sql`UPDATE advertisers SET last_name = ${val}                  WHERE id = ${idNum}`; break;
+        case 'company':             await sql`UPDATE advertisers SET company = ${val}                    WHERE id = ${idNum}`; break;
+        case 'title':               await sql`UPDATE advertisers SET title = ${val}                      WHERE id = ${idNum}`; break;
+        case 'industry':            await sql`UPDATE advertisers SET industry = ${val}                   WHERE id = ${idNum}`; break;
+        case 'license_number':      await sql`UPDATE advertisers SET license_number = ${val}             WHERE id = ${idNum}`; break;
+        case 'avatar_url':          await sql`UPDATE advertisers SET avatar_url = ${val}                 WHERE id = ${idNum}`; break;
+        case 'portal_email':        await sql`UPDATE advertisers SET portal_email = ${val}               WHERE id = ${idNum}`; break;
+        case 'phone':               await sql`UPDATE advertisers SET phone = ${val}                      WHERE id = ${idNum}`; break;
+        case 'office_phone':        await sql`UPDATE advertisers SET office_phone = ${val}               WHERE id = ${idNum}`; break;
+        case 'website':             await sql`UPDATE advertisers SET website = ${val}                    WHERE id = ${idNum}`; break;
+        case 'email_status':        await sql`UPDATE advertisers SET email_status = ${val}               WHERE id = ${idNum}`; break;
+        case 'email_verified_at':   await sql`UPDATE advertisers SET email_verified_at = ${val}          WHERE id = ${idNum}`; break;
+        case 'address':             await sql`UPDATE advertisers SET address = ${val}                    WHERE id = ${idNum}`; break;
+        case 'address_2':           await sql`UPDATE advertisers SET address_2 = ${val}                  WHERE id = ${idNum}`; break;
+        case 'city':                await sql`UPDATE advertisers SET city = ${val}                       WHERE id = ${idNum}`; break;
+        case 'state':               await sql`UPDATE advertisers SET state = ${val}                      WHERE id = ${idNum}`; break;
+        case 'zip':                 await sql`UPDATE advertisers SET zip = ${val}                        WHERE id = ${idNum}`; break;
+        case 'portal_activated_at': await sql`UPDATE advertisers SET portal_activated_at = ${val}        WHERE id = ${idNum}`; break;
+        case 'portal_onboarded_at': await sql`UPDATE advertisers SET portal_onboarded_at = ${val}        WHERE id = ${idNum}`; break;
+        case 'additional_contacts': await sql`UPDATE advertisers SET additional_contacts = ${val}::jsonb WHERE id = ${idNum}`; break;
+        case 'notes':               await sql`UPDATE advertisers SET notes = ${val}                      WHERE id = ${idNum}`; break;
+        case 'tags':                await sql`UPDATE advertisers SET tags = ${val}::jsonb                WHERE id = ${idNum}`; break;
+      }
+      updates.push(col);
+    }
+
+    await sql`UPDATE advertisers SET updated_at = NOW() WHERE id = ${idNum}`;
+
+    const rows = (await sql`SELECT * FROM advertisers WHERE id = ${idNum}`) as unknown as Advertiser[];
+    if (rows.length === 0) {
       return NextResponse.json({ error: 'not found' }, { status: 404 });
     }
-    const current = existing[0];
-
-    const nextName = typeof body.name === 'string' && body.name.trim()
-      ? body.name.trim()
-      : current.name;
-
-    let nextContactEmail: string | null = current.contact_email;
-    if (body.contact_email !== undefined) {
-      const trimmed = (body.contact_email || '').trim();
-      nextContactEmail = trimmed || null;
-    }
-
-    const nextRequiresGate = typeof body.requires_email_gate === 'boolean'
-      ? body.requires_email_gate
-      : current.requires_email_gate;
-
-    const normalizedPub = normalizePublication(body.publication);
-    const nextPublication = normalizedPub ?? (current.publication || 'austin');
-
-    let nextSlug = current.slug;
-    if (nextName !== current.name) {
-      const baseSlug = slugify(nextName) || `advertiser-${Date.now()}`;
-      let candidate = baseSlug;
-      let suffix = 2;
-      while (true) {
-        const conflict = (await sql`
-          SELECT id FROM advertisers WHERE slug = ${candidate} AND id != ${idNum} LIMIT 1
-        `) as unknown as Array<{ id: number }>;
-        if (conflict.length === 0) break;
-        candidate = `${baseSlug}-${suffix}`;
-        suffix += 1;
-        if (suffix > 50) {
-          return NextResponse.json({ error: 'could not allocate slug' }, { status: 500 });
-        }
-      }
-      nextSlug = candidate;
-    }
-
-    const updated = (await sql`
-      UPDATE advertisers
-      SET name = ${nextName},
-          slug = ${nextSlug},
-          contact_email = ${nextContactEmail},
-          requires_email_gate = ${nextRequiresGate},
-          publication = ${nextPublication},
-          updated_at = NOW()
-      WHERE id = ${idNum}
-      RETURNING *
-    `) as unknown as Advertiser[];
-
-    return NextResponse.json({ advertiser: updated[0] });
+    return NextResponse.json({ advertiser: rows[0], updated_fields: updates });
   } catch (err) {
     console.error('[admin/advertisers PATCH]', errMessage(err));
     return NextResponse.json({ error: 'update failed', detail: errMessage(err) }, { status: 500 });
