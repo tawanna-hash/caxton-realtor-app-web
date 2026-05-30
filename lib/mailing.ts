@@ -383,8 +383,17 @@ export async function countBySegment(): Promise<Record<MailingSegment | 'total',
  * Total count of contacts currently sitting in the holding stage,
  * across all segments. Powers the Holding Contacts KPI tile.
  */
-export async function countHolding(): Promise<{ total: number; verified: number; pending: number }> {
+export async function countHolding(): Promise<{
+  total: number;
+  verified: number;
+  pending: number;
+  near: number;
+  far: number;
+}> {
   const sql = getSql();
+  // 60mi radius. Kept inline (not imported) so this file stays free of
+  // the geocode module's runtime deps.
+  const NEAR_MI = 60;
   const rows = (await sql`
     SELECT
       COUNT(*)::int AS total,
@@ -394,14 +403,28 @@ export async function countHolding(): Promise<{ total: number; verified: number;
       COUNT(*) FILTER (
         WHERE (addr_status IS NULL OR addr_status <> 'Valid')
           AND (email_status IS NULL OR email_status <> 'Valid')
-      )::int AS pending
+      )::int AS pending,
+      COUNT(*) FILTER (
+        WHERE (distance_abor_mi       IS NOT NULL AND distance_abor_mi       <= ${NEAR_MI})
+           OR (distance_fivepoints_mi IS NOT NULL AND distance_fivepoints_mi <= ${NEAR_MI})
+      )::int AS near,
+      COUNT(*) FILTER (
+        WHERE distance_abor_mi       IS NOT NULL
+          AND distance_fivepoints_mi IS NOT NULL
+          AND distance_abor_mi       >  ${NEAR_MI}
+          AND distance_fivepoints_mi >  ${NEAR_MI}
+      )::int AS far
     FROM mailing_contacts
    WHERE stage = 'holding'
-  `) as unknown as Array<{ total: number; verified: number; pending: number }>;
+  `) as unknown as Array<{
+    total: number; verified: number; pending: number; near: number; far: number;
+  }>;
   return {
-    total: rows[0]?.total ?? 0,
+    total:    rows[0]?.total    ?? 0,
     verified: rows[0]?.verified ?? 0,
-    pending: rows[0]?.pending ?? 0,
+    pending:  rows[0]?.pending  ?? 0,
+    near:     rows[0]?.near     ?? 0,
+    far:      rows[0]?.far      ?? 0,
   };
 }
 

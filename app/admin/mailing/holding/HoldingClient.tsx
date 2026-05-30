@@ -24,7 +24,7 @@ import type {
   VerifyStatus,
 } from '@/lib/mailing';
 
-type Counts = { total: number; verified: number; pending: number };
+type Counts = { total: number; verified: number; pending: number; near: number; far: number };
 type FilterKey = 'all' | 'verified' | 'pending';
 
 const PAGE_SIZE = 100;
@@ -279,10 +279,12 @@ export default function HoldingClient() {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <KpiCard label="Total members"  value={counts?.total    ?? 0} sub="awaiting review" />
         <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#10B981" />
         <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#F59E0B" />
+        <KpiCard label="Within 60 mi"   value={counts?.near     ?? 0} sub="near ABoR or Five Points" accent="#059669" />
+        <KpiCard label="Outside 60 mi"  value={counts?.far      ?? 0} sub="out of both radii" accent="#9CA3AF" />
       </div>
 
       {/* Filter chips + search */}
@@ -561,14 +563,35 @@ function VerifyCell({
 function ProximityBadges({ row }: { row: MailingContactRow }) {
   const dA = row.distance_abor_mi;
   const dF = row.distance_fivepoints_mi;
-  const nearA = dA !== null && dA !== undefined && dA <= NEAR_RADIUS_MI;
-  const nearF = dF !== null && dF !== undefined && dF <= NEAR_RADIUS_MI;
+  const hasA = dA !== null && dA !== undefined;
+  const hasF = dF !== null && dF !== undefined;
+  const nearA = hasA && dA! <= NEAR_RADIUS_MI;
+  const nearF = hasF && dF! <= NEAR_RADIUS_MI;
+  // Not geocoded at all → neutral em-dash so the column never looks broken.
+  if (!hasA && !hasF) {
+    return <span className="text-[11px] text-gray-400">—</span>;
+  }
+  // Geocoded but outside both 60mi radii → dedicated "Outside 60 mi" badge
+  // mirroring the new KPI card. We surface the closer of the two distances
+  // so the user can tell how far out the contact actually is.
   if (!nearA && !nearF) {
-    if (dA === null || dA === undefined) {
-      return <span className="text-[11px] text-gray-400">—</span>;
-    }
-    // Geocoded but outside both radii
-    return <span className="text-[11px] text-gray-500">{Math.round(dA)} mi · out of range</span>;
+    const closer =
+      hasA && hasF ? Math.min(dA!, dF!) :
+      hasA         ? dA! :
+                     dF!;
+    const anchor =
+      hasA && hasF ? (dA! <= dF! ? 'ABoR' : 'Five Points') :
+      hasA         ? 'ABoR' :
+                     'Five Points';
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium ring-1 ring-gray-200"
+        title={`${closer.toFixed(1)} mi from nearest anchor (${anchor})`}
+      >
+        <span>Outside 60 mi</span>
+        <span className="text-gray-500">{closer.toFixed(0)} mi · {anchor}</span>
+      </span>
+    );
   }
   return (
     <div className="flex flex-col gap-1">
