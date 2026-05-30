@@ -17,7 +17,7 @@
 //
 // Replaces: SiteHeader.tsx, HamburgerMenu.tsx, admin layout inline nav.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getApiBase } from '@/lib/api-base';
@@ -39,45 +39,53 @@ const PUB_COLORS: Record<string, string> = {
   realtynewsnow: '#1a2a44',
 };
 
-// Admin nav is grouped into logical sections so the top bar reads as a
-// workspace rather than a flat list. Each group renders in order with a
-// subtle divider between them on desktop and a section header on mobile.
-const ADMIN_GROUPS: { label: string; links: { label: string; href: string }[] }[] = [
+// Admin nav is grouped into logical sections. On desktop each group is
+// rendered as a dropdown menu button; on mobile the drawer continues to
+// show section headers + flat links.
+type AdminLink = { label: string; href: string; description?: string };
+type AdminGroup = { label: string; links: AdminLink[] };
+
+const ADMIN_GROUPS: AdminGroup[] = [
   {
     label: 'CRM & Audience',
     links: [
-      { label: 'CRM',         href: '/admin/crm' },
-      { label: 'Mailing',     href: '/admin/mailing' },
-      { label: 'Advertisers', href: '/admin/advertisers' },
-      { label: 'Subscribers', href: '/admin/subscribers' },
+      { label: 'CRM',              href: '/admin/crm',             description: 'Advertisers / clients pipeline' },
+      { label: 'Mailing List',     href: '/admin/mailing',         description: 'Segment lists & exports' },
+      { label: 'Holding Contacts', href: '/admin/mailing/holding', description: 'Scraped contacts awaiting review' },
+      { label: 'Advertisers',      href: '/admin/advertisers',     description: 'Active accounts' },
+      { label: 'Subscribers',      href: '/admin/subscribers',     description: 'Newsletter signups' },
     ],
   },
   {
     label: 'Revenue',
     links: [
-      { label: 'Billing',   href: '/admin/billing' },
-      { label: 'Ads',       href: '/admin/ads' },
-      { label: 'Marketing', href: '/admin/marketing' },
+      { label: 'Billing',   href: '/admin/billing',   description: 'Invoices & payments' },
+      { label: 'Ads',       href: '/admin/ads',       description: 'Inventory & placements' },
+      { label: 'Marketing', href: '/admin/marketing', description: 'Campaigns & assets' },
     ],
   },
   {
     label: 'Content',
     links: [
-      { label: 'Magazines', href: '/admin/magazines' },
-      { label: 'Events',    href: '/admin/events' },
-      { label: 'Giveaways', href: '/admin/giveaways' },
-      { label: 'Inventory', href: '/admin/inventory' },
+      { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions' },
+      { label: 'Events',    href: '/admin/events',    description: 'Calendar publications' },
+      { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries' },
+      { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
     ],
   },
   {
     label: 'Insights',
     links: [
-      { label: 'Metrics',   href: '/admin/metrics' },
-      { label: 'Reports',   href: '/admin/reports' },
-      { label: 'Analytics', href: '/admin/analytics' },
+      { label: 'Metrics',   href: '/admin/metrics',   description: 'KPI dashboards' },
+      { label: 'Reports',   href: '/admin/reports',   description: 'Saved reports' },
+      { label: 'Analytics', href: '/admin/analytics', description: 'Traffic & engagement' },
     ],
   },
 ];
+
+function isGroupActive(group: AdminGroup, pathname: string): boolean {
+  return group.links.some((l) => pathname.startsWith(l.href));
+}
 
 const API = getApiBase();
 
@@ -162,6 +170,35 @@ export default function AppShell({
     setDrawerOpen(false);
   }, [pub]);
 
+  // Dropdown menu state — which admin group is currently open. null = none.
+  // Declared before any early return to keep hook order stable.
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const navRef = useRef<HTMLDivElement | null>(null);
+
+  // Close menus on outside click or Escape
+  useEffect(() => {
+    if (!openMenu) return;
+    const onClick = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setOpenMenu(null);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenMenu(null);
+    };
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [openMenu]);
+
+  // Close menu when route changes
+  useEffect(() => {
+    queueMicrotask(() => { setOpenMenu(null); });
+  }, [pathname]);
+
   const drawerBg = PUB_COLORS[pub] ?? PUB_COLORS.realtynewsnow;
   const isLoginPage = pathname === '/admin/login';
 
@@ -204,32 +241,82 @@ export default function AppShell({
             ) : null}
           </div>
 
-          {/* Right: desktop admin links (hidden on mobile) + logout */}
+          {/* Right: desktop admin dropdowns (hidden on mobile) + logout */}
           <div className="flex items-center gap-1">
-            {/* Desktop admin links */}
+            {/* Desktop admin dropdown menus */}
             {isAdmin ? (
-              <nav className="hidden lg:flex items-center gap-1 mr-2">
-                {ADMIN_GROUPS.map((group, gi) => (
-                  <div key={group.label} className="flex items-center gap-1">
-                    {gi > 0 && (
-                      <span aria-hidden className="mx-1 h-4 w-px bg-white/15" />
-                    )}
-                    {group.links.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        title={`${group.label} · ${link.label}`}
-                        className={`px-2.5 py-1.5 text-xs rounded-md transition ${
-                          pathname.startsWith(link.href)
+              <nav ref={navRef} className="hidden lg:flex items-center gap-1 mr-2 relative">
+                {ADMIN_GROUPS.map((group) => {
+                  const isOpen   = openMenu === group.label;
+                  const isActive = isGroupActive(group, pathname);
+                  return (
+                    <div key={group.label} className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setOpenMenu(isOpen ? null : group.label)}
+                        onMouseEnter={() => { if (openMenu) setOpenMenu(group.label); }}
+                        aria-haspopup="menu"
+                        aria-expanded={isOpen}
+                        className={`px-3 py-1.5 text-xs rounded-md transition inline-flex items-center gap-1 ${
+                          isOpen
                             ? 'text-white bg-white/15'
-                            : 'text-white/60 hover:text-white hover:bg-white/10'
+                            : isActive
+                              ? 'text-white bg-white/10 hover:bg-white/15'
+                              : 'text-white/70 hover:text-white hover:bg-white/10'
                         }`}
                       >
-                        {link.label}
-                      </Link>
-                    ))}
-                  </div>
-                ))}
+                        <span>{group.label}</span>
+                        <svg
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                          aria-hidden
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </button>
+                      {isOpen && (
+                        <div
+                          role="menu"
+                          className="absolute right-0 mt-1.5 min-w-[16rem] rounded-lg bg-white text-gray-900 shadow-lg border border-gray-200 py-1.5 z-50"
+                        >
+                          <div className="px-3 pt-1.5 pb-1 text-[10px] uppercase tracking-[0.15em] text-gray-400 font-semibold">
+                            {group.label}
+                          </div>
+                          {group.links.map((link) => {
+                            const linkActive = pathname.startsWith(link.href);
+                            return (
+                              <Link
+                                key={link.href}
+                                href={link.href}
+                                role="menuitem"
+                                onClick={() => setOpenMenu(null)}
+                                className={`block px-3 py-2 text-sm transition ${
+                                  linkActive
+                                    ? 'bg-gray-100 text-gray-900'
+                                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                                }`}
+                              >
+                                <div className="font-medium">{link.label}</div>
+                                {link.description && (
+                                  <div className="text-[11px] text-gray-500 mt-0.5">
+                                    {link.description}
+                                  </div>
+                                )}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </nav>
             ) : null}
 
