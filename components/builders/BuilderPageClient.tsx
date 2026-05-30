@@ -186,6 +186,38 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
       ];
     }
 
+    // La Cima promotions: keep ONLY David Weekley Homes promos unblurred,
+    // and float them to the top. All other underlying-builder promos are
+    // blurred regardless of count. Featured (advertiser) rows still bypass
+    // the paywall and lead. Developer-own promos (no embedded builder)
+    // come after DWH in the visible band.
+    if (builderName === 'La Cima' && tab === 'promos') {
+      const featuredVisible: BuilderInventoryRow[] = [];
+      const dwhVisible: BuilderInventoryRow[] = [];
+      const developerOwnVisible: BuilderInventoryRow[] = [];
+      const blurred: BuilderInventoryRow[] = [];
+      for (const r of currentRows) {
+        if (r.featured) {
+          featuredVisible.push(r);
+          continue;
+        }
+        const ub = extractUnderlyingBuilder(r.title);
+        if (ub && ub.toLowerCase() === 'david weekley homes') {
+          dwhVisible.push(r);
+        } else if (ub === null) {
+          developerOwnVisible.push(r);
+        } else {
+          blurred.push(r);
+        }
+      }
+      return [
+        ...featuredVisible.map((row) => ({ row, blurred: false })),
+        ...dwhVisible.map((row) => ({ row, blurred: false })),
+        ...developerOwnVisible.map((row) => ({ row, blurred: false })),
+        ...blurred.map((row) => ({ row, blurred: true })),
+      ];
+    }
+
     // Default paywall (La Cima, plus SRR Move-in Ready): keep advertiser
     // rows visible, plus one non-advertiser teaser per underlying builder.
     // Blur the rest. Unblurred items float to the top.
