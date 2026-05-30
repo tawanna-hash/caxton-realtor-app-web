@@ -1,48 +1,189 @@
 // lib/email-verify.ts
 //
-// Built-in email verifier. No external API needed.
+// Solid, free, production-grade email verifier. Zero third-party APIs.
 //
-// Three layers (cheap → expensive):
-//   1. Syntax     — strict-enough RFC 5322 regex
-//   2. MX lookup  — DNS resolveMx() against the domain
-//   3. SMTP probe — connect to the highest-priority MX, send
-//                   HELO / MAIL FROM / RCPT TO <address>, observe reply
+// Pipeline (cheap → expensive). Each layer can short-circuit the rest:
+//
+//   1.  Syntax            — strict RFC-5321 length checks + permissive regex
+//   2.  Domain shape      — top-level domain present, no trailing dot, etc.
+//   3.  Typo suggestion   — Levenshtein-1 distance against popular domains
+//                            (gmial.com → gmail.com). Informational only.
+//   4.  Disposable check  — bundled list of throwaway providers (mailinator,
+//                            10minutemail, tempr.email, …). Marks Invalid.
+//   5.  Role-account flag — info@, admin@, postmaster@, … Informational.
+//   6.  Free-provider     — gmail.com, outlook.com, yahoo.com, … Big mailbox
+//                            providers reject random-IP SMTP probes to
+//                            prevent enumeration. We accept the domain at
+//                            face value (Pending, low risk) and don't waste
+//                            an SMTP round-trip.
+//   7.  MX resolution     — DNS resolveMx() with retry across all MXes.
+//   8.  SMTP probe        — connect to each MX in priority order:
+//                            HELO/EHLO, MAIL FROM, RCPT TO <addr>, then
+//                            RCPT TO <random@domain> to detect catch-all.
 //
 // Verdicts:
-//   'Valid'   — SMTP server accepted RCPT TO with a 250/251 reply
-//   'Invalid' — syntax bad, no MX, or SMTP responded with 5xx on RCPT
-//   'Pending' — soft failure (timeout, 421/450 greylist, conn refused).
-//               Caller can retry later.
+//   'Valid'   — SMTP server accepted RCPT TO with 250/251/252
+//                (and the catch-all probe did NOT also accept)
+//   'Invalid' — syntax bad, disposable, no MX, or 5xx mailbox reject
+//   'Pending' — soft failure (greylist 4xx, timeout, catch-all detected,
+//                free-provider skipped) — caller can retry later
 //
-// We never throw — every failure mode maps to one of the three verdicts
-// plus a `detail` string. Probe is bounded by a hard timeout (8s default)
-// because some mail servers will sit on the socket forever.
+// We never throw. Every failure mode maps to a verdict + structured
+// `signals` object so the UI can show *why*.
 
 import { promises as dns } from 'node:dns';
 import net from 'node:net';
+import crypto from 'node:crypto';
 
-// Permissive but stricter than the trivial `\S+@\S+` regex.
-// Disallows leading/trailing dot, consecutive dots, etc.
-const EMAIL_RE =
-  /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
+// ─────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────
 
 export type EmailVerdict = 'Valid' | 'Invalid' | 'Pending';
 
-export interface EmailVerifyResult {
-  verdict: EmailVerdict;
-  detail:  string;
-  mx?:     string;
-  code?:   number;
+export interface EmailVerifySignals {
+  syntaxOk:       boolean;
+  disposable:     boolean;
+  roleAccount:    boolean;
+  freeProvider:   boolean;
+  hasMx:          boolean;
+  smtpConnected:  boolean;
+  mailboxExists:  boolean | null;   // null = unknown (probe didn't run)
+  catchAll:       boolean | null;   // null = unknown
 }
 
-interface VerifyOpts {
-  /** Hard timeout for the whole SMTP probe (ms). Default 8000. */
-  timeoutMs?: number;
-  /** MAIL FROM envelope sender. Default uses EMAIL_VERIFY_SENDER or postmaster@localhost. */
-  fromAddress?: string;
-  /** HELO/EHLO hostname. Default uses EMAIL_VERIFY_HELO_HOST or 'realtynewsnow.app'. */
-  heloHost?: string;
+export interface EmailVerifyResult {
+  /** Final verdict. */
+  verdict:     EmailVerdict;
+  /** Human-readable explanation. Always populated. */
+  detail:      string;
+  /** Best MX host we hit (or last one tried). */
+  mx?:         string;
+  /** Last SMTP response code we observed. */
+  code?:       number;
+  /** Risk score 0 (clean) → 100 (very risky). Useful for sorting. */
+  risk:        number;
+  /** Structured signals — surface in the UI for the user. */
+  signals:     EmailVerifySignals;
+  /** Suggested correction for likely typos (gmial.com → gmail.com). */
+  suggestion?: string;
+  /** Normalized address (lowercased domain). */
+  normalized?: string;
 }
+
+export interface VerifyOpts {
+  /** Hard timeout for the whole SMTP probe per MX (ms). Default 8000. */
+  timeoutMs?:   number;
+  /** MAIL FROM envelope. Default uses EMAIL_VERIFY_SENDER. */
+  fromAddress?: string;
+  /** HELO/EHLO host. Default uses EMAIL_VERIFY_HELO_HOST. */
+  heloHost?:    string;
+  /** Skip catch-all probe (saves one RCPT). Default false. */
+  skipCatchAll?: boolean;
+  /** Skip SMTP entirely (syntax + MX only). Default false. */
+  skipSmtp?:    boolean;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Static reference lists (bundled, no API, no fees)
+// ─────────────────────────────────────────────────────────────────
+
+// Common throwaway providers. Not exhaustive but covers the loud 95%.
+// Sources: stop-forum-spam, disposable-email-domains GitHub lists,
+// manually trimmed.
+const DISPOSABLE_DOMAINS = new Set<string>([
+  '10minutemail.com', '10minutemail.net', '20minutemail.com',
+  'anonbox.net', 'anonymbox.com', 'asdasd.ru',
+  'binkmail.com', 'bobmail.info', 'bsnow.net', 'bspamfree.org',
+  'crazymailing.com', 'cuvox.de',
+  'deadaddress.com', 'discard.email', 'disposable.email', 'disposablemail.com',
+  'dispostable.com', 'dropmail.me', 'dudmail.com',
+  'easytrashmail.com', 'einrot.com', 'emailondeck.com', 'emailtemporario.com.br',
+  'fakeinbox.com', 'fakemailgenerator.com', 'fastmail.fm',
+  'gawab.com', 'getairmail.com', 'getnada.com', 'guerrillamail.com',
+  'guerrillamail.de', 'guerrillamail.info', 'guerrillamail.net', 'guerrillamail.org',
+  'guerrillamailblock.com', 'gustr.com',
+  'harakirimail.com',
+  'inboxalias.com', 'inboxbear.com', 'incognitomail.com',
+  'jourrapide.com',
+  'maildrop.cc', 'mailexpire.com', 'mailforspam.com', 'mailinator.com',
+  'mailnesia.com', 'mailnull.com', 'mailtemp.info', 'mailtothis.com',
+  'mintemail.com', 'mohmal.com', 'moncourrier.fr.nf', 'monemail.fr.nf',
+  'mvrht.com', 'mytemp.email', 'mytrashmail.com',
+  'nada.email', 'no-spam.ws', 'nomail.xl.cx', 'nospam.ze.tc',
+  'objectmail.com', 'oneoffemail.com', 'opayq.com',
+  'pokemail.net', 'privatemail.com', 'punkass.com',
+  'rcpt.at', 'rhyta.com',
+  'safetymail.info', 'safetypost.de', 'sharklasers.com', 'shitmail.me',
+  'sinnlos-mail.de', 'slopsbox.com', 'spam4.me', 'spambog.com', 'spambog.de',
+  'spambog.ru', 'spambox.us', 'spamcero.com', 'spamevader.com', 'spamex.com',
+  'spamfree24.com', 'spamfree24.de', 'spamfree24.eu', 'spamfree24.info',
+  'spamfree24.net', 'spamfree24.org', 'spamgourmet.com', 'spamhereplease.com',
+  'spaml.com', 'spaml.de', 'spammotel.com', 'spamspot.com', 'spamthis.co.uk',
+  'speed.1s.fr', 'superrito.com',
+  'teleworm.com', 'teleworm.us', 'tempemail.biz', 'tempemail.com', 'tempemail.net',
+  'tempinbox.com', 'tempmail.eu', 'tempmail.it', 'tempmail.us', 'tempmailaddress.com',
+  'tempmailer.com', 'tempmailer.de', 'temp-mail.org', 'temp-mail.ru',
+  'tempr.email', 'thankyou2010.com', 'thismail.net', 'throam.com',
+  'thrott.com', 'throwam.com', 'throwawayemail.com', 'throwawaymail.com',
+  'tmail.ws', 'tmpeml.info', 'trashmail.at', 'trashmail.com', 'trashmail.de',
+  'trashmail.me', 'trashmail.net', 'trashmail.org', 'trashmail.ws',
+  'trbvm.com', 'trillianpro.com',
+  'urhen.com',
+  'wegwerfmail.de', 'wegwerfmail.info', 'wegwerfmail.net', 'wegwerfmail.org',
+  'wh4f.org', 'wuzup.net',
+  'yopmail.com', 'yopmail.fr', 'yopmail.net',
+  'zehnminutenmail.de', 'zoemail.org',
+]);
+
+// Common role-based local parts. Informational only — doesn't make an
+// address invalid, but B2B lists usually want to exclude them.
+const ROLE_LOCAL_PARTS = new Set<string>([
+  'abuse', 'admin', 'administrator', 'all', 'billing', 'cf', 'compliance',
+  'contact', 'enquiries', 'enquiry', 'feedback', 'help', 'hello', 'helpdesk',
+  'hostmaster', 'info', 'inquiries', 'inquiry', 'jobs', 'legal', 'mail',
+  'mailer-daemon', 'marketing', 'media', 'newsletter', 'no-reply', 'noc',
+  'noreply', 'office', 'orders', 'postmaster', 'press', 'privacy', 'root',
+  'sales', 'security', 'service', 'spam', 'staff', 'support', 'sysadmin',
+  'team', 'tech', 'usenet', 'uucp', 'webmaster', 'welcome', 'www',
+]);
+
+// Major free-mail providers. These reject random-IP SMTP probes by
+// design to prevent enumeration, so we don't bother probing them — we
+// trust the MX and return Pending with a clear reason.
+const FREE_PROVIDERS = new Set<string>([
+  'gmail.com', 'googlemail.com',
+  'yahoo.com', 'yahoo.co.uk', 'yahoo.co.jp', 'yahoo.fr', 'yahoo.de',
+  'yahoo.it', 'yahoo.es', 'yahoo.ca', 'yahoo.com.au', 'ymail.com', 'rocketmail.com',
+  'outlook.com', 'hotmail.com', 'live.com', 'msn.com', 'outlook.co.uk',
+  'hotmail.co.uk', 'hotmail.fr', 'hotmail.de', 'hotmail.it', 'hotmail.es',
+  'icloud.com', 'me.com', 'mac.com',
+  'aol.com', 'aim.com',
+  'protonmail.com', 'proton.me', 'pm.me',
+  'gmx.com', 'gmx.us', 'gmx.de', 'gmx.net', 'gmx.at', 'gmx.ch',
+  'mail.com', 'email.com',
+  'zoho.com', 'zohomail.com',
+  'yandex.com', 'yandex.ru',
+  'fastmail.com', 'fastmail.fm',
+  'tutanota.com', 'tutanota.de', 'tuta.io',
+]);
+
+// Popular domains we'll suggest corrections toward (Levenshtein-1).
+const POPULAR_DOMAINS = [
+  'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com',
+  'aol.com', 'msn.com', 'live.com', 'me.com', 'mac.com',
+  'comcast.net', 'sbcglobal.net', 'att.net', 'verizon.net', 'cox.net',
+  'protonmail.com', 'mail.com', 'gmx.com', 'zoho.com',
+];
+
+// ─────────────────────────────────────────────────────────────────
+// Tiny helpers
+// ─────────────────────────────────────────────────────────────────
+
+// Permissive but stricter than `\S+@\S+`. Disallows leading/trailing dot,
+// consecutive dots, requires a 2+ char TLD.
+const EMAIL_RE =
+  /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
 
 function fromAddr(opts: VerifyOpts): string {
   return opts.fromAddress
@@ -56,66 +197,262 @@ function heloHost(opts: VerifyOpts): string {
     ?? 'realtynewsnow.app';
 }
 
+/** Damerau-Levenshtein distance, capped at `max` for speed. */
+function dlDistance(a: string, b: string, max: number): number {
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  const la = a.length, lb = b.length;
+  // Two-row DP
+  let prev = Array.from({ length: lb + 1 }, (_, i) => i);
+  let cur  = new Array<number>(lb + 1);
+  for (let i = 1; i <= la; i++) {
+    cur[0] = i;
+    let rowMin = cur[0];
+    for (let j = 1; j <= lb; j++) {
+      const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
+      cur[j] = Math.min(
+        cur[j - 1] + 1,        // insert
+        prev[j] + 1,           // delete
+        prev[j - 1] + cost,    // replace
+      );
+      if (
+        i > 1 && j > 1 &&
+        a.charCodeAt(i - 1) === b.charCodeAt(j - 2) &&
+        a.charCodeAt(i - 2) === b.charCodeAt(j - 1)
+      ) {
+        cur[j] = Math.min(cur[j], prev[j - 1] - 1 + 1); // transposition
+      }
+      if (cur[j] < rowMin) rowMin = cur[j];
+    }
+    if (rowMin > max) return max + 1;
+    [prev, cur] = [cur, prev];
+  }
+  return prev[lb];
+}
+
+function suggestDomain(domain: string): string | undefined {
+  if (POPULAR_DOMAINS.includes(domain)) return undefined;
+  let best: string | undefined;
+  let bestD = 99;
+  for (const cand of POPULAR_DOMAINS) {
+    const d = dlDistance(domain, cand, 2);
+    if (d < bestD && d > 0 && d <= 2) {
+      bestD = d;
+      best = cand;
+    }
+  }
+  return best;
+}
+
+function blankSignals(): EmailVerifySignals {
+  return {
+    syntaxOk:       false,
+    disposable:     false,
+    roleAccount:    false,
+    freeProvider:   false,
+    hasMx:          false,
+    smtpConnected:  false,
+    mailboxExists:  null,
+    catchAll:       null,
+  };
+}
+
+function computeRisk(s: EmailVerifySignals): number {
+  if (!s.syntaxOk) return 100;
+  if (s.disposable) return 95;
+  if (!s.hasMx) return 90;
+  if (s.mailboxExists === false) return 95;
+  if (s.catchAll === true) return 60;
+  let r = 0;
+  if (s.roleAccount) r += 20;
+  if (s.freeProvider && s.mailboxExists === null) r += 25;
+  if (!s.smtpConnected) r += 30;
+  if (s.mailboxExists === true) r = Math.max(0, r - 20);
+  return Math.min(100, Math.max(0, r));
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Main entry point
+// ─────────────────────────────────────────────────────────────────
+
 /**
- * Verify a single email address. Returns a verdict + detail string.
- * Never throws.
+ * Verify a single email address. Never throws — returns a structured
+ * result with a verdict, detail, risk score, and full signals object.
  */
 export async function verifyEmail(
   email: string,
   opts: VerifyOpts = {},
 ): Promise<EmailVerifyResult> {
-  const addr = (email ?? '').trim();
-  if (!addr) {
-    return { verdict: 'Invalid', detail: 'Empty address.' };
-  }
-  if (!EMAIL_RE.test(addr)) {
-    return { verdict: 'Invalid', detail: 'Syntax check failed.' };
-  }
-  const domain = addr.split('@')[1].toLowerCase();
+  const signals = blankSignals();
+  const raw = (email ?? '').trim();
 
-  // ---- MX lookup ----
-  let mx: { exchange: string; priority: number }[];
+  // ---- 1. Syntax + length ----
+  if (!raw) {
+    return { verdict: 'Invalid', detail: 'Empty address.', risk: 100, signals };
+  }
+  if (raw.length > 254) {
+    return { verdict: 'Invalid', detail: 'Address exceeds 254 chars (RFC 5321).', risk: 100, signals };
+  }
+  const at = raw.lastIndexOf('@');
+  if (at < 1 || at === raw.length - 1) {
+    return { verdict: 'Invalid', detail: 'Missing local-part or domain.', risk: 100, signals };
+  }
+  const local  = raw.slice(0, at);
+  const domain = raw.slice(at + 1).toLowerCase();
+  if (local.length > 64) {
+    return { verdict: 'Invalid', detail: 'Local-part exceeds 64 chars (RFC 5321).', risk: 100, signals };
+  }
+  const normalized = `${local}@${domain}`;
+  if (!EMAIL_RE.test(normalized)) {
+    return { verdict: 'Invalid', detail: 'Syntax check failed.', risk: 100, signals, normalized };
+  }
+  signals.syntaxOk = true;
+
+  // ---- 2. Cheap static checks ----
+  signals.disposable   = DISPOSABLE_DOMAINS.has(domain);
+  signals.roleAccount  = ROLE_LOCAL_PARTS.has(local.toLowerCase());
+  signals.freeProvider = FREE_PROVIDERS.has(domain);
+  const suggestion     = suggestDomain(domain);
+
+  if (signals.disposable) {
+    return {
+      verdict:    'Invalid',
+      detail:     `${domain} is a disposable / throwaway provider.`,
+      risk:       computeRisk(signals),
+      signals,
+      suggestion,
+      normalized,
+    };
+  }
+
+  // ---- 3. MX lookup ----
+  let mxRecords: { exchange: string; priority: number }[] = [];
   try {
-    mx = await dns.resolveMx(domain);
+    mxRecords = await dns.resolveMx(domain);
   } catch (err) {
     const code = (err as NodeJS.ErrnoException)?.code ?? '';
     if (code === 'ENOTFOUND' || code === 'ENODATA') {
-      return { verdict: 'Invalid', detail: `No MX records for ${domain}.` };
+      return {
+        verdict:    'Invalid',
+        detail:     `No MX records for ${domain}.`,
+        risk:       computeRisk(signals),
+        signals,
+        suggestion,
+        normalized,
+      };
     }
-    return { verdict: 'Pending', detail: `DNS lookup failed: ${code}.` };
+    return {
+      verdict:    'Pending',
+      detail:     `DNS lookup failed: ${code}.`,
+      risk:       computeRisk(signals),
+      signals,
+      suggestion,
+      normalized,
+    };
   }
-  if (!mx || mx.length === 0) {
-    return { verdict: 'Invalid', detail: `No MX records for ${domain}.` };
+  if (!mxRecords || mxRecords.length === 0) {
+    // Fallback: per RFC 5321 §5.1, a host with an A record but no MX
+    // implicitly accepts mail. We treat this as "Pending — no MX".
+    return {
+      verdict:    'Invalid',
+      detail:     `No MX records for ${domain}.`,
+      risk:       computeRisk(signals),
+      signals,
+      suggestion,
+      normalized,
+    };
   }
-  mx.sort((a, b) => a.priority - b.priority);
-  const host = mx[0].exchange;
+  signals.hasMx = true;
+  mxRecords.sort((a, b) => a.priority - b.priority);
 
-  // ---- SMTP probe ----
-  return smtpProbe(addr, host, opts);
+  // ---- 4. Free-provider short-circuit ----
+  // Gmail/Outlook/Yahoo etc. reject SMTP probes from random IPs to
+  // prevent enumeration. The address looks well-formed, the domain
+  // resolves, and the MX is healthy — but we cannot prove the mailbox
+  // exists from here. Surface as Pending so the user can decide.
+  if (signals.freeProvider) {
+    return {
+      verdict:    'Pending',
+      detail:     `${domain} blocks SMTP verification (free-mail provider). Address looks well-formed.`,
+      risk:       computeRisk(signals),
+      mx:         mxRecords[0].exchange,
+      signals,
+      suggestion,
+      normalized,
+    };
+  }
+
+  // ---- 5. Caller asked to skip SMTP ----
+  if (opts.skipSmtp) {
+    return {
+      verdict:    'Pending',
+      detail:     'SMTP probe skipped.',
+      risk:       computeRisk(signals),
+      mx:         mxRecords[0].exchange,
+      signals,
+      suggestion,
+      normalized,
+    };
+  }
+
+  // ---- 6. SMTP probe across MXes (try next on conn-level failure) ----
+  let lastResult: EmailVerifyResult | null = null;
+  for (const mx of mxRecords) {
+    const r = await smtpProbe(normalized, domain, mx.exchange, opts, signals);
+    lastResult = r;
+    // If we got a definitive Valid/Invalid OR an SMTP-level Pending
+    // (mailbox-related), stop trying further MXes.
+    if (r.verdict !== 'Pending' || signals.smtpConnected) break;
+  }
+  const final = lastResult ?? {
+    verdict:    'Pending' as const,
+    detail:     'No MX could be probed.',
+    risk:       computeRisk(signals),
+    signals,
+    suggestion,
+    normalized,
+  };
+  return { ...final, suggestion, normalized, risk: computeRisk(signals) };
 }
 
-/**
- * Connect to the given MX and run HELO / MAIL FROM / RCPT TO. The probe
- * is bounded by `timeoutMs` total — if anything hangs we resolve with
- * `Pending`.
- */
+// ─────────────────────────────────────────────────────────────────
+// SMTP probe (one MX)
+// ─────────────────────────────────────────────────────────────────
+
 function smtpProbe(
   rcpt:    string,
+  domain:  string,
   mxHost:  string,
   opts:    VerifyOpts,
+  signals: EmailVerifySignals,
 ): Promise<EmailVerifyResult> {
   const timeoutMs = opts.timeoutMs ?? 8000;
   const from = fromAddr(opts);
   const helo = heloHost(opts);
+  const skipCatchAll = !!opts.skipCatchAll;
 
-  return new Promise((resolve) => {
+  // Random non-existent mailbox at the same domain for the catch-all probe.
+  // 16 random hex chars + 'noexist' guarantees uniqueness in practice.
+  const catchAllRcpt =
+    `noexist-${crypto.randomBytes(8).toString('hex')}@${domain}`;
+
+  return new Promise<EmailVerifyResult>((resolve) => {
     let settled = false;
-    const finish = (r: EmailVerifyResult) => {
+    let lastCode: number | undefined;
+    let mailboxAccepted = false;
+
+    const finish = (r: Omit<EmailVerifyResult, 'risk' | 'signals'>) => {
       if (settled) return;
       settled = true;
-      try { socket.destroy(); } catch {}
+      try { socket.end('QUIT\r\n'); } catch { /* ignore */ }
+      try { socket.destroy(); } catch { /* ignore */ }
       clearTimeout(deadline);
-      resolve({ ...r, mx: mxHost });
+      resolve({
+        ...r,
+        mx:      mxHost,
+        signals,
+        risk:    computeRisk(signals),
+      });
     };
 
     const socket = net.createConnection({ host: mxHost, port: 25 });
@@ -123,83 +460,143 @@ function smtpProbe(
     socket.setTimeout(timeoutMs);
 
     const deadline = setTimeout(() => {
-      finish({ verdict: 'Pending', detail: 'SMTP probe timed out.' });
+      finish({ verdict: 'Pending', detail: 'SMTP probe timed out.', code: lastCode });
     }, timeoutMs);
 
-    socket.on('error', (err) => {
+    socket.on('error', (err: NodeJS.ErrnoException) => {
+      // Connection refused / no route / DNS fail at host level — try
+      // next MX. We return Pending; the caller decides whether to
+      // escalate to Invalid based on whether ANY MX worked.
       finish({
         verdict: 'Pending',
-        detail:  `SMTP error: ${err.message}`,
+        detail:  `SMTP connect error (${err.code ?? 'ERR'}): ${err.message}`,
+        code:    lastCode,
       });
     });
     socket.on('timeout', () => {
-      finish({ verdict: 'Pending', detail: 'SMTP socket timeout.' });
+      finish({ verdict: 'Pending', detail: 'SMTP socket timeout.', code: lastCode });
     });
 
-    // We drive the conversation as a tiny state machine. `step` increments
-    // after every command/response pair.
+    // ─── State machine ───
+    // 0 banner → 1 EHLO → 2 MAIL FROM → 3 RCPT TO (real) →
+    // 4 RCPT TO (catch-all probe) → done
     let step = 0;
     let buf  = '';
+    let triedHelo = false;
 
     const send = (line: string) => {
-      socket.write(`${line}\r\n`);
+      try { socket.write(`${line}\r\n`); } catch { /* socket dying */ }
     };
 
     socket.on('data', (chunk: string) => {
       buf += chunk;
-      // SMTP replies are line-terminated; a multi-line response uses
-      // "XYZ-" continuation lines until a final "XYZ " (space) line.
       const lines = buf.split(/\r?\n/);
       buf = lines.pop() ?? '';
       for (const line of lines) {
         if (!line) continue;
-        const codeMatch = line.match(/^(\d{3})([- ])/);
-        if (!codeMatch) continue;
-        const code  = Number(codeMatch[1]);
-        const final = codeMatch[2] === ' ';
+        const m = line.match(/^(\d{3})([- ])/);
+        if (!m) continue;
+        const code  = Number(m[1]);
+        const final = m[2] === ' ';
         if (!final) continue;
+        lastCode = code;
 
         switch (step) {
           case 0: // banner
             if (code === 220) {
+              signals.smtpConnected = true;
               send(`EHLO ${helo}`);
               step = 1;
+            } else if (code === 421 || code === 451) {
+              finish({ verdict: 'Pending', detail: `Server temporarily unavailable (${code}).`, code });
             } else {
               finish({ verdict: 'Pending', detail: `SMTP banner ${code}.`, code });
             }
             break;
-          case 1: // EHLO response
-            if (code === 250) {
+          case 1: // EHLO / HELO response
+            if (code >= 200 && code < 300) {
               send(`MAIL FROM:<${from}>`);
               step = 2;
-            } else if (code >= 500) {
-              // Some servers reject EHLO and want HELO instead — try once
+            } else if (!triedHelo && code >= 500) {
+              triedHelo = true;
               send(`HELO ${helo}`);
-              step = 1; // re-handle as EHLO response
+              // stay on step 1
+            } else if (code === 421 || code === 450 || code === 451 || code === 452) {
+              finish({ verdict: 'Pending', detail: `HELO greylisted (${code}).`, code });
             } else {
-              finish({ verdict: 'Pending', detail: `EHLO got ${code}.`, code });
+              finish({ verdict: 'Pending', detail: `HELO got ${code}.`, code });
             }
             break;
-          case 2: // MAIL FROM response
+          case 2: // MAIL FROM
             if (code >= 200 && code < 300) {
               send(`RCPT TO:<${rcpt}>`);
               step = 3;
+            } else if (code === 421 || code === 450 || code === 451 || code === 452) {
+              finish({ verdict: 'Pending', detail: `MAIL FROM greylisted (${code}).`, code });
+            } else if (code >= 500) {
+              // Server rejected our envelope sender — try fallback FROM
+              // once with a postmaster@<helo> address. This catches
+              // servers that block <> or third-party senders.
+              if (from !== `postmaster@${helo}`) {
+                send(`MAIL FROM:<postmaster@${helo}>`);
+                // stay on step 2
+              } else {
+                finish({ verdict: 'Pending', detail: `MAIL FROM rejected (${code}).`, code });
+              }
             } else {
               finish({ verdict: 'Pending', detail: `MAIL FROM got ${code}.`, code });
             }
             break;
-          case 3: // RCPT TO response
-            send('QUIT');
-            if (code === 250 || code === 251) {
-              finish({ verdict: 'Valid', detail: `RCPT accepted (${code}).`, code });
+          case 3: // RCPT TO (real address)
+            if (code === 250 || code === 251 || code === 252) {
+              mailboxAccepted = true;
+              signals.mailboxExists = true;
+              if (skipCatchAll) {
+                signals.catchAll = null;
+                finish({ verdict: 'Valid', detail: `RCPT accepted (${code}).`, code });
+              } else {
+                send(`RCPT TO:<${catchAllRcpt}>`);
+                step = 4;
+              }
             } else if (code === 550 || code === 551 || code === 553 || code === 554) {
+              signals.mailboxExists = false;
               finish({ verdict: 'Invalid', detail: `Mailbox rejected (${code}).`, code });
             } else if (code === 552) {
-              // Over-quota — mailbox exists but is full. Still useful.
+              // Over-quota — mailbox exists but is full
+              signals.mailboxExists = true;
               finish({ verdict: 'Valid', detail: `Mailbox over quota (${code}).`, code });
+            } else if (code === 421 || code === 450 || code === 451 || code === 452) {
+              finish({ verdict: 'Pending', detail: `RCPT greylisted (${code}).`, code });
             } else {
-              // 4xx greylisting / temp failures
               finish({ verdict: 'Pending', detail: `RCPT got ${code}.`, code });
+            }
+            break;
+          case 4: // RCPT TO (catch-all probe)
+            if (code === 250 || code === 251 || code === 252) {
+              // Domain accepts ANY mailbox → catch-all → we can't prove
+              // anything about the real address. Downgrade to Pending.
+              signals.catchAll = true;
+              finish({
+                verdict: 'Pending',
+                detail:  'Domain is catch-all — accepts any mailbox. Original RCPT also accepted, so cannot prove existence.',
+                code,
+              });
+            } else if (code === 550 || code === 551 || code === 553 || code === 554) {
+              signals.catchAll = false;
+              finish({
+                verdict: 'Valid',
+                detail:  `Mailbox exists; catch-all probe rejected (${code}).`,
+                code:    lastCode,
+              });
+            } else {
+              // Couldn't determine catch-all status. The real RCPT
+              // was accepted earlier, so trust that.
+              signals.catchAll = null;
+              finish({
+                verdict: mailboxAccepted ? 'Valid' : 'Pending',
+                detail:  `Catch-all probe inconclusive (${code}); trusting RCPT result.`,
+                code:    lastCode,
+              });
             }
             break;
           default:

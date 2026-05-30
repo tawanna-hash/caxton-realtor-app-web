@@ -559,4 +559,38 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       ON mailing_contacts(distance_abor_mi)
       WHERE distance_abor_mi IS NOT NULL
   `);
+
+  // ----------------------------------------------------------------
+  // Email verifier signals. Persist the rich result so the UI can
+  // render flags (disposable / role / catch-all / suggestion) without
+  // re-running the probe. `email_check` holds the full JSON payload.
+  // ----------------------------------------------------------------
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_disposable    boolean
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_role          boolean
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_free_provider boolean
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_catch_all     boolean
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_risk          int
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_suggestion    text
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_check         jsonb
+  `);
 }

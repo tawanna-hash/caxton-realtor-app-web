@@ -61,19 +61,37 @@ export async function POST(req: NextRequest) {
 
     const result = await verifyEmail(row.email);
 
-    // Only persist Valid / Invalid. Pending = soft failure, leave it alone.
+    // Persist signals on every probe (even Pending) so the UI shows
+    // disposable / role / catch-all / suggestion flags durably. We only
+    // overwrite the email_status itself when the verdict is definitive
+    // — a soft Pending shouldn't downgrade a previously-Valid mailbox.
     let updated = row;
-    if (result.verdict !== 'Pending') {
-      updated = (await persistEmailVerification(id, result.verdict)) ?? row;
-    }
+    const persistStatus =
+      result.verdict === 'Pending' && row.email_status === 'Valid'
+        ? 'Valid'
+        : result.verdict;
+    updated = (await persistEmailVerification(id, persistStatus, {
+      verdict:    result.verdict,
+      detail:     result.detail,
+      risk:       result.risk,
+      signals:    result.signals,
+      mx:         result.mx,
+      code:       result.code,
+      suggestion: result.suggestion,
+      normalized: result.normalized,
+    })) ?? row;
 
     return NextResponse.json({
-      ok:       true,
-      verdict:  result.verdict,
-      detail:   result.detail,
-      mx:       result.mx ?? null,
-      smtpCode: result.code ?? null,
-      row:      updated,
+      ok:         true,
+      verdict:    result.verdict,
+      detail:     result.detail,
+      mx:         result.mx ?? null,
+      smtpCode:   result.code ?? null,
+      risk:       result.risk,
+      signals:    result.signals,
+      suggestion: result.suggestion ?? null,
+      normalized: result.normalized ?? null,
+      row:        updated,
     });
   } catch (err) {
     console.error('[admin/mailing/holding/verify-email]', errMessage(err));

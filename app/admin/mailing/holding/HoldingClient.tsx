@@ -156,7 +156,19 @@ export default function HoldingClient() {
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
       if (j.row) mergeRow(j.row);
-      showToast(`Email: ${j.verdict ?? 'Unknown'}${j.detail ? ` — ${j.detail}` : ''}`);
+      // Build a richer toast surfacing the most actionable signals.
+      const extras: string[] = [];
+      const s = j.signals as {
+        disposable?: boolean; roleAccount?: boolean;
+        freeProvider?: boolean; catchAll?: boolean | null;
+      } | undefined;
+      if (s?.disposable)   extras.push('disposable provider');
+      if (s?.catchAll)     extras.push('catch-all domain');
+      if (s?.freeProvider) extras.push('free-mail provider');
+      if (s?.roleAccount)  extras.push('role account');
+      if (j.suggestion)    extras.push(`did you mean @${j.suggestion}?`);
+      const tag = extras.length ? ` · ${extras.join(' · ')}` : '';
+      showToast(`Email: ${j.verdict ?? 'Unknown'}${j.detail ? ` — ${j.detail}` : ''}${tag}`);
       await reload();
     } catch (err) {
       showToast(`Email verify failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -416,13 +428,16 @@ export default function HoldingClient() {
                     />
                   </td>
                   <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                    <VerifyCell
-                      status={r.email_status}
-                      hasData={!!r.email}
-                      busy={busy === `email-${r.id}`}
-                      onVerify={() => verifyEmail(r.id)}
-                      label="SMTP"
-                    />
+                    <div className="flex flex-col gap-1">
+                      <VerifyCell
+                        status={r.email_status}
+                        hasData={!!r.email}
+                        busy={busy === `email-${r.id}`}
+                        onVerify={() => verifyEmail(r.id)}
+                        label="SMTP"
+                      />
+                      <EmailFlags row={r} />
+                    </div>
                   </td>
                 </tr>
               );
@@ -556,6 +571,59 @@ function VerifyCell({
       >
         {busy ? '…' : `Verify ${label}`}
       </button>
+    </div>
+  );
+}
+
+function EmailFlags({ row }: { row: MailingContactRow }) {
+  const flags: { label: string; cls: string; title: string }[] = [];
+  if (row.email_disposable) {
+    flags.push({
+      label: 'Disposable',
+      cls:   'bg-red-100 text-red-800 ring-1 ring-red-200',
+      title: 'Throwaway / temporary email provider',
+    });
+  }
+  if (row.email_catch_all) {
+    flags.push({
+      label: 'Catch-all',
+      cls:   'bg-amber-100 text-amber-800 ring-1 ring-amber-200',
+      title: 'Domain accepts any mailbox — existence cannot be proven',
+    });
+  }
+  if (row.email_free_provider) {
+    flags.push({
+      label: 'Free mail',
+      cls:   'bg-slate-100 text-slate-700 ring-1 ring-slate-200',
+      title: 'Gmail/Outlook/Yahoo — SMTP probe blocked, address looks well-formed',
+    });
+  }
+  if (row.email_role) {
+    flags.push({
+      label: 'Role',
+      cls:   'bg-indigo-100 text-indigo-800 ring-1 ring-indigo-200',
+      title: 'Role / generic mailbox (info@, admin@, support@…)',
+    });
+  }
+  if (row.email_suggestion) {
+    flags.push({
+      label: `⇒ @${row.email_suggestion}`,
+      cls:   'bg-yellow-100 text-yellow-800 ring-1 ring-yellow-200',
+      title: `Likely typo — did you mean @${row.email_suggestion}?`,
+    });
+  }
+  if (flags.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {flags.map((f) => (
+        <span
+          key={f.label}
+          title={f.title}
+          className={`inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-full font-medium ${f.cls}`}
+        >
+          {f.label}
+        </span>
+      ))}
     </div>
   );
 }

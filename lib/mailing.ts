@@ -104,6 +104,14 @@ export type MailingContactRow = {
   distance_abor_mi: number | null;
   distance_fivepoints_mi: number | null;
   addr_usps_normalized: string | null;
+  // Email verifier signals
+  email_disposable:    boolean | null;
+  email_role:          boolean | null;
+  email_free_provider: boolean | null;
+  email_catch_all:     boolean | null;
+  email_risk:          number  | null;
+  email_suggestion:    string  | null;
+  email_check:         Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 };
@@ -1400,13 +1408,61 @@ export async function persistAddressVerification(
 }
 
 /**
+ * Rich payload from lib/email-verify.ts — kept loose here so this file
+ * doesn't take a dep on the verifier module.
+ */
+export interface EmailVerifyPayload {
+  verdict:     'Valid' | 'Invalid' | 'Pending';
+  detail:      string;
+  risk:        number;
+  signals:     {
+    syntaxOk:      boolean;
+    disposable:    boolean;
+    roleAccount:   boolean;
+    freeProvider:  boolean;
+    hasMx:         boolean;
+    smtpConnected: boolean;
+    mailboxExists: boolean | null;
+    catchAll:      boolean | null;
+  };
+  mx?:         string;
+  code?:       number;
+  suggestion?: string;
+  normalized?: string;
+}
+
+/**
  * Persist the result of an email verification probe on a holding row.
+ * The rich `payload` is optional for backwards compatibility — when
+ * provided we persist the full structured signals so the UI can render
+ * disposable / role / catch-all / suggestion badges.
  */
 export async function persistEmailVerification(
   id: string,
   status: VerifyStatus,
+  payload?: EmailVerifyPayload,
 ): Promise<MailingContactRow | null> {
   const sql = getSql();
+  if (payload) {
+    const s = payload.signals;
+    const rows = (await sql`
+      UPDATE mailing_contacts
+         SET email_status        = ${status},
+             email_verified_at   = NOW(),
+             email_disposable    = ${s.disposable},
+             email_role          = ${s.roleAccount},
+             email_free_provider = ${s.freeProvider},
+             email_catch_all     = ${s.catchAll},
+             email_risk          = ${Math.round(payload.risk)},
+             email_suggestion    = ${payload.suggestion ?? null},
+             email_check         = ${JSON.stringify(payload)}::jsonb,
+             updated_at          = NOW()
+       WHERE id = ${id}
+         AND stage = 'holding'
+       RETURNING *
+    `) as unknown as MailingContactRow[];
+    return rows[0] ?? null;
+  }
   const rows = (await sql`
     UPDATE mailing_contacts
        SET email_status      = ${status},
