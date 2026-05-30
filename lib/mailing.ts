@@ -64,9 +64,13 @@ export function isMailingSegment(v: unknown): v is MailingSegment {
 // Row types
 // ============================================================
 
+export type MailingStage = 'holding' | 'mailing';
+export type VerifyStatus = 'Pending' | 'Valid' | 'Invalid';
+
 export type MailingContactRow = {
   id: string;
   segment: MailingSegment;
+  stage: MailingStage;
   first_name: string;
   last_name: string | null;
   email: string | null;
@@ -84,6 +88,13 @@ export type MailingContactRow = {
   tags: string[];
   source: string | null;
   advertiser_id: number | null;
+  addr_status: VerifyStatus | null;
+  email_status: VerifyStatus | null;
+  addr_verified_at: string | null;
+  email_verified_at: string | null;
+  promoted_at: string | null;
+  external_id: string | null;
+  external_source: string | null;
   unsubscribed_at: string | null;
   created_at: string;
   updated_at: string;
@@ -271,6 +282,7 @@ export async function listMailingContacts(opts: {
     ? (await sql`
         SELECT * FROM mailing_contacts
          WHERE segment = ${segment}
+           AND stage = 'mailing'
            AND (
              LOWER(COALESCE(first_name, '')) LIKE ${search_like}
              OR LOWER(COALESCE(last_name, '')) LIKE ${search_like}
@@ -301,6 +313,7 @@ export async function listMailingContacts(opts: {
     : (await sql`
         SELECT * FROM mailing_contacts
          WHERE segment = ${segment}
+           AND stage = 'mailing'
          ORDER BY
            CASE WHEN ${sort} = 'first_name'  AND ${dir} = 'asc'  THEN LOWER(COALESCE(first_name, ''))  END ASC  NULLS LAST,
            CASE WHEN ${sort} = 'first_name'  AND ${dir} = 'desc' THEN LOWER(COALESCE(first_name, ''))  END DESC NULLS LAST,
@@ -324,6 +337,7 @@ export async function listMailingContacts(opts: {
     ? (await sql`
         SELECT COUNT(*)::int AS c FROM mailing_contacts
          WHERE segment = ${segment}
+           AND stage = 'mailing'
            AND (
              LOWER(COALESCE(first_name, '')) LIKE ${search_like}
              OR LOWER(COALESCE(last_name, '')) LIKE ${search_like}
@@ -334,7 +348,7 @@ export async function listMailingContacts(opts: {
              OR REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') LIKE ${search_like}
            )
       `) as unknown as Array<{ c: number }>
-    : (await sql`SELECT COUNT(*)::int AS c FROM mailing_contacts WHERE segment = ${segment}`) as unknown as Array<{ c: number }>;
+    : (await sql`SELECT COUNT(*)::int AS c FROM mailing_contacts WHERE segment = ${segment} AND stage = 'mailing'`) as unknown as Array<{ c: number }>;
 
   return { rows, total: totalRow[0]?.c ?? 0 };
 }
@@ -344,6 +358,7 @@ export async function countBySegment(): Promise<Record<MailingSegment | 'total',
   const rows = (await sql`
     SELECT segment, COUNT(*)::int AS c
       FROM mailing_contacts
+     WHERE stage = 'mailing'
      GROUP BY segment
   `) as unknown as Array<{ segment: MailingSegment; c: number }>;
   const out = { total: 0, advertiser: 0, 'non-advertiser': 0, realtor: 0 } as Record<MailingSegment | 'total', number>;
@@ -354,6 +369,32 @@ export async function countBySegment(): Promise<Record<MailingSegment | 'total',
     }
   }
   return out;
+}
+
+/**
+ * Total count of contacts currently sitting in the holding stage,
+ * across all segments. Powers the Holding Contacts KPI tile.
+ */
+export async function countHolding(): Promise<{ total: number; verified: number; pending: number }> {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT
+      COUNT(*)::int AS total,
+      COUNT(*) FILTER (
+        WHERE addr_status = 'Valid' OR email_status = 'Valid'
+      )::int AS verified,
+      COUNT(*) FILTER (
+        WHERE (addr_status IS NULL OR addr_status <> 'Valid')
+          AND (email_status IS NULL OR email_status <> 'Valid')
+      )::int AS pending
+    FROM mailing_contacts
+   WHERE stage = 'holding'
+  `) as unknown as Array<{ total: number; verified: number; pending: number }>;
+  return {
+    total: rows[0]?.total ?? 0,
+    verified: rows[0]?.verified ?? 0,
+    pending: rows[0]?.pending ?? 0,
+  };
 }
 
 // ============================================================
@@ -788,4 +829,409 @@ export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number
   }
   await insertAdvertiserMailing(sql, primary, adv.id, 'hook:advertiser-upsert');
   return { added: true, updated: false };
+}
+
+// ============================================================
+// Holding contacts (staging area, ported from PressBook CRM)
+//
+// Contacts ingested from outside sources (UnlockMLS realtor scraper,
+// CSV imports, manual add) land in stage='holding' first. They need
+// at least one of address OR email verified before they can be
+// promoted to stage='mailing'.
+//
+// Promotion preserves the row UUID, just flips stage and stamps
+// promoted_at. Dedupe-by-email against the active mailing list runs
+// before promotion to avoid duplicating active contacts.
+// ============================================================
+
+export interface HoldingListResult {
+  rows: MailingContactRow[];
+  total: number;
+}
+
+/**
+ * List holding contacts with optional filter:
+ *   filter='all'       → everyone in holding
+ *   filter='verified'  → at least one of addr/email verified
+ *   filter='pending'   → neither addr nor email verified yet
+ */
+export async function listHoldingContacts(opts: {
+  search?: string;
+  filter?: 'all' | 'verified' | 'pending';
+  sort?: MailingColumnId;
+  dir?: 'asc' | 'desc';
+  limit?: number;
+  offset?: number;
+}): Promise<HoldingListResult> {
+  const sql = getSql();
+  const search = (opts.search ?? '').trim();
+  const search_like = search ? `%${search.toLowerCase()}%` : null;
+  const filter = opts.filter ?? 'all';
+  const sort = opts.sort && SORTABLE_COLUMNS.has(opts.sort) ? opts.sort : 'created_at';
+  const dir = opts.dir === 'asc' ? 'asc' : 'desc';
+  const limit = Math.min(Math.max(opts.limit ?? 100, 1), 500);
+  const offset = Math.max(opts.offset ?? 0, 0);
+
+  // Filter predicate baked into the WHERE clause as a portable bool.
+  // We pass `filter` as a parameter and let Postgres branch.
+  const rows = (await sql`
+    SELECT * FROM mailing_contacts
+     WHERE stage = 'holding'
+       AND (
+         ${filter} = 'all'
+         OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+         OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
+                                    AND (email_status IS NULL OR email_status <> 'Valid'))
+       )
+       AND (
+         ${search_like}::text IS NULL
+         OR LOWER(COALESCE(first_name, '')) LIKE ${search_like}
+         OR LOWER(COALESCE(last_name, ''))  LIKE ${search_like}
+         OR LOWER(COALESCE(email, ''))      LIKE ${search_like}
+         OR LOWER(COALESCE(company, ''))    LIKE ${search_like}
+         OR LOWER(COALESCE(city, ''))       LIKE ${search_like}
+         OR LOWER(COALESCE(license_number, '')) LIKE ${search_like}
+         OR REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') LIKE ${search_like}
+       )
+     ORDER BY
+       CASE WHEN ${sort} = 'first_name'  AND ${dir} = 'asc'  THEN LOWER(COALESCE(first_name, ''))  END ASC  NULLS LAST,
+       CASE WHEN ${sort} = 'first_name'  AND ${dir} = 'desc' THEN LOWER(COALESCE(first_name, ''))  END DESC NULLS LAST,
+       CASE WHEN ${sort} = 'last_name'   AND ${dir} = 'asc'  THEN LOWER(COALESCE(last_name, ''))   END ASC  NULLS LAST,
+       CASE WHEN ${sort} = 'last_name'   AND ${dir} = 'desc' THEN LOWER(COALESCE(last_name, ''))   END DESC NULLS LAST,
+       CASE WHEN ${sort} = 'email'       AND ${dir} = 'asc'  THEN LOWER(COALESCE(email, ''))       END ASC  NULLS LAST,
+       CASE WHEN ${sort} = 'email'       AND ${dir} = 'desc' THEN LOWER(COALESCE(email, ''))       END DESC NULLS LAST,
+       CASE WHEN ${sort} = 'company'     AND ${dir} = 'asc'  THEN LOWER(COALESCE(company, ''))     END ASC  NULLS LAST,
+       CASE WHEN ${sort} = 'company'     AND ${dir} = 'desc' THEN LOWER(COALESCE(company, ''))     END DESC NULLS LAST,
+       CASE WHEN ${sort} = 'city'        AND ${dir} = 'asc'  THEN LOWER(COALESCE(city, ''))        END ASC  NULLS LAST,
+       CASE WHEN ${sort} = 'city'        AND ${dir} = 'desc' THEN LOWER(COALESCE(city, ''))        END DESC NULLS LAST,
+       CASE WHEN ${sort} = 'created_at'  AND ${dir} = 'asc'  THEN created_at                        END ASC,
+       CASE WHEN ${sort} = 'created_at'  AND ${dir} = 'desc' THEN created_at                        END DESC,
+       created_at DESC
+     LIMIT ${limit} OFFSET ${offset}
+  `) as unknown as MailingContactRow[];
+
+  const totalRow = (await sql`
+    SELECT COUNT(*)::int AS c FROM mailing_contacts
+     WHERE stage = 'holding'
+       AND (
+         ${filter} = 'all'
+         OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+         OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
+                                    AND (email_status IS NULL OR email_status <> 'Valid'))
+       )
+       AND (
+         ${search_like}::text IS NULL
+         OR LOWER(COALESCE(first_name, '')) LIKE ${search_like}
+         OR LOWER(COALESCE(last_name, ''))  LIKE ${search_like}
+         OR LOWER(COALESCE(email, ''))      LIKE ${search_like}
+         OR LOWER(COALESCE(company, ''))    LIKE ${search_like}
+         OR LOWER(COALESCE(city, ''))       LIKE ${search_like}
+         OR LOWER(COALESCE(license_number, '')) LIKE ${search_like}
+         OR REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') LIKE ${search_like}
+       )
+  `) as unknown as Array<{ c: number }>;
+  return { rows, total: totalRow[0]?.c ?? 0 };
+}
+
+/**
+ * Mark a holding row as having its address verified. Used by the
+ * "Mark Verified" button and bulk-verify flow.
+ */
+export async function markAddrVerified(id: string, status: VerifyStatus = 'Valid'): Promise<boolean> {
+  const sql = getSql();
+  const ts = status === 'Valid' ? new Date().toISOString() : null;
+  const rows = (await sql`
+    UPDATE mailing_contacts
+       SET addr_status = ${status},
+           addr_verified_at = ${ts}
+     WHERE id = ${id}
+     RETURNING id
+  `) as unknown as Array<{ id: string }>;
+  return rows.length > 0;
+}
+
+export async function markEmailVerified(id: string, status: VerifyStatus = 'Valid'): Promise<boolean> {
+  const sql = getSql();
+  const ts = status === 'Valid' ? new Date().toISOString() : null;
+  const rows = (await sql`
+    UPDATE mailing_contacts
+       SET email_status = ${status},
+           email_verified_at = ${ts}
+     WHERE id = ${id}
+     RETURNING id
+  `) as unknown as Array<{ id: string }>;
+  return rows.length > 0;
+}
+
+export interface PromoteResult {
+  promoted: number;
+  rejected_unverified: number;
+  rejected_duplicate: number;
+}
+
+/**
+ * Promote one or more holding rows to stage='mailing'. Rows are only
+ * promoted if at least one of (addr_status, email_status) is 'Valid'
+ * AND the email (when present) doesn't already exist in the active
+ * mailing list. Returns counts so the caller can report results.
+ */
+export async function promoteHoldingContacts(ids: string[]): Promise<PromoteResult> {
+  if (ids.length === 0) return { promoted: 0, rejected_unverified: 0, rejected_duplicate: 0 };
+  const sql = getSql();
+  // Fetch the candidate rows.
+  const candidates = (await sql`
+    SELECT id, email, addr_status, email_status
+      FROM mailing_contacts
+     WHERE id = ANY(${ids}::uuid[])
+       AND stage = 'holding'
+  `) as unknown as Array<{
+    id: string;
+    email: string | null;
+    addr_status: VerifyStatus | null;
+    email_status: VerifyStatus | null;
+  }>;
+
+  let unverified = 0;
+  let duplicate = 0;
+  const eligible: string[] = [];
+
+  for (const row of candidates) {
+    if (row.addr_status !== 'Valid' && row.email_status !== 'Valid') {
+      unverified += 1;
+      continue;
+    }
+    if (row.email) {
+      const dup = (await sql`
+        SELECT id FROM mailing_contacts
+         WHERE stage = 'mailing'
+           AND LOWER(email) = LOWER(${row.email})
+         LIMIT 1
+      `) as unknown as Array<{ id: string }>;
+      if (dup.length > 0) {
+        duplicate += 1;
+        continue;
+      }
+    }
+    eligible.push(row.id);
+  }
+
+  if (eligible.length > 0) {
+    await sql`
+      UPDATE mailing_contacts
+         SET stage = 'mailing',
+             promoted_at = NOW()
+       WHERE id = ANY(${eligible}::uuid[])
+    `;
+  }
+
+  return {
+    promoted: eligible.length,
+    rejected_unverified: unverified,
+    rejected_duplicate: duplicate,
+  };
+}
+
+/**
+ * Reject (delete) holding contacts. Different code path from
+ * deleteMailingContacts so callers can confirm the rejected rows were
+ * actually in holding (mistakes shouldn't blow away active mailing
+ * list rows).
+ */
+export async function rejectHoldingContacts(ids: string[]): Promise<number> {
+  if (ids.length === 0) return 0;
+  const sql = getSql();
+  const rows = (await sql`
+    DELETE FROM mailing_contacts
+     WHERE id = ANY(${ids}::uuid[])
+       AND stage = 'holding'
+     RETURNING id
+  `) as unknown as Array<{ id: string }>;
+  return rows.length;
+}
+
+// ============================================================
+// Upsert from external scraper into holding
+//
+// Used by both the manual admin sync and the Vercel cron route.
+// Match priority:
+//   1. (external_source, external_id) — strongest, e.g. UnlockMLS MemberKey
+//   2. license_number (case-insensitive)
+//   3. email (case-insensitive)
+// On match: smart-merge — fill in blanks only, never overwrite manual
+// edits. On miss: insert as new holding row with status='Pending'.
+// ============================================================
+
+export interface ExternalContactInput {
+  external_id: string;
+  external_source: string;
+  first_name: string;
+  last_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  company?: string | null;
+  title?: string | null;
+  license_number?: string | null;
+  address?: string | null;
+  address_2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  website?: string | null;
+  segment?: MailingSegment;
+  source?: string | null;
+}
+
+export interface UpsertHoldingResult {
+  inserted: number;
+  updated: number;
+  unchanged: number;
+}
+
+export async function upsertHoldingContacts(
+  inputs: ExternalContactInput[],
+): Promise<UpsertHoldingResult> {
+  if (inputs.length === 0) return { inserted: 0, updated: 0, unchanged: 0 };
+  const sql = getSql();
+  let inserted = 0;
+  let updated = 0;
+  let unchanged = 0;
+
+  for (const inp of inputs) {
+    const segment: MailingSegment = isMailingSegment(inp.segment) ? inp.segment : 'realtor';
+    const first_name = normString(inp.first_name) ?? normString(inp.email) ?? '(no name)';
+
+    // Look up by external_source+external_id first.
+    let existing = (await sql`
+      SELECT id, email, address, phone, company, title, license_number,
+             city, state, zip, website, address_2
+        FROM mailing_contacts
+       WHERE external_source = ${inp.external_source}
+         AND external_id = ${inp.external_id}
+       LIMIT 1
+    `) as unknown as Array<{
+      id: string;
+      email: string | null;
+      address: string | null;
+      phone: string | null;
+      company: string | null;
+      title: string | null;
+      license_number: string | null;
+      city: string | null;
+      state: string | null;
+      zip: string | null;
+      website: string | null;
+      address_2: string | null;
+    }>;
+
+    // Fallback: license number (case-insensitive)
+    if (existing.length === 0 && inp.license_number) {
+      existing = (await sql`
+        SELECT id, email, address, phone, company, title, license_number,
+               city, state, zip, website, address_2
+          FROM mailing_contacts
+         WHERE LOWER(license_number) = LOWER(${inp.license_number})
+         LIMIT 1
+      `) as unknown as typeof existing;
+    }
+
+    // Fallback: email (case-insensitive)
+    if (existing.length === 0 && inp.email) {
+      existing = (await sql`
+        SELECT id, email, address, phone, company, title, license_number,
+               city, state, zip, website, address_2
+          FROM mailing_contacts
+         WHERE LOWER(email) = LOWER(${inp.email})
+         LIMIT 1
+      `) as unknown as typeof existing;
+    }
+
+    if (existing.length > 0) {
+      // Smart-merge: only fill blanks. Don't touch stage/segment so
+      // promoted records stay promoted, manual edits stick.
+      const cur = existing[0];
+      const updates: { field: string; value: string | null }[] = [];
+      const maybeSet = (field: string, currentVal: string | null, newVal: string | null | undefined) => {
+        if (currentVal == null || currentVal === '') {
+          const v = normString(newVal);
+          if (v) updates.push({ field, value: v });
+        }
+      };
+      maybeSet('email',          cur.email,          inp.email);
+      maybeSet('phone',          cur.phone,          inp.phone);
+      maybeSet('company',        cur.company,        inp.company);
+      maybeSet('title',          cur.title,          inp.title);
+      maybeSet('license_number', cur.license_number, inp.license_number);
+      maybeSet('address',        cur.address,        inp.address);
+      maybeSet('address_2',      cur.address_2,      inp.address_2);
+      maybeSet('city',           cur.city,           inp.city);
+      maybeSet('state',          cur.state,          inp.state);
+      maybeSet('zip',            cur.zip,            inp.zip);
+      maybeSet('website',        cur.website,        inp.website);
+
+      if (updates.length === 0) {
+        unchanged += 1;
+        continue;
+      }
+      // Apply one field at a time (Neon doesn't allow dynamic SET lists).
+      for (const u of updates) {
+        switch (u.field) {
+          case 'email':          await sql`UPDATE mailing_contacts SET email          = ${u.value} WHERE id = ${cur.id}`; break;
+          case 'phone':          await sql`UPDATE mailing_contacts SET phone          = ${u.value} WHERE id = ${cur.id}`; break;
+          case 'company':        await sql`UPDATE mailing_contacts SET company        = ${u.value} WHERE id = ${cur.id}`; break;
+          case 'title':          await sql`UPDATE mailing_contacts SET title          = ${u.value} WHERE id = ${cur.id}`; break;
+          case 'license_number': await sql`UPDATE mailing_contacts SET license_number = ${u.value} WHERE id = ${cur.id}`; break;
+          case 'address':        await sql`UPDATE mailing_contacts SET address        = ${u.value} WHERE id = ${cur.id}`; break;
+          case 'address_2':      await sql`UPDATE mailing_contacts SET address_2      = ${u.value} WHERE id = ${cur.id}`; break;
+          case 'city':           await sql`UPDATE mailing_contacts SET city           = ${u.value} WHERE id = ${cur.id}`; break;
+          case 'state':          await sql`UPDATE mailing_contacts SET state          = ${u.value} WHERE id = ${cur.id}`; break;
+          case 'zip':            await sql`UPDATE mailing_contacts SET zip            = ${u.value} WHERE id = ${cur.id}`; break;
+          case 'website':        await sql`UPDATE mailing_contacts SET website        = ${u.value} WHERE id = ${cur.id}`; break;
+        }
+      }
+      // Stamp external_id/source if previously null (e.g. license-matched
+      // a manually-added row).
+      await sql`
+        UPDATE mailing_contacts
+           SET external_id     = COALESCE(external_id, ${inp.external_id}),
+               external_source = COALESCE(external_source, ${inp.external_source})
+         WHERE id = ${cur.id}
+      `;
+      updated += 1;
+    } else {
+      // Insert new holding row. Pending statuses iff we have content
+      // worth verifying; otherwise leave NULL so the UI shows blanks.
+      const addrPending = inp.address ? 'Pending' : null;
+      const emailPending = inp.email ? 'Pending' : null;
+      await sql`
+        INSERT INTO mailing_contacts
+          (segment, stage, first_name, last_name, email, phone, company, title,
+           license_number, address, address_2, city, state, zip, website,
+           source, external_id, external_source, addr_status, email_status, tags)
+        VALUES
+          (${segment}, 'holding',
+           ${first_name},
+           ${normString(inp.last_name)},
+           ${normString(inp.email)},
+           ${normString(inp.phone)},
+           ${normString(inp.company)},
+           ${normString(inp.title)},
+           ${normString(inp.license_number)},
+           ${normString(inp.address)},
+           ${normString(inp.address_2)},
+           ${normString(inp.city)},
+           ${normString(inp.state)},
+           ${normString(inp.zip)},
+           ${normString(inp.website)},
+           ${normString(inp.source) ?? inp.external_source},
+           ${inp.external_id},
+           ${inp.external_source},
+           ${addrPending},
+           ${emailPending},
+           '[]'::jsonb)
+      `;
+      inserted += 1;
+    }
+  }
+
+  return { inserted, updated, unchanged };
 }

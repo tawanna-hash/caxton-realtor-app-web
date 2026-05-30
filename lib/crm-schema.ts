@@ -468,4 +468,55 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       BEFORE UPDATE ON mailing_contacts
       FOR EACH ROW EXECUTE FUNCTION trg_mailing_set_updated_at()
   `);
+
+  // ----------------------------------------------------------------
+  // Holding-contacts staging columns (ported from PressBook CRM).
+  // `stage` = 'holding'  → staging area awaiting address/email verify
+  //         = 'mailing'  → active mailing list (default)
+  // Address/email statuses follow PressBook's 'Pending' / 'Valid' /
+  // 'Invalid' tri-state. external_id lets sync runs idempotently match
+  // rows (e.g. UnlockMLS license number).
+  // All ALTERs use IF NOT EXISTS so they self-heal on existing DBs.
+  // ----------------------------------------------------------------
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS stage             text NOT NULL DEFAULT 'mailing'
+        CHECK (stage IN ('holding','mailing'))
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS addr_status       text
+        CHECK (addr_status IS NULL OR addr_status IN ('Pending','Valid','Invalid'))
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_status      text
+        CHECK (email_status IS NULL OR email_status IN ('Pending','Valid','Invalid'))
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS addr_verified_at  timestamptz
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_verified_at timestamptz
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS promoted_at       timestamptz
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS external_id       text
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS external_source   text
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mailing_stage         ON mailing_contacts(stage)`);
+  await step(() => sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_mailing_external_id
+      ON mailing_contacts(external_source, external_id)
+      WHERE external_source IS NOT NULL AND external_id IS NOT NULL
+  `);
 }

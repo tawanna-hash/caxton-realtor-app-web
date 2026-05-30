@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
-import { countBySegment, SEGMENTS } from '@/lib/mailing';
+import { countBySegment, countHolding, SEGMENTS } from '@/lib/mailing';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +23,7 @@ export default async function MailingHubPage() {
   if (!(await isAdmin())) redirect('/admin/login');
   await ensureSchema();
   const counts = await countBySegment();
+  const holding = await countHolding();
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -40,11 +41,12 @@ export default async function MailingHubPage() {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <KpiCard label="Total subscribers" value={counts.total} sub="all segments" />
         <KpiCard label="Advertisers"        value={counts.advertiser}     sub="paying clients"  accent="#10B981" />
         <KpiCard label="Non-Advertisers"    value={counts['non-advertiser']} sub="prospects"   accent="#F59E0B" />
         <KpiCard label="REALTORS"           value={counts.realtor}        sub="licensed agents" accent="#3D0740" />
+        <KpiCard label="Holding"            value={holding.total}         sub="awaiting review" accent="#6B7280" />
       </div>
 
       {/* Segment tiles */}
@@ -86,6 +88,44 @@ export default async function MailingHubPage() {
             );
           })}
         </div>
+      </div>
+
+      {/* Holding tile */}
+      <div>
+        <h2 className="font-serif text-xl text-gray-900 mb-3">Staging</h2>
+        <Link
+          href="/admin/mailing/holding"
+          className="group block rounded-lg border border-gray-200 bg-white p-5 hover:shadow-sm transition"
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div
+              className="h-10 w-10 rounded-md flex items-center justify-center text-sm font-semibold"
+              style={{ backgroundColor: '#6B728015', color: '#6B7280' }}
+            >
+              H
+            </div>
+            <span
+              className="text-xs font-semibold px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: '#6B728015', color: '#6B7280' }}
+            >
+              {holding.total.toLocaleString()}
+            </span>
+          </div>
+          <div className="font-serif text-lg text-gray-900">Holding Contacts</div>
+          <p className="mt-1 text-sm text-gray-600">
+            Scraped or imported contacts awaiting verification.{' '}
+            {holding.verified > 0 ? (
+              <span className="text-green-700 font-medium">
+                {holding.verified.toLocaleString()} ready to promote.
+              </span>
+            ) : (
+              <span className="text-gray-500">No verified entries yet.</span>
+            )}
+          </p>
+          <div className="mt-3 text-xs font-medium text-gray-700 group-hover:text-gray-900">
+            Review &amp; promote →
+          </div>
+        </Link>
       </div>
 
       {/* Footer hint */}

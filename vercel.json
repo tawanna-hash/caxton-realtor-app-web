@@ -83,6 +83,10 @@
     {
       "path": "/api/cron/scrape-la-cima-promotions",
       "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-abor-realtors",
+      "schedule": "0 3 * * *"
     }
   ]
 }
