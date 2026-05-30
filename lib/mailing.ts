@@ -112,6 +112,7 @@ export type MailingContactRow = {
   email_risk:          number  | null;
   email_suggestion:    string  | null;
   email_check:         Record<string, unknown> | null;
+  email_notes:         string  | null;
   created_at: string;
   updated_at: string;
 };
@@ -1301,6 +1302,7 @@ export interface HoldingEditInput {
   license_number?: string | null;
   phone?:         string | null;
   mobile_phone?:  string | null;
+  email_notes?:   string | null;
 }
 
 /**
@@ -1336,6 +1338,7 @@ export async function updateHoldingContact(
     license_number: input.license_number !== undefined ? input.license_number : existing.license_number,
     phone:          input.phone          !== undefined ? input.phone          : existing.phone,
     mobile_phone:   input.mobile_phone   !== undefined ? input.mobile_phone   : existing.mobile_phone,
+    email_notes:    input.email_notes    !== undefined ? input.email_notes    : existing.email_notes,
   };
 
   // Did any address part change?
@@ -1365,6 +1368,7 @@ export async function updateHoldingContact(
            license_number         = ${next.license_number},
            phone                  = ${next.phone},
            mobile_phone           = ${next.mobile_phone},
+           email_notes            = ${next.email_notes},
            addr_status            = CASE WHEN ${addressChanged} THEN 'Pending' ELSE addr_status END,
            addr_verified_at       = CASE WHEN ${addressChanged} THEN NULL      ELSE addr_verified_at END,
            addr_usps_normalized   = CASE WHEN ${addressChanged} THEN NULL      ELSE addr_usps_normalized END,
@@ -1445,6 +1449,16 @@ export async function persistEmailVerification(
   const sql = getSql();
   if (payload) {
     const s = payload.signals;
+    // Auto-append a single timestamped log line to email_notes so the
+    // user has a running history of probes. Format:
+    //   [2026-05-30 18:30 CDT] Valid — RCPT accepted (250)
+    // We use the database's NOW() in CDT-ish ISO format via to_char
+    // to keep the line short and human-readable.
+    const logLine =
+      `${payload.verdict} — ${payload.detail}` +
+      (payload.code ? ` [code ${payload.code}]` : '') +
+      (s.catchAll ? ' [catch-all]' : '') +
+      (s.disposable ? ' [disposable]' : '');
     const rows = (await sql`
       UPDATE mailing_contacts
          SET email_status        = ${status},
@@ -1456,6 +1470,11 @@ export async function persistEmailVerification(
              email_risk          = ${Math.round(payload.risk)},
              email_suggestion    = ${payload.suggestion ?? null},
              email_check         = ${JSON.stringify(payload)}::jsonb,
+             email_notes         = CONCAT_WS(
+                                     E'\n',
+                                     NULLIF(email_notes, ''),
+                                     CONCAT('[', to_char(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI'), '] ', ${logLine}::text)
+                                   ),
              updated_at          = NOW()
        WHERE id = ${id}
          AND stage = 'holding'

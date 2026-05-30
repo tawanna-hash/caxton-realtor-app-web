@@ -593,4 +593,11 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
     ALTER TABLE mailing_contacts
       ADD COLUMN IF NOT EXISTS email_check         jsonb
   `);
+  // Free-text notes attached to the email/verifier on each contact.
+  // Edited from the drawer; also auto-appended to with timestamped
+  // verifier outcomes so the user has a running log.
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_notes         text
+  `);
 }

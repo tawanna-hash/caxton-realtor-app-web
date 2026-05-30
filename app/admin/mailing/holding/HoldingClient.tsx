@@ -649,6 +649,16 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
       title: `Likely typo — did you mean @${row.email_suggestion}?`,
     });
   }
+  if (row.email_notes) {
+    // Surface first line of notes as a tooltip-preview so the user
+    // sees there's history without opening the drawer.
+    const firstLine = row.email_notes.split(/\r?\n/)[0].slice(0, 200);
+    flags.push({
+      label: '✎ Notes',
+      cls:   'bg-purple-100 text-purple-800 ring-1 ring-purple-200',
+      title: firstLine || 'Email notes',
+    });
+  }
   if (flags.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-1">
@@ -750,6 +760,7 @@ function EditDrawer({
     license_number: row.license_number ?? '',
     phone:          row.phone ?? '',
     mobile_phone:   row.mobile_phone ?? '',
+    email_notes:    row.email_notes ?? '',
   });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -773,11 +784,13 @@ function EditDrawer({
         license_number: row.license_number ?? '',
         phone:          row.phone ?? '',
         mobile_phone:   row.mobile_phone ?? '',
+        email_notes:    row.email_notes ?? '',
       });
     });
   }, [row.id, row.updated_at, row.first_name, row.last_name, row.title,
       row.email, row.company, row.address, row.address_2, row.city,
-      row.state, row.zip, row.license_number, row.phone, row.mobile_phone]);
+      row.state, row.zip, row.license_number, row.phone, row.mobile_phone,
+      row.email_notes]);
 
   const setField = (k: keyof typeof form, v: string) => {
     setForm((prev) => ({ ...prev, [k]: v }));
@@ -913,6 +926,28 @@ function EditDrawer({
             <Field label="TREC License" value={form.license_number} onChange={(v) => setField('license_number', v)} />
             <Field label="Phone"        value={form.phone}          onChange={(v) => setField('phone', v)} type="tel" />
             <Field label="Mobile / Cell" value={form.mobile_phone}  onChange={(v) => setField('mobile_phone', v)} type="tel" />
+          </div>
+
+          {/* Email notes — free-text journal for verifier outcomes,
+              bounce reports, manual confirmations, etc. Each verify
+              run auto-appends a timestamped line; the user can also
+              edit freely. */}
+          <div>
+            <label className="block">
+              <span className="block text-[11px] uppercase tracking-wider text-gray-500 font-semibold mb-1">
+                Email Notes
+              </span>
+              <textarea
+                value={form.email_notes}
+                onChange={(e) => setField('email_notes', e.target.value)}
+                rows={5}
+                placeholder="Notes about this contact's email — e.g. bounced 5/30, verified via phone, alternate address..."
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#3D0740] resize-y"
+              />
+              <span className="mt-1 block text-[10px] text-gray-500">
+                Each verifier run auto-appends a timestamped line. Edit freely.
+              </span>
+            </label>
           </div>
 
           {saveError && (

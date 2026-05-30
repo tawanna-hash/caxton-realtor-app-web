@@ -22,6 +22,7 @@ const EDITABLE_KEYS: (keyof HoldingEditInput)[] = [
   'first_name', 'last_name', 'title', 'email', 'company',
   'address', 'address_2', 'city', 'state', 'zip',
   'license_number', 'phone', 'mobile_phone',
+  'email_notes',
 ];
 
 function errMessage(err: unknown): string {
@@ -35,8 +36,16 @@ function pickEdits(body: Record<string, unknown>): HoldingEditInput {
     const v = body[k];
     if (v === null) { (out as Record<string, unknown>)[k] = null; continue; }
     if (typeof v === 'string') {
-      const trimmed = v.trim();
-      (out as Record<string, unknown>)[k] = trimmed === '' ? null : trimmed;
+      // email_notes is multi-line free text — don't trim, just
+      // collapse leading/trailing blank lines. All other fields get
+      // a hard trim and convert blank → NULL.
+      if (k === 'email_notes') {
+        const stripped = v.replace(/^\s+|\s+$/g, '');
+        (out as Record<string, unknown>)[k] = stripped === '' ? null : stripped;
+      } else {
+        const trimmed = v.trim();
+        (out as Record<string, unknown>)[k] = trimmed === '' ? null : trimmed;
+      }
     }
   }
   return out;
