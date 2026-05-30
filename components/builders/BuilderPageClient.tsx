@@ -218,27 +218,42 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
       ];
     }
 
-    // Default paywall (La Cima, plus SRR Move-in Ready): keep advertiser
-    // rows visible, plus one non-advertiser teaser per underlying builder.
-    // Blur the rest. Unblurred items float to the top.
+    // Default paywall (La Cima Move-in Ready, plus SRR Move-in Ready):
+    // keep advertiser rows visible, plus one non-advertiser teaser per
+    // underlying builder. Blur the rest. Unblurred items float to the top.
+    //
+    // Exception: on La Cima, David Weekley Homes is fully unblurred (every
+    // DWH row visible, all floated to the top under advertiser rows).
     const featuredRows = currentRows.filter((r) => r.featured);
     const nonFeaturedRows = currentRows.filter((r) => !r.featured);
 
+    const dwhFullyVisible: BuilderInventoryRow[] = [];
     const seenBuilders = new Set<string>();
-    const visible: BuilderInventoryRow[] = [...featuredRows];
+    const otherVisible: BuilderInventoryRow[] = [];
     const blurred: BuilderInventoryRow[] = [];
     for (const r of nonFeaturedRows) {
-      const ub = extractUnderlyingBuilder(r.title) ?? '__developer__';
-      if (!seenBuilders.has(ub)) {
-        seenBuilders.add(ub);
-        visible.push(r);
+      const ub = extractUnderlyingBuilder(r.title);
+      if (
+        builderName === 'La Cima' &&
+        ub &&
+        ub.toLowerCase() === 'david weekley homes'
+      ) {
+        dwhFullyVisible.push(r);
+        continue;
+      }
+      const key = ub ?? '__developer__';
+      if (!seenBuilders.has(key)) {
+        seenBuilders.add(key);
+        otherVisible.push(r);
       } else {
         blurred.push(r);
       }
     }
 
     return [
-      ...visible.map((row) => ({ row, blurred: false })),
+      ...featuredRows.map((row) => ({ row, blurred: false })),
+      ...dwhFullyVisible.map((row) => ({ row, blurred: false })),
+      ...otherVisible.map((row) => ({ row, blurred: false })),
       ...blurred.map((row) => ({ row, blurred: true })),
     ];
   }, [currentRows, isPaywalled, builderName, tab]);
