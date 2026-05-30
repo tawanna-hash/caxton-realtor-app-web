@@ -15,6 +15,7 @@ import NavDrawer from '@/components/NavDrawer';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import { SW } from '@/lib/style-constants';
 import { PUB_META, type PubKey } from '@/lib/pub-meta';
+import { AdSlot as AdSlotComponent } from '@/components/ads/AdSlot';
 
 const API = getApiBase();
 
@@ -996,24 +997,36 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
             ))}
           </div>
           <div>
-            {feed.map((item, idx) => item.t === 's' ? (
-              <ArticleSkeleton key={'s' + idx} />
-            ) : item.t === 'e' ? (
-              <EmptyState key={'e' + idx} cat={item.d.cat} />
-            ) : item.t === 'c' ? (
-              <NewsletterCTA
-                key={'c' + idx}
-                source="dashboard_feed"
-                publication={info.id as 'realtyline' | 'newsline'}
-                buttonColor={info.color}
-              />
-            ) : item.t === 'n' ? (
-              <article key={'n' + item.d.id} className="bg-white border-b border-gray-200">
-                <ArticleCard item={item.d} pub={pub} />
-              </article>
-            ) : (
-              <AdCardTracked key={'a' + item.d.id} ad={item.d} onClick={handleAdClick} track={track} pub={pub} />
-            ))}
+            {feed.flatMap((item, idx) => {
+              const node = item.t === 's' ? (
+                <ArticleSkeleton key={'s' + idx} />
+              ) : item.t === 'e' ? (
+                <EmptyState key={'e' + idx} cat={item.d.cat} />
+              ) : item.t === 'c' ? (
+                <NewsletterCTA
+                  key={'c' + idx}
+                  source="dashboard_feed"
+                  publication={info.id as 'realtyline' | 'newsline'}
+                  buttonColor={info.color}
+                />
+              ) : item.t === 'n' ? (
+                <article key={'n' + item.d.id} className="bg-white border-b border-gray-200">
+                  <ArticleCard item={item.d} pub={pub} />
+                </article>
+              ) : (
+                <AdCardTracked key={'a' + item.d.id} ad={item.d} onClick={handleAdClick} track={track} pub={pub} />
+              );
+              // Interleave a feed_inline_card ad every 6 items (renders only when a campaign is active)
+              if (idx > 0 && idx % 6 === 0) {
+                return [
+                  <div key={'fic' + idx} className="border-b border-gray-200">
+                    <AdSlotComponent slug="feed_inline_card" variant="bare" />
+                  </div>,
+                  node,
+                ];
+              }
+              return [node];
+            })}
           </div>
         </div>
       )}
@@ -1955,6 +1968,9 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
             </a>
           </div>
         )}
+
+        {/* Article bottom ad slot (renders only when a campaign is active) */}
+        <AdSlotComponent slug="article_bottom" className="mt-10" />
       </div>
 
       {/* Sticky action bar */}
