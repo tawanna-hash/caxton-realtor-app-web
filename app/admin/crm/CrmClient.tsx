@@ -287,6 +287,36 @@ function EditDrawer({
   onSaved: () => Promise<void>;
   onError: (msg: string) => void;
 }) {
+  // Portal magic-link state — separate from the form so it doesn't bleed
+  // into the PATCH payload. Result holds the consume URL + email status
+  // returned by /api/admin/portal-links.
+  const [sendingLink, setSendingLink] = useState(false);
+  const [linkResult, setLinkResult] = useState<{ url?: string; status?: string; error?: string } | null>(null);
+
+  const sendPortalLink = async (
+    purpose: 'login' | 'sign_agreement' | 'pay_invoice' | 'form' = 'login',
+  ) => {
+    setSendingLink(true);
+    setLinkResult(null);
+    try {
+      const res = await fetch('/api/admin/portal-links', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ advertiser_id: row.id, purpose }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setLinkResult({ error: data?.error ?? `HTTP ${res.status}` });
+        return;
+      }
+      setLinkResult({ url: data.consume_url, status: data.email_status });
+    } catch (err) {
+      setLinkResult({ error: err instanceof Error ? err.message : 'send failed' });
+    } finally {
+      setSendingLink(false);
+    }
+  };
+
   const [form, setForm] = useState({
     type:           row.type           ?? 'advertiser',
     status:         row.status         ?? 'active',
@@ -380,6 +410,52 @@ function EditDrawer({
               <Field label="Mobile phone"><input value={form.phone} onChange={(e) => update('phone', e.target.value)} className={INPUT} /></Field>
               <Field label="Office phone"><input value={form.office_phone} onChange={(e) => update('office_phone', e.target.value)} className={INPUT} /></Field>
               <Field label="Website" className="col-span-2"><input value={form.website} onChange={(e) => update('website', e.target.value)} className={INPUT} placeholder="https://" /></Field>
+            </div>
+          </Section>
+
+          <Section title="Portal access">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Magic link</div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    Single-use, valid 24h. Sends to{' '}
+                    <span className="font-mono text-gray-700">
+                      {row.portal_email || row.contact_email || '— no email on file'}
+                    </span>.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => sendPortalLink('login')}
+                  disabled={sendingLink || (!row.portal_email && !row.contact_email)}
+                  className="shrink-0 rounded-lg bg-gray-900 text-white px-3 py-1.5 text-sm hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {sendingLink ? 'Sending…' : 'Send portal link'}
+                </button>
+              </div>
+              {linkResult?.error && (
+                <div className="rounded-lg bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-xs">
+                  {linkResult.error}
+                </div>
+              )}
+              {linkResult?.url && (
+                <div className="space-y-1">
+                  <div className="text-xs text-gray-600">
+                    {linkResult.status === 'sent'
+                      ? '✓ Email sent.'
+                      : linkResult.status === 'failed'
+                      ? '✕ Email failed — copy URL below:'
+                      : 'Email skipped — copy URL below:'}
+                  </div>
+                  <input
+                    readOnly
+                    value={linkResult.url}
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                    className="w-full rounded border border-gray-300 px-2 py-1 text-xs font-mono"
+                  />
+                </div>
+              )}
             </div>
           </Section>
 
