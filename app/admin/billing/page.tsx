@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
+import type { RenewalReminder } from '@/lib/types/renewal-reminder';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import BillingClient, { type AdCampaignOption } from './BillingClient';
 
@@ -25,7 +26,7 @@ export default async function BillingPage() {
   // The agreements/invoices migration adds advertiser_id + agreement_id columns to
   // ad_campaigns. We SELECT them defensively so a fresh schema (where ensureSchema
   // has not seen the migration yet) still renders the page instead of hard-crashing.
-  const [agreements, invoices, advertisers, adCampaigns] = await Promise.all([
+  const [agreements, invoices, advertisers, adCampaigns, renewalReminders] = await Promise.all([
     sql`
       SELECT ag.*, adv.name AS advertiser_name,
         COALESCE((SELECT SUM(i.total_cents)::int FROM invoices i WHERE i.agreement_id = ag.id AND i.status <> 'void'), 0) AS invoiced_cents,
@@ -49,6 +50,8 @@ export default async function BillingPage() {
         FROM ad_campaigns
        ORDER BY created_at DESC
     `.catch(() => [] as unknown[]),
+    sql`SELECT * FROM renewal_reminders ORDER BY remind_date ASC`
+      .catch(() => [] as unknown[]),
   ]);
 
   return (
@@ -57,6 +60,7 @@ export default async function BillingPage() {
       initialInvoices={invoices as unknown as InvoiceWithAdvertiser[]}
       advertisers={advertisers as unknown as Array<{ id: number; name: string; publication: string }>}
       adCampaigns={adCampaigns as unknown as AdCampaignOption[]}
+      initialRenewalReminders={renewalReminders as unknown as RenewalReminder[]}
     />
   );
 }

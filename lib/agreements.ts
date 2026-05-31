@@ -23,6 +23,13 @@ export type AgreementAdTiming = {
   years: number;      // count of issue years
 };
 
+export type AgreementAttachmentFile = {
+  name: string;
+  size: number;
+  url: string;
+  uploadedAt: string;
+};
+
 export interface Agreement {
   id: string;
   advertiser_id: number | null;
@@ -33,6 +40,12 @@ export interface Agreement {
   advertiser_email: string | null;
   advertiser_phone: string | null;
   advertiser_address: string | null;
+
+  // Pressbook address fields
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
 
   // Terms
   type: AgreementType | null;
@@ -47,6 +60,13 @@ export interface Agreement {
   ad_timing: AgreementAdTiming | null;
   eblast_packages: string[];
 
+  // Pressbook pricing
+  discount_cents: number | null;
+  ad_premium_cents: number | null;
+  total_monthly_rate_cents: number | null;
+  page_position: string | null;
+  ad_timing_months: Record<string, string> | null;  // { january: '2026', ... }
+
   amount_cents: number | null;
 
   // Signature
@@ -58,10 +78,25 @@ export interface Agreement {
   sent_to_email: string | null;
   is_uploaded: boolean;
 
+  // Pressbook signature / terms
+  signer_name: string | null;
+  terms_accepted: boolean | null;
+  terms_accepted_at: string | null;
+
   // Billing
   billing_name: string | null;
   billing_email: string | null;
   payment_mode: PaymentMode | null;
+
+  // Pressbook billing
+  bill_to: string | null;
+  billing_contact_name: string | null;
+  billing_contact_phone: string | null;
+  card_type: string | null;
+  cardholder_name: string | null;
+  card_number_last4: string | null;
+  card_expiration: string | null;
+  cardholder_address: string | null;
 
   // Stripe
   stripe_customer_id: string | null;
@@ -69,6 +104,12 @@ export interface Agreement {
   stripe_payment_intent_id: string | null;
   stripe_payment_link_url: string | null;
   paid_at: string | null;
+
+  attachments: { files: AgreementAttachmentFile[] } | null;
+
+  // Renewals
+  is_renewal: boolean | null;
+  renewed_from_id: string | null;
 
   notes: string | null;
   audit_log: AgreementAuditEntry[];
@@ -89,14 +130,22 @@ export interface AgreementWithAdvertiser extends Agreement {
 export const AGREEMENT_PATCHABLE_FIELDS = [
   'advertiser_id',
   'company_name','rep_name','advertiser_email','advertiser_phone','advertiser_address',
+  'address','city','state','zip',
   'type','status','start_date','end_date',
   'ad_size','frequency','ad_rate_cents','ad_timing','eblast_packages',
+  'discount_cents','ad_premium_cents','total_monthly_rate_cents',
+  'page_position','ad_timing_months',
   'amount_cents',
   'sign_date','exp_date','renewal_notice_date','signed_at','signed_document',
   'sent_to_email','is_uploaded',
+  'signer_name','terms_accepted','terms_accepted_at',
   'billing_name','billing_email','payment_mode',
+  'bill_to','billing_contact_name','billing_contact_phone',
+  'card_type','cardholder_name','card_number_last4','card_expiration','cardholder_address',
   'stripe_customer_id','stripe_invoice_id','stripe_payment_intent_id',
   'stripe_payment_link_url','paid_at',
+  'attachments',
+  'is_renewal','renewed_from_id',
   'notes',
 ] as const;
 

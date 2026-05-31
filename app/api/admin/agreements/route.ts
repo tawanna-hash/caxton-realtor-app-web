@@ -71,8 +71,7 @@ export async function POST(req: NextRequest) {
     await ensureSchema();
     const sql = getSql();
 
-    // Snapshot identity from the advertiser row if linked + no
-    // explicit override was sent.
+    // Snapshot identity from the advertiser row if linked + no explicit override was sent.
     let snapshot = {
       company_name:        (body.company_name        as string | undefined) ?? null,
       rep_name:            (body.rep_name            as string | undefined) ?? null,
@@ -102,12 +101,31 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Pressbook new fields
+    const discountCents           = typeof body.discount_cents           === 'number' ? body.discount_cents           : null;
+    const adPremiumCents          = typeof body.ad_premium_cents         === 'number' ? body.ad_premium_cents         : null;
+    const totalMonthlyRateCents   = typeof body.total_monthly_rate_cents === 'number' ? body.total_monthly_rate_cents : null;
+    const adTimingMonths          = body.ad_timing_months != null ? JSON.stringify(body.ad_timing_months) : null;
+    const attachments             = body.attachments != null ? JSON.stringify(body.attachments) : JSON.stringify({ files: [] });
+    const isRenewal               = typeof body.is_renewal    === 'boolean' ? body.is_renewal    : false;
+    const renewedFromId           = typeof body.renewed_from_id === 'string' ? body.renewed_from_id : null;
+    const termsAccepted           = typeof body.terms_accepted  === 'boolean' ? body.terms_accepted : null;
+    const termsAcceptedAt         = typeof body.terms_accepted_at === 'string' ? body.terms_accepted_at : null;
+
     const rows = await sql`
       INSERT INTO agreements (
         advertiser_id, company_name, rep_name, advertiser_email,
         advertiser_phone, advertiser_address, type, status,
         start_date, end_date, ad_size, frequency, ad_rate_cents,
-        amount_cents, payment_mode, notes, created_by
+        amount_cents, payment_mode, notes, created_by,
+        address, city, state, zip,
+        discount_cents, ad_premium_cents, total_monthly_rate_cents,
+        page_position, ad_timing_months,
+        bill_to, billing_contact_name, billing_contact_phone,
+        card_type, cardholder_name, card_number_last4, card_expiration, cardholder_address,
+        signer_name, terms_accepted, terms_accepted_at,
+        attachments, is_renewal, renewed_from_id,
+        billing_email
       ) VALUES (
         ${advertiserId},
         ${snapshot.company_name},
@@ -125,7 +143,31 @@ export async function POST(req: NextRequest) {
         ${typeof body.amount_cents  === 'number' ? body.amount_cents  : null},
         ${paymentMode},
         ${(body.notes         as string | null | undefined) ?? null},
-        ${admin.email ?? null}
+        ${admin.email ?? null},
+        ${(body.address       as string | null | undefined) ?? null},
+        ${(body.city          as string | null | undefined) ?? null},
+        ${(body.state         as string | null | undefined) ?? null},
+        ${(body.zip           as string | null | undefined) ?? null},
+        ${discountCents},
+        ${adPremiumCents},
+        ${totalMonthlyRateCents},
+        ${(body.page_position as string | null | undefined) ?? null},
+        ${adTimingMonths ? adTimingMonths : null}::jsonb,
+        ${(body.bill_to                as string | null | undefined) ?? 'Advertiser'},
+        ${(body.billing_contact_name   as string | null | undefined) ?? null},
+        ${(body.billing_contact_phone  as string | null | undefined) ?? null},
+        ${(body.card_type              as string | null | undefined) ?? null},
+        ${(body.cardholder_name        as string | null | undefined) ?? null},
+        ${(body.card_number_last4      as string | null | undefined) ?? null},
+        ${(body.card_expiration        as string | null | undefined) ?? null},
+        ${(body.cardholder_address     as string | null | undefined) ?? null},
+        ${(body.signer_name            as string | null | undefined) ?? null},
+        ${termsAccepted},
+        ${termsAcceptedAt},
+        ${attachments}::jsonb,
+        ${isRenewal},
+        ${renewedFromId},
+        ${(body.billing_email          as string | null | undefined) ?? null}
       )
       RETURNING *
     `;

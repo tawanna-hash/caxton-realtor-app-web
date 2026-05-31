@@ -14,8 +14,10 @@ import {
   appendAudit,
   type AgreementWithAdvertiser,
   type AgreementAuditEntry,
+  type Agreement,
 } from '@/lib/agreements';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { autoCreateForAgreement } from '@/lib/renewal-reminders';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -74,6 +76,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json({ error: 'not found' }, { status: 404 });
     }
     const existing = existingRows[0];
+    const prevStatus = existing.status;
 
     const updated: string[] = [];
     const apply = async (col: string, val: unknown, exec: () => Promise<unknown>) => {
@@ -99,6 +102,10 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         case 'advertiser_email':   await apply(field, raw, () => sql`UPDATE agreements SET advertiser_email = ${raw}                   WHERE id = ${id}`); break;
         case 'advertiser_phone':   await apply(field, raw, () => sql`UPDATE agreements SET advertiser_phone = ${raw}                   WHERE id = ${id}`); break;
         case 'advertiser_address': await apply(field, raw, () => sql`UPDATE agreements SET advertiser_address = ${raw}                 WHERE id = ${id}`); break;
+        case 'address':            await apply(field, raw, () => sql`UPDATE agreements SET address = ${raw}                            WHERE id = ${id}`); break;
+        case 'city':               await apply(field, raw, () => sql`UPDATE agreements SET city = ${raw}                               WHERE id = ${id}`); break;
+        case 'state':              await apply(field, raw, () => sql`UPDATE agreements SET state = ${raw}                              WHERE id = ${id}`); break;
+        case 'zip':                await apply(field, raw, () => sql`UPDATE agreements SET zip = ${raw}                                WHERE id = ${id}`); break;
         case 'type':               await apply(field, raw, () => sql`UPDATE agreements SET type = ${raw}                               WHERE id = ${id}`); break;
         case 'status':             await apply(field, raw, () => sql`UPDATE agreements SET status = ${raw}                             WHERE id = ${id}`); break;
         case 'start_date':         await apply(field, raw, () => sql`UPDATE agreements SET start_date = ${raw}                         WHERE id = ${id}`); break;
@@ -108,6 +115,11 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         case 'ad_rate_cents':      await apply(field, raw, () => sql`UPDATE agreements SET ad_rate_cents = ${raw}                      WHERE id = ${id}`); break;
         case 'ad_timing':          await apply(field, raw, () => sql`UPDATE agreements SET ad_timing = ${JSON.stringify(raw ?? null)}::jsonb WHERE id = ${id}`); break;
         case 'eblast_packages':    await apply(field, raw, () => sql`UPDATE agreements SET eblast_packages = ${JSON.stringify(Array.isArray(raw) ? raw : [])}::jsonb WHERE id = ${id}`); break;
+        case 'discount_cents':     await apply(field, raw, () => sql`UPDATE agreements SET discount_cents = ${raw}                     WHERE id = ${id}`); break;
+        case 'ad_premium_cents':   await apply(field, raw, () => sql`UPDATE agreements SET ad_premium_cents = ${raw}                   WHERE id = ${id}`); break;
+        case 'total_monthly_rate_cents': await apply(field, raw, () => sql`UPDATE agreements SET total_monthly_rate_cents = ${raw}     WHERE id = ${id}`); break;
+        case 'page_position':      await apply(field, raw, () => sql`UPDATE agreements SET page_position = ${raw}                      WHERE id = ${id}`); break;
+        case 'ad_timing_months':   await apply(field, raw, () => sql`UPDATE agreements SET ad_timing_months = ${raw != null ? JSON.stringify(raw) : null}::jsonb WHERE id = ${id}`); break;
         case 'amount_cents':       await apply(field, raw, () => sql`UPDATE agreements SET amount_cents = ${raw}                       WHERE id = ${id}`); break;
         case 'sign_date':          await apply(field, raw, () => sql`UPDATE agreements SET sign_date = ${raw}                          WHERE id = ${id}`); break;
         case 'exp_date':           await apply(field, raw, () => sql`UPDATE agreements SET exp_date = ${raw}                           WHERE id = ${id}`); break;
@@ -116,14 +128,31 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         case 'signed_document':    await apply(field, raw, () => sql`UPDATE agreements SET signed_document = ${raw}                    WHERE id = ${id}`); break;
         case 'sent_to_email':      await apply(field, raw, () => sql`UPDATE agreements SET sent_to_email = ${raw}                      WHERE id = ${id}`); break;
         case 'is_uploaded':        await apply(field, raw, () => sql`UPDATE agreements SET is_uploaded = ${!!raw}                      WHERE id = ${id}`); break;
+        case 'signer_name':        await apply(field, raw, () => sql`UPDATE agreements SET signer_name = ${raw}                        WHERE id = ${id}`); break;
+        case 'terms_accepted':     await apply(field, raw, () => sql`UPDATE agreements SET terms_accepted = ${raw}                     WHERE id = ${id}`); break;
+        case 'terms_accepted_at':  await apply(field, raw, () => sql`UPDATE agreements SET terms_accepted_at = ${raw}                  WHERE id = ${id}`); break;
         case 'billing_name':       await apply(field, raw, () => sql`UPDATE agreements SET billing_name = ${raw}                       WHERE id = ${id}`); break;
         case 'billing_email':      await apply(field, raw, () => sql`UPDATE agreements SET billing_email = ${raw}                      WHERE id = ${id}`); break;
         case 'payment_mode':       await apply(field, raw, () => sql`UPDATE agreements SET payment_mode = ${raw}                       WHERE id = ${id}`); break;
+        case 'bill_to':            await apply(field, raw, () => sql`UPDATE agreements SET bill_to = ${raw}                            WHERE id = ${id}`); break;
+        case 'billing_contact_name':  await apply(field, raw, () => sql`UPDATE agreements SET billing_contact_name = ${raw}            WHERE id = ${id}`); break;
+        case 'billing_contact_phone': await apply(field, raw, () => sql`UPDATE agreements SET billing_contact_phone = ${raw}           WHERE id = ${id}`); break;
+        case 'card_type':          await apply(field, raw, () => sql`UPDATE agreements SET card_type = ${raw}                          WHERE id = ${id}`); break;
+        case 'cardholder_name':    await apply(field, raw, () => sql`UPDATE agreements SET cardholder_name = ${raw}                    WHERE id = ${id}`); break;
+        case 'card_number_last4':  await apply(field, raw, () => sql`UPDATE agreements SET card_number_last4 = ${raw}                  WHERE id = ${id}`); break;
+        case 'card_expiration':    await apply(field, raw, () => sql`UPDATE agreements SET card_expiration = ${raw}                    WHERE id = ${id}`); break;
+        case 'cardholder_address': await apply(field, raw, () => sql`UPDATE agreements SET cardholder_address = ${raw}                 WHERE id = ${id}`); break;
         case 'stripe_customer_id': await apply(field, raw, () => sql`UPDATE agreements SET stripe_customer_id = ${raw}                 WHERE id = ${id}`); break;
         case 'stripe_invoice_id':  await apply(field, raw, () => sql`UPDATE agreements SET stripe_invoice_id = ${raw}                  WHERE id = ${id}`); break;
         case 'stripe_payment_intent_id': await apply(field, raw, () => sql`UPDATE agreements SET stripe_payment_intent_id = ${raw}     WHERE id = ${id}`); break;
         case 'stripe_payment_link_url':  await apply(field, raw, () => sql`UPDATE agreements SET stripe_payment_link_url = ${raw}      WHERE id = ${id}`); break;
         case 'paid_at':            await apply(field, raw, () => sql`UPDATE agreements SET paid_at = ${raw}                            WHERE id = ${id}`); break;
+        case 'attachments':        await apply(field, raw, () => sql`UPDATE agreements SET attachments = ${raw != null ? JSON.stringify(raw) : null}::jsonb WHERE id = ${id}`); break;
+        case 'is_renewal':         await apply(field, raw, () => sql`UPDATE agreements SET is_renewal = ${!!raw}                       WHERE id = ${id}`); break;
+        case 'renewed_from_id':
+          if (raw === null || typeof raw === 'string') {
+            await apply(field, raw, () => sql`UPDATE agreements SET renewed_from_id = ${raw}         WHERE id = ${id}`);
+          } break;
         case 'notes':              await apply(field, raw, () => sql`UPDATE agreements SET notes = ${raw}                              WHERE id = ${id}`); break;
       }
     }
@@ -142,7 +171,17 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb, updated_at = NOW() WHERE id = ${id}`;
 
     const rows = await sql`SELECT * FROM agreements WHERE id = ${id}`;
-    return NextResponse.json({ agreement: rows[0], updated_fields: updated });
+    const savedAg = rows[0] as unknown as Agreement;
+
+    // Auto-create renewal reminder when status transitions to 'signed'
+    const newStatus = body.status as string | undefined;
+    if (newStatus === 'signed' && prevStatus !== 'signed' && savedAg.exp_date) {
+      await autoCreateForAgreement(savedAg).catch((e: unknown) => {
+        console.error('[admin/agreements PATCH] autoCreateForAgreement failed', errMessage(e));
+      });
+    }
+
+    return NextResponse.json({ agreement: savedAg, updated_fields: updated });
   } catch (err) {
     console.error('[admin/agreements PATCH]', errMessage(err));
     return NextResponse.json({ error: 'patch failed', detail: errMessage(err) }, { status: 500 });
