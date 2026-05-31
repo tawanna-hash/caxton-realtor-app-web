@@ -79,7 +79,7 @@ const PAY_MODES: { value: PaymentMode; label: string }[] = [
 ];
 
 export default function BillingClient({ initialAgreements, initialInvoices, advertisers, adCampaigns: initialAdCampaigns }: Props) {
-  const [tab, setTab] = useState<'agreements' | 'invoices'>('agreements');
+  const [tab, setTab] = useState<'agreements' | 'invoices' | 'renewals'>('agreements');
   const [agreements, setAgreements] = useState(initialAgreements);
   const [invoices, setInvoices] = useState(initialInvoices);
   const [adCampaigns, setAdCampaigns] = useState(initialAdCampaigns);
@@ -135,6 +135,53 @@ export default function BillingClient({ initialAgreements, initialInvoices, adve
     amount_cents: number | null;
   } | null>(null);
 
+  // State: when a user clicks "Renew" on an expiring agreement, we open the
+  // AgreementDrawer in create mode pre-populated from the source agreement.
+  const [renewalSeed, setRenewalSeed] = useState<AgreementWithAdvertiser | null>(null);
+
+  // Renewal-tab derived list — only agreements that need attention OR have
+  // a notice on file. Sorted by soonest-expiring first.
+  const renewalRows = useMemo(() => {
+    return agreements
+      .filter((a) => a.end_date && a.status !== 'cancelled')
+      .map((a) => ({ a, info: renewalInfoFor(a) }))
+      .filter(({ info }) => info.bucket !== 'fresh')
+      .sort((x, y) => {
+        const dx = x.info.daysUntilExpiry ?? 99999;
+        const dy = y.info.daysUntilExpiry ?? 99999;
+        return dx - dy;
+      })
+      .map(({ a }) => a);
+  }, [agreements]);
+
+  const renewalKpis = useMemo(() => {
+    let expired = 0, dueSoon = 0, upcoming = 0, noticesSent = 0;
+    for (const a of agreements) {
+      const info = renewalInfoFor(a);
+      if (a.status === 'cancelled') continue;
+      if (info.bucket === 'expired') expired++;
+      else if (info.bucket === 'due_soon') dueSoon++;
+      else if (info.bucket === 'upcoming') upcoming++;
+      if (info.noticeSent) noticesSent++;
+    }
+    return { expired, dueSoon, upcoming, noticesSent };
+  }, [agreements]);
+
+  const markNoticeSent = useCallback(async (ag: AgreementWithAdvertiser) => {
+    try {
+      const res = await fetch(`/api/admin/agreements/${ag.id}/mark-notice`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (res.status === 401) { router.push('/admin/login'); return; }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await reloadAgreements();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'mark notice failed');
+    }
+  }, [reloadAgreements, router]);
+
   // Filter
   const filteredAg = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -181,18 +228,31 @@ export default function BillingClient({ initialAgreements, initialInvoices, adve
           <p className="text-sm text-gray-600 mt-1">Contracts, billing, and Stripe state for every advertiser.</p>
         </div>
         <div className="flex gap-2">
-          {tab === 'agreements'
-            ? <button onClick={() => setCreateAg(true)} className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">+ New agreement</button>
-            : <button onClick={() => setCreateInv(true)} className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">+ New invoice</button>}
+          {tab === 'invoices'
+            ? <button onClick={() => setCreateInv(true)} className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">+ New invoice</button>
+            : tab === 'renewals'
+              ? <button onClick={() => setTab('agreements')} className="px-4 py-2 rounded border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">All agreements →</button>
+              : <button onClick={() => setCreateAg(true)} className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">+ New agreement</button>}
         </div>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs — swap based on active tab */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label="Active agreements" value={String(kpis.activeAg)} />
-        <Kpi label="Drafts" value={String(kpis.draftAg)} />
-        <Kpi label="Outstanding" value={formatCents(kpis.outstanding)} />
-        <Kpi label="Paid (30d)" value={formatCents(kpis.paid30)} />
+        {tab === 'renewals' ? (
+          <>
+            <Kpi label="Expired" value={String(renewalKpis.expired)} />
+            <Kpi label="Due in 30d" value={String(renewalKpis.dueSoon)} />
+            <Kpi label="Upcoming (90d)" value={String(renewalKpis.upcoming)} />
+            <Kpi label="Notices sent" value={String(renewalKpis.noticesSent)} />
+          </>
+        ) : (
+          <>
+            <Kpi label="Active agreements" value={String(kpis.activeAg)} />
+            <Kpi label="Drafts" value={String(kpis.draftAg)} />
+            <Kpi label="Outstanding" value={formatCents(kpis.outstanding)} />
+            <Kpi label="Paid (30d)" value={formatCents(kpis.paid30)} />
+          </>
+        )}
       </div>
 
       {error && (
@@ -201,44 +261,62 @@ export default function BillingClient({ initialAgreements, initialInvoices, adve
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
-        {(['agreements','invoices'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => { setTab(t); setStatusFilter('all'); }}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
-              tab === t ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {t === 'agreements' ? 'Agreements' : 'Invoices'}
-            <span className="ml-2 text-xs text-gray-400">
-              ({t === 'agreements' ? agreements.length : invoices.length})
-            </span>
-          </button>
-        ))}
+        {(['agreements','invoices','renewals'] as const).map((t) => {
+          const label = t === 'agreements' ? 'Agreements' : t === 'invoices' ? 'Invoices' : 'Renewals';
+          const count = t === 'agreements' ? agreements.length
+                      : t === 'invoices' ? invoices.length
+                      : renewalRows.length;
+          return (
+            <button
+              key={t}
+              onClick={() => { setTab(t); setStatusFilter('all'); }}
+              className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+                tab === t ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {label}
+              <span className={`ml-2 text-xs ${tab === t ? 'text-blue-600' : 'text-gray-400'}`}>
+                ({count})
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Filters */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 flex flex-wrap gap-2 items-center">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={tab === 'agreements' ? 'Search advertiser, ad size…' : 'Search invoice #, advertiser…'}
-          className="flex-1 min-w-[240px] px-3 py-2 rounded border border-gray-300 text-sm"
-        />
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded border border-gray-300 text-sm">
-          <option value="all">All statuses</option>
-          {(tab === 'agreements' ? AG_STATUS : INV_STATUS).map((s) => (
-            <option key={s.value} value={s.value}>{s.label}</option>
-          ))}
-        </select>
-      </div>
+      {/* Filters — hidden on renewals tab (renewals are pre-sorted/filtered) */}
+      {tab !== 'renewals' && (
+        <div className="rounded-xl border border-gray-200 bg-white p-4 flex flex-wrap gap-2 items-center">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={tab === 'agreements' ? 'Search advertiser, ad size…' : 'Search invoice #, advertiser…'}
+            className="flex-1 min-w-[240px] px-3 py-2 rounded border border-gray-300 text-sm"
+          />
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded border border-gray-300 text-sm">
+            <option value="all">All statuses</option>
+            {(tab === 'agreements' ? AG_STATUS : INV_STATUS).map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Lists */}
       {tab === 'agreements' ? (
         <AgreementList rows={filteredAg} onOpen={(r) => setEditAg(r)} />
-      ) : (
+      ) : tab === 'invoices' ? (
         <InvoiceList rows={filteredInv} onOpen={(r) => setEditInv(r)} />
+      ) : (
+        <RenewalList
+          rows={renewalRows}
+          onOpen={(r) => setEditAg(r)}
+          onMarkNotice={markNoticeSent}
+          onRenew={(r) => setRenewalSeed(r)}
+        />
       )}
+
+      {/* New Agreement / Invoice CTA also depends on tab */}
+      {/* (rendered inside the header block above) */}
 
       {/* Modals */}
       {createAg && (
@@ -247,6 +325,17 @@ export default function BillingClient({ initialAgreements, initialInvoices, adve
           adCampaigns={adCampaigns}
           onClose={() => setCreateAg(false)}
           onSaved={async () => { setCreateAg(false); await reloadAgreements(); await reloadAdCampaigns(); }}
+          onError={setError}
+        />
+      )}
+
+      {renewalSeed && (
+        <AgreementDrawer
+          renewedFrom={renewalSeed}
+          advertisers={advertisers}
+          adCampaigns={adCampaigns}
+          onClose={() => setRenewalSeed(null)}
+          onSaved={async () => { setRenewalSeed(null); await reloadAgreements(); await reloadAdCampaigns(); }}
           onError={setError}
         />
       )}
@@ -347,6 +436,120 @@ function AgreementList({ rows, onOpen }: { rows: AgreementWithAdvertiser[]; onOp
   );
 }
 
+// ──────────────────────────────────────────────────────────────────
+// Renewals — derived view over agreements
+// ──────────────────────────────────────────────────────────────────
+export type RenewalBucket = 'expired' | 'due_soon' | 'upcoming' | 'fresh';
+
+export function renewalInfoFor(ag: AgreementWithAdvertiser): {
+  bucket: RenewalBucket;
+  daysUntilExpiry: number | null;
+  noticeSent: boolean;
+} {
+  const noticeSent = !!ag.renewal_notice_date;
+  if (!ag.end_date) return { bucket: 'fresh', daysUntilExpiry: null, noticeSent };
+  const end = new Date(ag.end_date as unknown as string);
+  const today = new Date();
+  // Normalise to UTC midnight for stable date math.
+  end.setUTCHours(0, 0, 0, 0);
+  today.setUTCHours(0, 0, 0, 0);
+  const diffDays = Math.round((end.getTime() - today.getTime()) / 86_400_000);
+  let bucket: RenewalBucket;
+  if (diffDays < 0) bucket = 'expired';
+  else if (diffDays <= 30) bucket = 'due_soon';
+  else if (diffDays <= 90) bucket = 'upcoming';
+  else bucket = 'fresh';
+  return { bucket, daysUntilExpiry: diffDays, noticeSent };
+}
+
+function RenewalBadge({ bucket, days }: { bucket: RenewalBucket; days: number | null }) {
+  const cfg: Record<RenewalBucket, { label: string; cls: string }> = {
+    expired:  { label: days != null ? `Expired ${Math.abs(days)}d ago` : 'Expired', cls: 'border-rose-500 text-rose-700 bg-rose-50' },
+    due_soon: { label: days != null ? `Due in ${days}d` : 'Due soon',                cls: 'border-amber-500 text-amber-700 bg-amber-50' },
+    upcoming: { label: days != null ? `${days}d out` : 'Upcoming',                   cls: 'border-sky-400 text-sky-700 bg-sky-50' },
+    fresh:    { label: 'Fresh',                                                       cls: 'border-gray-300 text-gray-600 bg-gray-50' },
+  };
+  const { label, cls } = cfg[bucket];
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-[0.15em] border ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
+function RenewalList({
+  rows, onOpen, onMarkNotice, onRenew,
+}: {
+  rows: AgreementWithAdvertiser[];
+  onOpen: (r: AgreementWithAdvertiser) => void;
+  onMarkNotice: (r: AgreementWithAdvertiser) => Promise<void>;
+  onRenew: (r: AgreementWithAdvertiser) => void;
+}) {
+  if (rows.length === 0) {
+    return <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-500">No agreements need renewal attention.</div>;
+  }
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
+        <div className="col-span-3">Advertiser</div>
+        <div className="col-span-2">End date</div>
+        <div className="col-span-2">Renewal</div>
+        <div className="col-span-2">Notice</div>
+        <div className="col-span-1">Amount</div>
+        <div className="col-span-2 text-right">Actions</div>
+      </div>
+      <div className="divide-y divide-gray-100">
+        {rows.map((r) => {
+          const info = renewalInfoFor(r);
+          return (
+            <div key={r.id} className="w-full grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-blue-50/40">
+              <button onClick={() => onOpen(r)} className="col-span-3 min-w-0 text-left">
+                <div className="font-medium text-gray-900 truncate">{r.advertiser_name ?? r.company_name ?? '—'}</div>
+                <div className="text-xs text-gray-500 truncate">{r.rep_name ?? r.advertiser_email ?? ''}</div>
+              </button>
+              <div className="col-span-2 text-sm text-gray-700">
+                {r.end_date ? new Date(r.end_date).toLocaleDateString() : '—'}
+              </div>
+              <div className="col-span-2">
+                <RenewalBadge bucket={info.bucket} days={info.daysUntilExpiry} />
+              </div>
+              <div className="col-span-2 text-xs text-gray-700">
+                {info.noticeSent
+                  ? <span className="inline-flex items-center gap-1 text-emerald-700">
+                      <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-4-4a1 1 0 011.4-1.4L9 11.6l6.3-6.3a1 1 0 011.4 0z" clipRule="evenodd"/></svg>
+                      Sent {r.renewal_notice_date ? new Date(r.renewal_notice_date).toLocaleDateString() : ''}
+                    </span>
+                  : <span className="text-gray-400">—</span>}
+              </div>
+              <div className="col-span-1 text-sm text-gray-900">{formatCents(r.amount_cents)}</div>
+              <div className="col-span-2 flex gap-1 justify-end">
+                {!info.noticeSent && (
+                  <button
+                    type="button"
+                    onClick={() => onMarkNotice(r)}
+                    className="px-2 py-1 rounded text-xs border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    title="Mark renewal notice as sent today"
+                  >
+                    Mark notice
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onRenew(r)}
+                  className="px-2 py-1 rounded text-xs bg-blue-600 text-white hover:bg-blue-700"
+                  title="Create a new draft agreement based on this one"
+                >
+                  Renew
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function PaidStamp({ paidAt }: { paidAt: string | null }) {
   return (
     <span
@@ -424,9 +627,15 @@ function InvoiceList({ rows, onOpen }: { rows: InvoiceWithAdvertiser[]; onOpen: 
 const INPUT = 'w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
 
 function AgreementDrawer({
-  existing, advertisers, adCampaigns, onClose, onSaved, onError, onGenerateInvoice,
+  existing, renewedFrom, advertisers, adCampaigns, onClose, onSaved, onError, onGenerateInvoice,
 }: {
   existing?: AgreementWithAdvertiser;
+  /**
+   * When set, opens the drawer in CREATE mode but pre-populates fields from
+   * the source agreement. Used by the Renewals tab to draft a follow-on
+   * agreement: new term starts where the old one ends, +12 months by default.
+   */
+  renewedFrom?: AgreementWithAdvertiser;
   advertisers: AdvertiserOption[];
   adCampaigns: AdCampaignOption[];
   onClose: () => void;
@@ -440,19 +649,40 @@ function AgreementDrawer({
     [adCampaigns, existing],
   );
 
+  // Renewal seed — compute default start/end for the new draft.
+  const renewalDefaults = useMemo(() => {
+    if (!renewedFrom) return null;
+    const oldEnd = renewedFrom.end_date ? new Date(renewedFrom.end_date as unknown as string) : new Date();
+    oldEnd.setUTCHours(0, 0, 0, 0);
+    // New term starts the day after the old one ends.
+    const newStart = new Date(oldEnd.getTime() + 86_400_000);
+    const newEnd = new Date(newStart.getTime());
+    newEnd.setUTCFullYear(newEnd.getUTCFullYear() + 1);
+    return {
+      start_date: newStart.toISOString().slice(0, 10),
+      end_date: newEnd.toISOString().slice(0, 10),
+    };
+  }, [renewedFrom]);
+
+  // Effective seed: explicit edit > renewal > blank.
+  const seed: AgreementWithAdvertiser | undefined = existing ?? renewedFrom;
+
   const [form, setForm] = useState({
-    advertiser_id: existing?.advertiser_id ?? null as number | null,
-    type: (existing?.type ?? null) as AgreementType | null,
+    advertiser_id: seed?.advertiser_id ?? null as number | null,
+    type: (seed?.type ?? null) as AgreementType | null,
     status: (existing?.status ?? 'draft') as AgreementStatus,
-    start_date: existing?.start_date ? formatDateISO(existing.start_date as string | Date) : '',
-    end_date: existing?.end_date ? formatDateISO(existing.end_date as string | Date) : '',
-    ad_size: existing?.ad_size ?? '',
-    frequency: existing?.frequency ?? '',
-    ad_rate_dollars: existing?.ad_rate_cents != null ? (existing.ad_rate_cents / 100).toString() : '',
-    amount_dollars: existing?.amount_cents != null ? (existing.amount_cents / 100).toString() : '',
-    payment_mode: (existing?.payment_mode ?? null) as PaymentMode | null,
-    notes: existing?.notes ?? '',
-    rep_name: existing?.rep_name ?? '',
+    start_date: renewalDefaults?.start_date
+      ?? (existing?.start_date ? formatDateISO(existing.start_date as string | Date) : ''),
+    end_date: renewalDefaults?.end_date
+      ?? (existing?.end_date ? formatDateISO(existing.end_date as string | Date) : ''),
+    ad_size: seed?.ad_size ?? '',
+    frequency: seed?.frequency ?? '',
+    ad_rate_dollars: seed?.ad_rate_cents != null ? (seed.ad_rate_cents / 100).toString() : '',
+    amount_dollars: seed?.amount_cents != null ? (seed.amount_cents / 100).toString() : '',
+    payment_mode: (seed?.payment_mode ?? null) as PaymentMode | null,
+    notes: existing?.notes
+      ?? (renewedFrom ? `Renewed from agreement ${renewedFrom.id}` : ''),
+    rep_name: seed?.rep_name ?? '',
     ad_campaign_id: (linkedCampaign?.id ?? '') as string,
   });
   const [saving, setSaving] = useState(false);
@@ -535,7 +765,15 @@ function AgreementDrawer({
   };
 
   return (
-    <DrawerShell title={isCreate ? 'New agreement' : (existing?.advertiser_name ?? 'Agreement')} subtitle={isCreate ? 'Contract — draft by default' : existing?.id} onClose={onClose}>
+    <DrawerShell
+      title={isCreate
+        ? (renewedFrom ? `Renew — ${renewedFrom.advertiser_name ?? 'agreement'}` : 'New agreement')
+        : (existing?.advertiser_name ?? 'Agreement')}
+      subtitle={isCreate
+        ? (renewedFrom ? `Draft renewal of ${renewedFrom.id}` : 'Contract — draft by default')
+        : existing?.id}
+      onClose={onClose}
+    >
       {!isCreate && onGenerateInvoice && (
         <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-3 flex items-center justify-between">
           <div>
