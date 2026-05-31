@@ -54,6 +54,12 @@ export interface EmailVerifySignals {
   smtpTimedOut:   boolean;
   /** Number of MX hosts we attempted to probe (0 if skipped). */
   mxAttempts:     number;
+  /**
+   * If the MX matched a known managed-mail provider (Microsoft 365 EOP /
+   * Google Workspace / Proofpoint) we short-circuit to Pending. Null means
+   * either probe never ran or the MX didn't match a managed provider.
+   */
+  managedMailProvider: 'microsoft365-eop' | 'google-workspace' | 'proofpoint' | null;
 }
 
 export interface EmailVerifyResult {
@@ -185,6 +191,81 @@ const FREE_PROVIDERS = new Set<string>([
   'tutanota.com', 'tutanota.de', 'tuta.io',
 ]);
 
+// ────────────────────────────────────────────────────────────────────
+// Managed-mail MX patterns.
+//
+// Microsoft 365 EOP, Google Workspace, and Proofpoint all aggressively
+// block SMTP RCPT-TO probes originating from public cloud datacenter
+// IP ranges (AWS, Vercel, GCP, Azure). The TCP handshake either:
+//   • silently drops at SYN (timeout), or
+//   • completes but the 220 banner is delayed past our hard deadline,
+//     or
+//   • we get a 421/451 "deferred" code regardless of mailbox validity.
+//
+// In every case we CANNOT prove mailbox-existence from a Vercel function,
+// but the address is almost certainly valid — these are corporate mail
+// hosts, not free-mail. So we treat them exactly like the free-provider
+// short-circuit: trust the MX, return Pending with a diagnostic reason,
+// and let the user manually confirm.
+//
+// Patterns are matched (case-insensitive) against the MX exchange host.
+// ────────────────────────────────────────────────────────────────────
+export interface ManagedMailProvider {
+  /** Internal id used in detail messages and badges. */
+  id:       'microsoft365-eop' | 'google-workspace' | 'proofpoint';
+  /** Human-readable label. */
+  label:    string;
+  /** MX-host regexes; any match flips the short-circuit. */
+  patterns: RegExp[];
+}
+
+const MANAGED_MAIL_PROVIDERS: ManagedMailProvider[] = [
+  {
+    id:       'microsoft365-eop',
+    label:    'Microsoft 365 (Exchange Online Protection)',
+    patterns: [
+      /\.mail\.protection\.outlook\.com\.?$/i,
+      /\.olc\.protection\.outlook\.com\.?$/i,
+      /\.mail\.eo\.outlook\.com\.?$/i,
+    ],
+  },
+  {
+    id:       'google-workspace',
+    label:    'Google Workspace',
+    patterns: [
+      /\.aspmx\.l\.google\.com\.?$/i,
+      /^aspmx\d*\.googlemail\.com\.?$/i,
+      /^alt\d+\.aspmx\.l\.google\.com\.?$/i,
+      /^gmail-smtp-in\.l\.google\.com\.?$/i,
+    ],
+  },
+  {
+    id:       'proofpoint',
+    label:    'Proofpoint',
+    patterns: [
+      /\.pphosted\.com\.?$/i,
+      /\.ppe-hosted\.com\.?$/i,
+    ],
+  },
+];
+
+/**
+ * Classify a list of MX hosts against the managed-mail patterns above.
+ * Returns the first matching provider, or null if none match. Exported
+ * for reuse in audit / reclassification routes.
+ */
+export function classifyManagedMail(
+  mxHosts: ReadonlyArray<{ exchange: string } | string>,
+): ManagedMailProvider | null {
+  const hosts = mxHosts.map(h => (typeof h === 'string' ? h : h.exchange).toLowerCase());
+  for (const provider of MANAGED_MAIL_PROVIDERS) {
+    if (hosts.some(h => provider.patterns.some(rx => rx.test(h)))) {
+      return provider;
+    }
+  }
+  return null;
+}
+
 // Popular domains we'll suggest corrections toward (Levenshtein-1).
 const POPULAR_DOMAINS = [
   'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com',
@@ -271,8 +352,9 @@ function blankSignals(): EmailVerifySignals {
     smtpConnected:  false,
     mailboxExists:  null,
     catchAll:       null,
-    smtpTimedOut:   false,
-    mxAttempts:     0,
+    smtpTimedOut:        false,
+    mxAttempts:          0,
+    managedMailProvider: null,
   };
 }
 
@@ -397,6 +479,26 @@ export async function verifyEmail(
     return {
       verdict:    'Pending',
       detail:     `${domain} blocks SMTP verification (free-mail provider). Address looks well-formed.`,
+      risk:       computeRisk(signals),
+      mx:         mxRecords[0].exchange,
+      signals,
+      suggestion,
+      normalized,
+    };
+  }
+
+  // ---- 4b. Managed-mail short-circuit (M365 EOP / Google Workspace / Proofpoint) ----
+  // Same rationale as free-mail: these providers silently drop or 421
+  // SMTP probes from cloud-egress IPs. The MX is healthy and almost
+  // certainly delivers mail; we just can't prove the mailbox from a
+  // serverless function. Return Pending with a diagnostic detail naming
+  // the provider so the user knows it needs manual confirmation.
+  const managed = classifyManagedMail(mxRecords);
+  if (managed) {
+    signals.managedMailProvider = managed.id;
+    return {
+      verdict:    'Pending',
+      detail:     `${managed.label} blocks SMTP verification from cloud IPs. Address looks well-formed; manual confirmation recommended.`,
       risk:       computeRisk(signals),
       mx:         mxRecords[0].exchange,
       signals,

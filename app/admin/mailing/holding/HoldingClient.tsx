@@ -657,7 +657,12 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
   // Surface SMTP timeout signal from the persisted email_check JSONB so
   // the user can see at-a-glance which addresses are stuck on slow MX hosts.
   const check = row.email_check as
-    | { signals?: { smtpTimedOut?: boolean; smtpConnected?: boolean; mxAttempts?: number } }
+    | { signals?: {
+        smtpTimedOut?: boolean;
+        smtpConnected?: boolean;
+        mxAttempts?: number;
+        managedMailProvider?: 'microsoft365-eop' | 'google-workspace' | 'proofpoint' | null;
+      } }
     | null
     | undefined;
   const sig = check?.signals;
@@ -666,6 +671,19 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
       label: '⏱ Timed out',
       cls:   'bg-orange-100 text-orange-800 ring-1 ring-orange-200',
       title: `Mail server did not respond${sig.mxAttempts ? ` across ${sig.mxAttempts} MX host${sig.mxAttempts === 1 ? '' : 's'}` : ''} — domain may be misconfigured or rate-limiting us`,
+    });
+  }
+  if (sig?.managedMailProvider) {
+    const labels: Record<NonNullable<typeof sig.managedMailProvider>, { short: string; long: string }> = {
+      'microsoft365-eop': { short: 'M365', long: 'Microsoft 365 (Exchange Online Protection)' },
+      'google-workspace': { short: 'Google Workspace', long: 'Google Workspace' },
+      'proofpoint':       { short: 'Proofpoint', long: 'Proofpoint' },
+    };
+    const l = labels[sig.managedMailProvider];
+    flags.push({
+      label: l.short,
+      cls:   'bg-sky-100 text-sky-800 ring-1 ring-sky-200',
+      title: `${l.long} — SMTP verification blocked from cloud IPs; needs manual confirmation`,
     });
   }
   if (row.email_notes) {

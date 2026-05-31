@@ -1430,6 +1430,7 @@ export interface EmailVerifyPayload {
     catchAll:      boolean | null;
     smtpTimedOut?: boolean;
     mxAttempts?:   number;
+    managedMailProvider?: 'microsoft365-eop' | 'google-workspace' | 'proofpoint' | null;
   };
   mx?:         string;
   code?:       number;
@@ -1461,7 +1462,8 @@ export async function persistEmailVerification(
       (payload.code ? ` [code ${payload.code}]` : '') +
       (s.catchAll ? ' [catch-all]' : '') +
       (s.disposable ? ' [disposable]' : '') +
-      (s.smtpTimedOut && !s.smtpConnected ? ' [timed out]' : '');
+      (s.smtpTimedOut && !s.smtpConnected ? ' [timed out]' : '') +
+      (s.managedMailProvider ? ` [${s.managedMailProvider}]` : '');
     const rows = (await sql`
       UPDATE mailing_contacts
          SET email_status        = ${status},
