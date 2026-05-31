@@ -1464,6 +1464,12 @@ export async function persistEmailVerification(
       (s.disposable ? ' [disposable]' : '') +
       (s.smtpTimedOut && !s.smtpConnected ? ' [timed out]' : '') +
       (s.managedMailProvider ? ` [${s.managedMailProvider}]` : '');
+    // Idempotency: if the most recent line in email_notes carries the
+    // SAME log payload AND was stamped within the last 2 minutes, treat
+    // this probe as a no-op rewrite — update the structured columns but
+    // skip appending a duplicate line. This protects against fast
+    // double-clicks (row button + drawer button, dev StrictMode
+    // re-invocation, or accidental client retries).
     const rows = (await sql`
       UPDATE mailing_contacts
          SET email_status        = ${status},
@@ -1475,11 +1481,22 @@ export async function persistEmailVerification(
              email_risk          = ${Math.round(payload.risk)},
              email_suggestion    = ${payload.suggestion ?? null},
              email_check         = ${JSON.stringify(payload)}::jsonb,
-             email_notes         = CONCAT_WS(
-                                     E'\n',
-                                     NULLIF(email_notes, ''),
-                                     CONCAT('[', to_char(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI'), '] ', ${logLine}::text)
-                                   ),
+             email_notes         = CASE
+               -- Dedup: if email_notes already ends with this exact log
+               -- payload (last line, ignoring its timestamp prefix) AND
+               -- we last verified within the past 2 minutes, treat the
+               -- re-probe as a no-op append.
+               WHEN email_notes IS NOT NULL
+                AND email_verified_at IS NOT NULL
+                AND email_verified_at > (NOW() - INTERVAL '2 minutes')
+                AND RIGHT(email_notes, length(${logLine}::text)) = ${logLine}::text
+                  THEN email_notes
+               ELSE CONCAT_WS(
+                      E'\n',
+                      NULLIF(email_notes, ''),
+                      CONCAT('[', to_char(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI'), '] ', ${logLine}::text)
+                    )
+             END,
              updated_at          = NOW()
        WHERE id = ${id}
          AND stage = 'holding'
