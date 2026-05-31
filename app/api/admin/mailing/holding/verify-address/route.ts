@@ -13,6 +13,7 @@ import { requireAdmin } from '@/lib/server/auth/admin';
 import {
   persistAddressVerification,
   persistGeocode,
+  persistUspsCanonicalAddress,
   type MailingContactRow,
 } from '@/lib/mailing';
 import {
@@ -71,9 +72,15 @@ export const POST = withErrorHandling(async (req: Request) => {
     });
   }
 
-  // Valid — store normalized address, then geocode for distance calc.
+  // Valid — overwrite the row's address fields with the USPS-canonical
+  // version (so the drawer + the rest of the app sees the standardized
+  // form rather than the user's raw input), then geocode for distance.
   const normalized = formatUspsAddress(result.normalized);
-  let updated = await persistAddressVerification(id, 'Valid', normalized);
+  let updated = await persistUspsCanonicalAddress(
+    id,
+    result.normalized,
+    normalized,
+  );
 
   // Geocode using USPS-normalized parts (more reliable than raw input)
   const geo = await geocodeAddress({

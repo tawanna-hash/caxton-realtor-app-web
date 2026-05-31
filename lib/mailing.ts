@@ -1412,6 +1412,47 @@ export async function persistAddressVerification(
 }
 
 /**
+ * Persist a USPS-canonical address back into the holding row's address
+ * component fields (address / address_2 / city / state / zip). Called
+ * after a successful Valid verdict so the row carries the
+ * standardized USPS form rather than whatever the user typed.
+ *
+ * ZIP is stored as "12345" or "12345-6789" depending on whether USPS
+ * returned a ZIP+4. State is always the 2-letter postal code.
+ */
+export async function persistUspsCanonicalAddress(
+  id: string,
+  canonical: {
+    streetAddress: string;
+    secondaryAddress: string | null;
+    city: string;
+    state: string;
+    zip5: string;
+    zip4: string | null;
+  },
+  normalizedOneLine: string,
+): Promise<MailingContactRow | null> {
+  const sql = getSql();
+  const zip = canonical.zip4 ? `${canonical.zip5}-${canonical.zip4}` : canonical.zip5;
+  const rows = (await sql`
+    UPDATE mailing_contacts
+       SET address              = ${canonical.streetAddress},
+           address_2            = ${canonical.secondaryAddress},
+           city                 = ${canonical.city},
+           state                = ${canonical.state},
+           zip                  = ${zip},
+           addr_status          = 'Valid',
+           addr_verified_at     = NOW(),
+           addr_usps_normalized = ${normalizedOneLine},
+           updated_at           = NOW()
+     WHERE id = ${id}
+       AND stage = 'holding'
+     RETURNING *
+  `) as unknown as MailingContactRow[];
+  return rows[0] ?? null;
+}
+
+/**
  * Rich payload from lib/email-verify.ts — kept loose here so this file
  * doesn't take a dep on the verifier module.
  */
