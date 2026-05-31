@@ -18,18 +18,17 @@
 // to update the job row never abort verification work.
 
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { persistEmailVerification } from '@/lib/mailing';
 import { verifyEmail } from '@/lib/email-verify';
+import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { uuidSchema } from '@/lib/server/schemas/_common';
 
 export const runtime     = 'nodejs';
 export const dynamic     = 'force-dynamic';
 export const maxDuration = 300; // 5 min — comfortably more than 150 × 6s with concurrency=10
-
-const UUID_RE   = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const MAX_BATCH = 500;
-const MAX_CONC  = 25;
 
 interface PendingRow {
   id:    string;
@@ -48,23 +47,37 @@ function authorizedByCron(req: Request): boolean {
   return req.headers.get('x-vercel-cron') === '1';
 }
 
-export async function POST(req: Request) {
-  // Auth: admin OR cron
+// Body schema for the batch worker. All fields optional with sane
+// defaults so cron / fire-and-forget callers can POST {}.
+const verifyBatchSchema = z
+  .object({
+    batchSize:   z.coerce.number().int().min(1).max(500).default(150),
+    concurrency: z.coerce.number().int().min(1).max(25).default(10),
+    jobId:       uuidSchema.optional(),
+  })
+  .partial()
+  .default({});
+
+export const POST = withErrorHandling(async (req: Request) => {
+  // Auth: admin OR cron. We can't use `requireAdmin` directly because
+  // the cron path is unauthenticated except for the bearer token.
   const admin = await getCurrentAdmin();
   const cron  = authorizedByCron(req);
   if (!admin && !cron) {
-    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+    throw new ApiError(401, 'unauthorized');
   }
 
-  let body: { batchSize?: number; concurrency?: number; jobId?: string } = {};
+  // Tolerate empty body (Vercel cron self-call sends `{}`).
+  let bodyRaw: unknown = {};
   try {
-    body = (await req.json()) as typeof body;
+    bodyRaw = await req.json();
   } catch {
-    /* empty body OK */
+    bodyRaw = {};
   }
-  const batchSize   = Math.min(MAX_BATCH, Math.max(1, body.batchSize ?? 150));
-  const concurrency = Math.min(MAX_CONC,  Math.max(1, body.concurrency ?? 10));
-  const jobId       = (typeof body.jobId === 'string' && UUID_RE.test(body.jobId)) ? body.jobId : null;
+  const parsed = verifyBatchSchema.parse(bodyRaw);
+  const batchSize   = parsed.batchSize   ?? 150;
+  const concurrency = parsed.concurrency ?? 10;
+  const jobId       = parsed.jobId       ?? null;
 
   await ensureSchema();
   const sql = getSql();
@@ -220,4 +233,4 @@ export async function POST(req: Request) {
     batch_size:       batchSize,
     concurrency,
   });
-}
+});

@@ -9,8 +9,15 @@
 // Auth: forwards admin cookie to droplet /admin/auth/me (same pattern as
 // the other /api/admin/* routes).
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { requireAdmin } from '@/lib/server/auth/admin';
+import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { parseQuery } from '@/lib/server/schemas/_common';
+
+const metricsQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(365).default(7),
+});
 
 const POSTHOG_API_KEY = process.env.POSTHOG_PERSONAL_API_KEY;
 const POSTHOG_PROJECT_ID = process.env.POSTHOG_PROJECT_ID;
@@ -19,15 +26,6 @@ const POSTHOG_HOST = 'https://us.posthog.com';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
-
-async function verifyAdmin(): Promise<boolean> {
-  try {
-    const admin = await getCurrentAdmin();
-    return admin !== null;
-  } catch {
-    return false;
-  }
-}
 
 async function runHogQL(query: string): Promise<unknown[]> {
   const res = await fetch(
@@ -52,27 +50,15 @@ async function runHogQL(query: string): Promise<unknown[]> {
   return data.results ?? [];
 }
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async (req: Request) => {
   if (!POSTHOG_API_KEY || !POSTHOG_PROJECT_ID) {
-    return NextResponse.json(
-      { ok: false, error: 'Server misconfigured: POSTHOG_PERSONAL_API_KEY or POSTHOG_PROJECT_ID missing.' },
-      { status: 500 },
-    );
+    throw new ApiError(500, 'Server misconfigured: POSTHOG_PERSONAL_API_KEY or POSTHOG_PROJECT_ID missing.');
   }
 
-  const isAdmin = await verifyAdmin();
-  if (!isAdmin) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-  }
+  await requireAdmin();
+  const { days } = parseQuery(req, metricsQuerySchema);
 
-  try {
-    // Parse days query param (default 7, clamp 1..365 for safety).
-    const daysRaw = req.nextUrl.searchParams.get('days');
-    const daysParsed = daysRaw ? parseInt(daysRaw, 10) : 7;
-    const days = Number.isFinite(daysParsed) && daysParsed >= 1 && daysParsed <= 365
-      ? daysParsed
-      : 7;
-
+  {
     // 1. Event totals — last 7 days, by event name
     const eventTotalsRaw = await runHogQL(`
       SELECT event, count() AS total
@@ -291,12 +277,5 @@ export async function GET(req: NextRequest) {
         share_breakdown,
       },
     });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[admin/metrics] error:', message);
-    return NextResponse.json(
-      { ok: false, error: 'Metrics query failed. Check Vercel logs.' },
-      { status: 500 },
-    );
   }
-}
+})

@@ -16,25 +16,13 @@
 
 import { NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
-import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { requireAdmin } from '@/lib/server/auth/admin';
 import { listSubscribers } from '@/lib/server/subscribers-store';
+import { withErrorHandling } from '@/lib/server/error';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 15;
-
-async function isAdmin(): Promise<boolean> {
-  try {
-    const admin = await getCurrentAdmin();
-    return admin !== null;
-  } catch {
-    return false;
-  }
-}
-
-function errMessage(err: unknown): string {
-  return err instanceof Error ? err.message : 'unknown error';
-}
 
 // Fetch subscriber total from the droplet. pageSize=1 keeps the payload tiny;
 // the response still carries the full `total`. Per-market counts come from two
@@ -60,13 +48,10 @@ async function fetchSubscriberCounts(): Promise<{
   return { total, austin, san_antonio };
 }
 
-export async function GET() {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  try {
-    await ensureSchema();
+export const GET = withErrorHandling(async () => {
+  await requireAdmin();
+  await ensureSchema();
+  {
     const sql = getSql();
 
     // Run the Postgres rollups and the droplet subscriber fetch in parallel.
@@ -116,11 +101,5 @@ export async function GET() {
       linkedAdvertisers: linkedAdvRows[0]?.n ?? 0,
       topAdvertiser,
     });
-  } catch (err: unknown) {
-    console.error('[admin/analytics/overview] failed:', errMessage(err));
-    return NextResponse.json(
-      { error: 'database error', detail: errMessage(err) },
-      { status: 500 },
-    );
   }
-}
+});

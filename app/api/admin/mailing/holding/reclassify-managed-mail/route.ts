@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { promises as dns } from 'node:dns';
+import { z } from 'zod';
 import { ensureSchema, getSql } from '@/lib/db';
-import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { requireAdmin } from '@/lib/server/auth/admin';
 import { classifyManagedMail } from '@/lib/email-verify';
+import { withErrorHandling } from '@/lib/server/error';
+import { parseJson } from '@/lib/server/schemas/_common';
 
 // ────────────────────────────────────────────────────────────────────
 // One-shot reclassification endpoint.
@@ -26,6 +29,11 @@ import { classifyManagedMail } from '@/lib/email-verify';
 // Pass {"dryRun": false} to actually persist the reclassification.
 // ────────────────────────────────────────────────────────────────────
 
+const reclassifyBodySchema = z
+  .object({ dryRun: z.boolean().default(true) })
+  .partial()
+  .default({});
+
 interface InvalidRow {
   id:                string;
   email:             string;
@@ -45,20 +53,12 @@ async function resolveMxSafe(domain: string): Promise<string[]> {
   }
 }
 
-export async function POST(req: Request) {
-  const admin = await getCurrentAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  }
+export const POST = withErrorHandling(async (req: Request) => {
+  await requireAdmin();
   await ensureSchema();
   const sql = getSql();
 
-  let body: { dryRun?: boolean } = {};
-  try {
-    body = (await req.json()) as { dryRun?: boolean };
-  } catch {
-    /* empty body → default dry run */
-  }
+  const body = await parseJson(req, reclassifyBodySchema);
   const dryRun = body.dryRun !== false; // default true
 
   // Pull every Invalid row with an email.
@@ -176,4 +176,4 @@ export async function POST(req: Request) {
     reclassified_count:   updated,
     candidates,
   });
-}
+});

@@ -11,27 +11,32 @@
 // We deliberately do NOT spawn a long-running background task here —
 // Vercel serverless functions don't keep work alive past the response.
 // The pattern is: client kicks off, client drives the loop, client
-// observes progress. If the user navigates away mid-drain, the nightly
-// (every-6-hour) cron picks up wherever they left off.
+// observes progress. If the user navigates away mid-drain, the every-
+// 6-hour cron picks up wherever they left off.
 
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { ensureSchema, getSql } from '@/lib/db';
-import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { requireAdmin } from '@/lib/server/auth/admin';
+import { withErrorHandling } from '@/lib/server/error';
+import { parseJson } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: Request) {
-  const admin = await getCurrentAdmin();
-  if (!admin) {
-    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
-  }
+const startSchema = z
+  .object({
+    batchSize: z.coerce.number().int().min(1).max(500).default(150),
+  })
+  .partial()
+  .default({});
+
+export const POST = withErrorHandling(async (req: Request) => {
+  const admin = await requireAdmin();
   await ensureSchema();
   const sql = getSql();
 
-  let body: { batchSize?: number } = {};
-  try { body = (await req.json()) as typeof body; } catch { /* ignore */ }
-  const batchSize = Math.min(500, Math.max(1, body.batchSize ?? 150));
+  const { batchSize = 150 } = await parseJson(req, startSchema);
 
   // Compute the initial total so the progress bar has a denominator
   // immediately, before the first batch runs.
@@ -49,16 +54,24 @@ export async function POST(req: Request) {
   // Reject if there's already an active drain (running or queued) to
   // avoid double-driving the same queue from two browser tabs.
   const existing = (await sql`
-    SELECT id FROM verify_jobs WHERE status IN ('queued', 'running') LIMIT 1
-  `) as unknown as { id: string }[];
+    SELECT id, total FROM verify_jobs WHERE status IN ('queued', 'running') LIMIT 1
+  `) as unknown as { id: string; total: number }[];
   if (existing.length > 0) {
+    // Include both `job_id` (client-canonical) and the legacy
+    // `existing_job_id` key so anything depending on the old field
+    // keeps working through the rollout.
     return NextResponse.json(
-      { ok: false, error: 'drain_already_running', existing_job_id: existing[0].id },
+      {
+        ok: false,
+        error: 'drain_already_running',
+        job_id: existing[0].id,
+        existing_job_id: existing[0].id,
+        total: existing[0].total,
+      },
       { status: 409 },
     );
   }
 
-  // Pull the admin's email/name for audit, if available.
   const startedBy =
     (admin as { email?: string; name?: string }).email ??
     (admin as { name?: string }).name ?? null;
@@ -77,4 +90,4 @@ export async function POST(req: Request) {
     started_at: job.started_at,
     batch_size: batchSize,
   });
-}
+});

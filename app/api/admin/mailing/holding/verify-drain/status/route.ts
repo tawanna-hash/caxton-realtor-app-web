@@ -7,13 +7,18 @@
 //   (no id) Returns the most-recent active job, if any.
 
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { ensureSchema, getSql } from '@/lib/db';
-import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { requireAdmin } from '@/lib/server/auth/admin';
+import { withErrorHandling } from '@/lib/server/error';
+import { parseQuery, uuidSchema } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const statusQuerySchema = z.object({
+  id: uuidSchema.optional(),
+});
 
 interface JobRow {
   id:            string;
@@ -31,32 +36,20 @@ interface JobRow {
   updated_at:    string;
 }
 
-export async function GET(req: Request) {
-  const admin = await getCurrentAdmin();
-  if (!admin) {
-    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
-  }
+export const GET = withErrorHandling(async (req: Request) => {
+  await requireAdmin();
   await ensureSchema();
   const sql = getSql();
 
-  const url = new URL(req.url);
-  const id  = url.searchParams.get('id');
+  const { id } = parseQuery(req, statusQuerySchema);
 
-  let rows: JobRow[];
-  if (id) {
-    if (!UUID_RE.test(id)) {
-      return NextResponse.json({ ok: false, error: 'invalid_id' }, { status: 400 });
-    }
-    rows = (await sql`SELECT * FROM verify_jobs WHERE id = ${id}::uuid`) as unknown as JobRow[];
-  } else {
-    // Fall back to the latest active job (running/queued), or the most
-    // recent job overall if none are active.
-    rows = (await sql`
-      SELECT * FROM verify_jobs
-       ORDER BY (status IN ('running','queued')) DESC, started_at DESC
-       LIMIT 1
-    `) as unknown as JobRow[];
-  }
+  const rows: JobRow[] = id
+    ? ((await sql`SELECT * FROM verify_jobs WHERE id = ${id}::uuid`) as unknown as JobRow[])
+    : ((await sql`
+        SELECT * FROM verify_jobs
+         ORDER BY (status IN ('running','queued')) DESC, started_at DESC
+         LIMIT 1
+      `) as unknown as JobRow[]);
 
   const job = rows[0];
   if (!job) {
@@ -81,4 +74,4 @@ export async function GET(req: Request) {
     job,
     remaining: remainingRows[0]?.n ?? 0,
   });
-}
+});

@@ -22,9 +22,17 @@
 //
 //   - 'All' applies no filter.
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
-import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { z } from 'zod';
+import { requireAdmin } from '@/lib/server/auth/admin';
+import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { parseJson } from '@/lib/server/schemas/_common';
+
+const posthogBodySchema = z.object({
+  timeframe:   z.string().optional(),
+  publication: z.string().optional(),
+});
 
 // ============================================================
 // CONFIG
@@ -400,50 +408,23 @@ const getCachedReport = unstable_cache(
 );
 
 // ============================================================
-// Auth
-// ============================================================
-
-async function verifyAdmin(): Promise<boolean> {
-  try {
-    const admin = await getCurrentAdmin();
-    return admin !== null;
-  } catch {
-    return false;
-  }
-}
-
-// ============================================================
 // Handler
 // ============================================================
 
-export async function POST(request: NextRequest) {
-  const authorized = await verifyAdmin();
-  if (!authorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  let body: { timeframe?: string; publication?: string };
-  try {
-    body = (await request.json()) as { timeframe?: string; publication?: string };
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
-  }
+export const POST = withErrorHandling(async (request: Request) => {
+  await requireAdmin();
+  const body = await parseJson(request, posthogBodySchema);
 
   const timeframe = body.timeframe ?? '28';
   const publication = body.publication ?? 'All';
 
   if (!TIMEFRAME_DAYS[timeframe]) {
-    return NextResponse.json({ error: `Invalid timeframe: ${timeframe}` }, { status: 400 });
+    throw new ApiError(400, `Invalid timeframe: ${timeframe}`);
   }
   if (!(publication in PUBLICATION_CONFIG)) {
-    return NextResponse.json({ error: `Invalid publication: ${publication}` }, { status: 400 });
+    throw new ApiError(400, `Invalid publication: ${publication}`);
   }
 
-  try {
-    const report = await getCachedReport(timeframe, publication);
-    return NextResponse.json(report);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  const report = await getCachedReport(timeframe, publication);
+  return NextResponse.json(report);
+});

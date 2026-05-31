@@ -1,72 +1,46 @@
 // app/api/admin/inventory/route.ts
 // Admin endpoint: list builder_inventory rows filtered by status.
 // Returns rows + counts per status (for the tab indicators).
-//
-// Auth: forwards the session cookie to the droplet GET /admin/auth/me,
-// matching the pattern in app/api/admin/ads/upload-token/route.ts.
-// Page layouts do NOT gate API routes in Next.js — auth must be inline.
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import {
   listBuilderInventory,
   ensureBuilderInventorySchema,
   type Status,
 } from '@/lib/builder-inventory';
 import { neon } from '@neondatabase/serverless';
-import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { requireAdmin } from '@/lib/server/auth/admin';
+import { withErrorHandling } from '@/lib/server/error';
+import { parseQuery } from '@/lib/server/schemas/_common';
 
 const sql = neon(process.env.DATABASE_URL!);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-async function verifyAdmin(): Promise<boolean> {
-  try {
-    const admin = await getCurrentAdmin();
-    return admin !== null;
-  } catch {
-    return false;
-  }
-}
+const listInventoryQuerySchema = z.object({
+  status: z.enum(['pending', 'active', 'rejected']).default('pending'),
+  limit:  z.coerce.number().int().min(1).max(200).default(200),
+});
 
-export async function GET(req: NextRequest) {
-  const isAdmin = await verifyAdmin();
-  if (!isAdmin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const GET = withErrorHandling(async (req: Request) => {
+  await requireAdmin();
+  await ensureBuilderInventorySchema();
 
-  try {
-    await ensureBuilderInventorySchema();
+  const { status, limit } = parseQuery(req, listInventoryQuerySchema);
 
-    const url = new URL(req.url);
-    const statusParam = url.searchParams.get('status') as Status | null;
+  const rows = await listBuilderInventory({ status, limit });
 
-    const VALID_STATUSES: Status[] = ['pending', 'active', 'rejected'];
-    const status: Status =
-      statusParam && VALID_STATUSES.includes(statusParam)
-        ? statusParam
-        : 'pending';
+  // Counts for the tab badges — single query across all statuses.
+  const countRows = (await sql`
+    SELECT status, COUNT(*)::int AS count
+    FROM builder_inventory
+    GROUP BY status
+  `) as { status: Status; count: number }[];
 
-    const rows = await listBuilderInventory({ status, limit: 200 });
+  const counts: Record<Status, number> = { pending: 0, active: 0, rejected: 0 };
+  for (const r of countRows) counts[r.status] = r.count;
 
-    // Fetch counts for all statuses in a single query.
-    const countRows = (await sql`
-      SELECT status, COUNT(*)::int AS count
-      FROM builder_inventory
-      GROUP BY status
-    `) as { status: Status; count: number }[];
-
-    const counts: Record<Status, number> = {
-      pending: 0,
-      active: 0,
-      rejected: 0,
-    };
-    for (const r of countRows) counts[r.status] = r.count;
-
-    return NextResponse.json({ rows, counts });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[admin/inventory] error:', message);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  return NextResponse.json({ rows, counts });
+});

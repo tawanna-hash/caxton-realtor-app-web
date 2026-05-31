@@ -9,69 +9,53 @@
 //
 // Default range: last 30 days inclusive.
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getSql, ensureSchema } from '@/lib/db';
 import type { Advertiser } from '@/lib/advertisers';
-import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { requireAdmin } from '@/lib/server/auth/admin';
+import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { parseQuery } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-async function isAdmin(): Promise<boolean> {
-  try {
-    const admin = await getCurrentAdmin();
-    return admin !== null;
-  } catch {
-    return false;
-  }
-}
-
-function errMessage(err: unknown): string {
-  return err instanceof Error ? err.message : 'unknown error';
-}
+const rangeQuerySchema = z.object({
+  from: z.string().optional(),
+  to:   z.string().optional(),
+});
 
 type RouteCtx = { params: Promise<{ id: string }> };
 
-export async function GET(req: NextRequest, ctx: RouteCtx) {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const GET = withErrorHandling(async (req: Request, ctx: RouteCtx) => {
+  await requireAdmin();
   const { id } = await ctx.params;
   const idNum = Number(id);
   if (!Number.isInteger(idNum) || idNum < 1) {
-    return NextResponse.json({ error: 'invalid id' }, { status: 400 });
+    throw new ApiError(400, 'invalid id');
   }
 
   // Parse date range from query, default = last 30 days inclusive.
-  const url = new URL(req.url);
+  const { from: fromRaw, to: toRaw } = parseQuery(req, rangeQuerySchema);
   const today = new Date();
   today.setUTCHours(23, 59, 59, 999);
   const defaultFrom = new Date(today);
   defaultFrom.setUTCDate(defaultFrom.getUTCDate() - 29);
   defaultFrom.setUTCHours(0, 0, 0, 0);
 
-  let from: Date;
-  let to: Date;
-  try {
-    from = url.searchParams.get('from')
-      ? new Date(url.searchParams.get('from')!)
-      : defaultFrom;
-    to = url.searchParams.get('to')
-      ? new Date(url.searchParams.get('to')!)
-      : today;
-    if (isNaN(from.getTime()) || isNaN(to.getTime())) throw new Error('invalid date');
-    if (from > to) throw new Error('from must be before to');
-  } catch (err) {
-    return NextResponse.json(
-      { error: 'invalid date range', detail: errMessage(err) },
-      { status: 400 },
-    );
+  const from = fromRaw ? new Date(fromRaw) : defaultFrom;
+  const to   = toRaw   ? new Date(toRaw)   : today;
+  if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+    throw new ApiError(400, 'invalid date range', { detail: 'invalid date' });
+  }
+  if (from > to) {
+    throw new ApiError(400, 'invalid date range', { detail: 'from must be before to' });
   }
 
   const fromIso = from.toISOString();
   const toIso = to.toISOString();
 
-  try {
+  {
     await ensureSchema();
     const sql = getSql();
 
@@ -82,7 +66,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       FROM advertisers WHERE id = ${idNum}
     `) as unknown as Advertiser[];
     if (advRows.length === 0) {
-      return NextResponse.json({ error: 'advertiser not found' }, { status: 404 });
+      throw new ApiError(404, 'advertiser not found');
     }
     const advertiser = advRows[0];
 
@@ -215,11 +199,5 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
         unique_sessions: r.unique_sessions,
       })),
     });
-  } catch (err) {
-    console.error('[admin/analytics/advertiser/:id] failed:', errMessage(err));
-    return NextResponse.json(
-      { error: 'analytics query failed', detail: errMessage(err) },
-      { status: 500 },
-    );
   }
-}
+});
