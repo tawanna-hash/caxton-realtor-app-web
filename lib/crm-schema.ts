@@ -600,4 +600,31 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
     ALTER TABLE mailing_contacts
       ADD COLUMN IF NOT EXISTS email_notes         text
   `);
+
+  // ───────────────────────────────────────────────────────────────────
+  // verify_jobs — background queue-drain runs.
+  //
+  // Each row tracks one full or partial sweep of email_status='Pending'
+  // contacts (manual kick-off or cron). The UI polls /status?id to show
+  // a live progress bar; the worker updates counts after each batch.
+  // ───────────────────────────────────────────────────────────────────
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS verify_jobs (
+      id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      kind            text NOT NULL CHECK (kind IN ('manual', 'cron')),
+      status          text NOT NULL CHECK (status IN ('queued', 'running', 'done', 'failed', 'cancelled')) DEFAULT 'queued',
+      total           integer NOT NULL DEFAULT 0,
+      processed       integer NOT NULL DEFAULT 0,
+      valid_count     integer NOT NULL DEFAULT 0,
+      invalid_count   integer NOT NULL DEFAULT 0,
+      pending_count   integer NOT NULL DEFAULT 0,
+      last_error      text,
+      started_by      text,
+      started_at      timestamptz NOT NULL DEFAULT NOW(),
+      finished_at     timestamptz,
+      updated_at      timestamptz NOT NULL DEFAULT NOW()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_verify_jobs_status   ON verify_jobs(status)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_verify_jobs_started  ON verify_jobs(started_at DESC)`);
 }

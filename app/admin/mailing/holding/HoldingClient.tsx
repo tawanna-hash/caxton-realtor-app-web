@@ -51,6 +51,19 @@ export default function HoldingClient() {
   const [toast, setToast] = useState<string | null>(null);
   const [editing, setEditing] = useState<MailingContactRow | null>(null);
 
+  // verify-all-pending drain state. `drainJob` is non-null while the
+  // client-driven loop is running and is polled every 3s for live counts.
+  const [drainJob, setDrainJob] = useState<{
+    id:        string;
+    total:     number;
+    processed: number;
+    valid:     number;
+    invalid:   number;
+    pending:   number;
+    remaining: number;
+    status:    'queued' | 'running' | 'done' | 'failed' | 'cancelled';
+  } | null>(null);
+
   const reload = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -235,6 +248,107 @@ export default function HoldingClient() {
     }
   };
 
+  // ------------------------------------------------------------------
+  // Verify-all-Pending drain: client-driven loop that hits the batch
+  // worker repeatedly until the Pending queue is empty. Progress is
+  // polled from the verify_jobs row so refreshing the page or running
+  // in another tab still picks up the in-flight job.
+  // ------------------------------------------------------------------
+  const runVerifyDrain = async () => {
+    const pendingCount = counts?.pending ?? 0;
+    if (pendingCount === 0) {
+      showToast('No Pending contacts to verify.');
+      return;
+    }
+    if (!confirm(`Verify all ${pendingCount} Pending contacts? This runs in the background and may take 30+ minutes.`)) {
+      return;
+    }
+    setBusy('drain');
+    let jobId: string | null = null;
+    let totalForBar = pendingCount;
+    try {
+      // Step 1: kick off (or join) a drain job.
+      const startRes = await fetch('/api/admin/mailing/holding/verify-drain/start', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const startJson = await startRes.json().catch(() => ({}));
+      if (startRes.status === 409 && startJson?.job_id) {
+        // A drain is already running — join it.
+        jobId = startJson.job_id as string;
+        totalForBar = startJson.total ?? pendingCount;
+        showToast('Joined existing verify-drain job.');
+      } else if (!startRes.ok) {
+        throw new Error(startJson?.detail || startJson?.error || `HTTP ${startRes.status}`);
+      } else {
+        jobId = startJson.job_id as string;
+        totalForBar = startJson.total ?? pendingCount;
+      }
+      if (!jobId) throw new Error('start did not return a job_id');
+      setDrainJob({
+        id:        jobId,
+        total:     totalForBar,
+        processed: 0,
+        valid:     0,
+        invalid:   0,
+        pending:   0,
+        remaining: totalForBar,
+        status:    'running',
+      });
+
+      // Step 2: drain loop. POST batches sequentially; in parallel, poll status.
+      let stopPolling = false;
+      const poll = async () => {
+        while (!stopPolling) {
+          try {
+            const sres = await fetch(`/api/admin/mailing/holding/verify-drain/status?id=${jobId}`, {
+              credentials: 'include',
+            });
+            if (sres.ok) {
+              const sj = await sres.json();
+              const job = sj.job ?? {};
+              setDrainJob({
+                id:        jobId!,
+                total:     job.total ?? totalForBar,
+                processed: job.processed ?? 0,
+                valid:     job.valid_count ?? 0,
+                invalid:   job.invalid_count ?? 0,
+                pending:   job.pending_count ?? 0,
+                remaining: sj.remaining ?? 0,
+                status:    job.status ?? 'running',
+              });
+            }
+          } catch {
+            /* ignore poll errors — next tick will retry */
+          }
+          await new Promise((r) => setTimeout(r, 3000));
+        }
+      };
+      void poll();
+
+      for (;;) {
+        const bres = await fetch('/api/admin/mailing/holding/verify-all-pending', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ batchSize: 150, concurrency: 10, jobId }),
+        });
+        const bj = await bres.json().catch(() => ({}));
+        if (!bres.ok) throw new Error(bj?.detail || bj?.error || `HTTP ${bres.status}`);
+        if ((bj.remaining_after ?? 0) === 0 || (bj.processed ?? 0) === 0) {
+          break;
+        }
+      }
+      stopPolling = true;
+      showToast('Verify drain complete.');
+      await reload();
+    } catch (err) {
+      showToast(`Verify drain failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const syncFromUnlockMLS = async () => {
     if (!confirm('Run the UnlockMLS realtor scraper now? This may take several minutes.')) return;
     setBusy('sync');
@@ -287,6 +401,15 @@ export default function HoldingClient() {
           <button
             type="button"
             disabled={busy !== null}
+            onClick={runVerifyDrain}
+            className="px-4 py-2 rounded-md border border-[#3D0740] text-[#3D0740] text-sm font-medium hover:bg-[#3D0740] hover:text-white disabled:opacity-50"
+            title="Verify every Pending contact in the background (batches of 150)."
+          >
+            {busy === 'drain' ? 'Verifying…' : 'Verify all Pending'}
+          </button>
+          <button
+            type="button"
+            disabled={busy !== null}
             onClick={syncFromUnlockMLS}
             className="px-4 py-2 rounded-md bg-[#3D0740] text-white text-sm font-medium hover:bg-[#5A0E5F] disabled:opacity-50"
           >
@@ -294,6 +417,55 @@ export default function HoldingClient() {
           </button>
         </div>
       </div>
+
+      {/* Verify-drain progress strip */}
+      {drainJob && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <div className="flex items-baseline justify-between gap-3 flex-wrap mb-2">
+            <div>
+              <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium">
+                Verify drain
+              </p>
+              <p className="font-serif text-lg text-gray-900 mt-0.5">
+                {drainJob.processed.toLocaleString()} / {drainJob.total.toLocaleString()} processed
+                {drainJob.status !== 'running' && drainJob.status !== 'queued' && (
+                  <span className="ml-2 text-xs uppercase tracking-wider text-gray-500">
+                    · {drainJob.status}
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-gray-600">Valid</span>
+                <span className="font-medium text-gray-900">{drainJob.valid.toLocaleString()}</span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block w-2 h-2 rounded-full bg-rose-500" />
+                <span className="text-gray-600">Invalid</span>
+                <span className="font-medium text-gray-900">{drainJob.invalid.toLocaleString()}</span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+                <span className="text-gray-600">Pending</span>
+                <span className="font-medium text-gray-900">{drainJob.pending.toLocaleString()}</span>
+              </span>
+              <span className="inline-flex items-center gap-1 text-gray-500">
+                · {drainJob.remaining.toLocaleString()} remaining
+              </span>
+            </div>
+          </div>
+          <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+            <div
+              className="h-full bg-[#3D0740] transition-all"
+              style={{
+                width: `${drainJob.total > 0 ? Math.min(100, Math.round((drainJob.processed / drainJob.total) * 100)) : 0}%`,
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
