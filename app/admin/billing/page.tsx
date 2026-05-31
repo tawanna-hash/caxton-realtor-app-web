@@ -22,6 +22,9 @@ export default async function BillingPage() {
   await ensureSchema();
   const sql = getSql();
 
+  // The agreements/invoices migration adds advertiser_id + agreement_id columns to
+  // ad_campaigns. We SELECT them defensively so a fresh schema (where ensureSchema
+  // has not seen the migration yet) still renders the page instead of hard-crashing.
   const [agreements, invoices, advertisers, adCampaigns] = await Promise.all([
     sql`
       SELECT ag.*, adv.name AS advertiser_name,
@@ -30,21 +33,22 @@ export default async function BillingPage() {
       FROM agreements ag
       LEFT JOIN advertisers adv ON adv.id = ag.advertiser_id
       ORDER BY ag.updated_at DESC
-    `,
+    `.catch(() => [] as unknown[]),
     sql`
       SELECT i.*, adv.name AS advertiser_name,
         (i.status NOT IN ('paid','void') AND i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE) AS is_overdue
       FROM invoices i
       LEFT JOIN advertisers adv ON adv.id = i.advertiser_id
       ORDER BY i.created_at DESC
-    `,
-    sql`SELECT id, name, publication FROM advertisers ORDER BY name ASC`,
+    `.catch(() => [] as unknown[]),
+    sql`SELECT id, name, publication FROM advertisers ORDER BY name ASC`
+      .catch(() => [] as unknown[]),
     sql`
       SELECT id, advertiser_name, ad_space_slug, publication,
              start_date, end_date, active, advertiser_id, agreement_id
         FROM ad_campaigns
        ORDER BY created_at DESC
-    `,
+    `.catch(() => [] as unknown[]),
   ]);
 
   return (

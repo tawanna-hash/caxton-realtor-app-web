@@ -24,12 +24,23 @@ export type AdCampaignOption = {
   advertiser_name: string;
   ad_space_slug: string;
   publication: string;
-  start_date: string;
-  end_date: string;
+  // start_date / end_date may arrive as ISO strings (via the API roundtrip) OR
+  // as JS Date objects (via the server-component direct SQL query — the neon
+  // driver hydrates DATE columns into Date instances). Be tolerant of both.
+  start_date: string | Date | null;
+  end_date: string | Date | null;
   active: boolean;
   advertiser_id: number | null;
   agreement_id: string | null;
 };
+
+/** Format a DATE column value (which may be a JS Date or ISO string) as YYYY-MM-DD. */
+function formatDateISO(d: string | Date | null | undefined): string {
+  if (d == null) return '—';
+  if (d instanceof Date) return d.toISOString().slice(0, 10);
+  if (typeof d === 'string') return d.length >= 10 ? d.slice(0, 10) : d;
+  return String(d);
+}
 
 type Props = {
   initialAgreements: AgreementWithAdvertiser[];
@@ -433,8 +444,8 @@ function AgreementDrawer({
     advertiser_id: existing?.advertiser_id ?? null as number | null,
     type: (existing?.type ?? null) as AgreementType | null,
     status: (existing?.status ?? 'draft') as AgreementStatus,
-    start_date: existing?.start_date?.slice(0, 10) ?? '',
-    end_date: existing?.end_date?.slice(0, 10) ?? '',
+    start_date: existing?.start_date ? formatDateISO(existing.start_date as string | Date) : '',
+    end_date: existing?.end_date ? formatDateISO(existing.end_date as string | Date) : '',
     ad_size: existing?.ad_size ?? '',
     frequency: existing?.frequency ?? '',
     ad_rate_dollars: existing?.ad_rate_cents != null ? (existing.ad_rate_cents / 100).toString() : '',
@@ -597,7 +608,7 @@ function AgreementDrawer({
             {campaignChoices.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.advertiser_name} · {c.ad_space_slug} · {c.publication}
-                {' '}({c.start_date?.slice(0,10)} → {c.end_date?.slice(0,10)})
+                {' '}({formatDateISO(c.start_date)} → {formatDateISO(c.end_date)})
                 {c.active ? '' : ' · inactive'}
               </option>
             ))}
@@ -646,7 +657,7 @@ function InvoiceDrawer({
     status: (existing?.status ?? 'draft') as InvoiceStatus,
     amount_dollars: initialAmountDollars,
     tax_dollars: existing?.tax_cents != null ? (existing.tax_cents / 100).toString() : '0',
-    due_date: existing?.due_date?.slice(0, 10) ?? '',
+    due_date: existing?.due_date ? formatDateISO(existing.due_date as string | Date) : '',
     memo: existing?.memo ?? (seed ? 'Generated from agreement' : ''),
     line_items: existing?.line_items ?? [] as InvoiceLineItem[],
   });
