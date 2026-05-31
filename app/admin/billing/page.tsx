@@ -9,7 +9,7 @@ import { ensureSchema, getSql } from '@/lib/db';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
-import BillingClient from './BillingClient';
+import BillingClient, { type AdCampaignOption } from './BillingClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +22,7 @@ export default async function BillingPage() {
   await ensureSchema();
   const sql = getSql();
 
-  const [agreements, invoices, advertisers] = await Promise.all([
+  const [agreements, invoices, advertisers, adCampaigns] = await Promise.all([
     sql`
       SELECT ag.*, adv.name AS advertiser_name,
         COALESCE((SELECT SUM(i.total_cents)::int FROM invoices i WHERE i.agreement_id = ag.id AND i.status <> 'void'), 0) AS invoiced_cents,
@@ -39,6 +39,12 @@ export default async function BillingPage() {
       ORDER BY i.created_at DESC
     `,
     sql`SELECT id, name, publication FROM advertisers ORDER BY name ASC`,
+    sql`
+      SELECT id, advertiser_name, ad_space_slug, publication,
+             start_date, end_date, active, advertiser_id, agreement_id
+        FROM ad_campaigns
+       ORDER BY created_at DESC
+    `,
   ]);
 
   return (
@@ -46,6 +52,7 @@ export default async function BillingPage() {
       initialAgreements={agreements as unknown as AgreementWithAdvertiser[]}
       initialInvoices={invoices as unknown as InvoiceWithAdvertiser[]}
       advertisers={advertisers as unknown as Array<{ id: number; name: string; publication: string }>}
+      adCampaigns={adCampaigns as unknown as AdCampaignOption[]}
     />
   );
 }

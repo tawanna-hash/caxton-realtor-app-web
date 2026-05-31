@@ -19,10 +19,23 @@ import { formatCents, lineItemsTotal } from '@/lib/invoices';
 
 type AdvertiserOption = { id: number; name: string; publication: string };
 
+export type AdCampaignOption = {
+  id: string;
+  advertiser_name: string;
+  ad_space_slug: string;
+  publication: string;
+  start_date: string;
+  end_date: string;
+  active: boolean;
+  advertiser_id: number | null;
+  agreement_id: string | null;
+};
+
 type Props = {
   initialAgreements: AgreementWithAdvertiser[];
   initialInvoices: InvoiceWithAdvertiser[];
   advertisers: AdvertiserOption[];
+  adCampaigns: AdCampaignOption[];
 };
 
 const AG_STATUS: { value: AgreementStatus; label: string; tone: string }[] = [
@@ -54,10 +67,11 @@ const PAY_MODES: { value: PaymentMode; label: string }[] = [
   { value: 'check',   label: 'Check' },
 ];
 
-export default function BillingClient({ initialAgreements, initialInvoices, advertisers }: Props) {
+export default function BillingClient({ initialAgreements, initialInvoices, advertisers, adCampaigns: initialAdCampaigns }: Props) {
   const [tab, setTab] = useState<'agreements' | 'invoices'>('agreements');
   const [agreements, setAgreements] = useState(initialAgreements);
   const [invoices, setInvoices] = useState(initialInvoices);
+  const [adCampaigns, setAdCampaigns] = useState(initialAdCampaigns);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createAg, setCreateAg] = useState(false);
@@ -78,6 +92,37 @@ export default function BillingClient({ initialAgreements, initialInvoices, adve
     if (res.status === 401) { router.push('/admin/login'); return; }
     if (res.ok) setInvoices((await res.json()).invoices ?? []);
   }, [router]);
+
+  const reloadAdCampaigns = useCallback(async () => {
+    const res = await fetch('/api/admin/ads/campaigns', { cache: 'no-store' });
+    if (res.status === 401) { router.push('/admin/login'); return; }
+    if (res.ok) {
+      const data = await res.json();
+      // The campaigns endpoint returns AdCampaignWithRefs — extract subset.
+      type RawCampaign = AdCampaignOption & Record<string, unknown>;
+      const list = (data.campaigns ?? []) as RawCampaign[];
+      setAdCampaigns(list.map((c) => ({
+        id: c.id,
+        advertiser_name: c.advertiser_name,
+        ad_space_slug: c.ad_space_slug,
+        publication: c.publication,
+        start_date: c.start_date,
+        end_date: c.end_date,
+        active: c.active,
+        advertiser_id: c.advertiser_id ?? null,
+        agreement_id: c.agreement_id ?? null,
+      })));
+    }
+  }, [router]);
+
+  // State: when a user clicks "Generate invoice" on an agreement, we open the
+  // InvoiceDrawer pre-populated from that agreement. This object holds the
+  // seed values without persisting to the agreement edit state.
+  const [invoiceSeed, setInvoiceSeed] = useState<{
+    advertiser_id: number | null;
+    agreement_id: string;
+    amount_cents: number | null;
+  } | null>(null);
 
   // Filter
   const filteredAg = useMemo(() => {
@@ -188,8 +233,9 @@ export default function BillingClient({ initialAgreements, initialInvoices, adve
       {createAg && (
         <AgreementDrawer
           advertisers={advertisers}
+          adCampaigns={adCampaigns}
           onClose={() => setCreateAg(false)}
-          onSaved={async () => { setCreateAg(false); await reloadAgreements(); }}
+          onSaved={async () => { setCreateAg(false); await reloadAgreements(); await reloadAdCampaigns(); }}
           onError={setError}
         />
       )}
@@ -197,17 +243,25 @@ export default function BillingClient({ initialAgreements, initialInvoices, adve
         <AgreementDrawer
           existing={editAg}
           advertisers={advertisers}
+          adCampaigns={adCampaigns}
           onClose={() => setEditAg(null)}
-          onSaved={async () => { setEditAg(null); await reloadAgreements(); }}
+          onSaved={async () => { setEditAg(null); await reloadAgreements(); await reloadAdCampaigns(); }}
           onError={setError}
+          onGenerateInvoice={(seed) => {
+            setEditAg(null);
+            setInvoiceSeed(seed);
+            setCreateInv(true);
+            setTab('invoices');
+          }}
         />
       )}
       {createInv && (
         <InvoiceDrawer
           advertisers={advertisers}
           agreements={agreements}
-          onClose={() => setCreateInv(false)}
-          onSaved={async () => { setCreateInv(false); await reloadInvoices(); }}
+          seed={invoiceSeed ?? undefined}
+          onClose={() => { setCreateInv(false); setInvoiceSeed(null); }}
+          onSaved={async () => { setCreateInv(false); setInvoiceSeed(null); await reloadInvoices(); }}
           onError={setError}
         />
       )}
@@ -282,6 +336,32 @@ function AgreementList({ rows, onOpen }: { rows: AgreementWithAdvertiser[]; onOp
   );
 }
 
+function PaidStamp({ paidAt }: { paidAt: string | null }) {
+  return (
+    <span
+      title={paidAt ? `Paid ${new Date(paidAt).toLocaleDateString()}` : 'Paid'}
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-[0.15em] border-2 border-emerald-600 text-emerald-700 bg-emerald-50"
+      style={{ transform: 'rotate(-2deg)' }}
+    >
+      ✓ Paid
+    </span>
+  );
+}
+
+function UnpaidBadge({ overdue }: { overdue: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-[0.15em] border ${
+        overdue
+          ? 'border-amber-500 text-amber-700 bg-amber-50'
+          : 'border-gray-300 text-gray-600 bg-gray-50'
+      }`}
+    >
+      {overdue ? 'Overdue' : 'Unpaid'}
+    </span>
+  );
+}
+
 function InvoiceList({ rows, onOpen }: { rows: InvoiceWithAdvertiser[]; onOpen: (r: InvoiceWithAdvertiser) => void }) {
   if (rows.length === 0) {
     return <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-500">No invoices yet.</div>;
@@ -293,26 +373,35 @@ function InvoiceList({ rows, onOpen }: { rows: InvoiceWithAdvertiser[]; onOpen: 
         <div className="col-span-3">Advertiser</div>
         <div className="col-span-2">Total</div>
         <div className="col-span-2">Due</div>
-        <div className="col-span-2">Status</div>
-        <div className="col-span-1"></div>
+        <div className="col-span-2">Payment</div>
+        <div className="col-span-1">Status</div>
       </div>
       <div className="divide-y divide-gray-100">
-        {rows.map((r) => (
-          <button key={r.id} onClick={() => onOpen(r)} className="w-full grid grid-cols-12 gap-3 px-4 py-3 text-left hover:bg-blue-50/40">
-            <div className="col-span-2 font-mono text-sm text-gray-700">{r.number ?? '—'}</div>
-            <div className="col-span-3 min-w-0">
-              <div className="font-medium text-gray-900 truncate">{r.advertiser_name ?? '—'}</div>
-              <div className="text-xs text-gray-500 truncate">{r.bill_to_email ?? ''}</div>
-            </div>
-            <div className="col-span-2 text-sm text-gray-900">{formatCents(r.total_cents)}</div>
-            <div className="col-span-2 text-sm text-gray-700">
-              {r.due_date ? new Date(r.due_date).toLocaleDateString() : '—'}
-              {r.is_overdue && <span className="ml-2 text-xs text-amber-700 font-medium">overdue</span>}
-            </div>
-            <div className="col-span-2"><StatusPill value={r.status} options={INV_STATUS} /></div>
-            <div className="col-span-1 text-right text-xs text-gray-400">{new Date(r.created_at).toLocaleDateString()}</div>
-          </button>
-        ))}
+        {rows.map((r) => {
+          const isPaid = r.status === 'paid';
+          const isVoid = r.status === 'void';
+          return (
+            <button key={r.id} onClick={() => onOpen(r)} className={`w-full grid grid-cols-12 gap-3 px-4 py-3 text-left hover:bg-blue-50/40 ${isPaid ? 'bg-emerald-50/30' : ''}`}>
+              <div className="col-span-2 font-mono text-sm text-gray-700">{r.number ?? '—'}</div>
+              <div className="col-span-3 min-w-0">
+                <div className="font-medium text-gray-900 truncate">{r.advertiser_name ?? '—'}</div>
+                <div className="text-xs text-gray-500 truncate">{r.bill_to_email ?? ''}</div>
+              </div>
+              <div className="col-span-2 text-sm text-gray-900">{formatCents(r.total_cents)}</div>
+              <div className="col-span-2 text-sm text-gray-700">
+                {r.due_date ? new Date(r.due_date).toLocaleDateString() : '—'}
+              </div>
+              <div className="col-span-2">
+                {isPaid
+                  ? <PaidStamp paidAt={r.paid_at} />
+                  : isVoid
+                    ? <span className="text-xs text-rose-600 font-medium uppercase tracking-wider">Void</span>
+                    : <UnpaidBadge overdue={!!r.is_overdue} />}
+              </div>
+              <div className="col-span-1"><StatusPill value={r.status} options={INV_STATUS} /></div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -324,14 +413,22 @@ function InvoiceList({ rows, onOpen }: { rows: InvoiceWithAdvertiser[]; onOpen: 
 const INPUT = 'w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
 
 function AgreementDrawer({
-  existing, advertisers, onClose, onSaved, onError,
+  existing, advertisers, adCampaigns, onClose, onSaved, onError, onGenerateInvoice,
 }: {
   existing?: AgreementWithAdvertiser;
   advertisers: AdvertiserOption[];
+  adCampaigns: AdCampaignOption[];
   onClose: () => void;
   onSaved: () => Promise<void>;
   onError: (msg: string) => void;
+  onGenerateInvoice?: (seed: { advertiser_id: number | null; agreement_id: string; amount_cents: number | null }) => void;
 }) {
+  // Determine which campaign is currently linked to this agreement (one-to-one).
+  const linkedCampaign = useMemo(
+    () => existing ? (adCampaigns.find((c) => c.agreement_id === existing.id) ?? null) : null,
+    [adCampaigns, existing],
+  );
+
   const [form, setForm] = useState({
     advertiser_id: existing?.advertiser_id ?? null as number | null,
     type: (existing?.type ?? null) as AgreementType | null,
@@ -345,9 +442,26 @@ function AgreementDrawer({
     payment_mode: (existing?.payment_mode ?? null) as PaymentMode | null,
     notes: existing?.notes ?? '',
     rep_name: existing?.rep_name ?? '',
+    ad_campaign_id: (linkedCampaign?.id ?? '') as string,
   });
   const [saving, setSaving] = useState(false);
   const isCreate = !existing;
+
+  // For new agreements, show ALL campaigns (filtered later). For existing,
+  // include the currently-linked campaign plus any unlinked ones.
+  const campaignChoices = useMemo(() => {
+    const eligible = adCampaigns.filter((c) =>
+      c.agreement_id === null
+      || (existing && c.agreement_id === existing.id),
+    );
+    // Optional: prefer campaigns whose advertiser matches the selected advertiser.
+    if (form.advertiser_id) {
+      const own = eligible.filter((c) => c.advertiser_id === form.advertiser_id);
+      const rest = eligible.filter((c) => c.advertiser_id !== form.advertiser_id);
+      return [...own, ...rest];
+    }
+    return eligible;
+  }, [adCampaigns, existing, form.advertiser_id]);
 
   const update = <K extends keyof typeof form>(k: K, v: typeof form[K]) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -376,6 +490,22 @@ function AgreementDrawer({
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      // After the agreement is saved, sync the ad_campaign link if it changed.
+      const saved = await res.json();
+      const agreementId = saved.agreement?.id ?? existing?.id;
+      const previousCampaignId = linkedCampaign?.id ?? '';
+      if (agreementId && form.ad_campaign_id !== previousCampaignId) {
+        const linkRes = await fetch(`/api/admin/agreements/${agreementId}/link-campaign`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ ad_campaign_id: form.ad_campaign_id || null }),
+        });
+        if (!linkRes.ok) {
+          const detail = await linkRes.text();
+          throw new Error(`campaign link failed: ${detail}`);
+        }
+      }
       await onSaved();
     } catch (e) {
       onError(e instanceof Error ? e.message : 'save failed');
@@ -384,8 +514,37 @@ function AgreementDrawer({
     }
   };
 
+  const handleGenerateInvoice = () => {
+    if (!existing || !onGenerateInvoice) return;
+    onGenerateInvoice({
+      advertiser_id: existing.advertiser_id,
+      agreement_id: existing.id,
+      amount_cents: existing.amount_cents,
+    });
+  };
+
   return (
     <DrawerShell title={isCreate ? 'New agreement' : (existing?.advertiser_name ?? 'Agreement')} subtitle={isCreate ? 'Contract — draft by default' : existing?.id} onClose={onClose}>
+      {!isCreate && onGenerateInvoice && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-3 flex items-center justify-between">
+          <div>
+            <div className="text-xs uppercase tracking-[0.2em] text-blue-700 font-medium">Invoice</div>
+            <div className="text-sm text-gray-800 mt-0.5">
+              {existing && (existing.invoiced_cents > 0
+                ? <>Invoiced so far: <span className="font-medium">{formatCents(existing.invoiced_cents)}</span> of {formatCents(existing.amount_cents)}</>
+                : <>No invoices yet for this agreement.</>)}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleGenerateInvoice}
+            className="px-3 py-1.5 rounded bg-blue-600 text-white text-xs hover:bg-blue-700"
+          >
+            Generate invoice
+          </button>
+        </div>
+      )}
+
       <Section title="Parties">
         <Field label="Advertiser">
           <select value={form.advertiser_id ?? ''} onChange={(e) => update('advertiser_id', e.target.value ? +e.target.value : null)} className={INPUT}>
@@ -431,6 +590,25 @@ function AgreementDrawer({
         </div>
       </Section>
 
+      <Section title="Linked ad campaign">
+        <Field label="Ad campaign">
+          <select value={form.ad_campaign_id} onChange={(e) => update('ad_campaign_id', e.target.value)} className={INPUT}>
+            <option value="">— none —</option>
+            {campaignChoices.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.advertiser_name} · {c.ad_space_slug} · {c.publication}
+                {' '}({c.start_date?.slice(0,10)} → {c.end_date?.slice(0,10)})
+                {c.active ? '' : ' · inactive'}
+              </option>
+            ))}
+          </select>
+          <div className="text-xs text-gray-500 mt-1">
+            Link this agreement to a running ad campaign. Only campaigns without an existing
+            agreement (plus the one already linked here, if any) are shown.
+          </div>
+        </Field>
+      </Section>
+
       <Section title="Notes">
         <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} rows={3} className={INPUT + ' resize-y'} />
       </Section>
@@ -444,23 +622,32 @@ function AgreementDrawer({
 // Invoice drawer (create + edit)
 // ──────────────────────────────────────────────────────────────────
 function InvoiceDrawer({
-  existing, advertisers, agreements, onClose, onSaved, onError,
+  existing, advertisers, agreements, seed, onClose, onSaved, onError,
 }: {
   existing?: InvoiceWithAdvertiser;
   advertisers: AdvertiserOption[];
   agreements: AgreementWithAdvertiser[];
+  seed?: { advertiser_id: number | null; agreement_id: string; amount_cents: number | null };
   onClose: () => void;
   onSaved: () => Promise<void>;
   onError: (msg: string) => void;
 }) {
+  // When seeded from an agreement, pre-populate advertiser + agreement + amount.
+  const initialAdvertiserId = existing?.advertiser_id ?? seed?.advertiser_id ?? null;
+  const initialAgreementId = (existing?.agreement_id ?? seed?.agreement_id ?? '') as string;
+  const initialAmountDollars =
+    existing?.amount_cents != null ? (existing.amount_cents / 100).toString()
+    : seed?.amount_cents != null ? (seed.amount_cents / 100).toString()
+    : '';
+
   const [form, setForm] = useState({
-    advertiser_id: existing?.advertiser_id ?? null as number | null,
-    agreement_id: (existing?.agreement_id ?? '') as string,
+    advertiser_id: initialAdvertiserId as number | null,
+    agreement_id: initialAgreementId,
     status: (existing?.status ?? 'draft') as InvoiceStatus,
-    amount_dollars: existing?.amount_cents != null ? (existing.amount_cents / 100).toString() : '',
+    amount_dollars: initialAmountDollars,
     tax_dollars: existing?.tax_cents != null ? (existing.tax_cents / 100).toString() : '0',
     due_date: existing?.due_date?.slice(0, 10) ?? '',
-    memo: existing?.memo ?? '',
+    memo: existing?.memo ?? (seed ? 'Generated from agreement' : ''),
     line_items: existing?.line_items ?? [] as InvoiceLineItem[],
   });
   const [saving, setSaving] = useState(false);
