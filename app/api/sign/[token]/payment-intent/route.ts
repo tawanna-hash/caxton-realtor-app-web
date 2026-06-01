@@ -149,7 +149,12 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'unknown error';
-    console.error('[sign/payment-intent] error:', msg);
-    return NextResponse.json({ error: 'payment intent failed', detail: msg }, { status: 500 });
+    const stack = err instanceof Error ? err.stack : undefined;
+    console.error('[sign/payment-intent] error:', msg, stack);
+    // Include the actual cause in the response so the client surfaces a usable message.
+    return NextResponse.json(
+      { error: `payment intent failed: ${msg}`, detail: msg },
+      { status: 500 },
+    );
   }
 }

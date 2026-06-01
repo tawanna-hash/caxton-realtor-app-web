@@ -60,8 +60,12 @@ const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function Strip
     setError(null);
     fetch(`/api/sign/${token}/payment-intent`, { method: 'POST' })
       .then(async (r) => {
-        const j = (await r.json()) as PIResp | { error: string };
-        if (!r.ok) throw new Error((j as { error: string }).error ?? 'Failed to start payment');
+        const j = (await r.json()) as PIResp | { error: string; detail?: string };
+        if (!r.ok) {
+          const j2 = j as { error: string; detail?: string };
+          const msg = j2.detail ? `${j2.error} — ${j2.detail}` : (j2.error ?? 'Failed to start payment');
+          throw new Error(msg);
+        }
         if (cancelled) return;
         setPi(j as PIResp);
         setStripePromise(loadStripe((j as PIResp).publishableKey));
