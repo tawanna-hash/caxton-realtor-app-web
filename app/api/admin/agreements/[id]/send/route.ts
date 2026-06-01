@@ -50,7 +50,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       adSize: ag.ad_size ?? undefined,
       adRate: ag.ad_rate_cents != null ? ag.ad_rate_cents / 100 : null,
       status: ag.status,
-      message: `Please review and sign your advertising agreement with RealtyLine. Click the button below to access your secure signing link.`,
+      message: `Your RealtyLine advertising agreement is ready for review. Click below to open your secure signing portal. If your package hasn't been pre-selected, you'll be able to choose your ad size and publication frequency before signing. Reach out if you have any questions — we're glad to help.`,
       signingLink,
     });
 
