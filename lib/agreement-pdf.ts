@@ -4,11 +4,20 @@
 // Uses pdf-lib. Mirrors the Pressbook generateAgreementPdf layout
 // (pb_index.html line 7824 onwards).
 //
-// Letter size: 612 x 792 pt. Uses built-in Helvetica fonts.
+// Letter size: 612 x 792 pt. Uses bundled Georgia serif fonts to mirror app UI.
 
-import { PDFDocument, rgb, StandardFonts, type PDFPage, type PDFFont } from 'pdf-lib';
+import { PDFDocument, rgb, type PDFPage, type PDFFont } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
+import fs from 'node:fs';
+import path from 'node:path';
 import type { Agreement } from '@/lib/agreements';
 import { TERMS_RL } from '@/lib/agreement-terms';
+
+// Resolve bundled Georgia TTFs at lib/pdf/fonts/. Load once at module init.
+const FONT_DIR = path.join(process.cwd(), 'lib', 'pdf', 'fonts');
+const GEORGIA_REGULAR = fs.readFileSync(path.join(FONT_DIR, 'Georgia.ttf'));
+const GEORGIA_BOLD = fs.readFileSync(path.join(FONT_DIR, 'Georgia-Bold.ttf'));
+const GEORGIA_ITALIC = fs.readFileSync(path.join(FONT_DIR, 'Georgia-Italic.ttf'));
 
 const RED = rgb(0.824, 0.145, 0.192);   // #D22531
 const DARK = rgb(0.1, 0.1, 0.1);
@@ -190,9 +199,10 @@ function humanDate(iso: string | Date | null | undefined): string {
 
 export async function generateAgreementPdfBuffer(ag: Agreement): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const regular = await doc.embedFont(StandardFonts.Helvetica);
-  const italic = await doc.embedFont(StandardFonts.HelveticaOblique);
+  doc.registerFontkit(fontkit);
+  const bold = await doc.embedFont(GEORGIA_BOLD);
+  const regular = await doc.embedFont(GEORGIA_REGULAR);
+  const italic = await doc.embedFont(GEORGIA_ITALIC);
 
   const firstPage = doc.addPage([PW, PH]);
   const ctx: DrawCtx = {
