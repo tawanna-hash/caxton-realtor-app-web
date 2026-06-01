@@ -47,22 +47,28 @@ type AdminGroup = { label: string; links: AdminLink[] };
 
 const ADMIN_GROUPS: AdminGroup[] = [
   {
-    label: 'CRM & Audience',
+    label: 'CRM',
     links: [
-      { label: 'CRM',              href: '/admin/crm',             description: 'Advertisers / clients pipeline' },
-      { label: 'Mailing List',     href: '/admin/mailing',         description: 'Segment lists & exports' },
-      { label: 'ABOR Members',     href: '/admin/mailing/holding', description: 'Scraped agents awaiting review' },
-      { label: 'Advertisers',      href: '/admin/advertisers',     description: 'Active accounts' },
-      { label: 'Subscribers',      href: '/admin/subscribers',     description: 'Newsletter signups' },
+      { label: 'Advertisers', href: '/admin/advertisers', description: 'Active accounts' },
+      { label: 'Media Kit',   href: '/admin/media-kit',   description: '2026 packages, rates & deadlines' },
+      { label: 'Agreements',  href: '/admin/billing',     description: 'Invoices, sign wizard & payments' },
+    ],
+  },
+  {
+    label: 'Audience',
+    links: [
+      { label: 'ABOR Members',      href: '/admin/mailing/holding',    description: 'Scraped agents awaiting review' },
+      { label: 'App Subscribers',   href: '/admin/subscribers',        description: 'Newsletter signups' },
+      { label: 'Five Points Board', href: '/admin/five-points-board',  description: 'Coming soon' },
+      { label: 'Manual Subscribe',  href: '/subscribe',                description: 'Add a subscriber by hand' },
     ],
   },
   {
     label: 'Revenue',
     links: [
-      { label: 'Billing',   href: '/admin/billing',   description: 'Invoices & payments' },
-      { label: 'Ads',       href: '/admin/ads',       description: 'Inventory & placements' },
-      { label: 'Marketing', href: '/admin/marketing', description: 'Campaigns & assets' },
-      { label: 'Media Kit', href: '/admin/media-kit', description: '2026 packages, rates & deadlines' },
+      { label: 'Ads',          href: '/admin/ads',       description: 'Inventory & placements' },
+      { label: 'Marketing',    href: '/admin/marketing', description: 'Campaigns & assets' },
+      { label: 'Mailing List', href: '/admin/mailing',   description: 'Segment lists & exports' },
     ],
   },
   {
