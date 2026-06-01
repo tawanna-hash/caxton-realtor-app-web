@@ -1136,7 +1136,15 @@ function AgreementDrawer({
     return eligible;
   }, [adCampaigns, existing, form.advertiser_id]);
 
-  const canSign = form.terms_accepted && form.signer_name.trim() !== '' && form.sign_date !== '';
+  // Admin shortcut signing is allowed ONLY when payment is Check (or no payment).
+  // Credit Card must go through the public Sign Wizard so Stripe actually charges —
+  // signing here would mark the agreement paid-on-paper without ever hitting Stripe.
+  const cardRequiresSigningLink = form.payment_type === 'Credit Card';
+  const canSign =
+    form.terms_accepted &&
+    form.signer_name.trim() !== '' &&
+    form.sign_date !== '' &&
+    !cardRequiresSigningLink;
 
   const buildPayload = (isSigning: boolean) => {
     const rateCents = Math.round((parseFloat(form.ad_rate) || 0) * 100);
@@ -1560,7 +1568,13 @@ function AgreementDrawer({
 
         {form.payment_type === 'Credit Card' && (
           <div className="rounded border border-amber-200 bg-amber-50/40 p-3 space-y-3">
-            <div className="text-xs text-amber-700 font-medium">A 3% surcharge applies to credit card transactions</div>
+            <div className="text-xs text-amber-800 font-medium">A 3% surcharge applies to credit card transactions</div>
+            <div className="text-xs text-amber-900 bg-amber-100 border border-amber-300 rounded p-2 leading-relaxed">
+              <strong>The actual card charge happens on the signing link.</strong>{' '}
+              These fields below are reference metadata only — the advertiser will enter their
+              card securely via Stripe on the Sign Wizard. Click <em>Send Signing Link</em>{' '}
+              (or <em>Copy Link</em>) instead of <em>Sign &amp; Save</em>.
+            </div>
             <div>
               <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Card Type</div>
               {CARD_TYPES.map((ct) => (
@@ -1788,7 +1802,13 @@ function AgreementDrawer({
           onClick={() => save(true)}
           disabled={saving || !canSign}
           className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          title={!canSign ? 'Accept terms, enter signer name and sign date first' : ''}
+          title={
+            cardRequiresSigningLink
+              ? 'Credit Card payments must be signed via the public Sign Wizard so Stripe can charge the card. Use Send Signing Link instead.'
+              : !canSign
+              ? 'Accept terms, enter signer name and sign date first'
+              : ''
+          }
         >
           {saving ? 'Saving…' : 'Sign & Save'}
         </button>
