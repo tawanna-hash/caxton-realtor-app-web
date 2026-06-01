@@ -208,7 +208,7 @@ export async function generateAgreementPdfBuffer(ag: Agreement): Promise<Uint8Ar
 
   // Red accent bar
   page.drawRectangle({ x: 0, y: PH - 72, width: PW, height: 72, color: RED });
-  page.drawText('RealtyLine', {
+  page.drawText('RealtyLine Austin', {
     x: MARGIN, y: PH - 36,
     font: bold, size: 22, color: WHITE,
   });
@@ -242,7 +242,7 @@ export async function generateAgreementPdfBuffer(ag: Agreement): Promise<Uint8Ar
   // Publisher block
   currentPg(ctx).drawText('PUBLISHER', { x: MARGIN, y: twoColY, font: bold, size: 8, color: GRAY });
   const pubLines = [
-    'RealtyLine',
+    'RealtyLine Austin',
     'Caxton Publications Inc.',
     'P.O. Box 81366',
     'Austin, Texas 78708-1366',
@@ -376,7 +376,7 @@ export async function generateAgreementPdfBuffer(ag: Agreement): Promise<Uint8Ar
       end: { x: PW - MARGIN, y: 36 },
       thickness: 0.5, color: LGRAY,
     });
-    pg.drawText(`RealtyLine · Caxton Publications Inc. · Page ${i + 1} of ${totalPages}`, {
+    pg.drawText(`RealtyLine Austin · Caxton Publications Inc. · Page ${i + 1} of ${totalPages}`, {
       x: MARGIN, y: 22,
       font: regular, size: 7.5, color: GRAY,
     });
