@@ -145,6 +145,37 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_cust   ON agreements(stripe_customer_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_inv    ON agreements(stripe_invoice_id)`);
 
+  // Stripe + Wave (Zapier) wiring — 20260601-stripe-payments.sql
+  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS stripe_payment_method_id text`);
+  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS stripe_charged_cents     integer`);
+  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS stripe_charged_at        timestamptz`);
+  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS wave_invoice_synced_at   timestamptz`);
+  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS wave_invoice_id          text`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_pm ON agreements(stripe_payment_method_id)`);
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS issue_charges (
+      id                       uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      agreement_id             uuid NOT NULL REFERENCES agreements(id) ON DELETE CASCADE,
+      amount_cents             integer NOT NULL,
+      surcharge_cents          integer NOT NULL DEFAULT 0,
+      issue_month              text,
+      stripe_payment_intent_id text,
+      stripe_charge_id         text,
+      status                   text NOT NULL DEFAULT 'pending'
+                                 CHECK (status IN ('pending','succeeded','failed','refunded')),
+      wave_invoice_id          text,
+      wave_invoice_synced_at   timestamptz,
+      failure_reason           text,
+      charged_at               timestamptz,
+      created_by               text,
+      created_at               timestamptz NOT NULL DEFAULT now(),
+      updated_at               timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_issue_charges_agreement ON issue_charges(agreement_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_issue_charges_status    ON issue_charges(status)`);
+
   await step(() => sql`
     CREATE OR REPLACE FUNCTION trg_agreements_set_updated_at()
     RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql

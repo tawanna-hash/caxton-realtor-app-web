@@ -9,7 +9,8 @@
 // Step 4: Billing & Payment (fully editable)
 // Step 5: Terms & Sign
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import StripePaymentBlock, { type StripePaymentHandle } from './StripePaymentBlock';
 import { useRouter } from 'next/navigation';
 import type { Agreement } from '@/lib/agreements';
 import { TERMS_RL } from '@/lib/agreement-terms';
@@ -249,6 +250,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const stripeRef = useRef<StripePaymentHandle>(null);
 
   // ── Advertiser fields ──────────────────────────────────────────────────────
   const [companyName, setCompanyName] = useState(ag.company_name ?? '');
@@ -404,6 +406,23 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
     setSaving(true);
     setError(null);
     try {
+      // 1. Charge the card first if Credit Card was selected and Stripe is wired.
+      //    confirm() returns {skipped:true} if Stripe isn't configured (graceful fallback).
+      let stripePaymentIntentId: string | null = null;
+      if (paymentType === 'Credit Card' && stripeRef.current) {
+        try {
+          const result = await stripeRef.current.confirm();
+          if ('paymentIntentId' in result) stripePaymentIntentId = result.paymentIntentId;
+        } catch (e) {
+          // Card declined / 3DS failed — stop here; client can fix and retry.
+          const msg = e instanceof Error ? e.message : 'card authorization failed';
+          setError(`Card payment failed: ${msg}. Update card details or choose Check.`);
+          setSaving(false);
+          return;
+        }
+      }
+
+      // 2. Persist signature + patches.
       const res = await fetch(`/api/sign/${token}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -412,6 +431,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
           signedAt: signDate,
           termsAccepted: true,
           patches: buildPatchPayload(),
+          stripePaymentIntentId,
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -797,6 +817,22 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                   <strong>New monthly: ${ccSurchargeTotal.toFixed(2)}</strong>
                 </div>
               )}
+
+              {/* Stripe Payment Element — PCI-safe card capture. Falls back gracefully if STRIPE_*_KEY env vars are not set. */}
+              <div className="rounded-md bg-white p-4 border border-amber-200">
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
+                  Secure Card Payment
+                </p>
+                <StripePaymentBlock
+                  ref={stripeRef}
+                  token={token}
+                  adRateCents={strToCents(adRate) ?? 0}
+                  refreshKey={`${adSize}|${frequency}|${adRate}`}
+                />
+                <p className="text-[11px] text-gray-500 mt-2">
+                  Charged at signing. Your card is securely saved for future monthly issue charges.
+                </p>
+              </div>
 
               {/* Card Type */}
               <div>
