@@ -17,7 +17,9 @@ export interface SendEmailResult {
   error?: string;
 }
 
-const FROM_DEFAULT = 'RealtyLine <noreply@realtynewsnow.app>';
+// myrealtyline.com is verified in Resend. realtynewsnow.app is not (yet).
+// Override with EMAIL_FROM env var if needed.
+const FROM_DEFAULT = process.env.EMAIL_FROM ?? 'RealtyLine <noreply@myrealtyline.com>';
 
 export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
