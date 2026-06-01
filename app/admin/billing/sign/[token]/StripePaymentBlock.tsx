@@ -29,6 +29,11 @@ interface Props {
   adRateCents: number;
   /** Force re-fetch the PaymentIntent when amount changes. */
   refreshKey?: string | number;
+  /**
+   * Called whenever the form's readiness changes. Parent should disable any
+   * "Authorize Card" / submit button until `ready === true`.
+   */
+  onReadyChange?: (ready: boolean) => void;
 }
 
 interface PIResp {
@@ -41,7 +46,7 @@ interface PIResp {
 }
 
 const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function StripePaymentBlock(
-  { token, adRateCents, refreshKey },
+  { token, adRateCents, refreshKey, onReadyChange },
   ref,
 ) {
   const [pi, setPi] = useState<PIResp | null>(null);
@@ -85,11 +90,16 @@ const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function Strip
   // Inner component (has access to Elements context)
   const Inner = useMemo(
     () =>
-      forwardRef<StripePaymentHandle, { paymentIntentId: string }>(function Inner({ paymentIntentId }, innerRef) {
+      forwardRef<StripePaymentHandle, { paymentIntentId: string; onReady?: (ready: boolean) => void }>(function Inner({ paymentIntentId, onReady }, innerRef) {
         const stripe = useStripe();
         const elements = useElements();
         const [confirming, setConfirming] = useState(false);
         const [innerError, setInnerError] = useState<string | null>(null);
+
+        // Notify parent when Stripe + Elements are mounted (form is ready).
+        useEffect(() => {
+          onReady?.(!!stripe && !!elements);
+        }, [stripe, elements, onReady]);
 
         useImperativeHandle(
           innerRef,
@@ -155,6 +165,14 @@ const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function Strip
     [pi],
   );
 
+  // Whenever PaymentIntent / Elements are torn down (e.g. amount changes
+  // and we re-fetch), report not-ready so the parent disables Authorize.
+  useEffect(() => {
+    if (!pi || !stripePromise) {
+      onReadyChange?.(false);
+    }
+  }, [pi, stripePromise, onReadyChange]);
+
   if (!adRateCents || adRateCents <= 0) {
     return (
       <div className="text-sm text-gray-600 bg-gray-50 rounded p-3 border border-gray-200">
@@ -186,7 +204,7 @@ const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function Strip
         appearance: { theme: 'stripe', labels: 'floating' },
       }}
     >
-      <Inner ref={innerRef} paymentIntentId={pi.paymentIntentId} />
+      <Inner ref={innerRef} paymentIntentId={pi.paymentIntentId} onReady={onReadyChange} />
     </Elements>
   );
 });

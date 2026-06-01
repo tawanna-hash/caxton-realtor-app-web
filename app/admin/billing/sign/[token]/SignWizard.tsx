@@ -254,6 +254,10 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
   // PaymentIntent id captured at end of Step 4 (while StripePaymentBlock is
   // still mounted). Step 5 just persists this — it no longer touches Stripe.
   const [confirmedPaymentIntentId, setConfirmedPaymentIntentId] = useState<string | null>(null);
+  // True once Stripe Elements has fully mounted and is ready to confirm.
+  // Gated by StripePaymentBlock's onReadyChange callback so the Authorize
+  // button stays disabled until the form can actually accept a confirmation.
+  const [stripeReady, setStripeReady] = useState(false);
 
   // ── Advertiser fields ──────────────────────────────────────────────────────
   const [companyName, setCompanyName] = useState(ag.company_name ?? '');
@@ -757,12 +761,18 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
   // ─── Step 4: Billing & Payment ────────────────────────────────────────────
 
   if (step === 4) {
+    const ccNotReady = paymentType === 'Credit Card' && !stripeReady;
     return (
       <Shell
         step={4}
         onBack={() => setStep(3)}
         onNext={handleNext}
-        nextLabel={paymentType === 'Credit Card' ? 'Authorize Card →' : 'Next →'}
+        nextLabel={
+          paymentType === 'Credit Card'
+            ? (stripeReady ? 'Authorize Card →' : 'Loading payment form…')
+            : 'Next →'
+        }
+        nextDisabled={ccNotReady}
         saving={saving}
       >
         <div className="space-y-5">
@@ -857,6 +867,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                   token={token}
                   adRateCents={strToCents(adRate) ?? 0}
                   refreshKey={`${adSize}|${frequency}|${adRate}`}
+                  onReadyChange={setStripeReady}
                 />
                 <p className="text-[11px] text-gray-500 mt-2">
                   When you click <strong>Next</strong> below, your card is authorized and charged for the first issue. Your card is securely saved for future monthly issue charges. You’ll review and sign the terms on the next step.
@@ -933,6 +944,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
         // Going back to Step 4 invalidates any prior card authorization —
         // user must re-enter the card and re-confirm before reaching Step 5.
         setConfirmedPaymentIntentId(null);
+        setStripeReady(false);
         setStep(4);
       }}
       onNext={submitSignature}
