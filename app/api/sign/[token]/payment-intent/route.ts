@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { verifyToken } from '@/lib/sign-token';
-import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
+import { getStripe, isStripeConfigured, withSurcharge, getPublishableKey } from '@/lib/stripe';
 import type { Agreement } from '@/lib/agreements';
 
 export const runtime = 'nodejs';
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       { status: 503 },
     );
   }
-  const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  const publishableKey = getPublishableKey();
   if (!publishableKey) {
     return NextResponse.json(
       { error: 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY not configured.' },

@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { getSql, ensureSchema } from '@/lib/db';
-import { getStripe, isStripeConfigured } from '@/lib/stripe';
+import { getStripe, isStripeConfigured, getWebhookSecret } from '@/lib/stripe';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
 import { fireWaveInvoiceWebhook } from '@/lib/wave-webhook';
 
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   if (!isStripeConfigured()) {
     return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 });
   }
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  const secret = getWebhookSecret();
   if (!secret) {
     return NextResponse.json({ error: 'STRIPE_WEBHOOK_SECRET not configured' }, { status: 503 });
   }
