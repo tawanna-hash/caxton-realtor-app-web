@@ -62,6 +62,7 @@ const ADMIN_GROUPS: AdminGroup[] = [
       { label: 'Billing',   href: '/admin/billing',   description: 'Invoices & payments' },
       { label: 'Ads',       href: '/admin/ads',       description: 'Inventory & placements' },
       { label: 'Marketing', href: '/admin/marketing', description: 'Campaigns & assets' },
+      { label: 'Media Kit', href: '/admin/media-kit', description: '2026 packages, rates & deadlines' },
     ],
   },
   {
