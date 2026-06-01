@@ -251,6 +251,9 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const stripeRef = useRef<StripePaymentHandle>(null);
+  // PaymentIntent id captured at end of Step 4 (while StripePaymentBlock is
+  // still mounted). Step 5 just persists this — it no longer touches Stripe.
+  const [confirmedPaymentIntentId, setConfirmedPaymentIntentId] = useState<string | null>(null);
 
   // ── Advertiser fields ──────────────────────────────────────────────────────
   const [companyName, setCompanyName] = useState(ag.company_name ?? '');
@@ -396,7 +399,36 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
 
   async function handleNext() {
     const ok = await saveEdits();
-    if (ok) setStep((s) => s + 1);
+    if (!ok) return;
+    // Special case: leaving Step 4 with Credit Card selected → authorize the
+    // card NOW while StripePaymentBlock is still mounted. The actual capture
+    // happens server-side via the payment_intent.succeeded webhook.
+    if (step === 4 && paymentType === 'Credit Card') {
+      setSaving(true);
+      setError(null);
+      try {
+        if (!stripeRef.current) {
+          setError('Card payment form is not ready. Reload the page and try again, or choose Check.');
+          setSaving(false);
+          return;
+        }
+        const result = await stripeRef.current.confirm();
+        if ('skipped' in result) {
+          setError('Card payment did not process. The secure payment form was not initialized. Reload the page and try again, or choose Check.');
+          setSaving(false);
+          return;
+        }
+        setConfirmedPaymentIntentId(result.paymentIntentId);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'card authorization failed';
+        setError(`Card payment failed: ${msg}. Update card details or choose Check.`);
+        setSaving(false);
+        return;
+      } finally {
+        setSaving(false);
+      }
+    }
+    setStep((s) => s + 1);
   }
 
   // ── submitSignature ────────────────────────────────────────────────────────
@@ -406,31 +438,17 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
     setSaving(true);
     setError(null);
     try {
-      // 1. Charge the card first if Credit Card was selected and Stripe is wired.
-      //    When Credit Card is selected we HARD FAIL if the charge doesn't go through —
-      //    we never silently complete signing with no payment.
+      // 1. Card authorization happened at the end of Step 4 (while the
+      //    StripePaymentBlock was still mounted). If Credit Card was selected,
+      //    we MUST have a confirmedPaymentIntentId here — hard-fail otherwise.
       let stripePaymentIntentId: string | null = null;
       if (paymentType === 'Credit Card') {
-        if (!stripeRef.current) {
-          setError('Card payment form is not ready. Reload the page and try again, or choose Check.');
+        if (!confirmedPaymentIntentId) {
+          setError('Card was not authorized in the previous step. Go back to Billing & Payment and re-enter your card.');
           setSaving(false);
           return;
         }
-        try {
-          const result = await stripeRef.current.confirm();
-          if ('skipped' in result) {
-            setError('Card payment did not process. The secure payment form was not initialized. Reload the page and try again, or choose Check.');
-            setSaving(false);
-            return;
-          }
-          stripePaymentIntentId = result.paymentIntentId;
-        } catch (e) {
-          // Card declined / 3DS failed — stop here; client can fix and retry.
-          const msg = e instanceof Error ? e.message : 'card authorization failed';
-          setError(`Card payment failed: ${msg}. Update card details or choose Check.`);
-          setSaving(false);
-          return;
-        }
+        stripePaymentIntentId = confirmedPaymentIntentId;
       }
 
       // 2. Persist signature + patches.
@@ -744,7 +762,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
         step={4}
         onBack={() => setStep(3)}
         onNext={handleNext}
-        nextLabel="Next →"
+        nextLabel={paymentType === 'Credit Card' ? 'Authorize Card →' : 'Next →'}
         saving={saving}
       >
         <div className="space-y-5">
@@ -841,7 +859,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                   refreshKey={`${adSize}|${frequency}|${adRate}`}
                 />
                 <p className="text-[11px] text-gray-500 mt-2">
-                  Charged at signing. Your card is securely saved for future monthly issue charges.
+                  When you click <strong>Next</strong> below, your card is authorized and charged for the first issue. Your card is securely saved for future monthly issue charges. You’ll review and sign the terms on the next step.
                 </p>
               </div>
 
@@ -911,7 +929,12 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
   return (
     <Shell
       step={5}
-      onBack={() => setStep(4)}
+      onBack={() => {
+        // Going back to Step 4 invalidates any prior card authorization —
+        // user must re-enter the card and re-confirm before reaching Step 5.
+        setConfirmedPaymentIntentId(null);
+        setStep(4);
+      }}
       onNext={submitSignature}
       nextLabel="Sign Agreement"
       nextDisabled={!canSign}
@@ -924,6 +947,12 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
         </h2>
 
         {error && <div className="text-sm text-red-600 bg-red-50 rounded p-3">{error}</div>}
+
+        {paymentType === 'Credit Card' && confirmedPaymentIntentId && (
+          <div className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded p-3">
+            ✓ Card authorized. Your card will be charged the moment you click <strong>Sign Agreement</strong> below.
+          </div>
+        )}
 
         {/* Scrollable terms */}
         <div className="h-52 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
