@@ -34,17 +34,27 @@ const CURRENT_YEAR = new Date().getFullYear().toString();
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function humanDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
+function toISODateString(v: string | Date | null | undefined): string {
+  if (v == null) return '';
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? '' : v.toISOString().slice(0, 10);
+  if (typeof v === 'string') return v.length >= 10 ? v.slice(0, 10) : v;
+  const s = String(v);
+  return s.length >= 10 ? s.slice(0, 10) : s;
+}
+
+function humanDate(iso: string | Date | null | undefined): string {
+  const s = toISODateString(iso);
+  if (!s) return '—';
   try {
-    const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+    const [y, m, d] = s.split('-').map(Number);
+    if (!y || !m || !d) return s;
     return new Date(y, m - 1, d).toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
       year: 'numeric',
     });
   } catch {
-    return iso;
+    return s;
   }
 }
 

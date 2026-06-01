@@ -35,19 +35,33 @@ function formatPhone(s: string | null | undefined): string {
   return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
 }
 
-function getDaysUntil(s: string | null | undefined): number | null {
-  if (!s) return null;
+/** Coerce a `timestamptz`/`date` value (string | Date | null) to a YYYY-MM-DD string. */
+function toISODateString(v: string | Date | null | undefined): string {
+  if (v == null) return '';
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? '' : v.toISOString().slice(0, 10);
+  if (typeof v === 'string') return v.length >= 10 ? v.slice(0, 10) : v;
+  // Some neon driver paths return ISO-shaped objects — fall back to String()
+  const s = String(v);
+  return s.length >= 10 ? s.slice(0, 10) : s;
+}
+
+function getDaysUntil(s: string | Date | null | undefined): number | null {
+  const iso = toISODateString(s);
+  if (!iso) return null;
   const t = new Date(); t.setHours(0, 0, 0, 0);
-  const e = new Date(s.slice(0, 10)); e.setHours(0, 0, 0, 0);
+  const e = new Date(iso); e.setHours(0, 0, 0, 0);
+  if (Number.isNaN(e.getTime())) return null;
   return Math.round((e.getTime() - t.getTime()) / 86400000);
 }
 
-function humanDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
+function humanDate(iso: string | Date | null | undefined): string {
+  const s = toISODateString(iso);
+  if (!s) return '—';
   try {
-    const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+    const [y, m, d] = s.split('-').map(Number);
+    if (!y || !m || !d) return s;
     return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  } catch { return iso; }
+  } catch { return s; }
 }
 
 type AdvertiserOption = { id: number; name: string; publication: string };
@@ -64,12 +78,11 @@ export type AdCampaignOption = {
   agreement_id: string | null;
 };
 
-/** Format a DATE column value as YYYY-MM-DD. */
+/** Format a DATE column value as YYYY-MM-DD (display version returns em-dash for null). */
 function formatDateISO(d: string | Date | null | undefined): string {
   if (d == null) return '—';
-  if (d instanceof Date) return d.toISOString().slice(0, 10);
-  if (typeof d === 'string') return d.length >= 10 ? d.slice(0, 10) : d;
-  return String(d);
+  const s = toISODateString(d);
+  return s || '—';
 }
 
 type Props = {
@@ -1038,7 +1051,7 @@ function AgreementDrawer({
     card_expiration:      seed?.card_expiration ?? '',
     cardholder_address:   seed?.cardholder_address ?? '',
     terms_accepted:       seed?.terms_accepted ?? false,
-    sign_date:            existing?.signed_at ? existing.signed_at.slice(0, 10) : today,
+    sign_date:            toISODateString(existing?.signed_at) || today,
     signer_name:          seed?.signer_name ?? '',
     notes:                existing?.notes ?? (renewedFrom ? `Renewed from agreement ${renewedFrom.id}` : ''),
     status:               (existing?.status ?? 'draft') as AgreementStatus,
