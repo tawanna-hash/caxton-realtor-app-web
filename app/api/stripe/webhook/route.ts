@@ -100,6 +100,48 @@ async function handlePaymentSucceeded(
   const chargeId =
     typeof pi.latest_charge === 'string' ? pi.latest_charge : pi.latest_charge?.id ?? null;
 
+  // Fetch the PaymentMethod to backfill human-readable card details (brand,
+  // last4, exp, cardholder name + billing address) used in the PDF and admin
+  // UI. The wizard no longer collects these as “reference” fields — Stripe is
+  // the source of truth.
+  let cardBrand: string | null = null;
+  let cardLast4: string | null = null;
+  let cardExp: string | null = null;
+  let cardholderName: string | null = null;
+  let cardholderAddress: string | null = null;
+  if (paymentMethodId) {
+    try {
+      const stripe = getStripe();
+      const pm = await stripe.paymentMethods.retrieve(paymentMethodId);
+      if (pm.card) {
+        const brand = pm.card.brand; // 'visa' | 'mastercard' | 'amex' | ...
+        cardBrand =
+          brand === 'visa' ? 'Visa'
+          : brand === 'mastercard' ? 'Mastercard'
+          : brand === 'amex' ? 'American Express'
+          : brand ? brand.charAt(0).toUpperCase() + brand.slice(1)
+          : null;
+        cardLast4 = pm.card.last4 ?? null;
+        if (pm.card.exp_month && pm.card.exp_year) {
+          const mm = String(pm.card.exp_month).padStart(2, '0');
+          const yy = String(pm.card.exp_year).slice(-2);
+          cardExp = `${mm}/${yy}`;
+        }
+      }
+      if (pm.billing_details) {
+        cardholderName = pm.billing_details.name ?? null;
+        const a = pm.billing_details.address;
+        if (a) {
+          cardholderAddress = [a.line1, a.line2, a.city, a.state, a.postal_code]
+            .filter(Boolean)
+            .join(', ') || null;
+        }
+      }
+    } catch (e) {
+      console.warn('[stripe-webhook] PaymentMethod fetch failed for', paymentMethodId, e);
+    }
+  }
+
   // Idempotent: only mark paid if not already
   if (!ag.paid_at) {
     await sql`
@@ -109,6 +151,11 @@ async function handlePaymentSucceeded(
         stripe_charged_at = NOW(),
         stripe_payment_method_id = ${paymentMethodId},
         stripe_customer_id = ${typeof pi.customer === 'string' ? pi.customer : (pi.customer?.id ?? ag.stripe_customer_id)},
+        card_type = COALESCE(${cardBrand}, card_type),
+        card_number_last4 = COALESCE(${cardLast4}, card_number_last4),
+        card_expiration = COALESCE(${cardExp}, card_expiration),
+        cardholder_name = COALESCE(${cardholderName}, cardholder_name),
+        cardholder_address = COALESCE(${cardholderAddress}, cardholder_address),
         updated_at = NOW()
       WHERE id = ${ag.id}
     `;

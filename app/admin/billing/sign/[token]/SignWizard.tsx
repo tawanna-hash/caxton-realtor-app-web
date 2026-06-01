@@ -19,7 +19,6 @@ import {
   FREQUENCIES,
   MONTHS_LIST,
   PAYMENT_TYPES,
-  CARD_TYPES,
   BILL_TO,
 } from '@/lib/pressbook-constants';
 import {
@@ -285,12 +284,11 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
   const [billingEmail, setBillingEmail] = useState(ag.billing_email ?? '');
   const [billingContactName, setBillingContactName] = useState(ag.billing_contact_name ?? '');
   const [billingContactPhone, setBillingContactPhone] = useState(ag.billing_contact_phone ?? '');
-  const [paymentType, setPaymentType] = useState<string>(ag.card_type ? 'Credit Card' : (ag.payment_mode === 'check' ? 'Check' : ''));
-  const [cardType, setCardType] = useState(ag.card_type ?? '');
-  const [cardholderName, setCardholderName] = useState(ag.cardholder_name ?? '');
-  const [cardNumberLast4, setCardNumberLast4] = useState(ag.card_number_last4 ?? '');
-  const [cardExpiration, setCardExpiration] = useState(ag.card_expiration ?? '');
-  const [cardholderAddress, setCardholderAddress] = useState(ag.cardholder_address ?? '');
+  const [paymentType, setPaymentType] = useState<string>(
+    ag.card_type || ag.payment_mode === 'card'
+      ? 'Credit Card'
+      : (ag.payment_mode === 'check' ? 'Check' : ''),
+  );
 
   // ── Sign step ──────────────────────────────────────────────────────────────
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -327,21 +325,6 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
 
   const ccSurchargeTotal = paymentType === 'Credit Card' ? applyCcSurcharge(totalMonthly) : null;
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  function handleCardNumberChange(v: string) {
-    setCardNumberLast4(v.replace(/\D/g, '').slice(0, 4));
-  }
-
-  function handleCardExpirationChange(v: string) {
-    const digits = v.replace(/\D/g, '');
-    if (digits.length >= 3) {
-      setCardExpiration(digits.slice(0, 2) + '/' + digits.slice(2, 4));
-    } else {
-      setCardExpiration(v.replace(/[^0-9/]/g, ''));
-    }
-  }
-
   // ── saveEdits ──────────────────────────────────────────────────────────────
 
   function buildPatchPayload(): Record<string, unknown> {
@@ -374,11 +357,10 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
       billing_contact_name: billingContactName || null,
       billing_contact_phone: billingContactPhone || null,
       payment_mode: paymentType === 'Credit Card' ? 'card' : paymentType === 'Check' ? 'check' : null,
-      card_type: paymentType === 'Credit Card' ? (cardType || null) : null,
-      cardholder_name: paymentType === 'Credit Card' ? (cardholderName || null) : null,
-      card_number_last4: paymentType === 'Credit Card' ? (cardNumberLast4 || null) : null,
-      card_expiration: paymentType === 'Credit Card' ? (cardExpiration || null) : null,
-      cardholder_address: paymentType === 'Credit Card' ? (cardholderAddress || null) : null,
+      // Card details (type, cardholder, last4, exp, address) are captured by
+      // Stripe Elements + populated server-side from the PaymentIntent's
+      // PaymentMethod when the webhook fires. Do not send placeholder values
+      // from the wizard — Stripe is the source of truth.
     };
   }
 
@@ -847,7 +829,10 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
             </div>
           </div>
 
-          {/* Credit Card details */}
+          {/* Credit Card — Stripe Elements only (no legacy reference fields).
+              Stripe captures card type, cardholder, last 4, expiration, and
+              billing address securely; server populates DB fields from the
+              PaymentMethod when the webhook fires. */}
           {paymentType === 'Credit Card' && (
             <div className="space-y-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
               {ccSurchargeTotal != null && (
@@ -857,7 +842,6 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                 </div>
               )}
 
-              {/* Stripe Payment Element — PCI-safe card capture. Falls back gracefully if STRIPE_*_KEY env vars are not set. */}
               <div className="rounded-md bg-white p-4 border border-amber-200">
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
                   Secure Card Payment
@@ -870,62 +854,9 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                   onReadyChange={setStripeReady}
                 />
                 <p className="text-[11px] text-gray-500 mt-2">
-                  When you click <strong>Next</strong> below, your card is authorized and charged for the first issue. Your card is securely saved for future monthly issue charges. You’ll review and sign the terms on the next step.
+                  When you click <strong>Authorize Card</strong> below, your card is authorized and charged for the first issue. Your card is securely saved for future monthly issue charges. You’ll review and sign the terms on the next step.
                 </p>
               </div>
-
-              {/* Card Type */}
-              <div>
-                <Eyebrow>Card Type</Eyebrow>
-                <div className="flex flex-wrap gap-3">
-                  {CARD_TYPES.map((ct) => (
-                    <label key={ct} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="cardType"
-                        value={ct}
-                        checked={cardType === ct}
-                        onChange={() => setCardType(ct)}
-                        className="accent-red-600"
-                      />
-                      <span className="text-sm text-gray-800">{ct}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Cardholder Name */}
-              <EditableField
-                label="Cardholder Name"
-                value={cardholderName}
-                onChange={setCardholderName}
-              />
-
-              {/* Last 4 + Expiration */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <EditableField
-                  label="Last 4 Digits"
-                  value={cardNumberLast4}
-                  onChange={handleCardNumberChange}
-                  maxLength={4}
-                  inputMode="numeric"
-                  placeholder="1234"
-                />
-                <EditableField
-                  label="Expiration MM/YY"
-                  value={cardExpiration}
-                  onChange={handleCardExpirationChange}
-                  placeholder="MM/YY"
-                  maxLength={5}
-                />
-              </div>
-
-              {/* Cardholder Address */}
-              <EditableField
-                label="Cardholder Address"
-                value={cardholderAddress}
-                onChange={setCardholderAddress}
-              />
             </div>
           )}
         </div>
