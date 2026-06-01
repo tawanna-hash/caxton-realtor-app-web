@@ -75,8 +75,9 @@ function drawText(ctx: DrawCtx, text: string, opts: TextOpts = {}): void {
   const x = opts.x ?? MARGIN;
   const maxWidth = opts.maxWidth ?? CONTENT_W;
 
-  // Word-wrap
-  const words = text.split(' ');
+  // Word-wrap — coerce to string defensively (Date/number/etc.)
+  const safeText = typeof text === 'string' ? text : String(text ?? '');
+  const words = safeText.split(' ');
   let line = '';
   const lines: string[] = [];
 
@@ -120,11 +121,20 @@ function drawSectionHeader(ctx: DrawCtx, title: string): void {
 function drawLabelValue(
   ctx: DrawCtx,
   label: string,
-  value: string | null | undefined,
+  value: string | number | Date | null | undefined,
   x = MARGIN,
   colW = CONTENT_W,
 ): void {
-  if (!value) return;
+  if (value == null || value === '') return;
+  // Coerce to string defensively — Postgres date columns come back as Date objects,
+  // numeric columns can come back as numbers, etc.
+  const safeValue =
+    value instanceof Date
+      ? value.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+      : typeof value === 'string'
+      ? value
+      : String(value);
+  if (!safeValue) return;
   const size = 9;
   ensureSpace(ctx, size + 4);
   const page = currentPg(ctx);
@@ -134,7 +144,7 @@ function drawLabelValue(
   // Value may need wrapping
   const valueMaxW = colW - labelW;
   const valueX = x + labelW;
-  const words = (value || '').split(' ');
+  const words = safeValue.split(' ');
   let line = '';
   let firstLine = true;
 
@@ -162,12 +172,18 @@ function fmt$(cents: number | null | undefined): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-function humanDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
+function humanDate(iso: string | Date | null | undefined): string {
+  if (iso == null) return '—';
+  // Postgres `date` columns come back from @neondatabase/serverless as Date objects.
+  if (iso instanceof Date) {
+    return iso.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  }
+  const s = typeof iso === 'string' ? iso : String(iso);
+  if (!s) return '—';
   try {
-    const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+    const [y, m, d] = s.slice(0, 10).split('-').map(Number);
     return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  } catch { return iso; }
+  } catch { return s; }
 }
 
 export async function generateAgreementPdfBuffer(ag: Agreement): Promise<Uint8Array> {
