@@ -126,7 +126,13 @@ export default function BillingClient({
   const [editAg, setEditAg] = useState<AgreementWithAdvertiser | null>(null);
   const [editInv, setEditInv] = useState<InvoiceWithAdvertiser | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const router = useRouter();
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
 
   const reloadAgreements = useCallback(async () => {
     const res = await fetch('/api/admin/agreements', { cache: 'no-store' });
@@ -329,6 +335,11 @@ export default function BillingClient({
       {error && (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-800 shadow-lg">
+          {toast}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
@@ -374,7 +385,19 @@ export default function BillingClient({
 
       {/* Lists */}
       {tab === 'agreements' ? (
-        <AgreementList rows={filteredAg} onOpen={(r) => setEditAg(r)} />
+        <AgreementList
+          rows={filteredAg}
+          onOpen={(r) => setEditAg(r)}
+          onEmail={async (r) => {
+            try {
+              const res = await fetch(`/api/admin/agreements/${r.id}/send`, { method: 'POST' });
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              const d = await res.json();
+              showToast(`Signing link sent to ${d.sentTo ?? r.advertiser_email ?? 'advertiser'}`);
+              await reloadAgreements();
+            } catch (e) { setError(e instanceof Error ? e.message : 'send failed'); }
+          }}
+        />
       ) : tab === 'invoices' ? (
         <InvoiceList rows={filteredInv} onOpen={(r) => setEditInv(r)} />
       ) : (
@@ -387,6 +410,23 @@ export default function BillingClient({
           onOpen={(r) => setEditAg(r)}
           onRenew={(r) => setRenewalSeed(r)}
           onReminderAction={reminderAction}
+          onSendRenewal={async (r) => {
+            try {
+              const res = await fetch(`/api/admin/agreements/${r.id}/send-renewal`, { method: 'POST' });
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              const d = await res.json();
+              showToast(`Renewal email sent to ${d.sentTo ?? r.advertiser_email ?? 'advertiser'}`);
+            } catch (e) { setError(e instanceof Error ? e.message : 'send renewal failed'); }
+          }}
+          onSendReminder={async (r) => {
+            try {
+              const res = await fetch(`/api/admin/renewal-reminders/${r.id}/send`, { method: 'POST' });
+              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+              const d = await res.json();
+              showToast(`Reminder email sent to ${d.sentTo ?? r.email ?? 'advertiser'}`);
+              await reloadReminders();
+            } catch (e) { setError(e instanceof Error ? e.message : 'send reminder failed'); }
+          }}
         />
       )}
 
@@ -482,7 +522,13 @@ function StatusPill({ value, options }: { value: string; options: { value: strin
 // ──────────────────────────────────────────────────────────────────
 // Agreement list
 // ──────────────────────────────────────────────────────────────────
-function AgreementList({ rows, onOpen }: { rows: AgreementWithAdvertiser[]; onOpen: (r: AgreementWithAdvertiser) => void }) {
+function AgreementList({
+  rows, onOpen, onEmail,
+}: {
+  rows: AgreementWithAdvertiser[];
+  onOpen: (r: AgreementWithAdvertiser) => void;
+  onEmail?: (r: AgreementWithAdvertiser) => void;
+}) {
   if (rows.length === 0) {
     return <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-500">No agreements yet.</div>;
   }
@@ -494,28 +540,42 @@ function AgreementList({ rows, onOpen }: { rows: AgreementWithAdvertiser[]; onOp
         <div className="col-span-2">Term</div>
         <div className="col-span-2">Amount</div>
         <div className="col-span-1">Invoiced</div>
-        <div className="col-span-2">Status</div>
+        <div className="col-span-2">Status · Actions</div>
       </div>
       <div className="divide-y divide-gray-100">
         {rows.map((r) => (
-          <button key={r.id} onClick={() => onOpen(r)} className="w-full grid grid-cols-12 gap-3 px-4 py-3 text-left hover:bg-blue-50/40">
-            <div className="col-span-3 min-w-0">
+          <div key={r.id} className="grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-blue-50/40">
+            <button onClick={() => onOpen(r)} className="col-span-3 text-left min-w-0">
               <div className="font-medium text-gray-900 truncate">{r.advertiser_name ?? r.company_name ?? '—'}</div>
               <div className="text-xs text-gray-500 truncate">{r.rep_name ?? r.advertiser_email ?? ''}</div>
-            </div>
-            <div className="col-span-2 text-sm text-gray-700">
+            </button>
+            <button onClick={() => onOpen(r)} className="col-span-2 text-left text-sm text-gray-700">
               <div>{AG_TYPES.find((t) => t.value === r.type)?.label ?? r.type ?? '—'}</div>
               <div className="text-xs text-gray-500">{r.ad_size ?? ''} {r.frequency ? `· ${r.frequency}` : ''}</div>
-            </div>
-            <div className="col-span-2 text-sm text-gray-700">
+            </button>
+            <button onClick={() => onOpen(r)} className="col-span-2 text-left text-sm text-gray-700">
               {r.start_date ? new Date(r.start_date).toLocaleDateString() : '—'}
               {' → '}
               {r.end_date ? new Date(r.end_date).toLocaleDateString() : '—'}
+            </button>
+            <button onClick={() => onOpen(r)} className="col-span-2 text-left text-sm text-gray-900">{formatCents(r.amount_cents)}</button>
+            <button onClick={() => onOpen(r)} className="col-span-1 text-left text-sm text-gray-700">{formatCents(r.invoiced_cents)}</button>
+            <div className="col-span-2 flex items-center gap-1 flex-wrap">
+              <StatusPill value={r.status} options={AG_STATUS} />
+              <button
+                title="Send signing link email"
+                onClick={() => onEmail?.(r)}
+                className="p-1 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
+              >✉</button>
+              <a
+                href={`/api/admin/agreements/${r.id}/pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Download PDF"
+                className="p-1 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
+              >PDF</a>
             </div>
-            <div className="col-span-2 text-sm text-gray-900">{formatCents(r.amount_cents)}</div>
-            <div className="col-span-1 text-sm text-gray-700">{formatCents(r.invoiced_cents)}</div>
-            <div className="col-span-2"><StatusPill value={r.status} options={AG_STATUS} /></div>
-          </button>
+          </div>
         ))}
       </div>
     </div>
@@ -548,6 +608,7 @@ function ReminderStatusBadge({ status }: { status: string }) {
 
 function RenewalsPanel({
   expiringSoon, allRenewals, reminders, activeTab, onTabChange, onOpen, onRenew, onReminderAction,
+  onSendRenewal, onSendReminder,
 }: {
   expiringSoon: AgreementWithAdvertiser[];
   allRenewals: AgreementWithAdvertiser[];
@@ -557,6 +618,8 @@ function RenewalsPanel({
   onOpen: (r: AgreementWithAdvertiser) => void;
   onRenew: (r: AgreementWithAdvertiser) => void;
   onReminderAction: (id: string, patch: Record<string, unknown>) => Promise<void>;
+  onSendRenewal?: (r: AgreementWithAdvertiser) => Promise<void>;
+  onSendReminder?: (r: RenewalReminder) => Promise<void>;
 }) {
   const [noteId, setNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
@@ -614,8 +677,8 @@ function RenewalsPanel({
                     <div className="col-span-1 flex gap-1 justify-end">
                       <button
                         className="px-2 py-1 text-xs rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
-                        title="Send renewal email (Phase 2)"
-                        onClick={() => alert('Email sending coming in Phase 2')}
+                        title="Send renewal email"
+                        onClick={() => onSendRenewal?.(r)}
                       >Email</button>
                       <button
                         className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
@@ -713,7 +776,7 @@ function RenewalsPanel({
                       ) : (
                         <div className="flex gap-1 flex-wrap justify-end">
                           <button className="px-2 py-0.5 text-xs rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
-                            onClick={() => alert('Email sending coming in Phase 2')}>Email</button>
+                            onClick={() => onSendReminder?.(r)}>Email</button>
                           {r.status === 'Pending' && <>
                             <button className="px-2 py-0.5 text-xs rounded bg-emerald-600 text-white hover:bg-emerald-700"
                               onClick={() => onReminderAction(r.id, { status: 'Completed' })}>Complete</button>
@@ -1174,23 +1237,50 @@ function AgreementDrawer({
     }
   };
 
+  const [signingMsg, setSigningMsg] = useState<string | null>(null);
+
   const sendSigningLink = async () => {
-    // Stub — saves as 'sent', no email in Phase 1
     setSaving(true);
+    setSigningMsg(null);
     try {
-      const payload = { ...buildPayload(false), status: 'sent' };
+      // 1. Save/create the agreement first as draft
+      const payload = buildPayload(false);
       const url = isCreate ? '/api/admin/agreements' : `/api/admin/agreements/${existing!.id}`;
-      const res = await fetch(url, {
+      const saveRes = await fetch(url, {
         method: isCreate ? 'POST' : 'PATCH',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!saveRes.ok) throw new Error(`Save failed HTTP ${saveRes.status}`);
+      const saved = await saveRes.json();
+      const agreementId: string = saved.agreement?.id ?? existing?.id ?? '';
+
+      if (!agreementId) throw new Error('No agreement ID after save');
+
+      // 2. POST to send route — builds sign URL + emails it
+      const sendRes = await fetch(`/api/admin/agreements/${agreementId}/send`, { method: 'POST' });
+      if (!sendRes.ok) throw new Error(`Send failed HTTP ${sendRes.status}`);
+      const sendData = await sendRes.json();
+      const sentTo: string = sendData.sentTo ?? form.email ?? 'advertiser';
+      setSigningMsg(`Signing link sent to ${sentTo}`);
       await onSaved();
     } catch (e) {
       onError(e instanceof Error ? e.message : 'send link failed');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const copySigningLink = async () => {
+    if (!existing?.id) { onError('Save the agreement first'); return; }
+    try {
+      const res = await fetch(`/api/admin/agreements/${existing.id}/sign-link`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const { url } = await res.json();
+      await navigator.clipboard.writeText(url);
+      setSigningMsg('Signing link copied to clipboard!');
+    } catch (e) {
+      onError(e instanceof Error ? e.message : 'copy failed');
     }
   };
 
@@ -1626,7 +1716,12 @@ function AgreementDrawer({
       </Section>
 
       {/* ── Footer ── */}
-      <div className="sticky bottom-0 -mx-6 px-6 py-4 bg-white border-t border-gray-200 flex items-center gap-2">
+      {signingMsg && (
+        <div className="sticky bottom-[72px] -mx-6 px-6 py-2 bg-indigo-50 border-t border-indigo-200 text-xs text-indigo-800">
+          {signingMsg}
+        </div>
+      )}
+      <div className="sticky bottom-0 -mx-6 px-6 py-4 bg-white border-t border-gray-200 flex items-center gap-2 flex-wrap">
         {/* Delete — existing only */}
         {!isCreate && (
           <button
@@ -1638,6 +1733,16 @@ function AgreementDrawer({
             Delete
           </button>
         )}
+        {!isCreate && (
+          <a
+            href={`/api/admin/agreements/${existing!.id}/pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-2 rounded border border-gray-300 text-gray-700 text-sm hover:bg-gray-50"
+          >
+            Download PDF
+          </a>
+        )}
         <div className="flex-1" />
         <button onClick={onClose} className="px-4 py-2 rounded border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
         <button
@@ -1648,13 +1753,23 @@ function AgreementDrawer({
           {saving ? 'Saving…' : 'Save as Draft'}
         </button>
         {!isUploaded && (
-          <button
-            onClick={sendSigningLink}
-            disabled={saving}
-            className="px-4 py-2 rounded border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50"
-          >
-            Send Signing Link
-          </button>
+          <>
+            <button
+              onClick={sendSigningLink}
+              disabled={saving}
+              className="px-4 py-2 rounded border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50"
+            >
+              Send Signing Link
+            </button>
+            <button
+              onClick={copySigningLink}
+              disabled={saving}
+              className="px-4 py-2 rounded border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50"
+              title="Copy signing link to clipboard"
+            >
+              Copy Link
+            </button>
+          </>
         )}
         <button
           onClick={() => save(true)}
