@@ -10,6 +10,7 @@ type PageProps = { params: Promise<{ token: string }>; searchParams: Promise<{ i
 
 export default async function SignDonePage({ params, searchParams }: PageProps) {
   const { token } = await params;
+  // id is kept for display purposes but PDF now uses the token route
   const { id } = await searchParams;
 
   return (
@@ -35,6 +36,10 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
             Your agreement has been digitally signed and is now on file.
           </p>
 
+          {id && (
+            <p className="text-xs text-gray-400">Agreement #{id}</p>
+          )}
+
           <div className="bg-emerald-50 rounded-lg border border-emerald-200 p-4 text-sm text-emerald-800">
             <strong>What happens next:</strong>
             <ul className="list-disc list-inside mt-2 space-y-1 text-left">
@@ -44,17 +49,15 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
             </ul>
           </div>
 
-          {id && (
-            <a
-              href={`/api/admin/agreements/${id}/pdf`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block w-full py-3 rounded-lg text-white font-medium text-sm hover:opacity-90 transition-opacity"
-              style={{ background: '#D22531' }}
-            >
-              Download Signed Agreement PDF
-            </a>
-          )}
+          <a
+            href={`/api/sign/${token}/pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block w-full py-3 rounded-lg text-white font-medium text-sm hover:opacity-90 transition-opacity"
+            style={{ background: '#D22531' }}
+          >
+            Download Signed Agreement PDF
+          </a>
 
           <p className="text-xs text-gray-400">
             Questions? Contact{' '}

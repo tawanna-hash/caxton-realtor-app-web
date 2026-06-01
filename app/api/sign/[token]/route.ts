@@ -2,8 +2,8 @@
 //
 // Public (no admin auth) sign API — the HMAC token IS the auth.
 //
-// POST — Apply digital signature to agreement.
-// PATCH — Update advertiser/billing fields (allowlisted).
+// POST — Apply digital signature to agreement (with optional patches).
+// PATCH — Update advertiser/billing/order fields (allowlisted).
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
@@ -16,12 +16,103 @@ export const dynamic = 'force-dynamic';
 
 type RouteCtx = { params: Promise<{ token: string }> };
 
-// Fields the advertiser is allowed to update via PATCH
-const SIGN_PATCHABLE = new Set([
+// Fields the advertiser is allowed to update via PATCH — strings / null
+const SIGN_PATCHABLE_STR = new Set([
   'company_name', 'rep_name', 'advertiser_email', 'advertiser_phone',
   'address', 'city', 'state', 'zip',
-  'billing_email', 'billing_contact_name', 'billing_contact_phone',
+  'ad_size', 'frequency', 'page_position',
+  'bill_to', 'billing_email', 'billing_contact_name', 'billing_contact_phone',
+  'payment_mode', 'card_type', 'cardholder_name', 'card_number_last4',
+  'card_expiration', 'cardholder_address',
 ]);
+
+// Integer cents fields
+const SIGN_PATCHABLE_INT = new Set([
+  'ad_rate_cents', 'discount_cents', 'ad_premium_cents', 'total_monthly_rate_cents',
+]);
+
+// Date fields (YYYY-MM-DD)
+const SIGN_PATCHABLE_DATE = new Set(['exp_date']);
+
+// JSON object fields
+const SIGN_PATCHABLE_JSON = new Set(['ad_timing_months']);
+
+const MAX_CENTS = 100_000_000;
+
+async function applyPatches(
+  sql: ReturnType<typeof getSql>,
+  id: string,
+  body: Record<string, unknown>,
+): Promise<void> {
+  for (const field of Object.keys(body)) {
+    const val = body[field];
+
+    if (SIGN_PATCHABLE_STR.has(field)) {
+      if (typeof val !== 'string' && val !== null) continue;
+      const v = val as string | null;
+      switch (field) {
+        case 'company_name':          await sql`UPDATE agreements SET company_name          = ${v} WHERE id = ${id}`; break;
+        case 'rep_name':              await sql`UPDATE agreements SET rep_name              = ${v} WHERE id = ${id}`; break;
+        case 'advertiser_email':      await sql`UPDATE agreements SET advertiser_email      = ${v} WHERE id = ${id}`; break;
+        case 'advertiser_phone':      await sql`UPDATE agreements SET advertiser_phone      = ${v} WHERE id = ${id}`; break;
+        case 'address':               await sql`UPDATE agreements SET address               = ${v} WHERE id = ${id}`; break;
+        case 'city':                  await sql`UPDATE agreements SET city                  = ${v} WHERE id = ${id}`; break;
+        case 'state':                 await sql`UPDATE agreements SET state                 = ${v} WHERE id = ${id}`; break;
+        case 'zip':                   await sql`UPDATE agreements SET zip                   = ${v} WHERE id = ${id}`; break;
+        case 'ad_size':               await sql`UPDATE agreements SET ad_size               = ${v} WHERE id = ${id}`; break;
+        case 'frequency':             await sql`UPDATE agreements SET frequency             = ${v} WHERE id = ${id}`; break;
+        case 'page_position':         await sql`UPDATE agreements SET page_position         = ${v} WHERE id = ${id}`; break;
+        case 'bill_to':               await sql`UPDATE agreements SET bill_to               = ${v} WHERE id = ${id}`; break;
+        case 'billing_email':         await sql`UPDATE agreements SET billing_email         = ${v} WHERE id = ${id}`; break;
+        case 'billing_contact_name':  await sql`UPDATE agreements SET billing_contact_name  = ${v} WHERE id = ${id}`; break;
+        case 'billing_contact_phone': await sql`UPDATE agreements SET billing_contact_phone = ${v} WHERE id = ${id}`; break;
+        case 'payment_mode':          await sql`UPDATE agreements SET payment_mode          = ${v} WHERE id = ${id}`; break;
+        case 'card_type':             await sql`UPDATE agreements SET card_type             = ${v} WHERE id = ${id}`; break;
+        case 'cardholder_name':       await sql`UPDATE agreements SET cardholder_name       = ${v} WHERE id = ${id}`; break;
+        case 'card_number_last4':     await sql`UPDATE agreements SET card_number_last4     = ${v} WHERE id = ${id}`; break;
+        case 'card_expiration':       await sql`UPDATE agreements SET card_expiration       = ${v} WHERE id = ${id}`; break;
+        case 'cardholder_address':    await sql`UPDATE agreements SET cardholder_address    = ${v} WHERE id = ${id}`; break;
+      }
+
+    } else if (SIGN_PATCHABLE_INT.has(field)) {
+      if (val === null) {
+        switch (field) {
+          case 'ad_rate_cents':            await sql`UPDATE agreements SET ad_rate_cents            = NULL WHERE id = ${id}`; break;
+          case 'discount_cents':           await sql`UPDATE agreements SET discount_cents           = NULL WHERE id = ${id}`; break;
+          case 'ad_premium_cents':         await sql`UPDATE agreements SET ad_premium_cents         = NULL WHERE id = ${id}`; break;
+          case 'total_monthly_rate_cents': await sql`UPDATE agreements SET total_monthly_rate_cents = NULL WHERE id = ${id}`; break;
+        }
+        continue;
+      }
+      if (typeof val !== 'number' || !Number.isInteger(val) || val < 0 || val > MAX_CENTS) continue;
+      const n = val;
+      switch (field) {
+        case 'ad_rate_cents':            await sql`UPDATE agreements SET ad_rate_cents            = ${n} WHERE id = ${id}`; break;
+        case 'discount_cents':           await sql`UPDATE agreements SET discount_cents           = ${n} WHERE id = ${id}`; break;
+        case 'ad_premium_cents':         await sql`UPDATE agreements SET ad_premium_cents         = ${n} WHERE id = ${id}`; break;
+        case 'total_monthly_rate_cents': await sql`UPDATE agreements SET total_monthly_rate_cents = ${n} WHERE id = ${id}`; break;
+      }
+
+    } else if (SIGN_PATCHABLE_DATE.has(field)) {
+      if (val === null) {
+        await sql`UPDATE agreements SET exp_date = NULL WHERE id = ${id}`;
+        continue;
+      }
+      if (typeof val !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(val)) continue;
+      const d = val;
+      await sql`UPDATE agreements SET exp_date = ${d} WHERE id = ${id}`;
+
+    } else if (SIGN_PATCHABLE_JSON.has(field)) {
+      if (val === null) {
+        await sql`UPDATE agreements SET ad_timing_months = NULL WHERE id = ${id}`;
+        continue;
+      }
+      if (typeof val !== 'object' || Array.isArray(val)) continue;
+      const j = JSON.stringify(val);
+      await sql`UPDATE agreements SET ad_timing_months = ${j}::jsonb WHERE id = ${id}`;
+    }
+  }
+}
 
 export async function POST(req: NextRequest, ctx: RouteCtx) {
   const { token } = await ctx.params;
@@ -37,6 +128,9 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
   const signerName = typeof body.signerName === 'string' ? body.signerName.trim() : '';
   const signedAt = typeof body.signedAt === 'string' ? body.signedAt : new Date().toISOString().slice(0, 10);
   const termsAccepted = body.termsAccepted === true;
+  const patches = body.patches && typeof body.patches === 'object' && !Array.isArray(body.patches)
+    ? body.patches as Record<string, unknown>
+    : null;
 
   if (!signerName) return NextResponse.json({ error: 'signerName is required' }, { status: 400 });
   if (!termsAccepted) return NextResponse.json({ error: 'termsAccepted must be true' }, { status: 400 });
@@ -48,6 +142,11 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const rows = await sql`SELECT * FROM agreements WHERE id = ${id}` as unknown as Agreement[];
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const ag = rows[0];
+
+    // Apply any last-second patches first
+    if (patches) {
+      await applyPatches(sql, id, patches);
+    }
 
     const signedAtTs = signedAt.length === 10 ? `${signedAt}T00:00:00.000Z` : signedAt;
     const now = new Date().toISOString();
@@ -104,31 +203,10 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     const rows = await sql`SELECT id FROM agreements WHERE id = ${id}` as unknown as { id: string }[];
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
 
-    const updates: string[] = [];
-    for (const field of Object.keys(body)) {
-      if (!SIGN_PATCHABLE.has(field)) continue;
-      const val = body[field];
-      if (typeof val !== 'string' && val !== null) continue;
-
-      switch (field) {
-        case 'company_name':          await sql`UPDATE agreements SET company_name = ${val}          WHERE id = ${id}`; break;
-        case 'rep_name':              await sql`UPDATE agreements SET rep_name = ${val}              WHERE id = ${id}`; break;
-        case 'advertiser_email':      await sql`UPDATE agreements SET advertiser_email = ${val}      WHERE id = ${id}`; break;
-        case 'advertiser_phone':      await sql`UPDATE agreements SET advertiser_phone = ${val}      WHERE id = ${id}`; break;
-        case 'address':               await sql`UPDATE agreements SET address = ${val}               WHERE id = ${id}`; break;
-        case 'city':                  await sql`UPDATE agreements SET city = ${val}                  WHERE id = ${id}`; break;
-        case 'state':                 await sql`UPDATE agreements SET state = ${val}                 WHERE id = ${id}`; break;
-        case 'zip':                   await sql`UPDATE agreements SET zip = ${val}                   WHERE id = ${id}`; break;
-        case 'billing_email':         await sql`UPDATE agreements SET billing_email = ${val}         WHERE id = ${id}`; break;
-        case 'billing_contact_name':  await sql`UPDATE agreements SET billing_contact_name = ${val}  WHERE id = ${id}`; break;
-        case 'billing_contact_phone': await sql`UPDATE agreements SET billing_contact_phone = ${val} WHERE id = ${id}`; break;
-      }
-      updates.push(field);
-    }
-
+    await applyPatches(sql, id, body);
     await sql`UPDATE agreements SET updated_at = NOW() WHERE id = ${id}`;
 
-    return NextResponse.json({ ok: true, updated: updates });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'unknown error';
     return NextResponse.json({ error: 'patch failed', detail: msg }, { status: 500 });
