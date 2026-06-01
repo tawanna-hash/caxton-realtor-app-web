@@ -68,7 +68,6 @@ interface TextOpts {
 }
 
 function drawText(ctx: DrawCtx, text: string, opts: TextOpts = {}): void {
-  const page = currentPg(ctx);
   const font = opts.font ?? ctx.regular;
   const size = opts.size ?? 10;
   const color = opts.color ?? DARK;
@@ -95,6 +94,8 @@ function drawText(ctx: DrawCtx, text: string, opts: TextOpts = {}): void {
 
   for (const ln of lines) {
     ensureSpace(ctx, size + 2);
+    // Re-fetch the current page AFTER ensureSpace — it may have added a new page.
+    const page = currentPg(ctx);
     ctx.y -= size;
     let drawX = x;
     if (opts.align === 'center') {
@@ -137,10 +138,10 @@ function drawLabelValue(
   if (!safeValue) return;
   const size = 9;
   ensureSpace(ctx, size + 4);
-  const page = currentPg(ctx);
   ctx.y -= size;
   const labelW = ctx.bold.widthOfTextAtSize(`${label}: `, size);
-  page.drawText(`${label}: `, { x, y: ctx.y, font: ctx.bold, size, color: GRAY });
+  // Re-fetch page AFTER ensureSpace (it may have added a new page).
+  currentPg(ctx).drawText(`${label}: `, { x, y: ctx.y, font: ctx.bold, size, color: GRAY });
   // Value may need wrapping
   const valueMaxW = colW - labelW;
   const valueX = x + labelW;
@@ -153,7 +154,8 @@ function drawLabelValue(
     const w = ctx.regular.widthOfTextAtSize(test, size);
     const maxW = firstLine ? valueMaxW : colW;
     if (w > maxW && line) {
-      page.drawText(line, { x: firstLine ? valueX : x, y: ctx.y, font: ctx.regular, size, color: DARK });
+      currentPg(ctx).drawText(line, { x: firstLine ? valueX : x, y: ctx.y, font: ctx.regular, size, color: DARK });
+      ensureSpace(ctx, size + 2);
       ctx.y -= size + 2;
       line = word;
       firstLine = false;
@@ -162,7 +164,7 @@ function drawLabelValue(
     }
   }
   if (line) {
-    page.drawText(line, { x: firstLine ? valueX : x, y: ctx.y, font: ctx.regular, size, color: DARK });
+    currentPg(ctx).drawText(line, { x: firstLine ? valueX : x, y: ctx.y, font: ctx.regular, size, color: DARK });
   }
   ctx.y -= 3;
 }
