@@ -10,6 +10,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { verifyToken } from '@/lib/sign-token';
 import { appendAudit, type Agreement } from '@/lib/agreements';
 import { autoCreateForAgreement } from '@/lib/renewal-reminders';
+import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -170,15 +171,37 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     });
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${id}`;
 
-    // Fetch updated agreement for reminder creation
+    // Fetch updated agreement for downstream side effects
     const updatedRows = await sql`SELECT * FROM agreements WHERE id = ${id}` as unknown as Agreement[];
+
+    // Auto-create or link the advertiser in /admin/advertisers (idempotent).
+    let advertiserOutcome: string | null = null;
+    if (updatedRows.length > 0) {
+      try {
+        const result = await ensureAdvertiserForAgreement(updatedRows[0]);
+        advertiserOutcome = result.outcome;
+        if (result.outcome !== 'skipped') {
+          // Audit the advertiser link/create.
+          const advLog = appendAudit(updatedRows[0].audit_log, {
+            event: 'advertiser_linked',
+            timestamp: new Date().toISOString(),
+            details: `Advertiser #${result.advertiserId} ${result.outcome} via sign wizard`,
+          });
+          await sql`UPDATE agreements SET audit_log = ${JSON.stringify(advLog)}::jsonb WHERE id = ${id}`;
+        }
+      } catch (e) {
+        console.error('[api/sign POST] ensureAdvertiserForAgreement failed', e instanceof Error ? e.message : String(e));
+      }
+    }
+
+    // Auto-create renewal reminder 30 days before expiration.
     if (updatedRows.length > 0 && updatedRows[0].exp_date) {
       await autoCreateForAgreement(updatedRows[0]).catch((e: unknown) => {
         console.error('[api/sign POST] autoCreateForAgreement failed', e instanceof Error ? e.message : String(e));
       });
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, advertiserOutcome });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'unknown error';
     return NextResponse.json({ error: 'sign failed', detail: msg }, { status: 500 });

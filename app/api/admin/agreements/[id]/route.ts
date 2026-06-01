@@ -18,6 +18,7 @@ import {
 } from '@/lib/agreements';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { autoCreateForAgreement } from '@/lib/renewal-reminders';
+import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -173,12 +174,31 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     const rows = await sql`SELECT * FROM agreements WHERE id = ${id}`;
     const savedAg = rows[0] as unknown as Agreement;
 
-    // Auto-create renewal reminder when status transitions to 'signed'
+    // Side effects on status transitions into 'signed'
     const newStatus = body.status as string | undefined;
-    if (newStatus === 'signed' && prevStatus !== 'signed' && savedAg.exp_date) {
-      await autoCreateForAgreement(savedAg).catch((e: unknown) => {
-        console.error('[admin/agreements PATCH] autoCreateForAgreement failed', errMessage(e));
-      });
+    if (newStatus === 'signed' && prevStatus !== 'signed') {
+      // Ensure an advertiser row exists for this signed agreement (idempotent).
+      try {
+        const advRes = await ensureAdvertiserForAgreement(savedAg);
+        if (advRes.outcome !== 'skipped') {
+          const advLog = appendAudit(savedAg.audit_log, {
+            event: 'advertiser_linked',
+            timestamp: new Date().toISOString(),
+            user_email: admin.email,
+            details: `Advertiser #${advRes.advertiserId} ${advRes.outcome}`,
+          });
+          await sql`UPDATE agreements SET audit_log = ${JSON.stringify(advLog)}::jsonb WHERE id = ${id}`;
+        }
+      } catch (e) {
+        console.error('[admin/agreements PATCH] ensureAdvertiserForAgreement failed', errMessage(e));
+      }
+
+      // Auto-create renewal reminder.
+      if (savedAg.exp_date) {
+        await autoCreateForAgreement(savedAg).catch((e: unknown) => {
+          console.error('[admin/agreements PATCH] autoCreateForAgreement failed', errMessage(e));
+        });
+      }
     }
 
     return NextResponse.json({ agreement: savedAg, updated_fields: updated });
