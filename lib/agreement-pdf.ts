@@ -221,12 +221,8 @@ export async function generateAgreementPdfBuffer(ag: Agreement): Promise<Uint8Ar
   // Red accent bar
   page.drawRectangle({ x: 0, y: PH - 72, width: PW, height: 72, color: RED });
   page.drawText('RealtyLine Austin', {
-    x: MARGIN, y: PH - 36,
+    x: MARGIN, y: PH - 44,
     font: bold, size: 22, color: WHITE,
-  });
-  page.drawText('A Caxton Publications Publication', {
-    x: MARGIN, y: PH - 54,
-    font: regular, size: 9, color: rgb(1, 0.85, 0.85),
   });
   page.drawText('ADVERTISING AGREEMENT', {
     x: PW - MARGIN - bold.widthOfTextAtSize('ADVERTISING AGREEMENT', 11),
