@@ -33,10 +33,10 @@ export const MONTH_ORDER: Record<string, number> = {
 };
 
 export const FREQ_PKG_AG: Record<string, string> = {
-  '1x':  'Brand[1]',
-  '3x':  'Brand[3]',
-  '6x':  'Brand[6]',
-  '12x': 'Brand[12]',
+  '1x':  'Brand [1]',
+  '3x':  'Brand [3]',
+  '6x':  'Brand [6]',
+  '12x': 'Brand [12]',
 };
 
 export const FREQ_MONTHS: Record<string, number> = {

@@ -277,7 +277,7 @@ export default function MediaKitClient() {
                     className="text-[11.5px] font-bold px-1.5 py-0.5 rounded-full text-white ml-1"
                     style={{ background: PREMIUM }}
                   >
-                    Brand[12 Plus]
+                    Brand [12 Plus]
                   </span>
                 </td>
                 <td

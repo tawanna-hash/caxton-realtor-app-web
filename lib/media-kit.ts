@@ -46,7 +46,7 @@ export interface PolicyNote {
 export const PACKAGES: Package[] = [
   {
     id: 'brand1',
-    name: 'Brand[1]',
+    name: 'Brand [1]',
     term: 'No Agreement',
     tagline: 'Ad Creative in Print & Digital Editions Only',
     popular: false,
@@ -59,7 +59,7 @@ export const PACKAGES: Package[] = [
   },
   {
     id: 'brand3',
-    name: 'Brand[3]',
+    name: 'Brand [3]',
     term: '3-Month Agreement',
     tagline: 'Save with a short-term commitment',
     popular: false,
@@ -76,7 +76,7 @@ export const PACKAGES: Package[] = [
   },
   {
     id: 'brand6',
-    name: 'Brand[6]',
+    name: 'Brand [6]',
     term: '6-Month Agreement',
     tagline: 'Best value for growing brands',
     popular: true,
@@ -98,7 +98,7 @@ export const PACKAGES: Package[] = [
   },
   {
     id: 'brand12',
-    name: 'Brand[12]',
+    name: 'Brand [12]',
     term: '12-Month Agreement',
     tagline: 'Maximum exposure, maximum savings',
     popular: false,
@@ -120,7 +120,7 @@ export const PACKAGES: Package[] = [
   },
   {
     id: 'brand12plus',
-    name: 'Brand[12 Plus]',
+    name: 'Brand [12 Plus]',
     term: '12-Month Agreement',
     tagline: 'The ultimate premium brand presence',
     popular: false,
