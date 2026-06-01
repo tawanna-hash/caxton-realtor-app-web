@@ -1002,7 +1002,8 @@ function AgreementDrawer({
   const isCreate = !existing;
   const isUploaded = !!existing?.is_uploaded;
 
-  // Derive initial rate from seed or rate table
+  // Derive initial rate from seed or rate table. For fresh creates (no seed), do
+  // NOT auto-fill from any default size/frequency — those fields start empty too.
   const initRateAndBase = useMemo(() => {
     if (seed?.ad_rate_cents != null) {
       const payType = seed.payment_mode === 'card' ? 'Credit Card' : 'Check';
@@ -1011,10 +1012,10 @@ function AgreementDrawer({
         : seed.ad_rate_cents / 100;
       return { rate: String(seed.ad_rate_cents / 100), base: String(base) };
     }
-    const freq = seed?.frequency ?? '1x';
-    const size = seed?.ad_size ?? '1/4 page';
-    const looked = lookupRate(freq, size);
-    if (looked) return { rate: String(looked.rate), base: String(looked.rate) };
+    if (seed?.frequency && seed?.ad_size) {
+      const looked = lookupRate(seed.frequency, seed.ad_size);
+      if (looked) return { rate: String(looked.rate), base: String(looked.rate) };
+    }
     return { rate: '', base: '' };
   }, [seed]);
 
@@ -1027,10 +1028,10 @@ function AgreementDrawer({
     email:                seed?.advertiser_email ?? '',
     address:              seed?.address ?? '',
     city:                 seed?.city ?? '',
-    state:                seed?.state ?? 'TX',
+    state:                seed?.state ?? '',
     zip:                  seed?.zip ?? '',
-    ad_size:              seed?.ad_size ?? '1/4 page',
-    frequency:            seed?.frequency ?? '1x',
+    ad_size:              seed?.ad_size ?? '',
+    frequency:            seed?.frequency ?? '',
     ad_rate:              initRateAndBase.rate,
     ad_rate_base:         initRateAndBase.base,
     rate_user_edited:     seed?.ad_rate_cents != null,
@@ -1044,8 +1045,8 @@ function AgreementDrawer({
     billing_email:        seed?.billing_email ?? seed?.advertiser_email ?? '',
     billing_contact_name: seed?.billing_contact_name ?? '',
     billing_contact_phone:formatPhone(seed?.billing_contact_phone),
-    payment_type:         seed?.card_type ? 'Credit Card' : 'Check',
-    card_type:            seed?.card_type ?? 'Visa',
+    payment_type:         seed?.card_type ? 'Credit Card' : (seed?.payment_mode === 'check' ? 'Check' : ''),
+    card_type:            seed?.card_type ?? '',
     cardholder_name:      seed?.cardholder_name ?? '',
     card_number_last4:    seed?.card_number_last4 ?? '',
     card_expiration:      seed?.card_expiration ?? '',
@@ -1177,7 +1178,7 @@ function AgreementDrawer({
       billing_email:           form.billing_email || null,
       billing_contact_name:    form.billing_contact_name || null,
       billing_contact_phone:   form.billing_contact_phone || null,
-      payment_type:            form.payment_type,
+      payment_type:            form.payment_type || null,
       card_type:               form.payment_type === 'Credit Card' ? form.card_type : null,
       cardholder_name:         form.payment_type === 'Credit Card' ? form.cardholder_name || null : null,
       card_number_last4:       form.payment_type === 'Credit Card' ? form.card_number_last4 || null : null,
@@ -1801,7 +1802,7 @@ function AgreementDrawer({
         <button
           onClick={() => save(true)}
           disabled={saving || !canSign}
-          className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded border border-gray-300 text-gray-700 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           title={
             cardRequiresSigningLink
               ? 'Credit Card payments must be signed via the public Sign Wizard so Stripe can charge the card. Use Send Signing Link instead.'
