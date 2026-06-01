@@ -407,12 +407,23 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
     setError(null);
     try {
       // 1. Charge the card first if Credit Card was selected and Stripe is wired.
-      //    confirm() returns {skipped:true} if Stripe isn't configured (graceful fallback).
+      //    When Credit Card is selected we HARD FAIL if the charge doesn't go through —
+      //    we never silently complete signing with no payment.
       let stripePaymentIntentId: string | null = null;
-      if (paymentType === 'Credit Card' && stripeRef.current) {
+      if (paymentType === 'Credit Card') {
+        if (!stripeRef.current) {
+          setError('Card payment form is not ready. Reload the page and try again, or choose Check.');
+          setSaving(false);
+          return;
+        }
         try {
           const result = await stripeRef.current.confirm();
-          if ('paymentIntentId' in result) stripePaymentIntentId = result.paymentIntentId;
+          if ('skipped' in result) {
+            setError('Card payment did not process. The secure payment form was not initialized. Reload the page and try again, or choose Check.');
+            setSaving(false);
+            return;
+          }
+          stripePaymentIntentId = result.paymentIntentId;
         } catch (e) {
           // Card declined / 3DS failed — stop here; client can fix and retry.
           const msg = e instanceof Error ? e.message : 'card authorization failed';
