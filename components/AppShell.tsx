@@ -61,14 +61,14 @@ const ADMIN_GROUPS: AdminGroup[] = [
       { label: 'App Subscribers',   href: '/admin/subscribers',        description: 'Newsletter signups' },
       { label: 'Five Points Board', href: '/admin/five-points-board',  description: 'Coming soon' },
       { label: 'Manual Subscribe',  href: '/subscribe',                description: 'Add a subscriber by hand' },
+      { label: 'Mailing List',      href: '/admin/mailing',            description: 'Segment lists & exports' },
     ],
   },
   {
     label: 'Revenue',
     links: [
-      { label: 'Ads',          href: '/admin/ads',       description: 'Inventory & placements' },
-      { label: 'Marketing',    href: '/admin/marketing', description: 'Campaigns & assets' },
-      { label: 'Mailing List', href: '/admin/mailing',   description: 'Segment lists & exports' },
+      { label: 'Ads',       href: '/admin/ads',       description: 'Inventory & placements' },
+      { label: 'Marketing', href: '/admin/marketing', description: 'Campaigns & assets' },
     ],
   },
   {
