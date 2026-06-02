@@ -849,8 +849,8 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                 <StripePaymentBlock
                   ref={stripeRef}
                   token={token}
-                  adRateCents={strToCents(adRate) ?? 0}
-                  refreshKey={`${adSize}|${frequency}|${adRate}`}
+                  adRateCents={strToCents(effectiveAdRate) ?? 0}
+                  refreshKey={`${adSize}|${frequency}|${effectiveAdRate}`}
                   onReadyChange={setStripeReady}
                 />
                 <p className="text-[11px] text-gray-500 mt-2">
