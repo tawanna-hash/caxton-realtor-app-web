@@ -993,7 +993,18 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
           <FeedTopBanner pub={pub} />
           <div className="flex gap-2 overflow-x-auto px-4 py-3 bg-white border-b border-gray-200" style={{ scrollbarWidth: 'none' }}>
             {CATS.map((c) => (
-              <button key={c} onClick={() => setCat(c)} className={cat === c ? 'whitespace-nowrap px-3 py-1.5 text-sm font-semibold uppercase tracking-wider border-2 border-black bg-white text-black' : 'whitespace-nowrap px-3 py-1.5 text-sm font-medium uppercase tracking-wider border border-gray-300 bg-white text-gray-500'}>{c}</button>
+              <button
+                key={c}
+                onClick={() => setCat(c)}
+                aria-pressed={cat === c}
+                className={
+                  cat === c
+                    ? 'whitespace-nowrap px-3 py-1.5 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
+                    : 'whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
+                }
+              >
+                {c}
+              </button>
             ))}
           </div>
           <div>
