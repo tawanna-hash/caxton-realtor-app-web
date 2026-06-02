@@ -1,17 +1,28 @@
 // lib/wave-webhook.ts
 //
-// Fire-and-forget outbound webhook to Zapier (which routes to Wave).
-// Configured via WAVE_ZAP_WEBHOOK_URL env var.
+// Outbound Wave invoice creation triggered after a successful Stripe payment.
 //
-// Zap shape (suggested):
-//   Trigger: Webhooks by Zapier → Catch Hook
-//   Action:  Wave → Create Invoice (and optionally Record Payment)
+// History:
+//   * v1 (deprecated): fire-and-forget POST to a Zapier Catch Hook which then
+//     ran Wave GraphQL mutations from a Code-by-Zapier step. Killed because
+//     Zapier's free/Starter tier enforces a 1-second JavaScript execution
+//     timeout that Wave's GraphQL API can't reliably meet for 3 sequential
+//     mutations.
+//   * v2 (current): call Wave's GraphQL API directly from this Next.js app.
+//     No middleman, no timeout pressure, all 3 mutations run server-side with
+//     a 15s budget per call. See lib/wave-direct.ts.
 //
-// We do NOT block payment success on Zapier delivery; failures are logged
-// and the agreement is still marked paid. If WAVE_ZAP_WEBHOOK_URL is unset
-// the function silently no-ops, so dev/test envs don't error.
+// Env vars (used by lib/wave-direct.ts):
+//   WAVE_API_TOKEN          — full-access token
+//   WAVE_BUSINESS_ID        — Caxton Publications business ID
+//   WAVE_PAYMENT_ACCOUNT_ID — Stripe (Money in Transit) account ID
+//
+// If any are missing, this function silently no-ops so dev/test envs don't
+// fail. Stripe payment success is never blocked by Wave delivery failure;
+// failures are logged and the agreement is still marked paid.
 
 import type { Agreement } from '@/lib/agreements';
+import { createWaveInvoiceDirect } from '@/lib/wave-direct';
 
 export interface WaveInvoicePayload {
   /** "agreement-signed" (first issue) or "issue-charge" (subsequent monthly). */
@@ -44,51 +55,37 @@ export interface FireWaveOpts {
   issueMonth?: string;
 }
 
-export async function fireWaveInvoiceWebhook(opts: FireWaveOpts): Promise<{ ok: boolean; error?: string }> {
-  const url = process.env.WAVE_ZAP_WEBHOOK_URL;
-  if (!url) {
-    // Not configured — silent skip. Caller stays unblocked.
-    return { ok: true };
-  }
-
+export async function fireWaveInvoiceWebhook(
+  opts: FireWaveOpts
+): Promise<{ ok: boolean; error?: string; invoiceNumber?: string }> {
   const totalCents = opts.baseAmountCents + opts.surchargeCents;
-  const payload: WaveInvoicePayload = {
-    event: opts.event,
-    agreement_id: opts.ag.id,
-    company_name: opts.ag.company_name ?? null,
-    advertiser_email: opts.ag.advertiser_email ?? opts.ag.billing_email ?? null,
-    rep_name: opts.ag.rep_name ?? null,
-    ad_size: opts.ag.ad_size ?? null,
-    frequency: opts.ag.frequency ?? null,
-    issue_month: opts.issueMonth ?? null,
-    base_amount_cents: opts.baseAmountCents,
-    surcharge_cents: opts.surchargeCents,
-    total_cents: totalCents,
-    stripe_customer_id: opts.ag.stripe_customer_id ?? null,
-    stripe_payment_intent_id: opts.stripePaymentIntentId,
-    stripe_charge_id: opts.stripeChargeId ?? null,
-    paid_at: new Date().toISOString(),
-    publication: 'RealtyLine',
-    notes: `${opts.ag.ad_size ?? 'ad'} \u2014 ${opts.ag.frequency ?? 'monthly'}${opts.issueMonth ? ` \u2014 ${opts.issueMonth}` : ''}`,
-  };
+  const paidAtIso = new Date().toISOString();
 
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
-      // Don't wait forever
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      console.error('[wave-webhook] Zapier returned non-2xx:', res.status, txt.slice(0, 500));
-      return { ok: false, error: `Zapier ${res.status}` };
-    }
-    return { ok: true };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'unknown';
-    console.error('[wave-webhook] fetch failed:', msg);
-    return { ok: false, error: msg };
+  const result = await createWaveInvoiceDirect({
+    companyName: opts.ag.company_name ?? 'Unknown Advertiser',
+    advertiserEmail: opts.ag.advertiser_email ?? opts.ag.billing_email ?? null,
+    repName: opts.ag.rep_name ?? null,
+    adSize: opts.ag.ad_size ?? null,
+    frequency: opts.ag.frequency ?? null,
+    issueMonth: opts.issueMonth ?? null,
+    totalCents,
+    stripePaymentIntentId: opts.stripePaymentIntentId,
+    paidAtIso,
+    notes: `${opts.ag.ad_size ?? 'ad'} \u2014 ${opts.ag.frequency ?? 'monthly'}${
+      opts.issueMonth ? ` \u2014 ${opts.issueMonth}` : ''
+    } \u2014 agreement ${opts.ag.id}`,
+  });
+
+  if (!result.ok) {
+    console.error('[wave-webhook] createWaveInvoiceDirect failed:', result.error);
+    return { ok: false, error: result.error };
   }
+
+  if (result.invoiceNumber) {
+    console.log(
+      `[wave-webhook] Wave invoice #${result.invoiceNumber} created for agreement ${opts.ag.id} ($${result.amount})`
+    );
+  }
+
+  return { ok: true, invoiceNumber: result.invoiceNumber };
 }
