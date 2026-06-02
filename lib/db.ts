@@ -309,6 +309,110 @@ export async function ensureSchema(): Promise<void> {
   }
 
   // ============================================================
+  // House-ad placeholder seed (June 2026)
+  // Fills the 5 starter ad slots with "Feature your brand here"
+  // placeholders so they aren't visually empty before real
+  // advertisers are booked. Idempotent — re-running is a no-op.
+  // Deactivate any house campaign from /admin/ads when a real
+  // advertiser is booked for that slot.
+  // ============================================================
+  const houseAds: Array<{
+    slug: string;
+    blob_url: string;
+    width: number;
+    height: number;
+    alt: string;
+    subject: string;
+  }> = [
+    {
+      slug: 'featured_builder_strip',
+      blob_url: '/ads/house-featured-builder-strip.svg',
+      width: 728,
+      height: 90,
+      alt: 'Feature your model homes here — advertise with RealtyLine',
+      subject: 'Featured Builder Strip inquiry',
+    },
+    {
+      slug: 'calendar_event_sponsor',
+      blob_url: '/ads/house-calendar-event-sponsor.svg',
+      width: 600,
+      height: 160,
+      alt: 'Sponsor a pinned calendar event',
+      subject: 'Calendar Event Sponsor inquiry',
+    },
+    {
+      slug: 'feed_sticky_bottom',
+      blob_url: '/ads/house-feed-sticky-bottom.svg',
+      width: 320,
+      height: 50,
+      alt: 'Your ad here — sticky bottom banner',
+      subject: 'Sticky Bottom Banner inquiry',
+    },
+    {
+      slug: 'giveaway_prize_sponsor',
+      blob_url: '/ads/house-giveaway-prize-sponsor.svg',
+      width: 600,
+      height: 200,
+      alt: 'Become a giveaway prize sponsor',
+      subject: 'Giveaway Prize Sponsor inquiry',
+    },
+    {
+      slug: 'newsletter_banner',
+      blob_url: '/ads/house-newsletter-banner.svg',
+      width: 600,
+      height: 200,
+      alt: 'Top-of-newsletter sponsorship',
+      subject: 'Newsletter Sponsor inquiry',
+    },
+  ];
+
+  for (const ad of houseAds) {
+    const clickUrl = `mailto:ads@realtynewsnow.app?subject=${encodeURIComponent(ad.subject)}`;
+
+    // 1. Creative (idempotent on advertiser_name + blob_url).
+    const creativeRows = (await sql`
+      WITH ins AS (
+        INSERT INTO ad_creatives
+          (advertiser_name, blob_url, width, height, click_url, alt_text, uploaded_by)
+        SELECT 'RealtyLine House', ${ad.blob_url}, ${ad.width}, ${ad.height},
+               ${clickUrl}, ${ad.alt}, 'system:house-ad-seed'
+         WHERE NOT EXISTS (
+           SELECT 1 FROM ad_creatives
+            WHERE advertiser_name = 'RealtyLine House'
+              AND blob_url = ${ad.blob_url}
+         )
+        RETURNING id
+      )
+      SELECT id FROM ins
+      UNION ALL
+      SELECT id FROM ad_creatives
+       WHERE advertiser_name = 'RealtyLine House'
+         AND blob_url = ${ad.blob_url}
+       LIMIT 1
+    `) as unknown as { id: string }[];
+
+    const creativeId = creativeRows[0]?.id;
+    if (!creativeId) continue;
+
+    // 2. Campaign (idempotent on ad_space_slug + advertiser='RealtyLine House').
+    await sql`
+      INSERT INTO ad_campaigns
+        (advertiser_name, ad_space_slug, creative_id, publication,
+         start_date, end_date, active, price_notes, notes, created_by)
+      SELECT 'RealtyLine House', ${ad.slug}, ${creativeId}::uuid, 'both',
+             CURRENT_DATE, CURRENT_DATE + INTERVAL '5 years', TRUE,
+             'house ad — no charge',
+             'Auto-seeded house ad. Deactivate when a real advertiser is booked.',
+             'system:house-ad-seed'
+       WHERE NOT EXISTS (
+         SELECT 1 FROM ad_campaigns
+          WHERE ad_space_slug = ${ad.slug}
+            AND advertiser_name = 'RealtyLine House'
+       )
+    `;
+  }
+
+  // ============================================================
   // Magazine hotspots (Phase 1 — May 27, 2026)
   // Clickable regions overlaid on magazine pages. Position stored
   // as fractions of natural page dims so they scale correctly
