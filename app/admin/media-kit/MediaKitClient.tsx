@@ -15,12 +15,26 @@ import {
   BRAND_12_PLUS_RATE,
   AUDIENCE_STATS,
   POLICY_NOTES,
+  APP_AD_SLOTS,
+  APP_AD_AUDIENCE_NOTE,
   type Package,
   type EBlast,
+  type AppAdSlot,
 } from '@/lib/media-kit';
 
 const ACCENT = '#D22531';
 const PREMIUM = '#3D0740';
+const NAVY = '#0B2545';
+const GOLD = '#B8923A';
+
+const ZONE_LABEL: Record<AppAdSlot['zone'], string> = {
+  feed: 'Feed',
+  article: 'Article',
+  calendar: 'Calendar',
+  newsletter: 'Newsletter',
+  account: 'Account',
+  app: 'App',
+};
 
 const fmt = (n: number) => '$' + n.toLocaleString();
 
@@ -140,7 +154,95 @@ function PackageCard({ pkg }: { pkg: Package }) {
   );
 }
 
-// ── e-Blast card ──────────────────────────────────────────────────────────
+// ── App ad slots table ─────────────────────────────────────────────────────
+
+function AppSlotRow({ slot, striped }: { slot: AppAdSlot; striped: boolean }) {
+  const isPremium = slot.tier === 'premium';
+  const unit = slot.pricingUnit ? ` ${slot.pricingUnit}` : ' /wk';
+  const monthlyCell =
+    slot.monthlySingle === null || slot.monthlyBoth === null ? (
+      <span className="text-gray-400 italic text-[11px]">{slot.pricingUnit ?? '—'}</span>
+    ) : (
+      <span>
+        {fmt(slot.monthlySingle)} / {fmt(slot.monthlyBoth)}
+      </span>
+    );
+
+  return (
+    <tr className={striped ? 'bg-gray-50' : 'bg-white'}>
+      <td className="px-3 py-2.5 align-top">
+        <div className="text-[13px] font-semibold text-gray-900">{slot.name}</div>
+        <div className="text-[11px] text-gray-500 font-mono mt-0.5">{slot.slug}</div>
+      </td>
+      <td className="px-3 py-2.5 align-top">
+        <span className="text-[11px] uppercase tracking-wide font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
+          {ZONE_LABEL[slot.zone]}
+        </span>
+      </td>
+      <td className="px-3 py-2.5 align-top">
+        <span
+          className="text-[11px] uppercase tracking-wide font-bold px-2 py-0.5 rounded text-white"
+          style={{ background: isPremium ? PREMIUM : NAVY }}
+        >
+          {slot.tier}
+        </span>
+      </td>
+      <td className="px-3 py-2.5 text-right text-[13px] font-bold text-gray-900 align-top whitespace-nowrap">
+        {fmt(slot.weeklySingle)} / {fmt(slot.weeklyBoth)}
+        <div className="text-[10px] font-medium text-gray-500">single{unit} · both{unit}</div>
+      </td>
+      <td className="px-3 py-2.5 text-right text-[13px] font-bold align-top whitespace-nowrap" style={{ color: ACCENT }}>
+        {monthlyCell}
+        {slot.monthlySingle !== null && (
+          <div className="text-[10px] font-medium text-gray-500">single / both · 4 wk</div>
+        )}
+      </td>
+      <td className="px-3 py-2.5 align-top text-[11.5px] text-gray-600">{slot.sizes}</td>
+      <td className="px-3 py-2.5 align-top text-[12px] text-gray-700">{slot.notes}</td>
+    </tr>
+  );
+}
+
+function AppSlotsTable({ slots }: { slots: AppAdSlot[] }) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr>
+              {(
+                [
+                  { label: 'Placement', align: 'left' as const },
+                  { label: 'Zone', align: 'left' as const },
+                  { label: 'Tier', align: 'left' as const },
+                  { label: 'Weekly (single / both)', align: 'right' as const },
+                  { label: 'Monthly (single / both)', align: 'right' as const },
+                  { label: 'Sizes', align: 'left' as const },
+                  { label: 'Notes', align: 'left' as const },
+                ]
+              ).map((h) => (
+                <th
+                  key={h.label}
+                  className={`px-3 py-2.5 ${h.align === 'right' ? 'text-right' : 'text-left'} text-[11px] uppercase tracking-wide font-bold text-gray-600 bg-gray-50 border-b-2`}
+                  style={{ borderBottomColor: ACCENT }}
+                >
+                  {h.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {slots.map((slot, i) => (
+              <AppSlotRow key={slot.slug} slot={slot} striped={i % 2 === 1} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ── e-Blast card ────────────────────────────────────────────────
 
 function EBlastCard({ pkg }: { pkg: EBlast }) {
   return (
@@ -202,6 +304,43 @@ export default function MediaKitClient() {
           ))}
         </div>
       </header>
+
+      {/* App / Digital Ad Slots — unified <AdSlot> engine */}
+      <section>
+        <SectionHead>App &amp; Digital Ad Slots</SectionHead>
+        <p className="text-[13px] text-gray-600 max-w-3xl mb-4">
+          {APP_AD_AUDIENCE_NOTE} Weekly rates assume consecutive weeks; monthly = 4 weeks. Both-pub
+          rates run ≈1.7× single-pub for full network reach. Manage live campaigns at{' '}
+          <a href="/admin/ads" className="font-semibold underline" style={{ color: ACCENT }}>
+            /admin/ads
+          </a>
+          .
+        </p>
+
+        <div className="flex flex-wrap gap-2 mb-3">
+          <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wide font-semibold text-white px-2 py-1 rounded" style={{ background: PREMIUM }}>
+            ★ Premium tier
+          </span>
+          <span className="text-[12px] text-gray-600 self-center">High-context placements (article tops, sidebars, calendar pins, splash, push).</span>
+        </div>
+        <AppSlotsTable slots={APP_AD_SLOTS.filter((s) => s.tier === 'premium')} />
+
+        <div className="flex flex-wrap gap-2 mt-6 mb-3">
+          <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wide font-semibold text-white px-2 py-1 rounded" style={{ background: NAVY }}>
+            Standard tier
+          </span>
+          <span className="text-[12px] text-gray-600 self-center">Steady-reach inventory across feed, article, and calendar.</span>
+        </div>
+        <AppSlotsTable slots={APP_AD_SLOTS.filter((s) => s.tier === 'standard')} />
+
+        <div className="mt-4 p-3 rounded-md border border-gray-200 bg-amber-50/40" style={{ borderLeft: `4px solid ${GOLD}` }}>
+          <div className="text-[12.5px] text-gray-700">
+            <span className="font-semibold">House inventory.</span> Every slot has a RealtyLine House
+            fallback creative auto-seeded on app startup. Unsold weeks never go dark — the network
+            keeps serving brand impressions until a paid campaign goes live.
+          </div>
+        </div>
+      </section>
 
       {/* Packages */}
       <section>

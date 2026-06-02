@@ -41,6 +41,250 @@ export interface PolicyNote {
   body: string;
 }
 
+// ── Digital / App ad slots ─────────────────────────────────────────────────
+//
+// The 17-slot catalog that ships with the unified <AdSlot> engine
+// (June 2026). Same surface set the rate-card page in the printed Media
+// Kit PDF documents, kept in sync here so the admin reference page, the
+// Sign Wizard, and the generated agreement PDF all read from one source.
+//
+// Rates are weekly per single publication (RealtyLine OR Newsline). Both-
+// pub rates run ~1.7× single-pub for full network reach. Monthly = 4 weeks.
+
+export type AppAdSlotTier = 'standard' | 'premium';
+export type AppAdSlotZone =
+  | 'feed'
+  | 'article'
+  | 'calendar'
+  | 'newsletter'
+  | 'account'
+  | 'app';
+
+export interface AppAdSlot {
+  /** ad_spaces.slug — keep in sync with lib/db.ts catalog. */
+  slug: string;
+  /** Human-readable label, used in admin UI + agreement PDF. */
+  name: string;
+  zone: AppAdSlotZone;
+  tier: AppAdSlotTier;
+  /** Weekly rate, single publication, USD. */
+  weeklySingle: number;
+  /** Weekly rate, both publications, USD. */
+  weeklyBoth: number;
+  /** Monthly rate (4 weeks), single publication, USD. null when sold per send / per push. */
+  monthlySingle: number | null;
+  /** Monthly rate (4 weeks), both publications, USD. null when sold per send / per push. */
+  monthlyBoth: number | null;
+  /** Pricing-unit override for slots that don't follow weekly cadence. */
+  pricingUnit?: 'per send' | 'per push';
+  /** Creative sizes shown in the spec column of the admin reference page. */
+  sizes: string;
+  /** One-line placement / inventory note. */
+  notes: string;
+}
+
+export const APP_AD_SLOTS: AppAdSlot[] = [
+  // ---- Premium tier ----
+  {
+    slug: 'featured_builder_strip',
+    name: 'Featured Builder Strip',
+    zone: 'feed',
+    tier: 'premium',
+    weeklySingle: 350,
+    weeklyBoth: 525,
+    monthlySingle: 1400,
+    monthlyBoth: 2100,
+    sizes: '1200×200 desktop · 600×160 mobile',
+    notes: 'Top of /builders + /inventory. Logo + tagline + CTA.',
+  },
+  {
+    slug: 'giveaway_prize_sponsor',
+    name: 'Giveaway Prize Sponsor',
+    zone: 'feed',
+    tier: 'premium',
+    weeklySingle: 350,
+    weeklyBoth: 525,
+    monthlySingle: 1400,
+    monthlyBoth: 2100,
+    sizes: '1080×600 feed card · native entry page',
+    notes: 'Per giveaway, typically 2–4 weeks. Sponsor pays prize + visibility.',
+  },
+  {
+    slug: 'article_top_leaderboard',
+    name: 'Article Top Leaderboard',
+    zone: 'article',
+    tier: 'premium',
+    weeklySingle: 300,
+    weeklyBoth: 450,
+    monthlySingle: 1200,
+    monthlyBoth: 1800,
+    sizes: '728×90 desktop · 320×50 mobile · 300×250 fallback',
+    notes: '100% of article opens, above-the-fold.',
+  },
+  {
+    slug: 'article_interstitial',
+    name: 'Article Interstitial',
+    zone: 'article',
+    tier: 'premium',
+    weeklySingle: 300,
+    weeklyBoth: 450,
+    monthlySingle: 1200,
+    monthlyBoth: 1800,
+    sizes: '1080×1920 mobile fullscreen · 970×250 desktop',
+    notes: 'Every 4th article tap; never on first session. High friction — reserved.',
+  },
+  {
+    slug: 'article_sidebar_desktop',
+    name: 'Article Sidebar (Desktop)',
+    zone: 'article',
+    tier: 'premium',
+    weeklySingle: 275,
+    weeklyBoth: 425,
+    monthlySingle: 1100,
+    monthlyBoth: 1700,
+    sizes: '300×600 desktop · 300×250 stacked',
+    notes: 'Desktop only (≥1024px). Long-dwell placement.',
+  },
+  {
+    slug: 'calendar_event_sponsor',
+    name: 'Calendar Event Sponsor',
+    zone: 'calendar',
+    tier: 'premium',
+    weeklySingle: 275,
+    weeklyBoth: 425,
+    monthlySingle: 1100,
+    monthlyBoth: 1700,
+    sizes: 'Native event card (gold border)',
+    notes: 'Pinned to top of calendar list. “Presented by” tag. 1–2 per pub per week.',
+  },
+  {
+    slug: 'account_splash',
+    name: 'Account Page Splash',
+    zone: 'account',
+    tier: 'premium',
+    weeklySingle: 250,
+    weeklyBoth: 400,
+    monthlySingle: 1000,
+    monthlyBoth: 1600,
+    sizes: '1080×400 banner · 970×250 desktop · 320×250 mobile',
+    notes: 'Top of /account + /profile, every visit. Rotates per session.',
+  },
+  {
+    slug: 'newsletter_banner',
+    name: 'Newsletter Banner',
+    zone: 'newsletter',
+    tier: 'premium',
+    weeklySingle: 250,
+    weeklyBoth: 400,
+    monthlySingle: null,
+    monthlyBoth: null,
+    pricingUnit: 'per send',
+    sizes: '600×200 email · 600×100 email slim',
+    notes: 'Top of every send. Ships when newsletter ships.',
+  },
+  {
+    slug: 'splash_welcome',
+    name: 'Splash / Welcome',
+    zone: 'app',
+    tier: 'premium',
+    weeklySingle: 400,
+    weeklyBoth: 600,
+    monthlySingle: 1600,
+    monthlyBoth: 2400,
+    sizes: '1080×1920 mobile fullscreen',
+    notes: 'App-open moment, first session of the day. Never twice in 12h.',
+  },
+  {
+    slug: 'push_sponsorship',
+    name: 'Push Notification Sponsor',
+    zone: 'app',
+    tier: 'premium',
+    weeklySingle: 500,
+    weeklyBoth: 750,
+    monthlySingle: null,
+    monthlyBoth: null,
+    pricingUnit: 'per push',
+    sizes: '256×256 icon',
+    notes: 'Max 1 sponsored push per week. Use sparingly.',
+  },
+  // ---- Standard tier ----
+  {
+    slug: 'feed_top_banner',
+    name: 'Feed Top Banner',
+    zone: 'feed',
+    tier: 'standard',
+    weeklySingle: 150,
+    weeklyBoth: 225,
+    monthlySingle: 600,
+    monthlyBoth: 900,
+    sizes: '728×90 desktop · 320×50 mobile',
+    notes: 'Top of feed, both pubs.',
+  },
+  {
+    slug: 'feed_inline_card',
+    name: 'Feed Inline Card',
+    zone: 'feed',
+    tier: 'standard',
+    weeklySingle: 125,
+    weeklyBoth: 200,
+    monthlySingle: 500,
+    monthlyBoth: 800,
+    sizes: '1080×600 native',
+    notes: 'Every 6th feed card. Marked SPONSORED.',
+  },
+  {
+    slug: 'feed_sticky_bottom',
+    name: 'Feed Sticky Bottom',
+    zone: 'feed',
+    tier: 'standard',
+    weeklySingle: 125,
+    weeklyBoth: 200,
+    monthlySingle: 500,
+    monthlyBoth: 800,
+    sizes: '320×50 mobile · 320×100 mobile large',
+    notes: 'Persistent at bottom while scrolling feed. Dismissable.',
+  },
+  {
+    slug: 'article_mid_inline',
+    name: 'Article Mid-Inline',
+    zone: 'article',
+    tier: 'standard',
+    weeklySingle: 150,
+    weeklyBoth: 225,
+    monthlySingle: 600,
+    monthlyBoth: 900,
+    sizes: '300×250 · 320×100 mobile large',
+    notes: 'Inserted at 40% scroll depth on articles >600 words.',
+  },
+  {
+    slug: 'article_bottom',
+    name: 'Article Bottom',
+    zone: 'article',
+    tier: 'standard',
+    weeklySingle: 125,
+    weeklyBoth: 200,
+    monthlySingle: 500,
+    monthlyBoth: 800,
+    sizes: '300×250 · 728×90 desktop',
+    notes: '100% of article completions.',
+  },
+  {
+    slug: 'calendar_top_banner',
+    name: 'Calendar Top Banner',
+    zone: 'calendar',
+    tier: 'standard',
+    weeklySingle: 125,
+    weeklyBoth: 200,
+    monthlySingle: 500,
+    monthlyBoth: 800,
+    sizes: '728×90 desktop · 320×50 mobile',
+    notes: 'Top of calendar tab, both pubs.',
+  },
+];
+
+export const APP_AD_AUDIENCE_NOTE =
+  '17 ad spaces unified under <AdSlot>. PostHog ad_impression / ad_click tracking on every render. Unsold inventory auto-fills with RealtyLine House creatives.';
+
 // ── Packages ────────────────────────────────────────────────────────────────
 
 export const PACKAGES: Package[] = [
