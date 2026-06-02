@@ -1224,17 +1224,12 @@ interface ArticleReaderProps {
 }
 
 
-// CAXTON ADS — House ads rotate when slot is empty. To add a real campaign
-// for a publication and slot, push to the appropriate array.
-//
-// Example real campaign:
-//   ADS_RL.leaderboard.push({
-//     id: 'heritage-may-2026',
-//     image: 'https://cdn.example.com/ads/heritage-728x90.png',
-//     alt: 'Heritage Title — closing services',
-//     href: 'https://heritagetitle.com/?utm_source=realtorapp&utm_campaign=may2026',
-//   });
-type AdSlot = { id: string; image?: string; alt?: string; href?: string; headline?: string };
+// CAXTON ADS — All ad slots in this file render through <AdSlotComponent>
+// (components/ads/AdSlot.tsx). Campaigns + creatives live in the DB
+// (ad_campaigns / ad_creatives tables) and are managed at /admin/ads.
+// House-ad placeholders for unsold inventory are auto-seeded by
+// ensureSchema() in lib/db.ts. PostHog ad_impression/ad_click events
+// are fired by AdSlotComponent — no parallel tracking here.
 function decodeHtmlEntities(s: string): string {
   if (!s) return '';
   return s
@@ -1322,141 +1317,49 @@ function splitHtmlIntoChunks(html: string, chunks: number): string[] {
   return result.filter(Boolean);
 }
 
-// Per-session cache: key = `${slot}:${pub}`. First fetch picks one campaign at
-// random (server-side via ORDER BY RANDOM). All subsequent renders of the same
-// slot+pub return the cached choice. Survives until tab close.
-const __adCache = new Map<string, AdSlot | null>();
-const __adInflight = new Map<string, Promise<AdSlot | null>>();
-
-async function fetchAd(slot: 'leaderboard' | 'rectangle' | 'popup' | 'feed_top' | 'calendar_top', pub: string): Promise<AdSlot | null> {
-  const cacheKey = `${slot}:${pub}`;
-  if (__adCache.has(cacheKey)) return __adCache.get(cacheKey) ?? null;
-  const inflight = __adInflight.get(cacheKey);
-  if (inflight) return inflight;
-  const promise = (async () => {
-    try {
-      const r = await fetch(`${API}/ads/active?slot=${slot}&pub=${pub}`, { credentials: 'omit' });
-      if (!r.ok) {
-        __adCache.set(cacheKey, null);
-        return null;
-      }
-      const data = await r.json();
-      const ad = data?.ad ? (data.ad as AdSlot) : null;
-      __adCache.set(cacheKey, ad);
-      return ad;
-    } catch {
-      __adCache.set(cacheKey, null);
-      return null;
-    } finally {
-      __adInflight.delete(cacheKey);
-    }
-  })();
-  __adInflight.set(cacheKey, promise);
-  return promise;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- _key reserved for future use
-function useAd(slot: 'leaderboard' | 'rectangle' | 'popup' | 'feed_top' | 'calendar_top', pub: string, _key: string): AdSlot {
-  const cacheKey = `${slot}:${pub}`;
-  const cached = __adCache.get(cacheKey);
-  const [ad, setAd] = useState<AdSlot>(cached || { id: 'house', headline: 'house-ad' });
-  useEffect(() => {
-    let cancelled = false;
-    fetchAd(slot, pub).then((result) => {
-      if (cancelled) return;
-      if (result) setAd(result);
-    });
-    return () => { cancelled = true; };
-  }, [slot, pub]);
-  return ad;
-}
-
 // ─────────────────────────────────────────────────────────────────────────
-// HouseAd — fallback rendered when an ad slot has no real campaign loaded
+// Article ad slots — all delegate to <AdSlotComponent> so they share one
+// fetch path, one impression-tracking path, and one source of fallback
+// creative (the DB). The wrapper components here only own the surrounding
+// layout chrome (the "Advertisement" eyebrow, the dismissable popup shell).
 // ─────────────────────────────────────────────────────────────────────────
 
-function HouseAd({ slot, pub }: { slot: 'leaderboard' | 'rectangle' | 'popup'; pub: string }) {
-  const info = PUB_META[pub as PubKey] || PUB_META.realtyline;
-  const headline = slot === 'leaderboard' ? 'Get featured here' : 'Advertise in ' + info.name;
-  const sub = `Reach ${info.reach}`;
-  const isRect = slot === 'rectangle';
-  const isPopup = slot === 'popup';
-  return (
-    <div
-      className={`flex flex-col items-center justify-center text-center ${
-        isRect ? 'py-8 px-4' : isPopup ? 'p-3' : 'py-3 px-4'
-      }`}
-      style={{ backgroundColor: info.color, color: 'white' }}
-    >
-      <p className={`uppercase tracking-[0.2em] font-bold ${isRect ? 'text-2xl mb-2' : 'text-sm mb-1'}`}>
-        {headline}
-      </p>
-      <p className={`font-light ${isRect ? 'text-base mb-3' : 'text-xs mb-1'}`} style={{ opacity: 0.9 }}>
-        {sub}
-      </p>
-      <a
-        href={`mailto:${info.email}?subject=Advertise%20in%20${encodeURIComponent(info.name)}`}
-        className={`inline-block underline font-medium ${isRect ? 'text-sm' : 'text-xs'}`}
-      >
-        {info.email}
-      </a>
-    </div>
-  );
-}
+// Publication is read by <AdSlotComponent> from localStorage.caxton_pub,
+// so the ad wrappers below don't need pub or articleId props anymore.
+// Props are kept on the function signatures only where call sites pass them.
 
-function FeedTopBanner({ pub }: { pub: string }) {
-  const ad = useAd('feed_top' as any, pub, 'feed');
-  if (!ad?.image || !ad?.href) return null;
+function FeedTopBanner({}: { pub: string }) {
   return (
     <div className="bg-white border-b border-gray-200">
       <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center pt-3 pb-2 font-medium">
         Advertisement
       </p>
       <div className="pb-3 px-4">
-        <a href={ad.href} target="_blank" rel="noopener noreferrer" className="block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={ad.image} alt={ad.alt || ''} className="w-full h-auto" />
-        </a>
+        <AdSlotComponent slug="feed_top_banner" variant="bare" />
       </div>
     </div>
   );
 }
 
-function AdLeaderboard({ pub, articleId }: { pub: string; articleId: string }) {
-  const ad = useAd('leaderboard', pub, articleId);
+function AdLeaderboard({}: { pub: string; articleId: string }) {
   return (
     <div className="my-6 -mx-5">
       <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center mb-2 font-medium">
         Advertisement
       </p>
-      {ad.image && ad.href ? (
-        <a href={ad.href} target="_blank" rel="noopener noreferrer">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={ad.image} alt={ad.alt || ''} className="w-full h-auto" />
-        </a>
-      ) : (
-        <HouseAd slot="leaderboard" pub={pub} />
-      )}
+      <AdSlotComponent slug="article_top_leaderboard" variant="bare" />
     </div>
   );
 }
 
-function AdRectangle({ pub, articleId, idx }: { pub: string; articleId: string; idx: number }) {
-  const ad = useAd('rectangle', pub, articleId + ':' + idx);
+function AdRectangle({}: { pub: string; articleId: string; idx: number }) {
   return (
     <div className="my-8">
       <div className="border-t border-gray-200 pt-4">
         <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center mb-3 font-medium">
           Advertisement
         </p>
-        {ad.image && ad.href ? (
-          <a href={ad.href} target="_blank" rel="noopener noreferrer" className="block">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={ad.image} alt={ad.alt || ''} className="w-full h-auto" />
-          </a>
-        ) : (
-          <HouseAd slot="rectangle" pub={pub} />
-        )}
+        <AdSlotComponent slug="article_mid_inline" variant="bare" />
         <div className="border-t border-gray-200 mt-4" />
       </div>
     </div>
@@ -1464,10 +1367,12 @@ function AdRectangle({ pub, articleId, idx }: { pub: string; articleId: string; 
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// AdPopup — bottom-right corner, dismissable, session-remembered
+// AdPopup — bottom-right corner, dismissable, session-remembered.
+// Body delegates to <AdSlotComponent slug="article_interstitial"> so it
+// shares the same DB-backed fill + PostHog tracking as every other slot.
 // ─────────────────────────────────────────────────────────────────────────
 
-function AdPopup({ pub, articleId }: { pub: string; articleId: string }) {
+function AdPopup({}: { pub: string; articleId: string }) {
   const [show, setShow] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
@@ -1481,8 +1386,6 @@ function AdPopup({ pub, articleId }: { pub: string; articleId: string }) {
     const t = setTimeout(() => setShow(true), 4000);
     return () => clearTimeout(t);
   }, []);
-
-  const ad = useAd('popup', pub, articleId);
 
   if (dismissed || !show) return null;
 
@@ -1508,14 +1411,7 @@ function AdPopup({ pub, articleId }: { pub: string; articleId: string }) {
           <path d="M18 6L6 18"/><path d="M6 6l12 12"/>
         </svg>
       </button>
-      {ad.image && ad.href ? (
-        <a href={ad.href} target="_blank" rel="noopener noreferrer" className="block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={ad.image} alt={ad.alt || ''} className="w-full h-auto" />
-        </a>
-      ) : (
-        <HouseAd slot="popup" pub={pub} />
-      )}
+      <AdSlotComponent slug="article_interstitial" variant="bare" />
       <style jsx>{`
         @keyframes slideInRight {
           from { transform: translateX(100%); opacity: 0; }

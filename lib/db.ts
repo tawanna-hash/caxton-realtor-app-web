@@ -323,6 +323,12 @@ export async function ensureSchema(): Promise<void> {
     height: number;
     alt: string;
     subject: string;
+    /**
+     * Override the destination email. Defaults to ads@realtynewsnow.app.
+     * Article-reader slots use ads@myrealtyline.com to match the existing
+     * /lib/pub-meta.ts copy that ran on these placements previously.
+     */
+    email?: string;
   }> = [
     {
       slug: 'featured_builder_strip',
@@ -364,10 +370,41 @@ export async function ensureSchema(): Promise<void> {
       alt: 'Top-of-newsletter sponsorship',
       subject: 'Newsletter Sponsor inquiry',
     },
+    // ---- Article-reader slots (June 2026 unification) ----
+    // Previously rendered by inline <HouseAd> JSX in app/(dashboard)/dashboard/page.tsx.
+    // Now unified under <AdSlotComponent> so impressions/clicks track through PostHog.
+    {
+      slug: 'article_top_leaderboard',
+      blob_url: '/ads/house-article-top-leaderboard.svg',
+      width: 728,
+      height: 90,
+      alt: 'Get featured here — Reach 71,000+ Texas REALTORS',
+      subject: 'Article Leaderboard inquiry',
+      email: 'ads@myrealtyline.com',
+    },
+    {
+      slug: 'article_mid_inline',
+      blob_url: '/ads/house-article-mid-inline.svg',
+      width: 600,
+      height: 300,
+      alt: 'Advertise in RealtyLine — Reach 71,000+ Texas REALTORS',
+      subject: 'Article Mid-Inline inquiry',
+      email: 'ads@myrealtyline.com',
+    },
+    {
+      slug: 'article_interstitial',
+      blob_url: '/ads/house-article-interstitial.svg',
+      width: 288,
+      height: 200,
+      alt: 'Advertise in RealtyLine — dismissable popup',
+      subject: 'Article Interstitial inquiry',
+      email: 'ads@myrealtyline.com',
+    },
   ];
 
   for (const ad of houseAds) {
-    const clickUrl = `mailto:ads@realtynewsnow.app?subject=${encodeURIComponent(ad.subject)}`;
+    const destEmail = ad.email ?? 'ads@realtynewsnow.app';
+    const clickUrl = `mailto:${destEmail}?subject=${encodeURIComponent(ad.subject)}`;
 
     // 1. Creative (idempotent on advertiser_name + blob_url).
     const creativeRows = (await sql`
