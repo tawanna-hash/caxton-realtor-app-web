@@ -150,7 +150,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         stripeChargeId: chargeId,
         issueMonth,
       });
-      if (waveResult.ok && process.env.WAVE_ZAP_WEBHOOK_URL) {
+      if (waveResult.ok) {
         await sql`UPDATE issue_charges SET wave_invoice_synced_at = NOW() WHERE id = ${issueChargeId}`;
       }
     }

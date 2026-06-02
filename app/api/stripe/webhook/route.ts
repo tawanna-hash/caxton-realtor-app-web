@@ -1,7 +1,7 @@
 // app/api/stripe/webhook/route.ts
 //
 // Stripe webhook endpoint. Verifies signature, processes payment events,
-// marks the agreement paid, and fires the Wave (Zapier) webhook.
+// marks the agreement paid, and creates the Wave invoice via direct GraphQL.
 //
 // Stripe Dashboard → Developers → Webhooks → Add endpoint:
 //   URL:    https://realtynewsnow.app/api/stripe/webhook
@@ -181,7 +181,7 @@ async function handlePaymentSucceeded(
     stripePaymentIntentId: pi.id,
     stripeChargeId: chargeId,
   });
-  if (result.ok && process.env.WAVE_ZAP_WEBHOOK_URL) {
+  if (result.ok) {
     await sql`UPDATE agreements SET wave_invoice_synced_at = NOW() WHERE id = ${ag.id}`;
   }
 }

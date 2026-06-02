@@ -145,7 +145,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_cust   ON agreements(stripe_customer_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_inv    ON agreements(stripe_invoice_id)`);
 
-  // Stripe + Wave (Zapier) wiring — 20260601-stripe-payments.sql
+  // Stripe + Wave wiring — 20260601-stripe-payments.sql
   await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS stripe_payment_method_id text`);
   await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS stripe_charged_cents     integer`);
   await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS stripe_charged_at        timestamptz`);
