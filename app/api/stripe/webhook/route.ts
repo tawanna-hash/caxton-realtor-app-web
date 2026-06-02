@@ -161,17 +161,49 @@ async function handlePaymentSucceeded(
     `;
   }
 
-  const auditRows = (await sql`SELECT audit_log FROM agreements WHERE id = ${ag.id}`) as unknown as Array<{
-    audit_log: AgreementAuditEntry[] | null;
-  }>;
-  const newLog = appendAudit(auditRows[0]?.audit_log, {
-    event: 'stripe_payment_succeeded',
-    timestamp: new Date().toISOString(),
-    details: `Stripe charged ${(pi.amount_received / 100).toFixed(2)} ${pi.currency.toUpperCase()} \u2014 pi: ${pi.id}`,
-  });
-  await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${ag.id}`;
+  // Append the 'stripe_payment_succeeded' audit entry only on the first
+  // successful delivery. Subsequent Stripe webhook retries skip it so the PDF
+  // audit trail doesn't grow duplicate rows.
+  if (!ag.paid_at) {
+    const auditRows = (await sql`SELECT audit_log FROM agreements WHERE id = ${ag.id}`) as unknown as Array<{
+      audit_log: AgreementAuditEntry[] | null;
+    }>;
+    const newLog = appendAudit(auditRows[0]?.audit_log, {
+      event: 'stripe_payment_succeeded',
+      timestamp: new Date().toISOString(),
+      details: `Stripe charged ${(pi.amount_received / 100).toFixed(2)} ${pi.currency.toUpperCase()} \u2014 pi: ${pi.id}`,
+    });
+    await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${ag.id}`;
+  }
 
-  // Reload to send fresh data to Wave
+  // ---- Wave invoice sync (idempotent) -------------------------------
+  //
+  // Stripe will retry this webhook on any non-2xx response for up to 3 days,
+  // and "at-least-once delivery" means we can also get the same event twice
+  // even after a 2xx. Without a claim flag we'd create duplicate Wave
+  // customers + invoices on every retry.
+  //
+  // The conditional UPDATE atomically reserves the row: rows already synced
+  // (or claimed by a parallel delivery) return 0 affected rows and we skip.
+  // On failure we release the claim so a future retry — manual or via the
+  // backfill cron at /api/cron/retry-wave-sync — can pick it up.
+  const claim = (await sql`
+    UPDATE agreements
+       SET wave_invoice_synced_at = NOW(),
+           wave_sync_attempts     = COALESCE(wave_sync_attempts, 0) + 1,
+           wave_sync_error        = NULL
+     WHERE id = ${ag.id}
+       AND wave_invoice_synced_at IS NULL
+    RETURNING id
+  `) as unknown as Array<{ id: string }>;
+
+  if (claim.length === 0) {
+    // Already synced (or another concurrent delivery beat us to the claim).
+    console.log('[stripe-webhook] Wave sync already complete for agreement', ag.id);
+    return;
+  }
+
+  // Reload to send fresh data to Wave (card details just got backfilled).
   const fresh = (await sql`SELECT * FROM agreements WHERE id = ${ag.id}`) as unknown as Agreement[];
   const result = await fireWaveInvoiceWebhook({
     ag: fresh[0],
@@ -181,8 +213,26 @@ async function handlePaymentSucceeded(
     stripePaymentIntentId: pi.id,
     stripeChargeId: chargeId,
   });
-  if (result.ok) {
-    await sql`UPDATE agreements SET wave_invoice_synced_at = NOW() WHERE id = ${ag.id}`;
+
+  if (!result.ok) {
+    // Release the claim and record the error so the row reappears in the
+    // backfill cron's worklist. Throwing also makes Stripe retry — Stripe's
+    // exponential backoff is a free retry queue for transient failures.
+    await sql`
+      UPDATE agreements
+         SET wave_invoice_synced_at = NULL,
+             wave_sync_error        = ${result.error ?? 'unknown wave error'}
+       WHERE id = ${ag.id}
+    `;
+    throw new Error(`Wave sync failed for agreement ${ag.id}: ${result.error}`);
+  }
+
+  if (result.invoiceNumber) {
+    await sql`
+      UPDATE agreements
+         SET wave_invoice_id = ${result.invoiceNumber}
+       WHERE id = ${ag.id}
+    `;
   }
 }
 
