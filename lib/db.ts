@@ -270,6 +270,27 @@ export async function ensureSchema(): Promise<void> {
       sizes: [{w:0,h:0,context:'any'}],
       notes: 'Fills any unsold inventory. No revenue.',
     },
+    // ---- Starter-pack additions (MONETIZATION_MAP.md, June 2026) ----
+    // Three of the five recommended starter slots (calendar_event_sponsor,
+    // feed_sticky_bottom, newsletter_banner) were already present above.
+    // These two close out the starter pack so <AdSlot> can be wired into the
+    // builders, inventory, and giveaways pages immediately.
+    {
+      slug: 'featured_builder_strip',
+      display_name: 'Featured Builder Strip',
+      zone: 'feed',
+      tier: 'premium',
+      sizes: [{w:0,h:0,context:'native-strip'},{w:1200,h:200,context:'desktop-hero'},{w:600,h:160,context:'mobile-hero'}],
+      notes: 'Above the filter chips on /inventory and /builders. Logo + tagline + CTA. Premium tier; sell weekly.',
+    },
+    {
+      slug: 'giveaway_prize_sponsor',
+      display_name: 'Giveaway Prize Sponsor',
+      zone: 'feed',
+      tier: 'premium',
+      sizes: [{w:0,h:0,context:'native-card'},{w:1080,h:600,context:'feed-card'}],
+      notes: '"Prize provided by..." on /giveaways cards + entry-confirmation page. Sponsor pays for prize + visibility.',
+    },
   ];
 
   for (const space of adSpaceCatalog) {
