@@ -55,7 +55,8 @@ export async function GET(req: Request) {
     // Group posts can't be refreshed via Graph API (Meta deprecated the
     // Groups API in 2024). Skip them — their manually entered metadata
     // stays as-is.
-    if (/\/groups\//i.test(p.permalink_url)) {
+    // Skip manual-entry posts: groups (no API) + reels (limited API access).
+    if (/\/groups\//i.test(p.permalink_url) || /\/reel\//i.test(p.permalink_url)) {
       continue;
     }
     attempted++;

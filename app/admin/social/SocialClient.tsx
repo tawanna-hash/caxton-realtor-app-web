@@ -4,6 +4,13 @@
 //   • Group URL (facebook.com/groups/{id}/posts/{id})   \u2192 manual entry
 //                                                        (Meta killed the Groups
 //                                                         API in April 2024)
+//   • Reel URL  (facebook.com/reel/{id})                \u2192 manual entry
+//                                                        (video_reels endpoint
+//                                                         only returns Page-
+//                                                         authored reels; we'd
+//                                                         need Page Public
+//                                                         Content Access via
+//                                                         App Review for the rest)
 // The form sniffs the pasted URL and progressively reveals the manual fields
 // only when needed.
 
@@ -15,7 +22,7 @@ import { upload } from '@vercel/blob/client';
 import { adminApi } from '@/lib/admin-api';
 
 type SocialPub = 'realtyline' | 'newsline' | 'both';
-type UrlKind = 'page' | 'group' | 'unknown';
+type UrlKind = 'page' | 'group' | 'reel' | 'unknown';
 
 interface FeaturedSocialPost {
   id: number;
@@ -62,6 +69,7 @@ function detectUrlKind(input: string): UrlKind {
   }
   const segments = u.pathname.split('/').filter(Boolean);
   if (segments[0] === 'groups') return 'group';
+  if (segments[0] === 'reel') return 'reel';
   return 'page';
 }
 
@@ -164,7 +172,7 @@ export default function SocialClient() {
           is_open_house: isOpenHouse,
         };
 
-        if (urlKind === 'group') {
+        if (urlKind === 'group' || urlKind === 'reel') {
           // datetime-local gives 'YYYY-MM-DDTHH:mm' \u2014 convert to ISO if set.
           payload.message = manualMessage || null;
           payload.image_url = manualImageUrl || null;
@@ -174,7 +182,7 @@ export default function SocialClient() {
         }
 
         const res = (await adminApi.addSocialPost(payload)) as {
-          source: 'page' | 'group';
+          source: 'page' | 'group' | 'reel';
         };
 
         setUrl('');
@@ -185,6 +193,8 @@ export default function SocialClient() {
         setFormMsg(
           res.source === 'page'
             ? 'Page post added (metadata auto-fetched from Facebook).'
+            : res.source === 'reel'
+            ? 'Reel added (manual entry).'
             : 'Group post added (manual entry).'
         );
         await refetch();
@@ -245,11 +255,12 @@ export default function SocialClient() {
     return { active, inactive };
   }, [posts]);
 
+  const needsManual = urlKind === 'group' || urlKind === 'reel';
   const canSubmit =
     url.trim() &&
     !submitting &&
     !uploading &&
-    (urlKind !== 'group' || manualMessage.trim() || manualImageUrl);
+    (!needsManual || manualMessage.trim() || manualImageUrl);
 
   return (
     <div className="p-6">
@@ -257,8 +268,8 @@ export default function SocialClient() {
         <h1 className="text-2xl font-semibold text-gray-900">Social posts</h1>
         <p className="text-sm text-gray-700 mt-1">
           Curate Facebook posts that surface in the RealtyLine + Newsline feeds.
-          Page posts are auto-fetched; group posts need a caption and image
-          (Meta retired the Groups API in 2024).
+          Page posts are auto-fetched; group posts and reels need a caption and
+          image/thumbnail (Meta&rsquo;s API doesn&rsquo;t expose those to us).
         </p>
       </div>
 
@@ -274,7 +285,7 @@ export default function SocialClient() {
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://www.facebook.com/myrealtyline/posts/123… or /groups/…/posts/…"
+              placeholder="https://www.facebook.com/myrealtyline/posts/123… or /groups/…/posts/… or /reel/…"
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
               required
             />
@@ -291,18 +302,25 @@ export default function SocialClient() {
                   posts, so paste the caption and upload the image below.
                 </span>
               )}
+              {urlKind === 'reel' && (
+                <span className="text-amber-700">
+                  ⚠ Reel URL detected — Meta&rsquo;s API can&rsquo;t resolve reels
+                  shared from other Pages without App Review, so paste the
+                  caption and upload the thumbnail below.
+                </span>
+              )}
               {urlKind === 'unknown' && (
                 <>
                   Supports Page <code>/posts/</code>, Page <code>/photos/</code>,{' '}
-                  <code>?story_fbid=</code>, and Group{' '}
-                  <code>/groups/…/posts/</code> URLs.
+                  <code>?story_fbid=</code>, Group{' '}
+                  <code>/groups/…/posts/</code>, and <code>/reel/</code> URLs.
                 </>
               )}
             </p>
           </div>
 
-          {/* Manual fields — only required for group posts */}
-          {urlKind === 'group' && (
+          {/* Manual fields — required for group posts + reels */}
+          {needsManual && (
             <div className="rounded-md border border-amber-200 bg-amber-50 p-4 space-y-3">
               <div>
                 <label className="block text-sm font-medium text-gray-800 mb-1">

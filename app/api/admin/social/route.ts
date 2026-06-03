@@ -96,9 +96,13 @@ export const POST = withErrorHandling(async (req: Request) => {
       created_by: admin.email ?? null,
     });
   } else {
-    // ─── Group post: manual fields required ────────────────────────────
-    // Meta deprecated the Groups API in 2024 — there's no supported way to
-    // read group post content programmatically, even for group admins.
+    // ─── Group / Reel post: manual fields required ────────────────────
+    // • Groups: Meta deprecated the Groups API in 2024 — no supported way
+    //   to read group post content programmatically, even for group admins.
+    // • Reels: /{page_id}/video_reels only returns reels the Page itself
+    //   authored; reshares + tagged reels can't be fetched by ID without
+    //   pages_read_user_content + Page Public Content Access (App Review).
+    const kindLabel = parsed.kind === 'reel' ? 'Reel' : 'Group post';
     const message = (body.message ?? '').trim();
     const imageUrl = (body.image_url ?? '').trim() || null;
     const postedAt = (body.posted_at ?? '').trim() || null;
@@ -106,7 +110,7 @@ export const POST = withErrorHandling(async (req: Request) => {
     if (!message && !imageUrl) {
       throw new ApiError(
         400,
-        'Group posts require either a caption (message) or an image. ' +
+        `${kindLabel}s require either a caption (message) or an image/thumbnail. ` +
           'Paste a Page post URL to auto-fetch instead.'
       );
     }

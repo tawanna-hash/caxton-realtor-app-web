@@ -50,7 +50,15 @@ export interface FacebookPostMetadata {
  *
  * Throws if the URL doesn't look like a parseable Facebook post URL.
  */
-export type FacebookUrlKind = 'page' | 'group';
+// 'page'  → Graph API auto-fetch via Page Access Token.
+// 'group' → Manual entry (Groups API deprecated 2024).
+// 'reel'  → Manual entry. Page video_reels endpoint only returns reels the
+//          Page itself authored; reshares / tagged reels can't be resolved
+//          by ID without pages_read_user_content + Page Public Content
+//          Access (a Meta App Review approval). Path of least resistance:
+//          treat reels like Group posts and let the admin paste caption +
+//          thumbnail manually.
+export type FacebookUrlKind = 'page' | 'group' | 'reel';
 
 export interface FacebookUrlParseResult {
   /** Best-effort canonical id we'll store in featured_social_posts.fb_post_id */
@@ -78,6 +86,14 @@ export function parseFacebookPostUrl(input: string): FacebookUrlParseResult {
   }
 
   const segments = u.pathname.split('/').filter(Boolean);
+
+  // ─── Reel URLs ───────────────────────────────────────────────────────
+  // facebook.com/reel/{reelId}
+  // facebook.com/reel/{reelId}/?s=...
+  // facebook.com/{Page}/videos/{reelId}        (sometimes reels appear here too)
+  if (segments[0] === 'reel' && segments[1] && /^\d{6,}$/.test(segments[1])) {
+    return { fbPostId: segments[1], pageHint: segments[1], kind: 'reel' };
+  }
 
   // ─── Group URLs ──────────────────────────────────────────────────────
   // facebook.com/groups/{groupId}                           (group home)
