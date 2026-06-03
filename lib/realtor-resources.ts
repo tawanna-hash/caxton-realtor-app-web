@@ -169,9 +169,15 @@ export const RESOURCE_LINKS: ResourceLink[] = [
     source: 'nar.realtor',
   },
   {
-    title: 'City of Austin — Development Services',
-    description: 'Permitting, zoning lookups, and inspection records.',
-    href: 'https://www.austintexas.gov/department/development-services',
+    title: 'City of Austin',
+    description: 'Permits, zoning, inspections, utilities, and municipal records for properties inside the city limits.',
+    href: 'https://www.austintexas.gov/',
     source: 'austintexas.gov',
+  },
+  {
+    title: 'Williamson County, TX',
+    description: 'County appraisal links, tax info, recording, and unincorporated-area resources for Round Rock, Cedar Park, Leander, Georgetown, and Hutto.',
+    href: 'https://www.wilcotx.gov/',
+    source: 'wilcotx.gov',
   },
 ];
