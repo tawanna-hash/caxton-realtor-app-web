@@ -13,7 +13,14 @@ import { ApiError } from './error';
 import { query } from './db/neon';
 
 export type Publication = 'austin' | 'san_antonio';
-export type EventSource = 'unlockmls' | 'wordpress' | 'manual' | 'fpr' | 'hba';
+export type EventSource =
+  | 'unlockmls'
+  | 'wordpress'
+  | 'manual'
+  | 'fpr'
+  | 'hba'
+  | 'submission'   // Advertiser self-submission via /submit-event/[token]
+  | 'facebook-llm'; // Gemini-detected event from RealtyLine FB Page post
 
 export interface AdminCalendarEvent {
   id: number;
@@ -227,6 +234,158 @@ export async function createManualEvent(
   );
   if (!rows[0]) throw new ApiError(500, 'Event INSERT returned no row');
   return rowToAdminEvent(rows[0]);
+}
+
+/**
+ * Insert a pending event from an advertiser self-submission (Path A).
+ *
+ * Always lands with hidden=true so it sits in the admin review queue
+ * until approved. external_source='submission' lets the queue UI filter
+ * to just submitted/Gemini rows.
+ */
+export async function createSubmittedEvent(input: {
+  publication: Publication;
+  title: string;
+  description: string | null;
+  startDate: string;
+  endDate: string | null;
+  location: string | null;
+  website: string | null;
+  link: string | null;
+  imageUrl: string | null;
+  organizer: string;
+  advertiserId: number;
+}): Promise<AdminCalendarEvent> {
+  const externalId = crypto.randomUUID();
+  const rows = await query<EventRow>(
+    `INSERT INTO events (
+       external_source, external_id, publication, title, description, link,
+       start_date, end_date, location, organizer, website, image_url,
+       submitted_by_advertiser_id, hidden,
+       last_synced_at, updated_at
+     ) VALUES (
+       'submission', $1, $2, $3, $4, $5,
+       $6, $7, $8, $9, $10, $11,
+       $12, true,
+       NOW(), NOW()
+     )
+     RETURNING ${SELECT_COLS}`,
+    [
+      externalId,
+      input.publication,
+      input.title,
+      input.description,
+      input.link,
+      input.startDate,
+      input.endDate,
+      input.location,
+      input.organizer,
+      input.website,
+      input.imageUrl,
+      input.advertiserId,
+    ],
+  );
+  if (!rows[0]) throw new ApiError(500, 'Submitted event INSERT returned no row');
+  return rowToAdminEvent(rows[0]);
+}
+
+/**
+ * Insert a pending event detected by Gemini from a Facebook Page post (Path D).
+ *
+ * source_post_id is unique-indexed so re-running the scanner cron on the
+ * same post idempotently no-ops (no duplicate detection rows).
+ *
+ * Returns null when this post has already been scanned (caller treats as
+ * "nothing to do, move on").
+ */
+export async function createLLMDetectedEvent(input: {
+  publication: Publication;
+  title: string;
+  description: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  location: string | null;
+  link: string | null;
+  imageUrl: string | null;
+  organizer: string | null;
+  confidence: number;
+  sourcePostId: number;
+}): Promise<AdminCalendarEvent | null> {
+  const externalId = `fb-llm-${input.sourcePostId}`;
+  // ON CONFLICT on source_post_id idempotency: re-scanning the same FB post
+  // returns 0 rows so the cron knows to skip. The unique partial index on
+  // events(source_post_id) WHERE source_post_id IS NOT NULL enforces this.
+  const rows = await query<EventRow>(
+    `INSERT INTO events (
+       external_source, external_id, publication, title, description, link,
+       start_date, end_date, location, organizer, image_url,
+       source_post_id, confidence, hidden,
+       last_synced_at, updated_at
+     ) VALUES (
+       'facebook-llm', $1, $2, $3, $4, $5,
+       $6, $7, $8, $9, $10,
+       $11, $12, true,
+       NOW(), NOW()
+     )
+     ON CONFLICT ON CONSTRAINT events_external_uniq DO NOTHING
+     RETURNING ${SELECT_COLS}`,
+    [
+      externalId,
+      input.publication,
+      input.title,
+      input.description,
+      input.link,
+      input.startDate,
+      input.endDate,
+      input.location,
+      input.organizer,
+      input.imageUrl,
+      input.sourcePostId,
+      input.confidence,
+    ],
+  );
+  return rows[0] ? rowToAdminEvent(rows[0]) : null;
+}
+
+/**
+ * Admin queue: events awaiting review. Either source='submission' (advertiser
+ * self-submitted via public form) or source='facebook-llm' (Gemini extracted
+ * from a FB Page post). Manual hidden events authored by admins themselves
+ * are excluded — they used the "Hide" toggle deliberately.
+ */
+export async function listPendingEvents(): Promise<AdminCalendarEvent[]> {
+  const rows = await query<EventRow>(
+    `SELECT ${SELECT_COLS} FROM events
+      WHERE hidden = true
+        AND external_source IN ('submission', 'facebook-llm')
+      ORDER BY created_at DESC`,
+  );
+  return rows.map(rowToAdminEvent);
+}
+
+/** Admin queue: count of pending events for nav badge. */
+export async function countPendingEvents(): Promise<number> {
+  const rows = await query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM events
+      WHERE hidden = true
+        AND external_source IN ('submission', 'facebook-llm')`,
+  );
+  return rows[0] ? parseInt(rows[0].count, 10) : 0;
+}
+
+/** Admin: approve a pending event (hidden=false; it appears on the calendar). */
+export async function approvePendingEvent(
+  id: number,
+  editedBy: string,
+): Promise<AdminCalendarEvent | null> {
+  const rows = await query<EventRow>(
+    `UPDATE events SET hidden = false, edited_by = $1, edited_at = NOW(), updated_at = NOW()
+      WHERE id = $2 AND hidden = true
+        AND external_source IN ('submission', 'facebook-llm')
+      RETURNING ${SELECT_COLS}`,
+    [editedBy, id],
+  );
+  return rows[0] ? rowToAdminEvent(rows[0]) : null;
 }
 
 /** Admin: partial update. Returns null if not found. */

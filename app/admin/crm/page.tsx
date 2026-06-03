@@ -40,6 +40,7 @@ export default async function CrmPage() {
       a.name,
       a.slug,
       a.share_token,
+      a.submission_token,
       a.contact_email,
       a.requires_email_gate,
       a.publication,

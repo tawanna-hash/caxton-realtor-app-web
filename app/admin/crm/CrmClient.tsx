@@ -293,6 +293,60 @@ function EditDrawer({
   const [sendingLink, setSendingLink] = useState(false);
   const [linkResult, setLinkResult] = useState<{ url?: string; status?: string; error?: string } | null>(null);
 
+  // Submission-token state. We mirror row.submission_token in local state
+  // so the drawer reflects the new token immediately after Generate without
+  // a full page reload.
+  const [submissionToken, setSubmissionToken] = useState<string | null>(
+    row.submission_token ?? null,
+  );
+  const [tokenBusy, setTokenBusy] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const regenerateSubmissionToken = async () => {
+    if (
+      submissionToken &&
+      !window.confirm(
+        'A submission link already exists. Generating a new one will invalidate the old link. Continue?',
+      )
+    ) {
+      return;
+    }
+    setTokenBusy(true);
+    setTokenError(null);
+    try {
+      const res = await fetch(
+        `/api/admin/advertisers/${row.id}/regenerate-submission-token`,
+        { method: 'POST' },
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setTokenError(data?.error ?? `HTTP ${res.status}`);
+        return;
+      }
+      setSubmissionToken(data.submission_token);
+    } catch (err) {
+      setTokenError(err instanceof Error ? err.message : 'failed');
+    } finally {
+      setTokenBusy(false);
+    }
+  };
+
+  const submissionUrl = submissionToken
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/submit-event/${submissionToken}`
+    : null;
+
+  const copySubmissionUrl = async () => {
+    if (!submissionUrl) return;
+    try {
+      await navigator.clipboard.writeText(submissionUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // Fall back to a manual select if clipboard API is blocked.
+    }
+  };
+
   const sendPortalLink = async (
     purpose: 'login' | 'sign_agreement' | 'pay_invoice' | 'form' = 'login',
   ) => {
@@ -454,6 +508,69 @@ function EditDrawer({
                     onClick={(e) => (e.target as HTMLInputElement).select()}
                     className="w-full rounded border border-gray-300 px-2 py-1 text-xs font-mono"
                   />
+                </div>
+              )}
+            </div>
+          </Section>
+
+          <Section title="Event submission link">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Public submission form</div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    Share this URL with the advertiser so they can submit
+                    events directly into the review queue. Each submission
+                    lands on /admin/events/pending for your approval.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={regenerateSubmissionToken}
+                  disabled={tokenBusy}
+                  className="shrink-0 rounded-lg bg-gray-900 text-white px-3 py-1.5 text-sm hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {tokenBusy
+                    ? 'Working…'
+                    : submissionToken
+                    ? 'Regenerate'
+                    : 'Generate link'}
+                </button>
+              </div>
+              {tokenError && (
+                <div className="rounded-lg bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-xs">
+                  {tokenError}
+                </div>
+              )}
+              {submissionUrl ? (
+                <div className="space-y-1">
+                  <div className="flex gap-2 items-center">
+                    <input
+                      readOnly
+                      value={submissionUrl}
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                      className="flex-1 rounded border border-gray-300 px-2 py-1 text-xs font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={copySubmissionUrl}
+                      className="shrink-0 rounded border border-gray-300 px-2 py-1 text-xs bg-white hover:bg-gray-50"
+                    >
+                      {copied ? 'Copied' : 'Copy'}
+                    </button>
+                  </div>
+                  <a
+                    href={submissionUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-blue-600 underline"
+                  >
+                    Open form in new tab ↗
+                  </a>
+                </div>
+              ) : (
+                <div className="text-xs text-gray-500">
+                  No link yet — click Generate to issue one.
                 </div>
               )}
             </div>

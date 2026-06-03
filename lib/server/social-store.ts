@@ -152,3 +152,28 @@ export async function listStaleSocialPosts(): Promise<FeaturedSocialPost[]> {
   `) as DbRow[];
   return rows;
 }
+
+/**
+ * Active posts that have NOT yet been scanned by the Gemini event detector
+ * (no row in events with source_post_id = this post). Limit caps how many
+ * we send to Gemini per cron tick — Gemini Flash free tier is 15 req/min,
+ * 1500/day, and we run hourly, so 30 is a comfortable ceiling.
+ *
+ * Excludes posts with no message text (nothing for Gemini to read).
+ */
+export async function listSocialPostsForLLMScan(
+  limit = 30
+): Promise<FeaturedSocialPost[]> {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT p.* FROM featured_social_posts p
+    LEFT JOIN events e ON e.source_post_id = p.id
+    WHERE p.is_active = TRUE
+      AND p.message IS NOT NULL
+      AND length(trim(p.message)) > 20
+      AND e.id IS NULL
+    ORDER BY p.posted_at DESC NULLS LAST
+    LIMIT ${limit}
+  `) as DbRow[];
+  return rows;
+}

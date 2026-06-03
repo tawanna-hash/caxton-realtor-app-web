@@ -91,6 +91,12 @@ export const adminApi = {
   hideExpiredEvents: () =>
     adminFetch('/admin/events/hide-expired', { method: 'POST' }),
 
+  // Pending-event review queue (advertiser submissions + Gemini FB scans)
+  listPendingEvents: () => adminFetch('/admin/events/pending'),
+  countPendingEvents: () => adminFetch('/admin/events/pending/count'),
+  approvePendingEvent: (id: number) =>
+    adminFetch(`/admin/events/${id}/approve`, { method: 'POST' }),
+
   // Ads dashboard (Phase 1 — May 9, 2026)
   // Spaces: read-only catalog of 15 ad slots
   listAdSpaces: () => adminFetch('/admin/ads/spaces'),

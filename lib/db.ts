@@ -578,6 +578,39 @@ export async function ensureSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS idx_advertisers_slug ON advertisers(slug)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_advertisers_share_token ON advertisers(share_token)`;
 
+  // Event submission token (separate from share_token so revoking event
+  // submission privileges doesn't break magazine sharing). NULL until the
+  // admin generates one for an advertiser; the public /submit-event/[token]
+  // route 404s on NULL/unknown tokens.
+  await sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS submission_token TEXT`;
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_advertisers_submission_token
+    ON advertisers(submission_token) WHERE submission_token IS NOT NULL
+  `;
+
+  // Event-pipeline metadata (advertiser submissions + Gemini-detected from FB).
+  // submitted_by_advertiser_id: links a row to the advertiser when source =
+  //   'submission' (so the admin queue can show "Submitted by Austin Title").
+  // confidence: Gemini's self-reported 0..1 confidence (only set for
+  //   external_source='facebook-llm').
+  // source_post_id: links a 'facebook-llm' event back to the
+  //   featured_social_posts row it was extracted from (audit trail; also lets
+  //   us skip already-scanned posts on the next cron tick).
+  await sql`
+    ALTER TABLE events
+      ADD COLUMN IF NOT EXISTS submitted_by_advertiser_id INT REFERENCES advertisers(id) ON DELETE SET NULL,
+      ADD COLUMN IF NOT EXISTS confidence REAL,
+      ADD COLUMN IF NOT EXISTS source_post_id INT REFERENCES featured_social_posts(id) ON DELETE SET NULL
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_events_pending
+    ON events(hidden, external_source) WHERE hidden = true
+  `;
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_events_source_post
+    ON events(source_post_id) WHERE source_post_id IS NOT NULL
+  `;
+
   await sql`
     ALTER TABLE magazine_hotspots
     ADD COLUMN IF NOT EXISTS advertiser_id INT REFERENCES advertisers(id) ON DELETE SET NULL
