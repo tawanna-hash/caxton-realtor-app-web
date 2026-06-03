@@ -44,13 +44,21 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const token = signToken(id);
     const signingLink = `${siteUrl}/admin/billing/sign/${token}`;
 
+    // Allow the admin to override the standard pitch with a custom
+    // message typed into the drawer. Falls back to the boilerplate.
+    const customMessage =
+      typeof body.customMessage === 'string' && body.customMessage.trim().length > 0
+        ? body.customMessage.trim()
+        : null;
+    const defaultMessage = `Your RealtyLine advertising agreement is ready for review. Click below to open your secure signing portal. If your package hasn't been pre-selected, you'll be able to choose your ad size and publication frequency before signing. Reach out if you have any questions — we're glad to help.`;
+
     const html = agreementNotificationEmail({
       companyName: ag.company_name ?? undefined,
       repName: ag.rep_name ?? undefined,
       adSize: ag.ad_size ?? undefined,
       adRate: ag.ad_rate_cents != null ? ag.ad_rate_cents / 100 : null,
       status: ag.status,
-      message: `Your RealtyLine advertising agreement is ready for review. Click below to open your secure signing portal. If your package hasn't been pre-selected, you'll be able to choose your ad size and publication frequency before signing. Reach out if you have any questions — we're glad to help.`,
+      message: customMessage ?? defaultMessage,
       signingLink,
     });
 

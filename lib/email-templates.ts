@@ -137,3 +137,53 @@ ${ctaButton}
 <tr><td style="background:#f4f4f4;border-top:1px solid #e0e0e0;padding:20px 40px;text-align:center"><p style="margin:0 0 4px 0;font-family:Arial,sans-serif;font-size:12px;color:#888">${brand.brandName} | <a href="${websiteUrl}" style="color:#888;text-decoration:none">${websiteUrl}</a></p><p style="margin:4px 0 0 0;font-family:Arial,sans-serif;font-size:11px;color:#aaa">This is an automated renewal reminder. Please do not reply directly to this email.</p></td></tr>
 </table></td></tr></table></body></html>`;
 }
+
+// ──────────────────────────────────────────────────────────────────
+// Amended Agreement Email
+// Sent when an admin edits an existing agreement and wants to forward
+// the updated PDF to the advertiser as an FYI — NOT a signing request.
+// ──────────────────────────────────────────────────────────────────
+
+export interface AmendedAgreementEmailParams {
+  brand?: BrandConfig;
+  companyName?: string;
+  repName?: string;
+  /** Free-text "what changed" summary entered by the admin. May be empty. */
+  changeSummary?: string;
+  /** Sender's display name, used in the sign-off (defaults to brand team). */
+  senderName?: string;
+}
+
+export function amendedAgreementEmail(params: AmendedAgreementEmailParams): string {
+  const brand = params.brand ?? REALTYLINE_BRAND;
+  const websiteUrl = brand.websiteUrl ?? 'https://realtynewsnow.app';
+  const advertiserName = params.repName ?? 'Advertiser';
+  const companyName = params.companyName ?? '';
+  const signOff = params.senderName ?? `The ${brand.brandName} Advertising Team`;
+
+  const changeBlock = params.changeSummary && params.changeSummary.trim()
+    ? `<tr><td style="padding:0 40px 24px 40px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#fffbf0;border:1px solid #ffe58f;border-radius:4px"><tr><td style="padding:16px 20px"><p style="margin:0 0 6px 0;font-family:Arial,sans-serif;font-size:12px;font-weight:800;color:#7a5c00;text-transform:uppercase;letter-spacing:.8px">What changed</p><p style="margin:0;font-family:Arial,sans-serif;font-size:14px;color:#7a5c00;line-height:1.6;white-space:pre-wrap">${escapeHtml(params.changeSummary.trim())}</p></td></tr></table></td></tr>`
+    : '';
+
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>Amended Advertising Agreement</title></head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f4f4f4;padding:32px 0"><tr><td align="center">
+<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+<tr><td style="background:${brand.brandColor};padding:28px 40px;text-align:center"><h1 style="margin:0;color:#fff;font-family:Arial,sans-serif;font-size:26px;font-weight:bold;letter-spacing:1px">${brand.brandName}</h1><p style="margin:6px 0 0 0;color:rgba(255,255,255,.85);font-family:Arial,sans-serif;font-size:13px;letter-spacing:.5px">UPDATED ADVERTISING AGREEMENT</p></td></tr>
+<tr><td style="padding:36px 40px 8px 40px"><p style="margin:0;font-family:Arial,sans-serif;font-size:16px;color:#222">Dear ${advertiserName},</p></td></tr>
+<tr><td style="padding:8px 40px 16px 40px"><p style="margin:0;font-family:Arial,sans-serif;font-size:15px;color:#444;line-height:1.7">We've updated your advertising agreement${companyName ? ` for <strong>${escapeHtml(companyName)}</strong>` : ''}. The latest copy is attached to this email for your records — no action is needed on your end.</p></td></tr>
+${changeBlock}
+<tr><td style="padding:0 40px 24px 40px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f0f9f4;border:2px solid #10b981;border-radius:6px"><tr><td style="padding:16px 20px"><p style="margin:0 0 8px 0;font-family:Arial,sans-serif;font-size:12px;font-weight:800;color:#065f46;text-transform:uppercase;letter-spacing:.8px">&#128206; Updated Agreement Attached</p><p style="margin:0;font-family:Arial,sans-serif;font-size:13px;color:#047857;line-height:1.6">The PDF attached to this email reflects all updates and supersedes any prior version. If anything looks incorrect, just reply to this email and we'll get it sorted.</p></td></tr></table></td></tr>
+<tr><td style="padding:0 40px 32px 40px"><p style="margin:0 0 8px 0;font-family:Arial,sans-serif;font-size:15px;color:#444;line-height:1.7">Thank you for advertising with ${brand.brandName}.</p><p style="margin:16px 0 0 0;font-family:Arial,sans-serif;font-size:15px;color:#444">Best,<br><strong>${escapeHtml(signOff)}</strong></p></td></tr>
+<tr><td style="background:#f4f4f4;border-top:1px solid #e0e0e0;padding:20px 40px;text-align:center"><p style="margin:0;font-family:Arial,sans-serif;font-size:12px;color:#888">${brand.brandName} | <a href="${websiteUrl}" style="color:#888;text-decoration:none">${websiteUrl}</a></p></td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}

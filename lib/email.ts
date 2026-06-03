@@ -3,12 +3,26 @@
 // Lightweight Resend SDK wrapper for direct API calls.
 // Uses process.env.RESEND_API_KEY.
 
+/**
+ * Resend supports per-message attachments. `content` is base64-encoded
+ * file bytes; `filename` becomes the visible name in the recipient's
+ * client. `contentType` is recommended but optional — Resend will sniff
+ * if omitted. See https://resend.com/docs/api-reference/emails/send-email
+ */
+export interface EmailAttachment {
+  filename: string;
+  content: string; // base64
+  contentType?: string;
+}
+
 export interface SendEmailOptions {
   to: string | string[];
   from?: string;
   subject: string;
   html: string;
   replyTo?: string;
+  cc?: string | string[];
+  attachments?: EmailAttachment[];
 }
 
 export interface SendEmailResult {
@@ -35,6 +49,16 @@ export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult
     html: opts.html,
   };
   if (opts.replyTo) payload.reply_to = opts.replyTo;
+  if (opts.cc) payload.cc = Array.isArray(opts.cc) ? opts.cc : [opts.cc];
+  if (opts.attachments && opts.attachments.length > 0) {
+    // Resend expects { filename, content, content_type? } with content
+    // already base64-encoded by the caller.
+    payload.attachments = opts.attachments.map((a) => ({
+      filename: a.filename,
+      content: a.content,
+      ...(a.contentType ? { content_type: a.contentType } : {}),
+    }));
+  }
 
   try {
     const res = await fetch('https://api.resend.com/emails', {

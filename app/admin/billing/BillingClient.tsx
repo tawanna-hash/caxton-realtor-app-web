@@ -1002,12 +1002,17 @@ function AgreementDrawer({
   const isCreate = !existing;
   const isUploaded = !!existing?.is_uploaded;
 
-  // Amend mode: opt-in unlock for uploaded (already-signed paper) agreements
-  // so admins can re-capture digital terms acceptance / signature if a paper
-  // record needs to be amended in-system. Non-uploaded agreements are always
-  // “in amend mode” because Terms & Signature is always visible for them.
-  const [amending, setAmending] = useState(false);
-  const showTermsSection = !isUploaded || amending;
+  // “Send amended PDF” flow state. When an admin edits an uploaded paper
+  // agreement (or any existing agreement), we expose a button that saves
+  // and then emails the regenerated PDF to the advertiser as an FYI —
+  // no re-sign required.
+  const [sendingAmended, setSendingAmended] = useState(false);
+  const [amendedMsg, setAmendedMsg] = useState<string | null>(null);
+
+  // Optional custom message for the “Send Signing Link” email. Empty
+  // string → backend falls back to the standard boilerplate.
+  const [customMessage, setCustomMessage] = useState<string>('');
+  const [showCustomMessage, setShowCustomMessage] = useState<boolean>(false);
 
   // Derive initial rate from seed or rate table. For fresh creates (no seed), do
   // NOT auto-fill from any default size/frequency — those fields start empty too.
@@ -1268,6 +1273,16 @@ function AgreementDrawer({
 
   const [signingMsg, setSigningMsg] = useState<string | null>(null);
 
+  // Build the body for /api/admin/agreements/:id/send. Includes the
+  // admin’s optional custom pitch when one is filled in.
+  const buildSendBody = (): Record<string, unknown> => {
+    const out: Record<string, unknown> = {};
+    if (customMessage.trim().length > 0) {
+      out.customMessage = customMessage.trim();
+    }
+    return out;
+  };
+
   const sendSigningLink = async () => {
     setSaving(true);
     setSigningMsg(null);
@@ -1286,8 +1301,13 @@ function AgreementDrawer({
 
       if (!agreementId) throw new Error('No agreement ID after save');
 
-      // 2. POST to send route — builds sign URL + emails it
-      const sendRes = await fetch(`/api/admin/agreements/${agreementId}/send`, { method: 'POST' });
+      // 2. POST to send route — builds sign URL + emails it. Includes
+      // an optional custom pitch when admin filled one in.
+      const sendRes = await fetch(`/api/admin/agreements/${agreementId}/send`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(buildSendBody()),
+      });
       if (!sendRes.ok) throw new Error(`Send failed HTTP ${sendRes.status}`);
       const sendData = await sendRes.json();
       const sentTo: string = sendData.sentTo ?? form.email ?? 'advertiser';
@@ -1310,6 +1330,64 @@ function AgreementDrawer({
       setSigningMsg('Signing link copied to clipboard!');
     } catch (e) {
       onError(e instanceof Error ? e.message : 'copy failed');
+    }
+  };
+
+  // Amend flow:
+  //   1. PATCH the latest edits (no signing flag).
+  //   2. POST /send-amended — backend regenerates the PDF from the
+  //      just-saved row and emails it to the advertiser as FYI.
+  //   3. Refresh the parent list.
+  // Asks for an optional "what changed" note that's included in the email
+  // body so the advertiser knows why they received an updated copy.
+  const saveAndSendAmended = async () => {
+    if (!existing?.id) {
+      onError('Save the agreement first');
+      return;
+    }
+    const summary = window.prompt(
+      'Optional: what changed? (1–2 sentences — included in the email; leave blank for none)',
+      '',
+    );
+    if (summary === null) return; // user cancelled
+
+    setSendingAmended(true);
+    setAmendedMsg(null);
+    try {
+      // 1. Persist current form edits as a normal save.
+      const payload = buildPayload(false);
+      const patchRes = await fetch(`/api/admin/agreements/${existing.id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!patchRes.ok) {
+        const t = await patchRes.text();
+        throw new Error(`save failed: ${patchRes.status} ${t}`);
+      }
+
+      // 2. Send the amended PDF.
+      const sendRes = await fetch(
+        `/api/admin/agreements/${existing.id}/send-amended`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ changeSummary: summary || undefined }),
+        },
+      );
+      const sendBody = await sendRes.json().catch(() => ({}));
+      if (!sendRes.ok) {
+        throw new Error(
+          sendBody?.detail || sendBody?.error || `send failed: ${sendRes.status}`,
+        );
+      }
+
+      setAmendedMsg(`Updated PDF sent to ${sendBody.sentTo ?? 'advertiser'}`);
+      await onSaved();
+    } catch (e) {
+      onError(e instanceof Error ? e.message : 'amend failed');
+    } finally {
+      setSendingAmended(false);
     }
   };
 
@@ -1624,11 +1702,11 @@ function AgreementDrawer({
         )}
       </Section>
 
-      {/* ── Terms & Digital Signature ──
-          Always shown for new/digital agreements. For uploaded paper
-          agreements, only shown after the admin clicks “Amend agreement”
-          so we don’t suggest re-signing the paper original by accident. */}
-      {showTermsSection && (
+      {/* ── Terms & Digital Signature (hidden when uploaded) ──
+          Uploaded paper agreements are amended via “Save & send amended
+          PDF” below instead — the advertiser doesn’t need to re-sign,
+          they just receive the updated PDF for their records. */}
+      {!isUploaded && (
         <Section title="Terms &amp; Digital Signature">
           <div className="max-h-40 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
             {TERMS_RL}
@@ -1759,6 +1837,53 @@ function AgreementDrawer({
           {signingMsg}
         </div>
       )}
+      {amendedMsg && (
+        <div className="sticky bottom-[72px] -mx-6 px-6 py-2 bg-amber-50 border-t border-amber-200 text-xs text-amber-800">
+          {amendedMsg}
+        </div>
+      )}
+
+      {/* Custom signing-email message — collapsible. When empty the backend
+          falls back to the standard pitch. */}
+      {!isUploaded && (
+        <div className="-mx-6 px-6 py-3 bg-gray-50 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={() => setShowCustomMessage((v) => !v)}
+            className="text-xs font-medium text-indigo-700 hover:text-indigo-900 inline-flex items-center gap-1"
+          >
+            <span>{showCustomMessage ? '▾' : '▸'}</span>
+            <span>
+              Custom message for signing email
+              {customMessage.trim().length > 0 ? ' (custom)' : ' (using default pitch)'}
+            </span>
+          </button>
+          {showCustomMessage && (
+            <div className="mt-2">
+              <textarea
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                rows={4}
+                placeholder="Leave blank to use the standard pitch. When filled in, this replaces the body paragraph of the signing email."
+                className="w-full rounded border border-gray-300 px-3 py-2 text-sm font-normal text-gray-800 placeholder:text-gray-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+              />
+              <div className="mt-1 flex items-center justify-between text-[11px] text-gray-500">
+                <span>Plain text. Greeting, signing link, and signoff are added automatically.</span>
+                {customMessage.trim().length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setCustomMessage('')}
+                    className="text-rose-600 hover:text-rose-800"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="sticky bottom-0 -mx-6 px-6 py-4 bg-white border-t border-gray-200 flex items-center gap-2 flex-wrap">
         {/* Delete — existing only */}
         {!isCreate && (
@@ -1771,28 +1896,7 @@ function AgreementDrawer({
             Delete
           </button>
         )}
-        {/* Amend toggle — only meaningful for uploaded paper agreements,
-            where Terms & Signature are hidden by default. Clicking once
-            reveals them so the admin can re-capture consent. */}
-        {!isCreate && isUploaded && (
-          <button
-            type="button"
-            onClick={() => setAmending((v) => !v)}
-            disabled={saving}
-            className={`px-3 py-2 rounded border text-sm disabled:opacity-50 ${
-              amending
-                ? 'border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100'
-                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-            }`}
-            title={
-              amending
-                ? 'Hide Terms & Signature again'
-                : 'Reveal Terms & Signature so this uploaded agreement can be amended'
-            }
-          >
-            {amending ? 'Stop amending' : 'Amend agreement'}
-          </button>
-        )}
+
         {!isCreate && (
           <a
             href={`/api/admin/agreements/${existing!.id}/pdf`}
@@ -1812,7 +1916,7 @@ function AgreementDrawer({
         >
           {saving ? 'Saving…' : 'Save as Draft'}
         </button>
-        {showTermsSection && (
+        {!isUploaded && (
           <>
             <button
               onClick={sendSigningLink}
@@ -1830,6 +1934,21 @@ function AgreementDrawer({
               Copy Link
             </button>
           </>
+        )}
+        {/* Amend flow: save current edits, regenerate PDF, email it to
+            advertiser as FYI. Available on any existing agreement — most
+            useful for uploaded paper records that just need an updated
+            copy on file. */}
+        {!isCreate && (
+          <button
+            type="button"
+            onClick={saveAndSendAmended}
+            disabled={saving || sendingAmended}
+            className="px-4 py-2 rounded border border-amber-400 bg-amber-50 text-amber-800 text-sm hover:bg-amber-100 disabled:opacity-50"
+            title="Save current edits, regenerate the PDF, and email it to the advertiser as an FYI"
+          >
+            {sendingAmended ? 'Sending…' : 'Save & send amended PDF'}
+          </button>
         )}
         <button
           onClick={() => save(true)}
