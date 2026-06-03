@@ -13,6 +13,8 @@ import {
 } from '@/lib/realtor-calc-math';
 import { fmtUSD } from '@/lib/mortgage-math';
 import { NumberField, DateField } from '../_components/CalcInputs';
+import ResourceFloater from '../_components/ResourceFloater';
+import { reportTimestamp, type CalcReport } from '../_components/calcPdf';
 
 const EYEBROW = 'text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2';
 
@@ -92,8 +94,72 @@ export default function BuyerClosingCostsClient() {
     ]
   );
 
+  const buildReport = (): CalcReport => ({
+    title: 'Buyer Closing Costs',
+    subtitle: `${fmtUSD(homePrice)} home · ${downPct}% down · ${rate}% interest · closing ${closingDate}`,
+    heroLabel: 'Cash to close',
+    heroValue: fmtUSD(result.cashToClose),
+    meta: [
+      { key: 'Generated', value: reportTimestamp() },
+      { key: 'Loan amount', value: fmtUSD(result.loanAmount) },
+      { key: 'Down payment', value: fmtUSD(downPayment) },
+      { key: 'Closing date', value: closingDate },
+    ],
+    sections: [
+      {
+        heading: 'A — Origination',
+        rows: [
+          { label: `Origination (${originationPct}%)`, value: fmtUSD(result.origination) },
+          { label: `Discount points (${pointsPct}%)`, value: fmtUSD(result.points) },
+          { label: 'Other lender fees', value: fmtUSD(result.lenderFlatFees) },
+        ],
+      },
+      {
+        heading: 'B — Services',
+        rows: [
+          { label: 'Appraisal', value: fmtUSD(result.appraisalFee) },
+          { label: 'Credit report', value: fmtUSD(result.creditReportFee) },
+          { label: "Lender's title policy", value: fmtUSD(result.lendersTitlePolicy) },
+          { label: 'Title services', value: fmtUSD(result.titleServices) },
+        ],
+      },
+      {
+        heading: 'C — Taxes & gov\u2019t',
+        rows: [{ label: 'Recording fees', value: fmtUSD(result.recordingFees) }],
+      },
+      {
+        heading: 'E — Prepaids',
+        rows: [
+          { label: `Prepaid interest (${result.prepaidInterestDays}d)`, value: fmtUSD(result.prepaidInterest) },
+          { label: 'Insurance prepaid', value: fmtUSD(result.prepaidInsurance) },
+        ],
+      },
+      {
+        heading: 'F — Escrow setup',
+        rows: [
+          { label: 'Insurance in escrow', value: fmtUSD(result.escrowInsurance) },
+          { label: 'Tax in escrow', value: fmtUSD(result.escrowTax) },
+        ],
+      },
+      {
+        heading: 'Totals',
+        rows: [
+          { label: 'Total closing costs', value: fmtUSD(result.totalClosingCosts), emphasis: true },
+          { label: 'Down payment', value: fmtUSD(downPayment) },
+          ...(result.totalCredits > 0
+            ? [{ label: 'Credits & earnest', value: `−${fmtUSD(result.totalCredits)}`, negative: true }]
+            : []),
+          { label: 'Cash to close', value: fmtUSD(result.cashToClose), emphasis: true },
+        ],
+      },
+    ],
+    disclaimer:
+      'Estimates only. Lender fees, title rates, and prepaid amounts vary by lender, loan program (Conventional, FHA, VA), property, and timing. Confirm with the lender\u2019s Loan Estimate / Closing Disclosure before relying on these figures.',
+    filename: `buyer-closing-${closingDate}`,
+  });
+
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16">
+    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-32 print:pb-12">
       <header className="mb-10 print:mb-4">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle>Buyer Closing Costs</PageTitle>
@@ -199,16 +265,7 @@ export default function BuyerClosingCostsClient() {
         {/* ── Result card ────────────────────────────────────────── */}
         <div className="lg:col-span-2 print:col-span-5">
           <div className="lg:sticky lg:top-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none">
-            <div className="flex items-start justify-between mb-1">
-              <p className={EYEBROW}>Estimated Cash to Close</p>
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="text-xs px-3 py-1 border border-gray-300 rounded hover:border-[#1a2a44] hover:text-[#1a2a44] transition print:hidden"
-              >
-                Print
-              </button>
-            </div>
+            <p className={EYEBROW}>Estimated Cash to Close</p>
             <p
               className="text-4xl text-gray-900 mb-1"
               style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
@@ -277,6 +334,12 @@ export default function BuyerClosingCostsClient() {
         Confirm with the lender&apos;s Loan Estimate before relying on these
         figures.
       </p>
+
+      <ResourceFloater
+        shareTitle="Buyer Closing Costs — RealtyLine Austin"
+        shareText="Cash-to-close estimator with Texas CD line items."
+        buildReport={buildReport}
+      />
     </main>
   );
 }

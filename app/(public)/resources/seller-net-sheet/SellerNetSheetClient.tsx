@@ -14,6 +14,8 @@ import {
   type NetSheetBreakdown,
 } from '@/lib/realtor-calc-math';
 import { fmtUSD } from '@/lib/mortgage-math';
+import ResourceFloater from '../_components/ResourceFloater';
+import { reportTimestamp, type CalcReport } from '../_components/calcPdf';
 
 const EYEBROW = 'text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2';
 
@@ -89,8 +91,56 @@ export default function SellerNetSheetClient() {
     ]
   );
 
+  const buildReport = (): CalcReport => ({
+    title: 'Seller Net Sheet',
+    subtitle: `${fmtUSD(salePrice)} sale price · ${commissionRate}% commission · closing ${closingDate}`,
+    heroLabel: 'Estimated net to seller',
+    heroValue: fmtUSD(result.netToSeller),
+    meta: [
+      { key: 'Generated', value: reportTimestamp() },
+      { key: 'Sale price', value: fmtUSD(salePrice) },
+      { key: 'Mortgage payoff', value: fmtUSD(payoff) },
+      { key: 'Closing date', value: closingDate },
+    ],
+    sections: [
+      {
+        heading: 'Sale',
+        rows: [
+          { label: 'Sale price', value: fmtUSD(result.salePrice), emphasis: true },
+        ],
+      },
+      {
+        heading: 'Closing costs',
+        rows: [
+          { label: `Commission (${commissionRate}%)`, value: `−${fmtUSD(result.commission)}`, negative: true },
+          { label: 'Title policy', value: `−${fmtUSD(result.titlePolicy)}`, negative: true },
+          { label: 'Escrow / closing fee', value: `−${fmtUSD(result.escrowFee)}`, negative: true },
+          { label: 'Recording', value: `−${fmtUSD(result.recordingFees)}`, negative: true },
+          { label: 'Doc prep', value: `−${fmtUSD(result.docPrep)}`, negative: true },
+          ...(result.survey > 0 ? [{ label: 'Survey', value: `−${fmtUSD(result.survey)}`, negative: true }] : []),
+          ...(result.hoaTransferFee > 0 ? [{ label: 'HOA transfer', value: `−${fmtUSD(result.hoaTransferFee)}`, negative: true }] : []),
+          ...(result.homeWarranty > 0 ? [{ label: 'Home warranty', value: `−${fmtUSD(result.homeWarranty)}`, negative: true }] : []),
+          { label: 'Tax proration', value: `−${fmtUSD(result.taxProration)}`, negative: true },
+          ...(result.sellerConcessions > 0 ? [{ label: 'Seller concessions', value: `−${fmtUSD(result.sellerConcessions)}`, negative: true }] : []),
+          ...(result.misc > 0 ? [{ label: 'Misc', value: `−${fmtUSD(result.misc)}`, negative: true }] : []),
+          { label: 'Total closing costs', value: `−${fmtUSD(result.totalClosingCosts)}`, emphasis: true, negative: true },
+        ],
+      },
+      {
+        heading: 'Payoff & net',
+        rows: [
+          { label: 'Mortgage payoff', value: `−${fmtUSD(result.mortgagePayoff)}`, negative: true },
+          { label: 'Net to seller', value: fmtUSD(result.netToSeller), emphasis: true, negative: result.netToSeller < 0 },
+        ],
+      },
+    ],
+    disclaimer:
+      'Estimates only. Actual closing figures vary by title company, lender payoff timing, and final negotiated terms. Not a guarantee of net proceeds — confirm with the title company\u2019s preliminary settlement statement before closing.',
+    filename: `seller-net-sheet-${closingDate}`,
+  });
+
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16">
+    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-32 print:pb-12">
       <header className="mb-10 print:mb-4">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle>Seller Net Sheet</PageTitle>
@@ -248,16 +298,7 @@ export default function SellerNetSheetClient() {
         {/* ── Net sheet card (also the print view) ───────────────── */}
         <div className="lg:col-span-2 print:col-span-5">
           <div className="lg:sticky lg:top-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none">
-            <div className="flex items-start justify-between mb-1">
-              <p className={EYEBROW}>Estimated Net to Seller</p>
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="text-xs px-3 py-1 border border-gray-300 rounded hover:border-[#1a2a44] hover:text-[#1a2a44] transition print:hidden"
-              >
-                Print
-              </button>
-            </div>
+            <p className={EYEBROW}>Estimated Net to Seller</p>
             <p
               className={`text-4xl mb-1 ${
                 result.netToSeller >= 0 ? 'text-gray-900' : 'text-rose-700'
@@ -311,6 +352,12 @@ export default function SellerNetSheetClient() {
         proceeds — confirm with the title company&apos;s preliminary settlement
         statement before closing.
       </p>
+
+      <ResourceFloater
+        shareTitle="Seller Net Sheet — RealtyLine Austin"
+        shareText="Texas-standard seller net sheet — printable for listing appointments."
+        buildReport={buildReport}
+      />
     </main>
   );
 }

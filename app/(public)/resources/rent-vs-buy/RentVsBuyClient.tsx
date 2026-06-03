@@ -10,6 +10,8 @@ import PageTitle from '@/components/ui/PageTitle';
 import { computeRentVsBuy, type RentVsBuyResult } from '@/lib/realtor-calc-math';
 import { fmtUSD } from '@/lib/mortgage-math';
 import { NumberField, SelectField } from '../_components/CalcInputs';
+import ResourceFloater from '../_components/ResourceFloater';
+import { reportTimestamp, type CalcReport } from '../_components/calcPdf';
 
 const EYEBROW = 'text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2';
 
@@ -76,8 +78,65 @@ export default function RentVsBuyClient() {
 
   const finalRow = result.rows[result.rows.length - 1];
 
+  const buildReport = (): CalcReport => ({
+    title: 'Rent vs. Buy',
+    subtitle: `${fmtUSD(homePrice)} home · ${downPct}% down · ${rate}% / ${termYears}yr · ${fmtUSD(rent)}/mo rent · ${horizon}yr horizon`,
+    heroLabel: 'Breakeven year',
+    heroValue:
+      result.breakevenYear !== null ? `Year ${result.breakevenYear}` : 'Beyond horizon',
+    meta: [
+      { key: 'Generated', value: reportTimestamp() },
+      { key: 'Horizon', value: `${horizon} years` },
+      { key: 'Final buy cost', value: fmtUSD(finalRow.buyNetCost) },
+      { key: 'Final rent cost', value: fmtUSD(finalRow.rentCost) },
+    ],
+    sections: [
+      {
+        heading: 'Assumptions',
+        rows: [
+          { label: 'Home price', value: fmtUSD(homePrice) },
+          { label: 'Down payment', value: `${fmtUSD(downPayment)} (${downPct}%)` },
+          { label: 'Rate / term', value: `${rate}% / ${termYears}yr` },
+          { label: 'Closing costs', value: fmtUSD(closingCosts) },
+          { label: 'Annual property tax', value: fmtUSD(annualTax) },
+          { label: 'Annual insurance', value: fmtUSD(annualIns) },
+          ...(hoa > 0 ? [{ label: 'Monthly HOA', value: fmtUSD(hoa) }] : []),
+          { label: 'Appreciation', value: `${appreciation}%/yr` },
+          { label: 'Maintenance', value: `${maintenance}%/yr of home value` },
+          { label: 'Selling cost', value: `${sellingCost}% of sale` },
+          { label: 'Starting rent', value: `${fmtUSD(rent)}/mo` },
+          { label: 'Rent increase', value: `${rentIncrease}%/yr` },
+          { label: "Renter's insurance", value: `${fmtUSD(rentersIns)}/mo` },
+        ],
+      },
+      {
+        heading: 'Year-by-year cumulative cost',
+        rows: result.rows.map((r) => ({
+          label: `Year ${r.year}${r.year === result.breakevenYear ? ' — breakeven' : ''}`,
+          value: `Buy ${fmtUSD(r.buyNetCost)} · Rent ${fmtUSD(r.rentCost)} · Diff ${fmtUSD(r.rentCost - r.buyNetCost)}`,
+          emphasis: r.year === result.breakevenYear,
+        })),
+      },
+      {
+        heading: `After ${horizon} years`,
+        rows: [
+          { label: 'Total buy net cost', value: fmtUSD(finalRow.buyNetCost) },
+          { label: 'Total rent cost', value: fmtUSD(finalRow.rentCost) },
+          {
+            label: finalRow.buyNetCost < finalRow.rentCost ? 'Buying saves' : 'Renting saves',
+            value: fmtUSD(Math.abs(finalRow.rentCost - finalRow.buyNetCost)),
+            emphasis: true,
+          },
+        ],
+      },
+    ],
+    disclaimer:
+      'Estimates only. Does not model tax deductibility (mortgage interest, SALT cap, standard deduction), opportunity cost of the down payment if invested elsewhere, or moves/refinances mid-horizon. Use as a starting point in the buyer consult, not as financial advice.',
+    filename: `rent-vs-buy-${horizon}yr-${Math.round(homePrice / 1000)}k`,
+  });
+
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16">
+    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-32 print:pb-12">
       <header className="mb-10">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle>Rent vs. Buy</PageTitle>
@@ -283,6 +342,12 @@ export default function RentVsBuyClient() {
         invested elsewhere, or moves/refinances mid-horizon. Use as a starting
         point in the buyer consult, not as financial advice.
       </p>
+
+      <ResourceFloater
+        shareTitle="Rent vs. Buy — RealtyLine Austin"
+        shareText="Year-by-year rent vs. buy with breakeven analysis."
+        buildReport={buildReport}
+      />
     </main>
   );
 }

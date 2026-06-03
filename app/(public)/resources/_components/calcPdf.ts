@@ -1,0 +1,230 @@
+// app/(public)/resources/_components/calcPdf.ts
+//
+// Shared PDF generator for the calculator pages. Each page builds a
+// CalcReport describing the title, meta header, and one or more sections
+// of label/value rows; this module renders it to a typeset PDF using
+// jsPDF + autoTable and triggers a browser download.
+//
+// We deliberately render a typeset report (not a screenshot) so the
+// output is selectable, copy-pasteable, and lightweight — and so we
+// don't pull html2canvas into the bundle.
+
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+export interface CalcReportRow {
+  label: string;
+  value: string;
+  /** Render emphasised (bold + slightly larger) — for subtotals/totals. */
+  emphasis?: boolean;
+  /** Render in rose for negative line items. */
+  negative?: boolean;
+}
+
+export interface CalcReportSection {
+  heading?: string;
+  rows: CalcReportRow[];
+}
+
+export interface CalcReport {
+  /** Page title (e.g. "Mortgage Calculator"). */
+  title: string;
+  /** Optional subtitle / context line (e.g. "$450,000 home · 20% down"). */
+  subtitle?: string;
+  /** One-line summary printed under the hero — usually the headline number. */
+  heroLabel?: string;
+  heroValue?: string;
+  /** Meta key/value pairs printed under the title (e.g. address, generated date). */
+  meta?: Array<{ key: string; value: string }>;
+  sections: CalcReportSection[];
+  /** Footer disclaimer printed in small grey. */
+  disclaimer?: string;
+  /** File name (without .pdf extension). */
+  filename: string;
+}
+
+const BRAND_NAVY: [number, number, number] = [26, 42, 68];   // #1a2a44
+const BRAND_GOLD: [number, number, number] = [196, 163, 90]; // #c4a35a
+const GREY_900: [number, number, number] = [17, 24, 39];
+const GREY_700: [number, number, number] = [55, 65, 81];
+const GREY_500: [number, number, number] = [107, 114, 128];
+const ROSE_700: [number, number, number] = [190, 18, 60];
+
+export function downloadCalcReport(report: CalcReport): void {
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 48;
+  const contentWidth = pageWidth - margin * 2;
+
+  let y = margin;
+
+  // Eyebrow
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY_500);
+  doc.text('REALTYLINE AUSTIN  ·  REALTOR® TOOL', margin, y);
+  y += 20;
+
+  // Title (serif-feeling via Times)
+  doc.setFont('times', 'normal');
+  doc.setFontSize(24);
+  doc.setTextColor(...GREY_900);
+  doc.text(report.title, margin, y);
+  y += 8;
+
+  // Gold rule
+  doc.setDrawColor(...BRAND_GOLD);
+  doc.setLineWidth(2);
+  doc.line(margin, y, margin + 60, y);
+  y += 18;
+
+  // Subtitle
+  if (report.subtitle) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(...GREY_700);
+    const subLines = doc.splitTextToSize(report.subtitle, contentWidth);
+    doc.text(subLines, margin, y);
+    y += subLines.length * 13 + 6;
+  }
+
+  // Meta grid (right column)
+  if (report.meta && report.meta.length > 0) {
+    doc.setFontSize(9);
+    let metaY = y;
+    for (const m of report.meta) {
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...GREY_500);
+      doc.text(m.key.toUpperCase(), margin, metaY);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...GREY_900);
+      doc.text(m.value, margin + 110, metaY);
+      metaY += 14;
+    }
+    y = metaY + 6;
+  }
+
+  // Hero card
+  if (report.heroLabel && report.heroValue) {
+    const cardH = 64;
+    doc.setFillColor(248, 250, 252); // gray-50
+    doc.setDrawColor(229, 231, 235);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, y, contentWidth, cardH, 6, 6, 'FD');
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...GREY_500);
+    doc.text(report.heroLabel.toUpperCase(), margin + 14, y + 18);
+
+    doc.setFont('times', 'normal');
+    doc.setFontSize(28);
+    doc.setTextColor(...BRAND_NAVY);
+    doc.text(report.heroValue, margin + 14, y + 48);
+
+    y += cardH + 18;
+  }
+
+  // Sections
+  for (const section of report.sections) {
+    // Ensure space — break to next page if needed
+    if (y > doc.internal.pageSize.getHeight() - margin - 60) {
+      doc.addPage();
+      y = margin;
+    }
+
+    if (section.heading) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(...BRAND_NAVY);
+      doc.text(section.heading.toUpperCase(), margin, y);
+      y += 12;
+    }
+
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      tableWidth: contentWidth,
+      theme: 'plain',
+      styles: {
+        font: 'helvetica',
+        fontSize: 10,
+        cellPadding: { top: 4, bottom: 4, left: 0, right: 0 },
+        textColor: GREY_700,
+        lineColor: [229, 231, 235],
+        lineWidth: 0,
+      },
+      columnStyles: {
+        0: { cellWidth: contentWidth * 0.6 },
+        1: { cellWidth: contentWidth * 0.4, halign: 'right', textColor: GREY_900, fontStyle: 'bold' },
+      },
+      body: section.rows.map((r) => [
+        { content: r.label, styles: r.emphasis ? { fontStyle: 'bold', textColor: GREY_900 } : {} },
+        {
+          content: r.value,
+          styles: {
+            fontStyle: 'bold',
+            textColor: r.negative ? ROSE_700 : r.emphasis ? BRAND_NAVY : GREY_900,
+            fontSize: r.emphasis ? 11 : 10,
+          },
+        },
+      ]),
+      didDrawCell: (data) => {
+        // Bottom hairline between rows
+        if (data.section === 'body' && data.column.index === 1) {
+          const { x, y: cy, width } = data.cell;
+          const rowX = margin;
+          const rowW = contentWidth;
+          doc.setDrawColor(243, 244, 246);
+          doc.setLineWidth(0.5);
+          doc.line(rowX, cy + data.cell.height, rowX + rowW, cy + data.cell.height);
+          // suppress unused-var warnings
+          void x; void width;
+        }
+      },
+    });
+
+    // jspdf-autotable v5: read lastAutoTable from the doc
+    const lastY =
+      (doc as unknown as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? y;
+    y = lastY + 14;
+  }
+
+  // Disclaimer
+  if (report.disclaimer) {
+    if (y > doc.internal.pageSize.getHeight() - margin - 40) {
+      doc.addPage();
+      y = margin;
+    }
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8);
+    doc.setTextColor(...GREY_500);
+    const lines = doc.splitTextToSize(report.disclaimer, contentWidth);
+    doc.text(lines, margin, y);
+    y += lines.length * 11;
+  }
+
+  // Footer (every page)
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    const pageH = doc.internal.pageSize.getHeight();
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...GREY_500);
+    doc.text('realtynewsnow.app  ·  RealtyLine Austin', margin, pageH - 24);
+    doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin, pageH - 24, { align: 'right' });
+  }
+
+  doc.save(`${report.filename}.pdf`);
+}
+
+/** Build a human-readable timestamp string for the meta header. */
+export function reportTimestamp(): string {
+  const d = new Date();
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}

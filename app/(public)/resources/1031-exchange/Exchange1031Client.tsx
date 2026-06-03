@@ -14,6 +14,8 @@ import {
   type ExchangeMilestone,
 } from '@/lib/realtor-calc-math';
 import { DateField } from '../_components/CalcInputs';
+import ResourceFloater from '../_components/ResourceFloater';
+import { reportTimestamp, type CalcReport } from '../_components/calcPdf';
 
 const EYEBROW = 'text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2';
 
@@ -52,8 +54,59 @@ export default function Exchange1031Client() {
   const idMissed = timeline.daysUntilId < 0;
   const exchangeMissed = timeline.daysUntilExchange < 0;
 
+  const buildReport = (): CalcReport => ({
+    title: '1031 Exchange Timeline',
+    subtitle: `Relinquished closing · ${fmtDateLong(relinquishedClosing)}`,
+    heroLabel: 'Status',
+    heroValue: timeline.statusLabel,
+    meta: [
+      { key: 'Generated', value: reportTimestamp() },
+      { key: '45-day deadline', value: fmtDateLong(timeline.identificationDeadline) },
+      { key: '180-day deadline', value: fmtDateLong(timeline.exchangeDeadline) },
+      { key: 'Progress', value: `${Math.round(timeline.progress * 100)}%` },
+    ],
+    sections: [
+      {
+        heading: 'Key deadlines',
+        rows: [
+          {
+            label: '45-day identification deadline',
+            value: `${fmtDateLong(timeline.identificationDeadline)} (${fmtDays(timeline.daysUntilId)})`,
+            emphasis: true,
+            negative: idMissed,
+          },
+          {
+            label: '180-day exchange deadline',
+            value: `${fmtDateLong(timeline.exchangeDeadline)} (${fmtDays(timeline.daysUntilExchange)})`,
+            emphasis: true,
+            negative: exchangeMissed,
+          },
+        ],
+      },
+      {
+        heading: 'Milestones',
+        rows: timeline.milestones.map((m) => ({
+          label: `Day ${m.daysFromStart} — ${m.label}${m.isDeadline ? ' (IRS)' : ''}`,
+          value: `${fmtDateLong(m.date)} · ${fmtDays(m.daysFromToday)}`,
+          emphasis: m.isDeadline,
+        })),
+      },
+      {
+        heading: 'Identification rules (pick one)',
+        rows: [
+          { label: '3-property rule', value: 'Up to 3 of any value' },
+          { label: '200% rule', value: 'Any number — total FMV ≤ 200% of sale' },
+          { label: '95% rule', value: 'Any number — must close on 95%+ of FMV' },
+        ],
+      },
+    ],
+    disclaimer:
+      'Not tax or legal advice. 1031 exchanges have strict identification, related-party, and reporting rules (IRS Form 8824). Engage a qualified intermediary BEFORE closing the relinquished property and confirm timing with a CPA — the 180-day window is reduced if the tax return (incl. extensions) is due sooner.',
+    filename: `1031-timeline-${relinquishedClosing}`,
+  });
+
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16">
+    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-32 print:pb-12">
       <header className="mb-10 print:mb-4">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle>1031 Exchange Timeline</PageTitle>
@@ -117,13 +170,6 @@ export default function Exchange1031Client() {
                   {timeline.statusLabel}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="text-xs px-3 py-1 border border-gray-300 rounded hover:border-[#1a2a44] hover:text-[#1a2a44] transition print:hidden"
-              >
-                Print
-              </button>
             </div>
 
             {/* Progress bar — 180 day window */}
@@ -184,6 +230,12 @@ export default function Exchange1031Client() {
         with a CPA — the 180-day window is reduced if your tax return is due
         sooner (incl. extensions).
       </p>
+
+      <ResourceFloater
+        shareTitle="1031 Exchange Timeline — RealtyLine Austin"
+        shareText="Track the 45-day identification and 180-day replacement deadlines on a like-kind exchange."
+        buildReport={buildReport}
+      />
     </main>
   );
 }

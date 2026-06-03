@@ -14,6 +14,8 @@ import {
 } from '@/lib/realtor-calc-math';
 import { fmtUSD, fmtPct } from '@/lib/mortgage-math';
 import { NumberField } from '../_components/CalcInputs';
+import ResourceFloater from '../_components/ResourceFloater';
+import { reportTimestamp, type CalcReport } from '../_components/calcPdf';
 
 const EYEBROW = 'text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2';
 
@@ -85,8 +87,76 @@ export default function InvestmentPropertyClient() {
 
   const cashFlowPositive = result.monthlyCashFlow >= 0;
 
+  const buildReport = (): CalcReport => ({
+    title: 'Investment Property ROI',
+    subtitle: `${fmtUSD(purchasePrice)} purchase · ${fmtUSD(monthlyRent)}/mo rent`,
+    heroLabel: 'Monthly cash flow',
+    heroValue: fmtUSD(result.monthlyCashFlow, { cents: true }),
+    meta: [
+      { key: 'Generated', value: reportTimestamp() },
+      { key: 'Cap rate', value: fmtPct(result.capRate) },
+      { key: 'Cash-on-cash', value: fmtPct(result.cashOnCash) },
+      { key: 'DSCR', value: result.dscr.toFixed(2) },
+    ],
+    sections: [
+      {
+        heading: 'Returns',
+        rows: [
+          { label: 'Monthly cash flow', value: fmtUSD(result.monthlyCashFlow, { cents: true }), emphasis: true, negative: !cashFlowPositive },
+          { label: 'Annual cash flow', value: fmtUSD(result.annualCashFlow, { cents: true }), negative: result.annualCashFlow < 0 },
+          { label: 'NOI (annual)', value: fmtUSD(result.noi, { cents: true }) },
+          { label: 'Cap rate', value: fmtPct(result.capRate) },
+          { label: 'Cash-on-cash', value: fmtPct(result.cashOnCash) },
+          { label: 'GRM', value: result.grm.toFixed(2) },
+          { label: 'DSCR', value: result.dscr.toFixed(2) },
+          { label: '1% rule', value: result.onePctRuleMet ? 'Met' : 'Not met' },
+          { label: '50% rule', value: result.fiftyPctRuleMet ? 'Met' : 'Not met' },
+        ],
+      },
+      {
+        heading: 'Acquisition & financing',
+        rows: [
+          { label: 'Purchase price', value: fmtUSD(purchasePrice) },
+          { label: 'Down payment', value: `${fmtUSD(downPayment)} (${downPct}%)` },
+          { label: 'Loan amount', value: fmtUSD(result.loanAmount) },
+          { label: 'Rate / term', value: `${rate}% / ${termYears}yr` },
+          { label: 'Closing costs', value: fmtUSD(closingCosts) },
+          { label: 'Initial repairs', value: fmtUSD(initialRepairs) },
+          { label: 'Total cash invested', value: fmtUSD(result.totalCashInvested), emphasis: true },
+          { label: 'Annual debt service', value: fmtUSD(result.annualDebtService) },
+        ],
+      },
+      {
+        heading: 'Income (annual)',
+        rows: [
+          { label: 'Gross monthly rent', value: fmtUSD(result.grossMonthlyRent) },
+          { label: 'Gross annual rent', value: fmtUSD(result.grossAnnualRent) },
+          { label: `Vacancy (${vacancyPct}%)`, value: `-${fmtUSD(result.vacancyLoss)}`, negative: true },
+          { label: 'Effective gross income', value: fmtUSD(result.effectiveGrossIncome), emphasis: true },
+        ],
+      },
+      {
+        heading: 'Operating expenses (annual)',
+        rows: [
+          { label: 'Property tax', value: fmtUSD(result.propertyTax) },
+          { label: 'Insurance', value: fmtUSD(result.insurance) },
+          ...(result.hoa > 0 ? [{ label: 'HOA', value: fmtUSD(result.hoa) }] : []),
+          { label: `Property mgmt (${propMgmtPct}% EGI)`, value: fmtUSD(result.propMgmt) },
+          { label: `Maintenance (${maintenancePct}% EGI)`, value: fmtUSD(result.maintenance) },
+          { label: `CapEx reserve (${capExPct}% EGI)`, value: fmtUSD(result.capEx) },
+          ...(result.utilities > 0 ? [{ label: 'Utilities', value: fmtUSD(result.utilities) }] : []),
+          ...(result.otherOpEx > 0 ? [{ label: 'Other op-ex', value: fmtUSD(result.otherOpEx) }] : []),
+          { label: 'Total operating expenses', value: fmtUSD(result.totalOpEx), emphasis: true },
+        ],
+      },
+    ],
+    disclaimer:
+      'Estimates only. Underwriting must use the actual lender quote, verified rents (PM rent comps), and a property-specific tax/insurance/HOA quote. Rule-of-thumb checks (1% rule, 50% rule) are screening heuristics, not underwriting standards.',
+    filename: `investment-roi-${Math.round(purchasePrice)}`,
+  });
+
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16">
+    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-32 print:pb-12">
       <header className="mb-10 print:mb-4">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle>Investment Property ROI</PageTitle>
@@ -250,6 +320,12 @@ export default function InvestmentPropertyClient() {
         — operating expenses (excl. debt service) ≤ 50% of gross rent. These
         are screening heuristics, not underwriting standards.
       </p>
+
+      <ResourceFloater
+        shareTitle="Investment Property ROI — RealtyLine Austin"
+        shareText="Run cash flow, cap rate, cash-on-cash, NOI and DSCR on any rental."
+        buildReport={buildReport}
+      />
     </main>
   );
 }

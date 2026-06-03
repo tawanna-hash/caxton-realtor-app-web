@@ -9,7 +9,7 @@
 //
 // All math is in lib/mortgage-math.ts. This file is purely UI + state.
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
 import {
   computePiti,
@@ -20,6 +20,8 @@ import {
   type PitiBreakdown,
   type AmortAnnualRow,
 } from '@/lib/mortgage-math';
+import ResourceFloater from '../_components/ResourceFloater';
+import { reportTimestamp, type CalcReport } from '../_components/calcPdf';
 
 const EYEBROW = 'text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2';
 
@@ -63,8 +65,90 @@ export default function MortgageCalculatorClient() {
     [piti.loanAmount, rate, termYears]
   );
 
+  // Affordability tab owns its own state; it exposes a report builder up via
+  // this ref so the shared floater can render the right PDF regardless of
+  // which tab the user is viewing.
+  const affordabilityReportRef = useRef<(() => CalcReport) | null>(null);
+  const onAffordabilityReport = useCallback((fn: () => CalcReport) => {
+    affordabilityReportRef.current = fn;
+  }, []);
+
+  const buildReport = useCallback((): CalcReport => {
+    if (tab === 'affordability' && affordabilityReportRef.current) {
+      return affordabilityReportRef.current();
+    }
+    if (tab === 'amortization') {
+      return {
+        title: 'Mortgage — Amortization Schedule',
+        subtitle: `${fmtUSD(homePrice)} home · ${downPercent}% down · ${rate}% / ${termYears}yr`,
+        heroLabel: 'Total interest paid',
+        heroValue: fmtUSD(amort.totalInterest),
+        meta: [
+          { key: 'Generated', value: reportTimestamp() },
+          { key: 'Loan amount', value: fmtUSD(piti.loanAmount) },
+          { key: 'Total paid', value: fmtUSD(piti.loanAmount + amort.totalInterest) },
+          { key: 'Monthly P&I', value: fmtUSD(piti.principalAndInterest, { cents: true }) },
+        ],
+        sections: [
+          {
+            heading: 'Annual breakdown',
+            rows: amort.annual.map((row) => ({
+              label: `Year ${row.year}`,
+              value: `Principal ${fmtUSD(row.principalPaid)} · Interest ${fmtUSD(row.interestPaid)} · Balance ${fmtUSD(row.endingBalance)}`,
+            })),
+          },
+        ],
+        disclaimer:
+          'Schedule assumes a fixed rate and on-time monthly payments. Actual payoff varies with extra principal, escrow changes, and refinance.',
+        filename: `amortization-${termYears}yr-${Math.round(piti.loanAmount)}`,
+      };
+    }
+    // Default: Payment / PITI tab
+    return {
+      title: 'Mortgage — Monthly Payment',
+      subtitle: `${fmtUSD(homePrice)} home · ${downPercent}% down · ${rate}% / ${termYears}yr`,
+      heroLabel: 'Total monthly payment',
+      heroValue: fmtUSD(piti.total, { cents: true }),
+      meta: [
+        { key: 'Generated', value: reportTimestamp() },
+        { key: 'Loan amount', value: fmtUSD(piti.loanAmount) },
+        { key: 'Down payment', value: `${fmtUSD(downPayment)} (${downPercent}%)` },
+        { key: 'Interest rate', value: `${rate}% / ${termYears}yr` },
+      ],
+      sections: [
+        {
+          heading: 'PITI breakdown',
+          rows: [
+            { label: 'Principal & interest', value: fmtUSD(piti.principalAndInterest, { cents: true }) },
+            { label: 'Property tax (monthly)', value: fmtUSD(piti.propertyTax, { cents: true }) },
+            { label: 'Insurance (monthly)', value: fmtUSD(piti.insurance, { cents: true }) },
+            ...(piti.hoa > 0 ? [{ label: 'HOA', value: fmtUSD(piti.hoa, { cents: true }) }] : []),
+            ...(piti.pmi > 0 ? [{ label: 'PMI', value: fmtUSD(piti.pmi, { cents: true }) }] : []),
+            { label: 'Total monthly', value: fmtUSD(piti.total, { cents: true }), emphasis: true },
+          ],
+        },
+        {
+          heading: 'Loan terms',
+          rows: [
+            { label: 'Home price', value: fmtUSD(homePrice) },
+            { label: 'Down payment', value: `${fmtUSD(downPayment)} (${downPercent}%)` },
+            { label: 'Loan amount', value: fmtUSD(piti.loanAmount) },
+            { label: 'Rate / term', value: `${rate}% / ${termYears}yr` },
+            { label: 'Annual property tax', value: fmtUSD(annualTax) },
+            { label: 'Annual insurance', value: fmtUSD(annualIns) },
+            ...(monthlyHoa > 0 ? [{ label: 'Monthly HOA', value: fmtUSD(monthlyHoa) }] : []),
+            ...(piti.pmi > 0 ? [{ label: 'PMI rate', value: `${pmiRate}%` }] : []),
+          ],
+        },
+      ],
+      disclaimer:
+        'Estimates only. Actual rates, taxes, insurance, and PMI vary by lender, property, and borrower profile. Not a loan offer, pre-approval, or guarantee. Confirm all figures with a licensed lender.',
+      filename: `mortgage-piti-${Math.round(homePrice)}`,
+    };
+  }, [tab, homePrice, downPercent, downPayment, rate, termYears, annualTax, annualIns, monthlyHoa, pmiRate, piti, amort]);
+
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16">
+    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-32 print:pb-12">
       {/* ── Header ────────────────────────────────────────────────── */}
       <header className="mb-8">
         <p className={EYEBROW}>REALTOR® Tool</p>
@@ -125,7 +209,7 @@ export default function MortgageCalculatorClient() {
         />
       )}
 
-      {tab === 'affordability' && <AffordabilityTab />}
+      {tab === 'affordability' && <AffordabilityTab onReport={onAffordabilityReport} />}
 
       {tab === 'amortization' && (
         <AmortizationTab
@@ -144,6 +228,12 @@ export default function MortgageCalculatorClient() {
         or guarantee. Confirm all figures with a licensed lender before
         relying on them in a purchase decision.
       </p>
+
+      <ResourceFloater
+        shareTitle="Mortgage Calculator — RealtyLine Austin"
+        shareText="PITI breakdown, affordability, and amortization schedule."
+        buildReport={buildReport}
+      />
     </main>
   );
 }
@@ -335,7 +425,7 @@ function PitiBar({ piti }: { piti: PitiBreakdown }) {
 // TAB 2 — Affordability
 // ═══════════════════════════════════════════════════════════════════════════
 
-function AffordabilityTab() {
+function AffordabilityTab({ onReport }: { onReport: (fn: () => CalcReport) => void }) {
   const [income, setIncome] = useState(120000);
   const [debts, setDebts] = useState(500);
   const [down, setDown] = useState(50000);
@@ -359,6 +449,54 @@ function AffordabilityTab() {
       }),
     [income, debts, down, rate, term, frontDti, backDti, hoa]
   );
+
+  // Publish a report-builder up to the parent so the shared floater can
+  // produce the right PDF while this tab is visible.
+  useEffect(() => {
+    onReport(() => ({
+      title: 'Mortgage — Affordability',
+      subtitle: `${fmtUSD(income)} income · ${fmtUSD(debts)}/mo debts · ${fmtUSD(down)} down · ${rate}% / ${term}yr`,
+      heroLabel: 'Estimated max home price',
+      heroValue: fmtUSD(result.maxHomePrice),
+      meta: [
+        { key: 'Generated', value: reportTimestamp() },
+        { key: 'Max loan', value: fmtUSD(result.maxLoanAmount) },
+        { key: 'Binding ratio', value: String(result.bindingRatio) },
+        { key: 'Front / back DTI', value: `${frontDti}% / ${backDti}%` },
+      ],
+      sections: [
+        {
+          heading: 'Income & debts',
+          rows: [
+            { label: 'Annual gross income', value: fmtUSD(income) },
+            { label: 'Monthly gross income', value: fmtUSD(income / 12) },
+            { label: 'Monthly debt payments', value: fmtUSD(debts) },
+            { label: 'Down payment', value: fmtUSD(down) },
+            ...(hoa > 0 ? [{ label: 'Monthly HOA', value: fmtUSD(hoa) }] : []),
+          ],
+        },
+        {
+          heading: 'DTI caps',
+          rows: [
+            { label: `Front-end (${frontDti}%)`, value: fmtUSD(((income / 12) * frontDti) / 100) },
+            { label: `Back-end (${backDti}%)`, value: fmtUSD(Math.max(0, ((income / 12) * backDti) / 100 - debts)) },
+            { label: 'Max monthly housing', value: fmtUSD(result.maxMonthlyHousing), emphasis: true },
+          ],
+        },
+        {
+          heading: 'Result',
+          rows: [
+            { label: 'Max home price', value: fmtUSD(result.maxHomePrice), emphasis: true },
+            { label: 'Max loan amount', value: fmtUSD(result.maxLoanAmount) },
+            { label: 'Binding constraint', value: String(result.bindingRatio) },
+          ],
+        },
+      ],
+      disclaimer:
+        'Affordability uses 1.8% property tax + 0.35% insurance estimates and excludes PMI. Actual qualifying amounts depend on lender overlays, loan program, credit profile, and reserves.',
+      filename: `mortgage-affordability-${income}`,
+    }));
+  }, [onReport, income, debts, down, rate, term, frontDti, backDti, hoa, result]);
 
   return (
     <div className="grid lg:grid-cols-5 gap-8">
@@ -475,22 +613,13 @@ function AmortizationTab(p: AmortizationTabProps) {
         <p className="text-sm text-gray-600">
           Annual breakdown · {p.termYears}-year term @ {p.annualRatePct}%
         </p>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={downloadCsv}
-            className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:border-[#1a2a44] hover:text-[#1a2a44] transition"
-          >
-            Download CSV
-          </button>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:border-[#1a2a44] hover:text-[#1a2a44] transition"
-          >
-            Print
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={downloadCsv}
+          className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:border-[#1a2a44] hover:text-[#1a2a44] transition"
+        >
+          Download CSV
+        </button>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-gray-200">

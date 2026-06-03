@@ -10,6 +10,8 @@ import { useMemo, useState } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
 import { computeCommission, type CommissionBreakdown } from '@/lib/realtor-calc-math';
 import { fmtUSD } from '@/lib/mortgage-math';
+import ResourceFloater from '../_components/ResourceFloater';
+import { reportTimestamp, type CalcReport } from '../_components/calcPdf';
 
 const EYEBROW = 'text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2';
 
@@ -38,8 +40,43 @@ export default function CommissionCalculatorClient() {
     [salePrice, totalRate, listingShare, agentSplit, brokerFlat, referral, side]
   );
 
+  const buildReport = (): CalcReport => ({
+    title: 'Commission Calculator',
+    subtitle: `${fmtUSD(salePrice)} sale · ${totalRate}% commission · ${side === 'listing' ? 'Listing side' : 'Buyer side'}`,
+    heroLabel: 'Your net take-home',
+    heroValue: fmtUSD(result.agentNet),
+    meta: [
+      { key: 'Generated', value: reportTimestamp() },
+      { key: 'Side', value: side === 'listing' ? 'Listing side' : 'Buyer side' },
+      { key: 'Agent split', value: `${agentSplit}%` },
+      { key: '% of sale', value: `${((result.agentNet / salePrice) * 100).toFixed(2)}%` },
+    ],
+    sections: [
+      {
+        heading: 'Commission → take-home',
+        rows: [
+          { label: `Total commission (${totalRate}%)`, value: fmtUSD(result.totalCommission) },
+          { label: `Your side (${side}, ${side === 'listing' ? listingShare : 100 - listingShare}%)`, value: fmtUSD(result.sideCommission) },
+          ...(result.referralAmount > 0
+            ? [{ label: `Referral out (${referral}%)`, value: `−${fmtUSD(result.referralAmount)}`, negative: true }]
+            : []),
+          { label: 'After referral', value: fmtUSD(result.afterReferral), emphasis: true },
+          { label: `Your gross split (${agentSplit}%)`, value: fmtUSD(result.agentGross) },
+          ...(result.brokerFlatFee > 0
+            ? [{ label: 'Broker flat fee', value: `−${fmtUSD(result.brokerFlatFee)}`, negative: true }]
+            : []),
+          { label: 'Net to you', value: fmtUSD(result.agentNet), emphasis: true },
+          { label: 'Broker keeps', value: fmtUSD(result.brokerSplit) },
+        ],
+      },
+    ],
+    disclaimer:
+      'Estimates only. Commission structures, broker splits, and referral arrangements vary by brokerage and transaction. Confirm exact figures with your broker\u2019s commission disbursement authorization (CDA). Does not deduct self-employment / income tax.',
+    filename: `commission-${side}-${Math.round(salePrice / 1000)}k`,
+  });
+
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16">
+    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-32 print:pb-12">
       <header className="mb-10">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle>Commission Calculator</PageTitle>
@@ -184,6 +221,12 @@ export default function CommissionCalculatorClient() {
         with your broker&apos;s commission disbursement authorization (CDA) before
         relying on them.
       </p>
+
+      <ResourceFloater
+        shareTitle="Commission Calculator — RealtyLine Austin"
+        shareText="Sale price to take-home — model side split, referral, and broker fees."
+        buildReport={buildReport}
+      />
     </main>
   );
 }
