@@ -203,6 +203,337 @@ export function estimateTxTitlePolicy(salePrice: number): number {
   return top.baseAt + (over / 1000) * top.per1000;
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// Buyer Closing Costs (Texas)
+//
+// One-time costs the buyer brings to the table, not the monthly PITI. Mirrors
+// what shows up on a typical Texas closing disclosure (CD) page 2:
+//
+//   A. Origination charges (lender)
+//   B. Services buyer did/didn't shop for (appraisal, credit, title services)
+//   C. Taxes & gov't fees (recording, transfer)
+//   E. Prepaids (homeowner's ins, mortgage ins, prepaid interest, property tax)
+//   F. Initial escrow setup (months of insurance + tax held in escrow)
+//
+// Plus the cash-to-close math: down payment + total closing costs − credits.
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface BuyerClosingInput {
+  homePrice: number;
+  downPayment: number;
+  /** Annual interest rate as % (used for prepaid interest). */
+  annualRatePct: number;
+  /** Annual homeowners insurance in dollars. */
+  annualInsurance: number;
+  /** Annual property tax in dollars. */
+  annualPropertyTax: number;
+  /** Closing date as YYYY-MM-DD — used for prepaid-interest days. */
+  closingDate: string;
+
+  // A. Origination
+  /** Origination fee as % of loan amount (e.g. 1 for 1%). */
+  originationPct: number;
+  /** Discount points as % of loan amount. */
+  pointsPct: number;
+  /** Flat lender / underwriting / processing fees. */
+  lenderFlatFees: number;
+
+  // B. Services
+  appraisalFee: number;
+  creditReportFee: number;
+  /** Lender's title policy (paid by buyer in TX). */
+  lendersTitlePolicy: number;
+  /** Title search / endorsements / etc. */
+  titleServices: number;
+
+  // C. Taxes & gov't
+  recordingFees: number;
+
+  // E. Prepaids
+  /** Months of homeowner's insurance paid up-front (usually 12). */
+  prepaidInsMonths: number;
+
+  // F. Escrow setup
+  /** Months of insurance held in escrow at closing (usually 2–3). */
+  escrowInsMonths: number;
+  /** Months of property tax held in escrow at closing (usually 2–3). */
+  escrowTaxMonths: number;
+
+  // Credits
+  /** Seller credit toward buyer's closing costs. */
+  sellerCredit: number;
+  /** Lender credit (from rate or otherwise). */
+  lenderCredit: number;
+  /** Earnest money already on deposit (counts toward cash-to-close). */
+  earnestMoney: number;
+}
+
+export interface BuyerClosingBreakdown {
+  loanAmount: number;
+  // A
+  origination: number;
+  points: number;
+  lenderFlatFees: number;
+  // B
+  appraisalFee: number;
+  creditReportFee: number;
+  lendersTitlePolicy: number;
+  titleServices: number;
+  // C
+  recordingFees: number;
+  // E
+  prepaidInterest: number;
+  prepaidInsurance: number;
+  // F
+  escrowInsurance: number;
+  escrowTax: number;
+  // Totals
+  totalClosingCosts: number;
+  totalCredits: number;
+  cashToClose: number;
+  prepaidInterestDays: number;
+}
+
+export function computeBuyerClosing(
+  input: BuyerClosingInput
+): BuyerClosingBreakdown {
+  const loanAmount = Math.max(0, input.homePrice - input.downPayment);
+
+  // Section A — lender origination
+  const origination = (loanAmount * input.originationPct) / 100;
+  const points = (loanAmount * input.pointsPct) / 100;
+  const lenderFlatFees = input.lenderFlatFees;
+
+  // Section B — services
+  const appraisalFee = input.appraisalFee;
+  const creditReportFee = input.creditReportFee;
+  const lendersTitlePolicy = input.lendersTitlePolicy;
+  const titleServices = input.titleServices;
+
+  // Section C — taxes/recording
+  const recordingFees = input.recordingFees;
+
+  // Section E — prepaids
+  // Prepaid interest covers the days from closing through end of that month.
+  const closing = new Date(input.closingDate);
+  let prepaidInterestDays = 15; // fallback if date parse fails
+  if (!Number.isNaN(closing.getTime())) {
+    const lastDay = new Date(
+      Date.UTC(closing.getUTCFullYear(), closing.getUTCMonth() + 1, 0)
+    ).getUTCDate();
+    prepaidInterestDays = lastDay - closing.getUTCDate() + 1;
+  }
+  const dailyInterest = (loanAmount * (input.annualRatePct / 100)) / 365;
+  const prepaidInterest = dailyInterest * Math.max(0, prepaidInterestDays);
+  const prepaidInsurance =
+    (input.annualInsurance / 12) * Math.max(0, input.prepaidInsMonths);
+
+  // Section F — escrow setup
+  const escrowInsurance =
+    (input.annualInsurance / 12) * Math.max(0, input.escrowInsMonths);
+  const escrowTax =
+    (input.annualPropertyTax / 12) * Math.max(0, input.escrowTaxMonths);
+
+  const totalClosingCosts =
+    origination +
+    points +
+    lenderFlatFees +
+    appraisalFee +
+    creditReportFee +
+    lendersTitlePolicy +
+    titleServices +
+    recordingFees +
+    prepaidInterest +
+    prepaidInsurance +
+    escrowInsurance +
+    escrowTax;
+
+  const totalCredits =
+    input.sellerCredit + input.lenderCredit + input.earnestMoney;
+
+  const cashToClose =
+    input.downPayment + totalClosingCosts - totalCredits;
+
+  return {
+    loanAmount,
+    origination,
+    points,
+    lenderFlatFees,
+    appraisalFee,
+    creditReportFee,
+    lendersTitlePolicy,
+    titleServices,
+    recordingFees,
+    prepaidInterest,
+    prepaidInsurance,
+    escrowInsurance,
+    escrowTax,
+    totalClosingCosts,
+    totalCredits,
+    cashToClose,
+    prepaidInterestDays,
+  };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Rent vs. Buy
+//
+// Models year-by-year cumulative cost of buying vs. renting, including:
+//   Buying:  PITI → mortgage paydown (equity) + appreciation − maintenance
+//            − selling costs when modeled at year N. Down payment + closing
+//            counts as up-front cost.
+//   Renting: rent (with annual escalator) + renters insurance. Up-front
+//            cost is the security deposit.
+//
+// Result: arrays of cumulative net cost per year, plus a breakeven year
+// (first year where buying is cheaper net-of-equity than renting).
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface RentVsBuyInput {
+  // Buying
+  homePrice: number;
+  downPayment: number;
+  annualRatePct: number;
+  termYears: number;
+  closingCosts: number; // estimated one-time buyer closing costs
+  annualPropertyTax: number;
+  annualInsurance: number;
+  monthlyHoa: number;
+  /** Annual home-price appreciation %. Default 3. */
+  appreciationPct: number;
+  /** Annual maintenance as % of home value. Default 1. */
+  maintenancePct: number;
+  /** % of sale price the seller pays at exit (commission + closing). Default 8. */
+  sellingCostPct: number;
+
+  // Renting
+  monthlyRent: number;
+  /** Annual rent increase %. Default 4. */
+  rentIncreasePct: number;
+  /** Monthly renters insurance. */
+  rentersInsurance: number;
+  /** Security deposit. */
+  securityDeposit: number;
+
+  // Horizon
+  /** How many years to project (e.g. 1–10). */
+  horizonYears: number;
+}
+
+export interface RentVsBuyYear {
+  year: number;
+  /** Cumulative cost of buying through end of this year, net of equity if sold. */
+  buyNetCost: number;
+  /** Cumulative cost of renting through end of this year. */
+  rentCost: number;
+  /** Home value at end of this year. */
+  homeValue: number;
+  /** Loan balance at end of this year. */
+  loanBalance: number;
+  /** Equity if sold at end of this year (value − balance − selling costs). */
+  netEquity: number;
+}
+
+export interface RentVsBuyResult {
+  rows: RentVsBuyYear[];
+  /** First year where buyNetCost ≤ rentCost; null if buying never wins in horizon. */
+  breakevenYear: number | null;
+}
+
+export function computeRentVsBuy(input: RentVsBuyInput): RentVsBuyResult {
+  const {
+    homePrice,
+    downPayment,
+    annualRatePct,
+    termYears,
+    closingCosts,
+    annualPropertyTax,
+    annualInsurance,
+    monthlyHoa,
+    appreciationPct,
+    maintenancePct,
+    sellingCostPct,
+    monthlyRent,
+    rentIncreasePct,
+    rentersInsurance,
+    securityDeposit,
+    horizonYears,
+  } = input;
+
+  const loanAmount = Math.max(0, homePrice - downPayment);
+  const monthlyPandI = monthlyPI(loanAmount, annualRatePct, termYears);
+  const monthlyRate = annualRatePct / 100 / 12;
+
+  let cumulativeBuyOut = downPayment + closingCosts; // up-front
+  let cumulativeRentOut = securityDeposit; // up-front (refundable but model as flow)
+  let loanBalance = loanAmount;
+  let homeValue = homePrice;
+  let rent = monthlyRent;
+
+  const rows: RentVsBuyYear[] = [];
+  let breakevenYear: number | null = null;
+
+  for (let y = 1; y <= horizonYears; y++) {
+    // 12 months of mortgage payments + escrow + HOA + maintenance.
+    for (let m = 0; m < 12; m++) {
+      const interest = loanBalance * monthlyRate;
+      const principal = Math.min(loanBalance, monthlyPandI - interest);
+      loanBalance = Math.max(0, loanBalance - principal);
+      // Interest, tax, insurance, HOA are real out-flows. Principal is
+      // forced savings (equity) — NOT counted as cost, since we account
+      // for it through loanBalance.
+      cumulativeBuyOut += interest;
+      cumulativeBuyOut += annualPropertyTax / 12;
+      cumulativeBuyOut += annualInsurance / 12;
+      cumulativeBuyOut += monthlyHoa;
+      cumulativeBuyOut += (homeValue * (maintenancePct / 100)) / 12;
+
+      cumulativeRentOut += rent;
+      cumulativeRentOut += rentersInsurance;
+    }
+
+    // End-of-year appreciation + rent escalator.
+    homeValue *= 1 + appreciationPct / 100;
+    rent *= 1 + rentIncreasePct / 100;
+
+    // Net equity if sold at end of year.
+    const sellingCosts = homeValue * (sellingCostPct / 100);
+    const netEquity = Math.max(0, homeValue - loanBalance - sellingCosts);
+    // Down payment was already in cumulativeBuyOut; equity offsets total
+    // out-of-pocket. "buyNetCost" = total dollars spent on housing minus
+    // dollars recoverable through sale.
+    const buyNetCost = cumulativeBuyOut - netEquity;
+
+    rows.push({
+      year: y,
+      buyNetCost,
+      rentCost: cumulativeRentOut,
+      homeValue,
+      loanBalance,
+      netEquity,
+    });
+
+    if (breakevenYear === null && buyNetCost <= cumulativeRentOut) {
+      breakevenYear = y;
+    }
+  }
+
+  return { rows, breakevenYear };
+}
+
+// Local copy of monthlyPI to avoid a circular import w/ mortgage-math.
+function monthlyPI(
+  principal: number,
+  annualRatePct: number,
+  termYears: number
+): number {
+  if (principal <= 0 || termYears <= 0) return 0;
+  const n = Math.round(termYears * 12);
+  const r = annualRatePct / 100 / 12;
+  if (r === 0) return principal / n;
+  return (principal * r) / (1 - Math.pow(1 + r, -n));
+}
+
 /**
  * Convert a YYYY-MM-DD date string to its day-of-year (1-365/366).
  * Returns today's day-of-year if the input is invalid.

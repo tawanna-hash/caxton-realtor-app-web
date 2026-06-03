@@ -89,6 +89,18 @@ export default function ResourcesClient() {
             title="Seller Net Sheet"
             description="Estimate what your seller walks away with at closing. Texas-standard line items, auto title-policy estimate, printable for listing appointments."
           />
+          <ToolCard
+            href="/resources/buyer-closing-costs"
+            badge="Calculator"
+            title="Buyer Closing Costs"
+            description="Cash-to-close estimator. Lender fees, title, prepaids, and escrow setup — sectioned to match a Texas Closing Disclosure."
+          />
+          <ToolCard
+            href="/resources/rent-vs-buy"
+            badge="Analysis"
+            title="Rent vs. Buy"
+            description="Year-by-year cost comparison with breakeven. Models appreciation, equity, maintenance, and exit costs vs. annual rent escalators."
+          />
         </div>
       </section>
 
