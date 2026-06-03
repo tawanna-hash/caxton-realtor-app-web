@@ -1,28 +1,27 @@
-// caxton-social-v1
-// Admin curator for Facebook posts.
-//   • Page URL  (facebook.com/{page}/posts/{id})        \u2192 auto-fetch via Graph API
-//   • Group URL (facebook.com/groups/{id}/posts/{id})   \u2192 manual entry
-//                                                        (Meta killed the Groups
-//                                                         API in April 2024)
-//   • Reel URL  (facebook.com/reel/{id})                \u2192 manual entry
-//                                                        (video_reels endpoint
-//                                                         only returns Page-
-//                                                         authored reels; we'd
-//                                                         need Page Public
-//                                                         Content Access via
-//                                                         App Review for the rest)
-// The form sniffs the pasted URL and progressively reveals the manual fields
-// only when needed.
+// caxton-social-v2
+// Admin curator for Facebook Page posts.
+//   • Page URL  (facebook.com/{page}/posts/{id})  → auto-fetch via Graph API
+//
+// Group + Reel URLs are intentionally NOT supported — those require manual
+// caption + thumbnail entry that the team chose to skip (Option B). The
+// server still has a manual-entry code path on disk (route.ts) but the UI
+// no longer exposes it; if we ever want to bring back manual curation,
+// re-enable the rich form (see git history of this file before v2).
 
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { upload } from '@vercel/blob/client';
 import { adminApi } from '@/lib/admin-api';
 
 type SocialPub = 'realtyline' | 'newsline' | 'both';
 type UrlKind = 'page' | 'group' | 'reel' | 'unknown';
+
+// We only let Page URLs through. Everything else gets a hard error in-UI
+// and the form's submit button stays disabled.
+function isSupportedKind(k: UrlKind): boolean {
+  return k === 'page';
+}
 
 interface FeaturedSocialPost {
   id: number;
@@ -97,11 +96,6 @@ export default function SocialClient() {
   const [url, setUrl] = useState('');
   const [pub, setPub] = useState<SocialPub>('both');
   const [isOpenHouse, setIsOpenHouse] = useState(false);
-  // Manual fields (only used when URL kind === 'group')
-  const [manualMessage, setManualMessage] = useState('');
-  const [manualImageUrl, setManualImageUrl] = useState('');
-  const [manualPostedAt, setManualPostedAt] = useState(''); // datetime-local
-  const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formMsg, setFormMsg] = useState<string | null>(null);
@@ -127,76 +121,30 @@ export default function SocialClient() {
     void refetch();
   }, [refetch]);
 
-  const handleImageUpload = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      setUploading(true);
-      setFormError(null);
-      try {
-        const blob = await upload(`social/${Date.now()}-${file.name}`, file, {
-          access: 'public',
-          handleUploadUrl: '/api/admin/social/upload-token',
-        });
-        setManualImageUrl(blob.url);
-      } catch (err) {
-        setFormError(err instanceof Error ? err.message : 'Upload failed');
-      } finally {
-        setUploading(false);
-        // Reset the input so re-selecting the same file re-fires onChange.
-        e.target.value = '';
-      }
-    },
-    []
-  );
-
   const handleAdd = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (!url.trim()) return;
+      if (!isSupportedKind(urlKind)) {
+        setFormError(
+          'Only Facebook Page post URLs are supported. Group posts and reels are not curated through this tool.'
+        );
+        return;
+      }
       setSubmitting(true);
       setFormError(null);
       setFormMsg(null);
 
       try {
-        const payload: {
-          url: string;
-          pub: SocialPub;
-          is_open_house: boolean;
-          message?: string | null;
-          image_url?: string | null;
-          posted_at?: string | null;
-        } = {
+        await adminApi.addSocialPost({
           url: url.trim(),
           pub,
           is_open_house: isOpenHouse,
-        };
-
-        if (urlKind === 'group' || urlKind === 'reel') {
-          // datetime-local gives 'YYYY-MM-DDTHH:mm' \u2014 convert to ISO if set.
-          payload.message = manualMessage || null;
-          payload.image_url = manualImageUrl || null;
-          payload.posted_at = manualPostedAt
-            ? new Date(manualPostedAt).toISOString()
-            : null;
-        }
-
-        const res = (await adminApi.addSocialPost(payload)) as {
-          source: 'page' | 'group' | 'reel';
-        };
+        });
 
         setUrl('');
         setIsOpenHouse(false);
-        setManualMessage('');
-        setManualImageUrl('');
-        setManualPostedAt('');
-        setFormMsg(
-          res.source === 'page'
-            ? 'Page post added (metadata auto-fetched from Facebook).'
-            : res.source === 'reel'
-            ? 'Reel added (manual entry).'
-            : 'Group post added (manual entry).'
-        );
+        setFormMsg('Page post added (metadata auto-fetched from Facebook).');
         await refetch();
       } catch (err) {
         setFormError(err instanceof Error ? err.message : 'Failed to add post');
@@ -204,16 +152,7 @@ export default function SocialClient() {
         setSubmitting(false);
       }
     },
-    [
-      url,
-      pub,
-      isOpenHouse,
-      urlKind,
-      manualMessage,
-      manualImageUrl,
-      manualPostedAt,
-      refetch,
-    ]
+    [url, pub, isOpenHouse, urlKind, refetch]
   );
 
   const handlePatch = useCallback(
@@ -255,21 +194,16 @@ export default function SocialClient() {
     return { active, inactive };
   }, [posts]);
 
-  const needsManual = urlKind === 'group' || urlKind === 'reel';
-  const canSubmit =
-    url.trim() &&
-    !submitting &&
-    !uploading &&
-    (!needsManual || manualMessage.trim() || manualImageUrl);
+  const canSubmit = url.trim() && !submitting && isSupportedKind(urlKind);
 
   return (
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Social posts</h1>
         <p className="text-sm text-gray-700 mt-1">
-          Curate Facebook posts that surface in the RealtyLine + Newsline feeds.
-          Page posts are auto-fetched; group posts and reels need a caption and
-          image/thumbnail (Meta&rsquo;s API doesn&rsquo;t expose those to us).
+          Curate Facebook Page posts that surface in the RealtyLine + Newsline
+          feeds. Caption + image are pulled automatically from the Graph API.
+          Reels and group posts aren&rsquo;t supported.
         </p>
       </div>
 
@@ -285,7 +219,7 @@ export default function SocialClient() {
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://www.facebook.com/myrealtyline/posts/123… or /groups/…/posts/… or /reel/…"
+              placeholder="https://www.facebook.com/myrealtyline/posts/123…"
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
               required
             />
@@ -297,102 +231,23 @@ export default function SocialClient() {
                 </span>
               )}
               {urlKind === 'group' && (
-                <span className="text-amber-700">
-                  ⚠ Group URL detected — Facebook no longer lets apps read group
-                  posts, so paste the caption and upload the image below.
+                <span className="text-red-700">
+                  ✗ Group URL not supported. Curate Page posts only.
                 </span>
               )}
               {urlKind === 'reel' && (
-                <span className="text-amber-700">
-                  ⚠ Reel URL detected — Meta&rsquo;s API can&rsquo;t resolve reels
-                  shared from other Pages without App Review, so paste the
-                  caption and upload the thumbnail below.
+                <span className="text-red-700">
+                  ✗ Reel URL not supported. Curate Page posts only.
                 </span>
               )}
               {urlKind === 'unknown' && (
                 <>
-                  Supports Page <code>/posts/</code>, Page <code>/photos/</code>,{' '}
-                  <code>?story_fbid=</code>, Group{' '}
-                  <code>/groups/…/posts/</code>, and <code>/reel/</code> URLs.
+                  Paste a Page post URL like{' '}
+                  <code>facebook.com/{'{page}'}/posts/{'{id}'}</code>.
                 </>
               )}
             </p>
           </div>
-
-          {/* Manual fields — required for group posts + reels */}
-          {needsManual && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 p-4 space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-800 mb-1">
-                  Caption / message
-                </label>
-                <textarea
-                  value={manualMessage}
-                  onChange={(e) => setManualMessage(e.target.value)}
-                  rows={4}
-                  placeholder="Paste the post text from Facebook…"
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-800 mb-1">
-                  Image
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif"
-                    onChange={handleImageUpload}
-                    disabled={uploading}
-                    className="text-sm"
-                  />
-                  {uploading && (
-                    <span className="text-xs text-gray-600">Uploading…</span>
-                  )}
-                  {manualImageUrl && !uploading && (
-                    <>
-                      <Image
-                        src={manualImageUrl}
-                        alt=""
-                        width={48}
-                        height={48}
-                        className="rounded border border-gray-300 object-cover"
-                        unoptimized
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setManualImageUrl('')}
-                        className="text-xs text-red-700 hover:underline"
-                      >
-                        Remove
-                      </button>
-                    </>
-                  )}
-                </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  PNG / JPG / WebP / GIF, up to 10 MB. Right-click the photo on
-                  Facebook → Save image, then upload here.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-800 mb-1">
-                  Posted at (optional)
-                </label>
-                <input
-                  type="datetime-local"
-                  value={manualPostedAt}
-                  onChange={(e) => setManualPostedAt(e.target.value)}
-                  className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Used for the &ldquo;{'{time}'} ago&rdquo; label on the card. Leave
-                  blank if unknown.
-                </p>
-              </div>
-            </div>
-          )}
 
           <div className="flex flex-wrap items-center gap-4">
             <div>

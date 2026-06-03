@@ -67,6 +67,18 @@ export const POST = withErrorHandling(async (req: Request) => {
     throw new ApiError(400, (e as Error).message);
   }
 
+  // Per Option B (decided 2026-06-02): only Page posts are curated through
+  // this tool. Group + Reel URLs are rejected here even though the manual-
+  // entry code path below still exists — if the team reverses course, just
+  // remove this guard.
+  if (parsed.kind !== 'page') {
+    const label = parsed.kind === 'reel' ? 'Reel' : 'Group';
+    throw new ApiError(
+      400,
+      `${label} URLs are not supported. Paste a Facebook Page post URL instead.`
+    );
+  }
+
   let post;
 
   if (parsed.kind === 'page') {
