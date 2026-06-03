@@ -116,6 +116,19 @@ export function parseFacebookPostUrl(input: string): FacebookUrlParseResult {
     return { fbPostId: storyFbid, kind: 'page' };
   }
 
+  // facebook.com/photo/?fbid={photoId}&set=...  ← image-viewer URL, NOT a post
+  // The fbid here is a photo object, not a post; our token can't read it
+  // (would need pages_read_user_content + Page Public Content Access).
+  // Tell the admin to copy the post URL instead.
+  if (segments[0] === 'photo' && u.searchParams.get('fbid')) {
+    throw new Error(
+      'This is a photo-viewer URL, not a post URL. ' +
+        'Open the post on the Page, click the post timestamp/date, ' +
+        'and copy the URL from the address bar — it should look like ' +
+        'facebook.com/{page}/posts/{id}.'
+    );
+  }
+
   // Path-based: /{Page}/posts/{id} or /{Page}/posts/{slug}/{id}
   if (segments.length >= 3) {
     const [pageSeg, kind, ...rest] = segments;

@@ -861,7 +861,33 @@ export default function DashboardPage() {
 
 function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number; onLogout: () => void }) {
   const [tab, setTab] = useState('n');
-  const [cat, setCat] = useState('All');
+  // Server + first client render agree on 'All' to avoid hydration mismatch.
+  // Saved cat is hydrated from localStorage post-mount in the useEffect below.
+  const [cat, setCatState] = useState('All');
+
+  // Wrap setCat so every category change persists to localStorage.
+  const setCat = useCallback((next: string) => {
+    setCatState(next);
+    try {
+      window.localStorage.setItem(`caxton_cat_${pub}`, next);
+    } catch {}
+  }, [pub]);
+
+  // Hydrate saved cat for this pub on mount + when pub changes.
+  // Only restore if the saved cat is valid for the current pub's category list.
+  useEffect(() => {
+    queueMicrotask(() => {
+      try {
+        const saved = window.localStorage.getItem(`caxton_cat_${pub}`);
+        const validCats = pub === 'realtyline' ? RL_CATS : NS_CATS;
+        if (saved && validCats.includes(saved)) {
+          setCatState(saved);
+        } else {
+          setCatState('All');
+        }
+      } catch {}
+    });
+  }, [pub]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const track = useMetrics(user?.id || null);
