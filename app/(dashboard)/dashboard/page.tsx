@@ -861,9 +861,23 @@ export default function DashboardPage() {
 
 function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number; onLogout: () => void }) {
   const [tab, setTab] = useState('n');
-  // Server + first client render agree on 'All' to avoid hydration mismatch.
-  // Saved cat is hydrated from localStorage post-mount in the useEffect below.
-  const [cat, setCatState] = useState('All');
+
+  // Read saved cat synchronously on mount so the first client paint shows
+  // the correct pill (no 'All' → 'Social' flash). On the server this falls
+  // back to 'All' since there's no window; the client may then re-render
+  // with the saved value — React tolerates this since the difference is
+  // inside our component's state, not the rendered HTML.
+  const initialCat = (() => {
+    if (typeof window === 'undefined') return 'All';
+    try {
+      const saved = window.localStorage.getItem(`caxton_cat_${pub}`);
+      const validCats = pub === 'realtyline' ? RL_CATS : NS_CATS;
+      return saved && validCats.includes(saved) ? saved : 'All';
+    } catch {
+      return 'All';
+    }
+  })();
+  const [cat, setCatState] = useState(initialCat);
 
   // Wrap setCat so every category change persists to localStorage.
   const setCat = useCallback((next: string) => {
@@ -873,20 +887,15 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
     } catch {}
   }, [pub]);
 
-  // Hydrate saved cat for this pub on mount + when pub changes.
-  // Only restore if the saved cat is valid for the current pub's category list.
+  // When pub changes mid-session, re-sync cat to the saved value for the
+  // newly-active pub (or 'All' if nothing's saved / saved value is invalid).
   useEffect(() => {
-    queueMicrotask(() => {
-      try {
-        const saved = window.localStorage.getItem(`caxton_cat_${pub}`);
-        const validCats = pub === 'realtyline' ? RL_CATS : NS_CATS;
-        if (saved && validCats.includes(saved)) {
-          setCatState(saved);
-        } else {
-          setCatState('All');
-        }
-      } catch {}
-    });
+    try {
+      const saved = window.localStorage.getItem(`caxton_cat_${pub}`);
+      const validCats = pub === 'realtyline' ? RL_CATS : NS_CATS;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional sync of cat to current pub on pub change
+      setCatState(saved && validCats.includes(saved) ? saved : 'All');
+    } catch {}
   }, [pub]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
