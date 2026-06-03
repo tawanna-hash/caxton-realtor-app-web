@@ -26,8 +26,8 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     tagline: 'Reach 71,000+ Texas real estate professionals',
     reach: '71,000+ Texas REALTORS',
     email: 'ads@myrealtyline.com',
-    // TODO(social): swap '#' for live URLs when Tawanna provides them.
-    facebook: '#',
+    facebook: 'https://www.facebook.com/myrealtyline/',
+    // TODO(social): waiting on Instagram + LinkedIn URLs.
     instagram: '#',
     linkedin: '#',
   },
@@ -38,8 +38,8 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     tagline: 'Reach 24,000+ San Antonio real estate professionals',
     reach: '24,000+ San Antonio REALTORS',
     email: 'ads@newslinesa.com',
-    // TODO(social): swap '#' for live URLs when Tawanna provides them.
-    facebook: '#',
+    facebook: 'https://www.facebook.com/newslinesa/',
+    // TODO(social): waiting on Instagram + LinkedIn URLs.
     instagram: '#',
     linkedin: '#',
   },
