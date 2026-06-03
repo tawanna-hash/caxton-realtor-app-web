@@ -173,4 +173,29 @@ export const adminApi = {
     adminFetch(`/admin/ads/campaigns/${id}`, { method: 'DELETE' }),
   toggleAdCampaign: (id: string) =>
     adminFetch(`/admin/ads/campaigns/${id}/toggle`, { method: 'POST' }),
+
+  // Featured Facebook posts (→ surfaced in feed via the Social pill)
+  // Page URLs (facebook.com/{page}/posts/...) are auto-fetched via the
+  // Graph API. Group URLs (facebook.com/groups/{id}/posts/...) require
+  // manual caption + image (Meta deprecated the Groups API in 2024).
+  listSocialPosts: () => adminFetch('/admin/social'),
+  addSocialPost: (data: {
+    url: string;
+    pub: 'realtyline' | 'newsline' | 'both';
+    is_open_house?: boolean;
+    message?: string | null;
+    image_url?: string | null;
+    posted_at?: string | null;
+  }) => adminFetch('/admin/social', { method: 'POST', body: data }),
+  updateSocialPost: (
+    id: number,
+    patch: {
+      pub?: 'realtyline' | 'newsline' | 'both';
+      is_open_house?: boolean;
+      is_active?: boolean;
+      display_order?: number;
+    }
+  ) => adminFetch(`/admin/social/${id}`, { method: 'PATCH', body: patch }),
+  deleteSocialPost: (id: number) =>
+    adminFetch(`/admin/social/${id}`, { method: 'DELETE' }),
 };

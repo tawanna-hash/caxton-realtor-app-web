@@ -78,6 +78,7 @@ const ADMIN_GROUPS: AdminGroup[] = [
       { label: 'Events',    href: '/admin/events',    description: 'Calendar publications' },
       { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries' },
       { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
+      { label: 'Social',    href: '/admin/social',    description: 'Curated Facebook posts' },
     ],
   },
   {

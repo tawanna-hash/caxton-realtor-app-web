@@ -1,0 +1,154 @@
+/**
+ * Data access for featured_social_posts (curated Facebook posts that
+ * surface in the RealtyLine + Newsline feeds).
+ */
+
+import { getSql } from '@/lib/db';
+
+export type SocialPub = 'realtyline' | 'newsline' | 'both';
+
+export interface FeaturedSocialPost {
+  id: number;
+  fb_post_id: string;
+  page_id: string;
+  permalink_url: string;
+  message: string | null;
+  image_url: string | null;
+  posted_at: string | null;
+  pub: SocialPub;
+  is_open_house: boolean;
+  is_active: boolean;
+  display_order: number;
+  refreshed_at: string;
+  created_at: string;
+  created_by: string | null;
+}
+
+interface DbRow {
+  id: number;
+  fb_post_id: string;
+  page_id: string;
+  permalink_url: string;
+  message: string | null;
+  image_url: string | null;
+  posted_at: string | null;
+  pub: SocialPub;
+  is_open_house: boolean;
+  is_active: boolean;
+  display_order: number;
+  refreshed_at: string;
+  created_at: string;
+  created_by: string | null;
+}
+
+export async function listAllSocialPosts(): Promise<FeaturedSocialPost[]> {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT * FROM featured_social_posts
+    ORDER BY is_active DESC, display_order ASC, posted_at DESC NULLS LAST
+  `) as DbRow[];
+  return rows;
+}
+
+/**
+ * Posts visible to the feed for a given publication.
+ * Order: open-house pins first, then display_order, then newest.
+ */
+export async function listFeedSocialPosts(
+  pub: 'realtyline' | 'newsline'
+): Promise<FeaturedSocialPost[]> {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT * FROM featured_social_posts
+    WHERE is_active = TRUE
+      AND (pub = ${pub} OR pub = 'both')
+    ORDER BY is_open_house DESC,
+             display_order ASC,
+             posted_at DESC NULLS LAST
+  `) as DbRow[];
+  return rows;
+}
+
+export interface UpsertSocialPostInput {
+  fb_post_id: string;
+  page_id: string;
+  permalink_url: string;
+  message: string | null;
+  image_url: string | null;
+  posted_at: string | null;
+  pub: SocialPub;
+  is_open_house?: boolean;
+  is_active?: boolean;
+  display_order?: number;
+  created_by?: string | null;
+}
+
+export async function upsertSocialPost(
+  input: UpsertSocialPostInput
+): Promise<FeaturedSocialPost> {
+  const sql = getSql();
+  const rows = (await sql`
+    INSERT INTO featured_social_posts
+      (fb_post_id, page_id, permalink_url, message, image_url, posted_at,
+       pub, is_open_house, is_active, display_order, refreshed_at, created_by)
+    VALUES
+      (${input.fb_post_id}, ${input.page_id}, ${input.permalink_url},
+       ${input.message}, ${input.image_url}, ${input.posted_at},
+       ${input.pub}, ${input.is_open_house ?? false}, ${input.is_active ?? true},
+       ${input.display_order ?? 0}, NOW(), ${input.created_by ?? null})
+    ON CONFLICT (fb_post_id) DO UPDATE SET
+      page_id       = EXCLUDED.page_id,
+      permalink_url = EXCLUDED.permalink_url,
+      message       = EXCLUDED.message,
+      image_url     = EXCLUDED.image_url,
+      posted_at     = EXCLUDED.posted_at,
+      refreshed_at  = NOW()
+    RETURNING *
+  `) as DbRow[];
+  return rows[0];
+}
+
+export interface UpdateSocialPostInput {
+  pub?: SocialPub;
+  is_open_house?: boolean;
+  is_active?: boolean;
+  display_order?: number;
+}
+
+export async function updateSocialPost(
+  id: number,
+  patch: UpdateSocialPostInput
+): Promise<FeaturedSocialPost | null> {
+  const sql = getSql();
+  // Use COALESCE to leave unspecified fields untouched.
+  const rows = (await sql`
+    UPDATE featured_social_posts SET
+      pub           = COALESCE(${patch.pub ?? null}, pub),
+      is_open_house = COALESCE(${patch.is_open_house ?? null}, is_open_house),
+      is_active     = COALESCE(${patch.is_active ?? null}, is_active),
+      display_order = COALESCE(${patch.display_order ?? null}, display_order)
+    WHERE id = ${id}
+    RETURNING *
+  `) as DbRow[];
+  return rows[0] ?? null;
+}
+
+export async function deleteSocialPost(id: number): Promise<boolean> {
+  const sql = getSql();
+  const rows = (await sql`
+    DELETE FROM featured_social_posts WHERE id = ${id} RETURNING id
+  `) as { id: number }[];
+  return rows.length > 0;
+}
+
+/** All posts that need a refresh (older than 24h or never refreshed). */
+export async function listStaleSocialPosts(): Promise<FeaturedSocialPost[]> {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT * FROM featured_social_posts
+    WHERE is_active = TRUE
+      AND (refreshed_at IS NULL OR refreshed_at < NOW() - INTERVAL '24 hours')
+    ORDER BY refreshed_at ASC NULLS FIRST
+  `) as DbRow[];
+  return rows;
+}

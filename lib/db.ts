@@ -147,6 +147,38 @@ export async function ensureSchema(): Promise<void> {
       ON ad_creatives (advertiser_name)
   `;
 
+  // ── Featured social posts (curated Facebook integration) ─────────────────
+  //
+  // Admins paste a Facebook post URL in /admin/social; we fetch the post
+  // via the Graph API (using a long-lived Page Access Token) and cache the
+  // message/image/permalink here. Cards render natively in the feed and
+  // when the user clicks 'View on Facebook' they're sent to permalink_url.
+  //
+  // is_open_house flips on a gold badge AND pins the post to the top of
+  // the feed for that publication while is_active=true.
+  await sql`
+    CREATE TABLE IF NOT EXISTS featured_social_posts (
+      id              SERIAL PRIMARY KEY,
+      fb_post_id      TEXT UNIQUE NOT NULL,
+      page_id         TEXT NOT NULL,
+      permalink_url   TEXT NOT NULL,
+      message         TEXT,
+      image_url       TEXT,
+      posted_at       TIMESTAMPTZ,
+      pub             TEXT NOT NULL DEFAULT 'both',
+      is_open_house   BOOLEAN NOT NULL DEFAULT FALSE,
+      is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+      display_order   INTEGER NOT NULL DEFAULT 0,
+      refreshed_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_by      TEXT
+    )
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_featured_social_posts_feed
+      ON featured_social_posts (pub, is_active, is_open_house, display_order, posted_at DESC)
+  `;
+
   // Pre-populate the 15 ad spaces (catalog). Idempotent: ON CONFLICT DO NOTHING
   // means re-running ensureSchema() doesn't disturb anything.
   const adSpaceCatalog = [
