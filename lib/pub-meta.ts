@@ -27,8 +27,8 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     reach: '71,000+ Texas REALTORS',
     email: 'ads@myrealtyline.com',
     facebook: 'https://www.facebook.com/myrealtyline/',
-    // TODO(social): waiting on Instagram + LinkedIn URLs.
-    instagram: '#',
+    instagram: 'https://www.instagram.com/myrealtyline/',
+    // TODO(social): waiting on LinkedIn URL.
     linkedin: '#',
   },
   newsline: {
@@ -39,8 +39,8 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     reach: '24,000+ San Antonio REALTORS',
     email: 'ads@newslinesa.com',
     facebook: 'https://www.facebook.com/newslinesa/',
-    // TODO(social): waiting on Instagram + LinkedIn URLs.
-    instagram: '#',
+    instagram: 'https://www.instagram.com/newsline_sanantonio/',
+    // TODO(social): waiting on LinkedIn URL.
     linkedin: '#',
   },
 };
