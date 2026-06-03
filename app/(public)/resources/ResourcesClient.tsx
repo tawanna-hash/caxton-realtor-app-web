@@ -45,6 +45,7 @@ export default function ResourcesClient() {
       {/* ── Quick jump links ────────────────────────────────────────── */}
       <nav className="mb-12 flex flex-wrap gap-2 text-sm">
         {[
+          { href: '#tools', label: 'Tools' },
           { href: '#guides', label: 'Guides & PDFs' },
           { href: '#vendors', label: 'Vendors' },
           { href: '#videos', label: 'Videos' },
@@ -61,6 +62,45 @@ export default function ResourcesClient() {
       </nav>
 
       {/* ── Section 1: Guides ───────────────────────────────────────── */}
+      <section id="tools" className="mb-16 scroll-mt-24">
+        <p className={SECTION_EYEBROW}>Realtor Tools</p>
+        <h2
+          className="text-2xl md:text-3xl text-gray-900 mb-6"
+          style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
+        >
+          Calculators & quick references
+        </h2>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <a
+            href="/resources/mortgage-calculator"
+            className="group block rounded-xl border border-gray-200 bg-gradient-to-br from-[#1a2a44]/5 to-white p-6 hover:border-[#1a2a44] hover:shadow-md transition"
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1a2a44] bg-[#1a2a44]/10 px-2 py-0.5 rounded">
+                Calculator
+              </span>
+              <span className="text-[#1a2a44] opacity-0 group-hover:opacity-100 transition text-sm">→</span>
+            </div>
+            <p
+              className="text-xl text-gray-900 mb-2"
+              style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
+            >
+              Mortgage Calculator
+            </p>
+            <p className="text-sm text-gray-700 font-light leading-relaxed">
+              PITI breakdown, affordability analysis, and year-by-year amortization
+              with Austin defaults. Built for showings and buyer consults.
+            </p>
+          </a>
+          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 flex items-center justify-center text-center">
+            <p className="text-sm text-gray-500">
+              More tools coming soon — commission calculator, net-sheet generator,
+              closing cost estimator.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section id="guides" className="mb-16 scroll-mt-24">
         <p className={SECTION_EYEBROW}>Downloadable Guides</p>
         <h2
