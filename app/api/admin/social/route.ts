@@ -67,15 +67,15 @@ export const POST = withErrorHandling(async (req: Request) => {
     throw new ApiError(400, (e as Error).message);
   }
 
-  // Per Option B (decided 2026-06-02): only Page posts are curated through
-  // this tool. Group + Reel URLs are rejected here even though the manual-
-  // entry code path below still exists — if the team reverses course, just
-  // remove this guard.
-  if (parsed.kind !== 'page') {
-    const label = parsed.kind === 'reel' ? 'Reel' : 'Group';
+  // Reels remain unsupported (Page video_reels API only exposes reels the
+  // Page itself authored; reshares / tagged reels need App Review approval).
+  // Group posts ARE supported via the harvester (manual fallback). See
+  // /api/admin/social/harvest for the OG-tag auto-fill path the UI uses
+  // before submitting.
+  if (parsed.kind === 'reel') {
     throw new ApiError(
       400,
-      `${label} URLs are not supported. Paste a Facebook Page post URL instead.`
+      'Reel URLs are not supported. Paste a Facebook Page post or Group post URL instead.'
     );
   }
 
@@ -108,13 +108,11 @@ export const POST = withErrorHandling(async (req: Request) => {
       created_by: admin.email ?? null,
     });
   } else {
-    // ─── Group / Reel post: manual fields required ────────────────────
-    // • Groups: Meta deprecated the Groups API in 2024 — no supported way
-    //   to read group post content programmatically, even for group admins.
-    // • Reels: /{page_id}/video_reels only returns reels the Page itself
-    //   authored; reshares + tagged reels can't be fetched by ID without
-    //   pages_read_user_content + Page Public Content Access (App Review).
-    const kindLabel = parsed.kind === 'reel' ? 'Reel' : 'Group post';
+    // ─── Group post: manual fields (typically pre-filled by harvester) ──
+    // Meta deprecated the Groups API in 2024 — no supported way to read
+    // group post content programmatically, even for group admins. The UI
+    // calls /api/admin/social/harvest first to pull caption + image from
+    // the post's public OG tags, then posts here with those fields.
     const message = (body.message ?? '').trim();
     const imageUrl = (body.image_url ?? '').trim() || null;
     const postedAt = (body.posted_at ?? '').trim() || null;
@@ -122,8 +120,7 @@ export const POST = withErrorHandling(async (req: Request) => {
     if (!message && !imageUrl) {
       throw new ApiError(
         400,
-        `${kindLabel}s require either a caption (message) or an image/thumbnail. ` +
-          'Paste a Page post URL to auto-fetch instead.'
+        'Group posts require either a caption or an image. Click "Harvest from Facebook" in the admin UI to pull them automatically.'
       );
     }
 

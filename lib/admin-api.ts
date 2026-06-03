@@ -187,6 +187,12 @@ export const adminApi = {
     image_url?: string | null;
     posted_at?: string | null;
   }) => adminFetch('/admin/social', { method: 'POST', body: data }),
+  // Pre-flight: fetch the public HTML of a Facebook URL and return whatever
+  // caption / image / posted-at we can pull from OpenGraph tags. UI uses
+  // this to pre-fill the manual-entry form for Group posts before the admin
+  // submits. Returns { kind, harvested, message, imageUrl, postedAt, reason? }.
+  harvestSocialPost: (data: { url: string }) =>
+    adminFetch('/admin/social/harvest', { method: 'POST', body: data }),
   updateSocialPost: (
     id: number,
     patch: {
