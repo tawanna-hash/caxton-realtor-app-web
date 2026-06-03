@@ -101,6 +101,18 @@ export default function ResourcesClient() {
             title="Rent vs. Buy"
             description="Year-by-year cost comparison with breakeven. Models appreciation, equity, maintenance, and exit costs vs. annual rent escalators."
           />
+          <ToolCard
+            href="/resources/investment-property"
+            badge="Analysis"
+            title="Investment Property ROI"
+            description="Cash flow, cap rate, cash-on-cash, NOI and DSCR for SFR and small multifamily rentals. Includes 1% and 50% rule checks."
+          />
+          <ToolCard
+            href="/resources/1031-exchange"
+            badge="Timeline"
+            title="1031 Exchange Timeline"
+            description="Track the 45-day identification and 180-day replacement deadlines on a like-kind exchange from the relinquished closing date."
+          />
         </div>
       </section>
 

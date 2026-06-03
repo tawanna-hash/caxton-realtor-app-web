@@ -521,6 +521,327 @@ export function computeRentVsBuy(input: RentVsBuyInput): RentVsBuyResult {
   return { rows, breakevenYear };
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// Investment Property ROI / Cash Flow
+//
+// What a real-estate investor wants to see for a rental:
+//   - Monthly cash flow (rent − op-ex − debt service)
+//   - Effective gross income (rent net of vacancy)
+//   - NOI (EGI − operating expenses, BEFORE debt service)
+//   - Cap rate (NOI / purchase price)
+//   - Cash-on-cash return (annual cash flow / total cash invested)
+//   - GRM (price / annual gross rent)
+//   - DSCR (NOI / annual debt service) — what most DSCR lenders look at
+//   - 1% rule check (rent ≥ 1% of price)
+//   - 50% rule check (op-ex ≈ 50% of gross rent)
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface InvestmentInput {
+  purchasePrice: number;
+  downPayment: number;
+  closingCosts: number;
+  initialRepairs: number;
+  annualRatePct: number;
+  termYears: number;
+
+  // Income
+  monthlyRent: number;
+  /** Other monthly income (laundry, pet, parking, etc.). */
+  otherMonthlyIncome: number;
+  /** Vacancy rate as % of gross rent. Default 5. */
+  vacancyPct: number;
+
+  // Operating expenses (annual unless noted)
+  annualPropertyTax: number;
+  annualInsurance: number;
+  monthlyHoa: number;
+  /** Property management as % of EGI (effective gross income). */
+  propMgmtPct: number;
+  /** Maintenance reserve as % of EGI. */
+  maintenancePct: number;
+  /** CapEx reserve as % of EGI. */
+  capExPct: number;
+  monthlyUtilities: number;
+  otherMonthlyOpEx: number;
+}
+
+export interface InvestmentBreakdown {
+  loanAmount: number;
+  totalCashInvested: number;
+  // Income
+  grossMonthlyRent: number;
+  grossAnnualRent: number;
+  vacancyLoss: number; // annual
+  effectiveGrossIncome: number; // annual
+  // Op-ex (annual)
+  propertyTax: number;
+  insurance: number;
+  hoa: number;
+  propMgmt: number;
+  maintenance: number;
+  capEx: number;
+  utilities: number;
+  otherOpEx: number;
+  totalOpEx: number;
+  // Returns
+  noi: number; // annual
+  annualDebtService: number;
+  annualCashFlow: number;
+  monthlyCashFlow: number;
+  capRate: number; // decimal 0–1
+  cashOnCash: number; // decimal
+  grm: number;
+  dscr: number;
+  // Rule of thumb checks
+  onePctRuleMet: boolean;
+  fiftyPctRuleMet: boolean;
+  rentToPriceRatio: number; // monthly rent / price
+}
+
+export function computeInvestment(input: InvestmentInput): InvestmentBreakdown {
+  const {
+    purchasePrice,
+    downPayment,
+    closingCosts,
+    initialRepairs,
+    annualRatePct,
+    termYears,
+    monthlyRent,
+    otherMonthlyIncome,
+    vacancyPct,
+    annualPropertyTax,
+    annualInsurance,
+    monthlyHoa,
+    propMgmtPct,
+    maintenancePct,
+    capExPct,
+    monthlyUtilities,
+    otherMonthlyOpEx,
+  } = input;
+
+  const loanAmount = Math.max(0, purchasePrice - downPayment);
+  const totalCashInvested = downPayment + closingCosts + initialRepairs;
+
+  // Income side
+  const grossMonthlyRent = monthlyRent + otherMonthlyIncome;
+  const grossAnnualRent = grossMonthlyRent * 12;
+  const vacancyLoss = (grossAnnualRent * vacancyPct) / 100;
+  const effectiveGrossIncome = grossAnnualRent - vacancyLoss;
+
+  // Operating expenses
+  const propertyTax = annualPropertyTax;
+  const insurance = annualInsurance;
+  const hoa = monthlyHoa * 12;
+  const propMgmt = (effectiveGrossIncome * propMgmtPct) / 100;
+  const maintenance = (effectiveGrossIncome * maintenancePct) / 100;
+  const capEx = (effectiveGrossIncome * capExPct) / 100;
+  const utilities = monthlyUtilities * 12;
+  const otherOpEx = otherMonthlyOpEx * 12;
+  const totalOpEx =
+    propertyTax + insurance + hoa + propMgmt + maintenance + capEx + utilities + otherOpEx;
+
+  const noi = effectiveGrossIncome - totalOpEx;
+
+  const monthlyDebtService = monthlyPI(loanAmount, annualRatePct, termYears);
+  const annualDebtService = monthlyDebtService * 12;
+
+  const annualCashFlow = noi - annualDebtService;
+  const monthlyCashFlow = annualCashFlow / 12;
+
+  const capRate = purchasePrice > 0 ? noi / purchasePrice : 0;
+  const cashOnCash =
+    totalCashInvested > 0 ? annualCashFlow / totalCashInvested : 0;
+  const grm = grossAnnualRent > 0 ? purchasePrice / grossAnnualRent : 0;
+  const dscr = annualDebtService > 0 ? noi / annualDebtService : 0;
+
+  const rentToPriceRatio =
+    purchasePrice > 0 ? grossMonthlyRent / purchasePrice : 0;
+  const onePctRuleMet = rentToPriceRatio >= 0.01;
+  // Industry shorthand: total op-ex (incl. mgmt/maint/capex reserves) should
+  // be roughly 50% of gross rent.
+  const fiftyPctRuleMet =
+    grossAnnualRent > 0 ? totalOpEx / grossAnnualRent <= 0.5 : false;
+
+  return {
+    loanAmount,
+    totalCashInvested,
+    grossMonthlyRent,
+    grossAnnualRent,
+    vacancyLoss,
+    effectiveGrossIncome,
+    propertyTax,
+    insurance,
+    hoa,
+    propMgmt,
+    maintenance,
+    capEx,
+    utilities,
+    otherOpEx,
+    totalOpEx,
+    noi,
+    annualDebtService,
+    annualCashFlow,
+    monthlyCashFlow,
+    capRate,
+    cashOnCash,
+    grm,
+    dscr,
+    onePctRuleMet,
+    fiftyPctRuleMet,
+    rentToPriceRatio,
+  };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// 1031 Exchange Timeline
+//
+// IRC §1031 like-kind exchange deadlines:
+//   - 45-day identification period: identify replacement property/properties
+//     in writing within 45 calendar days of relinquished closing.
+//   - 180-day exchange period: acquire replacement within 180 calendar days
+//     of relinquished closing OR by the due date of the tax return for the
+//     year of the sale (incl. extensions) — whichever is earlier.
+//
+// Both periods run from the same start date and are NOT extended for
+// weekends/holidays.
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface ExchangeMilestone {
+  /** Label e.g. "Day 0 — Relinquished closing" */
+  label: string;
+  /** YYYY-MM-DD */
+  date: string;
+  /** Days from the start (0 for the closing itself). */
+  daysFromStart: number;
+  /** Days remaining from "today" until this milestone (negative if past). */
+  daysFromToday: number;
+  /** One-line description for the realtor / client. */
+  description: string;
+  /** Hard IRS deadline (vs. recommended internal milestone). */
+  isDeadline: boolean;
+}
+
+export interface ExchangeTimeline {
+  startDate: string;
+  identificationDeadline: string;
+  exchangeDeadline: string;
+  daysUntilId: number;
+  daysUntilExchange: number;
+  milestones: ExchangeMilestone[];
+  /** Progress 0–1 through the 180-day window. */
+  progress: number;
+  /** Current status label */
+  statusLabel: string;
+}
+
+/** Add N calendar days to a YYYY-MM-DD date. Returns YYYY-MM-DD. */
+function addDays(isoDate: string, days: number): string {
+  const d = new Date(isoDate + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Days between two YYYY-MM-DD dates (signed; b − a). */
+function daysBetween(a: string, b: string): number {
+  const da = new Date(a + 'T00:00:00Z').getTime();
+  const db = new Date(b + 'T00:00:00Z').getTime();
+  return Math.round((db - da) / (1000 * 60 * 60 * 24));
+}
+
+export function computeExchangeTimeline(
+  relinquishedClosingDate: string,
+  todayIso?: string
+): ExchangeTimeline {
+  const today =
+    todayIso ?? new Date().toISOString().slice(0, 10);
+
+  const identificationDeadline = addDays(relinquishedClosingDate, 45);
+  const exchangeDeadline = addDays(relinquishedClosingDate, 180);
+
+  const daysUntilId = daysBetween(today, identificationDeadline);
+  const daysUntilExchange = daysBetween(today, exchangeDeadline);
+  const elapsed = daysBetween(relinquishedClosingDate, today);
+  const progress = Math.max(0, Math.min(1, elapsed / 180));
+
+  let statusLabel: string;
+  if (elapsed < 0) {
+    statusLabel = 'Pre-closing';
+  } else if (daysUntilId >= 0) {
+    statusLabel = 'Identification period';
+  } else if (daysUntilExchange >= 0) {
+    statusLabel = 'Exchange period';
+  } else {
+    statusLabel = 'Expired';
+  }
+
+  const mkMilestone = (
+    label: string,
+    days: number,
+    description: string,
+    isDeadline: boolean
+  ): ExchangeMilestone => {
+    const date = addDays(relinquishedClosingDate, days);
+    return {
+      label,
+      date,
+      daysFromStart: days,
+      daysFromToday: daysBetween(today, date),
+      description,
+      isDeadline,
+    };
+  };
+
+  const milestones: ExchangeMilestone[] = [
+    mkMilestone(
+      'Relinquished closing',
+      0,
+      'Sale of relinquished property closes. Proceeds go to qualified intermediary — do NOT touch them.',
+      true
+    ),
+    mkMilestone(
+      'Identification draft due',
+      30,
+      'Internal milestone: have your written identification list drafted and reviewed with the QI.',
+      false
+    ),
+    mkMilestone(
+      '45-day identification deadline',
+      45,
+      'Final written identification of replacement property(ies) must be delivered to the QI. No exceptions — not extended for weekends.',
+      true
+    ),
+    mkMilestone(
+      'Under contract on replacement',
+      90,
+      'Internal milestone: replacement property under contract with adequate buffer to close.',
+      false
+    ),
+    mkMilestone(
+      'Replacement closing buffer',
+      165,
+      'Target close date — leaves a 15-day buffer before the 180-day hard deadline.',
+      false
+    ),
+    mkMilestone(
+      '180-day exchange deadline',
+      180,
+      'Replacement property MUST close. Whichever comes first: 180 days or the due date of the tax return for the year of sale (incl. extensions).',
+      true
+    ),
+  ];
+
+  return {
+    startDate: relinquishedClosingDate,
+    identificationDeadline,
+    exchangeDeadline,
+    daysUntilId,
+    daysUntilExchange,
+    milestones,
+    progress,
+    statusLabel,
+  };
+}
+
 // Local copy of monthlyPI to avoid a circular import w/ mortgage-math.
 function monthlyPI(
   principal: number,
