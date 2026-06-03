@@ -70,34 +70,25 @@ export default function ResourcesClient() {
         >
           Calculators & quick references
         </h2>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <a
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <ToolCard
             href="/resources/mortgage-calculator"
-            className="group block rounded-xl border border-gray-200 bg-gradient-to-br from-[#1a2a44]/5 to-white p-6 hover:border-[#1a2a44] hover:shadow-md transition"
-          >
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1a2a44] bg-[#1a2a44]/10 px-2 py-0.5 rounded">
-                Calculator
-              </span>
-              <span className="text-[#1a2a44] opacity-0 group-hover:opacity-100 transition text-sm">→</span>
-            </div>
-            <p
-              className="text-xl text-gray-900 mb-2"
-              style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
-            >
-              Mortgage Calculator
-            </p>
-            <p className="text-sm text-gray-700 font-light leading-relaxed">
-              PITI breakdown, affordability analysis, and year-by-year amortization
-              with Austin defaults. Built for showings and buyer consults.
-            </p>
-          </a>
-          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 flex items-center justify-center text-center">
-            <p className="text-sm text-gray-500">
-              More tools coming soon — commission calculator, net-sheet generator,
-              closing cost estimator.
-            </p>
-          </div>
+            badge="Calculator"
+            title="Mortgage Calculator"
+            description="PITI breakdown, affordability analysis, and year-by-year amortization with Austin defaults. Built for showings and buyer consults."
+          />
+          <ToolCard
+            href="/resources/commission-calculator"
+            badge="Calculator"
+            title="Commission Calculator"
+            description="Sale price to take-home. Models side split, referral fee, broker split, and broker flat fee — so you know your number before writing the offer."
+          />
+          <ToolCard
+            href="/resources/seller-net-sheet"
+            badge="Printable"
+            title="Seller Net Sheet"
+            description="Estimate what your seller walks away with at closing. Texas-standard line items, auto title-policy estimate, printable for listing appointments."
+          />
         </div>
       </section>
 
@@ -177,6 +168,41 @@ export default function ResourcesClient() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Card components
 // ─────────────────────────────────────────────────────────────────────────────
+
+function ToolCard({
+  href,
+  badge,
+  title,
+  description,
+}: {
+  href: string;
+  badge: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <a
+      href={href}
+      className="group block rounded-xl border border-gray-200 bg-gradient-to-br from-[#1a2a44]/5 to-white p-6 hover:border-[#1a2a44] hover:shadow-md transition"
+    >
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1a2a44] bg-[#1a2a44]/10 px-2 py-0.5 rounded">
+          {badge}
+        </span>
+        <span className="text-[#1a2a44] opacity-0 group-hover:opacity-100 transition text-sm">→</span>
+      </div>
+      <p
+        className="text-xl text-gray-900 mb-2"
+        style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
+      >
+        {title}
+      </p>
+      <p className="text-sm text-gray-700 font-light leading-relaxed">
+        {description}
+      </p>
+    </a>
+  );
+}
 
 function GuideCard({ guide }: { guide: ResourceGuide }) {
   const isPlaceholder = guide.href === '#';
