@@ -78,7 +78,8 @@ const ADMIN_GROUPS: AdminGroup[] = [
       { label: 'Events',    href: '/admin/events',    description: 'Calendar publications' },
       { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries' },
       { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
-      { label: 'Social',    href: '/admin/social',    description: 'Curated Facebook posts' },
+      // 'Social' link removed 2026-06-02 — page itself kept at /admin/social
+      // in case curation comes back, but no longer reachable from the nav.
     ],
   },
   {

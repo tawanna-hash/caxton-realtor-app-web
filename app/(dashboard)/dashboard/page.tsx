@@ -16,7 +16,6 @@ import NewsletterCTA from '@/components/NewsletterCTA';
 import { SW } from '@/lib/style-constants';
 import { PUB_META, type PubKey } from '@/lib/pub-meta';
 import { AdSlot as AdSlotComponent } from '@/components/ads/AdSlot';
-import FacebookPostCard, { type FacebookFeedPost } from '@/components/FacebookPostCard';
 
 const API = getApiBase();
 
@@ -25,8 +24,13 @@ const PUBS = [
   { id: 'newsline', name: 'Newsline San Antonio', city: 'San Antonio', tagline: 'Founded 1982 - Relaunched 2025', color: '#3D0740' },
 ];
 
-const RL_CATS = ['All', 'Social', 'ABoR', 'Five Points', 'Featured Advertisers', "Editor's Choice", 'Faces of Real Estate', 'WCR Austin'];
-const NS_CATS = ['All', 'Social', 'SABOR', 'GSABA', 'WCR San Antonio', 'Residential', 'Featured Advertisers', "Editor's Choice", 'Faces of Real Estate'];
+// Social pill removed 2026-06-02 — Facebook Group integration didn't pan out
+// (Groups API deprecated by Meta in 2024, OG-tag harvester blocked by FB's
+// datacenter-IP filter). Old saved values for caxton_cat_* in localStorage
+// that reference 'Social' fall through to 'All' via the validCats check in
+// Feed's useState initializer below.
+const RL_CATS = ['All', 'ABoR', 'Five Points', 'Featured Advertisers', "Editor's Choice", 'Faces of Real Estate', 'WCR Austin'];
+const NS_CATS = ['All', 'SABOR', 'GSABA', 'WCR San Antonio', 'Residential', 'Featured Advertisers', "Editor's Choice", 'Faces of Real Estate'];
 
 const RL_NEWS = [
   { id: 1, cat: 'ABoR', head: 'ABoR Announces 2026 Board Election Results', sum: 'New leadership elected with a focus on affordability and inventory.', time: '2 hours ago' },
@@ -911,27 +915,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
   }, [liveNews]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsError, setNewsError] = useState<string | null>(null);
-  const [socialPosts, setSocialPosts] = useState<FacebookFeedPost[]>([]);
-
-  // caxton-social-v1 — pull curated Facebook posts for the current pub.
-  // Silent failure: an outage in the Graph API or our cache shouldn't block
-  // the feed; the user just sees no social cards that session.
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/social/feed?pub=${pub}`)
-      .then((r) => (r.ok ? r.json() : { posts: [] }))
-      .then((data) => {
-        if (cancelled) return;
-        const list: FacebookFeedPost[] = Array.isArray(data?.posts) ? data.posts : [];
-        setSocialPosts(list);
-      })
-      .catch(() => {
-        if (!cancelled) setSocialPosts([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [pub, newsRefreshNonce]);
+  // caxton-social-v1 social fetch removed 2026-06-02. Endpoint /api/social/feed
+  // and DB table featured_social_posts kept on disk in case curation comes back.
 
   useEffect(() => {
     let cancelled = false;
@@ -972,54 +957,28 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
   const CATS = pub === 'realtyline' ? RL_CATS : NS_CATS;
   const filt = cat === 'All' ? NEWS : NEWS.filter((n) => n.cat === cat);
 
-  const feed: { t: 'n' | 'a' | 'c' | 's' | 'e' | 'fb'; d?: any }[] = [];
+  const feed: { t: 'n' | 'a' | 'c' | 's' | 'e'; d?: any }[] = [];
   const isLoadingFirstFetch = newsLoading && liveNews === null;
 
-  // caxton-social-v1 — dedicated Social tab: only Facebook cards.
-  if (cat === 'Social') {
-    if (socialPosts.length === 0) {
-      feed.push({ t: 'e', d: { cat } });
-    } else {
-      socialPosts.forEach((p) => feed.push({ t: 'fb', d: p }));
-    }
+  const isEmptyAfterLoad = !isLoadingFirstFetch && filt.length === 0;
+
+  if (isLoadingFirstFetch) {
+    for (let i = 0; i < 3; i++) feed.push({ t: 's', d: { id: i } });
+  } else if (isEmptyAfterLoad) {
+    feed.push({ t: 'e', d: { cat } });
   } else {
-    const isEmptyAfterLoad = !isLoadingFirstFetch && filt.length === 0;
+    // Mock inline ad cards (Austin Title, Cornerstone, Alamo, SWBC) were
+    // removed — paid inventory now flows through <AdSlot> + ad_campaigns.
+    // `pubAds` retained above only so the constant declaration doesn't
+    // become an unused-variable lint error in case future code wants it.
+    void pubAds;
 
-    if (isLoadingFirstFetch) {
-      for (let i = 0; i < 3; i++) feed.push({ t: 's', d: { id: i } });
-    } else if (isEmptyAfterLoad) {
-      feed.push({ t: 'e', d: { cat } });
-    } else {
-      // Mock inline ad cards (Austin Title, Cornerstone, Alamo, SWBC) were
-      // removed — paid inventory now flows through <AdSlot> + ad_campaigns.
-      // `pubAds` retained above only so the constant declaration doesn't
-      // become an unused-variable lint error in case future code wants it.
-      void pubAds;
-
-      // caxton-social-v1 — mixed-in social cards.
-      // Open-house posts pin to the top; non-OH posts interleave every 5th
-      // item alongside the article stream. Only applies when the user is
-      // viewing the unfiltered "All" tab — category-specific views stay
-      // pure to honor the filter intent.
-      const openHousePins =
-        cat === 'All' ? socialPosts.filter((p) => p.is_open_house) : [];
-      const mixIn =
-        cat === 'All' ? socialPosts.filter((p) => !p.is_open_house) : [];
-
-      openHousePins.forEach((p) => feed.push({ t: 'fb', d: p }));
-
-      let mixCursor = 0;
-      filt.forEach((item, i) => {
-        feed.push({ t: 'n', d: item });
-        if (i === 2) {
-          feed.push({ t: 'c' });
-        }
-        // Slot a non-OH social card every 5th article (positions 4, 9, 14…).
-        if (i > 0 && (i + 1) % 5 === 0 && mixCursor < mixIn.length) {
-          feed.push({ t: 'fb', d: mixIn[mixCursor++] });
-        }
-      });
-    }
+    filt.forEach((item, i) => {
+      feed.push({ t: 'n', d: item });
+      if (i === 2) {
+        feed.push({ t: 'c' });
+      }
+    });
   }
 
   function handleSwitch() {
@@ -1108,14 +1067,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
               ) : item.t === 'n' ? (
                 <article key={'n' + item.d.id} className="bg-white border-b border-gray-200">
                   <ArticleCard item={item.d} pub={pub} />
-                </article>
-              ) : item.t === 'fb' ? (
-                <article key={'fb' + item.d.id} className="bg-white border-b border-gray-200">
-                  <FacebookPostCard
-                    post={item.d}
-                    pub={pub as 'realtyline' | 'newsline'}
-                    track={track}
-                  />
                 </article>
               ) : (
                 <AdCardTracked key={'a' + item.d.id} ad={item.d} onClick={handleAdClick} track={track} pub={pub} />
@@ -1269,23 +1220,18 @@ function ArticleSkeleton() {
 }
 
 function EmptyState({ cat }: { cat: string }) {
-  const isSocial = cat === 'Social';
   const isAll = cat === 'All';
   return (
     <div className="px-6 py-16 text-center bg-white border-b border-gray-200">
       <p className="text-gray-700 text-lg font-medium mb-1">
-        {isSocial
-          ? 'No social posts yet.'
-          : isAll
-            ? 'No articles available right now.'
-            : `No articles tagged ${cat} yet.`}
+        {isAll
+          ? 'No articles available right now.'
+          : `No articles tagged ${cat} yet.`}
       </p>
       <p className="text-gray-500 text-sm font-light">
-        {isSocial
-          ? 'Curated Facebook posts will appear here once an admin adds them.'
-          : isAll
-            ? 'Check back soon.'
-            : 'Check back soon, or try another category.'}
+        {isAll
+          ? 'Check back soon.'
+          : 'Check back soon, or try another category.'}
       </p>
     </div>
   );
