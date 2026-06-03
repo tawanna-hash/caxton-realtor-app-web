@@ -1002,6 +1002,13 @@ function AgreementDrawer({
   const isCreate = !existing;
   const isUploaded = !!existing?.is_uploaded;
 
+  // Amend mode: opt-in unlock for uploaded (already-signed paper) agreements
+  // so admins can re-capture digital terms acceptance / signature if a paper
+  // record needs to be amended in-system. Non-uploaded agreements are always
+  // “in amend mode” because Terms & Signature is always visible for them.
+  const [amending, setAmending] = useState(false);
+  const showTermsSection = !isUploaded || amending;
+
   // Derive initial rate from seed or rate table. For fresh creates (no seed), do
   // NOT auto-fill from any default size/frequency — those fields start empty too.
   const initRateAndBase = useMemo(() => {
@@ -1617,8 +1624,11 @@ function AgreementDrawer({
         )}
       </Section>
 
-      {/* ── Terms & Digital Signature (hidden when uploaded) ── */}
-      {!isUploaded && (
+      {/* ── Terms & Digital Signature ──
+          Always shown for new/digital agreements. For uploaded paper
+          agreements, only shown after the admin clicks “Amend agreement”
+          so we don’t suggest re-signing the paper original by accident. */}
+      {showTermsSection && (
         <Section title="Terms &amp; Digital Signature">
           <div className="max-h-40 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
             {TERMS_RL}
@@ -1761,6 +1771,28 @@ function AgreementDrawer({
             Delete
           </button>
         )}
+        {/* Amend toggle — only meaningful for uploaded paper agreements,
+            where Terms & Signature are hidden by default. Clicking once
+            reveals them so the admin can re-capture consent. */}
+        {!isCreate && isUploaded && (
+          <button
+            type="button"
+            onClick={() => setAmending((v) => !v)}
+            disabled={saving}
+            className={`px-3 py-2 rounded border text-sm disabled:opacity-50 ${
+              amending
+                ? 'border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+            title={
+              amending
+                ? 'Hide Terms & Signature again'
+                : 'Reveal Terms & Signature so this uploaded agreement can be amended'
+            }
+          >
+            {amending ? 'Stop amending' : 'Amend agreement'}
+          </button>
+        )}
         {!isCreate && (
           <a
             href={`/api/admin/agreements/${existing!.id}/pdf`}
@@ -1780,7 +1812,7 @@ function AgreementDrawer({
         >
           {saving ? 'Saving…' : 'Save as Draft'}
         </button>
-        {!isUploaded && (
+        {showTermsSection && (
           <>
             <button
               onClick={sendSigningLink}
