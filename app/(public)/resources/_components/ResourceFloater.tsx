@@ -23,8 +23,8 @@ interface Props {
   shareText: string;
   /** Lazy report builder. Called on Download — should return current state. */
   buildReport: () => CalcReport;
-  /** Optional offset override. Defaults to 'bottom-[24px]' — these pages
-   *  don't have a sticky bottom CTA so we sit closer to the bottom edge. */
+  /** Optional offset override. Defaults to 'bottom-[96px]' — clears the
+   *  AppShell BottomNav (~72px tall) with a small visual gap. */
   bottomOffsetClass?: string;
 }
 
@@ -32,7 +32,7 @@ export default function ResourceFloater({
   shareTitle,
   shareText,
   buildReport,
-  bottomOffsetClass = 'bottom-[24px]',
+  bottomOffsetClass = 'bottom-[96px]',
 }: Props) {
   const router = useRouter();
 

@@ -136,7 +136,7 @@ export default function RentVsBuyClient() {
   });
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-32 print:pb-12">
+    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
       <header className="mb-10">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle>Rent vs. Buy</PageTitle>

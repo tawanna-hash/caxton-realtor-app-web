@@ -148,7 +148,7 @@ export default function MortgageCalculatorClient() {
   }, [tab, homePrice, downPercent, downPayment, rate, termYears, annualTax, annualIns, monthlyHoa, pmiRate, piti, amort]);
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-32 print:pb-12">
+    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
       {/* ── Header ────────────────────────────────────────────────── */}
       <header className="mb-8">
         <p className={EYEBROW}>REALTOR® Tool</p>

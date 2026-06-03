@@ -159,7 +159,7 @@ export default function BuyerClosingCostsClient() {
   });
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-32 print:pb-12">
+    <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
       <header className="mb-10 print:mb-4">
         <p className={EYEBROW}>REALTOR® Tool</p>
         <PageTitle>Buyer Closing Costs</PageTitle>
