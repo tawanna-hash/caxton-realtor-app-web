@@ -412,9 +412,11 @@ export default function AppShell({
         <>
           {/* Inline newsletter signup — shown on every public page above the footer. */}
           <NewsletterCTA source="public_footer" variant="flush" />
-          {/* Sticky footer banner (paid placement) — sits above bottom nav */}
-          <div className="fixed bottom-16 left-0 right-0 z-20 pointer-events-none px-3">
-            <div className="max-w-3xl mx-auto pointer-events-auto">
+          {/* Inline footer banner (paid placement) — scrolls with the page,
+              sits above the site footer. Previously fixed at bottom-16, but
+              overlapped sticky page UI (calc floater, etc). */}
+          <div className="px-3 py-4">
+            <div className="max-w-3xl mx-auto">
               <AdSlot slug="feed_sticky_bottom" variant="bare" />
             </div>
           </div>
