@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SocialLinks } from '@/components/SocialLinks';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -10,12 +11,14 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-semibold text-gray-900 mb-3">RealtyLine Austin</h3>
             <p className="text-xs text-gray-600 mb-2">Putting A Face on Real Estate since 1995</p>
-            <p className="text-xs text-gray-600">Austin, Texas</p>
+            <p className="text-xs text-gray-600 mb-3">Austin, Texas</p>
+            <SocialLinks pub="realtyline" variant="footer" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Newsline San Antonio</h3>
             <p className="text-xs text-gray-600 mb-2">Founded 1982, Relaunched 2025</p>
-            <p className="text-xs text-gray-600">San Antonio, Texas</p>
+            <p className="text-xs text-gray-600 mb-3">San Antonio, Texas</p>
+            <SocialLinks pub="newsline" variant="footer" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Resources</h3>

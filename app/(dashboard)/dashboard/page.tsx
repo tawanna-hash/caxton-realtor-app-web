@@ -12,6 +12,7 @@ import { getApiBase } from '@/lib/api-base';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
 import BottomNav from '@/components/BottomNav';
 import NavDrawer from '@/components/NavDrawer';
+import { SocialLinks } from '@/components/SocialLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import { SW } from '@/lib/style-constants';
 import { PUB_META, type PubKey } from '@/lib/pub-meta';
@@ -1082,6 +1083,10 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
               }
               return [node];
             })}
+            {/* Follow-us card pinned at the bottom of the feed, brand-colored
+                per pub. URLs live in lib/pub-meta.ts — placeholders render
+                as disabled icons until real URLs are wired in. */}
+            <SocialLinks pub={pub as 'realtyline' | 'newsline'} variant="feed" />
           </div>
         </div>
       )}

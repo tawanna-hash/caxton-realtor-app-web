@@ -11,6 +11,11 @@ export interface PubMeta {
   tagline: string;
   reach: string;
   email: string;
+  // Social URLs surfaced via <SocialLinks>. Leave as undefined or '#' to render
+  // the icon as a disabled placeholder until the real URL is wired up.
+  facebook?: string;
+  instagram?: string;
+  linkedin?: string;
 }
 
 export const PUB_META: Record<PubKey, PubMeta> = {
@@ -21,6 +26,10 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     tagline: 'Reach 71,000+ Texas real estate professionals',
     reach: '71,000+ Texas REALTORS',
     email: 'ads@myrealtyline.com',
+    // TODO(social): swap '#' for live URLs when Tawanna provides them.
+    facebook: '#',
+    instagram: '#',
+    linkedin: '#',
   },
   newsline: {
     name: 'Newsline San Antonio',
@@ -29,5 +38,9 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     tagline: 'Reach 24,000+ San Antonio real estate professionals',
     reach: '24,000+ San Antonio REALTORS',
     email: 'ads@newslinesa.com',
+    // TODO(social): swap '#' for live URLs when Tawanna provides them.
+    facebook: '#',
+    instagram: '#',
+    linkedin: '#',
   },
 };
