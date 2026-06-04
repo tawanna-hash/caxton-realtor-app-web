@@ -19,6 +19,25 @@ import { reportTimestamp, type CalcReport } from '../_components/calcPdf';
 
 const EYEBROW = 'text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2';
 
+// Counties within ~60 miles of downtown Austin (78701). Covers the 5-county
+// Austin MSA (Bastrop, Caldwell, Hays, Travis, Williamson) plus Hill Country
+// neighbors (Blanco, Burnet, Comal, Llano) and the eastern ring (Fayette,
+// Lee, Milam). Alphabetical.
+const CLOSING_COUNTIES = [
+  'Bastrop County',
+  'Blanco County',
+  'Burnet County',
+  'Caldwell County',
+  'Comal County',
+  'Fayette County',
+  'Hays County',
+  'Lee County',
+  'Llano County',
+  'Milam County',
+  'Travis County',
+  'Williamson County',
+];
+
 // Default closing date = 30 days out, ISO date string for <input type="date">
 function defaultClosingDate(): string {
   const d = new Date();
@@ -27,6 +46,12 @@ function defaultClosingDate(): string {
 }
 
 export default function SellerNetSheetClient() {
+  // Transaction info
+  const [agentName, setAgentName] = useState('');
+  const [sellerName, setSellerName] = useState('');
+  const [propertyAddress, setPropertyAddress] = useState('');
+  const [closingCounty, setClosingCounty] = useState('Travis County');
+
   const [salePrice, setSalePrice] = useState(450000);
   const [payoff, setPayoff] = useState(280000);
   const [commissionRate, setCommissionRate] = useState(6);
@@ -93,14 +118,20 @@ export default function SellerNetSheetClient() {
 
   const buildReport = (): CalcReport => ({
     title: 'Seller Net Sheet',
-    subtitle: `${fmtUSD(salePrice)} sale price · ${commissionRate}% commission · closing ${closingDate}`,
+    subtitle:
+      propertyAddress.trim().length > 0
+        ? `${propertyAddress.trim()} · ${closingCounty}`
+        : `${fmtUSD(salePrice)} sale price · ${commissionRate}% commission · closing ${closingDate}`,
     heroLabel: 'Estimated net to seller',
     heroValue: fmtUSD(result.netToSeller),
     meta: [
       { key: 'Generated', value: reportTimestamp() },
+      ...(sellerName.trim() ? [{ key: 'Seller', value: sellerName.trim() }] : []),
+      ...(agentName.trim() ? [{ key: 'Prepared by', value: agentName.trim() }] : []),
+      { key: 'Closing county', value: closingCounty },
+      { key: 'Closing date', value: closingDate },
       { key: 'Sale price', value: fmtUSD(salePrice) },
       { key: 'Mortgage payoff', value: fmtUSD(payoff) },
-      { key: 'Closing date', value: closingDate },
     ],
     sections: [
       {
@@ -154,6 +185,47 @@ export default function SellerNetSheetClient() {
       <div className="grid lg:grid-cols-5 gap-8">
         {/* ── Inputs (hidden on print) ───────────────────────────── */}
         <div className="lg:col-span-3 space-y-5 print:hidden">
+          <div className="rounded-xl border border-gray-200 bg-white p-5">
+            <p className={EYEBROW}>Transaction info</p>
+            <p className="text-xs text-gray-500 mb-4">
+              Used to personalize the printed and downloaded net sheet.
+            </p>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <TextField
+                label="Your name"
+                value={agentName}
+                onChange={setAgentName}
+                required
+                placeholder="e.g. Jane Smith"
+              />
+              <TextField
+                label="Seller's name"
+                value={sellerName}
+                onChange={setSellerName}
+                required
+                placeholder="e.g. John & Mary Doe"
+              />
+            </div>
+            <div className="mt-4">
+              <TextField
+                label="Property address"
+                value={propertyAddress}
+                onChange={setPropertyAddress}
+                required
+                placeholder="e.g. 1234 Main St, Austin, TX 78701"
+              />
+            </div>
+            <div className="mt-4">
+              <SelectField
+                label="Closing county"
+                value={closingCounty}
+                onChange={setClosingCounty}
+                options={CLOSING_COUNTIES}
+                hint="Counties within ~60 miles of downtown Austin (78701)."
+              />
+            </div>
+          </div>
+
           <NumberField
             label="Sale price"
             value={salePrice}
@@ -298,6 +370,42 @@ export default function SellerNetSheetClient() {
         {/* ── Net sheet card (also the print view) ───────────────── */}
         <div className="lg:col-span-2 print:col-span-5">
           <div className="lg:sticky lg:top-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none">
+            {(sellerName.trim() || propertyAddress.trim() || agentName.trim()) && (
+              <div className="mb-5 pb-4 border-b border-gray-100 text-xs text-gray-600 space-y-0.5">
+                {sellerName.trim() && (
+                  <p>
+                    <span className="uppercase tracking-[0.15em] text-gray-400 mr-1">
+                      Seller:
+                    </span>
+                    <span className="font-medium text-gray-800">{sellerName.trim()}</span>
+                  </p>
+                )}
+                {propertyAddress.trim() && (
+                  <p>
+                    <span className="uppercase tracking-[0.15em] text-gray-400 mr-1">
+                      Property:
+                    </span>
+                    <span className="font-medium text-gray-800">{propertyAddress.trim()}</span>
+                  </p>
+                )}
+                <p>
+                  <span className="uppercase tracking-[0.15em] text-gray-400 mr-1">
+                    Closing:
+                  </span>
+                  <span className="font-medium text-gray-800">
+                    {closingCounty} · {closingDate}
+                  </span>
+                </p>
+                {agentName.trim() && (
+                  <p>
+                    <span className="uppercase tracking-[0.15em] text-gray-400 mr-1">
+                      Prepared by:
+                    </span>
+                    <span className="font-medium text-gray-800">{agentName.trim()}</span>
+                  </p>
+                )}
+              </div>
+            )}
             <p className={EYEBROW}>Estimated Net to Seller</p>
             <p
               className={`text-4xl mb-1 ${
@@ -456,6 +564,82 @@ function NumberField({
           </span>
         )}
       </div>
+      {hint && <span className="block text-xs text-gray-500 mt-1">{hint}</span>}
+    </label>
+  );
+}
+
+function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  hint,
+  required = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  hint?: string;
+  required?: boolean;
+}) {
+  const empty = required && value.trim().length === 0;
+  return (
+    <label className="block">
+      <span className="block text-sm font-medium text-gray-800 mb-1">
+        {label}
+        {required && <span className="text-rose-600 ml-0.5">*</span>}
+      </span>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        aria-required={required}
+        aria-invalid={empty}
+        className={`w-full rounded-md border px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-1 ${
+          empty
+            ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-500/30'
+            : 'border-gray-300 focus:border-[#1a2a44] focus:ring-[#1a2a44]/30'
+        }`}
+      />
+      {empty ? (
+        <span className="block text-xs text-rose-600 mt-1">Required</span>
+      ) : (
+        hint && <span className="block text-xs text-gray-500 mt-1">{hint}</span>
+      )}
+    </label>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  hint,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: readonly string[];
+  hint?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="block text-sm font-medium text-gray-800 mb-1">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-[#1a2a44] focus:outline-none focus:ring-1 focus:ring-[#1a2a44]/30"
+      >
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
       {hint && <span className="block text-xs text-gray-500 mt-1">{hint}</span>}
     </label>
   );

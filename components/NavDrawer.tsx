@@ -9,6 +9,7 @@
 // Presentational: parent owns drawerOpen state, user/auth state, and the pub
 // switch + logout handlers. This component just renders.
 
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 
@@ -19,6 +20,8 @@ interface NavItem {
   href: string;
   placeholder?: boolean;
   adminOnly?: boolean;
+  /** Optional collapsible sub-menu. Parent link remains clickable. */
+  subitems?: NavItem[];
 }
 
 interface NavSection {
@@ -83,7 +86,20 @@ const DRAWER_SECTIONS: NavSection[] = [
       { label: 'Inventory & Promotions', href: '/inventory' },
       { label: 'Communities', href: '/communities' },
       { label: 'Advertisers', href: '/advertisers' },
-      { label: 'REALTOR Resources', href: '/resources' },
+      {
+        label: 'REALTOR Resources',
+        href: '/resources',
+        subitems: [
+          { label: "Seller's Net Sheet", href: '/resources/seller-net-sheet' },
+          { label: 'Buyer Closing Costs', href: '/resources/buyer-closing-costs' },
+          { label: 'Mortgage Calculator', href: '/resources/mortgage-calculator' },
+          { label: 'Commission Calculator', href: '/resources/commission-calculator' },
+          { label: 'Title Rate Calculator', href: '/resources/title-rate-calculator' },
+          { label: 'Investment Property ROI', href: '/resources/investment-property' },
+          { label: 'Rent vs Buy', href: '/resources/rent-vs-buy' },
+          { label: '1031 Exchange Timeline', href: '/resources/1031-exchange' },
+        ],
+      },
     ],
   },
   {
@@ -140,6 +156,23 @@ export default function NavDrawer({
   onPubSwitch,
 }: Props) {
   const pathname = usePathname();
+
+  // Collapsible parent state. Auto-open any parent whose subitem matches the
+  // current pathname so users see where they are without a manual click.
+  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
+  const isSubmenuOpen = (parent: NavItem): boolean => {
+    if (openSubmenus[parent.href] !== undefined) return openSubmenus[parent.href];
+    if (!parent.subitems) return false;
+    return parent.subitems.some(
+      (s) => pathname === s.href || pathname.startsWith(s.href + '/'),
+    );
+  };
+  const toggleSubmenu = (parent: NavItem) => {
+    setOpenSubmenus((prev) => ({
+      ...prev,
+      [parent.href]: !isSubmenuOpen(parent),
+    }));
+  };
 
   return (
     <div
@@ -208,6 +241,79 @@ export default function NavDrawer({
                   >
                     {item.label}
                   </span>
+                );
+              }
+
+              // Collapsible parent: chevron toggles subitem list; tapping the
+              // label itself navigates to the parent's href (overview page).
+              if (item.subitems && item.subitems.length > 0) {
+                const expanded = isSubmenuOpen(item);
+                return (
+                  <div key={item.href + item.label}>
+                    <div
+                      className={`flex items-stretch rounded-lg transition ${
+                        isActive
+                          ? 'text-white bg-white/15'
+                          : 'text-white/80 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      <Link
+                        href={item.href}
+                        onClick={onClose}
+                        className="flex-1 px-3 py-2.5 text-sm uppercase tracking-[0.1em] font-medium"
+                      >
+                        {item.label}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => toggleSubmenu(item)}
+                        aria-expanded={expanded}
+                        aria-label={expanded ? 'Collapse menu' : 'Expand menu'}
+                        className="px-3 flex items-center justify-center text-white/60 hover:text-white"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className={`transition-transform duration-200 ${
+                            expanded ? 'rotate-180' : ''
+                          }`}
+                          aria-hidden
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </button>
+                    </div>
+                    {expanded && (
+                      <div className="mt-1 ml-3 pl-3 border-l border-white/15 space-y-0.5">
+                        {item.subitems.map((sub) => {
+                          if (sub.adminOnly && !isAdmin) return null;
+                          const subActive =
+                            pathname === sub.href ||
+                            pathname.startsWith(sub.href + '/');
+                          return (
+                            <Link
+                              key={sub.href}
+                              href={sub.href}
+                              onClick={onClose}
+                              className={`block px-3 py-2 text-[13px] tracking-wide rounded-md transition ${
+                                subActive
+                                  ? 'text-white bg-white/15 font-medium'
+                                  : 'text-white/70 hover:text-white hover:bg-white/10'
+                              }`}
+                            >
+                              {sub.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               }
 
