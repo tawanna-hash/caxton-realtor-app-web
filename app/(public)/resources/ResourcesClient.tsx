@@ -90,6 +90,12 @@ export default function ResourcesClient() {
             description="Estimate what your seller walks away with at closing. Texas-standard line items, auto title-policy estimate, printable for listing appointments."
           />
           <ToolCard
+            href="/resources/title-rate-calculator"
+            badge="Calculator"
+            title="Texas Title Rate Calculator"
+            description="Promulgated TDI premiums (Mar 2026). Owner and Lender policies, R-5 simultaneous issue, R-8 refinance credit, and endorsements (T-19, T-19.1, T-30, T-3)."
+          />
+          <ToolCard
             href="/resources/buyer-closing-costs"
             badge="Calculator"
             title="Buyer Closing Costs"

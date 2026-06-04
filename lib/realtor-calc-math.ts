@@ -8,6 +8,8 @@
 // - Rates are entered as percentages (e.g. 6 → 6%).
 // - All functions are pure; no DOM, no I/O.
 
+import { basicPremium } from './tx-title-math';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Commission Calculator
 // ─────────────────────────────────────────────────────────────────────────────
@@ -183,24 +185,9 @@ export function computeNetSheet(input: NetSheetInput): NetSheetBreakdown {
 // simple owner's policy. Real schedule has more brackets but these brackets
 // match within ~$50 for prices up to $1M.
 // ─────────────────────────────────────────────────────────────────────────────
+// Delegates to the authoritative TDI March 2026 schedule in tx-title-math.
 export function estimateTxTitlePolicy(salePrice: number): number {
-  if (salePrice <= 0) return 0;
-  // Brackets: [upper bound, rate per $1000, base added at start of bracket]
-  const brackets: { upTo: number; per1000: number; baseAt: number; basePrice: number }[] = [
-    { upTo: 100_000, per1000: 5.75, baseAt: 328, basePrice: 10_000 },
-    { upTo: 1_000_000, per1000: 5.0, baseAt: 845, basePrice: 100_000 },
-    { upTo: 5_000_000, per1000: 4.0, baseAt: 5_345, basePrice: 1_000_000 },
-  ];
-  for (const b of brackets) {
-    if (salePrice <= b.upTo) {
-      const over = Math.max(0, salePrice - b.basePrice);
-      return b.baseAt + (over / 1000) * b.per1000;
-    }
-  }
-  // Fall through for very expensive properties.
-  const top = brackets[brackets.length - 1];
-  const over = salePrice - top.basePrice;
-  return top.baseAt + (over / 1000) * top.per1000;
+  return basicPremium(salePrice);
 }
 
 // ────────────────────────────────────────────────────────────────────────────
