@@ -333,14 +333,22 @@ export default function SocialClient() {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Social posts</h1>
-        <p className="text-sm text-gray-700 mt-1">
-          Curate Facebook posts that surface in the RealtyLine + Newsline feeds.
-          Page posts auto-fetch via the Graph API; Group posts use a one-click
-          harvester that pulls the caption + image from the post&rsquo;s public
-          preview.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Social posts</h1>
+          <p className="text-sm text-gray-700 mt-1">
+            Curate Facebook posts that surface in the RealtyLine + Newsline feeds.
+            Page posts auto-fetch via the Graph API; Group posts use a one-click
+            harvester that pulls the caption + image from the post&rsquo;s public
+            preview.
+          </p>
+        </div>
+        <a
+          href="/admin/social/fb-pages"
+          className="shrink-0 inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 whitespace-nowrap"
+        >
+          Pages I follow &rarr;
+        </a>
       </div>
 
       {/* ────────── Add form ────────── */}
