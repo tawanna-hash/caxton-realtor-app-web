@@ -22,10 +22,13 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 function authorized(req: Request): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
   const auth = req.headers.get('authorization') ?? '';
-  if (auth === `Bearer ${secret}`) return true;
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret && auth === `Bearer ${cronSecret}`) return true;
+  // Allow manual on-demand triggering via BACKFILL_TOKEN (short-lived
+  // env var we add temporarily when an admin wants to force a run).
+  const adhocSecret = process.env.BACKFILL_TOKEN;
+  if (adhocSecret && auth === `Bearer ${adhocSecret}`) return true;
   return req.headers.get('x-vercel-cron') === '1';
 }
 
