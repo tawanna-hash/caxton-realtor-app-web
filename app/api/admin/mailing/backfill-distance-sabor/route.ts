@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { ensureSchema, getSql } from '@/lib/db';
-import { requireAdmin } from '@/lib/server/auth/admin';
+import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { ANCHOR_SABOR } from '@/lib/geocode';
-import { withErrorHandling } from '@/lib/server/error';
+import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { parseJson } from '@/lib/server/schemas/_common';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+function authorizedByBearer(req: Request): boolean {
+  const secret = process.env.BACKFILL_TOKEN;
+  if (!secret) return false;
+  return req.headers.get('authorization') === `Bearer ${secret}`;
+}
 
 // ────────────────────────────────────────────────────────────────────
 // One-shot backfill of distance_sabor_mi.
@@ -44,7 +53,12 @@ interface CountRow {
 }
 
 export const POST = withErrorHandling(async (req: Request) => {
-  await requireAdmin();
+  // Accept either an admin session cookie OR a one-shot bearer token
+  // (BACKFILL_TOKEN env var) so this can run from a non-browser context.
+  const admin = await getCurrentAdmin();
+  if (!admin && !authorizedByBearer(req)) {
+    throw new ApiError(401, 'unauthorized');
+  }
   await ensureSchema();
   const sql = getSql();
 
