@@ -288,6 +288,7 @@ function normString(v: unknown): string | null {
 export async function listMailingContacts(opts: {
   segment: MailingSegment;
   search?: string;
+  filter?: 'all' | 'verified' | 'pending';
   sort?: MailingColumnId;
   dir?: 'asc' | 'desc';
   limit?: number;
@@ -296,6 +297,7 @@ export async function listMailingContacts(opts: {
   const sql = getSql();
   const segment = opts.segment;
   const search  = (opts.search ?? '').trim();
+  const filter  = opts.filter ?? 'all';
   const sort    = opts.sort && SORTABLE_COLUMNS.has(opts.sort) ? opts.sort : 'created_at';
   const dir     = opts.dir === 'asc' ? 'asc' : 'desc';
   const limit   = Math.min(Math.max(opts.limit ?? 100, 1), 500);
@@ -310,6 +312,12 @@ export async function listMailingContacts(opts: {
         SELECT * FROM mailing_contacts
          WHERE segment = ${segment}
            AND stage = 'mailing'
+           AND (
+             ${filter} = 'all'
+             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+             OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
+                                        AND (email_status IS NULL OR email_status <> 'Valid'))
+           )
            AND (
              LOWER(COALESCE(first_name, '')) LIKE ${search_like}
              OR LOWER(COALESCE(last_name, '')) LIKE ${search_like}
@@ -341,6 +349,12 @@ export async function listMailingContacts(opts: {
         SELECT * FROM mailing_contacts
          WHERE segment = ${segment}
            AND stage = 'mailing'
+           AND (
+             ${filter} = 'all'
+             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+             OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
+                                        AND (email_status IS NULL OR email_status <> 'Valid'))
+           )
          ORDER BY
            CASE WHEN ${sort} = 'first_name'  AND ${dir} = 'asc'  THEN LOWER(COALESCE(first_name, ''))  END ASC  NULLS LAST,
            CASE WHEN ${sort} = 'first_name'  AND ${dir} = 'desc' THEN LOWER(COALESCE(first_name, ''))  END DESC NULLS LAST,
@@ -366,6 +380,12 @@ export async function listMailingContacts(opts: {
          WHERE segment = ${segment}
            AND stage = 'mailing'
            AND (
+             ${filter} = 'all'
+             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+             OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
+                                        AND (email_status IS NULL OR email_status <> 'Valid'))
+           )
+           AND (
              LOWER(COALESCE(first_name, '')) LIKE ${search_like}
              OR LOWER(COALESCE(last_name, '')) LIKE ${search_like}
              OR LOWER(COALESCE(email, ''))     LIKE ${search_like}
@@ -375,7 +395,17 @@ export async function listMailingContacts(opts: {
              OR REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') LIKE ${search_like}
            )
       `) as unknown as Array<{ c: number }>
-    : (await sql`SELECT COUNT(*)::int AS c FROM mailing_contacts WHERE segment = ${segment} AND stage = 'mailing'`) as unknown as Array<{ c: number }>;
+    : (await sql`
+        SELECT COUNT(*)::int AS c FROM mailing_contacts
+         WHERE segment = ${segment}
+           AND stage = 'mailing'
+           AND (
+             ${filter} = 'all'
+             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+             OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
+                                        AND (email_status IS NULL OR email_status <> 'Valid'))
+           )
+      `) as unknown as Array<{ c: number }>;
 
   return { rows, total: totalRow[0]?.c ?? 0 };
 }
@@ -400,52 +430,53 @@ export async function countBySegment(): Promise<Record<MailingSegment | 'total',
 
 /**
  * Per-segment KPI stats for the segment detail page (mailing stage only).
- * Returns total + USPS verdict breakdown + with-email / with-address counts.
+ * Mirrors the ABOR Members (countHolding) shape but scoped to a single
+ * segment within stage='mailing'.
  */
 export type SegmentStats = {
-  total:        number;
-  uspsValid:    number;
-  uspsInvalid:  number;
-  uspsPending:  number;
-  unverified:   number;
-  withEmail:    number;
-  withAddress:  number;
+  total:    number;
+  verified: number;
+  pending:  number;
+  near:     number;
+  far:      number;
 };
 
 export async function segmentStats(segment: MailingSegment): Promise<SegmentStats> {
   const sql = getSql();
+  // 60mi radius. Kept inline (not imported) so this file stays free of
+  // the geocode module's runtime deps.
+  const NEAR_MI = 60;
   const rows = (await sql`
     SELECT
-      COUNT(*)::int                                                                         AS total,
-      COUNT(*) FILTER (WHERE addr_status = 'Valid')::int                                    AS usps_valid,
-      COUNT(*) FILTER (WHERE addr_status = 'Invalid')::int                                  AS usps_invalid,
-      COUNT(*) FILTER (WHERE addr_status = 'Pending')::int                                  AS usps_pending,
-      COUNT(*) FILTER (WHERE addr_status IS NULL)::int                                      AS unverified,
-      COUNT(*) FILTER (WHERE NULLIF(TRIM(COALESCE(email, '')),   '') IS NOT NULL)::int      AS with_email,
-      COUNT(*) FILTER (WHERE NULLIF(TRIM(COALESCE(address, '')), '') IS NOT NULL)::int      AS with_address
+      COUNT(*)::int AS total,
+      COUNT(*) FILTER (
+        WHERE addr_status = 'Valid' OR email_status = 'Valid'
+      )::int AS verified,
+      COUNT(*) FILTER (
+        WHERE (addr_status IS NULL OR addr_status <> 'Valid')
+          AND (email_status IS NULL OR email_status <> 'Valid')
+      )::int AS pending,
+      COUNT(*) FILTER (
+        WHERE (distance_abor_mi       IS NOT NULL AND distance_abor_mi       <= ${NEAR_MI})
+           OR (distance_fivepoints_mi IS NOT NULL AND distance_fivepoints_mi <= ${NEAR_MI})
+      )::int AS near,
+      COUNT(*) FILTER (
+        WHERE distance_abor_mi       IS NOT NULL
+          AND distance_fivepoints_mi IS NOT NULL
+          AND distance_abor_mi       >  ${NEAR_MI}
+          AND distance_fivepoints_mi >  ${NEAR_MI}
+      )::int AS far
     FROM mailing_contacts
     WHERE stage = 'mailing' AND segment = ${segment}
   `) as unknown as Array<{
-    total:         number;
-    usps_valid:    number;
-    usps_invalid:  number;
-    usps_pending:  number;
-    unverified:    number;
-    with_email:    number;
-    with_address:  number;
+    total: number; verified: number; pending: number; near: number; far: number;
   }>;
-  const r = rows[0] ?? {
-    total: 0, usps_valid: 0, usps_invalid: 0, usps_pending: 0,
-    unverified: 0, with_email: 0, with_address: 0,
-  };
   return {
-    total:        r.total,
-    uspsValid:    r.usps_valid,
-    uspsInvalid:  r.usps_invalid,
-    uspsPending:  r.usps_pending,
-    unverified:   r.unverified,
-    withEmail:    r.with_email,
-    withAddress:  r.with_address,
+    total:    rows[0]?.total    ?? 0,
+    verified: rows[0]?.verified ?? 0,
+    pending:  rows[0]?.pending  ?? 0,
+    near:     rows[0]?.near     ?? 0,
+    far:      rows[0]?.far      ?? 0,
   };
 }
 
@@ -1685,6 +1716,67 @@ export async function persistEmailVerification(
            updated_at        = NOW()
      WHERE id = ${id}
        AND stage = 'holding'
+     RETURNING *
+  `) as unknown as MailingContactRow[];
+  return rows[0] ?? null;
+}
+
+/**
+ * Stage-agnostic variant of persistEmailVerification. Identical body but
+ * WITHOUT the `AND stage = 'holding'` guard, so it can persist email
+ * verification results for rows in any stage (e.g. stage='mailing'
+ * segment rows). Used by the stage-agnostic mailing verify-email route.
+ */
+export async function persistEmailVerificationAnyStage(
+  id: string,
+  status: VerifyStatus,
+  payload?: EmailVerifyPayload,
+): Promise<MailingContactRow | null> {
+  const sql = getSql();
+  if (payload) {
+    const s = payload.signals;
+    const logLine =
+      `${payload.verdict} — ${payload.detail}` +
+      (payload.code ? ` [code ${payload.code}]` : '') +
+      (s.catchAll ? ' [catch-all]' : '') +
+      (s.disposable ? ' [disposable]' : '') +
+      (s.smtpTimedOut && !s.smtpConnected ? ' [timed out]' : '') +
+      (s.managedMailProvider ? ` [${s.managedMailProvider}]` : '');
+    const rows = (await sql`
+      UPDATE mailing_contacts
+         SET email_status        = ${status},
+             email_verified_at   = NOW(),
+             email_disposable    = ${s.disposable},
+             email_role          = ${s.roleAccount},
+             email_free_provider = ${s.freeProvider},
+             email_catch_all     = ${s.catchAll},
+             email_risk          = ${Math.round(payload.risk)},
+             email_suggestion    = ${payload.suggestion ?? null},
+             email_check         = ${JSON.stringify(payload)}::jsonb,
+             email_notes         = CASE
+               WHEN email_notes IS NOT NULL
+                AND email_verified_at IS NOT NULL
+                AND email_verified_at > (NOW() - INTERVAL '2 minutes')
+                AND RIGHT(email_notes, length(${logLine}::text)) = ${logLine}::text
+                  THEN email_notes
+               ELSE CONCAT_WS(
+                      E'\n',
+                      NULLIF(email_notes, ''),
+                      CONCAT('[', to_char(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI'), '] ', ${logLine}::text)
+                    )
+             END,
+             updated_at          = NOW()
+       WHERE id = ${id}
+       RETURNING *
+    `) as unknown as MailingContactRow[];
+    return rows[0] ?? null;
+  }
+  const rows = (await sql`
+    UPDATE mailing_contacts
+       SET email_status      = ${status},
+           email_verified_at = NOW(),
+           updated_at        = NOW()
+     WHERE id = ${id}
      RETURNING *
   `) as unknown as MailingContactRow[];
   return rows[0] ?? null;
