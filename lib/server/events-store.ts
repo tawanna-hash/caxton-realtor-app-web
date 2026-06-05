@@ -46,8 +46,9 @@ export type EventSource =
   | 'manual'
   | 'fpr'
   | 'hba'
-  | 'submission'   // Advertiser self-submission via /submit-event/[token]
-  | 'facebook-llm'; // Gemini-detected event from RealtyLine FB Page post
+  | 'submission'    // Advertiser self-submission via /submit-event/[token]
+  | 'facebook-llm'  // Gemini-detected event from RealtyLine FB Page post
+  | 'facebook-graph'; // Native Facebook Page event pulled via Graph API
 
 export interface AdminCalendarEvent {
   id: number;
@@ -381,6 +382,63 @@ export async function createLLMDetectedEvent(input: {
 }
 
 /**
+ * Insert a pending event pulled from the Facebook Graph API /{page-id}/events
+ * endpoint (Path E). Fallback to Gemini-on-posts detection: this catches
+ * events admins published natively through Facebook's event tool, which often
+ * don't have a corresponding wall post for Gemini to read.
+ *
+ * external_id is `fb-graph-<facebookEventId>` so the events_external_uniq
+ * constraint makes re-running idempotent. (We don't use source_post_id here
+ * because there is no featured_social_posts row — this is a Page-level
+ * event, not a post-level detection.)
+ *
+ * Returns null when the event was already inserted on a prior cron run.
+ */
+export async function createGraphDetectedEvent(input: {
+  publication: Publication;
+  facebookEventId: string;
+  title: string;
+  description: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  location: string | null;
+  link: string;
+  imageUrl: string | null;
+}): Promise<AdminCalendarEvent | null> {
+  const externalId = `fb-graph-${input.facebookEventId}`;
+  const coords = await geocodeEventLocation(input.location);
+  const rows = await query<EventRow>(
+    `INSERT INTO events (
+       external_source, external_id, publication, title, description, link,
+       start_date, end_date, location, image_url,
+       lat, lng, hidden,
+       last_synced_at, updated_at
+     ) VALUES (
+       'facebook-graph', $1, $2, $3, $4, $5,
+       $6, $7, $8, $9,
+       $10, $11, true,
+       NOW(), NOW()
+     )
+     ON CONFLICT ON CONSTRAINT events_external_uniq DO NOTHING
+     RETURNING ${SELECT_COLS}`,
+    [
+      externalId,
+      input.publication,
+      input.title,
+      input.description,
+      input.link,
+      input.startDate,
+      input.endDate,
+      input.location,
+      input.imageUrl,
+      coords?.lat ?? null,
+      coords?.lng ?? null,
+    ],
+  );
+  return rows[0] ? rowToAdminEvent(rows[0]) : null;
+}
+
+/**
  * Admin queue: events awaiting review. Either source='submission' (advertiser
  * self-submitted via public form) or source='facebook-llm' (Gemini extracted
  * from a FB Page post). Manual hidden events authored by admins themselves
@@ -390,7 +448,7 @@ export async function listPendingEvents(): Promise<AdminCalendarEvent[]> {
   const rows = await query<EventRow>(
     `SELECT ${SELECT_COLS} FROM events
       WHERE hidden = true
-        AND external_source IN ('submission', 'facebook-llm')
+        AND external_source IN ('submission', 'facebook-llm', 'facebook-graph')
       ORDER BY created_at DESC`,
   );
   return rows.map(rowToAdminEvent);
@@ -401,7 +459,7 @@ export async function countPendingEvents(): Promise<number> {
   const rows = await query<{ count: string }>(
     `SELECT COUNT(*)::text AS count FROM events
       WHERE hidden = true
-        AND external_source IN ('submission', 'facebook-llm')`,
+        AND external_source IN ('submission', 'facebook-llm', 'facebook-graph')`,
   );
   return rows[0] ? parseInt(rows[0].count, 10) : 0;
 }
@@ -414,7 +472,7 @@ export async function approvePendingEvent(
   const rows = await query<EventRow>(
     `UPDATE events SET hidden = false, edited_by = $1, edited_at = NOW(), updated_at = NOW()
       WHERE id = $2 AND hidden = true
-        AND external_source IN ('submission', 'facebook-llm')
+        AND external_source IN ('submission', 'facebook-llm', 'facebook-graph')
       RETURNING ${SELECT_COLS}`,
     [editedBy, id],
   );

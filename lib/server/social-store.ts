@@ -177,3 +177,34 @@ export async function listSocialPostsForLLMScan(
   `) as DbRow[];
   return rows;
 }
+
+/**
+ * Distinct Facebook Page IDs we've curated posts from, with the publication
+ * each Page maps to. Used by the Graph API events cron to know which Pages
+ * to query for native FB events.
+ *
+ * If multiple posts from the same page_id map to different pubs (very rare —
+ * usually only happens if an admin reassigned a post), we keep the most
+ * common pub for that page via a simple GROUP BY count.
+ */
+export async function listScannablePageIds(): Promise<
+  Array<{ pageId: string; pub: SocialPub }>
+> {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT page_id, pub, COUNT(*)::int AS n
+    FROM featured_social_posts
+    WHERE is_active = TRUE
+      AND page_id IS NOT NULL
+      AND length(page_id) > 0
+    GROUP BY page_id, pub
+    ORDER BY page_id, n DESC
+  `) as Array<{ page_id: string; pub: SocialPub; n: number }>;
+
+  // Collapse to one row per page_id, picking the pub with the most posts.
+  const seen = new Map<string, SocialPub>();
+  for (const r of rows) {
+    if (!seen.has(r.page_id)) seen.set(r.page_id, r.pub);
+  }
+  return Array.from(seen.entries()).map(([pageId, pub]) => ({ pageId, pub }));
+}

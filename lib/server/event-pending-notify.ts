@@ -19,7 +19,7 @@ interface Args {
   eventId: number;
   title: string;
   organizer: string | null;
-  source: 'submission' | 'facebook-llm';
+  source: 'submission' | 'facebook-llm' | 'facebook-graph';
   startDate: string | null;
 }
 
@@ -66,7 +66,15 @@ export async function notifyAdminsPendingEvent({
   const sourceLabel =
     source === 'submission'
       ? 'an advertiser self-submission'
-      : 'Gemini auto-detection from the RealtyLine Facebook Page';
+      : source === 'facebook-graph'
+        ? 'a native Facebook Page event (Graph API)'
+        : 'Gemini auto-detection from the RealtyLine Facebook Page';
+  const sourceDisplay =
+    source === 'submission'
+      ? 'Advertiser submission'
+      : source === 'facebook-graph'
+        ? 'Facebook Page (Graph API)'
+        : 'Facebook Page (LLM)';
 
   const subject = `[Realty News Now] Pending event — ${title.slice(0, 80)}`;
   const html = `
@@ -85,7 +93,7 @@ export async function notifyAdminsPendingEvent({
         <tr><td style="padding: 6px 0; color: #666;">Start</td>
             <td style="padding: 6px 0; color: #111;">${escapeHtml(fmtDate(startDate))}</td></tr>
         <tr><td style="padding: 6px 0; color: #666;">Source</td>
-            <td style="padding: 6px 0; color: #111;">${source === 'submission' ? 'Advertiser submission' : 'Facebook Page (LLM)'}</td></tr>
+            <td style="padding: 6px 0; color: #111;">${sourceDisplay}</td></tr>
       </table>
 
       <p style="margin: 24px 0 8px;">
