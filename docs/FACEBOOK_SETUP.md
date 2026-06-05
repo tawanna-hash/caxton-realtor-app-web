@@ -151,6 +151,54 @@ Daily cron `/api/cron/refresh-social` (`0 9 * * *` UTC):
 - 4xx Graph API errors on Page posts (deleted, permissions revoked) are
   logged; the row stays in the admin list so you can investigate.
 
+## Auto-scan Page feed (no curation required)
+
+The `/api/cron/scan-fb-page-feed` cron pulls recent posts from configured
+Pages directly via Graph API `/{page-id}/posts` and runs Gemini on each one
+to detect events. Detected events land in `/admin/events/pending` as
+`hidden=true` rows. **No `/admin/social` curation step needed.**
+
+### Configuration
+
+| Env var | Required | Format | Example |
+|---|---|---|---|
+| `FB_PAGE_ACCESS_TOKEN` | yes | Long-lived Page token | see Step 3 above |
+| `FB_PAGE_IDS` | yes | `<pageId>:<pub>,<pageId>:<pub>` | `1234567890:realtyline,9876543210:newsline` |
+| `GEMINI_API_KEY` | yes | Gemini Flash key | already set |
+
+`pub` values: `realtyline` (→ austin publication), `newsline` (→ san_antonio),
+or `both`. Defaults to `realtyline` if omitted.
+
+### Finding your Page IDs
+
+The `me/accounts` response from Step 3 already returns each Page's `id`. Or:
+
+```bash
+curl -G "https://graph.facebook.com/v20.0/me/accounts" \
+  --data-urlencode "access_token=$FB_PAGE_ACCESS_TOKEN" \
+  | jq '.data[] | {id, name}'
+```
+
+### Add to Vercel
+
+```bash
+vercel env add FB_PAGE_IDS production
+# paste: 1234567890:realtyline,9876543210:newsline
+```
+
+Trigger a redeploy. To force a run right now:
+
+```bash
+curl -sS -H "Authorization: Bearer $BACKFILL_TOKEN" \
+  https://realtynewsnow.app/api/cron/scan-fb-page-feed
+```
+
+### Idempotency
+
+Each FB post is processed at most once across all cron ticks. The unique
+`external_id` `fb-llm-feed-<fbPostId>` on the `events` table enforces it.
+Re-running the cron is always safe.
+
 ## Rotating the token
 
 Page tokens minted from a long-lived user token are effectively permanent.
