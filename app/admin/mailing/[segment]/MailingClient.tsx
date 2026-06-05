@@ -7,7 +7,7 @@
 // only) the "Sync from advertisers" action.
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   MAILING_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
@@ -186,6 +186,55 @@ export default function MailingClient({ segment, slug, label }: Props) {
     }
   }
 
+  async function handleVerifyAddresses() {
+    // Verify USPS addresses for selected rows, or all rows on the
+    // current page if no rows are selected. Per-row API call (USPS v3
+    // is single-address per request), throttled to ~5/sec.
+    const targets = selectedIds.size > 0
+      ? rows.filter((r) => selectedIds.has(r.id))
+      : rows;
+    const candidates = targets.filter((r) => (r.address ?? '').trim().length > 0);
+    if (candidates.length === 0) {
+      alert('No rows with a street address to verify.');
+      return;
+    }
+    const scope = selectedIds.size > 0 ? `${candidates.length} selected` : `${candidates.length} on this page`;
+    if (!confirm(`Run USPS address verification on ${scope}? Valid rows will be overwritten with the USPS-standardized form.`)) return;
+
+    let valid = 0;
+    let invalid = 0;
+    let errors = 0;
+    for (let i = 0; i < candidates.length; i++) {
+      const r = candidates[i];
+      setBusy(`Verifying ${i + 1}/${candidates.length}\u2026`);
+      try {
+        const res = await fetch('/api/admin/mailing/verify-address', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: r.id }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          errors++;
+          console.error('[verify-address]', r.id, j?.detail || j?.error || res.status);
+        } else if (j.verdict === 'Valid') {
+          valid++;
+        } else if (j.verdict === 'Invalid') {
+          invalid++;
+        }
+      } catch (err) {
+        errors++;
+        console.error('[verify-address]', r.id, err);
+      }
+      // Throttle to ~5 req/sec to stay friendly to USPS API.
+      await new Promise((res) => setTimeout(res, 200));
+    }
+    setBusy(null);
+    alert(`USPS verify complete \u2014 Valid ${valid}, Invalid ${invalid}, Errors ${errors}.`);
+    await reload();
+  }
+
   async function handleDedupe() {
     if (!confirm(`Dedupe ${label}? Rows with the same email (or name+phone) will be merged, keeping the oldest.`)) return;
     setBusy('Deduping…');
@@ -253,6 +302,14 @@ export default function MailingClient({ segment, slug, label }: Props) {
             </div>
             <button onClick={handleDedupe} className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50">
               Dedupe
+            </button>
+            <button
+              onClick={handleVerifyAddresses}
+              className="px-3 py-1.5 text-sm rounded-md text-white"
+              style={{ backgroundColor: '#3D0740' }}
+              title="Run USPS Address API on selected rows (or this page if none selected)"
+            >
+              Verify USPS{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
             </button>
             <button
               onClick={handleDeleteAllInSegment}
@@ -375,13 +432,26 @@ export default function MailingClient({ segment, slug, label }: Props) {
 
 // ──────────────────────────────────────────────────────────────
 
-function renderCell(r: MailingContactRow, col: MailingColumnId): string {
+function renderCell(r: MailingContactRow, col: MailingColumnId): ReactNode {
   if (col === 'created_at') {
     try {
       return new Date(r.created_at).toLocaleDateString();
     } catch {
       return r.created_at ?? '';
     }
+  }
+  if (col === 'addr_status') {
+    const s = r.addr_status;
+    if (s === 'Valid') {
+      return <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">Valid</span>;
+    }
+    if (s === 'Invalid') {
+      return <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800">Invalid</span>;
+    }
+    if (s === 'Pending') {
+      return <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800">Pending</span>;
+    }
+    return <span className="text-gray-400">—</span>;
   }
   const v = r[col];
   return v == null ? '' : String(v);

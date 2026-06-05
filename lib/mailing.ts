@@ -159,6 +159,7 @@ export type MailingColumnId =
   | 'zip'
   | 'website'
   | 'notes'
+  | 'addr_status'
   | 'created_at';
 
 export const MAILING_COLUMNS: {
@@ -180,6 +181,7 @@ export const MAILING_COLUMNS: {
   { id: 'zip',            label: 'ZIP',        sortable: false, defaultVisible: false },
   { id: 'website',        label: 'Website',    sortable: false, defaultVisible: false },
   { id: 'notes',          label: 'Notes',      sortable: false, defaultVisible: false },
+  { id: 'addr_status',    label: 'USPS',       sortable: false, defaultVisible: true  },
   { id: 'created_at',     label: 'Added',      sortable: true,  defaultVisible: true  },
 ];
 
@@ -1434,6 +1436,29 @@ export async function persistAddressVerification(
 }
 
 /**
+ * Stage-agnostic variant of persistAddressVerification. Used by the
+ * mailing-stage Verify USPS action on segment views (e.g. Manual
+ * Newsline Contacts) where rows live in stage='mailing'.
+ */
+export async function persistAddressVerificationAnyStage(
+  id: string,
+  status: VerifyStatus,
+  normalizedAddress: string | null,
+): Promise<MailingContactRow | null> {
+  const sql = getSql();
+  const rows = (await sql`
+    UPDATE mailing_contacts
+       SET addr_status          = ${status},
+           addr_verified_at     = NOW(),
+           addr_usps_normalized = ${normalizedAddress},
+           updated_at           = NOW()
+     WHERE id = ${id}
+     RETURNING *
+  `) as unknown as MailingContactRow[];
+  return rows[0] ?? null;
+}
+
+/**
  * Persist a USPS-canonical address back into the holding row's address
  * component fields (address / address_2 / city / state / zip). Called
  * after a successful Valid verdict so the row carries the
@@ -1469,6 +1494,41 @@ export async function persistUspsCanonicalAddress(
            updated_at           = NOW()
      WHERE id = ${id}
        AND stage = 'holding'
+     RETURNING *
+  `) as unknown as MailingContactRow[];
+  return rows[0] ?? null;
+}
+
+/**
+ * Stage-agnostic variant of persistUspsCanonicalAddress. Used by the
+ * Verify USPS action on the mailing-stage segment views.
+ */
+export async function persistUspsCanonicalAddressAnyStage(
+  id: string,
+  canonical: {
+    streetAddress: string;
+    secondaryAddress: string | null;
+    city: string;
+    state: string;
+    zip5: string;
+    zip4: string | null;
+  },
+  normalizedOneLine: string,
+): Promise<MailingContactRow | null> {
+  const sql = getSql();
+  const zip = canonical.zip4 ? `${canonical.zip5}-${canonical.zip4}` : canonical.zip5;
+  const rows = (await sql`
+    UPDATE mailing_contacts
+       SET address              = ${canonical.streetAddress},
+           address_2            = ${canonical.secondaryAddress},
+           city                 = ${canonical.city},
+           state                = ${canonical.state},
+           zip                  = ${zip},
+           addr_status          = 'Valid',
+           addr_verified_at     = NOW(),
+           addr_usps_normalized = ${normalizedOneLine},
+           updated_at           = NOW()
+     WHERE id = ${id}
      RETURNING *
   `) as unknown as MailingContactRow[];
   return rows[0] ?? null;
