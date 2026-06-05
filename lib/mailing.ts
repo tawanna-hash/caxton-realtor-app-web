@@ -21,14 +21,14 @@ type Sql = NeonQueryFunction<false, false>;
 // Segments (canonical labels & helpers)
 // ============================================================
 
-export type MailingSegment = 'advertiser' | 'non-advertiser' | 'realtor';
+export type MailingSegment = 'manual-newsline' | 'non-advertiser' | 'realtor';
 
 export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; caption: string; accent: string }[] = [
   {
-    segment: 'advertiser',
-    slug:    'advertisers',
-    label:   'Advertisers',
-    caption: 'Businesses currently or previously running ads.',
+    segment: 'manual-newsline',
+    slug:    'manual-newsline-contacts',
+    label:   'Manual Newsline Contacts',
+    caption: 'Newsline contacts entered or imported manually.',
     accent:  '#10B981',
   },
   {
@@ -49,7 +49,10 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
 
 export function segmentFromSlug(slug: string): MailingSegment | null {
   const m = SEGMENTS.find((s) => s.slug === slug);
-  return m ? m.segment : null;
+  if (m) return m.segment;
+  // Back-compat: old slug 'advertisers' → new segment 'manual-newsline'.
+  if (slug === 'advertisers') return 'manual-newsline';
+  return null;
 }
 
 export function slugFromSegment(seg: MailingSegment): string {
@@ -57,7 +60,7 @@ export function slugFromSegment(seg: MailingSegment): string {
 }
 
 export function isMailingSegment(v: unknown): v is MailingSegment {
-  return v === 'advertiser' || v === 'non-advertiser' || v === 'realtor';
+  return v === 'manual-newsline' || v === 'non-advertiser' || v === 'realtor';
 }
 
 // ============================================================
@@ -383,7 +386,7 @@ export async function countBySegment(): Promise<Record<MailingSegment | 'total',
      WHERE stage = 'mailing'
      GROUP BY segment
   `) as unknown as Array<{ segment: MailingSegment; c: number }>;
-  const out = { total: 0, advertiser: 0, 'non-advertiser': 0, realtor: 0 } as Record<MailingSegment | 'total', number>;
+  const out = { total: 0, 'manual-newsline': 0, 'non-advertiser': 0, realtor: 0 } as Record<MailingSegment | 'total', number>;
   for (const r of rows) {
     if (isMailingSegment(r.segment)) {
       out[r.segment] = r.c;
@@ -724,7 +727,7 @@ async function findAdvertiserMailingId(sql: Sql, src: MailingSourceRow): Promise
   if (email) {
     const rows = (await sql`
       SELECT id FROM mailing_contacts
-       WHERE segment = 'advertiser'
+       WHERE segment = 'manual-newsline'
          AND LOWER(COALESCE(email, '')) = ${email}
        LIMIT 1
     `) as unknown as Array<{ id: string }>;
@@ -737,7 +740,7 @@ async function findAdvertiserMailingId(sql: Sql, src: MailingSourceRow): Promise
   const last  = (src.last_name  ?? '').toLowerCase();
   const rows = (await sql`
     SELECT id FROM mailing_contacts
-     WHERE segment = 'advertiser'
+     WHERE segment = 'manual-newsline'
        AND LOWER(COALESCE(first_name, '')) = ${first}
        AND LOWER(COALESCE(last_name, ''))  = ${last}
        AND REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') = ${phoneDigits}
@@ -757,7 +760,7 @@ async function insertAdvertiserMailing(
       (segment, first_name, last_name, email, phone, company, title, license_number,
        address, address_2, city, state, zip, website, source, advertiser_id, tags)
     VALUES
-      ('advertiser',
+      ('manual-newsline',
        ${src.first_name || (src.email ?? '(no name)')},
        ${src.last_name},
        ${src.email},

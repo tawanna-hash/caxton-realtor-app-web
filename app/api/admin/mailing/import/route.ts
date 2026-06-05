@@ -3,7 +3,7 @@
 // POST — bulk import rows into a mailing segment.
 //
 // Accepts JSON body:
-//   { segment: 'advertiser', rows: [{...}, ...] }   <- already-parsed rows
+//   { segment: 'manual-newsline', rows: [{...}, ...] }   <- already-parsed rows
 //
 // Rows are normalized + filtered (must have first_name OR email) and
 // inserted in a single multi-row INSERT for speed. Duplicates within the

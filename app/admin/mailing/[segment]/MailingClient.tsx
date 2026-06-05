@@ -19,7 +19,7 @@ import {
   type CanonicalImportField,
 } from '@/lib/mailing';
 
-type Counts = { total: number; advertiser: number; 'non-advertiser': number; realtor: number };
+type Counts = { total: number; 'manual-newsline': number; 'non-advertiser': number; realtor: number };
 
 type Props = {
   segment: MailingSegment;
@@ -30,7 +30,7 @@ type Props = {
 
 const PAGE_SIZE = 100;
 
-export default function MailingClient({ segment, slug, label, accent }: Props) {
+export default function MailingClient({ segment, slug, label }: Props) {
   const [rows, setRows] = useState<MailingContactRow[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [counts, setCounts] = useState<Counts | null>(null);
@@ -210,28 +210,6 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
     }
   }
 
-  async function handleSyncAdvertisers() {
-    if (!confirm('Pull active advertisers and their additional contacts into this list?')) return;
-    setBusy('Syncing…');
-    try {
-      const res = await fetch('/api/admin/mailing/sync-advertisers', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
-      }
-      const j = await res.json() as { added: number; skipped: number; errors: number };
-      alert(`Sync complete — added ${j.added}, skipped ${j.skipped}, errors ${j.errors}.`);
-      await reload();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusy(null);
-    }
-  }
-
   function handleExport(format: 'csv' | 'tsv' | 'json') {
     const url = `/api/admin/mailing/export?segment=${encodeURIComponent(slug)}&format=${format}`;
     window.open(url, '_blank');
@@ -282,15 +260,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             >
               Delete all
             </button>
-            {segment === 'advertiser' && (
-              <button
-                onClick={handleSyncAdvertisers}
-                className="px-3 py-1.5 text-sm rounded-md text-white"
-                style={{ backgroundColor: accent }}
-              >
-                Sync from advertisers
-              </button>
-            )}
+            {/* Sync-from-advertisers hidden: Manual Newsline Contacts is manual-only. */}
           </div>
         </div>
       </div>

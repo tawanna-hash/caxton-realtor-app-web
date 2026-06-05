@@ -1,6 +1,6 @@
 // app/api/admin/mailing/route.ts
 //
-// GET  /api/admin/mailing?segment=advertisers&search=&sort=&dir=&limit=&offset=
+// GET  /api/admin/mailing?segment=manual-newsline-contacts&search=&sort=&dir=&limit=&offset=
 //   List rows + total + segment counts
 // POST /api/admin/mailing
 //   Create a single row (admin manual add). Body fields match MailingContactInput.
@@ -32,7 +32,7 @@ export const dynamic = 'force-dynamic';
 // Schemas
 // ---------------------------------------------------------------------------
 
-// Accepts either canonical ('advertiser') or slug ('advertisers') form,
+// Accepts either canonical ('manual-newsline') or slug ('manual-newsline-contacts') form,
 // matching the legacy `resolveSegment` helper. Refined output is the
 // canonical MailingSegment.
 const segmentParam = z

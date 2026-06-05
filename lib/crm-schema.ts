@@ -466,7 +466,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
     CREATE TABLE IF NOT EXISTS mailing_contacts (
       id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
       segment         text        NOT NULL DEFAULT 'non-advertiser'
-                                   CHECK (segment IN ('advertiser','non-advertiser','realtor')),
+                                   CHECK (segment IN ('manual-newsline','non-advertiser','realtor')),
       first_name      text        NOT NULL,
       last_name       text,
       email           text,
@@ -489,6 +489,13 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       updated_at      timestamptz NOT NULL DEFAULT NOW()
     )
   `);
+  // Migration: rename 'advertiser' segment → 'manual-newsline' on existing
+  // databases. Drop the old CHECK (named by Postgres) and add the new one.
+  // Update any pre-existing rows first so the new constraint doesn't fail.
+  await step(() => sql`UPDATE mailing_contacts SET segment = 'manual-newsline' WHERE segment = 'advertiser'`);
+  await step(() => sql`ALTER TABLE mailing_contacts DROP CONSTRAINT IF EXISTS mailing_contacts_segment_check`);
+  await step(() => sql`ALTER TABLE mailing_contacts ADD CONSTRAINT mailing_contacts_segment_check CHECK (segment IN ('manual-newsline','non-advertiser','realtor'))`);
+
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mailing_segment       ON mailing_contacts(segment)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mailing_email_lower   ON mailing_contacts(LOWER(email))`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mailing_advertiser    ON mailing_contacts(advertiser_id) WHERE advertiser_id IS NOT NULL`);
