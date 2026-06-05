@@ -135,6 +135,49 @@ RealtyLine · Newsline San Antonio
   return { subject, text, html };
 }
 
+/**
+ * Render the newsletter signup confirmation email. Sent immediately after a
+ * visitor signs up via the inline NewsletterCTA on the public site.
+ */
+export function renderNewsletterConfirmationEmail(opts: {
+  publication: 'realtyline' | 'newsline';
+  manageUrl: string;
+}): MagicLinkTemplate {
+  const pubLabel =
+    opts.publication === 'newsline' ? 'Newsline San Antonio' : 'RealtyLine Austin';
+  const subject = `You\u2019re subscribed to ${pubLabel}`;
+  const text = `Welcome to ${pubLabel}.
+
+You\u2019re subscribed to our weekly digest. Every week we round up the news, events, and incentives Texas REALTORS\u00AE actually need \u2014 nothing more.
+
+What to expect:
+  \u2022 One email per week (sometimes two if news breaks)
+  \u2022 Local market updates and ABoR/HBA/SABOR coverage
+  \u2022 Event calendars, giveaways, and advertiser incentives
+  \u2022 Direct links to the latest digital edition
+
+Manage your subscriptions anytime: ${opts.manageUrl}
+
+\u2014
+Caxton Publications, Inc.
+RealtyLine \u00B7 Newsline San Antonio
+`;
+
+  const html = `<p>Welcome to <strong>${escapeHtml(pubLabel)}</strong>.</p>
+<p>You\u2019re subscribed to our weekly digest. Every week we round up the news, events, and incentives Texas REALTORS&reg; actually need \u2014 nothing more.</p>
+<p><strong>What to expect:</strong></p>
+<ul>
+  <li>One email per week (sometimes two if news breaks)</li>
+  <li>Local market updates and ABoR/HBA/SABOR coverage</li>
+  <li>Event calendars, giveaways, and advertiser incentives</li>
+  <li>Direct links to the latest digital edition</li>
+</ul>
+<p><a href="${escapeHtml(opts.manageUrl)}">Manage your subscriptions</a> anytime.</p>
+<p>\u2014<br>Caxton Publications, Inc.<br>RealtyLine \u00B7 Newsline San Antonio</p>`;
+
+  return { subject, text, html };
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')

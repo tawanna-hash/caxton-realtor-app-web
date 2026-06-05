@@ -12,8 +12,12 @@
 //   - Returns { ok: true, already: boolean }
 
 import { NextRequest, NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { getSql } from '@/lib/db';
 import { withErrorHandling } from '@/lib/server/error';
+import { getEmailProvider } from '@/lib/server/email';
+import { renderNewsletterConfirmationEmail } from '@/lib/server/email/templates';
+import { logger } from '@/lib/server/logger';
 
 export const runtime = 'nodejs';
 
@@ -53,7 +57,10 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
     LIMIT 1
   `) as Array<{ id: number; status: string }>;
 
-  if (existing.length > 0) {
+  const wasAlready = existing.length > 0;
+  const wasReactivated = wasAlready && existing[0]!.status !== 'active';
+
+  if (wasAlready) {
     const row = existing[0]!;
     if (row.status !== 'active') {
       await sql`
@@ -62,15 +69,53 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
         WHERE id = ${row.id}
       `;
     }
-    return NextResponse.json({ ok: true, already: true });
+  } else {
+    await sql`
+      INSERT INTO newsletter_subscribers
+        (email, publication, source, status, source_ip, user_agent)
+      VALUES
+        (${rawEmail}, ${publication}, ${source}, 'active', ${sourceIp}, ${userAgent})
+    `;
   }
 
-  await sql`
-    INSERT INTO newsletter_subscribers
-      (email, publication, source, status, source_ip, user_agent)
-    VALUES
-      (${rawEmail}, ${publication}, ${source}, 'active', ${sourceIp}, ${userAgent})
-  `;
+  // Send the confirmation email for new subscribers and for reactivations.
+  // Skip for already-active subscribers so we don't spam them on duplicate submits.
+  if (!wasAlready || wasReactivated) {
+    try {
+      const h = await headers();
+      const host = h.get('host') ?? 'realtynewsnow.app';
+      const proto = h.get('x-forwarded-proto') ?? 'https';
+      const base = process.env.NEXT_PUBLIC_SITE_URL || `${proto}://${host}`;
+      const manageUrl = `${base}/newsletter`;
 
-  return NextResponse.json({ ok: true, already: false });
+      const template = renderNewsletterConfirmationEmail({
+        publication: publication as 'realtyline' | 'newsline',
+        manageUrl,
+      });
+
+      const result = await getEmailProvider().send({
+        to: { email: rawEmail },
+        subject: template.subject,
+        text: template.text,
+        html: template.html,
+        emailType: 'newsletter_confirmation',
+        tags: ['newsletter_confirmation', publication],
+      });
+
+      if (!result.success) {
+        logger.error(
+          { email: rawEmail, publication, error: result.error },
+          'Failed to send newsletter confirmation email',
+        );
+      }
+    } catch (err) {
+      // Never fail the signup because the welcome email failed.
+      logger.error(
+        { email: rawEmail, publication, err },
+        'Newsletter confirmation email threw',
+      );
+    }
+  }
+
+  return NextResponse.json({ ok: true, already: wasAlready && !wasReactivated });
 });
