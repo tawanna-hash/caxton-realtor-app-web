@@ -8,6 +8,7 @@ import { ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import {
   dedupeSegment,
+  deleteAllInSegment,
   deleteMailingContacts,
   isMailingSegment,
   segmentFromSlug,
@@ -43,6 +44,21 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'no valid ids' }, { status: 400 });
       }
       const removed = await deleteMailingContacts(ids);
+      return NextResponse.json({ ok: true, removed });
+    }
+
+    if (action === 'delete-all-in-segment') {
+      const segRaw = typeof body.segment === 'string' ? body.segment : null;
+      const segment = segRaw && (isMailingSegment(segRaw) ? segRaw : segmentFromSlug(segRaw));
+      if (!segment) {
+        return NextResponse.json({ error: 'invalid segment' }, { status: 400 });
+      }
+      // Require an explicit confirm token so this can\u2019t be triggered by a
+      // stray POST. The UI sends { confirm: 'DELETE_ALL' }.
+      if (body.confirm !== 'DELETE_ALL') {
+        return NextResponse.json({ error: 'confirm token required' }, { status: 400 });
+      }
+      const removed = await deleteAllInSegment(segment);
       return NextResponse.json({ ok: true, removed });
     }
 

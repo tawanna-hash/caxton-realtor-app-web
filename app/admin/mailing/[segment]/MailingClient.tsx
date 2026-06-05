@@ -147,6 +147,45 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
     }
   }
 
+  async function handleDeleteAllInSegment() {
+    const inSegment = counts?.[segment] ?? 0;
+    if (inSegment === 0) {
+      alert(`No contacts in ${label} to delete.`);
+      return;
+    }
+    const first = window.prompt(
+      `\u26a0 This will permanently delete ALL ${inSegment.toLocaleString()} contact(s) in ${label}. ` +
+        `This cannot be undone.\n\nType DELETE to confirm:`,
+    );
+    if (first !== 'DELETE') return;
+    if (!confirm(`Final check: delete all ${inSegment.toLocaleString()} contacts in ${label}?`)) return;
+    setBusy('Deleting all\u2026');
+    try {
+      const res = await fetch('/api/admin/mailing/bulk', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete-all-in-segment',
+          segment,
+          confirm: 'DELETE_ALL',
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
+      }
+      const j = (await res.json()) as { removed: number };
+      alert(`Deleted ${j.removed.toLocaleString()} contact(s) from ${label}.`);
+      setSelectedIds(new Set());
+      await reload();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function handleDedupe() {
     if (!confirm(`Dedupe ${label}? Rows with the same email (or name+phone) will be merged, keeping the oldest.`)) return;
     setBusy('Deduping…');
@@ -236,6 +275,12 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             </div>
             <button onClick={handleDedupe} className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50">
               Dedupe
+            </button>
+            <button
+              onClick={handleDeleteAllInSegment}
+              className="px-3 py-1.5 text-sm rounded-md border border-red-300 text-red-700 hover:bg-red-50"
+            >
+              Delete all
             </button>
             {segment === 'advertiser' && (
               <button

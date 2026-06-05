@@ -547,6 +547,20 @@ export async function deleteMailingContacts(ids: string[]): Promise<number> {
   return rows.length;
 }
 
+/**
+ * Delete every contact in a segment. Irreversible. Used by the
+ * "Delete all in segment" admin action.
+ */
+export async function deleteAllInSegment(segment: MailingSegment): Promise<number> {
+  const sql = getSql();
+  const rows = (await sql`
+    DELETE FROM mailing_contacts
+     WHERE segment = ${segment}
+     RETURNING id
+  `) as unknown as Array<{ id: string }>;
+  return rows.length;
+}
+
 // ============================================================
 // Dedupe (keeps oldest row per duplicate group)
 // ============================================================
