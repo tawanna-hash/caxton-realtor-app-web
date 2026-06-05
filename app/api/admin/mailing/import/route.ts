@@ -32,6 +32,7 @@ type ImportRow = {
   title?: string | null;
   license_number?: string | null;
   address?: string | null;
+  address_2?: string | null;
   city?: string | null;
   state?: string | null;
   zip?: string | null;
@@ -88,6 +89,7 @@ export async function POST(req: NextRequest) {
         title: string | null;
         license_number: string | null;
         address: string | null;
+        address_2: string | null;
         city: string | null;
         state: string | null;
         zip: string | null;
@@ -121,6 +123,7 @@ export async function POST(req: NextRequest) {
           title:          s(raw.title),
           license_number: s(raw.license_number),
           address:        s(raw.address),
+          address_2:      s(raw.address_2),
           city:           s(raw.city),
           state:          s(raw.state),
           zip:            s(raw.zip),
@@ -137,7 +140,7 @@ export async function POST(req: NextRequest) {
         await sql`
           INSERT INTO mailing_contacts
             (segment, first_name, last_name, email, phone, company, title, license_number,
-             address, city, state, zip, website, notes, source, tags)
+             address, address_2, city, state, zip, website, notes, source, tags)
           VALUES
             (${segment},
              ${v.first_name},
@@ -148,6 +151,7 @@ export async function POST(req: NextRequest) {
              ${v.title},
              ${v.license_number},
              ${v.address},
+             ${v.address_2},
              ${v.city},
              ${v.state},
              ${v.zip},

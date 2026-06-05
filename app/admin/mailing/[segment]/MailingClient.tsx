@@ -742,6 +742,7 @@ function ImportDialog({
                     <option value="title">Title</option>
                     <option value="license_number">License #</option>
                     <option value="address">Address</option>
+                    <option value="address_2">Address 2</option>
                     <option value="city">City</option>
                     <option value="state">State</option>
                     <option value="zip">ZIP</option>

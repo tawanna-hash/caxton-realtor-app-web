@@ -206,6 +206,7 @@ export type CanonicalImportField =
   | 'title'
   | 'license_number'
   | 'address'
+  | 'address_2'
   | 'city'
   | 'state'
   | 'zip'
@@ -223,6 +224,7 @@ export const IMPORT_FIELDS: { id: CanonicalImportField; label: string }[] = [
   { id: 'title',          label: 'Title' },
   { id: 'license_number', label: 'License #' },
   { id: 'address',        label: 'Address' },
+  { id: 'address_2',      label: 'Address 2' },
   { id: 'city',           label: 'City' },
   { id: 'state',          label: 'State' },
   { id: 'zip',            label: 'ZIP' },
@@ -240,7 +242,10 @@ const GUESS_TABLE: Record<string, CanonicalImportField> = {
   'title': 'title', 'job title': 'title', 'position': 'title', 'role': 'title',
   'license': 'license_number', 'license number': 'license_number', 'license no': 'license_number',
   'license #': 'license_number', 'lic': 'license_number', 'lic #': 'license_number', 'lic no': 'license_number',
-  'address': 'address', 'street': 'address', 'street address': 'address',
+  'address': 'address', 'street': 'address', 'street address': 'address', 'address 1': 'address', 'address1': 'address', 'mailing address': 'address',
+  'address 2': 'address_2', 'address2': 'address_2', 'addr 2': 'address_2', 'addr2': 'address_2',
+  'apt': 'address_2', 'apartment': 'address_2', 'suite': 'address_2', 'ste': 'address_2', 'unit': 'address_2',
+  'mailing address 2': 'address_2', 'address line 2': 'address_2',
   'city': 'city',
   'state': 'state', 'province': 'state',
   'zip': 'zip', 'zipcode': 'zip', 'zip code': 'zip', 'postal code': 'zip', 'postcode': 'zip',
