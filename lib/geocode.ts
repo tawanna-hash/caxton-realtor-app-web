@@ -131,21 +131,82 @@ export async function geocodeAddress(input: GeocodeInput): Promise<GeocodeResult
   }
 
   const match = json?.result?.addressMatches?.[0];
-  if (!match || !match.coordinates) {
+  if (match && match.coordinates) {
+    const lat = match.coordinates.y;
+    const lon = match.coordinates.x;
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+      const here: LatLon = { lat, lon };
+      return {
+        ok:             true,
+        lat,
+        lon,
+        matched:        match.matchedAddress,
+        distAbor:       haversineMiles(here, ANCHOR_ABOR),
+        distFivePoints: haversineMiles(here, ANCHOR_FIVE_POINTS),
+        distSabor:      haversineMiles(here, ANCHOR_SABOR),
+      };
+    }
+  }
+
+  // Census had no match — fall back to Nominatim (OpenStreetMap).
+  // The same fallback was used to locate SABOR HQ itself.
+  return geocodeViaNominatim(oneline);
+}
+
+/**
+ * Nominatim fallback. Free, no API key. ~1 req/sec rate limit per the
+ * usage policy — callers should serialize calls (the backfill route
+ * already iterates rows sequentially).
+ */
+async function geocodeViaNominatim(oneline: string): Promise<GeocodeResult> {
+  const params = new URLSearchParams({
+    q:               oneline,
+    format:          'json',
+    limit:           '1',
+    countrycodes:    'us',
+    addressdetails:  '0',
+  });
+  const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method:  'GET',
+      headers: {
+        Accept:       'application/json',
+        // Nominatim policy requires a descriptive UA.
+        'User-Agent': 'CaxtonRealtorApp/1.0 (contact: tawanna@myrealtyline.com)',
+      },
+      signal:  AbortSignal.timeout(8000),
+    });
+  } catch (err) {
+    return { ok: false, error: `nominatim ${err instanceof Error ? err.message : String(err)}` };
+  }
+  if (!res.ok) {
+    return { ok: false, error: `nominatim ${res.status}` };
+  }
+
+  let arr: { lat?: string; lon?: string; display_name?: string }[];
+  try {
+    arr = await res.json();
+  } catch {
+    return { ok: false, error: 'nominatim bad json' };
+  }
+  const hit = arr[0];
+  if (!hit || !hit.lat || !hit.lon) {
     return { ok: false, error: 'no match' };
   }
-  const lat = match.coordinates.y;
-  const lon = match.coordinates.x;
+  const lat = Number(hit.lat);
+  const lon = Number(hit.lon);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
     return { ok: false, error: 'bad coords' };
   }
-
   const here: LatLon = { lat, lon };
   return {
     ok:             true,
     lat,
     lon,
-    matched:        match.matchedAddress,
+    matched:        hit.display_name ?? oneline,
     distAbor:       haversineMiles(here, ANCHOR_ABOR),
     distFivePoints: haversineMiles(here, ANCHOR_FIVE_POINTS),
     distSabor:      haversineMiles(here, ANCHOR_SABOR),

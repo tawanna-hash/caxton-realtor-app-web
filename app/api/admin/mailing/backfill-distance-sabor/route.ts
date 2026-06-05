@@ -37,7 +37,7 @@ const bodySchema = z
   .object({
     action:  z.enum(['count', 'distance', 'geocode']).default('count'),
     segment: z.string().optional(),
-    limit:   z.coerce.number().int().min(1).max(1000).default(200),
+    limit:   z.coerce.number().int().min(1).max(1000).default(150),
   })
   .partial()
   .default({});
@@ -152,9 +152,17 @@ export const POST = withErrorHandling(async (req: Request) => {
   }
   const outcomes: Outcome[] = [];
 
-  // Sequential to be polite to Census + stay under maxDuration.
-  // Each Census call ~500ms; 200 rows ≈ 100s.
+  // Sequential to respect Nominatim's 1 req/sec usage policy.
+  // Each call: Census ~500ms + (Nominatim fallback ~1000ms when triggered).
+  // ~150 rows fits comfortably under maxDuration.
+  const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+  let firstRow = true;
   for (const row of rows) {
+    if (!firstRow) {
+      // Conservative throttle for the Nominatim fallback path.
+      await sleep(1100);
+    }
+    firstRow = false;
     const name = [row.first_name, row.last_name].filter(Boolean).join(' ') || (row.company ?? '(no name)');
     try {
       const geo = await geocodeAddress({
