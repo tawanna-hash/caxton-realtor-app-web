@@ -594,6 +594,11 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
     ALTER TABLE mailing_contacts
       ADD COLUMN IF NOT EXISTS distance_fivepoints_mi double precision
   `);
+  // SABOR anchor (Manual Newsline Contacts proximity reference)
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS distance_sabor_mi      double precision
+  `);
   await step(() => sql`
     ALTER TABLE mailing_contacts
       ADD COLUMN IF NOT EXISTS addr_usps_normalized   text
@@ -602,6 +607,11 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_mailing_distance_abor
       ON mailing_contacts(distance_abor_mi)
       WHERE distance_abor_mi IS NOT NULL
+  `);
+  await step(() => sql`
+    CREATE INDEX IF NOT EXISTS idx_mailing_distance_sabor
+      ON mailing_contacts(distance_sabor_mi)
+      WHERE distance_sabor_mi IS NOT NULL
   `);
 
   // ----------------------------------------------------------------

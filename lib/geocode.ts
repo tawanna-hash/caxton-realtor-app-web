@@ -7,13 +7,15 @@
 //     ?address=...&benchmark=Public_AR_Current&format=json
 //
 // Also exposes anchor lat/lons and helpers to compute distance (miles)
-// from a given point to the two REALTOR boards we care about for
-// ABOR Members:
+// from a given point to the REALTOR boards we care about for the various
+// mailing audiences:
 //
 //   ABoR        — Austin Board of Realtors
 //                 4800 Spicewood Springs Rd, Austin, TX 78759
 //   Five Points — Five Points Board of REALTORS
 //                 123 E. Old Settler's Blvd., Round Rock, TX 78664
+//   SABOR       — San Antonio Board of REALTORS (Manual Newsline anchor)
+//                 9110 IH-10 W, San Antonio, TX 78230
 //
 // A row is "near" a board when its great-circle distance is <= 60 mi.
 
@@ -32,6 +34,12 @@ export const ANCHOR_ABOR: LatLon = {
 export const ANCHOR_FIVE_POINTS: LatLon = {
   lat: 30.516893,
   lon: -97.665878,
+};
+
+/** San Antonio Board of REALTORS HQ (9110 IH-10 W, San Antonio, TX 78230). */
+export const ANCHOR_SABOR: LatLon = {
+  lat: 29.524318,
+  lon: -98.557229,
 };
 
 export const NEAR_RADIUS_MI = 60;
@@ -69,6 +77,8 @@ export interface GeocodeResult {
   distAbor?:    number;
   /** Miles to Five Points Board of REALTORS. */
   distFivePoints?: number;
+  /** Miles to San Antonio Board of REALTORS. */
+  distSabor?:   number;
   error?:       string;
 }
 
@@ -138,6 +148,7 @@ export async function geocodeAddress(input: GeocodeInput): Promise<GeocodeResult
     matched:        match.matchedAddress,
     distAbor:       haversineMiles(here, ANCHOR_ABOR),
     distFivePoints: haversineMiles(here, ANCHOR_FIVE_POINTS),
+    distSabor:      haversineMiles(here, ANCHOR_SABOR),
   };
 }
 

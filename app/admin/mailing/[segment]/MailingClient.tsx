@@ -162,8 +162,15 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
       if (j.row) mergeRow(j.row);
       const verdict = j.verdict ?? 'Unknown';
-      const extra = verdict === 'Valid' && j.distance_abor_mi !== null && j.distance_abor_mi !== undefined
-        ? ` · ${Number(j.distance_abor_mi).toFixed(1)} mi from ABoR`
+      // Manual Newsline anchors on SABOR (San Antonio); other segments
+      // anchor on ABoR (Austin). Show whichever applies in the toast.
+      const isSabor = segment === 'manual-newsline';
+      const distVal = isSabor
+        ? j.distance_sabor_mi
+        : j.distance_abor_mi;
+      const anchorLabel = isSabor ? 'SABOR' : 'ABoR';
+      const extra = verdict === 'Valid' && distVal !== null && distVal !== undefined
+        ? ` · ${Number(distVal).toFixed(1)} mi from ${anchorLabel}`
         : '';
       showToast(`Address: ${verdict}${extra}${j.detail ? ` — ${j.detail}` : ''}`);
       await reload();
@@ -461,8 +468,18 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         <KpiCard label="In segment"    value={stats?.total    ?? 0} sub="all contacts"             accent={accent} />
         <KpiCard label="Verified"      value={stats?.verified ?? 0} sub="address or email valid"   accent="#10B981" />
         <KpiCard label="Pending"       value={stats?.pending  ?? 0} sub="needs verification"       accent="#F59E0B" />
-        <KpiCard label="Within 60 mi"  value={stats?.near     ?? 0} sub="near ABoR or Five Points" accent="#059669" />
-        <KpiCard label="Outside 60 mi" value={stats?.far      ?? 0} sub="out of both radii"        accent="#9CA3AF" />
+        <KpiCard
+          label="Within 60 mi"
+          value={stats?.near ?? 0}
+          sub={segment === 'manual-newsline' ? 'near SABOR' : 'near ABoR or Five Points'}
+          accent="#059669"
+        />
+        <KpiCard
+          label="Outside 60 mi"
+          value={stats?.far ?? 0}
+          sub={segment === 'manual-newsline' ? 'beyond SABOR 60 mi' : 'out of both radii'}
+          accent="#9CA3AF"
+        />
       </div>
 
       {/* Filter chips + search */}
@@ -577,7 +594,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                   <td className="px-3 py-2 text-gray-700">{r.company ?? ''}</td>
                   <td className="px-3 py-2 text-gray-700">{r.city ?? ''}</td>
                   <td className="px-3 py-2">
-                    <ProximityBadges row={r} />
+                    <ProximityBadges row={r} segment={segment} />
                   </td>
                   <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                     <VerifyCell
@@ -632,6 +649,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       {editing && (
         <EditDrawer
           row={editing}
+          segment={segment}
           onClose={() => setEditing(null)}
           onSaved={(row) => { mergeRow(row); showToast('Saved.'); }}
           onVerifyAddress={() => verifyAddress(editing.id)}
@@ -839,7 +857,43 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
   );
 }
 
-function ProximityBadges({ row }: { row: MailingContactRow }) {
+function ProximityBadges({
+  row,
+  segment,
+}: {
+  row: MailingContactRow;
+  segment: MailingSegment;
+}) {
+  // Manual Newsline Contacts anchor on SABOR (9110 IH-10 W, San Antonio).
+  // All other mailing-stage segments keep the Austin/Five-Points dual anchor.
+  if (segment === 'manual-newsline') {
+    const dS = row.distance_sabor_mi;
+    if (dS === null || dS === undefined) {
+      return <span className="text-[11px] text-gray-400">—</span>;
+    }
+    const nearS = dS <= NEAR_RADIUS_MI;
+    if (!nearS) {
+      return (
+        <span
+          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium ring-1 ring-gray-200"
+          title={`${dS.toFixed(1)} mi from SABOR (9110 IH-10 W, San Antonio)`}
+        >
+          <span>Outside 60 mi</span>
+          <span className="text-gray-500">{dS.toFixed(0)} mi · SABOR</span>
+        </span>
+      );
+    }
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-medium"
+        title={`${dS.toFixed(1)} mi from SABOR HQ`}
+      >
+        <span>Near SABOR</span>
+        <span className="text-emerald-700/70">{dS.toFixed(0)} mi</span>
+      </span>
+    );
+  }
+
   const dA = row.distance_abor_mi;
   const dF = row.distance_fivepoints_mi;
   const hasA = dA !== null && dA !== undefined;
@@ -901,9 +955,10 @@ function ProximityBadges({ row }: { row: MailingContactRow }) {
 // ============================================================
 
 function EditDrawer({
-  row, onClose, onSaved, onVerifyAddress, onVerifyEmail, busy,
+  row, segment, onClose, onSaved, onVerifyAddress, onVerifyEmail, busy,
 }: {
   row: MailingContactRow;
+  segment: MailingSegment;
   onClose: () => void;
   onSaved: (row: MailingContactRow) => void;
   onVerifyAddress: () => void;
@@ -1029,13 +1084,19 @@ function EditDrawer({
                   USPS: {row.addr_usps_normalized}
                 </div>
               )}
-              {row.distance_abor_mi !== null && row.distance_abor_mi !== undefined && (
-                <div className="text-[11px] text-gray-500">
-                  {row.distance_abor_mi.toFixed(1)} mi to ABoR
-                  {row.distance_fivepoints_mi !== null && row.distance_fivepoints_mi !== undefined &&
-                    ` · ${row.distance_fivepoints_mi.toFixed(1)} mi to Five Points`}
-                </div>
-              )}
+              {segment === 'manual-newsline'
+                ? (row.distance_sabor_mi !== null && row.distance_sabor_mi !== undefined && (
+                    <div className="text-[11px] text-gray-500">
+                      {row.distance_sabor_mi.toFixed(1)} mi to SABOR
+                    </div>
+                  ))
+                : (row.distance_abor_mi !== null && row.distance_abor_mi !== undefined && (
+                    <div className="text-[11px] text-gray-500">
+                      {row.distance_abor_mi.toFixed(1)} mi to ABoR
+                      {row.distance_fivepoints_mi !== null && row.distance_fivepoints_mi !== undefined &&
+                        ` · ${row.distance_fivepoints_mi.toFixed(1)} mi to Five Points`}
+                    </div>
+                  ))}
               <button
                 type="button"
                 disabled={addrBusy}

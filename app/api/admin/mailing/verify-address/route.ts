@@ -95,6 +95,7 @@ export const POST = withErrorHandling(async (req: Request) => {
       geo.lon,
       geo.distAbor ?? 0,
       geo.distFivePoints ?? 0,
+      geo.distSabor ?? 0,
     );
   }
 
@@ -105,6 +106,7 @@ export const POST = withErrorHandling(async (req: Request) => {
     geocoded:  geo.ok,
     distance_abor_mi:       geo.distAbor ?? null,
     distance_fivepoints_mi: geo.distFivePoints ?? null,
+    distance_sabor_mi:      geo.distSabor ?? null,
     row: updated,
   });
 });

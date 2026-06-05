@@ -96,6 +96,7 @@ export const POST = withErrorHandling(async (req: Request) => {
       geo.lon,
       geo.distAbor ?? 0,
       geo.distFivePoints ?? 0,
+      geo.distSabor ?? 0,
     );
   }
 

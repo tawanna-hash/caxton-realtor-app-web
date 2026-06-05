@@ -106,6 +106,7 @@ export type MailingContactRow = {
   geocoded_at: string | null;
   distance_abor_mi: number | null;
   distance_fivepoints_mi: number | null;
+  distance_sabor_mi: number | null;
   addr_usps_normalized: string | null;
   // Email verifier signals
   email_disposable:    boolean | null;
@@ -446,31 +447,59 @@ export async function segmentStats(segment: MailingSegment): Promise<SegmentStat
   // 60mi radius. Kept inline (not imported) so this file stays free of
   // the geocode module's runtime deps.
   const NEAR_MI = 60;
-  const rows = (await sql`
-    SELECT
-      COUNT(*)::int AS total,
-      COUNT(*) FILTER (
-        WHERE addr_status = 'Valid' OR email_status = 'Valid'
-      )::int AS verified,
-      COUNT(*) FILTER (
-        WHERE (addr_status IS NULL OR addr_status <> 'Valid')
-          AND (email_status IS NULL OR email_status <> 'Valid')
-      )::int AS pending,
-      COUNT(*) FILTER (
-        WHERE (distance_abor_mi       IS NOT NULL AND distance_abor_mi       <= ${NEAR_MI})
-           OR (distance_fivepoints_mi IS NOT NULL AND distance_fivepoints_mi <= ${NEAR_MI})
-      )::int AS near,
-      COUNT(*) FILTER (
-        WHERE distance_abor_mi       IS NOT NULL
-          AND distance_fivepoints_mi IS NOT NULL
-          AND distance_abor_mi       >  ${NEAR_MI}
-          AND distance_fivepoints_mi >  ${NEAR_MI}
-      )::int AS far
-    FROM mailing_contacts
-    WHERE stage = 'mailing' AND segment = ${segment}
-  `) as unknown as Array<{
-    total: number; verified: number; pending: number; near: number; far: number;
-  }>;
+
+  // Manual Newsline Contacts use SABOR (San Antonio Board of REALTORS,
+  // 9110 IH-10 W) as the proximity anchor. All other mailing-stage
+  // segments keep the Austin/Five-Points dual anchor.
+  const rows = segment === 'manual-newsline'
+    ? ((await sql`
+        SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (
+            WHERE addr_status = 'Valid' OR email_status = 'Valid'
+          )::int AS verified,
+          COUNT(*) FILTER (
+            WHERE (addr_status IS NULL OR addr_status <> 'Valid')
+              AND (email_status IS NULL OR email_status <> 'Valid')
+          )::int AS pending,
+          COUNT(*) FILTER (
+            WHERE distance_sabor_mi IS NOT NULL
+              AND distance_sabor_mi <= ${NEAR_MI}
+          )::int AS near,
+          COUNT(*) FILTER (
+            WHERE distance_sabor_mi IS NOT NULL
+              AND distance_sabor_mi >  ${NEAR_MI}
+          )::int AS far
+        FROM mailing_contacts
+        WHERE stage = 'mailing' AND segment = ${segment}
+      `) as unknown as Array<{
+        total: number; verified: number; pending: number; near: number; far: number;
+      }>)
+    : ((await sql`
+        SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (
+            WHERE addr_status = 'Valid' OR email_status = 'Valid'
+          )::int AS verified,
+          COUNT(*) FILTER (
+            WHERE (addr_status IS NULL OR addr_status <> 'Valid')
+              AND (email_status IS NULL OR email_status <> 'Valid')
+          )::int AS pending,
+          COUNT(*) FILTER (
+            WHERE (distance_abor_mi       IS NOT NULL AND distance_abor_mi       <= ${NEAR_MI})
+               OR (distance_fivepoints_mi IS NOT NULL AND distance_fivepoints_mi <= ${NEAR_MI})
+          )::int AS near,
+          COUNT(*) FILTER (
+            WHERE distance_abor_mi       IS NOT NULL
+              AND distance_fivepoints_mi IS NOT NULL
+              AND distance_abor_mi       >  ${NEAR_MI}
+              AND distance_fivepoints_mi >  ${NEAR_MI}
+          )::int AS far
+        FROM mailing_contacts
+        WHERE stage = 'mailing' AND segment = ${segment}
+      `) as unknown as Array<{
+        total: number; verified: number; pending: number; near: number; far: number;
+      }>);
   return {
     total:    rows[0]?.total    ?? 0,
     verified: rows[0]?.verified ?? 0,
@@ -1483,6 +1512,7 @@ export async function updateHoldingContact(
            geocoded_at            = CASE WHEN ${addressChanged} THEN NULL      ELSE geocoded_at END,
            distance_abor_mi       = CASE WHEN ${addressChanged} THEN NULL      ELSE distance_abor_mi END,
            distance_fivepoints_mi = CASE WHEN ${addressChanged} THEN NULL      ELSE distance_fivepoints_mi END,
+           distance_sabor_mi      = CASE WHEN ${addressChanged} THEN NULL      ELSE distance_sabor_mi END,
            email_status           = CASE WHEN ${emailChanged}   THEN 'Pending' ELSE email_status END,
            email_verified_at      = CASE WHEN ${emailChanged}   THEN NULL      ELSE email_verified_at END,
            updated_at             = NOW()
@@ -1791,6 +1821,7 @@ export async function persistGeocode(
   lon: number,
   distAbor: number,
   distFivePoints: number,
+  distSabor: number = 0,
 ): Promise<MailingContactRow | null> {
   const sql = getSql();
   const rows = (await sql`
@@ -1800,6 +1831,7 @@ export async function persistGeocode(
            geocoded_at            = NOW(),
            distance_abor_mi       = ${distAbor},
            distance_fivepoints_mi = ${distFivePoints},
+           distance_sabor_mi      = ${distSabor},
            updated_at             = NOW()
      WHERE id = ${id}
      RETURNING *
