@@ -473,7 +473,7 @@ function AddDialog({
 }: { segment: MailingSegment; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState({
     first_name: '', last_name: '', email: '', phone: '', company: '', title: '',
-    license_number: '', address: '', city: '', state: '', zip: '', website: '', notes: '',
+    license_number: '', address: '', address_2: '', city: '', state: '', zip: '', website: '', notes: '',
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -522,6 +522,7 @@ function AddDialog({
           <Field label="License #"    value={form.license_number} onChange={(v) => set('license_number', v)} />
           <Field label="Website"      value={form.website}        onChange={(v) => set('website', v)} />
           <Field label="Address"      value={form.address}        onChange={(v) => set('address', v)} className="sm:col-span-2" />
+          <Field label="Address 2"    value={form.address_2}      onChange={(v) => set('address_2', v)} className="sm:col-span-2" />
           <Field label="City"         value={form.city}           onChange={(v) => set('city', v)} />
           <Field label="State"        value={form.state}          onChange={(v) => set('state', v)} />
           <Field label="ZIP"          value={form.zip}            onChange={(v) => set('zip', v)} />
