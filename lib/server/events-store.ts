@@ -11,6 +11,33 @@
 import crypto from 'node:crypto';
 import { ApiError } from './error';
 import { query } from './db/neon';
+import { geocodeAddress } from '@/lib/geocode';
+import { logger } from './logger';
+
+/**
+ * Best-effort geocode of a free-form venue/location string. Returns null
+ * on any failure (network, no match, malformed) so the caller can still
+ * insert the event row without lat/lng. Never throws.
+ */
+async function geocodeEventLocation(
+  location: string | null | undefined,
+): Promise<{ lat: number; lng: number } | null> {
+  const oneline = (location ?? '').trim();
+  if (!oneline) return null;
+  try {
+    const res = await geocodeAddress({ address: oneline });
+    if (res.ok && typeof res.lat === 'number' && typeof res.lon === 'number') {
+      return { lat: res.lat, lng: res.lon };
+    }
+    return null;
+  } catch (err) {
+    logger.warn(
+      { location: oneline, err: err instanceof Error ? err.message : String(err) },
+      '[events-store] geocode failed',
+    );
+    return null;
+  }
+}
 
 export type Publication = 'austin' | 'san_antonio';
 export type EventSource =
@@ -257,16 +284,17 @@ export async function createSubmittedEvent(input: {
   advertiserId: number;
 }): Promise<AdminCalendarEvent> {
   const externalId = crypto.randomUUID();
+  const coords = await geocodeEventLocation(input.location);
   const rows = await query<EventRow>(
     `INSERT INTO events (
        external_source, external_id, publication, title, description, link,
        start_date, end_date, location, organizer, website, image_url,
-       submitted_by_advertiser_id, hidden,
+       submitted_by_advertiser_id, lat, lng, hidden,
        last_synced_at, updated_at
      ) VALUES (
        'submission', $1, $2, $3, $4, $5,
        $6, $7, $8, $9, $10, $11,
-       $12, true,
+       $12, $13, $14, true,
        NOW(), NOW()
      )
      RETURNING ${SELECT_COLS}`,
@@ -283,6 +311,8 @@ export async function createSubmittedEvent(input: {
       input.website,
       input.imageUrl,
       input.advertiserId,
+      coords?.lat ?? null,
+      coords?.lng ?? null,
     ],
   );
   if (!rows[0]) throw new ApiError(500, 'Submitted event INSERT returned no row');
@@ -312,6 +342,7 @@ export async function createLLMDetectedEvent(input: {
   sourcePostId: number;
 }): Promise<AdminCalendarEvent | null> {
   const externalId = `fb-llm-${input.sourcePostId}`;
+  const coords = await geocodeEventLocation(input.location);
   // ON CONFLICT on source_post_id idempotency: re-scanning the same FB post
   // returns 0 rows so the cron knows to skip. The unique partial index on
   // events(source_post_id) WHERE source_post_id IS NOT NULL enforces this.
@@ -319,12 +350,12 @@ export async function createLLMDetectedEvent(input: {
     `INSERT INTO events (
        external_source, external_id, publication, title, description, link,
        start_date, end_date, location, organizer, image_url,
-       source_post_id, confidence, hidden,
+       source_post_id, confidence, lat, lng, hidden,
        last_synced_at, updated_at
      ) VALUES (
        'facebook-llm', $1, $2, $3, $4, $5,
        $6, $7, $8, $9, $10,
-       $11, $12, true,
+       $11, $12, $13, $14, true,
        NOW(), NOW()
      )
      ON CONFLICT ON CONSTRAINT events_external_uniq DO NOTHING
@@ -342,6 +373,8 @@ export async function createLLMDetectedEvent(input: {
       input.imageUrl,
       input.sourcePostId,
       input.confidence,
+      coords?.lat ?? null,
+      coords?.lng ?? null,
     ],
   );
   return rows[0] ? rowToAdminEvent(rows[0]) : null;

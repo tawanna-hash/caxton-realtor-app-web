@@ -35,7 +35,7 @@ function authorizedByBearer(req: Request): boolean {
 
 const bodySchema = z
   .object({
-    action:  z.enum(['count', 'distance', 'geocode', 'fb-status']).default('count'),
+    action:  z.enum(['count', 'distance', 'geocode', 'fb-status', 'geocode-events']).default('count'),
     segment: z.string().optional(),
     limit:   z.coerce.number().int().min(1).max(1000).default(100),
   })
@@ -84,6 +84,103 @@ export const POST = withErrorHandling(async (req: Request) => {
   const limit   = body.limit   ?? 200;
 
   const before = await getCounts(sql, segment);
+
+  // ───── action: geocode-events ─────
+  // Geocode events that have a non-empty `location` but NULL lat/lng.
+  if (action === 'geocode-events') {
+    interface EventRow {
+      id:       number;
+      title:    string | null;
+      location: string | null;
+    }
+    const rows = (await sql`
+      SELECT id, title, location
+        FROM events
+       WHERE location IS NOT NULL
+         AND location <> ''
+         AND (lat IS NULL OR lng IS NULL)
+       ORDER BY id DESC
+       LIMIT ${limit}
+    `) as unknown as EventRow[];
+
+    interface EventOutcome {
+      id:       number;
+      title:    string | null;
+      location: string | null;
+      ok:       boolean;
+      lat?:     number;
+      lng?:     number;
+      error?:   string;
+    }
+    const outcomes: EventOutcome[] = [];
+    const sleep    = (ms: number) => new Promise(r => setTimeout(r, ms));
+    const deadline = Date.now() + 270_000;
+    let firstEvt   = true;
+    let aborted: number | null = null;
+
+    for (const [idx, ev] of rows.entries()) {
+      if (Date.now() > deadline) { aborted = idx; break; }
+      if (!firstEvt) await sleep(1100); // Nominatim throttle
+      firstEvt = false;
+      try {
+        const geo = await geocodeAddress({ address: ev.location ?? '' });
+        if (geo.ok && typeof geo.lat === 'number' && typeof geo.lon === 'number') {
+          await sql`
+            UPDATE events
+               SET lat = ${geo.lat}::double precision,
+                   lng = ${geo.lon}::double precision,
+                   updated_at = NOW()
+             WHERE id = ${ev.id}
+          `;
+          outcomes.push({
+            id:       ev.id,
+            title:    ev.title,
+            location: ev.location,
+            ok:       true,
+            lat:      geo.lat,
+            lng:      geo.lon,
+          });
+        } else {
+          outcomes.push({
+            id:       ev.id,
+            title:    ev.title,
+            location: ev.location,
+            ok:       false,
+            error:    geo.ok ? 'no coords' : geo.error,
+          });
+        }
+      } catch (err) {
+        outcomes.push({
+          id:       ev.id,
+          title:    ev.title,
+          location: ev.location,
+          ok:       false,
+          error:    err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    const ok_count   = outcomes.filter(o => o.ok).length;
+    const fail_count = outcomes.length - ok_count;
+    const remaining  = (await sql`
+      SELECT COUNT(*)::text AS pending
+        FROM events
+       WHERE location IS NOT NULL
+         AND location <> ''
+         AND (lat IS NULL OR lng IS NULL)
+    `) as unknown as Array<{ pending: string }>;
+
+    return NextResponse.json({
+      action:        'geocode-events',
+      scanned:       outcomes.length,
+      fetched:       rows.length,
+      aborted_at:    aborted,
+      ok_count,
+      fail_count,
+      still_pending: remaining[0]?.pending ?? '0',
+      outcomes,
+    });
+  }
 
   // ───── action: fb-status ─────
   if (action === 'fb-status') {

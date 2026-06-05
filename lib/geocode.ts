@@ -30,10 +30,15 @@ export const ANCHOR_ABOR: LatLon = {
   lon: -97.76889,
 };
 
-/** Five Points Board of REALTORS (Round Rock). */
+/**
+ * Five Points Board of REALTORS
+ * 123 E Old Settlers Blvd, Round Rock, TX 78664.
+ * Coordinates verified against both the US Census geocoder and Nominatim;
+ * both returned the same point to within ~30 ft.
+ */
 export const ANCHOR_FIVE_POINTS: LatLon = {
-  lat: 30.516893,
-  lon: -97.665878,
+  lat: 30.534815,
+  lon: -97.683454,
 };
 
 /** San Antonio Board of REALTORS HQ (9110 IH-10 W, San Antonio, TX 78230). */
