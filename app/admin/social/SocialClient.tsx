@@ -347,7 +347,7 @@ export default function SocialClient() {
           href="/admin/social/fb-pages"
           className="shrink-0 inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 whitespace-nowrap"
         >
-          Pages I follow &rarr;
+          Facebook Events &rarr;
         </a>
       </div>
 

@@ -149,10 +149,10 @@ export default function MonitoredFbPagesClient() {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-        Social &middot; Monitored Pages
+        Content &middot; Facebook Events
       </p>
       <h1 className="font-serif text-3xl text-gray-900 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
-        Facebook Pages I Follow
+        Facebook Events
       </h1>
       <p className="text-gray-600 mb-6 max-w-2xl">
         Pages on this list are scanned every few hours by a headless browser. Any
