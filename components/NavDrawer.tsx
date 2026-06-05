@@ -86,20 +86,6 @@ const DRAWER_SECTIONS: NavSection[] = [
       { label: 'Inventory & Promotions', href: '/inventory' },
       { label: 'Communities', href: '/communities' },
       { label: 'Advertisers', href: '/advertisers' },
-      {
-        label: 'REALTOR Resources',
-        href: '/resources',
-        subitems: [
-          { label: "Seller's Net Sheet", href: '/resources/seller-net-sheet' },
-          { label: 'Buyer Closing Costs', href: '/resources/buyer-closing-costs' },
-          { label: 'Mortgage Calculator', href: '/resources/mortgage-calculator' },
-          { label: 'Commission Calculator', href: '/resources/commission-calculator' },
-          { label: 'Title Rate Calculator', href: '/resources/title-rate-calculator' },
-          { label: 'Investment Property ROI', href: '/resources/investment-property' },
-          { label: 'Rent vs Buy', href: '/resources/rent-vs-buy' },
-          { label: '1031 Exchange Timeline', href: '/resources/1031-exchange' },
-        ],
-      },
     ],
   },
   {
