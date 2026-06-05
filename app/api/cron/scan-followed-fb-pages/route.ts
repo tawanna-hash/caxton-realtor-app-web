@@ -50,10 +50,18 @@ const MIN_POST_CHARS = 30;
 const MIN_CONFIDENCE = 0.55;
 const NAV_TIMEOUT_MS = 25_000;
 
+// mbasic.facebook.com is FB's no-JS HTML-only site (originally for feature
+// phones / low-bandwidth users / screen readers). It has historically had a
+// much weaker login wall than m.facebook.com because the whole point is to
+// serve public content to barely-functional clients. Post text renders
+// server-side so we don't need JS execution at all.
+const FB_HOST = 'mbasic.facebook.com';
+
+// Mimic a real feature-phone / older Android browser — the kind of UA mbasic
+// actually expects. Modern mobile UAs from cloud IPs trip FB's bot heuristic.
 const MOBILE_UA =
-  'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) ' +
-  'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 ' +
-  'Mobile/15E148 Safari/604.1';
+  'Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) ' +
+  'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36';
 
 function authorized(req: Request): boolean {
   const auth = req.headers.get('authorization') ?? '';
@@ -135,11 +143,10 @@ async function extractPostsForPage(slug: string): Promise<ExtractedPost[]> {
     });
 
     const page = await context.newPage();
-    const url = `https://m.facebook.com/${encodeURIComponent(slug)}/posts/`;
+    // mbasic serves server-rendered HTML, so domcontentloaded is enough —
+    // no need to wait for JS hydration.
+    const url = `https://${FB_HOST}/${encodeURIComponent(slug)}`;
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: NAV_TIMEOUT_MS });
-
-    // Give FB a moment to hydrate post text. They lazy-render via JS.
-    await page.waitForTimeout(2500);
 
     // Detect login wall: FB sometimes redirects logged-out anons to /login.
     const currentUrl = page.url();
@@ -147,9 +154,9 @@ async function extractPostsForPage(slug: string): Promise<ExtractedPost[]> {
       throw new Error(`login wall: redirected to ${currentUrl}`);
     }
 
-    // Extract text candidates from the DOM. We grab any element matching
-    // story-shaped containers, plus a general fallback that scoops all
-    // sufficiently-long <div> innerText blocks.
+    // mbasic markup is plain HTML. Posts on /{slug} live inside <article>
+    // elements or under <div id="recent"> with permalinks to /story.php?
+    // story_fbid=...&id=... Each post is a self-contained block.
     const rawCandidates = await page.evaluate(() => {
       const out: Array<{ text: string; permalink: string | null }> = [];
       const seen = new Set<string>();
@@ -163,29 +170,29 @@ async function extractPostsForPage(slug: string): Promise<ExtractedPost[]> {
         out.push({ text, permalink });
       };
 
-      // 1. Best signal: anything containing a permalink to /story.php or
-      //    /<slug>/posts/<id> is almost certainly a post container.
-      const links = Array.from(
-        document.querySelectorAll(
-          'a[href*="/story.php"], a[href*="/posts/"], a[href*="/permalink/"]'
-        )
+      // mbasic: posts often live inside <article role="article">.
+      const articles = Array.from(document.querySelectorAll('article'));
+      for (const art of articles) {
+        const permalink =
+          art.querySelector<HTMLAnchorElement>('a[href*="/story.php"]')?.href ??
+          art.querySelector<HTMLAnchorElement>('a[href*="/permalink"]')?.href ??
+          null;
+        pushCandidate(art, permalink);
+      }
+
+      // Fallback: any anchor pointing to a story—walk up to a containing div.
+      const storyLinks = Array.from(
+        document.querySelectorAll('a[href*="/story.php"]')
       ) as HTMLAnchorElement[];
-      for (const a of links) {
-        // Walk up to a sensible container (the closest <article> or
-        // a div with substantial text content).
+      for (const a of storyLinks) {
         let node: Element | null = a;
         for (let i = 0; i < 6 && node; i += 1) {
-          if (node.tagName === 'ARTICLE') break;
           const text = (node as HTMLElement).innerText?.trim() ?? '';
           if (text.length >= 80) break;
           node = node.parentElement;
         }
         if (node) pushCandidate(node, a.href);
       }
-
-      // 2. Fallback: <article> elements (FB sometimes still uses these).
-      const articles = Array.from(document.querySelectorAll('article'));
-      for (const art of articles) pushCandidate(art, null);
 
       return out;
     });
