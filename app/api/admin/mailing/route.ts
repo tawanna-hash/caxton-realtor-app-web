@@ -11,6 +11,7 @@ import { ensureSchema } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import {
   countBySegment,
+  segmentStats,
   createMailingContact,
   isMailingSegment,
   isSortableColumn,
@@ -97,7 +98,8 @@ export const GET = withErrorHandling(async (req: Request) => {
     offset,
   });
   const counts = await countBySegment();
-  return NextResponse.json({ rows, total, counts });
+  const stats  = await segmentStats(segment);
+  return NextResponse.json({ rows, total, counts, stats });
 });
 
 export const POST = withErrorHandling(async (req: Request) => {

@@ -20,6 +20,15 @@ import {
 } from '@/lib/mailing';
 
 type Counts = { total: number; 'manual-newsline': number; 'non-advertiser': number; realtor: number };
+type Stats  = {
+  total:       number;
+  uspsValid:   number;
+  uspsInvalid: number;
+  uspsPending: number;
+  unverified:  number;
+  withEmail:   number;
+  withAddress: number;
+};
 
 type Props = {
   segment: MailingSegment;
@@ -30,10 +39,11 @@ type Props = {
 
 const PAGE_SIZE = 100;
 
-export default function MailingClient({ segment, slug, label }: Props) {
+export default function MailingClient({ segment, slug, label, accent }: Props) {
   const [rows, setRows] = useState<MailingContactRow[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [counts, setCounts] = useState<Counts | null>(null);
+  const [stats, setStats]   = useState<Stats | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,10 +78,11 @@ export default function MailingClient({ segment, slug, label }: Props) {
         const j = await res.json().catch(() => ({}));
         throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
       }
-      const data = await res.json() as { rows: MailingContactRow[]; total: number; counts: Counts };
+      const data = await res.json() as { rows: MailingContactRow[]; total: number; counts: Counts; stats?: Stats };
       setRows(data.rows);
       setTotal(data.total);
       setCounts(data.counts);
+      if (data.stats) setStats(data.stats);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -320,6 +331,16 @@ export default function MailingClient({ segment, slug, label }: Props) {
             {/* Sync-from-advertisers hidden: Manual Newsline Contacts is manual-only. */}
           </div>
         </div>
+      </div>
+
+      {/* KPI strip — segment-specific stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <KpiCard label="In segment"    value={stats?.total       ?? 0} sub="all contacts"            accent={accent} />
+        <KpiCard label="USPS Valid"    value={stats?.uspsValid   ?? 0} sub="verified addresses"      accent="#10B981" />
+        <KpiCard label="USPS Invalid"  value={stats?.uspsInvalid ?? 0} sub={'USPS couldn\u2019t verify'} accent="#EF4444" />
+        <KpiCard label="Pending"       value={stats?.uspsPending ?? 0} sub="awaiting re-check"       accent="#F59E0B" />
+        <KpiCard label="Unverified"    value={stats?.unverified  ?? 0} sub="never run through USPS"  accent="#6B7280" />
+        <KpiCard label="With email"    value={stats?.withEmail   ?? 0} sub="emailable"               accent="#3D0740" />
       </div>
 
       {/* Filters bar */}
@@ -881,4 +902,25 @@ function parseDelimited(text: string, delim: string): Record<string, string>[] {
     out.push(obj);
   }
   return out;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Compact KPI card — segment stats strip.
+
+function KpiCard({
+  label, value, sub, accent,
+}: { label: string; value: number; sub: string; accent?: string }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-4">
+      <div
+        className="h-7 w-7 rounded-md mb-3"
+        style={{ backgroundColor: accent ? `${accent}15` : '#F3F4F6' }}
+      />
+      <div className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</div>
+      <div className="mt-1">
+        <div className="text-xs font-semibold text-gray-900">{label}</div>
+        <div className="text-[11px] text-gray-500">{sub}</div>
+      </div>
+    </div>
+  );
 }

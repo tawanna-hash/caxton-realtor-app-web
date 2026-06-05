@@ -399,6 +399,57 @@ export async function countBySegment(): Promise<Record<MailingSegment | 'total',
 }
 
 /**
+ * Per-segment KPI stats for the segment detail page (mailing stage only).
+ * Returns total + USPS verdict breakdown + with-email / with-address counts.
+ */
+export type SegmentStats = {
+  total:        number;
+  uspsValid:    number;
+  uspsInvalid:  number;
+  uspsPending:  number;
+  unverified:   number;
+  withEmail:    number;
+  withAddress:  number;
+};
+
+export async function segmentStats(segment: MailingSegment): Promise<SegmentStats> {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT
+      COUNT(*)::int                                                                         AS total,
+      COUNT(*) FILTER (WHERE addr_status = 'Valid')::int                                    AS usps_valid,
+      COUNT(*) FILTER (WHERE addr_status = 'Invalid')::int                                  AS usps_invalid,
+      COUNT(*) FILTER (WHERE addr_status = 'Pending')::int                                  AS usps_pending,
+      COUNT(*) FILTER (WHERE addr_status IS NULL)::int                                      AS unverified,
+      COUNT(*) FILTER (WHERE NULLIF(TRIM(COALESCE(email, '')),   '') IS NOT NULL)::int      AS with_email,
+      COUNT(*) FILTER (WHERE NULLIF(TRIM(COALESCE(address, '')), '') IS NOT NULL)::int      AS with_address
+    FROM mailing_contacts
+    WHERE stage = 'mailing' AND segment = ${segment}
+  `) as unknown as Array<{
+    total:         number;
+    usps_valid:    number;
+    usps_invalid:  number;
+    usps_pending:  number;
+    unverified:    number;
+    with_email:    number;
+    with_address:  number;
+  }>;
+  const r = rows[0] ?? {
+    total: 0, usps_valid: 0, usps_invalid: 0, usps_pending: 0,
+    unverified: 0, with_email: 0, with_address: 0,
+  };
+  return {
+    total:        r.total,
+    uspsValid:    r.usps_valid,
+    uspsInvalid:  r.usps_invalid,
+    uspsPending:  r.usps_pending,
+    unverified:   r.unverified,
+    withEmail:    r.with_email,
+    withAddress:  r.with_address,
+  };
+}
+
+/**
  * Total count of contacts currently sitting in the holding stage,
  * across all segments. Powers the Holding Contacts KPI tile.
  */
