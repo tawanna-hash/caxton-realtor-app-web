@@ -530,14 +530,19 @@ function ImportDialog({
   const [err, setErr] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<{ inserted: number; skipped: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function processFile(file: File) {
     setFileName(file.name);
     try {
-      const text = await file.text();
       const lower = file.name.toLowerCase();
+      const accepted =
+        lower.endsWith('.csv') ||
+        lower.endsWith('.tsv') ||
+        lower.endsWith('.json') ||
+        lower.endsWith('.txt');
+      if (!accepted) throw new Error('Unsupported file type. Use .csv, .tsv, .json, or .txt.');
+      const text = await file.text();
       let parsedRows: Record<string, string>[] = [];
 
       if (lower.endsWith('.json')) {
@@ -567,6 +572,34 @@ function ImportDialog({
     } catch (ex) {
       setErr(ex instanceof Error ? ex.message : String(ex));
     }
+  }
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+  }
+
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+    if (!isDragging) setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }
+
+  async function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+    await processFile(file);
   }
 
   async function runImport() {
@@ -618,9 +651,26 @@ function ImportDialog({
         <p className="text-sm text-gray-600 mb-4">CSV, TSV, or JSON. Headers will be auto-mapped — review and adjust before importing.</p>
 
         {step === 'pick' && (
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-            <input type="file" accept=".csv,.tsv,.json,.txt" onChange={handleFile} className="block mx-auto" />
-            <p className="mt-3 text-xs text-gray-500">Max ~50,000 rows.</p>
+          <div
+            onDragOver={handleDragOver}
+            onDragEnter={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition ${
+              isDragging ? 'border-gray-900 bg-gray-50' : 'border-gray-300'
+            }`}
+          >
+            <p className="text-sm text-gray-700 mb-3">
+              {isDragging ? 'Drop file to import\u2026' : 'Drag &amp; drop a file here'}
+            </p>
+            <p className="text-xs text-gray-500 mb-4">or</p>
+            <input
+              type="file"
+              accept=".csv,.tsv,.json,.txt"
+              onChange={handleFile}
+              className="block mx-auto text-sm"
+            />
+            <p className="mt-3 text-xs text-gray-500">CSV, TSV, or JSON. Max ~50,000 rows.</p>
           </div>
         )}
 
