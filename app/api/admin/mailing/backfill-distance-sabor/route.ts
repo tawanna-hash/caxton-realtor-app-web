@@ -37,7 +37,7 @@ const bodySchema = z
   .object({
     action:  z.enum(['count', 'distance', 'geocode']).default('count'),
     segment: z.string().optional(),
-    limit:   z.coerce.number().int().min(1).max(1000).default(150),
+    limit:   z.coerce.number().int().min(1).max(1000).default(100),
   })
   .partial()
   .default({});
@@ -152,12 +152,16 @@ export const POST = withErrorHandling(async (req: Request) => {
   }
   const outcomes: Outcome[] = [];
 
-  // Sequential to respect Nominatim's 1 req/sec usage policy.
-  // Each call: Census ~500ms + (Nominatim fallback ~1000ms when triggered).
-  // ~150 rows fits comfortably under maxDuration.
-  const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-  let firstRow = true;
-  for (const row of rows) {
+  // Sequential to respect Nominatim's 1 req/sec usage policy. A failing
+  // row may trigger up to 3 Nominatim calls (full → city → zip), so we
+  // throttle between rows AND keep batches small.
+  // ~100 rows worst-case = ~300s; we abort early at 270s to be safe.
+  const sleep    = (ms: number) => new Promise(r => setTimeout(r, ms));
+  const deadline = Date.now() + 270_000;
+  let firstRow   = true;
+  let abortedAt: number | null = null;
+  for (const [idx, row] of rows.entries()) {
+    if (Date.now() > deadline) { abortedAt = idx; break; }
     if (!firstRow) {
       // Conservative throttle for the Nominatim fallback path.
       await sleep(1100);
@@ -222,7 +226,9 @@ export const POST = withErrorHandling(async (req: Request) => {
     action:        'geocode',
     anchor:        ANCHOR_SABOR,
     segment,
-    scanned:       rows.length,
+    scanned:       outcomes.length,
+    fetched:       rows.length,
+    aborted_at:    abortedAt,
     ok_count,
     fail_count,
     before,

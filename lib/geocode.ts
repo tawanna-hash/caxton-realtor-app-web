@@ -150,7 +150,32 @@ export async function geocodeAddress(input: GeocodeInput): Promise<GeocodeResult
 
   // Census had no match — fall back to Nominatim (OpenStreetMap).
   // The same fallback was used to locate SABOR HQ itself.
-  return geocodeViaNominatim(oneline);
+  const nomi = await geocodeViaNominatim(oneline);
+  if (nomi.ok) return nomi;
+
+  // Final fallback — city+state+zip only. Loses street-level precision
+  // but is still accurate within the 60-mile radius checks the app uses.
+  const cityFallback = [input.city, input.state, input.zip]
+    .map((s) => (s ?? '').trim())
+    .filter(Boolean)
+    .join(', ');
+  if (cityFallback && cityFallback !== oneline) {
+    const cityHit = await geocodeViaNominatim(cityFallback);
+    if (cityHit.ok) {
+      return { ...cityHit, matched: `${cityHit.matched ?? cityFallback} (city-level)` };
+    }
+  }
+
+  // ZIP-only as last resort.
+  const zipOnly = (input.zip ?? '').trim();
+  if (zipOnly && zipOnly.length >= 5) {
+    const zipHit = await geocodeViaNominatim(`${zipOnly}, USA`);
+    if (zipHit.ok) {
+      return { ...zipHit, matched: `ZIP ${zipOnly} (zip-level)` };
+    }
+  }
+
+  return { ok: false, error: 'no match' };
 }
 
 /**
