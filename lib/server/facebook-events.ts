@@ -174,3 +174,121 @@ export interface ScannablePage {
   pageId: string;
   pub: 'realtyline' | 'newsline' | 'both';
 }
+
+/**
+ * Configured Pages whose feeds we scan automatically (no /admin/social
+ * curation required). Format: `FB_PAGE_IDS="<pageId>:<pub>,<pageId>:<pub>"`
+ * where pub is `realtyline`, `newsline`, or `both`.
+ *
+ * Example:
+ *   FB_PAGE_IDS="123456789:realtyline,987654321:newsline"
+ *
+ * If unset, the Page-feed cron exits cleanly with skipped='no-pages-configured'.
+ * (The Graph-events cron continues to use `featured_social_posts.page_id`
+ * as its source — that path is curated-by-admin and stays user-driven.)
+ */
+export function listConfiguredPages(): ScannablePage[] {
+  const raw = process.env.FB_PAGE_IDS?.trim();
+  if (!raw) return [];
+  const out: ScannablePage[] = [];
+  for (const chunk of raw.split(',')) {
+    const [pageId, pubRaw] = chunk.trim().split(':').map((s) => s?.trim());
+    if (!pageId) continue;
+    const pub: ScannablePage['pub'] =
+      pubRaw === 'newsline' || pubRaw === 'both' ? pubRaw : 'realtyline';
+    out.push({ pageId, pub });
+  }
+  return out;
+}
+
+export interface FacebookPagePost {
+  /** Canonical {pageId}_{postId} */
+  fbPostId: string;
+  message: string | null;
+  imageUrl: string | null;
+  permalinkUrl: string;
+  /** ISO timestamp */
+  postedAt: string | null;
+}
+
+/**
+ * Fetch recent posts from a Page's feed via Graph API. Used by the Page-feed
+ * cron to detect events without requiring admin curation in /admin/social.
+ *
+ * since= cutoff defaults to 14 days back — enough to catch event flyers that
+ * are typically posted 1–2 weeks before the event, but short enough that we
+ * don't burn Gemini quota re-scanning ancient posts.
+ */
+export async function fetchPagePosts(
+  pageId: string,
+  opts: {
+    token?: string;
+    graphVersion?: string;
+    lookbackDays?: number;
+    limit?: number;
+  } = {},
+): Promise<FacebookPagePost[]> {
+  const token = opts.token ?? process.env.FB_PAGE_ACCESS_TOKEN;
+  if (!token) {
+    throw new FacebookConfigError(
+      'FB_PAGE_ACCESS_TOKEN is not set. See docs/FACEBOOK_SETUP.md for setup.',
+    );
+  }
+  const version = opts.graphVersion ?? process.env.FB_GRAPH_VERSION ?? DEFAULT_GRAPH_VERSION;
+  const lookbackDays = opts.lookbackDays ?? 14;
+  const limit = Math.min(opts.limit ?? 25, 100);
+
+  const sinceUnix = Math.floor(Date.now() / 1000) - lookbackDays * 86_400;
+
+  const fields = [
+    'id',
+    'message',
+    'permalink_url',
+    'full_picture',
+    'created_time',
+  ].join(',');
+
+  const url =
+    `https://graph.facebook.com/${version}/${encodeURIComponent(pageId)}/posts` +
+    `?fields=${encodeURIComponent(fields)}` +
+    `&since=${sinceUnix}` +
+    `&limit=${limit}` +
+    `&access_token=${encodeURIComponent(token)}`;
+
+  const res = await fetch(url, { method: 'GET' });
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const j = (await res.json()) as { error?: { message?: string } };
+      detail = j.error?.message ?? '';
+    } catch {
+      detail = await res.text();
+    }
+    throw new FacebookFetchError(
+      `Graph API ${res.status}: ${detail || 'unknown error'} (Page ${pageId} /posts)`,
+      res.status,
+    );
+  }
+
+  interface PostRaw {
+    id: string;
+    message?: string;
+    permalink_url?: string;
+    full_picture?: string;
+    created_time?: string;
+  }
+  const body = (await res.json()) as { data: PostRaw[] };
+  const posts = Array.isArray(body.data) ? body.data : [];
+
+  return posts.map<FacebookPagePost>((p) => {
+    // Normalize id to compound form so we have pageId baked in.
+    const id = p.id.includes('_') ? p.id : `${pageId}_${p.id}`;
+    return {
+      fbPostId: id,
+      message: p.message?.trim() || null,
+      imageUrl: p.full_picture ?? null,
+      permalinkUrl: p.permalink_url ?? `https://facebook.com/${id}`,
+      postedAt: p.created_time ?? null,
+    };
+  });
+}

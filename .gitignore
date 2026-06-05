@@ -54,3 +54,6 @@ next-env.d.ts
 *.bak_*
 .env*.local
 *.bak.*
+
+# Vercel env pulls — never commit (contain secrets)
+.vercel.env.*

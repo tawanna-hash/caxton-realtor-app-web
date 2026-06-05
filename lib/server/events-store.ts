@@ -382,6 +382,80 @@ export async function createLLMDetectedEvent(input: {
 }
 
 /**
+ * Insert a pending event detected by Gemini from a raw Facebook Page post
+ * pulled directly via the Graph API /{page-id}/posts endpoint (no
+ * featured_social_posts row required).
+ *
+ * external_id = `fb-llm-feed-<fbPostId>` so the events_external_uniq
+ * constraint makes re-running idempotent across cron ticks.
+ *
+ * Returns null when this post was already scanned on a prior tick.
+ */
+export async function createFeedPostDetectedEvent(input: {
+  publication: Publication;
+  fbPostId: string;
+  title: string;
+  description: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  location: string | null;
+  link: string;
+  imageUrl: string | null;
+  organizer: string | null;
+  confidence: number;
+}): Promise<AdminCalendarEvent | null> {
+  const externalId = `fb-llm-feed-${input.fbPostId}`;
+  const coords = await geocodeEventLocation(input.location);
+  const rows = await query<EventRow>(
+    `INSERT INTO events (
+       external_source, external_id, publication, title, description, link,
+       start_date, end_date, location, organizer, image_url,
+       confidence, lat, lng, hidden,
+       last_synced_at, updated_at
+     ) VALUES (
+       'facebook-llm', $1, $2, $3, $4, $5,
+       $6, $7, $8, $9, $10,
+       $11, $12, $13, true,
+       NOW(), NOW()
+     )
+     ON CONFLICT ON CONSTRAINT events_external_uniq DO NOTHING
+     RETURNING ${SELECT_COLS}`,
+    [
+      externalId,
+      input.publication,
+      input.title,
+      input.description,
+      input.link,
+      input.startDate,
+      input.endDate,
+      input.location,
+      input.organizer,
+      input.imageUrl,
+      input.confidence,
+      coords?.lat ?? null,
+      coords?.lng ?? null,
+    ],
+  );
+  return rows[0] ? rowToAdminEvent(rows[0]) : null;
+}
+
+/**
+ * Cheap pre-check: has this FB post already been scanned by either the curated
+ * (fb-llm-<sourcePostId>) or feed (fb-llm-feed-<fbPostId>) path? Used by the
+ * Page-feed cron to skip Gemini calls for posts we've already processed.
+ */
+export async function hasScannedFbPost(fbPostId: string): Promise<boolean> {
+  const rows = await query<{ id: number }>(
+    `SELECT id FROM events
+      WHERE external_source = 'facebook-llm'
+        AND external_id = $1
+      LIMIT 1`,
+    [`fb-llm-feed-${fbPostId}`],
+  );
+  return rows.length > 0;
+}
+
+/**
  * Insert a pending event pulled from the Facebook Graph API /{page-id}/events
  * endpoint (Path E). Fallback to Gemini-on-posts detection: this catches
  * events admins published natively through Facebook's event tool, which often
