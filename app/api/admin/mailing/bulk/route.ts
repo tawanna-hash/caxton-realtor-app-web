@@ -12,6 +12,8 @@ import {
   deleteMailingContacts,
   isMailingSegment,
   segmentFromSlug,
+  updateMailingContact,
+  type MailingContactInput,
 } from '@/lib/mailing';
 
 export const runtime = 'nodejs';
@@ -45,6 +47,57 @@ export async function POST(req: NextRequest) {
       }
       const removed = await deleteMailingContacts(ids);
       return NextResponse.json({ ok: true, removed });
+    }
+
+    if (action === 'patch') {
+      // Bulk edit: apply the same partial update to every selected row.
+      // Only fields present in `body.patch` are updated; everything else
+      // is left as-is. Allowed string fields mirror the [id] PATCH route.
+      const ids = Array.isArray(body.ids)
+        ? (body.ids as unknown[]).filter((v): v is string => typeof v === 'string' && UUID_RE.test(v))
+        : [];
+      if (ids.length === 0) {
+        return NextResponse.json({ error: 'no valid ids' }, { status: 400 });
+      }
+      const patch = (body.patch && typeof body.patch === 'object' && !Array.isArray(body.patch))
+        ? (body.patch as Record<string, unknown>)
+        : null;
+      if (!patch) {
+        return NextResponse.json({ error: 'patch object required' }, { status: 400 });
+      }
+
+      const stringFields: (keyof MailingContactInput)[] = [
+        'first_name', 'last_name', 'email', 'phone', 'company', 'title', 'license_number',
+        'address', 'address_2', 'city', 'state', 'zip', 'website', 'notes', 'source',
+      ];
+      const input: MailingContactInput = {};
+      for (const f of stringFields) {
+        if (f in patch) {
+          const v = patch[f];
+          if (v === null || typeof v === 'string') {
+            (input as Record<string, unknown>)[f] = v;
+          }
+        }
+      }
+      if (Array.isArray(patch.tags)) {
+        input.tags = (patch.tags as unknown[]).filter((t): t is string => typeof t === 'string');
+      }
+      if (Object.keys(input).length === 0) {
+        return NextResponse.json({ error: 'no allowed fields in patch' }, { status: 400 });
+      }
+
+      let updated = 0;
+      const errors: { id: string; error: string }[] = [];
+      for (const id of ids) {
+        try {
+          const row = await updateMailingContact(id, input);
+          if (row) updated += 1;
+          else errors.push({ id, error: 'not found' });
+        } catch (err) {
+          errors.push({ id, error: errMessage(err) });
+        }
+      }
+      return NextResponse.json({ ok: true, updated, errors });
     }
 
     if (action === 'delete-all-in-segment') {

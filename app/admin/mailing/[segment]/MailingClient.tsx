@@ -46,6 +46,61 @@ const SORTABLE: MailingColumnId[] = [
   'first_name', 'last_name', 'email', 'company', 'city', 'state', 'created_at',
 ];
 
+// ---------------------------------------------------------------------------
+// Column visibility registry
+// `name` is always shown (it's the primary anchor for the row); everything
+// else is user-toggleable and persisted in localStorage per session.
+// ---------------------------------------------------------------------------
+type ColumnId =
+  | 'name'
+  | 'email'
+  | 'phone'
+  | 'company'
+  | 'city'
+  | 'proximity'
+  | 'address'
+  | 'email_verify';
+
+type ColumnDef = { id: ColumnId; label: string; alwaysOn?: boolean };
+
+const COLUMNS: ColumnDef[] = [
+  { id: 'name',         label: 'Name',      alwaysOn: true },
+  { id: 'email',        label: 'Email' },
+  { id: 'phone',        label: 'Phone' },
+  { id: 'company',      label: 'Company' },
+  { id: 'city',         label: 'City' },
+  { id: 'proximity',    label: 'Proximity' },
+  { id: 'address',      label: 'Address (USPS)' },
+  { id: 'email_verify', label: 'Email (SMTP)' },
+];
+
+const DEFAULT_VISIBLE: Record<ColumnId, boolean> = {
+  name: true, email: true, phone: true, company: true, city: true,
+  proximity: true, address: true, email_verify: true,
+};
+
+const COLUMNS_LS_KEY = 'mailing.columns.v1';
+
+function loadColumnVisibility(): Record<ColumnId, boolean> {
+  if (typeof window === 'undefined') return DEFAULT_VISIBLE;
+  try {
+    const raw = window.localStorage.getItem(COLUMNS_LS_KEY);
+    if (!raw) return DEFAULT_VISIBLE;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object') return DEFAULT_VISIBLE;
+    const merged = { ...DEFAULT_VISIBLE };
+    for (const c of COLUMNS) {
+      const v = (parsed as Record<string, unknown>)[c.id];
+      if (typeof v === 'boolean') merged[c.id] = v;
+    }
+    // alwaysOn columns can never be hidden
+    for (const c of COLUMNS) if (c.alwaysOn) merged[c.id] = true;
+    return merged;
+  } catch {
+    return DEFAULT_VISIBLE;
+  }
+}
+
 export default function MailingClient({ segment, slug, label, accent }: Props) {
   const [rows, setRows] = useState<MailingContactRow[]>([]);
   const [total, setTotal] = useState<number>(0);
@@ -62,9 +117,23 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showBulkEdit, setShowBulkEdit] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [editing, setEditing] = useState<MailingContactRow | null>(null);
+
+  // Column visibility. Loaded lazily from localStorage on the first client
+  // render; saved on every change. The lazy initializer runs once and
+  // mirrors the value we'd otherwise reconcile in an effect (avoiding the
+  // react-hooks/set-state-in-effect lint rule).
+  const [visibleCols, setVisibleCols] = useState<Record<ColumnId, boolean>>(
+    () => loadColumnVisibility(),
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try { window.localStorage.setItem(COLUMNS_LS_KEY, JSON.stringify(visibleCols)); } catch {}
+  }, [visibleCols]);
+  const isVisible = (id: ColumnId) => visibleCols[id];
 
   // verify-all-pending drain state. Holding-only for now; the button is
   // rendered disabled so the visual stays in parity without backend work.
@@ -437,6 +506,8 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         >
           Delete all
         </button>
+        <div className="flex-1" />
+        <ColumnsDropdown visible={visibleCols} onChange={setVisibleCols} />
       </div>
 
       {/* Verify-drain progress strip (holding-only; inert here) */}
@@ -505,6 +576,14 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
           <div className="flex-1" />
           <button
             type="button"
+            onClick={() => setShowBulkEdit(true)}
+            disabled={busy !== null}
+            className="px-3 py-1.5 rounded-md border border-[#3D0740] text-[#3D0740] text-xs font-medium hover:bg-[#3D0740]/5 disabled:opacity-50"
+          >
+            Edit {selectedIds.size}
+          </button>
+          <button
+            type="button"
             onClick={handleDelete}
             disabled={busy !== null}
             className="px-3 py-1.5 rounded-md border border-red-300 text-red-700 text-xs font-medium hover:bg-red-50 disabled:opacity-50"
@@ -547,22 +626,22 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                   onChange={(e) => handleSelectAll(e.target.checked)}
                 />
               </th>
-              <SortHeader col="first_name" label="Name"    sort={sort} dir={dir} onSort={handleSort} />
-              <SortHeader col="email"      label="Email"   sort={sort} dir={dir} onSort={handleSort} />
-              <th className="px-3 py-3 text-left font-semibold">Phone</th>
-              <SortHeader col="company"    label="Company" sort={sort} dir={dir} onSort={handleSort} />
-              <SortHeader col="city"       label="City"    sort={sort} dir={dir} onSort={handleSort} />
-              <th className="px-3 py-3 text-left font-semibold">Proximity</th>
-              <th className="px-3 py-3 text-left font-semibold">Address</th>
-              <th className="px-3 py-3 text-left font-semibold">Email</th>
+              {isVisible('name')  && <SortHeader col="first_name" label="Name"    sort={sort} dir={dir} onSort={handleSort} />}
+              {isVisible('email') && <SortHeader col="email"      label="Email"   sort={sort} dir={dir} onSort={handleSort} />}
+              {isVisible('phone') && <th className="px-3 py-3 text-left font-semibold">Phone</th>}
+              {isVisible('company') && <SortHeader col="company" label="Company" sort={sort} dir={dir} onSort={handleSort} />}
+              {isVisible('city')    && <SortHeader col="city"    label="City"    sort={sort} dir={dir} onSort={handleSort} />}
+              {isVisible('proximity')    && <th className="px-3 py-3 text-left font-semibold">Proximity</th>}
+              {isVisible('address')      && <th className="px-3 py-3 text-left font-semibold">Address</th>}
+              {isVisible('email_verify') && <th className="px-3 py-3 text-left font-semibold">Email</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {loading && (
-              <tr><td colSpan={9} className="px-3 py-8 text-center text-gray-500">Loading…</td></tr>
+              <tr><td colSpan={1 + COLUMNS.filter((c) => visibleCols[c.id]).length} className="px-3 py-8 text-center text-gray-500">Loading…</td></tr>
             )}
             {!loading && rows.length === 0 && (
-              <tr><td colSpan={9} className="px-3 py-8 text-center text-gray-500">
+              <tr><td colSpan={1 + COLUMNS.filter((c) => visibleCols[c.id]).length} className="px-3 py-8 text-center text-gray-500">
                 No contacts yet.
               </td></tr>
             )}
@@ -582,41 +661,57 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                       onChange={(e) => handleSelect(r.id, e.target.checked)}
                     />
                   </td>
-                  <td className="px-3 py-2">
-                    <div className="text-gray-900 font-medium">{fullName || '—'}</div>
-                    {r.title && <div className="text-[11px] text-gray-500">{r.title}</div>}
-                  </td>
-                  <td className="px-3 py-2 text-gray-700">{r.email ?? ''}</td>
-                  <td className="px-3 py-2 text-gray-700 text-xs">
-                    {r.phone ?? ''}
-                    {r.mobile_phone && <div className="text-[10px] text-gray-500">m: {r.mobile_phone}</div>}
-                  </td>
-                  <td className="px-3 py-2 text-gray-700">{r.company ?? ''}</td>
-                  <td className="px-3 py-2 text-gray-700">{r.city ?? ''}</td>
-                  <td className="px-3 py-2">
-                    <ProximityBadges row={r} segment={segment} />
-                  </td>
-                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                    <VerifyCell
-                      status={r.addr_status}
-                      hasData={hasAddr}
-                      busy={busy === `addr-${r.id}`}
-                      onVerify={() => verifyAddress(r.id)}
-                      label="USPS"
-                    />
-                  </td>
-                  <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex flex-col gap-1">
+                  {isVisible('name') && (
+                    <td className="px-3 py-2">
+                      <div className="text-gray-900 font-medium">{fullName || '—'}</div>
+                      {r.title && <div className="text-[11px] text-gray-500">{r.title}</div>}
+                    </td>
+                  )}
+                  {isVisible('email') && (
+                    <td className="px-3 py-2 text-gray-700">{r.email ?? ''}</td>
+                  )}
+                  {isVisible('phone') && (
+                    <td className="px-3 py-2 text-gray-700 text-xs">
+                      {r.phone ?? ''}
+                      {r.mobile_phone && <div className="text-[10px] text-gray-500">m: {r.mobile_phone}</div>}
+                    </td>
+                  )}
+                  {isVisible('company') && (
+                    <td className="px-3 py-2 text-gray-700">{r.company ?? ''}</td>
+                  )}
+                  {isVisible('city') && (
+                    <td className="px-3 py-2 text-gray-700">{r.city ?? ''}</td>
+                  )}
+                  {isVisible('proximity') && (
+                    <td className="px-3 py-2">
+                      <ProximityBadges row={r} segment={segment} />
+                    </td>
+                  )}
+                  {isVisible('address') && (
+                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                       <VerifyCell
-                        status={r.email_status}
-                        hasData={!!r.email}
-                        busy={busy === `email-${r.id}`}
-                        onVerify={() => verifyEmail(r.id)}
-                        label="SMTP"
+                        status={r.addr_status}
+                        hasData={hasAddr}
+                        busy={busy === `addr-${r.id}`}
+                        onVerify={() => verifyAddress(r.id)}
+                        label="USPS"
                       />
-                      <EmailFlags row={r} />
-                    </div>
-                  </td>
+                    </td>
+                  )}
+                  {isVisible('email_verify') && (
+                    <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex flex-col gap-1">
+                        <VerifyCell
+                          status={r.email_status}
+                          hasData={!!r.email}
+                          busy={busy === `email-${r.id}`}
+                          onVerify={() => verifyEmail(r.id)}
+                          label="SMTP"
+                        />
+                        <EmailFlags row={r} />
+                      </div>
+                    </td>
+                  )}
                 </tr>
               );
             })}
@@ -660,6 +755,18 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
 
       {showAdd && <AddDialog segment={segment} onClose={() => setShowAdd(false)} onSaved={() => { setShowAdd(false); void reload(); }} />}
       {showImport && <ImportDialog segment={segment} onClose={() => setShowImport(false)} onDone={() => { setShowImport(false); void reload(); }} />}
+      {showBulkEdit && (
+        <BulkEditDialog
+          ids={Array.from(selectedIds)}
+          onClose={() => setShowBulkEdit(false)}
+          onDone={(updated) => {
+            setShowBulkEdit(false);
+            setSelectedIds(new Set());
+            showToast(`Updated ${updated} contact${updated === 1 ? '' : 's'}.`);
+            void reload();
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -1604,4 +1711,237 @@ function parseDelimited(text: string, delim: string): Record<string, string>[] {
     out.push(obj);
   }
   return out;
+}
+
+// ============================================================
+// Columns dropdown
+// ============================================================
+
+function ColumnsDropdown({
+  visible,
+  onChange,
+}: {
+  visible: Record<ColumnId, boolean>;
+  onChange: (next: Record<ColumnId, boolean>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const visibleCount = COLUMNS.filter((c) => visible[c.id]).length;
+
+  // Close on outside click / Escape
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const onClick = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && t.closest('[data-columns-dropdown]')) return;
+      setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('mousedown', onClick);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('mousedown', onClick);
+    };
+  }, [open]);
+
+  function toggle(id: ColumnId) {
+    const def = COLUMNS.find((c) => c.id === id);
+    if (def?.alwaysOn) return;
+    onChange({ ...visible, [id]: !visible[id] });
+  }
+
+  function reset() {
+    onChange({ ...DEFAULT_VISIBLE });
+  }
+
+  return (
+    <div className="relative inline-block" data-columns-dropdown>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50 flex items-center gap-1"
+        title="Show or hide columns"
+      >
+        Columns
+        <span className="text-xs text-gray-500">({visibleCount}/{COLUMNS.length})</span>
+        <span aria-hidden className="text-xs">▾</span>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 rounded-md shadow-md min-w-[220px] py-1">
+          <div className="px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-gray-500 font-semibold">
+            Visible columns
+          </div>
+          {COLUMNS.map((c) => (
+            <label
+              key={c.id}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-50 ${
+                c.alwaysOn ? 'opacity-60 cursor-not-allowed' : ''
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={!!visible[c.id]}
+                disabled={c.alwaysOn}
+                onChange={() => toggle(c.id)}
+              />
+              <span className="flex-1 text-gray-800">{c.label}</span>
+              {c.alwaysOn && <span className="text-[10px] text-gray-400 uppercase">locked</span>}
+            </label>
+          ))}
+          <div className="border-t border-gray-100 mt-1 pt-1 px-2 pb-1">
+            <button
+              type="button"
+              onClick={reset}
+              className="w-full text-left px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 rounded"
+            >
+              Reset to defaults
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// Bulk edit dialog
+//
+// Applies the same partial update to every selected row. Each field is
+// optional — leaving a field blank leaves that field unchanged on every
+// row. Use the "Set" toggle to mark which fields the user actually wants
+// to write (so you can clear a value by toggling Set and leaving the
+// input empty).
+// ============================================================
+
+type BulkEditField = 'company' | 'title' | 'city' | 'state' | 'zip' | 'source' | 'notes';
+
+const BULK_EDIT_FIELDS: { id: BulkEditField; label: string; type?: string }[] = [
+  { id: 'company', label: 'Company' },
+  { id: 'title',   label: 'Title' },
+  { id: 'city',    label: 'City' },
+  { id: 'state',   label: 'State' },
+  { id: 'zip',     label: 'ZIP' },
+  { id: 'source',  label: 'Source' },
+  { id: 'notes',   label: 'Notes' },
+];
+
+function BulkEditDialog({
+  ids,
+  onClose,
+  onDone,
+}: {
+  ids: string[];
+  onClose: () => void;
+  onDone: (updated: number) => void;
+}) {
+  const [enabled, setEnabled] = useState<Record<BulkEditField, boolean>>({
+    company: false, title: false, city: false, state: false, zip: false, source: false, notes: false,
+  });
+  const [values, setValues] = useState<Record<BulkEditField, string>>({
+    company: '', title: '', city: '', state: '', zip: '', source: '', notes: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const anyEnabled = Object.values(enabled).some(Boolean);
+
+  async function save() {
+    if (!anyEnabled) {
+      setErr('Toggle at least one field to apply.');
+      return;
+    }
+    const patch: Record<string, string> = {};
+    for (const f of BULK_EDIT_FIELDS) {
+      if (enabled[f.id]) patch[f.id] = values[f.id];
+    }
+    setSaving(true);
+    setErr(null);
+    try {
+      const res = await fetch('/api/admin/mailing/bulk', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'patch', ids, patch }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
+      onDone(Number(j?.updated ?? 0));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-30 bg-black/40 flex items-center justify-center px-4">
+      <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+        <h2 className="font-serif text-xl text-gray-900 mb-1">
+          Edit {ids.length} contact{ids.length === 1 ? '' : 's'}
+        </h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Toggle a field to overwrite it on every selected row. Leave a field
+          off to keep the existing value unchanged.
+        </p>
+        <div className="space-y-3">
+          {BULK_EDIT_FIELDS.filter((f) => f.id !== 'notes').map((f) => (
+            <div key={f.id} className="flex items-center gap-2">
+              <label className="flex items-center gap-2 w-32 shrink-0 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={enabled[f.id]}
+                  onChange={(e) => setEnabled({ ...enabled, [f.id]: e.target.checked })}
+                />
+                {f.label}
+              </label>
+              <input
+                type="text"
+                value={values[f.id]}
+                disabled={!enabled[f.id]}
+                onChange={(e) => setValues({ ...values, [f.id]: e.target.value })}
+                placeholder={enabled[f.id] ? `New ${f.label.toLowerCase()}…` : '(field off — value unchanged)'}
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-50 disabled:text-gray-400"
+              />
+            </div>
+          ))}
+          <div className="flex items-start gap-2">
+            <label className="flex items-center gap-2 w-32 shrink-0 text-sm text-gray-700 mt-2">
+              <input
+                type="checkbox"
+                checked={enabled.notes}
+                onChange={(e) => setEnabled({ ...enabled, notes: e.target.checked })}
+              />
+              Notes
+            </label>
+            <textarea
+              value={values.notes}
+              disabled={!enabled.notes}
+              onChange={(e) => setValues({ ...values, notes: e.target.value })}
+              rows={3}
+              placeholder={enabled.notes ? 'New notes…' : '(field off — value unchanged)'}
+              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-50 disabled:text-gray-400"
+            />
+          </div>
+        </div>
+        {err && <div className="mt-3 text-sm text-red-700">{err}</div>}
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving || !anyEnabled}
+            className="px-3 py-1.5 text-sm rounded-md bg-[#3D0740] text-white hover:bg-[#5A0E5F] disabled:opacity-50"
+          >
+            {saving ? 'Applying…' : `Apply to ${ids.length}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
