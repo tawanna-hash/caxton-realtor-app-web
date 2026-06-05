@@ -83,6 +83,7 @@ const ADMIN_GROUPS: AdminGroup[] = [
       { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
       // 'Social' link removed 2026-06-02 — page itself kept at /admin/social
       // in case curation comes back, but no longer reachable from the nav.
+      { label: 'FB Pages I Follow', href: '/admin/social/fb-pages', description: 'Auto-scan Pages for events' },
     ],
   },
   {
