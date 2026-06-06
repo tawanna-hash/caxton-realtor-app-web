@@ -74,6 +74,7 @@ const ADMIN_GROUPS: AdminGroup[] = [
   {
     label: 'Content',
     links: [
+      { label: 'Articles',  href: '/admin/articles',  description: 'WordPress feeds & sync' },
       { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions' },
       { label: 'Events',    href: '/admin/events',    description: 'Calendar publications' },
       // 'Pending Events' link removed 2026-06-06 — page deleted; API routes
