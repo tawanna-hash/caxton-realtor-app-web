@@ -1091,10 +1091,12 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
                 key={c}
                 onClick={() => setCat(c)}
                 aria-pressed={cat === c}
+                // BUG-16: add flex-shrink-0 so long chips like "Featured Advertisers"
+                // don't get squeezed by sibling flex children and overflow the row.
                 className={
                   cat === c
-                    ? 'whitespace-nowrap px-3 py-1.5 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
-                    : 'whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
+                    ? 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
+                    : 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
                 }
               >
                 {c}

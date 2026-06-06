@@ -265,18 +265,30 @@ function AdvertiserColumn({
                 >
                   Edit
                 </button>
-                <button
-                  onClick={() => onRegenerateToken(a)}
-                  className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
-                >
-                  Rotate token
-                </button>
-                <button
-                  onClick={() => onDelete(a)}
-                  className="px-2 py-1 border border-red-200 text-red-700 rounded hover:bg-red-50"
-                >
-                  Delete
-                </button>
+                {/* BUG-27: hide destructive actions (rotate token, delete) behind
+                    an explicit "More" toggle so they aren't reachable by accident
+                    when scanning the card. <details> is keyboard-accessible. */}
+                <details className="relative">
+                  <summary className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-50 cursor-pointer list-none select-none">
+                    More ▾
+                  </summary>
+                  <div className="absolute right-0 mt-1 z-10 flex flex-col gap-1 p-2 rounded-md border border-gray-200 bg-white shadow-md min-w-[160px]">
+                    <button
+                      type="button"
+                      onClick={() => onRegenerateToken(a)}
+                      className="text-left px-2 py-1 rounded hover:bg-gray-50 text-gray-800"
+                    >
+                      Rotate token
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(a)}
+                      className="text-left px-2 py-1 rounded hover:bg-red-50 text-red-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </details>
               </div>
             </div>
           ))}

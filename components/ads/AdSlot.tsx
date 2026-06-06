@@ -113,14 +113,23 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
   const w = ad.width ?? 728;
   const h = ad.height ?? 90;
 
+  // BUG-10: when the click destination is a mailto: link (house ads soliciting
+  // inquiries) surface a small envelope badge so users understand the tap
+  // opens their mail client, not a third-party site.
+  const isMailto = ad.href.startsWith('mailto:');
+
   const creative = (
     <a
       href={ad.href}
-      target="_blank"
+      target={isMailto ? undefined : '_blank'}
       rel="noopener sponsored"
       onClick={handleClick}
-      aria-label={`Sponsored: ${ad.advertiser}`}
-      className="block"
+      aria-label={
+        isMailto
+          ? `${ad.advertiser} — opens email inquiry`
+          : `Sponsored: ${ad.advertiser}`
+      }
+      className="relative block"
     >
       <Image
         src={ad.image}
@@ -130,6 +139,18 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
         className="h-auto w-full"
         unoptimized
       />
+      {isMailto && (
+        <span
+          aria-hidden="true"
+          className="absolute left-2 bottom-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-gray-800 shadow-sm"
+        >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="2" />
+            <path d="m3 7 9 6 9-6" />
+          </svg>
+          Inquire
+        </span>
+      )}
     </a>
   );
 

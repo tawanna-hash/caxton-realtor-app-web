@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export const metadata = {
   title: "Page not found · RealtyLine Austin",
-  description: "The page you were looking for doesn&apos;t exist.",
+  description: "The page you were looking for doesn’t exist.",
 };
 
 export default function NotFound() {

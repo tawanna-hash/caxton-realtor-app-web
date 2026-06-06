@@ -186,10 +186,30 @@ export default function CommunitiesClient({ initialRows }: Props) {
 
         {/* Empty state */}
         {filtered.length === 0 && (
+          // BUG-07: when caxton_pub is sticky on newsline (no SA communities yet),
+          // a flat "0 communities" left users stranded. Surface a one-tap switch
+          // back to the publication that has data.
           <div className="py-20 text-center">
             <p className="text-gray-500 font-light">
-              No communities to show for {PUB_LABEL[pub]}.
+              No communities to show for {PUB_LABEL[activePub]}.
             </p>
+            {activePub !== 'realtyline' && initialRows.some(
+              (r) => r.publication === 'realtyline' || r.publication === 'both',
+            ) && (
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    window.localStorage.setItem('caxton_pub', 'realtyline');
+                    window.dispatchEvent(new Event('savedPubChange'));
+                  } catch {}
+                  router.push('/communities?pub=realtyline');
+                }}
+                className="mt-4 inline-flex items-center justify-center min-h-[44px] px-5 py-2 text-sm font-medium text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50 transition"
+              >
+                Switch to RealtyLine Austin
+              </button>
+            )}
           </div>
         )}
 

@@ -577,7 +577,14 @@ function AgreementList({
               {' → '}
               {r.end_date ? new Date(r.end_date).toLocaleDateString() : '—'}
             </button>
-            <button onClick={() => onOpen(r)} className="col-span-2 text-left text-sm text-gray-900">{formatCents(r.amount_cents)}</button>
+            {/* BUG-39: disambiguate "—" (no contract amount set) from $0.00 invoiced. */}
+            <button
+              onClick={() => onOpen(r)}
+              title={r.amount_cents == null ? 'No contract amount set yet — open the agreement to add one.' : undefined}
+              className={`col-span-2 text-left text-sm ${r.amount_cents == null ? 'text-amber-700' : 'text-gray-900'}`}
+            >
+              {r.amount_cents == null ? 'Not set' : formatCents(r.amount_cents)}
+            </button>
             <button onClick={() => onOpen(r)} className="col-span-1 text-left text-sm text-gray-700">{formatCents(r.invoiced_cents)}</button>
             <div className="col-span-2 flex items-center gap-1 flex-wrap">
               <StatusPill value={r.status} options={AG_STATUS} />
