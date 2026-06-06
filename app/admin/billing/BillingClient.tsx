@@ -270,7 +270,10 @@ export default function BillingClient({
 
   // ── KPIs (Agreements/Invoices tab) ────────────────────────────────────────
   const kpis = useMemo(() => {
-    const activeAg = agreements.filter((a) => a.status === 'active').length;
+    // 'sent' agreements are in-flight contracts awaiting countersignature —
+    // they're effectively active revenue, so the KPI counts them alongside
+    // 'active' (BUG-37). Drafts remain a separate bucket.
+    const activeAg = agreements.filter((a) => a.status === 'active' || a.status === 'sent').length;
     const draftAg  = agreements.filter((a) => a.status === 'draft').length;
     const outstanding = invoices
       .filter((i) => i.status !== 'paid' && i.status !== 'void')
@@ -337,7 +340,7 @@ export default function BillingClient({
           </>
         ) : (
           <>
-            <Kpi label="Active agreements" value={String(kpis.activeAg)} />
+            <Kpi label="Active + sent" value={String(kpis.activeAg)} />
             <Kpi label="Drafts" value={String(kpis.draftAg)} />
             <Kpi label="Outstanding" value={formatCents(kpis.outstanding)} />
             <Kpi label="Paid (30d)" value={formatCents(kpis.paid30)} />

@@ -204,10 +204,21 @@ export default function AppShell({
     const other = pub === 'realtyline' ? 'newsline' : 'realtyline';
     try {
       localStorage.setItem('caxton_pub', other);
+      // Also clear any saved phase/selection so we don't strand the user on
+      // an article that belongs to the previous pub.
+      localStorage.removeItem('caxton_selected_article');
+      localStorage.removeItem('caxton_selected_event');
       window.dispatchEvent(new Event('savedPubChange'));
     } catch {}
     setPub(other);
     setDrawerOpen(false);
+    // Force a hard reload to '/' so the entire app re-mounts with the new
+    // pub context (server components, pub-scoped fetches, header chrome, etc.).
+    // The previous soft setState left stale data on the screen, which was
+    // the reported "switch button does nothing" bug (BUG-03).
+    if (typeof window !== 'undefined') {
+      window.location.assign('/');
+    }
   }, [pub]);
 
   // Dropdown menu state — which admin group is currently open. null = none.

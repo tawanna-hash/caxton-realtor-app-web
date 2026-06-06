@@ -192,6 +192,8 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
 }
 
 function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void }) {
+  // Honor /auth/sign-in and /auth/sign-up aliases via ?auth=login|signup so
+  // visitors land directly on the right form instead of the 'choice' screen.
   const [mode, setMode] = useState<'choice' | 'signup' | 'login' | 'sent'>('choice');
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [passkeySupported, setPasskeySupported] = useState<boolean | null>(null);
@@ -199,6 +201,13 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
     if (typeof window === 'undefined') return;
     queueMicrotask(() => {
       setPasskeySupported(typeof window.PublicKeyCredential === 'function');
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const wanted = params.get('auth');
+        if (wanted === 'login' || wanted === 'signup') {
+          setMode(wanted);
+        }
+      } catch {}
     });
   }, []);
   const [step, setStep] = useState(1);
@@ -983,9 +992,21 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
   }
 
   function handleSwitch() {
+    // Persist the new pub then hard-reload so every pub-scoped fetch
+    // (articles, ads, events) re-runs from scratch. The previous soft
+    // setState path left stale data visible (BUG-03).
+    try {
+      localStorage.setItem('caxton_pub', other.id);
+      localStorage.removeItem('caxton_selected_article');
+      localStorage.removeItem('caxton_selected_event');
+      window.dispatchEvent(new Event('savedPubChange'));
+    } catch {}
     setCat('All');
     setTab('n');
     onSwitch(other.id);
+    if (typeof window !== 'undefined') {
+      window.location.assign('/');
+    }
   }
 
   function handleAdClick(ad: any) {
@@ -1842,7 +1863,10 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
         </div>
       )}
 
-      <div className="px-5 pt-6 pb-44 max-w-2xl mx-auto">
+      {/* pb-52: clears the sticky ArticleActionBar (bottom-4 + ~62px pill) with
+          breathing room. Was pb-44 — the bar overlapped the last paragraph on
+          short articles and the "Read on website" link (BUG-18). */}
+      <div className="px-5 pt-6 pb-52 max-w-2xl mx-auto">
         {/* Top leaderboard ad — first thing in the article column */}
         <AdLeaderboard pub={pub} articleId={articleId} />
 
