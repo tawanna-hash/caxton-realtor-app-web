@@ -724,16 +724,12 @@ export default function DashboardPage() {
         try { setSelectedArticle(JSON.parse(savedArticle)); } catch {}
       }
       if (savedPhase && savedPhase !== 'splash') {
-        // BUG-01: returning PWA users were landing on a single article (the
-        // last one they read). When the URL is the bare app root, always
-        // start on the feed instead — the article is still reachable via
-        // their saves and history. Deep links into /article/<id> (when
-        // those routes ship) should restore the article phase.
-        const onAppRoot = typeof window !== 'undefined'
-          && (window.location.pathname === '/' || window.location.pathname === '/dashboard');
-
-        // Stale-data guard: don't restore article/event_detail phase if its data is missing.
-        if (savedPhase === 'article' && (!savedArticle || onAppRoot)) {
+        // BUG-01 followup: previously we kicked refresh-on-article back to
+        // the feed when on the app root. User pushback: refreshing while
+        // reading an article SHOULD keep you on that article. Only fall
+        // back to feed when the saved-article payload is missing (stale).
+        // Stale-data guard: don't restore article phase if its data is missing.
+        if (savedPhase === 'article' && !savedArticle) {
           setPhase('feed');
         } else if (savedPhase === 'events' || savedPhase === 'event_detail') {
           // Legacy phases — events lives at /calendar now. Land on feed; the
@@ -1924,15 +1920,15 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
               <img
                 src={author.avatar}
                 alt=""
-                width={48}
-                height={48}
+                width={96}
+                height={96}
                 referrerPolicy="no-referrer"
                 onError={(e) => {
                   // Hide the avatar element entirely when Gravatar 404s
                   // (author has no registered Gravatar). Avoids broken-image icon.
                   (e.currentTarget as HTMLImageElement).style.display = 'none';
                 }}
-                className="w-12 h-12 rounded-full object-cover bg-gray-100 flex-shrink-0"
+                className="w-16 h-16 rounded-full object-cover bg-gray-100 flex-shrink-0"
               />
             )}
             <div className="min-w-0 flex-1">

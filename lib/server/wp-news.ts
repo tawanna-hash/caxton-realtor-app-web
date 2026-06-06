@@ -282,8 +282,12 @@ function enrichFromEmbed(post: WpPost): Partial<NewsArticle> {
     // has no registered Gravatar (d=mm | d=mystery | d=mp | d=blank). Rewrite
     // those defaults to d=404 so missing avatars return HTTP 404 instead of a
     // placeholder image — the renderer can then onerror-hide the broken <img>.
+    // Also bump Gravatar size param to 192 so larger avatars render crisply
+    // on retina (we display at 64px CSS / 96px intrinsic, 2x for retina).
     const avatar = rawAvatar
-      ? rawAvatar.replace(/([?&])d=(mm|mp|mystery|blank|identicon|monsterid|wavatar|retro|robohash)\b/gi, '$1d=404')
+      ? rawAvatar
+          .replace(/([?&])d=(mm|mp|mystery|blank|identicon|monsterid|wavatar|retro|robohash)\b/gi, '$1d=404')
+          .replace(/([?&])s=\d+/gi, '$1s=192')
       : null;
     out.author = avatar
       ? { name: auth.name || 'Staff', avatar }
