@@ -343,12 +343,6 @@ export default function SocialClient() {
             preview.
           </p>
         </div>
-        <a
-          href="/admin/social/fb-pages"
-          className="shrink-0 inline-flex items-center px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 whitespace-nowrap"
-        >
-          Facebook Events &rarr;
-        </a>
       </div>
 
       {/* ────────── Add form ────────── */}

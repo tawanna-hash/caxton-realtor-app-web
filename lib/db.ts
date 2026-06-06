@@ -682,32 +682,5 @@ export async function ensureSchema(): Promise<void> {
   // ============================================================
   await ensureCrmSchema(sql);
 
-  // ============================================================
-  // monitored_fb_pages: admin-curated list of FB Pages we *follow*
-  // (i.e. don't admin). Scanned by /api/cron/scan-followed-fb-pages
-  // via headless Chromium + Gemini. See db/migrations/20260605-monitored-fb-pages.sql
-  // ============================================================
-  await sql`
-    CREATE TABLE IF NOT EXISTS monitored_fb_pages (
-      id                BIGSERIAL PRIMARY KEY,
-      slug              TEXT NOT NULL UNIQUE,
-      label             TEXT NOT NULL,
-      pub               TEXT NOT NULL DEFAULT 'austin',
-      is_active         BOOLEAN NOT NULL DEFAULT TRUE,
-      last_scanned_at   TIMESTAMPTZ,
-      last_post_count   INTEGER NOT NULL DEFAULT 0,
-      last_detected     INTEGER NOT NULL DEFAULT 0,
-      last_error        TEXT,
-      consecutive_failures INTEGER NOT NULL DEFAULT 0,
-      created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `;
-  await sql`
-    CREATE INDEX IF NOT EXISTS idx_monitored_fb_pages_due
-      ON monitored_fb_pages (last_scanned_at NULLS FIRST)
-      WHERE is_active = TRUE
-  `;
-
   schemaEnsured = true;
 }

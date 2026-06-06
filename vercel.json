@@ -111,16 +111,6 @@
     {
       "path": "/api/cron/scan-fb-page-feed",
       "schedule": "15 10 * * *"
-    },
-    {
-      "path": "/api/cron/scan-followed-fb-pages",
-      "schedule": "45 * * * *"
     }
-  ],
-  "functions": {
-    "app/api/cron/scan-followed-fb-pages/route.ts": {
-      "memory": 1024,
-      "maxDuration": 90
-    }
-  }
+  ]
 }
