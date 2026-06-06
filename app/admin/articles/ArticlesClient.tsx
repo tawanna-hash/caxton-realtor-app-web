@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useId, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { NewsArticle } from '@/lib/server/wp-news';
 
@@ -444,24 +444,22 @@ function EditModal({
                 className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
               />
             </Field>
-            <Field label="Author avatar URL">
-              <input
-                type="url"
+            <Field label="Author photo" hint="Upload an image or paste a URL">
+              <ImageUpload
+                kind="author"
                 value={authorAvatar}
-                onChange={(e) => setAuthorAvatar(e.target.value)}
-                placeholder="https://…"
-                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+                onChange={setAuthorAvatar}
+                previewClassName="w-16 h-16 rounded-full"
               />
             </Field>
           </div>
 
-          <Field label="Featured image URL">
-            <input
-              type="url"
+          <Field label="Featured image" hint="Upload an image or paste a URL">
+            <ImageUpload
+              kind="featured"
               value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://…"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+              onChange={setImageUrl}
+              previewClassName="w-32 h-20 rounded"
             />
           </Field>
 
@@ -565,6 +563,150 @@ function Field({
       </label>
       {children}
       {hint && <p className="text-xs text-gray-500 mt-1">{hint}</p>}
+    </div>
+  );
+}
+
+// =============================================================================
+// ImageUpload — preview + Upload button + URL fallback. Accepts any image/*.
+// =============================================================================
+
+function ImageUpload({
+  kind,
+  value,
+  onChange,
+  previewClassName = 'w-16 h-16 rounded',
+}: {
+  kind: 'author' | 'featured';
+  value: string;
+  onChange: (url: string) => void;
+  previewClassName?: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const reactId = useId();
+  const inputId = `img-upload-${kind}-${reactId}`;
+
+  async function handleFile(file: File) {
+    setErr(null);
+    if (file.size > 8 * 1024 * 1024) {
+      setErr('File too large (max 8 MB)');
+      return;
+    }
+    if (file.type && !file.type.startsWith('image/')) {
+      setErr(`Not an image (${file.type})`);
+      return;
+    }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('kind', kind);
+      const res = await fetch('/api/admin/articles/upload-image', {
+        method: 'POST',
+        body: fd,
+        credentials: 'include',
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.url) {
+        throw new Error(body?.error || `Upload failed (${res.status})`);
+      }
+      onChange(body.url as string);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-start gap-3">
+        {value ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={value}
+            alt=""
+            className={`${previewClassName} object-cover bg-gray-100 border border-gray-200 flex-shrink-0`}
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : (
+          <div
+            className={`${previewClassName} bg-gray-100 border border-dashed border-gray-300 flex-shrink-0 flex items-center justify-center text-[10px] text-gray-400 uppercase tracking-wide`}
+            aria-hidden="true"
+          >
+            No image
+          </div>
+        )}
+        <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <label
+              htmlFor={inputId}
+              className={`inline-flex items-center gap-1.5 cursor-pointer px-3 py-2 rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-xs font-medium text-gray-700 min-h-[44px] ${
+                uploading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              {uploading ? (
+                <>
+                  <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
+                  Uploading…
+                </>
+              ) : (
+                <>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  {value ? 'Replace' : 'Upload'}
+                </>
+              )}
+              <input
+                id={inputId}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                disabled={uploading}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleFile(f);
+                  e.target.value = '';
+                }}
+              />
+            </label>
+            {value && (
+              <button
+                type="button"
+                onClick={() => onChange('')}
+                disabled={uploading}
+                className="text-xs text-gray-500 hover:text-red-600 hover:underline disabled:opacity-50"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <input
+            type="url"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="or paste image URL…"
+            className="w-full px-3 py-1.5 rounded-md border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+          />
+        </div>
+      </div>
+      {err && <p className="text-xs text-red-600">{err}</p>}
     </div>
   );
 }
