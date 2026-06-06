@@ -43,8 +43,9 @@ type Props = {
   bottomOffsetClass?: string;
 };
 
+// BUG-13: bump tap target to >=44px on both axes (WCAG 2.5.5).
 const BTN_CLS =
-  'flex flex-col items-center justify-center min-w-[52px] px-1.5 py-1 rounded-md ' +
+  'flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-1.5 py-1.5 rounded-md ' +
   'transition-colors text-white/85 hover:text-white active:bg-white/10 ' +
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60';
 

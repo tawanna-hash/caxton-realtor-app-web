@@ -153,6 +153,22 @@ function stripHtml(html: string): string {
   return decodeEntities(html.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 }
 
+// BUG-08: WP feeds occasionally publish titles with the contraction "it's"
+// where the possessive "its" was intended (e.g. "Propels ABoR Toward It's
+// 100 Year"). Patch the most common possessive-misuse patterns when we read
+// the title from the upstream feed. Conservative — only matches "It's" /
+// "it's" before a noun-like token where the possessive is unambiguous.
+function fixPossessiveTypos(title: string): string {
+  if (!title) return title;
+  // "It's <number> Year" / "It's <Capitalized noun>" patterns. Possessive
+  // before "Year/Anniversary/Centennial" or a capitalized word is almost
+  // always meant to be "Its".
+  return title.replace(
+    /\bIt['\u2019]s\b(?=\s+(?:\d+[-\s]?(?:Year|Years|Anniversary|Centennial|Birthday|Mile(?:stone)?)|(?:[A-Z][a-z]+)))/g,
+    'Its',
+  );
+}
+
 function formatRelativeTime(iso: string): string {
   const then = new Date(iso).getTime();
   if (!Number.isFinite(then)) return '';
@@ -302,7 +318,7 @@ function transformPost(
     }
   }
 
-  const headline = stripHtml(post.title?.rendered || '');
+  const headline = fixPossessiveTypos(stripHtml(post.title?.rendered || ''));
   const summary = stripHtml(post.excerpt?.rendered || '').slice(0, 240);
 
   return {

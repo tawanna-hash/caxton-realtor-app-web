@@ -117,7 +117,8 @@ function Tab({
     <button
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
-      className="flex flex-col items-center flex-1 px-1 gap-1 transition"
+      // BUG-12: bump tap target to >=44px (WCAG 2.5.5 / Apple HIG)
+      className="flex flex-col items-center justify-center flex-1 px-1 gap-1 min-h-[44px] transition"
       style={{ color: active ? accent : '#9ca3af' }}
     >
       {children}

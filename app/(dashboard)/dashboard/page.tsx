@@ -25,6 +25,26 @@ const PUBS = [
   { id: 'newsline', name: 'Newsline San Antonio', city: 'San Antonio', tagline: 'Founded 1982 - Relaunched 2025', color: '#3D0740' },
 ];
 
+// BUG-09: Article share URLs come back from WP source feeds (realtyline.us /
+// newslinesa.com). Canonicalize the host to realtynewsnow.app so shared links
+// land readers on the app, where the branded experience (and any future
+// /article/<id> route) lives. Preserve path + query so future deep-links work.
+function canonicalShareUrl(link?: string | null): string {
+  if (!link) {
+    return typeof window !== 'undefined' ? window.location.href : 'https://realtynewsnow.app/';
+  }
+  try {
+    const u = new URL(link, 'https://realtynewsnow.app');
+    const externalHosts = ['realtyline.us', 'www.realtyline.us', 'newslinesa.com', 'www.newslinesa.com'];
+    if (externalHosts.includes(u.hostname)) {
+      return `https://realtynewsnow.app${u.pathname}${u.search}`;
+    }
+    return u.toString();
+  } catch {
+    return link;
+  }
+}
+
 // Social pill removed 2026-06-02 — Facebook Group integration didn't pan out
 // (Groups API deprecated by Meta in 2024, OG-tag harvester blocked by FB's
 // datacenter-IP filter). Old saved values for caxton_cat_* in localStorage
@@ -1521,7 +1541,7 @@ function AdPopup({}: { pub: string; articleId: string }) {
 // ─────────────────────────────────────────────────────────────────────────
 
 function ShareRow({ article, pubColor, onCopied }: { article: any; pubColor: string; onCopied: () => void }) {
-  const url = article?.link || (typeof window !== 'undefined' ? window.location.href : '');
+  const url = canonicalShareUrl(article?.link);
   const title = article?.head || article?.title || '';
   const enc = (s: string) => encodeURIComponent(s);
 
@@ -1808,7 +1828,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
 
   const onShare = async () => {
     if (!article) return;
-    const url = article.link;
+    const url = canonicalShareUrl(article.link);
     const title = article.head || article.title || '';
     try {
       if (navigator.share) {
@@ -1825,7 +1845,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
   const onCopy = async () => {
     if (!article) return;
     try {
-      await navigator.clipboard.writeText(article.link || '');
+      await navigator.clipboard.writeText(canonicalShareUrl(article.link));
       flashToast('Link copied');
     } catch {}
   };
