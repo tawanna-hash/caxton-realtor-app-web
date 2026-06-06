@@ -1636,7 +1636,9 @@ function ReadNext({ allArticles, currentId, onSelect, pubColor }: { allArticles:
               type="button"
               onClick={() => {
                 trackEvent('article_related_clicked', { from_article_id: currentId, to_article_id: a.id });
-                if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+                // Scroll-to-top is handled by ArticleReader's article-id
+                // effect below — the reader has its own inner scroll container
+                // (window.scrollTo here does nothing).
                 onSelect(a);
               }}
               className="w-full text-left group"
@@ -1736,6 +1738,20 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
   // to satisfy React's Rules of Hooks (otherwise hook count varies across
   // renders when `article` toggles null/non-null, throwing React #310).
   const { ref: swipeRef, style: swipeStyle } = useSwipeBack({ onBack });
+
+  // Reset scroll to top whenever the active article changes (e.g. Read Next
+  // tap). The reader uses an inner overflow-y-auto container, so
+  // window.scrollTo from the click handler does nothing — we have to scroll
+  // the actual container here, after the new article has rendered.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const container = document.querySelector<HTMLDivElement>('div.fixed.inset-0.bg-white.z-30.overflow-y-auto');
+    if (container) {
+      container.scrollTop = 0;
+    } else if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0 });
+    }
+  }, [article?.id]);
 
   // Scroll milestone telemetry + time-on-article on unmount.
   // The article being viewed is identified by `article?.id`; if it changes,
