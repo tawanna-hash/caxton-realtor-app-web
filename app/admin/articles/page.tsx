@@ -1,17 +1,35 @@
-import { getNews, type NewsArticle } from '@/lib/server/wp-news';
-import ArticlesClient from './ArticlesClient';
+import { getNewsRaw, type NewsArticle, type Publication } from '@/lib/server/wp-news';
+import {
+  getAllOverridesForPublication,
+  applyOverride,
+  type ArticleOverride,
+} from '@/lib/server/article-overrides';
+import ArticlesClient, { type AdminArticle } from './ArticlesClient';
 
 export const dynamic = 'force-dynamic';
 
+async function loadForPublication(publication: Publication): Promise<AdminArticle[]> {
+  const [upstream, overrides] = await Promise.all([
+    getNewsRaw(publication),
+    getAllOverridesForPublication(publication).catch((): Map<string, ArticleOverride> => new Map()),
+  ]);
+  return upstream.map((a) => {
+    const merged = applyOverride(a, overrides.get(a.id));
+    return {
+      ...(merged as NewsArticle),
+      hidden: (merged as { hidden?: boolean }).hidden ?? false,
+      editedFields: (merged as { editedFields?: string[] }).editedFields ?? [],
+    };
+  });
+}
+
 export default async function AdminArticlesPage() {
-  // Pull from both publications. unstable_cache means this is cheap on
-  // repeat loads; the sync button invalidates the cache tags.
   const [austin, sanAntonio] = await Promise.allSettled([
-    getNews('austin'),
-    getNews('san_antonio'),
+    loadForPublication('austin'),
+    loadForPublication('san_antonio'),
   ]);
 
-  const articles: NewsArticle[] = [];
+  const articles: AdminArticle[] = [];
   if (austin.status === 'fulfilled') articles.push(...austin.value);
   if (sanAntonio.status === 'fulfilled') articles.push(...sanAntonio.value);
 

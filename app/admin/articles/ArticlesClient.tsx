@@ -4,8 +4,13 @@ import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { NewsArticle } from '@/lib/server/wp-news';
 
+export type AdminArticle = NewsArticle & {
+  hidden: boolean;
+  editedFields: string[];
+};
+
 type Props = {
-  initialArticles: NewsArticle[];
+  initialArticles: AdminArticle[];
   initialErrors: string[];
 };
 
@@ -36,6 +41,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
   const [filter, setFilter] = useState<PubFilter>('all');
   const [search, setSearch] = useState('');
+  const [editing, setEditing] = useState<AdminArticle | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -77,6 +83,11 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     }
   }
 
+  function handleSaved() {
+    setEditing(null);
+    startTransition(() => router.refresh());
+  }
+
   const busy = syncing || pending;
 
   return (
@@ -87,8 +98,9 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Content</p>
           <h1 className="font-serif text-3xl text-gray-900">Articles</h1>
           <p className="text-sm text-gray-600 mt-1">
-            All articles pulled from WordPress feeds. Cache refreshes every 30 minutes;
-            use Sync now to refresh immediately.
+            All articles pulled from WordPress feeds. Edits are saved locally and applied
+            instantly to the public app — WordPress is untouched. Use Sync now to refresh
+            the upstream feed.
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
@@ -128,9 +140,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
           {syncedAt && !syncError && (
             <span className="text-xs text-gray-500">Last sync: {syncedAt}</span>
           )}
-          {syncError && (
-            <span className="text-xs text-red-600">{syncError}</span>
-          )}
+          {syncError && <span className="text-xs text-red-600">{syncError}</span>}
         </div>
       </div>
 
@@ -194,12 +204,15 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                   <th className="px-4 py-3 font-medium">Category</th>
                   <th className="px-4 py-3 font-medium">Author</th>
                   <th className="px-4 py-3 font-medium">Published</th>
-                  <th className="px-4 py-3 font-medium text-right">Source</th>
+                  <th className="px-4 py-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map((a) => (
-                  <tr key={a.id} className="hover:bg-gray-50">
+                  <tr
+                    key={a.id}
+                    className={`hover:bg-gray-50 ${a.hidden ? 'opacity-50' : ''}`}
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-start gap-3">
                         {a.imageThumb || a.imageUrl ? (
@@ -216,7 +229,19 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                           <div className="w-12 h-12 rounded bg-gray-100 flex-shrink-0" aria-hidden="true" />
                         )}
                         <div className="min-w-0">
-                          <p className="font-medium text-gray-900 line-clamp-2">{a.head}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-gray-900 line-clamp-2">{a.head}</p>
+                            {a.editedFields.length > 0 && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                                Edited
+                              </span>
+                            )}
+                            {a.hidden && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">
+                                Hidden
+                              </span>
+                            )}
+                          </div>
                           {a.sum && (
                             <p className="text-xs text-gray-500 mt-1 line-clamp-1">{a.sum}</p>
                           )}
@@ -238,14 +263,23 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                       {formatDate(a.dateIso || a.publishedAt)}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right">
-                      <a
-                        href={a.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#021D40] hover:underline text-xs font-medium"
-                      >
-                        View ↗
-                      </a>
+                      <div className="inline-flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setEditing(a)}
+                          className="text-[#021D40] hover:underline text-xs font-medium"
+                        >
+                          Edit
+                        </button>
+                        <a
+                          href={a.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-600 hover:underline text-xs"
+                        >
+                          View ↗
+                        </a>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -257,6 +291,280 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
           </div>
         </div>
       )}
+
+      {editing && (
+        <EditModal
+          article={editing}
+          onClose={() => setEditing(null)}
+          onSaved={handleSaved}
+        />
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// Edit modal
+// =============================================================================
+
+function EditModal({
+  article,
+  onClose,
+  onSaved,
+}: {
+  article: AdminArticle;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [head, setHead] = useState(article.head);
+  const [excerpt, setExcerpt] = useState(article.sum || article.excerpt || '');
+  const [contentHtml, setContentHtml] = useState(article.contentHtml || '');
+  const [imageUrl, setImageUrl] = useState(article.imageUrl || '');
+  const [authorName, setAuthorName] = useState(article.author?.name || '');
+  const [authorAvatar, setAuthorAvatar] = useState(article.author?.avatar || '');
+  const [cat, setCat] = useState(article.cat);
+  const [tagsCsv, setTagsCsv] = useState((article.tags || []).join(', '));
+  const [hidden, setHidden] = useState(article.hidden);
+  const [saving, setSaving] = useState(false);
+  const [reverting, setReverting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save() {
+    setSaving(true);
+    setError(null);
+    try {
+      const body = {
+        head: head.trim() || null,
+        excerpt: excerpt.trim() || null,
+        contentHtml: contentHtml.trim() || null,
+        imageUrl: imageUrl.trim() || null,
+        authorName: authorName.trim() || null,
+        authorAvatar: authorAvatar.trim() || null,
+        cat: cat.trim() || null,
+        tags: tagsCsv
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+        hidden,
+      };
+      const res = await fetch(`/api/admin/articles/${encodeURIComponent(article.id)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({}));
+        throw new Error(b?.error || `Save failed (${res.status})`);
+      }
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function revert() {
+    if (!confirm('Revert all admin edits for this article? Upstream WordPress values will be restored.')) {
+      return;
+    }
+    setReverting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/articles/${encodeURIComponent(article.id)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => ({}));
+        throw new Error(b?.error || `Revert failed (${res.status})`);
+      }
+      onSaved();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Revert failed');
+    } finally {
+      setReverting(false);
+    }
+  }
+
+  const busy = saving || reverting;
+  const hasOverride = article.editedFields.length > 0;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full my-8">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
+              Edit article · {PUB_LABEL[article.publication]}
+            </p>
+            <h2 className="font-serif text-xl text-gray-900 mt-1 line-clamp-1">{article.head}</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-700 text-xl leading-none min-h-[44px] min-w-[44px]"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          <Field label="Title">
+            <input
+              type="text"
+              value={head}
+              onChange={(e) => setHead(e.target.value)}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+            />
+          </Field>
+
+          <Field label="Category">
+            <input
+              type="text"
+              value={cat}
+              onChange={(e) => setCat(e.target.value)}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+            />
+          </Field>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Author name">
+              <input
+                type="text"
+                value={authorName}
+                onChange={(e) => setAuthorName(e.target.value)}
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+              />
+            </Field>
+            <Field label="Author avatar URL">
+              <input
+                type="url"
+                value={authorAvatar}
+                onChange={(e) => setAuthorAvatar(e.target.value)}
+                placeholder="https://…"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+              />
+            </Field>
+          </div>
+
+          <Field label="Featured image URL">
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://…"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+            />
+          </Field>
+
+          <Field label="Excerpt / summary">
+            <textarea
+              value={excerpt}
+              onChange={(e) => setExcerpt(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40] resize-y"
+            />
+          </Field>
+
+          <Field label="Body (HTML)" hint="Raw HTML. Leave blank to use upstream content.">
+            <textarea
+              value={contentHtml}
+              onChange={(e) => setContentHtml(e.target.value)}
+              rows={10}
+              className="w-full px-3 py-2 rounded-md border border-gray-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40] resize-y"
+            />
+          </Field>
+
+          <Field label="Tags" hint="Comma-separated">
+            <input
+              type="text"
+              value={tagsCsv}
+              onChange={(e) => setTagsCsv(e.target.value)}
+              placeholder="tag1, tag2, tag3"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+            />
+          </Field>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={hidden}
+              onChange={(e) => setHidden(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-[#021D40] focus:ring-[#021D40]"
+            />
+            <span className="text-sm text-gray-700">
+              Hide this article from the public app
+            </span>
+          </label>
+
+          {error && (
+            <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex flex-wrap items-center justify-between gap-3 rounded-b-lg">
+          <div>
+            {hasOverride && (
+              <button
+                type="button"
+                onClick={revert}
+                disabled={busy}
+                className="text-sm text-red-600 hover:underline disabled:opacity-50 min-h-[44px]"
+              >
+                {reverting ? 'Reverting…' : 'Revert to WordPress'}
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={busy}
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50 min-h-[44px]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={save}
+              disabled={busy}
+              className="px-4 py-2 text-sm font-medium text-white bg-[#021D40] hover:bg-[#021D40]/90 rounded-md disabled:opacity-50 min-h-[44px]"
+            >
+              {saving ? 'Saving…' : 'Save changes'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">
+        {label}
+      </label>
+      {children}
+      {hint && <p className="text-xs text-gray-500 mt-1">{hint}</p>}
     </div>
   );
 }

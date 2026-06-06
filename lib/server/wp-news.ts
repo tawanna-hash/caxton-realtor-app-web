@@ -377,6 +377,29 @@ const cachedSanAntonio = unstable_cache(
   { revalidate: CACHE_REVALIDATE_S, tags: ['wp-news', 'wp-news:san_antonio'] },
 );
 
-export async function getNews(publication: Publication): Promise<NewsArticle[]> {
+/**
+ * Internal: returns the upstream-only article list (cached for 30 min).
+ * Use getNews() for public consumers — it also applies admin overrides.
+ */
+export async function getNewsRaw(publication: Publication): Promise<NewsArticle[]> {
   return publication === 'austin' ? cachedAustin() : cachedSanAntonio();
+}
+
+export async function getNews(publication: Publication): Promise<NewsArticle[]> {
+  const upstream = await getNewsRaw(publication);
+
+  // Apply admin overrides on top of upstream. Overrides are NOT inside the
+  // unstable_cache wrapper above, so edits take effect immediately without
+  // needing a Sync. Failures must not break the public feed.
+  try {
+    const { getAllOverridesForPublication, applyOverride } = await import('./article-overrides');
+    const overrides = await getAllOverridesForPublication(publication);
+    if (overrides.size === 0) return upstream;
+    const merged = upstream.map((a) => applyOverride(a, overrides.get(a.id)));
+    // Filter out hidden articles for public consumers.
+    return merged.filter((a) => !(a as { hidden?: boolean }).hidden);
+  } catch (err) {
+    logger.warn({ err, publication }, 'Article overrides merge failed; serving upstream');
+    return upstream;
+  }
 }
