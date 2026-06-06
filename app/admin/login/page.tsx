@@ -10,7 +10,7 @@ import { adminApi } from '@/lib/admin-api';
 // falls back to the default landing page. This blocks open-redirect
 // abuse where an attacker crafts /admin/login?next=https://evil.com.
 function safeNext(raw: string | null): string {
-  const fallback = '/admin/giveaways';
+  const fallback = '/admin/crm';
   if (!raw) return fallback;
   if (!raw.startsWith('/')) return fallback;
   if (raw.startsWith('//')) return fallback; // protocol-relative
