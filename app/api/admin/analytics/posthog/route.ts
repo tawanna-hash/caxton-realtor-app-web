@@ -176,13 +176,17 @@ function publicationClause(publication: string): string {
   return ` AND properties.publication = '${safeProp}'`;
 }
 
+// BUG-36: `properties.$session_duration` is only set on virtual `$session`
+// events, so the previous avg() returned NULL even with 1300+ pageviews,
+// and the KPI rendered as "—". Compute duration ourselves as
+// max(timestamp) - min(timestamp) per $session_id, then average. Two
+// queries (event-counts + per-session) keep each one simple HogQL.
 function kpisSQL(days: number, pubClause: string, label: string): string {
   return `
     SELECT
       uniq(distinct_id) AS users,
       countIf(event = '$pageview') AS pageviews,
-      uniq(properties.$session_id) AS sessions,
-      avg(toFloat(properties.$session_duration)) AS avg_session_seconds
+      uniq(properties.$session_id) AS sessions
     FROM events
     WHERE timestamp >= now() - INTERVAL ${days} DAY
       AND timestamp < now()
@@ -191,13 +195,28 @@ function kpisSQL(days: number, pubClause: string, label: string): string {
   `;
 }
 
+function avgSessionSQL(days: number, pubClause: string, prior: boolean): string {
+  const from = prior ? `now() - INTERVAL ${days * 2} DAY` : `now() - INTERVAL ${days} DAY`;
+  const to = prior ? `now() - INTERVAL ${days} DAY` : `now()`;
+  return `
+    SELECT avg(dur) AS avg_session_seconds FROM (
+      SELECT dateDiff('second', min(timestamp), max(timestamp)) AS dur
+      FROM events
+      WHERE timestamp >= ${from}
+        AND timestamp < ${to}
+        AND properties.$session_id IS NOT NULL
+        ${pubClause}
+      GROUP BY properties.$session_id
+    )
+  `;
+}
+
 function priorKpisSQL(days: number, pubClause: string): string {
   return `
     SELECT
       uniq(distinct_id) AS users,
       countIf(event = '$pageview') AS pageviews,
-      uniq(properties.$session_id) AS sessions,
-      avg(toFloat(properties.$session_duration)) AS avg_session_seconds
+      uniq(properties.$session_id) AS sessions
     FROM events
     WHERE timestamp >= now() - INTERVAL ${days * 2} DAY
       AND timestamp < now() - INTERVAL ${days} DAY
@@ -303,26 +322,32 @@ async function buildReport(timeframe: string, publication: string): Promise<Repo
   const pubClause = publicationClause(publication);
   const warnings: string[] = [];
 
-  const [kpisCur, kpisPrior, topPagesRes, topEventsRes, sourcesRes] = await Promise.all([
+  // BUG-36: avg-session is now computed in its own HogQL query (see
+  // avgSessionSQL). The base kpis query no longer includes it.
+  const [kpisCur, kpisPrior, avgDurCurRes, avgDurPriorRes, topPagesRes, topEventsRes, sourcesRes] = await Promise.all([
     runHogQL('reports.kpis.current', kpisSQL(days, pubClause, 'current')),
     runHogQL('reports.kpis.prior', priorKpisSQL(days, pubClause)),
+    runHogQL('reports.avg_session.current', avgSessionSQL(days, pubClause, false))
+      .catch((err) => { console.warn('[analytics] avg_session current failed', err); return { results: [[null]] } as PostHogQueryResult; }),
+    runHogQL('reports.avg_session.prior', avgSessionSQL(days, pubClause, true))
+      .catch((err) => { console.warn('[analytics] avg_session prior failed', err); return { results: [[null]] } as PostHogQueryResult; }),
     runHogQL('reports.top_pages', topPagesSQL(days, pubClause)),
     runHogQL('reports.top_events', topEventsSQL(days, pubClause)),
     runHogQL('reports.traffic_sources', trafficSourcesSQL(days, pubClause)),
   ]);
 
-  const curRow = kpisCur.results[0] ?? [0, 0, 0, 0];
-  const priorRow = kpisPrior.results[0] ?? [0, 0, 0, 0];
+  const curRow = kpisCur.results[0] ?? [0, 0, 0];
+  const priorRow = kpisPrior.results[0] ?? [0, 0, 0];
 
   const usersCur = toNum(curRow[0]);
   const pageviewsCur = toNum(curRow[1]);
   const sessionsCur = toNum(curRow[2]);
-  const avgDurCur = toNum(curRow[3]);
+  const avgDurCur = toNum(avgDurCurRes.results[0]?.[0] ?? null);
 
   const usersPrior = toNum(priorRow[0]);
   const pageviewsPrior = toNum(priorRow[1]);
   const sessionsPrior = toNum(priorRow[2]);
-  const avgDurPrior = toNum(priorRow[3]);
+  const avgDurPrior = toNum(avgDurPriorRes.results[0]?.[0] ?? null);
 
   const subLabel = `vs prior ${days}d`;
   const kpis: Record<string, Kpi> = {

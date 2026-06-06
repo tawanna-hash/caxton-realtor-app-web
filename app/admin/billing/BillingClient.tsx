@@ -310,7 +310,10 @@ export default function BillingClient({
         <div>
           <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin · Billing</div>
           <h1 className="text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>Agreements &amp; invoices</h1>
-          <p className="text-sm text-gray-600 mt-1">Contracts, billing, and Stripe state for every advertiser.</p>
+          {/* BUG-38: tagline previously claimed "Stripe state" but no Stripe
+              IDs / sync status / customer IDs are surfaced here. Soften the
+              copy until the Stripe-sync columns ship. */}
+          <p className="text-sm text-gray-600 mt-1">Contracts and invoicing for every advertiser. Stripe charges land via the public Sign Wizard — see each agreement for payment status.</p>
         </div>
         <div className="flex gap-2">
           {tab === 'invoices'

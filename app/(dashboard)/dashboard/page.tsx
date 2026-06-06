@@ -704,8 +704,16 @@ export default function DashboardPage() {
         try { setSelectedArticle(JSON.parse(savedArticle)); } catch {}
       }
       if (savedPhase && savedPhase !== 'splash') {
+        // BUG-01: returning PWA users were landing on a single article (the
+        // last one they read). When the URL is the bare app root, always
+        // start on the feed instead — the article is still reachable via
+        // their saves and history. Deep links into /article/<id> (when
+        // those routes ship) should restore the article phase.
+        const onAppRoot = typeof window !== 'undefined'
+          && (window.location.pathname === '/' || window.location.pathname === '/dashboard');
+
         // Stale-data guard: don't restore article/event_detail phase if its data is missing.
-        if (savedPhase === 'article' && !savedArticle) {
+        if (savedPhase === 'article' && (!savedArticle || onAppRoot)) {
           setPhase('feed');
         } else if (savedPhase === 'events' || savedPhase === 'event_detail') {
           // Legacy phases — events lives at /calendar now. Land on feed; the
@@ -1656,8 +1664,12 @@ function TagsRow({ article, pubColor }: { article: any; pubColor: string }) {
 // ─────────────────────────────────────────────────────────────────────────
 
 function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onMagazine, onLatest }: { article: any; pubColor: string; saved: boolean; onBack: () => void; onSaveToggle: () => void; onShare: () => void; onCopy: () => void; onMagazine?: () => void; onLatest?: () => void }) {
+  // BUG-04: AdPopup (z-50) sits at bottom-20 right-4 and was visually
+  // covering the Latest/Share pills, so taps on those buttons hit the ad
+  // instead. Bump this bar above the popup (z-60) so navigation always
+  // wins. AdPopup remains dismissable via its own close button.
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] pointer-events-none">
       <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1.5 shadow-lg">
         <ActionPillButton onClick={onBack} label="Back">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>

@@ -231,9 +231,12 @@ export default function AdminReportsPage() {
               className="w-full max-w-2xl border border-gray-300 rounded-md px-3 py-2 text-sm"
             >
               <option value="">— Select an article —</option>
+              {/* BUG-35: omit the bracket when pub is unknown so older,
+                  untagged events don't render "[?] (untitled)". The route
+                  already substitutes "Article #<id>" for missing titles. */}
               {articles.map((a) => (
                 <option key={a.article_id} value={a.article_id}>
-                  [{a.pub || '?'}] {a.title} · {a.opens} opens
+                  {a.pub ? `[${a.pub}] ` : ''}{a.title} · {a.opens} opens
                 </option>
               ))}
             </select>
@@ -414,7 +417,7 @@ export default function AdminReportsPage() {
               <option value="">— Select an event —</option>
               {eventsList.map((e) => (
                 <option key={e.event_id} value={e.event_id}>
-                  [{e.pub || '?'}] {e.title} · {e.card_clicks} clicks, {e.registrations} regs
+                  {e.pub ? `[${e.pub}] ` : ''}{e.title} · {e.card_clicks} clicks, {e.registrations} regs
                 </option>
               ))}
             </select>

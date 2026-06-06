@@ -71,11 +71,34 @@ export async function GET(req: NextRequest) {
   try {
     // Distinct articles with at least one open in the window, ordered by
     // open count desc so the most-engaged articles are at the top.
+    //
+    // BUG-35: older `article_opened` events were emitted before the tracker
+    // attached `article_title` and `pub` properties — they showed up as
+    // "[?] (untitled)" in the picker. Coalesce the column across every
+    // plausible property name the tracker has used, and emptyString -> null
+    // so the fallback in the row mapper applies.
     const raw = await runHogQL(`
       SELECT
         properties.article_id AS article_id,
-        any(properties.article_title) AS title,
-        any(properties.pub) AS pub,
+        nullIf(
+          coalesce(
+            any(properties.article_title),
+            any(properties.title),
+            any(properties.article_head),
+            any(properties.head),
+            ''
+          ),
+          ''
+        ) AS title,
+        nullIf(
+          coalesce(
+            any(properties.pub),
+            any(properties.publication),
+            any(properties.pub_id),
+            ''
+          ),
+          ''
+        ) AS pub,
         count() AS opens
       FROM events
       WHERE event = 'article_opened'
@@ -88,9 +111,12 @@ export async function GET(req: NextRequest) {
 
     const articles = raw.map((r) => {
       const row = r as [string, string | null, string | null, number];
+      const id = String(row[0]);
+      // Article-id fallback is more useful than "(untitled)" — the admin can
+      // at least look it up in the news feed by ID.
       return {
-        article_id: row[0],
-        title: row[1] ?? '(untitled)',
+        article_id: id,
+        title: row[1] ?? `Article #${id}`,
         pub: row[2] ?? null,
         opens: Number(row[3]),
       };
