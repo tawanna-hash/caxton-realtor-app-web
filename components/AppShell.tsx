@@ -76,9 +76,8 @@ const ADMIN_GROUPS: AdminGroup[] = [
     links: [
       { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions' },
       { label: 'Events',    href: '/admin/events',    description: 'Calendar publications' },
-      // Pending Events shows a badge with the count of submissions + Gemini-detected events
-      // awaiting review. Badge value is injected at render time below via PENDING_EVENTS_HREF.
-      { label: 'Pending Events', href: '/admin/events/pending', description: 'Advertiser submissions & AI detections' },
+      // 'Pending Events' link removed 2026-06-06 — page deleted; API routes
+      // kept for the cron + submit-event flow.
       { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries' },
       { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
       // 'Social' link removed 2026-06-02 — page itself kept at /admin/social
@@ -120,11 +119,6 @@ export default function AppShell({
   // Server + first client render agree on 'realtynewsnow' to avoid hydration mismatch.
   // Actual pub is read from localStorage post-mount in the useEffect below.
   const [pub, setPub] = useState<string>('realtynewsnow');
-  // Count of pending events (advertiser submissions + Gemini-detected) so we
-  // can render a badge on the Pending Events nav link. Admin only — fetched
-  // once on mount + every 60s while the tab is open.
-  const [pendingEventsCount, setPendingEventsCount] = useState<number>(0);
-
   useEffect(() => {
     // Defer the localStorage read into a microtask so the first commit lands
     // before this setState — avoids react-hooks/set-state-in-effect.
@@ -157,30 +151,6 @@ export default function AppShell({
       })
       .catch(() => setUser(null));
   }, []);
-
-  // Poll pending-event count for the admin nav badge. 60s is generous;
-  // submissions are infrequent and the cron only runs hourly.
-  useEffect(() => {
-    if (!isAdmin) return;
-    let cancelled = false;
-    const load = () => {
-      fetch(`${API}/admin/events/pending/count`, { credentials: 'include' })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          if (cancelled || !data) return;
-          setPendingEventsCount(typeof data.count === 'number' ? data.count : 0);
-        })
-        .catch(() => {
-          /* swallow — badge stays at its last known value */
-        });
-    };
-    load();
-    const t = setInterval(load, 60_000);
-    return () => {
-      cancelled = true;
-      clearInterval(t);
-    };
-  }, [isAdmin]);
 
   const handleLogout = useCallback(async () => {
     const logoutUrl = isAdmin ? `${API}/admin/auth/logout` : `${API}/auth/logout`;
@@ -342,9 +312,6 @@ export default function AppShell({
                           </div>
                           {group.links.map((link) => {
                             const linkActive = pathname.startsWith(link.href);
-                            // Badge: only the Pending Events link gets one, and only when count > 0.
-                            const showBadge =
-                              link.href === '/admin/events/pending' && pendingEventsCount > 0;
                             return (
                               <Link
                                 key={link.href}
@@ -357,14 +324,7 @@ export default function AppShell({
                                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                 }`}
                               >
-                                <div className="font-medium flex items-center gap-2">
-                                  <span>{link.label}</span>
-                                  {showBadge && (
-                                    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-red-600 text-white text-[10px] font-semibold leading-none">
-                                      {pendingEventsCount > 99 ? '99+' : pendingEventsCount}
-                                    </span>
-                                  )}
-                                </div>
+                                <div className="font-medium">{link.label}</div>
                                 {link.description && (
                                   <div className="text-[11px] text-gray-500 mt-0.5">
                                     {link.description}

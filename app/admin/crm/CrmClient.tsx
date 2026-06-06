@@ -521,7 +521,7 @@ function EditDrawer({
                   <div className="text-xs text-gray-500 mt-0.5">
                     Share this URL with the advertiser so they can submit
                     events directly into the review queue. Each submission
-                    lands on /admin/events/pending for your approval.
+                    lands in the Events queue for your approval.
                   </div>
                 </div>
                 <button
