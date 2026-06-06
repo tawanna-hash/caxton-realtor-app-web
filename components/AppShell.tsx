@@ -434,7 +434,9 @@ export default function AppShell({
           <BottomNav info={null} onMoreClick={() => setDrawerOpen(true)} />
         </>
       ) : null}
-      <Footer />
+      {/* Admin chrome stays admin-only — the public Footer (RealtyLine /
+          Newsline / Resources columns) was leaking onto every /admin page. */}
+      {!isAdmin && <Footer />}
     </div>
   );
 }
