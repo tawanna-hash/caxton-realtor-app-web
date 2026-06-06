@@ -277,7 +277,14 @@ function enrichFromEmbed(post: WpPost): Partial<NewsArticle> {
   const auth = Array.isArray(authArr) ? authArr[0] : null;
   if (auth && !auth.code) {
     const avatars = auth.avatar_urls || {};
-    const avatar = avatars['96'] || avatars['48'] || avatars['24'];
+    const rawAvatar = avatars['96'] || avatars['48'] || avatars['24'];
+    // Gravatar serves a gray "Mystery Person" silhouette when the author email
+    // has no registered Gravatar (d=mm | d=mystery | d=mp | d=blank). Rewrite
+    // those defaults to d=404 so missing avatars return HTTP 404 instead of a
+    // placeholder image — the renderer can then onerror-hide the broken <img>.
+    const avatar = rawAvatar
+      ? rawAvatar.replace(/([?&])d=(mm|mp|mystery|blank|identicon|monsterid|wavatar|retro|robohash)\b/gi, '$1d=404')
+      : null;
     out.author = avatar
       ? { name: auth.name || 'Staff', avatar }
       : { name: auth.name || 'Staff' };

@@ -1924,6 +1924,12 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
               <img
                 src={author.avatar}
                 alt=""
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  // Hide the avatar element entirely when Gravatar 404s
+                  // (author has no registered Gravatar). Avoids broken-image icon.
+                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                }}
                 className="w-10 h-10 rounded-full bg-gray-100 flex-shrink-0"
               />
             )}
