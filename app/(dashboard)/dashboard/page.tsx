@@ -1901,11 +1901,21 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
       </div>
 
 
-      {/* Featured image */}
+      {/* Featured image — constrained to the same max-w-2xl column as the
+          article body, so it doesn't stretch edge-to-edge on wide desktop
+          windows (which also upscaled smaller source images and made them
+          look blurry). max-h cap prevents very tall portraits from dominating. */}
       {article.imageUrl && (
         <div className="w-full bg-gray-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={article.imageUrl} alt="" className="w-full h-auto" />
+          <div className="max-w-2xl mx-auto">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={article.imageUrl}
+              alt=""
+              className="w-full h-auto max-h-[60vh] object-cover"
+              loading="eager"
+            />
+          </div>
         </div>
       )}
 
