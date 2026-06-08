@@ -219,9 +219,16 @@ async function fetchCategoryMap(baseUrl: string): Promise<Map<number, string>> {
 }
 
 async function fetchPosts(baseUrl: string, perPage = POSTS_PER_PAGE): Promise<WpPost[]> {
+  // newslinesa.com and realtyline.us are fronted by a CDN that caches the WP
+  // REST API response keyed on URL. The canonical URL
+  // `posts?per_page=20&_embed=1&orderby=date&order=desc` was returning a stale
+  // body that didn't include articles published in the last few hours. We add
+  // a cache-buster minute-bucket so each WP fetch hits origin but we don't
+  // hammer their server on every request (one fresh fetch per minute is fine).
+  const bucket = Math.floor(Date.now() / 60_000);
   const url =
     `${baseUrl}/wp-json/wp/v2/posts?per_page=${perPage}&_embed=1` +
-    `&orderby=date&order=desc`;
+    `&orderby=date&order=desc&_=${bucket}`;
   const res = await fetchWithTimeout(url, FETCH_TIMEOUT_MS);
   if (!res.ok) {
     throw new Error(`WP posts fetch failed: ${res.status} ${res.statusText}`);
