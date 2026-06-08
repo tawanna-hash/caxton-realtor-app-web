@@ -18,11 +18,15 @@ export const runtime = 'nodejs';
 export const POST = withErrorHandling(async () => {
   await requireAdmin();
 
-  // Next 16 requires a cacheLife profile as the second arg. 'max' forces an
-  // immediate full invalidation regardless of the tag's configured lifetime.
-  revalidateTag('wp-news', 'max');
-  revalidateTag('wp-news:austin', 'max');
-  revalidateTag('wp-news:san_antonio', 'max');
+  // Next 16: revalidateTag(tag, 'max') uses stale-while-revalidate — the
+  // NEXT request returns stale data while fresh is fetched in the background,
+  // which means the admin shows yesterday's articles after Sync now. Per
+  // https://nextjs.org/docs/app/api-reference/functions/revalidateTag, route
+  // handlers reacting to external mutations should pass { expire: 0 } so
+  // cache entries hard-expire and the next read blocks until WP is refetched.
+  revalidateTag('wp-news', { expire: 0 });
+  revalidateTag('wp-news:austin', { expire: 0 });
+  revalidateTag('wp-news:san_antonio', { expire: 0 });
 
   return NextResponse.json({
     ok: true,
