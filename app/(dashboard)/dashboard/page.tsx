@@ -25,23 +25,30 @@ const PUBS = [
   { id: 'newsline', name: 'Newsline San Antonio', city: 'San Antonio', tagline: 'Founded 1982 - Relaunched 2025', color: '#3D0740' },
 ];
 
-// BUG-09: Article share URLs come back from WP source feeds (realtyline.us /
-// newslinesa.com). Canonicalize the host to realtynewsnow.app so shared links
-// land readers on the app, where the branded experience (and any future
-// /article/<id> route) lives. Preserve path + query so future deep-links work.
-function canonicalShareUrl(link?: string | null): string {
+// BUG-09 / share-404 fix: Share URLs must deep-link into the app. The WP
+// permalink (realtyline.us / newslinesa.com / YYYY/MM/DD/slug) doesn't exist
+// as a route on realtynewsnow.app, so we emit a stable query param the
+// dashboard reads on mount to auto-open the article reader.
+function canonicalShareUrl(article?: { id?: string | number | null; link?: string | null } | null): string {
+  const base = 'https://realtynewsnow.app/';
+  const id = article?.id;
+  if (id !== undefined && id !== null && String(id).length > 0) {
+    return `${base}?article=${encodeURIComponent(String(id))}`;
+  }
+  // Fallback: no id available — try to keep the link usable but rooted on app host.
+  const link = article?.link;
   if (!link) {
-    return typeof window !== 'undefined' ? window.location.href : 'https://realtynewsnow.app/';
+    return typeof window !== 'undefined' ? window.location.href : base;
   }
   try {
-    const u = new URL(link, 'https://realtynewsnow.app');
+    const u = new URL(link, base);
     const externalHosts = ['realtyline.us', 'www.realtyline.us', 'newslinesa.com', 'www.newslinesa.com'];
     if (externalHosts.includes(u.hostname)) {
-      return `https://realtynewsnow.app${u.pathname}${u.search}`;
+      return base;
     }
     return u.toString();
   } catch {
-    return link;
+    return base;
   }
 }
 
@@ -812,6 +819,30 @@ export default function DashboardPage() {
     return () => window.removeEventListener('caxton:openArticle', onOpenArticle as EventListener);
   }, []);
 
+  // share-deep-link: if URL has ?article=<id>, open that article in the reader
+  // once we have the news list. Runs only once per id; strips the param after.
+  const deepLinkConsumedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const wantId = params.get('article');
+    if (!wantId || deepLinkConsumedRef.current === wantId) return;
+    if (!globalArticles || globalArticles.length === 0) return;
+    const match = globalArticles.find((a: any) => String(a?.id) === String(wantId));
+    if (match) {
+      deepLinkConsumedRef.current = wantId;
+      trackEvent('article_opened', { article_id: match?.id, article_title: match?.title, article_cat: match?.cat, pub: match?.pub, source: 'share_link' });
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: deep-link from URL query param into reader once data loads
+      setSelectedArticle(match);
+      setPhase('article');
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('article');
+        window.history.replaceState({}, '', url.toString());
+      } catch {}
+    }
+  }, [globalArticles]);
+
   // caxton-article-reader-b2a-fix (newsList listener)
   useEffect(() => {
     const onNewsList = (e: any) => {
@@ -1539,7 +1570,7 @@ function AdPopup({}: { pub: string; articleId: string }) {
 // ─────────────────────────────────────────────────────────────────────────
 
 function ShareRow({ article, pubColor, onCopied }: { article: any; pubColor: string; onCopied: () => void }) {
-  const url = canonicalShareUrl(article?.link);
+  const url = canonicalShareUrl(article);
   const title = article?.head || article?.title || '';
   const enc = (s: string) => encodeURIComponent(s);
 
@@ -1842,7 +1873,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
 
   const onShare = async () => {
     if (!article) return;
-    const url = canonicalShareUrl(article.link);
+    const url = canonicalShareUrl(article);
     const title = article.head || article.title || '';
     try {
       if (navigator.share) {
@@ -1859,7 +1890,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
   const onCopy = async () => {
     if (!article) return;
     try {
-      await navigator.clipboard.writeText(canonicalShareUrl(article.link));
+      await navigator.clipboard.writeText(canonicalShareUrl(article));
       flashToast('Link copied');
     } catch {}
   };
