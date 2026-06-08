@@ -382,15 +382,30 @@ const cachedSanAntonio = unstable_cache(
 );
 
 /**
- * Internal: returns the upstream-only article list (cached for 30 min).
- * Use getNews() for public consumers — it also applies admin overrides.
+ * Internal: returns the upstream-only article list.
+ *
+ * Admin uses this directly and we deliberately BYPASS unstable_cache so the
+ * admin Articles page always reflects the true current state of WordPress.
+ * (Next 16 deprecated unstable_cache and revalidateTag(tag, 'max') now uses
+ * stale-while-revalidate, so the prior "sync revalidates, page re-renders"
+ * flow returned stale data on the immediate next read. Admin is low traffic
+ * — paying the WP roundtrip on every load is fine and is the most reliable
+ * way to guarantee correctness.)
+ *
+ * Public callers should keep using getNews() which still goes through the
+ * 30-minute cache.
  */
 export async function getNewsRaw(publication: Publication): Promise<NewsArticle[]> {
+  return fetchNewsArticles(publication);
+}
+
+/** Public-cached variant used by the public feed (kept on unstable_cache). */
+async function getNewsCached(publication: Publication): Promise<NewsArticle[]> {
   return publication === 'austin' ? cachedAustin() : cachedSanAntonio();
 }
 
 export async function getNews(publication: Publication): Promise<NewsArticle[]> {
-  const upstream = await getNewsRaw(publication);
+  const upstream = await getNewsCached(publication);
 
   // Apply admin overrides on top of upstream. Overrides are NOT inside the
   // unstable_cache wrapper above, so edits take effect immediately without
