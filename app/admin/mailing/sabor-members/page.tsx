@@ -1,13 +1,13 @@
-// app/admin/mailing/holding/page.tsx
+// app/admin/mailing/sabor-members/page.tsx
 //
-// Holding contacts staging page. Server-side: auth check + initial
-// shell. Data lives in the client component.
+// SABOR Members admin landing page. Shows sync status, the freshness of
+// the captured ramco.sabor.com cookies, and a "Sync SABOR Now" button
+// that triggers the GitHub Actions workflow.
 
-import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
-import HoldingClient from './HoldingClient';
+import SaborMembersClient from './SaborMembersClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,12 +20,8 @@ async function isAdmin(): Promise<boolean> {
   }
 }
 
-export default async function MailingHoldingPage() {
+export default async function SaborMembersPage() {
   if (!(await isAdmin())) redirect('/admin/login');
   await ensureSchema();
-  return (
-    <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading…</div>}>
-      <HoldingClient />
-    </Suspense>
-  );
+  return <SaborMembersClient />;
 }

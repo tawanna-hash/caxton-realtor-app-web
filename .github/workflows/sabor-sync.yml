@@ -1,0 +1,48 @@
+name: SABOR Realtor Sync
+
+# Runs nightly + on-demand. Scrapes ramco.sabor.com and POSTs records to
+# the production ingest API. Requires repository secrets:
+#   RAMCO_SABOR_SESSION_ID  \u2014 ASP.NET_SessionId cookie (rotate ~weekly)
+#   RAMCO_SABOR_AUTH        \u2014 .RAMCOAUTH cookie (rotate ~weekly)
+#   CRON_SECRET             \u2014 shared with Vercel CRON_SECRET env var
+#   INGEST_URL              \u2014 https://<prod-host>/api/admin/mailing/sabor-realtors/ingest
+
+on:
+  schedule:
+    # 03:00 UTC nightly = 10pm CDT / 9pm CST
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      max_records:
+        description: 'Cap on detail-page fetches (blank = unlimited)'
+        required: false
+        default: ''
+      max_pages:
+        description: 'Cap on list pages'
+        required: false
+        default: '200'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci --include=dev
+
+      - name: Run SABOR sync
+        env:
+          RAMCO_SABOR_SESSION_ID: ${{ secrets.RAMCO_SABOR_SESSION_ID }}
+          RAMCO_SABOR_AUTH: ${{ secrets.RAMCO_SABOR_AUTH }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          INGEST_URL: ${{ secrets.INGEST_URL }}
+          SABOR_MAX_RECORDS: ${{ github.event.inputs.max_records }}
+          SABOR_MAX_PAGES: ${{ github.event.inputs.max_pages || '200' }}
+        run: npx tsx scripts/sabor-sync.ts
