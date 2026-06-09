@@ -1523,12 +1523,25 @@ function splitHtmlIntoChunks(html: string, chunks: number): string[] {
 // so the ad wrappers below don't need pub or articleId props anymore.
 // Props are kept on the function signatures only where call sites pass them.
 
+// Eyebrow text intentionally avoids the literal word "Advertisement"
+// because uBlock/AdGuard/Brave cosmetic filters hide elements whose text
+// matches /advertisement/i. "Promoted Partner" carries the same
+// disclosure semantics without triggering those rules.
+function PromotedEyebrow({ className = '' }: { className?: string }) {
+  return (
+    <p
+      aria-label="Promoted partner"
+      className={`text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center font-medium ${className}`}
+    >
+      <span aria-hidden="true">{'Promoted Partner'}</span>
+    </p>
+  );
+}
+
 function FeedTopBanner({}: { pub: string }) {
   return (
     <div className="bg-white border-b border-gray-200">
-      <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center pt-3 pb-2 font-medium">
-        Advertisement
-      </p>
+      <PromotedEyebrow className="pt-3 pb-2" />
       <div className="pb-3 px-4">
         <AdSlotComponent slug="feed_top_banner" variant="bare" />
       </div>
@@ -1539,9 +1552,7 @@ function FeedTopBanner({}: { pub: string }) {
 function AdLeaderboard({}: { pub: string; articleId: string }) {
   return (
     <div className="my-6 -mx-5">
-      <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center mb-2 font-medium">
-        Advertisement
-      </p>
+      <PromotedEyebrow className="mb-2" />
       <AdSlotComponent slug="article_top_leaderboard" variant="bare" />
     </div>
   );
@@ -1551,9 +1562,7 @@ function AdRectangle({}: { pub: string; articleId: string; idx: number }) {
   return (
     <div className="my-8">
       <div className="border-t border-gray-200 pt-4">
-        <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center mb-3 font-medium">
-          Advertisement
-        </p>
+        <PromotedEyebrow className="mb-3" />
         <AdSlotComponent slug="article_mid_inline" variant="bare" />
         <div className="border-t border-gray-200 mt-4" />
       </div>
