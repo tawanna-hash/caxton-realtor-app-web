@@ -10,7 +10,7 @@ import { adminApi } from '@/lib/admin-api';
 // falls back to the default landing page. This blocks open-redirect
 // abuse where an attacker crafts /admin/login?next=https://evil.com.
 function safeNext(raw: string | null): string {
-  const fallback = '/admin/giveaways';
+  const fallback = '/admin/crm';
   if (!raw) return fallback;
   if (!raw.startsWith('/')) return fallback;
   if (raw.startsWith('//')) return fallback; // protocol-relative
@@ -42,6 +42,19 @@ function AdminLoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // BUG-22: surface a visible inline error when an invalid email is blurred,
+  // matched to the same aria-invalid state announced to screen readers.
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
+  const handleEmailBlur = () => {
+    if (!email) {
+      setEmailError(null);
+      return;
+    }
+    setEmailError(isValidEmail(email) ? null : 'Enter a valid email address.');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,10 +84,25 @@ function AdminLoginForm() {
               type="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (emailError) setEmailError(null);
+              }}
+              onBlur={handleEmailBlur}
               autoComplete="username"
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+              aria-invalid={emailError ? true : undefined}
+              aria-describedby={emailError ? 'admin-email-error' : undefined}
+              className={`w-full border px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none ${
+                emailError
+                  ? 'border-red-400 focus:border-red-500'
+                  : 'border-gray-300 focus:border-[#1a2a44]'
+              }`}
             />
+            {emailError && (
+              <p id="admin-email-error" className="mt-1.5 text-xs text-red-600">
+                {emailError}
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Password</label>

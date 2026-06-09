@@ -79,20 +79,27 @@ export function SocialLinks({ pub, variant = 'feed', heading }: Props) {
   const hasAnyLive = liveLinks.length > 0;
 
   if (variant === 'footer') {
+    // BUG-14: 22×22 icons were direct tap targets. Wrap each in a
+    // >=44×44 container (WCAG 2.5.5). A11y: replace aria-label on bare <span>
+    // (prohibited — element has no role) with a disabled <button> for the
+    // "coming soon" placeholders so the accessible name is exposed by an
+    // element that supports it.
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1">
         {PLATFORMS.map((p) => {
           const url = urls[p.key];
           if (!isLiveUrl(url)) {
             return (
-              <span
+              <button
                 key={p.key}
-                aria-label={`${p.label} (coming soon)`}
+                type="button"
+                disabled
+                aria-label={`${p.label} link coming soon`}
                 title={`${p.label} link coming soon`}
-                className="text-gray-300"
+                className="inline-flex items-center justify-center w-11 h-11 text-gray-300 cursor-not-allowed"
               >
                 <PlatformIcon k={p.key} />
-              </span>
+              </button>
             );
           }
           return (
@@ -102,7 +109,7 @@ export function SocialLinks({ pub, variant = 'feed', heading }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`${meta.name} on ${p.label}`}
-              className="text-gray-500 hover:text-gray-900 transition-colors"
+              className="inline-flex items-center justify-center w-11 h-11 text-gray-500 hover:text-gray-900 transition-colors"
             >
               <PlatformIcon k={p.key} />
             </a>
@@ -135,15 +142,20 @@ export function SocialLinks({ pub, variant = 'feed', heading }: Props) {
           const base =
             'inline-flex items-center justify-center w-12 h-12 rounded-full transition-all';
           if (!live) {
+            // A11y: <span aria-label> is prohibited (no role). Use a
+            // disabled <button> so the accessible name attaches to a real
+            // interactive element.
             return (
-              <span
+              <button
                 key={p.key}
-                aria-label={`${p.label} (coming soon)`}
+                type="button"
+                disabled
+                aria-label={`${p.label} link coming soon`}
                 title={`${p.label} link coming soon`}
                 className={`${base} bg-white/10 text-white/40 cursor-not-allowed`}
               >
                 <PlatformIcon k={p.key} />
-              </span>
+              </button>
             );
           }
           return (

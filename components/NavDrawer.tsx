@@ -45,6 +45,7 @@ const ADMIN_GROUPS: { label: string; links: NavItem[] }[] = [
       { label: 'CRM', href: '/admin/crm', adminOnly: true },
       { label: 'Mailing', href: '/admin/mailing', adminOnly: true },
       { label: 'ABOR Members', href: '/admin/mailing/holding', adminOnly: true },
+      { label: 'SABOR Members', href: '/admin/mailing/sabor-members', adminOnly: true },
       { label: 'Advertisers', href: '/admin/advertisers', adminOnly: true },
       { label: 'Subscribers', href: '/admin/subscribers', adminOnly: true },
     ],
@@ -366,13 +367,8 @@ export default function NavDrawer({
                 >
                   Login
                 </Link>
-                <Link
-                  href="/admin/login"
-                  onClick={onClose}
-                  className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/60 font-medium rounded-lg hover:text-white hover:bg-white/10 transition"
-                >
-                  Admin Login
-                </Link>
+                {/* Admin login is intentionally not exposed in the public nav.
+                    Staff bookmark /admin/login directly. */}
               </>
             )}
           </div>

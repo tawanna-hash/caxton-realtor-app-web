@@ -270,7 +270,10 @@ export default function BillingClient({
 
   // ── KPIs (Agreements/Invoices tab) ────────────────────────────────────────
   const kpis = useMemo(() => {
-    const activeAg = agreements.filter((a) => a.status === 'active').length;
+    // 'sent' agreements are in-flight contracts awaiting countersignature —
+    // they're effectively active revenue, so the KPI counts them alongside
+    // 'active' (BUG-37). Drafts remain a separate bucket.
+    const activeAg = agreements.filter((a) => a.status === 'active' || a.status === 'sent').length;
     const draftAg  = agreements.filter((a) => a.status === 'draft').length;
     const outstanding = invoices
       .filter((i) => i.status !== 'paid' && i.status !== 'void')
@@ -307,7 +310,10 @@ export default function BillingClient({
         <div>
           <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin · Billing</div>
           <h1 className="text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>Agreements &amp; invoices</h1>
-          <p className="text-sm text-gray-600 mt-1">Contracts, billing, and Stripe state for every advertiser.</p>
+          {/* BUG-38: tagline previously claimed "Stripe state" but no Stripe
+              IDs / sync status / customer IDs are surfaced here. Soften the
+              copy until the Stripe-sync columns ship. */}
+          <p className="text-sm text-gray-600 mt-1">Contracts and invoicing for every advertiser. Stripe charges land via the public Sign Wizard — see each agreement for payment status.</p>
         </div>
         <div className="flex gap-2">
           {tab === 'invoices'
@@ -337,7 +343,7 @@ export default function BillingClient({
           </>
         ) : (
           <>
-            <Kpi label="Active agreements" value={String(kpis.activeAg)} />
+            <Kpi label="Active + sent" value={String(kpis.activeAg)} />
             <Kpi label="Drafts" value={String(kpis.draftAg)} />
             <Kpi label="Outstanding" value={formatCents(kpis.outstanding)} />
             <Kpi label="Paid (30d)" value={formatCents(kpis.paid30)} />
@@ -571,7 +577,14 @@ function AgreementList({
               {' → '}
               {r.end_date ? new Date(r.end_date).toLocaleDateString() : '—'}
             </button>
-            <button onClick={() => onOpen(r)} className="col-span-2 text-left text-sm text-gray-900">{formatCents(r.amount_cents)}</button>
+            {/* BUG-39: disambiguate "—" (no contract amount set) from $0.00 invoiced. */}
+            <button
+              onClick={() => onOpen(r)}
+              title={r.amount_cents == null ? 'No contract amount set yet — open the agreement to add one.' : undefined}
+              className={`col-span-2 text-left text-sm ${r.amount_cents == null ? 'text-amber-700' : 'text-gray-900'}`}
+            >
+              {r.amount_cents == null ? 'Not set' : formatCents(r.amount_cents)}
+            </button>
             <button onClick={() => onOpen(r)} className="col-span-1 text-left text-sm text-gray-700">{formatCents(r.invoiced_cents)}</button>
             <div className="col-span-2 flex items-center gap-1 flex-wrap">
               <StatusPill value={r.status} options={AG_STATUS} />

@@ -153,6 +153,22 @@ function stripHtml(html: string): string {
   return decodeEntities(html.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 }
 
+// BUG-08: WP feeds occasionally publish titles with the contraction "it's"
+// where the possessive "its" was intended (e.g. "Propels ABoR Toward It's
+// 100 Year"). Patch the most common possessive-misuse patterns when we read
+// the title from the upstream feed. Conservative — only matches "It's" /
+// "it's" before a noun-like token where the possessive is unambiguous.
+function fixPossessiveTypos(title: string): string {
+  if (!title) return title;
+  // "It's <number> Year" / "It's <Capitalized noun>" patterns. Possessive
+  // before "Year/Anniversary/Centennial" or a capitalized word is almost
+  // always meant to be "Its".
+  return title.replace(
+    /\bIt['\u2019]s\b(?=\s+(?:\d+[-\s]?(?:Year|Years|Anniversary|Centennial|Birthday|Mile(?:stone)?)|(?:[A-Z][a-z]+)))/g,
+    'Its',
+  );
+}
+
 function formatRelativeTime(iso: string): string {
   const then = new Date(iso).getTime();
   if (!Number.isFinite(then)) return '';
@@ -203,9 +219,16 @@ async function fetchCategoryMap(baseUrl: string): Promise<Map<number, string>> {
 }
 
 async function fetchPosts(baseUrl: string, perPage = POSTS_PER_PAGE): Promise<WpPost[]> {
+  // newslinesa.com and realtyline.us are fronted by a CDN that caches the WP
+  // REST API response keyed on URL. The canonical URL
+  // `posts?per_page=20&_embed=1&orderby=date&order=desc` was returning a stale
+  // body that didn't include articles published in the last few hours. We add
+  // a cache-buster minute-bucket so each WP fetch hits origin but we don't
+  // hammer their server on every request (one fresh fetch per minute is fine).
+  const bucket = Math.floor(Date.now() / 60_000);
   const url =
     `${baseUrl}/wp-json/wp/v2/posts?per_page=${perPage}&_embed=1` +
-    `&orderby=date&order=desc`;
+    `&orderby=date&order=desc&_=${bucket}`;
   const res = await fetchWithTimeout(url, FETCH_TIMEOUT_MS);
   if (!res.ok) {
     throw new Error(`WP posts fetch failed: ${res.status} ${res.statusText}`);
@@ -261,7 +284,18 @@ function enrichFromEmbed(post: WpPost): Partial<NewsArticle> {
   const auth = Array.isArray(authArr) ? authArr[0] : null;
   if (auth && !auth.code) {
     const avatars = auth.avatar_urls || {};
-    const avatar = avatars['96'] || avatars['48'] || avatars['24'];
+    const rawAvatar = avatars['96'] || avatars['48'] || avatars['24'];
+    // Gravatar serves a gray "Mystery Person" silhouette when the author email
+    // has no registered Gravatar (d=mm | d=mystery | d=mp | d=blank). Rewrite
+    // those defaults to d=404 so missing avatars return HTTP 404 instead of a
+    // placeholder image — the renderer can then onerror-hide the broken <img>.
+    // Also bump Gravatar size param to 192 so larger avatars render crisply
+    // on retina (we display at 64px CSS / 96px intrinsic, 2x for retina).
+    const avatar = rawAvatar
+      ? rawAvatar
+          .replace(/([?&])d=(mm|mp|mystery|blank|identicon|monsterid|wavatar|retro|robohash)\b/gi, '$1d=404')
+          .replace(/([?&])s=\d+/gi, '$1s=192')
+      : null;
     out.author = avatar
       ? { name: auth.name || 'Staff', avatar }
       : { name: auth.name || 'Staff' };
@@ -302,7 +336,7 @@ function transformPost(
     }
   }
 
-  const headline = stripHtml(post.title?.rendered || '');
+  const headline = fixPossessiveTypos(stripHtml(post.title?.rendered || ''));
   const summary = stripHtml(post.excerpt?.rendered || '').slice(0, 240);
 
   return {
@@ -354,6 +388,44 @@ const cachedSanAntonio = unstable_cache(
   { revalidate: CACHE_REVALIDATE_S, tags: ['wp-news', 'wp-news:san_antonio'] },
 );
 
-export async function getNews(publication: Publication): Promise<NewsArticle[]> {
+/**
+ * Internal: returns the upstream-only article list.
+ *
+ * Admin uses this directly and we deliberately BYPASS unstable_cache so the
+ * admin Articles page always reflects the true current state of WordPress.
+ * (Next 16 deprecated unstable_cache and revalidateTag(tag, 'max') now uses
+ * stale-while-revalidate, so the prior "sync revalidates, page re-renders"
+ * flow returned stale data on the immediate next read. Admin is low traffic
+ * — paying the WP roundtrip on every load is fine and is the most reliable
+ * way to guarantee correctness.)
+ *
+ * Public callers should keep using getNews() which still goes through the
+ * 30-minute cache.
+ */
+export async function getNewsRaw(publication: Publication): Promise<NewsArticle[]> {
+  return fetchNewsArticles(publication);
+}
+
+/** Public-cached variant used by the public feed (kept on unstable_cache). */
+async function getNewsCached(publication: Publication): Promise<NewsArticle[]> {
   return publication === 'austin' ? cachedAustin() : cachedSanAntonio();
+}
+
+export async function getNews(publication: Publication): Promise<NewsArticle[]> {
+  const upstream = await getNewsCached(publication);
+
+  // Apply admin overrides on top of upstream. Overrides are NOT inside the
+  // unstable_cache wrapper above, so edits take effect immediately without
+  // needing a Sync. Failures must not break the public feed.
+  try {
+    const { getAllOverridesForPublication, applyOverride } = await import('./article-overrides');
+    const overrides = await getAllOverridesForPublication(publication);
+    if (overrides.size === 0) return upstream;
+    const merged = upstream.map((a) => applyOverride(a, overrides.get(a.id)));
+    // Filter out hidden articles for public consumers.
+    return merged.filter((a) => !(a as { hidden?: boolean }).hidden);
+  } catch (err) {
+    logger.warn({ err, publication }, 'Article overrides merge failed; serving upstream');
+    return upstream;
+  }
 }

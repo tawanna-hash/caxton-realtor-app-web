@@ -633,7 +633,10 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               {isVisible('city')    && <SortHeader col="city"    label="City"    sort={sort} dir={dir} onSort={handleSort} />}
               {isVisible('proximity')    && <th className="px-3 py-3 text-left font-semibold">Proximity</th>}
               {isVisible('address')      && <th className="px-3 py-3 text-left font-semibold">Address</th>}
-              {isVisible('email_verify') && <th className="px-3 py-3 text-left font-semibold">Email</th>}
+              {/* BUG-33: was "Email" (duplicate header with the Email column above).
+                  Match the column-picker label so the SMTP verify column is
+                  visually distinct from the raw email column. */}
+              {isVisible('email_verify') && <th className="px-3 py-3 text-left font-semibold">Email (SMTP)</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">

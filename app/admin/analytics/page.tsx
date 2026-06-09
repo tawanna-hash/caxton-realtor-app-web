@@ -443,12 +443,16 @@ export default function AdminAnalyticsPage() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <div className="flex items-center gap-2">
               <label htmlFor="pub-select" className="text-xs text-gray-500">Publication:</label>
+              {/* BUG-40: do NOT use `disabled` for the loading state — it
+                  hides the control from keyboards and screen readers entirely.
+                  Use aria-busy + a faded visual cue instead so the filter
+                  stays focusable while the report refreshes. */}
               <select
                 id="pub-select"
                 value={publication}
                 onChange={onPublicationChange}
-                className="bg-white border border-gray-300 text-sm text-gray-700 rounded-md px-3 py-1.5 outline-none focus:border-blue-500 cursor-pointer"
-                disabled={loading}
+                aria-busy={loading}
+                className={`bg-white border border-gray-300 text-sm text-gray-700 rounded-md px-3 py-1.5 outline-none focus:border-blue-500 cursor-pointer ${loading ? 'opacity-60' : ''}`}
               >
                 {PUBLICATION_OPTIONS.map((p) => (
                   <option key={p} value={p}>{p}</option>
@@ -461,8 +465,8 @@ export default function AdminAnalyticsPage() {
                 id="timeframe-select"
                 value={timeframe}
                 onChange={onTimeframeChange}
-                className="bg-white border border-gray-300 text-sm text-gray-700 rounded-md px-3 py-1.5 outline-none focus:border-blue-500 cursor-pointer"
-                disabled={loading}
+                aria-busy={loading}
+                className={`bg-white border border-gray-300 text-sm text-gray-700 rounded-md px-3 py-1.5 outline-none focus:border-blue-500 cursor-pointer ${loading ? 'opacity-60' : ''}`}
               >
                 {TIMEFRAME_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>

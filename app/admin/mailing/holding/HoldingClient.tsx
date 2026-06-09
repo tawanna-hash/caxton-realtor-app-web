@@ -17,6 +17,7 @@
 //   - "Sync from UnlockMLS" button
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
   MailingColumnId,
@@ -34,6 +35,9 @@ const SORTABLE: MailingColumnId[] = [
 ];
 
 export default function HoldingClient() {
+  const searchParams = useSearchParams();
+  const initialSource = searchParams?.get('source') ?? '';
+
   const [rows, setRows] = useState<MailingContactRow[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [counts, setCounts] = useState<Counts | null>(null);
@@ -42,6 +46,7 @@ export default function HoldingClient() {
 
   const [search, setSearch] = useState<string>('');
   const [filter, setFilter] = useState<FilterKey>('all');
+  const [source, setSource] = useState<string>(initialSource);
   const [sort, setSort] = useState<MailingColumnId>('created_at');
   const [dir, setDir] = useState<'asc' | 'desc'>('desc');
   const [offset, setOffset] = useState<number>(0);
@@ -76,6 +81,7 @@ export default function HoldingClient() {
         offset: String(offset),
       });
       if (search.trim()) params.set('search', search.trim());
+      if (source) params.set('source', source);
       const res = await fetch(`/api/admin/mailing/holding?${params.toString()}`, {
         credentials: 'include',
       });
@@ -92,7 +98,7 @@ export default function HoldingClient() {
     } finally {
       setLoading(false);
     }
-  }, [filter, sort, dir, offset, search]);
+  }, [filter, source, sort, dir, offset, search]);
 
   useEffect(() => { queueMicrotask(() => { void reload(); }); }, [reload]);
 
@@ -101,7 +107,7 @@ export default function HoldingClient() {
     return () => clearTimeout(t);
   }, [search]);
 
-  useEffect(() => { queueMicrotask(() => { setOffset(0); }); }, [filter]);
+  useEffect(() => { queueMicrotask(() => { setOffset(0); }); }, [filter, source]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -494,6 +500,19 @@ export default function HoldingClient() {
         <FilterChip active={filter === 'all'}      onClick={() => setFilter('all')}      label="All"      count={counts?.total ?? 0} />
         <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={counts?.verified ?? 0} accent="#10B981" />
         <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={counts?.pending ?? 0}  accent="#F59E0B" />
+
+        <div className="w-px h-6 bg-gray-300 mx-1" />
+
+        <select
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          className="px-3 py-1.5 rounded-md border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3D0740]"
+          aria-label="Filter by source"
+        >
+          <option value="">All sources</option>
+          <option value="unlockmls">ABoR (UnlockMLS)</option>
+          <option value="ramco-sabor">SABOR Members</option>
+        </select>
 
         <div className="flex-1" />
 

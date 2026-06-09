@@ -140,10 +140,13 @@ export function CampaignsTable({ campaigns, onChange }: Props) {
                   >
                     {c.active ? 'Pause' : 'Resume'}
                   </button>
+                  {/* BUG-26: visually separate destructive Delete from safe Edit/Pause. */}
+                  <span className="inline-block w-px h-3 bg-gray-300 align-middle mr-3" aria-hidden="true" />
                   <button
                     onClick={() => handleDelete(c.id, c.advertiser_name)}
                     disabled={busy}
-                    className="text-red-700 hover:text-red-900 text-xs disabled:opacity-50"
+                    title="Delete campaign (cannot be undone)"
+                    className="text-red-700 hover:text-red-900 hover:underline text-xs disabled:opacity-50"
                   >
                     Delete
                   </button>

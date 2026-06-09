@@ -21,6 +21,7 @@ export const dynamic = 'force-dynamic';
 const listHoldingQuerySchema = paginationSchema.extend({
   search: z.string().trim().min(1).max(200).optional(),
   filter: z.enum(['all', 'verified', 'pending']).default('all'),
+  source: z.string().trim().min(1).max(64).optional(),
   sort:   z.string().min(1).max(64).optional(),
   dir:    z.enum(['asc', 'desc']).default('desc'),
 });
@@ -29,12 +30,13 @@ export const GET = withErrorHandling(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
 
-  const { search, filter, sort, dir, limit, offset } = parseQuery(req, listHoldingQuerySchema);
+  const { search, filter, source, sort, dir, limit, offset } = parseQuery(req, listHoldingQuerySchema);
   const safeSort = isSortableColumn(sort) ? sort : undefined;
 
   const { rows, total } = await listHoldingContacts({
     search,
     filter,
+    source,
     sort: safeSort,
     dir,
     limit,

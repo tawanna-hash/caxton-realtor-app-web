@@ -333,14 +333,16 @@ export default function SocialClient() {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Social posts</h1>
-        <p className="text-sm text-gray-700 mt-1">
-          Curate Facebook posts that surface in the RealtyLine + Newsline feeds.
-          Page posts auto-fetch via the Graph API; Group posts use a one-click
-          harvester that pulls the caption + image from the post&rsquo;s public
-          preview.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Social posts</h1>
+          <p className="text-sm text-gray-700 mt-1">
+            Curate Facebook posts that surface in the RealtyLine + Newsline feeds.
+            Page posts auto-fetch via the Graph API; Group posts use a one-click
+            harvester that pulls the caption + image from the post&rsquo;s public
+            preview.
+          </p>
+        </div>
       </div>
 
       {/* ────────── Add form ────────── */}
@@ -566,10 +568,16 @@ interface ListProps {
 
 function SocialList({ title, posts, onPatch, onDelete }: ListProps) {
   if (posts.length === 0) {
+    // BUG-41: explain *why* the list is empty and what to do next, instead of a bare "None."
     return (
       <section className="mb-8">
         <h2 className="text-lg font-medium text-gray-900 mb-3">{title}</h2>
-        <p className="text-sm text-gray-500">None.</p>
+        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center">
+          <p className="text-sm text-gray-700 font-medium mb-1">No posts curated yet</p>
+          <p className="text-xs text-gray-500">
+            Paste a Facebook Page or Group post URL above to add one. Reels and personal-profile posts aren&apos;t supported.
+          </p>
+        </div>
       </section>
     );
   }

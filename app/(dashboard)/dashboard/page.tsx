@@ -14,6 +14,7 @@ import BottomNav from '@/components/BottomNav';
 import NavDrawer from '@/components/NavDrawer';
 import { SocialLinks } from '@/components/SocialLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
+import SaborReportCard from '@/components/SaborReportCard';
 import { SW } from '@/lib/style-constants';
 import { PUB_META, type PubKey } from '@/lib/pub-meta';
 import { AdSlot as AdSlotComponent } from '@/components/ads/AdSlot';
@@ -24,6 +25,33 @@ const PUBS = [
   { id: 'realtyline', name: 'RealtyLine', city: 'Austin', tagline: 'Putting A Face on Real Estate since 1995', color: '#021D40' },
   { id: 'newsline', name: 'Newsline San Antonio', city: 'San Antonio', tagline: 'Founded 1982 - Relaunched 2025', color: '#3D0740' },
 ];
+
+// BUG-09 / share-404 fix: Share URLs must deep-link into the app. The WP
+// permalink (realtyline.us / newslinesa.com / YYYY/MM/DD/slug) doesn't exist
+// as a route on realtynewsnow.app, so we emit a stable query param the
+// dashboard reads on mount to auto-open the article reader.
+function canonicalShareUrl(article?: { id?: string | number | null; link?: string | null } | null): string {
+  const base = 'https://realtynewsnow.app/';
+  const id = article?.id;
+  if (id !== undefined && id !== null && String(id).length > 0) {
+    return `${base}?article=${encodeURIComponent(String(id))}`;
+  }
+  // Fallback: no id available — try to keep the link usable but rooted on app host.
+  const link = article?.link;
+  if (!link) {
+    return typeof window !== 'undefined' ? window.location.href : base;
+  }
+  try {
+    const u = new URL(link, base);
+    const externalHosts = ['realtyline.us', 'www.realtyline.us', 'newslinesa.com', 'www.newslinesa.com'];
+    if (externalHosts.includes(u.hostname)) {
+      return base;
+    }
+    return u.toString();
+  } catch {
+    return base;
+  }
+}
 
 // Social pill removed 2026-06-02 — Facebook Group integration didn't pan out
 // (Groups API deprecated by Meta in 2024, OG-tag harvester blocked by FB's
@@ -192,6 +220,8 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
 }
 
 function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void }) {
+  // Honor /auth/sign-in and /auth/sign-up aliases via ?auth=login|signup so
+  // visitors land directly on the right form instead of the 'choice' screen.
   const [mode, setMode] = useState<'choice' | 'signup' | 'login' | 'sent'>('choice');
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [passkeySupported, setPasskeySupported] = useState<boolean | null>(null);
@@ -199,6 +229,13 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
     if (typeof window === 'undefined') return;
     queueMicrotask(() => {
       setPasskeySupported(typeof window.PublicKeyCredential === 'function');
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const wanted = params.get('auth');
+        if (wanted === 'login' || wanted === 'signup') {
+          setMode(wanted);
+        }
+      } catch {}
     });
   }, []);
   const [step, setStep] = useState(1);
@@ -695,7 +732,11 @@ export default function DashboardPage() {
         try { setSelectedArticle(JSON.parse(savedArticle)); } catch {}
       }
       if (savedPhase && savedPhase !== 'splash') {
-        // Stale-data guard: don't restore article/event_detail phase if its data is missing.
+        // BUG-01 followup: previously we kicked refresh-on-article back to
+        // the feed when on the app root. User pushback: refreshing while
+        // reading an article SHOULD keep you on that article. Only fall
+        // back to feed when the saved-article payload is missing (stale).
+        // Stale-data guard: don't restore article phase if its data is missing.
         if (savedPhase === 'article' && !savedArticle) {
           setPhase('feed');
         } else if (savedPhase === 'events' || savedPhase === 'event_detail') {
@@ -778,6 +819,30 @@ export default function DashboardPage() {
     window.addEventListener('caxton:openArticle', onOpenArticle as EventListener);
     return () => window.removeEventListener('caxton:openArticle', onOpenArticle as EventListener);
   }, []);
+
+  // share-deep-link: if URL has ?article=<id>, open that article in the reader
+  // once we have the news list. Runs only once per id; strips the param after.
+  const deepLinkConsumedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const wantId = params.get('article');
+    if (!wantId || deepLinkConsumedRef.current === wantId) return;
+    if (!globalArticles || globalArticles.length === 0) return;
+    const match = globalArticles.find((a: any) => String(a?.id) === String(wantId));
+    if (match) {
+      deepLinkConsumedRef.current = wantId;
+      trackEvent('article_opened', { article_id: match?.id, article_title: match?.title, article_cat: match?.cat, pub: match?.pub, source: 'share_link' });
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: deep-link from URL query param into reader once data loads
+      setSelectedArticle(match);
+      setPhase('article');
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('article');
+        window.history.replaceState({}, '', url.toString());
+      } catch {}
+    }
+  }, [globalArticles]);
 
   // caxton-article-reader-b2a-fix (newsList listener)
   useEffect(() => {
@@ -958,10 +1023,46 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
   const CATS = pub === 'realtyline' ? RL_CATS : NS_CATS;
   const filt = cat === 'All' ? NEWS : NEWS.filter((n) => n.cat === cat);
 
-  const feed: { t: 'n' | 'a' | 'c' | 's' | 'e'; d?: any }[] = [];
+  const feed: { t: 'n' | 'a' | 'c' | 's' | 'e' | 'm'; d?: any }[] = [];
   const isLoadingFirstFetch = newsLoading && liveNews === null;
 
   const isEmptyAfterLoad = !isLoadingFirstFetch && filt.length === 0;
+
+  // SABOR MLS card — Newsline (San Antonio) only.
+  // "Both — hero this month, inline thereafter": pin at top for the first
+  // 7 days from released_at, then slot inline every 5 articles. The card
+  // itself fetches its data; we only decide placement here. Hero-vs-inline
+  // is resolved in an effect (not render) so render stays pure — react-hooks/purity
+  // forbids Date.now() in the render path.
+  // saborReleasedAt is set by the fetch callback only (no synchronous setState
+  // in the effect body). Hero-vs-inline is derived in render from that value
+  // plus a useId-like stable epoch captured at mount, so render stays pure.
+  const [saborReleasedAt, setSaborReleasedAt] = useState<string | null | undefined>(undefined);
+  const [mountEpoch] = useState<number>(() => Date.now());
+  useEffect(() => {
+    if (pub !== 'newsline' || cat !== 'All') return;
+    let alive = true;
+    fetch('/api/sabor-mls/current', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive) return;
+        const released = (j?.report?.released_at as string | undefined) ?? null;
+        setSaborReleasedAt(released);
+      })
+      .catch(() => {
+        if (alive) setSaborReleasedAt(null);
+      });
+    return () => { alive = false; };
+  }, [pub, cat]);
+  const saborEligible = pub === 'newsline' && cat === 'All';
+  const showSaborHero = (() => {
+    if (!saborEligible) return false;
+    if (saborReleasedAt === undefined) return false; // still loading
+    if (saborReleasedAt === null) return true;       // no data yet: behave as hero
+    const ageDays = (mountEpoch - new Date(saborReleasedAt).getTime()) / 86_400_000;
+    return ageDays >= 0 && ageDays <= 7;
+  })();
+  const showSaborInline = saborEligible && saborReleasedAt !== undefined && !showSaborHero;
 
   if (isLoadingFirstFetch) {
     for (let i = 0; i < 3; i++) feed.push({ t: 's', d: { id: i } });
@@ -974,18 +1075,38 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
     // become an unused-variable lint error in case future code wants it.
     void pubAds;
 
+    if (showSaborHero) {
+      feed.push({ t: 'm', d: { variant: 'hero' } });
+    }
+
     filt.forEach((item, i) => {
       feed.push({ t: 'n', d: item });
       if (i === 2) {
         feed.push({ t: 'c' });
       }
+      // Inline placement: every 5th article, after the initial newsletter CTA
+      if (showSaborInline && i > 0 && (i + 1) % 5 === 0) {
+        feed.push({ t: 'm', d: { variant: 'inline' } });
+      }
     });
   }
 
   function handleSwitch() {
+    // Persist the new pub then hard-reload so every pub-scoped fetch
+    // (articles, ads, events) re-runs from scratch. The previous soft
+    // setState path left stale data visible (BUG-03).
+    try {
+      localStorage.setItem('caxton_pub', other.id);
+      localStorage.removeItem('caxton_selected_article');
+      localStorage.removeItem('caxton_selected_event');
+      window.dispatchEvent(new Event('savedPubChange'));
+    } catch {}
     setCat('All');
     setTab('n');
     onSwitch(other.id);
+    if (typeof window !== 'undefined') {
+      window.location.assign('/');
+    }
   }
 
   function handleAdClick(ad: any) {
@@ -1042,10 +1163,12 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
                 key={c}
                 onClick={() => setCat(c)}
                 aria-pressed={cat === c}
+                // BUG-16: add flex-shrink-0 so long chips like "Featured Advertisers"
+                // don't get squeezed by sibling flex children and overflow the row.
                 className={
                   cat === c
-                    ? 'whitespace-nowrap px-3 py-1.5 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
-                    : 'whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
+                    ? 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
+                    : 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
                 }
               >
                 {c}
@@ -1069,6 +1192,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
                 <article key={'n' + item.d.id} className="bg-white border-b border-gray-200">
                   <ArticleCard item={item.d} pub={pub} />
                 </article>
+              ) : item.t === 'm' ? (
+                <SaborReportCard key={'m' + idx + item.d.variant} variant={item.d.variant} />
               ) : (
                 <AdCardTracked key={'a' + item.d.id} ad={item.d} onClick={handleAdClick} track={track} pub={pub} />
               );
@@ -1492,7 +1617,7 @@ function AdPopup({}: { pub: string; articleId: string }) {
 // ─────────────────────────────────────────────────────────────────────────
 
 function ShareRow({ article, pubColor, onCopied }: { article: any; pubColor: string; onCopied: () => void }) {
-  const url = article?.link || (typeof window !== 'undefined' ? window.location.href : '');
+  const url = canonicalShareUrl(article);
   const title = article?.head || article?.title || '';
   const enc = (s: string) => encodeURIComponent(s);
 
@@ -1589,7 +1714,9 @@ function ReadNext({ allArticles, currentId, onSelect, pubColor }: { allArticles:
               type="button"
               onClick={() => {
                 trackEvent('article_related_clicked', { from_article_id: currentId, to_article_id: a.id });
-                if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+                // Scroll-to-top is handled by ArticleReader's article-id
+                // effect below — the reader has its own inner scroll container
+                // (window.scrollTo here does nothing).
                 onSelect(a);
               }}
               className="w-full text-left group"
@@ -1635,8 +1762,12 @@ function TagsRow({ article, pubColor }: { article: any; pubColor: string }) {
 // ─────────────────────────────────────────────────────────────────────────
 
 function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onMagazine, onLatest }: { article: any; pubColor: string; saved: boolean; onBack: () => void; onSaveToggle: () => void; onShare: () => void; onCopy: () => void; onMagazine?: () => void; onLatest?: () => void }) {
+  // BUG-04: AdPopup (z-50) sits at bottom-20 right-4 and was visually
+  // covering the Latest/Share pills, so taps on those buttons hit the ad
+  // instead. Bump this bar above the popup (z-60) so navigation always
+  // wins. AdPopup remains dismissable via its own close button.
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] pointer-events-none">
       <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1.5 shadow-lg">
         <ActionPillButton onClick={onBack} label="Back">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -1685,6 +1816,20 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
   // to satisfy React's Rules of Hooks (otherwise hook count varies across
   // renders when `article` toggles null/non-null, throwing React #310).
   const { ref: swipeRef, style: swipeStyle } = useSwipeBack({ onBack });
+
+  // Reset scroll to top whenever the active article changes (e.g. Read Next
+  // tap). The reader uses an inner overflow-y-auto container, so
+  // window.scrollTo from the click handler does nothing — we have to scroll
+  // the actual container here, after the new article has rendered.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const container = document.querySelector<HTMLDivElement>('div.fixed.inset-0.bg-white.z-30.overflow-y-auto');
+    if (container) {
+      container.scrollTop = 0;
+    } else if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0 });
+    }
+  }, [article?.id]);
 
   // Scroll milestone telemetry + time-on-article on unmount.
   // The article being viewed is identified by `article?.id`; if it changes,
@@ -1775,7 +1920,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
 
   const onShare = async () => {
     if (!article) return;
-    const url = article.link;
+    const url = canonicalShareUrl(article);
     const title = article.head || article.title || '';
     try {
       if (navigator.share) {
@@ -1792,7 +1937,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
   const onCopy = async () => {
     if (!article) return;
     try {
-      await navigator.clipboard.writeText(article.link || '');
+      await navigator.clipboard.writeText(canonicalShareUrl(article));
       flashToast('Link copied');
     } catch {}
   };
@@ -1834,15 +1979,28 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
       </div>
 
 
-      {/* Featured image */}
+      {/* Featured image — constrained to the same max-w-2xl column as the
+          article body, so it doesn't stretch edge-to-edge on wide desktop
+          windows (which also upscaled smaller source images and made them
+          look blurry). max-h cap prevents very tall portraits from dominating. */}
       {article.imageUrl && (
         <div className="w-full bg-gray-100">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={article.imageUrl} alt="" className="w-full h-auto" />
+          <div className="max-w-2xl mx-auto">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={article.imageUrl}
+              alt=""
+              className="w-full h-auto max-h-[60vh] object-cover"
+              loading="eager"
+            />
+          </div>
         </div>
       )}
 
-      <div className="px-5 pt-6 pb-44 max-w-2xl mx-auto">
+      {/* pb-52: clears the sticky ArticleActionBar (bottom-4 + ~62px pill) with
+          breathing room. Was pb-44 — the bar overlapped the last paragraph on
+          short articles and the "Read on website" link (BUG-18). */}
+      <div className="px-5 pt-6 pb-52 max-w-2xl mx-auto">
         {/* Top leaderboard ad — first thing in the article column */}
         <AdLeaderboard pub={pub} articleId={articleId} />
 
@@ -1866,7 +2024,15 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
               <img
                 src={author.avatar}
                 alt=""
-                className="w-10 h-10 rounded-full bg-gray-100 flex-shrink-0"
+                width={96}
+                height={96}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  // Hide the avatar element entirely when Gravatar 404s
+                  // (author has no registered Gravatar). Avoids broken-image icon.
+                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                }}
+                className="w-16 h-16 rounded-full object-cover bg-gray-100 flex-shrink-0"
               />
             )}
             <div className="min-w-0 flex-1">

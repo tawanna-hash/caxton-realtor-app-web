@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { getNewsRaw } from '@/lib/server/wp-news';
 
 const POSTHOG_API_KEY = process.env.POSTHOG_PERSONAL_API_KEY;
 const POSTHOG_PROJECT_ID = process.env.POSTHOG_PROJECT_ID;
@@ -71,11 +72,34 @@ export async function GET(req: NextRequest) {
   try {
     // Distinct articles with at least one open in the window, ordered by
     // open count desc so the most-engaged articles are at the top.
+    //
+    // BUG-35: older `article_opened` events were emitted before the tracker
+    // attached `article_title` and `pub` properties — they showed up as
+    // "[?] (untitled)" in the picker. Coalesce the column across every
+    // plausible property name the tracker has used, and emptyString -> null
+    // so the fallback in the row mapper applies.
     const raw = await runHogQL(`
       SELECT
         properties.article_id AS article_id,
-        any(properties.article_title) AS title,
-        any(properties.pub) AS pub,
+        nullIf(
+          coalesce(
+            any(properties.article_title),
+            any(properties.title),
+            any(properties.article_head),
+            any(properties.head),
+            ''
+          ),
+          ''
+        ) AS title,
+        nullIf(
+          coalesce(
+            any(properties.pub),
+            any(properties.publication),
+            any(properties.pub_id),
+            ''
+          ),
+          ''
+        ) AS pub,
         count() AS opens
       FROM events
       WHERE event = 'article_opened'
@@ -86,14 +110,61 @@ export async function GET(req: NextRequest) {
       LIMIT 200
     `);
 
-    const articles = raw.map((r) => {
+    // PostHog rows: id -> { title, pub, opens }
+    const posthogById = new Map<string, { title: string | null; pub: string | null; opens: number }>();
+    for (const r of raw) {
       const row = r as [string, string | null, string | null, number];
-      return {
-        article_id: row[0],
-        title: row[1] ?? '(untitled)',
+      const id = String(row[0]);
+      posthogById.set(id, {
+        title: row[1] ?? null,
         pub: row[2] ?? null,
         opens: Number(row[3]),
-      };
+      });
+    }
+
+    // Pull the current WP article lists so newly-synced articles appear in
+    // the picker even if no one has opened them yet. Failure here must not
+    // break the report builder — fall back to PostHog-only if WP is down.
+    type LiveRow = { id: string; head: string; pub: 'realtyline' | 'newsline' };
+    const live: LiveRow[] = [];
+    try {
+      const [austin, sa] = await Promise.all([
+        getNewsRaw('austin').catch(() => []),
+        getNewsRaw('san_antonio').catch(() => []),
+      ]);
+      for (const a of austin) live.push({ id: String(a.id), head: a.head, pub: 'realtyline' });
+      for (const a of sa) live.push({ id: String(a.id), head: a.head, pub: 'newsline' });
+    } catch {
+      // Swallow — articles[] will still contain PostHog-only entries below.
+    }
+
+    // Union: every live WP article + any PostHog id we haven't already covered.
+    const seen = new Set<string>();
+    const articles: Array<{ article_id: string; title: string; pub: string | null; opens: number }> = [];
+    for (const l of live) {
+      seen.add(l.id);
+      const ph = posthogById.get(l.id);
+      articles.push({
+        article_id: l.id,
+        title: ph?.title || l.head || `Article #${l.id}`,
+        pub: ph?.pub || l.pub,
+        opens: ph?.opens ?? 0,
+      });
+    }
+    for (const [id, ph] of posthogById.entries()) {
+      if (seen.has(id)) continue;
+      articles.push({
+        article_id: id,
+        title: ph.title || `Article #${id}`,
+        pub: ph.pub,
+        opens: ph.opens,
+      });
+    }
+
+    // Sort: opens DESC, then title ASC so 0-open new articles cluster but stay alphabetical.
+    articles.sort((a, b) => {
+      if (b.opens !== a.opens) return b.opens - a.opens;
+      return a.title.localeCompare(b.title);
     });
 
     return NextResponse.json({ ok: true, articles, range_days: days });

@@ -91,9 +91,13 @@ export async function GET(req: NextRequest) {
 
     const events = raw.map((r) => {
       const row = r as [string, string | null, string | null, number, number];
+      const id = String(row[0]);
+      // BUG-35 parity: prefer Event #<id> over "(untitled event)" so the
+      // admin can cross-reference even when older events were emitted
+      // before the tracker attached a title.
       return {
-        event_id: row[0],
-        title: row[1] ?? '(untitled event)',
+        event_id: id,
+        title: row[1] ?? `Event #${id}`,
         pub: row[2] ?? null,
         card_clicks: Number(row[3]),
         registrations: Number(row[4]),

@@ -1033,6 +1033,7 @@ export interface HoldingListResult {
 export async function listHoldingContacts(opts: {
   search?: string;
   filter?: 'all' | 'verified' | 'pending';
+  source?: string;
   sort?: MailingColumnId;
   dir?: 'asc' | 'desc';
   limit?: number;
@@ -1042,6 +1043,7 @@ export async function listHoldingContacts(opts: {
   const search = (opts.search ?? '').trim();
   const search_like = search ? `%${search.toLowerCase()}%` : null;
   const filter = opts.filter ?? 'all';
+  const source = (opts.source ?? '').trim() || null;
   const sort = opts.sort && SORTABLE_COLUMNS.has(opts.sort) ? opts.sort : 'created_at';
   const dir = opts.dir === 'asc' ? 'asc' : 'desc';
   const limit = Math.min(Math.max(opts.limit ?? 100, 1), 500);
@@ -1057,6 +1059,10 @@ export async function listHoldingContacts(opts: {
          OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
          OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
                                     AND (email_status IS NULL OR email_status <> 'Valid'))
+       )
+       AND (
+         ${source}::text IS NULL
+         OR external_source = ${source}
        )
        AND (
          ${search_like}::text IS NULL
@@ -1093,6 +1099,10 @@ export async function listHoldingContacts(opts: {
          OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
          OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
                                     AND (email_status IS NULL OR email_status <> 'Valid'))
+       )
+       AND (
+         ${source}::text IS NULL
+         OR external_source = ${source}
        )
        AND (
          ${search_like}::text IS NULL

@@ -36,8 +36,27 @@ export function CampaignForm({ initial }: Props) {
   const [adSpaceSlug, setAdSpaceSlug] = useState(initial?.ad_space_slug ?? '');
   const [creativeId, setCreativeId] = useState(initial?.creative_id ?? '');
   const [publication, setPublication] = useState<AdPublication>(initial?.publication ?? 'both');
-  const [startDate, setStartDate] = useState(initial?.start_date ?? '');
-  const [endDate, setEndDate] = useState(initial?.end_date ?? '');
+  // Normalize whatever the API returns (ISO timestamp, Date, or 'YYYY-MM-DD')
+  // into the 'YYYY-MM-DD' shape that <input type="date"> requires. Without
+  // this, edit-mode showed empty inputs even though the list view had dates
+  // (BUG-25). We intentionally do this client-side here rather than mutating
+  // the AdCampaign type, since the rest of the app already tolerates either.
+  const toDateInput = (v: unknown): string => {
+    if (!v) return '';
+    if (typeof v === 'string') {
+      // Already 'YYYY-MM-DD' (or starts with it on an ISO string).
+      const m = v.match(/^(\d{4}-\d{2}-\d{2})/);
+      if (m) return m[1];
+    }
+    const d = new Date(v as string);
+    if (Number.isNaN(d.getTime())) return '';
+    const y = d.getUTCFullYear();
+    const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const da = String(d.getUTCDate()).padStart(2, '0');
+    return `${y}-${mo}-${da}`;
+  };
+  const [startDate, setStartDate] = useState(toDateInput(initial?.start_date));
+  const [endDate, setEndDate] = useState(toDateInput(initial?.end_date));
   const [priceTotal, setPriceTotal] = useState(initial?.price_total ?? '');
   const [priceNotes, setPriceNotes] = useState(initial?.price_notes ?? '');
   const [notes, setNotes] = useState(initial?.notes ?? '');

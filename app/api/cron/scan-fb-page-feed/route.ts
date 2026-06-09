@@ -80,6 +80,7 @@ interface PageResult {
   lowConfidence: number;
   errored: number;
   error?: string;
+  errorSamples?: Array<{ reason: string; detail?: string }>;
 }
 
 export async function GET(req: Request) {
@@ -176,6 +177,10 @@ export async function GET(req: Request) {
 
       if ('ok' in result) {
         r.errored++;
+        r.errorSamples = r.errorSamples ?? [];
+        if (r.errorSamples.length < 5) {
+          r.errorSamples.push({ reason: result.reason, detail: result.detail });
+        }
         if (result.reason === 'rate-limit') {
           rateLimited = true;
           logger.warn(
