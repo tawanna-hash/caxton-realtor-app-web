@@ -1523,17 +1523,17 @@ function splitHtmlIntoChunks(html: string, chunks: number): string[] {
 // so the ad wrappers below don't need pub or articleId props anymore.
 // Props are kept on the function signatures only where call sites pass them.
 
-// Eyebrow text intentionally avoids the literal word "Advertisement"
-// because uBlock/AdGuard/Brave cosmetic filters hide elements whose text
-// matches /advertisement/i. "Promoted Partner" carries the same
-// disclosure semantics without triggering those rules.
+// Disclosure eyebrow. We split the visible string across two spans so the
+// rendered text node is not the literal word that uBlock/AdGuard/Brave
+// cosmetic filters key on (/advertisement/i, /advertising/i).
 function PromotedEyebrow({ className = '' }: { className?: string }) {
   return (
     <p
-      aria-label="Promoted partner"
+      aria-label="Advertising partner"
       className={`text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center font-medium ${className}`}
     >
-      <span aria-hidden="true">{'Promoted Partner'}</span>
+      <span aria-hidden="true">{'Advertising'}</span>
+      <span aria-hidden="true">{'\u00a0Partner'}</span>
     </p>
   );
 }

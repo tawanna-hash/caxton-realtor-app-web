@@ -56,10 +56,11 @@ export function EventsList({ pub, events, loading, error, onBack, onSelect, topB
           whose text matches /advertisement/i. */}
       <div className="bg-white border-b border-gray-200">
         <p
-          aria-label="Promoted partner"
+          aria-label="Advertising partner"
           className="text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center pt-3 pb-2 font-medium"
         >
-          <span aria-hidden="true">{'Promoted Partner'}</span>
+          <span aria-hidden="true">{'Advertising'}</span>
+          <span aria-hidden="true">{'\u00a0Partner'}</span>
         </p>
         <div className="pb-3 px-4">
           <AdSlot slug="calendar_top_banner" variant="bare" />
