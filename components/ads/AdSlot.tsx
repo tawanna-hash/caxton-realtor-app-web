@@ -23,8 +23,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
 import { trackEvent } from '@/app/posthog-provider';
-
-type Pub = 'realtyline' | 'newsline';
+import { usePublication } from '@/lib/use-publication';
 
 type ActiveAd = {
   id: string;
@@ -36,12 +35,6 @@ type ActiveAd = {
   href: string;
   alt: string;
 };
-
-function readPub(): Pub {
-  if (typeof window === 'undefined') return 'realtyline';
-  const saved = window.localStorage.getItem('caxton_pub');
-  return saved === 'newsline' ? 'newsline' : 'realtyline';
-}
 
 type Props = {
   slug: string;
@@ -59,12 +52,20 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
   const [ad, setAd] = useState<ActiveAd | null>(null);
   const [loaded, setLoaded] = useState(false);
   const impressionFired = useRef(false);
+  const { pub } = usePublication();
 
   useEffect(() => {
     let cancelled = false;
-    const pub = readPub();
+    // Reset impression latch so a fresh creative for the new pub fires its
+    // own impression. Ref mutation is fine here (not state).
+    impressionFired.current = false;
 
     (async () => {
+      // Defer the loading-state flip so we don't trigger a synchronous
+      // cascading render inside this effect (react-hooks/set-state-in-effect).
+      await Promise.resolve();
+      if (cancelled) return;
+      setLoaded(false);
       try {
         const res = await fetch(`/api/ads/active?slot=${encodeURIComponent(slug)}&pub=${pub}`, {
           cache: 'no-store',
@@ -84,7 +85,7 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, pub]);
 
   // Fire impression exactly once per slot mount, after the creative is in the DOM.
   useEffect(() => {
@@ -94,9 +95,9 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
       ad_space_slug: ad.slot,
       campaign_id: ad.id,
       advertiser: ad.advertiser,
-      publication: readPub(),
+      publication: pub,
     });
-  }, [ad]);
+  }, [ad, pub]);
 
   if (!loaded) return null;
   if (!ad) return <>{fallback}</>;
@@ -106,7 +107,7 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
       ad_space_slug: ad.slot,
       campaign_id: ad.id,
       advertiser: ad.advertiser,
-      publication: readPub(),
+      publication: pub,
     });
   };
 

@@ -1,9 +1,14 @@
 import AppShell from '@/components/AppShell';
+import { PublicationProvider } from '@/lib/publication-provider';
+import { getServerPub } from '@/lib/publication';
 
-export default function PublicLayout({ children }: { children: React.ReactNode }) {
+export default async function PublicLayout({ children }: { children: React.ReactNode }) {
+  const initialPub = await getServerPub();
   return (
-    <AppShell variant="public">
-      {children}
-    </AppShell>
+    <PublicationProvider initialPub={initialPub}>
+      <AppShell variant="public">
+        {children}
+      </AppShell>
+    </PublicationProvider>
   );
 }
