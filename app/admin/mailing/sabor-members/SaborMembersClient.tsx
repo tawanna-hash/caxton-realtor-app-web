@@ -411,7 +411,7 @@ export default function SaborMembersClient() {
   };
 
   const syncSaborNow = async () => {
-    if (!confirm('Trigger a full SABOR member sync? This dispatches a GitHub Actions workflow that takes ~90 minutes to walk all 150 pages.')) return;
+    if (!confirm('Trigger a full SABOR member sync? This dispatches a GitHub Actions workflow that walks realtytexas.com (~30 min, ~2,000 records with emails).')) return;
     setBusy('sync');
     try {
       const res = await fetch('/api/admin/mailing/sabor-realtors/sync-now', {
@@ -552,14 +552,11 @@ export default function SaborMembersClient() {
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">Cookies</p>
-            <p
-              className="font-serif text-lg mt-1"
-              style={{ color: syncStatus.cookie_present ? '#059669' : '#B91C1C' }}
-            >
-              {syncStatus.cookie_present ? 'Set' : 'Missing'}
+            <p className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">Source</p>
+            <p className="font-serif text-lg mt-1" style={{ color: '#059669' }}>
+              Public
             </p>
-            <p className="text-xs text-gray-500 mt-0.5">rotate ~weekly</p>
+            <p className="text-xs text-gray-500 mt-0.5">realtytexas.com · no auth</p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">Dispatch</p>

@@ -1,26 +1,31 @@
 // caxton-mailing-v1
-// SABOR realtor sync runner \u2014 designed for long-running environments
-// (GitHub Actions, local cron). Streams batches of scraped records to
-// the ingest API so a single run can populate the full 1,500-row holding
-// tank without retaining everything in memory.
+// SABOR (San Antonio Board of REALTORS) realtor sync runner.
+//
+// Data source: https://www.realtytexas.com/real-search
+//   Public statewide Texas realtor directory aggregating TREC + every
+//   Texas MLS (incl. SABOR) into a single index. Records include emails
+//   for ~94% of active licensees. No auth, no cookies, no postbacks.
+//
+// Filter: keeps records where Source = 'MLS: SABOR' OR PostalCode starts
+// with '78' (SABOR territory: Bexar + surrounding counties).
 //
 // Required env vars:
-//   RAMCO_SABOR_SESSION_ID  \u2014 ASP.NET_SessionId cookie value
-//   RAMCO_SABOR_AUTH        \u2014 .RAMCOAUTH cookie value
-//   CRON_SECRET             \u2014 shared secret for the ingest API
-//   INGEST_URL              \u2014 e.g. https://<host>/api/admin/mailing/sabor-realtors/ingest
+//   CRON_SECRET  — shared secret for the ingest API
+//   INGEST_URL   — e.g. https://<host>/api/admin/mailing/sabor-realtors/ingest
 //
 // Optional:
-//   SABOR_MAX_RECORDS  \u2014 cap on detail-page fetches (default: unlimited)
-//   SABOR_MAX_PAGES    \u2014 cap on list pages (default: 200)
-//   SABOR_DELAY_MS     \u2014 inter-request delay (default: 300)
-//   SABOR_BATCH_SIZE   \u2014 records per POST (default: 100)
+//   SABOR_MAX_RECORDS         — cap on records (default: unlimited)
+//   SABOR_MAX_PAGES_PER_LETTER — cap per letter a-z (default: 30)
+//   SABOR_MAX_LETTERS         — number of letters to walk (default: 26)
+//   SABOR_DELAY_MS            — inter-request delay (default: 300)
+//   SABOR_BATCH_SIZE          — records per POST (default: 100)
+//   SABOR_FILTER              — 'sabor' | 'sabor-or-78xxx' | 'all'
+//                               (default: 'sabor-or-78xxx')
 
 import {
-  scrapeSaborRealtors,
-  SaborAuthError,
+  scrapeRealtyTexas,
   type SaborMemberRecord,
-} from '../lib/sabor-realtor-scraper';
+} from '../lib/realty-texas-scraper';
 
 const BATCH_SIZE = Number(process.env.SABOR_BATCH_SIZE ?? 100);
 
@@ -65,23 +70,32 @@ async function postBatch(
 async function main(): Promise<void> {
   const ingestUrl = requireEnv('INGEST_URL');
   const secret = requireEnv('CRON_SECRET');
-  requireEnv('RAMCO_SABOR_SESSION_ID');
-  requireEnv('RAMCO_SABOR_AUTH');
 
   const maxRecords = process.env.SABOR_MAX_RECORDS
     ? Number(process.env.SABOR_MAX_RECORDS)
     : undefined;
-  const maxPages = process.env.SABOR_MAX_PAGES ? Number(process.env.SABOR_MAX_PAGES) : 200;
+  const maxPagesPerLetter = process.env.SABOR_MAX_PAGES_PER_LETTER
+    ? Number(process.env.SABOR_MAX_PAGES_PER_LETTER)
+    : 30;
+  const maxLetters = process.env.SABOR_MAX_LETTERS
+    ? Number(process.env.SABOR_MAX_LETTERS)
+    : 26;
   const delayMs = process.env.SABOR_DELAY_MS ? Number(process.env.SABOR_DELAY_MS) : 300;
+  const filterEnv = (process.env.SABOR_FILTER ?? 'sabor-or-78xxx') as
+    | 'sabor'
+    | 'sabor-or-78xxx'
+    | 'all';
 
-  console.log('=' .repeat(60));
-  console.log('SABOR Realtor Sync');
-  console.log('=' .repeat(60));
-  console.log(`ingest    : ${ingestUrl}`);
-  console.log(`maxRecords: ${maxRecords ?? 'unlimited'}`);
-  console.log(`maxPages  : ${maxPages}`);
-  console.log(`delayMs   : ${delayMs}`);
-  console.log(`batchSize : ${BATCH_SIZE}`);
+  console.log('='.repeat(60));
+  console.log('SABOR Realtor Sync (RealtyTexas source)');
+  console.log('='.repeat(60));
+  console.log(`ingest         : ${ingestUrl}`);
+  console.log(`maxRecords     : ${maxRecords ?? 'unlimited'}`);
+  console.log(`maxPagesPerLet : ${maxPagesPerLetter}`);
+  console.log(`maxLetters     : ${maxLetters}`);
+  console.log(`delayMs        : ${delayMs}`);
+  console.log(`batchSize      : ${BATCH_SIZE}`);
+  console.log(`filter         : ${filterEnv}`);
   console.log();
 
   const t0 = Date.now();
@@ -89,42 +103,42 @@ async function main(): Promise<void> {
   let totalUpdated = 0;
   let totalUnchanged = 0;
   let totalSent = 0;
-  let pendingBatch: SaborMemberRecord[] = [];
 
-  // We can't easily stream batches mid-scrape because scrapeSaborRealtors
-  // accumulates records internally. Instead, after the scrape completes we
-  // chunk the result \u2014 still memory-bounded at ~1.5MB JSON for full SABOR.
   try {
-    const result = await scrapeSaborRealtors({
+    const result = await scrapeRealtyTexas({
       maxRecords,
-      maxPages,
+      maxPagesPerLetter,
+      maxLetters,
       delayMs,
+      filter: filterEnv,
+      statusFilter: 'Active',
+      requireEmail: true,
       onProgress: (p) => {
-        if (p.phase === 'list') {
+        if (p.kept > 0) {
           console.log(
-            `  [list] page ${p.page}/${p.total ? Math.ceil(p.total / 10) : '?'} \u2014 ${p.fetched} ids`,
+            `  [list] letter=${p.letter} page=${p.page} +${p.kept} kept (running total: ${p.fetched})`,
           );
-        } else {
-          console.log(`  [detail] ${p.fetched}/${p.total}`);
         }
       },
     });
 
     console.log();
     console.log(
-      `Scrape complete in ${Math.round((Date.now() - t0) / 1000)}s \u2014 ${result.detailsFetched} records (errors: ${result.errors}, truncated: ${result.truncated})`,
+      `Scrape complete in ${Math.round((Date.now() - t0) / 1000)}s — ` +
+        `${result.records.length} records (scanned ${result.recordsScanned}, ` +
+        `pages ${result.pagesScraped}, errors ${result.errors}, ` +
+        `truncated ${result.truncated})`,
     );
 
-    // Chunk into batches and POST
     const all = result.records;
     for (let i = 0; i < all.length; i += BATCH_SIZE) {
       const batch = all.slice(i, i + BATCH_SIZE);
       const isLast = i + BATCH_SIZE >= all.length;
       const summary = isLast
         ? {
-            memberIdsFound: result.memberIdsFound,
+            memberIdsFound: all.length,
             pagesScraped: result.pagesScraped,
-            detailsFetched: result.detailsFetched,
+            detailsFetched: all.length,
             errors: result.errors,
             truncated: result.truncated,
           }
@@ -139,16 +153,16 @@ async function main(): Promise<void> {
       totalUnchanged += resp.unchanged;
       totalSent += resp.received;
       console.log(
-        `  [ingest] batch ${Math.floor(i / BATCH_SIZE) + 1}: +${resp.inserted} new, ~${resp.updated} updated, =${resp.unchanged} unchanged`,
+        `  [ingest] batch ${Math.floor(i / BATCH_SIZE) + 1}: ` +
+          `+${resp.inserted} new, ~${resp.updated} updated, =${resp.unchanged} unchanged`,
       );
     }
 
-    // Empty final ping if scraper returned 0 records (still record the run)
     if (all.length === 0) {
       await postBatch(ingestUrl, secret, {
         records: [],
         summary: {
-          memberIdsFound: result.memberIdsFound,
+          memberIdsFound: 0,
           pagesScraped: result.pagesScraped,
           detailsFetched: 0,
           errors: result.errors,
@@ -158,33 +172,29 @@ async function main(): Promise<void> {
     }
 
     console.log();
-    console.log('=' .repeat(60));
+    console.log('='.repeat(60));
     console.log(
-      `Done: sent=${totalSent}, +${totalInserted} new, ~${totalUpdated} updated, =${totalUnchanged} unchanged`,
+      `Done: sent=${totalSent}, +${totalInserted} new, ` +
+        `~${totalUpdated} updated, =${totalUnchanged} unchanged`,
     );
     console.log(`Total runtime: ${Math.round((Date.now() - t0) / 1000)}s`);
-    pendingBatch = []; // suppress unused-var lint
-    void pendingBatch;
     process.exit(0);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('\nFAILED:', msg);
-    // Notify the ingest endpoint so the admin freshness indicator flips
-    if (err instanceof SaborAuthError) {
-      try {
-        await postBatch(ingestUrl, secret, {
-          records: [],
-          summary: {
-            memberIdsFound: 0,
-            pagesScraped: 0,
-            detailsFetched: 0,
-            errors: 1,
-            truncated: false,
-          },
-        });
-      } catch {
-        // best-effort
-      }
+    try {
+      await postBatch(ingestUrl, secret, {
+        records: [],
+        summary: {
+          memberIdsFound: 0,
+          pagesScraped: 0,
+          detailsFetched: 0,
+          errors: 1,
+          truncated: false,
+        },
+      });
+    } catch {
+      // best-effort
     }
     process.exit(1);
   }

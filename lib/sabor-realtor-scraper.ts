@@ -1,35 +1,45 @@
 // caxton-mailing-v1
-// SABOR (San Antonio Board of REALTORS) member directory scraper.
+// SABOR (San Antonio Board of REALTORS) public member directory scraper.
 //
-// Source: https://ramco.sabor.com/Membership/Directory/MemberSearch.aspx?membertype=<GUID>
-//   ASP.NET WebForms app with Telerik RadGrid. Requires authenticated
-//   session cookies (ASP.NET_SessionId + .RAMCOAUTH) from a logged-in
-//   sabor.com / OneAccess session.
+// Source: https://ramco.sabor.com/Membership/Directory/MemberSearch.aspx
+//   ASP.NET WebForms application that is publicly accessible via the
+//   sabor.com Find-a-REALTOR iframe — no member login required. A fresh
+//   ASP.NET_SessionId cookie is issued on first GET; we just hold onto it
+//   for the rest of the run.
 //
 // Strategy:
-//   1. GET search page (renders empty form)
-//   2. POST searchButton click → grid populates (page 1 of 150, ~10/page)
+//   1. GET search page → captures ASP.NET_SessionId from Set-Cookie
+//   2. POST searchButton click (blank filters → all REALTORS) → page 1
 //   3. Loop: POST __EVENTTARGET=resultsGrid, __EVENTARGUMENT=Page$N
-//      preserving the complete form state from the previous response
+//      preserving __VIEWSTATE / __EVENTVALIDATION from the previous response
 //   4. Extract mid GUIDs from MemberDetails.aspx anchors
 //   5. GET MemberDetails.aspx?mid=<mid> per ID, parse <tr> label/value rows
 //   6. Normalize → SaborMemberRecord for upsertHoldingContacts
 //
-// Each postback takes ~33s (server is slow). Designed to run from a
-// long-lived environment (GitHub Actions, local cron, etc.) — NOT
-// from Vercel functions (5-min max).
+// NOTE: The public view does NOT expose email addresses. Records carry
+// name / license / company / address / phones only. Emails are gathered
+// via the on-site verify form (lib/sabor-mls/verify) when realtors claim
+// their profile.
+//
+// Designed for long-lived environments (GitHub Actions, local cron).
+// Each list POST takes ~22s server-side; detail GETs are ~1-3s each.
+// Full run = 150 list pages + 1500 detail GETs ≈ 60-90 minutes.
 
 import * as cheerio from 'cheerio';
 
 const BASE_URL = 'https://ramco.sabor.com';
 const SEARCH_URL = `${BASE_URL}/Membership/Directory/MemberSearch.aspx`;
 const DETAIL_URL = `${BASE_URL}/Membership/Directory/MemberDetails.aspx`;
+const OUTER_REFERER =
+  'https://sabor.com/buying-selling-and-renting/for-buyers/find-a-sabor-realtor/';
 const MEMBER_TYPE_REALTOR = '804c987f-2b58-e711-9c12-00155d63043d';
 const GRID_TARGET = 'ctl00$FormContentPlaceHolder$editForm$resultsGrid';
 const SEARCH_BUTTON =
   'ctl00$FormContentPlaceHolder$editForm$initialSearchButtonStrip$searchButton';
+const MEMBER_TYPE_FIELD =
+  'ctl00$FormContentPlaceHolder$editForm$memberTypePicklist';
 const DEFAULT_DELAY_MS = 300;
-const FETCH_TIMEOUT_MS = 90_000; // postbacks take ~33s
+const FETCH_TIMEOUT_MS = 90_000; // postbacks take ~22-33s
 const DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +
   'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -70,8 +80,6 @@ export interface SaborScrapeOptions {
   /** Cap on list pages to fetch; default 200 (covers ~2000 members at 10/page). */
   maxPages?: number;
   delayMs?: number;
-  sessionId?: string;
-  ramcoAuth?: string;
   /** When true, fetches each member's detail page; default true. */
   fetchDetails?: boolean;
   onProgress?: (info: {
@@ -99,31 +107,118 @@ export class SaborAuthError extends Error {
 }
 
 // ============================================================
-// Internal helpers
+// Cookie jar (per-run, in-memory)
 // ============================================================
 
-function buildCookieHeader(sessionId: string, ramcoAuth: string): string {
-  return `ASP.NET_SessionId=${sessionId}; .RAMCOAUTH=${ramcoAuth}`;
+class CookieJar {
+  private store = new Map<string, string>();
+
+  apply(setCookie: string[] | undefined): void {
+    if (!setCookie || setCookie.length === 0) return;
+    for (const raw of setCookie) {
+      const [pair] = raw.split(';');
+      const eq = pair.indexOf('=');
+      if (eq < 0) continue;
+      const name = pair.slice(0, eq).trim();
+      const value = pair.slice(eq + 1).trim();
+      if (!name) continue;
+      this.store.set(name, value);
+    }
+  }
+
+  header(): string {
+    if (this.store.size === 0) return '';
+    return [...this.store.entries()].map(([k, v]) => `${k}=${v}`).join('; ');
+  }
+
+  has(name: string): boolean {
+    return this.store.has(name);
+  }
 }
 
-function baseHeaders(cookie: string): Record<string, string> {
-  return {
+// ============================================================
+// HTTP helpers
+// ============================================================
+
+function baseHeaders(jar: CookieJar): Record<string, string> {
+  const h: Record<string, string> = {
     'User-Agent': DEFAULT_USER_AGENT,
     Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'en-US,en;q=0.9',
-    Referer: 'https://sabor.com/',
-    Cookie: cookie,
+    Referer: OUTER_REFERER,
   };
+  const cookie = jar.header();
+  if (cookie) h.Cookie = cookie;
+  return h;
 }
 
 async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), FETCH_TIMEOUT_MS);
   try {
-    return await fetch(url, { ...init, signal: ctl.signal, redirect: 'follow' });
+    return await fetch(url, { ...init, signal: ctl.signal });
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * GET with manual redirect handling so we can read Set-Cookie on the 302
+ * (the bootstrap response sets ASP.NET_SessionId and redirects to itself
+ * without the querystring).
+ */
+async function getFollow(url: string, jar: CookieJar, maxHops = 3): Promise<Response> {
+  let current = url;
+  for (let hop = 0; hop < maxHops; hop++) {
+    const res = await fetchWithTimeout(current, {
+      method: 'GET',
+      headers: baseHeaders(jar),
+      redirect: 'manual',
+    });
+    jar.apply(res.headers.getSetCookie?.());
+    if (res.status >= 300 && res.status < 400) {
+      const loc = res.headers.get('location');
+      if (!loc) return res;
+      current = new URL(loc, current).toString();
+      continue;
+    }
+    return res;
+  }
+  throw new Error(`Too many redirects starting at ${url}`);
+}
+
+async function postFollow(
+  url: string,
+  body: string,
+  jar: CookieJar,
+  maxHops = 3,
+): Promise<Response> {
+  let res = await fetchWithTimeout(url, {
+    method: 'POST',
+    headers: {
+      ...baseHeaders(jar),
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Origin: BASE_URL,
+    },
+    body,
+    redirect: 'manual',
+  });
+  jar.apply(res.headers.getSetCookie?.());
+  // Follow GET redirects
+  let current = url;
+  for (let hop = 0; hop < maxHops; hop++) {
+    if (!(res.status >= 300 && res.status < 400)) return res;
+    const loc = res.headers.get('location');
+    if (!loc) return res;
+    current = new URL(loc, current).toString();
+    res = await fetchWithTimeout(current, {
+      method: 'GET',
+      headers: baseHeaders(jar),
+      redirect: 'manual',
+    });
+    jar.apply(res.headers.getSetCookie?.());
+  }
+  return res;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -132,6 +227,7 @@ function sleep(ms: number): Promise<void> {
 
 function looksLikeLoginPage(html: string): boolean {
   const lc = html.toLowerCase();
+  // resultsgrid presence ⇒ we got the search page back, definitively not login
   if (lc.includes('resultsgrid')) return false;
   if (lc.includes('id="login"') || lc.includes('name="login"')) return true;
   if (lc.includes('action="/login') || lc.includes('action="login.aspx"')) return true;
@@ -206,28 +302,6 @@ function extractPageInfo($: cheerio.CheerioAPI): { items: number; pages: number 
   return result;
 }
 
-async function submitForm(
-  body: Record<string, string>,
-  memberType: string,
-  cookie: string,
-): Promise<string> {
-  const url = `${SEARCH_URL}?membertype=${encodeURIComponent(memberType)}`;
-  const res = await fetchWithTimeout(url, {
-    method: 'POST',
-    headers: {
-      ...baseHeaders(cookie),
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams(body).toString(),
-  });
-  if (!res.ok) throw new Error(`SABOR postback HTTP ${res.status}`);
-  const html = await res.text();
-  if (looksLikeLoginPage(html)) {
-    throw new SaborAuthError('SABOR session expired during postback');
-  }
-  return html;
-}
-
 // ============================================================
 // Detail-page parser
 // ============================================================
@@ -245,12 +319,7 @@ function splitName(fullName: string): { first: string; last: string | null } {
   return { first: parts[0], last: parts.slice(1).join(' ') };
 }
 
-/**
- * Strip an HTML fragment, preserving <br> as newlines so multi-line
- * fields (e.g. address blocks) can be split back into city/state/zip.
- */
 function htmlToLines(html: string): string[] {
-  // Convert <br> to newlines BEFORE stripping other tags
   const withBreaks = html
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(p|div|li)>/gi, '\n');
@@ -268,10 +337,6 @@ const US_STATES = new Set([
   'VT','VA','WA','WV','WI','WY',
 ]);
 
-/**
- * Try to split a "City, ST 12345-6789" string. Returns null fields if it
- * doesn't match the expected pattern.
- */
 function parseCityStateZip(line: string): {
   city: string | null;
   state: string | null;
@@ -290,7 +355,6 @@ function parseDetailPage(html: string, mid: string): SaborMemberRecord | null {
   }
   const $ = cheerio.load(html);
 
-  // Stable ID prefix used by all Ramco/myAssociations Member detail labels.
   const prefix = 'FormContentPlaceHolder_Panel_memberDetails_';
   const textOf = (id: string): string | null =>
     normalizeWhitespace($(`#${prefix}${id}`).text());
@@ -298,7 +362,6 @@ function parseDetailPage(html: string, mid: string): SaborMemberRecord | null {
   const linkOf = (id: string): string | null =>
     normalizeWhitespace($(`#${prefix}${id} a`).first().attr('href'));
 
-  // Name + license live in memberNameLiteralli as plain text + <br> + license
   let fullName: string | null = null;
   let licenseNumber: string | null = null;
   const nameBlockHtml = innerOf('memberNameLiteralli');
@@ -313,7 +376,6 @@ function parseDetailPage(html: string, mid: string): SaborMemberRecord | null {
       if (!fullName && line.length > 1) fullName = line;
     }
   }
-  // Fallback to <h1>/<h2>
   if (!fullName) {
     for (const tag of ['h1', 'h2']) {
       const txt = normalizeWhitespace($(tag).first().text());
@@ -325,10 +387,8 @@ function parseDetailPage(html: string, mid: string): SaborMemberRecord | null {
   }
   if (!fullName) return null;
 
-  // Board / primary association
   const board = textOf('primaryAssociationLabel');
 
-  // Address block: company link + street + city/state/zip lines
   let company: string | null = null;
   let address: string | null = null;
   let city: string | null = null;
@@ -336,11 +396,9 @@ function parseDetailPage(html: string, mid: string): SaborMemberRecord | null {
   let zip: string | null = null;
   const addrHtml = innerOf('addressLiteralli');
   if (addrHtml) {
-    // company name is the anchor text (if any)
     const compAnchor = $('#' + prefix + 'addressLiteralli a').first();
     if (compAnchor.length) company = normalizeWhitespace(compAnchor.text());
     const lines = htmlToLines(addrHtml);
-    // First line is the company (already captured); subsequent lines = street, city/st/zip
     const remaining = company ? lines.filter((l) => l !== company) : lines;
     for (const line of remaining) {
       const cz = parseCityStateZip(line);
@@ -351,13 +409,13 @@ function parseDetailPage(html: string, mid: string): SaborMemberRecord | null {
       } else if (!address) {
         address = line;
       } else {
-        // additional address line — concat
         address = `${address}, ${line}`;
       }
     }
   }
 
-  // Email — either an explicit email block or a mailto anchor anywhere
+  // Email — public view almost never exposes this, but keep parser intact
+  // in case some profiles opt in.
   let email: string | null = null;
   const emailHref = $(`#${prefix}emailLiteralli a[href^="mailto:"]`).attr('href');
   if (emailHref) {
@@ -376,14 +434,11 @@ function parseDetailPage(html: string, mid: string): SaborMemberRecord | null {
     if (emailText && emailText.includes('@')) email = emailText;
   }
 
-  // Phones
   const primaryPhone = textOf('contactLabel');
   const officePhone = textOf('officeLabel');
-  // Some skins expose mobileLabel / cellLabel — try both, ignore if missing
   const mobile =
     textOf('mobileLabel') ?? textOf('cellLabel') ?? textOf('cellPhoneLabel') ?? null;
 
-  // Website
   let website: string | null = null;
   const webHref = linkOf('webpageLabelli');
   if (webHref) {
@@ -393,7 +448,6 @@ function parseDetailPage(html: string, mid: string): SaborMemberRecord | null {
     if (webText && /^https?:\/\//i.test(webText)) website = webText;
   }
 
-  // Optional fields (may exist on some profiles)
   const designations =
     textOf('designationLabel') ??
     textOf('designationsLabel') ??
@@ -432,37 +486,60 @@ function parseDetailPage(html: string, mid: string): SaborMemberRecord | null {
 }
 
 // ============================================================
+// Session bootstrap
+// ============================================================
+
+/**
+ * Initial GET → returns the Member Search form HTML with a fresh
+ * ASP.NET_SessionId cookie attached to the jar. Follows the 302 that
+ * ASP.NET issues when querystrings are present.
+ */
+async function bootstrapSession(jar: CookieJar, memberType: string): Promise<string> {
+  // First touch picks up the cookie even if the server 302s
+  const first = await getFollow(
+    `${SEARCH_URL}?membertype=${encodeURIComponent(memberType)}`,
+    jar,
+  );
+  if (!first.ok) throw new Error(`SABOR initial GET HTTP ${first.status}`);
+  const html = await first.text();
+  if (looksLikeLoginPage(html)) {
+    throw new SaborAuthError('SABOR returned a login page on initial GET');
+  }
+  if (!jar.has('ASP.NET_SessionId')) {
+    throw new SaborAuthError(
+      'SABOR did not issue ASP.NET_SessionId — public endpoint may have changed',
+    );
+  }
+  return html;
+}
+
+async function submitForm(body: Record<string, string>, jar: CookieJar): Promise<string> {
+  const res = await postFollow(SEARCH_URL, new URLSearchParams(body).toString(), jar);
+  if (!res.ok) throw new Error(`SABOR postback HTTP ${res.status}`);
+  const html = await res.text();
+  if (looksLikeLoginPage(html)) {
+    throw new SaborAuthError('SABOR session expired during postback');
+  }
+  return html;
+}
+
+// ============================================================
 // Public entry point
 // ============================================================
 
 export async function scrapeSaborRealtors(
   opts: SaborScrapeOptions = {},
 ): Promise<SaborScrapeResult> {
-  const sessionId = opts.sessionId ?? process.env.RAMCO_SABOR_SESSION_ID;
-  const ramcoAuth = opts.ramcoAuth ?? process.env.RAMCO_SABOR_AUTH;
-  if (!sessionId || !ramcoAuth) {
-    throw new SaborAuthError(
-      'RAMCO_SABOR_SESSION_ID and RAMCO_SABOR_AUTH env vars must be set.',
-    );
-  }
   const memberType = opts.memberType ?? MEMBER_TYPE_REALTOR;
   const delayMs = opts.delayMs ?? DEFAULT_DELAY_MS;
   const maxRecords = opts.maxRecords;
   const maxPages = opts.maxPages ?? 200;
   const fetchDetails = opts.fetchDetails !== false;
-  const cookie = buildCookieHeader(sessionId, ramcoAuth);
   const onProgress = opts.onProgress;
+  const jar = new CookieJar();
 
-  // ── Step 1: GET initial search form ──
-  const initial = await fetchWithTimeout(
-    `${SEARCH_URL}?membertype=${encodeURIComponent(memberType)}`,
-    { headers: baseHeaders(cookie) },
-  );
-  if (!initial.ok) throw new Error(`SABOR initial GET HTTP ${initial.status}`);
-  let html = await initial.text();
-  if (looksLikeLoginPage(html)) {
-    throw new SaborAuthError('SABOR session expired (login page on initial GET)');
-  }
+  // ── Step 1: bootstrap session (no auth) ──
+  let html = await bootstrapSession(jar, memberType);
   let $ = cheerio.load(html);
 
   // ── Step 2: POST search button click ──
@@ -471,9 +548,9 @@ export async function scrapeSaborRealtors(
   searchState.__EVENTARGUMENT = '';
   searchState.__LASTFOCUS = '';
   searchState[SEARCH_BUTTON] = 'Search';
-  searchState['ctl00$FormContentPlaceHolder$editForm$memberTypePicklist'] = memberType;
+  searchState[MEMBER_TYPE_FIELD] = memberType;
 
-  html = await submitForm(searchState, memberType, cookie);
+  html = await submitForm(searchState, jar);
   $ = cheerio.load(html);
 
   // ── Step 3: paginate via Page$N ──
@@ -485,7 +562,6 @@ export async function scrapeSaborRealtors(
   const totalPages = pageInfo ? pageInfo.pages : maxPages;
   const totalItems = pageInfo ? pageInfo.items : 0;
 
-  // Page 1 IDs (already in current response)
   const page1Ids = extractMemberIds($);
   for (const id of page1Ids) {
     if (!seenIds.has(id)) {
@@ -495,10 +571,6 @@ export async function scrapeSaborRealtors(
   }
   pagesScraped = 1;
 
-  // Diagnostic: when page 1 returns 0 IDs, dump signals that tell us
-  // whether the session is still authenticated, whether the grid
-  // rendered at all, and what the search result panel actually said.
-  // This makes 'silently empty' failures debuggable from the GH Actions log.
   if (page1Ids.length === 0) {
     const lc = html.toLowerCase();
     const signals = {
@@ -515,7 +587,6 @@ export async function scrapeSaborRealtors(
       '  [list] page 1 returned 0 ids — diagnostic signals:',
       JSON.stringify(signals),
     );
-    // Print a small slice of the rendered <body> for forensic inspection.
     const bodyMatch = html.match(/<body[^>]*>([\s\S]{0,1500})/i);
     if (bodyMatch) {
       const snippet = bodyMatch[1]
@@ -542,14 +613,12 @@ export async function scrapeSaborRealtors(
     state.__EVENTTARGET = GRID_TARGET;
     state.__EVENTARGUMENT = `Page$${page}`;
     state.__LASTFOCUS = '';
-    // suppress the searchButton field which would re-trigger a fresh search
     delete state[SEARCH_BUTTON];
 
     try {
-      html = await submitForm(state, memberType, cookie);
+      html = await submitForm(state, jar);
     } catch (err) {
       if (err instanceof SaborAuthError) throw err;
-      // transient — break out, return what we have
       break;
     }
     $ = cheerio.load(html);
@@ -569,7 +638,6 @@ export async function scrapeSaborRealtors(
       fetched: allIds.length,
       total: totalItems,
     });
-    // if a page returned 0 new IDs we've hit the end (or stuck)
     if (addedThisPage === 0) break;
     await sleep(delayMs);
   }
@@ -599,7 +667,7 @@ export async function scrapeSaborRealtors(
         `~/Membership/Directory/MemberSearch.aspx?membertype=${memberType}`,
       )}`;
     try {
-      const res = await fetchWithTimeout(url, { headers: baseHeaders(cookie) });
+      const res = await getFollow(url, jar);
       if (res.ok) {
         const detailHtml = await res.text();
         const rec = parseDetailPage(detailHtml, mid);

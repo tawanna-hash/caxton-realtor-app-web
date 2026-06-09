@@ -1,11 +1,9 @@
 name: SABOR Realtor Sync
 
-# Runs nightly + on-demand. Scrapes ramco.sabor.com and POSTs records to
-# the production ingest API. Requires repository secrets:
-#   RAMCO_SABOR_SESSION_ID  \u2014 ASP.NET_SessionId cookie (rotate ~weekly)
-#   RAMCO_SABOR_AUTH        \u2014 .RAMCOAUTH cookie (rotate ~weekly)
-#   CRON_SECRET             \u2014 shared with Vercel CRON_SECRET env var
-#   INGEST_URL              \u2014 https://<prod-host>/api/admin/mailing/sabor-realtors/ingest
+# Runs nightly + on-demand. Scrapes realtytexas.com (public, no auth) and POSTs
+# records to the production ingest API. Requires repository secrets:
+#   CRON_SECRET  — shared with Vercel CRON_SECRET env var
+#   INGEST_URL   — https://<prod-host>/api/admin/mailing/sabor-realtors/ingest
 
 on:
   schedule:
@@ -14,13 +12,21 @@ on:
   workflow_dispatch:
     inputs:
       max_records:
-        description: 'Cap on detail-page fetches (blank = unlimited)'
+        description: 'Cap on records to upsert (blank = unlimited)'
         required: false
         default: ''
-      max_pages:
-        description: 'Cap on list pages'
+      max_pages_per_letter:
+        description: 'Cap on pages walked per letter (default 30)'
         required: false
-        default: '200'
+        default: '30'
+      max_letters:
+        description: 'Cap on letters walked a-z (default 26)'
+        required: false
+        default: '26'
+      filter:
+        description: "Filter mode: sabor | sabor-or-78xxx | all"
+        required: false
+        default: 'sabor-or-78xxx'
 
 jobs:
   sync:
@@ -39,10 +45,10 @@ jobs:
 
       - name: Run SABOR sync
         env:
-          RAMCO_SABOR_SESSION_ID: ${{ secrets.RAMCO_SABOR_SESSION_ID }}
-          RAMCO_SABOR_AUTH: ${{ secrets.RAMCO_SABOR_AUTH }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           INGEST_URL: ${{ secrets.INGEST_URL }}
           SABOR_MAX_RECORDS: ${{ github.event.inputs.max_records }}
-          SABOR_MAX_PAGES: ${{ github.event.inputs.max_pages || '200' }}
+          SABOR_MAX_PAGES_PER_LETTER: ${{ github.event.inputs.max_pages_per_letter || '30' }}
+          SABOR_MAX_LETTERS: ${{ github.event.inputs.max_letters || '26' }}
+          SABOR_FILTER: ${{ github.event.inputs.filter || 'sabor-or-78xxx' }}
         run: npx tsx scripts/sabor-sync.ts
