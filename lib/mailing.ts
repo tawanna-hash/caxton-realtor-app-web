@@ -524,32 +524,60 @@ export async function countHolding(source?: string): Promise<{
   // 60mi radius. Kept inline (not imported) so this file stays free of
   // the geocode module's runtime deps.
   const NEAR_MI = 60;
-  const rows = (await sql`
-    SELECT
-      COUNT(*)::int AS total,
-      COUNT(*) FILTER (
-        WHERE addr_status = 'Valid' OR email_status = 'Valid'
-      )::int AS verified,
-      COUNT(*) FILTER (
-        WHERE (addr_status IS NULL OR addr_status <> 'Valid')
-          AND (email_status IS NULL OR email_status <> 'Valid')
-      )::int AS pending,
-      COUNT(*) FILTER (
-        WHERE (distance_abor_mi       IS NOT NULL AND distance_abor_mi       <= ${NEAR_MI})
-           OR (distance_fivepoints_mi IS NOT NULL AND distance_fivepoints_mi <= ${NEAR_MI})
-      )::int AS near,
-      COUNT(*) FILTER (
-        WHERE distance_abor_mi       IS NOT NULL
-          AND distance_fivepoints_mi IS NOT NULL
-          AND distance_abor_mi       >  ${NEAR_MI}
-          AND distance_fivepoints_mi >  ${NEAR_MI}
-      )::int AS far
-    FROM mailing_contacts
-   WHERE stage = 'holding'
-     AND (${source}::text IS NULL OR external_source = ${source})
-  `) as unknown as Array<{
-    total: number; verified: number; pending: number; near: number; far: number;
-  }>;
+  // SABOR members get measured against the San Antonio Board of REALTORS
+  // HQ anchor only (distance_sabor_mi). All other holding sources fall
+  // back to the Austin-area ABoR / Five Points pair.
+  const rows = source === 'ramco-sabor'
+    ? ((await sql`
+        SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (
+            WHERE addr_status = 'Valid' OR email_status = 'Valid'
+          )::int AS verified,
+          COUNT(*) FILTER (
+            WHERE (addr_status IS NULL OR addr_status <> 'Valid')
+              AND (email_status IS NULL OR email_status <> 'Valid')
+          )::int AS pending,
+          COUNT(*) FILTER (
+            WHERE distance_sabor_mi IS NOT NULL
+              AND distance_sabor_mi <= ${NEAR_MI}
+          )::int AS near,
+          COUNT(*) FILTER (
+            WHERE distance_sabor_mi IS NOT NULL
+              AND distance_sabor_mi >  ${NEAR_MI}
+          )::int AS far
+        FROM mailing_contacts
+        WHERE stage = 'holding'
+          AND external_source = ${source}
+      `) as unknown as Array<{
+        total: number; verified: number; pending: number; near: number; far: number;
+      }>)
+    : ((await sql`
+        SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (
+            WHERE addr_status = 'Valid' OR email_status = 'Valid'
+          )::int AS verified,
+          COUNT(*) FILTER (
+            WHERE (addr_status IS NULL OR addr_status <> 'Valid')
+              AND (email_status IS NULL OR email_status <> 'Valid')
+          )::int AS pending,
+          COUNT(*) FILTER (
+            WHERE (distance_abor_mi       IS NOT NULL AND distance_abor_mi       <= ${NEAR_MI})
+               OR (distance_fivepoints_mi IS NOT NULL AND distance_fivepoints_mi <= ${NEAR_MI})
+          )::int AS near,
+          COUNT(*) FILTER (
+            WHERE distance_abor_mi       IS NOT NULL
+              AND distance_fivepoints_mi IS NOT NULL
+              AND distance_abor_mi       >  ${NEAR_MI}
+              AND distance_fivepoints_mi >  ${NEAR_MI}
+          )::int AS far
+        FROM mailing_contacts
+        WHERE stage = 'holding'
+          AND (${source}::text IS NULL OR external_source = ${source})
+      `) as unknown as Array<{
+        total: number; verified: number; pending: number; near: number; far: number;
+      }>);
   return {
     total:    rows[0]?.total    ?? 0,
     verified: rows[0]?.verified ?? 0,

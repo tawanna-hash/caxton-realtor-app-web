@@ -207,8 +207,8 @@ export default function SaborMembersClient() {
       if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
       if (j.row) mergeRow(j.row);
       const verdict = j.verdict ?? 'Unknown';
-      const extra = verdict === 'Valid' && j.distance_abor_mi !== null && j.distance_abor_mi !== undefined
-        ? ` · ${Number(j.distance_abor_mi).toFixed(1)} mi from ABoR`
+      const extra = verdict === 'Valid' && j.distance_sabor_mi !== null && j.distance_sabor_mi !== undefined
+        ? ` · ${Number(j.distance_sabor_mi).toFixed(1)} mi from SABOR`
         : '';
       showToast(`Address: ${verdict}${extra}${j.detail ? ` — ${j.detail}` : ''}`);
       await reload();
@@ -989,59 +989,33 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
 }
 
 function ProximityBadges({ row }: { row: MailingContactRow }) {
-  const dA = row.distance_abor_mi;
-  const dF = row.distance_fivepoints_mi;
-  const hasA = dA !== null && dA !== undefined;
-  const hasF = dF !== null && dF !== undefined;
-  const nearA = hasA && dA! <= NEAR_RADIUS_MI;
-  const nearF = hasF && dF! <= NEAR_RADIUS_MI;
-  // Not geocoded at all → neutral em-dash so the column never looks broken.
-  if (!hasA && !hasF) {
+  // SABOR-only proximity. The Austin-area ABoR / Five Points anchors are
+  // not relevant for San Antonio Board of REALTORS members.
+  const d = row.distance_sabor_mi;
+  const has = d !== null && d !== undefined;
+  if (!has) {
     return <span className="text-[11px] text-gray-400">—</span>;
   }
-  // Geocoded but outside both 60mi radii → dedicated "Outside 60 mi" badge
-  // mirroring the new KPI card. We surface the closer of the two distances
-  // so the user can tell how far out the contact actually is.
-  if (!nearA && !nearF) {
-    const closer =
-      hasA && hasF ? Math.min(dA!, dF!) :
-      hasA         ? dA! :
-                     dF!;
-    const anchor =
-      hasA && hasF ? (dA! <= dF! ? 'ABoR' : 'Five Points') :
-      hasA         ? 'ABoR' :
-                     'Five Points';
+  const near = d! <= NEAR_RADIUS_MI;
+  if (!near) {
     return (
       <span
         className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium ring-1 ring-gray-200"
-        title={`${closer.toFixed(1)} mi from nearest anchor (${anchor})`}
+        title={`${d!.toFixed(1)} mi from SABOR HQ`}
       >
         <span>Outside 60 mi</span>
-        <span className="text-gray-500">{closer.toFixed(0)} mi · {anchor}</span>
+        <span className="text-gray-500">{d!.toFixed(0)} mi · SABOR</span>
       </span>
     );
   }
   return (
-    <div className="flex flex-col gap-1">
-      {nearA && (
-        <span
-          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-medium"
-          title={`${dA!.toFixed(1)} mi from ABoR HQ`}
-        >
-          <span>Near ABoR</span>
-          <span className="text-emerald-700/70">{dA!.toFixed(0)} mi</span>
-        </span>
-      )}
-      {nearF && (
-        <span
-          className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-sky-100 text-sky-800 font-medium"
-          title={`${dF!.toFixed(1)} mi from Five Points Board of REALTORS`}
-        >
-          <span>Near Five Points</span>
-          <span className="text-sky-700/70">{dF!.toFixed(0)} mi</span>
-        </span>
-      )}
-    </div>
+    <span
+      className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-medium"
+      title={`${d!.toFixed(1)} mi from SABOR HQ (9110 IH-10 W, San Antonio)`}
+    >
+      <span>Within 60 mi</span>
+      <span className="text-emerald-700/70">{d!.toFixed(0)} mi · SABOR</span>
+    </span>
   );
 }
 
@@ -1178,11 +1152,9 @@ function EditDrawer({
                   USPS: {row.addr_usps_normalized}
                 </div>
               )}
-              {row.distance_abor_mi !== null && row.distance_abor_mi !== undefined && (
+              {row.distance_sabor_mi !== null && row.distance_sabor_mi !== undefined && (
                 <div className="text-[11px] text-gray-500">
-                  {row.distance_abor_mi.toFixed(1)} mi to ABoR
-                  {row.distance_fivepoints_mi !== null && row.distance_fivepoints_mi !== undefined &&
-                    ` · ${row.distance_fivepoints_mi.toFixed(1)} mi to Five Points`}
+                  {row.distance_sabor_mi.toFixed(1)} mi to SABOR HQ
                 </div>
               )}
               <button
