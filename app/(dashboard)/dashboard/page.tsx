@@ -14,6 +14,7 @@ import BottomNav from '@/components/BottomNav';
 import NavDrawer from '@/components/NavDrawer';
 import { SocialLinks } from '@/components/SocialLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
+import SaborReportCard from '@/components/SaborReportCard';
 import { SW } from '@/lib/style-constants';
 import { PUB_META, type PubKey } from '@/lib/pub-meta';
 import { AdSlot as AdSlotComponent } from '@/components/ads/AdSlot';
@@ -1022,10 +1023,46 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
   const CATS = pub === 'realtyline' ? RL_CATS : NS_CATS;
   const filt = cat === 'All' ? NEWS : NEWS.filter((n) => n.cat === cat);
 
-  const feed: { t: 'n' | 'a' | 'c' | 's' | 'e'; d?: any }[] = [];
+  const feed: { t: 'n' | 'a' | 'c' | 's' | 'e' | 'm'; d?: any }[] = [];
   const isLoadingFirstFetch = newsLoading && liveNews === null;
 
   const isEmptyAfterLoad = !isLoadingFirstFetch && filt.length === 0;
+
+  // SABOR MLS card — Newsline (San Antonio) only.
+  // "Both — hero this month, inline thereafter": pin at top for the first
+  // 7 days from released_at, then slot inline every 5 articles. The card
+  // itself fetches its data; we only decide placement here. Hero-vs-inline
+  // is resolved in an effect (not render) so render stays pure — react-hooks/purity
+  // forbids Date.now() in the render path.
+  // saborReleasedAt is set by the fetch callback only (no synchronous setState
+  // in the effect body). Hero-vs-inline is derived in render from that value
+  // plus a useId-like stable epoch captured at mount, so render stays pure.
+  const [saborReleasedAt, setSaborReleasedAt] = useState<string | null | undefined>(undefined);
+  const [mountEpoch] = useState<number>(() => Date.now());
+  useEffect(() => {
+    if (pub !== 'newsline' || cat !== 'All') return;
+    let alive = true;
+    fetch('/api/sabor-mls/current', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive) return;
+        const released = (j?.report?.released_at as string | undefined) ?? null;
+        setSaborReleasedAt(released);
+      })
+      .catch(() => {
+        if (alive) setSaborReleasedAt(null);
+      });
+    return () => { alive = false; };
+  }, [pub, cat]);
+  const saborEligible = pub === 'newsline' && cat === 'All';
+  const showSaborHero = (() => {
+    if (!saborEligible) return false;
+    if (saborReleasedAt === undefined) return false; // still loading
+    if (saborReleasedAt === null) return true;       // no data yet: behave as hero
+    const ageDays = (mountEpoch - new Date(saborReleasedAt).getTime()) / 86_400_000;
+    return ageDays >= 0 && ageDays <= 7;
+  })();
+  const showSaborInline = saborEligible && saborReleasedAt !== undefined && !showSaborHero;
 
   if (isLoadingFirstFetch) {
     for (let i = 0; i < 3; i++) feed.push({ t: 's', d: { id: i } });
@@ -1038,10 +1075,18 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
     // become an unused-variable lint error in case future code wants it.
     void pubAds;
 
+    if (showSaborHero) {
+      feed.push({ t: 'm', d: { variant: 'hero' } });
+    }
+
     filt.forEach((item, i) => {
       feed.push({ t: 'n', d: item });
       if (i === 2) {
         feed.push({ t: 'c' });
+      }
+      // Inline placement: every 5th article, after the initial newsletter CTA
+      if (showSaborInline && i > 0 && (i + 1) % 5 === 0) {
+        feed.push({ t: 'm', d: { variant: 'inline' } });
       }
     });
   }
@@ -1147,6 +1192,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
                 <article key={'n' + item.d.id} className="bg-white border-b border-gray-200">
                   <ArticleCard item={item.d} pub={pub} />
                 </article>
+              ) : item.t === 'm' ? (
+                <SaborReportCard key={'m' + idx + item.d.variant} variant={item.d.variant} />
               ) : (
                 <AdCardTracked key={'a' + item.d.id} ad={item.d} onClick={handleAdClick} track={track} pub={pub} />
               );
