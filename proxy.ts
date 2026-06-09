@@ -60,8 +60,40 @@ async function isValidAdminToken(token: string, secret: string): Promise<boolean
   }
 }
 
+// Publication permalink: ?pub=realtyline|newsline sets the caxton_pub
+// cookie, strips the query param, and 308-redirects to the clean URL.
+// This is what makes
+//   https://realtynewsnow.app/calendar?pub=newsline
+// work as a durable permalink that survives Incognito visits, cleared
+// localStorage, and bookmarks. See lib/publication.ts for the full model.
+const VALID_PUBS = new Set(['realtyline', 'newsline']);
+
+function handlePubPermalink(req: NextRequest): NextResponse | null {
+  const param = req.nextUrl.searchParams.get('pub');
+  if (!param || !VALID_PUBS.has(param)) return null;
+  const clean = req.nextUrl.clone();
+  clean.searchParams.delete('pub');
+  const res = NextResponse.redirect(clean, 308);
+  res.cookies.set('caxton_pub', param, {
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: 'lax',
+  });
+  return res;
+}
+
 export async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
+
+  // Publication permalink handling runs first so it applies to every page
+  // route (public + dashboard + admin), not just admin.
+  const pubRedirect = handlePubPermalink(req);
+  if (pubRedirect) return pubRedirect;
+
+  // Admin-only logic below. For non-admin paths there's nothing more to do.
+  if (!pathname.startsWith('/admin')) {
+    return NextResponse.next();
+  }
 
   if (isPublicAdminPath(pathname)) {
     return NextResponse.next();
@@ -91,8 +123,11 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // Run on every /admin/* page except the API namespace. Static assets
-  // under /admin (there are none today) and Next.js internals are skipped
-  // by the negative lookahead.
-  matcher: ['/admin/((?!api/).*)'],
+  // Two concerns share this proxy:
+  //   1. Admin auth gate — /admin/* (excluding /admin/api/*).
+  //   2. Publication permalink — every page route that could carry ?pub=,
+  //      so we exclude _next, API, /c/ proxy, and static asset URLs.
+  // The union of the two is expressed as a single negative-lookahead
+  // matcher that simply rules out internals and assets.
+  matcher: ['/((?!_next/|api/|c/|favicon|robots|sitemap|.*\\..*).*)'],
 };
