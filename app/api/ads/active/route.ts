@@ -57,7 +57,9 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
       id: campaign.id,
       slot: dbSlot,
       advertiser: campaign.creative.advertiser_name,
-      image: campaign.creative.blob_url,
+      // Route through same-origin proxy so URLs don't contain `/ads/`
+      // which trips ad-blocker filters. See app/c/[id]/route.ts.
+      image: `/c/${campaign.id}`,
       width: campaign.creative.width,
       height: campaign.creative.height,
       href: campaign.creative.click_url,
