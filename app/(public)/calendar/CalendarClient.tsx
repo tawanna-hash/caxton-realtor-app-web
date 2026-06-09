@@ -1,36 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { EventsList } from '@/components/events/EventsList';
 import type { CalendarEvent } from '@/lib/events-store';
+import { usePublication } from '@/lib/use-publication';
 
-type Pub = 'realtyline' | 'newsline';
 type View = 'month' | 'upcoming';
-
-function readPub(): Pub {
-  if (typeof window === 'undefined') return 'realtyline';
-  try {
-    const v = window.localStorage.getItem('caxton_pub');
-    if (v === 'realtyline' || v === 'newsline') return v;
-  } catch {}
-  return 'realtyline';
-}
-
-function subscribePub(callback: () => void): () => void {
-  if (typeof window === 'undefined') return () => {};
-  window.addEventListener('storage', callback);
-  window.addEventListener('savedPubChange', callback);
-  return () => {
-    window.removeEventListener('storage', callback);
-    window.removeEventListener('savedPubChange', callback);
-  };
-}
-
-const SERVER_PUB: Pub = 'realtyline';
-function getServerPubSnapshot(): Pub {
-  return SERVER_PUB;
-}
 
 function isoDateKey(d: Date): string {
   const y = d.getFullYear();
@@ -41,7 +17,7 @@ function isoDateKey(d: Date): string {
 
 export default function CalendarClient() {
   const router = useRouter();
-  const pub = useSyncExternalStore(subscribePub, readPub, getServerPubSnapshot);
+  const { pub } = usePublication();
 
   const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [loading, setLoading] = useState(true);

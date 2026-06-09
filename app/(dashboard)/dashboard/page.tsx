@@ -778,9 +778,12 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!hydrated) return;
     try {
+      const maxAge = 60 * 60 * 24 * 365;
       if (pub === 'realtyline' || pub === 'newsline') {
+        document.cookie = `caxton_pub=${pub}; path=/; max-age=${maxAge}; SameSite=Lax`;
         localStorage.setItem('caxton_pub', pub);
       } else {
+        document.cookie = 'caxton_pub=; path=/; max-age=0; SameSite=Lax';
         localStorage.removeItem('caxton_pub');
       }
       if (phase && phase !== 'splash') {
@@ -1096,6 +1099,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
     // (articles, ads, events) re-runs from scratch. The previous soft
     // setState path left stale data visible (BUG-03).
     try {
+      const maxAge = 60 * 60 * 24 * 365;
+      document.cookie = `caxton_pub=${other.id}; path=/; max-age=${maxAge}; SameSite=Lax`;
       localStorage.setItem('caxton_pub', other.id);
       localStorage.removeItem('caxton_selected_article');
       localStorage.removeItem('caxton_selected_event');

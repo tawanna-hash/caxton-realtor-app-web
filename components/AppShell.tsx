@@ -161,6 +161,7 @@ export default function AppShell({
     } catch {}
     if (!isAdmin) {
       try {
+        document.cookie = 'caxton_pub=; path=/; max-age=0; SameSite=Lax';
         localStorage.removeItem('caxton_pub');
         localStorage.removeItem('caxton_phase');
         localStorage.removeItem('caxton_selected_article');
@@ -175,6 +176,9 @@ export default function AppShell({
   const handlePubSwitch = useCallback(() => {
     const other = pub === 'realtyline' ? 'newsline' : 'realtyline';
     try {
+      // Cookie is the source of truth; localStorage is a legacy mirror.
+      const maxAge = 60 * 60 * 24 * 365;
+      document.cookie = `caxton_pub=${other}; path=/; max-age=${maxAge}; SameSite=Lax`;
       localStorage.setItem('caxton_pub', other);
       // Also clear any saved phase/selection so we don't strand the user on
       // an article that belongs to the previous pub.
