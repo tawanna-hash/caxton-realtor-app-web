@@ -494,6 +494,38 @@ export async function scrapeSaborRealtors(
     }
   }
   pagesScraped = 1;
+
+  // Diagnostic: when page 1 returns 0 IDs, dump signals that tell us
+  // whether the session is still authenticated, whether the grid
+  // rendered at all, and what the search result panel actually said.
+  // This makes 'silently empty' failures debuggable from the GH Actions log.
+  if (page1Ids.length === 0) {
+    const lc = html.toLowerCase();
+    const signals = {
+      htmlBytes: html.length,
+      hasResultsGrid: lc.includes('resultsgrid'),
+      hasMemberDetailsAnchor: lc.includes('memberdetails.aspx'),
+      hasOneAccess: lc.includes('oneaccess') || lc.includes('one-access'),
+      hasLoginForm: lc.includes('id="login"') || lc.includes('name="login"'),
+      hasNoRecordsText:
+        lc.includes('no records to display') || lc.includes('no matching records'),
+      pageInfo,
+    };
+    console.warn(
+      '  [list] page 1 returned 0 ids — diagnostic signals:',
+      JSON.stringify(signals),
+    );
+    // Print a small slice of the rendered <body> for forensic inspection.
+    const bodyMatch = html.match(/<body[^>]*>([\s\S]{0,1500})/i);
+    if (bodyMatch) {
+      const snippet = bodyMatch[1]
+        .replace(/\s+/g, ' ')
+        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .trim()
+        .slice(0, 800);
+      console.warn('  [list] body snippet:', snippet);
+    }
+  }
   onProgress?.({
     phase: 'list',
     page: 1,
