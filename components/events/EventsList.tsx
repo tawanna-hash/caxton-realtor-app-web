@@ -51,6 +51,16 @@ export function EventsList({ pub, events, loading, error, onBack, onSelect, topB
         <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
       </div>
 
+      {/* Top banner ad — calendar_top_banner */}
+      <div className="bg-white border-b border-gray-200">
+        <p className="text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center pt-3 pb-2 font-medium">
+          Advertisement
+        </p>
+        <div className="pb-3 px-4">
+          <AdSlot slug="calendar_top_banner" variant="bare" />
+        </div>
+      </div>
+
       {/* Body */}
       <div className="pb-24">
         {/* Page header — Title + deck (matches inventory pattern) */}
