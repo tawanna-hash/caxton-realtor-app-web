@@ -132,7 +132,7 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
       aria-label={
         isMailto
           ? `${ad.advertiser} — opens email inquiry`
-          : `Promoted partner: ${ad.advertiser}`
+          : `Advertising partner: ${ad.advertiser}`
       }
       className="relative block"
     >
