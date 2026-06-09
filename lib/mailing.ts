@@ -513,7 +513,7 @@ export async function segmentStats(segment: MailingSegment): Promise<SegmentStat
  * Total count of contacts currently sitting in the holding stage,
  * across all segments. Powers the Holding Contacts KPI tile.
  */
-export async function countHolding(): Promise<{
+export async function countHolding(source?: string): Promise<{
   total: number;
   verified: number;
   pending: number;
@@ -546,6 +546,7 @@ export async function countHolding(): Promise<{
       )::int AS far
     FROM mailing_contacts
    WHERE stage = 'holding'
+     AND (${source}::text IS NULL OR external_source = ${source})
   `) as unknown as Array<{
     total: number; verified: number; pending: number; near: number; far: number;
   }>;

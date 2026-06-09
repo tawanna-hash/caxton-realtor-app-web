@@ -42,6 +42,6 @@ export const GET = withErrorHandling(async (req: Request) => {
     limit,
     offset,
   });
-  const counts = await countHolding();
+  const counts = await countHolding(source);
   return NextResponse.json({ rows, total, counts });
 });
