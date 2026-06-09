@@ -155,7 +155,14 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
   );
 
   if (variant === 'bare') {
-    return <div className={className}>{creative}</div>;
+    // Cap creative to its natural size and center so wide desktop containers
+    // don't stretch a 728x90 banner to 1248px wide (which scales height
+    // proportionally and visually buries adjacent content).
+    return (
+      <div className={`mx-auto ${className}`} style={{ maxWidth: w }}>
+        {creative}
+      </div>
+    );
   }
 
   return (
