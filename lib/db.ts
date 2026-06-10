@@ -445,6 +445,15 @@ export async function ensureSchema(): Promise<void> {
        AND click_url LIKE '%ads@realtynewsnow.app%'
   `;
 
+  // One-time cleanup of malformed mailto links saved with a stray space
+  // (e.g. 'mailto: ads@...'), which browsers refuse to dispatch to the
+  // mail client. Becomes a no-op once all rows are clean.
+  await sql`
+    UPDATE ad_creatives
+       SET click_url = REGEXP_REPLACE(click_url, '^mailto:\s+', 'mailto:')
+     WHERE click_url ~ '^mailto:\s+'
+  `;
+
   for (const ad of houseAds) {
     const destEmail = ad.email ?? 'ads@myrealtyline.com';
     const clickUrl = `mailto:${destEmail}?subject=${encodeURIComponent(ad.subject)}`;
