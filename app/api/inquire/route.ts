@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/email';
+import { APP_AD_SLOTS } from '@/lib/media-kit';
 
 export const runtime = 'nodejs';
 
@@ -103,6 +104,78 @@ export async function POST(req: NextRequest) {
       { error: 'send_failed', detail: result.error },
       { status: 502 },
     );
+  }
+
+  // Auto-reply to submitter: thank you + rate card + CTA to self-serve checkout.
+  // Best-effort — never block the inquiry response on this.
+  try {
+    const slotInfo = data.slot ? APP_AD_SLOTS.find((s) => s.slug === data.slot) : null;
+    const checkoutUrl = slotInfo
+      ? `https://realtynewsnow.app/advertise/checkout/${slotInfo.slug}?pub=${data.pub}`
+      : 'https://realtynewsnow.app/advertise';
+
+    const ratesRow = slotInfo
+      ? (() => {
+          const unit = slotInfo.pricingUnit ?? 'week';
+          const wkSingle = `$${slotInfo.weeklySingle}/${unit === 'per send' ? 'send' : unit === 'per push' ? 'push' : 'wk'} single pub`;
+          const wkBoth = `$${slotInfo.weeklyBoth}/${unit === 'per send' ? 'send' : unit === 'per push' ? 'push' : 'wk'} both pubs`;
+          const mo =
+            slotInfo.monthlySingle && slotInfo.monthlyBoth
+              ? `<br/>$${slotInfo.monthlySingle}/mo single · $${slotInfo.monthlyBoth}/mo both`
+              : '';
+          return `${wkSingle} · ${wkBoth}${mo}`;
+        })()
+      : '';
+
+    const replyHtml = `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;padding:24px;color:#1a2a44;">
+        <h2 style="margin:0 0 16px 0;color:#1a2a44;">Thanks for reaching out, ${escapeHtml(data.name.split(' ')[0] ?? data.name)}.</h2>
+        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 20px 0;">
+          We received your inquiry${data.slot_label ? ` about <strong>${escapeHtml(data.slot_label)}</strong>` : ''} and will follow up personally within one business day.
+        </p>
+        ${
+          slotInfo
+            ? `
+        <div style="background:#f6f8fa;border:1px solid #e1e6ee;border-radius:8px;padding:16px;margin:0 0 24px 0;">
+          <p style="margin:0 0 8px 0;font-size:13px;color:#666;text-transform:uppercase;letter-spacing:.5px;">${escapeHtml(slotInfo.tier)} placement</p>
+          <p style="margin:0 0 8px 0;font-size:17px;font-weight:600;color:#1a2a44;">${escapeHtml(slotInfo.name)}</p>
+          <p style="margin:0 0 8px 0;font-size:14px;color:#444;">${ratesRow}</p>
+          <p style="margin:0 0 4px 0;font-size:13px;color:#666;"><strong>Specs:</strong> ${escapeHtml(slotInfo.sizes)}</p>
+          <p style="margin:0;font-size:13px;color:#666;"><strong>Placement:</strong> ${escapeHtml(slotInfo.notes)}</p>
+        </div>
+        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 16px 0;">
+          Ready to book yourself? You can choose dates, upload creative, accept terms, and pay by card in under five minutes:
+        </p>
+        <p style="margin:0 0 28px 0;">
+          <a href="${checkoutUrl}" style="display:inline-block;background:#1a2a44;color:#fff;text-decoration:none;padding:14px 28px;border-radius:6px;font-weight:600;font-size:15px;">
+            Book this placement
+          </a>
+        </p>`
+            : `
+        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 16px 0;">
+          See our full rate card and book any of our 17 placements directly:
+        </p>
+        <p style="margin:0 0 28px 0;">
+          <a href="https://realtynewsnow.app/advertise" style="display:inline-block;background:#1a2a44;color:#fff;text-decoration:none;padding:14px 28px;border-radius:6px;font-weight:600;font-size:15px;">
+            View rate card
+          </a>
+        </p>`
+        }
+        <p style="font-size:13px;color:#999;margin:24px 0 0 0;border-top:1px solid #eee;padding-top:16px;">
+          Questions? Just reply to this email.<br/>
+          — The RealtyLine Austin & Newsline San Antonio team
+        </p>
+      </div>
+    `;
+
+    await sendEmail({
+      to: data.email,
+      subject: slotInfo ? `Your ${slotInfo.name} inquiry — rate sheet & booking link` : 'Thanks for your ad inquiry',
+      html: replyHtml,
+      replyTo: recipient,
+    });
+  } catch (e) {
+    console.warn('[inquire] auto-reply failed (non-fatal):', e instanceof Error ? e.message : e);
   }
 
   return NextResponse.json({ ok: true, messageId: result.messageId });

@@ -80,6 +80,13 @@ async function handlePaymentSucceeded(
   sql: ReturnType<typeof getSql>,
   pi: Stripe.PaymentIntent,
 ): Promise<void> {
+  // Self-serve checkout branch — agreement is looked up by stripe_payment_intent_id
+  // (set by /api/checkout/submit) and the campaign is flipped active.
+  if (pi.metadata?.source === 'self_serve_checkout') {
+    await handleSelfServePaymentSucceeded(sql, pi);
+    return;
+  }
+
   const agreementId = pi.metadata?.agreement_id;
   if (!agreementId) {
     console.warn('[stripe-webhook] payment_intent.succeeded missing agreement_id metadata; pi:', pi.id);
@@ -234,6 +241,101 @@ async function handlePaymentSucceeded(
        WHERE id = ${ag.id}
     `;
   }
+}
+
+async function handleSelfServePaymentSucceeded(
+  sql: ReturnType<typeof getSql>,
+  pi: Stripe.PaymentIntent,
+): Promise<void> {
+  // The /api/checkout/submit endpoint writes the agreement row keyed by
+  // stripe_payment_intent_id. Stripe at-least-once delivery means we may get
+  // this event before submit() finishes — in that case there's no row yet;
+  // we return non-200 so Stripe retries on its backoff schedule (up to 3 days).
+  const rows = (await sql`
+    SELECT id, status, paid_at FROM agreements WHERE stripe_payment_intent_id = ${pi.id} LIMIT 1
+  `) as unknown as Array<{ id: string; status: string; paid_at: string | null }>;
+
+  if (rows.length === 0) {
+    console.warn('[stripe-webhook] self-serve agreement not yet persisted, will retry. pi:', pi.id);
+    throw new Error('self-serve agreement not yet persisted; Stripe will retry');
+  }
+
+  const ag = rows[0];
+  if (ag.paid_at) {
+    console.log('[stripe-webhook] self-serve agreement already paid, skipping. id:', ag.id);
+    return;
+  }
+
+  const paymentMethodId =
+    typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method?.id ?? null;
+  const customerId =
+    typeof pi.customer === 'string' ? pi.customer : pi.customer?.id ?? null;
+
+  // Backfill card details from PaymentMethod
+  let cardBrand: string | null = null;
+  let cardLast4: string | null = null;
+  let cardExp: string | null = null;
+  if (paymentMethodId) {
+    try {
+      const stripe = getStripe();
+      const pm = await stripe.paymentMethods.retrieve(paymentMethodId);
+      if (pm.card) {
+        const b = pm.card.brand;
+        cardBrand =
+          b === 'visa' ? 'Visa'
+          : b === 'mastercard' ? 'Mastercard'
+          : b === 'amex' ? 'American Express'
+          : b ? b.charAt(0).toUpperCase() + b.slice(1)
+          : null;
+        cardLast4 = pm.card.last4 ?? null;
+        if (pm.card.exp_month && pm.card.exp_year) {
+          cardExp = `${String(pm.card.exp_month).padStart(2, '0')}/${String(pm.card.exp_year).slice(-2)}`;
+        }
+      }
+    } catch (e) {
+      console.warn('[stripe-webhook] self-serve PM fetch failed:', e);
+    }
+  }
+
+  // 1) Flip agreement → signed + active + paid + capture stripe ids
+  await sql`
+    UPDATE agreements SET
+      status = 'active',
+      signed_at = COALESCE(signed_at, NOW()),
+      sign_date = COALESCE(sign_date, NOW()::date::text),
+      paid_at = NOW(),
+      stripe_charged_cents = ${pi.amount_received},
+      stripe_charged_at = NOW(),
+      stripe_payment_method_id = ${paymentMethodId},
+      stripe_customer_id = ${customerId},
+      card_type = COALESCE(${cardBrand}, card_type),
+      card_number_last4 = COALESCE(${cardLast4}, card_number_last4),
+      card_expiration = COALESCE(${cardExp}, card_expiration),
+      updated_at = NOW()
+    WHERE id = ${ag.id}
+  `;
+
+  // 2) Append audit
+  const auditRows = (await sql`SELECT audit_log FROM agreements WHERE id = ${ag.id}`) as unknown as Array<{
+    audit_log: AgreementAuditEntry[] | null;
+  }>;
+  const newLog = appendAudit(auditRows[0]?.audit_log, {
+    event: 'self_serve_payment_succeeded',
+    timestamp: new Date().toISOString(),
+    details: `Stripe charged ${(pi.amount_received / 100).toFixed(2)} ${pi.currency.toUpperCase()} \u2014 pi: ${pi.id}; agreement auto-activated.`,
+  });
+  await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${ag.id}`;
+
+  // 3) Activate the campaign (matched by notes containing the pi.id, written
+  //    by /api/checkout/submit). active=false at creation, flipped to true here
+  //    so unverified payments don't go live.
+  await sql`
+    UPDATE ad_campaigns
+       SET active = true, updated_at = NOW()
+     WHERE notes LIKE ${'%' + pi.id + '%'}
+  `;
+
+  console.log('[stripe-webhook] self-serve activated agreement', ag.id, 'pi:', pi.id);
 }
 
 async function handlePaymentFailed(
