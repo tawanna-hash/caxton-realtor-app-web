@@ -114,10 +114,17 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
   const w = ad.width ?? 728;
   const h = ad.height ?? 90;
 
+  // Defensive normalization: strip the stray space after the scheme that
+  // legacy admin-saved rows have (e.g. 'mailto: ads@...'). Browsers refuse
+  // to dispatch malformed URIs, so the Inquire button silently does nothing.
+  // The server-side schema + DB cleanup also fix this, but this guarantees
+  // a working link even if a stale row reaches the client.
+  const safeHref = ad.href.trim().replace(/^(mailto|tel|https?):\s+/i, '$1:');
+
   // BUG-10: when the click destination is a mailto: link (house ads soliciting
   // inquiries) surface a small envelope badge so users understand the tap
   // opens their mail client, not a third-party site.
-  const isMailto = ad.href.startsWith('mailto:');
+  const isMailto = safeHref.startsWith('mailto:');
 
   // Note: intentionally omitting rel="sponsored" here — ad blockers (uBlock,
   // AdGuard, Brave Shields) use it as a hide selector. The link is still
@@ -125,7 +132,7 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
   // accessible label below.
   const creative = (
     <a
-      href={ad.href}
+      href={safeHref}
       target={isMailto ? undefined : '_blank'}
       rel="noopener"
       onClick={handleClick}
