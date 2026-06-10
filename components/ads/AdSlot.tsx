@@ -121,10 +121,13 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
   // a working link even if a stale row reaches the client.
   const safeHref = ad.href.trim().replace(/^(mailto|tel|https?):\s+/i, '$1:');
 
-  // BUG-10: when the click destination is a mailto: link (house ads soliciting
-  // inquiries) surface a small envelope badge so users understand the tap
-  // opens their mail client, not a third-party site.
+  // BUG-10: surface a small envelope badge on house-ad inquiry creatives so
+  // users understand the tap leads to a contact path (form or mail client),
+  // not a third-party site. Covers both legacy mailto: links and the new
+  // on-site /advertise/inquire form (Gmail web ignores mailto: dispatch).
   const isMailto = safeHref.startsWith('mailto:');
+  const isInquireForm = /\/advertise\/inquire(\?|$|#)/i.test(safeHref);
+  const showInquireBadge = isMailto || isInquireForm;
 
   // Note: intentionally omitting rel="sponsored" here — ad blockers (uBlock,
   // AdGuard, Brave Shields) use it as a hide selector. The link is still
@@ -137,8 +140,8 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
       rel="noopener"
       onClick={handleClick}
       aria-label={
-        isMailto
-          ? `${ad.advertiser} — opens email inquiry`
+        showInquireBadge
+          ? `${ad.advertiser} — opens advertising inquiry`
           : `Advertising partner: ${ad.advertiser}`
       }
       className="relative block"
@@ -151,7 +154,7 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
         className="h-auto w-full"
         unoptimized
       />
-      {isMailto && (
+      {showInquireBadge && (
         <span
           aria-hidden="true"
           className="absolute left-2 bottom-2 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-gray-800 shadow-sm"

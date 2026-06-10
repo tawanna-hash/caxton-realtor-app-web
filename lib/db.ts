@@ -454,9 +454,21 @@ export async function ensureSchema(): Promise<void> {
      WHERE click_url ~ '^mailto:\s+'
   `;
 
+  // June 9, 2026: switch all ads@myrealtyline.com mailtos to the on-site
+  // inquiry form (/advertise/inquire). Gmail web doesn't honor mailto: as a
+  // compose intent by default, so the Inquire CTA opened Gmail without
+  // composing. The form posts to /api/inquire which sends via Resend to the
+  // same destination, with full lead capture. Becomes a no-op once migrated.
+  await sql`
+    UPDATE ad_creatives
+       SET click_url = 'https://realtynewsnow.app/advertise/inquire'
+     WHERE click_url LIKE 'mailto:ads@myrealtyline.com%'
+  `;
+
   for (const ad of houseAds) {
-    const destEmail = ad.email ?? 'ads@myrealtyline.com';
-    const clickUrl = `mailto:${destEmail}?subject=${encodeURIComponent(ad.subject)}`;
+    // Each slot gets its own inquiry URL so the form pre-fills the slot
+    // label and the email subject reflects which placement was clicked.
+    const clickUrl = `https://realtynewsnow.app/advertise/inquire?slot=${encodeURIComponent(ad.slug)}`;
 
     // 1. Creative (idempotent on advertiser_name + blob_url).
     const creativeRows = (await sql`
