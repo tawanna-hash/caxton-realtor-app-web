@@ -159,6 +159,13 @@ export const adminApi = {
   }) => adminFetch('/admin/ads/creatives', { method: 'POST', body: data }),
   deleteAdCreative: (id: string) =>
     adminFetch(`/admin/ads/creatives/${id}`, { method: 'DELETE' }),
+  updateAdCreative: (id: string, patch: {
+    advertiser_name?: string;
+    width?: number | null;
+    height?: number | null;
+    click_url?: string;
+    alt_text?: string | null;
+  }) => adminFetch(`/admin/ads/creatives/${id}`, { method: 'PATCH', body: patch }),
 
   // Campaigns: scheduled placements (advertiser × slot × pub × dates)
   listAdCampaigns: () => adminFetch('/admin/ads/campaigns'),

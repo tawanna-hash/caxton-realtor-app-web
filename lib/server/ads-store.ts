@@ -102,6 +102,44 @@ export async function createCreative(input: {
   return r.rows[0]!;
 }
 
+export async function updateCreative(
+  id: string,
+  patch: {
+    advertiser_name?: string;
+    width?: number | null;
+    height?: number | null;
+    click_url?: string;
+    alt_text?: string | null;
+  },
+): Promise<AdCreative | null> {
+  const fields: string[] = [];
+  const values: unknown[] = [];
+  let i = 1;
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === undefined) continue;
+    fields.push(`${k} = $${i++}`);
+    values.push(v);
+  }
+  if (fields.length === 0) {
+    const cur = await getPool().query<AdCreative>(
+      `SELECT id, advertiser_name, blob_url, width, height, click_url, alt_text,
+              uploaded_by, uploaded_at
+         FROM ad_creatives WHERE id = $1`,
+      [id],
+    );
+    return cur.rows[0] ?? null;
+  }
+  values.push(id);
+  const r = await getPool().query<AdCreative>(
+    `UPDATE ad_creatives SET ${fields.join(', ')}
+      WHERE id = $${i}
+      RETURNING id, advertiser_name, blob_url, width, height, click_url, alt_text,
+                uploaded_by, uploaded_at`,
+    values,
+  );
+  return r.rows[0] ?? null;
+}
+
 export async function deleteCreative(
   id: string,
 ): Promise<{ deleted: boolean; reason?: string }> {

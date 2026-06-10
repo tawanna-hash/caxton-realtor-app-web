@@ -15,7 +15,7 @@ BEGIN;
 -- ===== Creatives =====
 INSERT INTO ad_creatives (advertiser_name, blob_url, width, height, click_url, alt_text, uploaded_by)
 SELECT 'RealtyLine House', '/ads/house-featured-builder-strip.svg', 728, 90,
-       'mailto:ads@realtynewsnow.app?subject=Featured%20Builder%20Strip%20inquiry',
+       'mailto:ads@myrealtyline.com?subject=Featured%20Builder%20Strip%20inquiry',
        'Feature your model homes here — advertise with RealtyLine',
        'system:house-ad-seed'
 WHERE NOT EXISTS (
@@ -26,7 +26,7 @@ WHERE NOT EXISTS (
 
 INSERT INTO ad_creatives (advertiser_name, blob_url, width, height, click_url, alt_text, uploaded_by)
 SELECT 'RealtyLine House', '/ads/house-calendar-event-sponsor.svg', 600, 160,
-       'mailto:ads@realtynewsnow.app?subject=Calendar%20Event%20Sponsor%20inquiry',
+       'mailto:ads@myrealtyline.com?subject=Calendar%20Event%20Sponsor%20inquiry',
        'Sponsor a pinned calendar event',
        'system:house-ad-seed'
 WHERE NOT EXISTS (
@@ -37,7 +37,7 @@ WHERE NOT EXISTS (
 
 INSERT INTO ad_creatives (advertiser_name, blob_url, width, height, click_url, alt_text, uploaded_by)
 SELECT 'RealtyLine House', '/ads/house-feed-sticky-bottom.svg', 320, 50,
-       'mailto:ads@realtynewsnow.app?subject=Sticky%20Bottom%20Banner%20inquiry',
+       'mailto:ads@myrealtyline.com?subject=Sticky%20Bottom%20Banner%20inquiry',
        'Your ad here — sticky bottom banner',
        'system:house-ad-seed'
 WHERE NOT EXISTS (
@@ -48,7 +48,7 @@ WHERE NOT EXISTS (
 
 INSERT INTO ad_creatives (advertiser_name, blob_url, width, height, click_url, alt_text, uploaded_by)
 SELECT 'RealtyLine House', '/ads/house-giveaway-prize-sponsor.svg', 600, 200,
-       'mailto:ads@realtynewsnow.app?subject=Giveaway%20Prize%20Sponsor%20inquiry',
+       'mailto:ads@myrealtyline.com?subject=Giveaway%20Prize%20Sponsor%20inquiry',
        'Become a giveaway prize sponsor',
        'system:house-ad-seed'
 WHERE NOT EXISTS (
@@ -59,7 +59,7 @@ WHERE NOT EXISTS (
 
 INSERT INTO ad_creatives (advertiser_name, blob_url, width, height, click_url, alt_text, uploaded_by)
 SELECT 'RealtyLine House', '/ads/house-newsletter-banner.svg', 600, 200,
-       'mailto:ads@realtynewsnow.app?subject=Newsletter%20Sponsor%20inquiry',
+       'mailto:ads@myrealtyline.com?subject=Newsletter%20Sponsor%20inquiry',
        'Top-of-newsletter sponsorship',
        'system:house-ad-seed'
 WHERE NOT EXISTS (

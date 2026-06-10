@@ -356,7 +356,7 @@ export async function ensureSchema(): Promise<void> {
     alt: string;
     subject: string;
     /**
-     * Override the destination email. Defaults to ads@realtynewsnow.app.
+     * Override the destination email. Defaults to ads@myrealtyline.com.
      * Article-reader slots use ads@myrealtyline.com to match the existing
      * /lib/pub-meta.ts copy that ran on these placements previously.
      */
@@ -434,8 +434,19 @@ export async function ensureSchema(): Promise<void> {
     },
   ];
 
+  // One-time rewrite of legacy house-ad mailtos (June 2026).
+  // Existing rows seeded with ads@realtynewsnow.app are migrated to
+  // ads@myrealtyline.com to match the Resend-verified sending domain.
+  // Becomes a no-op once all rows are updated.
+  await sql`
+    UPDATE ad_creatives
+       SET click_url = REPLACE(click_url, 'ads@realtynewsnow.app', 'ads@myrealtyline.com')
+     WHERE uploaded_by = 'system:house-ad-seed'
+       AND click_url LIKE '%ads@realtynewsnow.app%'
+  `;
+
   for (const ad of houseAds) {
-    const destEmail = ad.email ?? 'ads@realtynewsnow.app';
+    const destEmail = ad.email ?? 'ads@myrealtyline.com';
     const clickUrl = `mailto:${destEmail}?subject=${encodeURIComponent(ad.subject)}`;
 
     // 1. Creative (idempotent on advertiser_name + blob_url).

@@ -16,6 +16,14 @@ export const createCreativeSchema = z.object({
   alt_text: z.string().max(500).nullable(),
 });
 
+export const updateCreativeSchema = z.object({
+  advertiser_name: z.string().min(1).max(200).optional(),
+  width: z.number().int().positive().nullable().optional(),
+  height: z.number().int().positive().nullable().optional(),
+  click_url: z.string().url().optional(),
+  alt_text: z.string().max(500).nullable().optional(),
+});
+
 export const createCampaignSchema = z.object({
   advertiser_name: z.string().min(1).max(200),
   ad_space_slug: z.string().min(1),

@@ -1,6 +1,6 @@
 // caxton-ads-v1
 // Creatives tab — image grid showing every uploaded creative,
-// with delete + "used in N" badge.
+// with edit + delete + "used in N" badge.
 
 'use client';
 
@@ -14,12 +14,91 @@ interface Props {
   onChange: () => void;
 }
 
+interface EditDraft {
+  advertiser_name: string;
+  width: string;
+  height: string;
+  click_url: string;
+  alt_text: string;
+}
+
+function draftFromCreative(c: AdCreative): EditDraft {
+  return {
+    advertiser_name: c.advertiser_name,
+    width: c.width != null ? String(c.width) : '',
+    height: c.height != null ? String(c.height) : '',
+    click_url: c.click_url,
+    alt_text: c.alt_text ?? '',
+  };
+}
+
 export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<EditDraft | null>(null);
 
   function usageCount(creativeId: string): number {
     return campaigns.filter((c) => c.creative_id === creativeId).length;
+  }
+
+  function startEdit(c: AdCreative) {
+    setEditingId(c.id);
+    setDraft(draftFromCreative(c));
+    setError(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setDraft(null);
+    setError(null);
+  }
+
+  async function handleSave(c: AdCreative) {
+    if (!draft) return;
+    const advertiser_name = draft.advertiser_name.trim();
+    const click_url = draft.click_url.trim();
+    if (!advertiser_name) {
+      setError('Advertiser name is required');
+      return;
+    }
+    if (!click_url) {
+      setError('Click URL is required');
+      return;
+    }
+    try {
+      new URL(click_url);
+    } catch {
+      setError('Click URL must be a valid URL (https://… or mailto:…)');
+      return;
+    }
+    const widthVal = draft.width.trim() === '' ? null : Number(draft.width);
+    const heightVal = draft.height.trim() === '' ? null : Number(draft.height);
+    if (widthVal != null && (!Number.isInteger(widthVal) || widthVal <= 0)) {
+      setError('Width must be a positive integer');
+      return;
+    }
+    if (heightVal != null && (!Number.isInteger(heightVal) || heightVal <= 0)) {
+      setError('Height must be a positive integer');
+      return;
+    }
+    setBusyId(c.id);
+    setError(null);
+    try {
+      await adminApi.updateAdCreative(c.id, {
+        advertiser_name,
+        width: widthVal,
+        height: heightVal,
+        click_url,
+        alt_text: draft.alt_text.trim() === '' ? null : draft.alt_text.trim(),
+      });
+      cancelEdit();
+      onChange();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setBusyId(null);
+    }
   }
 
   async function handleDelete(c: AdCreative) {
@@ -63,6 +142,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
         {creatives.map((c) => {
           const used = usageCount(c.id);
           const busy = busyId === c.id;
+          const isEditing = editingId === c.id;
           return (
             <div key={c.id} className="rounded-md border border-gray-200 bg-white overflow-hidden">
               <div className="aspect-[4/3] bg-gray-100 flex items-center justify-center">
@@ -72,30 +152,109 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                   className="max-h-full max-w-full object-contain"
                 />
               </div>
-              <div className="p-3 text-sm">
-                <p className="font-medium text-gray-900">{c.advertiser_name}</p>
-                <p className="text-xs text-gray-600">{c.width}×{c.height}</p>
-                <p className="text-xs text-gray-500 truncate mt-1" title={c.click_url}>
-                  → {c.click_url}
-                </p>
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-                  <span className="text-xs text-gray-600">
-                    {used === 0 ? (
-                      <span className="text-amber-700">Unused</span>
-                    ) : (
-                      <span className="text-green-700">Used in {used}</span>
-                    )}
-                  </span>
-                  <button
-                    onClick={() => handleDelete(c)}
-                    disabled={busy || used > 0}
-                    className="text-red-700 hover:text-red-900 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={used > 0 ? `Referenced by ${used} campaign(s)` : 'Delete this creative'}
-                  >
-                    Delete
-                  </button>
+              {isEditing && draft ? (
+                <div className="p-3 text-sm space-y-2">
+                  <label className="block">
+                    <span className="text-xs text-gray-600">Advertiser</span>
+                    <input
+                      type="text"
+                      value={draft.advertiser_name}
+                      onChange={(e) => setDraft({ ...draft, advertiser_name: e.target.value })}
+                      className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                    />
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="block">
+                      <span className="text-xs text-gray-600">Width</span>
+                      <input
+                        type="number"
+                        value={draft.width}
+                        onChange={(e) => setDraft({ ...draft, width: e.target.value })}
+                        className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs text-gray-600">Height</span>
+                      <input
+                        type="number"
+                        value={draft.height}
+                        onChange={(e) => setDraft({ ...draft, height: e.target.value })}
+                        className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                      />
+                    </label>
+                  </div>
+                  <label className="block">
+                    <span className="text-xs text-gray-600">Click URL (https:// or mailto:)</span>
+                    <input
+                      type="text"
+                      value={draft.click_url}
+                      onChange={(e) => setDraft({ ...draft, click_url: e.target.value })}
+                      className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm font-mono"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-gray-600">Alt text</span>
+                    <input
+                      type="text"
+                      value={draft.alt_text}
+                      onChange={(e) => setDraft({ ...draft, alt_text: e.target.value })}
+                      className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                    />
+                  </label>
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      disabled={busy}
+                      className="text-xs text-gray-700 hover:text-gray-900 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSave(c)}
+                      disabled={busy}
+                      className="rounded bg-indigo-600 px-2 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      {busy ? 'Saving…' : 'Save'}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="p-3 text-sm">
+                  <p className="font-medium text-gray-900">{c.advertiser_name}</p>
+                  <p className="text-xs text-gray-600">{c.width}×{c.height}</p>
+                  <p className="text-xs text-gray-500 truncate mt-1" title={c.click_url}>
+                    → {c.click_url}
+                  </p>
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                    <span className="text-xs text-gray-600">
+                      {used === 0 ? (
+                        <span className="text-amber-700">Unused</span>
+                      ) : (
+                        <span className="text-green-700">Used in {used}</span>
+                      )}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => startEdit(c)}
+                        disabled={busy}
+                        className="text-indigo-700 hover:text-indigo-900 text-xs disabled:opacity-50"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(c)}
+                        disabled={busy || used > 0}
+                        className="text-red-700 hover:text-red-900 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={used > 0 ? `Referenced by ${used} campaign(s)` : 'Delete this creative'}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
