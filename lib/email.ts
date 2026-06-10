@@ -32,8 +32,9 @@ export interface SendEmailResult {
 }
 
 // myrealtyline.com is verified in Resend. realtynewsnow.app is not (yet).
-// Override with EMAIL_FROM env var if needed.
-const FROM_DEFAULT = process.env.EMAIL_FROM ?? 'RealtyLine <noreply@myrealtyline.com>';
+// hello@ is the role mailbox that forwards to a monitored inbox; noreply@
+// was a dead address that silently dropped sends. Override with EMAIL_FROM.
+const FROM_DEFAULT = process.env.EMAIL_FROM ?? 'RealtyLine <hello@myrealtyline.com>';
 
 export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
