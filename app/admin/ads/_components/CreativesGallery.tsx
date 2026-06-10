@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { adminApi } from '@/lib/admin-api';
+import { CreativeUpload } from './CreativeUpload';
 import type { AdCreative, AdCampaign } from './types';
 
 interface Props {
@@ -37,6 +38,19 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<EditDraft | null>(null);
+
+  // Standalone upload form (not tied to creating a campaign).
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploadAdvertiser, setUploadAdvertiser] = useState('');
+  const [uploadClickUrl, setUploadClickUrl] = useState('');
+  const [uploadAlt, setUploadAlt] = useState('');
+
+  function resetUploadForm() {
+    setUploadAdvertiser('');
+    setUploadClickUrl('');
+    setUploadAlt('');
+    setShowUpload(false);
+  }
 
   function usageCount(creativeId: string): number {
     return campaigns.filter((c) => c.creative_id === creativeId).length;
@@ -120,16 +134,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
     }
   }
 
-  if (creatives.length === 0) {
-    return (
-      <div className="text-center py-12 bg-white rounded-md border border-gray-200">
-        <p className="text-gray-700">No creatives uploaded yet.</p>
-        <p className="text-sm text-gray-500 mt-1">
-          Creatives are uploaded as part of the new-campaign flow.
-        </p>
-      </div>
-    );
-  }
+
 
   return (
     <div className="space-y-3">
@@ -138,6 +143,85 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
           {error}
         </div>
       )}
+
+      <div className="rounded-md border border-gray-200 bg-white p-4">
+        {!showUpload ? (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-700">
+              Upload a new creative image to the library. You can attach it to a campaign later.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowUpload(true)}
+              className="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+            >
+              + Upload creative
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-900">New creative</h3>
+              <button
+                type="button"
+                onClick={resetUploadForm}
+                className="text-xs text-gray-600 hover:text-gray-900"
+              >
+                Cancel
+              </button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-xs text-gray-600">Advertiser name *</span>
+                <input
+                  type="text"
+                  value={uploadAdvertiser}
+                  onChange={(e) => setUploadAdvertiser(e.target.value)}
+                  placeholder="RealtyLine House"
+                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs text-gray-600">Click URL * (https:// or mailto:)</span>
+                <input
+                  type="text"
+                  value={uploadClickUrl}
+                  onChange={(e) => setUploadClickUrl(e.target.value)}
+                  placeholder="https://advertiser.com or mailto:ads@myrealtyline.com"
+                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm font-mono"
+                />
+              </label>
+              <label className="block sm:col-span-2">
+                <span className="text-xs text-gray-600">Alt text</span>
+                <input
+                  type="text"
+                  value={uploadAlt}
+                  onChange={(e) => setUploadAlt(e.target.value)}
+                  placeholder="Describe the image for accessibility"
+                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                />
+              </label>
+            </div>
+            <CreativeUpload
+              advertiserName={uploadAdvertiser}
+              clickUrl={uploadClickUrl}
+              altText={uploadAlt}
+              disabled={!uploadAdvertiser.trim() || !uploadClickUrl.trim()}
+              onUploaded={() => {
+                resetUploadForm();
+                onChange();
+              }}
+            />
+          </div>
+        )}
+      </div>
+
+      {creatives.length === 0 && (
+        <div className="text-center py-6 bg-white rounded-md border border-gray-200">
+          <p className="text-sm text-gray-600">No creatives uploaded yet — use the form above.</p>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {creatives.map((c) => {
           const used = usageCount(c.id);
