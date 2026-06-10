@@ -26,7 +26,7 @@ import { type SaborMemberRecord, SaborAuthError } from './sabor-realtor-scraper'
 const SEARCH_URL = 'https://www.realtytexas.com/real-search';
 const TOP_PER_PAGE = 100;
 const DEFAULT_DELAY_MS = 300;
-const FETCH_TIMEOUT_MS = 30_000;
+const FETCH_TIMEOUT_MS = 60_000;
 const DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +
   'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
@@ -340,20 +340,35 @@ export async function scrapeRealtyTexas(
   outer: for (let li = 0; li < maxLetters; li++) {
     const letter = SEARCH_LETTERS[li];
     let consecutiveEmptyPages = 0;
+    let letterErrors = 0;
     for (let page = 1; page <= maxPagesPerLetter; page++) {
       let html: string;
-      try {
-        html = await fetchPage(letter, page);
-      } catch (err) {
-        errors += 1;
-        console.warn(
-          `  [list] fetch error letter=${letter} page=${page}:`,
-          err instanceof Error ? err.message : String(err),
-        );
-        // bail this letter on repeated errors
-        if (errors > 10) {
-          truncated = true;
-          break outer;
+      let attempt = 0;
+      // Retry up to 3x on transient timeouts before giving up on this page
+      while (true) {
+        try {
+          html = await fetchPage(letter, page);
+          break;
+        } catch (err) {
+          attempt += 1;
+          errors += 1;
+          letterErrors += 1;
+          console.warn(
+            `  [list] fetch error letter=${letter} page=${page} attempt=${attempt}:`,
+            err instanceof Error ? err.message : String(err),
+          );
+          if (attempt >= 3) {
+            html = '';
+            break;
+          }
+          await sleep(delayMs * 2);
+        }
+      }
+      if (!html) {
+        // gave up on this page; bail letter if too many failures, otherwise next page
+        if (letterErrors > 20) {
+          console.warn(`  [list] letter=${letter} aborted after ${letterErrors} errors`);
+          break;
         }
         await sleep(delayMs);
         continue;
