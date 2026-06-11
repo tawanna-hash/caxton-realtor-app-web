@@ -477,8 +477,8 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`
     CREATE TABLE IF NOT EXISTS mailing_contacts (
       id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-      segment         text        NOT NULL DEFAULT 'non-advertiser'
-                                   CHECK (segment IN ('manual-newsline','non-advertiser','realtor','active-advertiser')),
+      segment         text        NOT NULL DEFAULT 'non-advertiser-atx'
+                                   CHECK (segment IN ('manual-newsline','realtor','active-advertiser-atx','active-advertiser-sa','non-advertiser-atx','non-advertiser-sa')),
       first_name      text        NOT NULL,
       last_name       text,
       email           text,
@@ -505,8 +505,55 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   // databases. Drop the old CHECK (named by Postgres) and add the new one.
   // Update any pre-existing rows first so the new constraint doesn't fail.
   await step(() => sql`UPDATE mailing_contacts SET segment = 'manual-newsline' WHERE segment = 'advertiser'`);
+  // Per-publication split: any rows still on the legacy single-publication
+  // segments get re-mapped here. 'active-advertiser' rows split by their
+  // advertiser's publication (both -> ATX; SA gets its own copy below).
+  // 'non-advertiser' rows had no advertiser link and default to the ATX
+  // bucket (user can re-tag manually).
+  await step(() => sql`
+    UPDATE mailing_contacts mc
+       SET segment = CASE
+         WHEN a.publication = 'san_antonio' THEN 'active-advertiser-sa'
+         ELSE 'active-advertiser-atx'
+       END
+      FROM advertisers a
+     WHERE mc.segment = 'active-advertiser'
+       AND mc.advertiser_id = a.id
+  `);
+  // For 'both' advertisers, also insert a SA copy of any row that just
+  // landed in -atx via the prior step. Dedupe by lowercased email.
+  await step(() => sql`
+    INSERT INTO mailing_contacts
+      (segment, first_name, last_name, email, phone, company, title, license_number,
+       address, address_2, city, state, zip, website, source, advertiser_id, tags, stage)
+    SELECT 'active-advertiser-sa', mc.first_name, mc.last_name, mc.email, mc.phone,
+           mc.company, mc.title, mc.license_number, mc.address, mc.address_2,
+           mc.city, mc.state, mc.zip, mc.website,
+           COALESCE(mc.source, '') || ':split-both', mc.advertiser_id, mc.tags, mc.stage
+      FROM mailing_contacts mc
+      JOIN advertisers a ON a.id = mc.advertiser_id
+     WHERE mc.segment = 'active-advertiser-atx'
+       AND a.publication = 'both'
+       AND mc.email IS NOT NULL
+       AND NOT EXISTS (
+         SELECT 1 FROM mailing_contacts mc2
+          WHERE mc2.segment = 'active-advertiser-sa'
+            AND LOWER(COALESCE(mc2.email, '')) = LOWER(mc.email)
+       )
+  `);
+  // Any remaining 'active-advertiser' rows with no advertiser link (manual
+  // imports etc.) default to ATX.
+  await step(() => sql`
+    UPDATE mailing_contacts SET segment = 'active-advertiser-atx'
+     WHERE segment = 'active-advertiser'
+  `);
+  // 'non-advertiser' -> 'non-advertiser-atx' default.
+  await step(() => sql`
+    UPDATE mailing_contacts SET segment = 'non-advertiser-atx'
+     WHERE segment = 'non-advertiser'
+  `);
   await step(() => sql`ALTER TABLE mailing_contacts DROP CONSTRAINT IF EXISTS mailing_contacts_segment_check`);
-  await step(() => sql`ALTER TABLE mailing_contacts ADD CONSTRAINT mailing_contacts_segment_check CHECK (segment IN ('manual-newsline','non-advertiser','realtor','active-advertiser'))`);
+  await step(() => sql`ALTER TABLE mailing_contacts ADD CONSTRAINT mailing_contacts_segment_check CHECK (segment IN ('manual-newsline','realtor','active-advertiser-atx','active-advertiser-sa','non-advertiser-atx','non-advertiser-sa'))`);
 
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mailing_segment       ON mailing_contacts(segment)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mailing_email_lower   ON mailing_contacts(LOWER(email))`);

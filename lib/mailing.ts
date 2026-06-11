@@ -21,15 +21,42 @@ type Sql = NeonQueryFunction<false, false>;
 // Segments (canonical labels & helpers)
 // ============================================================
 
-export type MailingSegment = 'manual-newsline' | 'non-advertiser' | 'realtor' | 'active-advertiser';
+export type MailingSegment =
+  | 'manual-newsline'
+  | 'realtor'
+  | 'active-advertiser-atx'
+  | 'active-advertiser-sa'
+  | 'non-advertiser-atx'
+  | 'non-advertiser-sa';
 
 export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; caption: string; accent: string }[] = [
   {
-    segment: 'active-advertiser',
-    slug:    'active-advertisers',
-    label:   'Active Advertisers',
-    caption: 'Currently-active advertiser contacts and their staff.',
+    segment: 'active-advertiser-atx',
+    slug:    'active-advertisers-atx',
+    label:   'Active Advertisers - RealtyLine ATX',
+    caption: 'Currently-active RealtyLine ATX advertisers and their staff.',
     accent:  '#2563EB',
+  },
+  {
+    segment: 'active-advertiser-sa',
+    slug:    'active-advertisers-sa',
+    label:   'Active Advertisers - Newsline SA',
+    caption: 'Currently-active Newsline SA advertisers and their staff.',
+    accent:  '#0EA5E9',
+  },
+  {
+    segment: 'non-advertiser-atx',
+    slug:    'non-advertisers-atx',
+    label:   'Non-Advertisers - RealtyLine ATX',
+    caption: 'RealtyLine ATX prospects who haven’t run an ad yet.',
+    accent:  '#F59E0B',
+  },
+  {
+    segment: 'non-advertiser-sa',
+    slug:    'non-advertisers-sa',
+    label:   'Non-Advertisers - Newsline SA',
+    caption: 'Newsline SA prospects who haven’t run an ad yet.',
+    accent:  '#EA580C',
   },
   {
     segment: 'manual-newsline',
@@ -37,13 +64,6 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
     label:   'Manual Newsline Contacts',
     caption: 'Newsline contacts entered or imported manually.',
     accent:  '#10B981',
-  },
-  {
-    segment: 'non-advertiser',
-    slug:    'non-advertisers',
-    label:   'Non-Advertisers',
-    caption: "Prospects and contacts who haven't run an ad yet.",
-    accent:  '#F59E0B',
   },
   {
     segment: 'realtor',
@@ -59,6 +79,11 @@ export function segmentFromSlug(slug: string): MailingSegment | null {
   if (m) return m.segment;
   // Back-compat: old slug 'advertisers' → new segment 'manual-newsline'.
   if (slug === 'advertisers') return 'manual-newsline';
+  // Back-compat for legacy segment slugs prior to the per-publication split:
+  //   /admin/mailing/active-advertisers → ATX variant
+  //   /admin/mailing/non-advertisers    → ATX variant
+  if (slug === 'active-advertisers') return 'active-advertiser-atx';
+  if (slug === 'non-advertisers') return 'non-advertiser-atx';
   return null;
 }
 
@@ -67,7 +92,14 @@ export function slugFromSegment(seg: MailingSegment): string {
 }
 
 export function isMailingSegment(v: unknown): v is MailingSegment {
-  return v === 'manual-newsline' || v === 'non-advertiser' || v === 'realtor' || v === 'active-advertiser';
+  return (
+    v === 'manual-newsline' ||
+    v === 'realtor' ||
+    v === 'active-advertiser-atx' ||
+    v === 'active-advertiser-sa' ||
+    v === 'non-advertiser-atx' ||
+    v === 'non-advertiser-sa'
+  );
 }
 
 // ============================================================
@@ -426,7 +458,15 @@ export async function countBySegment(): Promise<Record<MailingSegment | 'total',
      WHERE stage = 'mailing'
      GROUP BY segment
   `) as unknown as Array<{ segment: MailingSegment; c: number }>;
-  const out = { total: 0, 'manual-newsline': 0, 'non-advertiser': 0, realtor: 0, 'active-advertiser': 0 } as Record<MailingSegment | 'total', number>;
+  const out: Record<MailingSegment | 'total', number> = {
+    total: 0,
+    'manual-newsline':       0,
+    realtor:                 0,
+    'active-advertiser-atx': 0,
+    'active-advertiser-sa':  0,
+    'non-advertiser-atx':    0,
+    'non-advertiser-sa':     0,
+  };
   for (const r of rows) {
     if (isMailingSegment(r.segment)) {
       out[r.segment] = r.c;
@@ -455,10 +495,14 @@ export async function segmentStats(segment: MailingSegment): Promise<SegmentStat
   // the geocode module's runtime deps.
   const NEAR_MI = 60;
 
-  // Manual Newsline Contacts use SABOR (San Antonio Board of REALTORS,
-  // 9110 IH-10 W) as the proximity anchor. All other mailing-stage
+  // Manual Newsline Contacts and any San Antonio segment use SABOR
+  // (9110 IH-10 W) as the proximity anchor. All other mailing-stage
   // segments keep the Austin/Five-Points dual anchor.
-  const rows = segment === 'manual-newsline'
+  const useSaborAnchor =
+    segment === 'manual-newsline' ||
+    segment === 'active-advertiser-sa' ||
+    segment === 'non-advertiser-sa';
+  const rows = useSaborAnchor
     ? ((await sql`
         SELECT
           COUNT(*)::int AS total,
@@ -600,7 +644,7 @@ export async function countHolding(source?: string): Promise<{
 
 export async function createMailingContact(input: MailingContactInput): Promise<MailingContactRow> {
   const sql = getSql();
-  const segment = isMailingSegment(input.segment) ? input.segment : 'non-advertiser';
+  const segment = isMailingSegment(input.segment) ? input.segment : 'non-advertiser-atx';
   const first_name = normString(input.first_name) ?? normString(input.email) ?? '(no name)';
   const tags = Array.isArray(input.tags) ? JSON.stringify(input.tags) : '[]';
 
@@ -1044,11 +1088,14 @@ export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number
 
 /**
  * One-time backfill: copy every currently-active advertiser plus their
- * staff into the 'active-advertiser' segment. Idempotent — if a row
- * with the same email already exists in 'active-advertiser', it's left
- * alone (so re-running this is safe).
+ * staff into the per-publication active-advertiser-atx / -sa segments.
  *
- * Returns counts so the caller can log results.
+ * Routing is driven by advertisers.publication:
+ *   'austin'      -> active-advertiser-atx
+ *   'san_antonio' -> active-advertiser-sa
+ *   'both' (or null/unknown) -> BOTH segments
+ *
+ * Idempotent: dedup is per-segment by lowercased email. Safe to re-run.
  */
 export async function backfillActiveAdvertisersSegment(): Promise<{
   advertisersAdded: number;
@@ -1065,38 +1112,54 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
   const advertisers = (await sql`
     SELECT id, first_name, last_name, name, contact_email, portal_email,
            phone, office_phone, company, title, license_number,
-           address, address_2, city, state, zip, website
+           address, address_2, city, state, zip, website,
+           COALESCE(publication, 'austin') AS publication
       FROM advertisers
      WHERE COALESCE(status, 'active') = 'active'
-  `) as unknown as AdvertiserSyncRow[];
+  `) as unknown as Array<AdvertiserSyncRow & { publication: string }>;
 
-  const findInActiveSegment = async (email: string | null): Promise<string | null> => {
+  const findInSegment = async (
+    seg: MailingSegment,
+    email: string | null,
+  ): Promise<string | null> => {
     if (!email) return null;
     const e = email.trim().toLowerCase();
     if (!e) return null;
     const rows = (await sql`
       SELECT id FROM mailing_contacts
-       WHERE segment = 'active-advertiser'
+       WHERE segment = ${seg}
          AND LOWER(COALESCE(email, '')) = ${e}
        LIMIT 1
     `) as unknown as Array<{ id: string }>;
     return rows[0]?.id ?? null;
   };
 
+  const targetSegmentsFor = (publication: string): MailingSegment[] => {
+    if (publication === 'san_antonio') return ['active-advertiser-sa'];
+    if (publication === 'austin') return ['active-advertiser-atx'];
+    // 'both' or anything unrecognized -> insert into both.
+    return ['active-advertiser-atx', 'active-advertiser-sa'];
+  };
+
   for (const adv of advertisers) {
+    const segments = targetSegmentsFor(adv.publication);
     const primary = advertiserToSource(adv);
+
+    // Primary contact for this advertiser, into each target segment.
     if (primary && primary.email) {
-      try {
-        const existing = await findInActiveSegment(primary.email);
-        if (existing) {
-          skipped += 1;
-        } else {
+      for (const seg of segments) {
+        try {
+          const existing = await findInSegment(seg, primary.email);
+          if (existing) {
+            skipped += 1;
+            continue;
+          }
           await sql`
             INSERT INTO mailing_contacts
               (segment, first_name, last_name, email, phone, company, title, license_number,
                address, address_2, city, state, zip, website, source, advertiser_id, tags)
             VALUES
-              ('active-advertiser',
+              (${seg},
                ${primary.first_name || (primary.email ?? '(no name)')},
                ${primary.last_name},
                ${primary.email},
@@ -1115,14 +1178,14 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
                '["advertiser"]'::jsonb)
           `;
           advertisersAdded += 1;
+        } catch (err) {
+          errors += 1;
+          console.error('[backfill active-advertiser] primary failed for advertiser', adv.id, seg, err);
         }
-      } catch (err) {
-        errors += 1;
-        console.error('[backfill active-advertiser] primary failed for advertiser', adv.id, err);
       }
     }
 
-    // Staff for this advertiser
+    // Staff for this advertiser, into each target segment.
     const staffRows = (await sql`
       SELECT id, name, title, email, phone
         FROM advertiser_staff
@@ -1138,40 +1201,42 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
     for (const s of staffRows) {
       const email = (s.email ?? '').trim();
       if (!email) continue;
-      try {
-        const existing = await findInActiveSegment(email);
-        if (existing) {
-          skipped += 1;
-          continue;
+      const { first_name, last_name } = splitFullName(s.name ?? '');
+      for (const seg of segments) {
+        try {
+          const existing = await findInSegment(seg, email);
+          if (existing) {
+            skipped += 1;
+            continue;
+          }
+          await sql`
+            INSERT INTO mailing_contacts
+              (segment, first_name, last_name, email, phone, company, title, license_number,
+               address, address_2, city, state, zip, website, source, advertiser_id, tags)
+            VALUES
+              (${seg},
+               ${first_name || email},
+               ${last_name || null},
+               ${email},
+               ${s.phone ?? null},
+               ${adv.company ?? null},
+               ${s.title ?? null},
+               ${null},
+               ${adv.address ?? null},
+               ${adv.address_2 ?? null},
+               ${adv.city ?? null},
+               ${adv.state ?? null},
+               ${adv.zip ?? null},
+               ${adv.website ?? null},
+               'backfill:active-advertiser:staff',
+               ${adv.id},
+               '["advertiser","staff"]'::jsonb)
+          `;
+          staffAdded += 1;
+        } catch (err) {
+          errors += 1;
+          console.error('[backfill active-advertiser] staff failed', s.id, seg, err);
         }
-        const { first_name, last_name } = splitFullName(s.name ?? '');
-        await sql`
-          INSERT INTO mailing_contacts
-            (segment, first_name, last_name, email, phone, company, title, license_number,
-             address, address_2, city, state, zip, website, source, advertiser_id, tags)
-          VALUES
-            ('active-advertiser',
-             ${first_name || email},
-             ${last_name || null},
-             ${email},
-             ${s.phone ?? null},
-             ${adv.company ?? null},
-             ${s.title ?? null},
-             ${null},
-             ${adv.address ?? null},
-             ${adv.address_2 ?? null},
-             ${adv.city ?? null},
-             ${adv.state ?? null},
-             ${adv.zip ?? null},
-             ${adv.website ?? null},
-             'backfill:active-advertiser:staff',
-             ${adv.id},
-             '["advertiser","staff"]'::jsonb)
-        `;
-        staffAdded += 1;
-      } catch (err) {
-        errors += 1;
-        console.error('[backfill active-advertiser] staff failed', s.id, err);
       }
     }
   }
