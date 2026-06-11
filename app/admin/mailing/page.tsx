@@ -88,13 +88,15 @@ export default async function MailingHubPage() {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        <KpiCard label="Total subscribers"  value={counts.total} sub="all segments" />
-        <KpiCard label="Active Advertisers" value={counts['active-advertiser']} sub="current advertisers" accent="#2563EB" />
-        <KpiCard label="Manual Newsline"    value={counts['manual-newsline']} sub="manual entries" accent="#10B981" />
-        <KpiCard label="Non-Advertisers"    value={counts['non-advertiser']} sub="prospects"   accent="#F59E0B" />
-        <KpiCard label="REALTORS"           value={counts.realtor}        sub="licensed agents" accent="#3D0740" />
-        <KpiCard label="ABOR Members"       value={holding.total}         sub="awaiting review" accent="#6B7280" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
+        <KpiCard label="Total subscribers"   value={counts.total}                       sub="all segments" />
+        <KpiCard label="Manual Newsline"     value={counts['manual-newsline']}          sub="manual entries"  accent="#10B981" />
+        <KpiCard label="REALTORS"            value={counts.realtor}                     sub="licensed agents" accent="#3D0740" />
+        <KpiCard label="ABOR Members"        value={holding.total}                      sub="awaiting review" accent="#6B7280" />
+        <KpiCard label="Active — ATX"        value={counts['active-advertiser-atx']}    sub="RealtyLine ATX"  accent="#2563EB" />
+        <KpiCard label="Active — SA"         value={counts['active-advertiser-sa']}     sub="Newsline SA"     accent="#0EA5E9" />
+        <KpiCard label="Non-Advertisers — ATX" value={counts['non-advertiser-atx']}     sub="RealtyLine ATX"  accent="#F59E0B" />
+        <KpiCard label="Non-Advertisers — SA"  value={counts['non-advertiser-sa']}      sub="Newsline SA"     accent="#EA580C" />
       </div>
 
       {/* Segment tiles */}
