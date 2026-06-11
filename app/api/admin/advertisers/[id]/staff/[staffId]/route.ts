@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import type { AdvertiserStaff } from '@/lib/advertisers';
+import { upsertStaffMailingByStaffId } from '@/lib/mailing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -100,6 +101,13 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     const locs = (await sql`
       SELECT location_id FROM advertiser_staff_locations WHERE staff_id = ${staffId}::uuid
     `) as unknown as Array<{ location_id: string }>;
+
+    // Best-effort: sync updated staff into the Advertisers mailing segment.
+    try {
+      await upsertStaffMailingByStaffId(staffId);
+    } catch (err) {
+      console.warn('[staff PATCH] mailing upsert failed:', errMessage(err));
+    }
 
     const enriched: AdvertiserStaff = {
       ...staffRows[0],

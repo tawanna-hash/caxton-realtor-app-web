@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import type { AdvertiserStaff } from '@/lib/advertisers';
+import { upsertStaffMailingByStaffId } from '@/lib/mailing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -126,6 +127,13 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
           ON CONFLICT DO NOTHING
         `;
       }
+    }
+
+    // Best-effort: sync this staff member into the Advertisers mailing segment.
+    try {
+      await upsertStaffMailingByStaffId(staff.id);
+    } catch (err) {
+      console.warn('[staff POST] mailing upsert failed:', errMessage(err));
     }
 
     const enriched: AdvertiserStaff = { ...staff, location_ids: locationIds };
