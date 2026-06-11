@@ -88,8 +88,9 @@ export default async function MailingHubPage() {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <KpiCard label="Total subscribers" value={counts.total} sub="all segments" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <KpiCard label="Total subscribers"  value={counts.total} sub="all segments" />
+        <KpiCard label="Active Advertisers" value={counts['active-advertiser']} sub="current advertisers" accent="#2563EB" />
         <KpiCard label="Manual Newsline"    value={counts['manual-newsline']} sub="manual entries" accent="#10B981" />
         <KpiCard label="Non-Advertisers"    value={counts['non-advertiser']} sub="prospects"   accent="#F59E0B" />
         <KpiCard label="REALTORS"           value={counts.realtor}        sub="licensed agents" accent="#3D0740" />
@@ -101,11 +102,7 @@ export default async function MailingHubPage() {
         <h2 className="font-serif text-xl text-gray-900 mb-3">Segments</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {SEGMENTS.map((s) => {
-            const c = s.segment === 'manual-newsline'
-              ? counts['manual-newsline']
-              : s.segment === 'realtor'
-                ? counts.realtor
-                : counts['non-advertiser'];
+            const c = counts[s.segment];
             return (
               <Link
                 key={s.slug}
