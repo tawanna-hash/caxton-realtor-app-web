@@ -1039,51 +1039,108 @@ export async function syncAdvertisersFromAdvertisers(): Promise<{
 }
 
 /**
- * Upsert one advertiser's primary mailing row. Used as an inline hook
- * from the advertiser create/update endpoint so edits on a single
- * advertiser flow into the mailing list immediately (vs. waiting for
- * the cron run).
+ * Upsert one advertiser's primary mailing row into the per-publication
+ * Active Advertisers segment(s). Used as an inline hook from the
+ * advertiser create/update endpoint so edits on a single advertiser
+ * flow into the mailing list immediately.
+ *
+ * Routing by advertisers.publication:
+ *   'austin'      -> active-advertiser-atx
+ *   'san_antonio' -> active-advertiser-sa
+ *   'both' (or unknown) -> BOTH segments
+ *
+ * Status gate: only syncs when advertiser status is 'active'.
+ * Per-segment dedupe by lowercased email; existing rows are updated in place.
  */
-export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number): Promise<{ added: boolean; updated: boolean }> {
+export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number): Promise<{ added: number; updated: number }> {
   const sql = getSql();
   const rows = (await sql`
     SELECT id, first_name, last_name, name, contact_email, portal_email,
            phone, office_phone, company, title, license_number,
            address, address_2, city, state, zip, website,
-           additional_contacts
+           additional_contacts,
+           COALESCE(status, 'active') AS status,
+           COALESCE(publication, 'austin') AS publication
       FROM advertisers
      WHERE id = ${advertiserId}
      LIMIT 1
-  `) as unknown as AdvertiserSyncRow[];
-  if (rows.length === 0) return { added: false, updated: false };
+  `) as unknown as Array<AdvertiserSyncRow & { status: string; publication: string }>;
+  if (rows.length === 0) return { added: 0, updated: 0 };
   const adv = rows[0];
-  const primary = advertiserToSource(adv);
-  if (!primary) return { added: false, updated: false };
 
-  const existingId = await findAdvertiserMailingId(sql, primary);
-  if (existingId) {
-    await sql`
-      UPDATE mailing_contacts
-         SET first_name     = ${primary.first_name || (primary.email ?? '(no name)')},
-             last_name      = ${primary.last_name},
-             email          = ${primary.email},
-             phone          = ${primary.phone},
-             company        = ${primary.company},
-             title          = ${primary.title},
-             license_number = ${primary.license_number},
-             address        = ${primary.address},
-             address_2      = ${primary.address_2},
-             city           = ${primary.city},
-             state          = ${primary.state},
-             zip            = ${primary.zip},
-             website        = ${primary.website},
-             advertiser_id  = ${adv.id}
-       WHERE id = ${existingId}
-    `;
-    return { added: false, updated: true };
+  if (adv.status !== 'active') return { added: 0, updated: 0 };
+  const primary = advertiserToSource(adv);
+  if (!primary || !primary.email) return { added: 0, updated: 0 };
+
+  const targets: MailingSegment[] =
+    adv.publication === 'san_antonio' ? ['active-advertiser-sa']
+    : adv.publication === 'austin'    ? ['active-advertiser-atx']
+    : ['active-advertiser-atx', 'active-advertiser-sa'];
+
+  const findInSeg = async (seg: MailingSegment, email: string): Promise<string | null> => {
+    const e = email.trim().toLowerCase();
+    if (!e) return null;
+    const rows = (await sql`
+      SELECT id FROM mailing_contacts
+       WHERE segment = ${seg}
+         AND LOWER(COALESCE(email, '')) = ${e}
+       LIMIT 1
+    `) as unknown as Array<{ id: string }>;
+    return rows[0]?.id ?? null;
+  };
+
+  let added = 0;
+  let updated = 0;
+  for (const seg of targets) {
+    const existingId = await findInSeg(seg, primary.email);
+    if (existingId) {
+      await sql`
+        UPDATE mailing_contacts
+           SET first_name     = ${primary.first_name || (primary.email ?? '(no name)')},
+               last_name      = ${primary.last_name},
+               email          = ${primary.email},
+               phone          = ${primary.phone},
+               company        = ${primary.company},
+               title          = ${primary.title},
+               license_number = ${primary.license_number},
+               address        = ${primary.address},
+               address_2      = ${primary.address_2},
+               city           = ${primary.city},
+               state          = ${primary.state},
+               zip            = ${primary.zip},
+               website        = ${primary.website},
+               advertiser_id  = ${adv.id}
+         WHERE id = ${existingId}
+      `;
+      updated += 1;
+    } else {
+      await sql`
+        INSERT INTO mailing_contacts
+          (segment, first_name, last_name, email, phone, company, title, license_number,
+           address, address_2, city, state, zip, website, source, advertiser_id, tags)
+        VALUES
+          (${seg},
+           ${primary.first_name || (primary.email ?? '(no name)')},
+           ${primary.last_name},
+           ${primary.email},
+           ${primary.phone},
+           ${primary.company},
+           ${primary.title},
+           ${primary.license_number},
+           ${primary.address},
+           ${primary.address_2},
+           ${primary.city},
+           ${primary.state},
+           ${primary.zip},
+           ${primary.website},
+           'hook:advertiser-upsert',
+           ${adv.id},
+           '["advertiser"]'::jsonb)
+      `;
+      added += 1;
+    }
   }
-  await insertAdvertiserMailing(sql, primary, adv.id, 'hook:advertiser-upsert');
-  return { added: true, updated: false };
+  return { added, updated };
 }
 
 /**
@@ -1245,19 +1302,23 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
 }
 
 /**
- * Upsert one advertiser_staff row into the Advertisers mailing segment.
- * - Only syncs if the parent advertiser status is 'active'.
- * - Requires staff.email to be non-empty.
- * - Tags as ["advertiser","staff"] so admin can distinguish.
- * - Best-effort: returns flags, never throws unhandled.
+ * Upsert one advertiser_staff row into the per-publication Active
+ * Advertisers segment(s).
+ * - Only syncs when the parent advertiser status is 'active' AND staff.email is set.
+ * - Routes by parent advertiser publication (san_antonio -> -sa, austin -> -atx,
+ *   both -> BOTH).
+ * - Per-segment dedup by lowercased email; existing rows are updated in place
+ *   and tagged with ["advertiser","staff"].
+ * - Best-effort: returns counts, never throws unhandled.
  */
 export async function upsertStaffMailingByStaffId(
   staffId: string,
-): Promise<{ added: boolean; updated: boolean; skipped: boolean }> {
+): Promise<{ added: number; updated: number; skipped: boolean }> {
   const sql = getSql();
   const rows = (await sql`
     SELECT s.id, s.advertiser_id, s.name, s.title, s.email, s.phone,
-           a.company, a.status,
+           a.company, COALESCE(a.status, 'active') AS status,
+           COALESCE(a.publication, 'austin') AS publication,
            a.address, a.address_2, a.city, a.state, a.zip, a.website
       FROM advertiser_staff s
       JOIN advertisers a ON a.id = s.advertiser_id
@@ -1271,7 +1332,8 @@ export async function upsertStaffMailingByStaffId(
     email: string | null;
     phone: string | null;
     company: string | null;
-    status: string | null;
+    status: string;
+    publication: string;
     address: string | null;
     address_2: string | null;
     city: string | null;
@@ -1279,82 +1341,86 @@ export async function upsertStaffMailingByStaffId(
     zip: string | null;
     website: string | null;
   }>;
-  if (rows.length === 0) return { added: false, updated: false, skipped: true };
+  if (rows.length === 0) return { added: 0, updated: 0, skipped: true };
   const staff = rows[0];
 
-  // Only sync staff for active advertisers, with a real email.
-  if ((staff.status ?? 'active') !== 'active') return { added: false, updated: false, skipped: true };
+  if (staff.status !== 'active') return { added: 0, updated: 0, skipped: true };
   const email = (staff.email ?? '').trim();
-  if (!email) return { added: false, updated: false, skipped: true };
+  if (!email) return { added: 0, updated: 0, skipped: true };
 
   const { first_name, last_name } = splitFullName(staff.name ?? '');
-  const src: MailingSourceRow = {
-    first_name: first_name || email,
-    last_name:  last_name || null,
-    email,
-    phone:          staff.phone   ?? null,
-    company:        staff.company ?? null,
-    title:          staff.title   ?? null,
-    license_number: null,
-    address:        staff.address   ?? null,
-    address_2:      staff.address_2 ?? null,
-    city:           staff.city      ?? null,
-    state:          staff.state     ?? null,
-    zip:            staff.zip       ?? null,
-    website:        staff.website   ?? null,
+
+  const targets: MailingSegment[] =
+    staff.publication === 'san_antonio' ? ['active-advertiser-sa']
+    : staff.publication === 'austin'    ? ['active-advertiser-atx']
+    : ['active-advertiser-atx', 'active-advertiser-sa'];
+
+  const findInSeg = async (seg: MailingSegment): Promise<string | null> => {
+    const e = email.toLowerCase();
+    const rows = (await sql`
+      SELECT id FROM mailing_contacts
+       WHERE segment = ${seg}
+         AND LOWER(COALESCE(email, '')) = ${e}
+       LIMIT 1
+    `) as unknown as Array<{ id: string }>;
+    return rows[0]?.id ?? null;
   };
 
-  const existingId = await findAdvertiserMailingId(sql, src);
-  if (existingId) {
-    // Update fields but preserve any manually-added tags by merging the staff tag in.
-    await sql`
-      UPDATE mailing_contacts
-         SET first_name     = ${src.first_name || email},
-             last_name      = ${src.last_name},
-             email          = ${src.email},
-             phone          = ${src.phone},
-             company        = ${src.company},
-             title          = ${src.title},
-             address        = ${src.address},
-             address_2      = ${src.address_2},
-             city           = ${src.city},
-             state          = ${src.state},
-             zip            = ${src.zip},
-             website        = ${src.website},
-             advertiser_id  = ${staff.advertiser_id},
-             tags           = CASE
-               WHEN tags @> '["staff"]'::jsonb THEN tags
-               ELSE COALESCE(tags, '[]'::jsonb) || '["staff"]'::jsonb
-             END
-       WHERE id = ${existingId}
-    `;
-    return { added: false, updated: true, skipped: false };
+  let added = 0;
+  let updated = 0;
+  for (const seg of targets) {
+    const existingId = await findInSeg(seg);
+    if (existingId) {
+      await sql`
+        UPDATE mailing_contacts
+           SET first_name     = ${first_name || email},
+               last_name      = ${last_name || null},
+               email          = ${email},
+               phone          = ${staff.phone ?? null},
+               company        = ${staff.company ?? null},
+               title          = ${staff.title ?? null},
+               address        = ${staff.address ?? null},
+               address_2      = ${staff.address_2 ?? null},
+               city           = ${staff.city ?? null},
+               state          = ${staff.state ?? null},
+               zip            = ${staff.zip ?? null},
+               website        = ${staff.website ?? null},
+               advertiser_id  = ${staff.advertiser_id},
+               tags           = CASE
+                 WHEN tags @> '["staff"]'::jsonb THEN tags
+                 ELSE COALESCE(tags, '[]'::jsonb) || '["staff"]'::jsonb
+               END
+         WHERE id = ${existingId}
+      `;
+      updated += 1;
+    } else {
+      await sql`
+        INSERT INTO mailing_contacts
+          (segment, first_name, last_name, email, phone, company, title, license_number,
+           address, address_2, city, state, zip, website, source, advertiser_id, tags)
+        VALUES
+          (${seg},
+           ${first_name || email},
+           ${last_name || null},
+           ${email},
+           ${staff.phone ?? null},
+           ${staff.company ?? null},
+           ${staff.title ?? null},
+           ${null},
+           ${staff.address ?? null},
+           ${staff.address_2 ?? null},
+           ${staff.city ?? null},
+           ${staff.state ?? null},
+           ${staff.zip ?? null},
+           ${staff.website ?? null},
+           'hook:staff-upsert',
+           ${staff.advertiser_id},
+           '["advertiser","staff"]'::jsonb)
+      `;
+      added += 1;
+    }
   }
-
-  await sql`
-    INSERT INTO mailing_contacts
-      (segment, first_name, last_name, email, phone, company, title, license_number,
-       address, address_2, city, state, zip, website, source, advertiser_id, tags)
-    VALUES
-      ('manual-newsline',
-       ${src.first_name || email},
-       ${src.last_name},
-       ${src.email},
-       ${src.phone},
-       ${src.company},
-       ${src.title},
-       ${src.license_number},
-       ${src.address},
-       ${src.address_2},
-       ${src.city},
-       ${src.state},
-       ${src.zip},
-       ${src.website},
-       'hook:staff-upsert',
-       ${staff.advertiser_id},
-       '["advertiser","staff"]'::jsonb)
-  `;
-  return { added: true, updated: false, skipped: false };
+  return { added, updated, skipped: false };
 }
 
 // ============================================================
