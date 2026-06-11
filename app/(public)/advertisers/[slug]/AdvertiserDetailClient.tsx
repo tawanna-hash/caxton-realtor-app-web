@@ -8,7 +8,11 @@
 // pulled from builder_inventory by name.
 
 import Link from 'next/link';
-import type { Advertiser } from '@/lib/advertisers';
+import type {
+  Advertiser,
+  AdvertiserLocation,
+  AdvertiserStaff,
+} from '@/lib/advertisers';
 import type { BuilderInventoryRow } from '@/lib/builder-inventory';
 import { builderNameToSlug } from '@/lib/builder-slug';
 
@@ -17,9 +21,21 @@ type ThemeInfo = { accent: string; label: string };
 type Props = {
   advertiser: Advertiser;
   inventory: BuilderInventoryRow[];
+  locations?: AdvertiserLocation[];
+  staff?: AdvertiserStaff[];
   theme: ThemeInfo;
   backHref: string;
 };
+
+function formatLocationAddress(l: AdvertiserLocation): string | null {
+  const parts: string[] = [];
+  if (l.address) parts.push(l.address);
+  if (l.address_2) parts.push(l.address_2);
+  const cityStateZip = [l.city, l.state].filter(Boolean).join(', ');
+  const tail = [cityStateZip, l.zip].filter(Boolean).join(' ');
+  if (tail) parts.push(tail);
+  return parts.length > 0 ? parts.join(', ') : null;
+}
 
 function normalizeUrl(raw: string | null | undefined): string | null {
   if (!raw) return null;
@@ -56,6 +72,8 @@ function priceRange(r: BuilderInventoryRow): string | null {
 export default function AdvertiserDetailClient({
   advertiser: a,
   inventory,
+  locations = [],
+  staff = [],
   theme,
   backHref,
 }: Props) {
@@ -224,7 +242,7 @@ export default function AdvertiserDetailClient({
             </section>
           )}
 
-          {address && (
+          {locations.length === 0 && address && (
             <section>
               <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
                 Location
@@ -245,6 +263,163 @@ export default function AdvertiserDetailClient({
             </section>
           )}
         </div>
+
+        {locations.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
+              {locations.length === 1 ? 'Location' : 'Locations'}
+            </h2>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {locations.map((loc) => {
+                const locAddr = formatLocationAddress(loc);
+                const dirHref = locAddr
+                  ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(locAddr)}`
+                  : null;
+                return (
+                  <li key={loc.id} className="rounded-xl border border-gray-200 bg-white p-4">
+                    <div className="flex items-baseline justify-between gap-2 mb-1">
+                      <h3
+                        className="text-base font-semibold text-gray-900"
+                        style={{ fontFamily: 'Georgia, serif' }}
+                      >
+                        {loc.label || 'Office'}
+                      </h3>
+                      {loc.is_primary && (
+                        <span
+                          className="text-[10px] uppercase tracking-[0.15em] font-medium px-1.5 py-0.5 rounded"
+                          style={{ background: `${theme.accent}15`, color: theme.accent }}
+                        >
+                          HQ
+                        </span>
+                      )}
+                    </div>
+                    {locAddr && (
+                      <p className="text-sm text-gray-700 font-light leading-relaxed mb-1">
+                        {locAddr}
+                      </p>
+                    )}
+                    <dl className="space-y-0.5 text-sm text-gray-700">
+                      {loc.phone && (
+                        <div>
+                          <dt className="sr-only">Phone</dt>
+                          <dd>
+                            <a href={`tel:${loc.phone}`} className="hover:text-gray-900">
+                              {loc.phone}
+                            </a>
+                          </dd>
+                        </div>
+                      )}
+                      {loc.email && (
+                        <div>
+                          <dt className="sr-only">Email</dt>
+                          <dd>
+                            <a href={`mailto:${loc.email}`} className="hover:text-gray-900">
+                              {loc.email}
+                            </a>
+                          </dd>
+                        </div>
+                      )}
+                      {loc.hours && (
+                        <div>
+                          <dt className="sr-only">Hours</dt>
+                          <dd className="text-gray-600 text-xs mt-1">{loc.hours}</dd>
+                        </div>
+                      )}
+                    </dl>
+                    {dirHref && (
+                      <a
+                        href={dirHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-gray-900 underline underline-offset-2 hover:no-underline"
+                      >
+                        Get directions
+                      </a>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
+        {staff.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
+              Team
+            </h2>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {staff.map((s) => {
+                const assignedLocations = locations.filter((l) => s.location_ids.includes(l.id));
+                return (
+                  <li key={s.id} className="flex gap-3 rounded-xl border border-gray-200 bg-white p-4">
+                    {s.photo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={s.photo_url}
+                        alt={s.name}
+                        className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-lg font-semibold flex-shrink-0">
+                        {s.name
+                          .split(' ')
+                          .map((p) => p[0])
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .join('')
+                          .toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div
+                        className="text-base font-semibold text-gray-900 truncate"
+                        style={{ fontFamily: 'Georgia, serif' }}
+                      >
+                        {s.name}
+                      </div>
+                      {s.title && <div className="text-xs text-gray-600 mb-1">{s.title}</div>}
+                      <dl className="space-y-0.5 text-sm text-gray-700">
+                        {s.email && (
+                          <div className="truncate">
+                            <dt className="sr-only">Email</dt>
+                            <dd>
+                              <a href={`mailto:${s.email}`} className="hover:text-gray-900">
+                                {s.email}
+                              </a>
+                            </dd>
+                          </div>
+                        )}
+                        {s.phone && (
+                          <div>
+                            <dt className="sr-only">Phone</dt>
+                            <dd>
+                              <a href={`tel:${s.phone}`} className="hover:text-gray-900">
+                                {s.phone}
+                              </a>
+                            </dd>
+                          </div>
+                        )}
+                      </dl>
+                      {assignedLocations.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {assignedLocations.map((loc) => (
+                            <span
+                              key={loc.id}
+                              className="text-[10px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600"
+                            >
+                              {loc.label || loc.city || 'Office'}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
 
         {hasSocial && (
           <section className="mb-10">

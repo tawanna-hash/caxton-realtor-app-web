@@ -22,6 +22,7 @@ import type {
   AdvertiserType,
 } from '@/lib/advertisers';
 import { PUBLICATION_OPTIONS } from '@/lib/publication-theme';
+import LocationsStaffEditor from './LocationsStaffEditor';
 
 type Props = { initialRows: AdvertiserCrmRow[] };
 
@@ -633,6 +634,13 @@ function EditDrawer({
               <Field label="State"><input value={form.state} onChange={(e) => update('state', e.target.value)} className={INPUT} /></Field>
               <Field label="ZIP"><input value={form.zip} onChange={(e) => update('zip', e.target.value)} className={INPUT} /></Field>
             </div>
+          </Section>
+
+          <Section title="Locations & staff">
+            <LocationsStaffEditor
+              advertiserId={row.id}
+              onError={(msg) => onError(msg)}
+            />
           </Section>
 
           <Section title="Tags & notes">
