@@ -93,6 +93,51 @@ export interface Advertiser {
   tags?: string[];
 }
 
+// ── Session 19: Locations + Staff ─────────────────────────────────
+export interface AdvertiserLocation {
+  id: string;
+  advertiser_id: number;
+  label: string | null;
+  address: string | null;
+  address_2: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  phone: string | null;
+  email: string | null;
+  hours: string | null;
+  is_primary: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdvertiserStaff {
+  id: string;
+  advertiser_id: number;
+  name: string;
+  title: string | null;
+  email: string | null;
+  phone: string | null;
+  photo_url: string | null;
+  sort_order: number;
+  /** IDs of locations this staff member is assigned to (many-to-many). */
+  location_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export const LOCATION_PATCHABLE_FIELDS = [
+  'label', 'address', 'address_2', 'city', 'state', 'zip',
+  'phone', 'email', 'hours', 'is_primary', 'sort_order',
+] as const;
+export type LocationPatchableField = (typeof LOCATION_PATCHABLE_FIELDS)[number];
+
+export const STAFF_PATCHABLE_FIELDS = [
+  'name', 'title', 'email', 'phone', 'photo_url', 'sort_order',
+] as const;
+export type StaffPatchableField = (typeof STAFF_PATCHABLE_FIELDS)[number];
+
 export interface AdvertiserWithStats extends Advertiser {
   hotspot_count: number;
   clicks_30d: number;

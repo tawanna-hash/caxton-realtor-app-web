@@ -11,7 +11,7 @@
 import { notFound } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
 import { ensurePublicationColumn, getPublicationTheme } from '@/lib/publication-theme';
-import type { Advertiser } from '@/lib/advertisers';
+import type { Advertiser, AdvertiserLocation, AdvertiserStaff } from '@/lib/advertisers';
 import { listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
 import AdvertiserDetailClient from './AdvertiserDetailClient';
 
@@ -78,12 +78,54 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
     return true;
   });
 
+  // Locations + staff (Session 19) — best-effort, non-fatal if tables
+  // don't exist yet (ensureSchema will create them on first request).
+  let locations: AdvertiserLocation[] = [];
+  let staff: AdvertiserStaff[] = [];
+  try {
+    const locRows = (await sql`
+      SELECT * FROM advertiser_locations
+      WHERE advertiser_id = ${advertiser.id}
+      ORDER BY is_primary DESC, sort_order ASC, created_at ASC
+    `) as unknown as AdvertiserLocation[];
+    locations = locRows;
+
+    const staffRows = (await sql`
+      SELECT * FROM advertiser_staff
+      WHERE advertiser_id = ${advertiser.id}
+      ORDER BY sort_order ASC, created_at ASC
+    `) as unknown as Array<Omit<AdvertiserStaff, 'location_ids'>>;
+    const staffIds = staffRows.map((s) => s.id);
+    let joinRows: Array<{ staff_id: string; location_id: string }> = [];
+    if (staffIds.length > 0) {
+      joinRows = (await sql`
+        SELECT staff_id, location_id
+        FROM advertiser_staff_locations
+        WHERE staff_id = ANY(${staffIds}::uuid[])
+      `) as unknown as Array<{ staff_id: string; location_id: string }>;
+    }
+    const staffLocMap = new Map<string, string[]>();
+    for (const j of joinRows) {
+      const arr = staffLocMap.get(j.staff_id) ?? [];
+      arr.push(j.location_id);
+      staffLocMap.set(j.staff_id, arr);
+    }
+    staff = staffRows.map((s) => ({
+      ...s,
+      location_ids: staffLocMap.get(s.id) ?? [],
+    }));
+  } catch (err) {
+    console.warn('[advertiser detail] locations/staff load failed:', err);
+  }
+
   const theme = getPublicationTheme(advertiser.publication);
 
   return (
     <AdvertiserDetailClient
       advertiser={advertiser}
       inventory={inventoryRows}
+      locations={locations}
+      staff={staff}
       theme={{
         accent: theme.primaryColor,
         label:

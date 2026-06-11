@@ -741,4 +741,80 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       created_at       timestamptz NOT NULL DEFAULT now()
     )
   `);
+
+  // ============================================================
+  // Session 19 — Advertiser locations + staff.
+  // Multi-location advertisers (e.g. M/I Homes) need to list each
+  // office and assign staff members to a specific location.
+  // ============================================================
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS advertiser_locations (
+      id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      advertiser_id integer NOT NULL REFERENCES advertisers(id) ON DELETE CASCADE,
+      label         text,
+      address       text,
+      address_2     text,
+      city          text,
+      state         text,
+      zip           text,
+      phone         text,
+      email         text,
+      hours         text,
+      is_primary    boolean NOT NULL DEFAULT false,
+      sort_order    integer NOT NULL DEFAULT 0,
+      created_at    timestamptz NOT NULL DEFAULT now(),
+      updated_at    timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertiser_locations_advertiser ON advertiser_locations(advertiser_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertiser_locations_primary ON advertiser_locations(advertiser_id) WHERE is_primary = true`);
+
+  await step(() => sql`
+    CREATE OR REPLACE FUNCTION trg_advertiser_locations_set_updated_at()
+    RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql
+  `);
+  await step(() => sql`DROP TRIGGER IF EXISTS advertiser_locations_set_updated_at ON advertiser_locations`);
+  await step(() => sql`
+    CREATE TRIGGER advertiser_locations_set_updated_at
+      BEFORE UPDATE ON advertiser_locations
+      FOR EACH ROW EXECUTE FUNCTION trg_advertiser_locations_set_updated_at()
+  `);
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS advertiser_staff (
+      id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      advertiser_id  integer NOT NULL REFERENCES advertisers(id) ON DELETE CASCADE,
+      name           text NOT NULL,
+      title          text,
+      email          text,
+      phone          text,
+      photo_url      text,
+      sort_order     integer NOT NULL DEFAULT 0,
+      created_at     timestamptz NOT NULL DEFAULT now(),
+      updated_at     timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertiser_staff_advertiser ON advertiser_staff(advertiser_id)`);
+
+  // Many-to-many join: a staff member can belong to multiple locations.
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS advertiser_staff_locations (
+      staff_id    uuid NOT NULL REFERENCES advertiser_staff(id) ON DELETE CASCADE,
+      location_id uuid NOT NULL REFERENCES advertiser_locations(id) ON DELETE CASCADE,
+      created_at  timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (staff_id, location_id)
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertiser_staff_locations_location ON advertiser_staff_locations(location_id)`);
+
+  await step(() => sql`
+    CREATE OR REPLACE FUNCTION trg_advertiser_staff_set_updated_at()
+    RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql
+  `);
+  await step(() => sql`DROP TRIGGER IF EXISTS advertiser_staff_set_updated_at ON advertiser_staff`);
+  await step(() => sql`
+    CREATE TRIGGER advertiser_staff_set_updated_at
+      BEFORE UPDATE ON advertiser_staff
+      FOR EACH ROW EXECUTE FUNCTION trg_advertiser_staff_set_updated_at()
+  `);
 }
