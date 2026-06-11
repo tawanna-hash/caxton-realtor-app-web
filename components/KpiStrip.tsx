@@ -78,7 +78,7 @@ export default function KpiStrip() {
         value={data?.topAdvertiser ? data.topAdvertiser.name : '—'}
         sub={data?.topAdvertiser ? `${fmt(data.topAdvertiser.clicks)} clicks` : 'No clicks yet'}
         loading={loading}
-        href="/admin/advertisers"
+        href="/admin/crm"
         valueSmall
       />
       <Tile
@@ -86,7 +86,7 @@ export default function KpiStrip() {
         value={fmt(data?.linkedAdvertisers)}
         sub="With ≥1 tracked hotspot"
         loading={loading}
-        href="/admin/advertisers"
+        href="/admin/crm"
       />
       {error ? (
         <p className="col-span-2 lg:col-span-4 text-[11px] text-amber-700">

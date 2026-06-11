@@ -42,11 +42,10 @@ const ADMIN_GROUPS: { label: string; links: NavItem[] }[] = [
   {
     label: 'CRM & Audience',
     links: [
-      { label: 'CRM', href: '/admin/crm', adminOnly: true },
+      { label: 'Advertisers & CRM', href: '/admin/crm', adminOnly: true },
       { label: 'Mailing', href: '/admin/mailing', adminOnly: true },
       { label: 'ABOR Members', href: '/admin/mailing/holding', adminOnly: true },
       { label: 'SABOR Members', href: '/admin/mailing/sabor-members', adminOnly: true },
-      { label: 'Advertisers', href: '/admin/advertisers', adminOnly: true },
       { label: 'Subscribers', href: '/admin/subscribers', adminOnly: true },
     ],
   },

@@ -21,7 +21,8 @@ import type {
   AdvertiserStatus,
   AdvertiserType,
 } from '@/lib/advertisers';
-import { PUBLICATION_OPTIONS } from '@/lib/publication-theme';
+import type { Publication } from '@/lib/publication-theme';
+import { PUBLICATION_OPTIONS, getPublicationTheme } from '@/lib/publication-theme';
 import LocationsStaffEditor from './LocationsStaffEditor';
 
 type Props = { initialRows: AdvertiserCrmRow[] };
@@ -47,8 +48,15 @@ export default function CrmClient({ initialRows }: Props) {
   const [typeFilter, setTypeFilter] = useState<AdvertiserType | 'all'>('all');
   const [pubFilter, setPubFilter] = useState<string>('all');
   const [editing, setEditing] = useState<AdvertiserCrmRow | null>(null);
+  const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const router = useRouter();
+
+  const flash = useCallback((msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast(null), 1800);
+  }, []);
 
   // ── filtering ───────────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -106,24 +114,33 @@ export default function CrmClient({ initialRows }: Props) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-            Admin · CRM
+            Admin · Advertisers &amp; CRM
           </div>
           <h1 className="text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
             Advertisers &amp; contacts
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            CRM workspace for advertiser relationships. Search, filter, and edit contact details, status, notes, and tags.
+            Unified workspace for advertiser relationships. Search, filter,
+            copy share links, view analytics, and edit contact details, status,
+            notes, and tags.
           </p>
         </div>
         <div className="flex gap-2">
-          <Link
-            href="/admin/advertisers"
-            className="px-4 py-2 rounded border border-gray-300 text-sm text-gray-700 hover:bg-gray-50"
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700"
           >
-            Ad management →
-          </Link>
+            New advertiser
+          </button>
         </div>
       </div>
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 rounded-lg bg-gray-900 text-white text-sm px-4 py-2 shadow-lg">
+          {toast}
+        </div>
+      )}
 
       {error && (
         <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -173,14 +190,15 @@ export default function CrmClient({ initialRows }: Props) {
         </div>
       </div>
 
-      {/* List ───────────────────────────────────────────────────── */}
+      {/* List */}
       <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
         <div className="grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
-          <div className="col-span-4">Contact</div>
-          <div className="col-span-2">Status</div>
+          <div className="col-span-3">Contact</div>
+          <div className="col-span-1">Status</div>
           <div className="col-span-2">Publication</div>
           <div className="col-span-2">Hotspots / 30d</div>
-          <div className="col-span-2">Last touch</div>
+          <div className="col-span-1">Gate</div>
+          <div className="col-span-3 text-right">Actions</div>
         </div>
 
         {filtered.length === 0 ? (
@@ -190,37 +208,27 @@ export default function CrmClient({ initialRows }: Props) {
         ) : (
           <div className="divide-y divide-gray-100">
             {filtered.map((r) => (
-              <button
+              <CrmRow
                 key={r.id}
-                onClick={() => setEditing(r)}
-                className="w-full grid grid-cols-12 gap-3 px-4 py-3 text-left hover:bg-blue-50/40 transition"
-              >
-                <div className="col-span-4 min-w-0">
-                  <div className="font-medium text-gray-900 truncate">{r.name}</div>
-                  <div className="text-xs text-gray-500 truncate">
-                    {[r.contact_email, r.phone].filter(Boolean).join(' · ') || r.slug}
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <StatusBadge status={r.status ?? 'active'} />
-                </div>
-                <div className="col-span-2 text-sm text-gray-700">
-                  {r.publication ?? 'austin'}
-                </div>
-                <div className="col-span-2 text-sm text-gray-700">
-                  {r.hotspot_count} <span className="text-gray-400">·</span>{' '}
-                  <span className="text-gray-500">{r.clicks_30d} clicks</span>
-                </div>
-                <div className="col-span-2 text-sm text-gray-500">
-                  {r.last_click_at ? relativeTime(r.last_click_at) : '—'}
-                </div>
-              </button>
+                row={r}
+                onOpen={() => setEditing(r)}
+                onCopyLink={async () => {
+                  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                  const url = `${origin}/r/advertiser/${r.slug}?t=${r.share_token}`;
+                  try {
+                    await navigator.clipboard.writeText(url);
+                    flash('Share link copied');
+                  } catch {
+                    window.prompt('Copy this URL:', url);
+                  }
+                }}
+              />
             ))}
           </div>
         )}
       </div>
 
-      {/* Edit drawer ─────────────────────────────────────────────── */}
+      {/* Edit drawer */}
       {editing && (
         <EditDrawer
           row={editing}
@@ -229,10 +237,118 @@ export default function CrmClient({ initialRows }: Props) {
             setEditing(null);
             await reload();
           }}
+          onDeleted={async () => {
+            setEditing(null);
+            await reload();
+          }}
+          onError={(msg) => setError(msg)}
+        />
+      )}
+
+      {creating && (
+        <CreateAdvertiserModal
+          onClose={() => setCreating(false)}
+          onCreated={async () => {
+            setCreating(false);
+            await reload();
+          }}
           onError={(msg) => setError(msg)}
         />
       )}
     </div>
+  );
+}
+
+// CrmRow: list-row UI with quick actions (copy share link, analytics, edit).
+function CrmRow({
+  row,
+  onOpen,
+  onCopyLink,
+}: {
+  row: AdvertiserCrmRow;
+  onOpen: () => void;
+  onCopyLink: () => void | Promise<void>;
+}) {
+  return (
+    <div className="grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-blue-50/40 transition">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="col-span-3 min-w-0 text-left"
+      >
+        <div className="font-medium text-gray-900 truncate hover:underline">{row.name}</div>
+        <div className="text-xs text-gray-500 truncate">
+          {[row.contact_email, row.phone].filter(Boolean).join(' - ') || row.slug}
+        </div>
+      </button>
+      <div className="col-span-1">
+        <StatusBadge status={row.status ?? 'active'} />
+      </div>
+      <div className="col-span-2">
+        <PublicationBadge publication={row.publication ?? 'austin'} />
+      </div>
+      <div className="col-span-2 text-sm text-gray-700">
+        {row.hotspot_count} <span className="text-gray-400">/</span>{' '}
+        <span className="text-gray-500">{row.clicks_30d} clicks</span>
+        {row.last_click_at && (
+          <div className="text-xs text-gray-400">
+            last touch {relativeTime(row.last_click_at)}
+          </div>
+        )}
+      </div>
+      <div className="col-span-1 text-xs">
+        {row.requires_email_gate ? (
+          <span className="inline-block px-2 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700">
+            email
+          </span>
+        ) : (
+          <span className="inline-block px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-500">
+            open
+          </span>
+        )}
+      </div>
+      <div className="col-span-3 flex items-center justify-end gap-1.5 flex-wrap">
+        <button
+          type="button"
+          onClick={onCopyLink}
+          className="px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+          title="Copy public share link"
+        >
+          Copy link
+        </button>
+        <Link
+          href={`/admin/analytics/advertiser/${row.id}`}
+          className="px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+          title="Open advertiser analytics"
+        >
+          Analytics
+        </Link>
+        <button
+          type="button"
+          onClick={onOpen}
+          className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
+        >
+          Edit
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PublicationBadge({ publication }: { publication?: Publication }) {
+  const theme = getPublicationTheme(publication);
+  const tone =
+    theme.id === 'san_antonio'
+      ? 'bg-purple-50 text-purple-800 border-purple-200'
+      : theme.id === 'both'
+        ? 'bg-gray-100 text-gray-700 border-gray-200'
+        : 'bg-blue-50 text-blue-800 border-blue-200';
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${tone}`}
+    >
+      {theme.shortName}
+    </span>
   );
 }
 
@@ -281,13 +397,74 @@ function relativeTime(iso: string): string {
 // Edit drawer
 // ─────────────────────────────────────────────────────────────────
 function EditDrawer({
-  row, onClose, onSaved, onError,
+  row, onClose, onSaved, onDeleted, onError,
 }: {
   row: AdvertiserCrmRow;
   onClose: () => void;
   onSaved: () => Promise<void>;
+  onDeleted: () => Promise<void>;
   onError: (msg: string) => void;
 }) {
+  // Ad-management state (publication, contact email, email gate) and
+  // destructive actions (rotate share token, delete). These previously
+  // lived on the standalone /admin/advertisers page; surfacing them here
+  // lets the CRM be the single place for everything about an advertiser.
+  const [publication, setPublication] = useState<Publication>(row.publication ?? 'austin');
+  const [contactEmail, setContactEmail] = useState(row.contact_email ?? '');
+  const [requiresGate, setRequiresGate] = useState<boolean>(row.requires_email_gate ?? false);
+  const [shareToken, setShareToken] = useState<string>(row.share_token);
+  const [shareBusy, setShareBusy] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/r/advertiser/${row.slug}?t=${shareToken}`;
+
+  const copyShareUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1600);
+    } catch {
+      window.prompt('Copy this URL:', shareUrl);
+    }
+  };
+
+  const rotateShareToken = async () => {
+    if (!window.confirm(`Rotate the share token for "${row.name}"? Old share URLs will stop working.`)) {
+      return;
+    }
+    setShareBusy(true);
+    try {
+      const res = await fetch(`/api/admin/advertisers/${row.id}/regenerate-token`, { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data?.advertiser?.share_token) {
+        setShareToken(data.advertiser.share_token);
+      } else if (data?.share_token) {
+        setShareToken(data.share_token);
+      }
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'rotate failed');
+    } finally {
+      setShareBusy(false);
+    }
+  };
+
+  const deleteAdvertiser = async () => {
+    if (!window.confirm(`Delete "${row.name}"? Their hotspot links will be unlinked (hotspots remain).`)) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/advertisers/${row.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await onDeleted();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'delete failed');
+    } finally {
+      setDeleting(false);
+    }
+  };
   // Portal magic-link state — separate from the form so it doesn't bleed
   // into the PATCH payload. Result holds the consume URL + email status
   // returned by /api/admin/portal-links.
@@ -411,6 +588,10 @@ function EditDrawer({
       const payload = {
         ...form,
         tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+        // Ad-management fields merged from the legacy /admin/advertisers page.
+        publication,
+        contact_email: contactEmail.trim() || null,
+        requires_email_gate: requiresGate,
       };
       const res = await fetch(`/api/admin/advertisers/${row.id}`, {
         method: 'PATCH',
@@ -442,6 +623,74 @@ function EditDrawer({
         </div>
 
         <div className="p-6 space-y-6">
+          <Section title="Ad management">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Publication">
+                <select
+                  value={publication}
+                  onChange={(e) => setPublication(e.target.value as Publication)}
+                  className={INPUT}
+                >
+                  {PUBLICATION_OPTIONS.map((p) => (
+                    <option key={p.id} value={p.id}>{p.label}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Contact email (share link)">
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  className={INPUT}
+                  placeholder="contact@example.com"
+                />
+              </Field>
+              <Field label="Email gate" className="col-span-2">
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={requiresGate}
+                    onChange={(e) => setRequiresGate(e.target.checked)}
+                  />
+                  Require email verification before viewing the share link
+                </label>
+              </Field>
+            </div>
+
+            <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2">
+              <div className="text-xs uppercase tracking-wider text-gray-500">Public share link</div>
+              <div className="flex gap-2 items-center">
+                <input
+                  readOnly
+                  value={shareUrl}
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                  className="flex-1 rounded border border-gray-300 px-2 py-1 text-xs font-mono bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={copyShareUrl}
+                  className="shrink-0 rounded border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-50"
+                >
+                  {shareCopied ? 'Copied' : 'Copy'}
+                </button>
+                <button
+                  type="button"
+                  onClick={rotateShareToken}
+                  disabled={shareBusy}
+                  className="shrink-0 rounded border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-50 disabled:opacity-50"
+                >
+                  {shareBusy ? 'Rotating...' : 'Rotate token'}
+                </button>
+              </div>
+              <Link
+                href={`/admin/analytics/advertiser/${row.id}`}
+                className="inline-block text-xs text-blue-600 hover:underline"
+              >
+                Open analytics dashboard
+              </Link>
+            </div>
+          </Section>
+
           <Section title="Classification">
             <div className="grid grid-cols-2 gap-3">
               <Field label="Type">
@@ -658,8 +907,19 @@ function EditDrawer({
           </Section>
 
           <div className="sticky bottom-0 -mx-6 px-6 py-4 bg-white border-t border-gray-200 flex items-center justify-between">
-            <div className="text-xs text-gray-500">
-              Last updated {row.updated_at ? new Date(row.updated_at).toLocaleString() : '—'}
+            <div className="flex items-center gap-3">
+              <div className="text-xs text-gray-500">
+                Last updated {row.updated_at ? new Date(row.updated_at).toLocaleString() : '-'}
+              </div>
+              <button
+                type="button"
+                onClick={deleteAdvertiser}
+                disabled={deleting}
+                className="px-3 py-1.5 rounded border border-red-200 text-red-700 text-xs hover:bg-red-50 disabled:opacity-50"
+                title="Delete this advertiser (hotspots remain, links unlinked)"
+              >
+                {deleting ? 'Deleting...' : 'Delete advertiser'}
+              </button>
             </div>
             <div className="flex gap-2">
               <button onClick={onClose} className="px-4 py-2 rounded border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">
@@ -670,7 +930,7 @@ function EditDrawer({
                 disabled={saving}
                 className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
               >
-                {saving ? 'Saving…' : 'Save changes'}
+                {saving ? 'Saving...' : 'Save changes'}
               </button>
             </div>
           </div>
@@ -699,3 +959,126 @@ function Field({ label, children, className = '' }: { label: string; children: R
     </label>
   );
 }
+
+// Create-advertiser modal: minimal form (name + publication + optional
+// contact email + gate). Replaces the legacy /admin/advertisers modal.
+function CreateAdvertiserModal({
+  onClose,
+  onCreated,
+  onError,
+}: {
+  onClose: () => void;
+  onCreated: () => Promise<void>;
+  onError: (msg: string) => void;
+}) {
+  const [name, setName] = useState('');
+  const [publication, setPublication] = useState<Publication>('austin');
+  const [contactEmail, setContactEmail] = useState('');
+  const [requiresGate, setRequiresGate] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const save = useCallback(async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/advertisers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name.trim(),
+          contact_email: contactEmail.trim() || null,
+          requires_email_gate: requiresGate,
+          publication,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error || `HTTP ${res.status}`);
+      }
+      await onCreated();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'save failed');
+    } finally {
+      setSaving(false);
+    }
+  }, [name, publication, contactEmail, requiresGate, onCreated, onError]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="w-full max-w-lg rounded-xl bg-white shadow-xl border border-gray-200">
+        <div className="px-5 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">New advertiser</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Create the contact record. You can fill in everything else from the edit drawer afterwards.</p>
+        </div>
+        <div className="p-5 space-y-4">
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-gray-700">Name</span>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g. La Cima"
+              disabled={saving}
+              autoFocus
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-gray-700">Publication</span>
+            <select
+              value={publication}
+              onChange={(e) => setPublication(e.target.value as Publication)}
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={saving}
+            >
+              {PUBLICATION_OPTIONS.map((opt) => (
+                <option key={opt.id} value={opt.id}>{opt.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-gray-700">Contact email</span>
+            <input
+              type="email"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="contact@example.com"
+              disabled={saving}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              checked={requiresGate}
+              onChange={(e) => setRequiresGate(e.target.checked)}
+              disabled={saving}
+            />
+            Require email gate before viewing share link
+          </label>
+        </div>
+        <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+            disabled={saving}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={save}
+            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+            disabled={saving || !name.trim()}
+          >
+            {saving ? 'Creating...' : 'Create'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+

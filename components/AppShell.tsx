@@ -49,7 +49,7 @@ const ADMIN_GROUPS: AdminGroup[] = [
   {
     label: 'CRM',
     links: [
-      { label: 'Advertisers', href: '/admin/advertisers', description: 'Active accounts' },
+      { label: 'Advertisers & CRM', href: '/admin/crm', description: 'Accounts, contacts, share links' },
       { label: 'Media Kit',   href: '/admin/media-kit',   description: '2026 packages, rates & deadlines' },
       { label: 'Agreements',  href: '/admin/billing',     description: 'Invoices, sign wizard & payments' },
     ],
