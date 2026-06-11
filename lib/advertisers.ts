@@ -61,6 +61,17 @@ export interface Advertiser {
   office_phone?: string | null;
   website?: string | null;
 
+  // Social URLs (Session 18)
+  facebook_url?: string | null;
+  instagram_url?: string | null;
+  linkedin_url?: string | null;
+  twitter_url?: string | null;
+  youtube_url?: string | null;
+
+  // Public detail page copy (Session 18)
+  tagline?: string | null;
+  bio?: string | null;
+
   // Verification
   email_status?: EmailStatus | null;
   email_verified_at?: string | null;
@@ -103,6 +114,8 @@ export const CRM_PATCHABLE_FIELDS = [
   'first_name', 'last_name', 'company', 'title', 'industry',
   'license_number', 'avatar_url',
   'portal_email', 'phone', 'office_phone', 'website',
+  'facebook_url', 'instagram_url', 'linkedin_url', 'twitter_url', 'youtube_url',
+  'tagline', 'bio',
   'email_status', 'email_verified_at',
   'address', 'address_2', 'city', 'state', 'zip',
   'portal_activated_at', 'portal_onboarded_at',
