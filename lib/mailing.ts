@@ -1035,6 +1035,119 @@ export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number
   return { added: true, updated: false };
 }
 
+/**
+ * Upsert one advertiser_staff row into the Advertisers mailing segment.
+ * - Only syncs if the parent advertiser status is 'active'.
+ * - Requires staff.email to be non-empty.
+ * - Tags as ["advertiser","staff"] so admin can distinguish.
+ * - Best-effort: returns flags, never throws unhandled.
+ */
+export async function upsertStaffMailingByStaffId(
+  staffId: string,
+): Promise<{ added: boolean; updated: boolean; skipped: boolean }> {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT s.id, s.advertiser_id, s.name, s.title, s.email, s.phone,
+           a.company, a.status,
+           a.address, a.address_2, a.city, a.state, a.zip, a.website
+      FROM advertiser_staff s
+      JOIN advertisers a ON a.id = s.advertiser_id
+     WHERE s.id = ${staffId}
+     LIMIT 1
+  `) as unknown as Array<{
+    id: string;
+    advertiser_id: number;
+    name: string | null;
+    title: string | null;
+    email: string | null;
+    phone: string | null;
+    company: string | null;
+    status: string | null;
+    address: string | null;
+    address_2: string | null;
+    city: string | null;
+    state: string | null;
+    zip: string | null;
+    website: string | null;
+  }>;
+  if (rows.length === 0) return { added: false, updated: false, skipped: true };
+  const staff = rows[0];
+
+  // Only sync staff for active advertisers, with a real email.
+  if ((staff.status ?? 'active') !== 'active') return { added: false, updated: false, skipped: true };
+  const email = (staff.email ?? '').trim();
+  if (!email) return { added: false, updated: false, skipped: true };
+
+  const { first_name, last_name } = splitFullName(staff.name ?? '');
+  const src: MailingSourceRow = {
+    first_name: first_name || email,
+    last_name:  last_name || null,
+    email,
+    phone:          staff.phone   ?? null,
+    company:        staff.company ?? null,
+    title:          staff.title   ?? null,
+    license_number: null,
+    address:        staff.address   ?? null,
+    address_2:      staff.address_2 ?? null,
+    city:           staff.city      ?? null,
+    state:          staff.state     ?? null,
+    zip:            staff.zip       ?? null,
+    website:        staff.website   ?? null,
+  };
+
+  const existingId = await findAdvertiserMailingId(sql, src);
+  if (existingId) {
+    // Update fields but preserve any manually-added tags by merging the staff tag in.
+    await sql`
+      UPDATE mailing_contacts
+         SET first_name     = ${src.first_name || email},
+             last_name      = ${src.last_name},
+             email          = ${src.email},
+             phone          = ${src.phone},
+             company        = ${src.company},
+             title          = ${src.title},
+             address        = ${src.address},
+             address_2      = ${src.address_2},
+             city           = ${src.city},
+             state          = ${src.state},
+             zip            = ${src.zip},
+             website        = ${src.website},
+             advertiser_id  = ${staff.advertiser_id},
+             tags           = CASE
+               WHEN tags @> '["staff"]'::jsonb THEN tags
+               ELSE COALESCE(tags, '[]'::jsonb) || '["staff"]'::jsonb
+             END
+       WHERE id = ${existingId}
+    `;
+    return { added: false, updated: true, skipped: false };
+  }
+
+  await sql`
+    INSERT INTO mailing_contacts
+      (segment, first_name, last_name, email, phone, company, title, license_number,
+       address, address_2, city, state, zip, website, source, advertiser_id, tags)
+    VALUES
+      ('manual-newsline',
+       ${src.first_name || email},
+       ${src.last_name},
+       ${src.email},
+       ${src.phone},
+       ${src.company},
+       ${src.title},
+       ${src.license_number},
+       ${src.address},
+       ${src.address_2},
+       ${src.city},
+       ${src.state},
+       ${src.zip},
+       ${src.website},
+       'hook:staff-upsert',
+       ${staff.advertiser_id},
+       '["advertiser","staff"]'::jsonb)
+  `;
+  return { added: true, updated: false, skipped: false };
+}
+
 // ============================================================
 // Holding contacts (staging area, ported from PressBook CRM)
 //

@@ -1,6 +1,7 @@
 // app/admin/mailing/page.tsx
 //
-// Mailing List hub — KPI strip + tiles for each segment.
+// Mailing List HUB — KPI strip + tiles for each segment + tiles for every
+// Audience page (ABOR, SABOR, App Subscribers, Five Points Board, Manual Subscribe).
 
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -19,11 +20,57 @@ async function isAdmin(): Promise<boolean> {
   }
 }
 
+type AudienceTile = {
+  label: string;
+  href: string;
+  caption: string;
+  accent: string;
+  initial: string;
+};
+
 export default async function MailingHubPage() {
   if (!(await isAdmin())) redirect('/admin/login');
   await ensureSchema();
   const counts = await countBySegment();
   const holding = await countHolding();
+
+  const audienceTiles: AudienceTile[] = [
+    {
+      label: 'ABOR Members',
+      href: '/admin/mailing/holding',
+      caption: 'Austin Board of REALTORS — staging & review queue.',
+      accent: '#6B7280',
+      initial: 'A',
+    },
+    {
+      label: 'SABOR Members',
+      href: '/admin/mailing/sabor-members',
+      caption: 'San Antonio Board of REALTORS mirror.',
+      accent: '#0EA5E9',
+      initial: 'S',
+    },
+    {
+      label: 'App Subscribers',
+      href: '/admin/subscribers',
+      caption: 'Newsletter signups from realtynewsnow.app.',
+      accent: '#10B981',
+      initial: 'N',
+    },
+    {
+      label: 'Five Points Board',
+      href: '/admin/five-points-board',
+      caption: 'Five Points board members — coming soon.',
+      accent: '#F59E0B',
+      initial: '5',
+    },
+    {
+      label: 'Manual Subscribe',
+      href: '/subscribe',
+      caption: 'Add a subscriber by hand (public form).',
+      accent: '#3D0740',
+      initial: 'M',
+    },
+  ];
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -32,11 +79,11 @@ export default async function MailingHubPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Audience
         </p>
-        <h1 className="font-serif text-3xl text-gray-900">Mailing List</h1>
+        <h1 className="font-serif text-3xl text-gray-900">Mailing List HUB</h1>
         <p className="mt-2 text-sm text-gray-600 max-w-2xl">
-          Audiences you send to — each segment supports import, export, dedupe, and
-          manual additions. Active advertisers sync into the Advertisers segment
-          automatically.
+          Every audience source in one place — segments, board mirrors, app
+          signups, and manual entries. Active advertisers and their staff sync
+          into the Advertisers segment automatically.
         </p>
       </div>
 
@@ -82,7 +129,7 @@ export default async function MailingHubPage() {
                 <div className="font-serif text-lg text-gray-900">{s.label}</div>
                 <p className="mt-1 text-sm text-gray-600">{s.caption}</p>
                 <div className="mt-3 text-xs font-medium text-gray-700 group-hover:text-gray-900">
-                  Open list →
+                  Open list
                 </div>
               </Link>
             );
@@ -90,42 +137,32 @@ export default async function MailingHubPage() {
         </div>
       </div>
 
-      {/* Holding tile */}
+      {/* Audience pages — every page under Audience nav, surfaced as a tile here */}
       <div>
-        <h2 className="font-serif text-xl text-gray-900 mb-3">Staging</h2>
-        <Link
-          href="/admin/mailing/holding"
-          className="group block rounded-lg border border-gray-200 bg-white p-5 hover:shadow-sm transition"
-        >
-          <div className="flex items-start justify-between mb-3">
-            <div
-              className="h-10 w-10 rounded-md flex items-center justify-center text-sm font-semibold"
-              style={{ backgroundColor: '#6B728015', color: '#6B7280' }}
+        <h2 className="font-serif text-xl text-gray-900 mb-3">Audience pages</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {audienceTiles.map((t) => (
+            <Link
+              key={t.href}
+              href={t.href}
+              className="group block rounded-lg border border-gray-200 bg-white p-5 hover:shadow-sm transition"
             >
-              H
-            </div>
-            <span
-              className="text-xs font-semibold px-2 py-0.5 rounded-full"
-              style={{ backgroundColor: '#6B728015', color: '#6B7280' }}
-            >
-              {holding.total.toLocaleString()}
-            </span>
-          </div>
-          <div className="font-serif text-lg text-gray-900">ABOR Members</div>
-          <p className="mt-1 text-sm text-gray-600">
-            Scraped Austin Board of REALTORS agents awaiting verification.{' '}
-            {holding.verified > 0 ? (
-              <span className="text-green-700 font-medium">
-                {holding.verified.toLocaleString()} ready to promote.
-              </span>
-            ) : (
-              <span className="text-gray-500">No verified entries yet.</span>
-            )}
-          </p>
-          <div className="mt-3 text-xs font-medium text-gray-700 group-hover:text-gray-900">
-            Review &amp; promote →
-          </div>
-        </Link>
+              <div className="flex items-start justify-between mb-3">
+                <div
+                  className="h-10 w-10 rounded-md flex items-center justify-center text-sm font-semibold"
+                  style={{ backgroundColor: `${t.accent}15`, color: t.accent }}
+                >
+                  {t.initial}
+                </div>
+              </div>
+              <div className="font-serif text-lg text-gray-900">{t.label}</div>
+              <p className="mt-1 text-sm text-gray-600">{t.caption}</p>
+              <div className="mt-3 text-xs font-medium text-gray-700 group-hover:text-gray-900">
+                Open page
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Footer hint */}
