@@ -66,7 +66,7 @@ export default function HotspotPerformance() {
           </p>
         </div>
         <Link
-          href="/admin/advertisers"
+          href="/admin/crm"
           className="text-[10px] text-blue-600 uppercase tracking-wider self-start sm:self-auto hover:underline"
         >
           All advertisers
