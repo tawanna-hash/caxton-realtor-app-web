@@ -12,6 +12,16 @@ import type {
 
 type Props = {
   row: BuilderInventoryRow;
+  /**
+   * When 'modal', renders without page-level chrome (back link, prev/next nav,
+   * page title) and shows a close button. When 'page' (default), renders as the
+   * standalone /admin/inventory/[id] page.
+   */
+  variant?: 'page' | 'modal';
+  /** Called after a successful save/delete or when the user clicks close. */
+  onClose?: () => void;
+  /** Called after any successful mutation so parent lists can refresh. */
+  onChanged?: () => void;
 };
 
 const US_STATE_CODES = [
@@ -41,8 +51,14 @@ function formatDateTime(iso: string | null): string {
   });
 }
 
-export default function AdminInventoryDetail({ row }: Props) {
+export default function AdminInventoryDetail({
+  row,
+  variant = 'page',
+  onClose,
+  onChanged,
+}: Props) {
   const router = useRouter();
+  const isModal = variant === 'modal';
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -118,6 +134,7 @@ export default function AdminInventoryDetail({ row }: Props) {
         return;
       }
       setSuccessMessage(successLabel);
+      if (onChanged) onChanged();
       router.refresh();
     } catch (err) {
       setErrorMessage(
@@ -256,7 +273,12 @@ export default function AdminInventoryDetail({ row }: Props) {
         setBusy(false);
         return;
       }
-      router.push('/admin/inventory');
+      if (onChanged) onChanged();
+      if (isModal && onClose) {
+        onClose();
+      } else {
+        router.push('/admin/inventory');
+      }
     } catch (err) {
       setErrorMessage(
         err instanceof Error ? err.message : 'Network error. Try again.',
@@ -266,48 +288,52 @@ export default function AdminInventoryDetail({ row }: Props) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-4">
-        <Link
-          href="/admin/inventory"
-          className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
-        >
-          ← Back to queue
-        </Link>
-        <div className="flex items-center gap-3 text-sm">
-          {neighbors.prevId !== null ? (
-            <Link
-              href={`/admin/inventory/${neighbors.prevId}`}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              ← Prev
-            </Link>
-          ) : (
-            <span className="text-gray-300 cursor-not-allowed">← Prev</span>
-          )}
-          <span className="text-gray-300">|</span>
-          {neighbors.nextId !== null ? (
-            <Link
-              href={`/admin/inventory/${neighbors.nextId}`}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              Next →
-            </Link>
-          ) : (
-            <span className="text-gray-300 cursor-not-allowed">Next →</span>
-          )}
+    <div className={isModal ? '' : 'max-w-6xl mx-auto px-4 py-8'}>
+      {!isModal && (
+        <div className="flex items-center justify-between mb-4">
+          <Link
+            href="/admin/inventory"
+            className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+          >
+            ← Back to queue
+          </Link>
+          <div className="flex items-center gap-3 text-sm">
+            {neighbors.prevId !== null ? (
+              <Link
+                href={`/admin/inventory/${neighbors.prevId}`}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                ← Prev
+              </Link>
+            ) : (
+              <span className="text-gray-300 cursor-not-allowed">← Prev</span>
+            )}
+            <span className="text-gray-300">|</span>
+            {neighbors.nextId !== null ? (
+              <Link
+                href={`/admin/inventory/${neighbors.nextId}`}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                Next →
+              </Link>
+            ) : (
+              <span className="text-gray-300 cursor-not-allowed">Next →</span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="mb-6">
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-          Admin · Review submission
-        </p>
-        <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
-          {row.title}
-        </h1>
-        <p className="text-lg text-gray-700 font-light mt-1">{row.builderName}</p>
-      </div>
+      {!isModal && (
+        <div className="mb-6">
+          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
+            Admin · Review submission
+          </p>
+          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
+            {row.title}
+          </h1>
+          <p className="text-lg text-gray-700 font-light mt-1">{row.builderName}</p>
+        </div>
+      )}
 
       {errorMessage && (
         <div

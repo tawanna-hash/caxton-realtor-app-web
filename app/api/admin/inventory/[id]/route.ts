@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import {
+  getBuilderInventoryById,
   updateBuilderInventory,
   deleteBuilderInventory,
   type UpdateBuilderInventoryInput,
@@ -67,6 +68,37 @@ function coerceReqStr(v: unknown): string | undefined {
   if (v === null) return undefined;
   const s = String(v).trim();
   return s.length === 0 ? undefined : s;
+}
+
+export async function GET(_req: NextRequest, ctx: Ctx) {
+  const admin = await fetchAdmin();
+  if (!admin) {
+    return NextResponse.json(
+      { ok: false, error: 'Unauthorized' },
+      { status: 401 },
+    );
+  }
+
+  const { id: idParam } = await ctx.params;
+  const id = parseId(idParam);
+  if (id == null) {
+    return NextResponse.json({ ok: false, error: 'Invalid id' }, { status: 400 });
+  }
+
+  try {
+    const row = await getBuilderInventoryById(id);
+    if (!row) {
+      return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 });
+    }
+    return NextResponse.json({ ok: true, row });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.error(`[admin/inventory/${id} GET] error:`, msg);
+    return NextResponse.json(
+      { ok: false, error: 'Fetch failed' },
+      { status: 500 },
+    );
+  }
 }
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {

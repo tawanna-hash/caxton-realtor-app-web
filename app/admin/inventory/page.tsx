@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import type {
   BuilderInventoryRow,
   Status,
 } from '@/lib/builder-inventory';
+import EditInventoryModal from '@/components/inventory/EditInventoryModal';
 
 type Tab = 'pending' | 'active' | 'rejected';
 
@@ -20,6 +21,8 @@ export default function AdminInventoryPage() {
   const [rows, setRows] = useState<BuilderInventoryRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [counts, setCounts] = useState<Record<Status, number> | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,7 +52,21 @@ export default function AdminInventoryPage() {
     return () => {
       cancelled = true;
     };
-  }, [tab]);
+  }, [tab, reloadKey]);
+
+  const handleEditClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>, id: number) => {
+      // Allow cmd/ctrl/middle-click to open the dedicated page in a new tab.
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+      e.preventDefault();
+      setEditingId(id);
+    },
+    [],
+  );
+
+  const handleChanged = useCallback(() => {
+    setReloadKey((k) => k + 1);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -123,6 +140,12 @@ export default function AdminInventoryPage() {
           <EmptyState tab={tab} onSwitchTab={setTab} />
         )}
 
+        <EditInventoryModal
+          id={editingId}
+          onClose={() => setEditingId(null)}
+          onChanged={handleChanged}
+        />
+
         {rows != null && rows.length > 0 && (
           <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
             <table className="w-full text-sm">
@@ -180,6 +203,7 @@ export default function AdminInventoryPage() {
                     <td className="px-4 py-3 text-right">
                       <Link
                         href={`/admin/inventory/${r.id}`}
+                        onClick={(e) => handleEditClick(e, r.id)}
                         className="text-sm font-medium text-gray-900 hover:underline"
                       >
                         Review →
