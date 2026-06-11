@@ -383,6 +383,14 @@ function EditDrawer({
     phone:          row.phone          ?? '',
     office_phone:   row.office_phone   ?? '',
     website:        row.website        ?? '',
+    // Public profile (Session 18)
+    tagline:        row.tagline        ?? '',
+    bio:            row.bio            ?? '',
+    facebook_url:   row.facebook_url   ?? '',
+    instagram_url:  row.instagram_url  ?? '',
+    linkedin_url:   row.linkedin_url   ?? '',
+    twitter_url:    row.twitter_url    ?? '',
+    youtube_url:    row.youtube_url    ?? '',
     address:        row.address        ?? '',
     address_2:      row.address_2      ?? '',
     city:           row.city           ?? '',
@@ -464,6 +472,47 @@ function EditDrawer({
               <Field label="Mobile phone"><input value={form.phone} onChange={(e) => update('phone', e.target.value)} className={INPUT} /></Field>
               <Field label="Office phone"><input value={form.office_phone} onChange={(e) => update('office_phone', e.target.value)} className={INPUT} /></Field>
               <Field label="Website" className="col-span-2"><input value={form.website} onChange={(e) => update('website', e.target.value)} className={INPUT} placeholder="https://" /></Field>
+            </div>
+          </Section>
+
+          <Section title="Public profile">
+            <p className="text-xs text-gray-500 mb-3">
+              Shown on the public advertiser page at <span className="font-mono">/advertisers/{row.slug}</span>.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Tagline" className="col-span-2">
+                <input
+                  value={form.tagline}
+                  onChange={(e) => update('tagline', e.target.value)}
+                  className={INPUT}
+                  maxLength={140}
+                  placeholder="One-line description shown under the name"
+                />
+              </Field>
+              <Field label="About / Bio" className="col-span-2">
+                <textarea
+                  value={form.bio}
+                  onChange={(e) => update('bio', e.target.value)}
+                  className={INPUT + ' min-h-[100px]'}
+                  rows={4}
+                  placeholder="Longer description for the public page"
+                />
+              </Field>
+              <Field label="Facebook URL" className="col-span-2">
+                <input value={form.facebook_url} onChange={(e) => update('facebook_url', e.target.value)} className={INPUT} placeholder="https://facebook.com/..." />
+              </Field>
+              <Field label="Instagram URL" className="col-span-2">
+                <input value={form.instagram_url} onChange={(e) => update('instagram_url', e.target.value)} className={INPUT} placeholder="https://instagram.com/..." />
+              </Field>
+              <Field label="LinkedIn URL" className="col-span-2">
+                <input value={form.linkedin_url} onChange={(e) => update('linkedin_url', e.target.value)} className={INPUT} placeholder="https://linkedin.com/..." />
+              </Field>
+              <Field label="X / Twitter URL" className="col-span-2">
+                <input value={form.twitter_url} onChange={(e) => update('twitter_url', e.target.value)} className={INPUT} placeholder="https://x.com/..." />
+              </Field>
+              <Field label="YouTube URL" className="col-span-2">
+                <input value={form.youtube_url} onChange={(e) => update('youtube_url', e.target.value)} className={INPUT} placeholder="https://youtube.com/..." />
+              </Field>
             </div>
           </Section>
 

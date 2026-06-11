@@ -82,6 +82,18 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS portal_activated_at timestamptz`);
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS portal_onboarded_at timestamptz`);
 
+  // Social URLs (Session 18 — public advertiser detail pages)
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS facebook_url text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS instagram_url text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS linkedin_url text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS twitter_url text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS youtube_url text`);
+  // Short tagline shown under the name on the public detail page.
+  // `notes` remains internal-only; `tagline` is the public-facing one-liner.
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS tagline text`);
+  // Long-form description for the public detail page.
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS bio text`);
+
   // Free-form
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS additional_contacts jsonb NOT NULL DEFAULT '[]'::jsonb`);
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS notes text`);

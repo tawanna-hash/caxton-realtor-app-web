@@ -5,9 +5,10 @@
 // (caxton_pub in localStorage) so RealtyLine and Newsline directories
 // stay separate as the user switches publications.
 //
-// Display-only \u2014 per-advertiser detail pages live at
-// /r/advertiser/<slug> but are gated, so this directory does not link
-// out to them.
+// Names link to per-advertiser detail pages at /advertisers/<slug>.
+// A small external-link icon opens the advertiser's company website
+// in a new tab when set. The gated analytics report at
+// /r/advertiser/<slug> is separate and unchanged.
 //
 // Linked from the BottomNav "Advertisers" tab and the NavDrawer Content
 // section.
@@ -30,6 +31,7 @@ type AdvertiserRow = {
   id: number;
   name: string;
   slug: string;
+  website: string | null;
   publication: 'austin' | 'san_antonio' | null;
 };
 
@@ -39,7 +41,7 @@ export default async function AdvertisersDirectoryPage() {
   const sql = getSql();
 
   const rows = (await sql`
-    SELECT id, name, slug, publication
+    SELECT id, name, slug, website, publication
     FROM advertisers
     ORDER BY name ASC
   `) as unknown as AdvertiserRow[];
@@ -48,6 +50,8 @@ export default async function AdvertisersDirectoryPage() {
   const advertisers = rows.map((r) => ({
     id: r.id,
     name: r.name,
+    slug: r.slug,
+    website: r.website,
     publication: (r.publication ?? 'austin') as 'austin' | 'san_antonio',
   }));
 
