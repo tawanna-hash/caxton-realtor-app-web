@@ -6,6 +6,15 @@
 // the LocationsStaffEditor (per-staff headshot). Renders a thumbnail of
 // the current image (or a placeholder), an Upload button, a URL input
 // for direct pasting, and a Remove button.
+//
+// PDF logos: client-side, we render page 1 to a <canvas> via pdfjs-dist
+// and upload the resulting PNG as the avatar. This makes the logo show
+// up in browsers (PDFs would otherwise fall back to the monogram on the
+// public page).
+//
+// AI/EPS/PSD logos: stored as the source file (designers can download)
+// but the browser still can't render them - the public page will fall
+// back to the monogram.
 
 import { useRef, useState } from 'react';
 
@@ -60,6 +69,50 @@ export default function AdvertiserImageUploader({
     inputRef.current?.click();
   };
 
+  // Render page 1 of a PDF to a PNG Blob using pdfjs-dist. Returns null if
+  // anything goes wrong - the caller falls back to uploading the PDF
+  // verbatim, which still preserves the source file (just won't render).
+  async function rasterizePdfFirstPage(file: File): Promise<File | null> {
+    try {
+      const pdfjs = await import('pdfjs-dist');
+      // Tell pdfjs where to find its worker. We use the unpkg CDN copy
+      // pinned to the same version we ship with so it stays in sync.
+      const workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+      pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+
+      const arrayBuf = await file.arrayBuffer();
+      const pdf = await pdfjs.getDocument({ data: arrayBuf }).promise;
+      const page = await pdf.getPage(1);
+      // Aim for ~512px on the longest side - plenty for the 112px header
+      // slot but still crisp on retina displays.
+      const baseViewport = page.getViewport({ scale: 1 });
+      const longestSide = Math.max(baseViewport.width, baseViewport.height);
+      const scale = Math.min(4, Math.max(1, 512 / longestSide));
+      const viewport = page.getViewport({ scale });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      // White background so transparent PDFs don't blend into whatever's
+      // behind them.
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), 'image/png', 0.95),
+      );
+      if (!blob) return null;
+      const safeName = file.name.replace(/\.pdf$/i, '') || 'logo';
+      return new File([blob], `${safeName}.png`, { type: 'image/png' });
+    } catch (err) {
+      console.warn('[AdvertiserImageUploader] PDF rasterization failed', err);
+      return null;
+    }
+  }
+
   const handleFile = async (file: File) => {
     if (uploading) return;
     // For logos we accept image/* plus vector source files (.pdf/.ai/.eps/.psd).
@@ -68,10 +121,30 @@ export default function AdvertiserImageUploader({
       onError?.(`Unsupported file type: ${file.type || file.name}`);
       return;
     }
+
+    // PDF logos: rasterize page 1 to PNG so the browser can render it on
+    // the public page (PDFs would otherwise fall back to the monogram).
+    // The original PDF is discarded.
+    let fileToUpload = file;
+    const isPdf =
+      file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    if (kind === 'logo' && isPdf) {
+      setUploading(true);
+      const rasterized = await rasterizePdfFirstPage(file);
+      setUploading(false);
+      if (rasterized) {
+        fileToUpload = rasterized;
+      } else {
+        onError?.(
+          'Could not render this PDF in the browser. Uploading as-is - the public page will show the monogram fallback. For a visible logo, upload a PNG, JPG, or SVG instead.',
+        );
+      }
+    }
+
     setUploading(true);
     try {
       const fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', fileToUpload);
       fd.append('kind', kind);
       const res = await fetch('/api/admin/advertisers/upload-image', {
         method: 'POST',

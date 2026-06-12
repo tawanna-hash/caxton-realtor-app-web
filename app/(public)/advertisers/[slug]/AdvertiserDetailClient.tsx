@@ -175,20 +175,31 @@ export default function AdvertiserDetailClient({
               </p>
             )}
 
-            {website && (
-              <a
-                href={website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 text-sm font-medium text-white rounded-md transition-opacity hover:opacity-90"
-                style={{ backgroundColor: theme.accent }}
-              >
-                Visit website
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                  <path d="M5 3h6v6M11 3L5.5 8.5M3 5v6h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </a>
-            )}
+            <div className="flex flex-wrap items-center gap-2 mt-4">
+              {website && (
+                <a
+                  href={website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-md transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: theme.accent }}
+                >
+                  Visit website
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path d="M5 3h6v6M11 3L5.5 8.5M3 5v6h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </a>
+              )}
+              {hasSocial && (
+                <ul className="flex flex-wrap items-center gap-1.5" aria-label="Social links">
+                  {fb && <SocialIconLink href={fb} label="Facebook" accent={theme.accent} />}
+                  {ig && <SocialIconLink href={ig} label="Instagram" accent={theme.accent} />}
+                  {li && <SocialIconLink href={li} label="LinkedIn" accent={theme.accent} />}
+                  {tw && <SocialIconLink href={tw} label="X" accent={theme.accent} />}
+                  {yt && <SocialIconLink href={yt} label="YouTube" accent={theme.accent} />}
+                </ul>
+              )}
+            </div>
           </div>
         </header>
 
@@ -383,20 +394,6 @@ export default function AdvertiserDetailClient({
           </section>
         )}
 
-        {hasSocial && (
-          <section className="mb-10">
-            <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
-              Follow
-            </h2>
-            <ul className="flex flex-wrap gap-2">
-              {fb && <SocialPill href={fb} label="Facebook" />}
-              {ig && <SocialPill href={ig} label="Instagram" />}
-              {li && <SocialPill href={li} label="LinkedIn" />}
-              {tw && <SocialPill href={tw} label="X" />}
-              {yt && <SocialPill href={yt} label="YouTube" />}
-            </ul>
-          </section>
-        )}
 
         {(listings.length > 0 || promotions.length > 0) && (
           <section className="border-t border-gray-200 pt-8 mb-10">
@@ -464,16 +461,73 @@ export default function AdvertiserDetailClient({
   );
 }
 
-function SocialPill({ href, label }: { href: string; label: string }) {
+function SocialIcon({ label }: { label: string }) {
+  switch (label) {
+    case 'Facebook':
+      return (
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+          <path d="M13.5 21v-7h2.4l.4-3h-2.8V9.1c0-.9.3-1.5 1.5-1.5h1.5V5c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9V11H8v3h2.3v7h3.2z" />
+        </svg>
+      );
+    case 'Instagram':
+      return (
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+          <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
+          <circle cx="12" cy="12" r="3.8" />
+          <circle cx="17.1" cy="6.9" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case 'LinkedIn':
+      return (
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+          <path d="M6.5 8.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM5 10h3v9H5v-9zm5 0h2.9v1.3h.04c.4-.75 1.4-1.55 2.86-1.55 3.06 0 3.6 2 3.6 4.6V19h-3v-4.1c0-1 0-2.3-1.4-2.3-1.4 0-1.6 1.1-1.6 2.2V19h-3v-9z" />
+        </svg>
+      );
+    case 'X':
+      return (
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+          <path d="M17.5 4h2.8l-6.2 7.1L21.5 20h-5.7l-4.5-5.8L6.2 20H3.4l6.7-7.6L3 4h5.8l4 5.3L17.5 4zm-1 14.4h1.6L7.6 5.5H6L16.5 18.4z" />
+        </svg>
+      );
+    case 'YouTube':
+      return (
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+          <path d="M22 12c0-2.4-.2-4-.6-4.7-.4-.6-1-1-1.6-1.1C18.4 6 12 6 12 6s-6.4 0-7.8.2c-.6.1-1.2.5-1.6 1.1C2.2 8 2 9.6 2 12s.2 4 .6 4.7c.4.6 1 1 1.6 1.1C5.6 18 12 18 12 18s6.4 0 7.8-.2c.6-.1 1.2-.5 1.6-1.1.4-.7.6-2.3.6-4.7zM10 15V9l5 3-5 3z" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+function SocialIconLink({
+  href,
+  label,
+  accent,
+}: {
+  href: string;
+  label: string;
+  accent: string;
+}) {
   return (
     <li>
       <a
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-full hover:border-gray-500 hover:text-gray-900 transition-colors"
+        aria-label={label}
+        title={label}
+        className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 bg-white text-gray-600 hover:text-white transition-colors"
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = accent;
+          e.currentTarget.style.borderColor = accent;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = '';
+          e.currentTarget.style.borderColor = '';
+        }}
       >
-        {label}
+        <SocialIcon label={label} />
       </a>
     </li>
   );
