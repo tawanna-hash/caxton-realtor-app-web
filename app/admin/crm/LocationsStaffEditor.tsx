@@ -179,13 +179,22 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
         method: 'POST',
         body: fd,
       });
-      const data = await res.json().catch(() => ({} as Record<string, unknown>));
+      // Try to parse JSON; if the server returned HTML (e.g. a Vercel 404
+      // page or an auth redirect), fall back to the raw text so the user
+      // sees something more useful than just the status code.
+      const rawText = await res.text();
+      let data: Record<string, unknown> = {};
+      try {
+        data = rawText ? (JSON.parse(rawText) as Record<string, unknown>) : {};
+      } catch {
+        data = { error: rawText.slice(0, 200) || `HTTP ${res.status}` };
+      }
       if (!res.ok) {
         const detail =
           typeof data?.detail === 'string' ? (data.detail as string) :
           typeof data?.error  === 'string' ? (data.error  as string) :
           `HTTP ${res.status}`;
-        throw new Error(detail);
+        throw new Error(`${res.status} — ${detail}`);
       }
       const ins = (data?.inserted ?? {}) as { locations?: number; staff?: number };
       const locCount = Number(ins.locations ?? 0);
@@ -195,9 +204,9 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
       setTimeout(() => setImportMsg(null), 5_000);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'import failed';
-      reportError(`Import failed: ${msg}`);
+      // Show inline only; avoid the duplicate banner at the top of the drawer.
       setImportMsg(`Import failed: ${msg}`);
-      setTimeout(() => setImportMsg(null), 6_000);
+      setTimeout(() => setImportMsg(null), 10_000);
     } finally {
       setImporting(false);
     }
