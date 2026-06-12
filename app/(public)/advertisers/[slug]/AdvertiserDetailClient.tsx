@@ -132,7 +132,7 @@ export default function AdvertiserDetailClient({
 
         {/* Header — logo + identity */}
         <header className="flex items-start gap-5 sm:gap-7 mb-8 sm:mb-10">
-          <div className="shrink-0 w-20 h-20 sm:w-28 sm:h-28 bg-gray-50 border border-gray-200 rounded-md overflow-hidden flex items-center justify-center">
+          <div className="shrink-0 w-28 h-28 sm:w-36 sm:h-36 bg-gray-50 border border-gray-200 rounded-md overflow-hidden flex items-center justify-center">
             {a.avatar_url && isBrowserRenderableImage(a.avatar_url) ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
@@ -142,7 +142,7 @@ export default function AdvertiserDetailClient({
               />
             ) : (
               <span
-                className="text-2xl sm:text-3xl font-semibold"
+                className="text-3xl sm:text-4xl font-semibold"
                 style={{ color: theme.accent }}
                 aria-hidden="true"
               >
@@ -325,16 +325,16 @@ export default function AdvertiserDetailClient({
               {sortedStaff.map((s) => {
                 const assignedLocations = locations.filter((l) => s.location_ids.includes(l.id));
                 return (
-                  <li key={s.id} className="flex gap-3 rounded-xl border border-gray-200 bg-white p-4">
+                  <li key={s.id} className="flex gap-4 rounded-xl border border-gray-200 bg-white p-4">
                     {s.photo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={s.photo_url}
                         alt={s.name}
-                        className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover object-top flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-lg font-semibold flex-shrink-0">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-xl sm:text-2xl font-semibold flex-shrink-0">
                         {s.name
                           .split(' ')
                           .map((p) => p[0])
@@ -548,7 +548,7 @@ function InventoryCardLink({
         href={`/inventory/${row.id}`}
         className="flex items-stretch gap-3 p-3 border border-gray-200 rounded-md hover:border-gray-400 transition-colors"
       >
-        <div className="shrink-0 w-16 h-16 bg-gray-100 border border-gray-200 rounded overflow-hidden">
+        <div className="shrink-0 w-24 h-24 bg-gray-100 border border-gray-200 rounded overflow-hidden">
           {row.thumbnailUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img src={row.thumbnailUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
