@@ -9,11 +9,9 @@
 // so the client can show a summary toast and reload the editor.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { extractFromScreenshot } from '@/lib/server/gemini-screenshot-extract';
-import { formatPhone } from '@/lib/format-phone';
-import { upsertStaffMailingByStaffId } from '@/lib/mailing';
+import { insertExtractedAdvertiserData } from '@/lib/server/advertiser-import-insert';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -80,109 +78,14 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     );
   }
 
-  const { locations: extLocs, staff: extStaff } = result.data;
-
   try {
-    await ensureSchema();
-    const sql = getSql();
-
-    // ── Insert locations, capture new ids in order ────────────────────
-    const insertedLocationIds: string[] = [];
-    // Only honor `is_primary: true` on at most one row. If the advertiser
-    // already has a primary location, we leave it alone (don't steal the
-    // flag from an existing record).
-    const existingPrimary = (await sql`
-      SELECT id FROM advertiser_locations
-      WHERE advertiser_id = ${idNum} AND is_primary = true
-      LIMIT 1
-    `) as unknown as Array<{ id: string }>;
-
-    let primaryAssigned = existingPrimary.length > 0;
-
-    for (let i = 0; i < extLocs.length; i++) {
-      const loc = extLocs[i];
-      const shouldBePrimary = !primaryAssigned && loc.is_primary;
-      if (shouldBePrimary) primaryAssigned = true;
-
-      const rows = (await sql`
-        INSERT INTO advertiser_locations (
-          advertiser_id, label, address, address_2, city, state, zip,
-          phone, email, hours, is_primary, sort_order
-        ) VALUES (
-          ${idNum},
-          ${loc.label},
-          ${loc.address},
-          ${loc.address_2},
-          ${loc.city},
-          ${loc.state},
-          ${loc.zip},
-          ${loc.phone ? (formatPhone(loc.phone) || loc.phone) : null},
-          ${loc.email ? loc.email.toLowerCase() : null},
-          ${loc.hours},
-          ${shouldBePrimary},
-          ${i}
-        )
-        RETURNING id
-      `) as unknown as Array<{ id: string }>;
-      insertedLocationIds.push(rows[0].id);
-    }
-
-    // If we just inserted a primary and there was no existing primary,
-    // we already set is_primary=true on that one row. No global update
-    // needed because we guarded with `primaryAssigned`.
-
-    // ── Insert staff + bind to locations ──────────────────────────────
-    let staffInserted = 0;
-    for (let i = 0; i < extStaff.length; i++) {
-      const s = extStaff[i];
-      if (!s.name) continue;
-
-      const rows = (await sql`
-        INSERT INTO advertiser_staff (
-          advertiser_id, name, title, email, phone, photo_url, sort_order
-        ) VALUES (
-          ${idNum},
-          ${s.name},
-          ${s.title},
-          ${s.email ? s.email.toLowerCase() : null},
-          ${s.phone ? (formatPhone(s.phone) || s.phone) : null},
-          ${s.photo_url},
-          ${i}
-        )
-        RETURNING id
-      `) as unknown as Array<{ id: string }>;
-
-      const staffId = rows[0].id;
-      staffInserted++;
-
-      // location_index is 1-based per the prompt
-      if (
-        s.location_index !== null &&
-        s.location_index >= 1 &&
-        s.location_index <= insertedLocationIds.length
-      ) {
-        const locId = insertedLocationIds[s.location_index - 1];
-        await sql`
-          INSERT INTO advertiser_staff_locations (staff_id, location_id)
-          VALUES (${staffId}::uuid, ${locId}::uuid)
-          ON CONFLICT DO NOTHING
-        `;
-      }
-
-      // Best-effort mailing sync, same as the staff POST route.
-      try {
-        await upsertStaffMailingByStaffId(staffId);
-      } catch (err) {
-        console.warn('[import-screenshot] mailing upsert failed:', errMessage(err));
-      }
-    }
-
+    const counts = await insertExtractedAdvertiserData({
+      advertiserId: idNum,
+      extracted: result.data,
+    });
     return NextResponse.json({
       ok: true,
-      inserted: {
-        locations: insertedLocationIds.length,
-        staff: staffInserted,
-      },
+      inserted: counts,
       extracted: result.data,
     });
   } catch (err) {
