@@ -9,6 +9,29 @@
 
 import { useRef, useState } from 'react';
 
+const PREVIEWABLE_EXTS = new Set(['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'avif', 'ico', 'bmp']);
+
+function fileExtFromUrl(url: string): string {
+  try {
+    // Strip query and hash, take last path segment, take after final dot.
+    const path = url.split('?')[0].split('#')[0];
+    const m = /\.([a-z0-9]{2,5})$/i.exec(path);
+    return m ? m[1].toLowerCase() : '';
+  } catch {
+    return '';
+  }
+}
+
+function isPreviewableImage(url: string): boolean {
+  if (!url) return false;
+  if (url.startsWith('data:image/')) return true;
+  const ext = fileExtFromUrl(url);
+  if (ext) return PREVIEWABLE_EXTS.has(ext);
+  // No detectable extension (e.g. signed URL without extension) — assume it's
+  // an image and let the <img> tag try.
+  return true;
+}
+
 interface Props {
   value: string;
   onChange: (url: string) => void;
@@ -39,7 +62,9 @@ export default function AdvertiserImageUploader({
 
   const handleFile = async (file: File) => {
     if (uploading) return;
-    if (!file.type.startsWith('image/')) {
+    // For logos we accept image/* plus vector source files (.pdf/.ai/.eps/.psd).
+    // Staff photos stay image-only.
+    if (kind === 'staff_photo' && !file.type.startsWith('image/')) {
       onError?.(`Unsupported file type: ${file.type || file.name}`);
       return;
     }
@@ -76,7 +101,11 @@ export default function AdvertiserImageUploader({
       <input
         ref={inputRef}
         type="file"
-        accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+        accept={
+          kind === 'logo'
+            ? 'image/png,image/jpeg,image/webp,image/gif,image/svg+xml,application/pdf,application/postscript,.ai,.eps,.psd'
+            : 'image/png,image/jpeg,image/webp,image/gif,image/svg+xml'
+        }
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
@@ -89,16 +118,27 @@ export default function AdvertiserImageUploader({
         className={`relative w-20 h-20 flex-shrink-0 border border-gray-300 bg-gray-50 overflow-hidden ${rounded}`}
       >
         {value ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={value}
-            alt={emptyLabel}
-            className="w-full h-full object-cover"
-            onError={() => {
-              // Don't unset; admin may still want to edit the URL.
-              // Show a fallback border highlight instead.
-            }}
-          />
+          isPreviewableImage(value) ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={value}
+              alt={emptyLabel}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <a
+              href={value}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full h-full flex flex-col items-center justify-center gap-0.5 text-[10px] text-blue-700 hover:text-blue-900 px-1 text-center break-all leading-tight"
+              title={`Open ${fileExtFromUrl(value).toUpperCase() || 'file'}`}
+            >
+              <span className="text-base" aria-hidden>📄</span>
+              <span className="uppercase tracking-wide font-semibold">
+                {fileExtFromUrl(value) || 'file'}
+              </span>
+            </a>
+          )
         ) : (
           <div className="w-full h-full flex items-center justify-center text-[10px] uppercase tracking-[0.1em] text-gray-400">
             No {emptyLabel}

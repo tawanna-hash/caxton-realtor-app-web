@@ -28,6 +28,22 @@ type Props = {
   backHref: string;
 };
 
+// Admins can upload non-raster logo source files (.pdf, .ai, .eps, .psd) via
+// the CRM modal. Those URLs are valid (designers may want to download them)
+// but a browser <img> can't render them. Detect these so the public page
+// falls back to the initial monogram instead of showing a broken image.
+const BROWSER_IMAGE_EXTS = new Set([
+  'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'avif', 'ico', 'bmp',
+]);
+function isBrowserRenderableImage(url: string): boolean {
+  if (!url) return false;
+  if (url.startsWith('data:image/')) return true;
+  const path = url.split('?')[0].split('#')[0];
+  const m = /\.([a-z0-9]{2,5})$/i.exec(path);
+  if (!m) return true; // no extension — give it the benefit of the doubt
+  return BROWSER_IMAGE_EXTS.has(m[1].toLowerCase());
+}
+
 function formatLocationAddress(l: AdvertiserLocation): string | null {
   const parts: string[] = [];
   if (l.address) parts.push(l.address);
@@ -117,7 +133,7 @@ export default function AdvertiserDetailClient({
         {/* Header — logo + identity */}
         <header className="flex items-start gap-5 sm:gap-7 mb-8 sm:mb-10">
           <div className="shrink-0 w-20 h-20 sm:w-28 sm:h-28 bg-gray-50 border border-gray-200 rounded-md overflow-hidden flex items-center justify-center">
-            {a.avatar_url ? (
+            {a.avatar_url && isBrowserRenderableImage(a.avatar_url) ? (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={a.avatar_url}

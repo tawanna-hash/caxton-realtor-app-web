@@ -30,6 +30,19 @@ function safeExt(file: File): string {
 
 const VALID_KINDS = new Set(['logo', 'staff_photo']);
 
+// Logos often arrive as vector source files from designers (.ai, .eps, .psd)
+// or as PDFs from brand-kit handoffs. Staff photos stay image-only.
+const LOGO_EXTRA_MIME = new Set([
+  'application/pdf',
+  'application/postscript', // .ai, .eps
+  'application/illustrator', // some browsers report this for .ai
+  'image/vnd.adobe.photoshop', // .psd (modern)
+  'application/x-photoshop', // .psd (legacy)
+  'application/photoshop', // .psd (legacy)
+  'application/octet-stream', // fallback when the browser can't sniff a type
+]);
+const LOGO_EXTRA_EXTS = new Set(['pdf', 'ai', 'eps', 'psd']);
+
 export async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) {
@@ -56,18 +69,35 @@ export async function POST(req: NextRequest) {
       { status: 413 },
     );
   }
-  if (file.type && !file.type.startsWith('image/')) {
-    return NextResponse.json(
-      { error: `unsupported file type: ${file.type}` },
-      { status: 400 },
-    );
+  const kindRaw = formData.get('kind');
+  const kind: 'logo' | 'staff_photo' =
+    typeof kindRaw === 'string' && VALID_KINDS.has(kindRaw)
+      ? (kindRaw as 'logo' | 'staff_photo')
+      : 'logo';
+
+  const ext = safeExt(file);
+  const type = file.type || '';
+  const isImage = type.startsWith('image/');
+  const isExtraLogoMime = LOGO_EXTRA_MIME.has(type);
+  const isExtraLogoExt = LOGO_EXTRA_EXTS.has(ext);
+  if (kind === 'logo') {
+    if (!isImage && !isExtraLogoMime && !isExtraLogoExt) {
+      return NextResponse.json(
+        { error: `unsupported file type for logo: ${type || ext}` },
+        { status: 400 },
+      );
+    }
+  } else {
+    // staff_photo stays image-only
+    if (!isImage) {
+      return NextResponse.json(
+        { error: `unsupported file type: ${type || ext}` },
+        { status: 400 },
+      );
+    }
   }
 
-  const kindRaw = formData.get('kind');
-  const kind = typeof kindRaw === 'string' && VALID_KINDS.has(kindRaw) ? kindRaw : 'logo';
-
   try {
-    const ext = safeExt(file);
     const path = `advertisers/${kind}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const blob = await put(path, file, {
       access: 'public',
