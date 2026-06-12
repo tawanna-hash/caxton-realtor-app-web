@@ -46,10 +46,6 @@ function normalizeUrl(raw: string | null | undefined): string | null {
   return `https://${trimmed}`;
 }
 
-function displayUrl(url: string): string {
-  return url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
-}
-
 function formatAddress(a: Advertiser): string | null {
   const parts: string[] = [];
   if (a.address) parts.push(a.address);
@@ -92,8 +88,20 @@ export default function AdvertiserDetailClient({
   const listings = inventory.filter((r) => r.kind === 'listing');
   const promotions = inventory.filter((r) => r.kind === 'promotion');
 
-  const hasContact =
-    !!a.contact_email || !!a.phone || !!a.office_phone || !!website;
+  // Sort locations alphabetically by label (HQ-flagged location still rendered
+  // first so visitors can find the primary office at a glance, but everything
+  // else is alphabetized).
+  const sortedLocations = [...locations].sort((x, y) => {
+    if (x.is_primary && !y.is_primary) return -1;
+    if (!x.is_primary && y.is_primary) return 1;
+    return (x.label || '').localeCompare(y.label || '', undefined, { sensitivity: 'base' });
+  });
+
+  // Staff alphabetized by name.
+  const sortedStaff = [...staff].sort((x, y) =>
+    (x.name || '').localeCompare(y.name || '', undefined, { sensitivity: 'base' }),
+  );
+
   const hasSocial = !!fb || !!ig || !!li || !!tw || !!yt;
 
   return (
@@ -180,69 +188,6 @@ export default function AdvertiserDetailClient({
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8 mb-10">
-          {hasContact && (
-            <section>
-              <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
-                Contact
-              </h2>
-              <dl className="space-y-2 text-sm">
-                {website && (
-                  <div>
-                    <dt className="sr-only">Website</dt>
-                    <dd>
-                      <a
-                        href={website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-gray-900 underline underline-offset-2 hover:no-underline break-all"
-                      >
-                        {displayUrl(website)}
-                      </a>
-                    </dd>
-                  </div>
-                )}
-                {a.contact_email && (
-                  <div>
-                    <dt className="sr-only">Email</dt>
-                    <dd>
-                      <a
-                        href={`mailto:${a.contact_email}`}
-                        className="text-gray-700 hover:text-gray-900 break-all"
-                      >
-                        {a.contact_email}
-                      </a>
-                    </dd>
-                  </div>
-                )}
-                {a.phone && (
-                  <div>
-                    <dt className="sr-only">Mobile phone</dt>
-                    <dd>
-                      <a href={`tel:${a.phone}`} className="text-gray-700 hover:text-gray-900">
-                        {a.phone}
-                      </a>
-                      <span className="text-xs text-gray-400 ml-2">mobile</span>
-                    </dd>
-                  </div>
-                )}
-                {a.office_phone && (
-                  <div>
-                    <dt className="sr-only">Office phone</dt>
-                    <dd>
-                      <a
-                        href={`tel:${a.office_phone}`}
-                        className="text-gray-700 hover:text-gray-900"
-                      >
-                        {a.office_phone}
-                      </a>
-                      <span className="text-xs text-gray-400 ml-2">office</span>
-                    </dd>
-                  </div>
-                )}
-              </dl>
-            </section>
-          )}
-
           {locations.length === 0 && address && (
             <section>
               <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
@@ -265,13 +210,13 @@ export default function AdvertiserDetailClient({
           )}
         </div>
 
-        {locations.length > 0 && (
+        {sortedLocations.length > 0 && (
           <section className="mb-10">
             <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
-              {locations.length === 1 ? 'Location' : 'Locations'}
+              {sortedLocations.length === 1 ? 'Location' : 'Locations'}
             </h2>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {locations.map((loc) => {
+              {sortedLocations.map((loc) => {
                 const locAddr = formatLocationAddress(loc);
                 const dirHref = locAddr
                   ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(locAddr)}`
@@ -283,7 +228,7 @@ export default function AdvertiserDetailClient({
                         className="text-base font-semibold text-gray-900"
                         style={{ fontFamily: 'Georgia, serif' }}
                       >
-                        {loc.label || 'Office'}
+                        {loc.label ? toTitleCaseName(loc.label) : 'Office'}
                       </h3>
                       {loc.is_primary && (
                         <span
@@ -344,13 +289,13 @@ export default function AdvertiserDetailClient({
           </section>
         )}
 
-        {staff.length > 0 && (
+        {sortedStaff.length > 0 && (
           <section className="mb-10">
             <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
               Team
             </h2>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {staff.map((s) => {
+              {sortedStaff.map((s) => {
                 const assignedLocations = locations.filter((l) => s.location_ids.includes(l.id));
                 return (
                   <li key={s.id} className="flex gap-3 rounded-xl border border-gray-200 bg-white p-4">
@@ -409,7 +354,7 @@ export default function AdvertiserDetailClient({
                               key={loc.id}
                               className="text-[10px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600"
                             >
-                              {loc.label || loc.city || 'Office'}
+                              {toTitleCaseName(loc.label || loc.city || 'Office')}
                             </span>
                           ))}
                         </div>
