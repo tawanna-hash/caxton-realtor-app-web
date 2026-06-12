@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
-import { countBySegment, countHolding, SEGMENTS } from '@/lib/mailing';
+import { countAudienceSources, countBySegment, SEGMENTS } from '@/lib/mailing';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,8 +31,16 @@ type AudienceTile = {
 export default async function MailingHubPage() {
   if (!(await isAdmin())) redirect('/admin/login');
   await ensureSchema();
-  const counts = await countBySegment();
-  const holding = await countHolding();
+  // Headline KPIs come from two sources:
+  //  - countBySegment(): all stage='mailing' segment counts.
+  //  - countAudienceSources(): ABoR (unlockmls), SABOR (ramco-sabor),
+  //    and app subscribers (realtors table). These match what each
+  //    dedicated page reports, so the HUB tiles agree with their
+  //    destination pages.
+  const [counts, sources] = await Promise.all([
+    countBySegment(),
+    countAudienceSources(),
+  ]);
 
   const audienceTiles: AudienceTile[] = [
     {
@@ -89,14 +97,16 @@ export default async function MailingHubPage() {
 
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
-        <KpiCard label="Total subscribers"   value={counts.total}                       sub="all segments" />
-        <KpiCard label="Manual Newsline"     value={counts['manual-newsline']}          sub="manual entries"  accent="#10B981" />
-        <KpiCard label="REALTORS"            value={counts.realtor}                     sub="licensed agents" accent="#3D0740" />
-        <KpiCard label="ABOR Members"        value={holding.total}                      sub="awaiting review" accent="#6B7280" />
-        <KpiCard label="Active — ATX"        value={counts['active-advertiser-atx']}    sub="RealtyLine ATX"  accent="#2563EB" />
-        <KpiCard label="Active — SA"         value={counts['active-advertiser-sa']}     sub="Newsline SA"     accent="#0EA5E9" />
-        <KpiCard label="Non-Advertisers — ATX" value={counts['non-advertiser-atx']}     sub="RealtyLine ATX"  accent="#F59E0B" />
-        <KpiCard label="Non-Advertisers — SA"  value={counts['non-advertiser-sa']}      sub="Newsline SA"     accent="#EA580C" />
+        <KpiCard label="Segments total"      value={counts.total}                       sub="all mailing segments" />
+        <KpiCard label="Manual Newsline"     value={counts['manual-newsline']}          sub="manual entries"      accent="#10B981" />
+        <KpiCard label="REALTORS"            value={counts.realtor}                     sub="licensed agents"     accent="#3D0740" />
+        <KpiCard label="ABOR Members"        value={sources.aborMembers}                sub="UnlockMLS holding"   accent="#6B7280" />
+        <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#0EA5E9" />
+        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="newsletter signups"  accent="#10B981" />
+        <KpiCard label="Active — ATX"        value={counts['active-advertiser-atx']}    sub="RealtyLine ATX"      accent="#2563EB" />
+        <KpiCard label="Active — SA"         value={counts['active-advertiser-sa']}     sub="Newsline SA"         accent="#0EA5E9" />
+        <KpiCard label="Non-Advertisers — ATX" value={counts['non-advertiser-atx']}     sub="RealtyLine ATX"      accent="#F59E0B" />
+        <KpiCard label="Non-Advertisers — SA"  value={counts['non-advertiser-sa']}      sub="Newsline SA"         accent="#EA580C" />
       </div>
 
       {/* Segment tiles */}

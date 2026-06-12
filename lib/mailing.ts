@@ -638,6 +638,49 @@ export async function countHolding(source?: string): Promise<{
   };
 }
 
+/**
+ * Headline KPI counts for the Mailing List HUB. Each value is scoped to
+ * its own source so the tiles match what the dedicated page renders.
+ *
+ * - aborMembers: holding rows from ABoR (UnlockMLS) only.
+ * - saborMembers: holding rows from SABOR (RAMCO) only.
+ * - appSubscribers: rows in the `realtors` table (newsletter signups).
+ */
+export async function countAudienceSources(): Promise<{
+  aborMembers:    number;
+  saborMembers:   number;
+  appSubscribers: number;
+}> {
+  const sql = getSql();
+  const [aborRow] = (await sql`
+    SELECT COUNT(*)::int AS c
+      FROM mailing_contacts
+     WHERE stage = 'holding' AND external_source = 'unlockmls'
+  `) as unknown as Array<{ c: number }>;
+  const [saborRow] = (await sql`
+    SELECT COUNT(*)::int AS c
+      FROM mailing_contacts
+     WHERE stage = 'holding' AND external_source = 'ramco-sabor'
+  `) as unknown as Array<{ c: number }>;
+  // App subscribers live in the `realtors` table (newsletter signups
+  // from realtynewsnow.app). Wrapped in a try/catch so a missing/empty
+  // table doesn't blow up the whole HUB page.
+  let appSubscribers = 0;
+  try {
+    const [subRow] = (await sql`
+      SELECT COUNT(*)::int AS c FROM realtors
+    `) as unknown as Array<{ c: number }>;
+    appSubscribers = subRow?.c ?? 0;
+  } catch {
+    appSubscribers = 0;
+  }
+  return {
+    aborMembers:    aborRow?.c  ?? 0,
+    saborMembers:   saborRow?.c ?? 0,
+    appSubscribers,
+  };
+}
+
 // ============================================================
 // Create / update / delete
 // ============================================================
