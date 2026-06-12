@@ -34,8 +34,8 @@ export type ExtractResult =
   | { isEvent: false; confidence: number }
   | { ok: false; reason: 'no-key' | 'rate-limit' | 'parse-error' | 'http-error'; detail?: string };
 
-// gemini-1.5-flash-latest tracks the most recent stable Flash model.
-const MODEL = process.env.GEMINI_MODEL ?? 'gemini-1.5-flash-latest';
+// gemini-2.5-flash is the current GA Flash model (1.5-flash-latest was retired May 2025).
+const MODEL = process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 // 6 s per request — Flash is fast, anything longer is almost certainly
