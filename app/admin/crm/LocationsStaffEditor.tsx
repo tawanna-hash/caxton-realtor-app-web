@@ -30,6 +30,12 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
+  // Website-sync state. syncSource is the human label ("Austin Title
+  // website") if a parser exists for this advertiser's domain, else null.
+  const [syncSource, setSyncSource] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
   const reportError = useCallback(
     (msg: string) => {
       if (onError) onError(msg);
@@ -65,6 +71,51 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
   // are meant for. Disable for this single line.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { reload(); }, [reload]);
+
+  // Probe whether this advertiser has a configured website-sync source.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/admin/advertisers/${advertiserId}/website-sync`);
+        if (!res.ok) return;
+        const j = await res.json();
+        if (!cancelled) setSyncSource(j?.source?.label ?? null);
+      } catch {
+        /* ignore — Sync button just stays hidden */
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [advertiserId]);
+
+  const handleWebsiteSync = useCallback(async () => {
+    if (syncing) return;
+    setSyncing(true);
+    setSyncMsg('Syncing from website...');
+    try {
+      const res = await fetch(`/api/admin/advertisers/${advertiserId}/website-sync`, {
+        method: 'POST',
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail: string = j?.detail || j?.error || `HTTP ${res.status}`;
+        setSyncMsg(`Sync failed: ${detail}`);
+        return;
+      }
+      const c = j?.counts ?? {};
+      const locTxt =
+        `${c.locationsInserted ?? 0} new / ${c.locationsUpdated ?? 0} updated location` +
+        ((c.locationsInserted ?? 0) + (c.locationsUpdated ?? 0) === 1 ? '' : 's');
+      const staffTxt =
+        `${c.staffInserted ?? 0} new / ${c.staffUpdated ?? 0} updated staff`;
+      setSyncMsg(`Synced from ${j.source}: ${locTxt}, ${staffTxt}.`);
+      await reload();
+    } catch (err) {
+      setSyncMsg(`Sync failed: ${err instanceof Error ? err.message : 'unknown error'}`);
+    } finally {
+      setSyncing(false);
+    }
+  }, [advertiserId, syncing, reload]);
 
   // ── Location CRUD ───────────────────────────────────────────────
   const addLocation = async () => {
@@ -296,6 +347,46 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Sync-from-website affordance (only shown when a parser exists
+          for this advertiser's domain). */}
+      {syncSource && (
+        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-[200px]">
+            <div className="text-sm font-medium text-gray-800">
+              Sync from {syncSource}
+            </div>
+            <div className="text-xs text-gray-500">
+              Pulls fresh locations and staff from the live website. Safe to
+              re-run — existing rows are matched and updated, new rows are
+              added, and your edits are preserved.
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleWebsiteSync}
+            disabled={syncing}
+            className={`px-3 py-1.5 rounded text-sm font-medium border transition-colors ${
+              syncing
+                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-wait'
+                : 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
+            }`}
+          >
+            {syncing ? 'Syncing...' : 'Sync now'}
+          </button>
+        </div>
+      )}
+      {syncMsg && (
+        <div
+          className={`text-xs px-3 py-2 rounded ${
+            syncMsg.startsWith('Sync failed')
+              ? 'bg-red-50 text-red-700 border border-red-200'
+              : 'bg-blue-50 text-blue-700 border border-blue-200'
+          }`}
+        >
+          {syncMsg}
+        </div>
+      )}
+
       {/* Hidden file input shared by the import drop-zone */}
       <input
         ref={fileInputRef}
