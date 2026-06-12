@@ -10,6 +10,7 @@ import type {
   AudienceFilter,
 } from '@/lib/marketing-campaigns';
 import { summarizeAudience } from '@/lib/marketing-campaigns';
+import { toTitleCaseName } from '@/lib/format-name';
 
 type CampaignDetail = {
   campaign: MarketingCampaign;
@@ -657,7 +658,7 @@ function DetailDrawer({
                       <tbody>
                         {audience.sample.map((s) => (
                           <tr key={s.id} className="border-t border-gray-100">
-                            <td className="px-3 py-2">{s.name}</td>
+                            <td className="px-3 py-2">{toTitleCaseName(s.name)}</td>
                             <td className="px-3 py-2 text-gray-600">{s.company ?? ''}</td>
                             <td className="px-3 py-2"><StatusPill value={s.status ?? '—'} /></td>
                             <td className="px-3 py-2 text-gray-600">{s.publication ?? ''}</td>

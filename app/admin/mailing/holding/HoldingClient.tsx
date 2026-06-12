@@ -24,6 +24,7 @@ import type {
   VerifyStatus,
 } from '@/lib/mailing';
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
+import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 
 type Counts = { total: number; verified: number; pending: number; near: number; far: number };
 type FilterKey = 'all' | 'verified' | 'pending';
@@ -584,7 +585,7 @@ export default function HoldingClient() {
             )}
             {!loading && rows.map((r) => {
               const hasAddr = !!(r.address || r.city || r.state || r.zip);
-              const fullName = [r.first_name, r.last_name].filter(Boolean).join(' ');
+              const fullName = toTitleCaseName([r.first_name, r.last_name].filter(Boolean).join(' '));
               return (
                 <tr
                   key={r.id}
@@ -600,9 +601,19 @@ export default function HoldingClient() {
                   </td>
                   <td className="px-3 py-2">
                     <div className="text-gray-900 font-medium">{fullName || '—'}</div>
-                    {r.title && <div className="text-[11px] text-gray-500">{r.title}</div>}
+                    {r.title && <div className="text-[11px] text-gray-500">{toTitleCaseRole(r.title)}</div>}
                   </td>
-                  <td className="px-3 py-2 text-gray-700">{r.email ?? ''}</td>
+                  <td className="px-3 py-2 text-gray-700">
+                    {r.email ? (
+                      <a
+                        href={`mailto:${r.email}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        {r.email}
+                      </a>
+                    ) : ''}
+                  </td>
                   <td className="px-3 py-2 text-gray-700 text-xs">
                     {formatPhone(r.phone)}
                     {r.mobile_phone && <div className="text-[10px] text-gray-500">m: {formatPhone(r.mobile_phone)}</div>}
