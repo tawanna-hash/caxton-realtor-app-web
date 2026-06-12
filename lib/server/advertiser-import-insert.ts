@@ -7,6 +7,7 @@
 
 import { getSql, ensureSchema } from '@/lib/db';
 import { formatPhone } from '@/lib/format-phone';
+import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 import { upsertStaffMailingByStaffId } from '@/lib/mailing';
 import type {
   ExtractedLocation,
@@ -52,13 +53,16 @@ export async function insertExtractedAdvertiserData(args: {
     const shouldBePrimary = !primaryAssigned && loc.is_primary;
     if (shouldBePrimary) primaryAssigned = true;
 
+    // Title-case the label too ("HARTLAND PLAZA" -> "Hartland Plaza").
+    const normalizedLabel = loc.label ? toTitleCaseRole(loc.label) : null;
+
     const rows = (await sql`
       INSERT INTO advertiser_locations (
         advertiser_id, label, address, address_2, city, state, zip,
         phone, email, hours, is_primary, sort_order
       ) VALUES (
         ${advertiserId},
-        ${loc.label},
+        ${normalizedLabel},
         ${loc.address},
         ${loc.address_2},
         ${loc.city},
@@ -80,13 +84,17 @@ export async function insertExtractedAdvertiserData(args: {
     const s = extracted.staff[i];
     if (!s.name) continue;
 
+    // Title-case the imported name + role (sources often render in ALL CAPS).
+    const normalizedName = toTitleCaseName(s.name);
+    const normalizedTitle = s.title ? toTitleCaseRole(s.title) : null;
+
     const rows = (await sql`
       INSERT INTO advertiser_staff (
         advertiser_id, name, title, email, phone, photo_url, sort_order
       ) VALUES (
         ${advertiserId},
-        ${s.name},
-        ${s.title},
+        ${normalizedName},
+        ${normalizedTitle},
         ${s.email ? s.email.toLowerCase() : null},
         ${s.phone ? (formatPhone(s.phone) || s.phone) : null},
         ${s.photo_url},

@@ -30,6 +30,7 @@ import {
   type VerifyStatus,
 } from '@/lib/mailing';
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
+import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 
 type Stats = { total: number; verified: number; pending: number; near: number; far: number };
 type FilterKey = 'all' | 'verified' | 'pending';
@@ -651,7 +652,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             )}
             {!loading && rows.map((r) => {
               const hasAddr = !!(r.address || r.city || r.state || r.zip);
-              const fullName = [r.first_name, r.last_name].filter(Boolean).join(' ');
+              const fullName = toTitleCaseName([r.first_name, r.last_name].filter(Boolean).join(' '));
               return (
                 <tr
                   key={r.id}
@@ -668,11 +669,21 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                   {isVisible('name') && (
                     <td className="px-3 py-2">
                       <div className="text-gray-900 font-medium">{fullName || '—'}</div>
-                      {r.title && <div className="text-[11px] text-gray-500">{r.title}</div>}
+                      {r.title && <div className="text-[11px] text-gray-500">{toTitleCaseRole(r.title)}</div>}
                     </td>
                   )}
                   {isVisible('email') && (
-                    <td className="px-3 py-2 text-gray-700">{r.email ?? ''}</td>
+                    <td className="px-3 py-2 text-gray-700">
+                      {r.email ? (
+                        <a
+                          href={`mailto:${r.email}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          {r.email}
+                        </a>
+                      ) : ''}
+                    </td>
                   )}
                   {isVisible('phone') && (
                     <td className="px-3 py-2 text-gray-700 text-xs">

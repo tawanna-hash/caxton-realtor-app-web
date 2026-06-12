@@ -457,12 +457,24 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
                   inputMode="tel"
                   className={INPUT}
                 />
-                <input
-                  value={loc.email ?? ''}
-                  onChange={(e) => patchLocation(loc.id, { email: e.target.value })}
-                  placeholder="Office email"
-                  className={INPUT}
-                />
+                <div className="flex items-center gap-1">
+                  <input
+                    value={loc.email ?? ''}
+                    onChange={(e) => patchLocation(loc.id, { email: e.target.value })}
+                    placeholder="Office email"
+                    className={`${INPUT} flex-1`}
+                  />
+                  {loc.email && (
+                    <a
+                      href={`mailto:${loc.email}`}
+                      title={`Email ${loc.email}`}
+                      className="text-blue-600 hover:text-blue-800 text-base px-1"
+                      tabIndex={-1}
+                    >
+                      ✉
+                    </a>
+                  )}
+                </div>
               </div>
               <input
                 value={loc.hours ?? ''}
@@ -525,12 +537,24 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
                 className={INPUT}
               />
               <div className="grid grid-cols-2 gap-2">
-                <input
-                  value={s.email ?? ''}
-                  onChange={(e) => patchStaff(s.id, { email: e.target.value })}
-                  placeholder="Email"
-                  className={INPUT}
-                />
+                <div className="flex items-center gap-1">
+                  <input
+                    value={s.email ?? ''}
+                    onChange={(e) => patchStaff(s.id, { email: e.target.value })}
+                    placeholder="Email"
+                    className={`${INPUT} flex-1`}
+                  />
+                  {s.email && (
+                    <a
+                      href={`mailto:${s.email}`}
+                      title={`Email ${s.email}`}
+                      className="text-blue-600 hover:text-blue-800 text-base px-1"
+                      tabIndex={-1}
+                    >
+                      ✉
+                    </a>
+                  )}
+                </div>
                 <input
                   value={s.phone ?? ''}
                   onChange={(e) => patchStaff(s.id, { phone: formatPhoneInput(e.target.value) })}

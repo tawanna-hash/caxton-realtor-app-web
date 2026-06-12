@@ -15,6 +15,7 @@ import type {
 } from '@/lib/advertisers';
 import type { BuilderInventoryRow } from '@/lib/builder-inventory';
 import { builderNameToSlug } from '@/lib/builder-slug';
+import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 
 type ThemeInfo = { accent: string; label: string };
 
@@ -376,9 +377,9 @@ export default function AdvertiserDetailClient({
                         className="text-base font-semibold text-gray-900 truncate"
                         style={{ fontFamily: 'Georgia, serif' }}
                       >
-                        {s.name}
+                        {toTitleCaseName(s.name)}
                       </div>
-                      {s.title && <div className="text-xs text-gray-600 mb-1">{s.title}</div>}
+                      {s.title && <div className="text-xs text-gray-600 mb-1">{toTitleCaseRole(s.title)}</div>}
                       <dl className="space-y-0.5 text-sm text-gray-700">
                         {s.email && (
                           <div className="truncate">
