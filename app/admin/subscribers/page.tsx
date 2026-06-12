@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import { PUBLICATIONS, PUBLICATION_LABELS } from '@/lib/publications';
+import { formatPhone } from '@/lib/format-phone';
 
 type Subscriber = {
   id: string;
@@ -180,7 +181,7 @@ export default function SubscribersPage() {
                        s.license_type === 'NMLS' && s.nmls_license_number ? `NMLS ${s.nmls_license_number}` :
                        s.license_type || '-'}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{s.mobile || '-'}</td>
+                    <td className="px-4 py-3 text-gray-600">{formatPhone(s.mobile) || '-'}</td>
                     <td className="px-4 py-3 text-gray-600">{s.city || '-'}</td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(s.created_at)}</td>
                     <td className="px-4 py-3 text-gray-600">{formatDate(s.last_app_open_at || s.last_login_at)}</td>

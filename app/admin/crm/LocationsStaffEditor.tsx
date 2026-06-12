@@ -10,6 +10,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { AdvertiserLocation, AdvertiserStaff } from '@/lib/advertisers';
+import { formatPhoneInput } from '@/lib/format-phone';
 
 const INPUT = 'w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
 
@@ -252,8 +253,9 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
               <div className="grid grid-cols-2 gap-2">
                 <input
                   value={loc.phone ?? ''}
-                  onChange={(e) => patchLocation(loc.id, { phone: e.target.value })}
-                  placeholder="Office phone"
+                  onChange={(e) => patchLocation(loc.id, { phone: formatPhoneInput(e.target.value) })}
+                  placeholder="(000) 000-0000"
+                  inputMode="tel"
                   className={INPUT}
                 />
                 <input
@@ -332,8 +334,9 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
                 />
                 <input
                   value={s.phone ?? ''}
-                  onChange={(e) => patchStaff(s.id, { phone: e.target.value })}
-                  placeholder="Direct phone"
+                  onChange={(e) => patchStaff(s.id, { phone: formatPhoneInput(e.target.value) })}
+                  placeholder="(000) 000-0000"
+                  inputMode="tel"
                   className={INPUT}
                 />
               </div>

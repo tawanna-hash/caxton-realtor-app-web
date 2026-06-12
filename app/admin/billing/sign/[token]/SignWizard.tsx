@@ -28,6 +28,7 @@ import {
   computeTotal,
   computeExp,
 } from '@/lib/agreement-pricing';
+import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 
 const ACCENT = '#D22531';
 const CURRENT_YEAR = new Date().getFullYear().toString();
@@ -262,7 +263,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
   const [companyName, setCompanyName] = useState(ag.company_name ?? '');
   const [repName, setRepName] = useState(ag.rep_name ?? '');
   const [advertiserEmail, setAdvertiserEmail] = useState(ag.advertiser_email ?? '');
-  const [advertiserPhone, setAdvertiserPhone] = useState(ag.advertiser_phone ?? '');
+  const [advertiserPhone, setAdvertiserPhone] = useState(formatPhone(ag.advertiser_phone ?? ''));
   const [address, setAddress] = useState(ag.address ?? '');
   const [city, setCity] = useState(ag.city ?? '');
   const [stateVal, setStateVal] = useState(ag.state ?? '');
@@ -283,7 +284,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
   const [billTo, setBillTo] = useState<string>(ag.bill_to ?? 'Advertiser');
   const [billingEmail, setBillingEmail] = useState(ag.billing_email ?? '');
   const [billingContactName, setBillingContactName] = useState(ag.billing_contact_name ?? '');
-  const [billingContactPhone, setBillingContactPhone] = useState(ag.billing_contact_phone ?? '');
+  const [billingContactPhone, setBillingContactPhone] = useState(formatPhone(ag.billing_contact_phone ?? ''));
   const [paymentType, setPaymentType] = useState<string>(
     ag.card_type || ag.payment_mode === 'card'
       ? 'Credit Card'
@@ -532,7 +533,8 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
               label="Phone"
               type="tel"
               value={advertiserPhone}
-              onChange={setAdvertiserPhone}
+              onChange={(v) => setAdvertiserPhone(formatPhoneInput(v))}
+              placeholder="(000) 000-0000"
             />
             <EditableField
               label="Address"
@@ -805,7 +807,8 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
               label="Billing Contact Phone"
               type="tel"
               value={billingContactPhone}
-              onChange={setBillingContactPhone}
+              onChange={(v) => setBillingContactPhone(formatPhoneInput(v))}
+              placeholder="(000) 000-0000"
             />
           </div>
 

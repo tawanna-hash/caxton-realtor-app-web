@@ -23,6 +23,7 @@ import type {
 } from '@/lib/advertisers';
 import type { Publication } from '@/lib/publication-theme';
 import { PUBLICATION_OPTIONS, getPublicationTheme } from '@/lib/publication-theme';
+import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 import LocationsStaffEditor from './LocationsStaffEditor';
 
 type Props = { initialRows: AdvertiserCrmRow[] };
@@ -278,7 +279,7 @@ function CrmRow({
       >
         <div className="font-medium text-gray-900 truncate hover:underline">{row.name}</div>
         <div className="text-xs text-gray-500 truncate">
-          {[row.contact_email, row.phone].filter(Boolean).join(' - ') || row.slug}
+          {[row.contact_email, formatPhone(row.phone)].filter(Boolean).join(' - ') || row.slug}
         </div>
       </button>
       <div className="col-span-1">
@@ -558,8 +559,8 @@ function EditDrawer({
     title:          row.title          ?? '',
     industry:       row.industry       ?? '',
     license_number: row.license_number ?? '',
-    phone:          row.phone          ?? '',
-    office_phone:   row.office_phone   ?? '',
+    phone:          formatPhone(row.phone),
+    office_phone:   formatPhone(row.office_phone),
     website:        row.website        ?? '',
     // Public profile (Session 18)
     tagline:        row.tagline        ?? '',
@@ -719,8 +720,8 @@ function EditDrawer({
 
           <Section title="Contact">
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Mobile phone"><input value={form.phone} onChange={(e) => update('phone', e.target.value)} className={INPUT} /></Field>
-              <Field label="Office phone"><input value={form.office_phone} onChange={(e) => update('office_phone', e.target.value)} className={INPUT} /></Field>
+              <Field label="Mobile phone"><input value={form.phone} onChange={(e) => update('phone', formatPhoneInput(e.target.value))} className={INPUT} placeholder="(000) 000-0000" inputMode="tel" /></Field>
+              <Field label="Office phone"><input value={form.office_phone} onChange={(e) => update('office_phone', formatPhoneInput(e.target.value))} className={INPUT} placeholder="(000) 000-0000" inputMode="tel" /></Field>
               <Field label="Website" className="col-span-2"><input value={form.website} onChange={(e) => update('website', e.target.value)} className={INPUT} placeholder="https://" /></Field>
             </div>
           </Section>

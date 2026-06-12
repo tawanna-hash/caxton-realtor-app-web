@@ -29,6 +29,7 @@ import {
   type CanonicalImportField,
   type VerifyStatus,
 } from '@/lib/mailing';
+import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 
 type Stats = { total: number; verified: number; pending: number; near: number; far: number };
 type FilterKey = 'all' | 'verified' | 'pending';
@@ -675,7 +676,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                   )}
                   {isVisible('phone') && (
                     <td className="px-3 py-2 text-gray-700 text-xs">
-                      {r.phone ?? ''}
+                      {formatPhone(r.phone)}
                       {r.mobile_phone && <div className="text-[10px] text-gray-500">m: {r.mobile_phone}</div>}
                     </td>
                   )}
@@ -1087,8 +1088,8 @@ function EditDrawer({
     state:          row.state ?? '',
     zip:            row.zip ?? '',
     license_number: row.license_number ?? '',
-    phone:          row.phone ?? '',
-    mobile_phone:   row.mobile_phone ?? '',
+    phone:          formatPhone(row.phone),
+    mobile_phone:   formatPhone(row.mobile_phone),
     email_notes:    row.email_notes ?? '',
   });
   const [saving, setSaving] = useState(false);
@@ -1111,8 +1112,8 @@ function EditDrawer({
         state:          row.state ?? '',
         zip:            row.zip ?? '',
         license_number: row.license_number ?? '',
-        phone:          row.phone ?? '',
-        mobile_phone:   row.mobile_phone ?? '',
+        phone:          formatPhone(row.phone),
+        mobile_phone:   formatPhone(row.mobile_phone),
         email_notes:    row.email_notes ?? '',
       });
     });
@@ -1259,7 +1260,7 @@ function EditDrawer({
             <DrawerField label="State"        value={form.state}          onChange={(v) => setField('state', v)} />
             <DrawerField label="ZIP Code"     value={form.zip}            onChange={(v) => setField('zip', v)} />
             <DrawerField label="TREC License" value={form.license_number} onChange={(v) => setField('license_number', v)} />
-            <DrawerField label="Phone"        value={form.phone}          onChange={(v) => setField('phone', v)} type="tel" />
+            <DrawerField label="Phone"        value={form.phone}          onChange={(v) => setField('phone', formatPhoneInput(v))} type="tel" placeholder="(000) 000-0000" />
             <DrawerField label="Mobile / Cell" value={form.mobile_phone}  onChange={(v) => setField('mobile_phone', v)} type="tel" />
           </div>
 
@@ -1315,13 +1316,15 @@ function EditDrawer({
 }
 
 function DrawerField({
-  label, value, onChange, className, type,
+  label, value, onChange, className, type, placeholder, inputMode,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   className?: string;
   type?: string;
+  placeholder?: string;
+  inputMode?: React.InputHTMLAttributes<HTMLInputElement>['inputMode'];
 }) {
   return (
     <label className={`block ${className ?? ''}`}>
@@ -1332,6 +1335,8 @@ function DrawerField({
         type={type ?? 'text'}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        inputMode={inputMode}
         className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#3D0740]"
       />
     </label>
@@ -1389,7 +1394,7 @@ function AddDialog({
           <Field label="First name *" value={form.first_name}     onChange={(v) => set('first_name', v)} />
           <Field label="Last name"    value={form.last_name}      onChange={(v) => set('last_name', v)} />
           <Field label="Email"        value={form.email}          onChange={(v) => set('email', v)} type="email" />
-          <Field label="Phone"        value={form.phone}          onChange={(v) => set('phone', v)} />
+          <Field label="Phone"        value={form.phone}          onChange={(v) => set('phone', formatPhoneInput(v))} placeholder="(000) 000-0000" />
           <Field label="Company"      value={form.company}        onChange={(v) => set('company', v)} />
           <Field label="Title"        value={form.title}          onChange={(v) => set('title', v)} />
           <Field label="License #"    value={form.license_number} onChange={(v) => set('license_number', v)} />
@@ -1420,8 +1425,12 @@ function AddDialog({
 }
 
 function Field({
-  label, value, onChange, type = 'text', className = '',
-}: { label: string; value: string; onChange: (v: string) => void; type?: string; className?: string }) {
+  label, value, onChange, type = 'text', className = '', placeholder, inputMode,
+}: {
+  label: string; value: string; onChange: (v: string) => void; type?: string; className?: string;
+  placeholder?: string;
+  inputMode?: React.InputHTMLAttributes<HTMLInputElement>['inputMode'];
+}) {
   return (
     <label className={`block ${className}`}>
       <span className="block text-xs font-medium text-gray-700 mb-1">{label}</span>
@@ -1429,6 +1438,8 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        inputMode={inputMode}
         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200"
       />
     </label>

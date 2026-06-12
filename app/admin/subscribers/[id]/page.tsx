@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import { PUBLICATION_LABELS, type PublicationId } from '@/lib/publications';
+import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 
 type Subscriber = Record<string, any> & { id: string };
 
@@ -68,7 +69,7 @@ function subToForm(sub: Subscriber): EditableState {
     trec_license_number: s(sub.trec_license_number),
     nmls_license_number: s(sub.nmls_license_number),
     brokerage_name: s(sub.brokerage_name),
-    mobile: s(sub.mobile),
+    mobile: formatPhone(s(sub.mobile)),
     mailing_address: s(sub.mailing_address),
     mailing_address_2: s(sub.mailing_address_2),
     city: s(sub.city),
@@ -250,7 +251,10 @@ export default function SubscriberDetailPage({ params }: { params: Promise<{ id:
     setEditing(false); setForm(null); setSaveError(null);
   }
   function updateField(name: keyof EditableState, v: string) {
-    setForm((prev) => (prev ? { ...prev, [name]: v } : prev));
+    // Live-format phone-like fields so the value the user sees matches
+    // the canonical (000) 000-0000 layout used across the admin.
+    const next = name === 'mobile' ? formatPhoneInput(v) : v;
+    setForm((prev) => (prev ? { ...prev, [name]: next } : prev));
   }
   async function save() {
     if (!form || !sub) return;
@@ -464,7 +468,7 @@ return (
           <Section title="Contact">
             {editing && f ? (
               <>
-                <EditableField label="Mobile" name="mobile" value={f.mobile} onChange={updateField} placeholder="555-555-5555" />
+                <EditableField label="Mobile" name="mobile" value={f.mobile} onChange={updateField} placeholder="(000) 000-0000" />
                 <EditableField label="Mailing address" name="mailing_address" value={f.mailing_address} onChange={updateField} />
                 <EditableField label="Address line 2" name="mailing_address_2" value={f.mailing_address_2} onChange={updateField} />
                 <EditableField label="City" name="city" value={f.city} onChange={updateField} />
@@ -473,7 +477,7 @@ return (
               </>
             ) : (
               <>
-                <Field label="Mobile" value={sub.mobile || sub.mobile_phone} />
+                <Field label="Mobile" value={formatPhone(sub.mobile || sub.mobile_phone) || '-'} />
                 <Field label="Mailing address" value={sub.mailing_address || sub.mailing_address_line1} />
                 <Field label="Address line 2" value={sub.mailing_address_2 || sub.mailing_address_line2} />
                 <Field label="City" value={sub.city || sub.mailing_city} />
