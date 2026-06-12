@@ -16,6 +16,7 @@ import type {
 import type { BuilderInventoryRow } from '@/lib/builder-inventory';
 import { builderNameToSlug } from '@/lib/builder-slug';
 import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
+import AdvertiserHeader from '@/components/AdvertiserHeader';
 
 type ThemeInfo = { accent: string; label: string };
 
@@ -27,22 +28,6 @@ type Props = {
   theme: ThemeInfo;
   backHref: string;
 };
-
-// Admins can upload non-raster logo source files (.pdf, .ai, .eps, .psd) via
-// the CRM modal. Those URLs are valid (designers may want to download them)
-// but a browser <img> can't render them. Detect these so the public page
-// falls back to the initial monogram instead of showing a broken image.
-const BROWSER_IMAGE_EXTS = new Set([
-  'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'avif', 'ico', 'bmp',
-]);
-function isBrowserRenderableImage(url: string): boolean {
-  if (!url) return false;
-  if (url.startsWith('data:image/')) return true;
-  const path = url.split('?')[0].split('#')[0];
-  const m = /\.([a-z0-9]{2,5})$/i.exec(path);
-  if (!m) return true; // no extension — give it the benefit of the doubt
-  return BROWSER_IMAGE_EXTS.has(m[1].toLowerCase());
-}
 
 function formatLocationAddress(l: AdvertiserLocation): string | null {
   const parts: string[] = [];
@@ -118,8 +103,6 @@ export default function AdvertiserDetailClient({
     (x.name || '').localeCompare(y.name || '', undefined, { sensitivity: 'base' }),
   );
 
-  const hasSocial = !!fb || !!ig || !!li || !!tw || !!yt;
-
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
@@ -130,78 +113,25 @@ export default function AdvertiserDetailClient({
           ← All advertisers
         </Link>
 
-        {/* Header — logo + identity */}
-        <header className="flex items-start gap-5 sm:gap-7 mb-8 sm:mb-10">
-          <div className="shrink-0 w-28 h-28 sm:w-36 sm:h-36 bg-gray-50 border border-gray-200 rounded-md overflow-hidden flex items-center justify-center">
-            {a.avatar_url && isBrowserRenderableImage(a.avatar_url) ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={a.avatar_url}
-                alt={`${a.name} logo`}
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <span
-                className="text-3xl sm:text-4xl font-semibold"
-                style={{ color: theme.accent }}
-                aria-hidden="true"
-              >
-                {a.name.slice(0, 1).toUpperCase()}
-              </span>
-            )}
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <p
-              className="text-xs uppercase tracking-[0.2em] font-medium mb-2"
-              style={{ color: theme.accent }}
-            >
-              {theme.label}
-            </p>
-            <h1
-              className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight"
-              style={{ fontFamily: 'Georgia, serif' }}
-            >
-              {a.name}
-            </h1>
-            {a.tagline && (
-              <p className="text-base sm:text-lg text-gray-700 font-light mt-2 leading-relaxed">
-                {a.tagline}
-              </p>
-            )}
-            {a.industry && (
-              <p className="text-sm text-gray-500 font-light mt-1">
-                {a.industry}
-              </p>
-            )}
-
-            <div className="flex flex-wrap items-center gap-2 mt-4">
-              {website && (
-                <a
-                  href={website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-md transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: theme.accent }}
-                >
-                  Visit website
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                    <path d="M5 3h6v6M11 3L5.5 8.5M3 5v6h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </a>
-              )}
-              {hasSocial && (
-                <ul className="flex flex-wrap items-center gap-1.5" aria-label="Social links">
-                  {fb && <SocialIconLink href={fb} label="Facebook" accent={theme.accent} />}
-                  {ig && <SocialIconLink href={ig} label="Instagram" accent={theme.accent} />}
-                  {li && <SocialIconLink href={li} label="LinkedIn" accent={theme.accent} />}
-                  {tw && <SocialIconLink href={tw} label="X" accent={theme.accent} />}
-                  {yt && <SocialIconLink href={yt} label="YouTube" accent={theme.accent} />}
-                </ul>
-              )}
-            </div>
-          </div>
-        </header>
+        {/* Header is one of six layouts; admin picks per-advertiser. */}
+        <AdvertiserHeader
+          style={a.header_style}
+          theme={theme}
+          data={{
+            name: a.name,
+            tagline: a.tagline ?? null,
+            industry: a.industry ?? null,
+            avatar_url: a.avatar_url ?? null,
+            website,
+            social: {
+              Facebook: fb,
+              Instagram: ig,
+              LinkedIn: li,
+              X: tw,
+              YouTube: yt,
+            },
+          }}
+        />
 
         {a.bio && (
           <section className="mb-10">
@@ -458,78 +388,6 @@ export default function AdvertiserDetailClient({
         </div>
       </div>
     </main>
-  );
-}
-
-function SocialIcon({ label }: { label: string }) {
-  switch (label) {
-    case 'Facebook':
-      return (
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-          <path d="M13.5 21v-7h2.4l.4-3h-2.8V9.1c0-.9.3-1.5 1.5-1.5h1.5V5c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9V11H8v3h2.3v7h3.2z" />
-        </svg>
-      );
-    case 'Instagram':
-      return (
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-          <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
-          <circle cx="12" cy="12" r="3.8" />
-          <circle cx="17.1" cy="6.9" r="1" fill="currentColor" stroke="none" />
-        </svg>
-      );
-    case 'LinkedIn':
-      return (
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-          <path d="M6.5 8.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM5 10h3v9H5v-9zm5 0h2.9v1.3h.04c.4-.75 1.4-1.55 2.86-1.55 3.06 0 3.6 2 3.6 4.6V19h-3v-4.1c0-1 0-2.3-1.4-2.3-1.4 0-1.6 1.1-1.6 2.2V19h-3v-9z" />
-        </svg>
-      );
-    case 'X':
-      return (
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-          <path d="M17.5 4h2.8l-6.2 7.1L21.5 20h-5.7l-4.5-5.8L6.2 20H3.4l6.7-7.6L3 4h5.8l4 5.3L17.5 4zm-1 14.4h1.6L7.6 5.5H6L16.5 18.4z" />
-        </svg>
-      );
-    case 'YouTube':
-      return (
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-          <path d="M22 12c0-2.4-.2-4-.6-4.7-.4-.6-1-1-1.6-1.1C18.4 6 12 6 12 6s-6.4 0-7.8.2c-.6.1-1.2.5-1.6 1.1C2.2 8 2 9.6 2 12s.2 4 .6 4.7c.4.6 1 1 1.6 1.1C5.6 18 12 18 12 18s6.4 0 7.8-.2c.6-.1 1.2-.5 1.6-1.1.4-.7.6-2.3.6-4.7zM10 15V9l5 3-5 3z" />
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
-
-function SocialIconLink({
-  href,
-  label,
-  accent,
-}: {
-  href: string;
-  label: string;
-  accent: string;
-}) {
-  return (
-    <li>
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={label}
-        title={label}
-        className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-200 bg-white text-gray-600 hover:text-white transition-colors"
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = accent;
-          e.currentTarget.style.borderColor = accent;
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = '';
-          e.currentTarget.style.borderColor = '';
-        }}
-      >
-        <SocialIcon label={label} />
-      </a>
-    </li>
   );
 }
 

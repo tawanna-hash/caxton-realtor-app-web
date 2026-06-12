@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { slugify, CRM_PATCHABLE_FIELDS, type Advertiser } from '@/lib/advertisers';
+import { coerceHeaderStyle } from '@/lib/advertiser-header-styles';
 import {
   ensurePublicationColumn, type Publication,
 } from '@/lib/publication-theme';
@@ -177,6 +178,13 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         // so edits saved through the admin modal silently dropped on the
         // floor. (Found 2026-06-12.)
         case 'tagline':             await sql`UPDATE advertisers SET tagline = ${val}                    WHERE id = ${idNum}`; break;
+        case 'header_style': {
+          // Unknown/invalid values collapse to 'current' so the column
+          // can never hold a value the public renderer doesn't know about.
+          const style = coerceHeaderStyle(val);
+          await sql`UPDATE advertisers SET header_style = ${style} WHERE id = ${idNum}`;
+          break;
+        }
         case 'bio':                 await sql`UPDATE advertisers SET bio = ${val}                        WHERE id = ${idNum}`; break;
         case 'facebook_url':        await sql`UPDATE advertisers SET facebook_url = ${val}               WHERE id = ${idNum}`; break;
         case 'instagram_url':       await sql`UPDATE advertisers SET instagram_url = ${val}              WHERE id = ${idNum}`; break;
