@@ -48,7 +48,10 @@ export type ScreenshotExtractResult =
   | { ok: true; data: ExtractedScreenshot }
   | { ok: false; reason: 'no-key' | 'rate-limit' | 'parse-error' | 'http-error'; detail?: string };
 
-const MODEL = process.env.GEMINI_VISION_MODEL ?? 'gemini-1.5-flash-latest';
+// Gemini 1.5 Flash was retired in May 2025. Use Gemini 2.5 Flash --
+// the current GA stable Flash model that supports image (vision) input.
+// Override via GEMINI_VISION_MODEL if a newer model becomes available.
+const MODEL = process.env.GEMINI_VISION_MODEL ?? 'gemini-2.5-flash';
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 // Vision calls are slower than text — 30s ceiling.
