@@ -915,6 +915,67 @@ function deriveFirstLast(adv: AdvertiserSyncRow): { first_name: string; last_nam
   return { first_name, last_name: last_name || null };
 }
 
+// Address parts pulled from advertiser_locations as a fallback when the
+// advertiser's own address columns are blank. Use the staff member's
+// assigned location when available, else the primary location, else the
+// first location by sort_order.
+export type LocationAddressParts = {
+  address: string | null;
+  address_2: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+};
+
+export async function loadLocationAddressForAdvertiser(
+  advertiserId: number,
+  opts: { staffId?: string | null } = {},
+): Promise<LocationAddressParts | null> {
+  const sql = getSql();
+
+  // 1) Staff-assigned location wins when available.
+  if (opts.staffId) {
+    const rows = (await sql`
+      SELECT l.address, l.address_2, l.city, l.state, l.zip
+        FROM advertiser_staff_locations sl
+        JOIN advertiser_locations l ON l.id = sl.location_id
+       WHERE sl.staff_id = ${opts.staffId}::uuid
+         AND l.advertiser_id = ${advertiserId}
+       ORDER BY l.is_primary DESC NULLS LAST,
+                l.sort_order ASC NULLS LAST,
+                l.created_at ASC NULLS LAST
+       LIMIT 1
+    `) as unknown as LocationAddressParts[];
+    if (rows[0] && rows[0].address) return rows[0];
+  }
+
+  // 2) Primary location, else first location.
+  const rows = (await sql`
+    SELECT address, address_2, city, state, zip
+      FROM advertiser_locations
+     WHERE advertiser_id = ${advertiserId}
+     ORDER BY is_primary DESC NULLS LAST,
+              sort_order ASC NULLS LAST,
+              created_at ASC NULLS LAST
+     LIMIT 1
+  `) as unknown as LocationAddressParts[];
+  return rows[0] ?? null;
+}
+
+function mergeAddresses(
+  primary: LocationAddressParts,
+  fallback: LocationAddressParts | null,
+): LocationAddressParts {
+  if (!fallback) return primary;
+  return {
+    address:   primary.address   ?? fallback.address   ?? null,
+    address_2: primary.address_2 ?? fallback.address_2 ?? null,
+    city:      primary.city      ?? fallback.city      ?? null,
+    state:     primary.state     ?? fallback.state     ?? null,
+    zip:       primary.zip       ?? fallback.zip       ?? null,
+  };
+}
+
 function advertiserToSource(adv: AdvertiserSyncRow): MailingSourceRow | null {
   const { first_name, last_name } = deriveFirstLast(adv);
   const email = (adv.contact_email ?? adv.portal_email ?? '').trim() || null;
@@ -1041,9 +1102,12 @@ export async function syncAdvertisersFromAdvertisers(): Promise<{
   let errors = 0;
 
   for (const adv of advertisers) {
-    const primary = advertiserToSource(adv);
-    if (primary) {
+    const primaryBase = advertiserToSource(adv);
+    if (primaryBase) {
       try {
+        const fallback = await loadLocationAddressForAdvertiser(adv.id);
+        const merged = mergeAddresses(primaryBase, fallback);
+        const primary = { ...primaryBase, ...merged };
         const existingId = await findAdvertiserMailingId(sql, primary);
         if (existingId) {
           skipped += 1;
@@ -1112,8 +1176,17 @@ export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number
   const adv = rows[0];
 
   if (adv.status !== 'active') return { added: 0, updated: 0 };
-  const primary = advertiserToSource(adv);
-  if (!primary || !primary.email) return { added: 0, updated: 0 };
+  const primaryBase = advertiserToSource(adv);
+  if (!primaryBase || !primaryBase.email) return { added: 0, updated: 0 };
+
+  // Backfill missing address parts from the advertiser's primary location
+  // (USPS verification needs a full street/city/state/zip).
+  const fallback = await loadLocationAddressForAdvertiser(adv.id);
+  const merged = mergeAddresses(primaryBase, fallback);
+  // Re-attach the verified-non-null email so downstream narrowing survives the
+  // object spread (primaryBase.email is narrowed to string above; the spread
+  // would otherwise widen it back to string | null).
+  const primary = { ...primaryBase, ...merged, email: primaryBase.email };
 
   const targets: MailingSegment[] =
     adv.publication === 'san_antonio' ? ['active-advertiser-sa']
@@ -1187,6 +1260,120 @@ export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number
 }
 
 /**
+ * Walk every row in the given Active Advertisers segment and re-pull the
+ * mailing address from the linked advertiser's primary location (or, for
+ * staff rows, the staff member's assigned location). Used for USPS
+ * verification: existing mailing rows from older backfills are missing
+ * address parts because the advertisers row's own address columns are
+ * usually blank.
+ *
+ * If \`force\` is false (default), only rows whose address OR city OR zip
+ * is blank get updated — manual edits are preserved.
+ * If \`force\` is true, every row in the segment is overwritten with the
+ * advertiser/location address.
+ */
+export async function refreshMailingAddressesForSegment(
+  segment: MailingSegment,
+  opts: { force?: boolean } = {},
+): Promise<{ scanned: number; updated: number; skippedNoAdvertiser: number; skippedComplete: number }> {
+  const sql = getSql();
+  const force = opts.force === true;
+
+  const rows = (await sql`
+    SELECT mc.id, mc.advertiser_id,
+           mc.address, mc.address_2, mc.city, mc.state, mc.zip,
+           mc.email,
+           mc.tags @> '["staff"]'::jsonb AS is_staff
+      FROM mailing_contacts mc
+     WHERE mc.segment = ${segment}
+  `) as unknown as Array<{
+    id: string;
+    advertiser_id: number | null;
+    address: string | null;
+    address_2: string | null;
+    city: string | null;
+    state: string | null;
+    zip: string | null;
+    email: string | null;
+    is_staff: boolean;
+  }>;
+
+  let updated = 0;
+  let skippedNoAdvertiser = 0;
+  let skippedComplete = 0;
+
+  for (const row of rows) {
+    if (!row.advertiser_id) {
+      skippedNoAdvertiser += 1;
+      continue;
+    }
+    const hasFullAddress = !!(row.address && row.city && row.zip);
+    if (!force && hasFullAddress) {
+      skippedComplete += 1;
+      continue;
+    }
+
+    // For staff rows, resolve the staff_id from advertiser_staff via email
+    // so we can prefer their assigned location.
+    let staffId: string | null = null;
+    if (row.is_staff && row.email) {
+      const staffRows = (await sql`
+        SELECT id FROM advertiser_staff
+         WHERE advertiser_id = ${row.advertiser_id}
+           AND LOWER(COALESCE(email, '')) = ${row.email.toLowerCase()}
+         LIMIT 1
+      `) as unknown as Array<{ id: string }>;
+      staffId = staffRows[0]?.id ?? null;
+    }
+
+    const advRows = (await sql`
+      SELECT address, address_2, city, state, zip
+        FROM advertisers WHERE id = ${row.advertiser_id} LIMIT 1
+    `) as unknown as Array<LocationAddressParts>;
+    const advParts: LocationAddressParts = advRows[0] ?? {
+      address: null, address_2: null, city: null, state: null, zip: null,
+    };
+    const locFallback = await loadLocationAddressForAdvertiser(
+      row.advertiser_id,
+      { staffId },
+    );
+    const merged = mergeAddresses(advParts, locFallback);
+
+    if (!merged.address && !merged.city && !merged.zip) {
+      // Nothing to write — advertiser has no address anywhere.
+      skippedComplete += 1;
+      continue;
+    }
+
+    if (force) {
+      await sql`
+        UPDATE mailing_contacts
+           SET address   = ${merged.address},
+               address_2 = ${merged.address_2},
+               city      = ${merged.city},
+               state     = ${merged.state},
+               zip       = ${merged.zip}
+         WHERE id = ${row.id}
+      `;
+    } else {
+      // Only fill blanks — don't overwrite admin edits.
+      await sql`
+        UPDATE mailing_contacts
+           SET address   = COALESCE(NULLIF(address, ''),   ${merged.address}),
+               address_2 = COALESCE(NULLIF(address_2, ''), ${merged.address_2}),
+               city      = COALESCE(NULLIF(city, ''),      ${merged.city}),
+               state     = COALESCE(NULLIF(state, ''),     ${merged.state}),
+               zip       = COALESCE(NULLIF(zip, ''),       ${merged.zip})
+         WHERE id = ${row.id}
+      `;
+    }
+    updated += 1;
+  }
+
+  return { scanned: rows.length, updated, skippedNoAdvertiser, skippedComplete };
+}
+
+/**
  * One-time backfill: copy every currently-active advertiser plus their
  * staff into the per-publication active-advertiser-atx / -sa segments.
  *
@@ -1243,7 +1430,15 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
 
   for (const adv of advertisers) {
     const segments = targetSegmentsFor(adv.publication);
-    const primary = advertiserToSource(adv);
+    const primaryBase = advertiserToSource(adv);
+
+    // Pre-load the location fallback once per advertiser (used for both
+    // primary and staff rows).
+    const advFallback = await loadLocationAddressForAdvertiser(adv.id);
+
+    const primary = primaryBase
+      ? { ...primaryBase, ...mergeAddresses(primaryBase, advFallback) }
+      : null;
 
     // Primary contact for this advertiser, into each target segment.
     if (primary && primary.email) {
@@ -1302,6 +1497,21 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
       const email = (s.email ?? '').trim();
       if (!email) continue;
       const { first_name, last_name } = splitFullName(s.name ?? '');
+      // Prefer this staff member's assigned-location address, falling back
+      // to the advertiser's primary location.
+      const staffFallback =
+        (await loadLocationAddressForAdvertiser(adv.id, { staffId: s.id })) ??
+        advFallback;
+      const staffMerged = mergeAddresses(
+        {
+          address: adv.address ?? null,
+          address_2: adv.address_2 ?? null,
+          city: adv.city ?? null,
+          state: adv.state ?? null,
+          zip: adv.zip ?? null,
+        },
+        staffFallback,
+      );
       for (const seg of segments) {
         try {
           const existing = await findInSegment(seg, email);
@@ -1322,11 +1532,11 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
                ${adv.company ?? null},
                ${s.title ?? null},
                ${null},
-               ${adv.address ?? null},
-               ${adv.address_2 ?? null},
-               ${adv.city ?? null},
-               ${adv.state ?? null},
-               ${adv.zip ?? null},
+               ${staffMerged.address},
+               ${staffMerged.address_2},
+               ${staffMerged.city},
+               ${staffMerged.state},
+               ${staffMerged.zip},
                ${adv.website ?? null},
                'backfill:active-advertiser:staff',
                ${adv.id},
@@ -1391,6 +1601,23 @@ export async function upsertStaffMailingByStaffId(
   const email = (staff.email ?? '').trim();
   if (!email) return { added: 0, updated: 0, skipped: true };
 
+  // Backfill staff's mailing address from their assigned location (or the
+  // advertiser's primary location) when the advertisers row itself has
+  // blank address fields. Required for USPS verification.
+  const fallback = await loadLocationAddressForAdvertiser(staff.advertiser_id, {
+    staffId: staff.id,
+  });
+  const merged = mergeAddresses(
+    {
+      address: staff.address ?? null,
+      address_2: staff.address_2 ?? null,
+      city: staff.city ?? null,
+      state: staff.state ?? null,
+      zip: staff.zip ?? null,
+    },
+    fallback,
+  );
+
   const { first_name, last_name } = splitFullName(staff.name ?? '');
 
   const targets: MailingSegment[] =
@@ -1422,11 +1649,11 @@ export async function upsertStaffMailingByStaffId(
                phone          = ${staff.phone ?? null},
                company        = ${staff.company ?? null},
                title          = ${staff.title ?? null},
-               address        = ${staff.address ?? null},
-               address_2      = ${staff.address_2 ?? null},
-               city           = ${staff.city ?? null},
-               state          = ${staff.state ?? null},
-               zip            = ${staff.zip ?? null},
+               address        = ${merged.address},
+               address_2      = ${merged.address_2},
+               city           = ${merged.city},
+               state          = ${merged.state},
+               zip            = ${merged.zip},
                website        = ${staff.website ?? null},
                advertiser_id  = ${staff.advertiser_id},
                tags           = CASE
@@ -1450,11 +1677,11 @@ export async function upsertStaffMailingByStaffId(
            ${staff.company ?? null},
            ${staff.title ?? null},
            ${null},
-           ${staff.address ?? null},
-           ${staff.address_2 ?? null},
-           ${staff.city ?? null},
-           ${staff.state ?? null},
-           ${staff.zip ?? null},
+           ${merged.address},
+           ${merged.address_2},
+           ${merged.city},
+           ${merged.state},
+           ${merged.zip},
            ${staff.website ?? null},
            'hook:staff-upsert',
            ${staff.advertiser_id},

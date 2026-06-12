@@ -432,6 +432,40 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
     window.open(url, '_blank');
   }
 
+  async function handleRefreshAddresses(force: boolean) {
+    const msg = force
+      ? `Force overwrite every address in ${label} with the canonical address from each advertiser's locations? Admin edits will be replaced.`
+      : `Fill in blank address fields in ${label} from each advertiser's locations? Admin edits are preserved.`;
+    if (!confirm(msg)) return;
+    setBusy(force ? 'Overwriting addresses\u2026' : 'Refreshing addresses\u2026');
+    try {
+      const res = await fetch('/api/admin/mailing/refresh-addresses', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ segment, force }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
+      }
+      const j = await res.json() as {
+        scanned: number;
+        updated: number;
+        skippedNoAdvertiser: number;
+        skippedComplete: number;
+      };
+      showToast(
+        `Scanned ${j.scanned} · updated ${j.updated} · skipped ${j.skippedComplete} complete, ${j.skippedNoAdvertiser} no advertiser`,
+      );
+      await reload();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const allSelected = useMemo(
     () => rows.length > 0 && rows.every((r) => selectedIds.has(r.id)),
     [rows, selectedIds],
@@ -502,6 +536,34 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         <button onClick={handleDedupe} className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50">
           Dedupe
         </button>
+        {(segment === 'active-advertiser-atx' || segment === 'active-advertiser-sa') && (
+          <div className="relative inline-block group">
+            <button
+              onClick={() => handleRefreshAddresses(false)}
+              disabled={busy !== null}
+              className="px-3 py-1.5 text-sm rounded-md border border-[#3D0740] text-[#3D0740] hover:bg-[#3D0740]/5 disabled:opacity-50"
+              title="Walk every row and fill in blank address fields from the linked advertiser's locations (preferring each staff member's assigned location). Preserves admin edits."
+            >
+              Refresh addresses from advertisers
+            </button>
+            <div className="absolute right-0 top-full mt-1 hidden group-hover:block z-10 bg-white border border-gray-200 rounded-md shadow-sm py-1 min-w-[220px]">
+              <button
+                onClick={() => handleRefreshAddresses(false)}
+                disabled={busy !== null}
+                className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50 disabled:opacity-50"
+              >
+                Fill blanks only (safe)
+              </button>
+              <button
+                onClick={() => handleRefreshAddresses(true)}
+                disabled={busy !== null}
+                className="block w-full text-left px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
+              >
+                Force overwrite all
+              </button>
+            </div>
+          </div>
+        )}
         <button
           onClick={handleDeleteAllInSegment}
           className="px-3 py-1.5 text-sm rounded-md border border-red-300 text-red-700 hover:bg-red-50"
