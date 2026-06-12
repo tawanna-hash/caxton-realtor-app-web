@@ -620,6 +620,15 @@ export async function ensureSchema(): Promise<void> {
     ON advertisers(submission_token) WHERE submission_token IS NOT NULL
   `;
 
+  // Per-advertiser pick for the public detail page header layout.
+  // Valid values are kept in lib/advertiser-header-styles.ts. We don't
+  // CHECK the value at the DB level - the app coerces unknown values
+  // back to 'current' on read so adding a new option doesn't require
+  // a migration.
+  await sql`
+    ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS header_style TEXT NOT NULL DEFAULT 'current'
+  `;
+
   // Event-pipeline metadata (advertiser submissions + Gemini-detected from FB).
   // submitted_by_advertiser_id: links a row to the advertiser when source =
   //   'submission' (so the admin queue can show "Submitted by Austin Title").

@@ -26,6 +26,11 @@ import { PUBLICATION_OPTIONS, getPublicationTheme } from '@/lib/publication-them
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 import LocationsStaffEditor from './LocationsStaffEditor';
 import AdvertiserImageUploader from '@/components/AdvertiserImageUploader';
+import {
+  ADVERTISER_HEADER_STYLES,
+  HEADER_STYLE_META,
+  coerceHeaderStyle,
+} from '@/lib/advertiser-header-styles';
 
 type Props = { initialRows: AdvertiserCrmRow[] };
 
@@ -567,6 +572,7 @@ function EditDrawer({
     avatar_url:     row.avatar_url     ?? '',
     tagline:        row.tagline        ?? '',
     bio:            row.bio            ?? '',
+    header_style:   coerceHeaderStyle(row.header_style),
     facebook_url:   row.facebook_url   ?? '',
     instagram_url:  row.instagram_url  ?? '',
     linkedin_url:   row.linkedin_url   ?? '',
@@ -741,6 +747,30 @@ function EditDrawer({
                   emptyLabel="logo"
                   onError={onError}
                 />
+              </Field>
+              <Field label="Header style" className="col-span-2">
+                <select
+                  value={coerceHeaderStyle(form.header_style)}
+                  onChange={(e) => update('header_style', coerceHeaderStyle(e.target.value))}
+                  className={INPUT}
+                >
+                  {ADVERTISER_HEADER_STYLES.map((style) => (
+                    <option key={style} value={style}>
+                      {HEADER_STYLE_META[style].label}
+                    </option>
+                  ))}
+                </select>
+                <small className="mt-1 block text-xs text-gray-500">
+                  {HEADER_STYLE_META[coerceHeaderStyle(form.header_style)].blurb}
+                </small>
+                <a
+                  href="/admin/preview/logo-options"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-block text-xs text-blue-600 hover:underline"
+                >
+                  Preview all six styles side-by-side
+                </a>
               </Field>
               <Field label="Tagline" className="col-span-2">
                 <input
