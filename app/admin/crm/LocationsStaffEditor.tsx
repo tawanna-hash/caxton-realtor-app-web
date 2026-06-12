@@ -18,9 +18,16 @@ const INPUT = 'w-full px-3 py-2 rounded border border-gray-300 text-sm focus:out
 type Props = {
   advertiserId: number;
   onError?: (msg: string) => void;
+  /**
+   * Fires whenever the staff list changes (initial load, edits, adds,
+   * deletes, imports). The parent CRM modal uses this to detect when the
+   * company-level Person/Contact fields would duplicate an existing staff
+   * row and hides them so the same name/email/phone never appears twice.
+   */
+  onStaffChange?: (staff: AdvertiserStaff[]) => void;
 };
 
-export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
+export default function LocationsStaffEditor({ advertiserId, onError, onStaffChange }: Props) {
   const [locations, setLocations] = useState<AdvertiserLocation[]>([]);
   const [staff, setStaff] = useState<AdvertiserStaff[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,14 +64,16 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
       }
       if (sr.ok) {
         const data = await sr.json();
-        setStaff(data.staff ?? []);
+        const list: AdvertiserStaff[] = data.staff ?? [];
+        setStaff(list);
+        onStaffChange?.(list);
       }
     } catch (err) {
       reportError(err instanceof Error ? err.message : 'load failed');
     } finally {
       setLoading(false);
     }
-  }, [advertiserId, reportError]);
+  }, [advertiserId, reportError, onStaffChange]);
 
   // Initial data fetch when the drawer opens. The rule below is designed
   // to catch cascading-render bugs, but a one-shot fetch-on-mount is
@@ -183,7 +192,9 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
   };
 
   const patchStaff = async (id: string, patch: Partial<AdvertiserStaff>) => {
-    setStaff((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+    const next = staff.map((s) => (s.id === id ? { ...s, ...patch } : s));
+    setStaff(next);
+    onStaffChange?.(next);
     try {
       const res = await fetch(`/api/admin/advertisers/${advertiserId}/staff/${id}`, {
         method: 'PATCH',

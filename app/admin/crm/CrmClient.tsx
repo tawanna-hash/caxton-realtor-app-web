@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type {
   AdvertiserCrmRow,
+  AdvertiserStaff,
   AdvertiserStatus,
   AdvertiserType,
 } from '@/lib/advertisers';
@@ -424,6 +425,10 @@ function EditDrawer({
   const [shareCopied, setShareCopied] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Staff lifted from <LocationsStaffEditor> so we can hide company-level
+  // Person/Contact fields when they would duplicate an existing staff row.
+  const [editorStaff, setEditorStaff] = useState<AdvertiserStaff[]>([]);
+
   const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/r/advertiser/${row.slug}?t=${shareToken}`;
 
   const copyShareUrl = async () => {
@@ -591,6 +596,43 @@ function EditDrawer({
   const update = <K extends keyof typeof form>(k: K, v: typeof form[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
+  // ---- Duplicate-of-staff detection ------------------------------------
+  //
+  // Tawanna's rule (June 2026): if the company-level Person fields (name,
+  // email) or Contact phones already appear on a staff row in the "Locations
+  // & staff" section below, don't show those fields again as separate inputs
+  // -- it confuses operators and risks the public page double-listing the
+  // same person. We collapse the duplicates into a small "Same as Laura
+  // Schlameus in staff" note and skip the input.
+  //
+  // Comparison is case-insensitive and ignores whitespace; phone matching
+  // strips non-digits so "(512) 960-5172" matches "5129605172".
+  const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase();
+  const normPhone = (s: string | null | undefined) =>
+    (s ?? '').replace(/\D+/g, '');
+  const fullName = `${form.first_name} ${form.last_name}`.trim();
+
+  const matchStaffByName = (name: string): AdvertiserStaff | undefined => {
+    const n = norm(name);
+    if (!n) return undefined;
+    return editorStaff.find((s) => norm(s.name) === n);
+  };
+  const matchStaffByEmail = (email: string): AdvertiserStaff | undefined => {
+    const e = norm(email);
+    if (!e) return undefined;
+    return editorStaff.find((s) => norm(s.email) === e);
+  };
+  const matchStaffByPhone = (phone: string): AdvertiserStaff | undefined => {
+    const p = normPhone(phone);
+    if (!p) return undefined;
+    return editorStaff.find((s) => normPhone(s.phone) === p);
+  };
+
+  const nameMatch = matchStaffByName(fullName);
+  const emailMatch = matchStaffByEmail(contactEmail);
+  const mobileMatch = matchStaffByPhone(form.phone);
+  const officeMatch = matchStaffByPhone(form.office_phone);
+
   const submit = async () => {
     setSaving(true);
     try {
@@ -717,10 +759,28 @@ function EditDrawer({
 
           <Section title="Person">
             <div className="grid grid-cols-2 gap-3">
-              <Field label="First name"><input value={form.first_name} onChange={(e) => update('first_name', e.target.value)} className={INPUT} /></Field>
-              <Field label="Last name"><input value={form.last_name} onChange={(e) => update('last_name', e.target.value)} className={INPUT} /></Field>
+              {nameMatch ? (
+                <Field label="Name" className="col-span-2">
+                  <p className="text-xs text-gray-500 italic">
+                    Already in staff: <span className="not-italic font-medium">{nameMatch.name}</span>. Edit in &ldquo;Locations &amp; staff&rdquo; below.
+                  </p>
+                </Field>
+              ) : (
+                <>
+                  <Field label="First name"><input value={form.first_name} onChange={(e) => update('first_name', e.target.value)} className={INPUT} /></Field>
+                  <Field label="Last name"><input value={form.last_name} onChange={(e) => update('last_name', e.target.value)} className={INPUT} /></Field>
+                </>
+              )}
               <Field label="Title"><input value={form.title} onChange={(e) => update('title', e.target.value)} className={INPUT} /></Field>
-              <Field label="Email"><input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={INPUT} placeholder="name@company.com" inputMode="email" /></Field>
+              {emailMatch ? (
+                <Field label="Email">
+                  <p className="text-xs text-gray-500 italic">
+                    Already in staff: <span className="not-italic font-medium">{emailMatch.name}</span>. Edit in &ldquo;Locations &amp; staff&rdquo; below.
+                  </p>
+                </Field>
+              ) : (
+                <Field label="Email"><input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={INPUT} placeholder="name@company.com" inputMode="email" /></Field>
+              )}
               <Field label="Industry"><input value={form.industry} onChange={(e) => update('industry', e.target.value)} className={INPUT} /></Field>
               <Field label="License #"><input value={form.license_number} onChange={(e) => update('license_number', e.target.value)} className={INPUT} /></Field>
             </div>
@@ -728,8 +788,24 @@ function EditDrawer({
 
           <Section title="Contact">
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Mobile phone"><input value={form.phone} onChange={(e) => update('phone', formatPhoneInput(e.target.value))} className={INPUT} placeholder="(000) 000-0000" inputMode="tel" /></Field>
-              <Field label="Office phone"><input value={form.office_phone} onChange={(e) => update('office_phone', formatPhoneInput(e.target.value))} className={INPUT} placeholder="(000) 000-0000" inputMode="tel" /></Field>
+              {mobileMatch ? (
+                <Field label="Mobile phone">
+                  <p className="text-xs text-gray-500 italic">
+                    Already in staff: <span className="not-italic font-medium">{mobileMatch.name}</span>. Edit in &ldquo;Locations &amp; staff&rdquo; below.
+                  </p>
+                </Field>
+              ) : (
+                <Field label="Mobile phone"><input value={form.phone} onChange={(e) => update('phone', formatPhoneInput(e.target.value))} className={INPUT} placeholder="(000) 000-0000" inputMode="tel" /></Field>
+              )}
+              {officeMatch ? (
+                <Field label="Office phone">
+                  <p className="text-xs text-gray-500 italic">
+                    Already in staff: <span className="not-italic font-medium">{officeMatch.name}</span>. Edit in &ldquo;Locations &amp; staff&rdquo; below.
+                  </p>
+                </Field>
+              ) : (
+                <Field label="Office phone"><input value={form.office_phone} onChange={(e) => update('office_phone', formatPhoneInput(e.target.value))} className={INPUT} placeholder="(000) 000-0000" inputMode="tel" /></Field>
+              )}
               <Field label="Website" className="col-span-2"><input value={form.website} onChange={(e) => update('website', e.target.value)} className={INPUT} placeholder="https://" /></Field>
             </div>
           </Section>
@@ -931,6 +1007,7 @@ function EditDrawer({
             <LocationsStaffEditor
               advertiserId={row.id}
               onError={(msg) => onError(msg)}
+              onStaffChange={setEditorStaff}
             />
           </Section>
 
