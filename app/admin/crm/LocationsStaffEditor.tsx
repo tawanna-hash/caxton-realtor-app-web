@@ -8,7 +8,7 @@
 //   1) Locations — add / edit / delete office locations
 //   2) Staff    — add / edit / delete staff members, assign to N locations
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AdvertiserLocation, AdvertiserStaff } from '@/lib/advertisers';
 import { formatPhoneInput } from '@/lib/format-phone';
 
@@ -23,6 +23,11 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
   const [locations, setLocations] = useState<AdvertiserLocation[]>([]);
   const [staff, setStaff] = useState<AdvertiserStaff[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Screenshot-import affordance state
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
 
   const reportError = useCallback(
     (msg: string) => {
@@ -152,6 +157,52 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
     }
   };
 
+  // ── Screenshot import ──────────────────────────────────────────
+  const onPickImportFile = () => {
+    if (importing) return;
+    fileInputRef.current?.click();
+  };
+
+  const onImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    // Reset the input so the user can re-select the same file later
+    if (e.target) e.target.value = '';
+    if (!file) return;
+
+    setImporting(true);
+    setImportMsg('Reading screenshot…');
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      setImportMsg('Extracting locations & staff (this can take 10-20s)…');
+      const res = await fetch(`/api/admin/advertisers/${advertiserId}/import-screenshot`, {
+        method: 'POST',
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({} as Record<string, unknown>));
+      if (!res.ok) {
+        const detail =
+          typeof data?.detail === 'string' ? (data.detail as string) :
+          typeof data?.error  === 'string' ? (data.error  as string) :
+          `HTTP ${res.status}`;
+        throw new Error(detail);
+      }
+      const ins = (data?.inserted ?? {}) as { locations?: number; staff?: number };
+      const locCount = Number(ins.locations ?? 0);
+      const staffCount = Number(ins.staff ?? 0);
+      setImportMsg(`Imported ${locCount} location${locCount === 1 ? '' : 's'} and ${staffCount} staff member${staffCount === 1 ? '' : 's'}.`);
+      await reload();
+      setTimeout(() => setImportMsg(null), 5_000);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'import failed';
+      reportError(`Import failed: ${msg}`);
+      setImportMsg(`Import failed: ${msg}`);
+      setTimeout(() => setImportMsg(null), 6_000);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const toggleStaffLocation = async (staffId: string, locationId: string) => {
     const current = staff.find((s) => s.id === staffId);
     if (!current) return;
@@ -167,6 +218,47 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* Hidden file input shared by the Import-from-screenshot button */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        onChange={onImportFileChange}
+        className="hidden"
+      />
+
+      {/* Import-from-screenshot affordance */}
+      <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50/60 px-3 py-2 flex items-center justify-between gap-3">
+        <div className="text-xs text-gray-600">
+          <span className="font-medium text-gray-800">Import from screenshot.</span>{' '}
+          Upload a screenshot of the advertiser&apos;s team / locations page
+          and we&apos;ll auto-fill these fields.
+        </div>
+        <button
+          type="button"
+          onClick={onPickImportFile}
+          disabled={importing}
+          className={`text-xs px-3 py-1.5 rounded border whitespace-nowrap ${
+            importing
+              ? 'border-gray-200 text-gray-400 bg-gray-100 cursor-wait'
+              : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-100'
+          }`}
+        >
+          {importing ? 'Importing…' : 'Import screenshot'}
+        </button>
+      </div>
+      {importMsg && (
+        <div
+          className={`text-xs px-3 py-2 rounded ${
+            importMsg.startsWith('Import failed')
+              ? 'bg-red-50 text-red-700 border border-red-200'
+              : 'bg-blue-50 text-blue-700 border border-blue-200'
+          }`}
+        >
+          {importMsg}
+        </div>
+      )}
+
       {/* ── Locations ─────────────────────────────────── */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
