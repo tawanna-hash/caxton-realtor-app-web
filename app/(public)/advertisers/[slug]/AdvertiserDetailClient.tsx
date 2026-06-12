@@ -169,9 +169,9 @@ export default function AdvertiserDetailClient({
                 {a.tagline}
               </p>
             )}
-            {(a.title || a.industry) && (
+            {a.industry && (
               <p className="text-sm text-gray-500 font-light mt-1">
-                {[a.title, a.industry].filter(Boolean).join(' · ')}
+                {a.industry}
               </p>
             )}
 
