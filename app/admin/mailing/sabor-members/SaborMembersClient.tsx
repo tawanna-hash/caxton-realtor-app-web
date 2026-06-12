@@ -27,6 +27,7 @@ import type {
   MailingContactRow,
   VerifyStatus,
 } from '@/lib/mailing';
+import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 
 type Counts = { total: number; verified: number; pending: number; near: number; far: number };
 type FilterKey = 'all' | 'verified' | 'pending';
@@ -704,8 +705,8 @@ export default function SaborMembersClient() {
                   </td>
                   <td className="px-3 py-2 text-gray-700">{r.email ?? ''}</td>
                   <td className="px-3 py-2 text-gray-700 text-xs">
-                    {r.phone ?? ''}
-                    {r.mobile_phone && <div className="text-[10px] text-gray-500">m: {r.mobile_phone}</div>}
+                    {formatPhone(r.phone)}
+                    {r.mobile_phone && <div className="text-[10px] text-gray-500">m: {formatPhone(r.mobile_phone)}</div>}
                   </td>
                   <td className="px-3 py-2 text-gray-700">{r.company ?? ''}</td>
                   <td className="px-3 py-2 text-gray-700">{r.city ?? ''}</td>
@@ -1045,8 +1046,8 @@ function EditDrawer({
     state:          row.state ?? '',
     zip:            row.zip ?? '',
     license_number: row.license_number ?? '',
-    phone:          row.phone ?? '',
-    mobile_phone:   row.mobile_phone ?? '',
+    phone:          formatPhone(row.phone),
+    mobile_phone:   formatPhone(row.mobile_phone),
     email_notes:    row.email_notes ?? '',
   });
   const [saving, setSaving] = useState(false);
@@ -1069,8 +1070,8 @@ function EditDrawer({
         state:          row.state ?? '',
         zip:            row.zip ?? '',
         license_number: row.license_number ?? '',
-        phone:          row.phone ?? '',
-        mobile_phone:   row.mobile_phone ?? '',
+        phone:          formatPhone(row.phone),
+        mobile_phone:   formatPhone(row.mobile_phone),
         email_notes:    row.email_notes ?? '',
       });
     });
@@ -1209,8 +1210,8 @@ function EditDrawer({
             <Field label="State"        value={form.state}          onChange={(v) => setField('state', v)} />
             <Field label="ZIP Code"     value={form.zip}            onChange={(v) => setField('zip', v)} />
             <Field label="TREC License" value={form.license_number} onChange={(v) => setField('license_number', v)} />
-            <Field label="Phone"        value={form.phone}          onChange={(v) => setField('phone', v)} type="tel" />
-            <Field label="Mobile / Cell" value={form.mobile_phone}  onChange={(v) => setField('mobile_phone', v)} type="tel" />
+            <Field label="Phone"        value={form.phone}          onChange={(v) => setField('phone', formatPhoneInput(v))} type="tel" placeholder="(000) 000-0000" />
+            <Field label="Mobile / Cell" value={form.mobile_phone}  onChange={(v) => setField('mobile_phone', formatPhoneInput(v))} type="tel" placeholder="(000) 000-0000" />
           </div>
 
           {/* Email notes — free-text journal for verifier outcomes,
@@ -1265,13 +1266,15 @@ function EditDrawer({
 }
 
 function Field({
-  label, value, onChange, className, type,
+  label, value, onChange, className, type, placeholder, inputMode,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   className?: string;
   type?: string;
+  placeholder?: string;
+  inputMode?: React.InputHTMLAttributes<HTMLInputElement>['inputMode'];
 }) {
   return (
     <label className={`block ${className ?? ''}`}>
@@ -1282,6 +1285,8 @@ function Field({
         type={type ?? 'text'}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        inputMode={inputMode}
         className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#3D0740]"
       />
     </label>

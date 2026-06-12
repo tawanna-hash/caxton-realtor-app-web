@@ -23,17 +23,10 @@ import { TERMS_RL } from '@/lib/agreement-terms';
 import {
   lookupRate, applyCcSurcharge, pagePositionPremium, computeExp,
 } from '@/lib/agreement-pricing';
+import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
-function formatPhone(s: string | null | undefined): string {
-  if (!s) return '';
-  const d = s.replace(/\D/g, '').slice(0, 10);
-  if (!d) return '';
-  if (d.length <= 3) return d;
-  if (d.length <= 6) return `${d.slice(0, 3)}-${d.slice(3)}`;
-  return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
-}
 
 /** Coerce a `timestamptz`/`date` value (string | Date | null) to a YYYY-MM-DD string. */
 function toISODateString(v: string | Date | null | undefined): string {
@@ -1461,8 +1454,8 @@ function AgreementDrawer({
           </Field>
           <Field label="Contact Number">
             <input value={form.phone}
-              onChange={(e) => upd('phone', formatPhone(e.target.value))}
-              className={INPUT} placeholder="555-000-0000" />
+              onChange={(e) => upd('phone', formatPhoneInput(e.target.value))}
+              className={INPUT} placeholder="(000) 000-0000" inputMode="tel" />
           </Field>
           <Field label="Email">
             <input value={form.email} type="email"
@@ -1648,8 +1641,8 @@ function AgreementDrawer({
           </Field>
           <Field label="Billing Contact Phone">
             <input value={form.billing_contact_phone}
-              onChange={(e) => upd('billing_contact_phone', formatPhone(e.target.value))}
-              className={INPUT} placeholder="555-000-0000" />
+              onChange={(e) => upd('billing_contact_phone', formatPhoneInput(e.target.value))}
+              className={INPUT} placeholder="(000) 000-0000" inputMode="tel" />
           </Field>
         </div>
 
