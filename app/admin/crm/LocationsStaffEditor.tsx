@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AdvertiserLocation, AdvertiserStaff } from '@/lib/advertisers';
 import { formatPhoneInput } from '@/lib/format-phone';
+import AdvertiserImageUploader from '@/components/AdvertiserImageUploader';
 
 const INPUT = 'w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
 
@@ -654,11 +655,13 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
                   className={INPUT}
                 />
               </div>
-              <input
+              <AdvertiserImageUploader
                 value={s.photo_url ?? ''}
-                onChange={(e) => patchStaff(s.id, { photo_url: e.target.value })}
-                placeholder="Photo URL (https://…)"
-                className={INPUT}
+                onChange={(url) => patchStaff(s.id, { photo_url: url || null })}
+                kind="staff_photo"
+                emptyLabel="photo"
+                shape="circle"
+                onError={reportError}
               />
 
               {locations.length > 0 && (
