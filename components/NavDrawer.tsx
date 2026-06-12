@@ -40,13 +40,18 @@ const PUB_NAMES: Record<string, string> = {
 // structure on mobile (with subheaders) that the desktop top bar uses.
 const ADMIN_GROUPS: { label: string; links: NavItem[] }[] = [
   {
-    label: 'CRM & Audience',
+    label: 'CRM',
     links: [
       { label: 'Advertisers & CRM', href: '/admin/crm', adminOnly: true },
-      { label: 'Mailing', href: '/admin/mailing', adminOnly: true },
+    ],
+  },
+  {
+    label: 'Mailing List HUB',
+    links: [
+      { label: 'Mailing List HUB', href: '/admin/mailing', adminOnly: true },
       { label: 'ABOR Members', href: '/admin/mailing/holding', adminOnly: true },
       { label: 'SABOR Members', href: '/admin/mailing/sabor-members', adminOnly: true },
-      { label: 'Subscribers', href: '/admin/subscribers', adminOnly: true },
+      { label: 'App Subscribers', href: '/admin/subscribers', adminOnly: true },
     ],
   },
   {
