@@ -24,10 +24,11 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
   const [staff, setStaff] = useState<AdvertiserStaff[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Screenshot-import affordance state
+  // Import affordance state (screenshot OR CSV/Excel/XML)
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
 
   const reportError = useCallback(
     (msg: string) => {
@@ -157,31 +158,63 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
     }
   };
 
-  // ── Screenshot import ──────────────────────────────────────────
-  const onPickImportFile = () => {
-    if (importing) return;
-    fileInputRef.current?.click();
+  // -- Import (screenshot OR CSV/Excel/XML) --------------------
+  // Decide which endpoint + form field to use for this file.
+  const classifyImportFile = (file: File): {
+    endpoint: 'screenshot' | 'data';
+    field: 'image' | 'file';
+    label: string;
+  } | null => {
+    const mime = (file.type || '').toLowerCase();
+    const name = (file.name || '').toLowerCase();
+    if (mime.startsWith('image/')) {
+      return { endpoint: 'screenshot', field: 'image', label: 'screenshot' };
+    }
+    if (mime.includes('csv') || name.endsWith('.csv')) {
+      return { endpoint: 'data', field: 'file', label: 'CSV' };
+    }
+    if (
+      mime.includes('spreadsheetml') ||
+      mime.includes('ms-excel') ||
+      name.endsWith('.xlsx') ||
+      name.endsWith('.xls')
+    ) {
+      return { endpoint: 'data', field: 'file', label: 'Excel' };
+    }
+    if (mime.includes('xml') || name.endsWith('.xml')) {
+      return { endpoint: 'data', field: 'file', label: 'XML' };
+    }
+    return null;
   };
 
-  const onImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    // Reset the input so the user can re-select the same file later
-    if (e.target) e.target.value = '';
-    if (!file) return;
+  const handleImportFile = useCallback(async (file: File) => {
+    if (importing) return;
+
+    const classified = classifyImportFile(file);
+    if (!classified) {
+      setImportMsg(
+        `Import failed: unsupported file type "${file.type || file.name}". Drop a screenshot (PNG/JPEG), CSV, Excel, or XML file.`,
+      );
+      setTimeout(() => setImportMsg(null), 10_000);
+      return;
+    }
 
     setImporting(true);
-    setImportMsg('Reading screenshot…');
+    setImportMsg(`Reading ${classified.label}...`);
     try {
       const fd = new FormData();
-      fd.append('image', file);
-      setImportMsg('Extracting locations & staff (this can take 10-20s)…');
-      const res = await fetch(`/api/admin/advertisers/${advertiserId}/import-screenshot`, {
-        method: 'POST',
-        body: fd,
-      });
-      // Try to parse JSON; if the server returned HTML (e.g. a Vercel 404
-      // page or an auth redirect), fall back to the raw text so the user
-      // sees something more useful than just the status code.
+      fd.append(classified.field, file);
+      if (classified.endpoint === 'screenshot') {
+        setImportMsg('Extracting locations & staff from screenshot (this can take 10-20s)...');
+      } else {
+        setImportMsg(`Parsing ${classified.label} and inserting rows...`);
+      }
+      const url =
+        classified.endpoint === 'screenshot'
+          ? `/api/admin/advertisers/${advertiserId}/import-screenshot`
+          : `/api/admin/advertisers/${advertiserId}/import-data`;
+      const res = await fetch(url, { method: 'POST', body: fd });
+
       const rawText = await res.text();
       let data: Record<string, unknown> = {};
       try {
@@ -194,22 +227,58 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
           typeof data?.detail === 'string' ? (data.detail as string) :
           typeof data?.error  === 'string' ? (data.error  as string) :
           `HTTP ${res.status}`;
-        throw new Error(`${res.status} — ${detail}`);
+        throw new Error(`${res.status} - ${detail}`);
       }
       const ins = (data?.inserted ?? {}) as { locations?: number; staff?: number };
       const locCount = Number(ins.locations ?? 0);
       const staffCount = Number(ins.staff ?? 0);
-      setImportMsg(`Imported ${locCount} location${locCount === 1 ? '' : 's'} and ${staffCount} staff member${staffCount === 1 ? '' : 's'}.`);
+      setImportMsg(
+        `Imported ${locCount} location${locCount === 1 ? '' : 's'} and ${staffCount} staff member${staffCount === 1 ? '' : 's'} from ${classified.label}.`,
+      );
       await reload();
       setTimeout(() => setImportMsg(null), 5_000);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'import failed';
-      // Show inline only; avoid the duplicate banner at the top of the drawer.
       setImportMsg(`Import failed: ${msg}`);
       setTimeout(() => setImportMsg(null), 10_000);
     } finally {
       setImporting(false);
     }
+  }, [advertiserId, importing, reload]);
+
+  const onPickImportFile = () => {
+    if (importing) return;
+    fileInputRef.current?.click();
+  };
+
+  const onImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (e.target) e.target.value = '';
+    if (!file) return;
+    await handleImportFile(file);
+  };
+
+  const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (importing) return;
+    if (e.dataTransfer.types.includes('Files')) setDragOver(true);
+  };
+
+  const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  };
+
+  const onDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    if (importing) return;
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    await handleImportFile(file);
   };
 
   const toggleStaffLocation = async (staffId: string, locationId: string) => {
@@ -227,34 +296,63 @@ export default function LocationsStaffEditor({ advertiserId, onError }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Hidden file input shared by the Import-from-screenshot button */}
+      {/* Hidden file input shared by the import drop-zone */}
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/png,image/jpeg,image/webp,image/gif"
+        accept="image/png,image/jpeg,image/webp,image/gif,text/csv,.csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/xml,application/xml,.xml"
         onChange={onImportFileChange}
         className="hidden"
       />
 
-      {/* Import-from-screenshot affordance */}
-      <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50/60 px-3 py-2 flex items-center justify-between gap-3">
-        <div className="text-xs text-gray-600">
-          <span className="font-medium text-gray-800">Import from screenshot.</span>{' '}
-          Upload a screenshot of the advertiser&apos;s team / locations page
-          and we&apos;ll auto-fill these fields.
+      {/* Drag-and-drop import affordance */}
+      <div
+        onDragOver={onDragOver}
+        onDragEnter={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+        onClick={onPickImportFile}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onPickImportFile();
+          }
+        }}
+        className={`rounded-lg border-2 border-dashed px-4 py-5 text-center cursor-pointer transition-colors ${
+          importing
+            ? 'border-gray-200 bg-gray-100 cursor-wait'
+            : dragOver
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-300 bg-gray-50/60 hover:border-gray-400 hover:bg-gray-100'
+        }`}
+      >
+        <div className="flex flex-col items-center gap-1.5 pointer-events-none">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={importing ? 'text-gray-400' : dragOver ? 'text-blue-600' : 'text-gray-500'}
+            aria-hidden="true"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          <div className="text-sm font-medium text-gray-800">
+            {importing ? 'Importing...' : 'Drop a file or click to upload'}
+          </div>
+          <div className="text-xs text-gray-500">
+            Screenshot (PNG, JPEG), CSV, Excel (.xlsx/.xls), or XML &mdash; we&apos;ll auto-fill locations &amp; staff.
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={onPickImportFile}
-          disabled={importing}
-          className={`text-xs px-3 py-1.5 rounded border whitespace-nowrap ${
-            importing
-              ? 'border-gray-200 text-gray-400 bg-gray-100 cursor-wait'
-              : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-100'
-          }`}
-        >
-          {importing ? 'Importing…' : 'Import screenshot'}
-        </button>
       </div>
       {importMsg && (
         <div
