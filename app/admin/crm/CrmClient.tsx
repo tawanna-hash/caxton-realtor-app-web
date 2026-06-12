@@ -25,6 +25,7 @@ import type { Publication } from '@/lib/publication-theme';
 import { PUBLICATION_OPTIONS, getPublicationTheme } from '@/lib/publication-theme';
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 import LocationsStaffEditor from './LocationsStaffEditor';
+import AdvertiserImageUploader from '@/components/AdvertiserImageUploader';
 
 type Props = { initialRows: AdvertiserCrmRow[] };
 
@@ -563,6 +564,7 @@ function EditDrawer({
     office_phone:   formatPhone(row.office_phone),
     website:        row.website        ?? '',
     // Public profile (Session 18)
+    avatar_url:     row.avatar_url     ?? '',
     tagline:        row.tagline        ?? '',
     bio:            row.bio            ?? '',
     facebook_url:   row.facebook_url   ?? '',
@@ -731,6 +733,15 @@ function EditDrawer({
               Shown on the public advertiser page at <span className="font-mono">/advertisers/{row.slug}</span>.
             </p>
             <div className="grid grid-cols-2 gap-3">
+              <Field label="Company logo" className="col-span-2">
+                <AdvertiserImageUploader
+                  value={form.avatar_url}
+                  onChange={(url) => update('avatar_url', url)}
+                  kind="logo"
+                  emptyLabel="logo"
+                  onError={onError}
+                />
+              </Field>
               <Field label="Tagline" className="col-span-2">
                 <input
                   value={form.tagline}

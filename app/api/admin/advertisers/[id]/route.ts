@@ -173,6 +173,16 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         case 'additional_contacts': await sql`UPDATE advertisers SET additional_contacts = ${val}::jsonb WHERE id = ${idNum}`; break;
         case 'notes':               await sql`UPDATE advertisers SET notes = ${val}                      WHERE id = ${idNum}`; break;
         case 'tags':                await sql`UPDATE advertisers SET tags = ${val}::jsonb                WHERE id = ${idNum}`; break;
+        // Public profile fields. These columns were added but missing here,
+        // so edits saved through the admin modal silently dropped on the
+        // floor. (Found 2026-06-12.)
+        case 'tagline':             await sql`UPDATE advertisers SET tagline = ${val}                    WHERE id = ${idNum}`; break;
+        case 'bio':                 await sql`UPDATE advertisers SET bio = ${val}                        WHERE id = ${idNum}`; break;
+        case 'facebook_url':        await sql`UPDATE advertisers SET facebook_url = ${val}               WHERE id = ${idNum}`; break;
+        case 'instagram_url':       await sql`UPDATE advertisers SET instagram_url = ${val}              WHERE id = ${idNum}`; break;
+        case 'linkedin_url':        await sql`UPDATE advertisers SET linkedin_url = ${val}               WHERE id = ${idNum}`; break;
+        case 'twitter_url':         await sql`UPDATE advertisers SET twitter_url = ${val}                WHERE id = ${idNum}`; break;
+        case 'youtube_url':         await sql`UPDATE advertisers SET youtube_url = ${val}                WHERE id = ${idNum}`; break;
       }
       updates.push(col);
     }
