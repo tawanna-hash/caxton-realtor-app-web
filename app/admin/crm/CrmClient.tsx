@@ -712,7 +712,7 @@ function EditDrawer({
               <Field label="First name"><input value={form.first_name} onChange={(e) => update('first_name', e.target.value)} className={INPUT} /></Field>
               <Field label="Last name"><input value={form.last_name} onChange={(e) => update('last_name', e.target.value)} className={INPUT} /></Field>
               <Field label="Title"><input value={form.title} onChange={(e) => update('title', e.target.value)} className={INPUT} /></Field>
-              <Field label="Company"><input value={form.company} onChange={(e) => update('company', e.target.value)} className={INPUT} /></Field>
+              <Field label="Email"><input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={INPUT} placeholder="name@company.com" inputMode="email" /></Field>
               <Field label="Industry"><input value={form.industry} onChange={(e) => update('industry', e.target.value)} className={INPUT} /></Field>
               <Field label="License #"><input value={form.license_number} onChange={(e) => update('license_number', e.target.value)} className={INPUT} /></Field>
             </div>
