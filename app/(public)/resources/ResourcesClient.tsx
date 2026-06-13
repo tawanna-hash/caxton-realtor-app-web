@@ -8,10 +8,8 @@
 import PageTitle from '@/components/ui/PageTitle';
 import {
   RESOURCE_GUIDES,
-  RESOURCE_VENDORS,
   RESOURCE_LINKS,
   type ResourceGuide,
-  type ResourceVendor,
   type ResourceLink,
 } from '@/lib/realtor-resources';
 
@@ -26,8 +24,8 @@ export default function ResourcesClient() {
         <p className={EYEBROW}>REALTOR® Resources</p>
         <PageTitle>Tools, partners, and training for Austin agents.</PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
-          A curated collection of downloadable guides, recommended vendors,
-          and external links our team relies on. Have
+          A curated collection of downloadable guides and external
+          links our team relies on. Have
           something to add?{' '}
           <a
             href="mailto:hello@myrealtyline.com?subject=Resources%20Page%20Suggestion"
@@ -44,7 +42,6 @@ export default function ResourcesClient() {
         {[
           { href: '#tools', label: 'Tools' },
           { href: '#guides', label: 'Guides & PDFs' },
-          { href: '#vendors', label: 'Vendors' },
           { href: '#links', label: 'External Links' },
         ].map((j) => (
           <a
@@ -139,22 +136,6 @@ export default function ResourcesClient() {
         </div>
       </section>
 
-      {/* ── Section 2: Vendors ──────────────────────────────────────── */}
-      <section id="vendors" className="mb-16 scroll-mt-24">
-        <p className={SECTION_EYEBROW}>Recommended Vendors</p>
-        <h2
-          className="text-2xl md:text-3xl text-gray-900 mb-6"
-          style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
-        >
-          Trusted partners for every transaction
-        </h2>
-        <div className="grid sm:grid-cols-2 gap-4">
-          {RESOURCE_VENDORS.map((v) => (
-            <VendorCard key={v.name} vendor={v} />
-          ))}
-        </div>
-      </section>
-
       {/* ── Section 4: External Links ───────────────────────────────── */}
       <section id="links" className="mb-16 scroll-mt-24">
         <p className={SECTION_EYEBROW}>Curated Links</p>
@@ -173,8 +154,8 @@ export default function ResourcesClient() {
 
       {/* ── Footer note ─────────────────────────────────────────────── */}
       <p className="text-xs text-gray-500 mt-12">
-        This page is updated periodically. Listing a vendor here is a
-        recommendation, not an endorsement — confirm fit for your transaction
+        This page is updated periodically. Items listed here are
+        recommendations, not endorsements — confirm fit for your transaction
         and client.
       </p>
     </main>
@@ -249,37 +230,6 @@ function GuideCard({ guide }: { guide: ResourceGuide }) {
     </a>
   );
 }
-
-function VendorCard({ vendor }: { vendor: ResourceVendor }) {
-  const isPlaceholder = vendor.href === '#';
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5">
-      <div className="flex items-center justify-between gap-3 mb-2">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1a2a44] bg-[#1a2a44]/5 px-2 py-0.5 rounded">
-          {vendor.category}
-        </span>
-      </div>
-      <p className="font-semibold text-gray-900 mb-1">{vendor.name}</p>
-      <p className="text-sm text-gray-700 font-light leading-relaxed mb-3">
-        {vendor.description}
-      </p>
-      {vendor.contact && (
-        <p className="text-xs text-gray-600 mb-2">{vendor.contact}</p>
-      )}
-      {!isPlaceholder && (
-        <a
-          href={vendor.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs font-medium text-[#1a2a44] underline underline-offset-2 hover:no-underline"
-        >
-          Visit website →
-        </a>
-      )}
-    </div>
-  );
-}
-
 
 function LinkRow({ link }: { link: ResourceLink }) {
   return (
