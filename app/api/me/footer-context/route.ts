@@ -85,7 +85,7 @@ export async function GET() {
           phone, office_phone, website,
           avatar_url, tagline, license_number,
           address, address_2, city, state, zip,
-          footer_template
+          footer_template, publication
         FROM advertisers
         WHERE id = ${portal.advertiser_id}
         LIMIT 1
@@ -96,7 +96,7 @@ export async function GET() {
         avatar_url: string | null; tagline: string | null; license_number: string | null;
         address: string | null; address_2: string | null;
         city: string | null; state: string | null; zip: string | null;
-        footer_template: string | null;
+        footer_template: string | null; publication: string | null;
       }>;
       if (rows.length > 0) {
         const r = rows[0];
@@ -117,6 +117,10 @@ export async function GET() {
           zip: r.zip,
           license_number: r.license_number,
           tagline: r.tagline,
+          publication:
+            r.publication === 'austin' || r.publication === 'san_antonio' || r.publication === 'both'
+              ? r.publication
+              : null,
         };
         const payload: FooterContextResponse = {
           role: 'portal',

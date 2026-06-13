@@ -30,14 +30,15 @@
 import type { jsPDF } from 'jspdf';
 import {
   type FooterBrand,
+  type FooterPalette,
   type FooterTemplateId,
+  getFooterPalette,
   getFooterTemplateMeta,
 } from '@/lib/footer-templates';
 
 const MARGIN = 48;
 
-const BRAND_NAVY: [number, number, number] = [26, 42, 68];   // #1a2a44
-const BRAND_GOLD: [number, number, number] = [196, 163, 90]; // #c4a35a
+// Neutral colors are shared across publications.
 const WHITE: [number, number, number] = [255, 255, 255];
 const GREY_900: [number, number, number] = [17, 24, 39];
 const GREY_700: [number, number, number] = [55, 65, 81];
@@ -122,6 +123,7 @@ export async function applyBrandFooter(
   const meta = getFooterTemplateMeta(opts.template);
   const brand = opts.brand;
   const prepared = formatPreparedDate(opts.preparedAt ?? new Date());
+  const palette = getFooterPalette(brand);
 
   // Preload images once
   const logo = await loadImage(brand.logo_url);
@@ -143,22 +145,22 @@ export async function applyBrandFooter(
 
     switch (opts.template) {
       case 'business-card':
-        renderBusinessCard(doc, brand, logo, photo, prepared, footerTop, pageWidth);
+        renderBusinessCard(doc, brand, palette, logo, photo, prepared, footerTop, pageWidth);
         break;
       case 'banner':
-        renderBanner(doc, brand, logo, photo, prepared, footerTop, pageWidth, meta.heightPt);
+        renderBanner(doc, brand, palette, logo, photo, prepared, footerTop, pageWidth, meta.heightPt);
         break;
       case 'minimal':
-        renderMinimal(doc, brand, logo, photo, prepared, footerTop, pageWidth);
+        renderMinimal(doc, brand, palette, logo, photo, prepared, footerTop, pageWidth);
         break;
       case 'signature':
-        renderSignature(doc, brand, logo, photo, prepared, footerTop, pageWidth);
+        renderSignature(doc, brand, palette, logo, photo, prepared, footerTop, pageWidth);
         break;
       case 'two-column':
-        renderTwoColumn(doc, brand, logo, photo, prepared, footerTop, pageWidth);
+        renderTwoColumn(doc, brand, palette, logo, photo, prepared, footerTop, pageWidth);
         break;
       case 'stacked':
-        renderStacked(doc, brand, logo, photo, prepared, footerTop, pageWidth);
+        renderStacked(doc, brand, palette, logo, photo, prepared, footerTop, pageWidth);
         break;
     }
   }
@@ -179,6 +181,7 @@ function drawHairline(doc: jsPDF, y: number, pageWidth: number) {
  *  Returns the X coordinate where text should start. */
 function drawPhotoAndLogo(
   doc: jsPDF,
+  palette: FooterPalette,
   photo: ImgRef,
   logo: ImgRef,
   x: number,
@@ -190,7 +193,7 @@ function drawPhotoAndLogo(
   if (photo) {
     try {
       doc.addImage(photo.dataUrl, photo.format, x, y, photoSize, photoSize, undefined, 'FAST');
-      doc.setDrawColor(...BRAND_GOLD);
+      doc.setDrawColor(...palette.accent);
       doc.setLineWidth(0.8);
       doc.rect(x, y, photoSize, photoSize);
       drawn = true;
@@ -215,6 +218,7 @@ function drawPhotoAndLogo(
 function renderBusinessCard(
   doc: jsPDF,
   b: FooterBrand,
+  palette: FooterPalette,
   logo: ImgRef,
   photo: ImgRef,
   prepared: string,
@@ -225,7 +229,7 @@ function renderBusinessCard(
   const y = top + 12;
   const photoSize = 60;
   const logoSize = 32;
-  const textX = drawPhotoAndLogo(doc, photo, logo, MARGIN, y, photoSize, logoSize);
+  const textX = drawPhotoAndLogo(doc, palette, photo, logo, MARGIN, y, photoSize, logoSize);
 
   const name = primaryName(b);
   if (name) {
@@ -264,6 +268,7 @@ function renderBusinessCard(
 function renderBanner(
   doc: jsPDF,
   b: FooterBrand,
+  palette: FooterPalette,
   logo: ImgRef,
   photo: ImgRef,
   prepared: string,
@@ -271,11 +276,11 @@ function renderBanner(
   pageWidth: number,
   height: number,
 ) {
-  doc.setFillColor(...BRAND_NAVY);
+  doc.setFillColor(...palette.primary);
   doc.rect(0, top, pageWidth, height, 'F');
 
   // Gold accent strip
-  doc.setFillColor(...BRAND_GOLD);
+  doc.setFillColor(...palette.accent);
   doc.rect(0, top, pageWidth, 2, 'F');
 
   const y = top + 10;
@@ -285,7 +290,7 @@ function renderBanner(
     try {
       const size = 52;
       doc.addImage(photo.dataUrl, photo.format, MARGIN, y, size, size, undefined, 'FAST');
-      doc.setDrawColor(...BRAND_GOLD);
+      doc.setDrawColor(...palette.accent);
       doc.setLineWidth(0.8);
       doc.rect(MARGIN, y, size, size);
       textX = MARGIN + size + 10;
@@ -334,6 +339,7 @@ function renderBanner(
 function renderMinimal(
   doc: jsPDF,
   b: FooterBrand,
+  palette: FooterPalette,
   logo: ImgRef,
   photo: ImgRef,
   prepared: string,
@@ -349,7 +355,7 @@ function renderMinimal(
     try {
       const size = 36;
       doc.addImage(photo.dataUrl, photo.format, MARGIN, y, size, size, undefined, 'FAST');
-      doc.setDrawColor(...BRAND_GOLD);
+      doc.setDrawColor(...palette.accent);
       doc.setLineWidth(0.6);
       doc.rect(MARGIN, y, size, size);
       textX = MARGIN + size + 10;
@@ -394,6 +400,7 @@ function renderMinimal(
 function renderSignature(
   doc: jsPDF,
   b: FooterBrand,
+  palette: FooterPalette,
   logo: ImgRef,
   photo: ImgRef,
   prepared: string,
@@ -409,7 +416,7 @@ function renderSignature(
     try {
       const size = 62;
       doc.addImage(photo.dataUrl, photo.format, MARGIN, y, size, size, undefined, 'FAST');
-      doc.setDrawColor(...BRAND_GOLD);
+      doc.setDrawColor(...palette.accent);
       doc.setLineWidth(1.2);
       doc.rect(MARGIN, y, size, size);
       textX = MARGIN + size + 14;
@@ -419,7 +426,7 @@ function renderSignature(
   // Italic-script name
   doc.setFont('times', 'italic');
   doc.setFontSize(20);
-  doc.setTextColor(...BRAND_NAVY);
+  doc.setTextColor(...palette.primary);
   const name = primaryName(b);
   if (name) doc.text(name, textX, y + 22);
 
@@ -466,6 +473,7 @@ function renderSignature(
 function renderTwoColumn(
   doc: jsPDF,
   b: FooterBrand,
+  palette: FooterPalette,
   logo: ImgRef,
   photo: ImgRef,
   prepared: string,
@@ -482,7 +490,7 @@ function renderTwoColumn(
     try {
       const size = 52;
       doc.addImage(photo.dataUrl, photo.format, MARGIN, y, size, size, undefined, 'FAST');
-      doc.setDrawColor(...BRAND_GOLD);
+      doc.setDrawColor(...palette.accent);
       doc.setLineWidth(0.8);
       doc.rect(MARGIN, y, size, size);
       leftTextX = MARGIN + size + 10;
@@ -529,7 +537,7 @@ function renderTwoColumn(
   // Right column: contact channels + prepared date
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.setTextColor(...BRAND_NAVY);
+  doc.setTextColor(...palette.primary);
   doc.text('CONTACT', midX + 8, y + 10);
 
   doc.setFont('helvetica', 'normal');
@@ -556,6 +564,7 @@ function renderTwoColumn(
 function renderStacked(
   doc: jsPDF,
   b: FooterBrand,
+  palette: FooterPalette,
   logo: ImgRef,
   photo: ImgRef,
   prepared: string,
@@ -572,7 +581,7 @@ function renderStacked(
       const size = 46;
       const px = cx - size / 2;
       doc.addImage(photo.dataUrl, photo.format, px, y, size, size, undefined, 'FAST');
-      doc.setDrawColor(...BRAND_GOLD);
+      doc.setDrawColor(...palette.accent);
       doc.setLineWidth(0.8);
       doc.rect(px, y, size, size);
       if (logo) {
