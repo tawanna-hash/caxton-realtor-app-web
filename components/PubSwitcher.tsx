@@ -18,9 +18,9 @@ import { useCallback } from 'react';
 
 type Pub = 'realtyline' | 'newsline';
 
-const PUBS: { id: Pub; label: string; sublabel: string; color: string }[] = [
-  { id: 'realtyline', label: 'RealtyLine', sublabel: 'Austin',      color: '#021D40' },
-  { id: 'newsline',   label: 'Newsline',   sublabel: 'San Antonio', color: '#3D0740' },
+const PUBS: { id: Pub; label: string; color: string }[] = [
+  { id: 'realtyline', label: 'RealtyLine Austin', color: '#021D40' },
+  { id: 'newsline',   label: 'Newsline SA',       color: '#3D0740' },
 ];
 
 export function PubSwitcher({ current }: { current: string }) {
@@ -39,9 +39,6 @@ export function PubSwitcher({ current }: { current: string }) {
   return (
     <div className="border-b border-gray-200 bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-2">
-        <span className="text-[10px] uppercase tracking-[0.25em] text-gray-500 font-medium mr-1">
-          Market
-        </span>
         {PUBS.map((p) => {
           const active = current === p.id;
           return (
@@ -50,6 +47,7 @@ export function PubSwitcher({ current }: { current: string }) {
               type="button"
               onClick={() => onPick(p.id)}
               aria-pressed={active}
+              aria-label={`Switch to ${p.label}`}
               className="text-xs uppercase tracking-[0.15em] font-medium px-3 py-1.5 rounded-md transition-colors border"
               style={{
                 color: active ? '#ffffff' : '#4b5563',
@@ -57,10 +55,7 @@ export function PubSwitcher({ current }: { current: string }) {
                 borderColor: active ? p.color : '#d1d5db',
               }}
             >
-              <span>{p.label}</span>
-              <span className="ml-1.5 opacity-70 normal-case tracking-normal font-normal">
-                {p.sublabel}
-              </span>
+              {p.label}
             </button>
           );
         })}
