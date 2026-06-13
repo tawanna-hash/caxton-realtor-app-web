@@ -5,16 +5,13 @@
 // Client component — purely presentational. Pulls all content from
 // lib/realtor-resources.ts. No fetches, no state beyond expand/collapse.
 
-import { useState } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
 import {
   RESOURCE_GUIDES,
   RESOURCE_VENDORS,
-  RESOURCE_VIDEOS,
   RESOURCE_LINKS,
   type ResourceGuide,
   type ResourceVendor,
-  type ResourceVideo,
   type ResourceLink,
 } from '@/lib/realtor-resources';
 
@@ -30,7 +27,7 @@ export default function ResourcesClient() {
         <PageTitle>Tools, partners, and training for Austin agents.</PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           A curated collection of downloadable guides, recommended vendors,
-          training videos, and external links our team relies on. Have
+          and external links our team relies on. Have
           something to add?{' '}
           <a
             href="mailto:hello@myrealtyline.com?subject=Resources%20Page%20Suggestion"
@@ -48,7 +45,6 @@ export default function ResourcesClient() {
           { href: '#tools', label: 'Tools' },
           { href: '#guides', label: 'Guides & PDFs' },
           { href: '#vendors', label: 'Vendors' },
-          { href: '#videos', label: 'Videos' },
           { href: '#links', label: 'External Links' },
         ].map((j) => (
           <a
@@ -155,22 +151,6 @@ export default function ResourcesClient() {
         <div className="grid sm:grid-cols-2 gap-4">
           {RESOURCE_VENDORS.map((v) => (
             <VendorCard key={v.name} vendor={v} />
-          ))}
-        </div>
-      </section>
-
-      {/* ── Section 3: Videos ───────────────────────────────────────── */}
-      <section id="videos" className="mb-16 scroll-mt-24">
-        <p className={SECTION_EYEBROW}>Training Videos</p>
-        <h2
-          className="text-2xl md:text-3xl text-gray-900 mb-6"
-          style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
-        >
-          Watch & learn
-        </h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          {RESOURCE_VIDEOS.map((v) => (
-            <VideoCard key={v.title} video={v} />
           ))}
         </div>
       </section>
@@ -300,47 +280,6 @@ function VendorCard({ vendor }: { vendor: ResourceVendor }) {
   );
 }
 
-function VideoCard({ video }: { video: ResourceVideo }) {
-  const [playing, setPlaying] = useState(false);
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-      <div className="aspect-video bg-gray-100 relative">
-        {playing ? (
-          <iframe
-            src={video.embedUrl}
-            title={video.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="w-full h-full"
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={() => setPlaying(true)}
-            className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 transition group"
-          >
-            <span className="w-14 h-14 rounded-full bg-white/90 group-hover:bg-white shadow-md flex items-center justify-center">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="#1a2a44">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </span>
-          </button>
-        )}
-      </div>
-      <div className="p-4">
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <p className="font-semibold text-gray-900">{video.title}</p>
-          {video.duration && (
-            <span className="text-xs text-gray-500">{video.duration}</span>
-          )}
-        </div>
-        <p className="text-sm text-gray-700 font-light leading-relaxed">
-          {video.description}
-        </p>
-      </div>
-    </div>
-  );
-}
 
 function LinkRow({ link }: { link: ResourceLink }) {
   return (
