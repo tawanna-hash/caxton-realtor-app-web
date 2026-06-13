@@ -243,19 +243,20 @@ function SignedOutPrompt({ onContinueWithoutFooter }: { onContinueWithoutFooter:
         </svg>
       </div>
       <h3 className="font-serif text-lg text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
-        Sign in to add your brand
+        Add your brand to every download
       </h3>
       <p className="text-sm text-gray-600 mt-1 max-w-sm mx-auto">
-        Brokers and agents who sign in to the portal can stamp every download
-        with their own footer template - logo, contact info, license, the works.
+        Brokers and agents with a RealtyLine portal account can stamp every
+        download with their own footer - logo, contact info, license, the
+        works. Portal access is invite-only and arrives by email.
       </p>
-      <div className="mt-5 flex items-center justify-center gap-3">
-        <Link
-          href="/portal"
+      <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a
+          href="mailto:hello@myrealtyline.com?subject=Portal%20access%20for%20downloads&body=I%27d%20like%20a%20portal%20link%20so%20I%20can%20add%20my%20brand%20to%20RealtyLine%20downloads.%0A%0AName%3A%0ABrokerage%3A%0AEmail%3A%0APhone%3A"
           className="rounded-lg bg-[#1a2a44] text-white px-5 py-2 text-sm font-medium hover:bg-[#0f1c30]"
         >
-          Sign in to portal
-        </Link>
+          Request portal access
+        </a>
         <button
           type="button"
           onClick={onContinueWithoutFooter}
@@ -264,6 +265,9 @@ function SignedOutPrompt({ onContinueWithoutFooter }: { onContinueWithoutFooter:
           Download without footer
         </button>
       </div>
+      <p className="text-xs text-gray-500 mt-4">
+        Already invited? Use the portal link from your account manager email.
+      </p>
     </div>
   );
 }
