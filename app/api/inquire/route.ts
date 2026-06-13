@@ -15,6 +15,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { sendEmail } from '@/lib/email';
 import { APP_AD_SLOTS } from '@/lib/media-kit';
+import { isAdChannel, deriveChannelFromSlot, AD_CHANNEL_LABEL, type AdChannel } from '@/lib/ad-channels';
+import { insertAdInquiry } from '@/lib/server/ad-inquiries-store';
+import { ensureSchema } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -27,6 +30,10 @@ const inquirySchema = z.object({
   slot: z.string().trim().max(100).optional().default(''),
   slot_label: z.string().trim().max(200).optional().default(''),
   pub: z.enum(['realtyline', 'newsline']).optional().default('realtyline'),
+  // Optional channel — if omitted we derive it from the slot/package id.
+  channel: z.enum(['print', 'digital', 'email']).optional(),
+  // Optional package id (e.g. 'brand6', 'eblast1') for Print/Email flows.
+  package_id: z.string().trim().max(100).optional().default(''),
   website: z.string().optional().default(''),
 });
 
@@ -65,9 +72,36 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  // Resolve channel: explicit → derived from slot/package id → 'digital'.
+  const resolvedChannel: AdChannel =
+    (data.channel && isAdChannel(data.channel) && data.channel) ||
+    deriveChannelFromSlot(data.slot || data.package_id) ||
+    'digital';
+
+  // Persist BEFORE sending email so a Resend outage doesn't lose the lead.
+  // Also auto-upserts the contact into the unified CRM (advertisers table)
+  // with tag 'ad_inquiry'. Failure is non-fatal — we still email.
+  await ensureSchema();
+  const inquiryRow = await insertAdInquiry({
+    channel: resolvedChannel,
+    slot_slug: data.slot || null,
+    slot_label: data.slot_label || null,
+    publication: data.pub,
+    package_id: data.package_id || null,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    company: data.company,
+    message: data.message,
+    source_url: req.headers.get('referer'),
+    ip: req.headers.get('x-forwarded-for'),
+    user_agent: req.headers.get('user-agent'),
+  });
+
+  const channelLabel = AD_CHANNEL_LABEL[resolvedChannel];
   const subject = data.slot_label
-    ? `Ad inquiry — ${data.slot_label}`
-    : 'Ad inquiry from realtynewsnow.app';
+    ? `[${channelLabel}] Ad inquiry — ${data.slot_label}`
+    : `[${channelLabel}] Ad inquiry from realtynewsnow.app`;
 
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; padding: 24px;">
@@ -81,7 +115,10 @@ export async function POST(req: NextRequest) {
         ${data.phone ? `<tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Phone</td><td style="padding: 6px 0; font-size: 14px;">${escapeHtml(data.phone)}</td></tr>` : ''}
         ${data.company ? `<tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Company</td><td style="padding: 6px 0; font-size: 14px;">${escapeHtml(data.company)}</td></tr>` : ''}
         ${data.slot_label ? `<tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Slot</td><td style="padding: 6px 0; font-size: 14px;">${escapeHtml(data.slot_label)} <span style="color:#999">(${escapeHtml(data.slot)})</span></td></tr>` : ''}
+        <tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Channel</td><td style="padding: 6px 0; font-size: 14px;"><strong>${escapeHtml(channelLabel)}</strong></td></tr>
         <tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Publication</td><td style="padding: 6px 0; font-size: 14px;">${escapeHtml(data.pub)}</td></tr>
+        ${data.package_id ? `<tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Package</td><td style="padding: 6px 0; font-size: 14px;">${escapeHtml(data.package_id)}</td></tr>` : ''}
+        ${inquiryRow ? `<tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Inbox</td><td style="padding: 6px 0; font-size: 14px;"><a href="https://realtynewsnow.app/admin/ads/inquiries/${inquiryRow.id}" style="color: #1a2a44;">Open in admin</a></td></tr>` : ''}
       </table>
       <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee;">
         <p style="color: #666; font-size: 13px; margin: 0 0 8px 0;">Message:</p>
@@ -178,5 +215,10 @@ export async function POST(req: NextRequest) {
     console.warn('[inquire] auto-reply failed (non-fatal):', e instanceof Error ? e.message : e);
   }
 
-  return NextResponse.json({ ok: true, messageId: result.messageId });
+  return NextResponse.json({
+    ok: true,
+    messageId: result.messageId,
+    inquiryId: inquiryRow?.id ?? null,
+    channel: resolvedChannel,
+  });
 }

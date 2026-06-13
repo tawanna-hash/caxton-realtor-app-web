@@ -1,27 +1,26 @@
 import InquireForm from './InquireForm';
 import PageTitle from '@/components/ui/PageTitle';
+import { APP_AD_SLOTS, PACKAGES, EBLASTS } from '@/lib/media-kit';
+import { isAdChannel, deriveChannelFromSlot, type AdChannel } from '@/lib/ad-channels';
 
 export const metadata = {
-  title: 'Reserve Your Ad Spot — RealtyLine',
+  title: 'Reserve Your Ad Spot — RealtyLine & Newsline',
   description:
-    'Inquire about advertising slots on RealtyLine and Newsline. Tell us about your business and we will follow up with rates and availability.',
+    'Inquire about Print, Digital, or Email advertising on RealtyLine and Newsline. Tell us about your business and we will follow up with rates and availability.',
 };
 
-// Map ad-space slugs to user-friendly labels for the form context line.
-const SLOT_LABELS: Record<string, string> = {
-  featured_builder_strip: 'Featured Builder Strip',
-  calendar_event_sponsor: 'Pinned Calendar Event',
-  calendar_top_banner: 'Calendar Top Banner',
-  feed_top_banner: 'Feed Top Banner',
-  feed_sticky_bottom: 'Feed Sticky Bottom',
-  giveaway_prize_sponsor: 'Giveaway Prize Sponsor',
-  newsletter_banner: 'Newsletter Banner',
-  article_top_leaderboard: 'Article Leaderboard',
-  article_mid_inline: 'Article Mid-Inline',
-  article_interstitial: 'Article Interstitial',
-};
+// Map digital ad-slot slugs to user-friendly labels for the form context line.
+// Kept narrow on purpose — only slugs the public inquiry surface needs.
+const DIGITAL_SLOT_LABELS: Record<string, string> = Object.fromEntries(
+  APP_AD_SLOTS.map((s) => [s.slug, s.name]),
+);
 
-type SearchParams = { slot?: string; pub?: string };
+type SearchParams = {
+  slot?: string;
+  pub?: string;
+  channel?: string;
+  package?: string;
+};
 
 export default async function AdvertiseInquirePage({
   searchParams,
@@ -30,8 +29,23 @@ export default async function AdvertiseInquirePage({
 }) {
   const params = await searchParams;
   const slot = params.slot ?? '';
-  const slotLabel = SLOT_LABELS[slot] ?? '';
+  const pkg = params.package ?? '';
   const pub = params.pub === 'newsline' ? 'newsline' : 'realtyline';
+
+  // Resolve channel: explicit query param wins, then derive from slot/package,
+  // then default to 'digital' so a bare /advertise/inquire still renders.
+  const channel: AdChannel =
+    (params.channel && isAdChannel(params.channel) && params.channel) ||
+    deriveChannelFromSlot(slot || pkg) ||
+    'digital';
+
+  // Resolve a human label for the chosen target so the form headline can
+  // reflect what the buyer clicked on.
+  const slotLabel =
+    DIGITAL_SLOT_LABELS[slot] ??
+    PACKAGES.find((p) => p.id === pkg)?.name ??
+    EBLASTS.find((e) => e.name.toLowerCase().replace(/\s+/g, '') === pkg.toLowerCase())?.name ??
+    '';
 
   return (
     <main className="max-w-2xl mx-auto px-6 py-12 md:py-16">
@@ -50,7 +64,13 @@ export default async function AdvertiseInquirePage({
         </p>
       </header>
 
-      <InquireForm initialSlot={slot} initialSlotLabel={slotLabel} pub={pub} />
+      <InquireForm
+        initialSlot={slot}
+        initialSlotLabel={slotLabel}
+        initialPackage={pkg}
+        initialChannel={channel}
+        pub={pub}
+      />
     </main>
   );
 }
