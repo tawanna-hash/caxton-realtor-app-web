@@ -274,7 +274,27 @@ function EBlastCard({ pkg }: { pkg: EBlast }) {
 
 // ── Main page ──────────────────────────────────────────────────────────────
 
-export default function MediaKitClient() {
+type MediaKitClientProps = {
+  /** ISO timestamp of the most recent change to lib/media-kit.ts. */
+  lastSyncedISO: string;
+};
+
+function formatSyncedDate(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso.slice(0, 10);
+    return d.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  } catch {
+    return iso.slice(0, 10);
+  }
+}
+
+export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
+  const lastSyncedLabel = formatSyncedDate(lastSyncedISO);
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-12">
       {/* Page header */}
@@ -302,6 +322,33 @@ export default function MediaKitClient() {
               </span>
             </div>
           ))}
+        </div>
+
+        {/* Source-of-truth banner — confirms this page and every downstream
+            surface (inquiry auto-reply, public checkout, Stripe payment
+            intent, generated agreement) all read the same rate table. */}
+        <div
+          role="note"
+          aria-label="Rate source of truth"
+          className="mt-6 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3"
+        >
+          <div
+            aria-hidden="true"
+            className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-emerald-900">
+              Last synced from Media Kit on {lastSyncedLabel}
+            </p>
+            <p className="text-[13px] leading-relaxed text-emerald-900/80 mt-1">
+              All rates on this page flow from a single source of truth
+              (<code className="px-1 py-0.5 bg-emerald-100 text-emerald-900 rounded text-[12px]">lib/media-kit.ts</code>). The same rates power the public ad-inquiry auto-reply, the self-serve checkout at <code className="px-1 py-0.5 bg-emerald-100 text-emerald-900 rounded text-[12px]">/advertise/checkout/[slot]</code>, the Stripe payment intent, and the generated advertising agreement PDF. Edit one place, every surface updates on next deploy.
+            </p>
+          </div>
         </div>
       </header>
 
