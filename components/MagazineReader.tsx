@@ -10,6 +10,7 @@ import HTMLFlipBook from 'react-pageflip';
 import QRCode from 'qrcode';
 import type { Magazine } from '@/lib/magazines';
 import { trackEvent } from '../app/posthog-provider';
+import { trackMagazinePageFlip } from '@/components/MagazineGA';
 
 interface MagazineReaderProps {
   magazine: Magazine;
@@ -275,6 +276,11 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
         from_page: prev,
         to_page: next,
         direction: next > prev ? 'forward' : 'back',
+      });
+      trackMagazinePageFlip({
+        magazineId: magazine.id,
+        pageNumber: next + 1,
+        publication: magazine.publication,
       });
     }
   }
