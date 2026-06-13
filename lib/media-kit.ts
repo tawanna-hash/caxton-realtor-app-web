@@ -81,6 +81,40 @@ export interface AppAdSlot {
   sizes: string;
   /** One-line placement / inventory note. */
   notes: string;
+  /**
+   * Which publication scopes this slot can actually be booked on.
+   * Defaults to ['realtyline', 'newsline', 'both'] when omitted (all three),
+   * which is the historical assumption for every slot in this file.
+   * Set this explicitly when a placement is only sold on one publication
+   * (e.g. a Newsline-only sponsorship) or when 'both' is not packaged.
+   * The checkout UI disables disallowed scopes; the server enforces the
+   * same allow-list when creating the Stripe payment intent.
+   */
+  availablePubs?: Array<'realtyline' | 'newsline' | 'both'>;
+}
+
+/**
+ * Resolve the set of publication scopes a slot can be booked on. Centralized
+ * so checkout UI, server-side payment-intent validation, and admin reference
+ * tooling all agree on the rule. Slots with no explicit `availablePubs` are
+ * assumed to be sold on either single pub OR both, matching the historical
+ * default. A slot whose `weeklyBoth` is 0/null is treated as single-pub only.
+ */
+export function getSlotAvailablePubs(
+  slot: AppAdSlot,
+): Array<'realtyline' | 'newsline' | 'both'> {
+  if (slot.availablePubs && slot.availablePubs.length > 0) {
+    return slot.availablePubs;
+  }
+  const both: Array<'realtyline' | 'newsline' | 'both'> = [
+    'realtyline',
+    'newsline',
+    'both',
+  ];
+  if (!slot.weeklyBoth || slot.weeklyBoth <= 0) {
+    return ['realtyline', 'newsline'];
+  }
+  return both;
 }
 
 export const APP_AD_SLOTS: AppAdSlot[] = [

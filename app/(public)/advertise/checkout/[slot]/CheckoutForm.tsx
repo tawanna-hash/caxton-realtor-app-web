@@ -27,7 +27,7 @@ import {
   useElements,
   useStripe,
 } from '@stripe/react-stripe-js';
-import type { AppAdSlot } from '@/lib/media-kit';
+import { getSlotAvailablePubs, type AppAdSlot } from '@/lib/media-kit';
 
 interface Props {
   slot: AppAdSlot;
@@ -76,7 +76,22 @@ export default function CheckoutForm({
   const perUnit = slot.pricingUnit === 'per send' || slot.pricingUnit === 'per push';
   const hasMonthly = slot.monthlySingle != null && slot.monthlyBoth != null;
 
-  const [pub, setPub] = useState<Pub>(initialPub);
+  // Allow-list of publication scopes for this slot. Slots that aren't sold
+  // on both publications must not let the buyer pick 'both' (the pill
+  // renders disabled below, and the server-side intent route enforces the
+  // same rule).
+  const availablePubs = getSlotAvailablePubs(slot);
+  const bothAvailable = availablePubs.includes('both');
+
+  // If the URL passed an initialPub that this slot can't be booked on,
+  // fall back to the first allowed scope so we never start in an invalid
+  // state. Tested order: keep initialPub when valid, else use the first
+  // entry in availablePubs (which is 'realtyline' for slots that omit the
+  // explicit list).
+  const safeInitialPub: Pub = availablePubs.includes(initialPub)
+    ? initialPub
+    : (availablePubs[0] as Pub);
+  const [pub, setPub] = useState<Pub>(safeInitialPub);
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>(
     perUnit ? 'unit' : 'weekly',
   );
@@ -226,21 +241,47 @@ export default function CheckoutForm({
         <div className="space-y-4">
           <Field label="Publication">
             <div className="flex flex-wrap gap-2">
-              {(['realtyline', 'newsline', 'both'] as const).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPub(p)}
-                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${
-                    pub === p
-                      ? 'bg-slate-900 text-white border-slate-900'
-                      : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400'
-                  }`}
-                >
-                  {p === 'realtyline' ? 'RealtyLine Austin' : p === 'newsline' ? 'Newsline San Antonio' : 'Both pubs'}
-                </button>
-              ))}
+              {(['realtyline', 'newsline', 'both'] as const).map((p) => {
+                const allowed = availablePubs.includes(p);
+                const active = pub === p && allowed;
+                const label =
+                  p === 'realtyline'
+                    ? 'RealtyLine Austin'
+                    : p === 'newsline'
+                      ? 'Newsline SA'
+                      : 'Both pubs';
+                const title = allowed
+                  ? undefined
+                  : p === 'both'
+                    ? 'This placement is not sold across both publications.'
+                    : `${label} is not available for this placement.`;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => allowed && setPub(p)}
+                    disabled={!allowed}
+                    aria-disabled={!allowed}
+                    aria-pressed={active}
+                    title={title}
+                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${
+                      active
+                        ? 'bg-slate-900 text-white border-slate-900'
+                        : allowed
+                          ? 'bg-white text-slate-700 border-slate-300 hover:border-slate-400'
+                          : 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
+            {!bothAvailable && (
+              <p className="mt-2 text-xs text-slate-500">
+                This placement is not sold across both publications.
+              </p>
+            )}
           </Field>
 
           {!perUnit && (
