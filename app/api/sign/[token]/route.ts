@@ -178,7 +178,10 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     let advertiserOutcome: string | null = null;
     if (updatedRows.length > 0) {
       try {
-        const result = await ensureAdvertiserForAgreement(updatedRows[0]);
+        // Sign wizard always finalizes the agreement => contact is active.
+        const result = await ensureAdvertiserForAgreement(updatedRows[0], {
+          desiredStatus: 'active',
+        });
         advertiserOutcome = result.outcome;
         if (result.outcome !== 'skipped') {
           // Audit the advertiser link/create.

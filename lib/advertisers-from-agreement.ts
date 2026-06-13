@@ -53,13 +53,45 @@ function pickContactEmail(ag: Agreement): string | null {
  * Ensure an `advertisers` row exists for this agreement and that
  * `agreements.advertiser_id` is set to its id. Safe to call repeatedly.
  */
+/**
+ * Options that control side effects when linking/creating an advertiser
+ * for an agreement.
+ *
+ *  - `desiredStatus`: what the advertiser's `status` should be when the
+ *    helper is done.
+ *      * 'prospect' — used for draft/sent agreements. Brand-new rows are
+ *        created as prospect. Existing rows are NEVER demoted.
+ *      * 'active'   — used when an agreement is signed. New rows are
+ *        created as active. Existing rows with status='prospect' get
+ *        promoted to 'active'. Other statuses are left alone.
+ */
+export type EnsureAdvertiserOptions = {
+  desiredStatus?: 'prospect' | 'active';
+};
+
 export async function ensureAdvertiserForAgreement(
   ag: Agreement,
+  opts: EnsureAdvertiserOptions = {},
 ): Promise<EnsureAdvertiserResult> {
   const sql = getSql();
+  const desiredStatus: 'prospect' | 'active' = opts.desiredStatus ?? 'prospect';
 
-  // 1) Already linked → return as-is.
+  // Promote an existing advertiser from 'prospect' to 'active' when the
+  // caller signals that this agreement is now signed. Never demote, never
+  // touch 'paused' or 'archived' rows.
+  async function maybePromote(advertiserId: number): Promise<void> {
+    if (desiredStatus !== 'active') return;
+    await sql`
+      UPDATE advertisers
+         SET status = 'active', updated_at = NOW()
+       WHERE id = ${advertiserId}
+         AND COALESCE(status, 'active') = 'prospect'
+    `;
+  }
+
+  // 1) Already linked → promote on signed transitions, then return.
   if (typeof ag.advertiser_id === 'number' && ag.advertiser_id > 0) {
+    await maybePromote(ag.advertiser_id);
     return { outcome: 'linked', advertiserId: ag.advertiser_id };
   }
 
@@ -74,6 +106,7 @@ export async function ensureAdvertiserForAgreement(
     if (byEmail.length > 0) {
       const advertiserId = byEmail[0].id;
       await sql`UPDATE agreements SET advertiser_id = ${advertiserId} WHERE id = ${ag.id}`;
+      await maybePromote(advertiserId);
       return { outcome: 'matched', advertiserId };
     }
   }
@@ -102,6 +135,7 @@ export async function ensureAdvertiserForAgreement(
         await sql`UPDATE advertisers SET contact_email = ${contactEmail}, updated_at = NOW() WHERE id = ${advertiserId}`;
       }
       await sql`UPDATE agreements SET advertiser_id = ${advertiserId} WHERE id = ${ag.id}`;
+      await maybePromote(advertiserId);
       return { outcome: 'matched', advertiserId };
     }
   }
@@ -127,10 +161,10 @@ export async function ensureAdvertiserForAgreement(
   const inserted = (await sql`
     INSERT INTO advertisers (
       name, slug, share_token, contact_email,
-      requires_email_gate, publication, created_at, updated_at
+      requires_email_gate, publication, status, created_at, updated_at
     ) VALUES (
       ${name}, ${slug}, ${shareToken}, ${contactEmail},
-      false, ${publication}, NOW(), NOW()
+      false, ${publication}, ${desiredStatus}, NOW(), NOW()
     )
     RETURNING *
   `) as unknown as Advertiser[];
