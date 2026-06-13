@@ -107,9 +107,15 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
       const r = await fetch(`/api/admin/magazines/${magazine.id}/gif?${qs.toString()}`, {
         method: 'POST',
       });
-      const body = (await r.json().catch(() => ({}))) as { url?: string; error?: string };
+      const body = (await r.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+        detail?: string;
+      };
       if (!r.ok || !body.url) {
-        throw new Error(body.error || `Generation failed (${r.status})`);
+        const parts = [body.error, body.detail].filter(Boolean) as string[];
+        const msg = parts.length > 0 ? parts.join(' — ') : `Generation failed (${r.status})`;
+        throw new Error(msg);
       }
       setMagazines((prev) => prev.map((m) => (m.id === magazine.id ? applyGifUrl(m, variant, body.url as string) : m)));
     } catch (err: unknown) {
