@@ -44,6 +44,35 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
 
+  // Free-text search that filters both the Locations and Staff lists in
+  // place. Matches are case-insensitive and check the most-likely-to-help
+  // fields for each row (see filteredLocations / filteredStaff below).
+  const [search, setSearch] = useState('');
+  const searchNorm = search.trim().toLowerCase();
+  const searchDigits = search.replace(/\D+/g, '');
+  const locMatches = (l: AdvertiserLocation): boolean => {
+    if (!searchNorm) return true;
+    const haystack = [
+      l.label, l.address, l.address_2, l.city, l.state, l.zip,
+      l.email, l.hours,
+    ].filter(Boolean).join(' ').toLowerCase();
+    if (haystack.includes(searchNorm)) return true;
+    if (searchDigits && (l.phone ?? '').replace(/\D+/g, '').includes(searchDigits)) return true;
+    return false;
+  };
+  const staffMatches = (s: AdvertiserStaff): boolean => {
+    if (!searchNorm) return true;
+    const haystack = [s.name, s.title, s.email].filter(Boolean).join(' ').toLowerCase();
+    if (haystack.includes(searchNorm)) return true;
+    if (searchDigits && (s.phone ?? '').replace(/\D+/g, '').includes(searchDigits)) return true;
+    // Also let users find staff by an assigned location label / city.
+    const assignedLocs = locations.filter((l) => s.location_ids.includes(l.id));
+    if (assignedLocs.some((l) => locMatches(l))) return true;
+    return false;
+  };
+  const filteredLocations = locations.filter(locMatches);
+  const filteredStaff = staff.filter(staffMatches);
+
   const reportError = useCallback(
     (msg: string) => {
       if (onError) onError(msg);
@@ -357,8 +386,49 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
     return <div className="text-xs text-gray-500">Loading locations & staff…</div>;
   }
 
+  const hasAny = locations.length + staff.length > 0;
+
   return (
     <div className="space-y-6">
+      {/* Search bar — only shown when there's something to filter. */}
+      {hasAny && (
+        <div className="relative">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search locations & staff — name, title, city, email, phone…"
+            className="w-full pl-9 pr-9 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-lg leading-none px-1"
+              aria-label="Clear search"
+              title="Clear search"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Sync-from-website affordance (only shown when a parser exists
           for this advertiser's domain). */}
       {syncSource && (
@@ -490,8 +560,14 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
           </div>
         )}
 
+        {locations.length > 0 && filteredLocations.length === 0 && (
+          <div className="text-xs text-gray-500 italic">
+            No locations match &ldquo;{search}&rdquo;.
+          </div>
+        )}
+
         <div className="space-y-3">
-          {locations.map((loc) => (
+          {filteredLocations.map((loc) => (
             <div
               key={loc.id}
               className="rounded-lg border border-gray-200 bg-gray-50/50 p-3 space-y-2"
@@ -611,8 +687,14 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
           </div>
         )}
 
+        {staff.length > 0 && filteredStaff.length === 0 && (
+          <div className="text-xs text-gray-500 italic">
+            No staff match &ldquo;{search}&rdquo;.
+          </div>
+        )}
+
         <div className="space-y-3">
-          {staff.map((s) => (
+          {filteredStaff.map((s) => (
             <div
               key={s.id}
               className="rounded-lg border border-gray-200 bg-gray-50/50 p-3 space-y-2"
