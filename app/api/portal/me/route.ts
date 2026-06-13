@@ -49,7 +49,7 @@ export async function GET() {
       phone, office_phone, website,
       avatar_url, tagline, license_number,
       address, address_2, city, state, zip,
-      footer_template
+      footer_template, publication
     FROM advertisers
     WHERE id = ${user.advertiser_id}
     LIMIT 1
@@ -71,6 +71,7 @@ export async function GET() {
     state: string | null;
     zip: string | null;
     footer_template: string | null;
+    publication: string | null;
   }>;
   if (rows.length === 0) {
     return NextResponse.json({ signed_in: false }, { status: 401 });
@@ -98,6 +99,10 @@ export async function GET() {
     zip: row.zip,
     license_number: row.license_number,
     tagline: row.tagline,
+    publication:
+      row.publication === 'austin' || row.publication === 'san_antonio' || row.publication === 'both'
+        ? row.publication
+        : null,
   };
 
   const payload: PortalMeResponse = {

@@ -35,6 +35,10 @@ export function coerceFooterTemplateId(value: unknown): FooterTemplateId {
 /**
  * Brand fields the renderer can pull from. All optional - the renderer
  * skips blank lines so a partially-filled profile still looks tidy.
+ *
+ * `publication` controls the color palette: 'austin' (RealtyLine) uses
+ * navy + gold, 'san_antonio' (Newsline) uses plum + gold, 'both' falls
+ * back to navy. Unknown / null also defaults to navy.
  */
 export interface FooterBrand {
   name: string | null;
@@ -53,6 +57,35 @@ export interface FooterBrand {
   zip: string | null;
   license_number: string | null;
   tagline: string | null;
+  publication: 'austin' | 'san_antonio' | 'both' | null;
+}
+
+/** Color palette derived from a brand's publication. The renderer uses
+ *  this everywhere it used to reference hardcoded BRAND_NAVY. */
+export interface FooterPalette {
+  /** Primary brand color (navy for RealtyLine, plum for Newsline). RGB. */
+  primary: [number, number, number];
+  /** Slightly lighter shade of primary, used for body text on dark backgrounds. */
+  primarySoft: [number, number, number];
+  /** Gold accent stays the same across publications. */
+  accent: [number, number, number];
+}
+
+const PALETTE_NAVY: FooterPalette = {
+  primary: [2, 29, 64],       // #021D40 RealtyLine Austin
+  primarySoft: [220, 226, 238],
+  accent: [196, 163, 90],     // #c4a35a gold
+};
+
+const PALETTE_PLUM: FooterPalette = {
+  primary: [61, 7, 64],       // #3D0740 Newsline San Antonio
+  primarySoft: [232, 220, 234],
+  accent: [196, 163, 90],     // shared gold
+};
+
+export function getFooterPalette(b: Pick<FooterBrand, 'publication'>): FooterPalette {
+  if (b.publication === 'san_antonio') return PALETTE_PLUM;
+  return PALETTE_NAVY;
 }
 
 export interface FooterTemplateMeta {
