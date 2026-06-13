@@ -29,7 +29,7 @@ async function fetchSettings(): Promise<PublicationSettingsRow[]> {
 
 export default async function Page() {
   const admin = await getCurrentAdmin();
-  if (!admin) redirect('/login');
+  if (!admin) redirect('/admin/login');
 
   const settings = await fetchSettings();
   return <PublicationSettingsForm initialSettings={settings} />;

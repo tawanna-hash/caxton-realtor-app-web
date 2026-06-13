@@ -40,6 +40,28 @@ const PUB_COLORS: Record<string, string> = {
   realtynewsnow: '#1a2a44',
 };
 
+// Top-bar links shown to public (non-admin) visitors on desktop (lg+).
+// Mirrors the BottomNav destinations so the desktop and mobile experiences
+// stay in sync, plus a Subscribe shortcut. The drawer is still available
+// from the hamburger for less-frequent destinations (FAQs, About, Profile).
+const PUBLIC_DESKTOP_LINKS: { label: string; href: string }[] = [
+  { label: 'Feed',        href: '/dashboard' },
+  { label: 'Magazine',    href: '/magazine' },
+  { label: 'Calendar',    href: '/calendar' },
+  { label: 'Builders',    href: '/builders' },
+  { label: 'Advertisers', href: '/advertisers' },
+  { label: 'Resources',   href: '/resources' },
+  { label: 'Subscribe',   href: '/subscribe' },
+];
+
+function isPublicLinkActive(pathname: string, href: string): boolean {
+  // /dashboard must match exactly so it doesn't light up on every page
+  // (root '/' redirects to /dashboard so other public routes would never
+  // satisfy startsWith('/dashboard'), but the exact check is still clearer).
+  if (href === '/dashboard') return pathname === '/dashboard';
+  return pathname === href || pathname.startsWith(href + '/');
+}
+
 
 const API = getApiBase();
 
@@ -217,7 +239,9 @@ export default function AppShell({
 
           {/* Right: desktop admin dropdowns (hidden on mobile) + logout */}
           <div className="flex items-center gap-1">
-            {/* Desktop admin dropdown menus */}
+            {/* Desktop nav. Admins get dropdown menus grouped by domain;
+                public visitors get a flat link bar mirroring BottomNav so
+                desktop users see the same destinations as mobile. */}
             {isAdmin ? (
               <nav ref={navRef} className="hidden lg:flex items-center gap-1 mr-2 relative">
                 {ADMIN_GROUPS.map((group, groupIdx) => {
@@ -298,7 +322,27 @@ export default function AppShell({
                   );
                 })}
               </nav>
-            ) : null}
+            ) : (
+              <nav className="hidden lg:flex items-center gap-1 mr-2">
+                {PUBLIC_DESKTOP_LINKS.map((link) => {
+                  const active = isPublicLinkActive(pathname, link.href);
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      aria-current={active ? 'page' : undefined}
+                      className={`px-3 py-1.5 text-xs uppercase tracking-[0.15em] rounded-md transition ${
+                        active
+                          ? 'text-gray-900 bg-gray-100 font-medium'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            )}
 
             {/* Logout / auth */}
             {user || isAdmin ? (

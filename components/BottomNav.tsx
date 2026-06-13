@@ -37,7 +37,11 @@ export default function BottomNav({ info, onMoreClick }: Props) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const isHome = pathname === '/dashboard' && !hasHash('magazines', 'events');
+  // Initialize from pathname only so the active state is correct on first paint.
+  // The hash gate would briefly read window.location.hash on hydration, causing
+  // a one-frame flash of inactive state on /dashboard. Hash is only consulted
+  // in the goHome dispatch handler below, where the timing doesn't matter.
+  const isHome = pathname === '/dashboard';
   const isMagazine = pathname === '/magazine' || pathname.startsWith('/magazine/');
   const isCalendar = pathname === '/calendar' || pathname.startsWith('/calendar/');
   const isBuilders = pathname === '/builders' || pathname.startsWith('/builders/');
@@ -129,12 +133,4 @@ function Tab({
   );
 }
 
-/**
- * Check whether window.location.hash matches one of the given phase tokens.
- * Returns false during SSR.
- */
-function hasHash(...tokens: string[]): boolean {
-  if (typeof window === 'undefined') return false;
-  const h = window.location.hash.replace(/^#/, '');
-  return tokens.includes(h);
-}
+

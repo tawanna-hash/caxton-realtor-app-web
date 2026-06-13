@@ -79,7 +79,10 @@ export default function InventoryDetailFloater({
     key: 'promos',
     label: 'Promos',
     ariaLabel: 'Promotions',
-    href: '/builder-promotions',
+    // Points at the filtered inventory view (same destination as the /builders
+    // hub's "Promotions" row). The standalone /builder-promotions page was a
+    // ComingSoon stub with no inbound nav and has been removed.
+    href: '/inventory?kind=promotion',
     onClick: handlePromotions,
     icon: (
       <>
