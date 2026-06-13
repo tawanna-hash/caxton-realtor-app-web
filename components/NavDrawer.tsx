@@ -91,6 +91,7 @@ const DRAWER_SECTIONS: NavSection[] = [
       { label: 'Inventory & Promotions', href: '/inventory' },
       { label: 'Communities', href: '/communities' },
       { label: 'Advertisers', href: '/advertisers' },
+      { label: 'REALTOR® Resources', href: '/resources' },
     ],
   },
   {
