@@ -54,10 +54,13 @@ export async function GET() {
     try {
       await ensureSchema();
       const sql = getSql();
+      // Only active advertisers can be selected when stamping PDFs.
+      // Paused, prospect, and archived rows are hidden from the admin
+      // footer picker to match the public-facing rule.
       const rows = (await sql`
         SELECT id, name
         FROM advertisers
-        WHERE COALESCE(status, 'active') != 'archived'
+        WHERE COALESCE(status, 'active') = 'active'
         ORDER BY name ASC
       `) as unknown as Array<{ id: number; name: string }>;
       const payload: FooterContextResponse = {

@@ -33,8 +33,13 @@ export default async function PublicAdvertiserPage({ params, searchParams }: Pag
   await ensurePublicationColumn();
   const sql = getSql();
 
+  // Only active advertisers expose a public-facing report. Paused,
+  // prospect, and archived rows 404 even with a valid share token —
+  // matches the public directory rule.
   const rows = (await sql`
-    SELECT * FROM advertisers WHERE slug = ${slug}
+    SELECT * FROM advertisers
+    WHERE slug = ${slug}
+      AND COALESCE(status, 'active') = 'active'
   `) as unknown as Advertiser[];
   if (rows.length === 0) notFound();
   const advertiser = rows[0];
