@@ -32,6 +32,11 @@ import type { AppAdSlot } from '@/lib/media-kit';
 interface Props {
   slot: AppAdSlot;
   initialPub: 'realtyline' | 'newsline' | 'both';
+  /** Optional pre-fill from /advertise/inquire redirect. */
+  initialName?: string;
+  initialEmail?: string;
+  initialPhone?: string;
+  initialCompany?: string;
 }
 
 type Pub = 'realtyline' | 'newsline' | 'both';
@@ -60,7 +65,14 @@ function addDaysISO(iso: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-export default function CheckoutForm({ slot, initialPub }: Props) {
+export default function CheckoutForm({
+  slot,
+  initialPub,
+  initialName = '',
+  initialEmail = '',
+  initialPhone = '',
+  initialCompany = '',
+}: Props) {
   const perUnit = slot.pricingUnit === 'per send' || slot.pricingUnit === 'per push';
   const hasMonthly = slot.monthlySingle != null && slot.monthlyBoth != null;
 
@@ -72,10 +84,10 @@ export default function CheckoutForm({ slot, initialPub }: Props) {
   const [months, setMonths] = useState(1);
   const [units, setUnits] = useState(1);
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [company, setCompany] = useState('');
+  const [name, setName] = useState(initialName);
+  const [email, setEmail] = useState(initialEmail);
+  const [phone, setPhone] = useState(initialPhone);
+  const [company, setCompany] = useState(initialCompany);
 
   const [startDate, setStartDate] = useState(addDaysISO(todayISO(), 3));
   const [endDate, setEndDate] = useState(addDaysISO(todayISO(), 10));
