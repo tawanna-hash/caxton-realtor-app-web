@@ -2,117 +2,71 @@
 
 // app/(public)/resources/seller-concessions-limits/SellerConcessionsLimitsClient.tsx
 //
-// Public reference + calculator for seller's-concession (IPC) limits across
-// Conventional, FHA, VA, and USDA loan programs. Two halves:
-//   1. Calculator — pick program, occupancy, LTV; get the dollar cap on
-//      what the seller (or any interested party) can credit toward the
-//      buyer's closing costs / prepaids / points.
-//   2. Full agency matrix — every band the calculator switches on, so
-//      agents can scan it at a listing appointment.
+// Single-input reference: enter the listing price, see the maximum seller
+// contribution for every loan program × down-payment band on one card.
+// Inspired by Tawanna's reference design (Jun 2026) which puts the entire
+// agency matrix in front of agents at a listing appointment without making
+// them pick a program first.
 //
-// All math lives in lib/realtor-calc-math.ts (computeConcessionLimit +
-// CONCESSION_MATRIX). This file is presentation only.
+// Layout: a hero "card" (table) on the left with all scenarios, and a
+// right-rail with share affordances + a pre-written social caption.
+// Numbers come from lib/realtor-calc-math.ts (CONCESSION_DISPLAY) so the
+// math file remains the single source of truth.
 
 import { useMemo, useState } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
 import {
-  computeConcessionLimit,
-  CONCESSION_MATRIX,
-  type LoanProgram,
-  type Occupancy,
+  CONCESSION_DISPLAY,
+  type ConcessionDisplayRow,
 } from '@/lib/realtor-calc-math';
 import { fmtUSD } from '@/lib/mortgage-math';
-import { NumberField, SelectField } from '../_components/CalcInputs';
 import ResourceFloater from '../_components/ResourceFloater';
 import { reportTimestamp, type CalcReport } from '../_components/calcPdf';
 
 const EYEBROW = 'text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2';
 
-// SelectField expects {v, l} option shape (see _components/CalcInputs).
-const PROGRAM_OPTIONS: { v: LoanProgram; l: string }[] = [
-  { v: 'conventional', l: 'Conventional (Fannie / Freddie)' },
-  { v: 'fha', l: 'FHA' },
-  { v: 'va', l: 'VA' },
-  { v: 'usda', l: 'USDA' },
-];
-
-const OCCUPANCY_OPTIONS: { v: Occupancy; l: string }[] = [
-  { v: 'primary', l: 'Primary residence' },
-  { v: 'second_home', l: 'Second home' },
-  { v: 'investment', l: 'Investment property' },
-];
+/**
+ * Round a dollar amount to the nearest $500 so the card reads as a clean
+ * negotiation number ("$16,500" instead of "$16,484.93"). Above $50k we
+ * round to the nearest $1k; above $250k to the nearest $5k.
+ */
+function roundForDisplay(n: number): number {
+  if (n < 50_000) return Math.round(n / 500) * 500;
+  if (n < 250_000) return Math.round(n / 1_000) * 1_000;
+  return Math.round(n / 5_000) * 5_000;
+}
 
 export default function SellerConcessionsLimitsClient() {
-  const [program, setProgram] = useState<LoanProgram>('conventional');
-  const [occupancy, setOccupancy] = useState<Occupancy>('primary');
-  const [salePrice, setSalePrice] = useState(450000);
-  const [downPct, setDownPct] = useState(10);
-
-  // LTV is the inverse of down payment %, expressed as a percentage.
-  const ltvPct = useMemo(
-    () => Math.max(0, Math.min(100, 100 - downPct)),
-    [downPct],
-  );
-
-  // VA/USDA require primary residence — gently coerce occupancy when the
-  // user picks an incompatible program so the result stays meaningful.
-  const effectiveOccupancy: Occupancy = useMemo(() => {
-    if (program === 'va' || program === 'usda' || program === 'fha') {
-      return 'primary';
-    }
-    return occupancy;
-  }, [program, occupancy]);
-
-  const result = useMemo(
-    () =>
-      computeConcessionLimit({
-        program,
-        occupancy: effectiveOccupancy,
-        ltvPct,
-        salePrice,
-      }),
-    [program, effectiveOccupancy, ltvPct, salePrice],
-  );
-
-  const programOnlyAllowsPrimary =
-    program === 'fha' || program === 'va' || program === 'usda';
-
-  const programLabel = PROGRAM_OPTIONS.find((p) => p.v === program)?.l ?? '';
+  const [salePrice, setSalePrice] = useState(550_000);
 
   const buildReport = (): CalcReport => ({
     title: "Seller's Concession Limits",
-    subtitle: `${programLabel} · ${occupancyLabel(effectiveOccupancy)} · LTV ${ltvPct.toFixed(2)}%`,
-    heroLabel: `Maximum concession (${programLabel})`,
-    heroValue: fmtUSD(result.capAmount),
+    subtitle: `Listing price ${fmtUSD(salePrice)}`,
+    heroLabel: 'Listing price',
+    heroValue: fmtUSD(salePrice),
     meta: [
       { key: 'Generated', value: reportTimestamp() },
-      { key: 'Sale price', value: fmtUSD(salePrice) },
-      { key: 'LTV', value: `${ltvPct.toFixed(2)}%` },
-      { key: 'Down payment', value: `${downPct}%` },
-      { key: 'Occupancy', value: occupancyLabel(effectiveOccupancy) },
+      { key: 'Listing price', value: fmtUSD(salePrice) },
     ],
-    sections: [
-      {
-        heading: 'Result',
-        rows: [
-          { label: 'Concession cap', value: `${result.capPct}%`, emphasis: true },
-          { label: 'Dollar amount', value: fmtUSD(result.capAmount), emphasis: true },
-          { label: 'Basis', value: result.rule },
-          { label: 'Citation', value: result.citation },
-        ],
-      },
-      {
-        heading: 'Reference matrix (all programs)',
-        rows: CONCESSION_MATRIX.map((row) => ({
-          label: `${row.programLabel} · ${row.occupancyLabel} · ${row.ltvBand}`,
-          value: `${row.capPct}%`,
+    sections: CONCESSION_DISPLAY.flatMap((group) =>
+      group.scenarios.map((sc) => ({
+        heading: `${group.programLabel} — ${sc.occupancyLabel}`,
+        rows: sc.rows.map((row) => ({
+          label: `${row.downBand} · ${sc.coverage}`,
+          value:
+            row.kind === 'unlimited'
+              ? 'Unlimited'
+              : `${fmtUSD(roundForDisplay(((row.capPct ?? 0) * salePrice) / 100))} (${row.capPct}%)`,
+          emphasis: true,
         })),
-      },
-    ],
+      })),
+    ),
     disclaimer:
       'Agency caps shown. Lender / investor overlays can be stricter. VA defines "concessions" more narrowly than the other agencies — the seller may also pay normal closing costs separately. Always confirm allowable structure with the lender before contract.',
-    filename: `concession-limits-${program}`,
+    filename: `concession-limits-${salePrice}`,
   });
+
+  const caption = useMemo(() => buildCaption(), []);
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
@@ -120,169 +74,89 @@ export default function SellerConcessionsLimitsClient() {
         <p className={EYEBROW}>REALTOR® Reference</p>
         <PageTitle>Seller&rsquo;s Concession Limits</PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4 print:hidden">
-          The most the seller (or any interested party) can credit the
-          buyer toward closing costs, prepaids, and discount points
-          depends on the loan program, the occupancy, and on Conventional
-          loans, the LTV. Use the calculator to size a credit before
-          writing the offer, and the matrix below for a one-page reference.
+          The maximum a seller can contribute toward a buyer&rsquo;s costs,
+          by loan program and down-payment band. Enter your listing price
+          and the dollar caps update across every program at once &mdash;
+          built for negotiation prep at the listing appointment.
         </p>
       </header>
 
-      <div className="grid lg:grid-cols-5 gap-8">
-        {/* ── Inputs ─────────────────────────────────────────────── */}
-        <div className="lg:col-span-3 space-y-6 print:hidden">
-          <FieldGroup title="Loan & buyer">
-            <SelectField<LoanProgram>
-              label="Loan program"
-              value={program}
-              onChange={setProgram}
-              options={PROGRAM_OPTIONS}
-            />
-            <SelectField<Occupancy>
-              label="Occupancy"
-              value={effectiveOccupancy}
-              onChange={setOccupancy}
-              options={OCCUPANCY_OPTIONS}
-            />
-            {programOnlyAllowsPrimary && (
-              <p className="text-xs text-gray-500 -mt-2">
-                {programLabel.split(' ')[0]} requires primary residence — occupancy is locked.
-              </p>
-            )}
-          </FieldGroup>
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* ── Reference card ─────────────────────────────────────── */}
+        <div className="lg:col-span-2">
+          <article className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+            {/* Card header: eyebrow + title + listing-price input */}
+            <header className="px-6 md:px-8 pt-6 pb-5 border-b border-gray-100 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a2a44] mb-2">
+                  Seller Financing Guide
+                </p>
+                <h2
+                  className="text-2xl md:text-3xl text-gray-900 leading-tight"
+                  style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
+                >
+                  Seller concession <span className="text-[#1a2a44]">limits</span>
+                </h2>
+                <p className="text-sm text-gray-600 mt-2 max-w-md leading-relaxed">
+                  The maximum a seller can contribute toward a buyer&rsquo;s
+                  costs, by loan program and down payment.
+                </p>
+              </div>
 
-          <FieldGroup title="Deal">
-            <NumberField
-              label="Sale price"
-              value={salePrice}
-              onChange={setSalePrice}
-              prefix="$"
-              step={1000}
-            />
-            <NumberField
-              label="Down payment"
-              value={downPct}
-              onChange={setDownPct}
-              suffix="%"
-              step={0.5}
-              hint={`LTV ${ltvPct.toFixed(2)}%`}
-            />
-          </FieldGroup>
+              <ListingPriceInput value={salePrice} onChange={setSalePrice} />
+            </header>
 
-          <div className="rounded-md bg-amber-50 border border-amber-200 px-4 py-3 text-xs text-amber-900 leading-relaxed">
-            <p className="font-semibold mb-1">A note on how lenders read this:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>
-                Concessions over the cap don&rsquo;t void the loan — the lender
-                reduces the sale price (and therefore the LTV / loan amount)
-                by the overage.
-              </li>
-              <li>
-                On VA loans, the 4% cap covers items like prepaid taxes,
-                escrow funding, gifts, and payoff of buyer debts. The seller
-                may also pay normal closing costs <em>outside</em> the 4%.
-              </li>
-              <li>
-                Investor overlays can be stricter than agency. Confirm with
-                the lender before structuring an offer.
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* ── Result card ────────────────────────────────────────── */}
-        <div className="lg:col-span-2 print:col-span-5">
-          <div className="lg:sticky lg:top-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none">
-            <p className={EYEBROW}>Maximum allowable concession</p>
-            <p
-              className="text-4xl text-gray-900 mb-1"
-              style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
-            >
-              {fmtUSD(result.capAmount)}
-            </p>
-            <p className="text-xs text-gray-500 mb-5">
-              {result.capPct}% of {fmtUSD(salePrice)}
-            </p>
-
-            <div className="rounded-lg bg-[#1a2a44]/5 border border-[#1a2a44]/10 px-4 py-3 mb-4">
-              <p className="text-[10px] uppercase tracking-wider text-[#1a2a44] font-semibold mb-1">
-                Basis
-              </p>
-              <p className="text-sm text-gray-800 leading-snug">{result.rule}</p>
+            {/* Column labels */}
+            <div className="px-6 md:px-8 pt-5 grid grid-cols-12 gap-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+              <div className="col-span-5">Loan &amp; coverage</div>
+              <div className="col-span-4">Down payment</div>
+              <div className="col-span-3 text-right">Max seller contribution</div>
             </div>
 
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-2">Details</p>
-            <SubRow label="Program" value={programLabel.split(' ')[0]} />
-            <SubRow label="Occupancy" value={occupancyLabel(effectiveOccupancy)} />
-            <SubRow label="LTV" value={`${ltvPct.toFixed(2)}%`} />
-            <SubRow label="Sale price" value={fmtUSD(salePrice)} />
+            {/* Program groups */}
+            <div className="px-6 md:px-8 py-4 divide-y divide-gray-100">
+              {CONCESSION_DISPLAY.map((group) =>
+                group.scenarios.map((sc, sIdx) => (
+                  <ScenarioBlock
+                    key={`${group.program}-${sIdx}`}
+                    accent={group.accent}
+                    programLabel={group.programLabel}
+                    occupancyLabel={sc.occupancyLabel}
+                    coverage={sc.coverage}
+                    rows={sc.rows}
+                    salePrice={salePrice}
+                    footnote={sc.footnote}
+                  />
+                )),
+              )}
+            </div>
 
-            <hr className="border-gray-200 my-3" />
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">
-              Agency citation
+            <footer className="px-6 md:px-8 py-4 border-t border-gray-100 text-[11px] text-gray-500 italic leading-relaxed">
+              *USDA and all figures are estimates only. Please obtain final
+              numbers prior to closing. Lender / investor overlays may be
+              stricter than the agency caps shown.
+            </footer>
+          </article>
+        </div>
+
+        {/* ── Right rail: share + caption ────────────────────────── */}
+        <aside className="lg:col-span-1 space-y-4 print:hidden">
+          <CopyButton text={caption} label="Copy caption" />
+          <ShareButton
+            title="Seller's Concession Limits"
+            text="Maximum seller contribution by loan program and down payment."
+          />
+
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1a2a44] mb-3">
+              Suggested caption &amp; hashtags
             </p>
-            <p className="text-[11px] text-gray-600 leading-relaxed">{result.citation}</p>
-
-            <p className="text-[11px] text-gray-500 mt-4 leading-relaxed">
-              Estimate based on agency rules. Lender / investor overlays
-              may further restrict.
+            <p className="text-sm text-gray-800 whitespace-pre-line leading-relaxed">
+              {caption}
             </p>
           </div>
-        </div>
+        </aside>
       </div>
-
-      {/* ── Matrix ─────────────────────────────────────────────────── */}
-      <section className="mt-16">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#1a2a44] mb-3">
-          Reference Matrix
-        </p>
-        <h2
-          className="text-2xl md:text-3xl text-gray-900 mb-6"
-          style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
-        >
-          Every concession cap, at a glance
-        </h2>
-        <div className="overflow-x-auto rounded-lg border border-gray-200">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr className="text-left">
-                <Th>Program</Th>
-                <Th>Occupancy</Th>
-                <Th>LTV band</Th>
-                <Th className="text-right">Cap</Th>
-                <Th>Notes</Th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {CONCESSION_MATRIX.map((row, i) => {
-                const isActive =
-                  row.program === program &&
-                  row.occupancy === effectiveOccupancy &&
-                  bandMatches(row.ltvBand, ltvPct);
-                return (
-                  <tr
-                    key={`${row.program}-${row.occupancy}-${row.ltvBand}-${i}`}
-                    className={isActive ? 'bg-[#1a2a44]/5' : 'bg-white'}
-                  >
-                    <Td className="font-medium text-gray-900">{row.programLabel}</Td>
-                    <Td>{row.occupancyLabel}</Td>
-                    <Td>{row.ltvBand}</Td>
-                    <Td className="text-right font-semibold text-gray-900">
-                      {row.capPct}%
-                    </Td>
-                    <Td className="text-xs text-gray-600">{row.notes ?? '—'}</Td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        <p className="text-xs text-gray-500 mt-4 leading-relaxed">
-          Rows are agency caps. Highlighted row matches your current
-          calculator inputs. Always check the lender&rsquo;s investor
-          overlay before relying on the published agency maximum.
-        </p>
-      </section>
 
       <p className="text-xs text-gray-500 mt-12 leading-relaxed print:hidden">
         Sources:{' '}
@@ -342,55 +216,204 @@ export default function SellerConcessionsLimitsClient() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Sub-components
+// ─────────────────────────────────────────────────────────────────────────────
 
-function occupancyLabel(o: Occupancy): string {
-  switch (o) {
-    case 'primary': return 'Primary residence';
-    case 'second_home': return 'Second home';
-    case 'investment': return 'Investment property';
-  }
+function ListingPriceInput({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+}) {
+  // Show a US-formatted view while editing the underlying number. The
+  // <input> is text so we can render the $ + commas while typing.
+  const display = useMemo(() => fmtUSD(value), [value]);
+
+  return (
+    <label className="inline-flex flex-col rounded-lg border border-gray-200 bg-white px-4 py-3 min-w-[180px]">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500 text-right">
+        Listing price
+      </span>
+      <input
+        type="text"
+        inputMode="numeric"
+        value={display}
+        onChange={(e) => {
+          const digits = e.target.value.replace(/[^\d]/g, '');
+          const n = digits === '' ? 0 : Number(digits);
+          if (Number.isFinite(n)) onChange(n);
+        }}
+        className="bg-transparent text-right text-xl text-gray-900 font-semibold focus:outline-none mt-0.5"
+        aria-label="Listing price"
+      />
+    </label>
+  );
+}
+
+function ScenarioBlock({
+  accent,
+  programLabel,
+  occupancyLabel,
+  coverage,
+  rows,
+  salePrice,
+  footnote,
+}: {
+  accent: string;
+  programLabel: string;
+  occupancyLabel: string;
+  coverage: string;
+  rows: ConcessionDisplayRow[];
+  salePrice: number;
+  footnote?: string;
+}) {
+  return (
+    <div className="py-4 first:pt-2 last:pb-2">
+      <div className="grid grid-cols-12 gap-4">
+        {/* Loan & coverage */}
+        <div className="col-span-12 sm:col-span-5">
+          <div className="flex items-start gap-2">
+            <span
+              className="mt-2 inline-block w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: accent }}
+              aria-hidden="true"
+            />
+            <div>
+              <p className="font-semibold text-gray-900 leading-snug">
+                {programLabel}
+              </p>
+              <p className="text-sm text-gray-600 leading-snug mt-0.5">
+                {occupancyLabel}
+              </p>
+              <p className="text-[11px] text-gray-500 leading-relaxed mt-1">
+                {coverage}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Down payment + dollar caps. Each row of the scenario becomes
+            a horizontal pair (band → dollar). */}
+        <div className="col-span-12 sm:col-span-7 sm:pl-2">
+          <div className="space-y-2">
+            {rows.map((row, i) => (
+              <div
+                key={`${row.downBand}-${i}`}
+                className="grid grid-cols-12 gap-4 items-baseline"
+              >
+                <div className="col-span-6 text-sm text-gray-700">
+                  {row.downBand.split(' · ').map((part, j) => (
+                    <p
+                      key={j}
+                      className={j === 0 ? '' : 'text-[11px] text-gray-500 mt-0.5'}
+                    >
+                      {part}
+                    </p>
+                  ))}
+                </div>
+                <div className="col-span-6 text-right">
+                  {row.kind === 'unlimited' ? (
+                    <span className="text-base font-semibold text-emerald-700">
+                      Unlimited
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-baseline gap-2 justify-end">
+                      <span className="text-base font-semibold text-[#1a2a44]">
+                        {fmtUSD(roundForDisplay(((row.capPct ?? 0) * salePrice) / 100))}
+                      </span>
+                      <span className="text-[11px] font-medium text-[#1a2a44]/70">
+                        {row.capPct}%
+                      </span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {footnote && (
+        <p className="text-[11px] text-gray-500 leading-relaxed mt-3 sm:ml-4">
+          {footnote}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function CopyButton({ text, label }: { text: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch {
+          // Browser blocked — nothing to do; user can select the caption.
+        }
+      }}
+      className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#1a2a44] text-white text-sm font-semibold py-3 hover:bg-[#0f1c33] transition"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+      </svg>
+      {copied ? 'Copied' : label}
+    </button>
+  );
+}
+
+function ShareButton({ title, text }: { title: string; text: string }) {
+  const [shared, setShared] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        const url = typeof window !== 'undefined' ? window.location.href : '';
+        const data: ShareData = { title, text, url };
+        try {
+          if (navigator.share && navigator.canShare?.(data)) {
+            await navigator.share(data);
+            return;
+          }
+          await navigator.clipboard.writeText(url);
+          setShared(true);
+          setTimeout(() => setShared(false), 1500);
+        } catch {
+          // user dismissed — no-op
+        }
+      }}
+      className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#1a2a44] text-white text-sm font-semibold py-3 hover:bg-[#0f1c33] transition"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="18" cy="5" r="3" />
+        <circle cx="6" cy="12" r="3" />
+        <circle cx="18" cy="19" r="3" />
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+      </svg>
+      {shared ? 'Link copied' : 'Share'}
+    </button>
+  );
 }
 
 /**
- * Match a human-readable LTV band string against a numeric LTV. Bands
- * come from CONCESSION_MATRIX so they're a small known set.
+ * Pre-written social caption operators can copy and use on Instagram,
+ * Facebook, or email. The listing price isn't woven into the body
+ * because it's a generic education caption; the listing price drives
+ * the table next to it.
  */
-function bandMatches(band: string, ltv: number): boolean {
-  if (band === 'Any LTV') return true;
-  if (band === 'LTV ≤ 75%') return ltv <= 75;
-  if (band === 'LTV 75.01% – 90%') return ltv > 75 && ltv <= 90;
-  if (band === 'LTV > 90%') return ltv > 90;
-  return false;
-}
-
-function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#1a2a44] mb-3">
-        {title}
-      </p>
-      <div className="space-y-4">{children}</div>
-    </div>
-  );
-}
-
-function SubRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between text-sm text-gray-700 pl-3">
-      <span>{label}</span>
-      <span className="font-medium text-gray-900">{value}</span>
-    </div>
-  );
-}
-
-function Th({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return (
-    <th className={`px-4 py-3 text-[11px] uppercase tracking-wider font-semibold text-gray-600 ${className}`}>
-      {children}
-    </th>
-  );
-}
-
-function Td({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <td className={`px-4 py-3 align-top ${className}`}>{children}</td>;
+function buildCaption(): string {
+  return [
+    'In today\u2019s market, buyers may have more room to negotiate than they realize.',
+    '',
+    'Seller concessions can potentially help cover closing costs, prepaid items, or even discount points \u2014 but the limits depend on the loan type and scenario.',
+    '',
+    '#SellerConcessions #BuyerTips #ClosingCosts #RealEstateNegotiation #MortgageEducation',
+  ].join('\n');
 }

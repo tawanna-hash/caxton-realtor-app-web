@@ -1029,3 +1029,125 @@ export const CONCESSION_MATRIX: ConcessionMatrixRow[] = [
     capPct: 6,
   },
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Display matrix (richer than CONCESSION_MATRIX) for the public reference
+// table on the Seller's Concession Limits page. Each row encodes one
+// "down-payment band → max contribution" line, grouped by program + scenario.
+//
+// The VA program needs two scenario blocks because closing costs / prepaids /
+// up to 2 discount points are *uncapped* (paid separately), while the 4%
+// concession cap only applies to funding fee, extra discount points, debt
+// payoff, and gifts. We surface that distinction so agents understand why
+// VA can look generous on paper.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ConcessionRowKind = 'capped' | 'unlimited';
+
+export interface ConcessionDisplayRow {
+  /** Down-payment band as the operator should think of it. */
+  downBand: string;
+  /** Cap as a percentage of sale price. null for unlimited rows. */
+  capPct: number | null;
+  kind: ConcessionRowKind;
+  /** Optional sub-label rendered under the dollar cell. */
+  capLabel?: string;
+}
+
+export interface ConcessionDisplayScenario {
+  /** Sub-label under the program name (e.g. "Primary & secondary home"). */
+  occupancyLabel: string;
+  /** "What's covered" caption that appears under the occupancy. */
+  coverage: string;
+  rows: ConcessionDisplayRow[];
+  /** Optional footnote about what's *not* covered or is treated separately. */
+  footnote?: string;
+}
+
+export interface ConcessionDisplayGroup {
+  program: LoanProgram;
+  programLabel: string;
+  /** Accent color used for the program dot and program-label color. */
+  accent: string;
+  scenarios: ConcessionDisplayScenario[];
+}
+
+export const CONCESSION_DISPLAY: ConcessionDisplayGroup[] = [
+  {
+    program: 'conventional',
+    programLabel: 'Conventional',
+    accent: '#1a2a44',
+    scenarios: [
+      {
+        occupancyLabel: 'Primary & secondary home',
+        coverage: 'Closing costs, prepaid items & discount points',
+        rows: [
+          { downBand: 'Less than 10%', capPct: 3, kind: 'capped' },
+          { downBand: '10% – 25%', capPct: 6, kind: 'capped' },
+          { downBand: 'More than 25%', capPct: 9, kind: 'capped' },
+        ],
+      },
+      {
+        occupancyLabel: 'Investment',
+        coverage: 'Closing costs, prepaid items & discount points',
+        rows: [
+          { downBand: '15% or more', capPct: 2, kind: 'capped' },
+        ],
+      },
+    ],
+  },
+  {
+    program: 'fha',
+    programLabel: 'FHA',
+    accent: '#0d7a4f',
+    scenarios: [
+      {
+        occupancyLabel: 'Primary',
+        coverage: 'Closing costs, prepaid items & discount points',
+        rows: [
+          { downBand: '3.5% or more', capPct: 6, kind: 'capped' },
+        ],
+        footnote:
+          'Excess contributions reduce the sale price dollar-for-dollar before LTV is calculated.',
+      },
+    ],
+  },
+  {
+    program: 'va',
+    programLabel: 'VA',
+    accent: '#2a4ba3',
+    scenarios: [
+      {
+        occupancyLabel: 'Primary',
+        coverage: 'Closing costs, prepaids & up to 2 discount points',
+        rows: [
+          { downBand: 'Down payment · N/A', capPct: null, kind: 'unlimited' },
+        ],
+      },
+      {
+        occupancyLabel: 'Primary',
+        coverage: 'Funding fee, extra discount points & debt payoff',
+        rows: [
+          { downBand: 'Down payment · N/A', capPct: 4, kind: 'capped' },
+        ],
+        footnote:
+          'VA splits its treatment: standard buyer costs may be paid in full by the seller; only "concession" items (funding fee, extra points, payoff of buyer debts, gifts) count toward the 4% cap.',
+      },
+    ],
+  },
+  {
+    program: 'usda',
+    programLabel: 'USDA',
+    accent: '#a36b1f',
+    scenarios: [
+      {
+        occupancyLabel: 'Primary',
+        coverage: 'Closing costs, prepaid items & discount points',
+        rows: [
+          { downBand: 'N/A', capPct: 6, kind: 'capped' },
+        ],
+        footnote: 'Eligible rural primary residence only.',
+      },
+    ],
+  },
+];
