@@ -9,6 +9,7 @@
 
 import { listBuilderInventory } from '@/lib/builder-inventory';
 import CommunitiesClient from '@/components/communities/CommunitiesClient';
+import BuildersBreadcrumb from '@/components/BuildersBreadcrumb';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,5 +25,10 @@ export default async function Page() {
     homeType: 'community',
     limit: 200,
   });
-  return <CommunitiesClient initialRows={rows} />;
+  return (
+    <>
+      <BuildersBreadcrumb />
+      <CommunitiesClient initialRows={rows} />
+    </>
+  );
 }

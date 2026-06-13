@@ -21,6 +21,9 @@ interface NavItem {
   href: string;
   placeholder?: boolean;
   adminOnly?: boolean;
+  /** Hide this link when no user is signed in. Used to keep auth-gated
+   *  routes (e.g. /dashboard, /profile) from masquerading as public links. */
+  authOnly?: boolean;
   /** Optional collapsible sub-menu. Parent link remains clickable. */
   subitems?: NavItem[];
 }
@@ -77,10 +80,10 @@ const DRAWER_SECTIONS: NavSection[] = [
   {
     title: 'About',
     items: [
-      { label: 'My Feed', href: '/dashboard' },
+      { label: 'My Feed', href: '/dashboard', authOnly: true },
       { label: 'About Us', href: '/about' },
       { label: 'Advertise', href: '/advertise' },
-      { label: 'My Profile', href: '/profile' },
+      { label: 'My Profile', href: '/profile', authOnly: true },
     ],
   },
   {
@@ -194,6 +197,9 @@ export default function NavDrawer({
 
             const renderItem = (item: NavItem) => {
               if (item.adminOnly && !isAdmin) return null;
+              // Hide auth-only items for logged-out visitors so they don't
+              // appear to be public links that bounce to the AuthGate.
+              if (item.authOnly && !user) return null;
               const isActive =
                 pathname === item.href || pathname.startsWith(item.href + '/');
 

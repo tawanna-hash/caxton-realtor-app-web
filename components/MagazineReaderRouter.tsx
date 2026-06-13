@@ -39,6 +39,8 @@ interface Props {
   magazine: Magazine;
   brandColor: string;
   onClose: () => void;
+  /** Optional override for the reader's "home" link. Defaults to navigating to '/'. */
+  onHome?: () => void;
 }
 
 /**
@@ -82,9 +84,9 @@ function isInteractive(magazine: Magazine): boolean {
   return false;
 }
 
-export default function MagazineReaderRouter({ magazine, brandColor, onClose }: Props) {
+export default function MagazineReaderRouter({ magazine, brandColor, onClose, onHome }: Props) {
   if (isInteractive(magazine)) {
-    return <InteractiveMagazineReader magazine={magazine} brandColor={brandColor} onClose={onClose} />;
+    return <InteractiveMagazineReader magazine={magazine} brandColor={brandColor} onClose={onClose} onHome={onHome} />;
   }
-  return <MagazineReader magazine={magazine} brandColor={brandColor} onClose={onClose} />;
+  return <MagazineReader magazine={magazine} brandColor={brandColor} onClose={onClose} onHome={onHome} />;
 }

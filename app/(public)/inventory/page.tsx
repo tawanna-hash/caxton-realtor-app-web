@@ -10,6 +10,7 @@ import {
   listActiveBuilderNames,
 } from '@/lib/builder-inventory';
 import InventoryClient from '@/components/inventory/InventoryClient';
+import BuildersBreadcrumb from '@/components/BuildersBreadcrumb';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,5 +27,10 @@ export default async function Page() {
     listBuilderInventory({ status: 'active', limit: 500 }),
     listActiveBuilderNames('all'),
   ]);
-  return <InventoryClient initialRows={rows} allBuilders={allBuilders} />;
+  return (
+    <>
+      <BuildersBreadcrumb />
+      <InventoryClient initialRows={rows} allBuilders={allBuilders} />
+    </>
+  );
 }
