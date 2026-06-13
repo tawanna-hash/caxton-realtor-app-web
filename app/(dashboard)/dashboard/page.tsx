@@ -10,8 +10,6 @@ import ProfilePanel from '@/components/ProfilePanel';
 import { startAuthentication } from '@/components/PasskeysPanel';
 import { getApiBase } from '@/lib/api-base';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
-import BottomNav from '@/components/BottomNav';
-import NavDrawer from '@/components/NavDrawer';
 import { SocialLinks } from '@/components/SocialLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import SaborReportCard from '@/components/SaborReportCard';
@@ -970,7 +968,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
       setCatState(saved && validCats.includes(saved) ? saved : 'All');
     } catch {}
   }, [pub]);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const track = useMetrics(user?.id || null);
   const info = PUBS.find((p) => p.id === pub) || PUBS[0];
@@ -1121,15 +1118,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
 
   return (
     <div className="min-h-screen bg-white pb-36" style={SW}>
-      <div className="px-3 py-3 flex items-center justify-between bg-white border-b border-gray-200">
-        <button onClick={() => { trackEvent('menu_opened'); setMenuOpen(true); }} aria-label="Open menu" className="text-gray-900 p-2 border border-gray-300 rounded-full hover:border-gray-400 transition-colors">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
-        </button>
-        <p className="text-base font-semibold text-gray-900 tracking-tight">Realty News Now</p>
-        <button aria-label="Search" className="text-gray-700 p-2">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        </button>
-      </div>
       <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: info.color }}>
         <div className="min-w-0 flex-1">
           {!user?.guest && user?.firstName && (
@@ -1143,16 +1131,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
         </button>
       </div>
       <DashboardHero pub={pub as "realtyline" | "newsline"} />
-      <NavDrawer
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        pub={pub}
-        drawerBg={info.color}
-        isAdmin={false}
-        user={user}
-        onLogout={onLogout}
-        onPubSwitch={handleSwitch}
-      />
       {user?.guest && (
         <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
           <p className="text-sm text-amber-700 font-light">Browsing as Guest</p>
@@ -1247,7 +1225,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string
           })}
         </div>
       )}
-      <BottomNav info={{ name: info.name, color: info.color }} onMoreClick={() => setMenuOpen(true)} />
       {profileOpen && (
         <ProfilePanel user={user} accentColor={info.color} onClose={() => setProfileOpen(false)} />
       )}
