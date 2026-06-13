@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { slugify, CRM_PATCHABLE_FIELDS, type Advertiser } from '@/lib/advertisers';
+import { coerceFooterTemplateId } from '@/lib/footer-templates';
 import { coerceHeaderStyle } from '@/lib/advertiser-header-styles';
 import {
   ensurePublicationColumn, type Publication,
@@ -183,6 +184,13 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
           // can never hold a value the public renderer doesn't know about.
           const style = coerceHeaderStyle(val);
           await sql`UPDATE advertisers SET header_style = ${style} WHERE id = ${idNum}`;
+          break;
+        }
+        case 'footer_template': {
+          // Coerce unknown/legacy IDs back to the default so the column
+          // never holds a value the picker doesn't recognise.
+          const tpl = coerceFooterTemplateId(val);
+          await sql`UPDATE advertisers SET footer_template = ${tpl} WHERE id = ${idNum}`;
           break;
         }
         case 'bio':                 await sql`UPDATE advertisers SET bio = ${val}                        WHERE id = ${idNum}`; break;

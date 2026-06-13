@@ -1,0 +1,128 @@
+// lib/footer-templates.ts
+//
+// Footer template registry for downloadable broker/agent tools (PDFs from
+// /resources calculators today; reused by any future export surface).
+//
+// Each template is rendered onto the last page (or every page) of a PDF
+// by lib/pdf/brand-footer.ts. The shape here is purely declarative so
+// the picker UI and the renderer share the same source of truth.
+//
+// IDs are stored verbatim in the DB column advertisers.footer_template
+// (admin-set default) and in localStorage key
+// 'rnn:footer-template' (per-device override picked at download time).
+// Unknown / legacy values coerce back to 'minimal' on read.
+
+export const FOOTER_TEMPLATE_IDS = [
+  'business-card',
+  'banner',
+  'minimal',
+  'signature',
+  'two-column',
+  'stacked',
+] as const;
+
+export type FooterTemplateId = (typeof FOOTER_TEMPLATE_IDS)[number];
+
+export const FOOTER_TEMPLATE_DEFAULT: FooterTemplateId = 'business-card';
+
+export function coerceFooterTemplateId(value: unknown): FooterTemplateId {
+  if (typeof value !== 'string') return FOOTER_TEMPLATE_DEFAULT;
+  return (FOOTER_TEMPLATE_IDS as readonly string[]).includes(value)
+    ? (value as FooterTemplateId)
+    : FOOTER_TEMPLATE_DEFAULT;
+}
+
+/**
+ * Brand fields the renderer can pull from. All optional - the renderer
+ * skips blank lines so a partially-filled profile still looks tidy.
+ */
+export interface FooterBrand {
+  name: string | null;
+  company: string | null;
+  title: string | null;
+  email: string | null;
+  phone: string | null;
+  office_phone: string | null;
+  website: string | null;
+  logo_url: string | null;
+  photo_url: string | null;
+  address: string | null;
+  address_2: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  license_number: string | null;
+  tagline: string | null;
+}
+
+export interface FooterTemplateMeta {
+  id: FooterTemplateId;
+  label: string;
+  blurb: string;
+  /** Approximate footer height in points (jsPDF letter). The renderer
+   *  reserves this much space at the bottom of each page. */
+  heightPt: number;
+  /** Where the footer should render. */
+  placement: 'every-page' | 'last-page';
+}
+
+export const FOOTER_TEMPLATE_META: Record<FooterTemplateId, FooterTemplateMeta> = {
+  'business-card': {
+    id: 'business-card',
+    label: 'Business card',
+    blurb: 'Logo, name, phone, email, website - the everyday default.',
+    heightPt: 84,
+    placement: 'every-page',
+  },
+  banner: {
+    id: 'banner',
+    label: 'Brand banner',
+    blurb: 'Full-width navy bar with logo on the left and contact on the right.',
+    heightPt: 64,
+    placement: 'every-page',
+  },
+  minimal: {
+    id: 'minimal',
+    label: 'Minimal',
+    blurb: 'Single line: name, phone, and website. Lightest touch.',
+    heightPt: 32,
+    placement: 'every-page',
+  },
+  signature: {
+    id: 'signature',
+    label: 'Signature',
+    blurb: 'Headshot, handwritten-style name, and one tagline.',
+    heightPt: 92,
+    placement: 'last-page',
+  },
+  'two-column': {
+    id: 'two-column',
+    label: 'Two-column',
+    blurb: 'Logo and address on the left, phone/email/web on the right.',
+    heightPt: 96,
+    placement: 'every-page',
+  },
+  stacked: {
+    id: 'stacked',
+    label: 'Stacked',
+    blurb: 'Centered, multiline - logo, name, contact, address.',
+    heightPt: 108,
+    placement: 'last-page',
+  },
+};
+
+export function getFooterTemplateMeta(id: FooterTemplateId): FooterTemplateMeta {
+  return FOOTER_TEMPLATE_META[id] ?? FOOTER_TEMPLATE_META[FOOTER_TEMPLATE_DEFAULT];
+}
+
+/** True when a brand has enough fields to make any footer template look real. */
+export function brandLooksComplete(b: FooterBrand): boolean {
+  // Want at least: name OR company, plus one of (phone, email, website).
+  const hasIdentity = Boolean((b.name && b.name.trim()) || (b.company && b.company.trim()));
+  const hasChannel = Boolean(
+    (b.phone && b.phone.trim()) ||
+    (b.email && b.email.trim()) ||
+    (b.website && b.website.trim()),
+  );
+  return hasIdentity && hasChannel;
+}
