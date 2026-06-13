@@ -327,9 +327,9 @@ function CrmRow({
         <Link
           href={`/admin/advertisers/${row.id}`}
           className="px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
-          title="Open advertiser analytics"
+          title="Open advertiser analytics dashboard"
         >
-          Analytics
+          Open
         </Link>
         <button
           type="button"

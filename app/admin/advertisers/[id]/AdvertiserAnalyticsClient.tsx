@@ -106,11 +106,14 @@ export default function AdvertiserAnalyticsClient({ advertiser }: { advertiser: 
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="mb-6">
+          {/* Back link to the CRM workspace that opened this drill-down.
+              /admin/advertisers itself just redirects to /admin/crm now,
+              so link straight there to skip the extra hop. */}
           <Link
-            href="/admin/advertisers"
+            href="/admin/crm"
             className="text-sm text-gray-600 hover:text-gray-900"
           >
-            ← All advertisers
+            ← Back to CRM
           </Link>
           <div className="mt-2 flex items-start justify-between gap-4 flex-wrap">
             <div>

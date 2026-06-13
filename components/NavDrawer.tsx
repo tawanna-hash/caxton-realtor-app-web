@@ -12,6 +12,7 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { ADMIN_NAV } from '@/lib/admin-nav';
 
 type User = { id?: string; email?: string } | null;
 
@@ -36,50 +37,20 @@ const PUB_NAMES: Record<string, string> = {
   newsline: 'Newsline',
 };
 
-// Mirrors AppShell.tsx ADMIN_GROUPS so the drawer renders the same workspace
-// structure on mobile (with subheaders) that the desktop top bar uses.
-const ADMIN_GROUPS: { label: string; links: NavItem[] }[] = [
-  {
-    label: 'CRM',
-    links: [
-      { label: 'Advertisers & CRM', href: '/admin/crm', adminOnly: true },
-    ],
-  },
-  {
-    label: 'Mailing List HUB',
-    links: [
-      { label: 'Mailing List HUB', href: '/admin/mailing', adminOnly: true },
-      { label: 'ABOR Members', href: '/admin/mailing/holding', adminOnly: true },
-      { label: 'SABOR Members', href: '/admin/mailing/sabor-members', adminOnly: true },
-      { label: 'App Subscribers', href: '/admin/subscribers', adminOnly: true },
-    ],
-  },
-  {
-    label: 'Revenue',
-    links: [
-      { label: 'Billing', href: '/admin/billing', adminOnly: true },
-      { label: 'Ads', href: '/admin/ads', adminOnly: true },
-      { label: 'Marketing', href: '/admin/marketing', adminOnly: true },
-    ],
-  },
-  {
-    label: 'Content',
-    links: [
-      { label: 'Magazines', href: '/admin/magazines', adminOnly: true },
-      { label: 'Events', href: '/admin/events', adminOnly: true },
-      { label: 'Giveaways', href: '/admin/giveaways', adminOnly: true },
-      { label: 'Inventory', href: '/admin/inventory', adminOnly: true },
-    ],
-  },
-  {
-    label: 'Insights',
-    links: [
-      { label: 'Metrics', href: '/admin/metrics', adminOnly: true },
-      { label: 'Reports', href: '/admin/reports', adminOnly: true },
-      { label: 'Analytics', href: '/admin/analytics', adminOnly: true },
-    ],
-  },
-];
+// Admin nav is defined in lib/admin-nav.ts so this drawer and the
+// desktop top-bar in AppShell.tsx always render the same groups.
+// We adapt each canonical link into the drawer's NavItem shape
+// (adding `adminOnly: true` so non-admins never see admin links).
+const ADMIN_GROUPS: { label: string; links: NavItem[] }[] = ADMIN_NAV.map(
+  (g) => ({
+    label: g.label,
+    links: g.links.map((l) => ({
+      label: l.label,
+      href: l.href,
+      adminOnly: true,
+    })),
+  }),
+);
 
 const DRAWER_SECTIONS: NavSection[] = [
   {
@@ -99,7 +70,6 @@ const DRAWER_SECTIONS: NavSection[] = [
     items: [
       { label: 'Digital Newsletters', href: '/newsletter' },
       { label: 'Subscribe to Print', href: '/subscribe' },
-      { label: 'Manage Subscriptions', href: '#', placeholder: true },
       { label: 'FAQs', href: '/faq' },
     ],
   },
