@@ -76,25 +76,31 @@ export async function downloadCalcReport(report: CalcReport): Promise<void> {
 
   let y = margin;
 
+  // ── Headline area ───────────────────────────────────────────────
+  // Generous leading between eyebrow, title, gold rule, and subtitle
+  // so the top of the page reads as a deliberate masthead rather than
+  // four lines crammed together.
+
   // Eyebrow
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...GREY_500);
   doc.text('REALTYLINE AUSTIN  ·  REALTOR® TOOL', margin, y);
-  y += 20;
+  y += 28;
 
-  // Title (serif-feeling via Times)
+  // Title (serif-feeling via Times) - track on a 30pt baseline so the
+  // 24pt cap height has room to breathe before the gold rule.
   doc.setFont('times', 'normal');
   doc.setFontSize(24);
   doc.setTextColor(...GREY_900);
   doc.text(report.title, margin, y);
-  y += 8;
+  y += 16;
 
   // Gold rule
   doc.setDrawColor(...BRAND_GOLD);
   doc.setLineWidth(2);
   doc.line(margin, y, margin + 60, y);
-  y += 18;
+  y += 26;
 
   // Subtitle
   if (report.subtitle) {
@@ -102,8 +108,9 @@ export async function downloadCalcReport(report: CalcReport): Promise<void> {
     doc.setFontSize(10);
     doc.setTextColor(...GREY_700);
     const subLines = doc.splitTextToSize(report.subtitle, contentWidth);
+    // Bump per-line leading from 13 to 15pt for a softer, editorial feel.
     doc.text(subLines, margin, y);
-    y += subLines.length * 13 + 6;
+    y += subLines.length * 15 + 12;
   }
 
   // Meta grid (right column)

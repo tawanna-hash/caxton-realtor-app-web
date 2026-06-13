@@ -9,7 +9,8 @@
 // them pick a program first.
 //
 // Layout: a hero "card" (table) on the left with all scenarios, and a
-// right-rail with share affordances + a pre-written social caption.
+// (the previous right-rail share buttons + suggested caption card were
+// removed - sharing now lives on the global ResourceFloater pill.)
 // Numbers come from lib/realtor-calc-math.ts (CONCESSION_DISPLAY) so the
 // math file remains the single source of truth.
 
@@ -66,7 +67,6 @@ export default function SellerConcessionsLimitsClient() {
     filename: `concession-limits-${salePrice}`,
   });
 
-  const caption = useMemo(() => buildCaption(), []);
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
@@ -81,9 +81,9 @@ export default function SellerConcessionsLimitsClient() {
         </p>
       </header>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8">
         {/* ── Reference card ─────────────────────────────────────── */}
-        <div className="lg:col-span-2">
+        <div>
           <article className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
             {/* Card header: eyebrow + title + listing-price input */}
             <header className="px-6 md:px-8 pt-6 pb-5 border-b border-gray-100 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -139,23 +139,6 @@ export default function SellerConcessionsLimitsClient() {
           </article>
         </div>
 
-        {/* ── Right rail: share + caption ────────────────────────── */}
-        <aside className="lg:col-span-1 space-y-4 print:hidden">
-          <CopyButton text={caption} label="Copy caption" />
-          <ShareButton
-            title="Seller's Concession Limits"
-            text="Maximum seller contribution by loan program and down payment."
-          />
-
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#1a2a44] mb-3">
-              Suggested caption &amp; hashtags
-            </p>
-            <p className="text-sm text-gray-800 whitespace-pre-line leading-relaxed">
-              {caption}
-            </p>
-          </div>
-        </aside>
       </div>
 
       <p className="text-xs text-gray-500 mt-12 leading-relaxed print:hidden">
@@ -341,79 +324,4 @@ function ScenarioBlock({
       )}
     </div>
   );
-}
-
-function CopyButton({ text, label }: { text: string; label: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      type="button"
-      onClick={async () => {
-        try {
-          await navigator.clipboard.writeText(text);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
-        } catch {
-          // Browser blocked — nothing to do; user can select the caption.
-        }
-      }}
-      className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#1a2a44] text-white text-sm font-semibold py-3 hover:bg-[#0f1c33] transition"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-      </svg>
-      {copied ? 'Copied' : label}
-    </button>
-  );
-}
-
-function ShareButton({ title, text }: { title: string; text: string }) {
-  const [shared, setShared] = useState(false);
-  return (
-    <button
-      type="button"
-      onClick={async () => {
-        const url = typeof window !== 'undefined' ? window.location.href : '';
-        const data: ShareData = { title, text, url };
-        try {
-          if (navigator.share && navigator.canShare?.(data)) {
-            await navigator.share(data);
-            return;
-          }
-          await navigator.clipboard.writeText(url);
-          setShared(true);
-          setTimeout(() => setShared(false), 1500);
-        } catch {
-          // user dismissed — no-op
-        }
-      }}
-      className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#1a2a44] text-white text-sm font-semibold py-3 hover:bg-[#0f1c33] transition"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <circle cx="18" cy="5" r="3" />
-        <circle cx="6" cy="12" r="3" />
-        <circle cx="18" cy="19" r="3" />
-        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-      </svg>
-      {shared ? 'Link copied' : 'Share'}
-    </button>
-  );
-}
-
-/**
- * Pre-written social caption operators can copy and use on Instagram,
- * Facebook, or email. The listing price isn't woven into the body
- * because it's a generic education caption; the listing price drives
- * the table next to it.
- */
-function buildCaption(): string {
-  return [
-    'In today\u2019s market, buyers may have more room to negotiate than they realize.',
-    '',
-    'Seller concessions can potentially help cover closing costs, prepaid items, or even discount points \u2014 but the limits depend on the loan type and scenario.',
-    '',
-    '#SellerConcessions #BuyerTips #ClosingCosts #RealEstateNegotiation #MortgageEducation',
-  ].join('\n');
 }
