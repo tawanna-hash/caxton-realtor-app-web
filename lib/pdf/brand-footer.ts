@@ -4,10 +4,25 @@
 // Pure rendering - knows nothing about which page it's on; the caller
 // decides between 'every-page' and 'last-page' placement.
 //
+// Every template surfaces the same canonical set of fields so the
+// picker is purely about style, not about which contact details get
+// dropped:
+//   - profile photo (headshot)
+//   - logo
+//   - name
+//   - title
+//   - company
+//   - phone (mobile)
+//   - email
+//   - TREC / license number
+//   - date prepared
+// Optional address / website are shown when present but never replace
+// any of the required fields.
+//
 // Image loading: logo / photo URLs are fetched and base64-embedded so
 // the PDF is self-contained. We do this once per render call, not per
 // page. If the fetch fails (CORS, 404, expired blob URL) we silently
-// skip the image and fall back to text-only.
+// skip the image and the layout shifts text back to the margin.
 //
 // All measurements are in jsPDF points (1/72in). The doc is assumed to
 // be Letter, with the same 48pt margin used elsewhere.
@@ -62,20 +77,39 @@ function joinAddress(b: FooterBrand): string {
   return [line1, tail].filter(Boolean).join(' - ');
 }
 
-function cleanWebsite(url: string | null): string | null {
-  if (!url) return null;
-  return url.replace(/^https?:\/\//i, '').replace(/\/$/, '');
-}
-
 function primaryName(b: FooterBrand): string {
   const trimmed = (b.name || '').trim();
   if (trimmed) return trimmed;
   return (b.company || '').trim();
 }
 
+function formatPreparedDate(d: Date): string {
+  // "Prepared June 13, 2026"
+  try {
+    const fmt = new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(d);
+    return `Prepared ${fmt}`;
+  } catch {
+    return `Prepared ${d.toDateString()}`;
+  }
+}
+
+function licenseLabel(b: FooterBrand): string | null {
+  const lic = (b.license_number || '').trim();
+  if (!lic) return null;
+  // Already prefixed? Don't double-stamp.
+  if (/trec|license|lic\./i.test(lic)) return lic;
+  return `TREC #${lic}`;
+}
+
 export interface BrandFooterOptions {
   template: FooterTemplateId;
   brand: FooterBrand;
+  /** Date stamped onto every footer. Defaults to "now" at render time. */
+  preparedAt?: Date;
 }
 
 /** Render the configured footer template onto every applicable page of
@@ -87,6 +121,7 @@ export async function applyBrandFooter(
 ): Promise<void> {
   const meta = getFooterTemplateMeta(opts.template);
   const brand = opts.brand;
+  const prepared = formatPreparedDate(opts.preparedAt ?? new Date());
 
   // Preload images once
   const logo = await loadImage(brand.logo_url);
@@ -108,22 +143,22 @@ export async function applyBrandFooter(
 
     switch (opts.template) {
       case 'business-card':
-        renderBusinessCard(doc, brand, logo, footerTop, pageWidth);
+        renderBusinessCard(doc, brand, logo, photo, prepared, footerTop, pageWidth);
         break;
       case 'banner':
-        renderBanner(doc, brand, logo, footerTop, pageWidth, meta.heightPt);
+        renderBanner(doc, brand, logo, photo, prepared, footerTop, pageWidth, meta.heightPt);
         break;
       case 'minimal':
-        renderMinimal(doc, brand, footerTop, pageWidth);
+        renderMinimal(doc, brand, logo, photo, prepared, footerTop, pageWidth);
         break;
       case 'signature':
-        renderSignature(doc, brand, photo, footerTop, pageWidth);
+        renderSignature(doc, brand, logo, photo, prepared, footerTop, pageWidth);
         break;
       case 'two-column':
-        renderTwoColumn(doc, brand, logo, footerTop, pageWidth);
+        renderTwoColumn(doc, brand, logo, photo, prepared, footerTop, pageWidth);
         break;
       case 'stacked':
-        renderStacked(doc, brand, logo, footerTop, pageWidth);
+        renderStacked(doc, brand, logo, photo, prepared, footerTop, pageWidth);
         break;
     }
   }
@@ -139,25 +174,65 @@ function drawHairline(doc: jsPDF, y: number, pageWidth: number) {
   doc.line(MARGIN, y, pageWidth - MARGIN, y);
 }
 
-function renderBusinessCard(doc: jsPDF, b: FooterBrand, logo: ImgRef, top: number, pageWidth: number) {
-  drawHairline(doc, top, pageWidth);
-  const y = top + 14;
-  const logoW = 56;
-  const logoH = 56;
-  let textX = MARGIN;
-  if (logo) {
+/** Helper: draw a photo + logo pair on the left side. Photo is the
+ *  larger square (headshot), logo is a smaller chip below it.
+ *  Returns the X coordinate where text should start. */
+function drawPhotoAndLogo(
+  doc: jsPDF,
+  photo: ImgRef,
+  logo: ImgRef,
+  x: number,
+  y: number,
+  photoSize: number,
+  logoSize: number,
+): number {
+  let drawn = false;
+  if (photo) {
     try {
-      doc.addImage(logo.dataUrl, logo.format, MARGIN, y - 2, logoW, logoH, undefined, 'FAST');
-      textX = MARGIN + logoW + 14;
+      doc.addImage(photo.dataUrl, photo.format, x, y, photoSize, photoSize, undefined, 'FAST');
+      doc.setDrawColor(...BRAND_GOLD);
+      doc.setLineWidth(0.8);
+      doc.rect(x, y, photoSize, photoSize);
+      drawn = true;
     } catch { /* ignore */ }
   }
+  if (logo) {
+    try {
+      // Logo sits to the right of the photo when both present, otherwise in photo's spot.
+      const lx = drawn ? x + photoSize + 6 : x;
+      const ly = drawn ? y + photoSize - logoSize : y;
+      doc.addImage(logo.dataUrl, logo.format, lx, ly, logoSize, logoSize, undefined, 'FAST');
+      if (!drawn) {
+        drawn = true;
+        return x + logoSize + 12;
+      }
+      return x + photoSize + logoSize + 14;
+    } catch { /* ignore */ }
+  }
+  return drawn ? x + photoSize + 14 : x;
+}
+
+function renderBusinessCard(
+  doc: jsPDF,
+  b: FooterBrand,
+  logo: ImgRef,
+  photo: ImgRef,
+  prepared: string,
+  top: number,
+  pageWidth: number,
+) {
+  drawHairline(doc, top, pageWidth);
+  const y = top + 12;
+  const photoSize = 60;
+  const logoSize = 32;
+  const textX = drawPhotoAndLogo(doc, photo, logo, MARGIN, y, photoSize, logoSize);
 
   const name = primaryName(b);
   if (name) {
     doc.setFont('times', 'normal');
     doc.setFontSize(14);
     doc.setTextColor(...GREY_900);
-    doc.text(name, textX, y + 10);
+    doc.text(name, textX, y + 11);
   }
 
   if (b.title || b.company) {
@@ -174,18 +249,28 @@ function renderBusinessCard(doc: jsPDF, b: FooterBrand, logo: ImgRef, top: numbe
   const line: string[] = [];
   if (b.phone) line.push(b.phone);
   if (b.email) line.push(b.email);
-  const web = cleanWebsite(b.website);
-  if (web) line.push(web);
-  if (line.length > 0) doc.text(line.join('  -  '), textX, y + 38);
+  if (line.length > 0) doc.text(line.join('  -  '), textX, y + 37);
 
-  if (b.license_number) {
-    doc.setTextColor(...GREY_500);
-    doc.setFontSize(8);
-    doc.text(`License ${b.license_number}`, textX, y + 50);
-  }
+  // License + prepared date on a final small line
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY_500);
+  const tail: string[] = [];
+  const lic = licenseLabel(b);
+  if (lic) tail.push(lic);
+  tail.push(prepared);
+  doc.text(tail.join('  -  '), textX, y + 50);
 }
 
-function renderBanner(doc: jsPDF, b: FooterBrand, logo: ImgRef, top: number, pageWidth: number, height: number) {
+function renderBanner(
+  doc: jsPDF,
+  b: FooterBrand,
+  logo: ImgRef,
+  photo: ImgRef,
+  prepared: string,
+  top: number,
+  pageWidth: number,
+  height: number,
+) {
   doc.setFillColor(...BRAND_NAVY);
   doc.rect(0, top, pageWidth, height, 'F');
 
@@ -193,12 +278,24 @@ function renderBanner(doc: jsPDF, b: FooterBrand, logo: ImgRef, top: number, pag
   doc.setFillColor(...BRAND_GOLD);
   doc.rect(0, top, pageWidth, 2, 'F');
 
-  const y = top + 18;
+  const y = top + 10;
   let textX = MARGIN;
+  // Photo first (round-ish look via gold border), then logo to its right.
+  if (photo) {
+    try {
+      const size = 52;
+      doc.addImage(photo.dataUrl, photo.format, MARGIN, y, size, size, undefined, 'FAST');
+      doc.setDrawColor(...BRAND_GOLD);
+      doc.setLineWidth(0.8);
+      doc.rect(MARGIN, y, size, size);
+      textX = MARGIN + size + 10;
+    } catch { /* ignore */ }
+  }
   if (logo) {
     try {
-      doc.addImage(logo.dataUrl, logo.format, MARGIN, y, 40, 40, undefined, 'FAST');
-      textX = MARGIN + 52;
+      const size = 30;
+      doc.addImage(logo.dataUrl, logo.format, textX, y + 22, size, size, undefined, 'FAST');
+      textX += size + 10;
     } catch { /* ignore */ }
   }
 
@@ -211,89 +308,191 @@ function renderBanner(doc: jsPDF, b: FooterBrand, logo: ImgRef, top: number, pag
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(230, 235, 245);
-  const line: string[] = [];
-  if (b.phone) line.push(b.phone);
-  if (b.email) line.push(b.email);
-  const web = cleanWebsite(b.website);
-  if (web) line.push(web);
-  if (line.length > 0) {
-    doc.text(line.join('  -  '), pageWidth - MARGIN, y + 14, { align: 'right' });
-  }
-  const addr = joinAddress(b);
-  if (addr) {
-    doc.setFontSize(8);
-    doc.text(addr, pageWidth - MARGIN, y + 28, { align: 'right' });
-  }
-}
+  const sub = [b.title, b.name ? b.company : null].filter(Boolean).join(' - ');
+  if (sub) doc.text(sub, textX, y + 28);
 
-function renderMinimal(doc: jsPDF, b: FooterBrand, top: number, pageWidth: number) {
-  drawHairline(doc, top, pageWidth);
-  const y = top + 16;
+  const lic = licenseLabel(b);
+  if (lic) {
+    doc.setFontSize(8);
+    doc.setTextColor(210, 218, 235);
+    doc.text(lic, textX, y + 42);
+  }
+
+  // Right side: contact stack
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.setTextColor(...GREY_700);
-  const left = primaryName(b);
-  if (left) doc.text(left, MARGIN, y);
-
-  const right: string[] = [];
-  if (b.phone) right.push(b.phone);
-  const web = cleanWebsite(b.website);
-  if (web) right.push(web);
-  if (right.length > 0) {
-    doc.text(right.join('  -  '), pageWidth - MARGIN, y, { align: 'right' });
-  }
+  doc.setTextColor(230, 235, 245);
+  const rx = pageWidth - MARGIN;
+  let ry = y + 14;
+  if (b.phone) { doc.text(b.phone, rx, ry, { align: 'right' }); ry += 12; }
+  if (b.email) { doc.text(b.email, rx, ry, { align: 'right' }); ry += 12; }
+  doc.setFontSize(8);
+  doc.setTextColor(210, 218, 235);
+  doc.text(prepared, rx, ry, { align: 'right' });
 }
 
-function renderSignature(doc: jsPDF, b: FooterBrand, photo: ImgRef, top: number, pageWidth: number) {
+function renderMinimal(
+  doc: jsPDF,
+  b: FooterBrand,
+  logo: ImgRef,
+  photo: ImgRef,
+  prepared: string,
+  top: number,
+  pageWidth: number,
+) {
   drawHairline(doc, top, pageWidth);
-  const y = top + 14;
+  const y = top + 12;
 
-  // Circular-ish headshot (jsPDF can't easily clip to a circle, so we
-  // draw a square photo and a subtle gold ring overlay).
+  // Small headshot + tiny logo on the left
   let textX = MARGIN;
   if (photo) {
     try {
-      const size = 56;
+      const size = 36;
       doc.addImage(photo.dataUrl, photo.format, MARGIN, y, size, size, undefined, 'FAST');
       doc.setDrawColor(...BRAND_GOLD);
-      doc.setLineWidth(1.2);
+      doc.setLineWidth(0.6);
       doc.rect(MARGIN, y, size, size);
-      textX = MARGIN + size + 16;
+      textX = MARGIN + size + 10;
+    } catch { /* ignore */ }
+  }
+  if (logo) {
+    try {
+      const size = 20;
+      doc.addImage(logo.dataUrl, logo.format, textX, y + 16, size, size, undefined, 'FAST');
+      textX += size + 8;
     } catch { /* ignore */ }
   }
 
-  doc.setFont('times', 'italic');
-  doc.setFontSize(20);
-  doc.setTextColor(...BRAND_NAVY);
+  // Line 1: name - title - company
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(...GREY_900);
   const name = primaryName(b);
-  if (name) doc.text(name, textX, y + 24);
+  if (name) doc.text(name, textX, y + 10);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...GREY_700);
   const sub = [b.title, b.name ? b.company : null].filter(Boolean).join(' - ');
-  if (sub) doc.text(sub, textX, y + 40);
+  if (sub) doc.text(sub, textX, y + 22);
 
-  if (b.tagline) {
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(9);
-    doc.setTextColor(...GREY_500);
-    const lines = doc.splitTextToSize(b.tagline, pageWidth - textX - MARGIN);
-    doc.text(lines, textX, y + 56);
+  // Line 3: phone - email
+  const contact: string[] = [];
+  if (b.phone) contact.push(b.phone);
+  if (b.email) contact.push(b.email);
+  if (contact.length > 0) doc.text(contact.join('  -  '), textX, y + 34);
+
+  // Right side: license + prepared
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY_500);
+  const rx = pageWidth - MARGIN;
+  const lic = licenseLabel(b);
+  if (lic) doc.text(lic, rx, y + 22, { align: 'right' });
+  doc.text(prepared, rx, y + 34, { align: 'right' });
+}
+
+function renderSignature(
+  doc: jsPDF,
+  b: FooterBrand,
+  logo: ImgRef,
+  photo: ImgRef,
+  prepared: string,
+  top: number,
+  pageWidth: number,
+) {
+  drawHairline(doc, top, pageWidth);
+  const y = top + 12;
+
+  // Headshot
+  let textX = MARGIN;
+  if (photo) {
+    try {
+      const size = 62;
+      doc.addImage(photo.dataUrl, photo.format, MARGIN, y, size, size, undefined, 'FAST');
+      doc.setDrawColor(...BRAND_GOLD);
+      doc.setLineWidth(1.2);
+      doc.rect(MARGIN, y, size, size);
+      textX = MARGIN + size + 14;
+    } catch { /* ignore */ }
+  }
+
+  // Italic-script name
+  doc.setFont('times', 'italic');
+  doc.setFontSize(20);
+  doc.setTextColor(...BRAND_NAVY);
+  const name = primaryName(b);
+  if (name) doc.text(name, textX, y + 22);
+
+  // Title - company
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...GREY_700);
+  const sub = [b.title, b.name ? b.company : null].filter(Boolean).join(' - ');
+  if (sub) doc.text(sub, textX, y + 36);
+
+  // Contact line
+  const contact: string[] = [];
+  if (b.phone) contact.push(b.phone);
+  if (b.email) contact.push(b.email);
+  if (contact.length > 0) doc.text(contact.join('  -  '), textX, y + 50);
+
+  // License + prepared
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY_500);
+  const tail: string[] = [];
+  const lic = licenseLabel(b);
+  if (lic) tail.push(lic);
+  tail.push(prepared);
+  doc.text(tail.join('  -  '), textX, y + 62);
+
+  // Logo on the far right of the headline row
+  if (logo) {
+    try {
+      const size = 36;
+      doc.addImage(
+        logo.dataUrl,
+        logo.format,
+        pageWidth - MARGIN - size,
+        y + 4,
+        size,
+        size,
+        undefined,
+        'FAST',
+      );
+    } catch { /* ignore */ }
   }
 }
 
-function renderTwoColumn(doc: jsPDF, b: FooterBrand, logo: ImgRef, top: number, pageWidth: number) {
+function renderTwoColumn(
+  doc: jsPDF,
+  b: FooterBrand,
+  logo: ImgRef,
+  photo: ImgRef,
+  prepared: string,
+  top: number,
+  pageWidth: number,
+) {
   drawHairline(doc, top, pageWidth);
-  const y = top + 14;
+  const y = top + 12;
   const midX = pageWidth / 2;
 
-  // Left: logo + name + address
+  // Left column: photo + logo + name + title + company + address
   let leftTextX = MARGIN;
+  if (photo) {
+    try {
+      const size = 52;
+      doc.addImage(photo.dataUrl, photo.format, MARGIN, y, size, size, undefined, 'FAST');
+      doc.setDrawColor(...BRAND_GOLD);
+      doc.setLineWidth(0.8);
+      doc.rect(MARGIN, y, size, size);
+      leftTextX = MARGIN + size + 10;
+    } catch { /* ignore */ }
+  }
   if (logo) {
     try {
-      doc.addImage(logo.dataUrl, logo.format, MARGIN, y, 44, 44, undefined, 'FAST');
-      leftTextX = MARGIN + 56;
+      const size = 26;
+      doc.addImage(logo.dataUrl, logo.format, leftTextX, y + 26, size, size, undefined, 'FAST');
+      leftTextX += size + 8;
     } catch { /* ignore */ }
   }
 
@@ -306,14 +505,25 @@ function renderTwoColumn(doc: jsPDF, b: FooterBrand, logo: ImgRef, top: number, 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...GREY_700);
-  if (b.company && b.name) doc.text(b.company, leftTextX, y + 24);
+  const sub = [b.title, b.name ? b.company : null].filter(Boolean).join(' - ');
+  if (sub) doc.text(sub, leftTextX, y + 24);
+
   const addr = joinAddress(b);
   if (addr) {
+    doc.setFontSize(8);
+    doc.setTextColor(...GREY_500);
     const addrLines = doc.splitTextToSize(addr, midX - leftTextX - 12);
     doc.text(addrLines, leftTextX, y + 38);
   }
 
-  // Right column: contact channels
+  const lic = licenseLabel(b);
+  if (lic) {
+    doc.setFontSize(8);
+    doc.setTextColor(...GREY_500);
+    doc.text(lic, leftTextX, y + 50);
+  }
+
+  // Right column: contact channels + prepared date
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...BRAND_NAVY);
@@ -321,7 +531,6 @@ function renderTwoColumn(doc: jsPDF, b: FooterBrand, logo: ImgRef, top: number, 
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.setTextColor(...GREY_700);
   let ry = y + 24;
   const labelX = midX + 8;
   const valueX = midX + 60;
@@ -334,19 +543,57 @@ function renderTwoColumn(doc: jsPDF, b: FooterBrand, logo: ImgRef, top: number, 
     ry += 13;
   };
   drawRow('Mobile', b.phone);
-  drawRow('Office', b.office_phone);
   drawRow('Email',  b.email);
-  drawRow('Web',    cleanWebsite(b.website));
+
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY_500);
+  doc.text(prepared, midX + 8, ry + 4);
 }
 
-function renderStacked(doc: jsPDF, b: FooterBrand, logo: ImgRef, top: number, pageWidth: number) {
+function renderStacked(
+  doc: jsPDF,
+  b: FooterBrand,
+  logo: ImgRef,
+  photo: ImgRef,
+  prepared: string,
+  top: number,
+  pageWidth: number,
+) {
   drawHairline(doc, top, pageWidth);
   const cx = pageWidth / 2;
-  let y = top + 12;
+  let y = top + 10;
 
-  if (logo) {
+  // Centered headshot with logo chip beside it
+  if (photo) {
     try {
-      const size = 36;
+      const size = 46;
+      const px = cx - size / 2;
+      doc.addImage(photo.dataUrl, photo.format, px, y, size, size, undefined, 'FAST');
+      doc.setDrawColor(...BRAND_GOLD);
+      doc.setLineWidth(0.8);
+      doc.rect(px, y, size, size);
+      if (logo) {
+        try {
+          const ls = 22;
+          doc.addImage(
+            logo.dataUrl,
+            logo.format,
+            px + size + 8,
+            y + size - ls,
+            ls,
+            ls,
+            undefined,
+            'FAST',
+          );
+        } catch { /* ignore */ }
+      }
+      y += size + 6;
+    } catch {
+      // fall through to logo-only block
+    }
+  } else if (logo) {
+    try {
+      const size = 32;
       doc.addImage(logo.dataUrl, logo.format, cx - size / 2, y, size, size, undefined, 'FAST');
       y += size + 6;
     } catch { /* ignore */ }
@@ -358,35 +605,31 @@ function renderStacked(doc: jsPDF, b: FooterBrand, logo: ImgRef, top: number, pa
   const name = primaryName(b);
   if (name) {
     doc.text(name, cx, y, { align: 'center' });
-    y += 14;
-  }
-
-  if (b.title || (b.name && b.company)) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(...GREY_700);
-    const sub = [b.title, b.name ? b.company : null].filter(Boolean).join(' - ');
-    if (sub) {
-      doc.text(sub, cx, y, { align: 'center' });
-      y += 12;
-    }
+    y += 13;
   }
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...GREY_700);
+  const sub = [b.title, b.name ? b.company : null].filter(Boolean).join(' - ');
+  if (sub) {
+    doc.text(sub, cx, y, { align: 'center' });
+    y += 12;
+  }
+
   const contactLine: string[] = [];
   if (b.phone) contactLine.push(b.phone);
   if (b.email) contactLine.push(b.email);
-  const web = cleanWebsite(b.website);
-  if (web) contactLine.push(web);
   if (contactLine.length > 0) {
     doc.text(contactLine.join('  -  '), cx, y, { align: 'center' });
     y += 12;
   }
-  const addr = joinAddress(b);
-  if (addr) {
-    doc.setTextColor(...GREY_500);
-    doc.text(addr, cx, y, { align: 'center' });
-  }
+
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY_500);
+  const tail: string[] = [];
+  const lic = licenseLabel(b);
+  if (lic) tail.push(lic);
+  tail.push(prepared);
+  doc.text(tail.join('  -  '), cx, y, { align: 'center' });
 }
