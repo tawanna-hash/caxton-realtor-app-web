@@ -508,19 +508,22 @@ function renderTwoColumn(
   const sub = [b.title, b.name ? b.company : null].filter(Boolean).join(' - ');
   if (sub) doc.text(sub, leftTextX, y + 24);
 
+  let leftY = y + 38;
   const addr = joinAddress(b);
   if (addr) {
     doc.setFontSize(8);
     doc.setTextColor(...GREY_500);
     const addrLines = doc.splitTextToSize(addr, midX - leftTextX - 12);
-    doc.text(addrLines, leftTextX, y + 38);
+    doc.text(addrLines, leftTextX, leftY);
+    const lineCount = Array.isArray(addrLines) ? addrLines.length : 1;
+    leftY += lineCount * 10;
   }
 
   const lic = licenseLabel(b);
   if (lic) {
     doc.setFontSize(8);
     doc.setTextColor(...GREY_500);
-    doc.text(lic, leftTextX, y + 50);
+    doc.text(lic, leftTextX, leftY + 2);
   }
 
   // Right column: contact channels + prepared date
@@ -587,7 +590,7 @@ function renderStacked(
           );
         } catch { /* ignore */ }
       }
-      y += size + 6;
+      y += size + 16;
     } catch {
       // fall through to logo-only block
     }
@@ -595,7 +598,7 @@ function renderStacked(
     try {
       const size = 32;
       doc.addImage(logo.dataUrl, logo.format, cx - size / 2, y, size, size, undefined, 'FAST');
-      y += size + 6;
+      y += size + 16;
     } catch { /* ignore */ }
   }
 
