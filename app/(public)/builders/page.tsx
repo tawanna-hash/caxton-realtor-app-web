@@ -53,9 +53,12 @@ export default function BuildersHubPage() {
     <main className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
         <header className="mb-8 sm:mb-10">
-          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
+          <Link
+            href="/advertisers"
+            className="inline-block text-sm uppercase tracking-[0.2em] text-gray-500 hover:text-gray-900 font-medium mb-2 transition-colors"
+          >
             Advertisers
-          </p>
+          </Link>
           <PageTitle size="md">
             Builders &amp; Developers
           </PageTitle>

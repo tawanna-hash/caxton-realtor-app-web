@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { EventsList } from '@/components/events/EventsList';
 import type { CalendarEvent } from '@/lib/events-store';
 import { usePublication } from '@/lib/use-publication';
+import { PubSwitcher } from '@/components/PubSwitcher';
 
 type View = 'month' | 'upcoming';
 
@@ -111,6 +112,7 @@ export default function CalendarClient() {
       onSelectDay={setSelectedDay}
       onPrevMonth={handlePrevMonth}
       onNextMonth={handleNextMonth}
+      topBanner={<PubSwitcher current={pub} />}
     />
   );
 }

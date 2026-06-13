@@ -16,6 +16,8 @@ interface MagazineReaderProps {
   magazine: Magazine;
   brandColor: string;
   onClose: () => void;
+  /** Optional handler for the reader's "home" link in the top chrome. Defaults to window.location.assign('/'). */
+  onHome?: () => void;
 }
 
 type ActionMode = null | 'share' | 'qr' | 'download' | 'email' | 'embed' | 'search';
@@ -40,7 +42,17 @@ interface MagazineMaybeWithTexts {
   page_texts?: unknown;
 }
 
-export default function MagazineReader({ magazine, brandColor, onClose }: MagazineReaderProps) {
+export default function MagazineReader({ magazine, brandColor, onClose, onHome }: MagazineReaderProps) {
+  const handleHome = () => {
+    if (onHome) {
+      onHome();
+      return;
+    }
+    onClose();
+    if (typeof window !== 'undefined') {
+      window.location.assign('/');
+    }
+  };
   const [currentPage, setCurrentPage] = useState(0);
   const [actionMode, setActionMode] = useState<ActionMode>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -318,6 +330,14 @@ export default function MagazineReader({ magazine, brandColor, onClose }: Magazi
           </svg>
         </button>
         <div className="text-center flex-1 px-2 flex items-baseline justify-center gap-3">
+          <button
+            type="button"
+            onClick={handleHome}
+            className="text-[11px] uppercase tracking-[0.2em] text-white/80 hover:text-white font-medium border border-white/20 hover:border-white/40 rounded px-2 py-0.5 transition-colors"
+            aria-label="Go to Realty News Now home"
+          >
+            Realty News Now
+          </button>
           <p className="text-xs uppercase tracking-[0.2em] text-white/70 font-medium">{magazine.issue_label}</p>
           <span className="text-[10px] text-white/40">
             Page {currentPage + 1} / {magazine.page_count}

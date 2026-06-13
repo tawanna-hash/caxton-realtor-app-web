@@ -111,6 +111,8 @@ interface InteractiveMagazineReaderProps {
   magazine: Magazine;
   brandColor: string;
   onClose: () => void;
+  /** Optional handler for the reader's "home" link in the top chrome. Defaults to window.location.assign('/'). */
+  onHome?: () => void;
 }
 
 type ActionMode = null | 'share' | 'qr' | 'download' | 'email' | 'embed' | 'search';
@@ -251,7 +253,18 @@ export default function InteractiveMagazineReader({
   magazine,
   brandColor,
   onClose,
+  onHome,
 }: InteractiveMagazineReaderProps) {
+  const handleHome = () => {
+    if (onHome) {
+      onHome();
+      return;
+    }
+    onClose();
+    if (typeof window !== 'undefined') {
+      window.location.assign('/');
+    }
+  };
   const [doc, setDoc] = useState<PdfJsDoc | null>(null);
   const [currentPage, setCurrentPage] = useState(0); // zero-indexed
   const [zoomIdx, setZoomIdx] = useState(DEFAULT_ZOOM_IDX);
@@ -1155,6 +1168,14 @@ export default function InteractiveMagazineReader({
             </svg>
           </button>
           <div className="text-center flex-1 px-2 flex items-baseline justify-center gap-3">
+            <button
+              type="button"
+              onClick={handleHome}
+              className="text-[11px] uppercase tracking-[0.2em] text-white/90 hover:text-white font-medium border border-white/30 hover:border-white/50 rounded px-2 py-0.5 transition-colors"
+              aria-label="Go to Realty News Now home"
+            >
+              Realty News Now
+            </button>
             <p className="text-xs uppercase tracking-[0.2em] text-white/90 font-medium">{magazine.issue_label}</p>
             <span className="text-[10px] text-white/60">
               {doc ? pageLabel : loadProgress}

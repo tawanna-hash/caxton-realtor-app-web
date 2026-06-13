@@ -61,9 +61,16 @@ export default function SubscribePage() {
             onClick={() => setSelection('both')}
           />
         </div>
-        {selection === null && (
-          <p className="text-xs text-gray-500 mt-3 italic">
-            Pick one above to begin.
+        {selection === null ? (
+          <div className="mt-4 flex items-start gap-2 text-sm text-gray-600">
+            <span aria-hidden className="mt-0.5">{'\u2193'}</span>
+            <p>
+              Pick a publication above to reveal the print subscription form.
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-gray-500 mt-3 font-light">
+            Fill out the form below to start your free print subscription.
           </p>
         )}
       </section>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReaderRouter from '@/components/MagazineReaderRouter';
 import MagazineFeatured from '@/components/MagazineFeatured';
@@ -48,8 +48,14 @@ interface MagazineClientProps {
 }
 
 export default function MagazineClient({ initialMagazine }: MagazineClientProps = {}) {
-  const router = useRouter();
   const storedPub = useSyncExternalStore(subscribePub, readPub, getServerPubSnapshot);
+  // Only render the back chevron when the client was mounted from a
+  // /magazine/[id] share link — the chevron used to call router.back(),
+  // which would either pop the user off-site or land them on the
+  // dashboard auth wall when /magazine was the first tab they opened.
+  // On the regular /magazine list the AppShell top nav + drawer already
+  // provide every escape hatch they need.
+  const showBack = !!initialMagazine;
   // When opened via a share link, lock pub to the magazine's actual publication
   // so a Newsline subscriber clicking a RealtyLine share link still sees correct branding.
   const pub: Pub = initialMagazine
@@ -92,9 +98,11 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
     <div className="min-h-screen bg-white" style={{ paddingBottom: 96 }}>
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-3 py-3 flex items-center justify-between">
         <div className="flex items-center">
-          <button onClick={() => router.back()} aria-label="Back" className="text-gray-900 p-2 -ml-2">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-          </button>
+          {showBack ? (
+            <Link href="/magazine" aria-label="Back to all issues" className="text-gray-900 p-2 -ml-2">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </Link>
+          ) : null}
           <p className="text-sm uppercase tracking-[0.25em] text-gray-900 font-medium ml-2">Magazine</p>
         </div>
         <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>

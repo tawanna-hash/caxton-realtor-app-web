@@ -45,7 +45,7 @@ const PUB_COLORS: Record<string, string> = {
 // stay in sync, plus a Subscribe shortcut. The drawer is still available
 // from the hamburger for less-frequent destinations (FAQs, About, Profile).
 const PUBLIC_DESKTOP_LINKS: { label: string; href: string }[] = [
-  { label: 'Feed',        href: '/dashboard' },
+  { label: 'Home',        href: '/dashboard' },
   { label: 'Magazine',    href: '/magazine' },
   { label: 'Calendar',    href: '/calendar' },
   { label: 'Builders',    href: '/builders' },
@@ -206,13 +206,7 @@ export default function AppShell({
           <button
             onClick={() => setDrawerOpen(true)}
             aria-label="Open menu"
-            className={`p-2 rounded-lg transition ${
-              // On desktop the admin top-bar dropdowns already expose every
-              // admin route; hiding the hamburger there prevents the user
-              // from seeing two competing navs at once. Public pages have
-              // no top-bar dropdowns, so the hamburger stays at every width.
-              isAdmin ? 'lg:hidden ' : ''
-            }${
+            className={`p-2 rounded-lg transition lg:hidden ${
               isAdmin
                 ? 'text-white/70 hover:text-white hover:bg-white/10'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-gray-200'
