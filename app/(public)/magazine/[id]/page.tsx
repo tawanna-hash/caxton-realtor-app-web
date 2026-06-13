@@ -9,6 +9,8 @@ import { notFound } from 'next/navigation';
 import { getSql } from '@/lib/db';
 import type { Magazine } from '@/lib/magazines';
 import MagazineClient from '../MagazineClient';
+import { MagazineGA } from '@/components/MagazineGA';
+import { getMeasurementId, type PublicationKey } from '@/lib/publication-settings';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -61,5 +63,14 @@ export default async function MagazineByIdPage({ params }: PageProps) {
   if (!mag) {
     notFound();
   }
-  return <MagazineClient initialMagazine={mag} />;
+  // Pick the GA4 Measurement ID for this issue's publication so the
+  // reader fires page_view + page_flip events into the right property.
+  const pubKey: PublicationKey = mag.publication === 'san_antonio' ? 'san_antonio' : 'austin';
+  const measurementId = await getMeasurementId(pubKey);
+  return (
+    <>
+      <MagazineGA measurementId={measurementId} />
+      <MagazineClient initialMagazine={mag} />
+    </>
+  );
 }

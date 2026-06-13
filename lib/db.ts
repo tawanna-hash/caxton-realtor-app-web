@@ -729,6 +729,37 @@ export async function ensureSchema(): Promise<void> {
   // they don't crash when the migrate-* POST routes haven't been
   // hit yet on a given environment.
   // ============================================================
+  // ---- Magazine GIF preview columns ----
+  // Each magazine can have up to three pre-rendered animated previews
+  // (full flipbook, teaser, ping-pong) stored in Vercel Blob. The URL
+  // returned by the generator is cached here so subsequent share
+  // requests don't re-render the GIF.
+  await sql`ALTER TABLE magazines ADD COLUMN IF NOT EXISTS gif_full_url      TEXT`;
+  await sql`ALTER TABLE magazines ADD COLUMN IF NOT EXISTS gif_teaser_url    TEXT`;
+  await sql`ALTER TABLE magazines ADD COLUMN IF NOT EXISTS gif_pingpong_url  TEXT`;
+
+  // ---- Per-publication settings ----
+  // GA4 Measurement IDs (G-XXXXXXX) keyed by publication. The magazine
+  // reader and index inject the matching tag based on the publication
+  // of the issue being viewed.
+  await sql`
+    CREATE TABLE IF NOT EXISTS publication_settings (
+      publication        TEXT PRIMARY KEY,
+      ga_measurement_id  TEXT,
+      created_at         TIMESTAMPTZ DEFAULT NOW(),
+      updated_at         TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+  // Seed empty rows so the admin UI always has something to PATCH.
+  await sql`
+    INSERT INTO publication_settings (publication) VALUES ('austin')
+    ON CONFLICT (publication) DO NOTHING
+  `;
+  await sql`
+    INSERT INTO publication_settings (publication) VALUES ('san_antonio')
+    ON CONFLICT (publication) DO NOTHING
+  `;
+
   await ensureCrmSchema(sql);
 
   // Backfill: ensure every existing agreement has a linked advertiser

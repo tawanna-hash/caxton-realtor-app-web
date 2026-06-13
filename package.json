@@ -28,6 +28,7 @@
     "date-fns": "^4.1.0",
     "exceljs": "^4.4.0",
     "fast-xml-parser": "^5.8.0",
+    "gifenc": "^1.0.3",
     "jose": "^6.2.3",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.1",
@@ -46,6 +47,7 @@
     "react-rnd": "^10.5.3",
     "recharts": "^3.8.1",
     "resend": "^6.12.4",
+    "sharp": "^0.35.1",
     "stripe": "^22.2.0",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.4.3"

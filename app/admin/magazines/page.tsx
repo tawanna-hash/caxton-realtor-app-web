@@ -27,6 +27,9 @@ type Magazine = {
   page_urls: string[] | null;
   page_count: number;
   sort_date: string;
+  gif_full_url: string | null;
+  gif_teaser_url: string | null;
+  gif_pingpong_url: string | null;
 };
 
 async function isAdmin(): Promise<boolean> {
@@ -45,7 +48,8 @@ async function fetchMagazines(): Promise<Magazine[]> {
     const rows = (await sql`
       SELECT id, publication, year, month, issue_label,
              cover_url, reader_url, page_urls, page_count,
-             to_char(sort_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS sort_date
+             to_char(sort_date, 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') AS sort_date,
+             gif_full_url, gif_teaser_url, gif_pingpong_url
       FROM magazines
       ORDER BY sort_date DESC NULLS LAST, id DESC
     `) as Magazine[];
