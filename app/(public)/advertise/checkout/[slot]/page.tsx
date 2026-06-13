@@ -7,6 +7,7 @@
 
 import { notFound } from 'next/navigation';
 import { APP_AD_SLOTS } from '@/lib/media-kit';
+import { getBookedPubsForSlot } from '@/lib/server/slot-availability';
 import CheckoutForm from './CheckoutForm';
 import type { Metadata } from 'next';
 
@@ -51,6 +52,12 @@ export default async function CheckoutPage(ctx: RouteCtx) {
   const initialPhone = trimmed(sp.phone, 50);
   const initialCompany = trimmed(sp.company, 200);
 
+  // Live availability: query ad_campaigns for any active booking that
+  // overlaps the default window. The CheckoutForm grays out booked
+  // scopes; the API enforces the same rule on payment intent creation.
+  const bookedPubsSet = await getBookedPubsForSlot(slot.slug);
+  const bookedPubs = Array.from(bookedPubsSet);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <div className="max-w-3xl mx-auto px-4 py-10 sm:py-14">
@@ -91,6 +98,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
           initialEmail={initialEmail}
           initialPhone={initialPhone}
           initialCompany={initialCompany}
+          bookedPubs={bookedPubs}
         />
 
         <p className="text-center text-xs text-slate-500 mt-10">

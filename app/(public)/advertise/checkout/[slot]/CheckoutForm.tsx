@@ -37,6 +37,12 @@ interface Props {
   initialEmail?: string;
   initialPhone?: string;
   initialCompany?: string;
+  /**
+   * Pub scopes that are CURRENTLY taken by an active campaign overlapping
+   * the default window. The matching pill renders disabled + 'Sold' tooltip.
+   * Cleared automatically once those campaigns expire.
+   */
+  bookedPubs?: Array<'realtyline' | 'newsline' | 'both'>;
 }
 
 type Pub = 'realtyline' | 'newsline' | 'both';
@@ -72,7 +78,9 @@ export default function CheckoutForm({
   initialEmail = '',
   initialPhone = '',
   initialCompany = '',
+  bookedPubs = [],
 }: Props) {
+  const bookedSet = new Set(bookedPubs);
   const perUnit = slot.pricingUnit === 'per send' || slot.pricingUnit === 'per push';
   const hasMonthly = slot.monthlySingle != null && slot.monthlyBoth != null;
 
@@ -81,16 +89,20 @@ export default function CheckoutForm({
   // renders disabled below, and the server-side intent route enforces the
   // same rule).
   const availablePubs = getSlotAvailablePubs(slot);
-  const bothAvailable = availablePubs.includes('both');
+  const bothAvailable = availablePubs.includes('both') && !bookedSet.has('both');
+  // A scope is "open" if the slot is sold on it AND no active campaign
+  // is currently occupying it.
+  const isOpenForBooking = (p: Pub) => availablePubs.includes(p) && !bookedSet.has(p);
+  const allBlocked = !availablePubs.some(isOpenForBooking);
 
   // If the URL passed an initialPub that this slot can't be booked on,
-  // fall back to the first allowed scope so we never start in an invalid
-  // state. Tested order: keep initialPub when valid, else use the first
-  // entry in availablePubs (which is 'realtyline' for slots that omit the
-  // explicit list).
-  const safeInitialPub: Pub = availablePubs.includes(initialPub)
+  // fall back to the first OPEN scope (sold + not currently booked).
+  // Falls back to availablePubs[0] only if every scope is currently taken,
+  // so the form still renders rather than crashing on undefined.
+  const safeInitialPub: Pub = isOpenForBooking(initialPub)
     ? initialPub
-    : (availablePubs[0] as Pub);
+    : ((availablePubs.find(isOpenForBooking) ??
+        availablePubs[0]) as Pub);
   const [pub, setPub] = useState<Pub>(safeInitialPub);
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>(
     perUnit ? 'unit' : 'weekly',
@@ -242,7 +254,9 @@ export default function CheckoutForm({
           <Field label="Publication">
             <div className="flex flex-wrap gap-2">
               {(['realtyline', 'newsline', 'both'] as const).map((p) => {
-                const allowed = availablePubs.includes(p);
+                const sold = availablePubs.includes(p);
+                const taken = bookedSet.has(p);
+                const allowed = sold && !taken;
                 const active = pub === p && allowed;
                 const label =
                   p === 'realtyline'
@@ -252,9 +266,11 @@ export default function CheckoutForm({
                       : 'Both pubs';
                 const title = allowed
                   ? undefined
-                  : p === 'both'
-                    ? 'This placement is not sold across both publications.'
-                    : `${label} is not available for this placement.`;
+                  : taken
+                    ? `${label} is currently booked. Please check back later.`
+                    : p === 'both'
+                      ? 'This placement is not sold across both publications.'
+                      : `${label} is not available for this placement.`;
                 return (
                   <button
                     key={p}
@@ -273,11 +289,26 @@ export default function CheckoutForm({
                     }`}
                   >
                     {label}
+                    {taken && (
+                      <span className="ml-1.5 text-[10px] uppercase tracking-wider font-semibold text-amber-700">
+                        sold
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
-            {!bothAvailable && (
+            {bookedSet.size > 0 && !allBlocked && (
+              <p className="mt-2 text-xs text-amber-700">
+                One or more publication scopes are currently booked for this placement.
+              </p>
+            )}
+            {allBlocked && (
+              <p className="mt-2 text-xs text-amber-800 font-medium">
+                This placement is fully booked right now. Use the inquiry form to join the waitlist.
+              </p>
+            )}
+            {!bothAvailable && bookedSet.size === 0 && (
               <p className="mt-2 text-xs text-slate-500">
                 This placement is not sold across both publications.
               </p>
