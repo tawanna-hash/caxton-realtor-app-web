@@ -119,6 +119,12 @@ export default function ResourcesClient() {
             title="1031 Exchange Timeline"
             description="Track the 45-day identification and 180-day replacement deadlines on a like-kind exchange from the relinquished closing date."
           />
+          <ToolCard
+            href="/resources/seller-concessions-limits"
+            badge="Reference"
+            title="Seller&rsquo;s Concession Limits"
+            description="Agency caps on what the seller can credit the buyer toward closing costs. Conventional (LTV-banded), FHA, VA, and USDA — with a dollar calculator."
+          />
         </div>
       </section>
 
