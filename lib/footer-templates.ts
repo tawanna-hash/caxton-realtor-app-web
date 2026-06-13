@@ -106,7 +106,7 @@ export const FOOTER_TEMPLATE_META: Record<FooterTemplateId, FooterTemplateMeta> 
     id: 'stacked',
     label: 'Stacked',
     blurb: 'Centered - photo, logo, name, contact, license & date.',
-    heightPt: 116,
+    heightPt: 128,
     placement: 'last-page',
   },
 };
