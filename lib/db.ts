@@ -731,5 +731,134 @@ export async function ensureSchema(): Promise<void> {
   // ============================================================
   await ensureCrmSchema(sql);
 
+  // Backfill: ensure every existing agreement has a linked advertiser
+  // row so CRM contacts surface the full deal pipeline. Idempotent —
+  // matches on contact_email first, then exact slug-from-name, otherwise
+  // creates a new row with status='prospect' (drafts/sent agreements)
+  // or 'active' (signed agreements). NULL status is treated as 'active'.
+  // Inlined SQL avoids a circular import with lib/advertisers-from-agreement.
+  try {
+    const orphanAgreements = (await sql`
+      SELECT id, status,
+             company_name, rep_name, billing_contact_name, signer_name,
+             advertiser_email, billing_email, sent_to_email
+        FROM agreements
+       WHERE advertiser_id IS NULL
+    `) as unknown as Array<{
+      id: string;
+      status: string | null;
+      company_name: string | null;
+      rep_name: string | null;
+      billing_contact_name: string | null;
+      signer_name: string | null;
+      advertiser_email: string | null;
+      billing_email: string | null;
+      sent_to_email: string | null;
+    }>;
+
+    for (const ag of orphanAgreements) {
+      // Pick the best display name available.
+      const nameCandidates = [
+        ag.company_name, ag.rep_name, ag.billing_contact_name, ag.signer_name,
+      ];
+      let name = '';
+      for (const c of nameCandidates) {
+        const trimmed = (c ?? '').trim();
+        if (trimmed) { name = trimmed; break; }
+      }
+      if (!name) continue;
+
+      // Pick the best contact email available.
+      let contactEmail: string | null = null;
+      for (const c of [ag.advertiser_email, ag.billing_email, ag.sent_to_email]) {
+        const trimmed = (c ?? '').trim();
+        if (trimmed) { contactEmail = trimmed.toLowerCase(); break; }
+      }
+
+      const desiredStatus = ag.status === 'signed' ? 'active' : 'prospect';
+
+      // 1) Match by contact_email.
+      let advertiserId: number | null = null;
+      if (contactEmail) {
+        const byEmail = (await sql`
+          SELECT id FROM advertisers
+           WHERE LOWER(contact_email) = ${contactEmail}
+           LIMIT 1
+        `) as unknown as Array<{ id: number }>;
+        if (byEmail.length > 0) advertiserId = byEmail[0].id;
+      }
+
+      // 2) Match by slug derived from name.
+      const baseSlug = name
+        .toLowerCase()
+        .replace(/['"]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .replace(/-{2,}/g, '-')
+        .slice(0, 80);
+      if (advertiserId == null && baseSlug) {
+        const bySlug = (await sql`
+          SELECT id, contact_email FROM advertisers WHERE slug = ${baseSlug} LIMIT 1
+        `) as unknown as Array<{ id: number; contact_email: string | null }>;
+        if (bySlug.length > 0 && !bySlug[0].contact_email) {
+          advertiserId = bySlug[0].id;
+          if (contactEmail) {
+            await sql`UPDATE advertisers SET contact_email = ${contactEmail}, updated_at = NOW() WHERE id = ${advertiserId}`;
+          }
+        }
+      }
+
+      // 3) Allocate a unique slug and insert.
+      if (advertiserId == null) {
+        let slug = baseSlug || `advertiser-${Date.now()}`;
+        let suffix = 2;
+        while (true) {
+          const dup = (await sql`
+            SELECT id FROM advertisers WHERE slug = ${slug} LIMIT 1
+          `) as unknown as Array<{ id: number }>;
+          if (dup.length === 0) break;
+          slug = `${baseSlug}-${suffix}`;
+          suffix += 1;
+          if (suffix > 100) { slug = ''; break; }
+        }
+        if (!slug) continue;
+
+        const { randomBytes } = await import('crypto');
+        const shareToken = randomBytes(18).toString('base64url');
+        const inserted = (await sql`
+          INSERT INTO advertisers (
+            name, slug, share_token, contact_email,
+            requires_email_gate, publication, status, created_at, updated_at
+          ) VALUES (
+            ${name}, ${slug}, ${shareToken}, ${contactEmail},
+            false, 'austin', ${desiredStatus}, NOW(), NOW()
+          )
+          RETURNING id
+        `) as unknown as Array<{ id: number }>;
+        advertiserId = inserted[0]?.id ?? null;
+      }
+
+      if (advertiserId == null) continue;
+
+      // Link the agreement.
+      await sql`
+        UPDATE agreements SET advertiser_id = ${advertiserId}
+         WHERE id = ${ag.id}
+      `;
+
+      // Promote prospect -> active when this agreement is signed.
+      if (desiredStatus === 'active') {
+        await sql`
+          UPDATE advertisers
+             SET status = 'active', updated_at = NOW()
+           WHERE id = ${advertiserId}
+             AND COALESCE(status, 'active') = 'prospect'
+        `;
+      }
+    }
+  } catch (err) {
+    console.warn('[ensureSchema] agreements->advertisers backfill failed:', err);
+  }
+
   schemaEnsured = true;
 }

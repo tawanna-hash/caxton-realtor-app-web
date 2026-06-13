@@ -176,10 +176,27 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
 
     // Side effects on status transitions into 'signed'
     const newStatus = body.status as string | undefined;
-    if (newStatus === 'signed' && prevStatus !== 'signed') {
-      // Ensure an advertiser row exists for this signed agreement (idempotent).
+    const isSignedTransition = newStatus === 'signed' && prevStatus !== 'signed';
+
+    // Keep the CRM contact in sync on every PATCH: a contact-field edit on
+    // a still-unlinked agreement should mirror into the CRM, and any save
+    // that signs the agreement should promote prospect -> active.
+    const CONTACT_FIELDS = new Set([
+      'company_name', 'rep_name', 'advertiser_email',
+      'advertiser_phone', 'advertiser_address',
+      'billing_email', 'billing_contact_name', 'billing_contact_phone',
+      'signer_name',
+    ]);
+    const touchedContact = updated.some((f) => CONTACT_FIELDS.has(f));
+    const needsMirror =
+      isSignedTransition ||
+      (touchedContact && (savedAg.advertiser_id == null));
+
+    if (needsMirror) {
       try {
-        const advRes = await ensureAdvertiserForAgreement(savedAg);
+        const advRes = await ensureAdvertiserForAgreement(savedAg, {
+          desiredStatus: isSignedTransition ? 'active' : 'prospect',
+        });
         if (advRes.outcome !== 'skipped') {
           const advLog = appendAudit(savedAg.audit_log, {
             event: 'advertiser_linked',
@@ -192,7 +209,9 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       } catch (e) {
         console.error('[admin/agreements PATCH] ensureAdvertiserForAgreement failed', errMessage(e));
       }
+    }
 
+    if (isSignedTransition) {
       // Auto-create renewal reminder.
       if (savedAg.exp_date) {
         await autoCreateForAgreement(savedAg).catch((e: unknown) => {

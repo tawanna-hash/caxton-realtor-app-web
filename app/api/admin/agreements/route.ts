@@ -12,6 +12,8 @@ import {
   type AgreementWithAdvertiser,
 } from '@/lib/agreements';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
+import type { Agreement } from '@/lib/agreements';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -171,7 +173,31 @@ export async function POST(req: NextRequest) {
       )
       RETURNING *
     `;
-    return NextResponse.json({ agreement: rows[0] }, { status: 201 });
+    const createdAg = rows[0] as unknown as Agreement;
+
+    // Mirror the agreement into the CRM as soon as it's created. New rows
+    // land with status='prospect' so they stay off public-facing surfaces
+    // until the agreement is signed; on signing the helper promotes them
+    // to 'active'. Best-effort: never block agreement creation if the
+    // mirror fails.
+    let linkedAdvertiserId: number | null = createdAg.advertiser_id ?? null;
+    try {
+      const advRes = await ensureAdvertiserForAgreement(createdAg, {
+        desiredStatus: status === 'signed' ? 'active' : 'prospect',
+      });
+      if (advRes.outcome !== 'skipped') {
+        linkedAdvertiserId = advRes.advertiserId;
+      }
+    } catch (e) {
+      console.error('[admin/agreements POST] ensureAdvertiserForAgreement failed', errMessage(e));
+    }
+
+    const finalAg =
+      linkedAdvertiserId && linkedAdvertiserId !== createdAg.advertiser_id
+        ? { ...createdAg, advertiser_id: linkedAdvertiserId }
+        : createdAg;
+
+    return NextResponse.json({ agreement: finalAg }, { status: 201 });
   } catch (err) {
     console.error('[admin/agreements POST]', errMessage(err));
     return NextResponse.json({ error: 'create failed', detail: errMessage(err) }, { status: 500 });
