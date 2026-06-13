@@ -19,6 +19,7 @@ import {
   getPublishableKey,
 } from '@/lib/stripe';
 import { APP_AD_SLOTS, getSlotAvailablePubs } from '@/lib/media-kit';
+import { getBookedPubsForSlot } from '@/lib/server/slot-availability';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -96,9 +97,8 @@ export async function POST(req: NextRequest) {
   const slot = APP_AD_SLOTS.find((s) => s.slug === d.slot);
   if (!slot) return NextResponse.json({ error: 'unknown_slot' }, { status: 400 });
 
-  // Server-side guard: even if the client UI is bypassed, never let a buyer
-  // book a publication scope that isn't sold for this slot (e.g. 'both' on
-  // a single-pub-only placement).
+  // Server-side guard #1 (static): the slot's pricing model itself must
+  // support the requested scope (e.g. 'both' on a single-pub-only slot).
   const allowedPubs = getSlotAvailablePubs(slot);
   if (!allowedPubs.includes(d.pub)) {
     return NextResponse.json(
@@ -107,6 +107,20 @@ export async function POST(req: NextRequest) {
         detail: `Slot '${slot.slug}' is not sold on '${d.pub}'. Available: ${allowedPubs.join(', ')}.`,
       },
       { status: 400 },
+    );
+  }
+
+  // Server-side guard #2 (live): refuse to sell a scope that's currently
+  // taken by another active campaign overlapping the requested window.
+  // Reads ad_campaigns directly so an expired campaign auto-frees the slot.
+  const bookedPubs = await getBookedPubsForSlot(slot.slug, d.start_date, d.end_date);
+  if (bookedPubs.has(d.pub)) {
+    return NextResponse.json(
+      {
+        error: 'pub_unavailable_active_campaign',
+        detail: `Slot '${slot.slug}' is already booked on '${d.pub}' for the requested dates.`,
+      },
+      { status: 409 },
     );
   }
 
