@@ -2,24 +2,19 @@
 
 // app/(public)/resources/_components/FooterPickerSheet.tsx
 //
-// Modal sheet that appears when an agent or broker taps "Download" on a
-// /resources calculator. Renders the six footer templates as thumbnails
-// (small visual approximations - not an actual PDF preview, just enough
-// for the user to recognise the layout) and lets them pick one.
+// Modal sheet that appears when a signed-in user taps "Download" on a
+// /resources calculator. Three roles, three flows:
 //
-// State machine the sheet handles:
+//   admin     - dropdown to pick which advertiser to brand the footer
+//               as, then the 6 template thumbnails. (Tawanna / staff.)
+//   portal    - magic-link broker/agent; their own brand is preloaded
+//               and they pick a template.
+//   anonymous - the caller never opens this sheet; downloads use the
+//               generic site footer instead.
 //
-//   - Not signed in    -> show the "Sign in" empty state with a portal link.
-//                         User can still tap "Download without footer".
-//   - Signed in, brand
-//     incomplete       -> show the templates, but pin a "Complete your
-//                         profile to make these look real" callout with a
-//                         link to /portal/account.
-//   - Signed in, brand
-//     complete         -> templates + radio selection + "Use this footer".
-//
-// The selected template is remembered in localStorage so the next
-// download skips straight to confirmation (caller can still re-open).
+// The caller (ResourceFloater) decides which path to take by hitting
+// /api/me/footer-context first and only opening the sheet when role
+// is admin or portal.
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -33,81 +28,111 @@ import {
   type FooterTemplateId,
 } from '@/lib/footer-templates';
 
-const LS_KEY = 'rnn:footer-template';
+const LS_TEMPLATE_KEY = 'rnn:footer-template';
+const LS_ADMIN_ADVERTISER_KEY = 'rnn:footer-admin-advertiser-id';
 
 export interface FooterPickerResult {
   template: FooterTemplateId | null; // null = no footer
   brand: FooterBrand | null;
 }
 
+interface AdvertiserOption { id: number; name: string; }
+
+interface AdminInit {
+  role: 'admin';
+  advertisers: AdvertiserOption[];
+}
+interface PortalInit {
+  role: 'portal';
+  advertiser_id: number;
+  default_footer_template: string;
+  brand: FooterBrand;
+}
+export type FooterPickerInit = AdminInit | PortalInit;
+
 interface Props {
   open: boolean;
+  init: FooterPickerInit | null; // null while caller still loads context
   onClose: () => void;
   onConfirm: (result: FooterPickerResult) => void;
 }
 
-interface MePayload {
-  signed_in: boolean;
-  default_footer_template?: string;
-  brand?: FooterBrand;
-}
+export default function FooterPickerSheet({ open, init, onClose, onConfirm }: Props) {
+  // Admin-mode state
+  const [adminAdvId, setAdminAdvId] = useState<number | null>(null);
+  const [adminBrand, setAdminBrand] = useState<FooterBrand | null>(null);
+  const [adminBrandLoading, setAdminBrandLoading] = useState(false);
+  const [adminBrandError, setAdminBrandError] = useState<string | null>(null);
 
-export default function FooterPickerSheet({ open, onClose, onConfirm }: Props) {
-  const [loading, setLoading] = useState(true);
-  const [signedIn, setSignedIn] = useState(false);
-  const [brand, setBrand] = useState<FooterBrand | null>(null);
+  // Shared template selection
   const [selected, setSelected] = useState<FooterTemplateId>(FOOTER_TEMPLATE_DEFAULT);
 
+  // Initialise from `init` whenever the sheet opens or init changes
   useEffect(() => {
-    if (!open) return;
+    if (!open || !init) return;
     let cancelled = false;
 
-    (async () => {
-      // Reset loading flag for re-opens (deferred via the async IIFE so we
-      // don't synchronously setState inside the effect body).
-      if (!cancelled) setLoading(true);
-
-      // Pull localStorage preference up-front so signed-out users still
-      // get a remembered choice.
-      let lsPref: FooterTemplateId | null = null;
+    void (async () => {
+      // Per-device remembered template preference (used by both roles)
+      let lsTpl: FooterTemplateId | null = null;
       try {
-        const raw = window.localStorage.getItem(LS_KEY);
-        if (raw) lsPref = coerceFooterTemplateId(raw);
+        const raw = window.localStorage.getItem(LS_TEMPLATE_KEY);
+        if (raw) lsTpl = coerceFooterTemplateId(raw);
       } catch { /* ignore */ }
 
-      try {
-        const res = await fetch('/api/portal/me', { credentials: 'same-origin' });
+      if (cancelled) return;
+
+      if (init.role === 'admin') {
+        // Restore last-used advertiser id if it's still in the list
+        let restored: number | null = null;
+        try {
+          const raw = window.localStorage.getItem(LS_ADMIN_ADVERTISER_KEY);
+          if (raw) {
+            const n = Number(raw);
+            if (init.advertisers.some((a) => a.id === n)) restored = n;
+          }
+        } catch { /* ignore */ }
         if (cancelled) return;
-        if (res.status === 401) {
-          setSignedIn(false);
-          setBrand(null);
-          setSelected(lsPref ?? FOOTER_TEMPLATE_DEFAULT);
-        } else if (res.ok) {
-          const data: MePayload = await res.json();
-          if (cancelled) return;
-          setSignedIn(Boolean(data.signed_in));
-          setBrand(data.brand ?? null);
-          setSelected(
-            lsPref
-              ?? coerceFooterTemplateId(data.default_footer_template)
-              ?? FOOTER_TEMPLATE_DEFAULT,
-          );
-        } else {
-          setSignedIn(false);
-          setBrand(null);
-          setSelected(lsPref ?? FOOTER_TEMPLATE_DEFAULT);
-        }
-      } catch {
-        setSignedIn(false);
-        setBrand(null);
-        setSelected(lsPref ?? FOOTER_TEMPLATE_DEFAULT);
-      } finally {
-        if (!cancelled) setLoading(false);
+        setAdminAdvId(restored);
+        setAdminBrand(null);
+        setAdminBrandError(null);
+        setSelected(lsTpl ?? FOOTER_TEMPLATE_DEFAULT);
+      } else {
+        // portal
+        setSelected(
+          lsTpl ?? coerceFooterTemplateId(init.default_footer_template) ?? FOOTER_TEMPLATE_DEFAULT,
+        );
       }
     })();
 
     return () => { cancelled = true; };
-  }, [open]);
+  }, [open, init]);
+
+  // Whenever an admin picks an advertiser, fetch its brand fields
+  useEffect(() => {
+    if (!open || !init || init.role !== 'admin' || adminAdvId == null) return;
+    let cancelled = false;
+    (async () => {
+      setAdminBrandLoading(true);
+      setAdminBrandError(null);
+      try {
+        const res = await fetch(`/api/me/advertiser-brand/${adminAdvId}`, {
+          credentials: 'same-origin',
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json() as { brand: FooterBrand };
+        if (cancelled) return;
+        setAdminBrand(data.brand);
+      } catch (err) {
+        if (cancelled) return;
+        setAdminBrandError(err instanceof Error ? err.message : 'fetch failed');
+        setAdminBrand(null);
+      } finally {
+        if (!cancelled) setAdminBrandLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, init, adminAdvId]);
 
   // Close on Escape
   useEffect(() => {
@@ -117,19 +142,30 @@ export default function FooterPickerSheet({ open, onClose, onConfirm }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
+  const activeBrand: FooterBrand | null = useMemo(() => {
+    if (!init) return null;
+    if (init.role === 'portal') return init.brand;
+    return adminBrand;
+  }, [init, adminBrand]);
+
   const brandComplete = useMemo(
-    () => (brand ? brandLooksComplete(brand) : false),
-    [brand],
+    () => (activeBrand ? brandLooksComplete(activeBrand) : false),
+    [activeBrand],
   );
 
   function persistAndConfirm(template: FooterTemplateId | null) {
     if (template) {
-      try { window.localStorage.setItem(LS_KEY, template); } catch { /* ignore */ }
+      try { window.localStorage.setItem(LS_TEMPLATE_KEY, template); } catch { /* ignore */ }
     }
-    onConfirm({ template, brand });
+    if (init?.role === 'admin' && adminAdvId != null) {
+      try { window.localStorage.setItem(LS_ADMIN_ADVERTISER_KEY, String(adminAdvId)); } catch { /* ignore */ }
+    }
+    onConfirm({ template, brand: activeBrand });
   }
 
-  if (!open) return null;
+  if (!open || !init) return null;
+
+  const canConfirmFooter = Boolean(activeBrand) && !adminBrandLoading;
 
   return (
     <div
@@ -144,13 +180,15 @@ export default function FooterPickerSheet({ open, onClose, onConfirm }: Props) {
         <div className="px-6 pt-5 pb-3 border-b border-gray-100 flex items-start justify-between">
           <div>
             <div className="text-xs uppercase tracking-[0.18em] text-gray-500 font-semibold">
-              Footer template
+              {init.role === 'admin' ? 'Admin - footer template' : 'Footer template'}
             </div>
             <h2
               className="font-serif text-xl text-gray-900 mt-1"
               style={{ fontFamily: 'Georgia, serif' }}
             >
-              Add your brand to this download
+              {init.role === 'admin'
+                ? 'Brand this download on behalf of...'
+                : 'Add your brand to this download'}
             </h2>
           </div>
           <button
@@ -166,66 +204,63 @@ export default function FooterPickerSheet({ open, onClose, onConfirm }: Props) {
         </div>
 
         {/* Body */}
-        <div className="px-6 py-5 max-h-[60vh] overflow-y-auto">
-          {loading ? (
-            <div className="text-sm text-gray-500 py-8 text-center">Loading...</div>
-          ) : !signedIn ? (
-            <SignedOutPrompt
-              onContinueWithoutFooter={() => persistAndConfirm(null)}
+        <div className="px-6 py-5 max-h-[60vh] overflow-y-auto space-y-4">
+          {init.role === 'admin' && (
+            <AdminAdvertiserPicker
+              advertisers={init.advertisers}
+              value={adminAdvId}
+              onChange={setAdminAdvId}
+              loading={adminBrandLoading}
+              error={adminBrandError}
+              loadedBrand={adminBrand}
             />
-          ) : (
-            <>
-              {!brandComplete && (
-                <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                  <div className="font-medium mb-1">Your profile is missing a few fields.</div>
-                  <div>
-                    Templates will skip blank lines. For best results,{' '}
-                    <Link href="/portal/account" className="underline font-medium">
-                      complete your profile
-                    </Link>
-                    {' '}(logo, phone, website, address) and come back.
-                  </div>
-                </div>
-              )}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {FOOTER_TEMPLATE_IDS.map((id) => (
-                  <TemplateThumb
-                    key={id}
-                    id={id}
-                    selected={selected === id}
-                    onSelect={() => setSelected(id)}
-                  />
-                ))}
+          )}
+
+          {init.role === 'portal' && !brandComplete && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              <div className="font-medium mb-1">Your profile is missing a few fields.</div>
+              <div>
+                Templates will skip blank lines. For best results,{' '}
+                <Link href="/portal/account" className="underline font-medium">
+                  complete your profile
+                </Link>
+                {' '}(logo, phone, website, address) and come back.
               </div>
-            </>
+            </div>
+          )}
+
+          {(init.role === 'portal' || (init.role === 'admin' && activeBrand)) && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {FOOTER_TEMPLATE_IDS.map((id) => (
+                <TemplateThumb
+                  key={id}
+                  id={id}
+                  selected={selected === id}
+                  onSelect={() => setSelected(id)}
+                />
+              ))}
+            </div>
           )}
         </div>
 
         {/* Footer actions */}
-        {!loading && (
-          <div className="px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 bg-gray-50">
-            {signedIn ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => persistAndConfirm(null)}
-                  className="text-sm text-gray-600 hover:text-gray-900 underline"
-                >
-                  No footer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => persistAndConfirm(selected)}
-                  className="rounded-lg bg-[#1a2a44] text-white px-5 py-2 text-sm font-medium hover:bg-[#0f1c30]"
-                >
-                  Use this footer & download
-                </button>
-              </>
-            ) : (
-              <div className="ml-auto" />
-            )}
-          </div>
-        )}
+        <div className="px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 bg-gray-50">
+          <button
+            type="button"
+            onClick={() => persistAndConfirm(null)}
+            className="text-sm text-gray-600 hover:text-gray-900 underline"
+          >
+            No footer
+          </button>
+          <button
+            type="button"
+            onClick={() => persistAndConfirm(selected)}
+            disabled={!canConfirmFooter}
+            className="rounded-lg bg-[#1a2a44] text-white px-5 py-2 text-sm font-medium hover:bg-[#0f1c30] disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Use this footer & download
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -233,41 +268,61 @@ export default function FooterPickerSheet({ open, onClose, onConfirm }: Props) {
 
 // ── Sub-components ─────────────────────────────────────────────────
 
-function SignedOutPrompt({ onContinueWithoutFooter }: { onContinueWithoutFooter: () => void }) {
+function AdminAdvertiserPicker({
+  advertisers,
+  value,
+  onChange,
+  loading,
+  error,
+  loadedBrand,
+}: {
+  advertisers: AdvertiserOption[];
+  value: number | null;
+  onChange: (id: number) => void;
+  loading: boolean;
+  error: string | null;
+  loadedBrand: FooterBrand | null;
+}) {
   return (
-    <div className="text-center py-6">
-      <div className="mx-auto h-12 w-12 rounded-full bg-[#1a2a44]/5 flex items-center justify-center mb-3">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a2a44" strokeWidth="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-      </div>
-      <h3 className="font-serif text-lg text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
-        Add your brand to every download
-      </h3>
-      <p className="text-sm text-gray-600 mt-1 max-w-sm mx-auto">
-        Brokers and agents with a RealtyLine portal account can stamp every
-        download with their own footer - logo, contact info, license, the
-        works. Portal access is invite-only and arrives by email.
-      </p>
-      <div className="mt-5 flex flex-col sm:flex-row items-center justify-center gap-3">
-        <a
-          href="mailto:hello@myrealtyline.com?subject=Portal%20access%20for%20downloads&body=I%27d%20like%20a%20portal%20link%20so%20I%20can%20add%20my%20brand%20to%20RealtyLine%20downloads.%0A%0AName%3A%0ABrokerage%3A%0AEmail%3A%0APhone%3A"
-          className="rounded-lg bg-[#1a2a44] text-white px-5 py-2 text-sm font-medium hover:bg-[#0f1c30]"
-        >
-          Request portal access
-        </a>
-        <button
-          type="button"
-          onClick={onContinueWithoutFooter}
-          className="text-sm text-gray-600 hover:text-gray-900 underline"
-        >
-          Download without footer
-        </button>
-      </div>
-      <p className="text-xs text-gray-500 mt-4">
-        Already invited? Use the portal link from your account manager email.
-      </p>
+    <div className="rounded-lg border border-gray-200 bg-white p-4">
+      <label className="block text-xs font-semibold uppercase tracking-[0.16em] text-gray-500 mb-2">
+        Advertiser
+      </label>
+      <select
+        value={value ?? ''}
+        onChange={(e) => {
+          const n = Number(e.target.value);
+          if (Number.isFinite(n) && n > 0) onChange(n);
+        }}
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white"
+      >
+        <option value="">Select an advertiser...</option>
+        {advertisers.map((a) => (
+          <option key={a.id} value={a.id}>{a.name}</option>
+        ))}
+      </select>
+
+      {loading && (
+        <div className="text-xs text-gray-500 mt-2">Loading brand fields...</div>
+      )}
+      {error && (
+        <div className="text-xs text-red-700 mt-2">Could not load: {error}</div>
+      )}
+      {!loading && !error && loadedBrand && (
+        <div className="text-xs text-gray-500 mt-2 truncate">
+          Using:{' '}
+          <span className="font-medium text-gray-800">
+            {loadedBrand.name || loadedBrand.company || '(unnamed)'}
+          </span>
+          {loadedBrand.phone && <span> - {loadedBrand.phone}</span>}
+          {loadedBrand.website && <span> - {loadedBrand.website.replace(/^https?:\/\//i, '')}</span>}
+        </div>
+      )}
+      {!loading && !error && !loadedBrand && value == null && (
+        <div className="text-xs text-gray-500 mt-2">
+          Pick an advertiser to load their logo and contact details.
+        </div>
+      )}
     </div>
   );
 }
