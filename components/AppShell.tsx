@@ -26,6 +26,7 @@ import NavDrawer from '@/components/NavDrawer';
 import BottomNav from '@/components/BottomNav';
 import { AdSlot } from '@/components/ads/AdSlot';
 import NewsletterCTA from '@/components/NewsletterCTA';
+import { ADMIN_NAV as ADMIN_GROUPS, isAdminGroupActive as isGroupActive } from '@/lib/admin-nav';
 
 // ============================================================
 // Types + constants
@@ -39,66 +40,6 @@ const PUB_COLORS: Record<string, string> = {
   realtynewsnow: '#1a2a44',
 };
 
-// Admin nav is grouped into logical sections. On desktop each group is
-// rendered as a dropdown menu button; on mobile the drawer continues to
-// show section headers + flat links.
-type AdminLink = { label: string; href: string; description?: string };
-type AdminGroup = { label: string; links: AdminLink[] };
-
-const ADMIN_GROUPS: AdminGroup[] = [
-  {
-    label: 'CRM',
-    links: [
-      { label: 'Advertisers & CRM', href: '/admin/crm', description: 'Accounts, contacts, share links' },
-      { label: 'Media Kit',   href: '/admin/media-kit',   description: '2026 packages, rates & deadlines' },
-      { label: 'Agreements',  href: '/admin/billing',     description: 'Invoices, sign wizard & payments' },
-    ],
-  },
-  {
-    label: 'Mailing List HUB',
-    links: [
-      { label: 'Mailing List HUB',  href: '/admin/mailing',            description: 'All audience lists in one place' },
-      { label: 'ABOR Members',      href: '/admin/mailing/holding',    description: 'Austin agents awaiting review' },
-      { label: 'SABOR Members',     href: '/admin/mailing/sabor-members', description: 'San Antonio realtor mirror' },
-      { label: 'App Subscribers',   href: '/admin/subscribers',        description: 'Newsletter signups' },
-      { label: 'Five Points Board', href: '/admin/five-points-board',  description: 'Coming soon' },
-      { label: 'Manual Subscribe',  href: '/subscribe',                description: 'Add a subscriber by hand' },
-    ],
-  },
-  {
-    label: 'Revenue',
-    links: [
-      { label: 'Ads',       href: '/admin/ads',       description: 'Inventory & placements' },
-      { label: 'Marketing', href: '/admin/marketing', description: 'Campaigns & assets' },
-    ],
-  },
-  {
-    label: 'Content',
-    links: [
-      { label: 'Articles',  href: '/admin/articles',  description: 'WordPress feeds & sync' },
-      { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions' },
-      { label: 'Events',    href: '/admin/events',    description: 'Calendar publications' },
-      // 'Pending Events' link removed 2026-06-06 — page deleted; API routes
-      // kept for the cron + submit-event flow.
-      { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries' },
-      { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
-      // 'Social' link removed 2026-06-02 — page itself kept at /admin/social
-      // in case curation comes back, but no longer reachable from the nav.
-    ],
-  },
-  {
-    label: 'Insights',
-    links: [
-      { label: 'Metrics',   href: '/admin/metrics',   description: 'KPI dashboards' },
-      { label: 'Reports',   href: '/admin/reports',   description: 'Saved reports' },
-      { label: 'Analytics', href: '/admin/analytics', description: 'Traffic & engagement' },
-    ],
-  },
-];
-
-function isGroupActive(group: AdminGroup, pathname: string): boolean {
-  return group.links.some((l) => pathname.startsWith(l.href));
-}
 
 const API = getApiBase();
 
@@ -244,6 +185,12 @@ export default function AppShell({
             onClick={() => setDrawerOpen(true)}
             aria-label="Open menu"
             className={`p-2 rounded-lg transition ${
+              // On desktop the admin top-bar dropdowns already expose every
+              // admin route; hiding the hamburger there prevents the user
+              // from seeing two competing navs at once. Public pages have
+              // no top-bar dropdowns, so the hamburger stays at every width.
+              isAdmin ? 'lg:hidden ' : ''
+            }${
               isAdmin
                 ? 'text-white/70 hover:text-white hover:bg-white/10'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-gray-200'
@@ -258,7 +205,7 @@ export default function AppShell({
 
           {/* Center: brand + badge */}
           <div className="flex items-center gap-2">
-            <Link href={isAdmin ? '/admin/giveaways' : '/'} className="text-sm sm:text-base font-semibold tracking-tight">
+            <Link href={isAdmin ? '/admin' : '/'} className="text-sm sm:text-base font-semibold tracking-tight">
               {isAdmin ? 'Realty News Now Admin' : 'Realty News Now'}
             </Link>
             {isAdmin ? (
@@ -273,7 +220,13 @@ export default function AppShell({
             {/* Desktop admin dropdown menus */}
             {isAdmin ? (
               <nav ref={navRef} className="hidden lg:flex items-center gap-1 mr-2 relative">
-                {ADMIN_GROUPS.map((group) => {
+                {ADMIN_GROUPS.map((group, groupIdx) => {
+                  // Anchor menus so they extend in the direction with the
+                  // most room. The first three groups (leftmost) open to
+                  // the right; the last two open to the left so they don't
+                  // run off the right edge of narrow laptop screens.
+                  const menuAlign =
+                    groupIdx >= ADMIN_GROUPS.length - 2 ? 'right-0' : 'left-0';
                   const isOpen   = openMenu === group.label;
                   const isActive = isGroupActive(group, pathname);
                   return (
@@ -311,7 +264,7 @@ export default function AppShell({
                       {isOpen && (
                         <div
                           role="menu"
-                          className="absolute right-0 mt-1.5 min-w-[16rem] rounded-lg bg-white text-gray-900 shadow-lg border border-gray-200 py-1.5 z-50"
+                          className={`absolute ${menuAlign} mt-1.5 min-w-[16rem] rounded-lg bg-white text-gray-900 shadow-lg border border-gray-200 py-1.5 z-50`}
                         >
                           <div className="px-3 pt-1.5 pb-1 text-[10px] uppercase tracking-[0.15em] text-gray-400 font-semibold">
                             {group.label}
