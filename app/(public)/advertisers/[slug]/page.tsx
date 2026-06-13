@@ -26,7 +26,10 @@ export async function generateMetadata({ params }: PageProps) {
   await ensureSchema();
   const sql = getSql();
   const rows = (await sql`
-    SELECT name, tagline FROM advertisers WHERE slug = ${slug} LIMIT 1
+    SELECT name, tagline FROM advertisers
+    WHERE slug = ${slug}
+      AND COALESCE(status, 'active') = 'active'
+    LIMIT 1
   `) as unknown as Array<{ name: string; tagline: string | null }>;
   if (rows.length === 0) return { title: 'Advertiser not found' };
   const r = rows[0];
@@ -43,8 +46,13 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
   await ensurePublicationColumn();
   const sql = getSql();
 
+  // Only active advertisers have a public detail page. Paused,
+  // prospect, and archived rows 404 to match the public directory.
   const rows = (await sql`
-    SELECT * FROM advertisers WHERE slug = ${slug} LIMIT 1
+    SELECT * FROM advertisers
+    WHERE slug = ${slug}
+      AND COALESCE(status, 'active') = 'active'
+    LIMIT 1
   `) as unknown as Advertiser[];
   if (rows.length === 0) notFound();
   const advertiser = rows[0];

@@ -40,9 +40,13 @@ export default async function AdvertisersDirectoryPage() {
   await ensurePublicationColumn();
   const sql = getSql();
 
+  // Only active advertisers are public-facing. Paused, prospect, and
+  // archived rows are hidden from the public directory. NULL status is
+  // treated as 'active' for backward compatibility with legacy rows.
   const rows = (await sql`
     SELECT id, name, slug, website, publication
     FROM advertisers
+    WHERE COALESCE(status, 'active') = 'active'
     ORDER BY name ASC
   `) as unknown as AdvertiserRow[];
 
