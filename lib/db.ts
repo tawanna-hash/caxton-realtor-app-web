@@ -629,6 +629,14 @@ export async function ensureSchema(): Promise<void> {
     ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS header_style TEXT NOT NULL DEFAULT 'current'
   `;
 
+  // Per-advertiser default footer template applied to downloadable tools
+  // (the /resources calculator PDFs today). Picker IDs live in
+  // lib/footer-templates.ts; the app coerces unknown values back to
+  // the default on read so adding a new template requires no migration.
+  await sql`
+    ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS footer_template TEXT NOT NULL DEFAULT 'business-card'
+  `;
+
   // Event-pipeline metadata (advertiser submissions + Gemini-detected from FB).
   // submitted_by_advertiser_id: links a row to the advertiser when source =
   //   'submission' (so the admin queue can show "Submitted by Austin Title").

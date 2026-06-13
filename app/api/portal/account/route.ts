@@ -7,12 +7,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
+import { coerceFooterTemplateId } from '@/lib/footer-templates';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const SELF_UPDATABLE = ['company', 'phone', 'office_phone', 'website',
-  'address', 'address_2', 'city', 'state', 'zip'] as const;
+  'address', 'address_2', 'city', 'state', 'zip',
+  'footer_template'] as const;
 
 export async function PATCH(req: NextRequest) {
   const user = await getCurrentPortalUser();
@@ -42,6 +44,11 @@ export async function PATCH(req: NextRequest) {
         case 'city':         await sql`UPDATE advertisers SET city = ${v} WHERE id = ${user.advertiser_id}`; break;
         case 'state':        await sql`UPDATE advertisers SET state = ${v} WHERE id = ${user.advertiser_id}`; break;
         case 'zip':          await sql`UPDATE advertisers SET zip = ${v} WHERE id = ${user.advertiser_id}`; break;
+        case 'footer_template': {
+          const tpl = coerceFooterTemplateId(v);
+          await sql`UPDATE advertisers SET footer_template = ${tpl} WHERE id = ${user.advertiser_id}`;
+          break;
+        }
       }
       updated.push(field);
     }

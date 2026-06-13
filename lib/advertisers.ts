@@ -78,6 +78,11 @@ export interface Advertiser {
   // Defaults to 'current'.
   header_style?: AdvertiserHeaderStyle;
 
+  // Default footer template applied to downloadable tools (calculator PDFs).
+  // Valid IDs live in lib/footer-templates.ts. The app coerces unknown values
+  // back to the default on read.
+  footer_template?: string;
+
   // Verification
   email_status?: EmailStatus | null;
   email_verified_at?: string | null;
@@ -166,7 +171,7 @@ export const CRM_PATCHABLE_FIELDS = [
   'license_number', 'avatar_url',
   'portal_email', 'phone', 'office_phone', 'website',
   'facebook_url', 'instagram_url', 'linkedin_url', 'twitter_url', 'youtube_url',
-  'tagline', 'bio', 'header_style',
+  'tagline', 'bio', 'header_style', 'footer_template',
   'email_status', 'email_verified_at',
   'address', 'address_2', 'city', 'state', 'zip',
   'portal_activated_at', 'portal_onboarded_at',

@@ -4,26 +4,34 @@
 //
 // Shared floating action pill for every /resources calculator page.
 // Wraps <FloaterPill> and bakes in the four standard actions:
-//   Back · Share · Download · Print
+//   Back - Share - Download - Print
+//
+// Download flow (Session 22+):
+//   Tapping Download opens <FooterPickerSheet>. The sheet handles three
+//   states: signed-out (prompt to sign in), signed-in/incomplete-profile
+//   (warning callout + template grid), signed-in/complete (template
+//   grid). On confirm, the sheet returns a template id (or null) and
+//   the brand fields; we hand those to downloadCalcReport().
 //
 // Each page supplies:
 //   - shareTitle / shareText: copy for navigator.share()
-//   - buildReport(): () => CalcReport — invoked when Download is tapped.
+//   - buildReport(): () => CalcReport - invoked when Download is tapped.
 //     Generated lazily so the report reflects the latest input state.
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
 import { downloadCalcReport, type CalcReport } from './calcPdf';
+import FooterPickerSheet, { type FooterPickerResult } from './FooterPickerSheet';
 
 interface Props {
-  /** Share dialog title — usually the calculator name. */
+  /** Share dialog title - usually the calculator name. */
   shareTitle: string;
-  /** Share dialog body — one-line summary. */
+  /** Share dialog body - one-line summary. */
   shareText: string;
-  /** Lazy report builder. Called on Download — should return current state. */
+  /** Lazy report builder. Called on Download - should return current state. */
   buildReport: () => CalcReport;
-  /** Optional offset override. Defaults to 'bottom-[96px]' — clears the
+  /** Optional offset override. Defaults to 'bottom-[96px]' - clears the
    *  AppShell BottomNav (~72px tall) with a small visual gap. */
   bottomOffsetClass?: string;
 }
@@ -35,6 +43,7 @@ export default function ResourceFloater({
   bottomOffsetClass = 'bottom-[96px]',
 }: Props) {
   const router = useRouter();
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const onBack = useCallback(() => {
     if (typeof window !== 'undefined' && window.history.length > 1) {
@@ -56,18 +65,26 @@ export default function ResourceFloater({
         window.alert('Link copied to clipboard');
       }
     } catch (err) {
-      // user cancelled — no-op
+      // user cancelled - no-op
       console.log('[ResourceFloater] share cancelled or failed:', err);
     }
   }, [shareTitle, shareText]);
 
   const onDownload = useCallback(() => {
+    setPickerOpen(true);
+  }, []);
+
+  const onPickerConfirm = useCallback(async (pick: FooterPickerResult) => {
+    setPickerOpen(false);
     try {
       const report = buildReport();
-      downloadCalcReport(report);
+      if (pick.template && pick.brand) {
+        report.brandFooter = { template: pick.template, brand: pick.brand };
+      }
+      await downloadCalcReport(report);
     } catch (err) {
       console.error('[ResourceFloater] PDF generation failed:', err);
-      window.alert('Could not generate PDF — please try again.');
+      window.alert('Could not generate PDF - please try again.');
     }
   }, [buildReport]);
 
@@ -121,9 +138,16 @@ export default function ResourceFloater({
   ];
 
   return (
-    <FloaterPill
-      actions={actions}
-      bottomOffsetClass={bottomOffsetClass}
-    />
+    <>
+      <FloaterPill
+        actions={actions}
+        bottomOffsetClass={bottomOffsetClass}
+      />
+      <FooterPickerSheet
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onConfirm={onPickerConfirm}
+      />
+    </>
   );
 }

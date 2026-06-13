@@ -11,6 +11,12 @@
 
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { applyBrandFooter } from '@/lib/pdf/brand-footer';
+import {
+  type FooterBrand,
+  type FooterTemplateId,
+  getFooterTemplateMeta,
+} from '@/lib/footer-templates';
 
 export interface CalcReportRow {
   label: string;
@@ -41,6 +47,12 @@ export interface CalcReport {
   disclaimer?: string;
   /** File name (without .pdf extension). */
   filename: string;
+  /** Optional brand footer for signed-in brokers/agents. When omitted,
+   *  only the generic site footer is drawn. */
+  brandFooter?: {
+    template: FooterTemplateId;
+    brand: FooterBrand;
+  };
 }
 
 const BRAND_NAVY: [number, number, number] = [26, 42, 68];   // #1a2a44
@@ -50,11 +62,17 @@ const GREY_700: [number, number, number] = [55, 65, 81];
 const GREY_500: [number, number, number] = [107, 114, 128];
 const ROSE_700: [number, number, number] = [190, 18, 60];
 
-export function downloadCalcReport(report: CalcReport): void {
+export async function downloadCalcReport(report: CalcReport): Promise<void> {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 48;
   const contentWidth = pageWidth - margin * 2;
+  // Reserve extra bottom margin for the brand footer (if any) so body
+  // content never overlaps the footer artwork.
+  const brandFooterHeight = report.brandFooter
+    ? getFooterTemplateMeta(report.brandFooter.template).heightPt
+    : 0;
+  const bottomReserve = margin + brandFooterHeight;
 
   let y = margin;
 
@@ -128,7 +146,7 @@ export function downloadCalcReport(report: CalcReport): void {
   // Sections
   for (const section of report.sections) {
     // Ensure space — break to next page if needed
-    if (y > doc.internal.pageSize.getHeight() - margin - 60) {
+    if (y > doc.internal.pageSize.getHeight() - bottomReserve - 60) {
       doc.addPage();
       y = margin;
     }
@@ -192,7 +210,7 @@ export function downloadCalcReport(report: CalcReport): void {
 
   // Disclaimer
   if (report.disclaimer) {
-    if (y > doc.internal.pageSize.getHeight() - margin - 40) {
+    if (y > doc.internal.pageSize.getHeight() - bottomReserve - 40) {
       doc.addPage();
       y = margin;
     }
@@ -204,7 +222,16 @@ export function downloadCalcReport(report: CalcReport): void {
     y += lines.length * 11;
   }
 
-  // Footer (every page)
+  // Brand footer first (template artwork sits above the generic page-N line)
+  if (report.brandFooter) {
+    try {
+      await applyBrandFooter(doc, report.brandFooter);
+    } catch (err) {
+      console.error('[calcPdf] brand footer render failed:', err);
+    }
+  }
+
+  // Generic site footer (every page) - sits flush at the very bottom
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
@@ -212,8 +239,8 @@ export function downloadCalcReport(report: CalcReport): void {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(...GREY_500);
-    doc.text('realtynewsnow.app  ·  RealtyLine Austin', margin, pageH - 24);
-    doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin, pageH - 24, { align: 'right' });
+    doc.text('realtynewsnow.app  ·  RealtyLine Austin', margin, pageH - 12);
+    doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin, pageH - 12, { align: 'right' });
   }
 
   doc.save(`${report.filename}.pdf`);
