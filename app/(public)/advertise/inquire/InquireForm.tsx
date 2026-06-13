@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -15,8 +16,18 @@ export default function InquireForm({
   initialSlotLabel,
   pub,
 }: Props) {
+  const router = useRouter();
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState<string>('');
+  // Captured on success so we can pre-fill the checkout page after the
+  // brief confirmation interstitial. Kept in state (not just locals) so
+  // the success screen can render the buyer's name in the headline.
+  const [submitted, setSubmitted] = useState<{
+    name: string;
+    email: string;
+    phone: string;
+    company: string;
+  } | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -58,6 +69,12 @@ export default function InquireForm({
         setErrorMsg(body?.error ?? `Submit failed (${res.status})`);
         return;
       }
+      setSubmitted({
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        company: payload.company,
+      });
       setStatus('success');
     } catch (err) {
       setStatus('error');
@@ -65,15 +82,68 @@ export default function InquireForm({
     }
   }
 
-  if (status === 'success') {
+  // After a successful inquiry, send the buyer straight to the package /
+  // payment flow so they can self-serve immediately. We hold for ~1.6s on
+  // the confirmation screen so they see their data was captured, then:
+  //   - if a specific slot was requested, deep-link the buyer to the
+  //     checkout page for that slot with name/email/phone/company
+  //     pre-filled.
+  //   - if no slot was selected, send them to the rate card at /advertise
+  //     so they can pick a placement, then click into checkout.
+  useEffect(() => {
+    if (status !== 'success' || !submitted) return;
+    const target = initialSlot
+      ? `/advertise/checkout/${encodeURIComponent(initialSlot)}?` +
+        new URLSearchParams({
+          pub,
+          name: submitted.name,
+          email: submitted.email,
+          phone: submitted.phone,
+          company: submitted.company,
+        }).toString()
+      : '/advertise';
+    const t = setTimeout(() => router.push(target), 1600);
+    return () => clearTimeout(t);
+  }, [status, submitted, initialSlot, pub, router]);
+
+  if (status === 'success' && submitted) {
+    const firstName = submitted.name.split(' ')[0] || submitted.name;
     return (
-      <div className="border border-green-200 bg-green-50 p-6 rounded">
+      <div
+        className="border border-green-200 bg-green-50 p-6 rounded"
+        role="status"
+        aria-live="polite"
+      >
         <p className="text-base font-semibold text-green-900 mb-1">
-          Thanks — we&apos;ve got it.
+          Thanks, {firstName} — we&apos;ve got it.
         </p>
         <p className="text-sm text-green-900">
-          Your inquiry is on its way to our ads team at ads@myrealtyline.com.
-          We&apos;ll follow up within one business day.
+          Our ads team has been notified. Taking you to{' '}
+          {initialSlot
+            ? 'package options and secure payment'
+            : 'our rate card'}
+          &hellip;
+        </p>
+        <p className="text-xs text-green-800 mt-3">
+          Not redirecting?{' '}
+          <a
+            href={
+              initialSlot
+                ? `/advertise/checkout/${encodeURIComponent(initialSlot)}?` +
+                  new URLSearchParams({
+                    pub,
+                    name: submitted.name,
+                    email: submitted.email,
+                    phone: submitted.phone,
+                    company: submitted.company,
+                  }).toString()
+                : '/advertise'
+            }
+            className="underline font-medium"
+          >
+            Continue here
+          </a>
+          .
         </p>
       </div>
     );

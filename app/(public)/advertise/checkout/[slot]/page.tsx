@@ -12,7 +12,13 @@ import type { Metadata } from 'next';
 
 type RouteCtx = {
   params: Promise<{ slot: string }>;
-  searchParams: Promise<{ pub?: string }>;
+  searchParams: Promise<{
+    pub?: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+    company?: string;
+  }>;
 };
 
 export async function generateMetadata(ctx: RouteCtx): Promise<Metadata> {
@@ -26,14 +32,24 @@ export async function generateMetadata(ctx: RouteCtx): Promise<Metadata> {
 
 export default async function CheckoutPage(ctx: RouteCtx) {
   const { slot: slug } = await ctx.params;
-  const { pub: pubParam } = await ctx.searchParams;
+  const sp = await ctx.searchParams;
   const slot = APP_AD_SLOTS.find((s) => s.slug === slug);
   if (!slot) notFound();
 
   const initialPub: 'realtyline' | 'newsline' | 'both' =
-    pubParam === 'newsline' || pubParam === 'both' || pubParam === 'realtyline'
-      ? pubParam
+    sp.pub === 'newsline' || sp.pub === 'both' || sp.pub === 'realtyline'
+      ? sp.pub
       : 'realtyline';
+
+  // Pre-fill from the /advertise/inquire redirect so the buyer doesn't have
+  // to re-type contact info they already submitted. Capped to reasonable
+  // lengths so the URL can't be used to inject huge defaults.
+  const trimmed = (v: string | undefined, max: number) =>
+    typeof v === 'string' ? v.slice(0, max) : '';
+  const initialName = trimmed(sp.name, 200);
+  const initialEmail = trimmed(sp.email, 320);
+  const initialPhone = trimmed(sp.phone, 50);
+  const initialCompany = trimmed(sp.company, 200);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -68,7 +84,14 @@ export default async function CheckoutPage(ctx: RouteCtx) {
           </dl>
         </div>
 
-        <CheckoutForm slot={slot} initialPub={initialPub} />
+        <CheckoutForm
+          slot={slot}
+          initialPub={initialPub}
+          initialName={initialName}
+          initialEmail={initialEmail}
+          initialPhone={initialPhone}
+          initialCompany={initialCompany}
+        />
 
         <p className="text-center text-xs text-slate-500 mt-10">
           Need help? Email <a href="mailto:hello@myrealtyline.com" className="underline">hello@myrealtyline.com</a> or call us — we&apos;ll book you manually.
