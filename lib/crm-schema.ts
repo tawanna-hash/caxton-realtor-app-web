@@ -864,4 +864,71 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       BEFORE UPDATE ON advertiser_staff
       FOR EACH ROW EXECUTE FUNCTION trg_advertiser_staff_set_updated_at()
   `);
+
+  // ── ad_inquiries ────────────────────────────────────────────────────
+  // Persistent funnel record for every /api/inquire submission. Prior
+  // versions of /api/inquire only emailed the ads team; rows here are the
+  // durable source of truth so the admin inbox, pipeline, and conversion
+  // reporting all have something to read.
+  //
+  // `channel`  : 'print' | 'digital' | 'email' (matches lib/ad-channels)
+  // `slot_slug`: digital slot slug OR package id ('brand6', 'eblast2', etc.)
+  // `status`   : new / replied / quoted / won / lost / spam
+  // `assignee` : email of the admin who claimed the inquiry
+  // `takeover` : when true, the auto-redirect to self-serve checkout is
+  //              suppressed; admin is handling this lead manually.
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS ad_inquiries (
+      id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      channel         text NOT NULL DEFAULT 'digital',
+      slot_slug       text,
+      slot_label      text,
+      publication     text,
+      package_id      text,
+      name            text NOT NULL,
+      email           text NOT NULL,
+      phone           text,
+      company         text,
+      message         text NOT NULL,
+      source_url      text,
+      ip              text,
+      user_agent      text,
+      status          text NOT NULL DEFAULT 'new',
+      assignee        text,
+      takeover        boolean NOT NULL DEFAULT FALSE,
+      notes           text,
+      advertiser_id   integer REFERENCES advertisers(id) ON DELETE SET NULL,
+      created_at      timestamptz NOT NULL DEFAULT now(),
+      updated_at      timestamptz NOT NULL DEFAULT now(),
+      replied_at      timestamptz,
+      converted_at    timestamptz,
+      lost_at         timestamptz
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_ad_inquiries_channel    ON ad_inquiries(channel)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_ad_inquiries_status     ON ad_inquiries(status)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_ad_inquiries_email      ON ad_inquiries(lower(email))`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_ad_inquiries_created_at ON ad_inquiries(created_at DESC)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_ad_inquiries_advertiser ON ad_inquiries(advertiser_id)`);
+
+  await step(() => sql`
+    CREATE OR REPLACE FUNCTION trg_ad_inquiries_set_updated_at()
+    RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql
+  `);
+  await step(() => sql`DROP TRIGGER IF EXISTS ad_inquiries_set_updated_at ON ad_inquiries`);
+  await step(() => sql`
+    CREATE TRIGGER ad_inquiries_set_updated_at
+      BEFORE UPDATE ON ad_inquiries
+      FOR EACH ROW EXECUTE FUNCTION trg_ad_inquiries_set_updated_at()
+  `);
+
+  // ── channel tag on existing tables ──────────────────────────────────
+  // Tag every downstream row with the same enum so admin views and
+  // reporting can join inquiries → agreements → campaigns by channel.
+  // Defaults to 'digital' to preserve historical rows (every existing
+  // self-serve booking was digital).
+  await step(() => sql`ALTER TABLE ad_campaigns ADD COLUMN IF NOT EXISTS channel    text NOT NULL DEFAULT 'digital'`);
+  await step(() => sql`ALTER TABLE agreements   ADD COLUMN IF NOT EXISTS channel    text NOT NULL DEFAULT 'digital'`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_ad_campaigns_channel ON ad_campaigns(channel)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_channel    ON agreements(channel)`);
 }

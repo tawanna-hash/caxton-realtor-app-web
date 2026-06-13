@@ -18,8 +18,22 @@ import { z } from 'zod';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { APP_AD_SLOTS } from '@/lib/media-kit';
+import { deriveChannelFromSlot } from '@/lib/ad-channels';
 import { randomUUID } from 'crypto';
 import { appendAudit } from '@/lib/agreements';
+
+/**
+ * Convert the rate-card publication enum ('realtyline'|'newsline'|'both')
+ * to the DB enum ('austin'|'san_antonio'|'both'). The ad_campaigns table
+ * stores DB enum values; any other code that reads ad_campaigns.publication
+ * (admin views, slot-availability) expects DB enum.
+ */
+function normalizeDbPub(raw: string): 'austin' | 'san_antonio' | 'both' {
+  const v = (raw || '').toLowerCase().trim();
+  if (v === 'newsline' || v === 'san_antonio') return 'san_antonio';
+  if (v === 'both') return 'both';
+  return 'austin'; // 'realtyline' OR fallback
+}
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -71,7 +85,9 @@ export async function POST(req: NextRequest) {
     const phone = m.advertiser_phone || '';
     const startDate = m.start_date;
     const endDate = m.end_date;
-    const pub = (m.pub as string) || 'realtyline';
+    const rawPub = (m.pub as string) || 'realtyline';
+    const pub = normalizeDbPub(rawPub);
+    const channel = deriveChannelFromSlot(slotSlug) ?? 'digital';
     const clickUrl = m.click_url || 'https://realtynewsnow.app';
     const altText = m.alt_text || advertiserName;
     const baseCents = Number(m.base_amount_cents ?? pi.amount);
@@ -117,12 +133,13 @@ export async function POST(req: NextRequest) {
     await sql`
       INSERT INTO ad_campaigns
         (id, advertiser_name, ad_space_slug, creative_id, publication, start_date, end_date,
-         active, price_total, price_notes, notes, created_by)
+         active, price_total, price_notes, notes, created_by, channel)
       VALUES
         (${campaignId}, ${advertiserName}, ${slot.slug}, ${creativeId}, ${pub},
          ${startDate}, ${endDate}, ${false}, ${dollars}, ${billingPeriod},
          ${'self-serve checkout, pi=' + paymentIntentId},
-         ${'self_serve:' + (advertiserEmail || 'anon')})
+         ${'self_serve:' + (advertiserEmail || 'anon')},
+         ${channel})
     `;
 
     // 3) advertiser row (idempotent by contact_email)
@@ -164,7 +181,7 @@ export async function POST(req: NextRequest) {
          payment_mode,
          stripe_payment_intent_id,
          signer_name, terms_accepted, terms_accepted_at,
-         notes, audit_log, created_by)
+         notes, audit_log, created_by, channel)
       VALUES
         (${agreementId}, ${advertiserId}, ${advertiserName}, ${repName}, ${advertiserEmail}, ${phone},
          ${'other'}, ${'draft'}, ${startDate}, ${endDate},
@@ -174,7 +191,8 @@ export async function POST(req: NextRequest) {
          ${repName || advertiserName}, ${true}, ${now},
          ${'Self-serve checkout. Slot=' + slot.slug + ' pub=' + pub},
          ${JSON.stringify(audit)}::jsonb,
-         ${'self_serve:' + (advertiserEmail || 'anon')})
+         ${'self_serve:' + (advertiserEmail || 'anon')},
+         ${channel})
     `;
 
     return NextResponse.json({
