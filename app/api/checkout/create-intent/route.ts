@@ -18,7 +18,7 @@ import {
   withSurcharge,
   getPublishableKey,
 } from '@/lib/stripe';
-import { APP_AD_SLOTS } from '@/lib/media-kit';
+import { APP_AD_SLOTS, getSlotAvailablePubs } from '@/lib/media-kit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -95,6 +95,20 @@ export async function POST(req: NextRequest) {
 
   const slot = APP_AD_SLOTS.find((s) => s.slug === d.slot);
   if (!slot) return NextResponse.json({ error: 'unknown_slot' }, { status: 400 });
+
+  // Server-side guard: even if the client UI is bypassed, never let a buyer
+  // book a publication scope that isn't sold for this slot (e.g. 'both' on
+  // a single-pub-only placement).
+  const allowedPubs = getSlotAvailablePubs(slot);
+  if (!allowedPubs.includes(d.pub)) {
+    return NextResponse.json(
+      {
+        error: 'pub_not_available',
+        detail: `Slot '${slot.slug}' is not sold on '${d.pub}'. Available: ${allowedPubs.join(', ')}.`,
+      },
+      { status: 400 },
+    );
+  }
 
   const computed = computeAmountCents(
     slot,
