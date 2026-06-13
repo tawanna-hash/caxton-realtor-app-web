@@ -65,6 +65,19 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
               tawanna@myrealtyline.com
             </a>
           </p>
+
+          {/* Admin return path. The standalone sign-flow layout intentionally
+              has no AppShell, so we surface a direct link back to /admin/billing
+              for staff who arrive here to verify a signed agreement. The link
+              is harmless for advertisers — they hit /admin/login if not signed in. */}
+          <div className="pt-2 border-t border-gray-100">
+            <a
+              href="/admin/billing"
+              className="text-xs text-gray-500 hover:text-gray-900 transition-colors"
+            >
+              Back to Billing
+            </a>
+          </div>
         </div>
 
         {/* Token for debugging — visible only in dev */}

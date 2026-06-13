@@ -839,14 +839,9 @@ function EditDrawer({
                 <small className="mt-1 block text-xs text-gray-500">
                   {HEADER_STYLE_META[coerceHeaderStyle(form.header_style)].blurb}
                 </small>
-                <a
-                  href="/admin/preview/logo-options"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-1 inline-block text-xs text-blue-600 hover:underline"
-                >
-                  Preview all six styles side-by-side
-                </a>
+                {/* /admin/preview/logo-options preview sandbox was removed once
+                    the production header styles were locked in. The dropdown
+                    blurb above documents each style's visual treatment. */}
               </Field>
               <Field label="Tagline" className="col-span-2">
                 <input

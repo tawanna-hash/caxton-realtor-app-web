@@ -61,6 +61,7 @@ const DRAWER_SECTIONS: NavSection[] = [
       { label: 'Giveaways', href: '/giveaways' },
       { label: 'Inventory & Promotions', href: '/inventory' },
       { label: 'Communities', href: '/communities' },
+      { label: 'Builders & Developers', href: '/builders' },
       { label: 'Advertisers', href: '/advertisers' },
       { label: 'REALTOR® Resources', href: '/resources' },
     ],
@@ -76,6 +77,7 @@ const DRAWER_SECTIONS: NavSection[] = [
   {
     title: 'About',
     items: [
+      { label: 'My Feed', href: '/dashboard' },
       { label: 'About Us', href: '/about' },
       { label: 'Advertise', href: '/advertise' },
       { label: 'My Profile', href: '/profile' },
@@ -335,8 +337,12 @@ export default function NavDrawer({
               </button>
             ) : (
               <>
+                {/* Direct link to the realtor sign-in page. Previously this
+                    pointed at '/' which itself redirects to /dashboard and
+                    then bounces unauthenticated users back to sign-in — an
+                    indirect chain. Targeting /auth/sign-in skips the hops. */}
                 <Link
-                  href="/"
+                  href="/auth/sign-in"
                   onClick={onClose}
                   className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white font-medium rounded-lg hover:bg-white/10 transition"
                 >

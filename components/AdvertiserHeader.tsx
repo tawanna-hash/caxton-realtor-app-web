@@ -3,9 +3,10 @@
 // components/AdvertiserHeader.tsx
 //
 // Shared advertiser-detail-page header. Switches between six layouts
-// based on the advertiser's `header_style` column. Used by both the
-// public page (/advertisers/[slug]) and the admin design preview
-// (/admin/preview/logo-options) so the comparison stays honest.
+// based on the advertiser's `header_style` column. Used by the public
+// advertiser page (/advertisers/[slug]). The dedicated admin design
+// preview at /admin/preview/logo-options was removed once the styles
+// were locked in.
 //
 // To add a new style:
 //   1. Append the slug to ADVERTISER_HEADER_STYLES in

@@ -253,12 +253,26 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
       {/* ===== HEADER ===== */}
       <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
         <div className="px-4 py-3 flex items-center gap-4 flex-wrap">
-          <Link
-            href={`/admin/magazines/${magazine.id}`}
-            className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
-          >
-            ← Back
-          </Link>
+          {/* Breadcrumb: All Magazines / this magazine. The hotspot editor is
+              two levels deep, so a single back arrow was leaving users without
+              a one-click escape to the magazines list. */}
+          <div className="flex items-center gap-2 text-sm">
+            <Link
+              href="/admin/magazines"
+              className="text-gray-600 hover:text-gray-900"
+            >
+              All Magazines
+            </Link>
+            <span className="text-gray-400" aria-hidden>
+              /
+            </span>
+            <Link
+              href={`/admin/magazines/${magazine.id}`}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              {magazine.issue_label}
+            </Link>
+          </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-semibold text-gray-900 truncate">
               Hotspots · {magazine.publication === 'austin' ? 'RealtyLine' : 'Newsline SA'} · {magazine.issue_label}
