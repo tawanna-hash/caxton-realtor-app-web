@@ -102,24 +102,6 @@ export interface Advertiser {
   additional_contacts?: AdditionalContact[];
   notes?: string | null;
   tags?: string[];
-
-  // ── Billing↔CRM sync mirror (Session 21) ────────────────────────
-  // Mirrored from the advertiser's most recent agreement so the CRM
-  // detail page can render billing/payment/deal facts without joining
-  // agreements. Source of truth is still the agreement row; this is a
-  // cache kept in lockstep by lib/server/billing-crm-sync.ts.
-  billing_contact_name?: string | null;
-  billing_contact_phone?: string | null;
-  billing_email?: string | null;
-  payment_mode?: string | null;
-  stripe_customer_id?: string | null;
-  card_last4?: string | null;
-  current_agreement_id?: string | null;
-  current_ad_size?: string | null;
-  current_frequency?: string | null;
-  current_ad_rate_cents?: number | null;
-  current_amount_cents?: number | null;
-  current_exp_date?: string | null;
 }
 
 // ── Session 19: Locations + Staff ─────────────────────────────────

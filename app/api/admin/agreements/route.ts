@@ -13,7 +13,6 @@ import {
 } from '@/lib/agreements';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
-import { syncAgreementToAdvertiser } from '@/lib/server/billing-crm-sync';
 import type { Agreement } from '@/lib/agreements';
 
 export const runtime = 'nodejs';
@@ -197,15 +196,6 @@ export async function POST(req: NextRequest) {
       linkedAdvertiserId && linkedAdvertiserId !== createdAg.advertiser_id
         ? { ...createdAg, advertiser_id: linkedAdvertiserId }
         : createdAg;
-
-    // Billing -> CRM mirror on first save too. Best-effort.
-    if (finalAg.advertiser_id) {
-      try {
-        await syncAgreementToAdvertiser(finalAg);
-      } catch (e) {
-        console.error('[admin/agreements POST] syncAgreementToAdvertiser failed', errMessage(e));
-      }
-    }
 
     return NextResponse.json({ agreement: finalAg }, { status: 201 });
   } catch (err) {
