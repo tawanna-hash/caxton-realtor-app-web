@@ -225,17 +225,13 @@ export async function POST(req: NextRequest) {
     let bodyHtml: string;
     if (soldOut && slotInfo) {
       // Sold-out path: waitlist note + alternatives + checkout CTA.
-      // The CTA points straight at the TOP-ranked available alternative's
-      // self-checkout so the buyer lands on a real booking flow instead of
-      // a marketing landing page. If somehow no alternatives are available,
-      // we fall back to /advertise/inquire so they can still talk to us.
-      const topAlt = alternatives[0];
-      const ctaHref = topAlt
-        ? `https://realtynewsnow.app/advertise/checkout/${topAlt.slug}?pub=${data.pub}`
-        : 'https://realtynewsnow.app/advertise/inquire';
-      const ctaLabel = topAlt
-        ? `Book ${topAlt.name} instead`
-        : 'Talk to our team';
+      // The CTA points at /advertise/digital, which lists every digital
+      // placement with live availability and a 'Book this placement'
+      // button on each open slot. That way the buyer sees the full
+      // inventory (not just the inline-feed slot) and can choose what
+      // best fits their campaign.
+      const ctaHref = `https://realtynewsnow.app/advertise/digital?pub=${data.pub}`;
+      const ctaLabel = 'See all available digital placements';
       bodyHtml = `
         <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 16px 0;">
           Thanks so much for your interest in <strong>${escapeHtml(slotInfo.name)}</strong>. Heads up — that placement is <strong>fully booked</strong> right now, so we've added you to the waitlist and will reach out the moment it opens up.
