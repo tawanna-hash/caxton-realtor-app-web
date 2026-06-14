@@ -1150,20 +1150,29 @@ function AgreementDrawer({
     return d.toISOString().slice(0, 10);
   }, [expPreview]);
 
-  // Auto-fill rate from table when size/freq changes (unless user edited)
+  // Auto-fill rate from the rate table when size/freq changes.
+  //
+  // Historical bug: this used to be gated behind !rate_user_edited, which
+  // (because rate_user_edited is initialized to true for any existing
+  // agreement) silently froze the ad_rate for every drawer reopen — so
+  // editing 1/4-page → 1/2-page or 3x → 6x left the dollar amount stale.
+  //
+  // Picking a new size/freq pair is an explicit intent change: always
+  // recompute the rate from the lookup table and clear the user-edited
+  // flag so the "✨ Auto-filled" hint reappears. The manual override path
+  // (typing directly into Ad Rate $) still sets rate_user_edited=true.
   const onSizeFrChange = (size: string, freq: string) => {
-    if (!form.rate_user_edited) {
-      const looked = lookupRate(freq, size);
-      if (looked) {
-        const rate = form.payment_type === 'Credit Card'
-          ? String(applyCcSurcharge(looked.rate))
-          : String(looked.rate);
-        upd('ad_rate', rate);
-        upd('ad_rate_base', String(looked.rate));
-        // Recalc premium if pos_premium_active
-        if (form.pos_premium_active) {
-          upd('ad_premium', String(pagePositionPremium(looked.rate)));
-        }
+    const looked = lookupRate(freq, size);
+    if (looked) {
+      const rate = form.payment_type === 'Credit Card'
+        ? String(applyCcSurcharge(looked.rate))
+        : String(looked.rate);
+      upd('ad_rate', rate);
+      upd('ad_rate_base', String(looked.rate));
+      upd('rate_user_edited', false);
+      // Recalc premium if pos_premium_active
+      if (form.pos_premium_active) {
+        upd('ad_premium', String(pagePositionPremium(looked.rate)));
       }
     }
   };
