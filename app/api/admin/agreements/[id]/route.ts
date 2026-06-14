@@ -10,6 +10,7 @@ import {
   AGREEMENT_PATCHABLE_FIELDS,
   AGREEMENT_STATUS_VALUES,
   AGREEMENT_TYPE_VALUES,
+  AGREEMENT_PUBLICATION_VALUES,
   PAYMENT_MODE_VALUES,
   appendAudit,
   type AgreementWithAdvertiser,
@@ -93,6 +94,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       if (field === 'status' && typeof raw === 'string' && !AGREEMENT_STATUS_VALUES.has(raw as never)) continue;
       if (field === 'type'   && typeof raw === 'string' && !AGREEMENT_TYPE_VALUES.has(raw as never))   continue;
       if (field === 'payment_mode' && typeof raw === 'string' && !PAYMENT_MODE_VALUES.has(raw as never)) continue;
+      if (field === 'publication' && raw !== null && typeof raw === 'string' && !AGREEMENT_PUBLICATION_VALUES.has(raw as never)) continue;
 
       switch (field) {
         case 'advertiser_id':
@@ -156,6 +158,10 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
             await apply(field, raw, () => sql`UPDATE agreements SET renewed_from_id = ${raw}         WHERE id = ${id}`);
           } break;
         case 'notes':              await apply(field, raw, () => sql`UPDATE agreements SET notes = ${raw}                              WHERE id = ${id}`); break;
+        case 'publication':
+          if (raw === null || typeof raw === 'string') {
+            await apply(field, raw, () => sql`UPDATE agreements SET publication = ${raw}                  WHERE id = ${id}`);
+          } break;
       }
     }
 

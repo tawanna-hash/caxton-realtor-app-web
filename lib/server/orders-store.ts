@@ -84,6 +84,7 @@ interface AgreementRow {
   stripe_payment_intent_id: string | null;
   paid_at: string | null;
   created_at: string;
+  publication: string | null;
 }
 
 function asChannel(v: unknown): AdChannel {
@@ -145,7 +146,7 @@ export async function listOrders(
       SELECT id, channel, advertiser_id, company_name, advertiser_email,
              status, start_date, end_date, ad_size, amount_cents,
              stripe_payment_link_url, stripe_payment_intent_id,
-             paid_at, created_at
+             paid_at, created_at, publication
         FROM agreements
        WHERE (${channel}::text IS NULL OR channel = ${channel})
          AND (${q}::text       IS NULL OR
@@ -166,7 +167,7 @@ export async function listOrders(
         advertiser_name: a.company_name,
         advertiser_email: a.advertiser_email,
         slot_or_size: a.ad_size,
-        publication: null,
+        publication: a.publication,
         start_date: a.start_date,
         end_date: a.end_date,
         amount_cents: a.amount_cents,

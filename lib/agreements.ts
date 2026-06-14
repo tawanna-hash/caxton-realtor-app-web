@@ -119,6 +119,13 @@ export interface Agreement {
   renewed_from_id: string | null;
 
   notes: string | null;
+
+  // Publication / market: 'austin' (RealtyLine Austin),
+  // 'san_antonio' (Newsline San Antonio), or 'both'. Drives the PUB column
+  // on /admin/ads/orders and per-market filtering for agreement-sourced
+  // orders. Defaults from the linked advertiser's publication on create.
+  publication: 'austin' | 'san_antonio' | 'both' | null;
+
   audit_log: AgreementAuditEntry[];
   created_by: string | null;
   created_at: string;
@@ -154,7 +161,12 @@ export const AGREEMENT_PATCHABLE_FIELDS = [
   'attachments',
   'is_renewal','renewed_from_id',
   'notes',
+  'publication',
 ] as const;
+
+export const AGREEMENT_PUBLICATION_VALUES = new Set<NonNullable<Agreement['publication']>>([
+  'austin', 'san_antonio', 'both',
+]);
 
 export type AgreementPatchableField = (typeof AGREEMENT_PATCHABLE_FIELDS)[number];
 

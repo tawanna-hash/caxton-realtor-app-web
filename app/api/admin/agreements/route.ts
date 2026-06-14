@@ -8,6 +8,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import {
   AGREEMENT_STATUS_VALUES,
   AGREEMENT_TYPE_VALUES,
+  AGREEMENT_PUBLICATION_VALUES,
   PAYMENT_MODE_VALUES,
   type AgreementWithAdvertiser,
 } from '@/lib/agreements';
@@ -69,6 +70,8 @@ export async function POST(req: NextRequest) {
     ? (body.type as string) : null;
   const paymentMode = typeof body.payment_mode === 'string' && PAYMENT_MODE_VALUES.has(body.payment_mode as never)
     ? (body.payment_mode as string) : null;
+  const publicationInput = typeof body.publication === 'string' && AGREEMENT_PUBLICATION_VALUES.has(body.publication as never)
+    ? (body.publication as string) : null;
 
   try {
     await ensureSchema();
@@ -82,15 +85,17 @@ export async function POST(req: NextRequest) {
       advertiser_phone:    (body.advertiser_phone    as string | undefined) ?? null,
       advertiser_address:  (body.advertiser_address  as string | undefined) ?? null,
     };
-    if (advertiserId && !snapshot.company_name) {
+    let publication: string | null = publicationInput;
+    if (advertiserId && (!snapshot.company_name || publication == null)) {
       const adv = await sql`
-        SELECT name, company, contact_email, phone, address, address_2, city, state, zip
+        SELECT name, company, contact_email, phone, address, address_2, city, state, zip, publication
         FROM advertisers WHERE id = ${advertiserId}
       ` as unknown as Array<{
         name: string; company: string | null;
         contact_email: string | null; phone: string | null;
         address: string | null; address_2: string | null;
         city: string | null; state: string | null; zip: string | null;
+        publication: string | null;
       }>;
       if (adv[0]) {
         const a = adv[0];
@@ -101,6 +106,9 @@ export async function POST(req: NextRequest) {
           advertiser_phone:   snapshot.advertiser_phone   ?? a.phone,
           advertiser_address: snapshot.advertiser_address ?? ([a.address, a.address_2, a.city, a.state, a.zip].filter(Boolean).join(', ') || null),
         };
+        if (publication == null && a.publication && AGREEMENT_PUBLICATION_VALUES.has(a.publication as never)) {
+          publication = a.publication;
+        }
       }
     }
 
@@ -175,6 +183,17 @@ export async function POST(req: NextRequest) {
       RETURNING *
     `;
     const createdAg = rows[0] as unknown as Agreement;
+
+    // Publication is on a separate UPDATE so the column is optional in the
+    // INSERT — older deploys without the column won't crash on create.
+    if (publication) {
+      try {
+        await sql`UPDATE agreements SET publication = ${publication} WHERE id = ${createdAg.id}`;
+        (createdAg as { publication?: string | null }).publication = publication;
+      } catch (e) {
+        console.error('[admin/agreements POST] publication write failed', errMessage(e));
+      }
+    }
 
     // Mirror the agreement into the CRM as soon as it's created. New rows
     // land with status='prospect' so they stay off public-facing surfaces
