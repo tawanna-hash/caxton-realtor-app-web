@@ -17,6 +17,7 @@ import { sendEmail } from '@/lib/email';
 import { APP_AD_SLOTS } from '@/lib/media-kit';
 import { isAdChannel, deriveChannelFromSlot, AD_CHANNEL_LABEL, type AdChannel } from '@/lib/ad-channels';
 import { insertAdInquiry } from '@/lib/server/ad-inquiries-store';
+import { isSlotSoldOut, pickAlternativeSlots } from '@/lib/server/slot-availability';
 import { ensureSchema } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -98,17 +99,51 @@ export async function POST(req: NextRequest) {
     user_agent: req.headers.get('user-agent'),
   });
 
+  // Probe slot inventory BEFORE composing either email so the internal
+  // team email can flag a sold-out inquiry too. Best-effort.
+  const slotInfo = data.slot ? APP_AD_SLOTS.find((s) => s.slug === data.slot) : null;
+  let soldOut = false;
+  let alternatives: Array<{
+    slug: string;
+    name: string;
+    tier: string;
+    weeklySingle: number;
+    weeklyBoth: number;
+    pricingUnit?: 'per send' | 'per push';
+    notes: string;
+  }> = [];
+  if (slotInfo && resolvedChannel === 'digital') {
+    try {
+      soldOut = await isSlotSoldOut(slotInfo.slug, data.pub);
+      if (soldOut) {
+        const picks = await pickAlternativeSlots(slotInfo.slug, data.pub, 3);
+        alternatives = picks.map((p) => ({
+          slug: p.slug,
+          name: p.name,
+          tier: p.tier,
+          weeklySingle: p.weeklySingle,
+          weeklyBoth: p.weeklyBoth,
+          pricingUnit: p.pricingUnit,
+          notes: p.notes,
+        }));
+      }
+    } catch (e) {
+      console.warn('[inquire] sold-out probe failed (non-fatal):', e instanceof Error ? e.message : e);
+    }
+  }
+
   const channelLabel = AD_CHANNEL_LABEL[resolvedChannel];
   const subject = data.slot_label
-    ? `[${channelLabel}] Ad inquiry — ${data.slot_label}`
+    ? `${soldOut ? '[SOLD OUT] ' : ''}[${channelLabel}] Ad inquiry — ${data.slot_label}`
     : `[${channelLabel}] Ad inquiry from realtynewsnow.app`;
 
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; padding: 24px;">
-      <h2 style="color: #1a2a44; margin: 0 0 16px 0;">New ad inquiry</h2>
+      <h2 style="color: #1a2a44; margin: 0 0 16px 0;">New ad inquiry${soldOut ? ' <span style="color:#b45309;font-size:14px;font-weight:600;">(slot sold out)</span>' : ''}</h2>
       <p style="color: #444; font-size: 14px; margin: 0 0 24px 0;">
         Submitted via realtynewsnow.app${data.slot_label ? ` — ${escapeHtml(data.slot_label)}` : ''}
       </p>
+      ${soldOut ? `<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:10px 14px;margin:0 0 16px 0;font-size:13px;color:#9a3412;">Buyer was auto-emailed a sold-out notice with alternative placement suggestions.</div>` : ''}
       <table style="border-collapse: collapse; width: 100%;">
         <tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Name</td><td style="padding: 6px 0; font-size: 14px;">${escapeHtml(data.name)}</td></tr>
         <tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Email</td><td style="padding: 6px 0; font-size: 14px;"><a href="mailto:${escapeHtml(data.email)}" style="color: #1a2a44;">${escapeHtml(data.email)}</a></td></tr>
@@ -143,10 +178,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Auto-reply to submitter: thank you + rate card + CTA to self-serve checkout.
+  // Auto-reply to submitter. When the requested slot is sold out we send a
+  // waitlist + alternatives message instead of the standard book-it CTA so
+  // the buyer isn't pointed at a checkout they can't complete.
   // Best-effort — never block the inquiry response on this.
   try {
-    const slotInfo = data.slot ? APP_AD_SLOTS.find((s) => s.slug === data.slot) : null;
     const checkoutUrl = slotInfo
       ? `https://realtynewsnow.app/advertise/checkout/${slotInfo.slug}?pub=${data.pub}`
       : 'https://realtynewsnow.app/advertise';
@@ -164,15 +200,50 @@ export async function POST(req: NextRequest) {
         })()
       : '';
 
-    const replyHtml = `
-      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;padding:24px;color:#1a2a44;">
-        <h2 style="margin:0 0 16px 0;color:#1a2a44;">Thanks for reaching out, ${escapeHtml(data.name.split(' ')[0] ?? data.name)}.</h2>
-        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 20px 0;">
-          We received your inquiry${data.slot_label ? ` about <strong>${escapeHtml(data.slot_label)}</strong>` : ''} and will follow up personally within one business day.
+    const altCardsHtml = alternatives.length
+      ? `
+        <p style="font-size:15px;line-height:1.5;color:#333;margin:24px 0 12px 0;">
+          A few placements that <strong>are</strong> open right now that you may want to consider:
         </p>
-        ${
-          slotInfo
-            ? `
+        ${alternatives.map((a) => {
+          const unit = a.pricingUnit ?? 'week';
+          const u = unit === 'per send' ? 'send' : unit === 'per push' ? 'push' : 'wk';
+          const altCheckoutUrl = `https://realtynewsnow.app/advertise/checkout/${a.slug}?pub=${data.pub}`;
+          return `
+          <div style="background:#f6f8fa;border:1px solid #e1e6ee;border-radius:8px;padding:14px 16px;margin:0 0 10px 0;">
+            <p style="margin:0 0 4px 0;font-size:12px;color:#666;text-transform:uppercase;letter-spacing:.5px;">${escapeHtml(a.tier)} placement</p>
+            <p style="margin:0 0 4px 0;font-size:16px;font-weight:600;color:#1a2a44;">
+              <a href="${altCheckoutUrl}" style="color:#1a2a44;text-decoration:none;">${escapeHtml(a.name)}</a>
+            </p>
+            <p style="margin:0 0 4px 0;font-size:13px;color:#444;">$${a.weeklySingle}/${u} single pub · $${a.weeklyBoth}/${u} both pubs</p>
+            <p style="margin:0;font-size:12px;color:#666;">${escapeHtml(a.notes)}</p>
+          </div>`;
+        }).join('')}
+      `
+      : '';
+
+    let bodyHtml: string;
+    if (soldOut && slotInfo) {
+      // Sold-out path: waitlist note + alternatives + see-all CTA.
+      bodyHtml = `
+        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 16px 0;">
+          Thanks so much for your interest in <strong>${escapeHtml(slotInfo.name)}</strong>. Heads up — that placement is <strong>fully booked</strong> right now, so we've added you to the waitlist and will reach out the moment it opens up.
+        </p>
+        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 8px 0;">
+          In the meantime, we have several other strong placements with similar reach that are available today. Our team will follow up within one business day with anything tailored to your goals.
+        </p>
+        ${altCardsHtml}
+        <p style="margin:24px 0 0 0;">
+          <a href="https://realtynewsnow.app/advertise" style="display:inline-block;background:#1a2a44;color:#fff;text-decoration:none;padding:14px 28px;border-radius:6px;font-weight:600;font-size:15px;">
+            See all available placements
+          </a>
+        </p>`;
+    } else if (slotInfo) {
+      // Standard path: rate card + book CTA.
+      bodyHtml = `
+        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 20px 0;">
+          We received your inquiry about <strong>${escapeHtml(slotInfo.name)}</strong> and will follow up personally within one business day.
+        </p>
         <div style="background:#f6f8fa;border:1px solid #e1e6ee;border-radius:8px;padding:16px;margin:0 0 24px 0;">
           <p style="margin:0 0 8px 0;font-size:13px;color:#666;text-transform:uppercase;letter-spacing:.5px;">${escapeHtml(slotInfo.tier)} placement</p>
           <p style="margin:0 0 8px 0;font-size:17px;font-weight:600;color:#1a2a44;">${escapeHtml(slotInfo.name)}</p>
@@ -187,8 +258,13 @@ export async function POST(req: NextRequest) {
           <a href="${checkoutUrl}" style="display:inline-block;background:#1a2a44;color:#fff;text-decoration:none;padding:14px 28px;border-radius:6px;font-weight:600;font-size:15px;">
             Book this placement
           </a>
-        </p>`
-            : `
+        </p>`;
+    } else {
+      // No specific slot — generic rate card CTA.
+      bodyHtml = `
+        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 20px 0;">
+          We received your inquiry${data.slot_label ? ` about <strong>${escapeHtml(data.slot_label)}</strong>` : ''} and will follow up personally within one business day.
+        </p>
         <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 16px 0;">
           See our full rate card and book any of our 17 placements directly:
         </p>
@@ -196,8 +272,13 @@ export async function POST(req: NextRequest) {
           <a href="https://realtynewsnow.app/advertise" style="display:inline-block;background:#1a2a44;color:#fff;text-decoration:none;padding:14px 28px;border-radius:6px;font-weight:600;font-size:15px;">
             View rate card
           </a>
-        </p>`
-        }
+        </p>`;
+    }
+
+    const replyHtml = `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;padding:24px;color:#1a2a44;">
+        <h2 style="margin:0 0 16px 0;color:#1a2a44;">Thanks for reaching out, ${escapeHtml(data.name.split(' ')[0] ?? data.name)}.</h2>
+        ${bodyHtml}
         <p style="font-size:13px;color:#999;margin:24px 0 0 0;border-top:1px solid #eee;padding-top:16px;">
           Questions? Just reply to this email.<br/>
           — The RealtyLine Austin & Newsline San Antonio team
@@ -205,9 +286,15 @@ export async function POST(req: NextRequest) {
       </div>
     `;
 
+    const replySubject = soldOut && slotInfo
+      ? `${slotInfo.name} is fully booked — here are a few alternatives`
+      : slotInfo
+        ? `Your ${slotInfo.name} inquiry — rate sheet & booking link`
+        : 'Thanks for your ad inquiry';
+
     await sendEmail({
       to: data.email,
-      subject: slotInfo ? `Your ${slotInfo.name} inquiry — rate sheet & booking link` : 'Thanks for your ad inquiry',
+      subject: replySubject,
       html: replyHtml,
       replyTo: recipient,
     });
@@ -220,5 +307,6 @@ export async function POST(req: NextRequest) {
     messageId: result.messageId,
     inquiryId: inquiryRow?.id ?? null,
     channel: resolvedChannel,
+    soldOut,
   });
 }
