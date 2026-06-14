@@ -15,6 +15,7 @@ import {
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
 import { syncAgreementToAdvertiser } from '@/lib/server/billing-crm-sync';
+import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
 import type { Agreement } from '@/lib/agreements';
 
 export const runtime = 'nodejs';
@@ -192,6 +193,19 @@ export async function POST(req: NextRequest) {
         (createdAg as { publication?: string | null }).publication = publication;
       } catch (e) {
         console.error('[admin/agreements POST] publication write failed', errMessage(e));
+      }
+    }
+
+    // Channel is derived from `type` so /admin/ads/orders routes the row
+    // into the correct Print / Digital / Email tab. Wrapped in try/catch
+    // in case an older deploy doesn't yet have the channel column.
+    {
+      const derivedChannel = deriveChannelFromAgreementType(type);
+      try {
+        await sql`UPDATE agreements SET channel = ${derivedChannel} WHERE id = ${createdAg.id}`;
+        (createdAg as { channel?: string }).channel = derivedChannel;
+      } catch (e) {
+        console.error('[admin/agreements POST] channel write failed', errMessage(e));
       }
     }
 

@@ -21,6 +21,7 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { autoCreateForAgreement } from '@/lib/renewal-reminders';
 import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
 import { syncAgreementToAdvertiser } from '@/lib/server/billing-crm-sync';
+import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -110,7 +111,20 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         case 'city':               await apply(field, raw, () => sql`UPDATE agreements SET city = ${raw}                               WHERE id = ${id}`); break;
         case 'state':              await apply(field, raw, () => sql`UPDATE agreements SET state = ${raw}                              WHERE id = ${id}`); break;
         case 'zip':                await apply(field, raw, () => sql`UPDATE agreements SET zip = ${raw}                                WHERE id = ${id}`); break;
-        case 'type':               await apply(field, raw, () => sql`UPDATE agreements SET type = ${raw}                               WHERE id = ${id}`); break;
+        case 'type':
+          await apply(field, raw, () => sql`UPDATE agreements SET type = ${raw}                               WHERE id = ${id}`);
+          // Keep channel in sync so /admin/ads/orders routes the row into
+          // the correct Print / Digital / Email tab.
+          if (typeof raw === 'string') {
+            const derivedChannel = deriveChannelFromAgreementType(raw);
+            try {
+              await sql`UPDATE agreements SET channel = ${derivedChannel} WHERE id = ${id}`;
+              updated.push('channel');
+            } catch (e) {
+              console.error('[admin/agreements PATCH] channel write failed', e instanceof Error ? e.message : 'unknown');
+            }
+          }
+          break;
         case 'status':             await apply(field, raw, () => sql`UPDATE agreements SET status = ${raw}                             WHERE id = ${id}`); break;
         case 'start_date':         await apply(field, raw, () => sql`UPDATE agreements SET start_date = ${raw}                         WHERE id = ${id}`); break;
         case 'end_date':           await apply(field, raw, () => sql`UPDATE agreements SET end_date = ${raw}                           WHERE id = ${id}`); break;
