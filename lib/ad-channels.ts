@@ -49,3 +49,16 @@ export function deriveChannelFromSlot(
 export function isAdChannel(v: unknown): v is AdChannel {
   return v === 'print' || v === 'digital' || v === 'email';
 }
+
+/**
+ * Map an agreement's `type` (print_ad / eblast / sponsored_content /
+ * package / other) to the funnel `channel` tag used everywhere else.
+ * Print ads → print, eblasts → email, everything else → digital.
+ */
+export function deriveChannelFromAgreementType(
+  type: string | null | undefined,
+): AdChannel {
+  if (type === 'print_ad') return 'print';
+  if (type === 'eblast') return 'email';
+  return 'digital';
+}
