@@ -73,10 +73,15 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   },
   {
     label: 'Insights',
+    // Three sibling surfaces with distinct data sources:
+    //   • Engagement Metrics — in-app click events (builder/dev surfaces)
+    //   • Client Reports     — shareable HTML/plaintext recaps for clients
+    //   • Site Analytics     — PostHog traffic & user behavior
+    // Labels are explicit so admins can tell them apart at a glance.
     links: [
-      { label: 'Metrics',   href: '/admin/metrics',   description: 'KPI dashboards' },
-      { label: 'Reports',   href: '/admin/reports',   description: 'Saved reports' },
-      { label: 'Analytics', href: '/admin/analytics', description: 'Site-wide traffic & engagement' },
+      { label: 'Engagement Metrics', href: '/admin/metrics',   description: 'In-app click events & surface engagement' },
+      { label: 'Client Reports',     href: '/admin/reports',   description: 'Shareable article, event & advertiser recaps' },
+      { label: 'Site Analytics',     href: '/admin/analytics', description: 'PostHog traffic & user behavior' },
     ],
   },
 ];

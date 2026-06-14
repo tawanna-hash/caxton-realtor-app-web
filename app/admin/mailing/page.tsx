@@ -1,7 +1,7 @@
 // app/admin/mailing/page.tsx
 //
 // Mailing List HUB — KPI strip + tiles for each segment + tiles for every
-// Audience page (ABOR, SABOR, App Subscribers, Five Points Board, Manual Subscribe).
+// Audience page (ABOR, SABOR, App Subscribers, Manual Subscribe).
 
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
