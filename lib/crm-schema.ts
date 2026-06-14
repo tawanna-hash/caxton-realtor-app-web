@@ -99,6 +99,24 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS notes text`);
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS tags jsonb NOT NULL DEFAULT '[]'::jsonb`);
 
+  // ── Billing↔CRM two-way sync columns (Session 21) ────────────────
+  // Mirror the latest agreement's billing/payment/deal facts onto the
+  // advertiser row so the CRM detail page can show "current contract"
+  // without joining agreements. Columns added in PR A; the helper that
+  // writes them ships in PR B.
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS billing_contact_name  text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS billing_contact_phone text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS billing_email         text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS payment_mode          text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS stripe_customer_id    text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS card_last4            text`);
+  // current_agreement_id FK is added after the agreements table is created (see below).
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS current_ad_size       text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS current_frequency     text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS current_ad_rate_cents  integer`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS current_amount_cents   integer`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS current_exp_date       date`);
+
   // Indexes
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_type   ON advertisers(type)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_status ON advertisers(status)`);
@@ -156,6 +174,12 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_end_date      ON agreements(end_date)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_cust   ON agreements(stripe_customer_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_inv    ON agreements(stripe_invoice_id)`);
+
+  // Now that agreements exists, hang the back-pointer off advertisers.
+  // (Listed up top in the Billing↔CRM sync section but deferred to here
+  // because the FK requires agreements to exist first on a brand-new DB.)
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS current_agreement_id uuid REFERENCES agreements(id) ON DELETE SET NULL`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_current_agreement ON advertisers(current_agreement_id)`);
 
   // Stripe + Wave wiring — 20260601-stripe-payments.sql
   await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS stripe_payment_method_id text`);
