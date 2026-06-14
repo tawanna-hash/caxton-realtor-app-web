@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ADMIN_NAV } from '@/lib/admin-nav';
+import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 
 type User = { id?: string; email?: string } | null;
 
@@ -292,13 +293,17 @@ export default function NavDrawer({
                   key={item.href + item.label}
                   href={item.href}
                   onClick={onClose}
-                  className={`block px-3 py-2.5 text-sm uppercase tracking-[0.1em] font-medium rounded-lg transition ${
+                  className={`flex items-center px-3 py-2.5 text-sm uppercase tracking-[0.1em] font-medium rounded-lg transition ${
                     isActive
                       ? 'text-white bg-white/15'
                       : 'text-white/80 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  {item.label}
+                  <span>{item.label}</span>
+                  {/* Show unread count next to Ad Inquiries in the mobile drawer */}
+                  {item.href === '/admin/ads/inquiries' && (
+                    <UnreadAdsBadge variant="inline" />
+                  )}
                 </Link>
               );
             };

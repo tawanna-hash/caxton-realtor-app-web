@@ -27,6 +27,7 @@ import BottomNav from '@/components/BottomNav';
 import { AdSlot } from '@/components/ads/AdSlot';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import { ADMIN_NAV as ADMIN_GROUPS, isAdminGroupActive as isGroupActive } from '@/lib/admin-nav';
+import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 
 // ============================================================
 // Types + constants
@@ -264,6 +265,9 @@ export default function AppShell({
                         }`}
                       >
                         <span>{group.label}</span>
+                        {/* Surface unread ad inquiries as a red dot on the
+                            group that owns Ad Inquiries. */}
+                        {group.label === 'Revenue' && <UnreadAdsBadge />}
                         <svg
                           width="10"
                           height="10"
@@ -301,7 +305,16 @@ export default function AppShell({
                                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                 }`}
                               >
-                                <div className="font-medium">{link.label}</div>
+                                <div className="font-medium flex items-center">
+                                  <span>{link.label}</span>
+                                  {/* Inline unread count next to the Ad
+                                      Inquiries link so admins see how many
+                                      new leads are waiting without leaving
+                                      the dropdown. */}
+                                  {link.href === '/admin/ads/inquiries' && (
+                                    <UnreadAdsBadge variant="inline" />
+                                  )}
+                                </div>
                                 {link.description && (
                                   <div className="text-[11px] text-gray-500 mt-0.5">
                                     {link.description}
