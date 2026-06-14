@@ -28,6 +28,7 @@ import { AdSlot } from '@/components/ads/AdSlot';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import { ADMIN_NAV as ADMIN_GROUPS, isAdminGroupActive as isGroupActive } from '@/lib/admin-nav';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
+import BillingAlertsBadge from '@/components/BillingAlertsBadge';
 
 // ============================================================
 // Types + constants
@@ -266,8 +267,14 @@ export default function AppShell({
                       >
                         <span>{group.label}</span>
                         {/* Surface unread ad inquiries as a red dot on the
-                            group that owns Ad Inquiries. */}
-                        {group.label === 'Revenue' && <UnreadAdsBadge />}
+                            group that owns Ad Inquiries; expiring/overdue
+                            billing as an amber dot on the same group. */}
+                        {group.label === 'Revenue' && (
+                          <>
+                            <UnreadAdsBadge />
+                            <BillingAlertsBadge />
+                          </>
+                        )}
                         <svg
                           width="10"
                           height="10"
@@ -313,6 +320,9 @@ export default function AppShell({
                                       the dropdown. */}
                                   {link.href === '/admin/ads/inquiries' && (
                                     <UnreadAdsBadge variant="inline" />
+                                  )}
+                                  {link.href === '/admin/billing' && (
+                                    <BillingAlertsBadge variant="inline" />
                                   )}
                                 </div>
                                 {link.description && (

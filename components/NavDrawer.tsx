@@ -14,6 +14,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ADMIN_NAV } from '@/lib/admin-nav';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
+import BillingAlertsBadge from '@/components/BillingAlertsBadge';
 
 type User = { id?: string; email?: string } | null;
 
@@ -303,6 +304,9 @@ export default function NavDrawer({
                   {/* Show unread count next to Ad Inquiries in the mobile drawer */}
                   {item.href === '/admin/ads/inquiries' && (
                     <UnreadAdsBadge variant="inline" />
+                  )}
+                  {item.href === '/admin/billing' && (
+                    <BillingAlertsBadge variant="inline" />
                   )}
                 </Link>
               );

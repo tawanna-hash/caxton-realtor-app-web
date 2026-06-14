@@ -32,8 +32,9 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: 'CRM',
     links: [
-      { label: 'Advertisers & CRM', href: '/admin/crm', description: 'Accounts, contacts, share links' },
-      { label: 'Media Kit',         href: '/admin/media-kit', description: '2026 packages, rates & deadlines' },
+      { label: 'Advertisers & CRM', href: '/admin/crm',       description: 'Accounts, contacts, share links' },
+      { label: 'Marketing',         href: '/admin/marketing',  description: 'Outreach campaigns & tasks' },
+      { label: 'Media Kit',         href: '/admin/media-kit',  description: '2026 packages, rates & deadlines' },
     ],
   },
   {
@@ -51,12 +52,11 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: 'Revenue',
     links: [
-      { label: 'Billing',        href: '/admin/billing',          description: 'Agreements, invoices & payments' },
-      { label: 'Ads',            href: '/admin/ads',              description: 'Inventory & placements' },
-      { label: 'Ad Inquiries',   href: '/admin/ads/inquiries',    description: 'Print / Digital / Email leads' },
-      { label: 'Ad Orders',      href: '/admin/ads/orders',       description: 'Campaigns + agreements pipeline' },
+      { label: 'Billing',         href: '/admin/billing',          description: 'Agreements, invoices & payments' },
+      { label: 'Ads',             href: '/admin/ads',              description: 'Inventory & placements' },
+      { label: 'Ad Inquiries',    href: '/admin/ads/inquiries',    description: 'Print / Digital / Email leads' },
+      { label: 'Ad Orders',       href: '/admin/ads/orders',       description: 'Campaigns + agreements pipeline' },
       { label: 'Ad Availability', href: '/admin/ads/availability', description: 'Booked windows across all channels' },
-      { label: 'Marketing', href: '/admin/marketing', description: 'Campaigns & assets' },
     ],
   },
   {

@@ -7,9 +7,9 @@
 // at PR E.
 //
 // We deliberately keep this layer thin and read-only: each underlying
-// table keeps its own mutation surface (CampaignsTable in /admin/ads,
-// Billing for agreements). PR E's job is to show them together and link
-// out, not to re-implement edits.
+// table keeps its own mutation surface (campaign detail at
+// /admin/ads/campaigns/[id], Billing for agreements). The orders page
+// shows them together and links out — it does not re-implement edits.
 
 import { getSql } from '@/lib/db';
 import type { AdChannel } from '@/lib/ad-channels';
