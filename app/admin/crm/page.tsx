@@ -57,6 +57,11 @@ export default async function CrmPage() {
       COALESCE(a.additional_contacts, '[]'::jsonb) AS additional_contacts,
       a.notes,
       COALESCE(a.tags, '[]'::jsonb)         AS tags,
+      -- Billing↔CRM sync mirror (Session 21)
+      a.billing_contact_name, a.billing_contact_phone, a.billing_email,
+      a.payment_mode, a.stripe_customer_id, a.card_last4,
+      a.current_agreement_id, a.current_ad_size, a.current_frequency,
+      a.current_ad_rate_cents, a.current_amount_cents, a.current_exp_date,
       (SELECT COUNT(*)::int FROM magazine_hotspots h
         WHERE h.advertiser_id = a.id)       AS hotspot_count,
       (SELECT COUNT(*)::int FROM magazine_hotspot_clicks c

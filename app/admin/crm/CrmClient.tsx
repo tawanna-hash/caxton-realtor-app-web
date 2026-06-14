@@ -810,6 +810,10 @@ function EditDrawer({
             </div>
           </Section>
 
+          <Section title="Current contract (Billing)">
+            <CurrentContractPanel row={row} />
+          </Section>
+
           <Section title="Public profile">
             <p className="text-xs text-gray-500 mb-3">
               Shown on the public advertiser page at <span className="font-mono">/advertisers/{row.slug}</span>.
@@ -1055,6 +1059,93 @@ function EditDrawer({
 }
 
 const INPUT = 'w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
+
+// Read-only summary of the advertiser's current contract, mirrored from
+// the latest agreement by lib/server/billing-crm-sync.ts. Editing happens
+// in the Billing drawer at /admin/billing.
+function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
+  const hasAny =
+    row.current_ad_size || row.current_frequency || row.current_amount_cents != null ||
+    row.current_exp_date || row.billing_contact_name || row.billing_email ||
+    row.payment_mode || row.card_last4;
+
+  if (!hasAny) {
+    return (
+      <p className="text-xs text-gray-500 italic">
+        No agreement linked yet. Once an agreement is saved in{' '}
+        <Link href="/admin/billing" className="text-blue-600 hover:underline not-italic">Billing</Link>,
+        deal facts and payment details show up here automatically.
+      </p>
+    );
+  }
+
+  const fmtMoney = (cents: number | null | undefined) =>
+    typeof cents === 'number' ? `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '\u2014';
+  const fmtDate = (iso: string | null | undefined) => {
+    if (!iso) return '\u2014';
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? iso : d.toLocaleDateString();
+  };
+  const fmt = (v: string | null | undefined) => v && v.trim() ? v : '\u2014';
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-3">
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div>
+          <div className="text-xs text-gray-500">Ad size</div>
+          <div className="text-gray-900">{fmt(row.current_ad_size)}</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500">Frequency</div>
+          <div className="text-gray-900">{fmt(row.current_frequency)}</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500">Ad rate</div>
+          <div className="text-gray-900">{fmtMoney(row.current_ad_rate_cents)}</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500">Amount</div>
+          <div className="text-gray-900 font-medium">{fmtMoney(row.current_amount_cents)}</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500">Expiration</div>
+          <div className="text-gray-900">{fmtDate(row.current_exp_date)}</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500">Payment mode</div>
+          <div className="text-gray-900">{fmt(row.payment_mode)}</div>
+        </div>
+        <div className="col-span-2 border-t border-gray-200 pt-2">
+          <div className="text-xs text-gray-500">Billing contact</div>
+          <div className="text-gray-900">{fmt(row.billing_contact_name)}</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500">Billing phone</div>
+          <div className="text-gray-900">{fmt(row.billing_contact_phone)}</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500">Billing email</div>
+          <div className="text-gray-900 break-all">{fmt(row.billing_email)}</div>
+        </div>
+        {row.card_last4 ? (
+          <div className="col-span-2">
+            <div className="text-xs text-gray-500">Card on file</div>
+            <div className="text-gray-900 font-mono">{'\u2022\u2022\u2022\u2022 '}{row.card_last4}</div>
+          </div>
+        ) : null}
+      </div>
+      <div className="flex items-center justify-between border-t border-gray-200 pt-2">
+        <div className="text-xs text-gray-500">{'Edit these in Billing \u2192 Agreement drawer.'}</div>
+        <Link
+          href={row.current_agreement_id ? `/admin/billing?agreement=${row.current_agreement_id}` : '/admin/billing'}
+          className="text-xs text-blue-600 hover:underline"
+        >
+          {'Open in Billing \u2192'}
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
