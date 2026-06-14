@@ -57,6 +57,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Billing',        href: '/admin/billing',          description: 'Agreements, invoices & payments' },
       { label: 'Ads',            href: '/admin/ads',              description: 'Inventory & placements' },
       { label: 'Ad Inquiries',   href: '/admin/ads/inquiries',    description: 'Print / Digital / Email leads' },
+      { label: 'Ad Orders',      href: '/admin/ads/orders',       description: 'Campaigns + agreements pipeline' },
       { label: 'Marketing', href: '/admin/marketing', description: 'Campaigns & assets' },
     ],
   },
