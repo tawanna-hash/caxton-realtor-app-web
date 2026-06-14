@@ -189,6 +189,13 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS wave_invoice_id          text`);
   await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS wave_sync_error          text`);
   await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS wave_sync_attempts       integer NOT NULL DEFAULT 0`);
+
+  // Publication / market the agreement belongs to (RealtyLine Austin,
+  // Newsline San Antonio, or both). Drives the PUB column on /admin/ads/orders
+  // and lets agreement-sourced orders be filtered per-market.
+  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS publication text`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_publication ON agreements(publication)`);
+
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_pm ON agreements(stripe_payment_method_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_wave_pending ON agreements (paid_at) WHERE paid_at IS NOT NULL AND wave_invoice_synced_at IS NULL`);
 

@@ -76,6 +76,19 @@ function fmtDate(iso: string | null): string {
   });
 }
 
+// Friendly label for the PUB column. Campaigns + agreements both store
+// 'austin' | 'san_antonio' | 'both', but the row label should read like
+// the publication brand the team uses day-to-day.
+function fmtPublication(v: string | null): string {
+  if (!v) return '—';
+  switch (v) {
+    case 'austin':       return 'RealtyLine Austin';
+    case 'san_antonio':  return 'Newsline San Antonio';
+    case 'both':         return 'Both';
+    default:             return v;
+  }
+}
+
 function detailHref(row: OrderRow): string {
   // Campaigns live under /admin/ads (with the campaigns tab + detail edit
   // route). Agreements live in /admin/billing where invoices and the sign
@@ -328,8 +341,8 @@ export default function OrdersTable() {
                     <td className="px-4 py-3 text-gray-700 truncate max-w-[200px]">
                       {row.slot_or_size ?? '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-700 capitalize">
-                      {row.publication ?? '—'}
+                    <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
+                      {fmtPublication(row.publication)}
                     </td>
                     <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
                       {fmtDate(row.start_date)}

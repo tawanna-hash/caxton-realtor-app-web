@@ -1014,6 +1014,7 @@ type AgForm = {
   advertiser_id: number | null;
   type: AgreementType | null;
   payment_mode: PaymentMode | null;
+  publication: 'austin' | 'san_antonio' | 'both' | null;
   ad_campaign_id: string;
   // Attachments (new files to upload)
   pendingFiles: File[];
@@ -1123,6 +1124,7 @@ function AgreementDrawer({
     advertiser_id:        seed?.advertiser_id ?? null,
     type:                 (seed?.type ?? null) as AgreementType | null,
     payment_mode:         (seed?.payment_mode ?? null) as PaymentMode | null,
+    publication:          (seed?.publication ?? null) as AgForm['publication'],
     ad_campaign_id:       (linkedCampaign?.id ?? '') as string,
     pendingFiles:         [],
   });
@@ -1271,6 +1273,7 @@ function AgreementDrawer({
       advertiser_id:           form.advertiser_id,
       type:                    form.type || null,
       payment_mode:            form.payment_mode || null,
+      publication:             form.publication || null,
       exp_date:                expPreview || null,
       end_date:                expPreview || null,
       signer_name:             isSigning ? form.signer_name || null : form.signer_name || null,
@@ -1884,6 +1887,18 @@ function AgreementDrawer({
             <select value={form.payment_mode ?? ''} onChange={(e) => upd('payment_mode', (e.target.value || null) as PaymentMode | null)} className={INPUT}>
               <option value="">—</option>
               {PAY_MODES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+            </select>
+          </Field>
+          <Field label="Publication / Market">
+            <select
+              value={form.publication ?? ''}
+              onChange={(e) => upd('publication', (e.target.value || null) as AgForm['publication'])}
+              className={INPUT}
+            >
+              <option value="">—</option>
+              <option value="austin">RealtyLine Austin</option>
+              <option value="san_antonio">Newsline San Antonio</option>
+              <option value="both">Both</option>
             </select>
           </Field>
         </div>
