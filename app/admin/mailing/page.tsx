@@ -65,13 +65,6 @@ export default async function MailingHubPage() {
       initial: 'N',
     },
     {
-      label: 'Five Points Board',
-      href: '/admin/five-points-board',
-      caption: 'Five Points board members — coming soon.',
-      accent: '#F59E0B',
-      initial: '5',
-    },
-    {
       label: 'Manual Subscribe',
       href: '/subscribe',
       caption: 'Add a subscriber by hand (public form).',
