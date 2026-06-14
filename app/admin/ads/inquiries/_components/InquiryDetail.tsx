@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { AD_CHANNEL_LABEL } from '@/lib/ad-channels';
 import type { AdInquiryRow, AdInquiryStatus } from '@/lib/server/ad-inquiries-store';
+import QuoteBuilder from './QuoteBuilder';
 
 interface Props {
   inquiry: AdInquiryRow;
@@ -289,7 +290,13 @@ export default function InquiryDetail({ inquiry, onUpdated, onClose }: Props) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-100">
+      {/* Quote builder — Print / Email only. Digital uses self-serve
+          checkout, so no admin-side quote needed there. */}
+      {(inquiry.channel === 'print' || inquiry.channel === 'email') && (
+        <QuoteBuilder inquiry={inquiry} onQuoted={onUpdated} />
+      )}
+
+      <div className="flex flex-wrap items-center gap-2 pt-3 mt-4 border-t border-gray-100">
         <a
           href={replyHref}
           className="inline-flex items-center px-3 py-1.5 rounded text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
