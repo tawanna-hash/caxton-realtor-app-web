@@ -21,6 +21,7 @@
 // inserted them. We normalize both here.
 
 import { getSql } from '@/lib/db';
+import { APP_AD_SLOTS, getSlotAvailablePubs, type AppAdSlot } from '@/lib/media-kit';
 
 export type CheckoutPub = 'realtyline' | 'newsline' | 'both';
 
@@ -116,4 +117,57 @@ export async function getBookedPubsForSlot(
   if (realtylineTaken || newslineTaken) blocked.add('both');
 
   return blocked;
+}
+
+/**
+ * Determine whether a slot is fully sold out for the requested publication
+ * (or, when pub='both', sold out across BOTH publications).
+ */
+export async function isSlotSoldOut(
+  slotSlug: string,
+  pub: CheckoutPub,
+): Promise<boolean> {
+  const blocked = await getBookedPubsForSlot(slotSlug);
+  // For 'both' the slot is sold out if either single pub is blocked. For a
+  // single pub the slot is sold out only when that specific pub is blocked.
+  return blocked.has(pub);
+}
+
+/**
+ * Pick up to `limit` alternative digital slots the buyer could consider
+ * when the slot they inquired about is sold out. Preference order:
+ *   1. Same tier and zone as the original (closest substitute)
+ *   2. Same tier, any zone
+ *   3. Any tier, any zone
+ * Sold-out slots are filtered out using the same date window as the public
+ * checkout. Slots whose availablePubs don't include the requested pub are
+ * also filtered out.
+ */
+export async function pickAlternativeSlots(
+  originalSlug: string,
+  pub: CheckoutPub,
+  limit = 3,
+): Promise<AppAdSlot[]> {
+  const original = APP_AD_SLOTS.find((s) => s.slug === originalSlug);
+  const all = APP_AD_SLOTS.filter((s) => s.slug !== originalSlug);
+
+  // Only consider slots that can actually be booked on the requested pub.
+  const pubCompatible = all.filter((s) => getSlotAvailablePubs(s).includes(pub));
+
+  // Probe availability for each candidate in parallel.
+  const availability = await Promise.all(
+    pubCompatible.map(async (s) => ({ slot: s, soldOut: await isSlotSoldOut(s.slug, pub) })),
+  );
+  const available = availability.filter((a) => !a.soldOut).map((a) => a.slot);
+
+  // Rank: same tier+zone first, then same tier, then everything else.
+  const rank = (s: AppAdSlot): number => {
+    if (!original) return 2;
+    if (s.tier === original.tier && s.zone === original.zone) return 0;
+    if (s.tier === original.tier) return 1;
+    return 2;
+  };
+  available.sort((a, b) => rank(a) - rank(b));
+
+  return available.slice(0, limit);
 }
