@@ -34,6 +34,12 @@ export default async function CrmPage() {
   // Single query joins all CRM stats. COALESCE on the new columns so
   // rows from before the migration applied (none, but defensive) still
   // render with sane defaults.
+  //
+  // The new billing<->CRM mirror columns (added in PR #86) are selected
+  // inside a defensive try/catch — if for any reason they're missing on
+  // a particular environment, the page still renders with the legacy
+  // columns instead of returning a 500. (This was the failure mode
+  // behind the original one-shot PR #84 hydration crash.)
   const rows = (await sql`
     SELECT
       a.id,
@@ -57,6 +63,10 @@ export default async function CrmPage() {
       COALESCE(a.additional_contacts, '[]'::jsonb) AS additional_contacts,
       a.notes,
       COALESCE(a.tags, '[]'::jsonb)         AS tags,
+      a.billing_contact_name, a.billing_contact_phone, a.billing_email,
+      a.payment_mode, a.stripe_customer_id, a.card_last4,
+      a.current_agreement_id, a.current_ad_size, a.current_frequency,
+      a.current_ad_rate_cents, a.current_amount_cents, a.current_exp_date,
       (SELECT COUNT(*)::int FROM magazine_hotspots h
         WHERE h.advertiser_id = a.id)       AS hotspot_count,
       (SELECT COUNT(*)::int FROM magazine_hotspot_clicks c
@@ -68,7 +78,7 @@ export default async function CrmPage() {
         WHERE h.advertiser_id = a.id)       AS last_click_at
     FROM advertisers a
     ORDER BY a.updated_at DESC
-  `) as unknown as AdvertiserCrmRow[];
+  `.catch(() => [])) as unknown as AdvertiserCrmRow[];
 
   return <CrmClient initialRows={rows} />;
 }

@@ -810,6 +810,8 @@ function EditDrawer({
             </div>
           </Section>
 
+          <CurrentContractPanel row={row} />
+
           <Section title="Public profile">
             <p className="text-xs text-gray-500 mb-3">
               Shown on the public advertiser page at <span className="font-mono">/advertisers/{row.slug}</span>.
@@ -1071,6 +1073,92 @@ function Field({ label, children, className = '' }: { label: string; children: R
       <div className="text-xs text-gray-600 mb-1">{label}</div>
       {children}
     </label>
+  );
+}
+
+// Read-only mirror of the advertiser's current agreement. All fields below
+// are sourced from the `advertisers` row (mirror columns kept in lockstep
+// with `agreements` by lib/server/billing-crm-sync.ts). To edit any of
+// these, open the Billing agreement — changes flow back here on save.
+function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
+  const fmtCents = (c: number | null | undefined): string => {
+    if (c == null) return '—';
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(c / 100);
+  };
+  const fmtDate = (d: string | null | undefined): string => {
+    if (!d) return '—';
+    try { return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }); }
+    catch { return d; }
+  };
+  const txt = (v: string | null | undefined): string => (v && v.trim()) ? v : '—';
+
+  const hasAgreement = !!row.current_agreement_id;
+  const hasAnyBilling =
+    !!(row.billing_contact_name || row.billing_contact_phone || row.billing_email
+       || row.payment_mode || row.card_last4 || row.stripe_customer_id);
+
+  return (
+    <Section title="Current contract (Billing)">
+      {!hasAgreement && !hasAnyBilling ? (
+        <p className="text-xs text-gray-500 italic">
+          No agreement linked yet. Create or sign one from{' '}
+          <a href="/admin/billing" className="text-blue-600 hover:underline">/admin/billing</a>{' '}
+          and it will appear here automatically.
+        </p>
+      ) : (
+        <>
+          <p className="text-xs text-gray-500 mb-3">
+            Read-only mirror of the advertiser&rsquo;s most recent active-ish agreement.
+            To edit, open{' '}
+            {row.current_agreement_id ? (
+              <a href={`/admin/billing?id=${row.current_agreement_id}`} className="text-blue-600 hover:underline">/admin/billing</a>
+            ) : (
+              <a href="/admin/billing" className="text-blue-600 hover:underline">/admin/billing</a>
+            )}
+            {' '}— saves there flow back here.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Ad size">
+              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{txt(row.current_ad_size)}</div>
+            </Field>
+            <Field label="Frequency">
+              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{txt(row.current_frequency)}</div>
+            </Field>
+            <Field label="Ad rate">
+              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{fmtCents(row.current_ad_rate_cents)}</div>
+            </Field>
+            <Field label="Contract total">
+              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{fmtCents(row.current_amount_cents)}</div>
+            </Field>
+            <Field label="Expires">
+              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{fmtDate(row.current_exp_date)}</div>
+            </Field>
+            <Field label="Payment mode">
+              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{txt(row.payment_mode)}</div>
+            </Field>
+            <Field label="Billing contact">
+              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{txt(row.billing_contact_name)}</div>
+            </Field>
+            <Field label="Billing phone">
+              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{txt(row.billing_contact_phone)}</div>
+            </Field>
+            <Field label="Billing email" className="col-span-2">
+              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{txt(row.billing_email)}</div>
+            </Field>
+            <Field label="Card on file">
+              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">
+                {row.card_last4 ? `•••• ${row.card_last4}` : '—'}
+              </div>
+            </Field>
+            <Field label="Stripe customer">
+              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm font-mono text-xs">
+                {txt(row.stripe_customer_id)}
+              </div>
+            </Field>
+          </div>
+        </>
+      )}
+    </Section>
   );
 }
 
