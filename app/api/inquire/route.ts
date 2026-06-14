@@ -224,18 +224,29 @@ export async function POST(req: NextRequest) {
 
     let bodyHtml: string;
     if (soldOut && slotInfo) {
-      // Sold-out path: waitlist note + alternatives + see-all CTA.
+      // Sold-out path: waitlist note + alternatives + checkout CTA.
+      // The CTA points straight at the TOP-ranked available alternative's
+      // self-checkout so the buyer lands on a real booking flow instead of
+      // a marketing landing page. If somehow no alternatives are available,
+      // we fall back to /advertise/inquire so they can still talk to us.
+      const topAlt = alternatives[0];
+      const ctaHref = topAlt
+        ? `https://realtynewsnow.app/advertise/checkout/${topAlt.slug}?pub=${data.pub}`
+        : 'https://realtynewsnow.app/advertise/inquire';
+      const ctaLabel = topAlt
+        ? `Book ${topAlt.name} instead`
+        : 'Talk to our team';
       bodyHtml = `
         <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 16px 0;">
           Thanks so much for your interest in <strong>${escapeHtml(slotInfo.name)}</strong>. Heads up — that placement is <strong>fully booked</strong> right now, so we've added you to the waitlist and will reach out the moment it opens up.
         </p>
         <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 8px 0;">
-          In the meantime, we have several other strong placements with similar reach that are available today. Our team will follow up within one business day with anything tailored to your goals.
+          In the meantime, we have several other strong placements with similar reach that are available today. Each card below links straight to a self-checkout where you can pick dates, upload creative, and pay by card in under five minutes. Our team will also follow up within one business day.
         </p>
         ${altCardsHtml}
         <p style="margin:24px 0 0 0;">
-          <a href="https://realtynewsnow.app/advertise" style="display:inline-block;background:#1a2a44;color:#fff;text-decoration:none;padding:14px 28px;border-radius:6px;font-weight:600;font-size:15px;">
-            See all available placements
+          <a href="${ctaHref}" style="display:inline-block;background:#1a2a44;color:#fff;text-decoration:none;padding:14px 28px;border-radius:6px;font-weight:600;font-size:15px;">
+            ${escapeHtml(ctaLabel)}
           </a>
         </p>`;
     } else if (slotInfo) {
