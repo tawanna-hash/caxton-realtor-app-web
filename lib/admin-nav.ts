@@ -39,16 +39,13 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: 'Mailing List HUB',
     links: [
-      { label: 'Mailing List HUB',  href: '/admin/mailing',                  description: 'All audience lists in one place' },
-      { label: 'Newsletter',        href: '/admin/newsletter',               description: 'Subscriber email stats & queue' },
-      { label: 'ABOR Members',      href: '/admin/mailing/holding',          description: 'Austin agents awaiting review' },
-      { label: 'SABOR Members',     href: '/admin/mailing/sabor-members',    description: 'San Antonio realtor mirror' },
-      { label: 'Advertisers List',  href: '/admin/mailing/advertisers',      description: 'Current advertiser contacts' },
-      { label: 'Non-Advertisers',   href: '/admin/mailing/non-advertisers',  description: 'Prospect outreach pool' },
-      { label: 'All Realtors',      href: '/admin/mailing/realtors',         description: 'Combined ABOR + SABOR list' },
-      { label: 'App Subscribers',   href: '/admin/subscribers',              description: 'Newsletter signups' },
-      { label: 'Five Points Board', href: '/admin/five-points-board',        description: 'Coming soon' },
-      { label: 'Public Subscribe Form', href: '/subscribe',                  description: 'Public-facing print signup page' },
+      // The HUB page itself surfaces every audience segment as a tile, so
+      // we keep the nav group tight — just the HUB + Newsletter. ABoR,
+      // SABOR, Advertisers List, Non-Advertisers, All Realtors, App
+      // Subscribers, and the public subscribe form are all reachable from
+      // /admin/mailing.
+      { label: 'Mailing List HUB', href: '/admin/mailing',    description: 'All audience lists in one place' },
+      { label: 'Newsletter',       href: '/admin/newsletter', description: 'Subscriber email stats & queue' },
     ],
   },
   {
