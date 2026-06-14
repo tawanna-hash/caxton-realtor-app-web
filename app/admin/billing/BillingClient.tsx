@@ -16,7 +16,7 @@ import type {
 import { formatCents, lineItemsTotal } from '@/lib/invoices';
 import type { RenewalReminder } from '@/lib/types/renewal-reminder';
 import {
-  MONTHS_LIST, FREQ_PKG_AG,
+  MONTHS_LIST, FREQ_PKG_AG, FREQ_MONTHS,
   AD_SIZES, FREQUENCIES, PAYMENT_TYPES, CARD_TYPES, BILL_TO,
 } from '@/lib/pressbook-constants';
 import { TERMS_RL } from '@/lib/agreement-terms';
@@ -1225,6 +1225,14 @@ function AgreementDrawer({
     const discCents = Math.round((parseFloat(form.discount) || 0) * 100);
     const premCents = Math.round((parseFloat(form.ad_premium) || 0) * 100);
     const totalCents = Math.round(totalMonthly * 100);
+    // amount_cents = contract total over the full term. It powers the
+    // "Amount" column on the Agreements list — if we only persist
+    // ad_rate_cents / total_monthly_rate_cents the list shows "Not set".
+    // For print frequencies we multiply monthly × issues; if no frequency
+    // is selected fall back to the monthly so the list at least reflects
+    // something instead of blanking.
+    const issueCount = FREQ_MONTHS[form.frequency] ?? 0;
+    const amountCents = issueCount > 0 ? totalCents * issueCount : totalCents;
     const timingMonths: Record<string, string> = {};
     for (const m of MONTHS_LIST) {
       if (form.ad_timing_months[m.k]) timingMonths[m.k] = form.ad_timing_years[m.k] ?? '';
@@ -1245,6 +1253,7 @@ function AgreementDrawer({
       discount_cents:          discCents || null,
       ad_premium_cents:        premCents || null,
       total_monthly_rate_cents:totalCents || null,
+      amount_cents:            amountCents || null,
       page_position:           form.page_position || null,
       ad_timing_months:        Object.keys(timingMonths).length > 0 ? timingMonths : null,
       bill_to:                 form.bill_to,
