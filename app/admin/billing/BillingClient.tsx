@@ -261,6 +261,34 @@ export default function BillingClient({
     });
   }, [invoices, query, statusFilter]);
 
+  // ── Money summary (top-of-page, all tabs) ─────────────────────────────────
+  // Always visible regardless of tab. Sources of truth:
+  //   • MTD revenue        → invoices paid this calendar month
+  //   • AR outstanding     → invoices not paid/void, sum of total_cents
+  //   • Overdue            → same set filtered to is_overdue
+  //   • Expiring 30d       → active/signed/sent agreements w/ exp ≤ 30d
+  const moneySummary = useMemo(() => {
+    const t = new Date();
+    const startOfMonth = new Date(t.getFullYear(), t.getMonth(), 1).getTime();
+    let mtd = 0, ar = 0, overdue = 0, expiringCount = 0;
+    for (const i of invoices) {
+      if (i.status === 'paid' && i.paid_at) {
+        const paidTs = new Date(i.paid_at).getTime();
+        if (paidTs >= startOfMonth) mtd += i.total_cents ?? 0;
+      }
+      if (i.status !== 'paid' && i.status !== 'void') {
+        ar += i.total_cents ?? 0;
+        if (i.is_overdue) overdue += i.total_cents ?? 0;
+      }
+    }
+    for (const a of agreements) {
+      if (a.status === 'cancelled' || a.status === 'expired') continue;
+      const days = getDaysUntil(a.exp_date ?? a.end_date);
+      if (days !== null && days >= 0 && days <= 30) expiringCount++;
+    }
+    return { mtd, ar, overdue, expiringCount };
+  }, [agreements, invoices]);
+
   // ── KPIs (Agreements/Invoices tab) ────────────────────────────────────────
   const kpis = useMemo(() => {
     // 'sent' agreements are in-flight contracts awaiting countersignature —
@@ -324,7 +352,25 @@ export default function BillingClient({
         </div>
       </div>
 
-      {/* KPIs */}
+      {/* Money summary strip — always visible */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Kpi label="Revenue MTD" value={formatCents(moneySummary.mtd)} accent="emerald" />
+        <Kpi label="AR outstanding" value={formatCents(moneySummary.ar)} accent="blue" />
+        <Kpi
+          label="Overdue"
+          value={formatCents(moneySummary.overdue)}
+          accent="rose"
+          onClick={() => { setTab('invoices'); setStatusFilter('overdue'); }}
+        />
+        <Kpi
+          label="Expiring 30d"
+          value={String(moneySummary.expiringCount)}
+          accent="amber"
+          onClick={() => { setTab('renewals'); setRenewalTab('expiring'); }}
+        />
+      </div>
+
+      {/* Tab-scoped KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {tab === 'renewals' ? (
           <>

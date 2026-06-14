@@ -1,20 +1,23 @@
 // caxton-ads-v1
 // Tab switcher for /admin/ads. URL state via ?tab=...
+//
+// Note: the "Campaigns" tab was removed in favor of /admin/ads/orders
+// which unions ad_campaigns + agreements into a single pipeline view.
+// /admin/ads is now inventory-focused: Catalog + Creatives.
 
 'use client';
 
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
-export type AdTab = 'catalog' | 'campaigns' | 'creatives';
+export type AdTab = 'catalog' | 'creatives';
 
 interface Props {
   current: AdTab;
   catalogCount: number;
-  campaignsCount: number;
   creativesCount: number;
 }
 
-export function AdsTabs({ current, catalogCount, campaignsCount, creativesCount }: Props) {
+export function AdsTabs({ current, catalogCount, creativesCount }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -27,7 +30,6 @@ export function AdsTabs({ current, catalogCount, campaignsCount, creativesCount 
 
   const tabs: { key: AdTab; label: string; count: number }[] = [
     { key: 'catalog', label: 'Catalog', count: catalogCount },
-    { key: 'campaigns', label: 'Campaigns', count: campaignsCount },
     { key: 'creatives', label: 'Creatives', count: creativesCount },
   ];
 

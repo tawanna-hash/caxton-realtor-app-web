@@ -145,7 +145,7 @@ export function CampaignForm({ initial }: Props) {
       }
       clearTimeout(timeoutId);
       // Hard navigation — router.push has been hanging, see GOTCHAS.md
-      window.location.href = '/admin/ads?tab=campaigns';
+      window.location.href = '/admin/ads/orders';
     } catch (err) {
       clearTimeout(timeoutId);
       // Ignore aborts caused by the user navigating away or re-submitting

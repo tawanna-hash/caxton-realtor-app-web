@@ -1,5 +1,8 @@
 // caxton-ads-v1
 // Top-level /admin/ads page. Owns data fetch + renders the active tab.
+//
+// /admin/ads is inventory-focused: Catalog (slots) and Creatives.
+// The pipeline of campaigns + agreements lives at /admin/ads/orders.
 
 'use client';
 
@@ -9,7 +12,6 @@ import { useSearchParams } from 'next/navigation';
 import { adminApi } from '@/lib/admin-api';
 import { AdsTabs, type AdTab } from './_components/AdsTabs';
 import { CatalogList } from './_components/CatalogList';
-import { CampaignsTable } from './_components/CampaignsTable';
 import { CreativesGallery } from './_components/CreativesGallery';
 import type { AdSpace, AdCreative, AdCampaign } from './_components/types';
 
@@ -17,7 +19,12 @@ export const dynamic = 'force-dynamic';
 
 function AdsPageInner() {
   const params = useSearchParams();
-  const tab = (params.get('tab') as AdTab) || 'catalog';
+  const rawTab = params.get('tab');
+  // Legacy ?tab=campaigns redirects users to /admin/ads/orders via the
+  // "Open pipeline" link; for the in-page tab state we just fall back to
+  // catalog so the tab bar always has a valid selection.
+  const tab: AdTab =
+    rawTab === 'creatives' ? 'creatives' : 'catalog';
 
   const [spaces, setSpaces] = useState<AdSpace[]>([]);
   const [creatives, setCreatives] = useState<AdCreative[]>([]);
@@ -44,6 +51,8 @@ function AdsPageInner() {
   }, []);
 
   useEffect(() => {
+    // refetch updates loading/error/data state; required on mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refetch();
   }, [refetch]);
 
@@ -53,7 +62,10 @@ function AdsPageInner() {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Ads dashboard</h1>
           <p className="text-sm text-gray-700 mt-1">
-            15 ad slots across both publications. Manage campaigns and uploaded creatives.
+            15 ad slots across both publications. Manage inventory and creatives.{' '}
+            <Link href="/admin/ads/orders" className="text-blue-700 hover:underline">
+              Open pipeline →
+            </Link>
           </p>
         </div>
         <Link
@@ -67,7 +79,6 @@ function AdsPageInner() {
       <AdsTabs
         current={tab}
         catalogCount={spaces.length}
-        campaignsCount={campaigns.length}
         creativesCount={creatives.length}
       />
 
@@ -81,7 +92,6 @@ function AdsPageInner() {
         {!loading && !error && (
           <>
             {tab === 'catalog' && <CatalogList spaces={spaces} campaigns={campaigns} />}
-            {tab === 'campaigns' && <CampaignsTable campaigns={campaigns} onChange={refetch} />}
             {tab === 'creatives' && <CreativesGallery creatives={creatives} campaigns={campaigns} onChange={refetch} />}
           </>
         )}
