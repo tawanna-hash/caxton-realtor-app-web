@@ -14,6 +14,7 @@ import {
 } from '@/lib/publication-theme';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { upsertAdvertiserMailingByAdvertiserId } from '@/lib/mailing';
+import { syncAdvertiserToAgreement } from '@/lib/server/billing-crm-sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -217,6 +218,22 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       await upsertAdvertiserMailingByAdvertiserId(idNum);
     } catch (err) {
       console.warn('[admin/advertisers PATCH] mailing upsert failed:', err);
+    }
+
+    // CRM -> Billing mirror: identity / address edits flow back onto the
+    // advertiser's current agreement so the Billing drawer stays in sync.
+    // Only fire when an identity-ish column was touched. Best-effort.
+    const IDENTITY_COLS = new Set([
+      'name', 'company', 'first_name', 'last_name',
+      'contact_email', 'phone',
+      'address', 'city', 'state', 'zip',
+    ]);
+    if (updates.some((c) => IDENTITY_COLS.has(c))) {
+      try {
+        await syncAdvertiserToAgreement(idNum);
+      } catch (err) {
+        console.warn('[admin/advertisers PATCH] syncAdvertiserToAgreement failed:', err);
+      }
     }
 
     return NextResponse.json({ advertiser: rows[0], updated_fields: updates });

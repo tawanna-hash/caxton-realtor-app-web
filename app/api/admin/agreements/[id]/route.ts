@@ -19,6 +19,7 @@ import {
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { autoCreateForAgreement } from '@/lib/renewal-reminders';
 import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
+import { syncAgreementToAdvertiser } from '@/lib/server/billing-crm-sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -205,9 +206,25 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
             details: `Advertiser #${advRes.advertiserId} ${advRes.outcome}`,
           });
           await sql`UPDATE agreements SET audit_log = ${JSON.stringify(advLog)}::jsonb WHERE id = ${id}`;
+          // Re-fetch the agreement so syncAgreementToAdvertiser sees the
+          // freshly linked advertiser_id.
+          const refreshed = await sql`SELECT * FROM agreements WHERE id = ${id}`;
+          if (refreshed.length > 0) {
+            Object.assign(savedAg, refreshed[0] as unknown as Agreement);
+          }
         }
       } catch (e) {
         console.error('[admin/agreements PATCH] ensureAdvertiserForAgreement failed', errMessage(e));
+      }
+    }
+
+    // Billing -> CRM mirror: any agreement save flows billing/payment/deal
+    // facts onto the linked advertiser. Best-effort, never blocks the save.
+    if (savedAg.advertiser_id) {
+      try {
+        await syncAgreementToAdvertiser(savedAg);
+      } catch (e) {
+        console.error('[admin/agreements PATCH] syncAgreementToAdvertiser failed', errMessage(e));
       }
     }
 
