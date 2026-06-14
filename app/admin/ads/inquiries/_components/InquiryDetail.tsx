@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AD_CHANNEL_LABEL } from '@/lib/ad-channels';
 import type { AdInquiryRow, AdInquiryStatus } from '@/lib/server/ad-inquiries-store';
 import QuoteBuilder from './QuoteBuilder';
+import BookingBuilder from './BookingBuilder';
 
 interface Props {
   inquiry: AdInquiryRow;
@@ -290,10 +291,14 @@ export default function InquiryDetail({ inquiry, onUpdated, onClose }: Props) {
         </div>
       </div>
 
-      {/* Quote builder — Print / Email only. Digital uses self-serve
-          checkout, so no admin-side quote needed there. */}
+      {/* Quote builder + Booking builder — Print / Email only. Digital
+          uses self-serve checkout. Quote drafts an invoice for review;
+          Book it creates an agreement + invoice directly. */}
       {(inquiry.channel === 'print' || inquiry.channel === 'email') && (
-        <QuoteBuilder inquiry={inquiry} onQuoted={onUpdated} />
+        <>
+          <QuoteBuilder inquiry={inquiry} onQuoted={onUpdated} />
+          <BookingBuilder inquiry={inquiry} onBooked={onUpdated} />
+        </>
       )}
 
       <div className="flex flex-wrap items-center gap-2 pt-3 mt-4 border-t border-gray-100">
