@@ -106,10 +106,6 @@ export interface Agreement {
   stripe_payment_method_id: string | null;
   stripe_charged_cents: number | null;
   stripe_charged_at: string | null;
-  wave_invoice_id: string | null;
-  wave_invoice_synced_at: string | null;
-  wave_sync_error: string | null;
-  wave_sync_attempts: number | null;
   paid_at: string | null;
 
   attachments: { files: AgreementAttachmentFile[] } | null;
