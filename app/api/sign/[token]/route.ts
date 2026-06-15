@@ -11,6 +11,10 @@ import { verifyToken } from '@/lib/sign-token';
 import { appendAudit, type Agreement } from '@/lib/agreements';
 import { autoCreateForAgreement } from '@/lib/renewal-reminders';
 import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
+import {
+  syncAgreementToAdvertiser,
+  syncAgreementToLocationsAndStaff,
+} from '@/lib/server/billing-crm-sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -194,6 +198,47 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         }
       } catch (e) {
         console.error('[api/sign POST] ensureAdvertiserForAgreement failed', e instanceof Error ? e.message : String(e));
+      }
+
+      // Re-load after ensureAdvertiserForAgreement, which may have set
+      // advertiser_id on the agreement. syncAgreementToAdvertiser is a
+      // no-op unless advertiser_id is non-null.
+      const refreshed = await sql`SELECT * FROM agreements WHERE id = ${id}` as unknown as Agreement[];
+      const finalAg = refreshed[0] ?? updatedRows[0];
+
+      // Step 2 (2026-06-15): Mirror company + rep details onto the Billing
+      // cache columns on the advertiser row so the Billing page reflects
+      // everything captured at sign. Fill-blank only on identity fields;
+      // billing/payment/deal fields overwrite (agreement is source of truth).
+      try {
+        const cols = await syncAgreementToAdvertiser(finalAg);
+        if (cols.length > 0) {
+          const syncLog = appendAudit(finalAg.audit_log, {
+            event: 'crm_synced',
+            timestamp: new Date().toISOString(),
+            details: `Sign wizard mirrored ${cols.length} field(s) to CRM: ${cols.join(', ')}`,
+          });
+          await sql`UPDATE agreements SET audit_log = ${JSON.stringify(syncLog)}::jsonb WHERE id = ${id}`;
+        }
+      } catch (e) {
+        console.error('[api/sign POST] syncAgreementToAdvertiser failed', e instanceof Error ? e.message : String(e));
+      }
+
+      // Step 3 (2026-06-15): Seed Locations & Staff from the signed
+      // agreement. Idempotent — skips if a location/staff row already
+      // exists for this advertiser (matched by name or email).
+      try {
+        const created = await syncAgreementToLocationsAndStaff(finalAg);
+        if (created.length > 0) {
+          const locLog = appendAudit(finalAg.audit_log, {
+            event: 'locations_staff_seeded',
+            timestamp: new Date().toISOString(),
+            details: `Sign wizard seeded ${created.join(' + ')} from agreement`,
+          });
+          await sql`UPDATE agreements SET audit_log = ${JSON.stringify(locLog)}::jsonb WHERE id = ${id}`;
+        }
+      } catch (e) {
+        console.error('[api/sign POST] syncAgreementToLocationsAndStaff failed', e instanceof Error ? e.message : String(e));
       }
     }
 

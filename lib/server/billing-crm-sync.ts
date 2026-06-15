@@ -312,3 +312,124 @@ export async function syncAdvertiserToAgreement(advertiserId: number): Promise<s
     'address', 'city', 'state', 'zip',
   ];
 }
+
+
+/**
+ * On-sign side effect (added 2026-06-15 per owner spec):
+ *
+ * When an agreement is signed, ensure Locations & Staff has a primary
+ * location built from the company address and a staff entry built from
+ * the rep contact.
+ *
+ * Idempotent and additive:
+ *   - If the advertiser already has ANY location, we don't create one
+ *     (we never demote an existing primary).
+ *   - If a staff entry with a matching name OR email already exists, we
+ *     don't create a duplicate.
+ *   - If the staff entry IS created and a primary location exists, the
+ *     staff member is auto-assigned to that location.
+ *
+ * Safe to call multiple times. Never throws on partial data — missing
+ * company/rep info just shrinks what we create.
+ *
+ * Returns a short list of what was created, for audit log.
+ */
+export async function syncAgreementToLocationsAndStaff(
+  ag: Agreement,
+): Promise<string[]> {
+  if (!ag.advertiser_id) return [];
+  const sql = getSql();
+  const advertiserId = ag.advertiser_id;
+  const created: string[] = [];
+
+  // ── Location: build from company address ─────────────────────────
+  const addr  = nz(ag.address) ?? nz(ag.advertiser_address);
+  const city  = nz(ag.city);
+  const state = nz(ag.state);
+  const zip   = nz(ag.zip);
+
+  // Only seed when we actually have address material AND no location
+  // exists yet. We never touch an advertiser that already has manual
+  // location data — operator wins.
+  let primaryLocationId: string | null = null;
+  if (addr || city || state || zip) {
+    const existing = (await sql`
+      SELECT id, is_primary FROM advertiser_locations
+       WHERE advertiser_id = ${advertiserId}
+       ORDER BY is_primary DESC, sort_order ASC, created_at ASC
+       LIMIT 1
+    `) as unknown as Array<{ id: string; is_primary: boolean }>;
+
+    if (existing.length === 0) {
+      const inserted = (await sql`
+        INSERT INTO advertiser_locations (
+          advertiser_id, label, address, address_2, city, state, zip,
+          phone, email, hours, is_primary, sort_order
+        ) VALUES (
+          ${advertiserId},
+          ${nz(ag.company_name) ?? 'Primary'},
+          ${addr}, ${null},
+          ${city}, ${state}, ${zip},
+          ${nz(ag.advertiser_phone)},
+          ${nz(ag.advertiser_email)?.toLowerCase() ?? null},
+          ${null}, true, 0
+        )
+        RETURNING id
+      `) as unknown as Array<{ id: string }>;
+      if (inserted[0]?.id) {
+        primaryLocationId = inserted[0].id;
+        created.push('location');
+      }
+    } else {
+      // Reuse the existing top-ranked location for staff assignment.
+      primaryLocationId = existing[0].id;
+    }
+  }
+
+  // ── Staff: build from rep contact ────────────────────────────────
+  const repName  = nz(ag.rep_name);
+  const repEmail = nz(ag.advertiser_email)?.toLowerCase() ?? null;
+  const repPhone = nz(ag.advertiser_phone);
+
+  if (repName || repEmail) {
+    // Match by name (case/space-insensitive) OR email.
+    const dup = (await sql`
+      SELECT id FROM advertiser_staff
+       WHERE advertiser_id = ${advertiserId}
+         AND (
+           (${repName}  IS NOT NULL AND LOWER(REGEXP_REPLACE(name,  '\\s+', '', 'g')) = LOWER(REGEXP_REPLACE(${repName}, '\\s+', '', 'g')))
+           OR
+           (${repEmail} IS NOT NULL AND LOWER(email) = ${repEmail})
+         )
+       LIMIT 1
+    `) as unknown as Array<{ id: string }>;
+
+    if (dup.length === 0 && repName) {
+      // Staff.name is NOT NULL; require a name to insert. If we only have
+      // an email, we skip — the operator can fill the staff entry by hand
+      // later. (Inserting "Unknown" rows would just create noise.)
+      const inserted = (await sql`
+        INSERT INTO advertiser_staff (
+          advertiser_id, name, title, email, phone, photo_url, sort_order
+        ) VALUES (
+          ${advertiserId}, ${repName}, ${null}, ${repEmail}, ${repPhone}, ${null}, 0
+        )
+        RETURNING id
+      `) as unknown as Array<{ id: string }>;
+      const staffId = inserted[0]?.id ?? null;
+
+      if (staffId) {
+        created.push('staff');
+        if (primaryLocationId) {
+          await sql`
+            INSERT INTO advertiser_staff_locations (staff_id, location_id)
+            VALUES (${staffId}::uuid, ${primaryLocationId}::uuid)
+            ON CONFLICT DO NOTHING
+          `;
+        }
+      }
+    }
+  }
+
+  return created;
+}

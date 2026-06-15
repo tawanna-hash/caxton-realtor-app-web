@@ -87,12 +87,20 @@ export interface Advertiser {
   email_status?: EmailStatus | null;
   email_verified_at?: string | null;
 
-  // Mailing address
+  // Company mailing address (Company Details section of the CRM modal)
   address?: string | null;
   address_2?: string | null;
   city?: string | null;
   state?: string | null;
   zip?: string | null;
+
+  // Representative mailing address (Representative Details section).
+  // Separate from the company address and from per-location addresses
+  // tracked in advertiser_locations.
+  rep_address?: string | null;
+  rep_city?: string | null;
+  rep_state?: string | null;
+  rep_zip?: string | null;
 
   // Portal linkage (magic-link client portal)
   portal_activated_at?: string | null;
@@ -192,6 +200,7 @@ export const CRM_PATCHABLE_FIELDS = [
   'tagline', 'bio', 'header_style', 'footer_template',
   'email_status', 'email_verified_at',
   'address', 'address_2', 'city', 'state', 'zip',
+  'rep_address', 'rep_city', 'rep_state', 'rep_zip',
   'portal_activated_at', 'portal_onboarded_at',
   'additional_contacts', 'notes', 'tags',
 ] as const;

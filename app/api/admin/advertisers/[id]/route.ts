@@ -171,6 +171,13 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         case 'city':                await sql`UPDATE advertisers SET city = ${val}                       WHERE id = ${idNum}`; break;
         case 'state':               await sql`UPDATE advertisers SET state = ${val}                      WHERE id = ${idNum}`; break;
         case 'zip':                 await sql`UPDATE advertisers SET zip = ${val}                        WHERE id = ${idNum}`; break;
+        // Representative mailing address (2026-06-15). Separate from the
+        // company address above; captured under the Representative Details
+        // section of the CRM modal.
+        case 'rep_address':         await sql`UPDATE advertisers SET rep_address = ${val}                WHERE id = ${idNum}`; break;
+        case 'rep_city':            await sql`UPDATE advertisers SET rep_city = ${val}                   WHERE id = ${idNum}`; break;
+        case 'rep_state':           await sql`UPDATE advertisers SET rep_state = ${val}                  WHERE id = ${idNum}`; break;
+        case 'rep_zip':             await sql`UPDATE advertisers SET rep_zip = ${val}                    WHERE id = ${idNum}`; break;
         case 'portal_activated_at': await sql`UPDATE advertisers SET portal_activated_at = ${val}        WHERE id = ${idNum}`; break;
         case 'portal_onboarded_at': await sql`UPDATE advertisers SET portal_onboarded_at = ${val}        WHERE id = ${idNum}`; break;
         case 'additional_contacts': await sql`UPDATE advertisers SET additional_contacts = ${val}::jsonb WHERE id = ${idNum}`; break;

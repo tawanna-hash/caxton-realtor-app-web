@@ -20,7 +20,10 @@ import {
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { autoCreateForAgreement } from '@/lib/renewal-reminders';
 import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
-import { syncAgreementToAdvertiser } from '@/lib/server/billing-crm-sync';
+import {
+  syncAgreementToAdvertiser,
+  syncAgreementToLocationsAndStaff,
+} from '@/lib/server/billing-crm-sync';
 import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
 
 export const runtime = 'nodejs';
@@ -252,6 +255,26 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         await autoCreateForAgreement(savedAg).catch((e: unknown) => {
           console.error('[admin/agreements PATCH] autoCreateForAgreement failed', errMessage(e));
         });
+      }
+
+      // Step 3 (2026-06-15): Seed Locations & Staff from the signed
+      // agreement. Idempotent — won't duplicate existing location/staff
+      // rows. Mirrors the same behavior the public /api/sign route runs.
+      if (savedAg.advertiser_id) {
+        try {
+          const created = await syncAgreementToLocationsAndStaff(savedAg);
+          if (created.length > 0) {
+            const locLog = appendAudit(savedAg.audit_log, {
+              event: 'locations_staff_seeded',
+              timestamp: new Date().toISOString(),
+              user_email: admin.email,
+              details: `Countersign seeded ${created.join(' + ')} from agreement`,
+            });
+            await sql`UPDATE agreements SET audit_log = ${JSON.stringify(locLog)}::jsonb WHERE id = ${id}`;
+          }
+        } catch (e) {
+          console.error('[admin/agreements PATCH] syncAgreementToLocationsAndStaff failed', errMessage(e));
+        }
       }
     }
 
