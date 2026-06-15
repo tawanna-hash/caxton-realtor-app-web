@@ -59,15 +59,14 @@ export default async function AdvertisersDirectoryPage() {
     publication: (r.publication ?? 'austin') as 'austin' | 'san_antonio',
   }));
 
+  // Houston/Dallas inherit RealtyLine's accent color (navy) since they're
+  // under the RealtyLine umbrella and have no theme entries of their own.
+  const realtylineAccent = getPublicationTheme('austin').primaryColor;
   const themes = {
-    realtyline: {
-      accent: getPublicationTheme('austin').primaryColor,
-      label: 'RealtyLine Austin',
-    },
-    newsline: {
-      accent: getPublicationTheme('san_antonio').primaryColor,
-      label: 'Newsline San Antonio',
-    },
+    realtyline: { accent: realtylineAccent, label: 'RealtyLine Austin' },
+    newsline: { accent: getPublicationTheme('san_antonio').primaryColor, label: 'Newsline San Antonio' },
+    'realtyline-houston': { accent: realtylineAccent, label: 'RealtyLine Houston' },
+    'realtyline-dallas': { accent: realtylineAccent, label: 'RealtyLine Dallas' },
   };
 
   return (

@@ -1,5 +1,6 @@
 'use client';
 
+import { type PubKey } from '@/lib/pub-meta';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { APP_AD_SLOTS, PACKAGES, EBLASTS } from '@/lib/media-kit';
@@ -17,7 +18,7 @@ type Props = {
   initialSlotLabel: string;
   initialPackage: string;
   initialChannel: AdChannel;
-  pub: 'realtyline' | 'newsline';
+  pub: PubKey;
 };
 
 // Stable id for an e-Blast package. EBLASTS rows don't carry an id field,

@@ -1,5 +1,6 @@
 'use client';
 
+import { type PubKey } from '@/lib/pub-meta';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import MagazineCarousel from '@/components/MagazineCarousel';
@@ -11,11 +12,15 @@ import type { Magazine } from '@/lib/magazines';
 // 'realtyline' | 'newsline' stored in caxton_pub localStorage. The magazines
 // API translates these internally (same way MagazinePhase has always passed
 // pub directly to MagazineCarousel).
-type Pub = 'realtyline' | 'newsline';
+type Pub = PubKey;
 
+// Houston/Dallas use RealtyLine navy; they share the magazine surface with
+// the rest of the RealtyLine family until they have their own issues.
 const PUBS_INFO: Record<Pub, { name: string; city: string; color: string }> = {
   realtyline: { name: 'RealtyLine', city: 'Austin', color: '#021D40' },
   newsline: { name: 'Newsline San Antonio', city: 'San Antonio', color: '#3D0740' },
+  'realtyline-houston': { name: 'RealtyLine Houston', city: 'Houston', color: '#021D40' },
+  'realtyline-dallas': { name: 'RealtyLine Dallas', city: 'Dallas', color: '#021D40' },
 };
 
 function readPub(): Pub {

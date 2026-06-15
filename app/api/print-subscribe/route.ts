@@ -1,3 +1,5 @@
+import { type PubKey } from '@/lib/pub-meta';
+
 // Phase 2 — Print subscription POST handler
 // Receives form data from /subscribe, validates the address against USPS,
 // stores the subscriber on Neon, sends a notification to the publisher
@@ -15,7 +17,7 @@ export const runtime = 'nodejs';
 // ----------------------------------------------------------------------------
 
 type SubscribePayload = {
-  publication: 'realtyline' | 'newsline';
+  publication: PubKey;
   firstName: string;
   lastName: string;
   name: string;            // server-derived: firstName + ' ' + lastName
@@ -94,7 +96,7 @@ function validatePayload(body: unknown): { ok: true; data: SubscribePayload } | 
   return {
     ok: true,
     data: {
-      publication: b.publication as 'realtyline' | 'newsline',
+      publication: b.publication as PubKey,
       firstName,
       lastName,
       name: `${firstName} ${lastName}`,
@@ -282,7 +284,7 @@ async function sendEmail(opts: {
 // Email templates
 // ----------------------------------------------------------------------------
 
-function pubLabel(pub: 'realtyline' | 'newsline'): string {
+function pubLabel(pub: PubKey): string {
   return pub === 'realtyline' ? 'RealtyLine (Austin)' : 'Newsline (San Antonio)';
 }
 

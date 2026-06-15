@@ -1,3 +1,5 @@
+import { type PubKey } from '@/lib/pub-meta';
+
 // Email templates. Pure render functions; only env reads are at the very
 // bottom for FROM_NAME / FROM_ADDRESS exports.
 
@@ -142,7 +144,7 @@ RealtyLine · Newsline San Antonio
  * visitor signs up via the inline NewsletterCTA on the public site.
  */
 export function renderNewsletterConfirmationEmail(opts: {
-  publication: 'realtyline' | 'newsline';
+  publication: PubKey;
   manageUrl: string;
 }): MagicLinkTemplate {
   const pubLabel =

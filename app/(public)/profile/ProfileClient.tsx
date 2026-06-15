@@ -1,5 +1,6 @@
 'use client';
 
+import { type PubKey } from '@/lib/pub-meta';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { getApiBase } from '@/lib/api-base';
@@ -8,7 +9,7 @@ import PasskeysPanel from '@/components/PasskeysPanel';
 
 const API = getApiBase();
 
-type Pub = 'realtyline' | 'newsline';
+type Pub = PubKey;
 type User = {
   email?: string;
   first_name?: string;
@@ -19,9 +20,12 @@ type User = {
 };
 
 // Brand colors per publication. Falls back to RealtyLine navy.
+// Houston/Dallas inherit RealtyLine navy as they're under the same umbrella.
 const ACCENT: Record<Pub, string> = {
   realtyline: '#021D40',
   newsline: '#3D0740',
+  'realtyline-houston': '#021D40',
+  'realtyline-dallas': '#021D40',
 };
 
 function readPub(): Pub {
