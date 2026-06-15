@@ -25,6 +25,14 @@ import { APP_AD_SLOTS, getSlotAvailablePubs, type AppAdSlot } from '@/lib/media-
 
 export type CheckoutPub = 'realtyline' | 'newsline' | 'both';
 
+// House ads (advertiser_name = HOUSE_AD_ADVERTISER) exist to fill unsold
+// inventory — they should never block a real booking inquiry. We exclude
+// them from every blocking-availability query so the public checkout, the
+// inquire route's sold-out probe, and pickAlternativeSlots all treat
+// house-ad-only slots as available. When a real advertiser books, the
+// admin deactivates the house campaign from /admin/ads.
+export const HOUSE_AD_ADVERTISER = 'RealtyLine House';
+
 interface ActiveCampaignRow {
   ad_space_slug: string;
   publication: string;
@@ -124,6 +132,7 @@ export async function getBookedPubsForAllSlots(
              end_date::text   AS end_date
         FROM ad_campaigns
        WHERE active = TRUE
+         AND advertiser_name <> ${HOUSE_AD_ADVERTISER}
          AND start_date <= ${end}::date
          AND end_date   >= ${start}::date
     `) as unknown as ActiveCampaignRow[];
@@ -185,6 +194,7 @@ export async function getBookedPubsForSlot(
         FROM ad_campaigns
        WHERE ad_space_slug = ${slotSlug}
          AND active = TRUE
+         AND advertiser_name <> ${HOUSE_AD_ADVERTISER}
          AND start_date <= ${end}::date
          AND end_date   >= ${start}::date
     `) as unknown as ActiveCampaignRow[];
