@@ -11,7 +11,7 @@
 
 import { getSql } from '@/lib/db';
 
-export type Publication = 'austin' | 'san_antonio' | 'both';
+export type Publication = 'austin' | 'san_antonio' | 'houston' | 'dallas' | 'both';
 
 export interface PublicationTheme {
   id: Publication;
@@ -44,6 +44,22 @@ const THEMES: Record<Publication, PublicationTheme> = {
     primaryColorHover: '#52095a',
     fromEmailDisplayName: 'Newsline San Antonio',
   },
+  houston: {
+    id: 'houston',
+    name: 'RealtyLine Houston',
+    shortName: 'RealtyLine Houston',
+    primaryColor: '#021D40',
+    primaryColorHover: '#03285a',
+    fromEmailDisplayName: 'RealtyLine Houston',
+  },
+  dallas: {
+    id: 'dallas',
+    name: 'RealtyLine Dallas',
+    shortName: 'RealtyLine Dallas',
+    primaryColor: '#021D40',
+    primaryColorHover: '#03285a',
+    fromEmailDisplayName: 'RealtyLine Dallas',
+  },
   both: {
     id: 'both',
     name: 'Realty News Now',
@@ -57,15 +73,19 @@ const THEMES: Record<Publication, PublicationTheme> = {
 /** Always returns a theme — defaults to Austin if value is missing or unknown. */
 export function getPublicationTheme(pub: string | null | undefined): PublicationTheme {
   if (pub === 'san_antonio') return THEMES.san_antonio;
-  if (pub === 'both') return THEMES.both;
+  if (pub === 'houston')     return THEMES.houston;
+  if (pub === 'dallas')      return THEMES.dallas;
+  if (pub === 'both')        return THEMES.both;
   return THEMES.austin;
 }
 
 /** Selector options for admin forms. */
 export const PUBLICATION_OPTIONS: Array<{ id: Publication; label: string }> = [
-  { id: 'austin', label: 'RealtyLine Austin' },
+  { id: 'austin',      label: 'RealtyLine Austin' },
   { id: 'san_antonio', label: 'Newsline San Antonio' },
-  { id: 'both', label: 'Both' },
+  { id: 'houston',     label: 'RealtyLine Houston' },
+  { id: 'dallas',      label: 'RealtyLine Dallas' },
+  { id: 'both',        label: 'Both' },
 ];
 
 let columnEnsured = false;

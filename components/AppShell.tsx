@@ -268,12 +268,14 @@ export default function AppShell({
                         <span>{group.label}</span>
                         {/* Surface unread ad inquiries as a red dot on the
                             group that owns Ad Inquiries; expiring/overdue
-                            billing as an amber dot on the same group. */}
-                        {group.label === 'Revenue' && (
-                          <>
-                            <UnreadAdsBadge />
-                            <BillingAlertsBadge />
-                          </>
+                            billing as an amber dot on the group that owns
+                            Billing. Driven by group membership so the
+                            badges follow links if the nav is reorganized. */}
+                        {group.links.some((l) => l.href === '/admin/ads/inquiries') && (
+                          <UnreadAdsBadge />
+                        )}
+                        {group.links.some((l) => l.href === '/admin/billing') && (
+                          <BillingAlertsBadge />
                         )}
                         <svg
                           width="10"

@@ -21,8 +21,9 @@ export type AdminNavGroup = {
  * top-to-bottom on mobile. Order matters.
  *
  * Conventions:
- *  - "CRM" holds people and brand assets (advertisers, contacts, media kit).
- *  - "Revenue" holds money movement (billing, ads, marketing).
+ *  - "CRM" holds people, billing, and brand assets (advertisers, agreements,
+ *    invoices, marketing, media kit).
+ *  - "Revenue" holds ad inventory and placements (ads, orders, availability).
  *  - "Mailing List HUB" holds audience lists and subscriber tools.
  *  - "Content" holds editorial surfaces (articles, magazines, events,
  *    giveaways, inventory, social, MLS report cards).
@@ -32,9 +33,10 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: 'CRM',
     links: [
-      { label: 'Advertisers & CRM', href: '/admin/crm',       description: 'Accounts, contacts, share links' },
-      { label: 'Marketing',         href: '/admin/marketing',  description: 'Outreach campaigns & tasks' },
-      { label: 'Media Kit',         href: '/admin/media-kit',  description: '2026 packages, rates & deadlines' },
+      { label: 'Advertisers',  href: '/admin/crm',       description: 'Accounts, contacts, share links' },
+      { label: 'Billing',      href: '/admin/billing',   description: 'Agreements, invoices & payments' },
+      { label: 'Marketing',    href: '/admin/marketing', description: 'Outreach campaigns & tasks' },
+      { label: 'Media Kit',    href: '/admin/media-kit', description: '2026 packages, rates & deadlines' },
     ],
   },
   {
@@ -52,7 +54,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: 'Revenue',
     links: [
-      { label: 'Billing',         href: '/admin/billing',          description: 'Agreements, invoices & payments' },
       { label: 'Ads',             href: '/admin/ads',              description: 'Inventory & placements' },
       { label: 'Ad Inquiries',    href: '/admin/ads/inquiries',    description: 'Print / Digital / Email leads' },
       { label: 'Ad Orders',       href: '/admin/ads/orders',       description: 'Campaigns + agreements pipeline' },
