@@ -6,15 +6,13 @@
 // Body: { issueMonth?: string (e.g. "2026-07"), amountCents?: number (defaults to ad_rate * 1.03) }
 //
 // Uses the stored stripe_payment_method_id + stripe_customer_id from the agreement.
-// Creates an issue_charges row, fires Stripe PaymentIntent with confirm:true off_session,
-// and (on success) fires the Wave webhook with event:'issue-charge'.
+// Creates an issue_charges row, fires Stripe PaymentIntent with confirm:true off_session.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
-import { fireWaveInvoiceWebhook } from '@/lib/wave-webhook';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -139,55 +137,6 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       details: `${issueMonth} \u2014 ${(totalCents / 100).toFixed(2)} USD \u2014 pi: ${pi.id}`,
     });
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${ag.id}`;
-
-    if (succeeded) {
-      // Idempotent claim: only run the Wave sync if this row hasn't already
-      // been synced. Admin retries (user double-clicks the charge button) and
-      // the backfill cron at /api/cron/retry-wave-sync both go through this
-      // gate, so duplicate Wave invoices are impossible.
-      const claim = (await sql`
-        UPDATE issue_charges
-           SET wave_invoice_synced_at = NOW(),
-               wave_sync_attempts     = COALESCE(wave_sync_attempts, 0) + 1,
-               wave_sync_error        = NULL
-         WHERE id = ${issueChargeId}
-           AND wave_invoice_synced_at IS NULL
-        RETURNING id
-      `) as unknown as Array<{ id: string }>;
-
-      if (claim.length > 0) {
-        const waveResult = await fireWaveInvoiceWebhook({
-          ag,
-          event: 'issue-charge',
-          baseAmountCents: baseCents,
-          surchargeCents,
-          stripePaymentIntentId: pi.id,
-          stripeChargeId: chargeId,
-          issueMonth,
-        });
-        if (!waveResult.ok) {
-          // Release the claim so the backfill cron can retry. Don't block the
-          // admin response — the Stripe charge still went through.
-          await sql`
-            UPDATE issue_charges
-               SET wave_invoice_synced_at = NULL,
-                   wave_sync_error        = ${waveResult.error ?? 'unknown wave error'}
-             WHERE id = ${issueChargeId}
-          `;
-          console.error(
-            '[admin/charge-issue] Wave sync failed for issue_charge',
-            issueChargeId,
-            waveResult.error,
-          );
-        } else if (waveResult.invoiceNumber) {
-          await sql`
-            UPDATE issue_charges
-               SET wave_invoice_id = ${waveResult.invoiceNumber}
-             WHERE id = ${issueChargeId}
-          `;
-        }
-      }
-    }
 
     return NextResponse.json({
       ok: succeeded,

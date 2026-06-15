@@ -181,14 +181,10 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS current_agreement_id uuid REFERENCES agreements(id) ON DELETE SET NULL`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_current_agreement ON advertisers(current_agreement_id)`);
 
-  // Stripe + Wave wiring — 20260601-stripe-payments.sql
+  // Stripe wiring — 20260601-stripe-payments.sql
   await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS stripe_payment_method_id text`);
   await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS stripe_charged_cents     integer`);
   await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS stripe_charged_at        timestamptz`);
-  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS wave_invoice_synced_at   timestamptz`);
-  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS wave_invoice_id          text`);
-  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS wave_sync_error          text`);
-  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS wave_sync_attempts       integer NOT NULL DEFAULT 0`);
 
   // Publication / market the agreement belongs to (RealtyLine Austin,
   // Newsline San Antonio, or both). Drives the PUB column on /admin/ads/orders
@@ -197,7 +193,6 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_publication ON agreements(publication)`);
 
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_pm ON agreements(stripe_payment_method_id)`);
-  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_wave_pending ON agreements (paid_at) WHERE paid_at IS NOT NULL AND wave_invoice_synced_at IS NULL`);
 
   await step(() => sql`
     CREATE TABLE IF NOT EXISTS issue_charges (
@@ -210,8 +205,6 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       stripe_charge_id         text,
       status                   text NOT NULL DEFAULT 'pending'
                                  CHECK (status IN ('pending','succeeded','failed','refunded')),
-      wave_invoice_id          text,
-      wave_invoice_synced_at   timestamptz,
       failure_reason           text,
       charged_at               timestamptz,
       created_by               text,
@@ -221,9 +214,6 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   `);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_issue_charges_agreement ON issue_charges(agreement_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_issue_charges_status    ON issue_charges(status)`);
-  await step(() => sql`ALTER TABLE issue_charges ADD COLUMN IF NOT EXISTS wave_sync_error    text`);
-  await step(() => sql`ALTER TABLE issue_charges ADD COLUMN IF NOT EXISTS wave_sync_attempts integer NOT NULL DEFAULT 0`);
-  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_issue_charges_wave_pending ON issue_charges (charged_at) WHERE status = 'succeeded' AND wave_invoice_synced_at IS NULL`);
 
   await step(() => sql`
     CREATE OR REPLACE FUNCTION trg_agreements_set_updated_at()

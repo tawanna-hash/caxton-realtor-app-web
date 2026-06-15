@@ -93,10 +93,6 @@
       "schedule": "0 */6 * * *"
     },
     {
-      "path": "/api/cron/retry-wave-sync",
-      "schedule": "15 * * * *"
-    },
-    {
       "path": "/api/cron/refresh-social",
       "schedule": "0 9 * * *"
     },
