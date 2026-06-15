@@ -1,6 +1,8 @@
 // Email templates. Pure render functions; only env reads are at the very
 // bottom for FROM_NAME / FROM_ADDRESS exports.
 
+import { escapeHtml } from './html';
+
 interface MagicLinkTemplate {
   subject: string;
   text: string;
@@ -178,14 +180,7 @@ RealtyLine \u00B7 Newsline San Antonio
   return { subject, text, html };
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+
 
 // Re-export config-derived constants if templates need them
 export const FROM_NAME = process.env.EMAIL_FROM_NAME ?? 'Caxton Publications';

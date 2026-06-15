@@ -16,6 +16,7 @@ import {
 } from '@/lib/publication-theme';
 import type { Advertiser } from '@/lib/advertisers';
 import { getEmailProvider } from '@/lib/server/email';
+import { escapeHtml } from '@/lib/server/email/html';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,13 +35,7 @@ function getOrigin(req: NextRequest): string {
   return `${proto}://${host}`;
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+
 
 function renderMagicLinkHtml(
   publicationName: string,

@@ -14,6 +14,7 @@
  */
 
 import { sendEmail } from '@/lib/email';
+import { escapeHtml } from '@/lib/server/email/html';
 
 interface Args {
   eventId: number;
@@ -115,11 +116,4 @@ export async function notifyAdminsPendingEvent({
   }
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
+
