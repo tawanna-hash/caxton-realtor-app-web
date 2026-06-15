@@ -16,6 +16,7 @@ import SaborReportCard from '@/components/SaborReportCard';
 import { SW } from '@/lib/style-constants';
 import { PUB_META, type PubKey } from '@/lib/pub-meta';
 import { AdSlot as AdSlotComponent } from '@/components/ads/AdSlot';
+import { COMING_SOON_PUBS, type ComingSoonPubId } from '@/lib/coming-soon-pubs';
 
 const API = getApiBase();
 
@@ -180,8 +181,101 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
   );
 }
 
+function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; name: string }; onClose: () => void }) {
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  // Honeypot: bots tend to fill every input. Real users won't see this.
+  const [website, setWebsite] = useState('');
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setStatus('submitting');
+    setError(null);
+    try {
+      const res = await fetch(`${API}/api/market-interest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ market: market.id, email: email.trim(), name: name.trim(), website }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        setError(j?.detail || j?.error || 'Something went wrong. Please try again.');
+        setStatus('error');
+        return;
+      }
+      setStatus('success');
+      trackEvent('market_interest_signup', { market: market.id });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Network error');
+      setStatus('error');
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+        {status === 'success' ? (
+          <div className="text-center py-6">
+            <p className="text-xl font-semibold text-gray-900 mb-2">You&rsquo;re on the list</p>
+            <p className="text-gray-600 mb-6">We&rsquo;ll email you the moment {market.name} launches.</p>
+            <button onClick={onClose} className="px-6 py-2 bg-gray-900 text-white rounded-lg">Close</button>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="text-xl font-semibold text-gray-900">Notify me when {market.name} launches</h3>
+              <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-2">&times;</button>
+            </div>
+            <p className="text-sm text-gray-500 mb-5">No spam. One email at launch.</p>
+            <form onSubmit={submit} className="space-y-3">
+              <input
+                type="email"
+                required
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg text-base"
+                autoFocus
+              />
+              <input
+                type="text"
+                placeholder="Your name (optional)"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg text-base"
+              />
+              {/* Honeypot: hidden from humans, present to bots. */}
+              <input
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px' }}
+                aria-hidden="true"
+              />
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <button
+                type="submit"
+                disabled={status === 'submitting'}
+                className="w-full px-4 py-3 bg-gray-900 text-white rounded-lg font-semibold disabled:opacity-60"
+              >
+                {status === 'submitting' ? 'Submitting...' : 'Notify me'}
+              </button>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
   const [open, setOpen] = useState(false);
+  const [notifyFor, setNotifyFor] = useState<{ id: ComingSoonPubId; name: string } | null>(null);
   return (
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
       <div className="w-full max-w-md px-8">
@@ -208,11 +302,37 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
                   </div>
                 </button>
               ))}
+              {COMING_SOON_PUBS.map((pub) => (
+                <button
+                  key={pub.id}
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    setNotifyFor({ id: pub.id, name: pub.name });
+                    trackEvent('coming_soon_market_click', { market: pub.id });
+                  }}
+                  className="w-full text-left px-4 py-5 border-b border-gray-100 bg-gray-50 hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded flex items-center justify-center flex-shrink-0 opacity-60" style={{ backgroundColor: pub.color }}>
+                      <span className="text-white text-base font-medium">{pub.monogram}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-lg font-semibold text-gray-700">{pub.name}</p>
+                        <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Coming Soon</span>
+                      </div>
+                      <p className="text-base text-gray-400 font-light">{pub.city} - {pub.tagline}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
             </div>
           )}
         </div>
         <p className="text-sm text-gray-300 text-center mt-6 font-light">You can switch publications anytime</p>
       </div>
+      {notifyFor && <NotifyMeModal market={notifyFor} onClose={() => setNotifyFor(null)} />}
     </div>
   );
 }
