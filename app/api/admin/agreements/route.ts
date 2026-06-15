@@ -217,7 +217,7 @@ export async function POST(req: NextRequest) {
     let linkedAdvertiserId: number | null = createdAg.advertiser_id ?? null;
     try {
       const advRes = await ensureAdvertiserForAgreement(createdAg, {
-        desiredStatus: status === 'signed' ? 'active' : 'prospect',
+        desiredStatus: status === 'signed' ? 'advertiser' : 'prospect',
       });
       if (advRes.outcome !== 'skipped') {
         linkedAdvertiserId = advRes.advertiserId;

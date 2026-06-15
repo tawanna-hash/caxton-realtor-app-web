@@ -36,10 +36,9 @@ import {
 type Props = { initialRows: AdvertiserCrmRow[] };
 
 const STATUS_OPTIONS: { value: AdvertiserStatus; label: string; tone: string }[] = [
-  { value: 'active',   label: 'Active',   tone: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  { value: 'prospect', label: 'Prospect', tone: 'bg-sky-50 text-sky-700 border-sky-200' },
-  { value: 'paused',   label: 'Paused',   tone: 'bg-amber-50 text-amber-700 border-amber-200' },
-  { value: 'archived', label: 'Archived', tone: 'bg-gray-100 text-gray-600 border-gray-200' },
+  { value: 'prospect',   label: 'Prospect',   tone: 'bg-sky-50 text-sky-700 border-sky-200' },
+  { value: 'advertiser', label: 'Advertiser', tone: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { value: 'archived',   label: 'Archived',   tone: 'bg-gray-100 text-gray-600 border-gray-200' },
 ];
 
 const TYPE_OPTIONS: { value: AdvertiserType; label: string }[] = [
@@ -86,8 +85,8 @@ export default function CrmClient({ initialRows }: Props) {
 
   // ── counts for filter chips ─────────────────────────────────────
   const statusCounts = useMemo(() => {
-    const c: Record<AdvertiserStatus, number> = { active: 0, prospect: 0, paused: 0, archived: 0 };
-    for (const r of rows) c[r.status ?? 'active'] = (c[r.status ?? 'active'] ?? 0) + 1;
+    const c: Record<AdvertiserStatus, number> = { prospect: 0, advertiser: 0, archived: 0 };
+    for (const r of rows) c[r.status ?? 'prospect'] = (c[r.status ?? 'prospect'] ?? 0) + 1;
     return c;
   }, [rows]);
 
@@ -290,7 +289,7 @@ function CrmRow({
         </div>
       </button>
       <div className="col-span-1">
-        <StatusBadge status={row.status ?? 'active'} />
+        <StatusBadge status={row.status ?? 'prospect'} />
       </div>
       <div className="col-span-2">
         <PublicationBadge publication={row.publication ?? 'austin'} />
@@ -563,7 +562,7 @@ function EditDrawer({
 
   const [form, setForm] = useState({
     type:           row.type           ?? 'advertiser',
-    status:         row.status         ?? 'active',
+    status:         row.status         ?? 'prospect',
     first_name:     row.first_name     ?? '',
     last_name:      row.last_name      ?? '',
     company:        row.company        ?? '',

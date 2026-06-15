@@ -8,7 +8,7 @@ import type { AdvertiserHeaderStyle } from '@/lib/advertiser-header-styles';
 
 // ── CRM enums (mirror migration CHECK constraints) ────────────────
 export type AdvertiserType   = 'advertiser' | 'client' | 'prospect' | 'mailing';
-export type AdvertiserStatus = 'active' | 'prospect' | 'paused' | 'archived';
+export type AdvertiserStatus = 'prospect' | 'advertiser' | 'archived';
 export type EmailStatus      = 'valid' | 'invalid' | 'risk' | 'unknown';
 
 export type AdditionalContact = {

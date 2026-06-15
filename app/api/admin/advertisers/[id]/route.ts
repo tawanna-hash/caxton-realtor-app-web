@@ -65,7 +65,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
   }
 }
 
-const STATUS_VALUES = new Set(['active', 'prospect', 'paused', 'archived']);
+const STATUS_VALUES = new Set(['prospect', 'advertiser', 'archived']);
 const TYPE_VALUES   = new Set(['advertiser', 'client', 'prospect', 'mailing']);
 const EMAIL_STATUS  = new Set(['valid', 'invalid', 'risk', 'unknown']);
 

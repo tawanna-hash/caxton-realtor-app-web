@@ -10,13 +10,13 @@ import type { Sql } from './_internal';
 
 // ============================================================
 
-// PressBook's sync-helpers.ts walks the contacts(type='client',status='active')
+// PressBook's sync-helpers.ts walks the contacts(type='client',status='advertiser')
 // rows and ensures each one (plus its additional_contacts JSON column)
 // has a contacts(type='mailing', tags @> '["advertiser"]') counterpart.
 //
 // In Caxton the source is the `advertisers` table (which holds both
 // "advertiser" and "client" entries — the user already established that
-// they're the same thing). We treat status='active' as the eligibility
+// they're the same thing). We treat status='advertiser' as the eligibility
 // filter and additional_contacts JSONB the same way.
 // ============================================================
 
@@ -264,7 +264,7 @@ export async function syncAdvertisersFromAdvertisers(): Promise<{
            address, address_2, city, state, zip, website,
            additional_contacts
       FROM advertisers
-     WHERE COALESCE(status, 'active') = 'active'
+     WHERE COALESCE(status, 'prospect') = 'advertiser'
   `) as unknown as AdvertiserSyncRow[];
 
   let added = 0;
@@ -326,7 +326,7 @@ export async function syncAdvertisersFromAdvertisers(): Promise<{
  *   'san_antonio' -> active-advertiser-sa
  *   'both' (or unknown) -> BOTH segments
  *
- * Status gate: only syncs when advertiser status is 'active'.
+ * Status gate: only syncs when advertiser status is 'advertiser'.
  * Per-segment dedupe by lowercased email; existing rows are updated in place.
  */
 export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number): Promise<{ added: number; updated: number }> {
@@ -336,7 +336,7 @@ export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number
            phone, office_phone, company, title, license_number,
            address, address_2, city, state, zip, website,
            additional_contacts,
-           COALESCE(status, 'active') AS status,
+           COALESCE(status, 'prospect') AS status,
            COALESCE(publication, 'austin') AS publication
       FROM advertisers
      WHERE id = ${advertiserId}
@@ -345,7 +345,7 @@ export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number
   if (rows.length === 0) return { added: 0, updated: 0 };
   const adv = rows[0];
 
-  if (adv.status !== 'active') return { added: 0, updated: 0 };
+  if (adv.status !== 'advertiser') return { added: 0, updated: 0 };
   const primaryBase = advertiserToSource(adv);
   if (!primaryBase || !primaryBase.email) return { added: 0, updated: 0 };
 
@@ -572,7 +572,7 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
            address, address_2, city, state, zip, website,
            COALESCE(publication, 'austin') AS publication
       FROM advertisers
-     WHERE COALESCE(status, 'active') = 'active'
+     WHERE COALESCE(status, 'prospect') = 'advertiser'
   `) as unknown as Array<AdvertiserSyncRow & { publication: string }>;
 
   const findInSegment = async (
@@ -727,7 +727,7 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
 /**
  * Upsert one advertiser_staff row into the per-publication Active
  * Advertisers segment(s).
- * - Only syncs when the parent advertiser status is 'active' AND staff.email is set.
+ * - Only syncs when the parent advertiser status is 'advertiser' AND staff.email is set.
  * - Routes by parent advertiser publication (san_antonio -> -sa, austin -> -atx,
  *   both -> BOTH).
  * - Per-segment dedup by lowercased email; existing rows are updated in place
@@ -740,7 +740,7 @@ export async function upsertStaffMailingByStaffId(
   const sql = getSql();
   const rows = (await sql`
     SELECT s.id, s.advertiser_id, s.name, s.title, s.email, s.phone,
-           a.company, COALESCE(a.status, 'active') AS status,
+           a.company, COALESCE(a.status, 'prospect') AS status,
            COALESCE(a.publication, 'austin') AS publication,
            a.address, a.address_2, a.city, a.state, a.zip, a.website
       FROM advertiser_staff s
@@ -767,7 +767,7 @@ export async function upsertStaffMailingByStaffId(
   if (rows.length === 0) return { added: 0, updated: 0, skipped: true };
   const staff = rows[0];
 
-  if (staff.status !== 'active') return { added: 0, updated: 0, skipped: true };
+  if (staff.status !== 'advertiser') return { added: 0, updated: 0, skipped: true };
   const email = (staff.email ?? '').trim();
   if (!email) return { added: 0, updated: 0, skipped: true };
 

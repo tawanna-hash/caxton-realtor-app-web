@@ -28,7 +28,10 @@ export async function POST() {
 
   // CRM classification + lifecycle ---------------------------------
   await step('type',          () => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS type text NOT NULL DEFAULT 'advertiser'`);
-  await step('status',        () => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'active'`);
+  await step('status',        () => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'advertiser'`);
+  await step('status-rename-active',   () => sql`UPDATE advertisers SET status = 'advertiser' WHERE status = 'active'`);
+  await step('status-rename-paused',   () => sql`UPDATE advertisers SET status = 'prospect'   WHERE status = 'paused'`);
+  await step('status-default-bump',    () => sql`ALTER TABLE advertisers ALTER COLUMN status SET DEFAULT 'advertiser'`);
 
   // Identity --------------------------------------------------------
   await step('first_name',     () => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS first_name text`);
