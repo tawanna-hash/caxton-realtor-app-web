@@ -13,7 +13,7 @@
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
 import { APP_AD_SLOTS, getSlotAvailablePubs, type AppAdSlot } from '@/lib/media-kit';
-import { getBookedPubsForSlot } from '@/lib/server/slot-availability';
+import { getBookedPubsForAllSlots } from '@/lib/server/slot-availability';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -60,22 +60,19 @@ export default async function AdvertiseDigitalPage({
   const params = await searchParams;
   const pub = normalizePub(params.pub);
 
-  // Probe live availability for every slot in parallel.
-  const availability = await Promise.all(
-    APP_AD_SLOTS.map(async (slot) => {
-      const allowedPubs = getSlotAvailablePubs(slot);
-      const compatible = allowedPubs.includes(pub);
-      if (!compatible) {
-        return { slot, soldOut: true, compatible: false };
-      }
-      try {
-        const blocked = await getBookedPubsForSlot(slot.slug);
-        return { slot, soldOut: blocked.has(pub), compatible: true };
-      } catch {
-        return { slot, soldOut: false, compatible: true };
-      }
-    }),
-  );
+  // Single SQL query returns blocked-pub sets for every slot at once.
+  // Fails open inside the helper, so we never have to catch here.
+  const blockedBySlug = await getBookedPubsForAllSlots();
+
+  const availability = APP_AD_SLOTS.map((slot) => {
+    const allowedPubs = getSlotAvailablePubs(slot);
+    const compatible = allowedPubs.includes(pub);
+    if (!compatible) {
+      return { slot, soldOut: true, compatible: false };
+    }
+    const blocked = blockedBySlug.get(slot.slug) ?? new Set<typeof pub>();
+    return { slot, soldOut: blocked.has(pub), compatible: true };
+  });
 
   // Available first, sold-out last; within each group, premium tier first.
   availability.sort((a, b) => {
