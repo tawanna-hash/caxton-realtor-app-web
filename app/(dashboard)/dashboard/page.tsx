@@ -14,7 +14,8 @@ import { SocialLinks } from '@/components/SocialLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import SaborReportCard from '@/components/SaborReportCard';
 import { SW } from '@/lib/style-constants';
-import { PUB_META, type PubKey } from '@/lib/pub-meta';
+import { PUB_META, type PubKey, isPreLaunchPub, isPubKey } from '@/lib/pub-meta';
+import { PreLaunchEmptyState } from '@/components/PreLaunchEmptyState';
 import { AdSlot as AdSlotComponent } from '@/components/ads/AdSlot';
 import { COMING_SOON_PUBS, type ComingSoonPubId } from '@/lib/coming-soon-pubs';
 
@@ -1073,8 +1074,29 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
   }, [pub]);
   const [profileOpen, setProfileOpen] = useState(false);
   const track = useMetrics(user?.id || null);
-  const info = PUBS.find((p) => p.id === pub) || PUBS[0];
+  // For launched pubs (realtyline, newsline) `info` comes from the legacy
+  // PUBS array which carries the marketing-copy tagline. For pre-launch
+  // pubs (Houston/Dallas) fall through to PUB_META so the header still
+  // brands correctly (RealtyLine navy + city name) and surface tabs can
+  // render the PreLaunchEmptyState without crashing on undefined info.
+  const pubMetaEntry = isPubKey(pub) ? PUB_META[pub] : undefined;
+  const info =
+    PUBS.find((p) => p.id === pub) ??
+    (pubMetaEntry
+      ? {
+          id: pub,
+          name: pubMetaEntry.name,
+          city: pubMetaEntry.city,
+          tagline: pubMetaEntry.tagline,
+          color: pubMetaEntry.color,
+        }
+      : PUBS[0]);
   const other = PUBS.find((p) => p.id !== pub) || PUBS[1];
+  // Pre-launch markets short-circuit every content surface to the shared
+  // empty state (Phase 2 PR C). They still get the branded header above
+  // and the bottom nav below — only the tab body is replaced.
+  const showPreLaunch = isPubKey(pub) && isPreLaunchPub(pub);
+  const pubKey: PubKey | null = isPubKey(pub) ? pub : null;
   const [liveNews, setLiveNews] = useState<any[] | null>(null);
   // caxton-article-reader-b2a-fix (dispatcher)
   useEffect(() => {
@@ -1233,14 +1255,19 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
           <span className="text-white/50">{'\u2192'}</span>
         </button>
       </div>
-      <DashboardHero pub={pub as "realtyline" | "newsline"} />
+      {!showPreLaunch && (
+        <DashboardHero pub={pub as "realtyline" | "newsline"} />
+      )}
       {user?.guest && (
         <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
           <p className="text-sm text-amber-700 font-light">Browsing as Guest</p>
           <button onClick={() => window.location.reload()} className="text-sm text-amber-700 font-medium underline">Sign In</button>
         </div>
       )}
-      {tab === 'n' && (
+      {tab === 'n' && showPreLaunch && pubKey && (
+        <PreLaunchEmptyState pub={pubKey} surface="news" />
+      )}
+      {tab === 'n' && !showPreLaunch && (
         <div>
           <FeedTopBanner pub={pub} />
           <div className="flex gap-2 overflow-x-auto px-4 py-3 bg-white border-b border-gray-200" style={{ scrollbarWidth: 'none' }}>
@@ -1301,7 +1328,10 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
           </div>
         </div>
       )}
-      {tab === 'e' && (
+      {tab === 'e' && showPreLaunch && pubKey && (
+        <PreLaunchEmptyState pub={pubKey} surface="events" />
+      )}
+      {tab === 'e' && !showPreLaunch && (
         <div>
           <div className="px-4 py-4 border-b border-gray-200">
             <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium">Upcoming in {info.city}</p>

@@ -24,7 +24,17 @@ const sql = neon(process.env.DATABASE_URL!);
 
 export type Kind = 'listing' | 'promotion';
 export type Status = 'pending' | 'active' | 'rejected';
-export type Publication = 'realtyline' | 'newsline' | 'both';
+// Publication scope for a builder_inventory row. Mirrors the CHECK
+// constraint in the table (see migration 2026_06_15__widen_builder_inventory_publication_check).
+// 'both' covers Austin + San Antonio (the original launched markets). Pre-launch
+// pubs are listed here so admins can flag builder submissions for Houston/Dallas
+// inventory ahead of those markets going live.
+export type Publication =
+  | 'realtyline'
+  | 'newsline'
+  | 'realtyline-houston'
+  | 'realtyline-dallas'
+  | 'both';
 export type PromoType =
   | 'rate_buydown'
   | 'incentive'
@@ -281,6 +291,50 @@ const MIGRATIONS: Migration[] = [
       // and pick a different one per card via deterministic hash.
       await sql`ALTER TABLE builder_inventory
                 ADD COLUMN IF NOT EXISTS gallery_urls TEXT[]`;
+    },
+  },
+  {
+    // Phase 2 PR C: widen the publication CHECK to allow the pre-launch
+    // markets (realtyline-houston, realtyline-dallas). The old constraint
+    // only allowed realtyline/newsline/both — once admins start submitting
+    // builder rows scoped to Houston/Dallas the INSERT would fail with a
+    // CHECK violation. We DROP the old constraint by name then ADD the new
+    // one. The constraint name is what Postgres assigns by default when a
+    // CHECK is declared inline on a column (table_column_check) — we look
+    // it up dynamically to stay portable across managed Postgres providers.
+    name: '2026_06_15__widen_builder_inventory_publication_check',
+    up: async () => {
+      // Find the existing CHECK constraint on the publication column. There's
+      // exactly one inline CHECK that mentions 'realtyline', 'newsline', and
+      // 'both' together.
+      const rows = (await sql`
+        SELECT conname
+        FROM pg_constraint
+        WHERE conrelid = 'builder_inventory'::regclass
+          AND contype = 'c'
+          AND pg_get_constraintdef(oid) ILIKE '%publication%'
+          AND pg_get_constraintdef(oid) ILIKE '%realtyline%'
+          AND pg_get_constraintdef(oid) ILIKE '%newsline%'
+      `) as { conname: string }[];
+      for (const r of rows) {
+        // Identifier interpolation isn't supported by the tagged template;
+        // constraint names from pg_constraint are safe (no quoting needed
+        // for default-generated names) but we still wrap defensively.
+        await sql.query(
+          `ALTER TABLE builder_inventory DROP CONSTRAINT IF EXISTS "${r.conname}"`,
+        );
+      }
+      await sql`
+        ALTER TABLE builder_inventory
+        ADD CONSTRAINT builder_inventory_publication_check
+        CHECK (publication IN (
+          'realtyline',
+          'newsline',
+          'realtyline-houston',
+          'realtyline-dallas',
+          'both'
+        ))
+      `;
     },
   },
 ];
