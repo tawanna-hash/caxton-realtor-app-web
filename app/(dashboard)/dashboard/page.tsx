@@ -446,10 +446,10 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
     }
   }
 
-  function handleSkip() {
-    trackEvent('auth_guest_skip', { pub });
-    onAuth({ id: 'guest', firstName: 'Guest', email: '', guest: true });
-  }
+  // Guest sign-in removed: every visitor must create an account or sign in.
+  // Legacy `user.guest` checks lower in the file are intentionally retained
+  // so any pre-existing guest session left in someone's localStorage
+  // degrades gracefully rather than throwing.
 
   if (mode === 'sent') {
     return (
@@ -696,8 +696,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Sign In to Continue</h2>
         <button onClick={() => setMode('signup')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3" style={{ backgroundColor: info.color }}>Create Your Account</button>
         <button onClick={() => setMode('login')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-6 rounded-md">I Already Have an Account</button>
-        <button onClick={handleSkip} className="w-full text-center py-2 text-sm text-gray-300 font-light">Continue as Guest</button>
-        <p className="text-xs text-gray-300 text-center mt-4 font-light">Guest access has limited features</p>
       </div>
     </div>
   );
@@ -912,25 +910,10 @@ export default function DashboardPage() {
         onSelectArticle={(a: any) => setSelectedArticle(a)}
       />
     );
-  const handleLogout = async () => {
-    if (!confirm("Are you sure you want to log out?")) return;
-    try {
-      await fetch(`${API}/auth/logout`, { method: "POST", credentials: "include" });
-    } catch {}
-    try {
-      localStorage.removeItem("caxton_pub");
-      localStorage.removeItem("caxton_phase");
-    } catch {}
-    setUser(null);
-    identifyUser(null);
-    setPub("");
-    setPhase("splash");
-  };
-
-  return <Feed pub={pub} user={user} onSwitch={(id) => { setPub(id); }} newsRefreshNonce={newsRefreshNonce} onLogout={handleLogout} />;
+  return <Feed pub={pub} user={user} onSwitch={(id) => { setPub(id); }} newsRefreshNonce={newsRefreshNonce} />;
 }
 
-function Feed({ pub, user, onSwitch, newsRefreshNonce, onLogout }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number; onLogout: () => void }) {
+function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number }) {
   const [tab, setTab] = useState('n');
 
   // Read saved cat synchronously on mount so the first client paint shows
