@@ -4,6 +4,8 @@
 // Mirrors buildAgreementEmailHtml (pb_index.html line 638)
 // and buildRenewalEmailHtml (pb_index.html ~line 670).
 
+import { escapeHtml } from '@/lib/server/email/html';
+
 export interface BrandConfig {
   brandName: string;
   brandColor: string;
@@ -177,13 +179,4 @@ ${changeBlock}
 <tr><td style="padding:0 40px 32px 40px"><p style="margin:0 0 8px 0;font-family:Arial,sans-serif;font-size:15px;color:#444;line-height:1.7">Thank you for advertising with ${brand.brandName}.</p><p style="margin:16px 0 0 0;font-family:Arial,sans-serif;font-size:15px;color:#444">Best,<br><strong>${escapeHtml(signOff)}</strong></p></td></tr>
 <tr><td style="background:#f4f4f4;border-top:1px solid #e0e0e0;padding:20px 40px;text-align:center"><p style="margin:0;font-family:Arial,sans-serif;font-size:12px;color:#888">${brand.brandName} | <a href="${websiteUrl}" style="color:#888;text-decoration:none">${websiteUrl}</a></p></td></tr>
 </table></td></tr></table></body></html>`;
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }

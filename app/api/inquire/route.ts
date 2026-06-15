@@ -19,6 +19,14 @@ import { isAdChannel, deriveChannelFromSlot, AD_CHANNEL_LABEL, type AdChannel } 
 import { insertAdInquiry } from '@/lib/server/ad-inquiries-store';
 import { isSlotSoldOut, pickAlternativeSlots } from '@/lib/server/slot-availability';
 import { ensureSchema } from '@/lib/db';
+import {
+  escapeHtml,
+  wrapEmail,
+  primaryButton,
+  infoCard,
+  noticeBlock,
+  BRAND,
+} from '@/lib/server/email/html';
 
 export const runtime = 'nodejs';
 
@@ -38,13 +46,19 @@ const inquirySchema = z.object({
   website: z.string().optional().default(''),
 });
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+// Render the inline rate-card body inside an `infoCard` for the standard
+// auto-reply. Pulled out as a helper so the rate-string logic is shared
+// between the standard path and any future variant.
+function ratesRowHtml(slot: typeof APP_AD_SLOTS[number]): string {
+  const unit = slot.pricingUnit ?? 'week';
+  const u = unit === 'per send' ? 'send' : unit === 'per push' ? 'push' : 'wk';
+  const wkSingle = `$${slot.weeklySingle}/${u} single pub`;
+  const wkBoth = `$${slot.weeklyBoth}/${u} both pubs`;
+  const mo =
+    slot.monthlySingle && slot.monthlyBoth
+      ? `<br/>$${slot.monthlySingle}/mo single · $${slot.monthlyBoth}/mo both`
+      : '';
+  return `${wkSingle} · ${wkBoth}${mo}`;
 }
 
 export async function POST(req: NextRequest) {
@@ -132,6 +146,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // -------------------- Internal team email --------------------
   const channelLabel = AD_CHANNEL_LABEL[resolvedChannel];
   const subject = data.slot_label
     ? `${soldOut ? '[SOLD OUT] ' : ''}[${channelLabel}] Ad inquiry — ${data.slot_label}`
@@ -143,7 +158,7 @@ export async function POST(req: NextRequest) {
       <p style="color: #444; font-size: 14px; margin: 0 0 24px 0;">
         Submitted via realtynewsnow.app${data.slot_label ? ` — ${escapeHtml(data.slot_label)}` : ''}
       </p>
-      ${soldOut ? `<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:10px 14px;margin:0 0 16px 0;font-size:13px;color:#9a3412;">Buyer was auto-emailed a sold-out notice with alternative placement suggestions.</div>` : ''}
+      ${soldOut ? noticeBlock('Buyer was auto-emailed a sold-out notice with alternative placement suggestions.') : ''}
       <table style="border-collapse: collapse; width: 100%;">
         <tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Name</td><td style="padding: 6px 0; font-size: 14px;">${escapeHtml(data.name)}</td></tr>
         <tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Email</td><td style="padding: 6px 0; font-size: 14px;"><a href="mailto:${escapeHtml(data.email)}" style="color: #1a2a44;">${escapeHtml(data.email)}</a></td></tr>
@@ -178,31 +193,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Auto-reply to submitter. When the requested slot is sold out we send a
-  // waitlist + alternatives message instead of the standard book-it CTA so
-  // the buyer isn't pointed at a checkout they can't complete.
-  // Best-effort — never block the inquiry response on this.
+  // -------------------- Buyer auto-reply --------------------
+  // When the requested slot is sold out we send a waitlist + alternatives
+  // message instead of the standard book-it CTA so the buyer isn't pointed
+  // at a checkout they can't complete. Best-effort — never block the
+  // inquiry response on this.
   try {
     const checkoutUrl = slotInfo
       ? `https://realtynewsnow.app/advertise/checkout/${slotInfo.slug}?pub=${data.pub}`
       : 'https://realtynewsnow.app/advertise';
 
-    const ratesRow = slotInfo
-      ? (() => {
-          const unit = slotInfo.pricingUnit ?? 'week';
-          const wkSingle = `$${slotInfo.weeklySingle}/${unit === 'per send' ? 'send' : unit === 'per push' ? 'push' : 'wk'} single pub`;
-          const wkBoth = `$${slotInfo.weeklyBoth}/${unit === 'per send' ? 'send' : unit === 'per push' ? 'push' : 'wk'} both pubs`;
-          const mo =
-            slotInfo.monthlySingle && slotInfo.monthlyBoth
-              ? `<br/>$${slotInfo.monthlySingle}/mo single · $${slotInfo.monthlyBoth}/mo both`
-              : '';
-          return `${wkSingle} · ${wkBoth}${mo}`;
-        })()
-      : '';
-
     const altCardsHtml = alternatives.length
       ? `
-        <p style="font-size:15px;line-height:1.5;color:#333;margin:24px 0 12px 0;">
+        <p style="font-size:15px;line-height:1.5;color:${BRAND.bodyText};margin:24px 0 12px 0;">
           A few placements that <strong>are</strong> open right now that you may want to consider:
         </p>
         ${alternatives.map((a) => {
@@ -210,13 +213,13 @@ export async function POST(req: NextRequest) {
           const u = unit === 'per send' ? 'send' : unit === 'per push' ? 'push' : 'wk';
           const altCheckoutUrl = `https://realtynewsnow.app/advertise/checkout/${a.slug}?pub=${data.pub}`;
           return `
-          <div style="background:#f6f8fa;border:1px solid #e1e6ee;border-radius:8px;padding:14px 16px;margin:0 0 10px 0;">
-            <p style="margin:0 0 4px 0;font-size:12px;color:#666;text-transform:uppercase;letter-spacing:.5px;">${escapeHtml(a.tier)} placement</p>
-            <p style="margin:0 0 4px 0;font-size:16px;font-weight:600;color:#1a2a44;">
-              <a href="${altCheckoutUrl}" style="color:#1a2a44;text-decoration:none;">${escapeHtml(a.name)}</a>
+          <div style="background:${BRAND.cardBg};border:1px solid ${BRAND.cardBorder};border-radius:8px;padding:14px 16px;margin:0 0 10px 0;">
+            <p style="margin:0 0 4px 0;font-size:12px;color:${BRAND.muted};text-transform:uppercase;letter-spacing:.5px;">${escapeHtml(a.tier)} placement</p>
+            <p style="margin:0 0 4px 0;font-size:16px;font-weight:600;color:${BRAND.text};">
+              <a href="${altCheckoutUrl}" style="color:${BRAND.text};text-decoration:none;">${escapeHtml(a.name)}</a>
             </p>
             <p style="margin:0 0 4px 0;font-size:13px;color:#444;">$${a.weeklySingle}/${u} single pub · $${a.weeklyBoth}/${u} both pubs</p>
-            <p style="margin:0;font-size:12px;color:#666;">${escapeHtml(a.notes)}</p>
+            <p style="margin:0;font-size:12px;color:${BRAND.muted};">${escapeHtml(a.notes)}</p>
           </div>`;
         }).join('')}
       `
@@ -231,67 +234,50 @@ export async function POST(req: NextRequest) {
       // inventory (not just the inline-feed slot) and can choose what
       // best fits their campaign.
       const ctaHref = `https://realtynewsnow.app/advertise/digital?pub=${data.pub}`;
-      const ctaLabel = 'See all available digital placements';
       bodyHtml = `
-        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 16px 0;">
+        <p style="font-size:15px;line-height:1.5;color:${BRAND.bodyText};margin:0 0 16px 0;">
           Thanks so much for your interest in <strong>${escapeHtml(slotInfo.name)}</strong>. Heads up — that placement is <strong>fully booked</strong> right now, so we've added you to the waitlist and will reach out the moment it opens up.
         </p>
-        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 8px 0;">
+        <p style="font-size:15px;line-height:1.5;color:${BRAND.bodyText};margin:0 0 8px 0;">
           In the meantime, we have several other strong placements with similar reach that are available today. Each card below links straight to a self-checkout where you can pick dates, upload creative, and pay by card in under five minutes. Our team will also follow up within one business day.
         </p>
         ${altCardsHtml}
-        <p style="margin:24px 0 0 0;">
-          <a href="${ctaHref}" style="display:inline-block;background:#1a2a44;color:#fff;text-decoration:none;padding:14px 28px;border-radius:6px;font-weight:600;font-size:15px;">
-            ${escapeHtml(ctaLabel)}
-          </a>
-        </p>`;
+        <p style="margin:24px 0 0 0;">${primaryButton({ href: ctaHref, label: 'See all available digital placements' })}</p>`;
     } else if (slotInfo) {
       // Standard path: rate card + book CTA.
       bodyHtml = `
-        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 20px 0;">
+        <p style="font-size:15px;line-height:1.5;color:${BRAND.bodyText};margin:0 0 20px 0;">
           We received your inquiry about <strong>${escapeHtml(slotInfo.name)}</strong> and will follow up personally within one business day.
         </p>
-        <div style="background:#f6f8fa;border:1px solid #e1e6ee;border-radius:8px;padding:16px;margin:0 0 24px 0;">
-          <p style="margin:0 0 8px 0;font-size:13px;color:#666;text-transform:uppercase;letter-spacing:.5px;">${escapeHtml(slotInfo.tier)} placement</p>
-          <p style="margin:0 0 8px 0;font-size:17px;font-weight:600;color:#1a2a44;">${escapeHtml(slotInfo.name)}</p>
-          <p style="margin:0 0 8px 0;font-size:14px;color:#444;">${ratesRow}</p>
-          <p style="margin:0 0 4px 0;font-size:13px;color:#666;"><strong>Specs:</strong> ${escapeHtml(slotInfo.sizes)}</p>
-          <p style="margin:0;font-size:13px;color:#666;"><strong>Placement:</strong> ${escapeHtml(slotInfo.notes)}</p>
-        </div>
-        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 16px 0;">
+        ${infoCard({
+          tier: `${slotInfo.tier} placement`,
+          title: slotInfo.name,
+          bodyHtml: `
+            <p style="margin:0 0 8px 0;font-size:14px;color:#444;">${ratesRowHtml(slotInfo)}</p>
+            <p style="margin:0 0 4px 0;font-size:13px;color:${BRAND.muted};"><strong>Specs:</strong> ${escapeHtml(slotInfo.sizes)}</p>
+            <p style="margin:0;font-size:13px;color:${BRAND.muted};"><strong>Placement:</strong> ${escapeHtml(slotInfo.notes)}</p>
+          `,
+        })}
+        <p style="font-size:15px;line-height:1.5;color:${BRAND.bodyText};margin:0 0 16px 0;">
           Ready to book yourself? You can choose dates, upload creative, accept terms, and pay by card in under five minutes:
         </p>
-        <p style="margin:0 0 28px 0;">
-          <a href="${checkoutUrl}" style="display:inline-block;background:#1a2a44;color:#fff;text-decoration:none;padding:14px 28px;border-radius:6px;font-weight:600;font-size:15px;">
-            Book this placement
-          </a>
-        </p>`;
+        <p style="margin:0 0 28px 0;">${primaryButton({ href: checkoutUrl, label: 'Book this placement' })}</p>`;
     } else {
       // No specific slot — generic rate card CTA.
       bodyHtml = `
-        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 20px 0;">
+        <p style="font-size:15px;line-height:1.5;color:${BRAND.bodyText};margin:0 0 20px 0;">
           We received your inquiry${data.slot_label ? ` about <strong>${escapeHtml(data.slot_label)}</strong>` : ''} and will follow up personally within one business day.
         </p>
-        <p style="font-size:15px;line-height:1.5;color:#333;margin:0 0 16px 0;">
+        <p style="font-size:15px;line-height:1.5;color:${BRAND.bodyText};margin:0 0 16px 0;">
           See our full rate card and book any of our 17 placements directly:
         </p>
-        <p style="margin:0 0 28px 0;">
-          <a href="https://realtynewsnow.app/advertise" style="display:inline-block;background:#1a2a44;color:#fff;text-decoration:none;padding:14px 28px;border-radius:6px;font-weight:600;font-size:15px;">
-            View rate card
-          </a>
-        </p>`;
+        <p style="margin:0 0 28px 0;">${primaryButton({ href: 'https://realtynewsnow.app/advertise', label: 'View rate card' })}</p>`;
     }
 
-    const replyHtml = `
-      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;padding:24px;color:#1a2a44;">
-        <h2 style="margin:0 0 16px 0;color:#1a2a44;">Thanks for reaching out, ${escapeHtml(data.name.split(' ')[0] ?? data.name)}.</h2>
-        ${bodyHtml}
-        <p style="font-size:13px;color:#999;margin:24px 0 0 0;border-top:1px solid #eee;padding-top:16px;">
-          Questions? Just reply to this email.<br/>
-          — The RealtyLine Austin & Newsline San Antonio team
-        </p>
-      </div>
-    `;
+    const replyHtml = wrapEmail({
+      heading: `Thanks for reaching out, ${escapeHtml(data.name.split(' ')[0] ?? data.name)}.`,
+      bodyHtml,
+    });
 
     const replySubject = soldOut && slotInfo
       ? `${slotInfo.name} is fully booked — here are a few alternatives`

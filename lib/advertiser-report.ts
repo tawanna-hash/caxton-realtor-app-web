@@ -6,6 +6,7 @@
 // Email uses table-based layout + inline styles for broad client support.
 
 import type { PublicationTheme } from '@/lib/publication-theme';
+import { escapeHtml } from '@/lib/server/email/html';
 
 export interface AdvertiserReportInput {
   advertiserName: string;
@@ -24,15 +25,6 @@ export interface AdvertiserReportInput {
     uniqueSessions: number;
   }>;
   personalMessage?: string;
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
 
 function fmtShortDate(iso: string): string {

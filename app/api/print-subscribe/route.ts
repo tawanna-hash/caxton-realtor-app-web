@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getEmailProvider } from '@/lib/server/email';
+import { escapeHtml } from '@/lib/server/email/html';
 
 export const runtime = 'nodejs';
 
@@ -285,14 +286,7 @@ function pubLabel(pub: 'realtyline' | 'newsline'): string {
   return pub === 'realtyline' ? 'RealtyLine (Austin)' : 'Newsline (San Antonio)';
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+
 
 function notificationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): string {
   const norm = usps.normalized;

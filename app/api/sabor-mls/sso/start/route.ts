@@ -16,6 +16,7 @@
  */
 
 import { NextRequest } from 'next/server';
+import { escapeHtml } from '@/lib/server/email/html';
 
 export const dynamic = 'force-dynamic';
 
@@ -232,11 +233,4 @@ export async function GET(req: NextRequest) {
   });
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+
