@@ -22,8 +22,14 @@ import type {
   AdvertiserStatus,
   AdvertiserType,
 } from '@/lib/advertisers';
-import type { Publication } from '@/lib/publication-theme';
-import { PUBLICATION_OPTIONS, getPublicationTheme } from '@/lib/publication-theme';
+import type { Publication, PublicationKey } from '@/lib/publication-theme';
+import {
+  PUBLICATION_OPTIONS,
+  PUBLICATION_KEYS,
+  getPublicationTheme,
+  parsePublications,
+  serializePublications,
+} from '@/lib/publication-theme';
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 import LocationsStaffEditor from './LocationsStaffEditor';
 import AdvertiserImageUploader from '@/components/AdvertiserImageUploader';
@@ -53,7 +59,7 @@ export default function CrmClient({ initialRows }: Props) {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<AdvertiserStatus | 'all'>('all');
   const [typeFilter, setTypeFilter] = useState<AdvertiserType | 'all'>('all');
-  const [pubFilter, setPubFilter] = useState<string>('all');
+  const [pubFilter, setPubFilter] = useState<PublicationKey | 'all'>('all');
   const [editing, setEditing] = useState<AdvertiserCrmRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +77,10 @@ export default function CrmClient({ initialRows }: Props) {
     return rows.filter((r) => {
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
       if (typeFilter !== 'all' && r.type !== typeFilter) return false;
-      if (pubFilter !== 'all' && (r.publication ?? 'austin') !== pubFilter) return false;
+      if (pubFilter !== 'all') {
+        const advPubs = parsePublications(r.publication);
+        if (!advPubs.includes(pubFilter)) return false;
+      }
       if (!q) return true;
       const hay = [
         r.name, r.company, r.first_name, r.last_name,
@@ -174,7 +183,7 @@ export default function CrmClient({ initialRows }: Props) {
           </select>
           <select
             value={pubFilter}
-            onChange={(e) => setPubFilter(e.target.value)}
+            onChange={(e) => setPubFilter(e.target.value as PublicationKey | 'all')}
             className="px-3 py-2 rounded border border-gray-300 text-sm"
           >
             <option value="all">All publications</option>
@@ -342,20 +351,32 @@ function CrmRow({
   );
 }
 
-function PublicationBadge({ publication }: { publication?: Publication }) {
-  const theme = getPublicationTheme(publication);
-  const tone =
-    theme.id === 'san_antonio'
-      ? 'bg-purple-50 text-purple-800 border-purple-200'
-      : theme.id === 'both'
-        ? 'bg-gray-100 text-gray-700 border-gray-200'
-        : 'bg-blue-50 text-blue-800 border-blue-200';
+function publicationTone(key: PublicationKey): string {
+  switch (key) {
+    case 'san_antonio': return 'bg-purple-50 text-purple-800 border-purple-200';
+    case 'houston':     return 'bg-teal-50 text-teal-800 border-teal-200';
+    case 'dallas':      return 'bg-amber-50 text-amber-800 border-amber-200';
+    case 'austin':
+    default:            return 'bg-blue-50 text-blue-800 border-blue-200';
+  }
+}
+
+function PublicationBadge({ publication }: { publication?: Publication | string | null }) {
+  const pubs = parsePublications(publication);
   return (
-    <span
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${tone}`}
-    >
-      {theme.shortName}
-    </span>
+    <div className="flex flex-wrap gap-1">
+      {pubs.map((p) => {
+        const theme = getPublicationTheme(p);
+        return (
+          <span
+            key={p}
+            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${publicationTone(p)}`}
+          >
+            {theme.shortName}
+          </span>
+        );
+      })}
+    </div>
   );
 }
 
@@ -416,7 +437,20 @@ function EditDrawer({
   // destructive actions (rotate share token, delete). These previously
   // lived on the standalone /admin/advertisers page; surfacing them here
   // lets the CRM be the single place for everything about an advertiser.
-  const [publication, setPublication] = useState<Publication>(row.publication ?? 'austin');
+  // Multi-pub: stored as a sorted PublicationKey[]. Serialized to CSV on save.
+  const [publications, setPublications] = useState<PublicationKey[]>(
+    () => parsePublications(row.publication),
+  );
+  const togglePublication = (key: PublicationKey) => {
+    setPublications((prev) => {
+      const has = prev.includes(key);
+      const next = has ? prev.filter((k) => k !== key) : [...prev, key];
+      // Never allow zero — default back to Austin if the user uncheck-all.
+      if (next.length === 0) return ['austin'];
+      // Canonical order.
+      return PUBLICATION_KEYS.filter((k) => next.includes(k));
+    });
+  };
   const [contactEmail, setContactEmail] = useState(row.contact_email ?? '');
   const [requiresGate, setRequiresGate] = useState<boolean>(row.requires_email_gate ?? false);
   const [shareToken, setShareToken] = useState<string>(row.share_token);
@@ -644,7 +678,8 @@ function EditDrawer({
         ...form,
         tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
         // Ad-management fields merged from the legacy /admin/advertisers page.
-        publication,
+        // Multi-pub: send as canonical CSV. API accepts either array or CSV.
+        publication: serializePublications(publications),
         contact_email: contactEmail.trim() || null,
         requires_email_gate: requiresGate,
       };
@@ -803,16 +838,24 @@ function EditDrawer({
           {/* ── Ad Management (kept as-is) ───────────────────────────── */}
           <Section title="Ad management">
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Publication">
-                <select
-                  value={publication}
-                  onChange={(e) => setPublication(e.target.value as Publication)}
-                  className={INPUT}
-                >
+              <Field label="Publications">
+                <div className="flex flex-col gap-1.5 rounded border border-gray-300 bg-white px-3 py-2">
                   {PUBLICATION_OPTIONS.map((p) => (
-                    <option key={p.id} value={p.id}>{p.label}</option>
+                    <label key={p.id} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={publications.includes(p.id)}
+                        onChange={() => togglePublication(p.id)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span>{p.label}</span>
+                    </label>
                   ))}
-                </select>
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Pick one or more. Advertisers tagged to a publication appear
+                    in that publication&apos;s mailing list and filters.
+                  </p>
+                </div>
               </Field>
               <Field label="Contact email (share link)">
                 <input
@@ -1223,7 +1266,14 @@ function CreateAdvertiserModal({
   onError: (msg: string) => void;
 }) {
   const [name, setName] = useState('');
-  const [publication, setPublication] = useState<Publication>('austin');
+  const [publications, setPublications] = useState<PublicationKey[]>(['austin']);
+  const togglePublication = (key: PublicationKey) => {
+    setPublications((prev) => {
+      const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key];
+      if (next.length === 0) return ['austin'];
+      return PUBLICATION_KEYS.filter((k) => next.includes(k));
+    });
+  };
   const [contactEmail, setContactEmail] = useState('');
   const [requiresGate, setRequiresGate] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1239,7 +1289,7 @@ function CreateAdvertiserModal({
           name: name.trim(),
           contact_email: contactEmail.trim() || null,
           requires_email_gate: requiresGate,
-          publication,
+          publication: serializePublications(publications),
         }),
       });
       if (!res.ok) {
@@ -1252,7 +1302,7 @@ function CreateAdvertiserModal({
     } finally {
       setSaving(false);
     }
-  }, [name, publication, contactEmail, requiresGate, onCreated, onError]);
+  }, [name, publications, contactEmail, requiresGate, onCreated, onError]);
 
   return (
     <div
@@ -1278,19 +1328,24 @@ function CreateAdvertiserModal({
               autoFocus
             />
           </label>
-          <label className="block space-y-1">
-            <span className="text-sm font-medium text-gray-700">Publication</span>
-            <select
-              value={publication}
-              onChange={(e) => setPublication(e.target.value as Publication)}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={saving}
-            >
+          <div className="block space-y-1">
+            <span className="text-sm font-medium text-gray-700">Publications</span>
+            <div className="flex flex-col gap-1.5 rounded border border-gray-300 bg-white px-3 py-2">
               {PUBLICATION_OPTIONS.map((opt) => (
-                <option key={opt.id} value={opt.id}>{opt.label}</option>
+                <label key={opt.id} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={publications.includes(opt.id)}
+                    onChange={() => togglePublication(opt.id)}
+                    disabled={saving}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>{opt.label}</span>
+                </label>
               ))}
-            </select>
-          </label>
+            </div>
+            <p className="text-[11px] text-gray-500">Check one or more publications this advertiser belongs to.</p>
+          </div>
           <label className="block space-y-1">
             <span className="text-sm font-medium text-gray-700">Contact email</span>
             <input

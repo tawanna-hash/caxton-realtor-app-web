@@ -141,7 +141,7 @@ export async function resolveAudience<Row extends { id: number }>(
     WHERE
       (${JSON.stringify(f.status ?? null)}::jsonb IS NULL OR a.status = ANY(SELECT jsonb_array_elements_text(${JSON.stringify(f.status ?? null)}::jsonb)))
       AND (${JSON.stringify(f.type ?? null)}::jsonb IS NULL OR a.type = ANY(SELECT jsonb_array_elements_text(${JSON.stringify(f.type ?? null)}::jsonb)))
-      AND (${JSON.stringify(f.publication ?? null)}::jsonb IS NULL OR a.publication = ANY(SELECT jsonb_array_elements_text(${JSON.stringify(f.publication ?? null)}::jsonb)))
+      AND (${JSON.stringify(f.publication ?? null)}::jsonb IS NULL OR string_to_array(COALESCE(a.publication, ''), ',') && ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(f.publication ?? null)}::jsonb)))
       AND (${JSON.stringify(f.industry ?? null)}::jsonb IS NULL OR a.industry = ANY(SELECT jsonb_array_elements_text(${JSON.stringify(f.industry ?? null)}::jsonb)))
       AND (${JSON.stringify(f.tags ?? null)}::jsonb IS NULL OR a.tags ?| ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(f.tags ?? null)}::jsonb)))
       AND (${f.has_active_agreement ?? null}::boolean IS NULL OR ${f.has_active_agreement ?? null}::boolean = EXISTS (

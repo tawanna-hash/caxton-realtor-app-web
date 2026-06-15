@@ -14,7 +14,10 @@ import {
 } from '@/lib/advertisers';
 import {
   ensurePublicationColumn,
-  type Publication,
+  parsePublications,
+  serializePublications,
+  isPublicationKey,
+  type PublicationKey,
 } from '@/lib/publication-theme';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { upsertAdvertiserMailingByAdvertiserId } from '@/lib/mailing';
@@ -35,13 +38,19 @@ function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
 }
 
-function normalizePublication(value: unknown): Publication {
-  if (
-    value === 'san_antonio' ||
-    value === 'houston' ||
-    value === 'dallas' ||
-    value === 'both'
-  ) return value;
+/**
+ * Accept either a CSV string (legacy single-pub: 'austin', 'both', or
+ * a new multi-pub CSV like 'austin,houston') or an array of pub keys.
+ * Always returns a canonical CSV string ready to write to the DB.
+ */
+function normalizePublication(value: unknown): string {
+  if (Array.isArray(value)) {
+    const keys = value.filter(isPublicationKey) as PublicationKey[];
+    return serializePublications(keys);
+  }
+  if (typeof value === 'string') {
+    return serializePublications(parsePublications(value));
+  }
   return 'austin';
 }
 
@@ -81,7 +90,7 @@ export async function POST(req: NextRequest) {
     name?: string;
     contact_email?: string;
     requires_email_gate?: boolean;
-    publication?: string;
+    publication?: string | string[];
   };
   try {
     body = await req.json();
