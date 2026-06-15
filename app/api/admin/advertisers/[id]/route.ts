@@ -10,7 +10,11 @@ import { slugify, CRM_PATCHABLE_FIELDS, type Advertiser } from '@/lib/advertiser
 import { coerceFooterTemplateId } from '@/lib/footer-templates';
 import { coerceHeaderStyle } from '@/lib/advertiser-header-styles';
 import {
-  ensurePublicationColumn, type Publication,
+  ensurePublicationColumn,
+  parsePublications,
+  serializePublications,
+  isPublicationKey,
+  type PublicationKey,
 } from '@/lib/publication-theme';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { upsertAdvertiserMailingByAdvertiserId } from '@/lib/mailing';
@@ -32,14 +36,22 @@ function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
 }
 
-function normalizePublication(value: unknown): Publication | null {
-  if (
-    value === 'austin' ||
-    value === 'san_antonio' ||
-    value === 'houston' ||
-    value === 'dallas' ||
-    value === 'both'
-  ) return value;
+/**
+ * Accept either a CSV string (legacy 'austin' / 'both' or new multi-pub
+ * 'austin,houston') or an array of pub keys. Returns a canonical CSV
+ * ready to write, or null when the input has no recognizable values
+ * (caller treats null as "skip this field").
+ */
+function normalizePublication(value: unknown): string | null {
+  if (Array.isArray(value)) {
+    const keys = value.filter(isPublicationKey) as PublicationKey[];
+    if (keys.length === 0) return null;
+    return serializePublications(keys);
+  }
+  if (typeof value === 'string') {
+    const parsed = parsePublications(value);
+    return serializePublications(parsed);
+  }
   return null;
 }
 

@@ -7,6 +7,22 @@ import { getSql } from '@/lib/db';
 import type { MailingSegment } from './segments';
 import { splitFullName } from './import-fields';
 import type { Sql } from './_internal';
+import { parsePublications } from '@/lib/publication-theme';
+
+// Map an advertisers.publication CSV string to the set of mailing
+// segments it should land in. Houston/Dallas don't have dedicated
+// mailing segments yet, so for now they fall back to the ATX bucket
+// (RealtyLine umbrella). Update this when -hou / -dal segments exist.
+function segmentsForPublication(pubCsv: string | null | undefined): MailingSegment[] {
+  const keys = parsePublications(pubCsv);
+  const out = new Set<MailingSegment>();
+  for (const k of keys) {
+    if (k === 'san_antonio') out.add('active-advertiser-sa');
+    else out.add('active-advertiser-atx'); // austin + houston + dallas
+  }
+  if (out.size === 0) out.add('active-advertiser-atx');
+  return Array.from(out);
+}
 
 // ============================================================
 
@@ -358,10 +374,7 @@ export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number
   // would otherwise widen it back to string | null).
   const primary = { ...primaryBase, ...merged, email: primaryBase.email };
 
-  const targets: MailingSegment[] =
-    adv.publication === 'san_antonio' ? ['active-advertiser-sa']
-    : adv.publication === 'austin'    ? ['active-advertiser-atx']
-    : ['active-advertiser-atx', 'active-advertiser-sa'];
+  const targets: MailingSegment[] = segmentsForPublication(adv.publication);
 
   const findInSeg = async (seg: MailingSegment, email: string): Promise<string | null> => {
     const e = email.trim().toLowerCase();
@@ -591,12 +604,8 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
     return rows[0]?.id ?? null;
   };
 
-  const targetSegmentsFor = (publication: string): MailingSegment[] => {
-    if (publication === 'san_antonio') return ['active-advertiser-sa'];
-    if (publication === 'austin') return ['active-advertiser-atx'];
-    // 'both' or anything unrecognized -> insert into both.
-    return ['active-advertiser-atx', 'active-advertiser-sa'];
-  };
+  const targetSegmentsFor = (publication: string): MailingSegment[] =>
+    segmentsForPublication(publication);
 
   for (const adv of advertisers) {
     const segments = targetSegmentsFor(adv.publication);
@@ -790,10 +799,7 @@ export async function upsertStaffMailingByStaffId(
 
   const { first_name, last_name } = splitFullName(staff.name ?? '');
 
-  const targets: MailingSegment[] =
-    staff.publication === 'san_antonio' ? ['active-advertiser-sa']
-    : staff.publication === 'austin'    ? ['active-advertiser-atx']
-    : ['active-advertiser-atx', 'active-advertiser-sa'];
+  const targets: MailingSegment[] = segmentsForPublication(staff.publication);
 
   const findInSeg = async (seg: MailingSegment): Promise<string | null> => {
     const e = email.toLowerCase();
