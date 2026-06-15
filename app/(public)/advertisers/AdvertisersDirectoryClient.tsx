@@ -1,5 +1,7 @@
 'use client';
 
+import { type PubKey } from '@/lib/pub-meta';
+
 // app/(public)/advertisers/AdvertisersDirectoryClient.tsx
 //
 // Client view for the public Advertisers directory. Filters the
@@ -14,7 +16,7 @@
 import Link from 'next/link';
 import { useSyncExternalStore } from 'react';
 
-type SitePub = 'realtyline' | 'newsline';
+type SitePub = PubKey;
 
 type DirEntry = {
   id: number;
@@ -63,11 +65,15 @@ function getServerPubSnapshot(): SitePub {
   return SERVER_PUB;
 }
 
-// Map the UI-level site pub to the DB-level publication value used on
-// the advertisers table (austin = RealtyLine, san_antonio = Newsline).
+// Maps the UI-level site pub to the DB-level publication value used on
+// the advertisers table. Houston/Dallas inherit the RealtyLine ('austin')
+// publication slug because they're pre-launch with no advertisers of their
+// own yet - filtering on 'austin' returns the empty set safely.
 const SITE_TO_DB: Record<SitePub, 'austin' | 'san_antonio'> = {
   realtyline: 'austin',
   newsline: 'san_antonio',
+  'realtyline-houston': 'austin',
+  'realtyline-dallas': 'austin',
 };
 
 export default function AdvertisersDirectoryClient({ advertisers, themes }: Props) {

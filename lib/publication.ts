@@ -19,15 +19,36 @@
  *     migrated away. Cookie wins on conflict.
  */
 
-export type Pub = 'realtyline' | 'newsline';
+// PubKey is re-exported as the canonical Pub type so the two sources of
+// truth stay aligned. Houston/Dallas are valid Pub values as of Phase 2
+// PR A even though they ship with empty-shell content.
+import type { PubKey } from './pub-meta';
+import { isPubKey, isPreLaunchPub } from './pub-meta';
+export type Pub = PubKey;
 
 export const PUB_COOKIE = 'caxton_pub';
 export const PUB_LS_KEY = 'caxton_pub'; // legacy mirror
 export const PUB_CHANGE_EVENT = 'savedPubChange';
 export const PUB_DEFAULT: Pub = 'realtyline';
 
-export function normalizePub(v: unknown): Pub | null {
-  return v === 'realtyline' || v === 'newsline' ? v : null;
+/**
+ * Normalize an arbitrary value into a Pub.
+ *
+ * @param v - The raw value (cookie, query param, localStorage, etc).
+ * @param opts.allowPreLaunch - When true, pre-launch markets like
+ *   'realtyline-houston' / 'realtyline-dallas' are accepted. Defaults to
+ *   false so the picker, cookie reads, and admin tools don't accidentally
+ *   route users to a market with empty-shell content. Phase 2 PR C will
+ *   flip pre-launch markets to fully-launched in PUB_META and remove this
+ *   guard for them.
+ */
+export function normalizePub(
+  v: unknown,
+  opts: { allowPreLaunch?: boolean } = {},
+): Pub | null {
+  if (!isPubKey(v)) return null;
+  if (!opts.allowPreLaunch && isPreLaunchPub(v)) return null;
+  return v;
 }
 
 /**

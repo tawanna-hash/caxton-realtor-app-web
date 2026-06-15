@@ -9,6 +9,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
+import { type PubKey } from '@/lib/pub-meta';
 
 export interface FacebookFeedPost {
   id: number;
@@ -23,7 +24,7 @@ export interface FacebookFeedPost {
 
 interface Props {
   post: FacebookFeedPost;
-  pub: 'realtyline' | 'newsline';
+  pub: PubKey;
   track?: (event: string, data: Record<string, unknown>) => void;
 }
 

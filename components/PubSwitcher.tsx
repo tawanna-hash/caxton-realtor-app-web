@@ -1,5 +1,7 @@
 'use client';
 
+import { type PubKey } from '@/lib/pub-meta';
+
 // components/PubSwitcher.tsx
 //
 // Inline publication switcher pill-pair. Mirrors the implicit publication
@@ -16,7 +18,7 @@
 
 import { useCallback } from 'react';
 
-type Pub = 'realtyline' | 'newsline';
+type Pub = PubKey;
 
 const PUBS: { id: Pub; label: string; color: string }[] = [
   { id: 'realtyline', label: 'RealtyLine Austin', color: '#021D40' },

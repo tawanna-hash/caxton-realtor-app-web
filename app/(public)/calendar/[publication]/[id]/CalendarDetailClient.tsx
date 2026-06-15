@@ -1,11 +1,12 @@
 'use client';
 
+import { type PubKey } from '@/lib/pub-meta';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { EventDetail } from '@/components/events/EventDetail';
 import type { CalendarEvent } from '@/lib/events-store';
 
-type Pub = 'realtyline' | 'newsline';
+type Pub = PubKey;
 
 function pubFromMarket(market: string): Pub {
   return market === 'san_antonio' ? 'newsline' : 'realtyline';

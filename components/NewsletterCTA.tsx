@@ -1,5 +1,7 @@
 'use client';
 
+import { type PubKey } from '@/lib/pub-meta';
+
 // components/NewsletterCTA.tsx
 //
 // Shared inline newsletter signup form. Posts to /api/newsletter/subscribe
@@ -10,12 +12,15 @@
 
 import { useEffect, useState } from 'react';
 
-type Publication = 'realtyline' | 'newsline';
+type Publication = PubKey;
 
 // Brand color per publication. Falls back to neutral if unknown.
+// Houston/Dallas inherit RealtyLine navy.
 const PUB_COLORS: Record<Publication, string> = {
   realtyline: '#021D40',
   newsline: '#7A1F1F',
+  'realtyline-houston': '#021D40',
+  'realtyline-dallas': '#021D40',
 };
 
 type Props = {
