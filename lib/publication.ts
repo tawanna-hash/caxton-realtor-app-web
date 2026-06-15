@@ -64,7 +64,17 @@ export async function getServerPub(): Promise<Pub> {
   // callers will be the only ones that hit this branch.
   const { cookies } = await import('next/headers');
   const store = await cookies();
-  return normalizePub(store.get(PUB_COOKIE)?.value) ?? PUB_DEFAULT;
+  // Admin sessions are allowed to preview pre-launch pubs (Houston/Dallas)
+  // via the ?pub= deep-link middleware in proxy.ts. Detect either the
+  // current v2 session cookie or the legacy one so QA on either path works.
+  const hasAdmin = !!(
+    store.get('caxton_admin_session_v2')?.value ||
+    store.get('caxton_admin_session')?.value
+  );
+  return (
+    normalizePub(store.get(PUB_COOKIE)?.value, { allowPreLaunch: hasAdmin }) ??
+    PUB_DEFAULT
+  );
 }
 
 /**

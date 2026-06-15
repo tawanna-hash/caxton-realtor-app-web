@@ -25,7 +25,15 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
-import { ADMIN_SESSION_COOKIE_NAME } from './lib/auth/cookie-names';
+import {
+  ADMIN_SESSION_COOKIE_NAME,
+  LEGACY_ADMIN_SESSION_COOKIE_NAME,
+} from './lib/auth/cookie-names';
+import {
+  PUB_KEYS,
+  PRE_LAUNCH_PUB_KEYS,
+  type PubKey,
+} from './lib/pub-meta';
 
 // Pages anyone can hit without a session. Everything else under /admin
 // requires a valid admin JWT.
@@ -60,21 +68,52 @@ async function isValidAdminToken(token: string, secret: string): Promise<boolean
   }
 }
 
-// Publication permalink: ?pub=realtyline|newsline sets the caxton_pub
-// cookie, strips the query param, and 308-redirects to the clean URL.
-// This is what makes
+// Publication permalink: ?pub=<key> sets the caxton_pub cookie, strips
+// the query param, and 308-redirects to the clean URL. This is what makes
 //   https://realtynewsnow.app/calendar?pub=newsline
 // work as a durable permalink that survives Incognito visits, cleared
 // localStorage, and bookmarks. See lib/publication.ts for the full model.
-const VALID_PUBS = new Set(['realtyline', 'newsline']);
+//
+// Pre-launch markets (realtyline-houston, realtyline-dallas as of Phase 2
+// PR B) are admin-only: the redirect+cookie only fires when the request
+// carries an admin session cookie. Everyone else gets a silent strip of
+// the query param so a leaked link doesn't drop a visitor into an empty
+// market. Cookie signature verification still happens downstream in
+// requireAdmin() - middleware can only check presence.
+const PUB_KEY_SET = new Set<string>(PUB_KEYS);
+const PRE_LAUNCH_SET = new Set<string>(PRE_LAUNCH_PUB_KEYS);
+
+function hasAdminCookie(req: NextRequest): boolean {
+  return (
+    req.cookies.has(ADMIN_SESSION_COOKIE_NAME) ||
+    req.cookies.has(LEGACY_ADMIN_SESSION_COOKIE_NAME)
+  );
+}
 
 function handlePubPermalink(req: NextRequest): NextResponse | null {
   const param = req.nextUrl.searchParams.get('pub');
-  if (!param || !VALID_PUBS.has(param)) return null;
+  if (!param) return null;
+
+  // Unknown pub key: strip the param so a typo doesn't linger forever,
+  // but don't mutate cookie state.
+  if (!PUB_KEY_SET.has(param)) {
+    const clean = req.nextUrl.clone();
+    clean.searchParams.delete('pub');
+    return NextResponse.redirect(clean, 308);
+  }
+
+  // Pre-launch markets gated on admin cookie presence.
+  if (PRE_LAUNCH_SET.has(param) && !hasAdminCookie(req)) {
+    const clean = req.nextUrl.clone();
+    clean.searchParams.delete('pub');
+    return NextResponse.redirect(clean, 308);
+  }
+
+  // Valid + permitted: persist the cookie and clean the URL.
   const clean = req.nextUrl.clone();
   clean.searchParams.delete('pub');
   const res = NextResponse.redirect(clean, 308);
-  res.cookies.set('caxton_pub', param, {
+  res.cookies.set('caxton_pub', param as PubKey, {
     path: '/',
     maxAge: 60 * 60 * 24 * 365,
     sameSite: 'lax',
