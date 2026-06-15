@@ -211,7 +211,7 @@ export async function GET(req: Request) {
   const adminEmail =
     process.env.RENEWAL_ADMIN_EMAIL ??
     process.env.EMAIL_FROM_ADMIN ??
-    'tawanna@newslinesa.com';
+    'tawanna@myrealtyline.com';
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
 
   // Sort: 30-day bucket first (more urgent), then by expiration date.
