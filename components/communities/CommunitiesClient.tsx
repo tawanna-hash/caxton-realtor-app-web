@@ -26,6 +26,8 @@ type Props = {
 const PUB_LABEL: Record<Publication, string> = {
   realtyline: 'RealtyLine',
   newsline: 'Newsline',
+  'realtyline-houston': 'RealtyLine Houston',
+  'realtyline-dallas': 'RealtyLine Dallas',
   both: 'Both',
 };
 
