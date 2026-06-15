@@ -26,6 +26,7 @@ import { APP_AD_SLOTS, getSlotAvailablePubs, type AppAdSlot } from '@/lib/media-
 export type CheckoutPub = 'realtyline' | 'newsline' | 'both';
 
 interface ActiveCampaignRow {
+  ad_space_slug: string;
   publication: string;
   start_date: string;
   end_date: string;
@@ -44,57 +45,26 @@ function normalizePub(raw: string): 'realtyline' | 'newsline' | 'both' | null {
 }
 
 /**
- * For a given slot, return the set of checkout scopes that are CURRENTLY
- * blocked because at least one active campaign overlaps the window.
- *
- * Fails open: if the DB is unreachable (e.g. sandbox build with no
- * DATABASE_URL) the function logs and returns an empty Set so the UI
- * stays usable rather than blocking everything.
- *
- * @param slotSlug   Canonical slot slug (matches APP_AD_SLOTS[].slug).
- * @param startDate  ISO date (YYYY-MM-DD). Defaults to today.
- * @param endDate    ISO date (YYYY-MM-DD). Defaults to today + 5 years
- *                   so the public form treats any pending campaign as
- *                   taken until the buyer narrows the window.
+ * Compute the default availability window: today -> +5y. Intentionally wide
+ * so the checkout form treats any live or upcoming campaign as taken on
+ * first paint. Once the buyer narrows dates, the API recomputes.
  */
-export async function getBookedPubsForSlot(
-  slotSlug: string,
-  startDate?: string,
-  endDate?: string,
-): Promise<Set<CheckoutPub>> {
-  const blocked = new Set<CheckoutPub>();
-
-  // Default window: today -> +5y. This is intentionally wide so the
-  // checkout form treats any live or upcoming campaign as taken on
-  // first paint. Once the buyer narrows dates, the API recomputes.
+function defaultWindow(startDate?: string, endDate?: string): { start: string; end: string } {
   const today = new Date().toISOString().slice(0, 10);
   const farFuture = (() => {
     const d = new Date();
     d.setFullYear(d.getFullYear() + 5);
     return d.toISOString().slice(0, 10);
   })();
-  const start = startDate || today;
-  const end = endDate || farFuture;
+  return { start: startDate || today, end: endDate || farFuture };
+}
 
-  let rows: ActiveCampaignRow[] = [];
-  try {
-    const sql = getSql();
-    const result = (await sql`
-      SELECT publication, start_date::text AS start_date, end_date::text AS end_date
-        FROM ad_campaigns
-       WHERE ad_space_slug = ${slotSlug}
-         AND active = TRUE
-         AND start_date <= ${end}::date
-         AND end_date   >= ${start}::date
-    `) as unknown as ActiveCampaignRow[];
-    rows = Array.isArray(result) ? result : [];
-  } catch (err) {
-    // Sandbox / no DB / table missing — fail open so the UI is not bricked.
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`[slot-availability] fail-open for slot=${slotSlug}: ${msg}`);
-    return blocked;
-  }
-
+/**
+ * Reduce active-campaign rows (already filtered to a single slot) into the
+ * set of checkout scopes that are blocked. Pure / no I/O.
+ */
+function rowsToBlockedSet(rows: ActiveCampaignRow[]): Set<CheckoutPub> {
+  const blocked = new Set<CheckoutPub>();
   let realtylineTaken = false;
   let newslineTaken = false;
 
@@ -120,6 +90,116 @@ export async function getBookedPubsForSlot(
 }
 
 /**
+ * Batch helper — returns the blocked-pub Set for EVERY known slot in
+ * `APP_AD_SLOTS` using a single SQL query. This is the preferred entry
+ * point for pages that need to render availability for many slots at
+ * once (e.g. /advertise/digital, pickAlternativeSlots).
+ *
+ * Slots with no overlapping campaign are still present in the returned
+ * Map with an empty Set, so callers can `.get(slug)` without null-checks.
+ *
+ * Fails open: on DB error, returns a Map of empty Sets for every slot so
+ * the UI does not brick.
+ */
+export async function getBookedPubsForAllSlots(
+  startDate?: string,
+  endDate?: string,
+): Promise<Map<string, Set<CheckoutPub>>> {
+  const { start, end } = defaultWindow(startDate, endDate);
+
+  // Pre-seed every known slot with an empty Set so callers always get a
+  // value back even when no campaign touches that slug.
+  const result = new Map<string, Set<CheckoutPub>>();
+  for (const s of APP_AD_SLOTS) {
+    result.set(s.slug, new Set<CheckoutPub>());
+  }
+
+  let rows: ActiveCampaignRow[] = [];
+  try {
+    const sql = getSql();
+    const r = (await sql`
+      SELECT ad_space_slug,
+             publication,
+             start_date::text AS start_date,
+             end_date::text   AS end_date
+        FROM ad_campaigns
+       WHERE active = TRUE
+         AND start_date <= ${end}::date
+         AND end_date   >= ${start}::date
+    `) as unknown as ActiveCampaignRow[];
+    rows = Array.isArray(r) ? r : [];
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[slot-availability] batch fail-open: ${msg}`);
+    return result;
+  }
+
+  // Group rows by slug, then reduce each group with the shared helper.
+  const bySlug = new Map<string, ActiveCampaignRow[]>();
+  for (const r of rows) {
+    const slug = r.ad_space_slug;
+    if (!slug) continue;
+    const list = bySlug.get(slug);
+    if (list) list.push(r);
+    else bySlug.set(slug, [r]);
+  }
+
+  for (const [slug, slugRows] of bySlug) {
+    // If a campaign references an unknown slug, surface it anyway so
+    // future callers can still query for it.
+    result.set(slug, rowsToBlockedSet(slugRows));
+  }
+
+  return result;
+}
+
+/**
+ * For a given slot, return the set of checkout scopes that are CURRENTLY
+ * blocked because at least one active campaign overlaps the window.
+ *
+ * Fails open: if the DB is unreachable (e.g. sandbox build with no
+ * DATABASE_URL) the function logs and returns an empty Set so the UI
+ * stays usable rather than blocking everything.
+ *
+ * @param slotSlug   Canonical slot slug (matches APP_AD_SLOTS[].slug).
+ * @param startDate  ISO date (YYYY-MM-DD). Defaults to today.
+ * @param endDate    ISO date (YYYY-MM-DD). Defaults to today + 5 years
+ *                   so the public form treats any pending campaign as
+ *                   taken until the buyer narrows the window.
+ */
+export async function getBookedPubsForSlot(
+  slotSlug: string,
+  startDate?: string,
+  endDate?: string,
+): Promise<Set<CheckoutPub>> {
+  const { start, end } = defaultWindow(startDate, endDate);
+
+  let rows: ActiveCampaignRow[] = [];
+  try {
+    const sql = getSql();
+    const result = (await sql`
+      SELECT ad_space_slug,
+             publication,
+             start_date::text AS start_date,
+             end_date::text   AS end_date
+        FROM ad_campaigns
+       WHERE ad_space_slug = ${slotSlug}
+         AND active = TRUE
+         AND start_date <= ${end}::date
+         AND end_date   >= ${start}::date
+    `) as unknown as ActiveCampaignRow[];
+    rows = Array.isArray(result) ? result : [];
+  } catch (err) {
+    // Sandbox / no DB / table missing — fail open so the UI is not bricked.
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[slot-availability] fail-open for slot=${slotSlug}: ${msg}`);
+    return new Set<CheckoutPub>();
+  }
+
+  return rowsToBlockedSet(rows);
+}
+
+/**
  * Determine whether a slot is fully sold out for the requested publication
  * (or, when pub='both', sold out across BOTH publications).
  */
@@ -142,6 +222,9 @@ export async function isSlotSoldOut(
  * Sold-out slots are filtered out using the same date window as the public
  * checkout. Slots whose availablePubs don't include the requested pub are
  * also filtered out.
+ *
+ * Uses the batch helper so this is a single SQL query regardless of how
+ * many candidate slots APP_AD_SLOTS contains.
  */
 export async function pickAlternativeSlots(
   originalSlug: string,
@@ -154,11 +237,13 @@ export async function pickAlternativeSlots(
   // Only consider slots that can actually be booked on the requested pub.
   const pubCompatible = all.filter((s) => getSlotAvailablePubs(s).includes(pub));
 
-  // Probe availability for each candidate in parallel.
-  const availability = await Promise.all(
-    pubCompatible.map(async (s) => ({ slot: s, soldOut: await isSlotSoldOut(s.slug, pub) })),
-  );
-  const available = availability.filter((a) => !a.soldOut).map((a) => a.slot);
+  // Single SQL query for all slot availability.
+  const blockedBySlug = await getBookedPubsForAllSlots();
+
+  const available = pubCompatible.filter((s) => {
+    const blocked = blockedBySlug.get(s.slug) ?? new Set<CheckoutPub>();
+    return !blocked.has(pub);
+  });
 
   // Rank: same tier+zone first, then same tier, then everything else.
   const rank = (s: AppAdSlot): number => {
