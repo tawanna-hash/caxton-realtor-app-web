@@ -121,10 +121,10 @@ export default function CrmClient({ initialRows }: Props) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-            Admin · Advertisers &amp; CRM
+            Admin · Advertisers
           </div>
           <h1 className="text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
-            Advertisers &amp; contacts
+            Advertisers
           </h1>
           <p className="text-sm text-gray-600 mt-1">
             Unified workspace for advertiser relationships. Search, filter,
