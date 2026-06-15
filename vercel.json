@@ -93,6 +93,10 @@
       "schedule": "0 */6 * * *"
     },
     {
+      "path": "/api/cron/send-renewal-reminders",
+      "schedule": "0 13 * * *"
+    },
+    {
       "path": "/api/cron/refresh-social",
       "schedule": "0 9 * * *"
     },
