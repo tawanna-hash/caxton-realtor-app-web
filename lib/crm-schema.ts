@@ -50,7 +50,20 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
 
   // Classification + lifecycle
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS type text NOT NULL DEFAULT 'advertiser'`);
-  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'active'`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'advertiser'`);
+
+  // ── Status rename (Session 22) ───────────────────────────────────
+  // Status vocabulary collapsed from {active, prospect, paused, archived}
+  // to {prospect, advertiser, archived}:
+  //   - 'active' rows become 'advertiser' (the new "customer" label)
+  //   - 'paused' rows fall back to 'prospect' (paused is no longer a status)
+  // Idempotent: subsequent runs no-op because no rows match.
+  await step(() => sql`UPDATE advertisers SET status = 'advertiser' WHERE status = 'active'`);
+  await step(() => sql`UPDATE advertisers SET status = 'prospect'   WHERE status = 'paused'`);
+  // Also bump the column default forward in case it was created before
+  // this rename (ADD COLUMN IF NOT EXISTS above is a no-op once the
+  // column exists, so it can't update an existing default).
+  await step(() => sql`ALTER TABLE advertisers ALTER COLUMN status SET DEFAULT 'advertiser'`);
 
   // Identity
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS first_name text`);

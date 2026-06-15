@@ -219,7 +219,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     if (needsMirror) {
       try {
         const advRes = await ensureAdvertiserForAgreement(savedAg, {
-          desiredStatus: isSignedTransition ? 'active' : 'prospect',
+          desiredStatus: isSignedTransition ? 'advertiser' : 'prospect',
         });
         if (advRes.outcome !== 'skipped') {
           const advLog = appendAudit(savedAg.audit_log, {

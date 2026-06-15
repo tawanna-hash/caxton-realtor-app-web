@@ -61,12 +61,12 @@ function pickContactEmail(ag: Agreement): string | null {
  *    helper is done.
  *      * 'prospect' — used for draft/sent agreements. Brand-new rows are
  *        created as prospect. Existing rows are NEVER demoted.
- *      * 'active'   — used when an agreement is signed. New rows are
- *        created as active. Existing rows with status='prospect' get
- *        promoted to 'active'. Other statuses are left alone.
+ *      * 'advertiser' — used when an agreement is signed. New rows are
+ *        created as advertiser. Existing rows with status='prospect' get
+ *        promoted to 'advertiser'. Other statuses are left alone.
  */
 export type EnsureAdvertiserOptions = {
-  desiredStatus?: 'prospect' | 'active';
+  desiredStatus?: 'prospect' | 'advertiser';
 };
 
 export async function ensureAdvertiserForAgreement(
@@ -74,18 +74,18 @@ export async function ensureAdvertiserForAgreement(
   opts: EnsureAdvertiserOptions = {},
 ): Promise<EnsureAdvertiserResult> {
   const sql = getSql();
-  const desiredStatus: 'prospect' | 'active' = opts.desiredStatus ?? 'prospect';
+  const desiredStatus: 'prospect' | 'advertiser' = opts.desiredStatus ?? 'prospect';
 
-  // Promote an existing advertiser from 'prospect' to 'active' when the
+  // Promote an existing advertiser from 'prospect' to 'advertiser' when the
   // caller signals that this agreement is now signed. Never demote, never
-  // touch 'paused' or 'archived' rows.
+  // touch 'archived' rows.
   async function maybePromote(advertiserId: number): Promise<void> {
-    if (desiredStatus !== 'active') return;
+    if (desiredStatus !== 'advertiser') return;
     await sql`
       UPDATE advertisers
-         SET status = 'active', updated_at = NOW()
+         SET status = 'advertiser', updated_at = NOW()
        WHERE id = ${advertiserId}
-         AND COALESCE(status, 'active') = 'prospect'
+         AND COALESCE(status, 'prospect') = 'prospect'
     `;
   }
 

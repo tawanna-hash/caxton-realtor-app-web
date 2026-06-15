@@ -766,7 +766,7 @@ export async function ensureSchema(): Promise<void> {
   // row so CRM contacts surface the full deal pipeline. Idempotent —
   // matches on contact_email first, then exact slug-from-name, otherwise
   // creates a new row with status='prospect' (drafts/sent agreements)
-  // or 'active' (signed agreements). NULL status is treated as 'active'.
+  // or 'advertiser' (signed agreements). NULL status is treated as 'prospect'.
   // Inlined SQL avoids a circular import with lib/advertisers-from-agreement.
   try {
     const orphanAgreements = (await sql`
@@ -806,7 +806,7 @@ export async function ensureSchema(): Promise<void> {
         if (trimmed) { contactEmail = trimmed.toLowerCase(); break; }
       }
 
-      const desiredStatus = ag.status === 'signed' ? 'active' : 'prospect';
+      const desiredStatus = ag.status === 'signed' ? 'advertiser' : 'prospect';
 
       // 1) Match by contact_email.
       let advertiserId: number | null = null;
@@ -877,13 +877,13 @@ export async function ensureSchema(): Promise<void> {
          WHERE id = ${ag.id}
       `;
 
-      // Promote prospect -> active when this agreement is signed.
-      if (desiredStatus === 'active') {
+      // Promote prospect -> advertiser when this agreement is signed.
+      if (desiredStatus === 'advertiser') {
         await sql`
           UPDATE advertisers
-             SET status = 'active', updated_at = NOW()
+             SET status = 'advertiser', updated_at = NOW()
            WHERE id = ${advertiserId}
-             AND COALESCE(status, 'active') = 'prospect'
+             AND COALESCE(status, 'prospect') = 'prospect'
         `;
       }
     }
