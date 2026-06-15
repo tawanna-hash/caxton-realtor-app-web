@@ -55,8 +55,21 @@ export default async function CheckoutPage(ctx: RouteCtx) {
   // Live availability: query ad_campaigns for any active booking that
   // overlaps the default window. The CheckoutForm grays out booked
   // scopes; the API enforces the same rule on payment intent creation.
+  //
+  // bookedPubsSet may include Houston/Dallas keys (CheckoutPub is widened),
+  // but the public checkout UI only renders Austin/SA pills today. We
+  // narrow to the 3-value union the form expects; Houston/Dallas bookings
+  // are handled by admin BookingBuilder, not this page.
   const bookedPubsSet = await getBookedPubsForSlot(slot.slug);
-  const bookedPubs = Array.from(bookedPubsSet);
+  const NARROW_BOOKED: ReadonlyArray<'realtyline' | 'newsline' | 'both'> = [
+    'realtyline',
+    'newsline',
+    'both',
+  ];
+  const bookedPubs = Array.from(bookedPubsSet).filter(
+    (p): p is 'realtyline' | 'newsline' | 'both' =>
+      (NARROW_BOOKED as readonly string[]).includes(p),
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">

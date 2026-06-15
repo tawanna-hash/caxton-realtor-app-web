@@ -88,7 +88,15 @@ export default function CheckoutForm({
   // on both publications must not let the buyer pick 'both' (the pill
   // renders disabled below, and the server-side intent route enforces the
   // same rule).
-  const availablePubs = getSlotAvailablePubs(slot);
+  //
+  // Note: getSlotAvailablePubs may include Houston/Dallas (MediaKitPub), but
+  // the public checkout UI currently only surfaces RealtyLine Austin / Newsline
+  // San Antonio / both. Houston/Dallas bookings happen via admin BookingBuilder.
+  // We narrow here so the local Pub type stays the source of truth for the UI.
+  const NARROW_PUBS: readonly Pub[] = ['realtyline', 'newsline', 'both'];
+  const isNarrowPub = (v: string): v is Pub =>
+    (NARROW_PUBS as readonly string[]).includes(v);
+  const availablePubs: Pub[] = getSlotAvailablePubs(slot).filter(isNarrowPub);
   const bothAvailable = availablePubs.includes('both') && !bookedSet.has('both');
   // A scope is "open" if the slot is sold on it AND no active campaign
   // is currently occupying it.
@@ -101,8 +109,9 @@ export default function CheckoutForm({
   // so the form still renders rather than crashing on undefined.
   const safeInitialPub: Pub = isOpenForBooking(initialPub)
     ? initialPub
-    : ((availablePubs.find(isOpenForBooking) ??
-        availablePubs[0]) as Pub);
+    : (availablePubs.find(isOpenForBooking) ??
+        availablePubs[0] ??
+        'realtyline');
   const [pub, setPub] = useState<Pub>(safeInitialPub);
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>(
     perUnit ? 'unit' : 'weekly',

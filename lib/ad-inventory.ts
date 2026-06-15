@@ -1,69 +1,36 @@
-// Per-publication ad slot inventory registry (Phase 2 PR C skeleton).
+// Per-publication ad inventory readiness.
 //
-// Status: SKELETON. Realtyline + Newsline keep their existing inventory
-// inferred from APP_AD_SLOTS in lib/media-kit.ts and the `ad_campaigns`
-// table. This file ONLY surfaces the pre-launch markets (Houston/Dallas)
-// as empty inventory so any UI that iterates pubs (e.g. ad inquiry
-// builder, media-kit picker) has a stable shape to switch on.
+// Phase 2 PR C shipped this file as a per-pub slot list, but the actual
+// architecture keeps the slot catalog in lib/media-kit.ts (APP_AD_SLOTS)
+// and treats every pub equivalently — a pub either uses that catalog or
+// it doesn't. Phase 2 PR D flipped Houston and Dallas to inherit the
+// Austin/SA digital + email catalog at identical single-pub rates per
+// owner direction, so all four pubs share APP_AD_SLOTS.
 //
-// PR D activation steps:
-//   1. Owner provides Houston/Dallas slot dimensions + opening-day rate card
-//   2. Add real entries below
-//   3. Flip isPubInventoryReady() to true via a non-empty `slots` array
-//   4. Widen CheckoutPub in lib/server/slot-availability.ts to include the
-//      newly-activated pub key
-//
-// Until then, isPubInventoryReady('realtyline-houston') === false and the
-// inquiry/checkout UI MUST skip those pubs in the picker.
+// This file exists so future per-market overrides (e.g. a Houston-only
+// promo strip with custom pricing) have a stable hook: any pub that
+// returns a non-empty list from getPubAdSlotOverrides() means \"use this
+// instead of the shared APP_AD_SLOTS catalog\". Empty / undefined = use
+// the shared catalog.
 
 import { type PubKey } from '@/lib/pub-meta';
 
-export interface AdSlotSpec {
-  // Stable slot key matching lib/media-kit.ts APP_AD_SLOTS.slug values where
-  // possible so a Houston slot named feed_inline_card behaves the same as
-  // its Austin counterpart.
+export interface AdSlotOverride {
   slug: string;
   label: string;
-  // Pixel dimensions admins should target when uploading creative.
-  width: number;
-  height: number;
-  // Whether the slot rotates among multiple campaigns (true) or holds a
-  // single sponsorship for the campaign window (false).
-  rotates: boolean;
+  weeklySingle: number;
+  notes: string;
 }
 
-export interface PubInventory {
-  slots: AdSlotSpec[];
-  // Free-form notes for the rate card. Surfaced on the public media-kit
-  // page below the pricing table.
-  notes?: string;
+// No overrides today — every pub shares APP_AD_SLOTS. Add entries here
+// only when a market needs a slot that doesn't exist (or a different
+// rate) versus the shared catalog.
+export const AD_SLOT_OVERRIDES: Partial<Record<PubKey, AdSlotOverride[]>> = {};
+
+export function getPubAdSlotOverrides(pub: PubKey): AdSlotOverride[] {
+  return AD_SLOT_OVERRIDES[pub] ?? [];
 }
 
-// INVENTORY is the source of truth for pre-launch market slot lists. Launched
-// markets (realtyline, newsline) intentionally return undefined here so the
-// legacy APP_AD_SLOTS in lib/media-kit.ts remains authoritative for them.
-export const INVENTORY: Partial<Record<PubKey, PubInventory>> = {
-  'realtyline-houston': {
-    // TODO(houston-inventory): owner to provide slot list + dimensions.
-    // Most likely mirror of Austin's slots but with Houston-specific
-    // creative refresh cadence and rate card.
-    slots: [],
-    notes: 'Houston inventory opens Q3 2026 - rate card pending.',
-  },
-  'realtyline-dallas': {
-    // TODO(dallas-inventory): see houston note above. Dallas rate card
-    // expected to differ from Houston given DFW market depth.
-    slots: [],
-    notes: 'Dallas inventory opens Q3 2026 - rate card pending.',
-  },
-};
-
-export function getPubInventory(pub: PubKey): PubInventory | undefined {
-  return INVENTORY[pub];
-}
-
-export function isPubInventoryReady(pub: PubKey): boolean {
-  const inv = INVENTORY[pub];
-  if (!inv) return false; // launched pubs handle their own inventory elsewhere
-  return inv.slots.length > 0;
+export function pubHasAdSlotOverrides(pub: PubKey): boolean {
+  return getPubAdSlotOverrides(pub).length > 0;
 }

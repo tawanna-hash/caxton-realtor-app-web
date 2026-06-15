@@ -83,38 +83,52 @@ export interface AppAdSlot {
   notes: string;
   /**
    * Which publication scopes this slot can actually be booked on.
-   * Defaults to ['realtyline', 'newsline', 'both'] when omitted (all three),
-   * which is the historical assumption for every slot in this file.
+   * Defaults (when omitted) to every single-pub plus the legacy 'both'
+   * bundle — see getSlotAvailablePubs() for the resolved set.
    * Set this explicitly when a placement is only sold on one publication
    * (e.g. a Newsline-only sponsorship) or when 'both' is not packaged.
    * The checkout UI disables disallowed scopes; the server enforces the
    * same allow-list when creating the Stripe payment intent.
    */
-  availablePubs?: Array<'realtyline' | 'newsline' | 'both'>;
+  availablePubs?: Array<MediaKitPub>;
 }
+
+// Publication scope used by the rate-card and checkout system. Mirrors
+// CheckoutPub in lib/server/slot-availability.ts. Houston and Dallas
+// (added Phase 2 PR D) are sold as separate single-pub buys at the same
+// rate as a solo RealtyLine booking. 'both' remains the legacy Austin+SA
+// bundle and is NOT extended to cover Houston/Dallas.
+export type MediaKitPub =
+  | 'realtyline'
+  | 'newsline'
+  | 'realtyline-houston'
+  | 'realtyline-dallas'
+  | 'both';
 
 /**
  * Resolve the set of publication scopes a slot can be booked on. Centralized
  * so checkout UI, server-side payment-intent validation, and admin reference
  * tooling all agree on the rule. Slots with no explicit `availablePubs` are
- * assumed to be sold on either single pub OR both, matching the historical
- * default. A slot whose `weeklyBoth` is 0/null is treated as single-pub only.
+ * assumed to be sold on every single pub plus the legacy 'both' bundle.
+ * A slot whose `weeklyBoth` is 0/null is treated as single-pub only (no
+ * bundle), but Houston/Dallas remain bookable.
  */
 export function getSlotAvailablePubs(
   slot: AppAdSlot,
-): Array<'realtyline' | 'newsline' | 'both'> {
+): Array<MediaKitPub> {
   if (slot.availablePubs && slot.availablePubs.length > 0) {
     return slot.availablePubs;
   }
-  const both: Array<'realtyline' | 'newsline' | 'both'> = [
+  const singles: Array<MediaKitPub> = [
     'realtyline',
     'newsline',
-    'both',
+    'realtyline-houston',
+    'realtyline-dallas',
   ];
   if (!slot.weeklyBoth || slot.weeklyBoth <= 0) {
-    return ['realtyline', 'newsline'];
+    return singles;
   }
-  return both;
+  return [...singles, 'both'];
 }
 
 export const APP_AD_SLOTS: AppAdSlot[] = [

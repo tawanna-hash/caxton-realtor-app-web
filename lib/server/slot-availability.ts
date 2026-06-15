@@ -1,29 +1,40 @@
 // lib/server/slot-availability.ts
 //
-// Reads live ad_campaigns rows to determine which publication scopes
-// ('realtyline' | 'newsline' | 'both') are currently SOLD on a given slot
-// and therefore must be blocked in the public checkout UI + API.
+// Reads live ad_campaigns rows to determine which publication scopes are
+// currently SOLD on a given slot and therefore must be blocked in the
+// public checkout UI + API.
 //
 // Rules
 // -----
-//   1. A campaign with publication='both' (or 'realtyline'+'newsline') blocks
-//      all three scopes.
+//   1. A campaign with publication='both' (the legacy Austin + San Antonio
+//      bundle) blocks both 'realtyline' AND 'newsline' AND 'both'.
 //   2. A campaign on a single pub (austin/realtyline OR san_antonio/newsline)
 //      blocks that pub AND blocks 'both' (since 'both' requires both to be
 //      free).
-//   3. Date overlap is computed against the requested window. If none is
+//   3. Houston (realtyline-houston) and Dallas (realtyline-dallas) campaigns
+//      block ONLY their own scope. They do NOT block 'both' because 'both'
+//      remains the legacy Austin+SA bundle — Houston/Dallas are sold as
+//      separate single-pub buys at the same rate-card price as a solo
+//      RealtyLine (Austin) booking until further notice.
+//   4. Date overlap is computed against the requested window. If none is
 //      supplied, "today through 5 years out" is used so the public form
 //      shows the slot as blocked while any future campaign is live.
 //
 // Pub label encoding: historical rows in ad_campaigns.publication may use
 // either the DB enum ('austin' | 'san_antonio' | 'both') or the rate-card
-// enum ('realtyline' | 'newsline' | 'both') depending on which code path
-// inserted them. We normalize both here.
+// enum ('realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas'
+// | 'both') depending on which code path inserted them. We normalize all of
+// them here.
 
 import { getSql } from '@/lib/db';
 import { APP_AD_SLOTS, getSlotAvailablePubs, type AppAdSlot } from '@/lib/media-kit';
 
-export type CheckoutPub = 'realtyline' | 'newsline' | 'both';
+export type CheckoutPub =
+  | 'realtyline'
+  | 'newsline'
+  | 'realtyline-houston'
+  | 'realtyline-dallas'
+  | 'both';
 
 // House ads (advertiser_name = HOUSE_AD_ADVERTISER) exist to fill unsold
 // inventory — they should never block a real booking inquiry. We exclude
@@ -44,10 +55,12 @@ interface ActiveCampaignRow {
  * Normalize an ad_campaigns.publication string into the checkout enum.
  * Returns null for unrecognized values (defensive).
  */
-function normalizePub(raw: string): 'realtyline' | 'newsline' | 'both' | null {
+function normalizePub(raw: string): CheckoutPub | null {
   const v = (raw || '').toLowerCase().trim();
   if (v === 'realtyline' || v === 'austin') return 'realtyline';
   if (v === 'newsline' || v === 'san_antonio' || v === 'sa') return 'newsline';
+  if (v === 'realtyline-houston' || v === 'houston') return 'realtyline-houston';
+  if (v === 'realtyline-dallas' || v === 'dallas') return 'realtyline-dallas';
   if (v === 'both') return 'both';
   return null;
 }
@@ -75,6 +88,8 @@ function rowsToBlockedSet(rows: ActiveCampaignRow[]): Set<CheckoutPub> {
   const blocked = new Set<CheckoutPub>();
   let realtylineTaken = false;
   let newslineTaken = false;
+  let houstonTaken = false;
+  let dallasTaken = false;
 
   for (const r of rows) {
     const pub = normalizePub(r.publication);
@@ -85,13 +100,20 @@ function rowsToBlockedSet(rows: ActiveCampaignRow[]): Set<CheckoutPub> {
       realtylineTaken = true;
     } else if (pub === 'newsline') {
       newslineTaken = true;
+    } else if (pub === 'realtyline-houston') {
+      houstonTaken = true;
+    } else if (pub === 'realtyline-dallas') {
+      dallasTaken = true;
     }
   }
 
   if (realtylineTaken) blocked.add('realtyline');
   if (newslineTaken) blocked.add('newsline');
-  // 'both' is blocked whenever EITHER single pub is taken, since 'both'
-  // requires both pubs to be available.
+  if (houstonTaken) blocked.add('realtyline-houston');
+  if (dallasTaken) blocked.add('realtyline-dallas');
+  // 'both' is blocked whenever EITHER Austin/SA single pub is taken, since
+  // 'both' is the legacy Austin+SA bundle. Houston/Dallas campaigns do NOT
+  // block 'both' — they're separate single-pub markets.
   if (realtylineTaken || newslineTaken) blocked.add('both');
 
   return blocked;

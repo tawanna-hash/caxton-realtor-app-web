@@ -23,15 +23,20 @@ import { randomUUID } from 'crypto';
 import { appendAudit } from '@/lib/agreements';
 
 /**
- * Convert the rate-card publication enum ('realtyline'|'newsline'|'both')
- * to the DB enum ('austin'|'san_antonio'|'both'). The ad_campaigns table
- * stores DB enum values; any other code that reads ad_campaigns.publication
- * (admin views, slot-availability) expects DB enum.
+ * Convert the rate-card publication enum to the DB string value persisted
+ * in ad_campaigns.publication. Legacy Austin/SA bookings continue to use
+ * 'austin' | 'san_antonio' | 'both' for backward compatibility with admin
+ * views; Houston/Dallas bookings store the canonical PUB_META key directly
+ * (no rewrite). slot-availability.normalizePub accepts both shapes.
  */
-function normalizeDbPub(raw: string): 'austin' | 'san_antonio' | 'both' {
+function normalizeDbPub(
+  raw: string,
+): 'austin' | 'san_antonio' | 'both' | 'realtyline-houston' | 'realtyline-dallas' {
   const v = (raw || '').toLowerCase().trim();
   if (v === 'newsline' || v === 'san_antonio') return 'san_antonio';
   if (v === 'both') return 'both';
+  if (v === 'realtyline-houston' || v === 'houston') return 'realtyline-houston';
+  if (v === 'realtyline-dallas' || v === 'dallas') return 'realtyline-dallas';
   return 'austin'; // 'realtyline' OR fallback
 }
 

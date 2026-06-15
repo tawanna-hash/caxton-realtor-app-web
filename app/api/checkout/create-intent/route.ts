@@ -26,7 +26,18 @@ export const dynamic = 'force-dynamic';
 
 const schema = z.object({
   slot: z.string().trim().min(1),
-  pub: z.enum(['realtyline', 'newsline', 'both']),
+  // Houston (realtyline-houston) and Dallas (realtyline-dallas) added in
+  // Phase 2 PR D. They share the digital + email ad-slot catalog with the
+  // existing RealtyLine (Austin) market and bill at the same single-pub
+  // weekly/monthly rates. 'both' remains the legacy Austin+SA bundle and
+  // does NOT extend to Houston/Dallas — those are sold separately.
+  pub: z.enum([
+    'realtyline',
+    'newsline',
+    'realtyline-houston',
+    'realtyline-dallas',
+    'both',
+  ]),
   billing_period: z.enum(['weekly', 'monthly', 'unit']),
   weeks: z.number().int().min(1).max(52).optional().default(1),
   months: z.number().int().min(1).max(12).optional().default(1),
@@ -43,12 +54,20 @@ const schema = z.object({
 
 export function computeAmountCents(
   slot: (typeof APP_AD_SLOTS)[number],
-  pub: 'realtyline' | 'newsline' | 'both',
+  pub:
+    | 'realtyline'
+    | 'newsline'
+    | 'realtyline-houston'
+    | 'realtyline-dallas'
+    | 'both',
   billing_period: 'weekly' | 'monthly' | 'unit',
   weeks: number,
   months: number,
   units: number,
 ): { baseCents: number; description: string } | { error: string } {
+  // Only the legacy Austin+SA bundle uses the 'both' rate. Houston and
+  // Dallas bill at the single-pub rate (same dollar amount as a solo
+  // RealtyLine Austin booking).
   const isBoth = pub === 'both';
   if (slot.pricingUnit === 'per send' || slot.pricingUnit === 'per push') {
     const rate = isBoth ? slot.weeklyBoth : slot.weeklySingle;
