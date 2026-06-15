@@ -71,12 +71,22 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS email_status text`);
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS email_verified_at timestamptz`);
 
-  // Address
+  // Company address (used by Company Details section of the CRM modal)
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS address text`);
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS address_2 text`);
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS city text`);
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS state text`);
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS zip text`);
+
+  // Representative mailing address (added 2026-06-15). The CRM modal's
+  // Representative Details section captures a separate physical address
+  // for the primary point-of-contact at the advertiser's company; this is
+  // distinct from the company address above and from the per-location
+  // addresses tracked in advertiser_locations.
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS rep_address text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS rep_city text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS rep_state text`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS rep_zip text`);
 
   // Portal linkage
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS portal_activated_at timestamptz`);

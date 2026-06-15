@@ -588,6 +588,11 @@ function EditDrawer({
     city:           row.city           ?? '',
     state:          row.state          ?? '',
     zip:            row.zip            ?? '',
+    // Representative mailing address (separate from company address above).
+    rep_address:    row.rep_address    ?? '',
+    rep_city:       row.rep_city       ?? '',
+    rep_state:      row.rep_state      ?? '',
+    rep_zip:        row.rep_zip        ?? '',
     notes:          row.notes          ?? '',
     tags:           (row.tags ?? []).join(', '),
   });
@@ -674,6 +679,129 @@ function EditDrawer({
         </div>
 
         <div className="p-6 space-y-6">
+          {/* ── Status (top-level select, per spec) ─────────────────── */}
+          <Section title="Status">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Status">
+                <select value={form.status} onChange={(e) => update('status', e.target.value as AdvertiserStatus)} className={INPUT}>
+                  {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+              </Field>
+              <Field label="Type">
+                <select value={form.type} onChange={(e) => update('type', e.target.value as AdvertiserType)} className={INPUT}>
+                  {TYPE_OPTIONS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </Field>
+            </div>
+          </Section>
+
+          {/* ── Section One: Company Details ─────────────────────────── */}
+          <Section title="Company Details">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Company Name" className="col-span-2">
+                <input value={form.company} onChange={(e) => update('company', e.target.value)} className={INPUT} placeholder="Company or brand name" />
+              </Field>
+              <Field label="Address" className="col-span-2">
+                <input value={form.address} onChange={(e) => update('address', e.target.value)} className={INPUT} placeholder="Street address" />
+              </Field>
+              <Field label="Address 2" className="col-span-2">
+                <input value={form.address_2} onChange={(e) => update('address_2', e.target.value)} className={INPUT} placeholder="Apt / Suite / Floor" />
+              </Field>
+              <Field label="City">
+                <input value={form.city} onChange={(e) => update('city', e.target.value)} className={INPUT} />
+              </Field>
+              <Field label="State">
+                <input value={form.state} onChange={(e) => update('state', e.target.value)} className={INPUT} />
+              </Field>
+              <Field label="Zip Code">
+                <input value={form.zip} onChange={(e) => update('zip', e.target.value)} className={INPUT} />
+              </Field>
+              <Field label="Website">
+                <input value={form.website} onChange={(e) => update('website', e.target.value)} className={INPUT} placeholder="https://" />
+              </Field>
+            </div>
+          </Section>
+
+          {/* ── Section Two: Representative Details ──────────────────── */}
+          <Section title="Representative Details">
+            <div className="grid grid-cols-2 gap-3">
+              {nameMatch ? (
+                <Field label="Name" className="col-span-2">
+                  <p className="text-xs text-gray-500 italic">
+                    Already in staff: <span className="not-italic font-medium">{nameMatch.name}</span>. Edit in &ldquo;Location &amp; Staff&rdquo; below.
+                  </p>
+                </Field>
+              ) : (
+                <>
+                  <Field label="First name">
+                    <input value={form.first_name} onChange={(e) => update('first_name', e.target.value)} className={INPUT} />
+                  </Field>
+                  <Field label="Last name">
+                    <input value={form.last_name} onChange={(e) => update('last_name', e.target.value)} className={INPUT} />
+                  </Field>
+                </>
+              )}
+              <Field label="Title" className="col-span-2">
+                <input value={form.title} onChange={(e) => update('title', e.target.value)} className={INPUT} placeholder="Agent, Broker, Owner, etc." />
+              </Field>
+              {officeMatch ? (
+                <Field label="Phone">
+                  <p className="text-xs text-gray-500 italic">
+                    Already in staff: <span className="not-italic font-medium">{officeMatch.name}</span>.
+                  </p>
+                </Field>
+              ) : (
+                <Field label="Phone">
+                  <input value={form.office_phone} onChange={(e) => update('office_phone', formatPhoneInput(e.target.value))} className={INPUT} placeholder="(000) 000-0000" inputMode="tel" />
+                </Field>
+              )}
+              {mobileMatch ? (
+                <Field label="Mobile">
+                  <p className="text-xs text-gray-500 italic">
+                    Already in staff: <span className="not-italic font-medium">{mobileMatch.name}</span>.
+                  </p>
+                </Field>
+              ) : (
+                <Field label="Mobile">
+                  <input value={form.phone} onChange={(e) => update('phone', formatPhoneInput(e.target.value))} className={INPUT} placeholder="(000) 000-0000" inputMode="tel" />
+                </Field>
+              )}
+              {emailMatch ? (
+                <Field label="Email" className="col-span-2">
+                  <p className="text-xs text-gray-500 italic">
+                    Already in staff: <span className="not-italic font-medium">{emailMatch.name}</span>. Edit in &ldquo;Location &amp; Staff&rdquo; below.
+                  </p>
+                </Field>
+              ) : (
+                <Field label="Email" className="col-span-2">
+                  <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={INPUT} placeholder="name@company.com" inputMode="email" />
+                </Field>
+              )}
+              <Field label="Address" className="col-span-2">
+                <input value={form.rep_address} onChange={(e) => update('rep_address', e.target.value)} className={INPUT} placeholder="Street address" />
+              </Field>
+              <Field label="City">
+                <input value={form.rep_city} onChange={(e) => update('rep_city', e.target.value)} className={INPUT} />
+              </Field>
+              <Field label="State">
+                <input value={form.rep_state} onChange={(e) => update('rep_state', e.target.value)} className={INPUT} />
+              </Field>
+              <Field label="Zip Code">
+                <input value={form.rep_zip} onChange={(e) => update('rep_zip', e.target.value)} className={INPUT} />
+              </Field>
+              <Field label="Industry">
+                <input value={form.industry} onChange={(e) => update('industry', e.target.value)} className={INPUT} />
+              </Field>
+              <Field label="License #">
+                <input value={form.license_number} onChange={(e) => update('license_number', e.target.value)} className={INPUT} />
+              </Field>
+            </div>
+          </Section>
+
+          {/* ── Agreement Details (kept as-is) ───────────────────────── */}
+          <CurrentContractPanel row={row} />
+
+          {/* ── Ad Management (kept as-is) ───────────────────────────── */}
           <Section title="Ad management">
             <div className="grid grid-cols-2 gap-3">
               <Field label="Publication">
@@ -742,76 +870,7 @@ function EditDrawer({
             </div>
           </Section>
 
-          <Section title="Classification">
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Type">
-                <select value={form.type} onChange={(e) => update('type', e.target.value as AdvertiserType)} className={INPUT}>
-                  {TYPE_OPTIONS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
-              </Field>
-              <Field label="Status">
-                <select value={form.status} onChange={(e) => update('status', e.target.value as AdvertiserStatus)} className={INPUT}>
-                  {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-                </select>
-              </Field>
-            </div>
-          </Section>
-
-          <Section title="Person">
-            <div className="grid grid-cols-2 gap-3">
-              {nameMatch ? (
-                <Field label="Name" className="col-span-2">
-                  <p className="text-xs text-gray-500 italic">
-                    Already in staff: <span className="not-italic font-medium">{nameMatch.name}</span>. Edit in &ldquo;Locations &amp; staff&rdquo; below.
-                  </p>
-                </Field>
-              ) : (
-                <>
-                  <Field label="First name"><input value={form.first_name} onChange={(e) => update('first_name', e.target.value)} className={INPUT} /></Field>
-                  <Field label="Last name"><input value={form.last_name} onChange={(e) => update('last_name', e.target.value)} className={INPUT} /></Field>
-                </>
-              )}
-              <Field label="Title"><input value={form.title} onChange={(e) => update('title', e.target.value)} className={INPUT} /></Field>
-              {emailMatch ? (
-                <Field label="Email">
-                  <p className="text-xs text-gray-500 italic">
-                    Already in staff: <span className="not-italic font-medium">{emailMatch.name}</span>. Edit in &ldquo;Locations &amp; staff&rdquo; below.
-                  </p>
-                </Field>
-              ) : (
-                <Field label="Email"><input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={INPUT} placeholder="name@company.com" inputMode="email" /></Field>
-              )}
-              <Field label="Industry"><input value={form.industry} onChange={(e) => update('industry', e.target.value)} className={INPUT} /></Field>
-              <Field label="License #"><input value={form.license_number} onChange={(e) => update('license_number', e.target.value)} className={INPUT} /></Field>
-            </div>
-          </Section>
-
-          <Section title="Contact">
-            <div className="grid grid-cols-2 gap-3">
-              {mobileMatch ? (
-                <Field label="Mobile phone">
-                  <p className="text-xs text-gray-500 italic">
-                    Already in staff: <span className="not-italic font-medium">{mobileMatch.name}</span>. Edit in &ldquo;Locations &amp; staff&rdquo; below.
-                  </p>
-                </Field>
-              ) : (
-                <Field label="Mobile phone"><input value={form.phone} onChange={(e) => update('phone', formatPhoneInput(e.target.value))} className={INPUT} placeholder="(000) 000-0000" inputMode="tel" /></Field>
-              )}
-              {officeMatch ? (
-                <Field label="Office phone">
-                  <p className="text-xs text-gray-500 italic">
-                    Already in staff: <span className="not-italic font-medium">{officeMatch.name}</span>. Edit in &ldquo;Locations &amp; staff&rdquo; below.
-                  </p>
-                </Field>
-              ) : (
-                <Field label="Office phone"><input value={form.office_phone} onChange={(e) => update('office_phone', formatPhoneInput(e.target.value))} className={INPUT} placeholder="(000) 000-0000" inputMode="tel" /></Field>
-              )}
-              <Field label="Website" className="col-span-2"><input value={form.website} onChange={(e) => update('website', e.target.value)} className={INPUT} placeholder="https://" /></Field>
-            </div>
-          </Section>
-
-          <CurrentContractPanel row={row} />
-
+          {/* ── Public Profile (kept as-is) ──────────────────────────── */}
           <Section title="Public profile">
             <p className="text-xs text-gray-500 mb-3">
               Shown on the public advertiser page at <span className="font-mono">/advertisers/{row.slug}</span>.
@@ -841,9 +900,6 @@ function EditDrawer({
                 <small className="mt-1 block text-xs text-gray-500">
                   {HEADER_STYLE_META[coerceHeaderStyle(form.header_style)].blurb}
                 </small>
-                {/* /admin/preview/logo-options preview sandbox was removed once
-                    the production header styles were locked in. The dropdown
-                    blurb above documents each style's visual treatment. */}
               </Field>
               <Field label="Tagline" className="col-span-2">
                 <input
@@ -881,6 +937,7 @@ function EditDrawer({
             </div>
           </Section>
 
+          {/* ── Portal Access (kept as-is) ───────────────────────────── */}
           <Section title="Portal access">
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
               <div className="flex items-start justify-between gap-3">
@@ -927,6 +984,7 @@ function EditDrawer({
             </div>
           </Section>
 
+          {/* ── Event Submission Link (kept as-is) ───────────────────── */}
           <Section title="Event submission link">
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
               <div className="flex items-start justify-between gap-3">
@@ -990,17 +1048,8 @@ function EditDrawer({
             </div>
           </Section>
 
-          <Section title="Mailing address">
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Street" className="col-span-2"><input value={form.address} onChange={(e) => update('address', e.target.value)} className={INPUT} /></Field>
-              <Field label="Apt / Suite" className="col-span-2"><input value={form.address_2} onChange={(e) => update('address_2', e.target.value)} className={INPUT} /></Field>
-              <Field label="City"><input value={form.city} onChange={(e) => update('city', e.target.value)} className={INPUT} /></Field>
-              <Field label="State"><input value={form.state} onChange={(e) => update('state', e.target.value)} className={INPUT} /></Field>
-              <Field label="ZIP"><input value={form.zip} onChange={(e) => update('zip', e.target.value)} className={INPUT} /></Field>
-            </div>
-          </Section>
-
-          <Section title="Locations & staff">
+          {/* ── Location & Staff (kept as-is) ────────────────────────── */}
+          <Section title="Location & Staff">
             <LocationsStaffEditor
               advertiserId={row.id}
               onError={(msg) => onError(msg)}
@@ -1008,7 +1057,8 @@ function EditDrawer({
             />
           </Section>
 
-          <Section title="Tags & notes">
+          {/* ── Tags & Notes (kept as-is) ────────────────────────────── */}
+          <Section title="Tags & Notes">
             <Field label="Tags (comma-separated)">
               <input value={form.tags} onChange={(e) => update('tags', e.target.value)} className={INPUT} placeholder="vip, repeat, annual-contract" />
             </Field>
