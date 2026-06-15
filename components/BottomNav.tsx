@@ -49,7 +49,11 @@ export default function BottomNav({ info, onMoreClick }: Props) {
 
   function goHome() {
     if (pathname === '/dashboard') {
-      window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'news' }));
+      // Detail value must match the dashboard listener at
+      // app/(dashboard)/dashboard/page.tsx, which checks target === 'feed'
+      // (the same string used by the Phase enum). Sending anything else
+      // makes this tap a silent no-op.
+      window.dispatchEvent(new CustomEvent('caxton:nav', { detail: 'feed' }));
       // Clear any phase hash so isHome resolves correctly
       if (window.location.hash) {
         history.replaceState(null, '', '/dashboard');
