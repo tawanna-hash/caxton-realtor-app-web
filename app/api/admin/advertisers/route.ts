@@ -36,7 +36,12 @@ function errMessage(err: unknown): string {
 }
 
 function normalizePublication(value: unknown): Publication {
-  if (value === 'san_antonio' || value === 'both') return value;
+  if (
+    value === 'san_antonio' ||
+    value === 'houston' ||
+    value === 'dallas' ||
+    value === 'both'
+  ) return value;
   return 'austin';
 }
 
