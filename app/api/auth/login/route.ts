@@ -8,7 +8,6 @@
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/server/error';
-import { rateLimit } from '@/lib/server/rate-limit';
 import { loginSchema } from '@/lib/server/schemas/auth';
 import { findRealtorForLogin } from '@/lib/server/realtors-store';
 import { createAndSendMagicLink } from '@/lib/server/magic-link';
@@ -18,8 +17,15 @@ import { getRequestIp } from '@/lib/server/auth/admin';
 export const runtime = 'nodejs';
 
 export const POST = withErrorHandling(async (req: Request) => {
-  await rateLimit('auth');
-
+  // Rate limiting intentionally removed for the magic-link request endpoint.
+  // Real abuse is bounded by mailbox access (the attacker needs to read the
+  // emailed link) and by the magic-link table's own token expiry, so the
+  // brute-force surface is low. The previous 5-per-15min cap was locking
+  // out legitimate users during normal sign-in retries.
+  //
+  // Admin password login (/api/admin/auth/login) and realtor password login
+  // (/api/auth/password-login) still keep the rateLimit('auth') gate because
+  // they accept arbitrary password guesses.
   const input = loginSchema.parse(await req.json());
   const ipAddress = (await getRequestIp()) ?? undefined;
   const userAgent = (await headers()).get('user-agent') ?? undefined;
