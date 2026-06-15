@@ -93,7 +93,7 @@
       "schedule": "0 */6 * * *"
     },
     {
-      "path": "/api/cron/send-renewal-reminders",
+      "path": "/api/cron/agreement-lifecycle",
       "schedule": "0 13 * * *"
     },
     {
