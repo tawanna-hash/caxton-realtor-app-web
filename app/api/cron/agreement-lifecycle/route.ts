@@ -94,7 +94,7 @@ function rowHtml({ agreement: ag, bucket, daysUntil, expDate }: DigestRow, siteU
   const adSize = ag.ad_size ? escapeHtml(ag.ad_size) : '—';
   const freq = ag.frequency ? escapeHtml(ag.frequency) : '—';
   const rate = formatCurrencyCents(ag.ad_rate_cents);
-  const link = `${siteUrl}/admin/billing?agreement=${ag.id}`;
+  const link = `${siteUrl}/admin/agreements?agreement=${ag.id}`;
 
   let badgeText: string;
   let badgeColor: string;

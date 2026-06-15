@@ -174,10 +174,10 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
-            href={`/admin/billing?agreement=${encodeURIComponent(created.agreement.id)}`}
+            href={`/admin/agreements?agreement=${encodeURIComponent(created.agreement.id)}`}
             className="inline-flex items-center px-3 py-1.5 rounded text-xs font-medium bg-emerald-700 text-white hover:bg-emerald-800"
           >
-            Open in Billing →
+            Open in Agreements →
           </Link>
           <Link
             href="/admin/ads/orders"

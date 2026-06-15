@@ -17,7 +17,7 @@
 //                send date).
 //
 // We deliberately keep agreements vs campaigns split here — the calendar
-// surfaces the distinction (admin can click through to /admin/billing vs
+// surfaces the distinction (admin can click through to /admin/agreements vs
 // /admin/ads/campaigns/[id]).
 
 import { getSql } from '@/lib/db';

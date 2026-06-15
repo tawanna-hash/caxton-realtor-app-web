@@ -305,7 +305,7 @@ export default function NavDrawer({
                   {item.href === '/admin/ads/inquiries' && (
                     <UnreadAdsBadge variant="inline" />
                   )}
-                  {item.href === '/admin/billing' && (
+                  {item.href === '/admin/agreements' && (
                     <BillingAlertsBadge variant="inline" />
                   )}
                 </Link>
