@@ -91,12 +91,12 @@ function fmtPublication(v: string | null): string {
 
 function detailHref(row: OrderRow): string {
   // Campaigns live under /admin/ads (with the campaigns tab + detail edit
-  // route). Agreements live in /admin/billing where invoices and the sign
-  // flow are stitched together.
+  // route). Agreements live in /admin/agreements; the sign flow runs
+  // out of /admin/billing/sign/[token]. Invoices are at /admin/invoices.
   if (row.source === 'campaign') {
     return `/admin/ads/campaigns/${encodeURIComponent(row.id)}`;
   }
-  return `/admin/billing?agreement=${encodeURIComponent(row.id)}`;
+  return `/admin/agreements?agreement=${encodeURIComponent(row.id)}`;
 }
 
 export default function OrdersTable() {

@@ -1,62 +1,62 @@
 'use client';
 
-// app/admin/billing/BillingClient.tsx
+// app/admin/agreements/AgreementsClient.tsx
 //
-// Tabbed billing workspace. Agreements + Invoices + Renewals. Each tab is a
-// filterable list with a "+" affordance opening the matching create drawer.
-//
-// This file is intentionally lean — the heavy lifting (drawers, list rows,
-// badges, helpers, constants) lives under ./_components/. Everything that
-// is exported from this module to keep `import { renewalInfoFor } from
-// '@/app/admin/billing/BillingClient'` working from elsewhere in the
-// codebase is re-exported below.
+// Agreements workspace. Two sub-tabs: Agreements + Renewals. Invoices live
+// at /admin/invoices. Shares drawer / list / badge components with the
+// invoices page via app/admin/billing/_components/*.
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
-import type { InvoiceWithAdvertiser } from '@/lib/invoices';
-import { formatCents } from '@/lib/invoices';
 import type { RenewalReminder } from '@/lib/types/renewal-reminder';
+import { formatCents } from '@/lib/invoices';
 
-import { Kpi } from './_components/Badges';
-import { AG_STATUS, INV_STATUS } from './_components/constants';
-import { getDaysUntil } from './_components/helpers';
-import { AgreementList } from './_components/AgreementList';
-import { InvoiceList } from './_components/InvoiceList';
-import { RenewalsPanel } from './_components/RenewalsPanel';
-import { AgreementDrawer } from './_components/AgreementDrawer';
-import { InvoiceDrawer } from './_components/InvoiceDrawer';
-import type { AdvertiserOption, AdCampaignOption } from './_components/types';
+import { Kpi } from '@/app/admin/billing/_components/Badges';
+import { AG_STATUS } from '@/app/admin/billing/_components/constants';
+import { getDaysUntil } from '@/app/admin/billing/_components/helpers';
+import { AgreementList } from '@/app/admin/billing/_components/AgreementList';
+import { RenewalsPanel } from '@/app/admin/billing/_components/RenewalsPanel';
+import { AgreementDrawer } from '@/app/admin/billing/_components/AgreementDrawer';
+import type {
+  AdvertiserOption,
+  AdCampaignOption,
+} from '@/app/admin/billing/_components/types';
 
-// Re-exports for backward compatibility with callers that imported these
-// names from this module (e.g. server-side renewal-bucket consumers).
-export { renewalInfoFor, type RenewalBucket } from './_components/helpers';
-export type { AdCampaignOption };
+type InvoiceLite = {
+  id: string;
+  status: string;
+  total_cents: number | null;
+  paid_at: string | null;
+  due_date: string | null;
+  is_overdue: boolean;
+};
 
 type Props = {
   initialAgreements: AgreementWithAdvertiser[];
-  initialInvoices: InvoiceWithAdvertiser[];
+  initialInvoicesLite: InvoiceLite[];
   advertisers: AdvertiserOption[];
   adCampaigns: AdCampaignOption[];
   initialRenewalReminders: RenewalReminder[];
 };
 
-export default function BillingClient({
-  initialAgreements, initialInvoices, advertisers,
+export default function AgreementsClient({
+  initialAgreements,
+  initialInvoicesLite,
+  advertisers,
   adCampaigns: initialAdCampaigns,
   initialRenewalReminders,
 }: Props) {
-  const [tab, setTab] = useState<'agreements' | 'invoices' | 'renewals'>('agreements');
+  const [tab, setTab] = useState<'agreements' | 'renewals'>('agreements');
   const [agreements, setAgreements] = useState(initialAgreements);
-  const [invoices, setInvoices] = useState(initialInvoices);
+  const [invoicesLite] = useState(initialInvoicesLite);
   const [adCampaigns, setAdCampaigns] = useState(initialAdCampaigns);
   const [reminders, setReminders] = useState<RenewalReminder[]>(initialRenewalReminders);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createAg, setCreateAg] = useState(false);
-  const [createInv, setCreateInv] = useState(false);
   const [editAg, setEditAg] = useState<AgreementWithAdvertiser | null>(null);
-  const [editInv, setEditInv] = useState<InvoiceWithAdvertiser | null>(null);
+  const [renewalSeed, setRenewalSeed] = useState<AgreementWithAdvertiser | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const router = useRouter();
@@ -70,12 +70,6 @@ export default function BillingClient({
     const res = await fetch('/api/admin/agreements', { cache: 'no-store' });
     if (res.status === 401) { router.push('/admin/login'); return; }
     if (res.ok) setAgreements((await res.json()).agreements ?? []);
-  }, [router]);
-
-  const reloadInvoices = useCallback(async () => {
-    const res = await fetch('/api/admin/invoices', { cache: 'no-store' });
-    if (res.status === 401) { router.push('/admin/login'); return; }
-    if (res.ok) setInvoices((await res.json()).invoices ?? []);
   }, [router]);
 
   const reloadAdCampaigns = useCallback(async () => {
@@ -104,18 +98,8 @@ export default function BillingClient({
     if (res.ok) setReminders((await res.json()).reminders ?? []);
   }, []);
 
-  const [invoiceSeed, setInvoiceSeed] = useState<{
-    advertiser_id: number | null;
-    agreement_id: string;
-    amount_cents: number | null;
-  } | null>(null);
-
-  const [renewalSeed, setRenewalSeed] = useState<AgreementWithAdvertiser | null>(null);
-
-  // Renewal tab sub-state
   const [renewalTab, setRenewalTab] = useState<'expiring' | 'all_renewals' | 'reminders'>('expiring');
 
-  // ── Renewal / KPI derivations ────────────────────────────────────────────
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
@@ -149,7 +133,6 @@ export default function BillingClient({
     agreements.filter((a) => a.is_renewal),
   [agreements]);
 
-  // ── Renewal reminder actions ──────────────────────────────────────────────
   const reminderAction = useCallback(async (
     remId: string,
     patch: Record<string, unknown>,
@@ -167,7 +150,6 @@ export default function BillingClient({
     }
   }, [reloadReminders]);
 
-  // ── Filters ───────────────────────────────────────────────────────────────
   const filteredAg = useMemo(() => {
     const q = query.trim().toLowerCase();
     return agreements.filter((a) => {
@@ -178,26 +160,12 @@ export default function BillingClient({
     });
   }, [agreements, query, statusFilter]);
 
-  const filteredInv = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return invoices.filter((i) => {
-      if (statusFilter !== 'all' && i.status !== statusFilter && !(statusFilter === 'overdue' && i.is_overdue)) return false;
-      if (!q) return true;
-      return [i.number, i.advertiser_name, i.bill_to_email, i.memo].filter(Boolean).join(' ').toLowerCase().includes(q);
-    });
-  }, [invoices, query, statusFilter]);
-
-  // ── Money summary (top-of-page, all tabs) ─────────────────────────────────
-  // Always visible regardless of tab. Sources of truth:
-  //   • MTD revenue        → invoices paid this calendar month
-  //   • AR outstanding     → invoices not paid/void, sum of total_cents
-  //   • Overdue            → same set filtered to is_overdue
-  //   • Expiring 30d       → active/signed/sent agreements w/ exp ≤ 30d
+  // Money summary uses invoices for MTD/AR/overdue + agreements for expiring count.
   const moneySummary = useMemo(() => {
     const t = new Date();
     const startOfMonth = new Date(t.getFullYear(), t.getMonth(), 1).getTime();
     let mtd = 0, ar = 0, overdue = 0, expiringCount = 0;
-    for (const i of invoices) {
+    for (const i of invoicesLite) {
       if (i.status === 'paid' && i.paid_at) {
         const paidTs = new Date(i.paid_at).getTime();
         if (paidTs >= startOfMonth) mtd += i.total_cents ?? 0;
@@ -213,27 +181,16 @@ export default function BillingClient({
       if (days !== null && days >= 0 && days <= 30) expiringCount++;
     }
     return { mtd, ar, overdue, expiringCount };
-  }, [agreements, invoices]);
+  }, [agreements, invoicesLite]);
 
-  // ── KPIs (Agreements/Invoices tab) ────────────────────────────────────────
   const kpis = useMemo(() => {
-    // 'sent' agreements are in-flight contracts awaiting countersignature —
-    // they're effectively active revenue, so the KPI counts them alongside
-    // 'active' (BUG-37). Drafts remain a separate bucket.
     const activeAg = agreements.filter((a) => a.status === 'active' || a.status === 'sent').length;
     const draftAg  = agreements.filter((a) => a.status === 'draft').length;
-    const outstanding = invoices
-      .filter((i) => i.status !== 'paid' && i.status !== 'void')
-      .reduce((s, i) => s + (i.total_cents ?? 0), 0);
-    // eslint-disable-next-line react-hooks/purity
-    const cutoff = Date.now() - 30 * 86400000;
-    const paid30 = invoices
-      .filter((i) => i.status === 'paid' && i.paid_at && new Date(i.paid_at).getTime() > cutoff)
-      .reduce((s, i) => s + (i.total_cents ?? 0), 0);
-    return { activeAg, draftAg, outstanding, paid30 };
-  }, [agreements, invoices]);
+    const signedAg = agreements.filter((a) => a.status === 'signed').length;
+    const expiredAg = agreements.filter((a) => a.status === 'expired').length;
+    return { activeAg, draftAg, signedAg, expiredAg };
+  }, [agreements]);
 
-  // ── Upload handler ────────────────────────────────────────────────────────
   const fileInputRef = useRef<HTMLInputElement>(null);
   const handleUploadClick = () => fileInputRef.current?.click();
   const handleUploadFile = useCallback(async (file: File) => {
@@ -244,7 +201,6 @@ export default function BillingClient({
       if (!res.ok) throw new Error(`Upload failed HTTP ${res.status}`);
       const data = await res.json();
       await reloadAgreements();
-      // Open the newly created stub for editing
       if (data.agreement) setEditAg(data.agreement as AgreementWithAdvertiser);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'upload failed');
@@ -255,44 +211,34 @@ export default function BillingClient({
     <div className="max-w-7xl mx-auto p-6 space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin · Billing</div>
-          <h1 className="text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>Agreements &amp; invoices</h1>
-          {/* BUG-38: tagline previously claimed "Stripe state" but no Stripe
-              IDs / sync status / customer IDs are surfaced here. Soften the
-              copy until the Stripe-sync columns ship. */}
-          <p className="text-sm text-gray-600 mt-1">Contracts and invoicing for every advertiser. Stripe charges land via the public Sign Wizard — see each agreement for payment status.</p>
+          <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin · Agreements</div>
+          <h1 className="text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>Agreements</h1>
+          <p className="text-sm text-gray-600 mt-1">Contracts and renewals for every advertiser. Stripe charges land via the public Sign Wizard &mdash; see each agreement for payment status.</p>
         </div>
         <div className="flex gap-2">
-          {tab === 'invoices'
-            ? <button onClick={() => setCreateInv(true)} className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">+ New invoice</button>
-            : tab === 'renewals'
-              ? <button onClick={() => setTab('agreements')} className="px-4 py-2 rounded border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">All agreements →</button>
-              : <>
-                  <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) { void handleUploadFile(f); } e.target.value = ''; }}
-                  />
-                  <button onClick={handleUploadClick} className="px-4 py-2 rounded border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">↑ Upload</button>
-                  <button onClick={() => setCreateAg(true)} className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">+ New agreement</button>
-                </>
+          {tab === 'renewals'
+            ? <button onClick={() => setTab('agreements')} className="px-4 py-2 rounded border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">All agreements &rarr;</button>
+            : <>
+                <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) { void handleUploadFile(f); } e.target.value = ''; }}
+                />
+                <button onClick={handleUploadClick} className="px-4 py-2 rounded border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">&uarr; Upload</button>
+                <button onClick={() => setCreateAg(true)} className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">+ New agreement</button>
+              </>
           }
         </div>
       </div>
 
-      {/* Money summary strip — always visible */}
+      {/* Money summary strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Kpi label="Revenue MTD" value={formatCents(moneySummary.mtd)} accent="emerald" />
         <Kpi label="AR outstanding" value={formatCents(moneySummary.ar)} accent="blue" />
-        <Kpi
-          label="Overdue"
-          value={formatCents(moneySummary.overdue)}
-          accent="rose"
-          onClick={() => { setTab('invoices'); setStatusFilter('overdue'); }}
-        />
+        <Kpi label="Overdue" value={formatCents(moneySummary.overdue)} accent="rose" />
         <Kpi
           label="Expiring 30d"
           value={String(moneySummary.expiringCount)}
           accent="amber"
-          onClick={() => { setTab('renewals'); setRenewalTab('expiring'); }}
+          onClick={() => setTab('renewals')}
         />
       </div>
 
@@ -310,8 +256,8 @@ export default function BillingClient({
           <>
             <Kpi label="Active + sent" value={String(kpis.activeAg)} />
             <Kpi label="Drafts" value={String(kpis.draftAg)} />
-            <Kpi label="Outstanding" value={formatCents(kpis.outstanding)} />
-            <Kpi label="Paid (30d)" value={formatCents(kpis.paid30)} />
+            <Kpi label="Signed" value={String(kpis.signedAg)} />
+            <Kpi label="Expired" value={String(kpis.expiredAg)} />
           </>
         )}
       </div>
@@ -327,11 +273,9 @@ export default function BillingClient({
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200">
-        {(['agreements','invoices','renewals'] as const).map((t) => {
-          const label = t === 'agreements' ? 'Agreements' : t === 'invoices' ? 'Invoices' : 'Renewals';
-          const count = t === 'agreements' ? agreements.length
-                      : t === 'invoices' ? invoices.length
-                      : expiringSoon.length;
+        {(['agreements', 'renewals'] as const).map((t) => {
+          const label = t === 'agreements' ? 'Agreements' : 'Renewals';
+          const count = t === 'agreements' ? agreements.length : expiringSoon.length;
           return (
             <button
               key={t}
@@ -349,18 +293,18 @@ export default function BillingClient({
         })}
       </div>
 
-      {/* Filters — hidden on renewals tab */}
-      {tab !== 'renewals' && (
+      {/* Filters */}
+      {tab === 'agreements' && (
         <div className="rounded-xl border border-gray-200 bg-white p-4 flex flex-wrap gap-2 items-center">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={tab === 'agreements' ? 'Search advertiser, ad size…' : 'Search invoice #, advertiser…'}
+            placeholder="Search advertiser, ad size&hellip;"
             className="flex-1 min-w-[240px] px-3 py-2 rounded border border-gray-300 text-sm"
           />
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded border border-gray-300 text-sm">
             <option value="all">All statuses</option>
-            {(tab === 'agreements' ? AG_STATUS : INV_STATUS).map((s) => (
+            {AG_STATUS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
             ))}
           </select>
@@ -382,8 +326,6 @@ export default function BillingClient({
             } catch (e) { setError(e instanceof Error ? e.message : 'send failed'); }
           }}
         />
-      ) : tab === 'invoices' ? (
-        <InvoiceList rows={filteredInv} onOpen={(r) => setEditInv(r)} />
       ) : (
         <RenewalsPanel
           expiringSoon={expiringSoon}
@@ -414,7 +356,7 @@ export default function BillingClient({
         />
       )}
 
-      {/* Modals */}
+      {/* Drawers */}
       {createAg && (
         <AgreementDrawer
           advertisers={advertisers}
@@ -444,30 +386,15 @@ export default function BillingClient({
           onError={setError}
           onGenerateInvoice={(seed) => {
             setEditAg(null);
-            setInvoiceSeed(seed);
-            setCreateInv(true);
-            setTab('invoices');
+            // Hand off to /admin/invoices with seed values in query string so
+            // the invoice page opens the create drawer pre-populated.
+            const params = new URLSearchParams();
+            if (seed.advertiser_id !== null) params.set('advertiser_id', String(seed.advertiser_id));
+            params.set('agreement_id', seed.agreement_id);
+            if (seed.amount_cents !== null) params.set('amount_cents', String(seed.amount_cents));
+            params.set('create', '1');
+            router.push(`/admin/invoices?${params.toString()}`);
           }}
-        />
-      )}
-      {createInv && (
-        <InvoiceDrawer
-          advertisers={advertisers}
-          agreements={agreements}
-          seed={invoiceSeed ?? undefined}
-          onClose={() => { setCreateInv(false); setInvoiceSeed(null); }}
-          onSaved={async () => { setCreateInv(false); setInvoiceSeed(null); await reloadInvoices(); }}
-          onError={setError}
-        />
-      )}
-      {editInv && (
-        <InvoiceDrawer
-          existing={editInv}
-          advertisers={advertisers}
-          agreements={agreements}
-          onClose={() => setEditInv(null)}
-          onSaved={async () => { setEditInv(null); await reloadInvoices(); }}
-          onError={setError}
         />
       )}
     </div>

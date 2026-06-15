@@ -22,7 +22,8 @@ export type AdminNavGroup = {
  *
  * Conventions:
  *  - "CRM" holds people, billing, and brand assets (advertisers, agreements,
- *    invoices, marketing, media kit).
+ *    invoices, marketing, media kit). Agreements and Invoices are sibling
+ *    pages — the legacy /admin/billing route now redirects to Agreements.
  *  - "Revenue" holds ad inventory and placements (ads, orders, availability).
  *  - "Mailing List HUB" holds audience lists and subscriber tools.
  *  - "Content" holds editorial surfaces (articles, magazines, events,
@@ -33,10 +34,11 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: 'CRM',
     links: [
-      { label: 'Advertisers',  href: '/admin/crm',       description: 'Accounts, contacts, share links' },
-      { label: 'Billing',      href: '/admin/billing',   description: 'Agreements, invoices & payments' },
-      { label: 'Marketing',    href: '/admin/marketing', description: 'Outreach campaigns & tasks' },
-      { label: 'Media Kit',    href: '/admin/media-kit', description: '2026 packages, rates & deadlines' },
+      { label: 'Advertisers',  href: '/admin/crm',        description: 'Accounts, contacts, share links' },
+      { label: 'Agreements',   href: '/admin/agreements', description: 'Contracts & renewals' },
+      { label: 'Invoices',     href: '/admin/invoices',   description: 'Billable charges & payment status' },
+      { label: 'Marketing',    href: '/admin/marketing',  description: 'Outreach campaigns & tasks' },
+      { label: 'Media Kit',    href: '/admin/media-kit',  description: '2026 packages, rates & deadlines' },
     ],
   },
   {

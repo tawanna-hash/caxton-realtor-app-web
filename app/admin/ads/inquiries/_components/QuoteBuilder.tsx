@@ -116,14 +116,14 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
         </p>
         <p className="text-xs text-green-900 mt-1">
           ${(created.amount_cents / 100).toFixed(2)} · status {created.status}.
-          Open in Billing to send the Stripe link or mark invoiced.
+          Open in Invoices to send the Stripe link or mark invoiced.
         </p>
         <div className="mt-3 flex gap-2">
           <a
-            href={`/admin/billing?focus=${encodeURIComponent(created.id)}`}
+            href={`/admin/invoices?focus=${encodeURIComponent(created.id)}`}
             className="inline-flex items-center px-3 py-1.5 rounded text-xs font-medium bg-green-700 text-white hover:bg-green-800"
           >
-            Open invoice in Billing
+            Open in Invoices
           </a>
           <button
             type="button"

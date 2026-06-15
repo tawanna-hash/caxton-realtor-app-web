@@ -274,7 +274,7 @@ export default function AppShell({
                         {group.links.some((l) => l.href === '/admin/ads/inquiries') && (
                           <UnreadAdsBadge />
                         )}
-                        {group.links.some((l) => l.href === '/admin/billing') && (
+                        {group.links.some((l) => l.href === '/admin/agreements') && (
                           <BillingAlertsBadge />
                         )}
                         <svg
@@ -323,7 +323,7 @@ export default function AppShell({
                                   {link.href === '/admin/ads/inquiries' && (
                                     <UnreadAdsBadge variant="inline" />
                                   )}
-                                  {link.href === '/admin/billing' && (
+                                  {link.href === '/admin/agreements' && (
                                     <BillingAlertsBadge variant="inline" />
                                   )}
                                 </div>

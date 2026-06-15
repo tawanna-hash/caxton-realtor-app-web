@@ -1194,7 +1194,7 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
       {!hasAgreement && !hasAnyBilling ? (
         <p className="text-xs text-gray-500 italic">
           No agreement linked yet. Create or sign one from{' '}
-          <a href="/admin/billing" className="text-blue-600 hover:underline">/admin/billing</a>{' '}
+          <a href="/admin/agreements" className="text-blue-600 hover:underline">/admin/agreements</a>{' '}
           and it will appear here automatically.
         </p>
       ) : (
@@ -1203,9 +1203,9 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
             Read-only mirror of the advertiser&rsquo;s most recent active-ish agreement.
             To edit, open{' '}
             {row.current_agreement_id ? (
-              <a href={`/admin/billing?id=${row.current_agreement_id}`} className="text-blue-600 hover:underline">/admin/billing</a>
+              <a href={`/admin/agreements?id=${row.current_agreement_id}`} className="text-blue-600 hover:underline">/admin/agreements</a>
             ) : (
-              <a href="/admin/billing" className="text-blue-600 hover:underline">/admin/billing</a>
+              <a href="/admin/agreements" className="text-blue-600 hover:underline">/admin/agreements</a>
             )}
             {' '}— saves there flow back here.
           </p>

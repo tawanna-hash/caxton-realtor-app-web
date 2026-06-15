@@ -61,7 +61,7 @@ function detailHref(row: BookedWindow): string {
   if (row.source === 'campaign') {
     return `/admin/ads/campaigns/${encodeURIComponent(row.id)}`;
   }
-  return `/admin/billing?agreement=${encodeURIComponent(row.id)}`;
+  return `/admin/agreements?agreement=${encodeURIComponent(row.id)}`;
 }
 
 function fmtDateShort(iso: string | null): string {
