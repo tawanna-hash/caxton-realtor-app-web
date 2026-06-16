@@ -1158,9 +1158,10 @@ export function AgreementDrawer({
         <button
           onClick={() => save(false)}
           disabled={saving}
-          className="px-4 py-2 rounded border border-blue-300 text-blue-700 text-sm hover:bg-blue-50 disabled:opacity-50"
+          className="px-4 py-2 rounded border border-blue-500 bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+          title="Save the agreement with the currently selected status"
         >
-          {saving ? 'Saving…' : 'Save as Draft'}
+          {saving ? 'Saving…' : (isCreate ? 'Save as Draft' : 'Save')}
         </button>
         {!isUploaded && (
           <>
