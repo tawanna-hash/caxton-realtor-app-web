@@ -34,6 +34,19 @@ export interface EBlast {
    * absent here, the renderer falls back to `price`.
    */
   priceByPub?: Partial<Record<MediaKitPub, number>>;
+  /**
+   * Optional whitelist of publications this package is sold on. When unset,
+   * the package is available on every publication tab. Used to limit Houston
+   * and Dallas/FTW to a single eblast offering (no event-coverage SKU since
+   * those markets don't run live event coverage yet).
+   */
+  availablePubs?: Array<MediaKitPub>;
+}
+
+/** True when the eblast package should appear on the given publication tab. */
+export function isEblastAvailableForPub(blast: EBlast, pub: MediaKitPub): boolean {
+  if (!blast.availablePubs || blast.availablePubs.length === 0) return true;
+  return blast.availablePubs.includes(pub);
 }
 
 /**
@@ -496,14 +509,13 @@ export const PACKAGES: Package[] = [
 
 // e-Blast pricing model:
 //   - Austin (RealtyLine) and Newsline San Antonio: flat $750 / $1,050
-//     legacy package rates. Each package = 2 sends.
+//     legacy package rates. Each package = 2 sends. Both packages offered.
 //   - Houston (50K) and Dallas/FTW (27K): market CPM at $100 per thousand,
-//     x 2 sends per package, with the same 1.4x event-coverage premium.
+//     x 2 sends per package. Package No. 1 only - no event-coverage SKU,
+//     since those markets don't run live event coverage yet.
 //
 //   Houston pkg 1 (no event):     2 x 50,000 x $0.10 = $10,000
-//   Houston pkg 2 (with event):   10,000 x 1.4       = $14,000
 //   Dallas/FTW pkg 1 (no event):  2 x 27,000 x $0.10 = $5,400
-//   Dallas/FTW pkg 2 (with event): 5,400 x 1.4       = $7,560
 export const EBLASTS: EBlast[] = [
   {
     name: 'e-Blast Package No. 1',
@@ -521,10 +533,10 @@ export const EBLASTS: EBlast[] = [
   {
     name: 'e-Blast Package No. 2',
     price: 1050,
-    priceByPub: {
-      'realtyline-houston': 14000,
-      'realtyline-dallas':   7560,
-    },
+    // Event-coverage package is offered only on the two markets that run live
+    // event coverage (RealtyLine Austin + Newsline San Antonio). Houston and
+    // Dallas/FTW sell Package No. 1 only.
+    availablePubs: ['realtyline', 'newsline'],
     features: [
       'Exclusive e-Blast',
       'Up to two follow-up e-Blasts prior to event',

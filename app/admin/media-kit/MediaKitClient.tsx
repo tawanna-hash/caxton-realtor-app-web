@@ -24,6 +24,7 @@ import {
   MARKET_MULTIPLIERS,
   PUB_SUBSCRIBERS,
   eblastPriceForPub,
+  isEblastAvailableForPub,
   type Package,
   type EBlast,
   type AppAdSlot,
@@ -652,7 +653,7 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
       <section>
         <SectionHead>e-Blast Packages</SectionHead>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {EBLASTS.map((p) => (
+          {EBLASTS.filter((p) => isEblastAvailableForPub(p, activePub.mediaKitPub)).map((p) => (
             <EBlastCard key={p.name} pkg={p} activePub={activePub} />
           ))}
         </div>
