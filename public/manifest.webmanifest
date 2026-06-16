@@ -2,7 +2,7 @@
   "name": "Realty News Now",
   "short_name": "Realty News",
   "description": "Free REALTOR app for Texas real estate professionals",
-  "start_url": "/dashboard",
+  "start_url": "/dashboard?pwa=1",
   "scope": "/",
   "display": "browser",
   "orientation": "portrait",
