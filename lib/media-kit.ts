@@ -28,12 +28,25 @@ export interface EBlast {
   /** Default / Austin / Newsline San Antonio price (legacy single-market value). */
   price: number;
   features: string[];
+  /** Default number of sends bundled in the package (Austin + Newsline = 2). */
+  sends: number;
   /**
    * Optional per-publication price overrides. Used to charge market CPM rates
    * on the larger Houston (50K) and Dallas/FTW (27K) lists. When a pub key is
    * absent here, the renderer falls back to `price`.
    */
   priceByPub?: Partial<Record<MediaKitPub, number>>;
+  /**
+   * Optional per-publication send-count overrides. Houston and Dallas/FTW
+   * bundle 1 send (CPM-priced at $0.03/sub); Austin and Newsline San Antonio
+   * keep the legacy 2-send package.
+   */
+  sendsByPub?: Partial<Record<MediaKitPub, number>>;
+  /**
+   * Optional per-publication feature-list overrides. Houston/Dallas (1 send,
+   * no event coverage) drop the "follow-up prior to event" bullet.
+   */
+  featuresByPub?: Partial<Record<MediaKitPub, string[]>>;
   /**
    * Optional whitelist of publications this package is sold on. When unset,
    * the package is available on every publication tab. Used to limit Houston
@@ -56,6 +69,16 @@ export function isEblastAvailableForPub(blast: EBlast, pub: MediaKitPub): boolea
  */
 export function eblastPriceForPub(blast: EBlast, pub: MediaKitPub): number {
   return blast.priceByPub?.[pub] ?? blast.price;
+}
+
+/** Resolve the bundled-send count for the active publication tab. */
+export function eblastSendsForPub(blast: EBlast, pub: MediaKitPub): number {
+  return blast.sendsByPub?.[pub] ?? blast.sends;
+}
+
+/** Resolve the feature-list for the active publication tab. */
+export function eblastFeaturesForPub(blast: EBlast, pub: MediaKitPub): string[] {
+  return blast.featuresByPub?.[pub] ?? blast.features;
 }
 
 export interface PrintDeadline {
@@ -511,28 +534,46 @@ export const PACKAGES: Package[] = [
 //   - Austin (RealtyLine) and Newsline San Antonio: flat $750 / $1,050
 //     legacy package rates. Each package = 2 sends. Both packages offered.
 //   - Houston (50K) and Dallas/FTW (27K): $0.03 per subscriber per send
-//     ($30 CPM), x 2 sends per package. Package No. 1 only - no event-
+//     ($30 CPM), x 1 send per package. Package No. 1 only - no event-
 //     coverage SKU, since those markets don't run live event coverage yet.
 //
-//   Houston pkg 1 (no event):     2 x 50,000 x $0.03 = $3,000
-//   Dallas/FTW pkg 1 (no event):  2 x 27,000 x $0.03 = $1,620
+//   Houston pkg 1 (1 send):     50,000 x $0.03 = $1,500
+//   Dallas/FTW pkg 1 (1 send):  27,000 x $0.03 = $810
 export const EBLASTS: EBlast[] = [
   {
     name: 'e-Blast Package No. 1',
     price: 750,
+    sends: 2,
     priceByPub: {
-      'realtyline-houston': 3000,
-      'realtyline-dallas':  1620,
+      'realtyline-houston': 1500,
+      'realtyline-dallas':  810,
+    },
+    sendsByPub: {
+      'realtyline-houston': 1,
+      'realtyline-dallas':  1,
     },
     features: [
       'Exclusive e-Blast',
       'One follow-up e-Blast prior to event',
       'Included in Weekly e-Blast (Friday)',
     ],
+    // Houston + Dallas/FTW bundle a single send with no event-coverage
+    // follow-up, so the feature list drops the second-send bullet.
+    featuresByPub: {
+      'realtyline-houston': [
+        'Exclusive e-Blast',
+        'Included in Weekly e-Blast (Friday)',
+      ],
+      'realtyline-dallas': [
+        'Exclusive e-Blast',
+        'Included in Weekly e-Blast (Friday)',
+      ],
+    },
   },
   {
     name: 'e-Blast Package No. 2',
     price: 1050,
+    sends: 2,
     // Event-coverage package is offered only on the two markets that run live
     // event coverage (RealtyLine Austin + Newsline San Antonio). Houston and
     // Dallas/FTW sell Package No. 1 only.
