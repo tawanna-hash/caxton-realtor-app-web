@@ -188,7 +188,56 @@ export function AgreementDrawer({
   const [saving, setSaving] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null);
 
+  // Files actively being uploaded to /api/admin/agreements/upload
+  // when editing an existing agreement. Keyed by name+size so collisions
+  // are unlikely. We show these in the Attachments list with a spinner
+  // until the upload resolves and the file is appended to existing.attachments.
+  const [uploadingFiles, setUploadingFiles] = useState<Array<{ key: string; name: string; size: number; error?: string }>>([]);
+
   const upd = <K extends keyof AgForm>(k: K, v: AgForm[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  /**
+   * Handle files dropped or chosen via the Attachments drop zone.
+   *
+   * - Existing agreement: immediately upload each file to
+   *   /api/admin/agreements/upload?agreementId=... so the server appends it
+   *   to agreements.attachments.files. On success call onSaved() to refresh
+   *   the parent list — the new file then shows up in the Existing files list.
+   * - New (uncreated) agreement: queue into form.pendingFiles, uploaded on Save.
+   */
+  async function handleAttachFiles(files: File[]) {
+    if (files.length === 0) return;
+    if (!existing?.id) {
+      upd('pendingFiles', [...form.pendingFiles, ...files]);
+      return;
+    }
+    const additions = files.map((f) => ({ key: `${f.name}__${f.size}__${Math.random().toString(36).slice(2, 8)}`, name: f.name, size: f.size }));
+    setUploadingFiles((u) => [...u, ...additions]);
+    let anyOk = false;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const key = additions[i].key;
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('agreementId', existing.id);
+        const r = await fetch('/api/admin/agreements/upload', { method: 'POST', body: fd });
+        if (!r.ok) {
+          const detail = await r.text();
+          throw new Error(detail || `HTTP ${r.status}`);
+        }
+        anyOk = true;
+        setUploadingFiles((u) => u.filter((x) => x.key !== key));
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'upload failed';
+        setUploadingFiles((u) => u.map((x) => x.key === key ? { ...x, error: msg } : x));
+      }
+    }
+    if (anyOk) {
+      // Refresh parent so the existing.attachments list reflects the new files.
+      await onSaved();
+    }
+  }
 
   // Computed values
   const adRate = parseFloat(form.ad_rate) || 0;
@@ -883,14 +932,42 @@ export function AgreementDrawer({
             ))}
           </div>
         )}
-        {/* Pending new files */}
+        {/* Files currently uploading (existing agreement only) */}
+        {uploadingFiles.length > 0 && (
+          <div className="space-y-1">
+            {uploadingFiles.map((f) => (
+              <div key={f.key} className="flex items-center gap-2 text-xs">
+                <svg className="w-3 h-3 text-blue-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd"/></svg>
+                <span className="text-gray-700">{f.name}</span>
+                {f.error ? (
+                  <>
+                    <span className="text-rose-600">— {f.error}</span>
+                    <button
+                      className="text-rose-500 hover:underline"
+                      onClick={() => setUploadingFiles((u) => u.filter((x) => x.key !== f.key))}
+                    >×</button>
+                  </>
+                ) : (
+                  <span className="text-gray-400 inline-flex items-center gap-1">
+                    <svg className="w-3 h-3 animate-spin text-blue-500" viewBox="0 0 20 20" fill="none">
+                      <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25" />
+                      <path d="M17 10a7 7 0 0 0-7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                    uploading…
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+        {/* Pending new files (only for new agreements not yet created) */}
         {form.pendingFiles.length > 0 && (
           <div className="space-y-1">
             {form.pendingFiles.map((f, i) => (
               <div key={i} className="flex items-center gap-2 text-xs text-gray-600">
                 <svg className="w-3 h-3 text-amber-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd"/></svg>
                 <span>{f.name}</span>
-                <span className="text-gray-400">— pending upload</span>
+                <span className="text-gray-400">— will upload on save</span>
                 <button className="text-rose-500 hover:underline" onClick={() => upd('pendingFiles', form.pendingFiles.filter((_, j) => j !== i))}>×</button>
               </div>
             ))}
@@ -904,7 +981,7 @@ export function AgreementDrawer({
             const inp = document.createElement('input');
             inp.type = 'file'; inp.multiple = true;
             inp.onchange = () => {
-              if (inp.files) upd('pendingFiles', [...form.pendingFiles, ...Array.from(inp.files)]);
+              if (inp.files) void handleAttachFiles(Array.from(inp.files));
             };
             inp.click();
           }}
@@ -912,10 +989,12 @@ export function AgreementDrawer({
           onDrop={(e) => {
             e.preventDefault();
             const files = Array.from(e.dataTransfer.files);
-            upd('pendingFiles', [...form.pendingFiles, ...files]);
+            void handleAttachFiles(files);
           }}
         >
-          Click or drag files here to attach
+          {existing?.id
+            ? 'Click or drag files here — they upload immediately'
+            : 'Click or drag files here to attach'}
         </div>
       </Section>
 
