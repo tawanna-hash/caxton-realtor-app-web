@@ -6,7 +6,7 @@
 // at /admin/invoices. Shares drawer / list / badge components with the
 // invoices page via app/admin/billing/_components/*.
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { RenewalReminder } from '@/lib/types/renewal-reminder';
@@ -58,6 +58,55 @@ export default function AgreementsClient({
   const [editAg, setEditAg] = useState<AgreementWithAdvertiser | null>(null);
   const [renewalSeed, setRenewalSeed] = useState<AgreementWithAdvertiser | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Recently-signed banner: shows agreements whose signed_at is within the
+  // last 24h, dismissable per-browser via localStorage. Server triggers an
+  // admin email via lib/server/agreement-signed-notify when /api/sign POST
+  // flips an agreement to signed; this is the in-app companion surface.
+  //
+  // `nowMs` is seeded once at mount (post-mount via useEffect) so the memo
+  // stays pure (no Date.now() inside useMemo). It refreshes every 5 min so
+  // the 24h window slides without a full page reload.
+  const [nowMs, setNowMs] = useState<number | null>(null);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNowMs(Date.now());
+    const id = window.setInterval(() => setNowMs(Date.now()), 5 * 60 * 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  const recentlySigned = useMemo(() => {
+    if (nowMs == null) return [] as AgreementWithAdvertiser[];
+    const cutoffMs = nowMs - 24 * 60 * 60 * 1000;
+    return agreements.filter((ag) => {
+      if (!ag.signed_at) return false;
+      const ts = new Date(ag.signed_at).getTime();
+      return Number.isFinite(ts) && ts >= cutoffMs;
+    });
+  }, [agreements, nowMs]);
+  // Track the dismissal-key the user has acknowledged in this browser.
+  // Banner shows when the current recently-signed id-set differs from this.
+  const [dismissedKey, setDismissedKey] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDismissedKey(
+      window.localStorage.getItem('agreements:signedBannerDismissedFor'),
+    );
+  }, []);
+  const recentlySignedKey = useMemo(
+    () => recentlySigned.map((a) => a.id).sort().join(','),
+    [recentlySigned],
+  );
+  const signedBannerDismissed =
+    recentlySignedKey === '' || dismissedKey === recentlySignedKey;
+  const dismissSignedBanner = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(
+      'agreements:signedBannerDismissedFor',
+      recentlySignedKey,
+    );
+    setDismissedKey(recentlySignedKey);
+  }, [recentlySignedKey]);
   const [toast, setToast] = useState<string | null>(null);
   const router = useRouter();
 
@@ -228,6 +277,47 @@ export default function AgreementsClient({
           }
         </div>
       </div>
+
+      {/* Recently-signed banner (last 24h) */}
+      {!signedBannerDismissed && recentlySigned.length > 0 && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 flex items-start gap-3">
+          <div className="flex-shrink-0 mt-0.5 text-emerald-600" aria-hidden>✓</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-emerald-900">
+              {recentlySigned.length === 1
+                ? '1 agreement signed in the last 24 hours'
+                : `${recentlySigned.length} agreements signed in the last 24 hours`}
+            </div>
+            <ul className="mt-1 text-xs text-emerald-800 space-y-0.5">
+              {recentlySigned.slice(0, 5).map((ag) => (
+                <li key={ag.id} className="flex items-baseline gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditAg(ag)}
+                    className="font-medium underline-offset-2 hover:underline text-left"
+                  >
+                    {ag.company_name || ag.advertiser_name || '(unnamed)'}
+                  </button>
+                  <span className="text-emerald-700">
+                    {ag.signer_name ? `signed by ${ag.signer_name}` : 'signed'}
+                  </span>
+                </li>
+              ))}
+              {recentlySigned.length > 5 && (
+                <li className="text-emerald-700 italic">+{recentlySigned.length - 5} more</li>
+              )}
+            </ul>
+          </div>
+          <button
+            type="button"
+            onClick={dismissSignedBanner}
+            className="flex-shrink-0 text-emerald-700 hover:text-emerald-900 text-sm px-2 py-1 rounded hover:bg-emerald-100"
+            aria-label="Dismiss notification"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Money summary strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

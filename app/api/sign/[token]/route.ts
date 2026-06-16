@@ -15,6 +15,7 @@ import {
   syncAgreementToAdvertiser,
   syncAgreementToLocationsAndStaff,
 } from '@/lib/server/billing-crm-sync';
+import { notifyAgreementSigned } from '@/lib/server/agreement-signed-notify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -247,6 +248,16 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       await autoCreateForAgreement(updatedRows[0]).catch((e: unknown) => {
         console.error('[api/sign POST] autoCreateForAgreement failed', e instanceof Error ? e.message : String(e));
       });
+    }
+
+    // Email admin notification that an agreement was just signed.
+    // Never throws — caller doesn't need to know about email outages.
+    if (updatedRows.length > 0) {
+      try {
+        await notifyAgreementSigned(updatedRows[0]);
+      } catch (e) {
+        console.error('[api/sign POST] notifyAgreementSigned failed', e instanceof Error ? e.message : String(e));
+      }
     }
 
     return NextResponse.json({ ok: true, advertiserOutcome });
