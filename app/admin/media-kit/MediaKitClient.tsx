@@ -24,6 +24,8 @@ import {
   MARKET_MULTIPLIERS,
   PUB_SUBSCRIBERS,
   eblastPriceForPub,
+  eblastSendsForPub,
+  eblastFeaturesForPub,
   isEblastAvailableForPub,
   type Package,
   type EBlast,
@@ -347,9 +349,12 @@ function AppSlotsTable({ slots, activePubLabel }: { slots: AppAdSlot[]; activePu
 
 function EBlastCard({ pkg, activePub }: { pkg: EBlast; activePub: PubTab }) {
   const price = eblastPriceForPub(pkg, activePub.mediaKitPub);
+  const sends = eblastSendsForPub(pkg, activePub.mediaKitPub);
+  const features = eblastFeaturesForPub(pkg, activePub.mediaKitPub);
   const subscribers = PUB_SUBSCRIBERS[activePub.mediaKitPub];
-  // CPM = (price / 2 sends) / (list size / 1000)
-  const cpm = subscribers > 0 ? (price / 2) / (subscribers / 1000) : 0;
+  // CPM = (price / sends) / (list size / 1000)
+  const cpm = subscribers > 0 && sends > 0 ? (price / sends) / (subscribers / 1000) : 0;
+  const sendsLabel = sends === 1 ? '1 send' : `${sends} sends`;
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all">
       <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
@@ -358,7 +363,7 @@ function EBlastCard({ pkg, activePub }: { pkg: EBlast; activePub: PubTab }) {
           <div className="text-2xl font-extrabold" style={{ color: ACCENT }}>
             {fmt(price)}
           </div>
-          <div className="text-[11px] text-gray-500">per package (2 sends)</div>
+          <div className="text-[11px] text-gray-500">per package ({sendsLabel})</div>
           <div className="text-[10px] text-gray-400 mt-0.5">
             ${cpm.toFixed(2)} CPM · {(subscribers / 1000).toFixed(0)}K list
           </div>
@@ -366,7 +371,7 @@ function EBlastCard({ pkg, activePub }: { pkg: EBlast; activePub: PubTab }) {
       </div>
       <div className="border-t border-gray-200 mb-3" />
       <ul className="list-none m-0 p-0 space-y-1">
-        {pkg.features.map((f) => (
+        {features.map((f) => (
           <li key={f} className="flex items-start gap-2 text-[13px] text-gray-800">
             <span className="text-emerald-600 flex-shrink-0 mt-0.5">✓</span>
             <span>{f}</span>
