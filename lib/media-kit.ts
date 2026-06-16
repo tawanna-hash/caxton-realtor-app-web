@@ -530,30 +530,29 @@ export const PACKAGES: Package[] = [
 
 // ── e-Blasts ────────────────────────────────────────────────────────────────
 
-// e-Blast pricing model (all markets now CPM-priced at $0.05/sub):
-//   - Austin (RealtyLine, 39K) + Newsline San Antonio (14K):
-//     $0.05/sub x 2 sends per package. Pkg 2 adds a $300 event-coverage
-//     premium. Both packages offered.
-//   - Houston (50K) + Dallas/FTW (27K):
-//     $0.05/sub x 1 send per package. Pkg 1 only - no event-coverage SKU,
-//     since those markets don't run live event coverage yet.
+// e-Blast pricing model (mixed flat + CPM):
+//   - Austin (RealtyLine, 39K): flat $1,100 / $1,425 packages. Each package
+//     = 2 sends. Pkg 2 adds event-day coverage. Both packages offered.
+//   - Newsline San Antonio (14K): single CPM-priced package, no event
+//     coverage. $0.05/sub x 2 sends = $1,400. Pkg 1 only.
+//   - Houston (50K) + Dallas/FTW (27K): $0.05/sub x 1 send per package.
+//     Pkg 1 only - no event-coverage SKU.
 //
-//   Austin pkg 1 (2 sends):     39,000 x $0.05 x 2 = $3,900
-//   Austin pkg 2 (2 sends + ev): $3,900 + $300 event premium = $4,200
-//   Newsline pkg 1 (2 sends):    14,000 x $0.05 x 2 = $1,400
-//   Newsline pkg 2 (2 sends + ev): $1,400 + $300 event premium = $1,700
-//   Houston pkg 1 (1 send):     50,000 x $0.05 = $2,500
-//   Dallas/FTW pkg 1 (1 send):  27,000 x $0.05 = $1,350
+//   Austin pkg 1 (2 sends):       $1,100  (flat)
+//   Austin pkg 2 (2 sends + ev):  $1,425  (flat)
+//   Newsline pkg 1 (2 sends):     14,000 x $0.05 x 2 = $1,400
+//   Houston pkg 1 (1 send):       50,000 x $0.05 = $2,500
+//   Dallas/FTW pkg 1 (1 send):    27,000 x $0.05 = $1,350
 export const EBLASTS: EBlast[] = [
   {
     name: 'e-Blast Package No. 1',
     // Default falls back to the Austin (RealtyLine) rate. Non-pub-aware
     // surfaces (legacy quote builders, public marketing pages) will see
     // the Austin number until they're upgraded to use eblastPriceForPub().
-    price: 3900,
+    price: 1100,
     sends: 2,
     priceByPub: {
-      'realtyline':         3900,  // Austin   (39K x $0.05 x 2)
+      'realtyline':         1100,  // Austin   (flat)
       'newsline':           1400,  // SA       (14K x $0.05 x 2)
       'realtyline-houston': 2500,  // Houston  (50K x $0.05 x 1)
       'realtyline-dallas':  1350,  // Dallas   (27K x $0.05 x 1)
@@ -582,18 +581,15 @@ export const EBLASTS: EBlast[] = [
   },
   {
     name: 'e-Blast Package No. 2',
-    // Default falls back to the Austin (RealtyLine) rate (Pkg 1 + $300
-    // event premium).
-    price: 4200,
+    // Pkg 2 (event-coverage) is now Austin-only. Newsline San Antonio sells
+    // a single CPM-priced package (Pkg 1) with no event coverage; Houston +
+    // Dallas/FTW likewise sell Pkg 1 only.
+    price: 1425,
     sends: 2,
     priceByPub: {
-      'realtyline': 4200,  // Austin Pkg 1 ($3,900) + $300 event premium
-      'newsline':   1700,  // SA Pkg 1 ($1,400) + $300 event premium
+      'realtyline': 1425,  // Austin flat
     },
-    // Event-coverage package is offered only on the two markets that run live
-    // event coverage (RealtyLine Austin + Newsline San Antonio). Houston and
-    // Dallas/FTW sell Package No. 1 only.
-    availablePubs: ['realtyline', 'newsline'],
+    availablePubs: ['realtyline'],
     features: [
       'Exclusive e-Blast',
       'Up to two follow-up e-Blasts prior to event',
