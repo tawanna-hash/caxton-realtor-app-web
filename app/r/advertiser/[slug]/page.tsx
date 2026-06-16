@@ -39,7 +39,7 @@ export default async function PublicAdvertiserPage({ params, searchParams }: Pag
   const rows = (await sql`
     SELECT * FROM advertisers
     WHERE slug = ${slug}
-      AND COALESCE(status, 'active') = 'active'
+      AND COALESCE(status, 'advertiser') IN ('advertiser', 'active')
   `) as unknown as Advertiser[];
   if (rows.length === 0) notFound();
   const advertiser = rows[0];

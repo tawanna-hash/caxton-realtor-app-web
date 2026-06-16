@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps) {
   const rows = (await sql`
     SELECT name, tagline FROM advertisers
     WHERE slug = ${slug}
-      AND COALESCE(status, 'active') = 'active'
+      AND COALESCE(status, 'advertiser') IN ('advertiser', 'active')
     LIMIT 1
   `) as unknown as Array<{ name: string; tagline: string | null }>;
   if (rows.length === 0) return { title: 'Advertiser not found' };
@@ -51,7 +51,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
   const rows = (await sql`
     SELECT * FROM advertisers
     WHERE slug = ${slug}
-      AND COALESCE(status, 'active') = 'active'
+      AND COALESCE(status, 'advertiser') IN ('advertiser', 'active')
     LIMIT 1
   `) as unknown as Advertiser[];
   if (rows.length === 0) notFound();
