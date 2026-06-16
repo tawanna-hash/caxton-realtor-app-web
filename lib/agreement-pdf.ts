@@ -346,6 +346,85 @@ export async function generateAgreementPdfBuffer(ag: Agreement): Promise<Uint8Ar
     drawLabelValue(ctx, 'Signed by', ag.signer_name);
     drawLabelValue(ctx, 'Signed on', ag.signed_at ? humanDate(ag.signed_at) : '—');
     drawLabelValue(ctx, 'Terms accepted', ag.terms_accepted ? 'Yes — Digitally signed' : 'No');
+
+    // ── Signature visualization ───────────────────────────────────────────
+    // - Typed signature        : ag.signer_name in cursive on a sig line
+    // - Drawn signature (PNG)  : ag.signed_document URL, is_uploaded=false
+    // - Uploaded signed doc    : ag.signed_document URL, is_uploaded=true
+    const sigUrl = (ag.signed_document ?? '').trim();
+    const isUploadedDoc = !!ag.is_uploaded;
+    const isDrawnPng = !!sigUrl && !isUploadedDoc && /\.png(\?|$)/i.test(sigUrl);
+
+    if (isDrawnPng) {
+      // Embed the drawn signature as a PNG above a sig line.
+      try {
+        const r = await fetch(sigUrl);
+        if (r.ok) {
+          const bytes = new Uint8Array(await r.arrayBuffer());
+          const img = await ctx.doc.embedPng(bytes);
+          // Scale so the image fits in a 200x55 box, preserving aspect ratio.
+          const maxW = 200;
+          const maxH = 55;
+          const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+          const drawW = img.width * scale;
+          const drawH = img.height * scale;
+
+          ensureSpace(ctx, drawH + 30);
+          ctx.y -= 8;
+          const imgY = ctx.y - drawH;
+          currentPg(ctx).drawImage(img, {
+            x: MARGIN,
+            y: imgY,
+            width: drawW,
+            height: drawH,
+          });
+          // Signature line beneath the drawing.
+          const lineY = imgY - 4;
+          currentPg(ctx).drawLine({
+            start: { x: MARGIN, y: lineY },
+            end: { x: MARGIN + 240, y: lineY },
+            thickness: 0.75,
+            color: DARK,
+          });
+          currentPg(ctx).drawText('Advertiser Signature', {
+            x: MARGIN, y: lineY - 11, font: regular, size: 8, color: GRAY,
+          });
+          ctx.y = lineY - 24;
+        } else {
+          drawLabelValue(ctx, 'Signature', 'On file (see signed document link)');
+        }
+      } catch {
+        drawLabelValue(ctx, 'Signature', 'On file (see signed document link)');
+      }
+    } else if (sigUrl && isUploadedDoc) {
+      // Uploaded pre-signed document: note + URL.
+      drawLabelValue(ctx, 'Signed document', 'Uploaded by advertiser');
+      drawText(ctx, sigUrl, { font: regular, size: 8, color: GRAY, maxWidth: CONTENT_W });
+      ctx.y -= 4;
+    } else {
+      // Typed signature — render the name in italic on a sig line.
+      ensureSpace(ctx, 50);
+      ctx.y -= 8;
+      const sigBaselineY = ctx.y - 18;
+      currentPg(ctx).drawText(ag.signer_name, {
+        x: MARGIN + 6,
+        y: sigBaselineY + 4,
+        font: italic,
+        size: 18,
+        color: DARK,
+      });
+      const lineY = sigBaselineY - 2;
+      currentPg(ctx).drawLine({
+        start: { x: MARGIN, y: lineY },
+        end: { x: MARGIN + 240, y: lineY },
+        thickness: 0.75,
+        color: DARK,
+      });
+      currentPg(ctx).drawText('Advertiser Signature (typed)', {
+        x: MARGIN, y: lineY - 11, font: regular, size: 8, color: GRAY,
+      });
+      ctx.y = lineY - 24;
+    }
   } else {
     ensureSpace(ctx, 60);
     ctx.y -= 8;
