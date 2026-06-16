@@ -5,6 +5,7 @@
 // 2026 Media Kit reference page. Pulls all data from lib/media-kit.ts so
 // rates here always match what the Sign Wizard / agreement PDF use.
 
+import { useState } from 'react';
 import {
   PACKAGES,
   EBLASTS,
@@ -17,10 +18,37 @@ import {
   POLICY_NOTES,
   APP_AD_SLOTS,
   APP_AD_AUDIENCE_NOTE,
+  getSlotAvailablePubs,
   type Package,
   type EBlast,
   type AppAdSlot,
+  type MediaKitPub,
 } from '@/lib/media-kit';
+
+// Publication tabs. The Media Kit page is a single source of truth for every
+// publication; tabs scope which sections are visible:
+//   - RealtyLine Austin & Newsline -> Print + Digital + Email (all sections)
+//   - RealtyLine Houston & Dallas  -> Digital + Email only (no print packages,
+//     rate matrix, or print deadlines)
+// Houston/Dallas inherit the same digital + e-blast rate card as Austin
+// (Phase 2 PR D).
+type PubTab = {
+  id: 'austin' | 'newsline' | 'houston' | 'dallas';
+  label: string;
+  /** Matching MediaKitPub used by getSlotAvailablePubs(). */
+  mediaKitPub: MediaKitPub;
+  /** True when this publication actually runs a print magazine. */
+  hasPrint: boolean;
+  /** Short channel-mix descriptor shown under each tab label. */
+  channels: string;
+};
+
+const PUB_TABS: PubTab[] = [
+  { id: 'austin',   label: 'RealtyLine Austin',  mediaKitPub: 'realtyline',         hasPrint: true,  channels: 'Print, Digital, Email' },
+  { id: 'newsline', label: 'Newsline',           mediaKitPub: 'newsline',           hasPrint: true,  channels: 'Print, Digital, Email' },
+  { id: 'houston',  label: 'RealtyLine Houston', mediaKitPub: 'realtyline-houston', hasPrint: false, channels: 'Digital, Email' },
+  { id: 'dallas',   label: 'RealtyLine Dallas',  mediaKitPub: 'realtyline-dallas',  hasPrint: false, channels: 'Digital, Email' },
+];
 
 const ACCENT = '#D22531';
 const PREMIUM = '#3D0740';
@@ -295,19 +323,59 @@ function formatSyncedDate(iso: string): string {
 
 export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
   const lastSyncedLabel = formatSyncedDate(lastSyncedISO);
+  const [activePubId, setActivePubId] = useState<PubTab['id']>('austin');
+  const activePub = PUB_TABS.find((p) => p.id === activePubId) ?? PUB_TABS[0]!;
+
+  // Digital slot inventory available on the selected publication. We always
+  // include slots whose `availablePubs` either explicitly lists the active
+  // pub OR is unset (default = all four single pubs + 'both').
+  const visibleSlots = APP_AD_SLOTS.filter((s) =>
+    getSlotAvailablePubs(s).includes(activePub.mediaKitPub),
+  );
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-12">
       {/* Page header */}
       <header>
         <Eyebrow>2026 Media Kit</Eyebrow>
         <h1 className="text-3xl text-gray-900 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
-          RealtyLine Austin · Ad Packages &amp; Rates
+          Media Kit: Packages &amp; Rates
         </h1>
         <p className="text-sm text-gray-600 max-w-3xl">
           Reference sheet for sales — packages, ad rates, e-blasts, print deadlines, and
           contract policies pulled from the master 2026 Media Kit. Pricing here always
           matches the Sign Wizard and the generated agreement PDF.
         </p>
+
+        {/* Publication tabs */}
+        <div
+          role="tablist"
+          aria-label="Select publication"
+          className="mt-5 flex flex-wrap gap-x-2 border-b border-gray-200"
+        >
+          {PUB_TABS.map((t) => {
+            const isActive = t.id === activePubId;
+            return (
+              <button
+                key={t.id}
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActivePubId(t.id)}
+                className={`px-4 py-2 -mb-px text-sm font-medium border-b-2 transition ${
+                  isActive
+                    ? 'text-gray-900'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+                style={isActive ? { borderBottomColor: ACCENT } : undefined}
+              >
+                <span>{t.label}</span>
+                <span className={`ml-2 text-[11px] font-normal ${isActive ? 'text-gray-500' : 'text-gray-400'}`}>
+                  {t.channels}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
         {/* Audience stats */}
         <div className="flex flex-wrap gap-2 mt-4">
@@ -370,7 +438,7 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
           </span>
           <span className="text-[12px] text-gray-600 self-center">High-context placements (article tops, sidebars, calendar pins, splash, push).</span>
         </div>
-        <AppSlotsTable slots={APP_AD_SLOTS.filter((s) => s.tier === 'premium')} />
+        <AppSlotsTable slots={visibleSlots.filter((s) => s.tier === 'premium')} />
 
         <div className="flex flex-wrap gap-2 mt-6 mb-3">
           <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wide font-semibold text-white px-2 py-1 rounded" style={{ background: NAVY }}>
@@ -378,7 +446,7 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
           </span>
           <span className="text-[12px] text-gray-600 self-center">Steady-reach inventory across feed, article, and calendar.</span>
         </div>
-        <AppSlotsTable slots={APP_AD_SLOTS.filter((s) => s.tier === 'standard')} />
+        <AppSlotsTable slots={visibleSlots.filter((s) => s.tier === 'standard')} />
 
         <div className="mt-4 p-3 rounded-md border border-gray-200 bg-amber-50/40" style={{ borderLeft: `4px solid ${GOLD}` }}>
           <div className="text-[12.5px] text-gray-700">
@@ -389,7 +457,8 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
         </div>
       </section>
 
-      {/* Packages */}
+      {/* Packages — print + digital, only rendered for publications that run a print magazine */}
+      {activePub.hasPrint && (
       <section>
         <SectionHead>Print &amp; Digital Ad Rate Packages</SectionHead>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -398,8 +467,10 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
           ))}
         </div>
       </section>
+      )}
 
-      {/* Rate matrix */}
+      {/* Rate matrix — print-only */}
+      {activePub.hasPrint && (
       <section>
         <SectionHead>Ad Rates by Size &amp; Frequency</SectionHead>
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
@@ -487,7 +558,9 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
         </div>
       </section>
 
-      {/* e-Blast packages */}
+      )}
+
+      {/* e-Blast packages — every publication has email */}
       <section>
         <SectionHead>e-Blast Packages</SectionHead>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -497,7 +570,8 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
         </div>
       </section>
 
-      {/* Print deadlines */}
+      {/* Print deadlines — print-only */}
+      {activePub.hasPrint && (
       <section>
         <SectionHead>2026 Print Deadlines</SectionHead>
         <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm divide-y divide-gray-200">
@@ -523,7 +597,9 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
         </div>
       </section>
 
-      {/* Policy notes */}
+      )}
+
+      {/* Policy notes — universal */}
       <section>
         <SectionHead>Policies &amp; Notes</SectionHead>
         <div className="space-y-3">

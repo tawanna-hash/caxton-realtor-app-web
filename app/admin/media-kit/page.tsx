@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export const metadata = {
-  title: 'Media Kit · RealtyLine Austin Admin',
+  title: 'Media Kit · Packages & Rates',
 };
 
 // Resolve the last-modified date of lib/media-kit.ts so the page can render a
