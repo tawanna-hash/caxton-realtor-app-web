@@ -23,6 +23,7 @@ import {
   monthlyRateForMarkets,
   MARKET_MULTIPLIERS,
   PUB_SUBSCRIBERS,
+  eblastPriceForPub,
   type Package,
   type EBlast,
   type AppAdSlot,
@@ -343,16 +344,23 @@ function AppSlotsTable({ slots, activePubLabel }: { slots: AppAdSlot[]; activePu
 
 // ── e-Blast card ────────────────────────────────────────────────
 
-function EBlastCard({ pkg }: { pkg: EBlast }) {
+function EBlastCard({ pkg, activePub }: { pkg: EBlast; activePub: PubTab }) {
+  const price = eblastPriceForPub(pkg, activePub.mediaKitPub);
+  const subscribers = PUB_SUBSCRIBERS[activePub.mediaKitPub];
+  // CPM = (price / 2 sends) / (list size / 1000)
+  const cpm = subscribers > 0 ? (price / 2) / (subscribers / 1000) : 0;
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all">
       <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
         <div className="text-[15px] font-bold text-gray-900">{pkg.name}</div>
         <div className="bg-gray-50 px-3 py-1.5 rounded text-right">
           <div className="text-2xl font-extrabold" style={{ color: ACCENT }}>
-            {fmt(pkg.price)}
+            {fmt(price)}
           </div>
-          <div className="text-[11px] text-gray-500">per blast</div>
+          <div className="text-[11px] text-gray-500">per package (2 sends)</div>
+          <div className="text-[10px] text-gray-400 mt-0.5">
+            ${cpm.toFixed(2)} CPM · {(subscribers / 1000).toFixed(0)}K list
+          </div>
         </div>
       </div>
       <div className="border-t border-gray-200 mb-3" />
@@ -645,7 +653,7 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
         <SectionHead>e-Blast Packages</SectionHead>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {EBLASTS.map((p) => (
-            <EBlastCard key={p.name} pkg={p} />
+            <EBlastCard key={p.name} pkg={p} activePub={activePub} />
           ))}
         </div>
       </section>

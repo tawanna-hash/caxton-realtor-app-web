@@ -25,8 +25,24 @@ export interface Package {
 
 export interface EBlast {
   name: string;
+  /** Default / Austin / Newsline San Antonio price (legacy single-market value). */
   price: number;
   features: string[];
+  /**
+   * Optional per-publication price overrides. Used to charge market CPM rates
+   * on the larger Houston (50K) and Dallas/FTW (27K) lists. When a pub key is
+   * absent here, the renderer falls back to `price`.
+   */
+  priceByPub?: Partial<Record<MediaKitPub, number>>;
+}
+
+/**
+ * Resolve the eblast price for the active publication tab. Houston and
+ * Dallas/FTW carry market-CPM pricing (~$100 CPM x list size); Austin and
+ * Newsline San Antonio keep their legacy flat rate.
+ */
+export function eblastPriceForPub(blast: EBlast, pub: MediaKitPub): number {
+  return blast.priceByPub?.[pub] ?? blast.price;
 }
 
 export interface PrintDeadline {
@@ -478,10 +494,24 @@ export const PACKAGES: Package[] = [
 
 // ── e-Blasts ────────────────────────────────────────────────────────────────
 
+// e-Blast pricing model:
+//   - Austin (RealtyLine) and Newsline San Antonio: flat $750 / $1,050
+//     legacy package rates. Each package = 2 sends.
+//   - Houston (50K) and Dallas/FTW (27K): market CPM at $100 per thousand,
+//     x 2 sends per package, with the same 1.4x event-coverage premium.
+//
+//   Houston pkg 1 (no event):     2 x 50,000 x $0.10 = $10,000
+//   Houston pkg 2 (with event):   10,000 x 1.4       = $14,000
+//   Dallas/FTW pkg 1 (no event):  2 x 27,000 x $0.10 = $5,400
+//   Dallas/FTW pkg 2 (with event): 5,400 x 1.4       = $7,560
 export const EBLASTS: EBlast[] = [
   {
     name: 'e-Blast Package No. 1',
     price: 750,
+    priceByPub: {
+      'realtyline-houston': 10000,
+      'realtyline-dallas':   5400,
+    },
     features: [
       'Exclusive e-Blast',
       'One follow-up e-Blast prior to event',
@@ -491,6 +521,10 @@ export const EBLASTS: EBlast[] = [
   {
     name: 'e-Blast Package No. 2',
     price: 1050,
+    priceByPub: {
+      'realtyline-houston': 14000,
+      'realtyline-dallas':   7560,
+    },
     features: [
       'Exclusive e-Blast',
       'Up to two follow-up e-Blasts prior to event',
