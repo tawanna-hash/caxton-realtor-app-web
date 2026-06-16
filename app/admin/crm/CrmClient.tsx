@@ -676,6 +676,13 @@ function EditDrawer({
     try {
       const payload = {
         ...form,
+        // "Company Name" in this drawer is the canonical display name --
+        // it shows on the public site, the admin list, and the drawer
+        // header. The legacy `name` column is what the frontend renders
+        // (row.name), so mirror Company -> name on every save. Without
+        // this, editing the company field leaves the old ALL CAPS name
+        // intact and the change appears not to take effect.
+        name: form.company.trim() || form.company,
         tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
         // Ad-management fields merged from the legacy /admin/advertisers page.
         // Multi-pub: send as canonical CSV. API accepts either array or CSV.
