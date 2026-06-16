@@ -37,7 +37,7 @@ export function coerceFooterTemplateId(value: unknown): FooterTemplateId {
  * skips blank lines so a partially-filled profile still looks tidy.
  *
  * `publication` controls the color palette: 'austin' (RealtyLine) uses
- * navy + gold, 'san_antonio' (Newsline) uses plum + gold, 'both' falls
+ * navy + gold, 'san_antonio' (Newsline San Antonio) uses plum + gold, 'both' falls
  * back to navy. Unknown / null also defaults to navy.
  */
 export interface FooterBrand {
@@ -63,7 +63,7 @@ export interface FooterBrand {
 /** Color palette derived from a brand's publication. The renderer uses
  *  this everywhere it used to reference hardcoded BRAND_NAVY. */
 export interface FooterPalette {
-  /** Primary brand color (navy for RealtyLine, plum for Newsline). RGB. */
+  /** Primary brand color (navy for RealtyLine, plum for Newsline San Antonio). RGB. */
   primary: [number, number, number];
   /** Slightly lighter shade of primary, used for body text on dark backgrounds. */
   primarySoft: [number, number, number];

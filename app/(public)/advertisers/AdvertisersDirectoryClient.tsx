@@ -6,7 +6,7 @@ import { type PubKey } from '@/lib/pub-meta';
 //
 // Client view for the public Advertisers directory. Filters the
 // advertiser list to match the active publication (caxton_pub in
-// localStorage) so RealtyLine and Newsline directories stay separate.
+// localStorage) so RealtyLine and Newsline San Antonio directories stay separate.
 // Mirrors the useSyncExternalStore pattern used by BuilderPageClient.
 //
 // Names link to the per-advertiser detail page at /advertisers/[slug].

@@ -260,8 +260,8 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
               onChange={(e) => setPublication(e.target.value as Pub)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900"
             >
-              <option value="austin">RealtyLine (Austin)</option>
-              <option value="san_antonio">Newsline (San Antonio)</option>
+              <option value="austin">RealtyLine Austin</option>
+              <option value="san_antonio">Newsline San Antonio</option>
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">

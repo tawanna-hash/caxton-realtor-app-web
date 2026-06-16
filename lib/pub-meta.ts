@@ -63,9 +63,9 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     instagram: '#',
     linkedin: '#',
   },
-  // RealtyLine Dallas - activated 2026-06-15 (Phase 2 PR A). See notes above.
+  // RealtyLine Dallas/FTW - activated 2026-06-15 (Phase 2 PR A). See notes above.
   'realtyline-dallas': {
-    name: 'RealtyLine Dallas',
+    name: 'RealtyLine Dallas/FTW',
     city: 'Dallas',
     color: '#021D40', // inherits RealtyLine navy
     tagline: 'Coming soon to Dallas real estate professionals',

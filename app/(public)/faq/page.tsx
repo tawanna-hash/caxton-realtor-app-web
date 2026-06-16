@@ -88,10 +88,10 @@ export default function FaqPage() {
         <div className="space-y-6">
           <div>
             <p className="font-semibold text-gray-900 mb-1">
-              What does the app cover — RealtyLine, Newsline, or both?
+              What does the app cover — RealtyLine, Newsline San Antonio, or both?
             </p>
             <p className="text-gray-700 font-light leading-relaxed">
-              Both. RealtyLine covers Austin and Central Texas; Newsline covers
+              Both. RealtyLine covers Austin and Central Texas; Newsline San Antonio covers
               San Antonio and South Texas. You can choose which publication&apos;s
               content you want to see in your feed, or follow both.
             </p>

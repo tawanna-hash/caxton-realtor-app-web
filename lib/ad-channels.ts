@@ -27,7 +27,7 @@ export const AD_CHANNEL_DESCRIPTION: Record<AdChannel, string> = {
   digital:
     'On-site placements across realtynewsnow.app: feed banners, article slots, calendar sponsorships, push, etc.',
   email:
-    'Solo or weekly e-Blast to RealtyLine and/or Newsline subscribers.',
+    'Solo or weekly e-Blast to RealtyLine and/or Newsline San Antonio subscribers.',
 };
 
 /**

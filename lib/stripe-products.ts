@@ -9,7 +9,7 @@
 // market ready to accept paid bookings via the public checkout flow?
 //
 // Phase 2 PR D activated Houston and Dallas to inherit the same digital +
-// email rate card as RealtyLine (Austin). Both flip to `true` here.
+// email rate card as RealtyLine Austin. Both flip to `true` here.
 
 import { PUB_KEYS, type PubKey } from '@/lib/pub-meta';
 

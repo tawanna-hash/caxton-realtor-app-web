@@ -14,7 +14,7 @@
 //                 4800 Spicewood Springs Rd, Austin, TX 78759
 //   Five Points — Five Points Board of REALTORS
 //                 123 E. Old Settler's Blvd., Round Rock, TX 78664
-//   SABOR       — San Antonio Board of REALTORS (Manual Newsline anchor)
+//   SABOR       — San Antonio Board of REALTORS (Manual Newsline San Antonio anchor)
 //                 9110 IH-10 W, San Antonio, TX 78230
 //
 // A row is "near" a board when its great-circle distance is <= 60 mi.

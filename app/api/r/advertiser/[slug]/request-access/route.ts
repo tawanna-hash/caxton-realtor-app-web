@@ -4,7 +4,7 @@
 // → If email matches advertiser.contact_email, creates a magic-link grant
 //   and emails it (via Resend if RESEND_API_KEY set; else logs to Vercel logs).
 // → Email subject + from-display + button color all theme per advertiser's
-//   publication (RealtyLine Austin navy, Newsline SA purple, etc).
+//   publication (RealtyLine Austin navy, Newsline San Antonio purple, etc).
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';

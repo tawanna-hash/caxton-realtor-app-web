@@ -19,7 +19,7 @@ export const maxDuration = 15;
 
 function publicationLabel(pub: string | null): string {
   if (pub === 'austin') return 'RealtyLine';
-  if (pub === 'san_antonio') return 'Newsline SA';
+  if (pub === 'san_antonio') return 'Newsline San Antonio';
   return '—';
 }
 

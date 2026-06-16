@@ -2,7 +2,7 @@
  * /api/market-interest  POST
  *
  * Public endpoint backing the "Notify me" form on Coming Soon market tiles
- * (RealtyLine Houston, RealtyLine Dallas). Persists the lead and emails the
+ * (RealtyLine Houston, RealtyLine Dallas/FTW). Persists the lead and emails the
  * admin so we can build a waitlist before a market launches.
  *
  * Body:
@@ -24,7 +24,7 @@ const COMING_SOON_MARKETS = ['realtyline-houston', 'realtyline-dallas'] as const
 
 const MARKET_LABEL: Record<(typeof COMING_SOON_MARKETS)[number], string> = {
   'realtyline-houston': 'RealtyLine Houston',
-  'realtyline-dallas': 'RealtyLine Dallas',
+  'realtyline-dallas': 'RealtyLine Dallas/FTW',
 };
 
 const schema = z.object({

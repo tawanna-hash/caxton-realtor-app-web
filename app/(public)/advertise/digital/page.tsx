@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export const metadata = {
-  title: 'Digital Placements — RealtyLine & Newsline',
+  title: 'Digital Placements — RealtyLine & Newsline San Antonio',
   description:
     'Live availability across all 17 digital placements on realtynewsnow.app. Book any open slot in under five minutes with self-serve checkout.',
 };
@@ -115,7 +115,7 @@ export default async function AdvertiseDigitalPage({
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              {p === 'realtyline' ? 'RealtyLine' : p === 'newsline' ? 'Newsline' : 'Both pubs'}
+              {p === 'realtyline' ? 'RealtyLine Austin' : p === 'newsline' ? 'Newsline San Antonio' : 'Both pubs'}
             </Link>
           ))}
         </div>

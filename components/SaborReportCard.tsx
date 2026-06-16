@@ -6,7 +6,7 @@
  * "Option B — Data-Forward Card" CTA for the monthly SABOR MLS Summary Report.
  *
  * Two visual variants:
- *   - variant="hero"    → Pinned at top of Newsline feed for the first 7 days
+ *   - variant="hero"    → Pinned at top of Newsline San Antonio feed for the first 7 days
  *                        after release. Larger top spacing, no-shadow flat
  *                        treatment to feel native to the feed top.
  *   - variant="inline"  → Same component, slipped between articles every ~5

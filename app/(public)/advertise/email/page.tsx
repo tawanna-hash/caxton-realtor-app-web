@@ -11,9 +11,9 @@ import PageTitle from '@/components/ui/PageTitle';
 import { EBLASTS } from '@/lib/media-kit';
 
 export const metadata = {
-  title: 'e-Blast Advertising — RealtyLine & Newsline',
+  title: 'e-Blast Advertising — RealtyLine & Newsline San Antonio',
   description:
-    'Exclusive e-Blasts to 64,000+ RealtyLine and Newsline email subscribers. Pick a package and we will follow up with a quote and invoice.',
+    'Exclusive e-Blasts to 64,000+ RealtyLine and Newsline San Antonio email subscribers. Pick a package and we will follow up with a quote and invoice.',
 };
 
 // Stable id for an e-Blast package — same convention as the public
@@ -38,7 +38,7 @@ export default function AdvertiseEmailPage() {
         </PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
           Your message, your design, sent as a dedicated email to RealtyLine
-          and Newsline subscribers — agents, brokers, builders, and lenders
+          and Newsline San Antonio subscribers — agents, brokers, builders, and lenders
           across Central and South Texas. Pick a package below and we&apos;ll
           send a quote with the exact send date and invoice.
         </p>
@@ -59,7 +59,7 @@ export default function AdvertiseEmailPage() {
             21K
           </p>
           <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
-            Newsline email
+            Newsline San Antonio email
           </p>
         </div>
         <div className="border border-gray-200 px-4 py-4">

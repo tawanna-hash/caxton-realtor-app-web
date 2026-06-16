@@ -32,7 +32,7 @@ import {
 
 // Publication tabs. The Media Kit page is a single source of truth for every
 // publication; tabs scope which sections are visible:
-//   - RealtyLine Austin & Newsline -> Print + Digital + Email (all sections)
+//   - RealtyLine Austin & Newsline San Antonio -> Print + Digital + Email (all sections)
 //   - RealtyLine Houston & Dallas  -> Digital + Email only (no print packages,
 //     rate matrix, or print deadlines)
 // Houston/Dallas inherit the same digital + e-blast rate card as Austin
@@ -50,9 +50,9 @@ type PubTab = {
 
 const PUB_TABS: PubTab[] = [
   { id: 'austin',   label: 'RealtyLine Austin',  mediaKitPub: 'realtyline',         hasPrint: true,  channels: 'Print, Digital, Email' },
-  { id: 'newsline', label: 'Newsline',           mediaKitPub: 'newsline',           hasPrint: true,  channels: 'Print, Digital, Email' },
+  { id: 'newsline', label: 'Newsline San Antonio',           mediaKitPub: 'newsline',           hasPrint: true,  channels: 'Print, Digital, Email' },
   { id: 'houston',  label: 'RealtyLine Houston', mediaKitPub: 'realtyline-houston', hasPrint: false, channels: 'Digital, Email' },
-  { id: 'dallas',   label: 'RealtyLine Dallas',  mediaKitPub: 'realtyline-dallas',  hasPrint: false, channels: 'Digital, Email' },
+  { id: 'dallas',   label: 'RealtyLine Dallas/FTW',  mediaKitPub: 'realtyline-dallas',  hasPrint: false, channels: 'Digital, Email' },
 ];
 
 const ACCENT = '#D22531';

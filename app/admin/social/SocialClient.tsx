@@ -50,7 +50,7 @@ interface HarvestResponse {
 
 const PUB_LABEL: Record<SocialPub, string> = {
   realtyline: 'RealtyLine',
-  newsline: 'Newsline',
+  newsline: 'Newsline San Antonio',
   both: 'Both',
 };
 
@@ -337,7 +337,7 @@ export default function SocialClient() {
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Social posts</h1>
           <p className="text-sm text-gray-700 mt-1">
-            Curate Facebook posts that surface in the RealtyLine + Newsline feeds.
+            Curate Facebook posts that surface in the RealtyLine + Newsline San Antonio feeds.
             Page posts auto-fetch via the Graph API; Group posts use a one-click
             harvester that pulls the caption + image from the post&rsquo;s public
             preview.
@@ -694,7 +694,7 @@ function SocialList({ title, posts, onPatch, onDelete }: ListProps) {
                     >
                       <option value="both">Both</option>
                       <option value="realtyline">RealtyLine</option>
-                      <option value="newsline">Newsline</option>
+                      <option value="newsline">Newsline San Antonio</option>
                     </select>
                     <span className="text-gray-400">({PUB_LABEL[p.pub]})</span>
                   </div>

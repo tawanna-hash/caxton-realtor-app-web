@@ -18,7 +18,7 @@
 //   a. GET the year list page anchored at "today" → harvest every
 //      icalrepeat.detail link, extract { evid, uid, year, month, day, title }.
 //   b. Keep only events whose title starts with "NAHREP San Antonio" (case
-//      insensitive). This is the per-chapter filter for the Newsline SA pub.
+//      insensitive). This is the per-chapter filter for the Newsline San Antonio pub.
 //   c. For each kept event, GET the icals.icalevent ICS export to get the
 //      authoritative DTSTART/DTEND. NAHREP labels every chapter's ICS with
 //      TZID=America/Denver but the wall-clock time is the chapter's *local*
@@ -35,7 +35,7 @@ const SOURCE = 'nahrep' as const;
 const EVENT_NAME_PREFIX = 'NAHREP: ';
 
 interface ChapterConfig {
-  /** Newsline publication this chapter feeds (san_antonio or austin). */
+  /** Newsline San Antonio publication this chapter feeds (san_antonio or austin). */
   publication: Publication;
   /** Human-readable chapter name, e.g. "NAHREP San Antonio". */
   organizer: string;

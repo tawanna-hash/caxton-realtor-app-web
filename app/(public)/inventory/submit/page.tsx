@@ -9,7 +9,7 @@ import PageTitle from '@/components/ui/PageTitle';
 export const metadata = {
   title: 'Submit inventory — Realty News Now',
   description:
-    'Builders and developers: submit a new home listing or promotion for publication in RealtyLine and Newsline.',
+    'Builders and developers: submit a new home listing or promotion for publication in RealtyLine and Newsline San Antonio.',
 };
 
 export default function Page() {

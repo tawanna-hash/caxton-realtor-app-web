@@ -4,7 +4,7 @@
  * Admin: SABOR MLS Reports
  *
  * Manages the monthly SABOR MLS Summary Report card that shows in the
- * Newsline feed. Most recent row (by released_at) is what the feed displays.
+ * Newsline San Antonio feed. Most recent row (by released_at) is what the feed displays.
  *
  * Editor controls:
  *   - month_label              "April 2026"
@@ -180,7 +180,7 @@ export default function SaborMlsAdminPage() {
           SABOR MLS Reports
         </h1>
         <p className="text-gray-600 mt-2 max-w-2xl">
-          The most recent row by release date powers the gated card in the Newsline feed.
+          The most recent row by release date powers the gated card in the Newsline San Antonio feed.
           Hero placement runs for 7 days from release, then the card demotes to inline placement.
         </p>
       </div>
@@ -325,7 +325,7 @@ export default function SaborMlsAdminPage() {
           {loading ? (
             <p className="text-gray-500">Loading\u2026</p>
           ) : reports.length === 0 ? (
-            <p className="text-gray-500 italic">No reports yet. Create one to populate the Newsline card.</p>
+            <p className="text-gray-500 italic">No reports yet. Create one to populate the Newsline San Antonio card.</p>
           ) : (
             <ul className="space-y-2">
               {reports.map((r, i) => (

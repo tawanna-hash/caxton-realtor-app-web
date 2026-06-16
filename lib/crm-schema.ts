@@ -697,7 +697,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
     ALTER TABLE mailing_contacts
       ADD COLUMN IF NOT EXISTS distance_fivepoints_mi double precision
   `);
-  // SABOR anchor (Manual Newsline Contacts proximity reference)
+  // SABOR anchor (Manual Newsline San Antonio Contacts proximity reference)
   await step(() => sql`
     ALTER TABLE mailing_contacts
       ADD COLUMN IF NOT EXISTS distance_sabor_mi      double precision

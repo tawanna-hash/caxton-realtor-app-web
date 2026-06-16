@@ -88,7 +88,7 @@ export const ACTION_LABELS: Record<string, string> = {
 // Color palette consistent with the rest of the app:
 // #1a2a44 — admin chrome navy
 // #021D40 — RealtyLine pub navy
-// #2d1a44 — Newsline pub navy
+// #2d1a44 — Newsline San Antonio pub navy
 // #185FA5 — accent blue (links, hover states)
 export const EVENT_COLORS: Record<string, string> = {
   inventory_filter_clicked: '#1a2a44',

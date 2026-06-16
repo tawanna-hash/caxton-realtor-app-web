@@ -231,7 +231,7 @@ export default function EventsPage() {
         <div className="flex items-center gap-2">
           {filterButton('all', 'All')}
           {filterButton('austin', 'RealtyLine')}
-          {filterButton('san_antonio', 'Newsline SA')}
+          {filterButton('san_antonio', 'Newsline San Antonio')}
         </div>
         {/* BUG-29: surface counts so admins can see at a glance how many events are loaded + how many are hidden */}
         {!loading && items.length > 0 && (

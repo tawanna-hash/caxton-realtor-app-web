@@ -233,7 +233,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
       if (j.row) mergeRow(j.row);
       const verdict = j.verdict ?? 'Unknown';
-      // Manual Newsline anchors on SABOR (San Antonio); other segments
+      // Manual Newsline San Antonio anchors on SABOR (San Antonio); other segments
       // anchor on ABoR (Austin). Show whichever applies in the toast.
       const isSabor = segment === 'manual-newsline';
       const distVal = isSabor
@@ -1048,7 +1048,7 @@ function ProximityBadges({
   row: MailingContactRow;
   segment: MailingSegment;
 }) {
-  // Manual Newsline Contacts anchor on SABOR (9110 IH-10 W, San Antonio).
+  // Manual Newsline San Antonio Contacts anchor on SABOR (9110 IH-10 W, San Antonio).
   // All other mailing-stage segments keep the Austin/Five-Points dual anchor.
   if (segment === 'manual-newsline') {
     const dS = row.distance_sabor_mi;

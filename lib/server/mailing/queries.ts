@@ -184,7 +184,7 @@ export async function segmentStats(segment: MailingSegment): Promise<SegmentStat
   // the geocode module's runtime deps.
   const NEAR_MI = 60;
 
-  // Manual Newsline Contacts and any San Antonio segment use SABOR
+  // Manual Newsline San Antonio Contacts and any San Antonio segment use SABOR
   // (9110 IH-10 W) as the proximity anchor. All other mailing-stage
   // segments keep the Austin/Five-Points dual anchor.
   const useSaborAnchor =

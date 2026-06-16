@@ -48,7 +48,7 @@ export interface PolicyNote {
 // Kit PDF documents, kept in sync here so the admin reference page, the
 // Sign Wizard, and the generated agreement PDF all read from one source.
 //
-// Rates are weekly per single publication (RealtyLine OR Newsline). Both-
+// Rates are weekly per single publication (RealtyLine OR Newsline San Antonio). Both-
 // pub rates run ~1.7× single-pub for full network reach. Monthly = 4 weeks.
 
 export type AppAdSlotTier = 'standard' | 'premium';
@@ -86,7 +86,7 @@ export interface AppAdSlot {
    * Defaults (when omitted) to every single-pub plus the legacy 'both'
    * bundle — see getSlotAvailablePubs() for the resolved set.
    * Set this explicitly when a placement is only sold on one publication
-   * (e.g. a Newsline-only sponsorship) or when 'both' is not packaged.
+   * (e.g. a Newsline San Antonio-only sponsorship) or when 'both' is not packaged.
    * The checkout UI disables disallowed scopes; the server enforces the
    * same allow-list when creating the Stripe payment intent.
    */
@@ -134,13 +134,13 @@ export function getSlotAvailablePubs(
 // ── Multi-market rate scaling ────────────────────────────────────────────
 //
 // Rates in APP_AD_SLOTS are stored as 1-market (single) base prices. When an
-// advertiser bundles multiple markets (Austin / Newsline / Houston / Dallas),
+// advertiser bundles multiple markets (Austin / Newsline San Antonio / Houston / Dallas),
 // we apply a linear bundle multiplier that rewards bigger commitments:
 //
 //   1 market  → 1.0× (base price)
 //   2 markets → 1.7× (per current both-pub convention)
 //   3 markets → 2.4×
-//   4 markets → 3.0× (all RealtyLine network + Newsline)
+//   4 markets → 3.0× (all RealtyLine network + Newsline San Antonio)
 //
 // This replaces the legacy `weeklyBoth`/`monthlyBoth` two-tier model. The
 // stored `weeklyBoth`/`monthlyBoth` fields are kept on the AppAdSlot type for
@@ -549,7 +549,7 @@ export const AUDIENCE_STATS: { label: string; value: string }[] = [
 // where San Antonio rolls under the RealtyLine Austin umbrella).
 export const PUB_SUBSCRIBERS: Record<MediaKitPub, number> = {
   'realtyline':          39000, // RealtyLine Austin (39K Austin + 14K San Antonio rolls here)
-  'newsline':            14000, // Newsline / San Antonio
+  'newsline':            14000, // Newsline San Antonio / San Antonio
   'realtyline-houston':  50000,
   'realtyline-dallas':   27000,
   'both':               130000, // legacy bundle = full network

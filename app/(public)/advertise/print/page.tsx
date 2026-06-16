@@ -10,7 +10,7 @@ import PageTitle from '@/components/ui/PageTitle';
 import { PACKAGES, PRINT_DEADLINES } from '@/lib/media-kit';
 
 export const metadata = {
-  title: 'Print Advertising — RealtyLine & Newsline',
+  title: 'Print Advertising — RealtyLine & Newsline San Antonio',
   description:
     'Brand [1], [3], [6], [12], and [12 Plus] print + digital-edition advertising on RealtyLine Austin and Newsline San Antonio. Pick a package and we will follow up with a quote and invoice.',
 };

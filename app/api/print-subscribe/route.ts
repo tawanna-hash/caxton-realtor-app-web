@@ -285,7 +285,7 @@ async function sendEmail(opts: {
 // ----------------------------------------------------------------------------
 
 function pubLabel(pub: PubKey): string {
-  return pub === 'realtyline' ? 'RealtyLine (Austin)' : 'Newsline (San Antonio)';
+  return pub === 'realtyline' ? 'RealtyLine Austin' : 'Newsline San Antonio';
 }
 
 

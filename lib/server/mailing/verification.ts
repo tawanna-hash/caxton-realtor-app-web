@@ -135,7 +135,7 @@ export async function persistAddressVerification(
 /**
  * Stage-agnostic variant of persistAddressVerification. Used by the
  * mailing-stage Verify USPS action on segment views (e.g. Manual
- * Newsline Contacts) where rows live in stage='mailing'.
+ * Newsline San Antonio Contacts) where rows live in stage='mailing'.
  */
 export async function persistAddressVerificationAnyStage(
   id: string,

@@ -275,7 +275,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-semibold text-gray-900 truncate">
-              Hotspots · {magazine.publication === 'austin' ? 'RealtyLine' : 'Newsline SA'} · {magazine.issue_label}
+              Hotspots · {magazine.publication === 'austin' ? 'RealtyLine' : 'Newsline San Antonio'} · {magazine.issue_label}
             </h1>
             <p className="text-xs text-gray-500">
               {hotspots.length} hotspot{hotspots.length === 1 ? '' : 's'} · {magazine.page_count} pages

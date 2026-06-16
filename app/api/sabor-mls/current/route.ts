@@ -2,7 +2,7 @@
  * GET /api/sabor-mls/current
  *
  * Returns the most recently released SABOR MLS Summary Report row, shaped
- * for the Newsline feed <SaborReportCard>. Read-only, no auth required —
+ * for the Newsline San Antonio feed <SaborReportCard>. Read-only, no auth required —
  * gating happens at /sso/start when the user clicks the CTA.
  *
  * Table is created on first hit (idempotent CREATE IF NOT EXISTS) so we

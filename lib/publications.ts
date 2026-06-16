@@ -5,11 +5,11 @@
 // Session 13 audit (Batch 12) identified SEVEN distinct format variants
 // for "RealtyLine" across admin views:
 //   - Hamburger menu               -> "RealtyLine"
-//   - Events form dropdown         -> "RealtyLine (Austin)"
+//   - Events form dropdown         -> "RealtyLine Austin"
 //   - Events list filter pill      -> "RealtyLine"
 //   - Events list table Pub badge  -> "RealtyLine"
 //   - Campaigns Pubs column        -> "Both publications"
-//   - Subscribers filter dropdown  -> "RealtyLine (Austin)"
+//   - Subscribers filter dropdown  -> "RealtyLine Austin"
 //   - Inventory review dropdown    -> "RealtyLine only"
 //
 // This module exists to consolidate all of those into a single set of
@@ -36,16 +36,16 @@ export const PUBLICATIONS: readonly Publication[] = [
     id: 'austin',
     name: 'RealtyLine',
     market: 'Austin',
-    label: 'RealtyLine (Austin)',
+    label: 'RealtyLine Austin',
     filterLabel: 'RealtyLine',
     pillStyle: 'bg-[#021D40]/10 text-[#021D40] border-[#021D40]/20',
   },
   {
     id: 'san_antonio',
-    name: 'Newsline',
+    name: 'Newsline San Antonio',
     market: 'San Antonio',
-    label: 'Newsline (SA)',
-    filterLabel: 'Newsline SA',
+    label: 'Newsline San Antonio',
+    filterLabel: 'Newsline San Antonio',
     pillStyle: 'bg-[#3D0740]/10 text-[#3D0740] border-[#3D0740]/20',
   },
 ] as const;
@@ -64,21 +64,21 @@ export function getPublication(id: PublicationId): Publication {
 // PUB_LABELS or PUBLICATION_LABELS map keyed by id can use this directly.
 // New code should prefer getPublication(id).label.
 export const PUBLICATION_LABELS: Record<PublicationId, string> = {
-  austin: 'RealtyLine (Austin)',
-  san_antonio: 'Newsline (SA)',
+  austin: 'RealtyLine Austin',
+  san_antonio: 'Newsline San Antonio',
 };
 
 // Same shape as above but with the short filter labels.
 export const PUBLICATION_FILTER_LABELS: Record<PublicationId, string> = {
   austin: 'RealtyLine',
-  san_antonio: 'Newsline SA',
+  san_antonio: 'Newsline San Antonio',
 };
 
 // Variant for surfaces that also support "both publications" scope.
 // Currently used by ads campaigns where a campaign can target one or both pubs.
 // (Builder inventory uses a different legacy scheme — see FOLLOW_UP #84.)
 export const PUBLICATION_LABELS_WITH_BOTH: Record<PublicationId | 'both', string> = {
-  austin: 'RealtyLine (Austin)',
-  san_antonio: 'Newsline (SA)',
+  austin: 'RealtyLine Austin',
+  san_antonio: 'Newsline San Antonio',
   both: 'Both publications',
 };

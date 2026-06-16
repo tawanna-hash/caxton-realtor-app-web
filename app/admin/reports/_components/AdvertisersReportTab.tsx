@@ -34,7 +34,7 @@ interface SendResult {
 }
 
 function publicationLabel(pub: Advertiser['publication']): string {
-  return pub === 'san_antonio' ? 'Newsline SA' : pub === 'both' ? 'Both' : 'RealtyLine';
+  return pub === 'san_antonio' ? 'Newsline San Antonio' : pub === 'both' ? 'Both' : 'RealtyLine';
 }
 
 function rangeFromDays(days: DaysOption): { from: string; to: string } {

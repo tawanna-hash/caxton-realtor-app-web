@@ -339,7 +339,7 @@ function AdvertiserPicker({
         <option value="">— None —</option>
         {advertisers.map((a) => (
           <option key={a.id} value={String(a.id)}>
-            {a.name} {a.publication === 'san_antonio' ? '(Newsline SA)' : a.publication === 'both' ? '(Both)' : '(RealtyLine)'}
+            {a.name} {a.publication === 'san_antonio' ? '(Newsline San Antonio)' : a.publication === 'both' ? '(Both)' : '(RealtyLine)'}
           </option>
         ))}
       </select>
@@ -384,8 +384,8 @@ function AdvertiserPicker({
                 onChange={(e) => setNewPublication(e.target.value as 'austin' | 'san_antonio' | 'both')}
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded bg-white"
               >
-                <option value="austin">RealtyLine (Austin)</option>
-                <option value="san_antonio">Newsline SA</option>
+                <option value="austin">RealtyLine Austin</option>
+                <option value="san_antonio">Newsline San Antonio</option>
                 <option value="both">Both</option>
               </select>
             </div>

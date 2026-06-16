@@ -26,7 +26,7 @@ export default function PrivacyPage() {
           <p>
             Caxton Publications, Inc. (&ldquo;Caxton,&rdquo; &ldquo;we,&rdquo;
             &ldquo;us&rdquo;) operates Realty News Now (the &ldquo;app&rdquo;) and publishes
-            RealtyLine (Austin) and Newsline San Antonio. We are based in
+            RealtyLine Austin and Newsline San Antonio. We are based in
             Texas. This notice describes the information we collect through the
             app and how we use it.
           </p>

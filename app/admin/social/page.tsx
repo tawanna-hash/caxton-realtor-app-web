@@ -1,5 +1,5 @@
 // caxton-social-v1
-// Admin UI: curate Facebook posts that surface in the RealtyLine / Newsline feeds.
+// Admin UI: curate Facebook posts that surface in the RealtyLine / Newsline San Antonio feeds.
 
 import { Suspense } from 'react';
 import SocialClient from './SocialClient';

@@ -209,7 +209,7 @@ export async function POST(req: NextRequest) {
           hotspots: hotspotRows.map((r) => ({
             magazineLabel: [
               r.publication === 'austin' ? 'RealtyLine'
-                : r.publication === 'san_antonio' ? 'Newsline SA'
+                : r.publication === 'san_antonio' ? 'Newsline San Antonio'
                 : 'Magazine',
               r.issue_label || `#${r.magazine_id}`,
             ].join(' · '),

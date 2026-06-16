@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 type Kind = 'listing' | 'promotion';
 type Publication = 'realtyline' | 'newsline' | 'both';
 const PUBLICATION_OPTIONS: { value: Publication; label: string }[] = [
-  { value: 'realtyline', label: 'RealtyLine (Austin)' },
-  { value: 'newsline', label: 'Newsline (San Antonio)' },
+  { value: 'realtyline', label: 'RealtyLine Austin' },
+  { value: 'newsline', label: 'Newsline San Antonio' },
   { value: 'both', label: 'Both publications' },
 ];
 
@@ -57,6 +57,7 @@ export default function AdminInventoryCreateForm() {
 
   // Publication-aware city defaults
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- city default mirrors selected publication; refactor tracked separately
     if (publication === 'realtyline') setCity('Greater Austin');
     else if (publication === 'newsline') setCity('Greater San Antonio');
     // 'both' leaves city untouched — admin chooses
