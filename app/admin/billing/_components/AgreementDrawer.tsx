@@ -91,7 +91,7 @@ function initTimingYears(existing?: AgreementWithAdvertiser | null): Record<stri
 }
 
 export function AgreementDrawer({
-  existing, renewedFrom, advertisers, adCampaigns, onClose, onSaved, onError, onGenerateInvoice,
+  existing, renewedFrom, advertisers, adCampaigns, onClose, onSaved, onRefresh, onError, onGenerateInvoice,
 }: {
   existing?: AgreementWithAdvertiser;
   renewedFrom?: AgreementWithAdvertiser;
@@ -99,6 +99,11 @@ export function AgreementDrawer({
   adCampaigns: AdCampaignOption[];
   onClose: () => void;
   onSaved: () => Promise<void>;
+  /** Reload parent data without closing the drawer. Optional — used for
+   *  side-effect updates (file uploads, etc.) that shouldn't dismiss the
+   *  drawer the way an explicit Save would. Falls back to a no-op so the
+   *  drawer keeps working for callers that don't pass it. */
+  onRefresh?: () => Promise<void>;
   onError: (msg: string) => void;
   onGenerateInvoice?: (seed: { advertiser_id: number | null; agreement_id: string; amount_cents: number | null }) => void;
 }) {
@@ -193,6 +198,11 @@ export function AgreementDrawer({
   // are unlikely. We show these in the Attachments list with a spinner
   // until the upload resolves and the file is appended to existing.attachments.
   const [uploadingFiles, setUploadingFiles] = useState<Array<{ key: string; name: string; size: number; error?: string }>>([]);
+  // Successfully-uploaded files in this session, mirrored locally so the
+  // user sees them in the Attachments list without depending on the parent
+  // refreshing the `existing` prop. Merged with existing.attachments.files
+  // in render — dedup by URL.
+  const [localUploadedFiles, setLocalUploadedFiles] = useState<Array<{ name: string; size: number; url: string; uploadedAt: string }>>([]);
 
   const upd = <K extends keyof AgForm>(k: K, v: AgForm[K]) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -226,6 +236,10 @@ export function AgreementDrawer({
           const detail = await r.text();
           throw new Error(detail || `HTTP ${r.status}`);
         }
+        const data = (await r.json()) as { attachment?: { name: string; size: number; url: string; uploadedAt: string } };
+        if (data.attachment) {
+          setLocalUploadedFiles((prev) => [...prev, data.attachment!]);
+        }
         anyOk = true;
         setUploadingFiles((u) => u.filter((x) => x.key !== key));
       } catch (e) {
@@ -233,9 +247,12 @@ export function AgreementDrawer({
         setUploadingFiles((u) => u.map((x) => x.key === key ? { ...x, error: msg } : x));
       }
     }
-    if (anyOk) {
-      // Refresh parent so the existing.attachments list reflects the new files.
-      await onSaved();
+    if (anyOk && onRefresh) {
+      // Optionally refresh parent so the parent list reflects the new files,
+      // but keep the drawer open — the admin may still be editing other
+      // fields. The drawer also mirrors the upload locally so the user sees
+      // the file immediately even if onRefresh isn't provided.
+      await onRefresh();
     }
   }
 
@@ -920,18 +937,27 @@ export function AgreementDrawer({
 
       {/* ── Attachments ── */}
       <Section title="Attachments">
-        {/* Existing files */}
-        {(existing?.attachments?.files ?? []).length > 0 && (
-          <div className="space-y-1">
-            {existing!.attachments!.files.map((f, i) => (
-              <div key={i} className="flex items-center gap-2 text-xs text-gray-700">
-                <svg className="w-3 h-3 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd"/></svg>
-                <a href={f.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600">{f.name}</a>
-                <span className="text-gray-400">({Math.round(f.size / 1024)}KB)</span>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Existing files (server-persisted), merged with any uploads that
+            completed in this drawer session (so the user sees them without
+            relying on a parent refresh). Dedup by URL. */}
+        {(() => {
+          const serverFiles = (existing?.attachments?.files ?? []) as Array<{ name: string; size: number; url: string }>;
+          const seenUrls = new Set(serverFiles.map((f) => f.url));
+          const sessionUploads = localUploadedFiles.filter((f) => !seenUrls.has(f.url));
+          const allFiles = [...serverFiles, ...sessionUploads];
+          if (allFiles.length === 0) return null;
+          return (
+            <div className="space-y-1">
+              {allFiles.map((f, i) => (
+                <div key={`${f.url}-${i}`} className="flex items-center gap-2 text-xs text-gray-700">
+                  <svg className="w-3 h-3 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd"/></svg>
+                  <a href={f.url} target="_blank" rel="noopener noreferrer" className="hover:underline text-blue-600">{f.name}</a>
+                  <span className="text-gray-400">({Math.round(f.size / 1024)}KB)</span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
         {/* Files currently uploading (existing agreement only) */}
         {uploadingFiles.length > 0 && (
           <div className="space-y-1">
