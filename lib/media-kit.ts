@@ -533,20 +533,20 @@ export const PACKAGES: Package[] = [
 // e-Blast pricing model:
 //   - Austin (RealtyLine) and Newsline San Antonio: flat $750 / $1,050
 //     legacy package rates. Each package = 2 sends. Both packages offered.
-//   - Houston (50K) and Dallas/FTW (27K): $0.03 per subscriber per send
-//     ($30 CPM), x 1 send per package. Package No. 1 only - no event-
+//   - Houston (50K) and Dallas/FTW (27K): $0.05 per subscriber per send
+//     ($50 CPM), x 1 send per package. Package No. 1 only - no event-
 //     coverage SKU, since those markets don't run live event coverage yet.
 //
-//   Houston pkg 1 (1 send):     50,000 x $0.03 = $1,500
-//   Dallas/FTW pkg 1 (1 send):  27,000 x $0.03 = $810
+//   Houston pkg 1 (1 send):     50,000 x $0.05 = $2,500
+//   Dallas/FTW pkg 1 (1 send):  27,000 x $0.05 = $1,350
 export const EBLASTS: EBlast[] = [
   {
     name: 'e-Blast Package No. 1',
     price: 750,
     sends: 2,
     priceByPub: {
-      'realtyline-houston': 1500,
-      'realtyline-dallas':  810,
+      'realtyline-houston': 2500,
+      'realtyline-dallas':  1350,
     },
     sendsByPub: {
       'realtyline-houston': 1,
