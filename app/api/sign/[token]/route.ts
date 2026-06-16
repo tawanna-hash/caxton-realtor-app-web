@@ -138,8 +138,24 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     ? body.patches as Record<string, unknown>
     : null;
 
+  // Sign method + signature/document URL (new — type / draw / upload).
+  // Method is informational and stored only in the audit log; signed_document
+  // / is_uploaded carry the actual persisted state.
+  const signMethodRaw = typeof body.signMethod === 'string' ? body.signMethod : 'type';
+  const signMethod: 'type' | 'draw' | 'upload' =
+    signMethodRaw === 'draw' || signMethodRaw === 'upload' ? signMethodRaw : 'type';
+  const signedDocumentUrl = typeof body.signedDocumentUrl === 'string' && body.signedDocumentUrl.trim()
+    ? body.signedDocumentUrl.trim()
+    : null;
+
   if (!signerName) return NextResponse.json({ error: 'signerName is required' }, { status: 400 });
   if (!termsAccepted) return NextResponse.json({ error: 'termsAccepted must be true' }, { status: 400 });
+  if ((signMethod === 'draw' || signMethod === 'upload') && !signedDocumentUrl) {
+    return NextResponse.json(
+      { error: `signedDocumentUrl is required for sign method '${signMethod}'` },
+      { status: 400 },
+    );
+  }
 
   try {
     await ensureSchema();
@@ -157,6 +173,21 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const signedAtTs = signedAt.length === 10 ? `${signedAt}T00:00:00.000Z` : signedAt;
     const now = new Date().toISOString();
 
+    // When a drawn signature image or uploaded signed doc is provided,
+    // persist it on `signed_document`. `is_uploaded` is set true only for
+    // 'upload' (a pre-signed document supplied by the advertiser); drawn
+    // signatures keep is_uploaded=false since the wizard still produced the
+    // signature.
+    if (signedDocumentUrl) {
+      const isUploaded = signMethod === 'upload';
+      await sql`
+        UPDATE agreements
+        SET signed_document = ${signedDocumentUrl},
+            is_uploaded = ${isUploaded}
+        WHERE id = ${id}
+      `;
+    }
+
     await sql`
       UPDATE agreements
       SET status = 'signed',
@@ -169,10 +200,11 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     `;
 
     // Append audit
+    const methodLabel = signMethod === 'draw' ? 'drawn signature' : signMethod === 'upload' ? 'uploaded signed document' : 'typed signature';
     const newLog = appendAudit(ag.audit_log, {
       event: 'signed',
       timestamp: now,
-      details: `Digitally signed by "${signerName}" via sign wizard`,
+      details: `Digitally signed by "${signerName}" via sign wizard (${methodLabel})`,
     });
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${id}`;
 

@@ -11,6 +11,7 @@
 
 import { useRef, useState } from 'react';
 import StripePaymentBlock, { type StripePaymentHandle } from './StripePaymentBlock';
+import SignaturePad, { type SignatureValue } from './SignaturePad';
 import { useRouter } from 'next/navigation';
 import type { Agreement } from '@/lib/agreements';
 import { TERMS_RL } from '@/lib/agreement-terms';
@@ -293,7 +294,11 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
 
   // ── Sign step ──────────────────────────────────────────────────────────────
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [signerName, setSignerName] = useState(ag.rep_name ?? '');
+  const [signature, setSignature] = useState<SignatureValue>({
+    method: 'type',
+    signerName: ag.rep_name ?? '',
+  });
+  const signerName = signature.signerName;
   const [signDate, setSignDate] = useState(new Date().toISOString().slice(0, 10));
 
   // ── Computed values ────────────────────────────────────────────────────────
@@ -420,8 +425,43 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
 
   // ── submitSignature ────────────────────────────────────────────────────────
 
+  async function uploadSignatureBlob(
+    blob: Blob,
+    filename: string,
+    kind: 'signature' | 'document',
+  ): Promise<string> {
+    const fd = new FormData();
+    fd.append('file', blob, filename);
+    fd.append('kind', kind);
+    const res = await fetch(`/api/sign/${token}/upload`, {
+      method: 'POST',
+      body: fd,
+    });
+    if (!res.ok) {
+      let detail = '';
+      try {
+        const j = (await res.json()) as { error?: string; detail?: string };
+        detail = j.error || j.detail || '';
+      } catch { /* noop */ }
+      throw new Error(detail || `upload failed (HTTP ${res.status})`);
+    }
+    const data = (await res.json()) as { url: string };
+    return data.url;
+  }
+
   async function submitSignature() {
     if (!termsAccepted || !signerName.trim()) return;
+
+    // Method-specific guards.
+    if (signature.method === 'draw' && !signature.pngBlob) {
+      setError('Please draw your signature before continuing.');
+      return;
+    }
+    if (signature.method === 'upload' && !signature.file) {
+      setError('Please choose a signed file to upload before continuing.');
+      return;
+    }
+
     setSaving(true);
     setError(null);
     try {
@@ -438,7 +478,24 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
         stripePaymentIntentId = confirmedPaymentIntentId;
       }
 
-      // 2. Persist signature + patches.
+      // 2. For draw / upload methods, upload the asset to blob storage and
+      //    capture the resulting URL.
+      let signedDocumentUrl: string | null = null;
+      if (signature.method === 'draw' && signature.pngBlob) {
+        signedDocumentUrl = await uploadSignatureBlob(
+          signature.pngBlob,
+          `signature-${ag.id}.png`,
+          'signature',
+        );
+      } else if (signature.method === 'upload' && signature.file) {
+        signedDocumentUrl = await uploadSignatureBlob(
+          signature.file,
+          signature.file.name,
+          'document',
+        );
+      }
+
+      // 3. Persist signature + patches.
       const res = await fetch(`/api/sign/${token}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -446,6 +503,8 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
           signerName: signerName.trim(),
           signedAt: signDate,
           termsAccepted: true,
+          signMethod: signature.method,
+          signedDocumentUrl,
           patches: buildPatchPayload(),
           stripePaymentIntentId,
         }),
@@ -869,7 +928,13 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
 
   // ─── Step 5: Terms & Sign ─────────────────────────────────────────────────
 
-  const canSign = termsAccepted && signerName.trim() !== '' && signDate !== '';
+  const hasSignatureAsset =
+    signature.method === 'type'
+      ? true
+      : signature.method === 'draw'
+        ? !!signature.pngBlob
+        : !!signature.file;
+  const canSign = termsAccepted && signerName.trim() !== '' && signDate !== '' && hasSignatureAsset;
 
   return (
     <Shell
@@ -919,32 +984,21 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
           </span>
         </label>
 
-        <div
-          className={`rounded border-2 p-4 space-y-3 transition-colors ${
-            termsAccepted ? 'border-amber-400 bg-amber-50/40' : 'border-gray-200'
-          }`}
-        >
-          <div className="text-xs text-gray-600 font-medium">Digital Signature</div>
-          <div>
-            <div className="text-xs text-gray-500 mb-1">Type your full legal name *</div>
-            <input
-              value={signerName}
-              onChange={(e) => setSignerName(e.target.value)}
-              disabled={!termsAccepted}
-              placeholder="Full legal name"
-              className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 disabled:bg-gray-100 disabled:text-gray-400"
-            />
-          </div>
-          <div>
-            <div className="text-xs text-gray-500 mb-1">Signature date *</div>
-            <input
-              type="date"
-              value={signDate}
-              onChange={(e) => setSignDate(e.target.value)}
-              disabled={!termsAccepted}
-              className="px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 disabled:bg-gray-100"
-            />
-          </div>
+        <SignaturePad
+          initialSignerName={ag.rep_name ?? ''}
+          enabled={termsAccepted}
+          onChange={setSignature}
+        />
+
+        <div className="rounded border border-gray-200 p-3">
+          <div className="text-xs text-gray-500 mb-1">Signature date *</div>
+          <input
+            type="date"
+            value={signDate}
+            onChange={(e) => setSignDate(e.target.value)}
+            disabled={!termsAccepted}
+            className="px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 disabled:bg-gray-100"
+          />
         </div>
 
         {canSign && (
