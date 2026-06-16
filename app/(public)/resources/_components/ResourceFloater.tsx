@@ -6,27 +6,16 @@
 // Wraps <FloaterPill> and bakes in the four standard actions:
 //   Back - Share - Download - Print
 //
-// Download flow (Session 22+):
-//
-//   - We resolve /api/me/footer-context on mount. The response is one
-//     of: admin, portal, anonymous.
-//   - Tapping Download:
-//       admin     -> open FooterPickerSheet with the advertiser list.
-//       portal    -> open FooterPickerSheet with their own brand.
-//       anonymous -> skip the sheet entirely; just download the
-//                    calculator PDF with the generic site footer.
-//
-// The public visitor experience stays one-tap (no sign-in nags), and
-// admin/portal users get the branding affordance.
+// Download flow (simplified 2026-06-15): every Download tap produces
+// the plain calculator PDF with no branded footer. The old
+// FooterPickerSheet flow (admin / portal branded footer templates)
+// was removed per Tawanna's direction - one-tap download for
+// everyone, no role fetch, no sheet.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
 import { downloadCalcReport, type CalcReport } from './calcPdf';
-import FooterPickerSheet, {
-  type FooterPickerResult,
-  type FooterPickerInit,
-} from './FooterPickerSheet';
 
 interface Props {
   /** Share dialog title - usually the calculator name. */
@@ -40,8 +29,6 @@ interface Props {
   bottomOffsetClass?: string;
 }
 
-type Role = 'admin' | 'portal' | 'anonymous' | 'unknown';
-
 export default function ResourceFloater({
   shareTitle,
   shareText,
@@ -49,44 +36,6 @@ export default function ResourceFloater({
   bottomOffsetClass = 'bottom-[96px]',
 }: Props) {
   const router = useRouter();
-  const [role, setRole] = useState<Role>('unknown');
-  const [pickerInit, setPickerInit] = useState<FooterPickerInit | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
-
-  // One-shot context fetch on mount. We deliberately don't refetch on
-  // every Download tap - the role is stable for the life of the page
-  // and re-fetching adds latency.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/me/footer-context', { credentials: 'same-origin' });
-        if (!res.ok) {
-          if (!cancelled) setRole('anonymous');
-          return;
-        }
-        const data = await res.json();
-        if (cancelled) return;
-        if (data?.role === 'admin') {
-          setRole('admin');
-          setPickerInit({ role: 'admin', advertisers: data.advertisers ?? [] });
-        } else if (data?.role === 'portal') {
-          setRole('portal');
-          setPickerInit({
-            role: 'portal',
-            advertiser_id: data.advertiser_id,
-            default_footer_template: data.default_footer_template,
-            brand: data.brand,
-          });
-        } else {
-          setRole('anonymous');
-        }
-      } catch {
-        if (!cancelled) setRole('anonymous');
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
 
   const onBack = useCallback(() => {
     if (typeof window !== 'undefined' && window.history.length > 1) {
@@ -113,32 +62,9 @@ export default function ResourceFloater({
     }
   }, [shareTitle, shareText]);
 
-  const runDownloadNoFooter = useCallback(async () => {
+  const onDownload = useCallback(async () => {
     try {
       const report = buildReport();
-      await downloadCalcReport(report);
-    } catch (err) {
-      console.error('[ResourceFloater] PDF generation failed:', err);
-      window.alert('Could not generate PDF - please try again.');
-    }
-  }, [buildReport]);
-
-  const onDownload = useCallback(() => {
-    // Anonymous (or still-loading) visitors get a one-tap download.
-    if (role !== 'admin' && role !== 'portal') {
-      runDownloadNoFooter();
-      return;
-    }
-    setPickerOpen(true);
-  }, [role, runDownloadNoFooter]);
-
-  const onPickerConfirm = useCallback(async (pick: FooterPickerResult) => {
-    setPickerOpen(false);
-    try {
-      const report = buildReport();
-      if (pick.template && pick.brand) {
-        report.brandFooter = { template: pick.template, brand: pick.brand };
-      }
       await downloadCalcReport(report);
     } catch (err) {
       console.error('[ResourceFloater] PDF generation failed:', err);
@@ -196,17 +122,9 @@ export default function ResourceFloater({
   ];
 
   return (
-    <>
-      <FloaterPill
-        actions={actions}
-        bottomOffsetClass={bottomOffsetClass}
-      />
-      <FooterPickerSheet
-        open={pickerOpen}
-        init={pickerInit}
-        onClose={() => setPickerOpen(false)}
-        onConfirm={onPickerConfirm}
-      />
-    </>
+    <FloaterPill
+      actions={actions}
+      bottomOffsetClass={bottomOffsetClass}
+    />
   );
 }
