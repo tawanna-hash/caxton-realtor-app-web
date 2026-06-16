@@ -14,6 +14,7 @@ function VerifyContent() {
   useEffect(() => {
     const token = searchParams.get('token');
     if (!token) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot guard: when no token is in the URL we surface the error state once on mount; no cascading renders.
       setStatus('error');
       setMessage('No verification token provided');
       return;
@@ -39,7 +40,7 @@ function VerifyContent() {
   return (
     <div
       className="min-h-screen bg-white flex flex-col justify-center py-12 px-6"
-      style={{ fontFamily: 'Switzer, system-ui, sans-serif' }}
+      style={{ fontFamily: 'var(--font-sans-app), system-ui, sans-serif' }}
     >
       <div className="w-full max-w-md mx-auto text-center">
         <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium mb-2">
@@ -90,7 +91,7 @@ function VerifyFallback() {
   return (
     <div
       className="min-h-screen bg-white flex flex-col justify-center py-12 px-6"
-      style={{ fontFamily: 'Switzer, system-ui, sans-serif' }}
+      style={{ fontFamily: 'var(--font-sans-app), system-ui, sans-serif' }}
     >
       <div className="w-full max-w-md mx-auto text-center">
         <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium mb-2">
