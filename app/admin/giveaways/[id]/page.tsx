@@ -80,16 +80,19 @@ export default function GiveawayDetailPage() {
     setError(null);
     setSaving(true);
     try {
-      await adminApi.updateGiveaway(id, {
+      // Schema (lib/server/schemas/giveaways.ts) expects camelCase keys
+      // and rejects null description / drawAt. Omit those keys when empty.
+      const payload: Record<string, unknown> = {
         title,
-        description: description || null,
         prize,
         publication,
         status,
-        starts_at: new Date(startsAt).toISOString(),
-        ends_at: new Date(endsAt).toISOString(),
-        draw_at: drawAt ? new Date(drawAt).toISOString() : null,
-      });
+        startsAt: new Date(startsAt).toISOString(),
+        endsAt: new Date(endsAt).toISOString(),
+      };
+      if (description) payload.description = description;
+      if (drawAt) payload.drawAt = new Date(drawAt).toISOString();
+      await adminApi.updateGiveaway(id, payload);
       await loadGiveaway();
     } catch (err) {
       setError((err as Error).message);

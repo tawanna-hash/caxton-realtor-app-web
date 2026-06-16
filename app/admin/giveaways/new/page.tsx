@@ -25,15 +25,17 @@ export default function NewGiveawayPage() {
     setError(null);
     setSubmitting(true);
     try {
+      // Schema (lib/server/schemas/giveaways.ts) expects camelCase keys
+      // and rejects null/undefined description. Omit description when empty.
       const payload: Record<string, unknown> = {
         title,
         prize,
         publication,
-        starts_at: new Date(startsAt).toISOString(),
-        ends_at: new Date(endsAt).toISOString(),
+        startsAt: new Date(startsAt).toISOString(),
+        endsAt: new Date(endsAt).toISOString(),
       };
       if (description) payload.description = description;
-      if (drawAt) payload.draw_at = new Date(drawAt).toISOString();
+      if (drawAt) payload.drawAt = new Date(drawAt).toISOString();
       const res = await adminApi.createGiveaway(payload);
       const id = res?.giveaway?.id || res?.id;
       router.push(id ? `/admin/giveaways/${id}` : '/admin/giveaways');
