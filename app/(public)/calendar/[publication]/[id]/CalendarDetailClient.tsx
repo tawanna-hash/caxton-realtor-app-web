@@ -65,7 +65,7 @@ export default function CalendarDetailClient() {
     return (
       <div
         className="fixed inset-0 bg-white z-30 flex items-center justify-center"
-        style={{ fontFamily: 'Switzer, system-ui, sans-serif' }}
+        style={{ fontFamily: 'var(--font-sans-app), system-ui, sans-serif' }}
       >
         <p className="text-sm text-gray-400 font-light">Loading event…</p>
       </div>
@@ -76,7 +76,7 @@ export default function CalendarDetailClient() {
     return (
       <div
         className="fixed inset-0 bg-white z-30 flex items-center justify-center"
-        style={{ fontFamily: 'Switzer, system-ui, sans-serif' }}
+        style={{ fontFamily: 'var(--font-sans-app), system-ui, sans-serif' }}
       >
         <div className="text-center px-8">
           <p className="text-gray-500 mb-4">Event not found</p>

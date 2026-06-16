@@ -1,5 +1,20 @@
-@import url("https://fonts.cdnfonts.com/css/switzer");
 @import "tailwindcss";
+
+/*
+ * Application font.
+ *
+ * Switzer was previously loaded from fonts.cdnfonts.com (Cloudflare-gated,
+ * 13-15s to first byte in tests). We now use Plus Jakarta Sans, self-hosted
+ * via next/font/google in app/layout.tsx, exposed as --font-sans-app.
+ *
+ * Default font-family applies to all elements via :where() so it has zero
+ * specificity and can be overridden by any explicit style.
+ */
+@layer base {
+  :where(html, body) {
+    font-family: var(--font-sans-app), system-ui, sans-serif;
+  }
+}
 
 :root {
   --background: #ffffff;

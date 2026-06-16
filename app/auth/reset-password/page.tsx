@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getApiBase } from '@/lib/api-base';
 
-const SW = { fontFamily: 'Switzer, system-ui, sans-serif' };
+const SW = { fontFamily: 'var(--font-sans-app), system-ui, sans-serif' };
 const API = getApiBase();
 
 function ResetPasswordInner() {
