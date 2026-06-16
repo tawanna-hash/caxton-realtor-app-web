@@ -1,7 +1,18 @@
 // app/api/admin/agreements/upload/route.ts
 //
-// POST  multipart/form-data  { file: File }
-// Uploads to Vercel Blob, creates a stub agreement row with is_uploaded=true.
+// POST  multipart/form-data  { file: File, agreementId?: string }
+//
+// Two modes:
+//   1. No agreementId  -> upload PDF and create a NEW stub agreement row
+//                         (is_uploaded=true, status='draft'). Used for the
+//                         "Upload signed agreement" entry point in
+//                         /admin/billing.
+//   2. With agreementId -> upload file and append it to the existing
+//                          agreement's attachments.files JSONB array.
+//                          Used by the agreement drawer's Attachments
+//                          drop zone so files persist immediately without
+//                          having to also click Save.
+//
 // Sanitizes filename → company_name (mirrors Pressbook agHandleUpload).
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -11,6 +22,12 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+type AgreementRow = {
+  id: string;
+  attachments: { files?: Array<Record<string, unknown>> } | null;
+  [key: string]: unknown;
+};
 
 function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
@@ -50,13 +67,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'file field required' }, { status: 400 });
   }
 
+  const agreementIdRaw = formData.get('agreementId');
+  const agreementId = typeof agreementIdRaw === 'string' && agreementIdRaw.trim() ? agreementIdRaw.trim() : null;
+
   try {
-    // Upload to Vercel Blob
+    // Upload to Vercel Blob first — same for both modes.
     const blob = await put(`agreements/${Date.now()}-${file.name}`, file, {
       access: 'public',
     });
 
-    const companyName = sanitizeFilename(file.name);
     const attachment = {
       name:       file.name,
       size:       file.size,
@@ -67,7 +86,33 @@ export async function POST(req: NextRequest) {
     await ensureSchema();
     const sql = getSql();
 
-    const rows = await sql`
+    if (agreementId) {
+      // Mode 2: append to existing agreement's attachments.
+      const found = (await sql`
+        SELECT id, attachments FROM agreements WHERE id = ${agreementId}
+      `) as unknown as AgreementRow[];
+      if (found.length === 0) {
+        return NextResponse.json({ error: 'agreement not found' }, { status: 404 });
+      }
+      const current = found[0];
+      const existingFiles = Array.isArray(current.attachments?.files) ? current.attachments!.files! : [];
+      const nextFiles = [...existingFiles, attachment];
+
+      const updated = (await sql`
+        UPDATE agreements
+        SET attachments = ${JSON.stringify({ files: nextFiles })}::jsonb,
+            updated_at = NOW()
+        WHERE id = ${agreementId}
+        RETURNING *
+      `) as unknown as AgreementRow[];
+
+      return NextResponse.json({ agreement: updated[0], attachment }, { status: 200 });
+    }
+
+    // Mode 1: create a new stub row. The file becomes the seed of a new
+    // "uploaded paper agreement" the admin will then fill in.
+    const companyName = sanitizeFilename(file.name);
+    const rows = (await sql`
       INSERT INTO agreements (
         company_name, status, is_uploaded,
         attachments, created_by
@@ -79,9 +124,9 @@ export async function POST(req: NextRequest) {
         ${admin.email ?? null}
       )
       RETURNING *
-    `;
+    `) as unknown as AgreementRow[];
 
-    return NextResponse.json({ agreement: rows[0] }, { status: 201 });
+    return NextResponse.json({ agreement: rows[0], attachment }, { status: 201 });
   } catch (err) {
     console.error('[admin/agreements/upload POST]', errMessage(err));
     return NextResponse.json({ error: 'upload failed', detail: errMessage(err) }, { status: 500 });
