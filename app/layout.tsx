@@ -10,7 +10,11 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "Realty News",
-    statusBarStyle: "black-translucent",
+    // 'default' keeps the iOS status bar opaque and ABOVE the app content,
+    // so the splash + publication picker don't render under the notch.
+    // 'black-translucent' requires per-screen safe-area-inset handling we
+    // don't have, and made the app look blank in WebClip standalone mode.
+    statusBarStyle: "default",
   },
   icons: {
     icon: [
@@ -27,7 +31,10 @@ export const viewport: Viewport = {
   themeColor: "#021D40",
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover",
+  // No 'viewport-fit: cover' here — with statusBarStyle 'default' iOS keeps
+  // the status bar above the app, and we don't need to extend content into
+  // the notch area. Re-introduce with safe-area-inset padding if we ever
+  // want an edge-to-edge look.
 };
 
 export default function RootLayout({
