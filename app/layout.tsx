@@ -19,40 +19,17 @@ export const metadata: Metadata = {
   title: "Realty News Now | RealtyLine · Newsline San Antonio",
   description: "Free REALTOR® app for Texas real estate professionals",
   applicationName: "Realty News Now",
-  manifest: "/manifest.webmanifest",
-  // appleWebApp.capable=true launches the home-screen icon in iOS standalone
-  // WebView mode (no Safari chrome). On launch day we found that mode
-  // briefly flashes the page then shows Safari's "This page couldn't load"
-  // error -- a known iOS WebClip issue with full client-side React apps
-  // that mount auth + storage logic on first paint.
-  //
-  // Until we can fully audit and harden the standalone codepath, leave
-  // capable=false. The home-screen icon still works -- it just opens in
-  // regular Safari (which loads the app correctly) instead of standalone.
-  // We keep the apple-mobile-web-app-title so the icon label stays clean.
-  appleWebApp: {
-    capable: false,
-    title: "Realty News",
-  },
-  icons: {
-    icon: [
-      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
-    ],
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
-    shortcut: ["/favicon.ico"],
-  },
+  // Home-screen icon / PWA support removed 2026-06-16.
+  // iOS WebClip standalone mode kept caching a broken response across re-adds
+  // and Safari refused to drop it short of a full device restart. Plan: ship
+  // a real native iOS app via Capacitor for the home-screen experience.
+  // Until then this is a regular web app accessed via Safari URL/bookmark.
 };
 
 export const viewport: Viewport = {
   themeColor: "#021D40",
   width: "device-width",
   initialScale: 1,
-  // No 'viewport-fit: cover' here — with statusBarStyle 'default' iOS keeps
-  // the status bar above the app, and we don't need to extend content into
-  // the notch area. Re-introduce with safe-area-inset padding if we ever
-  // want an edge-to-edge look.
 };
 
 export default function RootLayout({
