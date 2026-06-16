@@ -473,6 +473,7 @@ export default function AgreementsClient({
           adCampaigns={adCampaigns}
           onClose={() => setEditAg(null)}
           onSaved={async () => { setEditAg(null); await reloadAgreements(); await reloadAdCampaigns(); await reloadReminders(); }}
+          onRefresh={async () => { await reloadAgreements(); await reloadAdCampaigns(); }}
           onError={setError}
           onGenerateInvoice={(seed) => {
             setEditAg(null);
