@@ -4,7 +4,7 @@
   "description": "Free REALTOR app for Texas real estate professionals",
   "start_url": "/dashboard",
   "scope": "/",
-  "display": "standalone",
+  "display": "browser",
   "orientation": "portrait",
   "background_color": "#021D40",
   "theme_color": "#021D40",

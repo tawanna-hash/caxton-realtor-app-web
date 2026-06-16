@@ -20,14 +20,19 @@ export const metadata: Metadata = {
   description: "Free REALTOR® app for Texas real estate professionals",
   applicationName: "Realty News Now",
   manifest: "/manifest.webmanifest",
+  // appleWebApp.capable=true launches the home-screen icon in iOS standalone
+  // WebView mode (no Safari chrome). On launch day we found that mode
+  // briefly flashes the page then shows Safari's "This page couldn't load"
+  // error -- a known iOS WebClip issue with full client-side React apps
+  // that mount auth + storage logic on first paint.
+  //
+  // Until we can fully audit and harden the standalone codepath, leave
+  // capable=false. The home-screen icon still works -- it just opens in
+  // regular Safari (which loads the app correctly) instead of standalone.
+  // We keep the apple-mobile-web-app-title so the icon label stays clean.
   appleWebApp: {
-    capable: true,
+    capable: false,
     title: "Realty News",
-    // 'default' keeps the iOS status bar opaque and ABOVE the app content,
-    // so the splash + publication picker don't render under the notch.
-    // 'black-translucent' requires per-screen safe-area-inset handling we
-    // don't have, and made the app look blank in WebClip standalone mode.
-    statusBarStyle: "default",
   },
   icons: {
     icon: [
