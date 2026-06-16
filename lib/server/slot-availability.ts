@@ -15,7 +15,7 @@
 //      block ONLY their own scope. They do NOT block 'both' because 'both'
 //      remains the legacy Austin+SA bundle — Houston/Dallas are sold as
 //      separate single-pub buys at the same rate-card price as a solo
-//      RealtyLine (Austin) booking until further notice.
+//      RealtyLine Austin booking until further notice.
 //   4. Date overlap is computed against the requested window. If none is
 //      supplied, "today through 5 years out" is used so the public form
 //      shows the slot as blocked while any future campaign is live.

@@ -3,7 +3,7 @@
 // app/admin/magazines/settings/PublicationSettingsForm.tsx
 //
 // Admin form for editing the GA4 Measurement ID per publication.
-// One row per publication (austin = RealtyLine, san_antonio = Newsline).
+// One row per publication (austin = RealtyLine, san_antonio = Newsline San Antonio).
 // Saves via PATCH /api/admin/publication-settings.
 
 import { useState } from 'react';
@@ -22,15 +22,15 @@ type Props = {
 };
 
 const PUB_LABEL: Record<Publication, string> = {
-  austin: 'RealtyLine (Austin)',
-  san_antonio: 'Newsline (San Antonio)',
+  austin: 'RealtyLine Austin',
+  san_antonio: 'Newsline San Antonio',
 };
 
 const PUB_HELP: Record<Publication, string> = {
   austin:
     'Paste the GA4 Measurement ID for the RealtyLine property. Looks like G-XXXXXXX. Leave blank to disable tracking on RealtyLine magazines.',
   san_antonio:
-    'Paste the GA4 Measurement ID for the Newsline property. Looks like G-XXXXXXX. Leave blank to disable tracking on Newsline magazines.',
+    'Paste the GA4 Measurement ID for the Newsline San Antonio property. Looks like G-XXXXXXX. Leave blank to disable tracking on Newsline San Antonio magazines.',
 };
 
 const PUBLICATIONS: Publication[] = ['austin', 'san_antonio'];

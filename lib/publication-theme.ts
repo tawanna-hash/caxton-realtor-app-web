@@ -105,7 +105,7 @@ const THEMES: Record<Publication, PublicationTheme> = {
   san_antonio: {
     id: 'san_antonio',
     name: 'Newsline San Antonio',
-    shortName: 'Newsline SA',
+    shortName: 'Newsline San Antonio',
     primaryColor: '#3D0740',
     primaryColorHover: '#52095a',
     fromEmailDisplayName: 'Newsline San Antonio',
@@ -120,11 +120,11 @@ const THEMES: Record<Publication, PublicationTheme> = {
   },
   dallas: {
     id: 'dallas',
-    name: 'RealtyLine Dallas',
-    shortName: 'RealtyLine Dallas',
+    name: 'RealtyLine Dallas/FTW',
+    shortName: 'RealtyLine Dallas/FTW',
     primaryColor: '#021D40',
     primaryColorHover: '#03285a',
-    fromEmailDisplayName: 'RealtyLine Dallas',
+    fromEmailDisplayName: 'RealtyLine Dallas/FTW',
   },
   both: {
     id: 'both',
@@ -151,7 +151,7 @@ export const PUBLICATION_OPTIONS: Array<{ id: PublicationKey; label: string }> =
   { id: 'austin',      label: 'RealtyLine Austin' },
   { id: 'san_antonio', label: 'Newsline San Antonio' },
   { id: 'houston',     label: 'RealtyLine Houston' },
-  { id: 'dallas',      label: 'RealtyLine Dallas' },
+  { id: 'dallas',      label: 'RealtyLine Dallas/FTW' },
 ];
 
 let columnEnsured = false;

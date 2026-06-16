@@ -37,8 +37,8 @@ type Props = {
 };
 
 const PUB_LABEL: Record<'austin' | 'san_antonio', string> = {
-  austin: 'RealtyLine (Austin)',
-  san_antonio: 'Newsline (San Antonio)',
+  austin: 'RealtyLine Austin',
+  san_antonio: 'Newsline San Antonio',
 };
 
 const VARIANT_LABEL: Record<GifVariant, string> = {

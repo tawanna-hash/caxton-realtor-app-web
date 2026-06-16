@@ -417,7 +417,7 @@ export default function AppShell({
         </>
       ) : null}
       {/* Admin chrome stays admin-only — the public Footer (RealtyLine /
-          Newsline / Resources columns) was leaking onto every /admin page. */}
+          Newsline San Antonio / Resources columns) was leaking onto every /admin page. */}
       {!isAdmin && <Footer />}
     </div>
   );

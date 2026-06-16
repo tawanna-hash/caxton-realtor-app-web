@@ -47,7 +47,7 @@ export default function SubscribePage() {
             onClick={() => setSelection('realtyline')}
           />
           <PickerButton
-            label="Newsline"
+            label="Newsline San Antonio"
             sublabel="San Antonio"
             selected={selection === 'newslinesa'}
             activeColor="#3D0740"
@@ -93,7 +93,7 @@ export default function SubscribePage() {
 
         {newslineActive && (
           <SubscribeForm
-            publication="Newsline"
+            publication="Newsline San Antonio"
             market="San Antonio"
             accentColor="#3D0740"
             formId="newslinesa"

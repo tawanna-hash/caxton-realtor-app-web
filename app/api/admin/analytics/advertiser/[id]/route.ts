@@ -186,7 +186,7 @@ export const GET = withErrorHandling(async (req: Request, ctx: RouteCtx) => {
         magazine_id: r.magazine_id,
         magazine_label: [
           r.publication === 'austin' ? 'RealtyLine'
-            : r.publication === 'san_antonio' ? 'Newsline SA'
+            : r.publication === 'san_antonio' ? 'Newsline San Antonio'
             : 'Magazine',
           r.issue_label || `#${r.magazine_id}`,
         ].join(' · '),

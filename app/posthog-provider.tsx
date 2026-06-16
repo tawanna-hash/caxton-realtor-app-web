@@ -40,7 +40,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         if (legacy) {
           const normalized =
             legacy === 'realtyline' || legacy === 'RealtyLine' ? 'realtyline' :
-            legacy === 'newsline' || legacy === 'Newsline' ? 'newsline' : null;
+            legacy === 'newsline' || legacy === 'Newsline' || legacy === 'Newsline San Antonio' ? 'newsline' : null;
           if (normalized) {
             window.localStorage.setItem('caxton_pub', normalized);
           }

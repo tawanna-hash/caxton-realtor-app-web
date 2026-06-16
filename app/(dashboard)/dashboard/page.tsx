@@ -1153,7 +1153,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
 
   const isEmptyAfterLoad = !isLoadingFirstFetch && filt.length === 0;
 
-  // SABOR MLS card — Newsline (San Antonio) only.
+  // SABOR MLS card — Newsline San Antonio only.
   // "Both — hero this month, inline thereafter": pin at top for the first
   // 7 days from released_at, then slot inline every 5 articles. The card
   // itself fetches its data; we only decide placement here. Hero-vs-inline

@@ -2,7 +2,7 @@ import PageTitle from '@/components/ui/PageTitle';
 export const metadata = {
   title: 'About Us — Realty News Now',
   description:
-    'Realty News Now puts a face on real estate. Publishers of RealtyLine (Austin) and Newsline San Antonio.',
+    'Realty News Now puts a face on real estate. Publishers of RealtyLine Austin and Newsline San Antonio.',
 };
 
 export default function AboutPage() {
@@ -41,7 +41,7 @@ export default function AboutPage() {
         <p>
           <strong className="font-semibold text-gray-900">Realty News Now</strong>{' '}
           — launched in May 2026 — is the next chapter. It brings everything
-          our print readers love about RealtyLine and Newsline into a single
+          our print readers love about RealtyLine and Newsline San Antonio into a single
           mobile experience: latest news, upcoming events, our digital
           magazine archive, builder inventory, giveaways, and direct access to
           the businesses that advertise with us. It is free to use, and it

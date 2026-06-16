@@ -4,9 +4,9 @@ import { APP_AD_SLOTS, PACKAGES, EBLASTS } from '@/lib/media-kit';
 import { isAdChannel, deriveChannelFromSlot, type AdChannel } from '@/lib/ad-channels';
 
 export const metadata = {
-  title: 'Reserve Your Ad Spot — RealtyLine & Newsline',
+  title: 'Reserve Your Ad Spot — RealtyLine & Newsline San Antonio',
   description:
-    'Inquire about Print, Digital, or Email advertising on RealtyLine and Newsline. Tell us about your business and we will follow up with rates and availability.',
+    'Inquire about Print, Digital, or Email advertising on RealtyLine and Newsline San Antonio. Tell us about your business and we will follow up with rates and availability.',
 };
 
 // Map digital ad-slot slugs to user-friendly labels for the form context line.

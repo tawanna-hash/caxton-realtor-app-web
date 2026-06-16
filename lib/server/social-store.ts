@@ -1,6 +1,6 @@
 /**
  * Data access for featured_social_posts (curated Facebook posts that
- * surface in the RealtyLine + Newsline feeds).
+ * surface in the RealtyLine + Newsline San Antonio feeds).
  */
 
 import { getSql } from '@/lib/db';

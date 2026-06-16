@@ -13,7 +13,7 @@
 //   - RealtyNewsNow is served from realtynewsnow.app (distinct host).
 //     Filterable via properties.$host on ALL historical + future events.
 //
-//   - RealtyLine + Newsline both live on app.myrealtyline.com. Which one a
+//   - RealtyLine + Newsline San Antonio both live on app.myrealtyline.com. Which one a
 //     user picked is stored in localStorage. PostHog has NO way to read
 //     localStorage. To make them filterable we register `publication` as a
 //     super property in posthog-provider.tsx (see posthog-provider-patch.tsx
@@ -170,7 +170,7 @@ function publicationClause(publication: string): string {
     return ` AND (properties.$host LIKE '${cfg.hostPattern}' OR properties.publication = '${safeProp}')`;
   }
 
-  // RealtyLine / Newsline: only the super property distinguishes them.
+  // RealtyLine / Newsline San Antonio: only the super property distinguishes them.
   // Historical events lack this — caller surfaces a warning.
   const safeProp = cfg.propertyValue?.replace(/'/g, "''") ?? '';
   return ` AND properties.publication = '${safeProp}'`;
@@ -396,7 +396,7 @@ async function buildReport(timeframe: string, publication: string): Promise<Repo
     newUsers: formatInt(toNum(row[3])),
   }));
 
-  // Historical-data warning for RealtyLine + Newsline filters
+  // Historical-data warning for RealtyLine + Newsline San Antonio filters
   if (cfg && !cfg.hasHistoricalData && publication !== 'All') {
     warnings.push(
       `Historical events (before the posthog-provider patch ships) are NOT tagged with publication. Numbers shown only reflect data captured after the tagging change. For full-history reporting on "${publication}", use the "All" filter and segment manually, or wait for sufficient post-patch data to accumulate.`

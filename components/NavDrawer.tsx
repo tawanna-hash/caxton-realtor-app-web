@@ -38,8 +38,8 @@ interface NavSection {
 }
 
 const PUB_NAMES: Record<string, string> = {
-  realtyline: 'RealtyLine',
-  newsline: 'Newsline',
+  realtyline: 'RealtyLine Austin',
+  newsline: 'Newsline San Antonio',
 };
 
 // Admin nav is defined in lib/admin-nav.ts so this drawer and the

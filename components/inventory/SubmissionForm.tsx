@@ -308,9 +308,9 @@ export default function SubmissionForm() {
           onChange={(e) => setPublication(e.target.value as Publication)}
           className={fieldStyle}
         >
-          <option value="both">Both (RealtyLine + Newsline)</option>
-          <option value="realtyline">RealtyLine (Austin) only</option>
-          <option value="newsline">Newsline (San Antonio) only</option>
+          <option value="both">Both (RealtyLine + Newsline San Antonio)</option>
+          <option value="realtyline">RealtyLine Austin only</option>
+          <option value="newsline">Newsline San Antonio only</option>
         </select>
         <p className={helpStyle}>
           Choose where this submission should appear. Builders marketing only to one metro should pick that publication.

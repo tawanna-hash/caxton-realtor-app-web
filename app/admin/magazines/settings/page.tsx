@@ -2,7 +2,7 @@
 //
 // Server wrapper for publication-wide magazine settings. Currently
 // holds the GA4 Measurement ID for each publication (RealtyLine /
-// Newsline). Queries the DB directly — same pattern as the other
+// Newsline San Antonio). Queries the DB directly — same pattern as the other
 // admin pages, since self-fetch to /api/admin/publication-settings
 // would lose the admin session cookie on Vercel's runtime.
 

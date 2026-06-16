@@ -3,7 +3,7 @@
 // Empty-state shown on every content surface (feed, events, magazine,
 // advertisers, profile, social) when the active publication is a
 // pre-launch market that hasn't been populated yet (e.g. RealtyLine Houston,
-// RealtyLine Dallas as of Phase 2 PR A).
+// RealtyLine Dallas/FTW as of Phase 2 PR A).
 //
 // Usage:
 //   import { PreLaunchEmptyState } from '@/components/PreLaunchEmptyState';

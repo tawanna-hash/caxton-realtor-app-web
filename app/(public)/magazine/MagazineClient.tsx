@@ -20,7 +20,7 @@ const PUBS_INFO: Record<Pub, { name: string; city: string; color: string }> = {
   realtyline: { name: 'RealtyLine', city: 'Austin', color: '#021D40' },
   newsline: { name: 'Newsline San Antonio', city: 'San Antonio', color: '#3D0740' },
   'realtyline-houston': { name: 'RealtyLine Houston', city: 'Houston', color: '#021D40' },
-  'realtyline-dallas': { name: 'RealtyLine Dallas', city: 'Dallas', color: '#021D40' },
+  'realtyline-dallas': { name: 'RealtyLine Dallas/FTW', city: 'Dallas', color: '#021D40' },
 };
 
 function readPub(): Pub {
@@ -62,7 +62,7 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
   // provide every escape hatch they need.
   const showBack = !!initialMagazine;
   // When opened via a share link, lock pub to the magazine's actual publication
-  // so a Newsline subscriber clicking a RealtyLine share link still sees correct branding.
+  // so a Newsline San Antonio subscriber clicking a RealtyLine share link still sees correct branding.
   const pub: Pub = initialMagazine
     ? (initialMagazine.publication === 'austin' ? 'realtyline' : 'newsline')
     : storedPub;

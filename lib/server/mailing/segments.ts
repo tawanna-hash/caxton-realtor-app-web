@@ -23,8 +23,8 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
   {
     segment: 'active-advertiser-sa',
     slug:    'active-advertisers-sa',
-    label:   'Active Advertisers - Newsline SA',
-    caption: 'Currently-active Newsline SA advertisers and their staff.',
+    label:   'Active Advertisers - Newsline San Antonio',
+    caption: 'Currently-active Newsline San Antonio advertisers and their staff.',
     accent:  '#0EA5E9',
   },
   {
@@ -37,15 +37,15 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
   {
     segment: 'non-advertiser-sa',
     slug:    'non-advertisers-sa',
-    label:   'Non-Advertisers - Newsline SA',
-    caption: 'Newsline SA prospects who haven’t run an ad yet.',
+    label:   'Non-Advertisers - Newsline San Antonio',
+    caption: 'Newsline San Antonio prospects who haven’t run an ad yet.',
     accent:  '#EA580C',
   },
   {
     segment: 'manual-newsline',
     slug:    'manual-newsline-contacts',
-    label:   'Manual Newsline Contacts',
-    caption: 'Newsline contacts entered or imported manually.',
+    label:   'Manual Newsline San Antonio Contacts',
+    caption: 'Newsline San Antonio contacts entered or imported manually.',
     accent:  '#10B981',
   },
   {

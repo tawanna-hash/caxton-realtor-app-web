@@ -1,6 +1,6 @@
 /**
  * Fetches articles from the public WordPress REST API on each publication
- * (RealtyLine -> realtyline.us, Newsline SA -> newslinesa.com), maps WP
+ * (RealtyLine -> realtyline.us, Newsline San Antonio -> newslinesa.com), maps WP
  * categories onto the in-app category names, and caches via Next's
  * unstable_cache (30 min, revalidate-on-demand).
  *

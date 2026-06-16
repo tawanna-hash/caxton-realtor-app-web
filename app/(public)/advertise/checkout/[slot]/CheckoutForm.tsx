@@ -90,7 +90,7 @@ export default function CheckoutForm({
   // same rule).
   //
   // Note: getSlotAvailablePubs may include Houston/Dallas (MediaKitPub), but
-  // the public checkout UI currently only surfaces RealtyLine Austin / Newsline
+  // the public checkout UI currently only surfaces RealtyLine Austin / Newsline San Antonio
   // San Antonio / both. Houston/Dallas bookings happen via admin BookingBuilder.
   // We narrow here so the local Pub type stays the source of truth for the UI.
   const NARROW_PUBS: readonly Pub[] = ['realtyline', 'newsline', 'both'];
@@ -271,7 +271,7 @@ export default function CheckoutForm({
                   p === 'realtyline'
                     ? 'RealtyLine Austin'
                     : p === 'newsline'
-                      ? 'Newsline SA'
+                      ? 'Newsline San Antonio'
                       : 'Both pubs';
                 const title = allowed
                   ? undefined

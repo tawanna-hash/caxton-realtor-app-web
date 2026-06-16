@@ -3,7 +3,7 @@
 // Publication-themed advertiser dashboard. Header bar, gate button,
 // and chart gradient all read from `theme.primaryColor`, so the
 // same component renders RealtyLine navy for Austin advertisers
-// and Newsline purple for San Antonio.
+// and Newsline San Antonio purple for San Antonio.
 
 'use client';
 

@@ -2,7 +2,7 @@ import PageTitle from '@/components/ui/PageTitle';
 export const metadata = {
   title: 'Advertise with Us — Realty News Now',
   description:
-    'Print and digital advertising across RealtyLine (Austin) and Newsline San Antonio — reaching 89,000+ Texas real estate professionals.',
+    'Print and digital advertising across RealtyLine Austin and Newsline San Antonio — reaching 89,000+ Texas real estate professionals.',
 };
 
 export default function AdvertisePage() {
@@ -52,7 +52,7 @@ export default function AdvertisePage() {
               11K
             </p>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
-              Newsline
+              Newsline San Antonio
               <br />
               email subscribers
             </p>
@@ -62,7 +62,7 @@ export default function AdvertisePage() {
               14K
             </p>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
-              Newsline
+              Newsline San Antonio
               <br />
               print readership
             </p>
@@ -179,7 +179,7 @@ export default function AdvertisePage() {
           Ad sizes
         </p>
         <p className="text-base text-gray-700 leading-relaxed font-light mb-6">
-          The same three sizes are available in both RealtyLine and Newsline:
+          The same three sizes are available in both RealtyLine and Newsline San Antonio:
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -347,7 +347,7 @@ export default function AdvertisePage() {
 
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-[#3D0740] mb-2">
-              Newsline — San Antonio
+              Newsline San Antonio — San Antonio
             </p>
             <a
               href="mailto:hello@newslinesa.com?subject=Media%20Kit%20Request%20%E2%80%94%20Newsline"

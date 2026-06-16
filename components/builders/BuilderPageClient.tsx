@@ -23,9 +23,9 @@ type MiniTab = 'communities' | 'moveIn' | 'promos';
 
 const PUB_LABEL: Record<Publication, string> = {
   realtyline: 'RealtyLine',
-  newsline: 'Newsline',
+  newsline: 'Newsline San Antonio',
   'realtyline-houston': 'RealtyLine Houston',
-  'realtyline-dallas': 'RealtyLine Dallas',
+  'realtyline-dallas': 'RealtyLine Dallas/FTW',
   both: 'Both',
 };
 

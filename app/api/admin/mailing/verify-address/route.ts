@@ -4,7 +4,7 @@
 //   Body: { id: string }
 //   Stage-agnostic USPS Address API v3 verifier for the mailing list.
 //   Mirrors app/api/admin/mailing/holding/verify-address/route.ts but
-//   operates on rows in stage='mailing' (e.g. the Manual Newsline
+//   operates on rows in stage='mailing' (e.g. the Manual Newsline San Antonio
 //   Contacts segment). Persists Valid/Invalid + USPS-normalized address
 //   and runs a Census geocode in the same request when Valid.
 

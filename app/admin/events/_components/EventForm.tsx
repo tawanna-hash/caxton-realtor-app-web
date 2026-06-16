@@ -182,8 +182,8 @@ export function EventForm({
               onChange={(e) => update('publication', e.target.value as PublicationId)}
               className={fieldClass}
             >
-              <option value="austin">RealtyLine (Austin)</option>
-              <option value="san_antonio">Newsline SA</option>
+              <option value="austin">RealtyLine Austin</option>
+              <option value="san_antonio">Newsline San Antonio</option>
             </select>
           </div>
           <div>

@@ -28,7 +28,7 @@ const schema = z.object({
   slot: z.string().trim().min(1),
   // Houston (realtyline-houston) and Dallas (realtyline-dallas) added in
   // Phase 2 PR D. They share the digital + email ad-slot catalog with the
-  // existing RealtyLine (Austin) market and bill at the same single-pub
+  // existing RealtyLine Austin market and bill at the same single-pub
   // weekly/monthly rates. 'both' remains the legacy Austin+SA bundle and
   // does NOT extend to Houston/Dallas — those are sold separately.
   pub: z.enum([

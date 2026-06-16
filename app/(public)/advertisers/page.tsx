@@ -2,7 +2,7 @@
 //
 // Public Advertisers directory. Server fetches all advertisers; the
 // client component filters to match the active publication
-// (caxton_pub in localStorage) so RealtyLine and Newsline directories
+// (caxton_pub in localStorage) so RealtyLine and Newsline San Antonio directories
 // stay separate as the user switches publications.
 //
 // Names link to per-advertiser detail pages at /advertisers/<slug>.
@@ -66,7 +66,7 @@ export default async function AdvertisersDirectoryPage() {
     realtyline: { accent: realtylineAccent, label: 'RealtyLine Austin' },
     newsline: { accent: getPublicationTheme('san_antonio').primaryColor, label: 'Newsline San Antonio' },
     'realtyline-houston': { accent: realtylineAccent, label: 'RealtyLine Houston' },
-    'realtyline-dallas': { accent: realtylineAccent, label: 'RealtyLine Dallas' },
+    'realtyline-dallas': { accent: realtylineAccent, label: 'RealtyLine Dallas/FTW' },
   };
 
   return (

@@ -417,8 +417,8 @@ return (
                 <Field label="Email (read-only)" value={sub.email} />
                 <Field label="Email verified" value={sub.email_verified_at ? fmtDate(sub.email_verified_at) : null} />
                 <EditableSelect label="Market" name="market" value={f.market} onChange={updateField} options={[
-                  { value: 'austin', label: 'RealtyLine (Austin)' },
-                  { value: 'san_antonio', label: 'Newsline (SA)' },
+                  { value: 'austin', label: 'RealtyLine Austin' },
+                  { value: 'san_antonio', label: 'Newsline San Antonio' },
                 ]} />
                 <EditableSelect label="Status" name="status" value={f.status} onChange={updateField} options={[
                   { value: 'active', label: 'active' },

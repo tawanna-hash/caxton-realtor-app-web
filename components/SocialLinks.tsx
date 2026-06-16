@@ -2,7 +2,7 @@
  * <SocialLinks> — small row of Facebook / Instagram / LinkedIn icon links.
  *
  * Used in two surfaces:
- *   1. Bottom of the in-app feed (per-pub URLs — RealtyLine vs Newsline)
+ *   1. Bottom of the in-app feed (per-pub URLs — RealtyLine vs Newsline San Antonio)
  *   2. Global app footer (both pubs side-by-side)
  *
  * URLs are stored in lib/pub-meta.ts so swapping them later is a one-line

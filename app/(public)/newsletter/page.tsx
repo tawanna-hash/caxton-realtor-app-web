@@ -9,7 +9,7 @@ import PageTitle from '@/components/ui/PageTitle';
 import NewsletterCTA from '@/components/NewsletterCTA';
 
 export const metadata = {
-  title: 'Newsletter — RealtyLine & Newsline',
+  title: 'Newsletter — RealtyLine & Newsline San Antonio',
   description: 'Sign up for our free weekly newsletter. Stay current on new builders, communities, inventory, giveaways, and events.',
 };
 
@@ -75,7 +75,7 @@ export default function NewsletterLandingPage() {
             <strong className="font-medium text-gray-900">RealtyLine</strong> &mdash; Austin metro
           </li>
           <li>
-            <strong className="font-medium text-gray-900">Newsline</strong> &mdash; San Antonio metro
+            <strong className="font-medium text-gray-900">Newsline San Antonio</strong> &mdash; San Antonio metro
           </li>
         </ul>
       </section>
