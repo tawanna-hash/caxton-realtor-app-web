@@ -19,10 +19,15 @@ import {
   APP_AD_SLOTS,
   APP_AD_AUDIENCE_NOTE,
   getSlotAvailablePubs,
+  weeklyRateForMarkets,
+  monthlyRateForMarkets,
+  MARKET_MULTIPLIERS,
+  PUB_SUBSCRIBERS,
   type Package,
   type EBlast,
   type AppAdSlot,
   type MediaKitPub,
+  type MarketCount,
 } from '@/lib/media-kit';
 
 // Publication tabs. The Media Kit page is a single source of truth for every
@@ -184,17 +189,47 @@ function PackageCard({ pkg }: { pkg: Package }) {
 
 // ── App ad slots table ─────────────────────────────────────────────────────
 
+// Tier headers used for the Weekly / Monthly rate columns. The first tier (1
+// market) is highlighted because it represents the active publication tab; the
+// other three are bundle upsells the rep can offer to extend reach.
+const MARKET_TIERS: Array<{ markets: MarketCount; label: string; sub: string }> = [
+  { markets: 1, label: '1 market',  sub: 'this pub'           },
+  { markets: 2, label: '2 markets', sub: '+1 (1.7x)'          },
+  { markets: 3, label: '3 markets', sub: '+2 (2.4x)'          },
+  { markets: 4, label: 'All 4',     sub: 'full network (3x)'  },
+];
+
+function RateTierCell({
+  value,
+  active,
+  emphasize,
+  pricingUnit,
+}: {
+  value: number | null;
+  active: boolean;
+  emphasize: boolean;
+  pricingUnit?: string | null;
+}) {
+  if (value === null) {
+    return (
+      <td className="px-2 py-2.5 text-right text-[11px] text-gray-400 italic align-top whitespace-nowrap">
+        {pricingUnit ?? '—'}
+      </td>
+    );
+  }
+  const base = 'px-2 py-2.5 text-right text-[13px] font-bold align-top whitespace-nowrap';
+  const color = emphasize ? { color: ACCENT } : undefined;
+  const activeBg = active ? 'bg-amber-50' : '';
+  return (
+    <td className={`${base} ${activeBg}`} style={color}>
+      {fmt(value)}
+    </td>
+  );
+}
+
 function AppSlotRow({ slot, striped }: { slot: AppAdSlot; striped: boolean }) {
   const isPremium = slot.tier === 'premium';
-  const unit = slot.pricingUnit ? ` ${slot.pricingUnit}` : ' /wk';
-  const monthlyCell =
-    slot.monthlySingle === null || slot.monthlyBoth === null ? (
-      <span className="text-gray-400 italic text-[11px]">{slot.pricingUnit ?? '—'}</span>
-    ) : (
-      <span>
-        {fmt(slot.monthlySingle)} / {fmt(slot.monthlyBoth)}
-      </span>
-    );
+  const hasMonthly = slot.monthlySingle !== null;
 
   return (
     <tr className={striped ? 'bg-gray-50' : 'bg-white'}>
@@ -215,48 +250,84 @@ function AppSlotRow({ slot, striped }: { slot: AppAdSlot; striped: boolean }) {
           {slot.tier}
         </span>
       </td>
-      <td className="px-3 py-2.5 text-right text-[13px] font-bold text-gray-900 align-top whitespace-nowrap">
-        {fmt(slot.weeklySingle)} / {fmt(slot.weeklyBoth)}
-        <div className="text-[10px] font-medium text-gray-500">single{unit} · both{unit}</div>
-      </td>
-      <td className="px-3 py-2.5 text-right text-[13px] font-bold align-top whitespace-nowrap" style={{ color: ACCENT }}>
-        {monthlyCell}
-        {slot.monthlySingle !== null && (
-          <div className="text-[10px] font-medium text-gray-500">single / both · 4 wk</div>
-        )}
-      </td>
+
+      {/* Weekly rate columns: 1 / 2 / 3 / 4 markets */}
+      {MARKET_TIERS.map((t) => (
+        <RateTierCell
+          key={`wk-${t.markets}`}
+          value={weeklyRateForMarkets(slot, t.markets)}
+          active={t.markets === 1}
+          emphasize={false}
+        />
+      ))}
+
+      {/* Monthly rate columns: 1 / 2 / 3 / 4 markets */}
+      {MARKET_TIERS.map((t) => (
+        <RateTierCell
+          key={`mo-${t.markets}`}
+          value={hasMonthly ? monthlyRateForMarkets(slot, t.markets) : null}
+          active={t.markets === 1}
+          emphasize={true}
+          pricingUnit={slot.pricingUnit}
+        />
+      ))}
+
       <td className="px-3 py-2.5 align-top text-[11.5px] text-gray-600">{slot.sizes}</td>
       <td className="px-3 py-2.5 align-top text-[12px] text-gray-700">{slot.notes}</td>
     </tr>
   );
 }
 
-function AppSlotsTable({ slots }: { slots: AppAdSlot[] }) {
+function AppSlotsTable({ slots, activePubLabel }: { slots: AppAdSlot[]; activePubLabel: string }) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
+            {/* Top header row: group labels */}
             <tr>
-              {(
-                [
-                  { label: 'Placement', align: 'left' as const },
-                  { label: 'Zone', align: 'left' as const },
-                  { label: 'Tier', align: 'left' as const },
-                  { label: 'Weekly (single / both)', align: 'right' as const },
-                  { label: 'Monthly (single / both)', align: 'right' as const },
-                  { label: 'Sizes', align: 'left' as const },
-                  { label: 'Notes', align: 'left' as const },
-                ]
-              ).map((h) => (
-                <th
-                  key={h.label}
-                  className={`px-3 py-2.5 ${h.align === 'right' ? 'text-right' : 'text-left'} text-[11px] uppercase tracking-wide font-bold text-gray-600 bg-gray-50 border-b-2`}
-                  style={{ borderBottomColor: ACCENT }}
-                >
-                  {h.label}
-                </th>
-              ))}
+              <th rowSpan={2} className="px-3 py-2.5 text-left text-[11px] uppercase tracking-wide font-bold text-gray-600 bg-gray-50 border-b-2" style={{ borderBottomColor: ACCENT }}>Placement</th>
+              <th rowSpan={2} className="px-3 py-2.5 text-left text-[11px] uppercase tracking-wide font-bold text-gray-600 bg-gray-50 border-b-2" style={{ borderBottomColor: ACCENT }}>Zone</th>
+              <th rowSpan={2} className="px-3 py-2.5 text-left text-[11px] uppercase tracking-wide font-bold text-gray-600 bg-gray-50 border-b-2" style={{ borderBottomColor: ACCENT }}>Tier</th>
+              <th colSpan={4} className="px-2 py-2 text-center text-[11px] uppercase tracking-wide font-bold text-gray-700 bg-gray-100 border-b border-gray-200">
+                Weekly rate by market count
+              </th>
+              <th colSpan={4} className="px-2 py-2 text-center text-[11px] uppercase tracking-wide font-bold bg-gray-100 border-b border-gray-200" style={{ color: ACCENT }}>
+                Monthly rate by market count
+              </th>
+              <th rowSpan={2} className="px-3 py-2.5 text-left text-[11px] uppercase tracking-wide font-bold text-gray-600 bg-gray-50 border-b-2" style={{ borderBottomColor: ACCENT }}>Sizes</th>
+              <th rowSpan={2} className="px-3 py-2.5 text-left text-[11px] uppercase tracking-wide font-bold text-gray-600 bg-gray-50 border-b-2" style={{ borderBottomColor: ACCENT }}>Notes</th>
+            </tr>
+            {/* Second header row: per-tier columns */}
+            <tr>
+              {MARKET_TIERS.map((t) => {
+                const isActive = t.markets === 1;
+                return (
+                  <th
+                    key={`wk-h-${t.markets}`}
+                    className={`px-2 py-2 text-right text-[10.5px] uppercase tracking-wide font-bold border-b-2 ${isActive ? 'bg-amber-50 text-gray-900' : 'bg-gray-50 text-gray-600'}`}
+                    style={{ borderBottomColor: ACCENT }}
+                    title={isActive ? `${activePubLabel} only` : `${t.markets}-market bundle`}
+                  >
+                    <div>{t.label}</div>
+                    <div className={`text-[9.5px] font-normal normal-case ${isActive ? 'text-gray-600' : 'text-gray-400'}`}>{isActive ? activePubLabel : t.sub}</div>
+                  </th>
+                );
+              })}
+              {MARKET_TIERS.map((t) => {
+                const isActive = t.markets === 1;
+                return (
+                  <th
+                    key={`mo-h-${t.markets}`}
+                    className={`px-2 py-2 text-right text-[10.5px] uppercase tracking-wide font-bold border-b-2 ${isActive ? 'bg-amber-50 text-gray-900' : 'bg-gray-50 text-gray-600'}`}
+                    style={{ borderBottomColor: ACCENT }}
+                    title={isActive ? `${activePubLabel} only` : `${t.markets}-market bundle`}
+                  >
+                    <div>{t.label}</div>
+                    <div className={`text-[9.5px] font-normal normal-case ${isActive ? 'text-gray-600' : 'text-gray-400'}`}>{isActive ? activePubLabel : t.sub}</div>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -377,19 +448,26 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
           })}
         </div>
 
-        {/* Audience stats */}
+        {/* Audience stats: subscriber count is per-tab (live list size for the
+            active publication); open + click rates are network-wide. */}
         <div className="flex flex-wrap gap-2 mt-4">
-          {AUDIENCE_STATS.map((s) => (
-            <div
-              key={s.label}
-              className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full"
-            >
-              <span className="text-xs text-gray-500">{s.label}:</span>
-              <span className="text-sm font-bold" style={{ color: ACCENT }}>
-                {s.value}
-              </span>
-            </div>
-          ))}
+          {AUDIENCE_STATS.map((s) => {
+            const value =
+              s.label === 'Subscribers'
+                ? `${(PUB_SUBSCRIBERS[activePub.mediaKitPub] / 1000).toFixed(0)}K`
+                : s.value;
+            return (
+              <div
+                key={s.label}
+                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full"
+              >
+                <span className="text-xs text-gray-500">{s.label}:</span>
+                <span className="text-sm font-bold" style={{ color: ACCENT }}>
+                  {value}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         {/* Source-of-truth banner — confirms this page and every downstream
@@ -424,8 +502,10 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
       <section>
         <SectionHead>App &amp; Digital Ad Slots</SectionHead>
         <p className="text-[13px] text-gray-600 max-w-3xl mb-4">
-          {APP_AD_AUDIENCE_NOTE} Weekly rates assume consecutive weeks; monthly = 4 weeks. Both-pub
-          rates run ≈1.7× single-pub for full network reach. Manage live campaigns at{' '}
+          {APP_AD_AUDIENCE_NOTE} Weekly rates assume consecutive weeks; monthly = 4 weeks. Multi-market
+          bundles use a {MARKET_MULTIPLIERS[2]}× / {MARKET_MULTIPLIERS[3]}× / {MARKET_MULTIPLIERS[4]}×
+          multiplier on the single-market base for 2 / 3 / all 4 markets respectively. Manage live
+          campaigns at{' '}
           <a href="/admin/ads" className="font-semibold underline" style={{ color: ACCENT }}>
             /admin/ads
           </a>
@@ -438,7 +518,7 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
           </span>
           <span className="text-[12px] text-gray-600 self-center">High-context placements (article tops, sidebars, calendar pins, splash, push).</span>
         </div>
-        <AppSlotsTable slots={visibleSlots.filter((s) => s.tier === 'premium')} />
+        <AppSlotsTable slots={visibleSlots.filter((s) => s.tier === 'premium')} activePubLabel={activePub.label} />
 
         <div className="flex flex-wrap gap-2 mt-6 mb-3">
           <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wide font-semibold text-white px-2 py-1 rounded" style={{ background: NAVY }}>
@@ -446,7 +526,7 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
           </span>
           <span className="text-[12px] text-gray-600 self-center">Steady-reach inventory across feed, article, and calendar.</span>
         </div>
-        <AppSlotsTable slots={visibleSlots.filter((s) => s.tier === 'standard')} />
+        <AppSlotsTable slots={visibleSlots.filter((s) => s.tier === 'standard')} activePubLabel={activePub.label} />
 
         <div className="mt-4 p-3 rounded-md border border-gray-200 bg-amber-50/40" style={{ borderLeft: `4px solid ${GOLD}` }}>
           <div className="text-[12.5px] text-gray-700">

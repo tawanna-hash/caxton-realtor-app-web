@@ -131,6 +131,47 @@ export function getSlotAvailablePubs(
   return [...singles, 'both'];
 }
 
+// ── Multi-market rate scaling ────────────────────────────────────────────
+//
+// Rates in APP_AD_SLOTS are stored as 1-market (single) base prices. When an
+// advertiser bundles multiple markets (Austin / Newsline / Houston / Dallas),
+// we apply a linear bundle multiplier that rewards bigger commitments:
+//
+//   1 market  → 1.0× (base price)
+//   2 markets → 1.7× (per current both-pub convention)
+//   3 markets → 2.4×
+//   4 markets → 3.0× (all RealtyLine network + Newsline)
+//
+// This replaces the legacy `weeklyBoth`/`monthlyBoth` two-tier model. The
+// stored `weeklyBoth`/`monthlyBoth` fields are kept on the AppAdSlot type for
+// backward compatibility with checkout / agreement PDF code paths, but the
+// Media Kit page now derives 2-market pricing from `MARKET_MULTIPLIERS` so
+// 3- and 4-market upsell tiers stay perfectly in sync.
+export const MARKET_MULTIPLIERS: Record<1 | 2 | 3 | 4, number> = {
+  1: 1.0,
+  2: 1.7,
+  3: 2.4,
+  4: 3.0,
+};
+
+export type MarketCount = 1 | 2 | 3 | 4;
+
+/** Round to the nearest $5 to keep printed rates clean. */
+function roundRate(n: number): number {
+  return Math.round(n / 5) * 5;
+}
+
+/** Weekly price for a slot at the given market-count tier. */
+export function weeklyRateForMarkets(slot: AppAdSlot, markets: MarketCount): number {
+  return roundRate(slot.weeklySingle * MARKET_MULTIPLIERS[markets]);
+}
+
+/** Monthly price for a slot at the given market-count tier. Returns null when the slot has no monthly tier. */
+export function monthlyRateForMarkets(slot: AppAdSlot, markets: MarketCount): number | null {
+  if (slot.monthlySingle === null) return null;
+  return roundRate(slot.monthlySingle * MARKET_MULTIPLIERS[markets]);
+}
+
 export const APP_AD_SLOTS: AppAdSlot[] = [
   // ---- Premium tier ----
   {
@@ -497,10 +538,22 @@ export const BRAND_12_PLUS_RATE = 1680;
 // ── Audience stats (RealtyLine) ────────────────────────────────────────────
 
 export const AUDIENCE_STATS: { label: string; value: string }[] = [
-  { label: 'Subscribers',    value: '93K'   },
+  { label: 'Subscribers',    value: '130K'  },
   { label: 'Avg Open Rate',  value: '3.3%'  },
   { label: 'Avg Click Rate', value: '0.66%' },
 ];
+
+// Per-publication subscriber counts. Used by the Media Kit page so each tab
+// reflects the actual list size for that market. Totals: 130K across all four
+// markets (Austin 39K + Houston 50K + Dallas/Ft. Worth 27K + San Antonio 14K,
+// where San Antonio rolls under the RealtyLine Austin umbrella).
+export const PUB_SUBSCRIBERS: Record<MediaKitPub, number> = {
+  'realtyline':          39000, // RealtyLine Austin (39K Austin + 14K San Antonio rolls here)
+  'newsline':            14000, // Newsline / San Antonio
+  'realtyline-houston':  50000,
+  'realtyline-dallas':   27000,
+  'both':               130000, // legacy bundle = full network
+};
 
 // ── Policy notes ───────────────────────────────────────────────────────────
 
