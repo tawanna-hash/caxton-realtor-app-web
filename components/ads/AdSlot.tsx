@@ -12,8 +12,9 @@
 // Behavior:
 //   - Fetches /api/ads/active?slot=<slug>&pub=<realtyline|newsline> on mount
 //   - For banner-shaped slugs (see ROTATING_SLUGS below) it fetches with
-//     multi=1 and rotates through up to 5 active creatives every ~7s with
-//     a cross-fade. If only one creative is active, no rotation happens.
+//     multi=1 and rotates through up to 5 active creatives. Each creative
+//     dwells 6s and cross-fades over 2s into the next. If only one creative
+//     is active, no rotation happens.
 //   - Resolves publication from localStorage key `caxton_pub` (set by pub switcher)
 //   - Renders nothing while loading. If no campaign, renders `fallback` (default: null).
 //   - Fires `ad_impression` once per (slot, campaign_id) visible — so each
@@ -63,8 +64,12 @@ const ROTATING_SLUGS = new Set([
   'calendar_top_banner',
 ]);
 
-const ROTATION_INTERVAL_MS = 7000;
-const FADE_MS = 400;
+// Timing: 6s dwell + 2s cross-fade.
+// Tuned to feel like a deliberate banner rotation — enough hang time to
+// read the creative, slow enough fade to avoid looking like a glitch.
+const DWELL_MS = 6000;
+const FADE_MS = 2000;
+const ROTATION_INTERVAL_MS = DWELL_MS + FADE_MS;
 
 export function AdSlot({ slug, className = '', fallback = null, variant = 'default' }: Props) {
   const [ads, setAds] = useState<ActiveAd[]>([]);
