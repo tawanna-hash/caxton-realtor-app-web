@@ -171,6 +171,19 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
               </button>
             ))}
           </div>
+          {/* Edit button: opens the same drawer in edit mode so the admin
+              can customize the date range and personal message before
+              copying or sending. Unlike "Send report email", this button is
+              available even when the advertiser has no contact email so
+              the report can still be previewed/copied. */}
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            title="Edit the report's date range and personal message"
+            className="px-3 py-1.5 text-xs font-medium rounded border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
+          >
+            Edit
+          </button>
           <button
             type="button"
             onClick={() => setDrawerOpen(true)}
