@@ -1,9 +1,7 @@
 // app/(public)/advertise/portal/page.tsx
 //
-// Self-Service Portal landing — public-facing hub matching the IMG_8654.jpg
-// concept. Two-path layout:
-//   1. Self-Service (Browse Products) → /advertise/placements
-//   2. Talk to Sales (custom campaign)  → /advertise/inquire
+// Self-Service Portal landing — public-facing hub.
+//   Single path: Self-Service (Browse Products) → /advertise/placements
 //
 // Below the hub we surface the bundle-savings ladder (1.7× / 2.4× / 3×) so
 // advertisers see the multi-market savings story before clicking through,
@@ -36,6 +34,16 @@ function highestWeekly(): number {
   const prices = APP_AD_SLOTS.map((s) => s.weeklySingle).filter((n) => n > 0);
   return prices.length > 0 ? Math.max(...prices) : 500;
 }
+
+// Bundle ladder market labels. The ladder math is cumulative (e.g. 1.7x = a
+// bundle of two markets), so each label represents the incremental market
+// added at that tier. Houston + DFW are coming soon - shown italic.
+const MARKET_LABELS: Record<1 | 2 | 3 | 4, { name: string; comingSoon: boolean }> = {
+  1: { name: 'RealtyLine Austin', comingSoon: false },
+  2: { name: 'Newsline San Antonio', comingSoon: false },
+  3: { name: 'RealtyLine Houston', comingSoon: true },
+  4: { name: 'RealtyLine Dallas/Ft. Worth', comingSoon: true },
+};
 
 // Pick a representative slot for the bundle-savings ladder. We use the
 // median-priced standard slot so the savings math reads as realistic.
@@ -145,67 +153,6 @@ export default function SelfServicePortalPage() {
             </Link>
           </article>
 
-          {/* Talk-to-sales card */}
-          <article className="relative rounded-3xl overflow-hidden bg-white border border-gray-200 p-7 md:p-8 shadow-sm">
-            <span className="absolute top-5 right-5 inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold">
-              Custom
-            </span>
-
-            <div className="w-12 h-12 rounded-xl bg-[#1a2a44]/5 flex items-center justify-center mb-6">
-              <svg
-                viewBox="0 0 24 24"
-                className="w-6 h-6 text-[#1a2a44]"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" />
-              </svg>
-            </div>
-
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 mb-3">
-              Talk to Sales
-            </h2>
-            <p className="text-gray-600 text-sm md:text-base font-light leading-relaxed mb-6">
-              For bigger multi-market campaigns, print + digital bundles, or
-              custom sponsorships {'\u2014'} our team will scope it with you.
-            </p>
-
-            <ul className="space-y-2.5 mb-7 text-sm md:text-[15px]">
-              {[
-                'Custom multi-channel campaigns',
-                'Print + e-Blast + mobile bundles',
-                'Editorial sponsorships & integrations',
-                'Volume pricing for agencies',
-              ].map((line) => (
-                <li key={line} className="flex items-start gap-2.5">
-                  <span className="shrink-0 w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center mt-0.5">
-                    <svg viewBox="0 0 20 20" className="w-3 h-3 text-gray-700" aria-hidden="true">
-                      <path
-                        fill="currentColor"
-                        d="m8.227 13.227-3.182-3.182 1.414-1.414 1.768 1.768 5.293-5.293 1.414 1.414-6.707 6.707Z"
-                      />
-                    </svg>
-                  </span>
-                  <span className="text-gray-700">{line}</span>
-                </li>
-              ))}
-            </ul>
-
-            <Link
-              href="/advertise/inquire"
-              className="inline-flex items-center gap-2 bg-[#1a2a44] hover:bg-[#243556] active:scale-[0.98] transition text-white font-semibold px-5 py-3 rounded-full text-sm md:text-base"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
-            >
-              Request a Quote
-              <svg viewBox="0 0 20 20" className="w-4 h-4" aria-hidden="true">
-                <path fill="currentColor" d="M10.293 4.293a1 1 0 0 1 1.414 0l5 5a1 1 0 0 1 0 1.414l-5 5a1 1 0 1 1-1.414-1.414L13.586 11H4a1 1 0 1 1 0-2h9.586l-3.293-3.293a1 1 0 0 1 0-1.414Z" />
-              </svg>
-            </Link>
-          </article>
         </section>
 
         {/* Bundle savings ladder \u2014 directly tied to MARKET_MULTIPLIERS */}
@@ -238,8 +185,14 @@ export default function SelfServicePortalPage() {
                       : 'border-emerald-200 bg-white',
                   ].join(' ')}
                 >
-                  <p className="text-[11px] uppercase tracking-wider text-gray-500 font-medium">
-                    {row.markets} market{row.markets === 1 ? '' : 's'}
+                  <p className="text-[11px] uppercase tracking-wider text-gray-500 font-medium leading-tight min-h-[2.2em]">
+                    {MARKET_LABELS[row.markets].name}
+                    {MARKET_LABELS[row.markets].comingSoon && (
+                      <>
+                        {' '}
+                        <em className="not-italic text-gray-400 normal-case tracking-normal">(coming soon)</em>
+                      </>
+                    )}
                   </p>
                   <p className="text-2xl md:text-3xl font-bold text-gray-900 mt-1 tabular-nums">
                     ${row.total.toLocaleString()}
