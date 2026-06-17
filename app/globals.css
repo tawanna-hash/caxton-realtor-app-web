@@ -9,6 +9,75 @@
      recolor inherited text, form controls, or scrollbars into an unreadable
      hybrid. */
   color-scheme: light;
+
+  /* ==========================================================================
+     RNN brand palette — four hues only (June 2026)
+     --------------------------------------------------------------------------
+     The app uses exactly four hue families, mixed across every market for
+     visual consistency. Neutral gray/white/black remain available for body
+     text, surfaces, and borders.
+
+       primary  = PURPLE  (brand master)
+       info     = BLUE    (also covers former success/emerald/sky)
+       warning  = ORANGE  (also covers former amber/yellow)
+       danger   = RED     (also covers former rose/pink)
+
+     Every Tailwind hue scale is remapped into one of these four below.
+     Existing class names (bg-emerald-600, text-sky-500, border-rose-300, etc.)
+     keep working — they now resolve through the palette.
+     ========================================================================== */
+
+  /* Purple — primary brand */
+  --rnn-purple-50:  #faf5fb;
+  --rnn-purple-100: #f1e1f2;
+  --rnn-purple-200: #e0b7e1;
+  --rnn-purple-300: #c884ca;
+  --rnn-purple-400: #a558a8;
+  --rnn-purple-500: #7a1f7e;
+  --rnn-purple-600: #5a0e5f;
+  --rnn-purple-700: #3D0740;
+  --rnn-purple-800: #2c0530;
+  --rnn-purple-900: #1e0322;
+
+  /* Blue */
+  --rnn-blue-50:  #eff6ff;
+  --rnn-blue-100: #dbeafe;
+  --rnn-blue-200: #bfdbfe;
+  --rnn-blue-300: #93c5fd;
+  --rnn-blue-400: #60a5fa;
+  --rnn-blue-500: #3b82f6;
+  --rnn-blue-600: #2563eb;
+  --rnn-blue-700: #1d4ed8;
+  --rnn-blue-800: #1e40af;
+  --rnn-blue-900: #1e3a8a;
+
+  /* Orange */
+  --rnn-orange-50:  #fff7ed;
+  --rnn-orange-100: #ffedd5;
+  --rnn-orange-200: #fed7aa;
+  --rnn-orange-300: #fdba74;
+  --rnn-orange-400: #fb923c;
+  --rnn-orange-500: #f97316;
+  --rnn-orange-600: #ea580c;
+  --rnn-orange-700: #c2410c;
+  --rnn-orange-800: #9a3412;
+  --rnn-orange-900: #7c2d12;
+
+  /* Red */
+  --rnn-red-50:  #fef2f2;
+  --rnn-red-100: #fee2e2;
+  --rnn-red-200: #fecaca;
+  --rnn-red-300: #fca5a5;
+  --rnn-red-400: #f87171;
+  --rnn-red-500: #ef4444;
+  --rnn-red-600: #dc2626;
+  --rnn-red-700: #b91c1c;
+  --rnn-red-800: #991b1b;
+  --rnn-red-900: #7f1d1d;
+
+  /* Publication chips */
+  --rnn-realtyline: var(--rnn-orange-600); /* #ea580c — was amber */
+  --rnn-newsline:   var(--rnn-blue-600);   /* #2563eb — was sky */
 }
 
 @theme inline {
@@ -26,6 +95,205 @@
   --color-gray-900: #021D40;
   --color-gray-800: #021D40;
   --color-gray-700: #021D40;
+
+  /* ==========================================================================
+     Four-color lockdown — remap off-palette Tailwind hues into the allowed
+     four (purple, blue, orange, red). Neutrals stay untouched.
+     ========================================================================== */
+
+  /* Purple — base. Also absorbs violet/indigo/fuchsia (close-magenta cousins
+     that would otherwise drift the brand). */
+  --color-purple-50:  var(--rnn-purple-50);
+  --color-purple-100: var(--rnn-purple-100);
+  --color-purple-200: var(--rnn-purple-200);
+  --color-purple-300: var(--rnn-purple-300);
+  --color-purple-400: var(--rnn-purple-400);
+  --color-purple-500: var(--rnn-purple-500);
+  --color-purple-600: var(--rnn-purple-600);
+  --color-purple-700: var(--rnn-purple-700);
+  --color-purple-800: var(--rnn-purple-800);
+  --color-purple-900: var(--rnn-purple-900);
+
+  --color-violet-50:  var(--rnn-purple-50);
+  --color-violet-100: var(--rnn-purple-100);
+  --color-violet-200: var(--rnn-purple-200);
+  --color-violet-300: var(--rnn-purple-300);
+  --color-violet-400: var(--rnn-purple-400);
+  --color-violet-500: var(--rnn-purple-500);
+  --color-violet-600: var(--rnn-purple-600);
+  --color-violet-700: var(--rnn-purple-700);
+  --color-violet-800: var(--rnn-purple-800);
+  --color-violet-900: var(--rnn-purple-900);
+
+  --color-indigo-50:  var(--rnn-purple-50);
+  --color-indigo-100: var(--rnn-purple-100);
+  --color-indigo-200: var(--rnn-purple-200);
+  --color-indigo-300: var(--rnn-purple-300);
+  --color-indigo-400: var(--rnn-purple-400);
+  --color-indigo-500: var(--rnn-purple-500);
+  --color-indigo-600: var(--rnn-purple-600);
+  --color-indigo-700: var(--rnn-purple-700);
+  --color-indigo-800: var(--rnn-purple-800);
+  --color-indigo-900: var(--rnn-purple-900);
+
+  --color-fuchsia-50:  var(--rnn-purple-50);
+  --color-fuchsia-100: var(--rnn-purple-100);
+  --color-fuchsia-200: var(--rnn-purple-200);
+  --color-fuchsia-300: var(--rnn-purple-300);
+  --color-fuchsia-400: var(--rnn-purple-400);
+  --color-fuchsia-500: var(--rnn-purple-500);
+  --color-fuchsia-600: var(--rnn-purple-600);
+  --color-fuchsia-700: var(--rnn-purple-700);
+  --color-fuchsia-800: var(--rnn-purple-800);
+  --color-fuchsia-900: var(--rnn-purple-900);
+
+  /* Blue — base. Absorbs sky/cyan (info), plus emerald/green/teal/lime
+     (former success — green is removed from the palette; positive states use
+     blue going forward). */
+  --color-blue-50:  var(--rnn-blue-50);
+  --color-blue-100: var(--rnn-blue-100);
+  --color-blue-200: var(--rnn-blue-200);
+  --color-blue-300: var(--rnn-blue-300);
+  --color-blue-400: var(--rnn-blue-400);
+  --color-blue-500: var(--rnn-blue-500);
+  --color-blue-600: var(--rnn-blue-600);
+  --color-blue-700: var(--rnn-blue-700);
+  --color-blue-800: var(--rnn-blue-800);
+  --color-blue-900: var(--rnn-blue-900);
+
+  --color-sky-50:  var(--rnn-blue-50);
+  --color-sky-100: var(--rnn-blue-100);
+  --color-sky-200: var(--rnn-blue-200);
+  --color-sky-300: var(--rnn-blue-300);
+  --color-sky-400: var(--rnn-blue-400);
+  --color-sky-500: var(--rnn-blue-500);
+  --color-sky-600: var(--rnn-blue-600);
+  --color-sky-700: var(--rnn-blue-700);
+  --color-sky-800: var(--rnn-blue-800);
+  --color-sky-900: var(--rnn-blue-900);
+
+  --color-cyan-50:  var(--rnn-blue-50);
+  --color-cyan-100: var(--rnn-blue-100);
+  --color-cyan-200: var(--rnn-blue-200);
+  --color-cyan-300: var(--rnn-blue-300);
+  --color-cyan-400: var(--rnn-blue-400);
+  --color-cyan-500: var(--rnn-blue-500);
+  --color-cyan-600: var(--rnn-blue-600);
+  --color-cyan-700: var(--rnn-blue-700);
+  --color-cyan-800: var(--rnn-blue-800);
+  --color-cyan-900: var(--rnn-blue-900);
+
+  --color-emerald-50:  var(--rnn-blue-50);
+  --color-emerald-100: var(--rnn-blue-100);
+  --color-emerald-200: var(--rnn-blue-200);
+  --color-emerald-300: var(--rnn-blue-300);
+  --color-emerald-400: var(--rnn-blue-400);
+  --color-emerald-500: var(--rnn-blue-500);
+  --color-emerald-600: var(--rnn-blue-600);
+  --color-emerald-700: var(--rnn-blue-700);
+  --color-emerald-800: var(--rnn-blue-800);
+  --color-emerald-900: var(--rnn-blue-900);
+
+  --color-green-50:  var(--rnn-blue-50);
+  --color-green-100: var(--rnn-blue-100);
+  --color-green-200: var(--rnn-blue-200);
+  --color-green-300: var(--rnn-blue-300);
+  --color-green-400: var(--rnn-blue-400);
+  --color-green-500: var(--rnn-blue-500);
+  --color-green-600: var(--rnn-blue-600);
+  --color-green-700: var(--rnn-blue-700);
+  --color-green-800: var(--rnn-blue-800);
+  --color-green-900: var(--rnn-blue-900);
+
+  --color-teal-50:  var(--rnn-blue-50);
+  --color-teal-100: var(--rnn-blue-100);
+  --color-teal-200: var(--rnn-blue-200);
+  --color-teal-300: var(--rnn-blue-300);
+  --color-teal-400: var(--rnn-blue-400);
+  --color-teal-500: var(--rnn-blue-500);
+  --color-teal-600: var(--rnn-blue-600);
+  --color-teal-700: var(--rnn-blue-700);
+  --color-teal-800: var(--rnn-blue-800);
+  --color-teal-900: var(--rnn-blue-900);
+
+  --color-lime-50:  var(--rnn-blue-50);
+  --color-lime-100: var(--rnn-blue-100);
+  --color-lime-200: var(--rnn-blue-200);
+  --color-lime-300: var(--rnn-blue-300);
+  --color-lime-400: var(--rnn-blue-400);
+  --color-lime-500: var(--rnn-blue-500);
+  --color-lime-600: var(--rnn-blue-600);
+  --color-lime-700: var(--rnn-blue-700);
+  --color-lime-800: var(--rnn-blue-800);
+  --color-lime-900: var(--rnn-blue-900);
+
+  /* Orange — base. Absorbs amber/yellow (warning). */
+  --color-orange-50:  var(--rnn-orange-50);
+  --color-orange-100: var(--rnn-orange-100);
+  --color-orange-200: var(--rnn-orange-200);
+  --color-orange-300: var(--rnn-orange-300);
+  --color-orange-400: var(--rnn-orange-400);
+  --color-orange-500: var(--rnn-orange-500);
+  --color-orange-600: var(--rnn-orange-600);
+  --color-orange-700: var(--rnn-orange-700);
+  --color-orange-800: var(--rnn-orange-800);
+  --color-orange-900: var(--rnn-orange-900);
+
+  --color-amber-50:  var(--rnn-orange-50);
+  --color-amber-100: var(--rnn-orange-100);
+  --color-amber-200: var(--rnn-orange-200);
+  --color-amber-300: var(--rnn-orange-300);
+  --color-amber-400: var(--rnn-orange-400);
+  --color-amber-500: var(--rnn-orange-500);
+  --color-amber-600: var(--rnn-orange-600);
+  --color-amber-700: var(--rnn-orange-700);
+  --color-amber-800: var(--rnn-orange-800);
+  --color-amber-900: var(--rnn-orange-900);
+
+  --color-yellow-50:  var(--rnn-orange-50);
+  --color-yellow-100: var(--rnn-orange-100);
+  --color-yellow-200: var(--rnn-orange-200);
+  --color-yellow-300: var(--rnn-orange-300);
+  --color-yellow-400: var(--rnn-orange-400);
+  --color-yellow-500: var(--rnn-orange-500);
+  --color-yellow-600: var(--rnn-orange-600);
+  --color-yellow-700: var(--rnn-orange-700);
+  --color-yellow-800: var(--rnn-orange-800);
+  --color-yellow-900: var(--rnn-orange-900);
+
+  /* Red — base. Absorbs rose/pink (danger). */
+  --color-red-50:  var(--rnn-red-50);
+  --color-red-100: var(--rnn-red-100);
+  --color-red-200: var(--rnn-red-200);
+  --color-red-300: var(--rnn-red-300);
+  --color-red-400: var(--rnn-red-400);
+  --color-red-500: var(--rnn-red-500);
+  --color-red-600: var(--rnn-red-600);
+  --color-red-700: var(--rnn-red-700);
+  --color-red-800: var(--rnn-red-800);
+  --color-red-900: var(--rnn-red-900);
+
+  --color-rose-50:  var(--rnn-red-50);
+  --color-rose-100: var(--rnn-red-100);
+  --color-rose-200: var(--rnn-red-200);
+  --color-rose-300: var(--rnn-red-300);
+  --color-rose-400: var(--rnn-red-400);
+  --color-rose-500: var(--rnn-red-500);
+  --color-rose-600: var(--rnn-red-600);
+  --color-rose-700: var(--rnn-red-700);
+  --color-rose-800: var(--rnn-red-800);
+  --color-rose-900: var(--rnn-red-900);
+
+  --color-pink-50:  var(--rnn-red-50);
+  --color-pink-100: var(--rnn-red-100);
+  --color-pink-200: var(--rnn-red-200);
+  --color-pink-300: var(--rnn-red-300);
+  --color-pink-400: var(--rnn-red-400);
+  --color-pink-500: var(--rnn-red-500);
+  --color-pink-600: var(--rnn-red-600);
+  --color-pink-700: var(--rnn-red-700);
+  --color-pink-800: var(--rnn-red-800);
+  --color-pink-900: var(--rnn-red-900);
 }
 
 /* NOTE: the previous @media (prefers-color-scheme: dark) override was removed.
