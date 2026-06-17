@@ -42,10 +42,10 @@ export default async function PortalErrorPage({ searchParams }: PageProps) {
       <p className="text-gray-600">{msg.body}</p>
       <div className="mt-6">
         <Link
-          href="mailto:hello@myrealtyline.com?subject=Portal%20access"
+          href="/portal"
           className="inline-block rounded-lg bg-gray-900 text-white px-5 py-2 text-sm font-medium hover:bg-gray-800"
         >
-          Contact account manager
+          Sign in again
         </Link>
       </div>
     </div>
