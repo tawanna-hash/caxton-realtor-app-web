@@ -187,7 +187,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                   type="text"
                   value={uploadClickUrl}
                   onChange={(e) => setUploadClickUrl(e.target.value)}
-                  placeholder="https://advertiser.com or mailto:ads@myrealtyline.com"
+                  placeholder="https://advertiser.com or mailto:info@myrealtyline.com"
                   className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm font-mono"
                 />
               </label>
