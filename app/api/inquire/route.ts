@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
   try {
     const checkoutUrl = slotInfo
       ? `https://realtynewsnow.app/advertise/checkout/${slotInfo.slug}?pub=${data.pub}`
-      : 'https://realtynewsnow.app/advertise';
+      : 'https://realtynewsnow.app/advertise/digital';
 
     const altCardsHtml = alternatives.length
       ? `
@@ -271,7 +271,7 @@ export async function POST(req: NextRequest) {
         <p style="font-size:15px;line-height:1.5;color:${BRAND.bodyText};margin:0 0 16px 0;">
           See our full rate card and book any of our 17 placements directly:
         </p>
-        <p style="margin:0 0 28px 0;">${primaryButton({ href: 'https://realtynewsnow.app/advertise', label: 'View rate card' })}</p>`;
+        <p style="margin:0 0 28px 0;">${primaryButton({ href: 'https://realtynewsnow.app/advertise/digital', label: 'View rate card' })}</p>`;
     }
 
     const replyHtml = wrapEmail({
