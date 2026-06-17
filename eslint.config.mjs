@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // iOS Capacitor scaffolding (Xcode project + asset gen scripts) is not Next.js app code
+    "ios/**",
+    "resources/**",
+    "scripts/generate-ios-*.mjs",
   ]),
 ]);
 
