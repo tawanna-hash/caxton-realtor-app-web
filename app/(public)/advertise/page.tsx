@@ -142,7 +142,7 @@ export default function AdvertisePage() {
                 </h3>
               </div>
               <p className="text-sm text-gray-500 font-light italic shrink-0">
-                From $880
+                Packages start at $485/month
               </p>
             </div>
             <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
@@ -178,8 +178,7 @@ export default function AdvertisePage() {
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-3 font-light italic">
-              Adobe InDesign templates provided for any size. Print runs in
-              both the monthly issue and the clickable digital replica.
+              Adobe InDesign templates provided for any size.
             </p>
 
             <details className="mt-6 border-t border-gray-100 pt-5 group">
@@ -265,35 +264,26 @@ export default function AdvertisePage() {
                   className="font-serif text-xl text-gray-900 mt-1"
                   style={{ fontFamily: 'Georgia, serif' }}
                 >
-                  Digital + email
+                  E-Blasts
                 </h3>
               </div>
               <p className="text-sm text-gray-500 font-light italic shrink-0">
-                From $200/week
+                From $1,100
               </p>
             </div>
             <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
-              17 digital placements across realtynewsnow.app plus dedicated
-              e-Blasts to 54K+ active subscribers. Every digital impression is
-              click-tracked.
+              Dedicated email sends to 54K+ active subscribers across our
+              RealtyLine and Newsline San Antonio lists. Every send is
+              click-tracked end-to-end.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="border border-gray-100 px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
-                  Web banners
+                  Dedicated e-Blast
                 </p>
                 <p className="text-xs text-gray-700 font-light mt-1">
-                  728{'\u00d7'}90, 300{'\u00d7'}250, 300{'\u00d7'}600 {'\u00b7'}
-                  article top, sidebar, mid-inline, bottom
-                </p>
-              </div>
-              <div className="border border-gray-100 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
-                  Feed cards
-                </p>
-                <p className="text-xs text-gray-700 font-light mt-1">
-                  1080{'\u00d7'}600 native, every 6th feed card,
-                  marked SPONSORED
+                  Exclusive email to the full subscriber list {'\u2014'} your
+                  design, full inbox real estate
                 </p>
               </div>
               <div className="border border-gray-100 px-4 py-3">
@@ -304,22 +294,7 @@ export default function AdvertisePage() {
                   600{'\u00d7'}200, top of every weekly e-Blast send
                 </p>
               </div>
-              <div className="border border-gray-100 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
-                  Dedicated e-Blast
-                </p>
-                <p className="text-xs text-gray-700 font-light mt-1">
-                  Exclusive email to the full subscriber list {'\u2014'} your
-                  design, full inbox real estate
-                </p>
-              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-3 font-light italic">
-              <Link href="/advertise/placements" className="underline underline-offset-2">
-                Browse all 17 digital placements
-              </Link>{' '}
-              with live pricing in the self-service portal.
-            </p>
           </div>
 
           {/* SOCIAL */}
@@ -390,14 +365,33 @@ export default function AdvertisePage() {
                 </h3>
               </div>
               <p className="text-sm text-gray-500 font-light italic shrink-0">
-                From $400/week
+                From $125/week
               </p>
             </div>
             <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
-              Premium app-only placements that hit subscribers in the moment
-              they open Realty News Now on their phone.
+              Premium placements across realtynewsnow.app and our native mobile
+              app {'\u2014'} reaching subscribers on every device, every visit.
+              Every impression is click-tracked.
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Web banners
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  728{'\u00d7'}90, 300{'\u00d7'}250, 300{'\u00d7'}600 {'\u00b7'}
+                  article top, sidebar, mid-inline, bottom
+                </p>
+              </div>
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Feed cards
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  1080{'\u00d7'}600 native, every 6th feed card,
+                  marked SPONSORED
+                </p>
+              </div>
               <div className="border border-gray-100 px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                   Splash / welcome
@@ -423,6 +417,12 @@ export default function AdvertisePage() {
                 </p>
               </div>
             </div>
+            <p className="text-xs text-gray-500 mt-3 font-light italic">
+              <Link href="/advertise/placements" className="underline underline-offset-2">
+                Browse all 17 digital placements
+              </Link>{' '}
+              with live pricing in the self-service portal.
+            </p>
           </div>
         </div>
       </section>
