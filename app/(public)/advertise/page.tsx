@@ -42,7 +42,7 @@ export default function AdvertisePage() {
               Buy a placement in two minutes.
             </h2>
             <p className="text-sm text-gray-700 leading-relaxed max-w-xl">
-              Six digital ad formats from $200, pick your market and dates,
+              Sixteen digital ad formats from $125/week, pick your market and dates,
               instant checkout {'—'} no sales call required.
             </p>
           </div>
@@ -253,12 +253,37 @@ export default function AdvertisePage() {
             </details>
           </div>
 
-          {/* DIGITAL */}
+          {/* SOCIAL */}
           <div className="border border-gray-200 p-6 md:p-7">
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
                   Channel 02
+                </p>
+                <h3
+                  className="font-serif text-xl text-gray-900 mt-1"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  Social
+                </h3>
+              </div>
+              <p className="text-sm text-gray-500 font-light italic shrink-0">
+                Included with print packages
+              </p>
+            </div>
+            <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
+              Reach beyond our subscriber list through our highly engaged
+              Facebook, Instagram, and LinkedIn audiences {'\u2014'} where
+              Texas real estate professionals actually spend their time.
+            </p>
+          </div>
+
+          {/* E-BLASTS */}
+          <div className="border border-gray-200 p-6 md:p-7">
+            <div className="flex items-baseline justify-between gap-3 mb-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
+                  Channel 03
                 </p>
                 <h3
                   className="font-serif text-xl text-gray-900 mt-1"
@@ -292,59 +317,6 @@ export default function AdvertisePage() {
                 </p>
                 <p className="text-xs text-gray-700 font-light mt-1">
                   600{'\u00d7'}200, top of every weekly e-Blast send
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* SOCIAL */}
-          <div className="border border-gray-200 p-6 md:p-7">
-            <div className="flex items-baseline justify-between gap-3 mb-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
-                  Channel 03
-                </p>
-                <h3
-                  className="font-serif text-xl text-gray-900 mt-1"
-                  style={{ fontFamily: 'Georgia, serif' }}
-                >
-                  Social
-                </h3>
-              </div>
-              <p className="text-sm text-gray-500 font-light italic shrink-0">
-                Included with packages
-              </p>
-            </div>
-            <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
-              Reach beyond our subscriber list through our highly engaged
-              Facebook, Instagram, and LinkedIn audiences {'\u2014'} where
-              Texas real estate professionals actually spend their time.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="border border-gray-100 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
-                  Branded post shares
-                </p>
-                <p className="text-xs text-gray-700 font-light mt-1">
-                  Featured article + ad creative cross-posted across all three
-                  networks
-                </p>
-              </div>
-              <div className="border border-gray-100 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
-                  Live event coverage
-                </p>
-                <p className="text-xs text-gray-700 font-light mt-1">
-                  Facebook Live + Instagram stories on the day of your event
-                </p>
-              </div>
-              <div className="border border-gray-100 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
-                  Up to 4 event images
-                </p>
-                <p className="text-xs text-gray-700 font-light mt-1">
-                  Published to Facebook, Instagram, and the website
-                  (Pkg No. 2)
                 </p>
               </div>
             </div>
