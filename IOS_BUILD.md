@@ -20,7 +20,7 @@ You need ALL of these before submitting. Most can run in parallel.
 ### 0.2 A Mac with Xcode
 You need a Mac (or rented cloud Mac like MacInCloud / MacStadium) running:
 - macOS 14 (Sonoma) or newer
-- **Xcode 15.0 or newer** — install from the Mac App Store (it's ~10GB, plan accordingly)
+- **Xcode 26.0 or newer** (we're building on Xcode 26.5) — install from the Mac App Store (it's ~10GB, plan accordingly)
 - Command Line Tools: `xcode-select --install`
 - **CocoaPods**: `sudo gem install cocoapods`
 
@@ -78,7 +78,7 @@ In Xcode, in the left sidebar, click the blue **App** project root → **Signing
 
 ## 3. Test on a simulator (5 minutes)
 
-In Xcode toolbar, pick a target device (e.g. **iPhone 15 Pro Simulator**) and hit **▶ Run** (Cmd+R).
+In Xcode toolbar, pick a target device (e.g. **iPhone 17 Pro Max Simulator**) and hit **▶ Run** (Cmd+R).
 
 Expected behavior:
 - Splash screen shows the navy-and-gold app icon centered on navy background for ~1.5 seconds.
@@ -141,11 +141,11 @@ In App Store Connect → your app → **App Store** tab → **iOS App → 1.0 Pr
 - **Privacy Policy URL**: REQUIRED. Use <https://realtynewsnow.app/privacy> — if that page doesn't exist yet, we must create one.
 
 ### Required screenshots (export from your iPhone using simulator or device):
-- **6.7" iPhone** (iPhone 15 Pro Max, 1290×2796) — at least 3, up to 10. **Required.**
-- **6.5" iPhone** (iPhone 14 Plus, 1284×2778) — optional but recommended.
-- **5.5" iPhone** (legacy) — no longer required.
+- **6.9" iPhone** (iPhone 17 Pro Max, 1320×2868) — at least 3, up to 10. **Required.**
+- **6.7" iPhone** (iPhone 15 Pro Max / 16 Pro Max, 1290×2796) — optional fallback.
+- **6.5" iPhone** (legacy) — no longer required.
 
-Use the iPhone 15 Pro Max simulator: run app → File → New Screen Shot (Cmd+S) → it saves to your Desktop at the right resolution. Take screenshots of: home feed, advertiser detail, news article, dashboard, profile.
+Use the iPhone 17 Pro Max simulator: run app → File → New Screen Shot (Cmd+S) → it saves to your Desktop at 1320×2868 (the current 6.9" required size). Take screenshots of: home feed, advertiser detail, news article, dashboard, profile.
 
 ### Required: App icon
 Already baked in at 1024×1024 from concept A (navy + gold house + newspaper). Don't need to upload separately.
