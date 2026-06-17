@@ -90,6 +90,24 @@ function hasAdminCookie(req: NextRequest): boolean {
   );
 }
 
+// Paths where pre-launch markets are intentionally previewable without an
+// admin session. The digital rate card is the canonical place advertisers
+// browse upcoming markets and join the waitlist, so the picker there must
+// be able to switch into Houston/Dallas even for logged-out visitors. The
+// page itself renders a Coming Soon empty state instead of selling sold
+// inventory.
+const PRE_LAUNCH_PREVIEW_PATHS = new Set<string>([
+  '/advertise/digital',
+]);
+
+function isPreLaunchPreviewPath(pathname: string): boolean {
+  if (PRE_LAUNCH_PREVIEW_PATHS.has(pathname)) return true;
+  for (const p of PRE_LAUNCH_PREVIEW_PATHS) {
+    if (pathname.startsWith(p + '/')) return true;
+  }
+  return false;
+}
+
 function handlePubPermalink(req: NextRequest): NextResponse | null {
   const param = req.nextUrl.searchParams.get('pub');
   if (!param) return null;
@@ -102,8 +120,14 @@ function handlePubPermalink(req: NextRequest): NextResponse | null {
     return NextResponse.redirect(clean, 308);
   }
 
-  // Pre-launch markets gated on admin cookie presence.
-  if (PRE_LAUNCH_SET.has(param) && !hasAdminCookie(req)) {
+  // Pre-launch markets gated on admin cookie presence — except on
+  // explicitly previewable paths (the rate card), where the page itself
+  // handles the coming-soon empty state safely.
+  if (
+    PRE_LAUNCH_SET.has(param) &&
+    !hasAdminCookie(req) &&
+    !isPreLaunchPreviewPath(req.nextUrl.pathname)
+  ) {
     const clean = req.nextUrl.clone();
     clean.searchParams.delete('pub');
     return NextResponse.redirect(clean, 308);
