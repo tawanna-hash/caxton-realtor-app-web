@@ -13,12 +13,6 @@
  *                        items after the hero window expires. Slightly more
  *                        compact.
  *
- * Gating: clicking the primary button hits /api/sabor-mls/sso/start which
- * (once SABOR credentials are wired) redirects to the SABOR member portal
- * and returns with a one-time download URL. Until SABOR SSO is provisioned,
- * the start endpoint returns a "coming soon" payload so the surface ships
- * safely.
- *
  * The card is data-driven: a single GET /api/sabor-mls/current call populates
  * the headline number + supporting stats. Falls back to baked-in April 2026
  * numbers from the uploaded report if the API hasn't been seeded yet.
@@ -61,7 +55,6 @@ const NEWSLINE = '#3D0740';
 
 export default function SaborReportCard({ variant = 'inline' }: Props) {
   const [data, setData] = useState<SaborReportData | null>(null);
-  const [signingIn, setSigningIn] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -89,17 +82,6 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
     } catch {
       // best-effort
     }
-  }
-
-  function onSignIn() {
-    setSigningIn(true);
-    try {
-      const w = window as unknown as { posthog?: { capture: (e: string, p?: unknown) => void } };
-      w.posthog?.capture?.('sabor_mls_signin_click', { variant, month: d.month_label });
-    } catch {
-      // best-effort
-    }
-    window.location.href = `/api/sabor-mls/sso/start?month=${encodeURIComponent(d.month_label)}`;
   }
 
   // Impression tracking — fire once per mount when in view
@@ -146,12 +128,6 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
             >
               <span aria-hidden>●</span>
               <span>SABOR Report</span>
-            </span>
-            <span
-              className="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider"
-              style={{ background: '#fff7ed', color: '#9a3412' }}
-            >
-              <span aria-hidden>🔒</span> Members
             </span>
           </div>
 
@@ -202,20 +178,6 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
             ))}
           </div>
 
-          {/* CTA */}
-          <button
-            type="button"
-            onClick={onSignIn}
-            disabled={signingIn}
-            className="w-full rounded-lg py-3 text-[14px] font-semibold tracking-wide text-white disabled:opacity-70"
-            style={{ background: NEWSLINE, minHeight: 44 }}
-          >
-            {signingIn ? 'Connecting to SABOR…' : 'Sign in with SABOR \u2192'}
-          </button>
-          <p className="text-[10px] text-gray-500 text-center mt-2.5 leading-snug">
-            Active SABOR membership required · Texas A&amp;M Real Estate Research Center
-            {d.page_count ? ` · ${d.page_count} pages` : ''}
-          </p>
         </div>
       </div>
     </article>
