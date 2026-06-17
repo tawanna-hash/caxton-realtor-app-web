@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { ArticleListItem, ArticleReport, EventListItem, EventReport, ReportOverrides } from './_types';
 import { ReportPreview, buildReportHtml, buildReportPlainText } from './_components/ReportPreview';
@@ -22,7 +22,23 @@ function parseTab(value: string | null): TabKey {
   return value === 'events' || value === 'advertisers' ? value : 'articles';
 }
 
+// Next 15+/16 disables static prerender bailout for useSearchParams() unless
+// it sits inside a <Suspense> boundary. The outer page provides that boundary
+// so the inner component (which actually reads the URL) is allowed to
+// suspend during prerender without erroring the build.
 export default function AdminReportsPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="text-sm text-gray-500">Loading reports…</div>
+      </div>
+    }>
+      <AdminReportsPageInner />
+    </Suspense>
+  );
+}
+
+function AdminReportsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 

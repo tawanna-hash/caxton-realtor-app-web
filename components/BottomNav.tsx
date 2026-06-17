@@ -126,7 +126,13 @@ export default function BottomNav({ info, onMoreClick }: Props) {
   const accent = info?.color ?? '#1a2a44';
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 z-40">
+    <nav
+      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 z-40"
+      // Extend the white background through the iOS home-indicator strip so
+      // it doesn't show through to the underlying page. The tab row inside
+      // pads itself up off the indicator with the same env() value.
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
       {/* Tab row */}
       <div className="flex justify-around py-2 pb-3">
         <Tab label="Feed" active={isHome} accent={accent} onClick={goHome}>

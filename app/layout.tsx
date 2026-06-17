@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { PostHogProvider } from "./posthog-provider";
 
@@ -56,6 +56,17 @@ export const metadata: Metadata = {
   verification: {
     google: "VntUQ3nLhhIJvbL5UFaiLV4-o5B0C3sYJ_tEPdaBd8s",
   },
+};
+
+// viewportFit="cover" is REQUIRED for env(safe-area-inset-*) to return real
+// values on notched iPhones. Without it, env() returns 0 and any UI that
+// claims to respect the safe area (BottomNav, FloaterPill, etc.) silently
+// renders behind the home indicator on iPhone X+ devices.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#1a2a44",
 };
 
 export default function RootLayout({
