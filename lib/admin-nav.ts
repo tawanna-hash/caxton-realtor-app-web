@@ -82,6 +82,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     //   • Site Analytics     — PostHog traffic & user behavior
     // Labels are explicit so admins can tell them apart at a glance.
     links: [
+      { label: 'Live Activity',      href: '/admin/activity',  description: 'Real-time public app events (last 7d)' },
       { label: 'Engagement Metrics', href: '/admin/metrics',   description: 'In-app click events & surface engagement' },
       { label: 'Client Reports',     href: '/admin/reports',   description: 'Shareable article, event & advertiser recaps' },
       { label: 'Site Analytics',     href: '/admin/analytics', description: 'PostHog traffic & user behavior' },
