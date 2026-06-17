@@ -7,6 +7,7 @@ import { ReportPreview, buildReportHtml, buildReportPlainText } from './_compone
 import { EventReportPreview, buildEventReportHtml, buildEventReportPlainText } from './_components/EventReportPreview';
 import AdvertisersReportTab from './_components/AdvertisersReportTab';
 import EditReportDrawer from './_components/EditReportDrawer';
+import ReportPicker, { type PickerItem } from './_components/ReportPicker';
 
 type DaysOption = 7 | 30 | 90 | 180;
 
@@ -171,7 +172,21 @@ function AdminReportsPageInner() {
         setEventReportLoading(false);
         return;
       }
-      setEventReport(body.report);
+      // The /event endpoint only sees data inside the selected window. When
+      // that window has no tracked events, title/pub come back null even
+      // though we already know them from the events-list call. Patch the
+      // report client-side with the list-item title and pub so the
+      // preview/header don't fall back to "Untitled event".
+      const listMeta = eventsList.find((e) => e.event_id === selectedEventId);
+      const patched: EventReport = {
+        ...body.report,
+        event: {
+          ...body.report.event,
+          title: body.report.event.title ?? listMeta?.title ?? null,
+          pub: body.report.event.pub ?? listMeta?.pub ?? null,
+        },
+      };
+      setEventReport(patched);
     } catch (err) {
       setEventReportError(err instanceof Error ? err.message : 'Network error');
     } finally {
@@ -200,7 +215,19 @@ function AdminReportsPageInner() {
         setReportLoading(false);
         return;
       }
-      setReport(body.report);
+      // Same client-side patch as event report: if title/pub came back null
+      // because the rolling window is empty, use the list-item title/pub
+      // we already have so the preview renders correctly.
+      const listMeta = articles.find((a) => a.article_id === selectedArticleId);
+      const patched: ArticleReport = {
+        ...body.report,
+        article: {
+          ...body.report.article,
+          title: body.report.article.title ?? listMeta?.title ?? null,
+          pub: body.report.article.pub ?? listMeta?.pub ?? null,
+        },
+      };
+      setReport(patched);
     } catch (err) {
       setReportError(err instanceof Error ? err.message : 'Network error');
     } finally {
@@ -270,21 +297,18 @@ function AdminReportsPageInner() {
               No articles with tracking data in the last 180 days.
             </div>
           ) : (
-            <select
-              value={selectedArticleId}
-              onChange={(e) => setSelectedArticleId(e.target.value)}
-              className="w-full max-w-2xl border border-gray-300 rounded-md px-3 py-2 text-sm"
-            >
-              <option value="">— Select an article —</option>
-              {/* BUG-35: omit the bracket when pub is unknown so older,
-                  untagged events don't render "[?] (untitled)". The route
-                  already substitutes "Article #<id>" for missing titles. */}
-              {articles.map((a) => (
-                <option key={a.article_id} value={a.article_id}>
-                  {a.pub ? `[${a.pub}] ` : ''}{a.title} · {a.opens} opens
-                </option>
-              ))}
-            </select>
+            <ReportPicker
+              items={articles.map<PickerItem>((a) => ({
+                id: a.article_id,
+                title: a.title,
+                pub: a.pub,
+                metric: `${a.opens} ${a.opens === 1 ? 'open' : 'opens'}`,
+              }))}
+              selectedId={selectedArticleId}
+              onSelect={setSelectedArticleId}
+              placeholder="Search articles by title or publication…"
+              emptyLabel="No articles match your search."
+            />
           )}
         </div>
 
@@ -461,18 +485,18 @@ function AdminReportsPageInner() {
               No events with tracking data in the last 180 days.
             </div>
           ) : (
-            <select
-              value={selectedEventId}
-              onChange={(e) => setSelectedEventId(e.target.value)}
-              className="w-full max-w-2xl border border-gray-300 rounded-md px-3 py-2 text-sm"
-            >
-              <option value="">— Select an event —</option>
-              {eventsList.map((e) => (
-                <option key={e.event_id} value={e.event_id}>
-                  {e.pub ? `[${e.pub}] ` : ''}{e.title} · {e.card_clicks} clicks, {e.registrations} regs
-                </option>
-              ))}
-            </select>
+            <ReportPicker
+              items={eventsList.map<PickerItem>((e) => ({
+                id: e.event_id,
+                title: e.title,
+                pub: e.pub,
+                metric: `${e.card_clicks} ${e.card_clicks === 1 ? 'click' : 'clicks'} · ${e.registrations} ${e.registrations === 1 ? 'reg' : 'regs'}`,
+              }))}
+              selectedId={selectedEventId}
+              onSelect={setSelectedEventId}
+              placeholder="Search events by title or publication…"
+              emptyLabel="No events match your search."
+            />
           )}
         </div>
 
