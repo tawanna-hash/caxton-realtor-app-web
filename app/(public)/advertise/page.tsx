@@ -172,36 +172,15 @@ export default function AdvertisePage() {
 
       <section className="mb-12">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-5">
-          What an advertising partnership includes
+          What every partnership includes
         </p>
         <p className="text-base text-gray-700 leading-relaxed font-light mb-6">
-          Our advertising packages are built around exposure plus engagement —
-          we don&apos;t just place an ad and walk away. Depending on the package,
-          partners get a mix of:
+          Our packages are built around exposure plus engagement {'\u2014'} we
+          don&apos;t just place an ad and walk away. Every partner gets a mix
+          of these editorial and audience perks alongside their paid placements:
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-base">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
-              Print &amp; digital placement
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Your ad runs in both the monthly print edition and the online
-              digital-replica issue. Ads in the digital edition are clickable
-              and link directly to your website.
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
-              Event coverage
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              We send a photographer to your events and capture live Facebook
-              coverage — turning a single event into ongoing marketing assets.
-            </p>
-          </div>
-
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
               Featured advertiser article
@@ -214,32 +193,12 @@ export default function AdvertisePage() {
 
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
-              Unlimited event calendar
+              Event coverage
             </p>
             <p className="text-gray-700 font-light leading-relaxed">
-              Add as many of your events as you want to our public event
-              calendar — open houses, CE classes, mixers, anything you&apos;re
-              hosting.
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
-              Social media shares
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Content shares across our highly engaged Facebook, Instagram, and
-              LinkedIn audiences — beyond just our subscriber list.
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
-              Builder inventory inclusion
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Builders and developers can have current inventory featured in
-              our weekly e-Blast to subscribers actively shopping the market.
+              We send a photographer to your events and capture live Facebook
+              coverage {'\u2014'} turning a single event into ongoing marketing
+              assets.
             </p>
           </div>
 
@@ -255,11 +214,33 @@ export default function AdvertisePage() {
 
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
-              Dedicated e-Blasts
+              Unlimited event calendar
             </p>
             <p className="text-gray-700 font-light leading-relaxed">
-              Exclusive email blasts to our full subscriber list — your message,
-              your design, full inbox real estate.
+              Add as many of your events as you want to our public event
+              calendar {'\u2014'} open houses, CE classes, mixers, anything
+              you&apos;re hosting.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
+              Builder inventory inclusion
+            </p>
+            <p className="text-gray-700 font-light leading-relaxed">
+              Builders and developers can have current inventory featured in
+              our weekly e-Blast to subscribers actively shopping the market.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
+              Design support
+            </p>
+            <p className="text-gray-700 font-light leading-relaxed">
+              Adobe InDesign templates for print, plus banner specs and design
+              guidance for digital, social, and mobile {'\u2014'} so your
+              creative reads consistently across every channel.
             </p>
           </div>
         </div>
@@ -268,60 +249,249 @@ export default function AdvertisePage() {
       <hr className="border-gray-200 my-12" />
 
       <section className="mb-12">
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-5">
-          Ad sizes
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
+          Where your ads run
         </p>
-        <p className="text-base text-gray-700 leading-relaxed font-light mb-6">
-          The same three sizes are available in both RealtyLine and Newsline San Antonio:
+        <h2
+          className="font-serif text-2xl md:text-3xl text-gray-900 leading-tight mb-3"
+          style={{ fontFamily: 'Georgia, serif' }}
+        >
+          Four channels. One integrated buy.
+        </h2>
+        <p className="text-base text-gray-700 leading-relaxed font-light mb-8 max-w-3xl">
+          Mix and match across all four {'\u2014'} or start with the channel
+          that fits your audience and add the rest later. Every channel is
+          priced independently in the media kit.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="border border-gray-200 px-5 py-5">
-            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-2">
-              Full Page
+        <div className="space-y-6">
+          {/* PRINT */}
+          <div className="border border-gray-200 p-6 md:p-7">
+            <div className="flex items-baseline justify-between gap-3 mb-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
+                  Channel 01
+                </p>
+                <h3
+                  className="font-serif text-xl text-gray-900 mt-1"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  Print magazine
+                </h3>
+              </div>
+              <p className="text-sm text-gray-500 font-light italic shrink-0">
+                From $880
+              </p>
+            </div>
+            <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
+              Monthly RealtyLine and Newsline San Antonio editions,
+              hand-delivered and racked across Central and South Texas.
             </p>
-            <p className="text-sm text-gray-700 font-light">
-              10&Prime; × 11.0833&Prime;
-            </p>
-            <p className="text-xs text-gray-500 mt-1 font-light">
-              (width × height)
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Full Page
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  10&Prime; {'\u00d7'} 11.0833&Prime;
+                </p>
+              </div>
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Half Page
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  10&Prime; {'\u00d7'} 5.25&Prime; horizontal
+                  <br />
+                  4.8333&Prime; {'\u00d7'} 11.0833&Prime; vertical
+                </p>
+              </div>
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Quarter Page
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  4.8333&Prime; {'\u00d7'} 5.25&Prime;
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-3 font-light italic">
+              Adobe InDesign templates provided for any size. Print runs in
+              both the monthly issue and the clickable digital replica.
             </p>
           </div>
 
-          <div className="border border-gray-200 px-5 py-5">
-            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-2">
-              Half Page
+          {/* DIGITAL */}
+          <div className="border border-gray-200 p-6 md:p-7">
+            <div className="flex items-baseline justify-between gap-3 mb-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
+                  Channel 02
+                </p>
+                <h3
+                  className="font-serif text-xl text-gray-900 mt-1"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  Digital + email
+                </h3>
+              </div>
+              <p className="text-sm text-gray-500 font-light italic shrink-0">
+                From $200/week
+              </p>
+            </div>
+            <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
+              17 digital placements across realtynewsnow.app plus dedicated
+              e-Blasts to 54K+ active subscribers. Every digital impression is
+              click-tracked.
             </p>
-            <p className="text-sm text-gray-700 font-light">
-              10&Prime; × 5.25&Prime;
-            </p>
-            <p className="text-xs text-gray-500 mt-1 font-light">
-              horizontal — or —
-            </p>
-            <p className="text-sm text-gray-700 font-light">
-              4.8333&Prime; × 11.0833&Prime;
-            </p>
-            <p className="text-xs text-gray-500 mt-1 font-light">
-              vertical
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Web banners
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  728{'\u00d7'}90, 300{'\u00d7'}250, 300{'\u00d7'}600 {'\u00b7'}
+                  article top, sidebar, mid-inline, bottom
+                </p>
+              </div>
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Feed cards
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  1080{'\u00d7'}600 native, every 6th feed card,
+                  marked SPONSORED
+                </p>
+              </div>
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Newsletter banner
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  600{'\u00d7'}200, top of every weekly e-Blast send
+                </p>
+              </div>
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Dedicated e-Blast
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  Exclusive email to the full subscriber list {'\u2014'} your
+                  design, full inbox real estate
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-3 font-light italic">
+              <Link href="/advertise/placements" className="underline underline-offset-2">
+                Browse all 17 digital placements
+              </Link>{' '}
+              with live pricing in the self-service portal.
             </p>
           </div>
 
-          <div className="border border-gray-200 px-5 py-5">
-            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-2">
-              Quarter Page
+          {/* SOCIAL */}
+          <div className="border border-gray-200 p-6 md:p-7">
+            <div className="flex items-baseline justify-between gap-3 mb-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
+                  Channel 03
+                </p>
+                <h3
+                  className="font-serif text-xl text-gray-900 mt-1"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  Social
+                </h3>
+              </div>
+              <p className="text-sm text-gray-500 font-light italic shrink-0">
+                Included with packages
+              </p>
+            </div>
+            <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
+              Reach beyond our subscriber list through our highly engaged
+              Facebook, Instagram, and LinkedIn audiences {'\u2014'} where
+              Texas real estate professionals actually spend their time.
             </p>
-            <p className="text-sm text-gray-700 font-light">
-              4.8333&Prime; × 5.25&Prime;
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Branded post shares
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  Featured article + ad creative cross-posted across all three
+                  networks
+                </p>
+              </div>
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Live event coverage
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  Facebook Live + Instagram stories on the day of your event
+                </p>
+              </div>
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Up to 4 event images
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  Published to Facebook, Instagram, and the website
+                  (Pkg No. 2)
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* MOBILE */}
+          <div className="border border-gray-200 p-6 md:p-7">
+            <div className="flex items-baseline justify-between gap-3 mb-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
+                  Channel 04
+                </p>
+                <h3
+                  className="font-serif text-xl text-gray-900 mt-1"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  Mobile web app
+                </h3>
+              </div>
+              <p className="text-sm text-gray-500 font-light italic shrink-0">
+                From $400/week
+              </p>
+            </div>
+            <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
+              Premium app-only placements that hit subscribers in the moment
+              they open Realty News Now on their phone.
             </p>
-            <p className="text-xs text-gray-500 mt-1 font-light">
-              (width × height)
-            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Splash / welcome
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  1080{'\u00d7'}1920 fullscreen, first session of the day
+                </p>
+              </div>
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Push notification sponsor
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  Max 1 sponsored push per week {'\u00b7'} 256{'\u00d7'}256 icon
+                </p>
+              </div>
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Mobile sticky banner
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  320{'\u00d7'}50 / 320{'\u00d7'}100 persistent at bottom
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-
-        <p className="text-sm text-gray-500 mt-5 font-light italic">
-          We can provide an Adobe InDesign template sized for any of the three.
-        </p>
       </section>
 
       <hr className="border-gray-200 my-12" />
