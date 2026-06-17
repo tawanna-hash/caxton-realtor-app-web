@@ -127,9 +127,23 @@ export default function AdvertiserReportDrawer({
 
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
-  // Write the HTML into the iframe via srcdoc; using srcdoc keeps the email's
-  // own <style> isolated from the admin UI.
-  const srcDoc = useMemo(() => previewHtml || '', [previewHtml]);
+  // Render the email HTML via a blob: URL rather than srcDoc. srcDoc was being
+  // unreliable in production (the iframe ended up showing the public dashboard
+  // page instead of the email body) — a blob URL guarantees the iframe loads
+  // exactly the HTML we hand it. The blob is revoked on cleanup so we don't
+  // leak memory across re-renders.
+  const blobUrl = useMemo(() => {
+    if (!previewHtml) return '';
+    if (typeof window === 'undefined') return '';
+    const blob = new Blob([previewHtml], { type: 'text/html;charset=utf-8' });
+    return URL.createObjectURL(blob);
+  }, [previewHtml]);
+
+  useEffect(() => {
+    return () => {
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
+  }, [blobUrl]);
 
   const handleSend = async () => {
     if (!canSend) return;
@@ -269,8 +283,8 @@ export default function AdvertiserReportDrawer({
             <iframe
               ref={iframeRef}
               title={`${advertiser.name} report preview`}
-              srcDoc={srcDoc}
-              sandbox="allow-same-origin"
+              src={blobUrl || 'about:blank'}
+              sandbox=""
               className="w-full h-full bg-white"
             />
           )}
