@@ -146,8 +146,8 @@ export default function AdvertisePage() {
               </p>
             </div>
             <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
-              Monthly RealtyLine and Newsline San Antonio editions,
-              hand-delivered and racked across Central and South Texas.
+              Monthly RealtyLine and Newsline San Antonio editions, directly
+              mailed each month to subscribers.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="border border-gray-100 px-4 py-3">
@@ -298,8 +298,7 @@ export default function AdvertisePage() {
             </div>
             <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
               Dedicated email sends to 54K+ active subscribers across our
-              RealtyLine and Newsline San Antonio lists. Every send is
-              click-tracked end-to-end.
+              RealtyLine and Newsline San Antonio lists.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="border border-gray-100 px-4 py-3">
@@ -307,7 +306,7 @@ export default function AdvertisePage() {
                   Dedicated e-Blast
                 </p>
                 <p className="text-xs text-gray-700 font-light mt-1">
-                  Exclusive email to the full subscriber list {'\u2014'} your
+                  Exclusive email to the preferred market subscriber list {'\u2014'} your
                   design, full inbox real estate
                 </p>
               </div>
@@ -341,9 +340,7 @@ export default function AdvertisePage() {
               </p>
             </div>
             <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
-              Premium placements across realtynewsnow.app and our native mobile
-              app {'\u2014'} reaching subscribers on every device, every visit.
-              Every impression is click-tracked.
+              Premium placements across realtynewsnow.app.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="border border-gray-100 px-4 py-3">
@@ -390,10 +387,8 @@ export default function AdvertisePage() {
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-3 font-light italic">
-              <Link href="/advertise/placements" className="underline underline-offset-2">
-                Browse all 17 digital placements
-              </Link>{' '}
-              with live pricing in the self-service portal.
+              Browse all 16 digital placements with live pricing in the
+              self-service portal.
             </p>
           </div>
         </div>
