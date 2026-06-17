@@ -109,85 +109,6 @@ export default function AdvertisePage() {
         </p>
       </section>
 
-      <hr className="border-gray-200 my-12" />
-
-      <section className="mb-12">
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-5">
-          What every partnership includes
-        </p>
-        <p className="text-base text-gray-700 leading-relaxed font-light mb-6">
-          Our packages are built around exposure plus engagement {'\u2014'} we
-          don&apos;t just place an ad and walk away. Every partner gets a mix
-          of these editorial and audience perks alongside their paid placements:
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-base">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
-              Featured advertiser article
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Our editorial team interviews you or your team and publishes a
-              feature piece on your people, products, or services.
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
-              Event coverage
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              We send a photographer to your events and capture live Facebook
-              coverage {'\u2014'} turning a single event into ongoing marketing
-              assets.
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
-              Press release distribution
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Submit press releases to be reviewed and run in print and digital
-              issues alongside our editorial coverage.
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
-              Unlimited event calendar
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Add as many of your events as you want to our public event
-              calendar {'\u2014'} open houses, CE classes, mixers, anything
-              you&apos;re hosting.
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
-              Builder inventory inclusion
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Builders and developers can have current inventory featured in
-              our weekly e-Blast to subscribers actively shopping the market.
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-gray-900 mb-1">
-              Design support
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Adobe InDesign templates for print, plus banner specs and design
-              guidance for digital, social, and mobile {'\u2014'} so your
-              creative reads consistently across every channel.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <hr className="border-gray-200 my-12" />
 
       <section className="mb-12">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
@@ -260,6 +181,77 @@ export default function AdvertisePage() {
               Adobe InDesign templates provided for any size. Print runs in
               both the monthly issue and the clickable digital replica.
             </p>
+
+            <details className="mt-6 border-t border-gray-100 pt-5 group">
+              <summary className="text-xs font-semibold uppercase tracking-wider text-gray-900 cursor-pointer list-none flex items-center justify-between">
+                <span>What every print partnership includes</span>
+                <span className="text-gray-400 group-open:rotate-180 transition-transform">{'\u25be'}</span>
+              </summary>
+              <p className="text-sm text-gray-700 leading-relaxed font-light mt-4 mb-5">
+                Our packages are built around exposure plus engagement {'\u2014'} we
+                don&apos;t just place an ad and walk away. Every partner gets a mix
+                of these editorial and audience perks alongside their paid placements:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-900 mb-1">
+                    Featured advertiser article
+                  </p>
+                  <p className="text-gray-700 font-light leading-relaxed">
+                    Our editorial team interviews you or your team and publishes a
+                    feature piece on your people, products, or services.
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-900 mb-1">
+                    Event coverage
+                  </p>
+                  <p className="text-gray-700 font-light leading-relaxed">
+                    We send a photographer to your events and capture live Facebook
+                    coverage {'\u2014'} turning a single event into ongoing marketing
+                    assets.
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-900 mb-1">
+                    Press release distribution
+                  </p>
+                  <p className="text-gray-700 font-light leading-relaxed">
+                    Submit press releases to be reviewed and run in print and digital
+                    issues alongside our editorial coverage.
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-900 mb-1">
+                    Unlimited event calendar
+                  </p>
+                  <p className="text-gray-700 font-light leading-relaxed">
+                    Add as many of your events as you want to our public event
+                    calendar {'\u2014'} open houses, CE classes, mixers, anything
+                    you&apos;re hosting.
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-900 mb-1">
+                    Builder inventory inclusion
+                  </p>
+                  <p className="text-gray-700 font-light leading-relaxed">
+                    Builders and developers can have current inventory featured in
+                    our weekly e-Blast to subscribers actively shopping the market.
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-900 mb-1">
+                    Design support
+                  </p>
+                  <p className="text-gray-700 font-light leading-relaxed">
+                    Adobe InDesign templates for print, plus banner specs and design
+                    guidance for digital, social, and mobile {'\u2014'} so your
+                    creative reads consistently across every channel.
+                  </p>
+                </div>
+              </div>
+            </details>
           </div>
 
           {/* DIGITAL */}
