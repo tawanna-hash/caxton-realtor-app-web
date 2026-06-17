@@ -25,7 +25,7 @@ type Ctx = { params: Promise<{ token: string }> };
 export default async function SubmitEventPage({ params }: Ctx) {
   const { token } = await params;
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
         <Suspense fallback={<p className="text-gray-500">Loading…</p>}>
           <SubmitEventClient token={token} />

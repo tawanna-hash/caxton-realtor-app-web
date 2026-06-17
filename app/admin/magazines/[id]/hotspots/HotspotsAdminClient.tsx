@@ -249,7 +249,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
   // RENDER
   // ============================================================
   return (
-    <div className="min-h-screen bg-gray-100 pb-12">
+    <div className="min-h-screen bg-white pb-12">
       {/* ===== HEADER ===== */}
       <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
         <div className="px-4 py-3 flex items-center gap-4 flex-wrap">

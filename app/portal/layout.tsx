@@ -17,7 +17,7 @@ export default async function PortalLayout({ children }: { children: React.React
   const user = await getCurrentPortalUser();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <header className="relative border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between gap-4">
           <Link href="/portal" className="flex items-center gap-3">

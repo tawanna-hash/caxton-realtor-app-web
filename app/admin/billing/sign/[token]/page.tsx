@@ -20,7 +20,7 @@ export default async function SignPage({ params }: PageProps) {
   const parsed = verifyToken(token);
   if (!parsed) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="bg-white rounded-xl border border-red-200 p-10 max-w-md text-center">
           <div className="text-3xl mb-3">⚠️</div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
@@ -53,7 +53,7 @@ export default async function SignPage({ params }: PageProps) {
 
   if (ag.status === 'signed' || ag.status === 'active') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="bg-white rounded-xl border border-emerald-200 p-10 max-w-md text-center">
           <div className="text-4xl mb-3">✓</div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Georgia, serif' }}>

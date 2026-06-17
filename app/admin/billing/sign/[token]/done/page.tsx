@@ -14,7 +14,7 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
   const { id } = await searchParams;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-xl border border-emerald-200 shadow-sm p-10 text-center space-y-5">
           <div className="text-5xl">✅</div>
