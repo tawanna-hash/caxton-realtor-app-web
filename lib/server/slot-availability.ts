@@ -4,40 +4,43 @@
 // currently SOLD on a given slot and therefore must be blocked in the
 // public checkout UI + API.
 //
+// Phase 3 (2026-06-17): multi-market checkout. Each campaign row stores
+// its booked markets in the `pubs` TEXT[] column (canonical) plus a
+// back-compat `publication` string. A booking blocks every market listed
+// in `pubs` independently. The legacy publication='both' value continues
+// to be honored on historical rows by mapping it to ['realtyline','newsline'].
+//
 // Rules
 // -----
-//   1. A campaign with publication='both' (the legacy Austin + San Antonio
-//      bundle) blocks both 'realtyline' AND 'newsline' AND 'both'.
-//   2. A campaign on a single pub (austin/realtyline OR san_antonio/newsline)
-//      blocks that pub AND blocks 'both' (since 'both' requires both to be
-//      free).
-//   3. Houston (realtyline-houston) and Dallas (realtyline-dallas) campaigns
-//      block ONLY their own scope. They do NOT block 'both' because 'both'
-//      remains the legacy Austin+SA bundle — Houston/Dallas are sold as
-//      separate single-pub buys at the same rate-card price as a solo
-//      RealtyLine Austin booking until further notice.
-//   4. Date overlap is computed against the requested window. If none is
+//   1. Each entry in a campaign's `pubs` array blocks exactly that single
+//      market for the campaign's date window. No more cross-market blocking
+//      via the legacy 'both' enum -- a 2-market booking writes
+//      pubs=['realtyline','newsline'] which independently blocks each.
+//   2. For back-compat with rows that pre-date the pubs column, we derive
+//      pubs from the legacy publication string (see legacyPubsFor()).
+//   3. Date overlap is computed against the requested window. If none is
 //      supplied, "today through 5 years out" is used so the public form
 //      shows the slot as blocked while any future campaign is live.
-//
-// Pub label encoding: historical rows in ad_campaigns.publication may use
-// either the DB enum ('austin' | 'san_antonio' | 'both') or the rate-card
-// enum ('realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas'
-// | 'both') depending on which code path inserted them. We normalize all of
-// them here.
+//   4. House ads (advertiser_name = HOUSE_AD_ADVERTISER) are excluded so
+//      unsold inventory rendered by house creatives never blocks a real
+//      booking inquiry.
 
 import { getSql } from '@/lib/db';
 import { APP_AD_SLOTS, getSlotAvailablePubs, type AppAdSlot } from '@/lib/media-kit';
 
+/**
+ * A single bookable market. The legacy 'both' value is intentionally NOT
+ * part of this type -- multi-market bookings are now represented as a
+ * collection of single-market entries.
+ */
 export type CheckoutPub =
   | 'realtyline'
   | 'newsline'
   | 'realtyline-houston'
-  | 'realtyline-dallas'
-  | 'both';
+  | 'realtyline-dallas';
 
 // House ads (advertiser_name = HOUSE_AD_ADVERTISER) exist to fill unsold
-// inventory — they should never block a real booking inquiry. We exclude
+// inventory -- they should never block a real booking inquiry. We exclude
 // them from every blocking-availability query so the public checkout, the
 // inquire route's sold-out probe, and pickAlternativeSlots all treat
 // house-ad-only slots as available. When a real advertiser books, the
@@ -47,22 +50,54 @@ export const HOUSE_AD_ADVERTISER = 'RealtyLine House';
 interface ActiveCampaignRow {
   ad_space_slug: string;
   publication: string;
+  pubs: string[] | null;
   start_date: string;
   end_date: string;
 }
 
 /**
- * Normalize an ad_campaigns.publication string into the checkout enum.
- * Returns null for unrecognized values (defensive).
+ * Normalize a single market identifier into the canonical CheckoutPub
+ * enum. Returns null for unrecognized values (defensive).
  */
-function normalizePub(raw: string): CheckoutPub | null {
+function normalizeSinglePub(raw: string): CheckoutPub | null {
   const v = (raw || '').toLowerCase().trim();
   if (v === 'realtyline' || v === 'austin') return 'realtyline';
   if (v === 'newsline' || v === 'san_antonio' || v === 'sa') return 'newsline';
   if (v === 'realtyline-houston' || v === 'houston') return 'realtyline-houston';
   if (v === 'realtyline-dallas' || v === 'dallas') return 'realtyline-dallas';
-  if (v === 'both') return 'both';
   return null;
+}
+
+/**
+ * Map the legacy publication enum to the canonical pubs[] representation.
+ * Used as a fallback for historical rows whose `pubs` column is empty.
+ *   'both'        -> ['realtyline', 'newsline']
+ *   'austin'      -> ['realtyline']
+ *   'san_antonio' -> ['newsline']
+ *   etc.
+ */
+function legacyPubsFor(publication: string): CheckoutPub[] {
+  const v = (publication || '').toLowerCase().trim();
+  if (v === 'both') return ['realtyline', 'newsline'];
+  const single = normalizeSinglePub(v);
+  return single ? [single] : [];
+}
+
+/**
+ * Extract the canonical CheckoutPub[] from an ad_campaigns row. Prefers
+ * the `pubs` array if populated; falls back to deriving from the legacy
+ * `publication` string.
+ */
+function pubsFromRow(row: ActiveCampaignRow): CheckoutPub[] {
+  if (row.pubs && row.pubs.length > 0) {
+    const out: CheckoutPub[] = [];
+    for (const p of row.pubs) {
+      const normalized = normalizeSinglePub(p);
+      if (normalized && !out.includes(normalized)) out.push(normalized);
+    }
+    if (out.length > 0) return out;
+  }
+  return legacyPubsFor(row.publication);
 }
 
 /**
@@ -86,41 +121,16 @@ function defaultWindow(startDate?: string, endDate?: string): { start: string; e
  */
 function rowsToBlockedSet(rows: ActiveCampaignRow[]): Set<CheckoutPub> {
   const blocked = new Set<CheckoutPub>();
-  let realtylineTaken = false;
-  let newslineTaken = false;
-  let houstonTaken = false;
-  let dallasTaken = false;
-
   for (const r of rows) {
-    const pub = normalizePub(r.publication);
-    if (pub === 'both') {
-      realtylineTaken = true;
-      newslineTaken = true;
-    } else if (pub === 'realtyline') {
-      realtylineTaken = true;
-    } else if (pub === 'newsline') {
-      newslineTaken = true;
-    } else if (pub === 'realtyline-houston') {
-      houstonTaken = true;
-    } else if (pub === 'realtyline-dallas') {
-      dallasTaken = true;
+    for (const p of pubsFromRow(r)) {
+      blocked.add(p);
     }
   }
-
-  if (realtylineTaken) blocked.add('realtyline');
-  if (newslineTaken) blocked.add('newsline');
-  if (houstonTaken) blocked.add('realtyline-houston');
-  if (dallasTaken) blocked.add('realtyline-dallas');
-  // 'both' is blocked whenever EITHER Austin/SA single pub is taken, since
-  // 'both' is the legacy Austin+SA bundle. Houston/Dallas campaigns do NOT
-  // block 'both' — they're separate single-pub markets.
-  if (realtylineTaken || newslineTaken) blocked.add('both');
-
   return blocked;
 }
 
 /**
- * Batch helper — returns the blocked-pub Set for EVERY known slot in
+ * Batch helper -- returns the blocked-pub Set for EVERY known slot in
  * `APP_AD_SLOTS` using a single SQL query. This is the preferred entry
  * point for pages that need to render availability for many slots at
  * once (e.g. /advertise/digital, pickAlternativeSlots).
@@ -150,6 +160,7 @@ export async function getBookedPubsForAllSlots(
     const r = (await sql`
       SELECT ad_space_slug,
              publication,
+             pubs,
              start_date::text AS start_date,
              end_date::text   AS end_date
         FROM ad_campaigns
@@ -211,6 +222,7 @@ export async function getBookedPubsForSlot(
     const result = (await sql`
       SELECT ad_space_slug,
              publication,
+             pubs,
              start_date::text AS start_date,
              end_date::text   AS end_date
         FROM ad_campaigns
@@ -222,7 +234,7 @@ export async function getBookedPubsForSlot(
     `) as unknown as ActiveCampaignRow[];
     rows = Array.isArray(result) ? result : [];
   } catch (err) {
-    // Sandbox / no DB / table missing — fail open so the UI is not bricked.
+    // Sandbox / no DB / table missing -- fail open so the UI is not bricked.
     const msg = err instanceof Error ? err.message : String(err);
     console.warn(`[slot-availability] fail-open for slot=${slotSlug}: ${msg}`);
     return new Set<CheckoutPub>();
@@ -232,16 +244,13 @@ export async function getBookedPubsForSlot(
 }
 
 /**
- * Determine whether a slot is fully sold out for the requested publication
- * (or, when pub='both', sold out across BOTH publications).
+ * Determine whether a slot is fully sold out for the requested publication.
  */
 export async function isSlotSoldOut(
   slotSlug: string,
   pub: CheckoutPub,
 ): Promise<boolean> {
   const blocked = await getBookedPubsForSlot(slotSlug);
-  // For 'both' the slot is sold out if either single pub is blocked. For a
-  // single pub the slot is sold out only when that specific pub is blocked.
   return blocked.has(pub);
 }
 
@@ -267,7 +276,9 @@ export async function pickAlternativeSlots(
   const all = APP_AD_SLOTS.filter((s) => s.slug !== originalSlug);
 
   // Only consider slots that can actually be booked on the requested pub.
-  const pubCompatible = all.filter((s) => getSlotAvailablePubs(s).includes(pub));
+  const pubCompatible = all.filter((s) =>
+    (getSlotAvailablePubs(s) as readonly string[]).includes(pub),
+  );
 
   // Single SQL query for all slot availability.
   const blockedBySlug = await getBookedPubsForAllSlots();

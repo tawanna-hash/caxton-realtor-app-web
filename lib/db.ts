@@ -126,6 +126,7 @@ export async function ensureSchema(): Promise<void> {
       ad_space_slug TEXT NOT NULL REFERENCES ad_spaces(slug),
       creative_id UUID NOT NULL REFERENCES ad_creatives(id),
       publication TEXT NOT NULL,
+      pubs TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
       start_date DATE NOT NULL,
       end_date DATE NOT NULL,
       active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -141,6 +142,28 @@ export async function ensureSchema(): Promise<void> {
   await sql`
     CREATE INDEX IF NOT EXISTS idx_ad_campaigns_lookup
       ON ad_campaigns (ad_space_slug, publication, active, start_date, end_date)
+  `;
+  // Multi-market checkout (Phase 3, 2026-06-17): pubs[] is the canonical
+  // per-market booking scope. publication stays as a back-compat display
+  // string (comma-joined for multi-market rows). GIN index supports fast
+  // overlap (&&) queries for sold-out detection.
+  await sql`
+    ALTER TABLE ad_campaigns ADD COLUMN IF NOT EXISTS pubs TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[]
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_ad_campaigns_pubs ON ad_campaigns USING GIN (pubs)
+  `;
+  // Backfill any rows that have a legacy publication value but no pubs.
+  await sql`
+    UPDATE ad_campaigns SET pubs = CASE
+      WHEN publication = 'both'                                       THEN ARRAY['realtyline','newsline']::TEXT[]
+      WHEN publication = 'austin'      OR publication = 'realtyline'  THEN ARRAY['realtyline']::TEXT[]
+      WHEN publication = 'san_antonio' OR publication = 'newsline'    THEN ARRAY['newsline']::TEXT[]
+      WHEN publication = 'realtyline-houston' OR publication = 'houston' THEN ARRAY['realtyline-houston']::TEXT[]
+      WHEN publication = 'realtyline-dallas'  OR publication = 'dallas'  THEN ARRAY['realtyline-dallas']::TEXT[]
+      ELSE ARRAY[publication]::TEXT[]
+    END
+    WHERE COALESCE(array_length(pubs, 1), 0) = 0
   `;
   await sql`
     CREATE INDEX IF NOT EXISTS idx_ad_creatives_advertiser

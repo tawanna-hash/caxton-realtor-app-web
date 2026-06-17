@@ -264,6 +264,10 @@ export async function getActiveCampaignForSlot(
   publication: 'austin' | 'san_antonio',
 ): Promise<AdCampaignWithRefs | null> {
   const today = new Date().toISOString().slice(0, 10);
+  // Map legacy enum -> canonical pub key so we can also match new multi-
+  // market campaigns stored in the `pubs` array column. Legacy rows still
+  // match on `publication` ('austin' | 'san_antonio' | 'both').
+  const pubKey = publication === 'austin' ? 'realtyline' : 'newsline';
   const r = await getPool().query<AdCampaignWithRefs>(
     `SELECT
        c.*,
@@ -274,12 +278,16 @@ export async function getActiveCampaignForSlot(
      JOIN ad_creatives cr ON cr.id = c.creative_id
      WHERE c.active = TRUE
        AND c.ad_space_slug = $1
-       AND (c.publication = $2 OR c.publication = 'both')
+       AND (
+         c.publication = $2
+         OR c.publication = 'both'
+         OR $4 = ANY(c.pubs)
+       )
        AND c.start_date <= $3
        AND c.end_date   >= $3
      ORDER BY RANDOM()
      LIMIT 1`,
-    [slot, publication, today],
+    [slot, publication, today, pubKey],
   );
   return r.rows[0] ?? null;
 }

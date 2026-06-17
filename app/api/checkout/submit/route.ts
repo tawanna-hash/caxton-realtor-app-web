@@ -23,21 +23,51 @@ import { randomUUID } from 'crypto';
 import { appendAudit } from '@/lib/agreements';
 
 /**
- * Convert the rate-card publication enum to the DB string value persisted
- * in ad_campaigns.publication. Legacy Austin/SA bookings continue to use
- * 'austin' | 'san_antonio' | 'both' for backward compatibility with admin
- * views; Houston/Dallas bookings store the canonical PUB_META key directly
- * (no rewrite). slot-availability.normalizePub accepts both shapes.
+ * Phase 3 (2026-06-17): write the canonical pubs[] array AND a back-compat
+ * `publication` display string to ad_campaigns. The display string keeps
+ * existing admin views and the legacy publication enum readers working:
+ *   - 1 market: returns its DB enum form ('austin' | 'san_antonio' |
+ *     'realtyline-houston' | 'realtyline-dallas')
+ *   - 2 markets, Austin+SA: returns 'both' (legacy bundle string)
+ *   - Otherwise: returns a comma-joined list (e.g. 'realtyline,realtyline-houston')
  */
-function normalizeDbPub(
-  raw: string,
-): 'austin' | 'san_antonio' | 'both' | 'realtyline-houston' | 'realtyline-dallas' {
-  const v = (raw || '').toLowerCase().trim();
-  if (v === 'newsline' || v === 'san_antonio') return 'san_antonio';
-  if (v === 'both') return 'both';
-  if (v === 'realtyline-houston' || v === 'houston') return 'realtyline-houston';
-  if (v === 'realtyline-dallas' || v === 'dallas') return 'realtyline-dallas';
-  return 'austin'; // 'realtyline' OR fallback
+function toDbPubsAndDisplay(pubs: string[]): {
+  pubs: string[];
+  display: string;
+} {
+  const canonical: string[] = [];
+  for (const p of pubs) {
+    const v = (p || '').toLowerCase().trim();
+    let normalized: string;
+    if (v === 'newsline' || v === 'san_antonio') normalized = 'newsline';
+    else if (v === 'realtyline' || v === 'austin') normalized = 'realtyline';
+    else if (v === 'realtyline-houston' || v === 'houston')
+      normalized = 'realtyline-houston';
+    else if (v === 'realtyline-dallas' || v === 'dallas')
+      normalized = 'realtyline-dallas';
+    else continue;
+    if (!canonical.includes(normalized)) canonical.push(normalized);
+  }
+  if (canonical.length === 0) canonical.push('realtyline');
+
+  // Legacy display string for ad_campaigns.publication.
+  let display: string;
+  if (canonical.length === 1) {
+    // Map single-market back to the legacy DB enum.
+    const only = canonical[0];
+    if (only === 'realtyline') display = 'austin';
+    else if (only === 'newsline') display = 'san_antonio';
+    else display = only; // houston/dallas store canonical key
+  } else if (
+    canonical.length === 2 &&
+    canonical.includes('realtyline') &&
+    canonical.includes('newsline')
+  ) {
+    display = 'both';
+  } else {
+    display = canonical.join(',');
+  }
+  return { pubs: canonical, display };
 }
 
 export const runtime = 'nodejs';
@@ -90,8 +120,17 @@ export async function POST(req: NextRequest) {
     const phone = m.advertiser_phone || '';
     const startDate = m.start_date;
     const endDate = m.end_date;
-    const rawPub = (m.pub as string) || 'realtyline';
-    const pub = normalizeDbPub(rawPub);
+    // Phase 3: prefer the canonical `pubs` metadata; fall back to legacy
+    // `pub` for older PaymentIntents that pre-date the multi-market field.
+    const rawPubs: string[] = (() => {
+      const pubsField = (m.pubs as string) || '';
+      if (pubsField.includes(',')) return pubsField.split(',').map((s) => s.trim()).filter(Boolean);
+      if (pubsField) return [pubsField];
+      const legacy = (m.pub as string) || 'realtyline';
+      if (legacy === 'both') return ['realtyline', 'newsline'];
+      return [legacy];
+    })();
+    const { pubs: dbPubs, display: dbPubDisplay } = toDbPubsAndDisplay(rawPubs);
     const channel = deriveChannelFromSlot(slotSlug) ?? 'digital';
     const clickUrl = m.click_url || 'https://realtynewsnow.app';
     const altText = m.alt_text || advertiserName;
@@ -137,10 +176,12 @@ export async function POST(req: NextRequest) {
     const dollars = (baseCents / 100).toFixed(2);
     await sql`
       INSERT INTO ad_campaigns
-        (id, advertiser_name, ad_space_slug, creative_id, publication, start_date, end_date,
+        (id, advertiser_name, ad_space_slug, creative_id, publication, pubs,
+         start_date, end_date,
          active, price_total, price_notes, notes, created_by, channel)
       VALUES
-        (${campaignId}, ${advertiserName}, ${slot.slug}, ${creativeId}, ${pub},
+        (${campaignId}, ${advertiserName}, ${slot.slug}, ${creativeId},
+         ${dbPubDisplay}, ${dbPubs},
          ${startDate}, ${endDate}, ${false}, ${dollars}, ${billingPeriod},
          ${'self-serve checkout, pi=' + paymentIntentId},
          ${'self_serve:' + (advertiserEmail || 'anon')},
@@ -194,7 +235,7 @@ export async function POST(req: NextRequest) {
          ${'card'},
          ${paymentIntentId},
          ${repName || advertiserName}, ${true}, ${now},
-         ${'Self-serve checkout. Slot=' + slot.slug + ' pub=' + pub},
+         ${'Self-serve checkout. Slot=' + slot.slug + ' pubs=' + dbPubs.join(',')},
          ${JSON.stringify(audit)}::jsonb,
          ${'self_serve:' + (advertiserEmail || 'anon')},
          ${channel})
