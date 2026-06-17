@@ -29,7 +29,7 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     color: '#021D40',
     tagline: 'Reach 71,000+ Texas real estate professionals',
     reach: '71,000+ Texas REALTORS',
-    email: 'ads@myrealtyline.com',
+    email: 'info@myrealtyline.com',
     facebook: 'https://www.facebook.com/myrealtyline/',
     instagram: 'https://www.instagram.com/myrealtyline/',
     // TODO(social): waiting on LinkedIn URL.
@@ -41,7 +41,7 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     color: '#3D0740',
     tagline: 'Reach 24,000+ San Antonio real estate professionals',
     reach: '24,000+ San Antonio REALTORS',
-    email: 'ads@newslinesa.com',
+    email: 'info@myrealtyline.com',
     facebook: 'https://www.facebook.com/newslinesa/',
     instagram: 'https://www.instagram.com/newsline_sanantonio/',
     // TODO(social): waiting on LinkedIn URL.
@@ -58,7 +58,7 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     color: '#021D40', // inherits RealtyLine navy
     tagline: 'Coming soon to Houston real estate professionals',
     reach: 'Houston REALTORS',
-    email: 'ads@myrealtyline.com',
+    email: 'info@myrealtyline.com',
     facebook: '#',
     instagram: '#',
     linkedin: '#',
@@ -70,7 +70,7 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     color: '#021D40', // inherits RealtyLine navy
     tagline: 'Coming soon to Dallas real estate professionals',
     reach: 'Dallas REALTORS',
-    email: 'ads@myrealtyline.com',
+    email: 'info@myrealtyline.com',
     facebook: '#',
     instagram: '#',
     linkedin: '#',

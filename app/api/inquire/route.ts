@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
     </div>
   `;
 
-  const recipient = process.env.ADS_INQUIRY_TO ?? 'ads@myrealtyline.com';
+  const recipient = process.env.ADS_INQUIRY_TO ?? 'info@myrealtyline.com';
   const result = await sendEmail({
     to: recipient,
     subject,

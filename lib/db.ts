@@ -379,8 +379,8 @@ export async function ensureSchema(): Promise<void> {
     alt: string;
     subject: string;
     /**
-     * Override the destination email. Defaults to ads@myrealtyline.com.
-     * Article-reader slots use ads@myrealtyline.com to match the existing
+     * Override the destination email. Defaults to info@myrealtyline.com.
+     * Article-reader slots use info@myrealtyline.com to match the existing
      * /lib/pub-meta.ts copy that ran on these placements previously.
      */
     email?: string;
@@ -435,7 +435,7 @@ export async function ensureSchema(): Promise<void> {
       height: 90,
       alt: 'Get featured here — Reach 71,000+ Texas REALTORS',
       subject: 'Article Leaderboard inquiry',
-      email: 'ads@myrealtyline.com',
+      email: 'info@myrealtyline.com',
     },
     {
       slug: 'article_mid_inline',
@@ -444,7 +444,7 @@ export async function ensureSchema(): Promise<void> {
       height: 300,
       alt: 'Advertise in RealtyLine — Reach 71,000+ Texas REALTORS',
       subject: 'Article Mid-Inline inquiry',
-      email: 'ads@myrealtyline.com',
+      email: 'info@myrealtyline.com',
     },
     {
       slug: 'article_interstitial',
@@ -453,19 +453,31 @@ export async function ensureSchema(): Promise<void> {
       height: 200,
       alt: 'Advertise in RealtyLine — dismissable popup',
       subject: 'Article Interstitial inquiry',
-      email: 'ads@myrealtyline.com',
+      email: 'info@myrealtyline.com',
     },
   ];
 
-  // One-time rewrite of legacy house-ad mailtos (June 2026).
-  // Existing rows seeded with ads@realtynewsnow.app are migrated to
-  // ads@myrealtyline.com to match the Resend-verified sending domain.
-  // Becomes a no-op once all rows are updated.
+  // One-time rewrite of legacy house-ad mailtos (June 2026 + June 17 2026).
+  // All ads@ inboxes (ads@realtynewsnow.app, ads@myrealtyline.com,
+  // ads@newslinesa.com) consolidate to info@myrealtyline.com so inbound
+  // lands in one place. Becomes a no-op once all rows are updated.
   await sql`
     UPDATE ad_creatives
-       SET click_url = REPLACE(click_url, 'ads@realtynewsnow.app', 'ads@myrealtyline.com')
+       SET click_url = REPLACE(click_url, 'ads@realtynewsnow.app', 'info@myrealtyline.com')
      WHERE uploaded_by = 'system:house-ad-seed'
        AND click_url LIKE '%ads@realtynewsnow.app%'
+  `;
+  await sql`
+    UPDATE ad_creatives
+       SET click_url = REPLACE(click_url, 'ads@myrealtyline.com', 'info@myrealtyline.com')
+     WHERE uploaded_by = 'system:house-ad-seed'
+       AND click_url LIKE '%ads@myrealtyline.com%'
+  `;
+  await sql`
+    UPDATE ad_creatives
+       SET click_url = REPLACE(click_url, 'ads@newslinesa.com', 'info@myrealtyline.com')
+     WHERE uploaded_by = 'system:house-ad-seed'
+       AND click_url LIKE '%ads@newslinesa.com%'
   `;
 
   // One-time cleanup of malformed mailto links saved with a stray space
@@ -477,15 +489,19 @@ export async function ensureSchema(): Promise<void> {
      WHERE click_url ~ '^mailto:\s+'
   `;
 
-  // June 9, 2026: switch all ads@myrealtyline.com mailtos to the on-site
-  // inquiry form (/advertise/inquire). Gmail web doesn't honor mailto: as a
-  // compose intent by default, so the Inquire CTA opened Gmail without
-  // composing. The form posts to /api/inquire which sends via Resend to the
-  // same destination, with full lead capture. Becomes a no-op once migrated.
+  // June 9, 2026: switch all mailto: ad CTAs to the on-site inquiry form
+  // (/advertise/inquire). Gmail web doesn't honor mailto: as a compose
+  // intent by default, so the Inquire CTA opened Gmail without composing.
+  // The form posts to /api/inquire which sends via Resend to the same
+  // destination, with full lead capture. Covers every ads@/info@ alias
+  // seen historically. Becomes a no-op once migrated.
   await sql`
     UPDATE ad_creatives
        SET click_url = 'https://realtynewsnow.app/advertise/inquire'
-     WHERE click_url LIKE 'mailto:ads@myrealtyline.com%'
+     WHERE click_url LIKE 'mailto:info@myrealtyline.com%'
+        OR click_url LIKE 'mailto:ads@myrealtyline.com%'
+        OR click_url LIKE 'mailto:ads@newslinesa.com%'
+        OR click_url LIKE 'mailto:ads@realtynewsnow.app%'
   `;
 
   for (const ad of houseAds) {
