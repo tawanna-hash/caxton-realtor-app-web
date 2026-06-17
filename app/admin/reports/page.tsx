@@ -6,6 +6,7 @@ import type { ArticleListItem, ArticleReport, EventListItem, EventReport, Report
 import { ReportPreview, buildReportHtml, buildReportPlainText } from './_components/ReportPreview';
 import { EventReportPreview, buildEventReportHtml, buildEventReportPlainText } from './_components/EventReportPreview';
 import AdvertisersReportTab from './_components/AdvertisersReportTab';
+import EditReportDrawer from './_components/EditReportDrawer';
 
 type DaysOption = 7 | 30 | 90 | 180;
 
@@ -57,6 +58,9 @@ function AdminReportsPageInner() {
   const [pubOverride, setPubOverride] = useState('');
   const [noteOverride, setNoteOverride] = useState('');
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
+  // Edit drawer (Articles tab). Parent owns open state so the same
+  // drawer instance can be reused across multiple generated reports.
+  const [articleEditOpen, setArticleEditOpen] = useState(false);
 
   // The active tab is derived directly from the URL so deep links and the
   // browser's back/forward buttons just work. Clicking a tab updates the
@@ -85,6 +89,8 @@ function AdminReportsPageInner() {
   const [eventPubOverride, setEventPubOverride] = useState('');
   const [eventNoteOverride, setEventNoteOverride] = useState('');
   const [eventCopyStatus, setEventCopyStatus] = useState<string | null>(null);
+  // Edit drawer (Events tab) — parallel to articleEditOpen above.
+  const [eventEditOpen, setEventEditOpen] = useState(false);
 
   // Load articles list on mount
   useEffect(() => {
@@ -354,77 +360,84 @@ function AdminReportsPageInner() {
             setTimeout(() => setCopyStatus(null), 3500);
           }
         }
+        const resolvedTitle = (titleOverride.trim() || r.article.title || 'Untitled article');
+        const resolvedPub = pubOverride.trim() || 'Tracked publication';
+        const hasNote = noteOverride.trim().length > 0;
         return (
           <div className="space-y-6">
             <div className="bg-white border border-gray-200 rounded-md p-6">
-              <h2 className="text-base font-semibold text-gray-900 mb-4">Customize report</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Article title <span className="text-gray-400 font-normal">(override)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={titleOverride}
-                    onChange={(e) => setTitleOverride(e.target.value)}
-                    placeholder={r.article.title || 'Untitled article'}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Leave blank to use the article&apos;s tracked title (often missing for older articles).</p>
+              <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold text-gray-900">Report customization</h2>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Override the title, publication branding, and editorial
+                    note before copying. Click Edit to open the editor.
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Publication <span className="text-gray-400 font-normal">(override)</span>
-                  </label>
-                  <select
-                    value={pubOverride}
-                    onChange={(e) => setPubOverride(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setArticleEditOpen(true)}
+                    className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-800"
                   >
-                    <option value="">— Use tracked publication —</option>
-                    <option value="RealtyLine Austin">RealtyLine Austin</option>
-                    <option value="Newsline San Antonio">Newsline San Antonio</option>
-                  </select>
-                  <p className="text-xs text-gray-500 mt-1">Drives header branding and colors.</p>
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={copyHtml}
+                    className="bg-[#1a2a44] hover:bg-[#243556] text-white px-3 py-1.5 rounded-md text-sm font-medium"
+                  >
+                    Copy HTML
+                  </button>
+                  <button
+                    type="button"
+                    onClick={copyPlain}
+                    className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-md text-sm font-medium"
+                  >
+                    Copy plain text
+                  </button>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Editorial note <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
-                <textarea
-                  value={noteOverride}
-                  onChange={(e) => setNoteOverride(e.target.value)}
-                  placeholder="e.g. This article was featured in your June newsletter and on the RealtyLine homepage May 10–12."
-                  rows={3}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                />
-              </div>
-              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={copyHtml}
-                  className="bg-[#1a2a44] hover:bg-[#243556] text-white px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  Copy HTML
-                </button>
-                <button
-                  type="button"
-                  onClick={copyPlain}
-                  className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  Copy plain text
-                </button>
-                {copyStatus && (
-                  <span className="text-xs text-gray-600">{copyStatus}</span>
-                )}
-              </div>
+              <dl className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 text-sm">
+                <div className="min-w-0">
+                  <dt className="text-xs uppercase tracking-wider text-gray-500">Title</dt>
+                  <dd className="text-gray-900 truncate" title={resolvedTitle}>{resolvedTitle}</dd>
+                </div>
+                <div className="min-w-0">
+                  <dt className="text-xs uppercase tracking-wider text-gray-500">Publication</dt>
+                  <dd className="text-gray-900 truncate">{resolvedPub}</dd>
+                </div>
+                <div className="min-w-0">
+                  <dt className="text-xs uppercase tracking-wider text-gray-500">Editorial note</dt>
+                  <dd className={hasNote ? 'text-gray-900 line-clamp-2' : 'text-gray-400'}>
+                    {hasNote ? noteOverride : 'None'}
+                  </dd>
+                </div>
+              </dl>
+              {copyStatus && (
+                <p className="text-xs text-gray-600 mt-3">{copyStatus}</p>
+              )}
             </div>
 
             <div>
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">Preview</p>
               <ReportPreview report={r} overrides={overrides} />
             </div>
+
+            <EditReportDrawer
+              open={articleEditOpen}
+              kind="article"
+              subjectLabel={resolvedTitle}
+              overrides={overrides}
+              onTitleChange={setTitleOverride}
+              onPubDisplayChange={setPubOverride}
+              onEditorialNoteChange={setNoteOverride}
+              onCopyHtml={copyHtml}
+              onCopyPlain={copyPlain}
+              copyStatus={copyStatus}
+              titlePlaceholder={r.article.title || 'Untitled article'}
+              onClose={() => setArticleEditOpen(false)}
+            />
           </div>
         );
       })()}
@@ -534,77 +547,84 @@ function AdminReportsPageInner() {
             setTimeout(() => setEventCopyStatus(null), 3500);
           }
         }
+        const resolvedTitle = (eventTitleOverride.trim() || r.event.title || 'Untitled event');
+        const resolvedPub = eventPubOverride.trim() || 'Tracked publication';
+        const hasNote = eventNoteOverride.trim().length > 0;
         return (
           <div className="space-y-6">
             <div className="bg-white border border-gray-200 rounded-md p-6">
-              <h2 className="text-base font-semibold text-gray-900 mb-4">Customize report</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Event title <span className="text-gray-400 font-normal">(override)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={eventTitleOverride}
-                    onChange={(e) => setEventTitleOverride(e.target.value)}
-                    placeholder={r.event.title || 'Untitled event'}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Leave blank to use the event&apos;s tracked title.</p>
+              <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold text-gray-900">Report customization</h2>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Override the title, publication branding, and editorial
+                    note before copying. Click Edit to open the editor.
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Publication <span className="text-gray-400 font-normal">(override)</span>
-                  </label>
-                  <select
-                    value={eventPubOverride}
-                    onChange={(e) => setEventPubOverride(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setEventEditOpen(true)}
+                    className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-800"
                   >
-                    <option value="">— Use tracked publication —</option>
-                    <option value="RealtyLine Austin">RealtyLine Austin</option>
-                    <option value="Newsline San Antonio">Newsline San Antonio</option>
-                  </select>
-                  <p className="text-xs text-gray-500 mt-1">Drives header branding and colors.</p>
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={copyHtml}
+                    className="bg-[#1a2a44] hover:bg-[#243556] text-white px-3 py-1.5 rounded-md text-sm font-medium"
+                  >
+                    Copy HTML
+                  </button>
+                  <button
+                    type="button"
+                    onClick={copyPlain}
+                    className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-md text-sm font-medium"
+                  >
+                    Copy plain text
+                  </button>
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Editorial note <span className="text-gray-400 font-normal">(optional)</span>
-                </label>
-                <textarea
-                  value={eventNoteOverride}
-                  onChange={(e) => setEventNoteOverride(e.target.value)}
-                  placeholder="e.g. This event was promoted in the May newsletter and on the homepage May 1–7."
-                  rows={3}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                />
-              </div>
-              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={copyHtml}
-                  className="bg-[#1a2a44] hover:bg-[#243556] text-white px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  Copy HTML
-                </button>
-                <button
-                  type="button"
-                  onClick={copyPlain}
-                  className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  Copy plain text
-                </button>
-                {eventCopyStatus && (
-                  <span className="text-xs text-gray-600">{eventCopyStatus}</span>
-                )}
-              </div>
+              <dl className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 text-sm">
+                <div className="min-w-0">
+                  <dt className="text-xs uppercase tracking-wider text-gray-500">Title</dt>
+                  <dd className="text-gray-900 truncate" title={resolvedTitle}>{resolvedTitle}</dd>
+                </div>
+                <div className="min-w-0">
+                  <dt className="text-xs uppercase tracking-wider text-gray-500">Publication</dt>
+                  <dd className="text-gray-900 truncate">{resolvedPub}</dd>
+                </div>
+                <div className="min-w-0">
+                  <dt className="text-xs uppercase tracking-wider text-gray-500">Editorial note</dt>
+                  <dd className={hasNote ? 'text-gray-900 line-clamp-2' : 'text-gray-400'}>
+                    {hasNote ? eventNoteOverride : 'None'}
+                  </dd>
+                </div>
+              </dl>
+              {eventCopyStatus && (
+                <p className="text-xs text-gray-600 mt-3">{eventCopyStatus}</p>
+              )}
             </div>
 
             <div>
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">Preview</p>
               <EventReportPreview report={r} overrides={overrides} />
             </div>
+
+            <EditReportDrawer
+              open={eventEditOpen}
+              kind="event"
+              subjectLabel={resolvedTitle}
+              overrides={overrides}
+              onTitleChange={setEventTitleOverride}
+              onPubDisplayChange={setEventPubOverride}
+              onEditorialNoteChange={setEventNoteOverride}
+              onCopyHtml={copyHtml}
+              onCopyPlain={copyPlain}
+              copyStatus={eventCopyStatus}
+              titlePlaceholder={r.event.title || 'Untitled event'}
+              onClose={() => setEventEditOpen(false)}
+            />
           </div>
         );
       })()}
