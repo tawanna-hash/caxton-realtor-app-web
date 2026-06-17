@@ -29,9 +29,13 @@ import {
 } from '@stripe/react-stripe-js';
 import { getSlotAvailablePubs, type AppAdSlot } from '@/lib/media-kit';
 
+// Per product decision (2026-06-16): the legacy 'both' Austin+SA bundle
+// option was removed from the public checkout. Advertisers pick exactly
+// one single-pub market (Austin / SA / Houston / Dallas). Bundle buys are
+// handled by admin BookingBuilder.
 interface Props {
   slot: AppAdSlot;
-  initialPub: 'realtyline' | 'newsline' | 'both';
+  initialPub: 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas';
   /** Optional pre-fill from /advertise/inquire redirect. */
   initialName?: string;
   initialEmail?: string;
@@ -42,10 +46,10 @@ interface Props {
    * the default window. The matching pill renders disabled + 'Sold' tooltip.
    * Cleared automatically once those campaigns expire.
    */
-  bookedPubs?: Array<'realtyline' | 'newsline' | 'both'>;
+  bookedPubs?: Array<'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas'>;
 }
 
-type Pub = 'realtyline' | 'newsline' | 'both';
+type Pub = 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas';
 type BillingPeriod = 'weekly' | 'monthly' | 'unit';
 
 interface IntentResp {
@@ -84,20 +88,20 @@ export default function CheckoutForm({
   const perUnit = slot.pricingUnit === 'per send' || slot.pricingUnit === 'per push';
   const hasMonthly = slot.monthlySingle != null && slot.monthlyBoth != null;
 
-  // Allow-list of publication scopes for this slot. Slots that aren't sold
-  // on both publications must not let the buyer pick 'both' (the pill
-  // renders disabled below, and the server-side intent route enforces the
-  // same rule).
-  //
-  // Note: getSlotAvailablePubs may include Houston/Dallas (MediaKitPub), but
-  // the public checkout UI currently only surfaces RealtyLine Austin / Newsline San Antonio
-  // San Antonio / both. Houston/Dallas bookings happen via admin BookingBuilder.
-  // We narrow here so the local Pub type stays the source of truth for the UI.
-  const NARROW_PUBS: readonly Pub[] = ['realtyline', 'newsline', 'both'];
+  // Allow-list of publication scopes for this slot, narrowed to the four
+  // single-pub markets the public checkout exposes. The legacy 'both'
+  // bundle is intentionally excluded here — it's still accepted by the
+  // server for backward compatibility with admin tooling, but the public
+  // UI no longer offers it. Bundle buys go through admin BookingBuilder.
+  const NARROW_PUBS: readonly Pub[] = [
+    'realtyline',
+    'newsline',
+    'realtyline-houston',
+    'realtyline-dallas',
+  ];
   const isNarrowPub = (v: string): v is Pub =>
     (NARROW_PUBS as readonly string[]).includes(v);
   const availablePubs: Pub[] = getSlotAvailablePubs(slot).filter(isNarrowPub);
-  const bothAvailable = availablePubs.includes('both') && !bookedSet.has('both');
   // A scope is "open" if the slot is sold on it AND no active campaign
   // is currently occupying it.
   const isOpenForBooking = (p: Pub) => availablePubs.includes(p) && !bookedSet.has(p);
@@ -154,19 +158,18 @@ export default function CheckoutForm({
   }, [startDate, weeks, months, billingPeriod]);
 
   // ─── Live price preview (client-side mirror of server math) ────────────
+  // All four single-pub markets use the same single-pub rate. (Houston/
+  // Dallas were priced equal to a solo RealtyLine booking when those
+  // markets were activated in Phase 2 PR D.)
   const previewBaseCents = useMemo(() => {
-    const isBoth = pub === 'both';
     if (perUnit) {
-      const rate = isBoth ? slot.weeklyBoth : slot.weeklySingle;
-      return rate * 100 * units;
+      return slot.weeklySingle * 100 * units;
     }
     if (billingPeriod === 'monthly' && hasMonthly) {
-      const rate = isBoth ? slot.monthlyBoth! : slot.monthlySingle!;
-      return rate * 100 * months;
+      return slot.monthlySingle! * 100 * months;
     }
-    const rate = isBoth ? slot.weeklyBoth : slot.weeklySingle;
-    return rate * 100 * weeks;
-  }, [slot, pub, billingPeriod, weeks, months, units, perUnit, hasMonthly]);
+    return slot.weeklySingle * 100 * weeks;
+  }, [slot, billingPeriod, weeks, months, units, perUnit, hasMonthly]);
 
   const previewSurcharge = Math.round(previewBaseCents * 0.03);
   const previewTotal = previewBaseCents + previewSurcharge;
@@ -262,7 +265,14 @@ export default function CheckoutForm({
         <div className="space-y-4">
           <Field label="Publication">
             <div className="flex flex-wrap gap-2">
-              {(['realtyline', 'newsline', 'both'] as const).map((p) => {
+              {(
+                [
+                  'realtyline',
+                  'newsline',
+                  'realtyline-houston',
+                  'realtyline-dallas',
+                ] as const
+              ).map((p) => {
                 const sold = availablePubs.includes(p);
                 const taken = bookedSet.has(p);
                 const allowed = sold && !taken;
@@ -272,14 +282,14 @@ export default function CheckoutForm({
                     ? 'RealtyLine Austin'
                     : p === 'newsline'
                       ? 'Newsline San Antonio'
-                      : 'Both pubs';
+                      : p === 'realtyline-houston'
+                        ? 'RealtyLine Houston'
+                        : 'RealtyLine Dallas/FTW';
                 const title = allowed
                   ? undefined
                   : taken
                     ? `${label} is currently booked. Please check back later.`
-                    : p === 'both'
-                      ? 'This placement is not sold across both publications.'
-                      : `${label} is not available for this placement.`;
+                    : `${label} is not available for this placement.`;
                 return (
                   <button
                     key={p}
@@ -309,17 +319,12 @@ export default function CheckoutForm({
             </div>
             {bookedSet.size > 0 && !allBlocked && (
               <p className="mt-2 text-xs text-amber-700">
-                One or more publication scopes are currently booked for this placement.
+                One or more publications are currently booked for this placement.
               </p>
             )}
             {allBlocked && (
               <p className="mt-2 text-xs text-amber-800 font-medium">
                 This placement is fully booked right now. Use the inquiry form to join the waitlist.
-              </p>
-            )}
-            {!bothAvailable && bookedSet.size === 0 && (
-              <p className="mt-2 text-xs text-slate-500">
-                This placement is not sold across both publications.
               </p>
             )}
           </Field>

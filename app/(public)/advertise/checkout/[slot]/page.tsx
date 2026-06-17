@@ -37,9 +37,24 @@ export default async function CheckoutPage(ctx: RouteCtx) {
   const slot = APP_AD_SLOTS.find((s) => s.slug === slug);
   if (!slot) notFound();
 
-  const initialPub: 'realtyline' | 'newsline' | 'both' =
-    sp.pub === 'newsline' || sp.pub === 'both' || sp.pub === 'realtyline'
-      ? sp.pub
+  // Public checkout exposes four single-pub markets. Legacy ?pub=both
+  // permalinks fall back to RealtyLine — the bundle option was removed
+  // from this page per the 2026-06-16 product decision and bundle buys
+  // now flow through admin BookingBuilder.
+  type PubInitial =
+    | 'realtyline'
+    | 'newsline'
+    | 'realtyline-houston'
+    | 'realtyline-dallas';
+  const PUB_INITIALS: ReadonlyArray<PubInitial> = [
+    'realtyline',
+    'newsline',
+    'realtyline-houston',
+    'realtyline-dallas',
+  ];
+  const initialPub: PubInitial =
+    sp.pub && (PUB_INITIALS as readonly string[]).includes(sp.pub)
+      ? (sp.pub as PubInitial)
       : 'realtyline';
 
   // Pre-fill from the /advertise/inquire redirect so the buyer doesn't have
@@ -56,19 +71,19 @@ export default async function CheckoutPage(ctx: RouteCtx) {
   // overlaps the default window. The CheckoutForm grays out booked
   // scopes; the API enforces the same rule on payment intent creation.
   //
-  // bookedPubsSet may include Houston/Dallas keys (CheckoutPub is widened),
-  // but the public checkout UI only renders Austin/SA pills today. We
-  // narrow to the 3-value union the form expects; Houston/Dallas bookings
-  // are handled by admin BookingBuilder, not this page.
+  // Narrowed to the four single-pub markets the public checkout exposes.
+  // Legacy 'both' bundle bookings are intentionally dropped here — the
+  // bundle option is no longer surfaced on this page (admin BookingBuilder
+  // still creates them), so showing it as "sold" would be misleading.
   const bookedPubsSet = await getBookedPubsForSlot(slot.slug);
-  const NARROW_BOOKED: ReadonlyArray<'realtyline' | 'newsline' | 'both'> = [
+  const NARROW_BOOKED: ReadonlyArray<PubInitial> = [
     'realtyline',
     'newsline',
-    'both',
+    'realtyline-houston',
+    'realtyline-dallas',
   ];
   const bookedPubs = Array.from(bookedPubsSet).filter(
-    (p): p is 'realtyline' | 'newsline' | 'both' =>
-      (NARROW_BOOKED as readonly string[]).includes(p),
+    (p): p is PubInitial => (NARROW_BOOKED as readonly string[]).includes(p),
   );
 
   return (
