@@ -120,7 +120,13 @@ async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Respons
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await fetch(url, { signal: controller.signal });
+    // Next 16 caches `fetch()` calls in the Data Cache by default. Without
+    // `cache: 'no-store'`, the WP REST response stays cached even after we
+    // revalidateTag('wp-news', {expire: 0}) on the unstable_cache wrapper —
+    // which made the Admin "Sync now" button appear to do nothing when WP
+    // editors fixed a post. We always want a fresh hit to the WP origin
+    // (the per-minute bucket query string already debounces repeated calls).
+    return await fetch(url, { signal: controller.signal, cache: 'no-store' });
   } finally {
     clearTimeout(timer);
   }
