@@ -11,13 +11,17 @@
 //
 // Behavior:
 //   - Fetches /api/ads/active?slot=<slug>&pub=<realtyline|newsline> on mount
+//   - For banner-shaped slugs (see ROTATING_SLUGS below) it fetches with
+//     multi=1 and rotates through up to 5 active creatives every ~7s with
+//     a cross-fade. If only one creative is active, no rotation happens.
 //   - Resolves publication from localStorage key `caxton_pub` (set by pub switcher)
 //   - Renders nothing while loading. If no campaign, renders `fallback` (default: null).
-//   - Fires `ad_impression` exactly once per slot when the creative renders.
+//   - Fires `ad_impression` once per (slot, campaign_id) visible — so each
+//     rotated creative gets its own impression.
 //   - Fires `ad_click` on user click, then opens click_url in a new tab.
 //
 // Tracking properties (PostHog):
-//   ad_space_slug, campaign_id, advertiser, publication
+//   ad_space_slug, campaign_id, advertiser, publication, rotation_index
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
@@ -48,35 +52,61 @@ type Props = {
   variant?: 'default' | 'bare';
 };
 
+// Banner-shaped slugs rotate. Any slug listed here fetches up to 5 active
+// creatives and cross-fades between them on a 7-second interval. Add new
+// banner slugs here as inventory grows.
+const ROTATING_SLUGS = new Set([
+  'feed_top_banner',
+  'feed_sticky_bottom',
+  'newsletter_banner',
+  'article_top_leaderboard',
+  'calendar_top_banner',
+]);
+
+const ROTATION_INTERVAL_MS = 7000;
+const FADE_MS = 400;
+
 export function AdSlot({ slug, className = '', fallback = null, variant = 'default' }: Props) {
-  const [ad, setAd] = useState<ActiveAd | null>(null);
+  const [ads, setAds] = useState<ActiveAd[]>([]);
+  const [index, setIndex] = useState(0);
   const [loaded, setLoaded] = useState(false);
-  const impressionFired = useRef(false);
+  const [fading, setFading] = useState(false);
+  const firedImpressions = useRef<Set<string>>(new Set());
   const { pub } = usePublication();
 
+  const rotating = ROTATING_SLUGS.has(slug);
+
+  // Reset on pub/slug change so a fresh creative for the new pub fires its
+  // own impression.
   useEffect(() => {
     let cancelled = false;
-    // Reset impression latch so a fresh creative for the new pub fires its
-    // own impression. Ref mutation is fine here (not state).
-    impressionFired.current = false;
+    firedImpressions.current = new Set();
 
     (async () => {
-      // Defer the loading-state flip so we don't trigger a synchronous
-      // cascading render inside this effect (react-hooks/set-state-in-effect).
+      // Defer state flip so we don't trigger a synchronous cascading render
+      // inside this effect (react-hooks/set-state-in-effect).
       await Promise.resolve();
       if (cancelled) return;
       setLoaded(false);
+      setIndex(0);
       try {
-        const res = await fetch(`/api/ads/active?slot=${encodeURIComponent(slug)}&pub=${pub}`, {
-          cache: 'no-store',
-        });
-        const body = (await res.json().catch(() => null)) as { ad: ActiveAd | null } | null;
+        const url = rotating
+          ? `/api/ads/active?slot=${encodeURIComponent(slug)}&pub=${pub}&multi=1&limit=5`
+          : `/api/ads/active?slot=${encodeURIComponent(slug)}&pub=${pub}`;
+        const res = await fetch(url, { cache: 'no-store' });
+        const body = (await res.json().catch(() => null)) as
+          | { ad?: ActiveAd | null; ads?: ActiveAd[] }
+          | null;
         if (cancelled) return;
-        setAd(body?.ad ?? null);
+        if (rotating) {
+          setAds(Array.isArray(body?.ads) ? (body!.ads as ActiveAd[]) : []);
+        } else {
+          setAds(body?.ad ? [body.ad as ActiveAd] : []);
+        }
         setLoaded(true);
       } catch {
         if (!cancelled) {
-          setAd(null);
+          setAds([]);
           setLoaded(true);
         }
       }
@@ -85,22 +115,43 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
     return () => {
       cancelled = true;
     };
-  }, [slug, pub]);
+  }, [slug, pub, rotating]);
 
-  // Fire impression exactly once per slot mount, after the creative is in the DOM.
+  // Rotation interval — only when more than one creative is active.
   useEffect(() => {
-    if (!ad || impressionFired.current) return;
-    impressionFired.current = true;
+    if (!rotating || ads.length < 2) return;
+    const id = setInterval(() => {
+      setFading(true);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % ads.length);
+        setFading(false);
+      }, FADE_MS);
+    }, ROTATION_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [rotating, ads.length]);
+
+  // Fire impression once per (slot, campaign_id) — covers initial render and
+  // every subsequent rotated creative.
+  const currentAd = ads[index];
+  useEffect(() => {
+    if (!currentAd) return;
+    const key = `${currentAd.slot}:${currentAd.id}`;
+    if (firedImpressions.current.has(key)) return;
+    firedImpressions.current.add(key);
     trackEvent('ad_impression', {
-      ad_space_slug: ad.slot,
-      campaign_id: ad.id,
-      advertiser: ad.advertiser,
+      ad_space_slug: currentAd.slot,
+      campaign_id: currentAd.id,
+      advertiser: currentAd.advertiser,
       publication: pub,
+      rotation_index: index,
+      rotation_total: ads.length,
     });
-  }, [ad, pub]);
+  }, [currentAd, pub, index, ads.length]);
 
   if (!loaded) return null;
-  if (!ad) return <>{fallback}</>;
+  if (!currentAd) return <>{fallback}</>;
+
+  const ad = currentAd;
 
   const handleClick = () => {
     trackEvent('ad_click', {
@@ -108,6 +159,8 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
       campaign_id: ad.id,
       advertiser: ad.advertiser,
       publication: pub,
+      rotation_index: index,
+      rotation_total: ads.length,
     });
   };
 
@@ -145,6 +198,10 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
           : `Advertising partner: ${ad.advertiser}`
       }
       className="relative block"
+      style={{
+        opacity: fading ? 0 : 1,
+        transition: `opacity ${FADE_MS}ms ease-in-out`,
+      }}
     >
       <Image
         src={ad.image}
@@ -169,6 +226,27 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
     </a>
   );
 
+  // Dot pagination — only when rotating with 2+ creatives.
+  const dots =
+    rotating && ads.length > 1 ? (
+      <div
+        className="flex items-center justify-center gap-1.5 pt-2"
+        aria-hidden="true"
+      >
+        {ads.map((a, i) => (
+          <span
+            key={a.id}
+            className="block rounded-full transition-all"
+            style={{
+              width: i === index ? 14 : 5,
+              height: 5,
+              background: i === index ? '#021D40' : '#d1d5db',
+            }}
+          />
+        ))}
+      </div>
+    ) : null;
+
   if (variant === 'bare') {
     // Cap creative to its natural size and center so wide desktop containers
     // don't stretch a 728x90 banner to 1248px wide (which scales height
@@ -176,6 +254,7 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
     return (
       <div className={`mx-auto ${className}`} style={{ maxWidth: w }}>
         {creative}
+        {dots}
       </div>
     );
   }
@@ -193,6 +272,7 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
         <span aria-hidden="true">{'A' + 'd'}</span>
       </span>
       {creative}
+      {dots}
     </div>
   );
 }

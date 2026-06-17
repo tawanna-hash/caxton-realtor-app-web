@@ -263,11 +263,21 @@ export async function getActiveCampaignForSlot(
   slot: string,
   publication: 'austin' | 'san_antonio',
 ): Promise<AdCampaignWithRefs | null> {
+  const rows = await getActiveCampaignsForSlot(slot, publication, 1);
+  return rows[0] ?? null;
+}
+
+// Public-facing: return UP TO N active campaigns for a (slot, publication).
+// Used by banner-shaped slots that rotate multiple creatives client-side.
+// SQL randomizes order so each request returns a fresh shuffle.
+export async function getActiveCampaignsForSlot(
+  slot: string,
+  publication: 'austin' | 'san_antonio',
+  limit = 5,
+): Promise<AdCampaignWithRefs[]> {
   const today = new Date().toISOString().slice(0, 10);
-  // Map legacy enum -> canonical pub key so we can also match new multi-
-  // market campaigns stored in the `pubs` array column. Legacy rows still
-  // match on `publication` ('austin' | 'san_antonio' | 'both').
   const pubKey = publication === 'austin' ? 'realtyline' : 'newsline';
+  const safeLimit = Math.max(1, Math.min(20, Math.floor(limit)));
   const r = await getPool().query<AdCampaignWithRefs>(
     `SELECT
        c.*,
@@ -286,8 +296,8 @@ export async function getActiveCampaignForSlot(
        AND c.start_date <= $3
        AND c.end_date   >= $3
      ORDER BY RANDOM()
-     LIMIT 1`,
+     LIMIT ${safeLimit}`,
     [slot, publication, today, pubKey],
   );
-  return r.rows[0] ?? null;
+  return r.rows;
 }
