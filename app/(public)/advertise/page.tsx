@@ -1,10 +1,38 @@
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
+import {
+  APP_AD_SLOTS,
+  PACKAGES,
+  EBLASTS,
+  RATE_MATRIX,
+  FREQ_LABELS,
+  FREQ_TERMS,
+  PUB_SUBSCRIBERS,
+  AUDIENCE_STATS,
+} from '@/lib/media-kit';
+
 export const metadata = {
   title: 'Advertise with Us — Realty News Now',
   description:
-    'Print and digital advertising across RealtyLine Austin and Newsline San Antonio — reaching 89,000+ Texas real estate professionals.',
+    'Print, digital, social, and mobile advertising across RealtyLine and Newsline — 130K+ Texas real estate professionals across Austin, San Antonio, Houston, and Dallas/Fort Worth.',
 };
+
+// Derived figures from the media kit. Source of truth: lib/media-kit.ts.
+const DIGITAL_SLOT_COUNT = APP_AD_SLOTS.length;
+const DIGITAL_STARTING_PRICE = Math.min(
+  ...APP_AD_SLOTS.map((s) => s.weeklySingle),
+);
+const PRINT_STARTING_PRICE = Math.min(
+  ...PACKAGES.flatMap((p) => p.sizes.map((s) => s.price)),
+);
+const EBLAST_STARTING_PRICE = Math.min(
+  ...EBLASTS.flatMap((b) =>
+    Object.values(b.priceByPub ?? { _: b.price }).filter(
+      (v): v is number => typeof v === 'number',
+    ),
+  ),
+);
+const TOTAL_NETWORK_SUBS = PUB_SUBSCRIBERS.both;
 
 export default function AdvertisePage() {
   return (
@@ -38,12 +66,15 @@ export default function AdvertisePage() {
             <p className="text-xs uppercase tracking-[0.2em] text-purple-700 font-semibold mb-2">
               New {'·'} Self-service portal
             </p>
-            <h2 className="font-serif text-2xl text-gray-900 mb-1" style={{ fontFamily: 'Georgia, serif' }}>
+            <h2
+              className="font-serif text-2xl text-gray-900 mb-1"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
               Buy a placement in two minutes.
             </h2>
             <p className="text-sm text-gray-700 leading-relaxed max-w-xl">
-              Digital ad formats from $125/week, pick your market and dates,
-              instant checkout {'—'} no sales call required.
+              Digital ad formats from ${DIGITAL_STARTING_PRICE}/week, pick your
+              market and dates, instant checkout {'—'} no sales call required.
             </p>
           </div>
           <Link
@@ -51,65 +82,89 @@ export default function AdvertisePage() {
             className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-800 transition"
           >
             Open self-service portal
-            <span aria-hidden>{'→'}</span>
+            <span aria-hidden>{'\u2192'}</span>
           </Link>
         </div>
       </section>
 
+      {/* ── Audience ────────────────────────────────────────────────────── */}
       <section className="mb-12">
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-5">
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Our combined audience
         </p>
+        <h2
+          className="font-serif text-2xl md:text-3xl text-gray-900 leading-tight mb-3"
+          style={{ fontFamily: 'Georgia, serif' }}
+        >
+          {TOTAL_NETWORK_SUBS.toLocaleString('en-US')} engaged real estate
+          subscribers across four Texas markets.
+        </h2>
+        <p className="text-base text-gray-700 leading-relaxed font-light mb-6 max-w-3xl">
+          Active REALTORS{'\u00ae'}, brokers, builders, lenders, title
+          professionals, and industry partners across Austin, San Antonio,
+          Houston, and Dallas / Fort Worth {'\u2014'} the largest dedicated
+          real-estate publishing network in Texas.
+        </p>
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="border border-gray-200 px-4 py-5">
             <p className="text-3xl font-semibold text-[#021D40] tracking-tight">
-              43K
+              {(PUB_SUBSCRIBERS.realtyline / 1000).toFixed(0)}K
             </p>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
               RealtyLine
               <br />
-              email subscribers
+              Austin
+            </p>
+          </div>
+          <div className="border border-gray-200 px-4 py-5">
+            <p className="text-3xl font-semibold text-[#3D0740] tracking-tight">
+              {(PUB_SUBSCRIBERS.newsline / 1000).toFixed(0)}K
+            </p>
+            <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
+              Newsline
+              <br />
+              San Antonio
             </p>
           </div>
           <div className="border border-gray-200 px-4 py-5">
             <p className="text-3xl font-semibold text-[#021D40] tracking-tight">
-              21K
+              {(PUB_SUBSCRIBERS['realtyline-houston'] / 1000).toFixed(0)}K
             </p>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
               RealtyLine
               <br />
-              print readership
+              Houston
             </p>
           </div>
           <div className="border border-gray-200 px-4 py-5">
-            <p className="text-3xl font-semibold text-[#3D0740] tracking-tight">
-              11K
+            <p className="text-3xl font-semibold text-[#021D40] tracking-tight">
+              {(PUB_SUBSCRIBERS['realtyline-dallas'] / 1000).toFixed(0)}K
             </p>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
-              Newsline San Antonio
+              RealtyLine
               <br />
-              email subscribers
-            </p>
-          </div>
-          <div className="border border-gray-200 px-4 py-5">
-            <p className="text-3xl font-semibold text-[#3D0740] tracking-tight">
-              14K
-            </p>
-            <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
-              Newsline San Antonio
-              <br />
-              print readership
+              Dallas / FTW
             </p>
           </div>
         </div>
-        <p className="text-sm text-gray-500 mt-4 font-light italic">
-          Active REALTORS®, brokers, builders, lenders, title professionals,
-          and industry partners across Austin, San Antonio, and surrounding
-          markets.
-        </p>
+
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {AUDIENCE_STATS.map((s) => (
+            <div
+              key={s.label}
+              className="border border-gray-100 px-4 py-3 bg-gray-50"
+            >
+              <p className="text-xl font-semibold text-gray-900">{s.value}</p>
+              <p className="text-xs uppercase tracking-wider text-gray-500 mt-0.5">
+                {s.label}
+              </p>
+            </div>
+          ))}
+        </div>
       </section>
 
-
+      {/* ── Four channels ─────────────────────────────────────────────────── */}
       <section className="mb-12">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Where your ads run
@@ -142,20 +197,58 @@ export default function AdvertisePage() {
                 </h3>
               </div>
               <p className="text-sm text-gray-500 font-light italic shrink-0">
-                Packages start at $485/month
+                Packages from ${PRINT_STARTING_PRICE}/month
               </p>
             </div>
             <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
               Monthly RealtyLine and Newsline San Antonio editions, directly
               mailed each month to subscribers.
             </p>
+
+            {/* Print rate matrix — live from media kit */}
+            <div className="overflow-x-auto -mx-2 mb-4">
+              <table className="min-w-full text-xs">
+                <thead>
+                  <tr className="text-left text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-2 font-semibold">Size</th>
+                    {FREQ_LABELS.map((f, i) => (
+                      <th key={f} className="px-2 py-2 font-semibold">
+                        {f}
+                        <span className="block text-[10px] text-gray-400 font-normal normal-case tracking-normal">
+                          {FREQ_TERMS[i]}
+                        </span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {Object.entries(RATE_MATRIX).map(([size, prices]) => (
+                    <tr key={size}>
+                      <td className="px-2 py-2 font-medium text-gray-900">
+                        {size}
+                      </td>
+                      {prices.map((p, i) => (
+                        <td
+                          key={i}
+                          className="px-2 py-2 text-gray-900 tabular-nums"
+                        >
+                          ${p}
+                          <span className="text-gray-400">/mo</span>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="border border-gray-100 px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                   Full Page
                 </p>
                 <p className="text-xs text-gray-700 font-light mt-1">
-                  10&Prime; {'\u00d7'} 11.0833&Prime;
+                  10{'\u2033'} {'\u00d7'} 11.0833{'\u2033'}
                 </p>
               </div>
               <div className="border border-gray-100 px-4 py-3">
@@ -163,9 +256,9 @@ export default function AdvertisePage() {
                   Half Page
                 </p>
                 <p className="text-xs text-gray-700 font-light mt-1">
-                  10&Prime; {'\u00d7'} 5.25&Prime; horizontal
+                  10{'\u2033'} {'\u00d7'} 5.25{'\u2033'} horizontal
                   <br />
-                  4.8333&Prime; {'\u00d7'} 11.0833&Prime; vertical
+                  4.8333{'\u2033'} {'\u00d7'} 11.0833{'\u2033'} vertical
                 </p>
               </div>
               <div className="border border-gray-100 px-4 py-3">
@@ -173,19 +266,81 @@ export default function AdvertisePage() {
                   Quarter Page
                 </p>
                 <p className="text-xs text-gray-700 font-light mt-1">
-                  4.8333&Prime; {'\u00d7'} 5.25&Prime;
+                  4.8333{'\u2033'} {'\u00d7'} 5.25{'\u2033'}
                 </p>
               </div>
             </div>
+
+            {/* Brand packages preview — live from media kit */}
+            <div className="mt-5 pt-5 border-t border-gray-100">
+              <p className="text-xs uppercase tracking-wider text-gray-700 font-semibold mb-3">
+                Brand packages
+              </p>
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-2">
+                {PACKAGES.map((p) => {
+                  const starting = Math.min(...p.sizes.map((s) => s.price));
+                  return (
+                    <div
+                      key={p.id}
+                      className={
+                        'border px-3 py-2.5 ' +
+                        (p.premium
+                          ? 'border-[#021D40] bg-[#021D40] text-white'
+                          : p.popular
+                            ? 'border-orange-200 bg-orange-50'
+                            : 'border-gray-100')
+                      }
+                    >
+                      <p
+                        className={
+                          'text-xs font-semibold ' +
+                          (p.premium ? 'text-white' : 'text-gray-900')
+                        }
+                      >
+                        {p.name}
+                      </p>
+                      <p
+                        className={
+                          'text-[10px] ' +
+                          (p.premium ? 'text-white/80' : 'text-gray-500')
+                        }
+                      >
+                        {p.term}
+                      </p>
+                      <p
+                        className={
+                          'text-sm font-semibold tabular-nums mt-1 ' +
+                          (p.premium ? 'text-white' : 'text-gray-900')
+                        }
+                      >
+                        from ${starting}
+                        <span
+                          className={
+                            'text-[10px] font-normal ' +
+                            (p.premium ? 'text-white/70' : 'text-gray-500')
+                          }
+                        >
+                          /mo
+                        </span>
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             <details className="mt-6 border-t border-gray-100 pt-5 group">
               <summary className="text-xs font-semibold uppercase tracking-wider text-gray-900 cursor-pointer list-none flex items-center justify-between">
                 <span>What every print partnership includes</span>
-                <span className="text-gray-400 group-open:rotate-180 transition-transform">{'\u25be'}</span>
+                <span className="text-gray-400 group-open:rotate-180 transition-transform">
+                  {'\u25be'}
+                </span>
               </summary>
               <p className="text-sm text-gray-700 leading-relaxed font-light mt-4 mb-5">
-                Our packages are built around exposure plus engagement {'\u2014'} we
-                don&apos;t just place an ad and walk away. Every partner gets a mix
-                of these editorial and audience perks alongside their paid placements:
+                Our packages are built around exposure plus engagement{' '}
+                {'\u2014'} we don&apos;t just place an ad and walk away. Every
+                partner gets a mix of these editorial and audience perks
+                alongside their paid placements:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
                 <div>
@@ -193,8 +348,9 @@ export default function AdvertisePage() {
                     Featured advertiser article
                   </p>
                   <p className="text-gray-700 font-light leading-relaxed">
-                    Our editorial team interviews you or your team and publishes a
-                    feature piece on your people, products, or services.
+                    Our editorial team interviews you or your team and
+                    publishes a feature piece on your people, products, or
+                    services.
                   </p>
                 </div>
                 <div>
@@ -202,9 +358,9 @@ export default function AdvertisePage() {
                     Event coverage
                   </p>
                   <p className="text-gray-700 font-light leading-relaxed">
-                    We send a photographer to your events and capture live Facebook
-                    coverage {'\u2014'} turning a single event into ongoing marketing
-                    assets.
+                    We send a photographer to your events and capture live
+                    Facebook coverage {'\u2014'} turning a single event into
+                    ongoing marketing assets.
                   </p>
                 </div>
                 <div>
@@ -212,8 +368,8 @@ export default function AdvertisePage() {
                     Press release distribution
                   </p>
                   <p className="text-gray-700 font-light leading-relaxed">
-                    Submit press releases to be reviewed and run in print and digital
-                    issues alongside our editorial coverage.
+                    Submit press releases to be reviewed and run in print and
+                    digital issues alongside our editorial coverage.
                   </p>
                 </div>
                 <div>
@@ -222,8 +378,8 @@ export default function AdvertisePage() {
                   </p>
                   <p className="text-gray-700 font-light leading-relaxed">
                     Add as many of your events as you want to our public event
-                    calendar {'\u2014'} open houses, CE classes, mixers, anything
-                    you&apos;re hosting.
+                    calendar {'\u2014'} open houses, CE classes, mixers,
+                    anything you&apos;re hosting.
                   </p>
                 </div>
                 <div>
@@ -231,8 +387,9 @@ export default function AdvertisePage() {
                     Builder inventory inclusion
                   </p>
                   <p className="text-gray-700 font-light leading-relaxed">
-                    Builders and developers can have current inventory featured in
-                    our weekly e-Blast to subscribers actively shopping the market.
+                    Builders and developers can have current inventory
+                    featured in our weekly e-Blast to subscribers actively
+                    shopping the market.
                   </p>
                 </div>
               </div>
@@ -257,9 +414,11 @@ export default function AdvertisePage() {
                 Included with print packages
               </p>
             </div>
-            <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
+            <p className="text-sm text-gray-700 font-light leading-relaxed">
               Reach beyond our subscriber list through our highly engaged
-              Facebook, Instagram, and LinkedIn audiences.
+              Facebook, Instagram, and LinkedIn audiences. Featured social
+              shares, event-day coverage, and Facebook LIVE included in every
+              print partnership.
             </p>
           </div>
 
@@ -278,9 +437,14 @@ export default function AdvertisePage() {
                 </h3>
               </div>
               <p className="text-sm text-gray-500 font-light italic shrink-0">
-                From $1,100
+                From ${EBLAST_STARTING_PRICE}
               </p>
             </div>
+            <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
+              Dedicated email sends to the subscriber list of your choice.
+              Austin runs flat-rate; Newsline, Houston, and Dallas / FTW are
+              CPM-priced for transparency.
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="border border-gray-100 px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
@@ -295,7 +459,7 @@ export default function AdvertisePage() {
                   Newsletter banner
                 </p>
                 <p className="text-xs text-gray-700 font-light mt-1">
-                  600{'\u00d7'}200, top of every weekly e-Blast send
+                  600{'\u00d7'}200, top of every weekly e-Blast send.
                 </p>
               </div>
             </div>
@@ -316,11 +480,14 @@ export default function AdvertisePage() {
                 </h3>
               </div>
               <p className="text-sm text-gray-500 font-light italic shrink-0">
-                From $125/week
+                From ${DIGITAL_STARTING_PRICE}/week
               </p>
             </div>
             <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
-              Premium placements across realtynewsnow.app.
+              {DIGITAL_SLOT_COUNT} premium placements across
+              realtynewsnow.app {'\u2014'} feed banners, article leaderboards,
+              sidebars, splash, push, and more. Self-serve checkout with live
+              availability.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="border border-gray-100 px-4 py-3">
@@ -328,7 +495,7 @@ export default function AdvertisePage() {
                   Web banners
                 </p>
                 <p className="text-xs text-gray-700 font-light mt-1">
-                  728{'\u00d7'}90, 300{'\u00d7'}250, 300{'\u00d7'}600 {'\u00b7'}
+                  728{'\u00d7'}90, 300{'\u00d7'}250, 300{'\u00d7'}600 {'\u00b7'}{' '}
                   article top, sidebar, mid-inline, bottom
                 </p>
               </div>
@@ -337,8 +504,8 @@ export default function AdvertisePage() {
                   Feed cards
                 </p>
                 <p className="text-xs text-gray-700 font-light mt-1">
-                  1080{'\u00d7'}600 native, every 6th feed card,
-                  marked SPONSORED
+                  1080{'\u00d7'}600 native, every 6th feed card, marked
+                  SPONSORED
                 </p>
               </div>
               <div className="border border-gray-100 px-4 py-3">
@@ -354,7 +521,8 @@ export default function AdvertisePage() {
                   Push notification sponsor
                 </p>
                 <p className="text-xs text-gray-700 font-light mt-1">
-                  Max 1 sponsored push per week {'\u00b7'} 256{'\u00d7'}256 icon
+                  Max 1 sponsored push per week {'\u00b7'} 256{'\u00d7'}256
+                  icon
                 </p>
               </div>
               <div className="border border-gray-100 px-4 py-3">
@@ -365,17 +533,36 @@ export default function AdvertisePage() {
                   320{'\u00d7'}50 / 320{'\u00d7'}100 persistent at bottom
                 </p>
               </div>
+              <div className="border border-gray-100 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
+                  Calendar event sponsor
+                </p>
+                <p className="text-xs text-gray-700 font-light mt-1">
+                  Native pinned event card on /calendar with {'\u201c'}
+                  Presented by{'\u201d'} tag
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-3 font-light italic">
-              Browse all 16 digital placements with live pricing in the
-              self-service portal.
-            </p>
+            <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs">
+              <Link
+                href="/advertise/placements"
+                className="font-semibold text-[#021D40] underline underline-offset-2 hover:text-[#03285a]"
+              >
+                See where every placement appears {'\u2192'}
+              </Link>
+              <Link
+                href="/advertise/digital"
+                className="font-semibold text-[#021D40] underline underline-offset-2 hover:text-[#03285a]"
+              >
+                Browse all {DIGITAL_SLOT_COUNT} placements with live pricing{' '}
+                {'\u2192'}
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       <hr className="border-gray-200 my-12" />
-
 
       <section className="bg-gray-50 border-l-4 border-[#021D40] px-6 py-6 md:px-8 md:py-8">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-700 font-medium mb-4">
@@ -390,7 +577,7 @@ export default function AdvertisePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-[#021D40] mb-2">
-              RealtyLine — Austin
+              RealtyLine {'\u2014'} Austin
             </p>
             <a
               href="mailto:hello@myrealtyline.com?subject=Media%20Kit%20Request%20%E2%80%94%20RealtyLine"
@@ -402,7 +589,7 @@ export default function AdvertisePage() {
 
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-[#3D0740] mb-2">
-              Newsline San Antonio — San Antonio
+              Newsline San Antonio {'\u2014'} San Antonio
             </p>
             <a
               href="mailto:hello@newslinesa.com?subject=Media%20Kit%20Request%20%E2%80%94%20Newsline"

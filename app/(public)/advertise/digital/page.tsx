@@ -23,7 +23,7 @@ export const runtime = 'nodejs';
 export const metadata = {
   title: 'Digital Placements — Realty News Now',
   description:
-    'Live availability across all 17 digital placements on realtynewsnow.app. Book any open slot in under five minutes with self-serve checkout.',
+    'Live availability across all 16 digital placements on realtynewsnow.app. Book any open slot in under five minutes with self-serve checkout.',
 };
 
 // Single-pub scopes considered when deciding if a slot is sold out. Only

@@ -3,7 +3,7 @@
 // Channel taxonomy for the ad-management funnel.
 //
 //   • PRINT   — Brand [1/3/6/12/12 Plus] packages, sold by issue/duration.
-//   • DIGITAL — APP_AD_SLOTS (the 17 on-site placements), sold by week/month.
+//   • DIGITAL — APP_AD_SLOTS (the 16 on-site placements), sold by week/month.
 //   • EMAIL   — e-Blast packages (Solo, Weekly inclusion), sold by send.
 //
 // Every inquiry, agreement, and campaign carries this tag so admin

@@ -1,5 +1,5 @@
 // caxton-ads-v1
-// Catalog tab — 15 ad slots grouped by zone, with active-campaign
+// Catalog tab — 16 ad slots grouped by zone, with active-campaign
 // counts overlaid. Read-only reference data.
 
 'use client';
@@ -29,7 +29,7 @@ export function CatalogList({ spaces, campaigns }: Props) {
     <div className="space-y-8">
       <div className="rounded-md bg-blue-50 p-4 text-sm text-blue-900 ring-1 ring-blue-200">
         <p>
-          <strong>15 ad slots</strong> across 7 zones. Counts show campaigns currently
+          <strong>16 ad slots</strong> across 7 zones. Counts show campaigns currently
           live (active + within date range). Slot definitions are read-only —
           contact engineering to add new slots.
         </p>

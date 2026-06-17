@@ -119,7 +119,13 @@ export default function AdsHubPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Ad Hub</h1>
-          <p className="text-sm text-gray-700 mt-1 max-w-2xl">
+          <p className="text-sm uppercase tracking-[0.18em] text-gray-700 font-semibold mt-1">
+            Print {'\u00b7'} Digital {'\u00b7'} Social {'\u00b7'} Mobile.{' '}
+            <span className="text-gray-500 font-normal normal-case tracking-normal">
+              One powerful marketing platform.
+            </span>
+          </p>
+          <p className="text-sm text-gray-700 mt-2 max-w-2xl">
             Everything ads in one place — inventory, creatives, campaigns,
             orders, inquiries, availability, placements, and the 2026 media
             kit.

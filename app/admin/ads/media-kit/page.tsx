@@ -542,7 +542,13 @@ export default function MediaKitPage() {
           <h1 className="text-2xl font-semibold text-gray-900 mt-1">
             2026 Media Kit
           </h1>
-          <p className="text-sm text-gray-700 mt-1 max-w-2xl">
+          <p className="text-sm uppercase tracking-[0.18em] text-gray-700 font-semibold mt-2">
+            Print {'\u00b7'} Digital {'\u00b7'} Social {'\u00b7'} Mobile.{' '}
+            <span className="text-gray-500 font-normal normal-case tracking-normal">
+              One powerful marketing platform.
+            </span>
+          </p>
+          <p className="text-sm text-gray-700 mt-2 max-w-2xl">
             One source of truth for print rates, digital placements, e-blasts,
             and policy. Numbers shown match the PDF media kit and the checkout
             quote engine.

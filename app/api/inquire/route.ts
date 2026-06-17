@@ -269,7 +269,7 @@ export async function POST(req: NextRequest) {
           We received your inquiry${data.slot_label ? ` about <strong>${escapeHtml(data.slot_label)}</strong>` : ''} and will follow up personally within one business day.
         </p>
         <p style="font-size:15px;line-height:1.5;color:${BRAND.bodyText};margin:0 0 16px 0;">
-          See our full rate card and book any of our 17 placements directly:
+          See our full rate card and book any of our 16 placements directly:
         </p>
         <p style="margin:0 0 28px 0;">${primaryButton({ href: 'https://realtynewsnow.app/advertise/digital', label: 'View rate card' })}</p>`;
     }

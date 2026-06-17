@@ -183,7 +183,7 @@ function drawCover(ctx: Ctx): void {
     size: 22,
     color: rgb(1, 1, 1),
   });
-  pg(ctx).drawText('Print + Digital + e-Blasts', {
+  pg(ctx).drawText('Print \u00B7 Digital \u00B7 Social \u00B7 Mobile.  One powerful marketing platform.', {
     x: MARGIN,
     y: PH - 100,
     font: ctx.italic,
