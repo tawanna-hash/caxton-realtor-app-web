@@ -194,7 +194,7 @@ export default function ActivityClient() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin</div>
         <h1 className="text-3xl text-gray-900 mb-1" style={{ fontFamily: 'Georgia, serif' }}>Live activity</h1>

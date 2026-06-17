@@ -196,11 +196,11 @@ export default function AppShell({
 
   // Admin login page — no nav
   if (isLoginPage) {
-    return <div className="min-h-screen bg-gray-50 flex flex-col">{children}</div>;
+    return <div className="min-h-screen bg-white flex flex-col">{children}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* ======== TOP BAR ======== */}
       <header className={`sticky top-0 z-40 ${isAdmin ? 'bg-[#021D40] text-white' : 'bg-white text-gray-900 border-b border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">

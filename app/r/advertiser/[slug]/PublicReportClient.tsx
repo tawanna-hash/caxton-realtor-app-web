@@ -79,7 +79,7 @@ export default function PublicReportClient({ advertiser, theme, mode, shareToken
   if (mode === 'email_gate') {
     if (!shareToken) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-white flex items-center justify-center">
           <p className="text-sm text-gray-500">Invalid access link.</p>
         </div>
       );
@@ -122,7 +122,7 @@ function EmailGate({
   }, [email, advertiser.slug, shareToken]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
           <h1 className="text-xl font-semibold text-gray-900 mb-2">{advertiser.name}</h1>
@@ -219,7 +219,7 @@ function Dashboard({
   const gradientId = `clicksGradient-${theme.id}`;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <div style={{ backgroundColor: theme.primaryColor }} className="text-white">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="text-sm font-medium">{theme.name} &middot; Advertiser Report</div>

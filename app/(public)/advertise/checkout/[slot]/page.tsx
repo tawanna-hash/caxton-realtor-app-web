@@ -97,7 +97,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-10 sm:py-14">
         <div className="mb-8">
           <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">

@@ -441,7 +441,7 @@ export default function MagazineUploadForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-white p-6">
       <div className="max-w-3xl mx-auto">
         <div className="mb-6">
           <Link href="/admin/magazines" className="text-sm text-blue-600 hover:underline">
