@@ -20,7 +20,7 @@ import { APP_AD_SLOTS, MARKET_MULTIPLIERS, weeklyRateForMarkets } from '@/lib/me
 export const metadata = {
   title: 'Self-Service Portal \u2014 Realty News Now',
   description:
-    'Buy ad placements directly on Realty News Now. 16 digital ad formats from $125/week, pick your market and dates, no sales call required \u2014 go live in as few as 3 business days.',
+    'Buy ad placements directly on Realty News Now. 16 digital ad formats from $125/week, pick your market and dates, no sales call required \u2014 go live in as few as 2 business days.',
 };
 
 // Lowest weekly price across the catalog \u2014 used as the "From $125" pill.
@@ -117,7 +117,7 @@ export default function SelfServicePortalPage() {
             </h2>
             <p className="text-violet-100/90 text-sm md:text-base font-light leading-relaxed mb-6">
               Buy ad placements directly, choose your market + go live in as
-              few as 3 business days. No sales call required.
+              few as 2 business days. No sales call required.
             </p>
 
             <ul className="space-y-2.5 mb-7 text-sm md:text-[15px]">
@@ -174,7 +174,8 @@ export default function SelfServicePortalPage() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {ladder.map((row) => {
-              const isWinner = row.markets === 4;
+              // No card is pre-highlighted — buyer chooses their own bundle size.
+              const isWinner = false;
               return (
                 <div
                   key={row.markets}
@@ -238,8 +239,8 @@ export default function SelfServicePortalPage() {
               },
               {
                 step: '3',
-                title: 'Go live in 3 days',
-                body: 'Pay by card, our team reviews creative, and your ad goes live within 3 business days.',
+                title: 'Go live in 2 days',
+                body: 'Pay by card, our team reviews creative, and your ad goes live within 2 business days.',
               },
             ].map((it) => (
               <div
