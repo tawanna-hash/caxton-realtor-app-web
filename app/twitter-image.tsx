@@ -1,6 +1,17 @@
 // app/twitter-image.tsx
 //
-// Re-uses the OG image for twitter:image. Keeps both in lockstep so we
-// never have to maintain two renderers.
+// Twitter card image. Next.js / Turbopack requires the route segment
+// config values (runtime, alt, size, contentType) to be statically
+// declared per file rather than re-exported, so we duplicate them here
+// and delegate the actual renderer to opengraph-image's default export.
 
-export { default, runtime, alt, size, contentType } from './opengraph-image';
+import OpenGraphImage from './opengraph-image';
+
+export const runtime = 'edge';
+export const alt = 'Realty News Now — Texas real estate, daily.';
+export const size = { width: 1200, height: 630 };
+export const contentType = 'image/png';
+
+export default function TwitterImage() {
+  return OpenGraphImage();
+}
