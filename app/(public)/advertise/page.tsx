@@ -177,10 +177,6 @@ export default function AdvertisePage() {
                 </p>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-3 font-light italic">
-              Adobe InDesign templates provided for any size.
-            </p>
-
             <details className="mt-6 border-t border-gray-100 pt-5 group">
               <summary className="text-xs font-semibold uppercase tracking-wider text-gray-900 cursor-pointer list-none flex items-center justify-between">
                 <span>What every print partnership includes</span>
@@ -239,16 +235,6 @@ export default function AdvertisePage() {
                     our weekly e-Blast to subscribers actively shopping the market.
                   </p>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-900 mb-1">
-                    Design support
-                  </p>
-                  <p className="text-gray-700 font-light leading-relaxed">
-                    Adobe InDesign templates for print, plus banner specs and design
-                    guidance for digital, social, and mobile {'\u2014'} so your
-                    creative reads consistently across every channel.
-                  </p>
-                </div>
               </div>
             </details>
           </div>
@@ -273,8 +259,7 @@ export default function AdvertisePage() {
             </div>
             <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
               Reach beyond our subscriber list through our highly engaged
-              Facebook, Instagram, and LinkedIn audiences {'\u2014'} where
-              Texas real estate professionals actually spend their time.
+              Facebook, Instagram, and LinkedIn audiences.
             </p>
           </div>
 
@@ -296,10 +281,6 @@ export default function AdvertisePage() {
                 From $1,100
               </p>
             </div>
-            <p className="text-sm text-gray-700 font-light leading-relaxed mb-4">
-              Dedicated email sends to 54K+ active subscribers across our
-              RealtyLine and Newsline San Antonio lists.
-            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="border border-gray-100 px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
