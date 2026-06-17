@@ -14,6 +14,13 @@
 // Positioning is the caller's responsibility — pass a `bottomOffsetClass`
 // (e.g. 'bottom-[80px]', 'bottom-[148px]') that clears any sticky CTA / bottom
 // nav stacked above the system nav.
+//
+// SAFE AREA: On notched iPhones the BottomNav now reserves
+// env(safe-area-inset-bottom) at its bottom edge, so the pill must sit
+// above (BottomNav height) + (safe-area-inset-bottom). The component adds
+// the safe-area inset on top of `bottomOffsetClass` automatically via the
+// inline `bottom` style, so callers can keep specifying pixel offsets
+// relative to the BottomNav as before.
 
 import React from 'react';
 import Link from 'next/link';
@@ -38,10 +45,22 @@ export type FloaterAction = {
 
 type Props = {
   actions: FloaterAction[];
-  // Tailwind class controlling the vertical offset, e.g. 'bottom-[80px]'.
-  // Defaults to 'bottom-[80px]' (clears AppShell BottomNav + safe-area).
+  // Pixel distance to keep between the pill and the top of the BottomNav.
+  // The safe-area inset is added on top of this automatically. Defaults to
+  // 80px (the historical value used across the app), which clears the
+  // current BottomNav with comfortable breathing room.
   bottomOffsetClass?: string;
 };
+
+// Extract the pixel value out of a Tailwind arbitrary class like
+// 'bottom-[80px]' or 'bottom-[148px]'. Falls back to 80 if the class
+// doesn't match the expected shape, so legacy callers keep working.
+function parseBottomOffsetPx(cls: string): number {
+  const m = cls.match(/bottom-\[(\d+(?:\.\d+)?)px\]/);
+  if (!m) return 80;
+  const n = parseFloat(m[1]);
+  return Number.isFinite(n) ? n : 80;
+}
 
 // BUG-13: bump tap target to >=44px on both axes (WCAG 2.5.5).
 //
@@ -93,12 +112,15 @@ export default function FloaterPill({
   bottomOffsetClass = 'bottom-[80px]',
 }: Props) {
   if (actions.length === 0) return null;
+  // Combine the caller-requested offset with the iOS safe-area inset so the
+  // pill clears both the BottomNav AND the home-indicator strip on notched
+  // iPhones (iPhone X+, including 17 Pro Max).
+  const offsetPx = parseBottomOffsetPx(bottomOffsetClass);
   return (
     <div
-      className={`fixed left-1/2 -translate-x-1/2 z-50 pointer-events-none ${bottomOffsetClass}`}
+      className="fixed left-1/2 -translate-x-1/2 z-50 pointer-events-none"
       style={{
-        // Respect iOS safe-area on top of the requested offset.
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        bottom: `calc(${offsetPx}px + env(safe-area-inset-bottom, 0px))`,
       }}
     >
       <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-1.5 py-1 shadow-lg">
