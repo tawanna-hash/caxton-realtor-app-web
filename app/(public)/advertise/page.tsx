@@ -103,6 +103,74 @@ export default function AdvertisePage() {
       <hr className="border-gray-200 my-12" />
 
       <section className="mb-12">
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
+          Reach our audience wherever they are
+        </p>
+        <h2
+          className="font-serif text-3xl md:text-4xl text-gray-900 leading-tight mb-4"
+          style={{ fontFamily: 'Georgia, serif' }}
+        >
+          Your audience moves. Your advertising should too.
+        </h2>
+        <p className="text-base text-gray-700 leading-relaxed font-light mb-6 max-w-3xl">
+          Whether they{'\u2019'}re reading our print edition, browsing our
+          digital replica, engaging on social media, or accessing content
+          through our mobile web app, your brand stays visible across every
+          touchpoint. Our integrated media platform delivers consistent
+          exposure and meaningful engagement, ensuring your message reaches
+          readers when, where, and how they prefer to consume information.
+        </p>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="border border-gray-200 px-4 py-5 text-center">
+            <p className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-1">
+              Channel 01
+            </p>
+            <p className="text-lg font-semibold text-[#1a2a44]">Print</p>
+            <p className="text-xs text-gray-500 mt-1 font-light leading-snug">
+              Monthly magazine in hands across Texas
+            </p>
+          </div>
+          <div className="border border-gray-200 px-4 py-5 text-center">
+            <p className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-1">
+              Channel 02
+            </p>
+            <p className="text-lg font-semibold text-[#1a2a44]">Digital</p>
+            <p className="text-xs text-gray-500 mt-1 font-light leading-snug">
+              Clickable replica + e-blasts
+            </p>
+          </div>
+          <div className="border border-gray-200 px-4 py-5 text-center">
+            <p className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-1">
+              Channel 03
+            </p>
+            <p className="text-lg font-semibold text-[#1a2a44]">Social</p>
+            <p className="text-xs text-gray-500 mt-1 font-light leading-snug">
+              Facebook, Instagram, LinkedIn shares
+            </p>
+          </div>
+          <div className="border border-gray-200 px-4 py-5 text-center">
+            <p className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-1">
+              Channel 04
+            </p>
+            <p className="text-lg font-semibold text-[#1a2a44]">Mobile</p>
+            <p className="text-xs text-gray-500 mt-1 font-light leading-snug">
+              Mobile web app + push alerts
+            </p>
+          </div>
+        </div>
+
+        <p className="text-sm uppercase tracking-[0.18em] text-gray-700 font-semibold">
+          Print {'\u00b7'} Digital {'\u00b7'} Social {'\u00b7'} Mobile.{' '}
+          <span className="text-gray-500 font-normal normal-case tracking-normal">
+            One powerful marketing platform.
+          </span>
+        </p>
+      </section>
+
+      <hr className="border-gray-200 my-12" />
+
+      <section className="mb-12">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-5">
           What an advertising partnership includes
         </p>
