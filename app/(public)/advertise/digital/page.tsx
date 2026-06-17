@@ -26,14 +26,14 @@ export const metadata = {
     'Live availability across all 17 digital placements on realtynewsnow.app. Book any open slot in under five minutes with self-serve checkout.',
 };
 
-// Single-pub scopes used to decide if a slot is sold out everywhere. The
-// legacy 'both' bundle is intentionally excluded — it's a packaging option
-// inside checkout, not a separate market.
-const SINGLE_PUBS: ReadonlyArray<MediaKitPub> = [
+// Single-pub scopes considered when deciding if a slot is sold out. Only
+// LAUNCHED markets count — Houston and Dallas/FTW are pre-launch and can't
+// be booked yet, so they must not 'rescue' a slot that's actually sold out
+// on every bookable publication. The legacy 'both' bundle is also
+// excluded — it's a packaging option, not a separate market.
+const BOOKABLE_PUBS: ReadonlyArray<MediaKitPub> = [
   'realtyline',
   'newsline',
-  'realtyline-houston',
-  'realtyline-dallas',
 ];
 
 function rateLine(s: AppAdSlot): string {
@@ -53,10 +53,13 @@ export default async function AdvertiseDigitalPage() {
   const availability = APP_AD_SLOTS.map((slot) => {
     const allowedPubs = getSlotAvailablePubs(slot);
     const blocked = blockedBySlug.get(slot.slug) ?? new Set<MediaKitPub>();
-    // A slot is "available" if at least one of its single-pub scopes is
-    // not currently booked. Houston/Dallas count as their own markets.
+    // A slot is "available" if at least one of its BOOKABLE single-pub
+    // scopes is not currently booked. Pre-launch markets (Houston,
+    // Dallas) are intentionally ignored so a slot booked on 'both' (which
+    // blocks RealtyLine + Newsline) correctly shows as sold out.
     const openPubs = allowedPubs.filter(
-      (p) => (SINGLE_PUBS as readonly MediaKitPub[]).includes(p) && !blocked.has(p),
+      (p) =>
+        (BOOKABLE_PUBS as readonly MediaKitPub[]).includes(p) && !blocked.has(p),
     );
     return { slot, soldOut: openPubs.length === 0 };
   });
