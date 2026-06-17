@@ -92,6 +92,14 @@ export default async function AdvertiseDigitalPage() {
           five minutes — your ad goes live as soon as we verify the creative
           meets spec, usually within one business day.
         </p>
+        <p className="mt-4">
+          <Link
+            href="/advertise/placements"
+            className="text-sm font-semibold text-[#1a2a44] underline underline-offset-2 hover:text-[#0f1d36]"
+          >
+            See where each ad appears in the app →
+          </Link>
+        </p>
       </header>
 
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
