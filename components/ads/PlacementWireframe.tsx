@@ -100,7 +100,7 @@ function ArticleWireframe({ active }: { active: string }) {
       <div className="px-2 pt-1.5 text-[9px] font-bold text-slate-900 leading-tight">
         City leaders unveil plan to improve public transit
       </div>
-      <div className="px-2 text-slate-500">By Jane Doe \u00b7 5 min read</div>
+      <div className="px-2 text-slate-500">By Jane Doe · 5 min read</div>
       <div className="flex-1 grid grid-cols-3 gap-1 px-2 py-2">
         <div className="col-span-2 space-y-1">
           <div className="h-3 bg-slate-100 rounded" />
