@@ -91,7 +91,24 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
             </h3>
             <div className="text-[10px] text-gray-400 font-mono mt-0.5">{slot.slug}</div>
           </div>
+          {slot.rotates && (
+            <span
+              className="shrink-0 inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+              title="Rotates with up to 5 active campaigns. 6s dwell, 2s cross-fade."
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M21 12a9 9 0 1 1-3-6.7" />
+                <polyline points="21 3 21 9 15 9" />
+              </svg>
+              Rotates
+            </span>
+          )}
         </div>
+        {slot.rotates && (
+          <div className="text-[11px] text-blue-700">
+            Shared with up to 4 other partners · 6s dwell · 2s cross-fade
+          </div>
+        )}
 
         <div className="text-xs text-gray-700">
           <span className="font-semibold">${slot.weeklySingle}</span>
@@ -167,6 +184,9 @@ export default function AdminAdsPlacementsPage() {
           a wireframe of the host page with the placement highlighted in green.
           Use this to walk advertisers through inventory or to verify a slot
           renders where you expect after a code change.
+        </p>
+        <p className="text-sm text-gray-600 mt-2 max-w-3xl">
+          Slots flagged <span className="inline-flex items-center gap-1 align-middle rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">Rotates</span> share the surface with up to 5 active campaigns — each creative dwells 6s and cross-fades over 2s. Single-campaign slots behave identically to before.
         </p>
       </div>
 
