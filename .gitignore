@@ -57,3 +57,15 @@ next-env.d.ts
 
 # Vercel env pulls — never commit (contain secrets)
 .vercel.env.*
+
+# iOS / Capacitor build outputs (the Xcode project itself IS committed;
+# only the build artifacts and CocoaPods cache should be ignored)
+ios/App/Pods/
+ios/App/build/
+ios/App/Podfile.lock
+ios/DerivedData/
+ios/App/App/public/
+*.xcuserdatad
+*.xcuserstate
+xcuserdata/
+
