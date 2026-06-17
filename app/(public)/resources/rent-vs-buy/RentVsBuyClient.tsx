@@ -274,10 +274,10 @@ export default function RentVsBuyClient() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="w-10 text-right text-[#c4a35a] font-medium">Rent</span>
+                      <span className="w-10 text-right text-[#c0982b] font-medium">Rent</span>
                       <div className="flex-1 h-3.5 bg-gray-100 rounded-sm overflow-hidden">
                         <div
-                          className="h-full bg-[#c4a35a]"
+                          className="h-full bg-[#c0982b]"
                           style={{ width: `${Math.max(0, rentWidth)}%` }}
                         />
                       </div>
@@ -311,13 +311,13 @@ export default function RentVsBuyClient() {
                     <tr
                       key={r.year}
                       className={`border-t border-gray-100 ${
-                        isBreakeven ? 'bg-[#c4a35a]/10' : ''
+                        isBreakeven ? 'bg-[#c0982b]/10' : ''
                       }`}
                     >
                       <td className="px-3 py-1.5 text-gray-700">
                         {r.year}
                         {isBreakeven && (
-                          <span className="ml-1.5 text-[10px] text-[#c4a35a] font-semibold uppercase">
+                          <span className="ml-1.5 text-[10px] text-[#c0982b] font-semibold uppercase">
                             breakeven
                           </span>
                         )}
@@ -377,7 +377,7 @@ function SummaryCard({
   return (
     <div
       className={`rounded-xl border p-5 ${
-        accent ? 'border-[#c4a35a]/40 bg-[#c4a35a]/5' : 'border-gray-200 bg-white'
+        accent ? 'border-[#c0982b]/40 bg-[#c0982b]/5' : 'border-gray-200 bg-white'
       }`}
     >
       <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">{label}</p>

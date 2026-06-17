@@ -25,14 +25,14 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
     slug:    'active-advertisers-sa',
     label:   'Active Advertisers - Newsline San Antonio',
     caption: 'Currently-active Newsline San Antonio advertisers and their staff.',
-    accent:  '#0EA5E9',
+    accent:  '#1887AB',
   },
   {
     segment: 'non-advertiser-atx',
     slug:    'non-advertisers-atx',
     label:   'Non-Advertisers - RealtyLine ATX',
     caption: 'RealtyLine ATX prospects who haven’t run an ad yet.',
-    accent:  '#F59E0B',
+    accent:  '#F0BE39',
   },
   {
     segment: 'non-advertiser-sa',
@@ -46,14 +46,14 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
     slug:    'manual-newsline-contacts',
     label:   'Manual Newsline San Antonio Contacts',
     caption: 'Newsline San Antonio contacts entered or imported manually.',
-    accent:  '#10B981',
+    accent:  '#359D73',
   },
   {
     segment: 'realtor',
     slug:    'realtors',
     label:   'REALTORS',
     caption: 'Licensed real estate agents — your core audience.',
-    accent:  '#3D0740',
+    accent:  '#874F80',
   },
 ];
 

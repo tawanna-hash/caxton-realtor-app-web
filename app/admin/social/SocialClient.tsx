@@ -621,7 +621,7 @@ function SocialList({ title, posts, onPatch, onDelete }: ListProps) {
                         className={
                           isGroup
                             ? 'inline-flex items-center rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.15em] font-semibold text-amber-800'
-                            : 'inline-flex items-center rounded-sm bg-blue-100 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.15em] font-semibold text-[#1877F2]'
+                            : 'inline-flex items-center rounded-sm bg-blue-100 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.15em] font-semibold text-[#156B8A]'
                         }
                       >
                         {isGroup ? 'Group · Harvested' : 'Page · Auto'}

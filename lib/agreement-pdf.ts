@@ -19,7 +19,7 @@ const GEORGIA_REGULAR = fs.readFileSync(path.join(FONT_DIR, 'Georgia.ttf'));
 const GEORGIA_BOLD = fs.readFileSync(path.join(FONT_DIR, 'Georgia-Bold.ttf'));
 const GEORGIA_ITALIC = fs.readFileSync(path.join(FONT_DIR, 'Georgia-Italic.ttf'));
 
-const RED = rgb(0.824, 0.145, 0.192);   // #D22531
+const RED = rgb(0.824, 0.145, 0.192);   // #D70E17
 const DARK = rgb(0.1, 0.1, 0.1);
 const GRAY = rgb(0.45, 0.45, 0.45);
 const LGRAY = rgb(0.85, 0.85, 0.85);

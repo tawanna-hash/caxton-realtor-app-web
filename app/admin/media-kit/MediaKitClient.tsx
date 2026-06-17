@@ -59,8 +59,8 @@ const PUB_TABS: PubTab[] = [
   { id: 'dallas',   label: 'RealtyLine Dallas/FTW',  mediaKitPub: 'realtyline-dallas',  hasPrint: false, channels: 'Digital, Email' },
 ];
 
-const ACCENT = '#D22531';
-const PREMIUM = '#3D0740';
+const ACCENT = '#D70E17';
+const PREMIUM = '#874F80';
 const NAVY = '#0B2545';
 const GOLD = '#B8923A';
 
