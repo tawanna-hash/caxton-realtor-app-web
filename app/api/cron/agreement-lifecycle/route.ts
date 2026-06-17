@@ -103,16 +103,16 @@ function rowHtml({ agreement: ag, bucket, daysUntil, expDate }: DigestRow, siteU
     badgeColor = '#7f1d1d';
   } else if (bucket === 'heads_up_45') {
     badgeText = '45 days out';
-    badgeColor = '#b75420';
+    badgeColor = '#b45309';
   } else if (daysUntil === 0) {
     badgeText = 'Expires today';
-    badgeColor = '#ac1917';
+    badgeColor = '#b91c1c';
   } else if (daysUntil <= 7) {
     badgeText = `${daysUntil} days left`;
-    badgeColor = '#ac1917';
+    badgeColor = '#b91c1c';
   } else {
     badgeText = `${daysUntil} days left`;
-    badgeColor = '#b75420';
+    badgeColor = '#b45309';
   }
 
   return `

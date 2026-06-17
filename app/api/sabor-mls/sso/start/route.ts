@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
   }
   input[type="text"]:focus, input[type="email"]:focus {
     outline: none;
-    border-color: #874F80;
+    border-color: #3D0740;
     background: #ffffff;
     box-shadow: 0 0 0 3px rgba(61,7,64,0.10);
   }
@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
     padding: 14px 18px;
     border: none;
     border-radius: 10px;
-    background: #874F80;
+    background: #3D0740;
     color: #ffffff;
     font-size: 15px;
     font-weight: 600;
@@ -135,7 +135,7 @@ export async function GET(req: NextRequest) {
     line-height: 1.6;
     color: #6B6557;
   }
-  .meta a { color: #874F80; text-decoration: underline; }
+  .meta a { color: #3D0740; text-decoration: underline; }
   .spinner {
     display: inline-block;
     width: 14px;

@@ -23,7 +23,7 @@ const PUB_LABEL: Record<NewsArticle['publication'], string> = {
 
 const PUB_STYLES: Record<NewsArticle['publication'], string> = {
   austin: 'bg-[#021D40]/10 text-[#021D40] border-[#021D40]/20',
-  san_antonio: 'bg-[#874F80]/10 text-[#874F80] border-[#874F80]/20',
+  san_antonio: 'bg-[#3D0740]/10 text-[#3D0740] border-[#3D0740]/20',
 };
 
 function formatDate(iso: string | undefined): string {

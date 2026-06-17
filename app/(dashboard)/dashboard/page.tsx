@@ -23,7 +23,7 @@ const API = getApiBase();
 
 const PUBS = [
   { id: 'realtyline', name: 'RealtyLine', city: 'Austin', tagline: 'Putting A Face on Real Estate since 1995', color: '#021D40' },
-  { id: 'newsline', name: 'Newsline San Antonio', city: 'San Antonio', tagline: 'Founded 1982 - Relaunched 2025', color: '#874F80' },
+  { id: 'newsline', name: 'Newsline San Antonio', city: 'San Antonio', tagline: 'Founded 1982 - Relaunched 2025', color: '#3D0740' },
 ];
 
 // BUG-09 / share-404 fix: Share URLs must deep-link into the app. The WP
@@ -1383,8 +1383,8 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
     <article ref={ref} className="bg-[#faf8f3] border-b border-[#e8dcc8]">
       <div className="px-4 py-5">
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-9 h-9 rounded-full bg-white border border-[#f0be39] flex items-center justify-center">
-            <span className="text-xs font-medium text-[#f0be39]">{initials}</span>
+          <div className="w-9 h-9 rounded-full bg-white border border-[#d4af37] flex items-center justify-center">
+            <span className="text-xs font-medium text-[#d4af37]">{initials}</span>
           </div>
           <span className="text-sm uppercase tracking-[0.2em] font-semibold text-[#b8972e]">Sponsored</span>
           <span className="flex-1" />

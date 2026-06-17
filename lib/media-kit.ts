@@ -658,17 +658,17 @@ export const PUB_SUBSCRIBERS: Record<MediaKitPub, number> = {
 
 export const POLICY_NOTES: PolicyNote[] = [
   {
-    color: '#D70E17',
+    color: '#D22531',
     title: 'Ad Rates',
     body: 'Ad rates are based on CONSECUTIVE MONTHS and agreement must be signed in advance to receive frequency discounts.',
   },
   {
-    color: '#F0BE39',
+    color: '#F59E0B',
     title: 'Premium Position Guarantees',
     body: 'A 20% premium fee applies to inside front cover, page 3, inside back cover, center-spread, and back page.',
   },
   {
-    color: '#AC1917',
+    color: '#DB1924',
     title: 'Cancellation Notice',
     body: 'All cancellations must be made in writing within 30 days of the stated advertising deadline. If not timely canceled, ad space will continue to be reserved, ad copy will pick up from the previous month, and the advertiser is responsible for payment at the open rate until a final written cancellation is received or a new agreement is executed.',
   },
