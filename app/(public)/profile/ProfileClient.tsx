@@ -23,7 +23,7 @@ type User = {
 // Houston/Dallas inherit RealtyLine navy as they're under the same umbrella.
 const ACCENT: Record<Pub, string> = {
   realtyline: '#021D40',
-  newsline: '#3D0740',
+  newsline: '#874F80',
   'realtyline-houston': '#021D40',
   'realtyline-dallas': '#021D40',
 };

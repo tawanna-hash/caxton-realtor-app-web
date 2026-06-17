@@ -28,7 +28,7 @@ type SortKey = 'title' | 'pub' | 'when' | 'source' | 'status';
 
 const PUB_STYLES: Record<PublicationId, string> = {
   austin: 'bg-[#021D40]/10 text-[#021D40] border-[#021D40]/20',
-  san_antonio: 'bg-[#3D0740]/10 text-[#3D0740] border-[#3D0740]/20',
+  san_antonio: 'bg-[#874F80]/10 text-[#874F80] border-[#874F80]/20',
 };
 
 const SOURCE_LABELS: Record<string, string> = {

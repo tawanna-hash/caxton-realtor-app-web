@@ -56,7 +56,7 @@ export default async function OpenGraphImage() {
               fontSize: '24px',
               letterSpacing: '0.18em',
               textTransform: 'uppercase',
-              color: '#9bb1d4',
+              color: '#728fb4',
               fontWeight: 600,
             }}
           >
@@ -81,7 +81,7 @@ export default async function OpenGraphImage() {
             style={{
               fontSize: '32px',
               lineHeight: 1.3,
-              color: '#9bb1d4',
+              color: '#728fb4',
               maxWidth: '900px',
               fontWeight: 400,
             }}
@@ -98,7 +98,7 @@ export default async function OpenGraphImage() {
             justifyContent: 'space-between',
             alignItems: 'flex-end',
             fontSize: '22px',
-            color: '#9bb1d4',
+            color: '#728fb4',
           }}
         >
           <div style={{ display: 'flex', gap: '32px' }}>

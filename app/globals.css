@@ -9,6 +9,96 @@
      recolor inherited text, form controls, or scrollbars into an unreadable
      hybrid. */
   color-scheme: light;
+
+  /* ==========================================================================
+     RNN brand palette — locked 36-color set (June 2026)
+     --------------------------------------------------------------------------
+     Hue tokens. These are the only hue-bearing colors used app-wide. Neutral
+     gray / white / black are still allowed (Tailwind gray-* scale, untouched).
+
+     Roles:
+       primary  = magenta family (replaces former purple #874F80)
+       success  = green/teal cool greens
+       warning  = warm yellows
+       danger   = warm reds
+       info     = mid blues
+       accent   = warm oranges (RealtyLine chip color)
+     ========================================================================== */
+  /* Primary — magenta */
+  --rnn-primary-50:  #fbf3f8;
+  --rnn-primary-100: #f3dfeb;
+  --rnn-primary-200: #e3bcd5;
+  --rnn-primary-300: #d386b7;
+  --rnn-primary-400: #c867a5;
+  --rnn-primary-500: #a9629f;
+  --rnn-primary-600: #a15284;
+  --rnn-primary-700: #874f80;
+  --rnn-primary-800: #aa3653;
+  --rnn-primary-900: #5a3354;
+
+  /* Success — greens / teals */
+  --rnn-success-50:  #eef6f1;
+  --rnn-success-100: #d6ebdf;
+  --rnn-success-200: #a9be77;
+  --rnn-success-300: #6fb293;
+  --rnn-success-400: #93ae55;
+  --rnn-success-500: #359d73;
+  --rnn-success-600: #237f5d;
+  --rnn-success-700: #1c7873;
+  --rnn-success-800: #27958f;
+  --rnn-success-900: #4eaaa6;
+
+  /* Warning — yellows / golds */
+  --rnn-warning-50:  #fdf7e2;
+  --rnn-warning-100: #faecbc;
+  --rnn-warning-200: #eec76b;
+  --rnn-warning-300: #f0be39;
+  --rnn-warning-400: #c0982b;
+  --rnn-warning-500: #c0982b;
+  --rnn-warning-600: #b75420;
+  --rnn-warning-700: #b75420;
+  --rnn-warning-800: #874f80;
+  --rnn-warning-900: #5a3354;
+
+  /* Danger — reds */
+  --rnn-danger-50:  #fdecec;
+  --rnn-danger-100: #fbcfd0;
+  --rnn-danger-200: #e54a50;
+  --rnn-danger-300: #e54a50;
+  --rnn-danger-400: #d70e17;
+  --rnn-danger-500: #d70e17;
+  --rnn-danger-600: #ac1917;
+  --rnn-danger-700: #ac1917;
+  --rnn-danger-800: #aa3653;
+  --rnn-danger-900: #5a1011;
+
+  /* Info — blues */
+  --rnn-info-50:  #eaf2f6;
+  --rnn-info-100: #cfe1ec;
+  --rnn-info-200: #5d9db9;
+  --rnn-info-300: #728fb4;
+  --rnn-info-400: #4f73a1;
+  --rnn-info-500: #1887ab;
+  --rnn-info-600: #156b8a;
+  --rnn-info-700: #3f5d82;
+  --rnn-info-800: #704776;
+  --rnn-info-900: #103247;
+
+  /* Accent — warm oranges (RealtyLine chip family) */
+  --rnn-accent-50:  #fdf1e8;
+  --rnn-accent-100: #fad9c1;
+  --rnn-accent-200: #ea8553;
+  --rnn-accent-300: #e46828;
+  --rnn-accent-400: #b75420;
+  --rnn-accent-500: #b75420;
+  --rnn-accent-600: #b75420;
+  --rnn-accent-700: #b75420;
+  --rnn-accent-800: #c0982b;
+  --rnn-accent-900: #5a2510;
+
+  /* Brand-specific publication chips */
+  --rnn-realtyline:  var(--rnn-accent-300); /* #e46828 — was amber-500 */
+  --rnn-newsline:    var(--rnn-info-500);   /* #1887ab — was sky-500 */
 }
 
 @theme inline {
@@ -26,6 +116,213 @@
   --color-gray-900: #021D40;
   --color-gray-800: #021D40;
   --color-gray-700: #021D40;
+
+  /* ==========================================================================
+     Palette lockdown — remap every Tailwind hue scale into the 36-color brand
+     palette. Neutral families (gray, neutral, slate, zinc, stone) keep their
+     defaults so body text, borders, surfaces stay readable.
+
+     Existing class names work unchanged:
+       bg-purple-700  → magenta primary
+       bg-emerald-600 → green success
+       bg-amber-500   → gold warning
+       bg-red-600     → red danger
+       bg-sky-500     → blue info
+     ========================================================================== */
+
+  /* Primary family — purple/fuchsia/pink/violet/indigo all collapse to magenta */
+  --color-purple-50:  var(--rnn-primary-50);
+  --color-purple-100: var(--rnn-primary-100);
+  --color-purple-200: var(--rnn-primary-200);
+  --color-purple-300: var(--rnn-primary-300);
+  --color-purple-400: var(--rnn-primary-400);
+  --color-purple-500: var(--rnn-primary-500);
+  --color-purple-600: var(--rnn-primary-600);
+  --color-purple-700: var(--rnn-primary-700);
+  --color-purple-800: var(--rnn-primary-800);
+  --color-purple-900: var(--rnn-primary-900);
+
+  --color-fuchsia-50:  var(--rnn-primary-50);
+  --color-fuchsia-100: var(--rnn-primary-100);
+  --color-fuchsia-200: var(--rnn-primary-200);
+  --color-fuchsia-300: var(--rnn-primary-300);
+  --color-fuchsia-400: var(--rnn-primary-400);
+  --color-fuchsia-500: var(--rnn-primary-500);
+  --color-fuchsia-600: var(--rnn-primary-600);
+  --color-fuchsia-700: var(--rnn-primary-700);
+  --color-fuchsia-800: var(--rnn-primary-800);
+  --color-fuchsia-900: var(--rnn-primary-900);
+
+  --color-pink-50:  var(--rnn-primary-50);
+  --color-pink-100: var(--rnn-primary-100);
+  --color-pink-200: var(--rnn-primary-200);
+  --color-pink-300: var(--rnn-primary-300);
+  --color-pink-400: var(--rnn-primary-400);
+  --color-pink-500: var(--rnn-primary-500);
+  --color-pink-600: var(--rnn-primary-600);
+  --color-pink-700: var(--rnn-primary-700);
+  --color-pink-800: var(--rnn-primary-800);
+  --color-pink-900: var(--rnn-primary-900);
+
+  --color-violet-50:  var(--rnn-primary-50);
+  --color-violet-100: var(--rnn-primary-100);
+  --color-violet-200: var(--rnn-primary-200);
+  --color-violet-300: var(--rnn-primary-300);
+  --color-violet-400: var(--rnn-primary-400);
+  --color-violet-500: var(--rnn-primary-500);
+  --color-violet-600: var(--rnn-primary-600);
+  --color-violet-700: var(--rnn-primary-700);
+  --color-violet-800: var(--rnn-primary-800);
+  --color-violet-900: var(--rnn-primary-900);
+
+  --color-indigo-50:  var(--rnn-primary-50);
+  --color-indigo-100: var(--rnn-primary-100);
+  --color-indigo-200: var(--rnn-primary-200);
+  --color-indigo-300: var(--rnn-primary-300);
+  --color-indigo-400: var(--rnn-primary-400);
+  --color-indigo-500: var(--rnn-primary-500);
+  --color-indigo-600: var(--rnn-primary-600);
+  --color-indigo-700: var(--rnn-primary-700);
+  --color-indigo-800: var(--rnn-primary-800);
+  --color-indigo-900: var(--rnn-primary-900);
+
+  /* Rose — danger-tinted pink in original palette; map to danger reds */
+  --color-rose-50:  var(--rnn-danger-50);
+  --color-rose-100: var(--rnn-danger-100);
+  --color-rose-200: var(--rnn-danger-200);
+  --color-rose-300: var(--rnn-danger-300);
+  --color-rose-400: var(--rnn-danger-400);
+  --color-rose-500: var(--rnn-danger-500);
+  --color-rose-600: var(--rnn-danger-600);
+  --color-rose-700: var(--rnn-danger-700);
+  --color-rose-800: var(--rnn-danger-800);
+  --color-rose-900: var(--rnn-danger-900);
+
+  /* Danger family — red */
+  --color-red-50:  var(--rnn-danger-50);
+  --color-red-100: var(--rnn-danger-100);
+  --color-red-200: var(--rnn-danger-200);
+  --color-red-300: var(--rnn-danger-300);
+  --color-red-400: var(--rnn-danger-400);
+  --color-red-500: var(--rnn-danger-500);
+  --color-red-600: var(--rnn-danger-600);
+  --color-red-700: var(--rnn-danger-700);
+  --color-red-800: var(--rnn-danger-800);
+  --color-red-900: var(--rnn-danger-900);
+
+  /* Accent family — orange */
+  --color-orange-50:  var(--rnn-accent-50);
+  --color-orange-100: var(--rnn-accent-100);
+  --color-orange-200: var(--rnn-accent-200);
+  --color-orange-300: var(--rnn-accent-300);
+  --color-orange-400: var(--rnn-accent-400);
+  --color-orange-500: var(--rnn-accent-500);
+  --color-orange-600: var(--rnn-accent-600);
+  --color-orange-700: var(--rnn-accent-700);
+  --color-orange-800: var(--rnn-accent-800);
+  --color-orange-900: var(--rnn-accent-900);
+
+  /* Warning family — amber/yellow */
+  --color-amber-50:  var(--rnn-warning-50);
+  --color-amber-100: var(--rnn-warning-100);
+  --color-amber-200: var(--rnn-warning-200);
+  --color-amber-300: var(--rnn-warning-300);
+  --color-amber-400: var(--rnn-warning-400);
+  --color-amber-500: var(--rnn-warning-500);
+  --color-amber-600: var(--rnn-warning-600);
+  --color-amber-700: var(--rnn-warning-700);
+  --color-amber-800: var(--rnn-warning-800);
+  --color-amber-900: var(--rnn-warning-900);
+
+  --color-yellow-50:  var(--rnn-warning-50);
+  --color-yellow-100: var(--rnn-warning-100);
+  --color-yellow-200: var(--rnn-warning-200);
+  --color-yellow-300: var(--rnn-warning-300);
+  --color-yellow-400: var(--rnn-warning-400);
+  --color-yellow-500: var(--rnn-warning-500);
+  --color-yellow-600: var(--rnn-warning-600);
+  --color-yellow-700: var(--rnn-warning-700);
+  --color-yellow-800: var(--rnn-warning-800);
+  --color-yellow-900: var(--rnn-warning-900);
+
+  /* Success family — green / emerald / teal / lime all collapse */
+  --color-green-50:  var(--rnn-success-50);
+  --color-green-100: var(--rnn-success-100);
+  --color-green-200: var(--rnn-success-200);
+  --color-green-300: var(--rnn-success-300);
+  --color-green-400: var(--rnn-success-400);
+  --color-green-500: var(--rnn-success-500);
+  --color-green-600: var(--rnn-success-600);
+  --color-green-700: var(--rnn-success-700);
+  --color-green-800: var(--rnn-success-800);
+  --color-green-900: var(--rnn-success-900);
+
+  --color-emerald-50:  var(--rnn-success-50);
+  --color-emerald-100: var(--rnn-success-100);
+  --color-emerald-200: var(--rnn-success-200);
+  --color-emerald-300: var(--rnn-success-300);
+  --color-emerald-400: var(--rnn-success-400);
+  --color-emerald-500: var(--rnn-success-500);
+  --color-emerald-600: var(--rnn-success-600);
+  --color-emerald-700: var(--rnn-success-700);
+  --color-emerald-800: var(--rnn-success-800);
+  --color-emerald-900: var(--rnn-success-900);
+
+  --color-teal-50:  var(--rnn-success-50);
+  --color-teal-100: var(--rnn-success-100);
+  --color-teal-200: var(--rnn-success-200);
+  --color-teal-300: var(--rnn-success-300);
+  --color-teal-400: var(--rnn-success-400);
+  --color-teal-500: var(--rnn-success-500);
+  --color-teal-600: var(--rnn-success-600);
+  --color-teal-700: var(--rnn-success-700);
+  --color-teal-800: var(--rnn-success-800);
+  --color-teal-900: var(--rnn-success-900);
+
+  --color-lime-50:  var(--rnn-success-50);
+  --color-lime-100: var(--rnn-success-100);
+  --color-lime-200: var(--rnn-success-200);
+  --color-lime-300: var(--rnn-success-300);
+  --color-lime-400: var(--rnn-success-400);
+  --color-lime-500: var(--rnn-success-500);
+  --color-lime-600: var(--rnn-success-600);
+  --color-lime-700: var(--rnn-success-700);
+  --color-lime-800: var(--rnn-success-800);
+  --color-lime-900: var(--rnn-success-900);
+
+  /* Info family — blue / sky / cyan all collapse */
+  --color-blue-50:  var(--rnn-info-50);
+  --color-blue-100: var(--rnn-info-100);
+  --color-blue-200: var(--rnn-info-200);
+  --color-blue-300: var(--rnn-info-300);
+  --color-blue-400: var(--rnn-info-400);
+  --color-blue-500: var(--rnn-info-500);
+  --color-blue-600: var(--rnn-info-600);
+  --color-blue-700: var(--rnn-info-700);
+  --color-blue-800: var(--rnn-info-800);
+  --color-blue-900: var(--rnn-info-900);
+
+  --color-sky-50:  var(--rnn-info-50);
+  --color-sky-100: var(--rnn-info-100);
+  --color-sky-200: var(--rnn-info-200);
+  --color-sky-300: var(--rnn-info-300);
+  --color-sky-400: var(--rnn-info-400);
+  --color-sky-500: var(--rnn-info-500);
+  --color-sky-600: var(--rnn-info-600);
+  --color-sky-700: var(--rnn-info-700);
+  --color-sky-800: var(--rnn-info-800);
+  --color-sky-900: var(--rnn-info-900);
+
+  --color-cyan-50:  var(--rnn-info-50);
+  --color-cyan-100: var(--rnn-info-100);
+  --color-cyan-200: var(--rnn-info-200);
+  --color-cyan-300: var(--rnn-info-300);
+  --color-cyan-400: var(--rnn-info-400);
+  --color-cyan-500: var(--rnn-info-500);
+  --color-cyan-600: var(--rnn-info-600);
+  --color-cyan-700: var(--rnn-info-700);
+  --color-cyan-800: var(--rnn-info-800);
+  --color-cyan-900: var(--rnn-info-900);
 }
 
 /* NOTE: the previous @media (prefers-color-scheme: dark) override was removed.

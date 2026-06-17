@@ -623,7 +623,7 @@ return (
 
                 <div className="flex items-center justify-between flex-wrap gap-3 pt-3 border-t border-gray-100">
                   <div className="text-sm text-gray-700">
-                    <div className="font-medium text-[#DB1924]">Delete subscriber</div>
+                    <div className="font-medium text-[#AC1917]">Delete subscriber</div>
                     <div className="text-xs text-gray-500">
                       Hard delete. Removes RSVPs, notification deliveries, magic links, subscriptions, and push tokens.
                       Email log entries are preserved with the realtor_id nulled.
@@ -631,7 +631,7 @@ return (
                   </div>
                   <button
                     onClick={() => { setDeleteModalOpen(true); setDeleteConfirmText(''); setActionMsg(null); }}
-                    className="text-sm font-medium px-3 py-1.5 rounded border border-[#DB1924] text-[#DB1924] hover:bg-red-50"
+                    className="text-sm font-medium px-3 py-1.5 rounded border border-[#AC1917] text-[#AC1917] hover:bg-red-50"
                   >
                     Delete…
                   </button>
@@ -645,7 +645,7 @@ return (
       {deleteModalOpen && sub && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
           <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-[#DB1924]">Delete this subscriber?</h3>
+            <h3 className="text-lg font-semibold text-[#AC1917]">Delete this subscriber?</h3>
             <p className="text-sm text-gray-700 mt-2">
               This will hard-delete <span className="font-medium">{sub.email}</span> and cascade to their
               RSVPs, notification deliveries, magic links, subscriptions, and push tokens. Email log entries
@@ -660,7 +660,7 @@ return (
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder={sub.email}
               autoFocus
-              className="mt-2 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#DB1924] focus:border-[#DB1924]"
+              className="mt-2 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#AC1917] focus:border-[#AC1917]"
             />
             <div className="mt-5 flex justify-end gap-2">
               <button
@@ -673,7 +673,7 @@ return (
               <button
                 onClick={doDelete}
                 disabled={!deleteEnabled || deleting}
-                className="text-sm font-medium px-4 py-1.5 rounded bg-[#DB1924] text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="text-sm font-medium px-4 py-1.5 rounded bg-[#AC1917] text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {deleting ? 'Deleting…' : 'Delete subscriber'}
               </button>

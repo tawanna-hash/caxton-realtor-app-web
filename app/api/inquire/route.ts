@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
 
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; padding: 24px;">
-      <h2 style="color: #1a2a44; margin: 0 0 16px 0;">New ad inquiry${soldOut ? ' <span style="color:#b45309;font-size:14px;font-weight:600;">(slot sold out)</span>' : ''}</h2>
+      <h2 style="color: #1a2a44; margin: 0 0 16px 0;">New ad inquiry${soldOut ? ' <span style="color:#b75420;font-size:14px;font-weight:600;">(slot sold out)</span>' : ''}</h2>
       <p style="color: #444; font-size: 14px; margin: 0 0 24px 0;">
         Submitted via realtynewsnow.app${data.slot_label ? ` — ${escapeHtml(data.slot_label)}` : ''}
       </p>

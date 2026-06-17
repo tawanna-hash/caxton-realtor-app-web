@@ -46,7 +46,7 @@ export const PUBLICATIONS: readonly Publication[] = [
     market: 'San Antonio',
     label: 'Newsline San Antonio',
     filterLabel: 'Newsline San Antonio',
-    pillStyle: 'bg-[#3D0740]/10 text-[#3D0740] border-[#3D0740]/20',
+    pillStyle: 'bg-[#874F80]/10 text-[#874F80] border-[#874F80]/20',
   },
 ] as const;
 

@@ -236,7 +236,7 @@ ${brand.tagline}`;
   <h1 style="font-size: 28px; font-weight: 600; color: #1a2a44; margin: 0 0 24px 0; line-height: 1.2;">Congratulations &mdash; you won!</h1>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Hi ${esc(input.firstName)},</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Your name was randomly drawn from the <strong>${esc(input.giveawayTitle)}</strong>, and you've been selected to receive:</p>
-  <p style="font-size: 22px; font-weight: 600; color: #1a2a44; padding: 20px; background: #faf8f3; border-left: 4px solid #d4af37; margin: 24px 0;">${esc(input.prize)}</p>
+  <p style="font-size: 22px; font-weight: 600; color: #1a2a44; padding: 20px; background: #faf8f3; border-left: 4px solid #f0be39; margin: 24px 0;">${esc(input.prize)}</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">We'll be in touch within the next few business days to coordinate getting your prize to you. Watch for an email or call from the ${esc(brand.name)} team.</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Thanks for being part of the ${esc(brand.name)} community.</p>
   <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e5e5;">

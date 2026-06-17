@@ -38,7 +38,7 @@ type User = { id?: string; email?: string } | null;
 
 const PUB_COLORS: Record<string, string> = {
   realtyline: '#021D40',
-  newsline: '#3D0740',
+  newsline: '#874F80',
   realtynewsnow: '#1a2a44',
 };
 
