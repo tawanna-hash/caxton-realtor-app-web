@@ -125,7 +125,7 @@ export default function SelfServicePortalPage() {
                 'Instant checkout \u2014 no call needed',
                 `${APP_AD_SLOTS.length} ad formats from $${minPrice}\u2013$${maxPrice.toLocaleString()}/wk`,
                 'Pick your market + preferred dates',
-                'Up to 30% off when you bundle markets',
+                'Bundle and save',
               ].map((line) => (
                 <li key={line} className="flex items-start gap-2.5">
                   <span className="shrink-0 w-5 h-5 rounded-full bg-emerald-500/90 flex items-center justify-center mt-0.5">
