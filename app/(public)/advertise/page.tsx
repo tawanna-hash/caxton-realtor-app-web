@@ -287,8 +287,7 @@ export default function AdvertisePage() {
                   Dedicated e-Blast
                 </p>
                 <p className="text-xs text-gray-700 font-light mt-1">
-                  Exclusive email to the preferred market subscriber list {'\u2014'} your
-                  design, full inbox real estate
+                  Exclusive email to the preferred market subscriber list.
                 </p>
               </div>
               <div className="border border-gray-100 px-4 py-3">
