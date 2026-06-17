@@ -42,7 +42,7 @@ export default function AdvertisePage() {
               Buy a placement in two minutes.
             </h2>
             <p className="text-sm text-gray-700 leading-relaxed max-w-xl">
-              Sixteen digital ad formats from $125/week, pick your market and dates,
+              Digital ad formats from $125/week, pick your market and dates,
               instant checkout {'—'} no sales call required.
             </p>
           </div>
@@ -396,94 +396,6 @@ export default function AdvertisePage() {
 
       <hr className="border-gray-200 my-12" />
 
-      <section className="mb-12">
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-5">
-          Frequently asked
-        </p>
-
-        <div className="space-y-6 text-base">
-          <div>
-            <p className="font-semibold text-gray-900 mb-1">
-              Can I request a specific ad placement?
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Yes. Premium positions and position guarantees are available.
-              Details on availability and pricing are in the media kit.
-            </p>
-          </div>
-
-          <div>
-            <p className="font-semibold text-gray-900 mb-1">
-              Do you offer pre-payment discounts?
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Yes. Contracts paid in full at signing receive a pre-payment
-              discount. Details are in the media kit.
-            </p>
-          </div>
-
-          <div>
-            <p className="font-semibold text-gray-900 mb-1">
-              What are the 2026 print deadlines?
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Each magazine has its own monthly production schedule. Current
-              deadlines are published at{' '}
-              <a
-                href="https://www.realtyline.us/2026-deadlines-2/"
-                className="text-[#1a2a44] font-medium underline underline-offset-2"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                realtyline.us/2026-deadlines
-              </a>{' '}
-              and{' '}
-              <a
-                href="https://www.newslinesa.com/2026-deadlines/"
-                className="text-[#3D0740] font-medium underline underline-offset-2"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                newslinesa.com/2026-deadlines
-              </a>
-              .
-            </p>
-          </div>
-
-          <div>
-            <p className="font-semibold text-gray-900 mb-1">
-              Do you provide a design template?
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Yes. We provide Adobe InDesign templates for advertisers who want
-              to design in-house.
-            </p>
-          </div>
-
-          <div>
-            <p className="font-semibold text-gray-900 mb-1">
-              What payment methods do you accept?
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Check, ACH, Visa, MasterCard, and American Express. A small
-              processing fee applies to credit card payments.
-            </p>
-          </div>
-
-          <div>
-            <p className="font-semibold text-gray-900 mb-1">
-              How do I get rate information?
-            </p>
-            <p className="text-gray-700 font-light leading-relaxed">
-              Rates depend on commitment length, ad size, and the package mix
-              you choose. We&apos;ll send a full media kit with rates after you
-              reach out — just email the publication you&apos;re interested in.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <hr className="border-gray-200 my-12" />
 
       <section className="bg-gray-50 border-l-4 border-[#1a2a44] px-6 py-6 md:px-8 md:py-8">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-700 font-medium mb-4">
