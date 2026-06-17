@@ -264,6 +264,21 @@ export async function getAdInquiry(id: string): Promise<AdInquiryRow | null> {
 }
 
 /**
+ * Permanently remove an inquiry. Returns true when a row was deleted.
+ *
+ * Used by the admin detail drawer's Delete action -- for example, to clear
+ * out test rows or spam that shouldn't sit in the pipeline. The audit log
+ * captures the deletion so we still have a record of what was removed.
+ */
+export async function deleteAdInquiry(id: string): Promise<boolean> {
+  const sql = getSql();
+  const rows = (await sql`
+    DELETE FROM ad_inquiries WHERE id = ${id} RETURNING id
+  `) as unknown as Array<{ id: string }>;
+  return rows.length > 0;
+}
+
+/**
  * Count of inquiries by status — used by the admin nav unread badge.
  */
 export async function countAdInquiries(
