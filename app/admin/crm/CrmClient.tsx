@@ -333,7 +333,7 @@ function CrmRow({
           Copy link
         </button>
         <Link
-          href={`/admin/advertisers/${row.id}`}
+          href={`/admin/reports?tab=advertisers&advertiserId=${row.id}`}
           className="px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
           title="Open advertiser analytics dashboard"
         >
@@ -904,7 +904,7 @@ function EditDrawer({
                 </button>
               </div>
               <Link
-                href={`/admin/advertisers/${row.id}`}
+                href={`/admin/reports?tab=advertisers&advertiserId=${row.id}`}
                 className="inline-block text-xs text-blue-600 hover:underline"
               >
                 Open analytics dashboard

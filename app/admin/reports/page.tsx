@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { ArticleListItem, ArticleReport, EventListItem, EventReport, ReportOverrides } from './_types';
 import { ReportPreview, buildReportHtml, buildReportPlainText } from './_components/ReportPreview';
 import { EventReportPreview, buildEventReportHtml, buildEventReportPlainText } from './_components/EventReportPreview';
@@ -15,7 +16,16 @@ const DAYS_OPTIONS: Array<{ value: DaysOption; label: string }> = [
   { value: 180, label: '180 days' },
 ];
 
+type TabKey = 'articles' | 'events' | 'advertisers';
+
+function parseTab(value: string | null): TabKey {
+  return value === 'events' || value === 'advertisers' ? value : 'articles';
+}
+
 export default function AdminReportsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [articles, setArticles] = useState<ArticleListItem[]>([]);
   const [articlesLoading, setArticlesLoading] = useState(true);
   const [articlesError, setArticlesError] = useState<string | null>(null);
@@ -31,7 +41,20 @@ export default function AdminReportsPage() {
   const [pubOverride, setPubOverride] = useState('');
   const [noteOverride, setNoteOverride] = useState('');
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'articles' | 'events' | 'advertisers'>('articles');
+
+  // The active tab is derived directly from the URL so deep links and the
+  // browser's back/forward buttons just work. Clicking a tab updates the
+  // URL via router.replace below, which feeds back into this value.
+  const activeTab: TabKey = parseTab(searchParams.get('tab'));
+
+  function selectTab(next: TabKey) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === 'articles') params.delete('tab'); else params.set('tab', next);
+    // Switching tabs clears any advertiser-specific deep-link param.
+    if (next !== 'advertisers') params.delete('advertiserId');
+    const qs = params.toString();
+    router.replace(qs ? `/admin/reports?${qs}` : '/admin/reports', { scroll: false });
+  }
 
   // Events tab state (parallel to the articles tab state above)
   const [eventsList, setEventsList] = useState<EventListItem[]>([]);
@@ -192,7 +215,7 @@ export default function AdminReportsPage() {
               <button
                 key={tab.key}
                 type="button"
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => selectTab(tab.key)}
                 className={[
                   'px-1 pb-3 text-sm font-medium border-b-2 transition-colors',
                   isActive
