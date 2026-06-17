@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
 export const metadata = {
   title: 'Advertise with Us — Realty News Now',
@@ -21,6 +22,30 @@ export default function AdvertisePage() {
           transactions every month.
         </p>
       </header>
+
+      <section className="mb-12 rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50 to-fuchsia-50 p-6 md:p-7">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-purple-700 font-semibold mb-2">
+              New {'·'} Self-service portal
+            </p>
+            <h2 className="font-serif text-2xl text-gray-900 mb-1" style={{ fontFamily: 'Georgia, serif' }}>
+              Buy a placement in two minutes.
+            </h2>
+            <p className="text-sm text-gray-700 leading-relaxed max-w-xl">
+              Six digital ad formats from $200, pick your market and dates,
+              instant checkout {'—'} no sales call required.
+            </p>
+          </div>
+          <Link
+            href="/advertise/portal"
+            className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-800 transition"
+          >
+            Open self-service portal
+            <span aria-hidden>{'→'}</span>
+          </Link>
+        </div>
+      </section>
 
       <section className="mb-12">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-5">
