@@ -1713,8 +1713,14 @@ function AdPopup({}: { pub: string; articleId: string }) {
 
   return (
     <div
-      className="fixed bottom-20 right-4 z-50 w-72 shadow-2xl rounded-lg overflow-hidden"
-      style={{ animation: 'slideInRight 0.3s ease-out' }}
+      className="fixed right-4 z-50 w-72 shadow-2xl rounded-lg overflow-hidden"
+      // BUG-iPhone-17: was bottom-20 (80px), which collided with the
+      // BottomNav + safe-area on tall iPhones. Lift it above BottomNav +
+      // ActionBar so it doesn't cover the article pill or get hidden.
+      style={{
+        animation: 'slideInRight 0.3s ease-out',
+        bottom: 'calc(160px + env(safe-area-inset-bottom, 0px))',
+      }}
     >
       <button
         onClick={onClose}
@@ -1890,8 +1896,20 @@ function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onMagazine, on
   // covering the Latest/Share pills, so taps on those buttons hit the ad
   // instead. Bump this bar above the popup (z-60) so navigation always
   // wins. AdPopup remains dismissable via its own close button.
+  //
+  // BUG-iPhone-17: bottom-4 (16px) put the pill BEHIND the BottomNav
+  // (which is ~70px + safe-area-inset-bottom tall on notched iPhones), so
+  // on iPhone 17 / 17 Pro Max the entire action bar was invisible. The
+  // ArticleReader overlay is z-30; BottomNav is z-40 and sits on top of
+  // it, hiding anything in the bottom ~100px strip. Push the pill above
+  // the BottomNav by combining a fixed 80px BottomNav clearance with the
+  // iOS safe-area inset via calc(). 80px matches FloaterPill's default
+  // offset elsewhere in the app.
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] pointer-events-none">
+    <div
+      className="fixed left-1/2 -translate-x-1/2 z-[60] pointer-events-none"
+      style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
+    >
       <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-2 py-1.5 shadow-lg">
         <ActionPillButton onClick={onBack} label="Back">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -2121,9 +2139,10 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
         </div>
       )}
 
-      {/* pb-52: clears the sticky ArticleActionBar (bottom-4 + ~62px pill) with
-          breathing room. Was pb-44 — the bar overlapped the last paragraph on
-          short articles and the "Read on website" link (BUG-18). */}
+      {/* pb-52: clears the sticky ArticleActionBar (now bottom 80px+safe-area +
+          ~62px pill) plus the BottomNav underneath, with breathing room.
+          Was pb-44 — the bar overlapped the last paragraph on short
+          articles and the "Read on website" link (BUG-18). */}
       <div className="px-5 pt-6 pb-52 max-w-2xl mx-auto">
         {/* Top leaderboard ad — first thing in the article column */}
         <AdLeaderboard pub={pub} articleId={articleId} />
