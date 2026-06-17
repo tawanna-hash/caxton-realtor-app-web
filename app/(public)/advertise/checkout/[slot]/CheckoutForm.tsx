@@ -27,18 +27,24 @@ import {
   useElements,
   useStripe,
 } from '@stripe/react-stripe-js';
-import { getSlotAvailablePubs, type AppAdSlot } from '@/lib/media-kit';
+import {
+  getSlotAvailablePubs,
+  weeklyRateForMarkets,
+  monthlyRateForMarkets,
+  MARKET_MULTIPLIERS,
+  type AppAdSlot,
+  type MarketCount,
+} from '@/lib/media-kit';
 
-// Per product decision (2026-06-16, revised 2026-06-17): publication pills
-// are MULTI-SELECT toggles. An advertiser can pick one or more single-pub
-// markets (Austin / SA / Houston / Dallas). Selecting both Austin AND
-// Newsline SA automatically applies the legacy 'both' bundle rate. Pre-
-// launch markets (Houston, Dallas/FTW) render as disabled Coming Soon
-// pills and can not be selected. Other multi-pub combinations are not
-// currently priced (only the Austin+SA bundle gets the discount); since
-// Houston/Dallas are pre-launch, the only multi-select the UI lets a
-// buyer create today is Austin+SA, which the server already supports as
-// pub='both'.
+// Phase 3 multi-market checkout (2026-06-17): publication pills are
+// MULTI-SELECT toggles backed by the MARKET_MULTIPLIERS pricing tier
+// (1x / 1.7x / 2.4x / 3.0x for 1-4 markets). The client sends a
+// `pubs: string[]` array to the server, which prices via
+// weeklyRateForMarkets / monthlyRateForMarkets. Pre-launch markets
+// (Houston, Dallas/FTW) render as disabled Coming Soon pills and cannot
+// be selected; when those markets launch, flipping the PRE_LAUNCH_PUB_KEYS
+// gate is all that's needed for 3- and 4-market bundles to become
+// bookable through this form.
 interface Props {
   slot: AppAdSlot;
   initialPub: 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas';
@@ -58,23 +64,20 @@ interface Props {
 type Pub = 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas';
 type BillingPeriod = 'weekly' | 'monthly' | 'unit';
 
-/** Server-side scope value. 'both' = Austin+SA bundle (legacy). */
-type ServerPub = Pub | 'both';
-
 /**
- * Map a set of selected single-pub markets to the canonical server scope
- * used by /api/checkout/create-intent. Today the public form only allows
- * the Austin+SA combination to be multi-selected (Houston/Dallas are
- * disabled), so this collapses cleanly to 'both' or a single pub.
+ * Canonical pill order used everywhere: Austin, Newsline SA, Houston,
+ * Dallas/FTW. Keeps the pubs[] payload deterministic regardless of the
+ * order in which the buyer clicked the pills.
  */
-function toServerPub(selected: ReadonlySet<Pub>): ServerPub | null {
-  if (selected.size === 0) return null;
-  if (selected.size === 1) return Array.from(selected)[0];
-  if (selected.size === 2 && selected.has('realtyline') && selected.has('newsline')) {
-    return 'both';
-  }
-  // Defensive: no other multi-select shape is reachable through the UI today.
-  return null;
+const CANONICAL_PUB_ORDER: readonly Pub[] = [
+  'realtyline',
+  'newsline',
+  'realtyline-houston',
+  'realtyline-dallas',
+];
+
+function sortedPubs(set: ReadonlySet<Pub>): Pub[] {
+  return CANONICAL_PUB_ORDER.filter((p) => set.has(p));
 }
 
 interface IntentResp {
@@ -160,11 +163,14 @@ export default function CheckoutForm({
       return next;
     });
   };
-  // Resolved server scope (one of the 4 single pubs, or 'both' if both
-  // Austin+SA pills are selected). Should never be null in practice since
-  // togglePub prevents unselecting the last pill.
-  const serverPub: ServerPub | null = toServerPub(selectedPubs);
-  const isBundle = serverPub === 'both';
+  // Canonical sorted array of selected markets. Sent to the server as
+  // the `pubs` payload; also used by the live pricing preview.
+  const selectedPubsArray = sortedPubs(selectedPubs);
+  const marketCount: MarketCount = (Math.min(
+    Math.max(selectedPubsArray.length, 1),
+    4,
+  ) as MarketCount);
+  const isBundle = marketCount >= 2;
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>(
     perUnit ? 'unit' : 'weekly',
   );
@@ -211,16 +217,17 @@ export default function CheckoutForm({
   // markets were activated in Phase 2 PR D.)
   const previewBaseCents = useMemo(() => {
     if (perUnit) {
-      const rate = isBundle ? slot.weeklyBoth : slot.weeklySingle;
+      const rate = weeklyRateForMarkets(slot, marketCount);
       return rate * 100 * units;
     }
     if (billingPeriod === 'monthly' && hasMonthly) {
-      const rate = isBundle ? slot.monthlyBoth! : slot.monthlySingle!;
+      const rate = monthlyRateForMarkets(slot, marketCount);
+      if (rate === null) return 0;
       return rate * 100 * months;
     }
-    const rate = isBundle ? slot.weeklyBoth : slot.weeklySingle;
+    const rate = weeklyRateForMarkets(slot, marketCount);
     return rate * 100 * weeks;
-  }, [slot, billingPeriod, weeks, months, units, perUnit, hasMonthly, isBundle]);
+  }, [slot, billingPeriod, weeks, months, units, perUnit, hasMonthly, marketCount]);
 
   const previewSurcharge = Math.round(previewBaseCents * 0.03);
   const previewTotal = previewBaseCents + previewSurcharge;
@@ -246,7 +253,7 @@ export default function CheckoutForm({
 
   // ─── Stage 1: prepare PaymentIntent ─────────────────────────────────────
   const ready =
-    !!serverPub &&
+    selectedPubsArray.length >= 1 &&
     !!name.trim() &&
     /.+@.+\..+/.test(email.trim()) &&
     !!startDate &&
@@ -257,7 +264,7 @@ export default function CheckoutForm({
 
   async function prepareIntent() {
     setError(null);
-    if (!serverPub) {
+    if (selectedPubsArray.length === 0) {
       setError('Pick at least one publication.');
       return;
     }
@@ -267,7 +274,7 @@ export default function CheckoutForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slot: slot.slug,
-          pub: serverPub,
+          pubs: selectedPubsArray,
           billing_period: billingPeriod,
           weeks,
           months,
@@ -386,7 +393,7 @@ export default function CheckoutForm({
             </div>
             {isBundle && (
               <p className="mt-2 text-xs text-emerald-700 font-medium">
-                Bundle pricing applied: RealtyLine Austin + Newsline San Antonio.
+                {marketCount}-market bundle pricing applied ({MARKET_MULTIPLIERS[marketCount].toFixed(1)}x base rate).
               </p>
             )}
             {bookedSet.size > 0 && !allBlocked && (

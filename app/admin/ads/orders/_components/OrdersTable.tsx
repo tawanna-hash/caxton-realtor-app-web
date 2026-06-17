@@ -76,17 +76,41 @@ function fmtDate(iso: string | null): string {
   });
 }
 
-// Friendly label for the PUB column. Campaigns + agreements both store
-// 'austin' | 'san_antonio' | 'both', but the row label should read like
-// the publication brand the team uses day-to-day.
+// Friendly label for the PUB column. Campaigns + agreements store either
+// the legacy enum ('austin' | 'san_antonio' | 'both') or, for new multi-
+// market bookings, a comma-joined pub-key list (e.g. 'realtyline,newsline-
+// houston'). Render either format as the publication brand the team uses
+// day-to-day.
 function fmtPublication(v: string | null): string {
   if (!v) return '—';
+  // Legacy single-value enums.
   switch (v) {
     case 'austin':       return 'RealtyLine Austin';
     case 'san_antonio':  return 'Newsline San Antonio';
     case 'both':         return 'Both';
-    default:             return v;
   }
+  // New comma-joined pub-key list — map each key to its short brand name.
+  if (v.includes(',')) {
+    const parts = v.split(',').map((s) => s.trim()).filter(Boolean);
+    const labels = parts.map((key) => {
+      switch (key) {
+        case 'realtyline':         return 'Austin';
+        case 'newsline':           return 'San Antonio';
+        case 'realtyline-houston': return 'Houston';
+        case 'realtyline-dallas':  return 'Dallas/FTW';
+        default:                   return key;
+      }
+    });
+    return labels.join(' + ');
+  }
+  // Single new-style pub key.
+  switch (v) {
+    case 'realtyline':         return 'RealtyLine Austin';
+    case 'newsline':           return 'Newsline San Antonio';
+    case 'realtyline-houston': return 'RealtyLine Houston';
+    case 'realtyline-dallas':  return 'RealtyLine Dallas/FTW';
+  }
+  return v;
 }
 
 function detailHref(row: OrderRow): string {
