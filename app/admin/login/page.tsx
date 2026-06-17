@@ -74,7 +74,7 @@ function AdminLoginForm() {
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-[#1a2a44] tracking-tight">Realty News Now Admin</h1>
+          <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">Realty News Now Admin</h1>
           <p className="text-sm text-gray-500 mt-1">Sign in to continue</p>
         </div>
         <form onSubmit={handleSubmit} className="bg-white border border-gray-200 p-6 space-y-4">
@@ -95,7 +95,7 @@ function AdminLoginForm() {
               className={`w-full border px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none ${
                 emailError
                   ? 'border-red-400 focus:border-red-500'
-                  : 'border-gray-300 focus:border-[#1a2a44]'
+                  : 'border-gray-300 focus:border-[#021D40]'
               }`}
             />
             {emailError && (
@@ -113,12 +113,12 @@ function AdminLoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                className="w-full border border-gray-300 px-3 py-2 pr-16 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+                className="w-full border border-gray-300 px-3 py-2 pr-16 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40]"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs uppercase tracking-wider text-gray-500 hover:text-[#1a2a44] px-2 py-1"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs uppercase tracking-wider text-gray-500 hover:text-[#021D40] px-2 py-1"
               >
                 {showPassword ? 'Hide' : 'Show'}
               </button>
@@ -130,12 +130,12 @@ function AdminLoginForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-[#1a2a44] text-white py-2.5 text-sm font-medium tracking-wide hover:bg-[#243556] disabled:opacity-60 transition-colors"
+            className="w-full bg-[#021D40] text-white py-2.5 text-sm font-medium tracking-wide hover:bg-[#03285a] disabled:opacity-60 transition-colors"
           >
             {submitting ? 'Signing in...' : 'Sign In'}
           </button>
           <div className="text-center pt-1">
-            <Link href="/admin/forgot-password" className="text-sm text-gray-500 hover:text-[#1a2a44]">
+            <Link href="/admin/forgot-password" className="text-sm text-gray-500 hover:text-[#021D40]">
               Forgot password?
             </Link>
           </div>

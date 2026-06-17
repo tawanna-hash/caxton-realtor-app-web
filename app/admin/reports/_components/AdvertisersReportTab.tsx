@@ -198,7 +198,7 @@ export default function AdvertisersReportTab() {
                     className={[
                       'px-3 py-1.5 text-sm border-r border-gray-300 last:border-r-0 transition-colors',
                       days === opt.value
-                        ? 'bg-[#1a2a44] text-white'
+                        ? 'bg-[#021D40] text-white'
                         : 'bg-white text-gray-700 hover:bg-gray-50',
                     ].join(' ')}
                   >
@@ -212,7 +212,7 @@ export default function AdvertisersReportTab() {
                 type="button"
                 onClick={selectAllSendable}
                 disabled={loading || sendable.length === 0}
-                className="text-xs text-[#1a2a44] hover:underline disabled:text-gray-400 disabled:no-underline"
+                className="text-xs text-[#021D40] hover:underline disabled:text-gray-400 disabled:no-underline"
               >
                 Select all sendable
               </button>
@@ -250,7 +250,7 @@ export default function AdvertisersReportTab() {
                       onClick={() => handleRowClick(a)}
                       className={[
                         'flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors',
-                        isActive ? 'bg-[#1a2a44]/5' : 'hover:bg-gray-50',
+                        isActive ? 'bg-[#021D40]/5' : 'hover:bg-gray-50',
                       ].join(' ')}
                     >
                       <input
@@ -273,7 +273,7 @@ export default function AdvertisersReportTab() {
                         </p>
                       </div>
                       {isActive ? (
-                        <span className="text-[10px] uppercase tracking-wider font-medium text-[#1a2a44] shrink-0">
+                        <span className="text-[10px] uppercase tracking-wider font-medium text-[#021D40] shrink-0">
                           Viewing
                         </span>
                       ) : null}
@@ -302,7 +302,7 @@ export default function AdvertisersReportTab() {
               type="button"
               onClick={handleSend}
               disabled={sending || selectedCount === 0}
-              className="bg-[#1a2a44] hover:bg-[#243556] text-white px-5 py-2.5 rounded-md text-sm font-medium disabled:opacity-40"
+              className="bg-[#021D40] hover:bg-[#03285a] text-white px-5 py-2.5 rounded-md text-sm font-medium disabled:opacity-40"
             >
               {sending ? 'Sending…' : `Send ${selectedCount || ''} report${selectedCount === 1 ? '' : 's'}`}
             </button>

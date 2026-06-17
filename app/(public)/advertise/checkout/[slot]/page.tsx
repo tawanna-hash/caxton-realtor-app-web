@@ -97,34 +97,34 @@ export default async function CheckoutPage(ctx: RouteCtx) {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-3xl mx-auto px-4 py-10 sm:py-14">
         <div className="mb-8">
-          <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
+          <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">
             {slot.tier} placement · {slot.zone}
           </p>
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
             Book {slot.name}
           </h1>
-          <p className="text-slate-600 text-base sm:text-lg leading-relaxed">
+          <p className="text-gray-600 text-base sm:text-lg leading-relaxed">
             Choose your dates, upload your creative, accept the terms, and pay
             securely. Your ad goes live as soon as we verify the creative meets
             spec — usually within one business day.
           </p>
         </div>
 
-        <div className="rounded-xl bg-white border border-slate-200 p-5 sm:p-6 mb-6 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
+        <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 mb-6 shadow-sm">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
             Placement summary
           </h2>
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div>
-              <dt className="text-slate-500">Creative spec</dt>
-              <dd className="font-medium text-slate-900">{slot.sizes}</dd>
+              <dt className="text-gray-500">Creative spec</dt>
+              <dd className="font-medium text-gray-900">{slot.sizes}</dd>
             </div>
             <div>
-              <dt className="text-slate-500">Placement notes</dt>
-              <dd className="font-medium text-slate-900">{slot.notes}</dd>
+              <dt className="text-gray-500">Placement notes</dt>
+              <dd className="font-medium text-gray-900">{slot.notes}</dd>
             </div>
           </dl>
         </div>
@@ -139,7 +139,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
           bookedPubs={bookedPubs}
         />
 
-        <p className="text-center text-xs text-slate-500 mt-10">
+        <p className="text-center text-xs text-gray-500 mt-10">
           Need help? Email <a href="mailto:hello@myrealtyline.com" className="underline">hello@myrealtyline.com</a> or call us — we&apos;ll book you manually.
         </p>
       </div>

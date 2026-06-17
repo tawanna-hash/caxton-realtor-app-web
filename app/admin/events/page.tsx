@@ -185,7 +185,7 @@ export default function EventsPage() {
       onClick={() => setFilter(key)}
       className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors ${
         filter === key
-          ? 'bg-[#1a2a44] text-white border-[#1a2a44]'
+          ? 'bg-[#021D40] text-white border-[#021D40]'
           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
       }`}
     >
@@ -212,7 +212,7 @@ export default function EventsPage() {
                 ? 'No expired events to hide'
                 : `Hide ${expiredVisibleCount} event${expiredVisibleCount === 1 ? '' : 's'} whose start date is in the past`
             }
-            className="px-4 py-2 bg-white text-[#1a2a44] text-sm font-medium rounded border border-[#1a2a44] hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-white text-[#021D40] text-sm font-medium rounded border border-[#021D40] hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {bulkBusy
               ? 'Hiding\u2026'
@@ -220,7 +220,7 @@ export default function EventsPage() {
           </button>
           <Link
             href="/admin/events/new"
-            className="px-4 py-2 bg-[#1a2a44] text-white text-sm font-medium rounded hover:bg-[#021D40] transition-colors"
+            className="px-4 py-2 bg-[#021D40] text-white text-sm font-medium rounded hover:bg-[#021D40] transition-colors"
           >
             + New Event
           </Link>
@@ -259,7 +259,7 @@ export default function EventsPage() {
         <div className="text-sm text-gray-500 py-12 text-center">Loading events...</div>
       ) : items.length === 0 ? (
         <div className="text-sm text-gray-500 py-12 text-center bg-white border border-gray-200 rounded">
-          No events found. <Link href="/admin/events/new" className="text-[#1a2a44] underline">Create one</Link>.
+          No events found. <Link href="/admin/events/new" className="text-[#021D40] underline">Create one</Link>.
         </div>
       ) : (
         <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
@@ -281,7 +281,7 @@ export default function EventsPage() {
                 return (
                   <tr key={ev.id} className={ev.hidden ? 'bg-gray-50' : ''}>
                     <td className="px-4 py-3">
-                      <Link href={`/admin/events/${ev.id}`} className="font-medium text-gray-900 hover:text-[#1a2a44] hover:underline">
+                      <Link href={`/admin/events/${ev.id}`} className="font-medium text-gray-900 hover:text-[#021D40] hover:underline">
                         {ev.title}
                       </Link>
                       {hasEdits && !isManual && (
@@ -309,7 +309,7 @@ export default function EventsPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <Link href={`/admin/events/${ev.id}`} className="text-xs text-[#1a2a44] hover:underline mr-3">
+                      <Link href={`/admin/events/${ev.id}`} className="text-xs text-[#021D40] hover:underline mr-3">
                         Edit
                       </Link>
                       <button

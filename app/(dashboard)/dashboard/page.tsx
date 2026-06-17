@@ -392,8 +392,8 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const ic = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3 placeholder:text-[#C7C7CD]';
-  const sc = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3 appearance-none placeholder:text-[#C7C7CD]';
+  const ic = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3 placeholder:text-[#d1d5db]';
+  const sc = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3 appearance-none placeholder:text-[#d1d5db]';
 
   function dismissGiveaway() {
     setShowGiveaway(false);
@@ -641,7 +641,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <input type="text" placeholder={licenseType === 'TREC #' ? 'TREC License Number' : 'NMLS ID Number'} value={licenseNum} onChange={(e) => setLicenseNum(e.target.value)} className={ic} />
 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3 mt-6">Your Information</p>
                 <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} className={ic} />
-                <select value={title} onChange={(e) => setTitle(e.target.value)} className={sc + (!title ? ' text-[#C7C7CD]' : ' text-gray-900')}>
+                <select value={title} onChange={(e) => setTitle(e.target.value)} className={sc + (!title ? ' text-[#d1d5db]' : ' text-gray-900')}>
                   <option value="">Select Title / Role</option>
                   {TITLES.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
@@ -715,11 +715,11 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">Birthday (optional)</p>
                 <p className="text-sm text-gray-400 font-light mb-3">So we can wish you a happy birthday!</p>
                 <div className="flex gap-2 mb-6">
-                  <select value={bdayMonth} onChange={(e) => setBdayMonth(e.target.value)} className={sc + ' flex-1' + (!bdayMonth ? ' text-[#C7C7CD]' : ' text-gray-900')}>
+                  <select value={bdayMonth} onChange={(e) => setBdayMonth(e.target.value)} className={sc + ' flex-1' + (!bdayMonth ? ' text-[#d1d5db]' : ' text-gray-900')}>
                     <option value="">Month</option>
                     {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
                   </select>
-                  <select value={bdayDay} onChange={(e) => setBdayDay(e.target.value)} className={sc + ' w-24' + (!bdayDay ? ' text-[#C7C7CD]' : ' text-gray-900')}>
+                  <select value={bdayDay} onChange={(e) => setBdayDay(e.target.value)} className={sc + ' w-24' + (!bdayDay ? ' text-[#d1d5db]' : ' text-gray-900')}>
                     <option value="">Day</option>
                     {DAYS.map((d) => <option key={d} value={String(d)}>{d}</option>)}
                   </select>
@@ -1380,13 +1380,13 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
   const initials = ad.biz.split(' ').map((w: string) => w[0]).join('');
 
   return (
-    <article ref={ref} className="bg-[#faf8f3] border-b border-[#e8dcc8]">
+    <article ref={ref} className="bg-[#f9fafb] border-b border-[#e5e7eb]">
       <div className="px-4 py-5">
         <div className="flex items-center gap-2 mb-3">
-          <div className="w-9 h-9 rounded-full bg-white border border-[#d4af37] flex items-center justify-center">
-            <span className="text-xs font-medium text-[#d4af37]">{initials}</span>
+          <div className="w-9 h-9 rounded-full bg-white border border-[#fb923c] flex items-center justify-center">
+            <span className="text-xs font-medium text-[#fb923c]">{initials}</span>
           </div>
-          <span className="text-sm uppercase tracking-[0.2em] font-semibold text-[#b8972e]">Sponsored</span>
+          <span className="text-sm uppercase tracking-[0.2em] font-semibold text-[#c2410c]">Sponsored</span>
           <span className="flex-1" />
           <span className="text-sm text-gray-400 italic font-light">{ad.page}</span>
         </div>
@@ -2269,7 +2269,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
       {/* Inline styles for the article prose */}
       <style jsx>{`
         :global(.caxton-article-prose) {
-          color: #1f2937;
+          color: #021D40;
           font-size: 1.0625rem;
           line-height: 1.7;
         }

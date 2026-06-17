@@ -46,7 +46,7 @@ function renderMagicLinkHtml(
   const safeAdv = escapeHtml(advertiserName);
   const safePub = escapeHtml(publicationName);
   return `<!DOCTYPE html>
-<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:#1f2937;">
+<html><body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:#021D40;">
   <h1 style="font-size:18px;font-weight:600;margin:0 0 16px;">Your ${safeAdv} performance report</h1>
   <p style="font-size:14px;line-height:1.6;margin:0 0 24px;color:#4b5563;">
     Click the button below to view your real-time performance report in ${safePub}.

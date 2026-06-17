@@ -68,7 +68,7 @@ export default function TermsPage() {
             unauthorized use of your account at{' '}
             <a
               href="mailto:hello@myrealtyline.com"
-              className="text-[#1a2a44] underline underline-offset-2"
+              className="text-[#021D40] underline underline-offset-2"
             >
               hello@myrealtyline.com
             </a>
@@ -182,7 +182,7 @@ export default function TermsPage() {
             You may delete your account at any time by emailing{' '}
             <a
               href="mailto:hello@myrealtyline.com?subject=Account%20Deletion%20Request"
-              className="text-[#1a2a44] underline underline-offset-2"
+              className="text-[#021D40] underline underline-offset-2"
             >
               hello@myrealtyline.com
             </a>
@@ -223,7 +223,7 @@ export default function TermsPage() {
             Questions about these Terms? Email{' '}
             <a
               href="mailto:hello@myrealtyline.com"
-              className="text-[#1a2a44] font-medium underline underline-offset-2"
+              className="text-[#021D40] font-medium underline underline-offset-2"
             >
               hello@myrealtyline.com
             </a>

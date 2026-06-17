@@ -86,15 +86,15 @@ export const ACTION_LABELS: Record<string, string> = {
 };
 
 // Color palette consistent with the rest of the app:
-// #1a2a44 — admin chrome navy
+// #021D40 — admin chrome navy
 // #021D40 — RealtyLine pub navy
-// #2d1a44 — Newsline San Antonio pub navy
-// #185FA5 — accent blue (links, hover states)
+// #2c0530 — Newsline San Antonio pub navy
+// #1d4ed8 — accent blue (links, hover states)
 export const EVENT_COLORS: Record<string, string> = {
-  inventory_filter_clicked: '#1a2a44',
+  inventory_filter_clicked: '#021D40',
   builder_chip_clicked: '#021D40',
-  inventory_card_clicked: '#2d1a44',
-  builder_tab_clicked: '#185FA5',
+  inventory_card_clicked: '#2c0530',
+  builder_tab_clicked: '#1d4ed8',
 };
 
 export type KPISummary = {

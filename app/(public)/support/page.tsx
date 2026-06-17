@@ -23,7 +23,7 @@ export default function SupportPage() {
       </header>
 
       <section className="mb-12">
-        <p className="text-sm font-semibold uppercase tracking-wider text-[#1a2a44] mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-[#021D40] mb-5">
           Email us
         </p>
         <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
@@ -34,7 +34,7 @@ export default function SupportPage() {
           </p>
           <a
             href={`mailto:${SUPPORT_EMAIL}?subject=Realty%20News%20Now%20Support`}
-            className="inline-flex items-center px-5 py-2.5 rounded-lg bg-[#1a2a44] text-white font-medium hover:bg-[#0d1a30] transition"
+            className="inline-flex items-center px-5 py-2.5 rounded-lg bg-[#021D40] text-white font-medium hover:bg-[#021D40] transition"
           >
             {SUPPORT_EMAIL}
           </a>
@@ -45,7 +45,7 @@ export default function SupportPage() {
       </section>
 
       <section className="mb-12">
-        <p className="text-sm font-semibold uppercase tracking-wider text-[#1a2a44] mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-[#021D40] mb-5">
           Common topics
         </p>
         <div className="space-y-6">
@@ -109,7 +109,7 @@ export default function SupportPage() {
               accounting/audit purposes as described in our{' '}
               <a
                 href="/privacy"
-                className="text-[#1a2a44] font-medium underline underline-offset-2"
+                className="text-[#021D40] font-medium underline underline-offset-2"
               >
                 privacy notice
               </a>
@@ -130,14 +130,14 @@ export default function SupportPage() {
       </section>
 
       <section className="mb-4">
-        <p className="text-sm font-semibold uppercase tracking-wider text-[#1a2a44] mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-[#021D40] mb-5">
           More resources
         </p>
         <ul className="space-y-2 text-gray-700 font-light leading-relaxed">
           <li>
             <a
               href="/faq"
-              className="text-[#1a2a44] font-medium underline underline-offset-2"
+              className="text-[#021D40] font-medium underline underline-offset-2"
             >
               Frequently asked questions
             </a>
@@ -145,7 +145,7 @@ export default function SupportPage() {
           <li>
             <a
               href="/privacy"
-              className="text-[#1a2a44] font-medium underline underline-offset-2"
+              className="text-[#021D40] font-medium underline underline-offset-2"
             >
               Privacy notice
             </a>
@@ -153,7 +153,7 @@ export default function SupportPage() {
           <li>
             <a
               href="/terms"
-              className="text-[#1a2a44] font-medium underline underline-offset-2"
+              className="text-[#021D40] font-medium underline underline-offset-2"
             >
               Terms of service
             </a>

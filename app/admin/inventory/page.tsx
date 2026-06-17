@@ -87,7 +87,7 @@ export default function AdminInventoryPage() {
           </div>
           <Link
             href="/admin/inventory/new"
-            className="shrink-0 bg-[#1a2a44] text-white px-4 py-2 text-sm font-medium hover:bg-[#243556] rounded-md transition-colors whitespace-nowrap"
+            className="shrink-0 bg-[#021D40] text-white px-4 py-2 text-sm font-medium hover:bg-[#03285a] rounded-md transition-colors whitespace-nowrap"
           >
             + Create Promotion
           </Link>
@@ -238,7 +238,7 @@ function EmptyState({ tab, onSwitchTab }: { tab: Tab; onSwitchTab: (t: Tab) => v
         <button
           type="button"
           onClick={() => onSwitchTab(action.target)}
-          className="text-sm font-medium text-[#1a2a44] underline"
+          className="text-sm font-medium text-[#021D40] underline"
         >
           {action.label}
         </button>

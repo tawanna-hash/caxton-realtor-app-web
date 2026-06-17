@@ -36,8 +36,8 @@ export async function GET(req: NextRequest) {
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    background: #FAF8F4;
-    color: #1A1A1A;
+    background: #f9fafb;
+    color: #171717;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -51,14 +51,14 @@ export async function GET(req: NextRequest) {
     max-width: 480px;
     width: 100%;
     padding: 40px 32px;
-    border: 1px solid #EAE6DE;
+    border: 1px solid #e5e7eb;
   }
   .eyebrow {
     text-transform: uppercase;
     letter-spacing: 0.2em;
     font-size: 11px;
     font-weight: 600;
-    color: #6B6557;
+    color: #6b7280;
     margin-bottom: 12px;
   }
   h1 {
@@ -66,10 +66,10 @@ export async function GET(req: NextRequest) {
     font-size: 28px;
     line-height: 1.25;
     margin: 0 0 12px;
-    color: #1A1A1A;
+    color: #171717;
   }
   .sub {
-    color: #4B4540;
+    color: #4b5563;
     font-size: 15px;
     line-height: 1.55;
     margin: 0 0 24px;
@@ -78,18 +78,18 @@ export async function GET(req: NextRequest) {
     display: block;
     font-size: 13px;
     font-weight: 600;
-    color: #4B4540;
+    color: #4b5563;
     margin-bottom: 6px;
     margin-top: 16px;
   }
   input[type="text"], input[type="email"] {
     width: 100%;
     padding: 12px 14px;
-    border: 1px solid #D6D1C7;
+    border: 1px solid #d1d5db;
     border-radius: 8px;
-    background: #FAF8F4;
+    background: #f9fafb;
     font-size: 15px;
-    color: #1A1A1A;
+    color: #171717;
     transition: border-color 0.15s, background 0.15s;
   }
   input[type="text"]:focus, input[type="email"]:focus {
@@ -112,16 +112,16 @@ export async function GET(req: NextRequest) {
     cursor: pointer;
     transition: background 0.15s, transform 0.05s;
   }
-  .submit:hover { background: #531055; }
+  .submit:hover { background: #5a0e5f; }
   .submit:active { transform: translateY(1px); }
-  .submit[disabled] { background: #8E7392; cursor: not-allowed; }
+  .submit[disabled] { background: #a558a8; cursor: not-allowed; }
   .err {
     margin-top: 16px;
     padding: 12px 14px;
-    background: #FEF2F2;
-    border: 1px solid #FECACA;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
     border-radius: 8px;
-    color: #991B1B;
+    color: #991b1b;
     font-size: 14px;
     line-height: 1.5;
     display: none;
@@ -130,10 +130,10 @@ export async function GET(req: NextRequest) {
   .meta {
     margin-top: 24px;
     padding-top: 20px;
-    border-top: 1px solid #EAE6DE;
+    border-top: 1px solid #e5e7eb;
     font-size: 12px;
     line-height: 1.6;
-    color: #6B6557;
+    color: #6b7280;
   }
   .meta a { color: #3D0740; text-decoration: underline; }
   .spinner {

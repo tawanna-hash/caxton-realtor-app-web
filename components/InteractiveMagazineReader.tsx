@@ -1075,7 +1075,7 @@ export default function InteractiveMagazineReader({
       aria-modal="true"
       aria-label={`${magazine.issue_label} — interactive magazine`}
       tabIndex={-1}
-      className="fixed inset-0 z-[60] bg-neutral-900 flex flex-col select-none outline-none"
+      className="fixed inset-0 z-[60] bg-gray-900 flex flex-col select-none outline-none"
     >
       {/* Screen-reader-only live announcement of current page */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">

@@ -88,14 +88,14 @@ export default function SellerConcessionsLimitsClient() {
             {/* Card header: eyebrow + title + listing-price input */}
             <header className="px-6 md:px-8 pt-6 pb-5 border-b border-gray-100 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1a2a44] mb-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#021D40] mb-2">
                   Seller Financing Guide
                 </p>
                 <h2
                   className="text-2xl md:text-3xl text-gray-900 leading-tight"
                   style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
                 >
-                  Seller concession <span className="text-[#1a2a44]">limits</span>
+                  Seller concession <span className="text-[#021D40]">limits</span>
                 </h2>
                 <p className="text-sm text-gray-600 mt-2 max-w-md leading-relaxed">
                   The maximum a seller can contribute toward a buyer&rsquo;s
@@ -302,10 +302,10 @@ function ScenarioBlock({
                     </span>
                   ) : (
                     <span className="inline-flex items-baseline gap-2 justify-end">
-                      <span className="text-base font-semibold text-[#1a2a44]">
+                      <span className="text-base font-semibold text-[#021D40]">
                         {fmtUSD(roundForDisplay(((row.capPct ?? 0) * salePrice) / 100))}
                       </span>
-                      <span className="text-[11px] font-medium text-[#1a2a44]/70">
+                      <span className="text-[11px] font-medium text-[#021D40]/70">
                         {row.capPct}%
                       </span>
                     </span>

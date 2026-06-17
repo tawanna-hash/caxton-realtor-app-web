@@ -71,7 +71,7 @@ export default function SelfServicePortalPage() {
   });
 
   return (
-    <main className="bg-gradient-to-b from-slate-50 to-white">
+    <main className="bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-5xl mx-auto px-6 py-10 md:py-16">
         {/* Header */}
         <header className="mb-8 text-center">
@@ -88,7 +88,7 @@ export default function SelfServicePortalPage() {
         {/* Two-path hub */}
         <section className="grid gap-5 md:grid-cols-2 mb-12">
           {/* Self-service card */}
-          <article className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#1e1b4b] via-[#2e1065] to-[#4c1d95] text-white p-7 md:p-8 shadow-lg">
+          <article className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#3d0740] via-[#3d0740] to-[#5a0e5f] text-white p-7 md:p-8 shadow-lg">
             {/* From-$X chip */}
             <span className="absolute top-5 right-5 inline-flex items-center px-3 py-1 rounded-full bg-violet-200/90 text-violet-900 text-xs font-semibold">
               From ${minPrice}
@@ -143,7 +143,7 @@ export default function SelfServicePortalPage() {
 
             <Link
               href="/advertise/placements"
-              className="inline-flex items-center gap-2 bg-violet-200 hover:bg-violet-100 active:scale-[0.98] transition text-[#1e1b4b] font-semibold px-5 py-3 rounded-full text-sm md:text-base"
+              className="inline-flex items-center gap-2 bg-violet-200 hover:bg-violet-100 active:scale-[0.98] transition text-[#3d0740] font-semibold px-5 py-3 rounded-full text-sm md:text-base"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               Browse Products
@@ -247,7 +247,7 @@ export default function SelfServicePortalPage() {
                 key={it.step}
                 className="rounded-xl border border-gray-200 bg-white p-5"
               >
-                <div className="w-7 h-7 rounded-full bg-[#1a2a44] text-white text-sm font-semibold flex items-center justify-center mb-3">
+                <div className="w-7 h-7 rounded-full bg-[#021D40] text-white text-sm font-semibold flex items-center justify-center mb-3">
                   {it.step}
                 </div>
                 <h4 className="text-base font-semibold text-gray-900 mb-1.5">
@@ -274,7 +274,7 @@ export default function SelfServicePortalPage() {
           </div>
           <Link
             href="/portal"
-            className="shrink-0 inline-flex items-center gap-2 border border-[#1a2a44] text-[#1a2a44] hover:bg-[#1a2a44] hover:text-white transition font-semibold px-5 py-2.5 rounded-full text-sm"
+            className="shrink-0 inline-flex items-center gap-2 border border-[#021D40] text-[#021D40] hover:bg-[#021D40] hover:text-white transition font-semibold px-5 py-2.5 rounded-full text-sm"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             Open advertiser portal

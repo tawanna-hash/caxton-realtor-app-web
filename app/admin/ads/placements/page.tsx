@@ -66,13 +66,13 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
   const unitLabel = unit === 'per send' ? '/send' : unit === 'per push' ? '/push' : '/wk';
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
+    <article className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col">
       {/* Wireframe preview */}
-      <div className="relative bg-slate-100 border-b border-slate-200 h-56 p-3">
+      <div className="relative bg-gray-100 border-b border-gray-200 h-56 p-3">
         {hasWireframe(slot.slug) ? (
           <PlacementWireframe slug={slot.slug} />
         ) : (
-          <div className="h-full flex items-center justify-center text-xs text-slate-500">
+          <div className="h-full flex items-center justify-center text-xs text-gray-500">
             No wireframe yet
           </div>
         )}
@@ -82,40 +82,40 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
       <div className="p-4 flex-1 flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+            <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">
               {slot.tier} · {ZONE_LABEL[slot.zone]}
             </div>
-            <h3 className="text-base font-semibold text-slate-900 leading-tight mt-0.5">
+            <h3 className="text-base font-semibold text-gray-900 leading-tight mt-0.5">
               {slot.name}
             </h3>
-            <div className="text-[10px] text-slate-400 font-mono mt-0.5">{slot.slug}</div>
+            <div className="text-[10px] text-gray-400 font-mono mt-0.5">{slot.slug}</div>
           </div>
         </div>
 
-        <div className="text-xs text-slate-700">
+        <div className="text-xs text-gray-700">
           <span className="font-semibold">${slot.weeklySingle}</span>
-          <span className="text-slate-500">{unitLabel} single pub</span>
+          <span className="text-gray-500">{unitLabel} single pub</span>
           {monthly && (
             <>
-              <span className="text-slate-300 mx-1.5">·</span>
-              <span className="text-slate-700">{monthly}</span>
+              <span className="text-gray-300 mx-1.5">·</span>
+              <span className="text-gray-700">{monthly}</span>
             </>
           )}
         </div>
 
-        <div className="text-[11px] text-slate-600">
-          <span className="font-semibold text-slate-700">Renders on:</span>{' '}
+        <div className="text-[11px] text-gray-600">
+          <span className="font-semibold text-gray-700">Renders on:</span>{' '}
           <span>{hostPage}</span>
         </div>
 
-        <div className="text-[11px] text-slate-600">
-          <span className="font-semibold text-slate-700">Specs:</span>{' '}
+        <div className="text-[11px] text-gray-600">
+          <span className="font-semibold text-gray-700">Specs:</span>{' '}
           <span>{slot.sizes}</span>
         </div>
 
-        <p className="text-[11px] text-slate-500 leading-relaxed mt-auto pt-1">{slot.notes}</p>
+        <p className="text-[11px] text-gray-500 leading-relaxed mt-auto pt-1">{slot.notes}</p>
 
-        <div className="flex gap-2 pt-2 border-t border-slate-100 mt-1">
+        <div className="flex gap-2 pt-2 border-t border-gray-100 mt-1">
           <Link
             href={`/advertise/checkout/${slot.slug}?pub=realtyline`}
             target="_blank"
@@ -125,7 +125,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
           </Link>
           <Link
             href={`/admin/ads?tab=catalog&slug=${slot.slug}`}
-            className="text-[11px] font-medium text-slate-600 hover:text-slate-900"
+            className="text-[11px] font-medium text-gray-600 hover:text-gray-900"
           >
             View in catalog
           </Link>
@@ -151,11 +151,11 @@ export default function AdminAdsPlacementsPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-6">
-        <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold">
+        <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
           Admin · Ads
         </div>
-        <h1 className="text-2xl font-semibold text-slate-900 mt-1">Placements</h1>
-        <p className="text-sm text-slate-600 mt-2 max-w-3xl">
+        <h1 className="text-2xl font-semibold text-gray-900 mt-1">Placements</h1>
+        <p className="text-sm text-gray-600 mt-2 max-w-3xl">
           Visual reference for every digital ad slot in the app. Each card shows
           a wireframe of the host page with the placement highlighted in green.
           Use this to walk advertisers through inventory or to verify a slot
@@ -169,7 +169,7 @@ export default function AdminAdsPlacementsPage() {
         ))}
       </div>
 
-      <p className="mt-8 text-xs text-slate-500">
+      <p className="mt-8 text-xs text-gray-500">
         {sorted.length} placements · source of truth: <code className="font-mono">lib/media-kit.ts</code>
       </p>
     </div>

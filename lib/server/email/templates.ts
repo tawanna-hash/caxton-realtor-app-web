@@ -52,14 +52,14 @@ Newsline San Antonio
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(subject)}</title>
 </head>
-<body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 20px;">
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 20px;">
     <tr>
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
           <!-- Header -->
           <tr>
-            <td style="padding:32px 40px 16px;text-align:center;border-bottom:1px solid #eeeeee;">
+            <td style="padding:32px 40px 16px;text-align:center;border-bottom:1px solid #f3f4f6;">
               <div style="font-size:18px;font-weight:600;color:#333;letter-spacing:0.3px;">Caxton Publications</div>
               <div style="font-size:13px;color:#888;margin-top:4px;">RealtyLine &nbsp;·&nbsp; Newsline San Antonio</div>
             </td>
@@ -71,14 +71,14 @@ Newsline San Antonio
               <p style="margin:0 0 24px;">${escapeHtml(intro)}</p>
               <p style="margin:0 0 32px;text-align:center;">
                 <a href="${escapeHtml(opts.loginUrl)}"
-                   style="display:inline-block;background:#1a5490;color:#ffffff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
+                   style="display:inline-block;background:#1d4ed8;color:#ffffff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
                   ${isSignup ? 'Verify my email' : 'Sign in'}
                 </a>
               </p>
               <p style="margin:0 0 8px;color:#666;font-size:14px;">
                 Or copy and paste this URL into your browser:
               </p>
-              <p style="margin:0 0 24px;word-break:break-all;font-size:13px;color:#1a5490;">
+              <p style="margin:0 0 24px;word-break:break-all;font-size:13px;color:#1d4ed8;">
                 ${escapeHtml(opts.loginUrl)}
               </p>
               <p style="margin:0;color:#888;font-size:13px;line-height:1.5;">
@@ -88,7 +88,7 @@ Newsline San Antonio
           </tr>
           <!-- Footer -->
           <tr>
-            <td style="padding:24px 40px;background:#fafafa;border-top:1px solid #eeeeee;color:#888;font-size:12px;line-height:1.5;text-align:center;">
+            <td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #f3f4f6;color:#888;font-size:12px;line-height:1.5;text-align:center;">
               <div>© Caxton Publications, Inc.</div>
               <div style="margin-top:4px;font-style:italic;">Putting A Face on Real Estate since 1995</div>
             </td>
@@ -231,15 +231,15 @@ ${brand.tagline}`;
 
   const html = `<!doctype html>
 <html>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; background: #fff; color: #1a2a44;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px; background: #fff; color: #021D40;">
   <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.25em; color: #888; margin: 0 0 8px 0;">${esc(brand.name)}</p>
-  <h1 style="font-size: 28px; font-weight: 600; color: #1a2a44; margin: 0 0 24px 0; line-height: 1.2;">Congratulations &mdash; you won!</h1>
+  <h1 style="font-size: 28px; font-weight: 600; color: #021D40; margin: 0 0 24px 0; line-height: 1.2;">Congratulations &mdash; you won!</h1>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Hi ${esc(input.firstName)},</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Your name was randomly drawn from the <strong>${esc(input.giveawayTitle)}</strong>, and you've been selected to receive:</p>
-  <p style="font-size: 22px; font-weight: 600; color: #1a2a44; padding: 20px; background: #faf8f3; border-left: 4px solid #d4af37; margin: 24px 0;">${esc(input.prize)}</p>
+  <p style="font-size: 22px; font-weight: 600; color: #021D40; padding: 20px; background: #f9fafb; border-left: 4px solid #fb923c; margin: 24px 0;">${esc(input.prize)}</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">We'll be in touch within the next few business days to coordinate getting your prize to you. Watch for an email or call from the ${esc(brand.name)} team.</p>
   <p style="font-size: 16px; line-height: 1.5; color: #333;">Thanks for being part of the ${esc(brand.name)} community.</p>
-  <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e5e5;">
+  <p style="font-size: 14px; color: #888; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
     Caxton Publications, Inc.<br/>
     <span style="font-style: italic;">${esc(brand.tagline)}</span>
   </p>
@@ -285,13 +285,13 @@ Newsline San Antonio
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(subject)}</title>
 </head>
-<body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 20px;">
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 20px;">
     <tr>
       <td align="center">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
           <tr>
-            <td style="padding:32px 40px 16px;text-align:center;border-bottom:1px solid #eeeeee;">
+            <td style="padding:32px 40px 16px;text-align:center;border-bottom:1px solid #f3f4f6;">
               <div style="font-size:18px;font-weight:600;color:#333;letter-spacing:0.3px;">Caxton Publications Admin</div>
               <div style="font-size:13px;color:#888;margin-top:4px;">Password Reset</div>
             </td>
@@ -302,19 +302,19 @@ Newsline San Antonio
               <p style="margin:0 0 24px;">${escapeHtml(intro)}</p>
               <p style="margin:0 0 32px;text-align:center;">
                 <a href="${escapeHtml(opts.resetUrl)}"
-                   style="display:inline-block;background:#1a2a44;color:#ffffff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
+                   style="display:inline-block;background:#021D40;color:#ffffff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
                   Reset my password
                 </a>
               </p>
               <p style="margin:0 0 8px;color:#666;font-size:14px;">Or copy and paste this URL into your browser:</p>
-              <p style="margin:0 0 24px;word-break:break-all;font-size:13px;color:#1a2a44;">${escapeHtml(opts.resetUrl)}</p>
+              <p style="margin:0 0 24px;word-break:break-all;font-size:13px;color:#021D40;">${escapeHtml(opts.resetUrl)}</p>
               <p style="margin:0;color:#888;font-size:13px;line-height:1.5;">
                 This link expires in ${opts.expiryMinutes} minutes. If you did not request a password reset, you can safely ignore this email — your password will not change.
               </p>
             </td>
           </tr>
           <tr>
-            <td style="padding:24px 40px;background:#fafafa;border-top:1px solid #eeeeee;color:#888;font-size:12px;line-height:1.5;text-align:center;">
+            <td style="padding:24px 40px;background:#f9fafb;border-top:1px solid #f3f4f6;color:#888;font-size:12px;line-height:1.5;text-align:center;">
               <div>© Caxton Publications, Inc.</div>
               <div style="margin-top:4px;font-style:italic;">Putting A Face on Real Estate since 1995</div>
             </td>

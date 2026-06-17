@@ -62,7 +62,7 @@ export default function AdvertisePage() {
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="border border-gray-200 px-4 py-5">
-            <p className="text-3xl font-semibold text-[#1a2a44] tracking-tight">
+            <p className="text-3xl font-semibold text-[#021D40] tracking-tight">
               43K
             </p>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
@@ -72,7 +72,7 @@ export default function AdvertisePage() {
             </p>
           </div>
           <div className="border border-gray-200 px-4 py-5">
-            <p className="text-3xl font-semibold text-[#1a2a44] tracking-tight">
+            <p className="text-3xl font-semibold text-[#021D40] tracking-tight">
               21K
             </p>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
@@ -377,7 +377,7 @@ export default function AdvertisePage() {
       <hr className="border-gray-200 my-12" />
 
 
-      <section className="bg-gray-50 border-l-4 border-[#1a2a44] px-6 py-6 md:px-8 md:py-8">
+      <section className="bg-gray-50 border-l-4 border-[#021D40] px-6 py-6 md:px-8 md:py-8">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-700 font-medium mb-4">
           Request a media kit
         </p>
@@ -389,12 +389,12 @@ export default function AdvertisePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-[#1a2a44] mb-2">
+            <p className="text-sm font-semibold uppercase tracking-wider text-[#021D40] mb-2">
               RealtyLine — Austin
             </p>
             <a
               href="mailto:hello@myrealtyline.com?subject=Media%20Kit%20Request%20%E2%80%94%20RealtyLine"
-              className="text-base font-medium text-[#1a2a44] underline underline-offset-2"
+              className="text-base font-medium text-[#021D40] underline underline-offset-2"
             >
               hello@myrealtyline.com
             </a>

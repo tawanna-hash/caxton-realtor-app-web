@@ -151,16 +151,16 @@ export default function GiveawayDetailPage() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
       <div>
-        <Link href="/admin/giveaways" className="text-sm text-gray-500 hover:text-[#1a2a44]">
+        <Link href="/admin/giveaways" className="text-sm text-gray-500 hover:text-[#021D40]">
           &larr; Back to giveaways
         </Link>
       </div>
 
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-[#1a2a44] tracking-tight">{giveaway.title as string}</h1>
+          <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">{giveaway.title as string}</h1>
           <div className="text-xs uppercase tracking-wider text-gray-500 mt-1">
-            Status: <span className="font-medium text-[#1a2a44]">{giveaway.status as string}</span>
+            Status: <span className="font-medium text-[#021D40]">{giveaway.status as string}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -175,14 +175,14 @@ export default function GiveawayDetailPage() {
           {winnerName ? (
             <div className="text-sm bg-blue-50 border border-blue-200 px-4 py-2">
               <span className="text-blue-700 text-xs uppercase tracking-wider">Winner:</span>{' '}
-              <span className="font-medium text-[#1a2a44]">{winnerName}</span>
+              <span className="font-medium text-[#021D40]">{winnerName}</span>
             </div>
           ) : (
             <button
               onClick={handleDraw}
               disabled={!canDraw || drawing}
               title={!endsAtPassed ? 'Cannot draw until ends-at has passed' : ''}
-              className="bg-[#1a2a44] text-white px-4 py-2 text-sm font-medium hover:bg-[#243556] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="bg-[#021D40] text-white px-4 py-2 text-sm font-medium hover:bg-[#03285a] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {drawing ? 'Drawing...' : 'Draw Winner'}
             </button>
@@ -203,7 +203,7 @@ export default function GiveawayDetailPage() {
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
             />
           </FieldRow>
           <FieldRow label="Description">
@@ -211,7 +211,7 @@ export default function GiveawayDetailPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
             />
           </FieldRow>
           <FieldRow label="Prize" required>
@@ -220,7 +220,7 @@ export default function GiveawayDetailPage() {
               required
               value={prize}
               onChange={(e) => setPrize(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
             />
           </FieldRow>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -228,7 +228,7 @@ export default function GiveawayDetailPage() {
               <select
                 value={publication}
                 onChange={(e) => setPublication(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#1a2a44] bg-white rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#021D40] bg-white rounded-md"
               >
                 <option value="both">Both Publications</option>
                 <option value="austin">RealtyLine Austin</option>
@@ -239,7 +239,7 @@ export default function GiveawayDetailPage() {
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#1a2a44] bg-white rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#021D40] bg-white rounded-md"
               >
                 <option value="draft">Draft</option>
                 <option value="active">Active</option>
@@ -254,7 +254,7 @@ export default function GiveawayDetailPage() {
                 type="datetime-local"
                 value={startsAt}
                 onChange={(e) => setStartsAt(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
               />
             </FieldRow>
             <FieldRow label="Ends At">
@@ -262,7 +262,7 @@ export default function GiveawayDetailPage() {
                 type="datetime-local"
                 value={endsAt}
                 onChange={(e) => setEndsAt(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
               />
             </FieldRow>
             <FieldRow label="Draw At">
@@ -270,7 +270,7 @@ export default function GiveawayDetailPage() {
                 type="datetime-local"
                 value={drawAt}
                 onChange={(e) => setDrawAt(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
               />
             </FieldRow>
           </div>
@@ -278,7 +278,7 @@ export default function GiveawayDetailPage() {
             <button
               type="submit"
               disabled={saving}
-              className="bg-[#1a2a44] text-white px-5 py-2 text-sm font-medium hover:bg-[#243556] disabled:opacity-60 transition-colors"
+              className="bg-[#021D40] text-white px-5 py-2 text-sm font-medium hover:bg-[#03285a] disabled:opacity-60 transition-colors"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
@@ -377,7 +377,7 @@ function RulesSection({
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-sm uppercase tracking-wider text-gray-500">Rules ({rules.length})</h2>
         {!adding && (
-          <button onClick={() => setAdding(true)} className="text-sm text-[#1a2a44] font-medium hover:underline">
+          <button onClick={() => setAdding(true)} className="text-sm text-[#021D40] font-medium hover:underline">
             + Add Rule
           </button>
         )}
@@ -403,7 +403,7 @@ function RulesSection({
             <div key={ruleId} className="flex items-center justify-between gap-3 border border-gray-100 px-4 py-3 text-sm rounded-md">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-xs uppercase tracking-wider text-gray-500 min-w-[140px]">{action}</span>
-                <span className="text-[#1a2a44] truncate">{lbl || '-'}</span>
+                <span className="text-[#021D40] truncate">{lbl || '-'}</span>
                 {url && (
                   <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:underline truncate max-w-[200px]">
                     {url}
@@ -434,7 +434,7 @@ function RulesSection({
               <select
                 value={actionType}
                 onChange={(e) => setActionType(e.target.value)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#1a2a44] bg-white rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#021D40] bg-white rounded-md"
               >
                 {RULE_ACTIONS.map((a) => (
                   <option key={a.value} value={a.value}>{a.label}</option>
@@ -448,7 +448,7 @@ function RulesSection({
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 placeholder="e.g. Follow @myrealtyline"
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
               />
             </div>
           </div>
@@ -460,7 +460,7 @@ function RulesSection({
                 value={targetUrl}
                 onChange={(e) => setTargetUrl(e.target.value)}
                 placeholder="https://"
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
               />
             </div>
             <div>
@@ -470,7 +470,7 @@ function RulesSection({
                 min={1}
                 value={tickets}
                 onChange={(e) => setTickets(parseInt(e.target.value) || 1)}
-                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+                className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
               />
             </div>
           </div>
@@ -487,11 +487,11 @@ function RulesSection({
             <button
               type="submit"
               disabled={submitting}
-              className="bg-[#1a2a44] text-white px-4 py-2 text-sm font-medium hover:bg-[#243556] disabled:opacity-60 transition-colors"
+              className="bg-[#021D40] text-white px-4 py-2 text-sm font-medium hover:bg-[#03285a] disabled:opacity-60 transition-colors"
             >
               {submitting ? 'Adding...' : 'Add Rule'}
             </button>
-            <button type="button" onClick={reset} className="text-sm text-gray-500 hover:text-[#1a2a44]">
+            <button type="button" onClick={reset} className="text-sm text-gray-500 hover:text-[#021D40]">
               Cancel
             </button>
           </div>
@@ -533,7 +533,7 @@ function EntriesSection({ giveawayId }: { giveawayId: string }) {
   return (
     <section className="bg-white border border-gray-200 p-6 rounded-md">
       <h2 className="text-sm uppercase tracking-wider text-gray-500 mb-5">
-        Entries {total > 0 && <span className="text-[#1a2a44] normal-case">({total})</span>}
+        Entries {total > 0 && <span className="text-[#021D40] normal-case">({total})</span>}
       </h2>
 
       {error && (
@@ -557,12 +557,12 @@ function EntriesSection({ giveawayId }: { giveawayId: string }) {
               return (
                 <div key={(e.realtor_id as string) || (e.id as string) || i} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                   <div className="min-w-0">
-                    <div className="font-medium text-[#1a2a44] truncate">{name}</div>
+                    <div className="font-medium text-[#021D40] truncate">{name}</div>
                     {email && <div className="text-xs text-gray-500 truncate">{email}</div>}
                   </div>
                   <div className="flex items-center gap-4 text-xs text-gray-600 flex-shrink-0">
                     <span>{completions} completions</span>
-                    <span><strong className="text-[#1a2a44]">{tickets}</strong> tickets</span>
+                    <span><strong className="text-[#021D40]">{tickets}</strong> tickets</span>
                   </div>
                 </div>
               );
@@ -574,7 +574,7 @@ function EntriesSection({ giveawayId }: { giveawayId: string }) {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="text-gray-500 hover:text-[#1a2a44] disabled:opacity-40"
+                className="text-gray-500 hover:text-[#021D40] disabled:opacity-40"
               >
                 &larr; Previous
               </button>
@@ -582,7 +582,7 @@ function EntriesSection({ giveawayId }: { giveawayId: string }) {
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="text-gray-500 hover:text-[#1a2a44] disabled:opacity-40"
+                className="text-gray-500 hover:text-[#021D40] disabled:opacity-40"
               >
                 Next &rarr;
               </button>

@@ -155,7 +155,7 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
                 onClick={() => saveFooterTemplate(id)}
                 className={`text-left rounded-xl border p-3 transition ${
                   selected
-                    ? 'border-[#1a2a44] ring-2 ring-[#1a2a44]/20 bg-white'
+                    ? 'border-[#021D40] ring-2 ring-[#021D40]/20 bg-white'
                     : 'border-gray-200 hover:border-gray-300 bg-white'
                 }`}
               >

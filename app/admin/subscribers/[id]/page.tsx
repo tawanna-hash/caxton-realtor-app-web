@@ -170,7 +170,7 @@ function EditableField({
         value={value}
         onChange={(e) => onChange(name, e.target.value)}
         placeholder={placeholder}
-        className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#1a2a44] focus:border-[#1a2a44]"
+        className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#021D40] focus:border-[#021D40]"
       />
     </div>
   );
@@ -191,7 +191,7 @@ function EditableSelect({
       <select
         value={value}
         onChange={(e) => onChange(name, e.target.value)}
-        className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#1a2a44] focus:border-[#1a2a44]"
+        className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#021D40] focus:border-[#021D40]"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -204,7 +204,7 @@ function EditableSelect({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="bg-white border border-gray-200 rounded p-5 mb-4">
-      <h2 className="text-sm font-semibold text-[#1a2a44] uppercase tracking-wide mb-3">{title}</h2>
+      <h2 className="text-sm font-semibold text-[#021D40] uppercase tracking-wide mb-3">{title}</h2>
       <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6">{children}</dl>
     </section>
   );
@@ -339,14 +339,14 @@ export default function SubscriberDetailPage({ params }: { params: Promise<{ id:
 return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
-        <Link href="/admin/subscribers" className="text-sm text-gray-500 hover:text-[#1a2a44]">
+        <Link href="/admin/subscribers" className="text-sm text-gray-500 hover:text-[#021D40]">
           ← Back to Subscribers
         </Link>
         {!loading && !error && sub && !editing && (
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={enterEdit}
-              className="text-sm font-medium px-4 py-1.5 rounded bg-[#1a2a44] text-white hover:bg-[#021D40]"
+              className="text-sm font-medium px-4 py-1.5 rounded bg-[#021D40] text-white hover:bg-[#021D40]"
             >
               Edit
             </button>
@@ -364,7 +364,7 @@ return (
             <button
               onClick={save}
               disabled={saving}
-              className="text-sm font-medium px-4 py-1.5 rounded bg-[#1a2a44] text-white hover:bg-[#021D40] disabled:opacity-50"
+              className="text-sm font-medium px-4 py-1.5 rounded bg-[#021D40] text-white hover:bg-[#021D40] disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -397,7 +397,7 @@ return (
       {!loading && !error && sub && (
         <>
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-[#1a2a44] tracking-tight">
+            <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">
               {fmtVal(sub.first_name)} {fmtVal(sub.last_name)}
             </h1>
             <p className="text-sm text-gray-500 mt-1">{fmtVal(sub.email)}</p>
@@ -549,7 +549,7 @@ return (
 
           {!editing && (
             <section className="bg-white border border-gray-200 rounded p-5 mt-8">
-              <h2 className="text-sm font-semibold text-[#1a2a44] uppercase tracking-wide mb-4">Actions</h2>
+              <h2 className="text-sm font-semibold text-[#021D40] uppercase tracking-wide mb-4">Actions</h2>
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
@@ -569,7 +569,7 @@ return (
                       <button
                         onClick={doSendMagicLink}
                         disabled={sendingLink}
-                        className="text-sm font-medium px-3 py-1.5 rounded bg-[#1a2a44] text-white hover:bg-[#021D40] disabled:opacity-50"
+                        className="text-sm font-medium px-3 py-1.5 rounded bg-[#021D40] text-white hover:bg-[#021D40] disabled:opacity-50"
                       >
                         {sendingLink ? 'Sending…' : 'Confirm send'}
                       </button>
@@ -623,7 +623,7 @@ return (
 
                 <div className="flex items-center justify-between flex-wrap gap-3 pt-3 border-t border-gray-100">
                   <div className="text-sm text-gray-700">
-                    <div className="font-medium text-[#DB1924]">Delete subscriber</div>
+                    <div className="font-medium text-[#dc2626]">Delete subscriber</div>
                     <div className="text-xs text-gray-500">
                       Hard delete. Removes RSVPs, notification deliveries, magic links, subscriptions, and push tokens.
                       Email log entries are preserved with the realtor_id nulled.
@@ -631,7 +631,7 @@ return (
                   </div>
                   <button
                     onClick={() => { setDeleteModalOpen(true); setDeleteConfirmText(''); setActionMsg(null); }}
-                    className="text-sm font-medium px-3 py-1.5 rounded border border-[#DB1924] text-[#DB1924] hover:bg-red-50"
+                    className="text-sm font-medium px-3 py-1.5 rounded border border-[#dc2626] text-[#dc2626] hover:bg-red-50"
                   >
                     Delete…
                   </button>
@@ -645,7 +645,7 @@ return (
       {deleteModalOpen && sub && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
           <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-[#DB1924]">Delete this subscriber?</h3>
+            <h3 className="text-lg font-semibold text-[#dc2626]">Delete this subscriber?</h3>
             <p className="text-sm text-gray-700 mt-2">
               This will hard-delete <span className="font-medium">{sub.email}</span> and cascade to their
               RSVPs, notification deliveries, magic links, subscriptions, and push tokens. Email log entries
@@ -660,7 +660,7 @@ return (
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder={sub.email}
               autoFocus
-              className="mt-2 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#DB1924] focus:border-[#DB1924]"
+              className="mt-2 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#dc2626] focus:border-[#dc2626]"
             />
             <div className="mt-5 flex justify-end gap-2">
               <button
@@ -673,7 +673,7 @@ return (
               <button
                 onClick={doDelete}
                 disabled={!deleteEnabled || deleting}
-                className="text-sm font-medium px-4 py-1.5 rounded bg-[#DB1924] text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="text-sm font-medium px-4 py-1.5 rounded bg-[#dc2626] text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {deleting ? 'Deleting…' : 'Delete subscriber'}
               </button>

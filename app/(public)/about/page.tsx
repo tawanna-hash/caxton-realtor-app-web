@@ -106,7 +106,7 @@ export default function AboutPage() {
 
         <hr className="border-gray-200 my-10" />
 
-        <div className="bg-gray-50 border-l-4 border-[#1a2a44] px-6 py-5">
+        <div className="bg-gray-50 border-l-4 border-[#021D40] px-6 py-5">
           <p className="text-base font-medium text-gray-900 mb-2">
             A note from our team
           </p>
@@ -148,7 +148,7 @@ export default function AboutPage() {
           Questions, story ideas, or partnership inquiries?{' '}
           <a
             href="mailto:hello@myrealtyline.com"
-            className="text-[#1a2a44] font-medium underline underline-offset-2"
+            className="text-[#021D40] font-medium underline underline-offset-2"
           >
             hello@myrealtyline.com
           </a>

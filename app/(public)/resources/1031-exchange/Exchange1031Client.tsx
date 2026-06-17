@@ -176,7 +176,7 @@ export default function Exchange1031Client() {
             <div className="mb-2">
               <div className="relative h-3 rounded-full bg-white/60 overflow-hidden border border-gray-200">
                 <div
-                  className="absolute inset-y-0 left-0 bg-[#1a2a44]"
+                  className="absolute inset-y-0 left-0 bg-[#021D40]"
                   style={{ width: `${timeline.progress * 100}%` }}
                 />
                 {/* 45-day marker — 45/180 = 25% */}
@@ -245,7 +245,7 @@ export default function Exchange1031Client() {
 function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#1a2a44] mb-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#021D40] mb-3">
         {title}
       </p>
       <div className="space-y-4">{children}</div>
@@ -294,7 +294,7 @@ function MilestoneRow({ milestone }: { milestone: ExchangeMilestone }) {
   const today = milestone.daysFromToday === 0;
   const deadline = milestone.isDeadline;
 
-  const dotColor = deadline ? 'bg-rose-600' : past ? 'bg-gray-400' : 'bg-[#1a2a44]';
+  const dotColor = deadline ? 'bg-rose-600' : past ? 'bg-gray-400' : 'bg-[#021D40]';
   const labelColor = deadline ? 'text-rose-800' : 'text-gray-900';
   const badgeBg = deadline
     ? 'bg-rose-100 text-rose-800 border-rose-200'
@@ -303,7 +303,7 @@ function MilestoneRow({ milestone }: { milestone: ExchangeMilestone }) {
   return (
     <li className="relative pl-7">
       <span
-        className={`absolute left-0 top-1.5 h-3 w-3 rounded-full ${dotColor} ${today ? 'ring-4 ring-[#c4a35a]/30' : ''}`}
+        className={`absolute left-0 top-1.5 h-3 w-3 rounded-full ${dotColor} ${today ? 'ring-4 ring-[#fb923c]/30' : ''}`}
         aria-hidden
       />
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -342,10 +342,10 @@ function statusToneFor(status: string) {
       };
     case 'Exchange period':
       return {
-        border: 'border-[#c4a35a]/40',
-        bg: 'bg-[#c4a35a]/5',
-        label: 'text-[#1a2a44]',
-        text: 'text-[#1a2a44]',
+        border: 'border-[#fb923c]/40',
+        bg: 'bg-[#fb923c]/5',
+        label: 'text-[#021D40]',
+        text: 'text-[#021D40]',
       };
     case 'Expired':
       return {

@@ -28,7 +28,7 @@ const STATUS_TONES: Record<string, string> = {
   planning:  'bg-blue-50 text-blue-700 border-blue-200',
   active:    'bg-emerald-50 text-emerald-700 border-emerald-200',
   completed: 'bg-purple-50 text-purple-700 border-purple-200',
-  archived:  'bg-stone-100 text-stone-600 border-stone-200',
+  archived:  'bg-gray-100 text-gray-600 border-gray-200',
 };
 
 function StatusPill({ value }: { value: string }) {

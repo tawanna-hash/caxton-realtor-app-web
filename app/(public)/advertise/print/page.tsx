@@ -46,25 +46,25 @@ export default function AdvertisePrintPage() {
               key={pkg.id}
               className={`relative flex flex-col border rounded p-5 ${
                 pkg.premium
-                  ? 'border-[#b08a3e] bg-amber-50/30'
+                  ? 'border-[#c2410c] bg-amber-50/30'
                   : pkg.popular
-                  ? 'border-[#1a2a44]'
+                  ? 'border-[#021D40]'
                   : 'border-gray-200'
               }`}
             >
               {pkg.popular && (
-                <span className="absolute -top-3 left-5 px-2 py-0.5 rounded-full bg-[#1a2a44] text-white text-[10px] font-semibold uppercase tracking-wider">
+                <span className="absolute -top-3 left-5 px-2 py-0.5 rounded-full bg-[#021D40] text-white text-[10px] font-semibold uppercase tracking-wider">
                   Most popular
                 </span>
               )}
               {pkg.premium && (
-                <span className="absolute -top-3 left-5 px-2 py-0.5 rounded-full bg-[#b08a3e] text-white text-[10px] font-semibold uppercase tracking-wider">
+                <span className="absolute -top-3 left-5 px-2 py-0.5 rounded-full bg-[#c2410c] text-white text-[10px] font-semibold uppercase tracking-wider">
                   Premium
                 </span>
               )}
 
               <div className="mb-3">
-                <h3 className="text-xl font-semibold text-[#1a2a44]">
+                <h3 className="text-xl font-semibold text-[#021D40]">
                   {pkg.name}
                 </h3>
                 <p className="text-xs uppercase tracking-wider text-gray-500 font-medium mt-0.5">
@@ -99,7 +99,7 @@ export default function AdvertisePrintPage() {
               <ul className="text-sm text-gray-700 space-y-1 mb-5 flex-1">
                 {pkg.features.map((f) => (
                   <li key={f} className="flex gap-2">
-                    <span aria-hidden className="text-[#1a2a44] font-bold">·</span>
+                    <span aria-hidden className="text-[#021D40] font-bold">·</span>
                     <span>{f}</span>
                   </li>
                 ))}
@@ -107,7 +107,7 @@ export default function AdvertisePrintPage() {
 
               <Link
                 href={`/advertise/inquire?channel=print&package=${encodeURIComponent(pkg.id)}`}
-                className="inline-flex items-center justify-center px-4 py-2.5 bg-[#1a2a44] text-white text-sm font-medium rounded hover:bg-[#243857] transition"
+                className="inline-flex items-center justify-center px-4 py-2.5 bg-[#021D40] text-white text-sm font-medium rounded hover:bg-[#03285a] transition"
               >
                 Request quote
               </Link>
@@ -153,7 +153,7 @@ export default function AdvertisePrintPage() {
         </p>
         <Link
           href="/advertise/inquire?channel=print"
-          className="inline-flex items-center justify-center px-5 py-2.5 border border-[#1a2a44] text-[#1a2a44] text-sm font-medium rounded hover:bg-[#1a2a44] hover:text-white transition"
+          className="inline-flex items-center justify-center px-5 py-2.5 border border-[#021D40] text-[#021D40] text-sm font-medium rounded hover:bg-[#021D40] hover:text-white transition"
         >
           Start a print inquiry
         </Link>

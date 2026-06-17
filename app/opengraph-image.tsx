@@ -28,7 +28,7 @@ export default async function OpenGraphImage() {
           justifyContent: 'space-between',
           padding: '72px',
           background:
-            'linear-gradient(135deg, #1a2a44 0%, #0f1d36 55%, #07101f 100%)',
+            'linear-gradient(135deg, #021D40 0%, #021D40 55%, #021D40 100%)',
           color: '#ffffff',
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
@@ -44,7 +44,7 @@ export default async function OpenGraphImage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#1a2a44',
+              color: '#021D40',
               fontSize: '32px',
               fontWeight: 800,
             }}
@@ -56,7 +56,7 @@ export default async function OpenGraphImage() {
               fontSize: '24px',
               letterSpacing: '0.18em',
               textTransform: 'uppercase',
-              color: '#9bb1d4',
+              color: '#93c5fd',
               fontWeight: 600,
             }}
           >
@@ -81,7 +81,7 @@ export default async function OpenGraphImage() {
             style={{
               fontSize: '32px',
               lineHeight: 1.3,
-              color: '#9bb1d4',
+              color: '#93c5fd',
               maxWidth: '900px',
               fontWeight: 400,
             }}
@@ -98,7 +98,7 @@ export default async function OpenGraphImage() {
             justifyContent: 'space-between',
             alignItems: 'flex-end',
             fontSize: '22px',
-            color: '#9bb1d4',
+            color: '#93c5fd',
           }}
         >
           <div style={{ display: 'flex', gap: '32px' }}>

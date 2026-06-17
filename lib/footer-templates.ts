@@ -74,7 +74,7 @@ export interface FooterPalette {
 const PALETTE_NAVY: FooterPalette = {
   primary: [2, 29, 64],       // #021D40 RealtyLine Austin
   primarySoft: [220, 226, 238],
-  accent: [196, 163, 90],     // #c4a35a gold
+  accent: [196, 163, 90],     // #fb923c gold
 };
 
 const PALETTE_PLUM: FooterPalette = {

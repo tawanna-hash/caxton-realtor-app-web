@@ -19,7 +19,7 @@ export default function FaqPage() {
           Don&apos;t see your question?{' '}
           <a
             href="mailto:hello@myrealtyline.com?subject=App%20Question"
-            className="text-[#1a2a44] font-medium underline underline-offset-2"
+            className="text-[#021D40] font-medium underline underline-offset-2"
           >
             Email us
           </a>{' '}
@@ -28,7 +28,7 @@ export default function FaqPage() {
       </header>
 
       <section className="mb-10">
-        <p className="text-sm font-semibold uppercase tracking-wider text-[#1a2a44] mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-[#021D40] mb-5">
           Getting started
         </p>
 
@@ -81,7 +81,7 @@ export default function FaqPage() {
       <hr className="border-gray-200 my-10" />
 
       <section className="mb-10">
-        <p className="text-sm font-semibold uppercase tracking-wider text-[#1a2a44] mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-[#021D40] mb-5">
           Notifications &amp; content
         </p>
 
@@ -125,7 +125,7 @@ export default function FaqPage() {
       <hr className="border-gray-200 my-10" />
 
       <section className="mb-10">
-        <p className="text-sm font-semibold uppercase tracking-wider text-[#1a2a44] mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-[#021D40] mb-5">
           Your account
         </p>
 
@@ -138,7 +138,7 @@ export default function FaqPage() {
               Email us at{' '}
               <a
                 href="mailto:hello@myrealtyline.com?subject=Email%20Address%20Change"
-                className="text-[#1a2a44] underline underline-offset-2"
+                className="text-[#021D40] underline underline-offset-2"
               >
                 hello@myrealtyline.com
               </a>{' '}
@@ -155,7 +155,7 @@ export default function FaqPage() {
               Email{' '}
               <a
                 href="mailto:hello@myrealtyline.com?subject=Account%20Deletion%20Request"
-                className="text-[#1a2a44] underline underline-offset-2"
+                className="text-[#021D40] underline underline-offset-2"
               >
                 hello@myrealtyline.com
               </a>{' '}
@@ -174,7 +174,7 @@ export default function FaqPage() {
               full details are in our{' '}
               <a
                 href="/privacy"
-                className="text-[#1a2a44] underline underline-offset-2"
+                className="text-[#021D40] underline underline-offset-2"
               >
                 Privacy Notice
               </a>
@@ -187,7 +187,7 @@ export default function FaqPage() {
       <hr className="border-gray-200 my-10" />
 
       <section className="mb-10">
-        <p className="text-sm font-semibold uppercase tracking-wider text-[#1a2a44] mb-5">
+        <p className="text-sm font-semibold uppercase tracking-wider text-[#021D40] mb-5">
           Troubleshooting
         </p>
 
@@ -222,7 +222,7 @@ export default function FaqPage() {
               Email{' '}
               <a
                 href="mailto:hello@myrealtyline.com?subject=Sign-in%20Issue"
-                className="text-[#1a2a44] underline underline-offset-2"
+                className="text-[#021D40] underline underline-offset-2"
               >
                 hello@myrealtyline.com
               </a>{' '}
@@ -239,7 +239,7 @@ export default function FaqPage() {
               We&apos;d love to hear it. Email{' '}
               <a
                 href="mailto:hello@myrealtyline.com?subject=App%20Feedback"
-                className="text-[#1a2a44] underline underline-offset-2"
+                className="text-[#021D40] underline underline-offset-2"
               >
                 hello@myrealtyline.com
               </a>{' '}
@@ -254,7 +254,7 @@ export default function FaqPage() {
           Still stuck? Email{' '}
           <a
             href="mailto:hello@myrealtyline.com"
-            className="text-[#1a2a44] font-medium underline underline-offset-2"
+            className="text-[#021D40] font-medium underline underline-offset-2"
           >
             hello@myrealtyline.com
           </a>{' '}
