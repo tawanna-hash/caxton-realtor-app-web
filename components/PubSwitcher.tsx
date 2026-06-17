@@ -22,7 +22,7 @@ type Pub = PubKey;
 
 const PUBS: { id: Pub; label: string; color: string }[] = [
   { id: 'realtyline', label: 'RealtyLine Austin', color: '#021D40' },
-  { id: 'newsline',   label: 'Newsline San Antonio',       color: '#874F80' },
+  { id: 'newsline',   label: 'Newsline San Antonio',       color: '#3D0740' },
 ];
 
 export function PubSwitcher({ current }: { current: string }) {

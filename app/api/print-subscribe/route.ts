@@ -314,7 +314,7 @@ function notificationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): str
     <tr><td style="padding: 6px 12px 6px 0; color: #6b7280; vertical-align: top;">USPS check</td><td style="padding: 6px 0;">
       ${usps.ok
         ? `<span style="color: #15803d;">✓ Verified</span>${norm ? `<br/><small style="color: #6b7280;">Normalized: ${escapeHtml(norm.streetAddress)}, ${escapeHtml(norm.city)}, ${escapeHtml(norm.state)} ${escapeHtml(norm.ZIPCode)}${norm.ZIPPlus4 ? '-' + escapeHtml(norm.ZIPPlus4) : ''}</small>` : ''}`
-        : `<span style="color: #ac1917;">⚠ ${escapeHtml(usps.error || 'Could not verify')}</span><br/><small style="color: #6b7280;">Review address before mailing.</small>`
+        : `<span style="color: #b91c1c;">⚠ ${escapeHtml(usps.error || 'Could not verify')}</span><br/><small style="color: #6b7280;">Review address before mailing.</small>`
       }
     </td></tr>
   </table>
@@ -325,7 +325,7 @@ function notificationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): str
 }
 
 function confirmationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): string {
-  const accent = p.publication === 'realtyline' ? '#1a2a44' : '#874F80';
+  const accent = p.publication === 'realtyline' ? '#1a2a44' : '#3D0740';
   const norm = usps.normalized;
   return `
 <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px;">

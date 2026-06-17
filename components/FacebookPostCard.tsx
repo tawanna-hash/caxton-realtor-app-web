@@ -52,7 +52,7 @@ function FacebookGlyph() {
   return (
     <span
       aria-hidden
-      className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#156B8A] text-white text-xs font-bold"
+      className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#1877F2] text-white text-xs font-bold"
       style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
     >
       f
@@ -109,7 +109,7 @@ export default function FacebookPostCard({ post, pub, track }: Props) {
     >
       <div className="flex items-start gap-4">
         <div className="flex-1 min-w-0">
-          <span className="text-xs uppercase tracking-[0.15em] font-medium text-[#156B8A] mb-2 flex items-center gap-1.5">
+          <span className="text-xs uppercase tracking-[0.15em] font-medium text-[#1877F2] mb-2 flex items-center gap-1.5">
             <FacebookGlyph />
             Social
             {post.is_open_house && (

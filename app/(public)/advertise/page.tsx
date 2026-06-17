@@ -73,7 +73,7 @@ export default function AdvertisePage() {
             </p>
           </div>
           <div className="border border-gray-200 px-4 py-5">
-            <p className="text-3xl font-semibold text-[#874F80] tracking-tight">
+            <p className="text-3xl font-semibold text-[#3D0740] tracking-tight">
               11K
             </p>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
@@ -83,7 +83,7 @@ export default function AdvertisePage() {
             </p>
           </div>
           <div className="border border-gray-200 px-4 py-5">
-            <p className="text-3xl font-semibold text-[#874F80] tracking-tight">
+            <p className="text-3xl font-semibold text-[#3D0740] tracking-tight">
               14K
             </p>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
@@ -302,7 +302,7 @@ export default function AdvertisePage() {
               and{' '}
               <a
                 href="https://www.newslinesa.com/2026-deadlines/"
-                className="text-[#874F80] font-medium underline underline-offset-2"
+                className="text-[#3D0740] font-medium underline underline-offset-2"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -371,12 +371,12 @@ export default function AdvertisePage() {
           </div>
 
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-[#874F80] mb-2">
+            <p className="text-sm font-semibold uppercase tracking-wider text-[#3D0740] mb-2">
               Newsline San Antonio — San Antonio
             </p>
             <a
               href="mailto:hello@newslinesa.com?subject=Media%20Kit%20Request%20%E2%80%94%20Newsline"
-              className="text-base font-medium text-[#874F80] underline underline-offset-2"
+              className="text-base font-medium text-[#3D0740] underline underline-offset-2"
             >
               hello@newslinesa.com
             </a>

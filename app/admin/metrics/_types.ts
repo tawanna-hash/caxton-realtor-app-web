@@ -89,12 +89,12 @@ export const ACTION_LABELS: Record<string, string> = {
 // #1a2a44 — admin chrome navy
 // #021D40 — RealtyLine pub navy
 // #2d1a44 — Newsline San Antonio pub navy
-// #3F5D82 — accent blue (links, hover states)
+// #185FA5 — accent blue (links, hover states)
 export const EVENT_COLORS: Record<string, string> = {
   inventory_filter_clicked: '#1a2a44',
   builder_chip_clicked: '#021D40',
   inventory_card_clicked: '#2d1a44',
-  builder_tab_clicked: '#3F5D82',
+  builder_tab_clicked: '#185FA5',
 };
 
 export type KPISummary = {

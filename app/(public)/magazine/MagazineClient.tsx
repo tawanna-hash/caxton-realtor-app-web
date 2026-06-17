@@ -18,7 +18,7 @@ type Pub = PubKey;
 // the rest of the RealtyLine family until they have their own issues.
 const PUBS_INFO: Record<Pub, { name: string; city: string; color: string }> = {
   realtyline: { name: 'RealtyLine', city: 'Austin', color: '#021D40' },
-  newsline: { name: 'Newsline San Antonio', city: 'San Antonio', color: '#874F80' },
+  newsline: { name: 'Newsline San Antonio', city: 'San Antonio', color: '#3D0740' },
   'realtyline-houston': { name: 'RealtyLine Houston', city: 'Houston', color: '#021D40' },
   'realtyline-dallas': { name: 'RealtyLine Dallas/FTW', city: 'Dallas', color: '#021D40' },
 };

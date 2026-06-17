@@ -56,7 +56,7 @@ export interface CalcReport {
 }
 
 const BRAND_NAVY: [number, number, number] = [26, 42, 68];   // #1a2a44
-const BRAND_GOLD: [number, number, number] = [196, 163, 90]; // #c0982b
+const BRAND_GOLD: [number, number, number] = [196, 163, 90]; // #c4a35a
 const GREY_900: [number, number, number] = [17, 24, 39];
 const GREY_700: [number, number, number] = [55, 65, 81];
 const GREY_500: [number, number, number] = [107, 114, 128];

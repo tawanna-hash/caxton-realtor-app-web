@@ -407,7 +407,7 @@ export default function HoldingClient() {
             type="button"
             disabled={busy !== null}
             onClick={runVerifyDrain}
-            className="px-4 py-2 rounded-md border border-[#874F80] text-[#874F80] text-sm font-medium hover:bg-[#874F80] hover:text-white disabled:opacity-50"
+            className="px-4 py-2 rounded-md border border-[#3D0740] text-[#3D0740] text-sm font-medium hover:bg-[#3D0740] hover:text-white disabled:opacity-50"
             title="Verify every Pending contact in the background (batches of 150)."
           >
             {busy === 'drain' ? 'Verifying…' : 'Verify all Pending'}
@@ -416,7 +416,7 @@ export default function HoldingClient() {
             type="button"
             disabled={busy !== null}
             onClick={syncFromUnlockMLS}
-            className="px-4 py-2 rounded-md bg-[#874F80] text-white text-sm font-medium hover:bg-[#AA3653] disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-[#3D0740] text-white text-sm font-medium hover:bg-[#5A0E5F] disabled:opacity-50"
           >
             {busy === 'sync' ? 'Syncing…' : 'Sync from UnlockMLS'}
           </button>
@@ -463,7 +463,7 @@ export default function HoldingClient() {
           </div>
           <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
             <div
-              className="h-full bg-[#874F80] transition-all"
+              className="h-full bg-[#3D0740] transition-all"
               style={{
                 width: `${drainJob.total > 0 ? Math.min(100, Math.round((drainJob.processed / drainJob.total) * 100)) : 0}%`,
               }}
@@ -475,13 +475,13 @@ export default function HoldingClient() {
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <KpiCard label="Total members"  value={counts?.total    ?? 0} sub="awaiting review" />
-        <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#359D73" />
-        <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#F0BE39" />
+        <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#10B981" />
+        <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#F59E0B" />
         <KpiCard
           label="Within 60 mi"
           value={counts?.near ?? 0}
           sub="near ABoR or Five Points"
-          accent="#237f5d"
+          accent="#059669"
           action={(counts?.near ?? 0) > 0 ? {
             label: 'Export CSV',
             onClick: () => {
@@ -497,8 +497,8 @@ export default function HoldingClient() {
       {/* Filter chips + search */}
       <div className="flex items-center gap-2 flex-wrap">
         <FilterChip active={filter === 'all'}      onClick={() => setFilter('all')}      label="All"      count={counts?.total ?? 0} />
-        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={counts?.verified ?? 0} accent="#359D73" />
-        <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={counts?.pending ?? 0}  accent="#F0BE39" />
+        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={counts?.verified ?? 0} accent="#10B981" />
+        <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={counts?.pending ?? 0}  accent="#F59E0B" />
 
         <div className="flex-1" />
 
@@ -507,7 +507,7 @@ export default function HoldingClient() {
           placeholder="Search name, email, company…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="px-3 py-2 rounded-md border border-gray-300 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-[#874F80]"
+          className="px-3 py-2 rounded-md border border-gray-300 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-[#3D0740]"
         />
       </div>
 
@@ -715,7 +715,7 @@ function KpiCard({
           title={action.label}
           aria-label={action.label}
           className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-white shadow-sm hover:opacity-90"
-          style={{ backgroundColor: accent ?? '#874F80' }}
+          style={{ backgroundColor: accent ?? '#3D0740' }}
         >
           {/* Download glyph (inline SVG, no icon lib dep) */}
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -733,7 +733,7 @@ function KpiCard({
 function FilterChip({
   active, onClick, label, count, accent,
 }: { active: boolean; onClick: () => void; label: string; count: number; accent?: string }) {
-  const bg = active ? (accent ?? '#874F80') : '#F3F4F6';
+  const bg = active ? (accent ?? '#3D0740') : '#F3F4F6';
   const fg = active ? 'white' : '#374151';
   return (
     <button
@@ -1100,7 +1100,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#874F80] text-white hover:bg-[#AA3653] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-[#3D0740] text-white hover:bg-[#5A0E5F] disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify with USPS'}
               </button>
@@ -1128,7 +1128,7 @@ function EditDrawer({
                 type="button"
                 disabled={emailBusy || !form.email}
                 onClick={onVerifyEmail}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#874F80] text-white hover:bg-[#AA3653] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-[#3D0740] text-white hover:bg-[#5A0E5F] disabled:opacity-50"
               >
                 {emailBusy ? 'Verifying…' : 'Verify Email'}
               </button>
@@ -1166,7 +1166,7 @@ function EditDrawer({
                 onChange={(e) => setField('email_notes', e.target.value)}
                 rows={5}
                 placeholder="Notes about this contact's email — e.g. bounced 5/30, verified via phone, alternate address..."
-                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#874F80] resize-y"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#3D0740] resize-y"
               />
               <span className="mt-1 block text-[10px] text-gray-500">
                 Each verifier run auto-appends a timestamped line. Edit freely.
@@ -1193,7 +1193,7 @@ function EditDrawer({
             type="button"
             disabled={saving}
             onClick={save}
-            className="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-[#874F80] hover:bg-[#AA3653] disabled:opacity-50"
+            className="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-[#3D0740] hover:bg-[#5A0E5F] disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>
@@ -1225,7 +1225,7 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         inputMode={inputMode}
-        className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#874F80]"
+        className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#3D0740]"
       />
     </label>
   );

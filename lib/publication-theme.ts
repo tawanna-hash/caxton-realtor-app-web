@@ -106,7 +106,7 @@ const THEMES: Record<Publication, PublicationTheme> = {
     id: 'san_antonio',
     name: 'Newsline San Antonio',
     shortName: 'Newsline San Antonio',
-    primaryColor: '#874F80',
+    primaryColor: '#3D0740',
     primaryColorHover: '#52095a',
     fromEmailDisplayName: 'Newsline San Antonio',
   },

@@ -31,7 +31,7 @@ import {
 } from '@/lib/agreement-pricing';
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 
-const ACCENT = '#D70E17';
+const ACCENT = '#D22531';
 const CURRENT_YEAR = new Date().getFullYear().toString();
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

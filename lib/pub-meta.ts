@@ -38,7 +38,7 @@ export const PUB_META: Record<PubKey, PubMeta> = {
   newsline: {
     name: 'Newsline San Antonio',
     city: 'San Antonio',
-    color: '#874F80',
+    color: '#3D0740',
     tagline: 'Reach 24,000+ San Antonio real estate professionals',
     reach: '24,000+ San Antonio REALTORS',
     email: 'ads@newslinesa.com',

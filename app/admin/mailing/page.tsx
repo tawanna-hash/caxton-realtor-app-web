@@ -54,21 +54,21 @@ export default async function MailingHubPage() {
       label: 'SABOR Members',
       href: '/admin/mailing/sabor-members',
       caption: 'San Antonio Board of REALTORS mirror.',
-      accent: '#1887AB',
+      accent: '#0EA5E9',
       initial: 'S',
     },
     {
       label: 'App Subscribers',
       href: '/admin/subscribers',
       caption: 'Newsletter signups from realtynewsnow.app.',
-      accent: '#359D73',
+      accent: '#10B981',
       initial: 'N',
     },
     {
       label: 'Manual Subscribe',
       href: '/subscribe',
       caption: 'Add a subscriber by hand (public form).',
-      accent: '#874F80',
+      accent: '#3D0740',
       initial: 'M',
     },
   ];
@@ -91,14 +91,14 @@ export default async function MailingHubPage() {
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
         <KpiCard label="Segments total"      value={counts.total}                       sub="all mailing segments" />
-        <KpiCard label="Manual Newsline San Antonio"     value={counts['manual-newsline']}          sub="manual entries"      accent="#359D73" />
-        <KpiCard label="REALTORS"            value={counts.realtor}                     sub="licensed agents"     accent="#874F80" />
+        <KpiCard label="Manual Newsline San Antonio"     value={counts['manual-newsline']}          sub="manual entries"      accent="#10B981" />
+        <KpiCard label="REALTORS"            value={counts.realtor}                     sub="licensed agents"     accent="#3D0740" />
         <KpiCard label="ABOR Members"        value={sources.aborMembers}                sub="UnlockMLS holding"   accent="#6B7280" />
-        <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#1887AB" />
-        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="newsletter signups"  accent="#359D73" />
+        <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#0EA5E9" />
+        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="newsletter signups"  accent="#10B981" />
         <KpiCard label="Active — ATX"        value={counts['active-advertiser-atx']}    sub="RealtyLine ATX"      accent="#2563EB" />
-        <KpiCard label="Active — SA"         value={counts['active-advertiser-sa']}     sub="Newsline San Antonio"         accent="#1887AB" />
-        <KpiCard label="Non-Advertisers — ATX" value={counts['non-advertiser-atx']}     sub="RealtyLine ATX"      accent="#F0BE39" />
+        <KpiCard label="Active — SA"         value={counts['active-advertiser-sa']}     sub="Newsline San Antonio"         accent="#0EA5E9" />
+        <KpiCard label="Non-Advertisers — ATX" value={counts['non-advertiser-atx']}     sub="RealtyLine ATX"      accent="#F59E0B" />
         <KpiCard label="Non-Advertisers — SA"  value={counts['non-advertiser-sa']}      sub="Newsline San Antonio"         accent="#EA580C" />
       </div>
 

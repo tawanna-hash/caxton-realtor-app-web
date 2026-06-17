@@ -28,7 +28,7 @@ interface Props {
  * guidelines so the icons feel native rather than recolored chiclets.
  */
 const PLATFORMS = [
-  { key: 'facebook' as const, label: 'Facebook', color: '#156B8A' },
+  { key: 'facebook' as const, label: 'Facebook', color: '#1877F2' },
   { key: 'instagram' as const, label: 'Instagram', color: '#E1306C' },
   { key: 'linkedin' as const, label: 'LinkedIn', color: '#0A66C2' },
 ];
