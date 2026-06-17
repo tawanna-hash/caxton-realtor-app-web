@@ -29,10 +29,16 @@ import {
 } from '@stripe/react-stripe-js';
 import { getSlotAvailablePubs, type AppAdSlot } from '@/lib/media-kit';
 
-// Per product decision (2026-06-16): the legacy 'both' Austin+SA bundle
-// option was removed from the public checkout. Advertisers pick exactly
-// one single-pub market (Austin / SA / Houston / Dallas). Bundle buys are
-// handled by admin BookingBuilder.
+// Per product decision (2026-06-16, revised 2026-06-17): publication pills
+// are MULTI-SELECT toggles. An advertiser can pick one or more single-pub
+// markets (Austin / SA / Houston / Dallas). Selecting both Austin AND
+// Newsline SA automatically applies the legacy 'both' bundle rate. Pre-
+// launch markets (Houston, Dallas/FTW) render as disabled Coming Soon
+// pills and can not be selected. Other multi-pub combinations are not
+// currently priced (only the Austin+SA bundle gets the discount); since
+// Houston/Dallas are pre-launch, the only multi-select the UI lets a
+// buyer create today is Austin+SA, which the server already supports as
+// pub='both'.
 interface Props {
   slot: AppAdSlot;
   initialPub: 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas';
@@ -51,6 +57,25 @@ interface Props {
 
 type Pub = 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas';
 type BillingPeriod = 'weekly' | 'monthly' | 'unit';
+
+/** Server-side scope value. 'both' = Austin+SA bundle (legacy). */
+type ServerPub = Pub | 'both';
+
+/**
+ * Map a set of selected single-pub markets to the canonical server scope
+ * used by /api/checkout/create-intent. Today the public form only allows
+ * the Austin+SA combination to be multi-selected (Houston/Dallas are
+ * disabled), so this collapses cleanly to 'both' or a single pub.
+ */
+function toServerPub(selected: ReadonlySet<Pub>): ServerPub | null {
+  if (selected.size === 0) return null;
+  if (selected.size === 1) return Array.from(selected)[0];
+  if (selected.size === 2 && selected.has('realtyline') && selected.has('newsline')) {
+    return 'both';
+  }
+  // Defensive: no other multi-select shape is reachable through the UI today.
+  return null;
+}
 
 interface IntentResp {
   clientSecret: string;
@@ -90,9 +115,8 @@ export default function CheckoutForm({
 
   // Allow-list of publication scopes for this slot, narrowed to the four
   // single-pub markets the public checkout exposes. The legacy 'both'
-  // bundle is intentionally excluded here — it's still accepted by the
-  // server for backward compatibility with admin tooling, but the public
-  // UI no longer offers it. Bundle buys go through admin BookingBuilder.
+  // bundle is derived dynamically by selecting BOTH Austin AND Newsline
+  // pills (see toServerPub above) and is not exposed as its own pill.
   const NARROW_PUBS: readonly Pub[] = [
     'realtyline',
     'newsline',
@@ -116,7 +140,31 @@ export default function CheckoutForm({
     : (availablePubs.find(isOpenForBooking) ??
         availablePubs[0] ??
         'realtyline');
-  const [pub, setPub] = useState<Pub>(safeInitialPub);
+
+  // Multi-select pill state. Always seeded with the safeInitialPub so the
+  // form starts in a valid bookable state.
+  const [selectedPubs, setSelectedPubs] = useState<Set<Pub>>(
+    () => new Set<Pub>([safeInitialPub]),
+  );
+  const togglePub = (p: Pub) => {
+    setSelectedPubs((prev) => {
+      const next = new Set(prev);
+      if (next.has(p)) {
+        // Don't allow unselecting the last pill: the form needs at least
+        // one publication to compute a price.
+        if (next.size <= 1) return prev;
+        next.delete(p);
+      } else {
+        next.add(p);
+      }
+      return next;
+    });
+  };
+  // Resolved server scope (one of the 4 single pubs, or 'both' if both
+  // Austin+SA pills are selected). Should never be null in practice since
+  // togglePub prevents unselecting the last pill.
+  const serverPub: ServerPub | null = toServerPub(selectedPubs);
+  const isBundle = serverPub === 'both';
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>(
     perUnit ? 'unit' : 'weekly',
   );
@@ -163,13 +211,16 @@ export default function CheckoutForm({
   // markets were activated in Phase 2 PR D.)
   const previewBaseCents = useMemo(() => {
     if (perUnit) {
-      return slot.weeklySingle * 100 * units;
+      const rate = isBundle ? slot.weeklyBoth : slot.weeklySingle;
+      return rate * 100 * units;
     }
     if (billingPeriod === 'monthly' && hasMonthly) {
-      return slot.monthlySingle! * 100 * months;
+      const rate = isBundle ? slot.monthlyBoth! : slot.monthlySingle!;
+      return rate * 100 * months;
     }
-    return slot.weeklySingle * 100 * weeks;
-  }, [slot, billingPeriod, weeks, months, units, perUnit, hasMonthly]);
+    const rate = isBundle ? slot.weeklyBoth : slot.weeklySingle;
+    return rate * 100 * weeks;
+  }, [slot, billingPeriod, weeks, months, units, perUnit, hasMonthly, isBundle]);
 
   const previewSurcharge = Math.round(previewBaseCents * 0.03);
   const previewTotal = previewBaseCents + previewSurcharge;
@@ -195,6 +246,7 @@ export default function CheckoutForm({
 
   // ─── Stage 1: prepare PaymentIntent ─────────────────────────────────────
   const ready =
+    !!serverPub &&
     !!name.trim() &&
     /.+@.+\..+/.test(email.trim()) &&
     !!startDate &&
@@ -205,13 +257,17 @@ export default function CheckoutForm({
 
   async function prepareIntent() {
     setError(null);
+    if (!serverPub) {
+      setError('Pick at least one publication.');
+      return;
+    }
     try {
       const r = await fetch('/api/checkout/create-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slot: slot.slug,
-          pub,
+          pub: serverPub,
           billing_period: billingPeriod,
           weeks,
           months,
@@ -263,7 +319,7 @@ export default function CheckoutForm({
         </h2>
 
         <div className="space-y-4">
-          <Field label="Publication">
+          <Field label="Publication (tap to select one or more)">
             <div className="flex flex-wrap gap-2">
               {(
                 [
@@ -281,7 +337,7 @@ export default function CheckoutForm({
                 const sold = availablePubs.includes(p);
                 const taken = bookedSet.has(p);
                 const allowed = !isComingSoon && sold && !taken;
-                const active = pub === p && allowed;
+                const active = selectedPubs.has(p) && allowed;
                 const label =
                   p === 'realtyline'
                     ? 'RealtyLine Austin'
@@ -301,7 +357,7 @@ export default function CheckoutForm({
                   <button
                     key={p}
                     type="button"
-                    onClick={() => allowed && setPub(p)}
+                    onClick={() => allowed && togglePub(p)}
                     disabled={!allowed}
                     aria-disabled={!allowed}
                     aria-pressed={active}
@@ -328,6 +384,11 @@ export default function CheckoutForm({
                 );
               })}
             </div>
+            {isBundle && (
+              <p className="mt-2 text-xs text-emerald-700 font-medium">
+                Bundle pricing applied: RealtyLine Austin + Newsline San Antonio.
+              </p>
+            )}
             {bookedSet.size > 0 && !allBlocked && (
               <p className="mt-2 text-xs text-amber-700">
                 One or more publications are currently booked for this placement.
