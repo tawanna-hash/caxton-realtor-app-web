@@ -171,6 +171,27 @@ export default function InquiriesInbox() {
     [refetch],
   );
 
+  const handleInquiryDeleted = useCallback(
+    (deletedId: string) => {
+      // Drop the row optimistically so the detail pane closes and the
+      // list collapses by one. The follow-up refetch refreshes badge
+      // counts and pulls in any newer rows from the server.
+      setData((prev) =>
+        prev
+          ? {
+              ...prev,
+              rows: prev.rows.filter((r) => r.id !== deletedId),
+              total: Math.max(0, prev.total - 1),
+            }
+          : prev,
+      );
+      // Clear the ?id= param so the URL no longer points at the deleted row.
+      setUrl({ id: null });
+      refetch();
+    },
+    [refetch, setUrl],
+  );
+
   const selectedInquiry = useMemo(
     () => data?.rows.find((r) => r.id === selectedId) ?? null,
     [data, selectedId],
@@ -340,6 +361,7 @@ export default function InquiriesInbox() {
               key={selectedInquiry.id}
               inquiry={selectedInquiry}
               onUpdated={handleInquiryUpdated}
+              onDeleted={handleInquiryDeleted}
               onClose={() => setUrl({ id: null })}
             />
           ) : (

@@ -9,6 +9,12 @@ import BookingBuilder from './BookingBuilder';
 interface Props {
   inquiry: AdInquiryRow;
   onUpdated: (next: AdInquiryRow) => void;
+  /**
+   * Called after the inquiry has been permanently removed via the Delete
+   * action. The parent should drop the row from its list state and clear
+   * any URL params pointing at this id.
+   */
+  onDeleted: (id: string) => void;
   onClose: () => void;
 }
 
@@ -43,12 +49,13 @@ function formatTimestamp(iso: string | null): string {
   });
 }
 
-export default function InquiryDetail({ inquiry, onUpdated, onClose }: Props) {
+export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }: Props) {
   const [notes, setNotes] = useState<string>(inquiry.notes ?? '');
   const [assignee, setAssignee] = useState<string>(inquiry.assignee ?? '');
   const [saving, setSaving] = useState<boolean>(false);
   const [savedFlag, setSavedFlag] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<boolean>(false);
 
   async function patch(body: Record<string, unknown>, label: string) {
     setSaving(true);
@@ -73,6 +80,31 @@ export default function InquiryDetail({ inquiry, onUpdated, onClose }: Props) {
       setError(err instanceof Error ? err.message : 'Save failed');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    // Two-step confirm so an accidental click on the red button can't wipe
+    // a real lead. The text mirrors what the audit log will record.
+    const ok = window.confirm(
+      `Permanently delete this inquiry from ${inquiry.name}?\n\nThis can't be undone. Use "Spam" or "Lost" if you just want to move it out of the pipeline.`,
+    );
+    if (!ok) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/ads/inquiries/${inquiry.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(j?.error || `Delete failed (${res.status})`);
+      }
+      onDeleted(inquiry.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Delete failed');
+      setDeleting(false);
     }
   }
 
@@ -318,6 +350,17 @@ export default function InquiryDetail({ inquiry, onUpdated, onClose }: Props) {
             Mark replied
           </button>
         )}
+        {/* Destructive action lives on the right so it can't be confused
+            with the primary blue Reply button on the left. */}
+        <button
+          type="button"
+          disabled={deleting || saving}
+          onClick={handleDelete}
+          className="ml-auto inline-flex items-center px-3 py-1.5 rounded text-sm font-medium border border-red-300 bg-white text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Permanently delete this inquiry"
+        >
+          {deleting ? 'Deleting…' : 'Delete'}
+        </button>
         {savedFlag && (
           <span className="text-xs text-green-700 font-medium">{savedFlag}</span>
         )}

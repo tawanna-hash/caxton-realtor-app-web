@@ -17,8 +17,19 @@
 // `info` is used only to derive the active-tab accent color from the current
 // publication. Paid ad inventory is rendered separately via <AdSlot> from
 // AppShell so it can be slot-aware and per-page.
+//
+// Tap feedback:
+//   - Each destination route is prefetched on mount so the next page is
+//     already warm when the user taps.
+//   - Tapping a tab paints an immediate "pending" active state that lasts
+//     until the pathname catches up. Without this, the bar feels frozen
+//     for the duration of the navigation because the previous tab stays
+//     highlighted until React Router commits.
+//   - Buttons have a touch-friendly active:scale-95 + tap-highlight reset
+//     so the press itself feels physical on iOS.
 
 import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState, useTransition } from 'react';
 import { Home, BookOpen, Calendar, Building2, Megaphone, MoreHorizontal } from 'lucide-react';
 
 type PubInfo = {
@@ -33,19 +44,68 @@ type Props = {
   onMoreClick: () => void;
 };
 
+// Destination routes the bar can navigate to. /dashboard isn't included
+// because Feed taps usually fire a same-page event rather than a route push.
+const PREFETCH_ROUTES = ['/magazine', '/calendar', '/builders', '/advertisers', '/dashboard'] as const;
+
 export default function BottomNav({ info, onMoreClick }: Props) {
   const pathname = usePathname();
   const router = useRouter();
+  const [, startTransition] = useTransition();
 
-  // Initialize from pathname only so the active state is correct on first paint.
-  // The hash gate would briefly read window.location.hash on hydration, causing
-  // a one-frame flash of inactive state on /dashboard. Hash is only consulted
-  // in the goHome dispatch handler below, where the timing doesn't matter.
-  const isHome = pathname === '/dashboard';
-  const isMagazine = pathname === '/magazine' || pathname.startsWith('/magazine/');
-  const isCalendar = pathname === '/calendar' || pathname.startsWith('/calendar/');
-  const isBuilders = pathname === '/builders' || pathname.startsWith('/builders/');
-  const isAdvertisers = pathname === '/advertisers' || pathname.startsWith('/advertisers/');
+  // Pending target while a navigation is in-flight. Painted as active so the
+  // user sees instant feedback. Cleared as soon as pathname commits to the
+  // target (or any new path).
+  const [pending, setPending] = useState<string | null>(null);
+
+  // Warm up the App Router cache for every destination so the first tap on
+  // each tab is instant. next/link does this automatically, but BottomNav
+  // uses programmatic router.push, so we have to call prefetch ourselves.
+  useEffect(() => {
+    for (const route of PREFETCH_ROUTES) {
+      try {
+        router.prefetch(route);
+      } catch {
+        // prefetch is a perf hint -- failures are non-fatal
+      }
+    }
+  }, [router]);
+
+  // Once the pathname catches up to the pending target (or moves anywhere
+  // else), the pending state is stale. We compute the effective pending
+  // value during render instead of mirroring pathname into state via an
+  // effect, which keeps the active state in sync with zero re-renders.
+  const effectivePending =
+    pending && (pathname === pending || pathname.startsWith(`${pending}/`)) ? null : pending;
+
+  function matches(targetPrefix: string, exactDashboard = false): boolean {
+    if (effectivePending === targetPrefix) return true;
+    if (exactDashboard) return pathname === '/dashboard';
+    return pathname === targetPrefix || pathname.startsWith(`${targetPrefix}/`);
+  }
+
+  const isHome = matches('/dashboard', true);
+  const isMagazine = matches('/magazine');
+  const isCalendar = matches('/calendar');
+  const isBuilders = matches('/builders');
+  const isAdvertisers = matches('/advertisers');
+
+  function navigate(target: string) {
+    if (pathname === target) return;
+    setPending(target);
+    // Safety net: if the navigation never completes (back button, blocked
+    // by an interstitial, etc.), the optimistic active state would otherwise
+    // stick. 1200ms is plenty for a normal route push and short enough that
+    // a stranded highlight self-heals quickly.
+    window.setTimeout(() => {
+      setPending((curr) => (curr === target ? null : curr));
+    }, 1200);
+    // Wrap in a transition so React keeps the previous screen interactive
+    // while the new one streams in -- avoids the brief input-blocked feel.
+    startTransition(() => {
+      router.push(target);
+    });
+  }
 
   function goHome() {
     if (pathname === '/dashboard') {
@@ -59,24 +119,8 @@ export default function BottomNav({ info, onMoreClick }: Props) {
         history.replaceState(null, '', '/dashboard');
       }
     } else {
-      router.push('/dashboard');
+      navigate('/dashboard');
     }
-  }
-
-  function goMagazine() {
-    router.push('/magazine');
-  }
-
-  function goCalendar() {
-    router.push('/calendar');
-  }
-
-  function goBuilders() {
-    router.push('/builders');
-  }
-
-  function goAdvertisers() {
-    router.push('/advertisers');
   }
 
   const accent = info?.color ?? '#1a2a44';
@@ -88,16 +132,16 @@ export default function BottomNav({ info, onMoreClick }: Props) {
         <Tab label="Feed" active={isHome} accent={accent} onClick={goHome}>
           <Home strokeWidth={1.75} size={22} />
         </Tab>
-        <Tab label="Magazine" active={isMagazine} accent={accent} onClick={goMagazine}>
+        <Tab label="Magazine" active={isMagazine} accent={accent} onClick={() => navigate('/magazine')}>
           <BookOpen strokeWidth={1.75} size={22} />
         </Tab>
-        <Tab label="Calendar" active={isCalendar} accent={accent} onClick={goCalendar}>
+        <Tab label="Calendar" active={isCalendar} accent={accent} onClick={() => navigate('/calendar')}>
           <Calendar strokeWidth={1.75} size={22} />
         </Tab>
-        <Tab label="Builders" active={isBuilders} accent={accent} onClick={goBuilders}>
+        <Tab label="Builders" active={isBuilders} accent={accent} onClick={() => navigate('/builders')}>
           <Building2 strokeWidth={1.75} size={22} />
         </Tab>
-        <Tab label="Advertisers" active={isAdvertisers} accent={accent} onClick={goAdvertisers}>
+        <Tab label="Advertisers" active={isAdvertisers} accent={accent} onClick={() => navigate('/advertisers')}>
           <Megaphone strokeWidth={1.75} size={22} />
         </Tab>
         <Tab label="More" active={false} accent={accent} onClick={onMoreClick}>
@@ -126,8 +170,14 @@ function Tab({
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       // BUG-12: bump tap target to >=44px (WCAG 2.5.5 / Apple HIG)
-      className="flex flex-col items-center justify-center flex-1 px-1 gap-1 min-h-[44px] transition"
-      style={{ color: active ? accent : '#9ca3af' }}
+      // - active:scale-95 gives a quick "press" feel under the finger
+      // - WebkitTapHighlightColor:transparent kills iOS's grey flash so
+      //   our own pressed-state is the only thing the user sees
+      className="flex flex-col items-center justify-center flex-1 px-1 gap-1 min-h-[44px] transition-transform duration-75 active:scale-95"
+      style={{
+        color: active ? accent : '#9ca3af',
+        WebkitTapHighlightColor: 'transparent',
+      }}
     >
       {children}
       <span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">
@@ -136,5 +186,3 @@ function Tab({
     </button>
   );
 }
-
-

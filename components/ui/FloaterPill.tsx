@@ -44,10 +44,20 @@ type Props = {
 };
 
 // BUG-13: bump tap target to >=44px on both axes (WCAG 2.5.5).
+//
+// Tap feedback:
+//   - active:scale-95 + duration-75 gives an immediate "press" feel under
+//     the finger, so the user knows the tap registered even if the target
+//     route (mailto:, tel:, external link) takes a moment to open.
+//   - active:bg-white/20 brightens on press (was /10 -- nearly invisible).
+//   - WebkitTapHighlightColor:transparent (set via inline style) kills the
+//     iOS grey flash so only our own pressed state is visible.
 const BTN_CLS =
   'flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-1.5 py-1.5 rounded-md ' +
-  'transition-colors text-white/85 hover:text-white active:bg-white/10 ' +
+  'transition-transform duration-75 text-white/85 hover:text-white active:scale-95 active:bg-white/20 ' +
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60';
+
+const TAP_STYLE: React.CSSProperties = { WebkitTapHighlightColor: 'transparent' };
 
 const LABEL_CLS =
   'text-[9px] uppercase tracking-wider mt-0.5 font-medium whitespace-nowrap';
@@ -107,6 +117,7 @@ export default function FloaterPill({
                   onClick={action.onClick}
                   aria-label={aria}
                   className={BTN_CLS}
+                  style={TAP_STYLE}
                 >
                   <ActionInner action={action} />
                 </a>
@@ -116,9 +127,11 @@ export default function FloaterPill({
               <Link
                 key={action.key}
                 href={action.href}
+                prefetch
                 onClick={action.onClick}
                 aria-label={aria}
                 className={BTN_CLS}
+                style={TAP_STYLE}
               >
                 <ActionInner action={action} />
               </Link>
@@ -131,6 +144,7 @@ export default function FloaterPill({
               onClick={action.onClick}
               aria-label={aria}
               className={BTN_CLS}
+              style={TAP_STYLE}
             >
               <ActionInner action={action} />
             </button>
