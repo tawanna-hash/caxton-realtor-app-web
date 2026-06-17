@@ -49,7 +49,7 @@ function VerifyContent() {
 
         {status === 'verifying' && (
           <div>
-            <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-[#1a2a44] mx-auto" />
+            <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-[#021D40] mx-auto" />
             <p className="mt-6 text-base text-gray-500 font-light">One moment...</p>
           </div>
         )}
@@ -75,7 +75,7 @@ function VerifyContent() {
             <p className="mt-4 text-base text-red-800">{message}</p>
             <a
               href="/dashboard"
-              className="mt-6 inline-block text-sm uppercase tracking-wider font-medium text-[#1a2a44] border-b border-[#1a2a44] pb-0.5"
+              className="mt-6 inline-block text-sm uppercase tracking-wider font-medium text-[#021D40] border-b border-[#021D40] pb-0.5"
             >
               Back to the app
             </a>
@@ -97,7 +97,7 @@ function VerifyFallback() {
           Caxton Publications, Inc.
         </p>
         <h2 className="text-2xl text-gray-900 font-semibold mb-8">Verifying your account</h2>
-        <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-[#1a2a44] mx-auto" />
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-[#021D40] mx-auto" />
       </div>
     </div>
   );

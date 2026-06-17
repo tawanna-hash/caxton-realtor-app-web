@@ -122,10 +122,10 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
 
   const deltaColor =
     d.headline_delta_direction === 'down'
-      ? '#B23B3B'
+      ? '#b91c1c'
       : d.headline_delta_direction === 'flat'
-        ? '#6B6660'
-        : '#2D7A3A';
+        ? '#6b7280'
+        : '#2563eb';
 
   return (
     <article
@@ -135,7 +135,7 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
     >
       <div className="bg-white mx-3 my-3 rounded-xl overflow-hidden shadow-sm">
         {/* Brand top strip */}
-        <div className="h-1" style={{ background: `linear-gradient(90deg, ${NEWSLINE} 0%, #6A1D6F 100%)` }} />
+        <div className="h-1" style={{ background: `linear-gradient(90deg, ${NEWSLINE} 0%, #7a1f7e 100%)` }} />
 
         <div className="px-4 pt-4 pb-4">
           {/* Eyebrow row */}
@@ -149,7 +149,7 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
             </span>
             <span
               className="px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider"
-              style={{ background: '#FFF8E8', color: '#8C6A1A' }}
+              style={{ background: '#fff7ed', color: '#9a3412' }}
             >
               <span aria-hidden>🔒</span> Members
             </span>
@@ -170,7 +170,7 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
           <div className="flex items-baseline gap-2.5">
             <div
               className="text-[38px] font-bold leading-none"
-              style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: '#2A052D' }}
+              style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: '#2c0530' }}
             >
               {d.headline_value}
             </div>
@@ -185,7 +185,7 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
           {/* 4-cell mini stats */}
           <div
             className="grid grid-cols-2 gap-x-3 gap-y-2.5 py-3 mb-3.5"
-            style={{ borderTop: '1px dashed #E6E2D8' }}
+            style={{ borderTop: '1px dashed #e5e7eb' }}
           >
             {d.mini_stats.slice(0, 4).map((m) => (
               <div key={m.label}>

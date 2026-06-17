@@ -26,7 +26,7 @@ function ResetPasswordForm() {
         </p>
         <Link
           href="/admin/forgot-password"
-          className="block w-full text-center bg-[#1a2a44] text-white py-2.5 text-sm font-medium tracking-wide hover:bg-[#243556] transition-colors"
+          className="block w-full text-center bg-[#021D40] text-white py-2.5 text-sm font-medium tracking-wide hover:bg-[#03285a] transition-colors"
         >
           Request a new reset link
         </Link>
@@ -69,7 +69,7 @@ function ResetPasswordForm() {
   if (success) {
     return (
       <div className="bg-white border border-gray-200 p-6">
-        <p className="text-sm text-[#1a2a44] mb-2">Password updated.</p>
+        <p className="text-sm text-[#021D40] mb-2">Password updated.</p>
         <p className="text-sm text-gray-500">Redirecting you to the sign-in page...</p>
       </div>
     );
@@ -87,12 +87,12 @@ function ResetPasswordForm() {
             onChange={(e) => setNewPassword(e.target.value)}
             autoComplete="new-password"
             placeholder="At least 8 characters"
-            className="w-full border border-gray-300 px-3 py-2 pr-16 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+            className="w-full border border-gray-300 px-3 py-2 pr-16 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40]"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-xs uppercase tracking-wider text-gray-500 hover:text-[#1a2a44] px-2 py-1"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-xs uppercase tracking-wider text-gray-500 hover:text-[#021D40] px-2 py-1"
           >
             {showPassword ? 'Hide' : 'Show'}
           </button>
@@ -106,7 +106,7 @@ function ResetPasswordForm() {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           autoComplete="new-password"
-          className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+          className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40]"
         />
       </div>
       {error && (
@@ -115,12 +115,12 @@ function ResetPasswordForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full bg-[#1a2a44] text-white py-2.5 text-sm font-medium tracking-wide hover:bg-[#243556] disabled:opacity-60 transition-colors"
+        className="w-full bg-[#021D40] text-white py-2.5 text-sm font-medium tracking-wide hover:bg-[#03285a] disabled:opacity-60 transition-colors"
       >
         {submitting ? 'Updating...' : 'Update Password'}
       </button>
       <div className="text-center pt-1">
-        <Link href="/admin/login" className="text-sm text-gray-500 hover:text-[#1a2a44]">
+        <Link href="/admin/login" className="text-sm text-gray-500 hover:text-[#021D40]">
           Back to Sign In
         </Link>
       </div>
@@ -133,7 +133,7 @@ export default function AdminResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-[#1a2a44] tracking-tight">Set new password</h1>
+          <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">Set new password</h1>
           <p className="text-sm text-gray-500 mt-1">Choose a new admin password</p>
         </div>
         <Suspense fallback={<div className="bg-white border border-gray-200 p-6 text-sm text-gray-500">Loading...</div>}>

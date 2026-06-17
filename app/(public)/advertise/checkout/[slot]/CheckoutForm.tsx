@@ -331,8 +331,8 @@ export default function CheckoutForm({
   return (
     <div className="space-y-6">
       {/* ── Pricing card ─────────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-slate-200 p-5 sm:p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">
+      <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           1 · Choose your run
         </h2>
 
@@ -382,10 +382,10 @@ export default function CheckoutForm({
                     title={title}
                     className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${
                       active
-                        ? 'bg-slate-900 text-white border-slate-900'
+                        ? 'bg-gray-900 text-white border-gray-900'
                         : allowed
-                          ? 'bg-white text-slate-700 border-slate-300 hover:border-slate-400'
-                          : 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed'
+                          ? 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                          : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
                     }`}
                   >
                     {label}
@@ -427,8 +427,8 @@ export default function CheckoutForm({
                   onClick={() => setBillingPeriod('weekly')}
                   className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium transition ${
                     billingPeriod === 'weekly'
-                      ? 'bg-slate-900 text-white border-slate-900'
-                      : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400'
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                   }`}
                 >
                   Weekly
@@ -439,8 +439,8 @@ export default function CheckoutForm({
                     onClick={() => setBillingPeriod('monthly')}
                     className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium transition ${
                       billingPeriod === 'monthly'
-                        ? 'bg-slate-900 text-white border-slate-900'
-                        : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400'
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                     }`}
                   >
                     Monthly (save ~7%)
@@ -448,7 +448,7 @@ export default function CheckoutForm({
                 )}
               </div>
               {billingPeriod === 'monthly' && monthlyWeeklyEquivCents != null && (
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-gray-500">
                   {formatUSD(monthlyRateForMarkets(slot, marketCount)! * 100)} / mo ≈{' '}
                   {formatUSD(monthlyWeeklyEquivCents)} / wk
                 </p>
@@ -468,20 +468,20 @@ export default function CheckoutForm({
                 else if (billingPeriod === 'monthly') setMonths(v);
                 else setWeeks(v);
               }}
-              className="w-32 rounded-lg border border-slate-300 px-3 py-2 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none"
+              className="w-32 rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
             />
           </Field>
 
-          <div className="rounded-lg bg-slate-50 border border-slate-200 p-4">
-            <div className="flex justify-between text-sm text-slate-600 mb-1">
+          <div className="rounded-lg bg-gray-50 border border-gray-200 p-4">
+            <div className="flex justify-between text-sm text-gray-600 mb-1">
               <span>Subtotal</span>
               <span>{formatUSD(previewBaseCents)}</span>
             </div>
-            <div className="flex justify-between text-sm text-slate-600 mb-2">
+            <div className="flex justify-between text-sm text-gray-600 mb-2">
               <span>3% card processing</span>
               <span>{formatUSD(previewSurcharge)}</span>
             </div>
-            <div className="flex justify-between text-lg font-bold text-slate-900 border-t border-slate-300 pt-2">
+            <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-300 pt-2">
               <span>Total</span>
               <span>{formatUSD(previewTotal)}</span>
             </div>
@@ -490,8 +490,8 @@ export default function CheckoutForm({
       </div>
 
       {/* ── Contact ─────────────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-slate-200 p-5 sm:p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">
+      <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           2 · Your info
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -511,8 +511,8 @@ export default function CheckoutForm({
       </div>
 
       {/* ── Dates ───────────────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-slate-200 p-5 sm:p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">
+      <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           3 · Run dates
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -533,38 +533,38 @@ export default function CheckoutForm({
             />
           </Field>
         </div>
-        <p className="text-xs text-slate-500 mt-3">End date auto-adjusts when you change duration. Override it if you need specific dates.</p>
+        <p className="text-xs text-gray-500 mt-3">End date auto-adjusts when you change duration. Override it if you need specific dates.</p>
       </div>
 
       {/* ── Creative ────────────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-slate-200 p-5 sm:p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">
+      <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           4 · Creative
         </h2>
-        <p className="text-sm text-slate-600 mb-3">
+        <p className="text-sm text-gray-600 mb-3">
           Spec: <strong>{slot.sizes}</strong>. PNG, JPG, or WebP. Up to 10 MB.
         </p>
 
         {blobUrl ? (
-          <div className="rounded-lg border border-slate-200 p-3 mb-4 flex items-center gap-4">
+          <div className="rounded-lg border border-gray-200 p-3 mb-4 flex items-center gap-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={blobUrl} alt="creative preview" className="max-h-24 rounded border border-slate-200" />
+            <img src={blobUrl} alt="creative preview" className="max-h-24 rounded border border-gray-200" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 truncate">{file?.name ?? 'creative.png'}</p>
+              <p className="text-sm font-medium text-gray-900 truncate">{file?.name ?? 'creative.png'}</p>
               <button
                 type="button"
                 onClick={() => {
                   setBlobUrl(null);
                   setFile(null);
                 }}
-                className="text-xs text-slate-500 hover:text-slate-900 underline mt-1"
+                className="text-xs text-gray-500 hover:text-gray-900 underline mt-1"
               >
                 Replace
               </button>
             </div>
           </div>
         ) : (
-          <label className="block rounded-lg border-2 border-dashed border-slate-300 hover:border-slate-500 transition cursor-pointer p-6 text-center mb-4">
+          <label className="block rounded-lg border-2 border-dashed border-gray-300 hover:border-gray-500 transition cursor-pointer p-6 text-center mb-4">
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp,image/gif"
@@ -577,10 +577,10 @@ export default function CheckoutForm({
                 }
               }}
             />
-            <p className="text-sm font-medium text-slate-700">
+            <p className="text-sm font-medium text-gray-700">
               {uploading ? 'Uploading…' : 'Click to upload your ad creative'}
             </p>
-            <p className="text-xs text-slate-500 mt-1">{slot.sizes}</p>
+            <p className="text-xs text-gray-500 mt-1">{slot.sizes}</p>
           </label>
         )}
 
@@ -595,11 +595,11 @@ export default function CheckoutForm({
       </div>
 
       {/* ── Terms ───────────────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-slate-200 p-5 sm:p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">
+      <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           5 · Agreement terms
         </h2>
-        <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 text-xs text-slate-700 leading-relaxed max-h-44 overflow-y-auto mb-4">
+        <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 text-xs text-gray-700 leading-relaxed max-h-44 overflow-y-auto mb-4">
           <p className="mb-2"><strong>Insertion Order — Self-Serve.</strong> By checking the box below and authorizing payment, you (&quot;Advertiser&quot;) agree to the following:</p>
           <p className="mb-2">1. <strong>Creative Approval.</strong> RealtyLine Austin & Newsline San Antonio (&quot;Publisher&quot;) reserves the right to reject any creative that does not meet spec, contains misleading claims, or conflicts with editorial standards. If rejected, Publisher will issue a full refund within 5 business days.</p>
           <p className="mb-2">2. <strong>Placement & Delivery.</strong> The campaign runs from the start date through the end date selected, displayed in the placement and publication you selected. Impressions are best-effort against committed inventory; Publisher does not guarantee CTR or conversion outcomes.</p>
@@ -612,35 +612,35 @@ export default function CheckoutForm({
             type="checkbox"
             checked={termsAccepted}
             onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="mt-1 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
           />
-          <span className="text-sm text-slate-700">
+          <span className="text-sm text-gray-700">
             I have read and accept the terms above. I&apos;m authorized to book ads on behalf of {company || 'my company'}.
           </span>
         </label>
       </div>
 
       {/* ── Payment ─────────────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-slate-200 p-5 sm:p-6 shadow-sm">
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">
+      <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           6 · Payment
         </h2>
 
         {!intent ? (
           <div>
-            <p className="text-sm text-slate-600 mb-4">
+            <p className="text-sm text-gray-600 mb-4">
               Click below to authorize <strong>{formatUSD(previewTotal)}</strong>. You&apos;ll enter your card details on the next step.
             </p>
             <button
               type="button"
               disabled={!ready}
               onClick={prepareIntent}
-              className="w-full px-6 py-3 rounded-lg bg-slate-900 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition"
+              className="w-full px-6 py-3 rounded-lg bg-gray-900 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition"
             >
               {ready ? `Continue to card → ${formatUSD(previewTotal)}` : 'Complete steps above to continue'}
             </button>
             {!ready && (
-              <ul className="mt-3 text-xs text-slate-500 space-y-1">
+              <ul className="mt-3 text-xs text-gray-500 space-y-1">
                 {!name.trim() && <li>· Enter your name</li>}
                 {!/.+@.+\..+/.test(email.trim()) && <li>· Enter a valid email</li>}
                 {!blobUrl && <li>· Upload your ad creative</li>}
@@ -679,7 +679,7 @@ export default function CheckoutForm({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-xs font-medium text-slate-700 mb-1">{label}</span>
+      <span className="block text-xs font-medium text-gray-700 mb-1">{label}</span>
       {children}
     </label>
   );
@@ -705,7 +705,7 @@ function Input({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       min={min}
-      className="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none text-sm"
+      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm"
     />
   );
 }
@@ -770,7 +770,7 @@ function PayBlock({
       >
         {paying ? 'Processing…' : `Pay ${(intent.amountCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`}
       </button>
-      <p className="text-xs text-slate-500 text-center">
+      <p className="text-xs text-gray-500 text-center">
         Secured by Stripe. Your card never touches our servers.
       </p>
     </div>

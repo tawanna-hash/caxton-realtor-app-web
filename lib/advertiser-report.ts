@@ -56,7 +56,7 @@ export function renderAdvertiserReportHtml(data: AdvertiserReportInput): string 
   const personalBlock = data.personalMessage?.trim()
     ? `
         <tr><td style="padding:20px 24px 0;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;border-left:3px solid ${t.primaryColor};border-radius:4px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;border-left:3px solid ${t.primaryColor};border-radius:4px;">
             <tr><td style="padding:14px 16px;">
               <p style="margin:0;font-size:14px;color:#374151;line-height:1.55;white-space:pre-wrap;">${escapeHtml(data.personalMessage.trim())}</p>
             </td></tr>

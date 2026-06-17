@@ -160,7 +160,7 @@ export default function PrivacyPage() {
               — email{' '}
               <a
                 href="mailto:hello@myrealtyline.com"
-                className="text-[#1a2a44] underline underline-offset-2"
+                className="text-[#021D40] underline underline-offset-2"
               >
                 hello@myrealtyline.com
               </a>{' '}
@@ -214,7 +214,7 @@ export default function PrivacyPage() {
             please contact us at{' '}
             <a
               href="mailto:hello@myrealtyline.com"
-              className="text-[#1a2a44] underline underline-offset-2"
+              className="text-[#021D40] underline underline-offset-2"
             >
               hello@myrealtyline.com
             </a>
@@ -270,7 +270,7 @@ export default function PrivacyPage() {
             privacy rights, email{' '}
             <a
               href="mailto:hello@myrealtyline.com?subject=Privacy%20Request"
-              className="text-[#1a2a44] underline underline-offset-2"
+              className="text-[#021D40] underline underline-offset-2"
             >
               hello@myrealtyline.com
             </a>{' '}
@@ -305,7 +305,7 @@ export default function PrivacyPage() {
               <strong className="font-semibold text-gray-900">Email:</strong>{' '}
               <a
                 href="mailto:hello@myrealtyline.com?subject=Privacy%20Request"
-                className="text-[#1a2a44] font-medium underline underline-offset-2"
+                className="text-[#021D40] font-medium underline underline-offset-2"
               >
                 hello@myrealtyline.com
               </a>
@@ -314,7 +314,7 @@ export default function PrivacyPage() {
               <strong className="font-semibold text-gray-900">Phone:</strong>{' '}
               <a
                 href="tel:+15129650057"
-                className="text-[#1a2a44] font-medium underline underline-offset-2"
+                className="text-[#021D40] font-medium underline underline-offset-2"
               >
                 (512) 965-0057
               </a>

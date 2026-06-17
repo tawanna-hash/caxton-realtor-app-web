@@ -53,7 +53,7 @@ function defaultDeviceLabel(): string {
  * Renders nothing visible on browsers that don't support WebAuthn — we hide
  * the section entirely rather than show a broken/disabled UI.
  */
-export default function PasskeysPanel({ accentColor = '#1a2a44' }: Props) {
+export default function PasskeysPanel({ accentColor = '#021D40' }: Props) {
   const [creds, setCreds] = useState<Credential[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [enrolling, setEnrolling] = useState(false);

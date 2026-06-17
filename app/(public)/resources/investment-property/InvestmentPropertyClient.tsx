@@ -238,7 +238,7 @@ export default function InvestmentPropertyClient() {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="text-xs px-3 py-1 border border-gray-300 rounded hover:border-[#1a2a44] hover:text-[#1a2a44] transition print:hidden"
+                className="text-xs px-3 py-1 border border-gray-300 rounded hover:border-[#021D40] hover:text-[#021D40] transition print:hidden"
               >
                 Print
               </button>
@@ -335,7 +335,7 @@ export default function InvestmentPropertyClient() {
 function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#1a2a44] mb-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#021D40] mb-3">
         {title}
       </p>
       <div className="space-y-4">{children}</div>
@@ -345,7 +345,7 @@ function FieldGroup({ title, children }: { title: string; children: React.ReactN
 
 function RatioTile({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className={`rounded-lg border px-3 py-2 ${accent ? 'border-[#c4a35a]/40 bg-[#c4a35a]/5' : 'border-gray-200 bg-gray-50'}`}>
+    <div className={`rounded-lg border px-3 py-2 ${accent ? 'border-[#fb923c]/40 bg-[#fb923c]/5' : 'border-gray-200 bg-gray-50'}`}>
       <p className="text-[10px] uppercase tracking-wider text-gray-500">{label}</p>
       <p
         className="text-lg text-gray-900"

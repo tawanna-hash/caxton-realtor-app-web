@@ -81,13 +81,13 @@ export const BRANDS: Record<string, BrandConfig> = {
   newsline: {
     pub_key: 'newsline',
     pub_display: 'Newsline San Antonio',
-    primary_hex: '#2d1a44',
+    primary_hex: '#2c0530',
     tagline: 'Putting A Face On Real Estate',
   },
   caxton: {
     pub_key: 'caxton',
     pub_display: 'Realty News Now',
-    primary_hex: '#1a2a44',
+    primary_hex: '#021D40',
     tagline: 'Putting A Face On Real Estate',
   },
 };

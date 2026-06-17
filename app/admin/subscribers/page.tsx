@@ -103,7 +103,7 @@ export default function SubscribersPage() {
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-[#1a2a44] tracking-tight">Subscribers</h1>
+          <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">Subscribers</h1>
           <p className="text-sm text-gray-500 mt-1">
             {data ? `${data.total.toLocaleString()} total` : 'Loading...'}
           </p>
@@ -111,7 +111,7 @@ export default function SubscribersPage() {
         <button
           onClick={handleExport}
           disabled={exporting}
-          className="bg-[#1a2a44] text-white px-4 py-2 text-sm font-medium hover:bg-[#243556] rounded-md transition-colors disabled:opacity-50"
+          className="bg-[#021D40] text-white px-4 py-2 text-sm font-medium hover:bg-[#03285a] rounded-md transition-colors disabled:opacity-50"
         >
           {exporting ? 'Exporting...' : 'Export CSV'}
         </button>
@@ -124,7 +124,7 @@ export default function SubscribersPage() {
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search email or name..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44]"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40]"
           />
           {q && (
             <button

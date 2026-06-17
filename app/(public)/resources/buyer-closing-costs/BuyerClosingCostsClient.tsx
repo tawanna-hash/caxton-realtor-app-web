@@ -349,7 +349,7 @@ export default function BuyerClosingCostsClient() {
 function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#1a2a44] mb-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#021D40] mb-3">
         {title}
       </p>
       <div className="space-y-4">{children}</div>

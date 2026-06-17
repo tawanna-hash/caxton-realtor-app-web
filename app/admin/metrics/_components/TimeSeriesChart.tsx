@@ -106,7 +106,7 @@ export function TimeSeriesChart({ data }: Props) {
               key={ev}
               type="monotone"
               dataKey={ev}
-              stroke={EVENT_COLORS[ev] ?? '#1a2a44'}
+              stroke={EVENT_COLORS[ev] ?? '#021D40'}
               strokeWidth={2}
               dot={{ r: 3 }}
               activeDot={{ r: 5 }}

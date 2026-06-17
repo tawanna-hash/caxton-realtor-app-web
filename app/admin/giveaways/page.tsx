@@ -58,14 +58,14 @@ export default function GiveawaysPage() {
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold text-[#1a2a44] tracking-tight">Giveaways</h1>
+          <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">Giveaways</h1>
           <p className="text-sm text-gray-500 mt-1">
             {items.length} {items.length === 1 ? 'giveaway' : 'giveaways'}
           </p>
         </div>
         <Link
           href="/admin/giveaways/new"
-          className="bg-[#1a2a44] text-white px-4 py-2 text-sm font-medium hover:bg-[#243556] rounded-md transition-colors"
+          className="bg-[#021D40] text-white px-4 py-2 text-sm font-medium hover:bg-[#03285a] rounded-md transition-colors"
         >
           + Create Giveaway
         </Link>
@@ -79,7 +79,7 @@ export default function GiveawaysPage() {
       {!loading && items.length === 0 && (
         <div className="bg-white border border-gray-200 p-12 text-center rounded-md">
           <p className="text-gray-500 mb-4">No giveaways yet.</p>
-          <Link href="/admin/giveaways/new" className="text-sm font-medium text-[#1a2a44] underline">
+          <Link href="/admin/giveaways/new" className="text-sm font-medium text-[#021D40] underline">
             Create your first giveaway
           </Link>
         </div>
@@ -90,10 +90,10 @@ export default function GiveawaysPage() {
           <Link
             key={g.id}
             href={`/admin/giveaways/${g.id}`}
-            className="bg-white border border-gray-200 p-5 hover:border-[#1a2a44] transition-colors block rounded-md"
+            className="bg-white border border-gray-200 p-5 hover:border-[#021D40] transition-colors block rounded-md"
           >
             <div className="flex items-start justify-between gap-3 mb-3">
-              <h2 className="font-semibold text-[#1a2a44] leading-tight">{g.title}</h2>
+              <h2 className="font-semibold text-[#021D40] leading-tight">{g.title}</h2>
               <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 border whitespace-nowrap ${STATUS_STYLES[g.status] || ''}`}>
                 {g.status}
               </span>
@@ -104,13 +104,13 @@ export default function GiveawaysPage() {
               {formatDate(g.starts_at)} - {formatDate(g.ends_at)}
             </div>
             <div className="flex items-center gap-4 text-xs text-gray-600 pt-3 border-t border-gray-100">
-              <span><strong className="text-[#1a2a44]">{g.participant_count ?? 0}</strong> entries</span>
-              <span><strong className="text-[#1a2a44]">{g.ticket_count ?? 0}</strong> tickets</span>
+              <span><strong className="text-[#021D40]">{g.participant_count ?? 0}</strong> entries</span>
+              <span><strong className="text-[#021D40]">{g.ticket_count ?? 0}</strong> tickets</span>
             </div>
             {g.winner_name && (
               <div className="mt-3 pt-3 border-t border-gray-100 text-xs">
                 <span className="text-gray-500">Winner: </span>
-                <span className="font-medium text-[#1a2a44]">{g.winner_name}</span>
+                <span className="font-medium text-[#021D40]">{g.winner_name}</span>
               </div>
             )}
           </Link>

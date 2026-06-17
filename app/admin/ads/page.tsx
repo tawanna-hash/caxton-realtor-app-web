@@ -71,13 +71,13 @@ function AdsPageInner() {
         <div className="flex items-center gap-2">
           <Link
             href="/admin/ads/placements"
-            className="rounded-md border border-slate-300 px-4 py-2 text-slate-700 text-sm font-medium hover:bg-slate-50"
+            className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 text-sm font-medium hover:bg-gray-50"
           >
             Placements
           </Link>
           <Link
             href="/admin/ads/campaigns/new"
-            className="rounded-md bg-[#1a2a44] px-4 py-2 text-white text-sm font-medium hover:bg-[#243556]"
+            className="rounded-md bg-[#021D40] px-4 py-2 text-white text-sm font-medium hover:bg-[#03285a]"
           >
             + New campaign
           </Link>

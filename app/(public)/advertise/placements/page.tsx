@@ -71,13 +71,13 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
   const hostPage = HOST_PAGE_BY_SLUG[slot.slug] ?? ZONE_LABEL[slot.zone];
 
   return (
-    <article className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden flex flex-col">
+    <article className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col">
       {/* Wireframe preview */}
-      <div className="relative bg-slate-100 border-b border-slate-200 h-56 p-3">
+      <div className="relative bg-gray-100 border-b border-gray-200 h-56 p-3">
         {hasWireframe(slot.slug) ? (
           <PlacementWireframe slug={slot.slug} />
         ) : (
-          <div className="h-full flex items-center justify-center text-xs text-slate-500">
+          <div className="h-full flex items-center justify-center text-xs text-gray-500">
             Preview coming soon
           </div>
         )}
@@ -85,35 +85,35 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
 
       {/* Meta */}
       <div className="p-4 flex-1 flex flex-col gap-2">
-        <div className="text-[10px] uppercase tracking-[0.15em] text-slate-500 font-semibold">
+        <div className="text-[10px] uppercase tracking-[0.15em] text-gray-500 font-semibold">
           {slot.tier} · {ZONE_LABEL[slot.zone]}
         </div>
-        <h3 className="text-base font-semibold text-[#1a2a44] leading-tight">
+        <h3 className="text-base font-semibold text-[#021D40] leading-tight">
           {slot.name}
         </h3>
 
-        <div className="text-xs text-slate-700">
+        <div className="text-xs text-gray-700">
           {priceLine(slot)}
         </div>
 
-        <div className="text-[11px] text-slate-600">
-          <span className="font-semibold text-slate-700">Where it appears:</span>{' '}
+        <div className="text-[11px] text-gray-600">
+          <span className="font-semibold text-gray-700">Where it appears:</span>{' '}
           <span>{hostPage}</span>
         </div>
 
-        <div className="text-[11px] text-slate-600">
-          <span className="font-semibold text-slate-700">Specs:</span>{' '}
+        <div className="text-[11px] text-gray-600">
+          <span className="font-semibold text-gray-700">Specs:</span>{' '}
           <span>{slot.sizes}</span>
         </div>
 
-        <p className="text-[11px] text-slate-500 leading-relaxed mt-auto pt-1">
+        <p className="text-[11px] text-gray-500 leading-relaxed mt-auto pt-1">
           {slot.notes}
         </p>
 
-        <div className="pt-3 mt-1 border-t border-slate-100">
+        <div className="pt-3 mt-1 border-t border-gray-100">
           <Link
             href={`/advertise/checkout/${slot.slug}?pub=realtyline`}
-            className="inline-block w-full text-center bg-[#1a2a44] text-white text-sm font-semibold py-2 rounded hover:bg-[#0f1d36]"
+            className="inline-block w-full text-center bg-[#021D40] text-white text-sm font-semibold py-2 rounded hover:bg-[#021D40]"
           >
             Book this placement →
           </Link>
@@ -150,13 +150,13 @@ export default function PublicAdvertisePlacementsPage() {
         <div className="mt-5 flex flex-wrap gap-3 text-sm">
           <Link
             href="/advertise/digital"
-            className="text-[#1a2a44] underline font-semibold"
+            className="text-[#021D40] underline font-semibold"
           >
             See live availability →
           </Link>
           <Link
             href="/advertise/inquire"
-            className="text-slate-600 hover:text-slate-900"
+            className="text-gray-600 hover:text-gray-900"
           >
             Need a custom package? Talk to our team
           </Link>

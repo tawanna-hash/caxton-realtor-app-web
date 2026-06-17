@@ -52,11 +52,11 @@ export default function NewGiveawayPage() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-8">
       <div className="mb-6">
-        <Link href="/admin/giveaways" className="text-sm text-gray-500 hover:text-[#1a2a44]">
+        <Link href="/admin/giveaways" className="text-sm text-gray-500 hover:text-[#021D40]">
           &larr; Back to giveaways
         </Link>
       </div>
-      <h1 className="text-2xl font-semibold text-[#1a2a44] tracking-tight mb-8">Create Giveaway</h1>
+      <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight mb-8">Create Giveaway</h1>
 
       <form onSubmit={handleSubmit} className="bg-white border border-gray-200 p-6 space-y-5 rounded-md">
         <Field label="Title" required>
@@ -66,7 +66,7 @@ export default function NewGiveawayPage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Q3 Gas Card Giveaway"
-            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
           />
         </Field>
 
@@ -75,7 +75,7 @@ export default function NewGiveawayPage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
           />
         </Field>
 
@@ -86,7 +86,7 @@ export default function NewGiveawayPage() {
             value={prize}
             onChange={(e) => setPrize(e.target.value)}
             placeholder="e.g. $200 H-E-B Gas Card"
-            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
           />
         </Field>
 
@@ -94,7 +94,7 @@ export default function NewGiveawayPage() {
           <select
             value={publication}
             onChange={(e) => setPublication(e.target.value as PublicationId | 'both')}
-            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#1a2a44] bg-white rounded-md"
+            className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-[#021D40] bg-white rounded-md"
           >
             <option value="both">Both Publications</option>
             <option value="austin">RealtyLine Austin</option>
@@ -109,7 +109,7 @@ export default function NewGiveawayPage() {
               required
               value={startsAt}
               onChange={(e) => setStartsAt(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
             />
           </Field>
           <Field label="Ends At" required>
@@ -118,7 +118,7 @@ export default function NewGiveawayPage() {
               required
               value={endsAt}
               onChange={(e) => setEndsAt(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
             />
           </Field>
           <Field label="Draw At" hint="Optional">
@@ -126,7 +126,7 @@ export default function NewGiveawayPage() {
               type="datetime-local"
               value={drawAt}
               onChange={(e) => setDrawAt(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] rounded-md"
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] rounded-md"
             />
           </Field>
         </div>
@@ -139,11 +139,11 @@ export default function NewGiveawayPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="bg-[#1a2a44] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#243556] disabled:opacity-60 transition-colors"
+            className="bg-[#021D40] text-white px-5 py-2.5 text-sm font-medium hover:bg-[#03285a] disabled:opacity-60 transition-colors"
           >
             {submitting ? 'Creating...' : 'Create Giveaway'}
           </button>
-          <Link href="/admin/giveaways" className="text-sm text-gray-500 hover:text-[#1a2a44]">
+          <Link href="/admin/giveaways" className="text-sm text-gray-500 hover:text-[#021D40]">
             Cancel
           </Link>
         </div>

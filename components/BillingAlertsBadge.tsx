@@ -86,7 +86,7 @@ export default function BillingAlertsBadge({
   // Revenue group button (both render absolute-positioned).
   return (
     <span
-      className="absolute -top-1 right-4 inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-amber-500 text-white text-[10px] font-semibold leading-none ring-2 ring-[#1a2a44]"
+      className="absolute -top-1 right-4 inline-flex items-center justify-center min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-amber-500 text-white text-[10px] font-semibold leading-none ring-2 ring-[#021D40]"
       aria-label={ariaLabel}
     >
       {label}

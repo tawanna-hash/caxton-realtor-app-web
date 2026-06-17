@@ -64,7 +64,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
 
   if (loading) {
     return (
-      <div className="px-4 py-12 bg-stone-50">
+      <div className="px-4 py-12 bg-gray-50">
         <div className="flex gap-4 justify-center">
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="flex-shrink-0 w-44 h-60 bg-gray-200 animate-pulse rounded-lg" />
@@ -76,7 +76,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
 
   if (error) {
     return (
-      <div className="px-4 py-12 bg-stone-50">
+      <div className="px-4 py-12 bg-gray-50">
         <p className="text-sm text-red-600 text-center">Couldn&apos;t load magazines: {error}</p>
       </div>
     );
@@ -84,7 +84,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
 
   if (magazines.length === 0) {
     return (
-      <div className="px-4 py-12 bg-stone-50 text-center">
+      <div className="px-4 py-12 bg-gray-50 text-center">
         <p className="text-sm text-gray-500">No issues available yet.</p>
       </div>
     );
@@ -102,7 +102,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   const display = tab === 'current' ? [current] : centerCurrent(magazines);
 
   return (
-    <div className="bg-stone-50 pt-10 pb-12">
+    <div className="bg-gray-50 pt-10 pb-12">
       <div className="px-4 mb-6">
         <PageTitle align="center">Magazine Archive</PageTitle>
       </div>

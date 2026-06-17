@@ -245,7 +245,7 @@ export default function RentVsBuyClient() {
         {/* ── Chart + Table ───────────────────────────────────────── */}
         <div className="lg:col-span-3">
           <div className="rounded-xl border border-gray-200 bg-white p-5 mb-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#1a2a44] mb-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#021D40] mb-4">
               Year-by-year — cumulative cost
             </p>
             <div className="space-y-2">
@@ -262,10 +262,10 @@ export default function RentVsBuyClient() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="w-10 text-right text-[#1a2a44] font-medium">Buy</span>
+                      <span className="w-10 text-right text-[#021D40] font-medium">Buy</span>
                       <div className="flex-1 h-3.5 bg-gray-100 rounded-sm overflow-hidden">
                         <div
-                          className="h-full bg-[#1a2a44]"
+                          className="h-full bg-[#021D40]"
                           style={{ width: `${Math.max(0, buyWidth)}%` }}
                         />
                       </div>
@@ -274,10 +274,10 @@ export default function RentVsBuyClient() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="w-10 text-right text-[#c4a35a] font-medium">Rent</span>
+                      <span className="w-10 text-right text-[#fb923c] font-medium">Rent</span>
                       <div className="flex-1 h-3.5 bg-gray-100 rounded-sm overflow-hidden">
                         <div
-                          className="h-full bg-[#c4a35a]"
+                          className="h-full bg-[#fb923c]"
                           style={{ width: `${Math.max(0, rentWidth)}%` }}
                         />
                       </div>
@@ -311,13 +311,13 @@ export default function RentVsBuyClient() {
                     <tr
                       key={r.year}
                       className={`border-t border-gray-100 ${
-                        isBreakeven ? 'bg-[#c4a35a]/10' : ''
+                        isBreakeven ? 'bg-[#fb923c]/10' : ''
                       }`}
                     >
                       <td className="px-3 py-1.5 text-gray-700">
                         {r.year}
                         {isBreakeven && (
-                          <span className="ml-1.5 text-[10px] text-[#c4a35a] font-semibold uppercase">
+                          <span className="ml-1.5 text-[10px] text-[#fb923c] font-semibold uppercase">
                             breakeven
                           </span>
                         )}
@@ -357,7 +357,7 @@ export default function RentVsBuyClient() {
 function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#1a2a44] mb-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#021D40] mb-3">
         {title}
       </p>
       <div className="space-y-3">{children}</div>
@@ -377,7 +377,7 @@ function SummaryCard({
   return (
     <div
       className={`rounded-xl border p-5 ${
-        accent ? 'border-[#c4a35a]/40 bg-[#c4a35a]/5' : 'border-gray-200 bg-white'
+        accent ? 'border-[#fb923c]/40 bg-[#fb923c]/5' : 'border-gray-200 bg-white'
       }`}
     >
       <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">{label}</p>

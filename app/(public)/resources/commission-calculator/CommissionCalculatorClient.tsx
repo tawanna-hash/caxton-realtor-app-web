@@ -103,7 +103,7 @@ export default function CommissionCalculatorClient() {
                   onClick={() => setSide(s)}
                   className={`px-4 py-2 text-sm font-medium transition ${
                     side === s
-                      ? 'bg-[#1a2a44] text-white'
+                      ? 'bg-[#021D40] text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -300,7 +300,7 @@ function NumberField({
             const n = parseFloat(e.target.value);
             onChange(Number.isFinite(n) ? n : 0);
           }}
-          className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#1a2a44] focus:outline-none focus:ring-1 focus:ring-[#1a2a44]/30 ${
+          className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#021D40] focus:outline-none focus:ring-1 focus:ring-[#021D40]/30 ${
             prefix ? 'pl-7' : ''
           } ${suffix ? 'pr-8' : ''}`}
         />

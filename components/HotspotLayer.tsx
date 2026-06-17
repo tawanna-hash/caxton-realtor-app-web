@@ -265,7 +265,7 @@ function ComingSoonModal({
       <div
         ref={ref}
         tabIndex={-1}
-        className="bg-neutral-900 border border-white/20 max-w-sm w-full p-6 rounded outline-none"
+        className="bg-gray-900 border border-white/20 max-w-sm w-full p-6 rounded outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <p className="text-sm uppercase tracking-[0.2em] text-white/80 font-medium mb-3">

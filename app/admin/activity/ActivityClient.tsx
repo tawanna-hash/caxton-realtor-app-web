@@ -82,7 +82,7 @@ function formatTime(ts: string): string {
 }
 
 function eventBadge(event: string): { label: string; color: string } {
-  if (event === '$pageview') return { label: 'view', color: 'bg-slate-100 text-slate-700' };
+  if (event === '$pageview') return { label: 'view', color: 'bg-gray-100 text-gray-700' };
   if (event === '$exception' || event === 'client_error') return { label: 'error', color: 'bg-rose-100 text-rose-800' };
   if (event === '$autocapture' || event === '$rageclick') return { label: 'click', color: 'bg-sky-100 text-sky-800' };
   if (event.includes('form_') || event.includes('_signed') || event.includes('signup') || event.includes('entered')) {
@@ -202,7 +202,7 @@ export default function ActivityClient() {
 
         {/* Rollup tiles */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-          <Tile label="Visitors" value={rollup.visitors} accent="bg-slate-900 text-white" />
+          <Tile label="Visitors" value={rollup.visitors} accent="bg-gray-900 text-white" />
           <Tile label="Page views" value={rollup.pageviews} />
           <Tile label="Clicks" value={rollup.clicks} />
           <Tile label="Form submits" value={rollup.forms} accent="bg-emerald-50" />
@@ -217,7 +217,7 @@ export default function ActivityClient() {
                 key={b.id}
                 onClick={() => setBucket(b.id)}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium ${
-                  bucket === b.id ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  bucket === b.id ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 {b.label}

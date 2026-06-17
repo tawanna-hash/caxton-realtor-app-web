@@ -127,7 +127,7 @@ export default function EditReportDrawer({
               value={overrides.title}
               onChange={(e) => onTitleChange(e.target.value)}
               placeholder={titlePlaceholder || `Untitled ${noun}`}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a2a44]/30"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30"
             />
             <p className="text-xs text-gray-500 mt-1">
               Leave blank to use the {noun}&apos;s tracked title
@@ -142,7 +142,7 @@ export default function EditReportDrawer({
             <select
               value={overrides.pub_display}
               onChange={(e) => onPubDisplayChange(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#1a2a44]/30"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#021D40]/30"
             >
               <option value="">— Use tracked publication —</option>
               <option value="RealtyLine Austin">RealtyLine Austin</option>
@@ -160,7 +160,7 @@ export default function EditReportDrawer({
               onChange={(e) => onEditorialNoteChange(e.target.value)}
               placeholder={examplePlaceholder}
               rows={4}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a2a44]/30"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30"
             />
           </div>
         </div>
@@ -170,7 +170,7 @@ export default function EditReportDrawer({
           <button
             type="button"
             onClick={onCopyHtml}
-            className="bg-[#1a2a44] hover:bg-[#243556] text-white px-4 py-2 rounded-md text-sm font-medium"
+            className="bg-[#021D40] hover:bg-[#03285a] text-white px-4 py-2 rounded-md text-sm font-medium"
           >
             Copy HTML
           </button>

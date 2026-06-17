@@ -59,10 +59,10 @@ const PUB_TABS: PubTab[] = [
   { id: 'dallas',   label: 'RealtyLine Dallas/FTW',  mediaKitPub: 'realtyline-dallas',  hasPrint: false, channels: 'Digital, Email' },
 ];
 
-const ACCENT = '#D22531';
+const ACCENT = '#dc2626';
 const PREMIUM = '#3D0740';
-const NAVY = '#0B2545';
-const GOLD = '#B8923A';
+const NAVY = '#021D40';
+const GOLD = '#c2410c';
 
 const ZONE_LABEL: Record<AppAdSlot['zone'], string> = {
   feed: 'Feed',

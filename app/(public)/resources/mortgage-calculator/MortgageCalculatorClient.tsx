@@ -176,7 +176,7 @@ export default function MortgageCalculatorClient() {
             onClick={() => setTab(t.id)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition ${
               tab === t.id
-                ? 'border-[#1a2a44] text-[#1a2a44]'
+                ? 'border-[#021D40] text-[#021D40]'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -392,11 +392,11 @@ function Row({ label, value }: { label: string; value: number }) {
 function PitiBar({ piti }: { piti: PitiBreakdown }) {
   const total = piti.total || 1;
   const segs = [
-    { key: 'pi', label: 'P&I', value: piti.principalAndInterest, color: '#1a2a44' },
-    { key: 'tax', label: 'Tax', value: piti.propertyTax, color: '#3b5b8a' },
-    { key: 'ins', label: 'Ins', value: piti.insurance, color: '#7b9bcc' },
-    { key: 'pmi', label: 'PMI', value: piti.pmi, color: '#c4a35a' },
-    { key: 'hoa', label: 'HOA', value: piti.hoa, color: '#a3a3a3' },
+    { key: 'pi', label: 'P&I', value: piti.principalAndInterest, color: '#021D40' },
+    { key: 'tax', label: 'Tax', value: piti.propertyTax, color: '#1d4ed8' },
+    { key: 'ins', label: 'Ins', value: piti.insurance, color: '#93c5fd' },
+    { key: 'pmi', label: 'PMI', value: piti.pmi, color: '#fb923c' },
+    { key: 'hoa', label: 'HOA', value: piti.hoa, color: '#9ca3af' },
   ].filter((s) => s.value > 0);
   return (
     <div className="mt-5">
@@ -616,7 +616,7 @@ function AmortizationTab(p: AmortizationTabProps) {
         <button
           type="button"
           onClick={downloadCsv}
-          className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:border-[#1a2a44] hover:text-[#1a2a44] transition"
+          className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:border-[#021D40] hover:text-[#021D40] transition"
         >
           Download CSV
         </button>
@@ -666,7 +666,7 @@ function StatCard({
   return (
     <div
       className={`rounded-xl border p-5 ${
-        accent ? 'border-[#c4a35a]/40 bg-[#c4a35a]/5' : 'border-gray-200 bg-white'
+        accent ? 'border-[#fb923c]/40 bg-[#fb923c]/5' : 'border-gray-200 bg-white'
       }`}
     >
       <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">{label}</p>
@@ -712,7 +712,7 @@ function NumberField({ label, value, onChange, prefix, suffix, step = 1, hint }:
             const n = parseFloat(e.target.value);
             onChange(Number.isFinite(n) ? n : 0);
           }}
-          className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#1a2a44] focus:outline-none focus:ring-1 focus:ring-[#1a2a44]/30 ${
+          className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#021D40] focus:outline-none focus:ring-1 focus:ring-[#021D40]/30 ${
             prefix ? 'pl-7' : ''
           } ${suffix ? 'pr-8' : ''}`}
         />
@@ -750,7 +750,7 @@ function SelectField<T extends number | string>({
           const coerced = (typeof options[0].v === 'number' ? Number(raw) : raw) as T;
           onChange(coerced);
         }}
-        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#1a2a44] focus:outline-none focus:ring-1 focus:ring-[#1a2a44]/30 bg-white"
+        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#021D40] focus:outline-none focus:ring-1 focus:ring-[#021D40]/30 bg-white"
       >
         {options.map((o) => (
           <option key={String(o.v)} value={String(o.v)}>

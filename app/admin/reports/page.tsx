@@ -268,7 +268,7 @@ function AdminReportsPageInner() {
                 className={[
                   'px-1 pb-3 text-sm font-medium border-b-2 transition-colors',
                   isActive
-                    ? 'border-[#1a2a44] text-gray-900'
+                    ? 'border-[#021D40] text-gray-900'
                     : 'border-transparent text-gray-500 hover:text-gray-700',
                 ].join(' ')}
                 aria-current={isActive ? 'page' : undefined}
@@ -328,7 +328,7 @@ function AdminReportsPageInner() {
                   className={[
                     'px-4 py-2 text-sm font-medium transition-colors',
                     !isFirst ? 'border-l border-gray-200' : '',
-                    isActive ? 'bg-[#1a2a44] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                    isActive ? 'bg-[#021D40] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
                   ].filter(Boolean).join(' ')}
                 >
                   {opt.label}
@@ -343,7 +343,7 @@ function AdminReportsPageInner() {
             type="button"
             onClick={generateReport}
             disabled={!selectedArticleId || reportLoading}
-            className="bg-[#1a2a44] hover:bg-[#243556] text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[#021D40] hover:bg-[#03285a] text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {reportLoading ? 'Generating…' : 'Generate report'}
           </button>
@@ -409,7 +409,7 @@ function AdminReportsPageInner() {
                   <button
                     type="button"
                     onClick={copyHtml}
-                    className="bg-[#1a2a44] hover:bg-[#243556] text-white px-3 py-1.5 rounded-md text-sm font-medium"
+                    className="bg-[#021D40] hover:bg-[#03285a] text-white px-3 py-1.5 rounded-md text-sm font-medium"
                   >
                     Copy HTML
                   </button>
@@ -516,7 +516,7 @@ function AdminReportsPageInner() {
                   className={[
                     'px-4 py-2 text-sm font-medium transition-colors',
                     !isFirst ? 'border-l border-gray-200' : '',
-                    isActive ? 'bg-[#1a2a44] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
+                    isActive ? 'bg-[#021D40] text-white' : 'bg-white text-gray-700 hover:bg-gray-50',
                   ].filter(Boolean).join(' ')}
                 >
                   {opt.label}
@@ -531,7 +531,7 @@ function AdminReportsPageInner() {
             type="button"
             onClick={generateEventReport}
             disabled={!selectedEventId || eventReportLoading}
-            className="bg-[#1a2a44] hover:bg-[#243556] text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[#021D40] hover:bg-[#03285a] text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {eventReportLoading ? 'Generating…' : 'Generate report'}
           </button>
@@ -596,7 +596,7 @@ function AdminReportsPageInner() {
                   <button
                     type="button"
                     onClick={copyHtml}
-                    className="bg-[#1a2a44] hover:bg-[#243556] text-white px-3 py-1.5 rounded-md text-sm font-medium"
+                    className="bg-[#021D40] hover:bg-[#03285a] text-white px-3 py-1.5 rounded-md text-sm font-medium"
                   >
                     Copy HTML
                   </button>

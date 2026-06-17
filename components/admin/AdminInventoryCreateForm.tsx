@@ -12,7 +12,7 @@ const PUBLICATION_OPTIONS: { value: Publication; label: string }[] = [
 ];
 
 const fieldStyle =
-  'w-full border border-gray-300 px-4 py-2.5 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#1a2a44] transition-colors disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed rounded-md';
+  'w-full border border-gray-300 px-4 py-2.5 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40] transition-colors disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed rounded-md';
 const labelStyle = 'block text-sm font-medium text-gray-900 mb-1.5';
 const helpStyle = 'mt-1 text-xs text-gray-500 font-light';
 
@@ -202,7 +202,7 @@ export default function AdminInventoryCreateForm() {
             className={
               'px-4 py-2 text-sm font-medium border rounded-md transition-colors ' +
               (kind === 'promotion'
-                ? 'border-[#1a2a44] bg-[#1a2a44] text-white'
+                ? 'border-[#021D40] bg-[#021D40] text-white'
                 : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500')
             }
             aria-pressed={kind === 'promotion'}
@@ -215,7 +215,7 @@ export default function AdminInventoryCreateForm() {
             className={
               'px-4 py-2 text-sm font-medium border rounded-md transition-colors ' +
               (kind === 'listing'
-                ? 'border-[#1a2a44] bg-[#1a2a44] text-white'
+                ? 'border-[#021D40] bg-[#021D40] text-white'
                 : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500')
             }
             aria-pressed={kind === 'listing'}
@@ -449,7 +449,7 @@ export default function AdminInventoryCreateForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="bg-[#1a2a44] text-white px-4 py-2 text-sm font-medium hover:bg-[#243556] disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
+          className="bg-[#021D40] text-white px-4 py-2 text-sm font-medium hover:bg-[#03285a] disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
         >
           {submitting ? 'Publishing…' : kind === 'promotion' ? 'Publish Promotion' : 'Publish Listing'}
         </button>

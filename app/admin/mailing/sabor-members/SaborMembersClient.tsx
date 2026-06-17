@@ -472,7 +472,7 @@ export default function SaborMembersClient() {
             type="button"
             disabled={busy !== null}
             onClick={syncSaborNow}
-            className="px-4 py-2 rounded-md bg-[#3D0740] text-white text-sm font-medium hover:bg-[#5A0E5F] disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-[#3D0740] text-white text-sm font-medium hover:bg-[#5a0e5f] disabled:opacity-50"
           >
             {busy === 'sync' ? 'Dispatching…' : 'Sync SABOR Now'}
           </button>
@@ -555,7 +555,7 @@ export default function SaborMembersClient() {
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">Source</p>
-            <p className="font-serif text-lg mt-1" style={{ color: '#059669' }}>
+            <p className="font-serif text-lg mt-1" style={{ color: '#2563eb' }}>
               Public
             </p>
             <p className="text-xs text-gray-500 mt-0.5">realtytexas.com · no auth</p>
@@ -564,7 +564,7 @@ export default function SaborMembersClient() {
             <p className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">Dispatch</p>
             <p
               className="font-serif text-lg mt-1"
-              style={{ color: syncStatus.gh_dispatch_configured ? '#059669' : '#B91C1C' }}
+              style={{ color: syncStatus.gh_dispatch_configured ? '#2563eb' : '#b91c1c' }}
             >
               {syncStatus.gh_dispatch_configured ? 'Configured' : 'Not configured'}
             </p>
@@ -576,13 +576,13 @@ export default function SaborMembersClient() {
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <KpiCard label="Total members"  value={counts?.total    ?? 0} sub="awaiting review" />
-        <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#10B981" />
-        <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#F59E0B" />
+        <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#3b82f6" />
+        <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#f97316" />
         <KpiCard
           label="Within 60 mi"
           value={counts?.near ?? 0}
           sub="near SABOR HQ"
-          accent="#059669"
+          accent="#2563eb"
           action={(counts?.near ?? 0) > 0 ? {
             label: 'Export CSV',
             onClick: () => {
@@ -592,14 +592,14 @@ export default function SaborMembersClient() {
             },
           } : undefined}
         />
-        <KpiCard label="Outside 60 mi"  value={counts?.far      ?? 0} sub="beyond 60 mi" accent="#9CA3AF" />
+        <KpiCard label="Outside 60 mi"  value={counts?.far      ?? 0} sub="beyond 60 mi" accent="#9ca3af" />
       </div>
 
       {/* Filter chips + search */}
       <div className="flex items-center gap-2 flex-wrap">
         <FilterChip active={filter === 'all'}      onClick={() => setFilter('all')}      label="All"      count={counts?.total ?? 0} />
-        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={counts?.verified ?? 0} accent="#10B981" />
-        <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={counts?.pending ?? 0}  accent="#F59E0B" />
+        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={counts?.verified ?? 0} accent="#3b82f6" />
+        <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={counts?.pending ?? 0}  accent="#f97316" />
 
         <div className="flex-1" />
 
@@ -803,7 +803,7 @@ function KpiCard({
 }) {
   return (
     <div className={`relative rounded-lg border border-gray-200 bg-white p-4 ${action ? 'transition-shadow hover:shadow-md' : ''}`}>
-      <div className="h-7 w-7 rounded-md mb-3" style={{ backgroundColor: accent ? `${accent}15` : '#F3F4F6' }} />
+      <div className="h-7 w-7 rounded-md mb-3" style={{ backgroundColor: accent ? `${accent}15` : '#f3f4f6' }} />
       <div className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</div>
       <div className="mt-1">
         <div className="text-xs font-semibold text-gray-900">{label}</div>
@@ -834,7 +834,7 @@ function KpiCard({
 function FilterChip({
   active, onClick, label, count, accent,
 }: { active: boolean; onClick: () => void; label: string; count: number; accent?: string }) {
-  const bg = active ? (accent ?? '#3D0740') : '#F3F4F6';
+  const bg = active ? (accent ?? '#3D0740') : '#f3f4f6';
   const fg = active ? 'white' : '#374151';
   return (
     <button
@@ -846,7 +846,7 @@ function FilterChip({
       <span>{label}</span>
       <span
         className="px-1.5 rounded-full text-[10px]"
-        style={{ backgroundColor: active ? 'rgba(255,255,255,0.25)' : 'white', color: active ? 'white' : '#6B7280' }}
+        style={{ backgroundColor: active ? 'rgba(255,255,255,0.25)' : 'white', color: active ? 'white' : '#6b7280' }}
       >
         {count.toLocaleString()}
       </span>
@@ -924,7 +924,7 @@ function EmailFlags({ row }: { row: MailingContactRow }) {
   if (row.email_free_provider) {
     flags.push({
       label: 'Free mail',
-      cls:   'bg-slate-100 text-slate-700 ring-1 ring-slate-200',
+      cls:   'bg-gray-100 text-gray-700 ring-1 ring-gray-200',
       title: 'Gmail/Outlook/Yahoo — SMTP probe blocked, address looks well-formed',
     });
   }
@@ -1173,7 +1173,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#3D0740] text-white hover:bg-[#5A0E5F] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-[#3D0740] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify with USPS'}
               </button>
@@ -1201,7 +1201,7 @@ function EditDrawer({
                 type="button"
                 disabled={emailBusy || !form.email}
                 onClick={onVerifyEmail}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#3D0740] text-white hover:bg-[#5A0E5F] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-[#3D0740] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
               >
                 {emailBusy ? 'Verifying…' : 'Verify Email'}
               </button>
@@ -1266,7 +1266,7 @@ function EditDrawer({
             type="button"
             disabled={saving}
             onClick={save}
-            className="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-[#3D0740] hover:bg-[#5A0E5F] disabled:opacity-50"
+            className="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-[#3D0740] hover:bg-[#5a0e5f] disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>
