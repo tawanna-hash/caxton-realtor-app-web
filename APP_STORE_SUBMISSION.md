@@ -181,15 +181,19 @@ For v1.0, use:
 
 ## Screenshots
 
-Required: **6.7" iPhone display** — minimum 3, maximum 10.
-Resolution: **1290 × 2796 px** (portrait).
+Required: **6.9" iPhone display** — minimum 3, maximum 10.
+Resolution: **1320 × 2868 px** (portrait, iPhone 17 Pro Max).
+
+Apple deprecated the older 6.7" requirement in favor of 6.9" with the
+Xcode 26 / iOS 26 release cycle. The iPhone 17 Pro Max simulator that
+ships with Xcode 26.5 is the correct target.
 
 ### How to capture
 
-1. Open Xcode → run on **iPhone 15 Pro Max Simulator**
+1. Open Xcode → run on **iPhone 17 Pro Max Simulator**
 2. Navigate to each screen below
 3. **File → New Screen Shot** (`Cmd + S`) — saves to Desktop at the
-   correct resolution automatically
+   correct 1320 × 2868 resolution automatically
 
 ### Recommended screen list (capture in this order)
 
@@ -205,8 +209,9 @@ Resolution: **1290 × 2796 px** (portrait).
 
 ### Optional: 6.5" iPhone (1284 × 2778)
 
-Recommended but not required. Use **iPhone 14 Plus Simulator** with the
-same screen list.
+Recommended for broader device coverage but not required. Use **iPhone
+14 Plus Simulator** with the same screen list. Apple will scale your
+6.9" screenshots automatically if you skip this.
 
 ---
 
