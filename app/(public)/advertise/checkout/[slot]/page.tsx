@@ -52,8 +52,18 @@ export default async function CheckoutPage(ctx: RouteCtx) {
     'realtyline-houston',
     'realtyline-dallas',
   ];
+  // Pre-launch markets (Houston, Dallas/FTW) are surfaced as disabled
+  // "Coming soon" pills in the publication selector. Don't pre-select
+  // them — if a buyer arrives with ?pub=realtyline-houston we fall back
+  // to RealtyLine so the form starts in a bookable state.
+  const PRELAUNCH_PUBS: ReadonlyArray<PubInitial> = [
+    'realtyline-houston',
+    'realtyline-dallas',
+  ];
   const initialPub: PubInitial =
-    sp.pub && (PUB_INITIALS as readonly string[]).includes(sp.pub)
+    sp.pub &&
+    (PUB_INITIALS as readonly string[]).includes(sp.pub) &&
+    !(PRELAUNCH_PUBS as readonly string[]).includes(sp.pub)
       ? (sp.pub as PubInitial)
       : 'realtyline';
 

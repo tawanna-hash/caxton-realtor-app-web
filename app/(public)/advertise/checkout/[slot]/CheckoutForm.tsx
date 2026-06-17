@@ -273,9 +273,14 @@ export default function CheckoutForm({
                   'realtyline-dallas',
                 ] as const
               ).map((p) => {
+                // Pre-launch markets render as disabled "Coming soon" pills.
+                // They're listed so advertisers know the markets are on the
+                // way, but they can't be booked until launch.
+                const isComingSoon =
+                  p === 'realtyline-houston' || p === 'realtyline-dallas';
                 const sold = availablePubs.includes(p);
                 const taken = bookedSet.has(p);
-                const allowed = sold && !taken;
+                const allowed = !isComingSoon && sold && !taken;
                 const active = pub === p && allowed;
                 const label =
                   p === 'realtyline'
@@ -287,9 +292,11 @@ export default function CheckoutForm({
                         : 'RealtyLine Dallas/FTW';
                 const title = allowed
                   ? undefined
-                  : taken
-                    ? `${label} is currently booked. Please check back later.`
-                    : `${label} is not available for this placement.`;
+                  : isComingSoon
+                    ? `${label} is launching soon. Join the waitlist via the inquiry form to be notified.`
+                    : taken
+                      ? `${label} is currently booked. Please check back later.`
+                      : `${label} is not available for this placement.`;
                 return (
                   <button
                     key={p}
@@ -308,11 +315,15 @@ export default function CheckoutForm({
                     }`}
                   >
                     {label}
-                    {taken && (
+                    {isComingSoon ? (
+                      <span className="ml-1.5 text-[10px] uppercase tracking-wider font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                        Coming soon
+                      </span>
+                    ) : taken ? (
                       <span className="ml-1.5 text-[10px] uppercase tracking-wider font-semibold text-amber-700">
                         sold
                       </span>
-                    )}
+                    ) : null}
                   </button>
                 );
               })}
