@@ -8,6 +8,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import AdvertiserReportDrawer from './AdvertiserReportDrawer';
 
 type DaysOption = 7 | 30 | 90 | 180;
 const DAYS_OPTIONS: Array<{ value: DaysOption; label: string }> = [
@@ -58,6 +59,12 @@ export default function AdvertisersReportTab() {
   const [sending, setSending] = useState(false);
   const [results, setResults] = useState<SendResult[] | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
+
+  // Drawer state for per-row View / Edit. `drawer` is null when closed.
+  const [drawer, setDrawer] = useState<
+    | { advertiser: Advertiser; mode: 'view' | 'edit' }
+    | null
+  >(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -217,6 +224,26 @@ export default function AdvertisersReportTab() {
                       {canSend ? email : 'No contact email — add one on the Advertisers page to send'}
                     </p>
                   </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setDrawer({ advertiser: a, mode: 'view' })}
+                      disabled={!canSend}
+                      className="text-xs font-medium text-[#1a2a44] hover:underline disabled:text-gray-300 disabled:no-underline"
+                      title={canSend ? 'Preview the report email' : 'Add a contact email to preview'}
+                    >
+                      View
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDrawer({ advertiser: a, mode: 'edit' })}
+                      disabled={!canSend}
+                      className="text-xs font-medium text-[#1a2a44] hover:underline disabled:text-gray-300 disabled:no-underline"
+                      title={canSend ? 'Customize and send to this advertiser' : 'Add a contact email to send'}
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </li>
               );
             })}
@@ -250,6 +277,17 @@ export default function AdvertisersReportTab() {
         </button>
         {sendError ? <span className="text-sm text-red-700">{sendError}</span> : null}
       </div>
+
+      {/* Per-row drawer (View / Edit) */}
+      {drawer ? (
+        <AdvertiserReportDrawer
+          advertiser={drawer.advertiser}
+          mode={drawer.mode}
+          initialDays={days}
+          initialMessage={message}
+          onClose={() => setDrawer(null)}
+        />
+      ) : null}
 
       {/* Results */}
       {results ? (
