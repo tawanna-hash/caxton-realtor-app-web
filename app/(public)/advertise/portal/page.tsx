@@ -22,19 +22,19 @@ import { APP_AD_SLOTS, MARKET_MULTIPLIERS, weeklyRateForMarkets } from '@/lib/me
 export const metadata = {
   title: 'Self-Service Portal \u2014 Realty News Now',
   description:
-    'Buy ad placements directly on Realty News Now. Six formats from $200, pick your market and dates, no sales call required \u2014 go live in as few as 3 business days.',
+    'Buy ad placements directly on Realty News Now. 16 digital ad formats from $125/week, pick your market and dates, no sales call required \u2014 go live in as few as 3 business days.',
 };
 
-// Lowest weekly price across the catalog \u2014 used as the "From $200" pill.
+// Lowest weekly price across the catalog \u2014 used as the "From $125" pill.
 function lowestWeekly(): number {
   const prices = APP_AD_SLOTS.map((s) => s.weeklySingle).filter((n) => n > 0);
-  return prices.length > 0 ? Math.min(...prices) : 200;
+  return prices.length > 0 ? Math.min(...prices) : 125;
 }
 
-// Highest weekly price (single-market) \u2014 used in "$200\u2013$X" copy on the card.
+// Highest weekly price (single-market) \u2014 used in "$125\u2013$X" copy on the card.
 function highestWeekly(): number {
   const prices = APP_AD_SLOTS.map((s) => s.weeklySingle).filter((n) => n > 0);
-  return prices.length > 0 ? Math.max(...prices) : 2000;
+  return prices.length > 0 ? Math.max(...prices) : 500;
 }
 
 // Pick a representative slot for the bundle-savings ladder. We use the
@@ -115,7 +115,7 @@ export default function SelfServicePortalPage() {
             <ul className="space-y-2.5 mb-7 text-sm md:text-[15px]">
               {[
                 'Instant checkout \u2014 no call needed',
-                `6 ad formats from $${minPrice}\u2013$${maxPrice.toLocaleString()}`,
+                `${APP_AD_SLOTS.length} ad formats from $${minPrice}\u2013$${maxPrice.toLocaleString()}/wk`,
                 'Pick your market + preferred dates',
                 'Up to 30% off when you bundle markets',
               ].map((line) => (
@@ -177,7 +177,7 @@ export default function SelfServicePortalPage() {
             <ul className="space-y-2.5 mb-7 text-sm md:text-[15px]">
               {[
                 'Custom multi-channel campaigns',
-                'Print + digital + email bundles',
+                'Print + e-Blast + mobile bundles',
                 'Editorial sponsorships & integrations',
                 'Volume pricing for agencies',
               ].map((line) => (
