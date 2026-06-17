@@ -232,6 +232,17 @@ export default function CheckoutForm({
   const previewSurcharge = Math.round(previewBaseCents * 0.03);
   const previewTotal = previewBaseCents + previewSurcharge;
 
+  // Per-week equivalent for the Monthly toggle. Makes it easy to compare
+  // weekly vs monthly pricing at a glance — e.g. "$1,200 / mo ≈ $277 / wk".
+  // Treat one month as ~4.345 weeks (365/12/7) so the comparison reflects
+  // a true calendar month, not an even 4-week multiple.
+  const monthlyWeeklyEquivCents = useMemo(() => {
+    if (perUnit || billingPeriod !== 'monthly' || !hasMonthly) return null;
+    const monthlyRate = monthlyRateForMarkets(slot, marketCount);
+    if (monthlyRate === null) return null;
+    return Math.round((monthlyRate * 100) / 4.345);
+  }, [slot, billingPeriod, perUnit, hasMonthly, marketCount]);
+
   // ─── Creative upload (Vercel Blob client-direct) ───────────────────────
   async function handleUpload(f: File) {
     setError(null);
@@ -436,6 +447,12 @@ export default function CheckoutForm({
                   </button>
                 )}
               </div>
+              {billingPeriod === 'monthly' && monthlyWeeklyEquivCents != null && (
+                <p className="mt-2 text-xs text-slate-500">
+                  {formatUSD(monthlyRateForMarkets(slot, marketCount)! * 100)} / mo ≈{' '}
+                  {formatUSD(monthlyWeeklyEquivCents)} / wk
+                </p>
+              )}
             </Field>
           )}
 
