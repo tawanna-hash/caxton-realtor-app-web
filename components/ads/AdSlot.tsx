@@ -226,27 +226,6 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
     </a>
   );
 
-  // Dot pagination — only when rotating with 2+ creatives.
-  const dots =
-    rotating && ads.length > 1 ? (
-      <div
-        className="flex items-center justify-center gap-1.5 pt-2"
-        aria-hidden="true"
-      >
-        {ads.map((a, i) => (
-          <span
-            key={a.id}
-            className="block rounded-full transition-all"
-            style={{
-              width: i === index ? 14 : 5,
-              height: 5,
-              background: i === index ? '#021D40' : '#d1d5db',
-            }}
-          />
-        ))}
-      </div>
-    ) : null;
-
   if (variant === 'bare') {
     // Cap creative to its natural size and center so wide desktop containers
     // don't stretch a 728x90 banner to 1248px wide (which scales height
@@ -254,7 +233,6 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
     return (
       <div className={`mx-auto ${className}`} style={{ maxWidth: w }}>
         {creative}
-        {dots}
       </div>
     );
   }
@@ -272,7 +250,6 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
         <span aria-hidden="true">{'A' + 'd'}</span>
       </span>
       {creative}
-      {dots}
     </div>
   );
 }
