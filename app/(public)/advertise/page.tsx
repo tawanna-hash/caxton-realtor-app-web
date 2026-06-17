@@ -20,7 +20,7 @@ export default function AdvertisePage() {
           </span>
         </p>
         <PageTitle>
-          Reach our audience wherever they are
+          Connect with our audience wherever they are, every day.
         </PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
           Whether they{'\u2019'}re reading our print edition, browsing our
