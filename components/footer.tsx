@@ -38,6 +38,7 @@ export function Footer() {
               <li><Link href="/about" className="hover:text-gray-900 transition-colors">About Us</Link></li>
               <li><Link href="/advertise" className="hover:text-gray-900 transition-colors">Advertise</Link></li>
               <li><Link href="/faq" className="hover:text-gray-900 transition-colors">FAQs</Link></li>
+              <li><Link href="/support" className="hover:text-gray-900 transition-colors">Support</Link></li>
               <li><Link href="/privacy" className="hover:text-gray-900 transition-colors">Privacy Policy</Link></li>
               <li><Link href="/terms" className="hover:text-gray-900 transition-colors">Terms of Use</Link></li>
             </ul>
