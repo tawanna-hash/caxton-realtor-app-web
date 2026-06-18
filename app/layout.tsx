@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "./posthog-provider";
+import { ThemeProvider, THEME_INIT_SCRIPT } from "@/components/theme/ThemeProvider";
 
 const SITE_URL = "https://realtynewsnow.app";
 const SITE_NAME = "Realty News Now";
@@ -88,8 +89,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
-      <body className="antialiased font-sans">
-        <PostHogProvider>{children}</PostHogProvider>
+      <head>
+        {/* Pre-paint theme bootstrap. Reads localStorage + system preference
+            and applies the .dark class to <html> before React hydrates,
+            preventing the flash-of-light-mode for dark-mode users. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body className="antialiased font-sans bg-[var(--surface-1)] text-[var(--text-primary)]">
+        <ThemeProvider>
+          <PostHogProvider>{children}</PostHogProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,12 +1,24 @@
 @import "tailwindcss";
 
+/* Tailwind v4 class-strategy dark mode. The <html> element gets the `.dark`
+   class from ThemeProvider; every `dark:` utility resolves against it. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  /* The app's components are built for a light surface (bg-white, text-gray-900,
-     etc). Pin the color scheme to light so the OS/browser dark mode doesn't
-     recolor inherited text, form controls, or scrollbars into an unreadable
-     hybrid. */
+  /* Modern News redesign: theme-aware surfaces, neutrals, and dividers.
+     Light defaults here; the .dark block below overrides them. */
+  --surface-1: #ffffff;       /* page background */
+  --surface-2: #f7f7f8;       /* subtle inset (chip bg, search field) */
+  --surface-3: #efeff1;       /* card bg on inset */
+  --text-primary: #171717;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --border-subtle: #e5e7eb;
+  --border-strong: #d1d5db;
+  --accent: #006fff;
+  --accent-fg: #ffffff;
   color-scheme: light;
 
   /* ==========================================================================
@@ -302,11 +314,25 @@
   --color-pink-900: var(--rnn-red-900);
 }
 
-/* NOTE: the previous @media (prefers-color-scheme: dark) override was removed.
-   It flipped --background to near-black and --foreground to near-white, but no
-   component was styled for a dark surface, so dark-mode users saw white panels
-   with washed-out text and faded input values. The app is intentionally
-   light-only for now. */
+/* Modern News redesign: dark theme tokens. Activated when <html class="dark">
+   is set by ThemeProvider (user toggle or system preference). Every surface,
+   text, and border variable above is re-pointed for dark mode. Components use
+   var(--surface-1) etc. or Tailwind `dark:` utilities and inherit automatically. */
+.dark {
+  --background: #0b0b0d;
+  --foreground: #f5f5f7;
+  --surface-1: #0b0b0d;
+  --surface-2: #16161a;
+  --surface-3: #1f1f24;
+  --text-primary: #f5f5f7;
+  --text-secondary: #c7c7cc;
+  --text-muted: #8e8e93;
+  --border-subtle: #2a2a2f;
+  --border-strong: #3a3a40;
+  --accent: #2a86ff;
+  --accent-fg: #ffffff;
+  color-scheme: dark;
+}
 
 body {
   background: var(--background);
