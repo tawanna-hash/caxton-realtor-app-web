@@ -32,6 +32,8 @@ interface SubStats {
   total: number;
   austin: number;
   san_antonio: number;
+  houston: number;
+  dallas: number;
   unspecified: number;
 }
 
@@ -68,12 +70,16 @@ export default async function AdminNotificationsPage() {
     total: 0,
     austin: 0,
     san_antonio: 0,
+    houston: 0,
+    dallas: 0,
     unspecified: 0,
   };
   for (const r of statsRows) {
     stats.total += r.n;
     if (r.bucket === 'austin') stats.austin = r.n;
     else if (r.bucket === 'san_antonio') stats.san_antonio = r.n;
+    else if (r.bucket === 'houston') stats.houston = r.n;
+    else if (r.bucket === 'dallas') stats.dallas = r.n;
     else stats.unspecified = r.n;
   }
 

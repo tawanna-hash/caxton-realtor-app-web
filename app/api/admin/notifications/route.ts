@@ -25,16 +25,25 @@ type Category =
 
 type Status = 'draft' | 'scheduled' | 'sending' | 'sent' | 'cancelled';
 
+type Market = 'austin' | 'san_antonio' | 'houston' | 'dallas';
+
 type CreateBody = {
   title: string;
   body: string;
   category: Category;
   deepLinkUrl?: string | null;
-  market?: 'austin' | 'san_antonio' | null;
+  market?: Market | null;
   scheduledFor?: string | null; // ISO
   channels?: Array<'web_push' | 'email'>;
   sendNow?: boolean;
 };
+
+const VALID_MARKETS: ReadonlySet<Market> = new Set<Market>([
+  'austin',
+  'san_antonio',
+  'houston',
+  'dallas',
+]);
 
 interface NotificationRow {
   id: string;
@@ -137,7 +146,7 @@ export const POST = withErrorHandling(async (req: Request) => {
             url: body.deepLinkUrl || '/dashboard',
             tag: `notif-${row.id}`,
           },
-          market === 'austin' || market === 'san_antonio' ? market : undefined,
+          market && VALID_MARKETS.has(market) ? market : undefined,
         );
       }
       await sql`

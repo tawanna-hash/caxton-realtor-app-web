@@ -1261,7 +1261,17 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
       )}
       {!showPreLaunch && (
         <PushOptInBanner
-          market={pub === 'realtyline' ? 'austin' : pub === 'newsline' ? 'san_antonio' : null}
+          market={
+            pub === 'realtyline'
+              ? 'austin'
+              : pub === 'newsline'
+              ? 'san_antonio'
+              : pub === 'realtyline-houston'
+              ? 'houston'
+              : pub === 'realtyline-dallas'
+              ? 'dallas'
+              : null
+          }
         />
       )}
       {user?.guest && (

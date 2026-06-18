@@ -24,12 +24,14 @@ type Category =
   | 'event_reminder'
   | 'weekly_digest';
 
-type Market = 'all' | 'austin' | 'san_antonio';
+type Market = 'all' | 'austin' | 'san_antonio' | 'houston' | 'dallas';
 
 interface SubStats {
   total: number;
   austin: number;
   san_antonio: number;
+  houston: number;
+  dallas: number;
   unspecified: number;
 }
 
@@ -75,6 +77,8 @@ export default function NewNotificationModal({ onClose, onSent, stats }: Props) 
   const reachCount = useMemo(() => {
     if (market === 'austin') return stats.austin;
     if (market === 'san_antonio') return stats.san_antonio;
+    if (market === 'houston') return stats.houston;
+    if (market === 'dallas') return stats.dallas;
     return stats.total;
   }, [market, stats]);
 
@@ -143,8 +147,8 @@ export default function NewNotificationModal({ onClose, onSent, stats }: Props) 
             <h2 className="text-lg font-semibold text-gray-900">New push notification</h2>
             <p className="text-xs text-gray-500 mt-0.5">
               Sends to {stats.total.toLocaleString()} active web push subscribers
-              {stats.austin || stats.san_antonio
-                ? ` (Austin ${stats.austin}, San Antonio ${stats.san_antonio})`
+              {stats.austin || stats.san_antonio || stats.houston || stats.dallas
+                ? ` (Austin ${stats.austin}, San Antonio ${stats.san_antonio}, Houston ${stats.houston}, Dallas ${stats.dallas})`
                 : ''}
               .
             </p>
@@ -240,18 +244,20 @@ export default function NewNotificationModal({ onClose, onSent, stats }: Props) 
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Audience</label>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {([
                     { v: 'all', label: `All (${stats.total})` },
                     { v: 'austin', label: `Austin (${stats.austin})` },
                     { v: 'san_antonio', label: `San Antonio (${stats.san_antonio})` },
+                    { v: 'houston', label: `Houston (${stats.houston})` },
+                    { v: 'dallas', label: `Dallas (${stats.dallas})` },
                   ] as Array<{ v: Market; label: string }>).map((opt) => (
                     <button
                       key={opt.v}
                       type="button"
                       onClick={() => setMarket(opt.v)}
                       disabled={sending}
-                      className={`flex-1 px-3 py-2 rounded-md text-sm border transition-colors ${
+                      className={`px-3 py-2 rounded-md text-sm border transition-colors ${
                         market === opt.v
                           ? 'bg-[#021D40] text-white border-[#021D40]'
                           : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -334,7 +340,15 @@ export default function NewNotificationModal({ onClose, onSent, stats }: Props) 
               <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md text-xs text-gray-600 space-y-1">
                 <div>
                   <span className="font-semibold">Audience:</span>{' '}
-                  {market === 'all' ? 'All markets' : market === 'austin' ? 'Austin only' : 'San Antonio only'}
+                  {market === 'all'
+                    ? 'All markets'
+                    : market === 'austin'
+                    ? 'Austin only'
+                    : market === 'san_antonio'
+                    ? 'San Antonio only'
+                    : market === 'houston'
+                    ? 'Houston only'
+                    : 'Dallas only'}
                 </div>
                 <div>
                   <span className="font-semibold">Reach:</span>{' '}

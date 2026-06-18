@@ -87,13 +87,15 @@ export async function markSubscriptionGone(endpoint: string): Promise<void> {
   `;
 }
 
+export type PushMarketFilter = 'austin' | 'san_antonio' | 'houston' | 'dallas';
+
 /**
  * Fan out a payload to every active subscription matching the audience
  * filter. Returns counts for the admin UI.
  *
  * `marketFilter`:
  *   - undefined → send to everyone (no filter)
- *   - 'austin' / 'san_antonio' → filter push_subscriptions.market
+ *   - 'austin' / 'san_antonio' / 'houston' / 'dallas' → filter push_subscriptions.market
  *
  * For each subscription we also record a row in `notification_deliveries`
  * so the admin can see per-realtor delivery status. Anonymous subscriptions
@@ -102,7 +104,7 @@ export async function markSubscriptionGone(endpoint: string): Promise<void> {
 export async function broadcastPush(
   notificationId: string,
   payload: PushPayload,
-  marketFilter?: 'austin' | 'san_antonio',
+  marketFilter?: PushMarketFilter,
 ): Promise<{ sent: number; failed: number; revoked: number }> {
   const sql = getSql();
 

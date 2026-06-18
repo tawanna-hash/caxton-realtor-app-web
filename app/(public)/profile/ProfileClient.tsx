@@ -128,7 +128,15 @@ export default function ProfileClient() {
             Get breaking news and new issue alerts delivered to this device.
           </p>
           <PushOptInButton
-            market={pub === 'newsline' ? 'san_antonio' : 'austin'}
+            market={
+              pub === 'newsline'
+                ? 'san_antonio'
+                : pub === 'realtyline-houston'
+                ? 'houston'
+                : pub === 'realtyline-dallas'
+                ? 'dallas'
+                : 'austin'
+            }
           />
         </section>
 
