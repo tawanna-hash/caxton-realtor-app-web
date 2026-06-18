@@ -215,9 +215,9 @@ export default function InquireForm({
           without going back to the rate card. */}
       <div>
         <label className="block text-xs uppercase tracking-wider text-gray-600 font-medium mb-1.5">
-          Channel
+          Market
         </label>
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Ad channel">
+        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Ad market">
           {AD_CHANNELS.map((c) => {
             const active = c === channel;
             return (

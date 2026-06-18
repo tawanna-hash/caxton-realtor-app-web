@@ -171,11 +171,11 @@ export default function AdvertisePage() {
         <h2
           className="font-serif text-2xl md:text-3xl text-gray-900 leading-tight mb-3"
         >
-          Four channels. One integrated buy.
+          Four markets. One integrated buy.
         </h2>
         <p className="text-base text-gray-700 leading-relaxed font-light mb-8 max-w-3xl">
-          Mix and match across all four {'\u2014'} or start with the channel
-          that fits your audience and add the rest later. Every channel is
+          Mix and match across all four {'\u2014'} or start with the market
+          that fits your audience and add the rest later. Every market is
           priced independently in the media kit.
         </p>
 
@@ -185,7 +185,7 @@ export default function AdvertisePage() {
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
-                  Channel 01
+                  Market 01
                 </p>
                 <h3
                   className="font-serif text-xl text-gray-900 mt-1"
@@ -398,7 +398,7 @@ export default function AdvertisePage() {
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
-                  Channel 02
+                  Market 02
                 </p>
                 <h3
                   className="font-serif text-xl text-gray-900 mt-1"
@@ -423,7 +423,7 @@ export default function AdvertisePage() {
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
-                  Channel 03
+                  Market 03
                 </p>
                 <h3
                   className="font-serif text-xl text-gray-900 mt-1"
@@ -465,7 +465,7 @@ export default function AdvertisePage() {
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
-                  Channel 04
+                  Market 04
                 </p>
                 <h3
                   className="font-serif text-xl text-gray-900 mt-1"
