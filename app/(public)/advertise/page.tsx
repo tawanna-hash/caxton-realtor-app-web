@@ -103,7 +103,7 @@ export default function AdvertisePage() {
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="border border-gray-200 px-4 py-5">
+          <div className="border border-gray-200 px-4 py-5 rounded-md">
             <p className="text-3xl font-semibold text-[#021D40] tracking-tight">
               {(PUB_SUBSCRIBERS.realtyline / 1000).toFixed(0)}K
             </p>
@@ -113,7 +113,7 @@ export default function AdvertisePage() {
               Austin
             </p>
           </div>
-          <div className="border border-gray-200 px-4 py-5">
+          <div className="border border-gray-200 px-4 py-5 rounded-md">
             <p className="text-3xl font-semibold text-[#3D0740] tracking-tight">
               {(PUB_SUBSCRIBERS.newsline / 1000).toFixed(0)}K
             </p>
@@ -123,7 +123,7 @@ export default function AdvertisePage() {
               San Antonio
             </p>
           </div>
-          <div className="border border-gray-200 px-4 py-5">
+          <div className="border border-gray-200 px-4 py-5 rounded-md">
             <p className="text-3xl font-semibold text-[#021D40] tracking-tight">
               {(PUB_SUBSCRIBERS['realtyline-houston'] / 1000).toFixed(0)}K
             </p>
@@ -133,7 +133,7 @@ export default function AdvertisePage() {
               Houston
             </p>
           </div>
-          <div className="border border-gray-200 px-4 py-5">
+          <div className="border border-gray-200 px-4 py-5 rounded-md">
             <p className="text-3xl font-semibold text-[#021D40] tracking-tight">
               {(PUB_SUBSCRIBERS['realtyline-dallas'] / 1000).toFixed(0)}K
             </p>
@@ -149,7 +149,7 @@ export default function AdvertisePage() {
           {AUDIENCE_STATS.map((s) => (
             <div
               key={s.label}
-              className="border border-gray-100 px-4 py-3 bg-gray-50"
+              className="border border-gray-100 px-4 py-3 bg-gray-50 rounded-md"
             >
               <p className="text-xl font-semibold text-gray-900">{s.value}</p>
               <p className="text-xs uppercase tracking-wider text-gray-500 mt-0.5">
@@ -165,7 +165,7 @@ export default function AdvertisePage() {
 
         <div className="space-y-6">
           {/* PRINT */}
-          <div className="border border-gray-200 p-6 md:p-7">
+          <div className="border border-gray-200 p-6 md:p-7 rounded-md">
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <div>
                 <h3
@@ -185,7 +185,7 @@ export default function AdvertisePage() {
 
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="border border-gray-100 px-4 py-3">
+              <div className="border border-gray-100 px-4 py-3 rounded-md">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                   Full Page
                 </p>
@@ -193,7 +193,7 @@ export default function AdvertisePage() {
                   10{'\u2033'} {'\u00d7'} 11.0833{'\u2033'}
                 </p>
               </div>
-              <div className="border border-gray-100 px-4 py-3">
+              <div className="border border-gray-100 px-4 py-3 rounded-md">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                   Half Page
                 </p>
@@ -203,7 +203,7 @@ export default function AdvertisePage() {
                   4.8333{'\u2033'} {'\u00d7'} 11.0833{'\u2033'} vertical
                 </p>
               </div>
-              <div className="border border-gray-100 px-4 py-3">
+              <div className="border border-gray-100 px-4 py-3 rounded-md">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                   Quarter Page
                 </p>
@@ -339,7 +339,7 @@ export default function AdvertisePage() {
           </div>
 
           {/* SOCIAL */}
-          <div className="border border-gray-200 p-6 md:p-7">
+          <div className="border border-gray-200 p-6 md:p-7 rounded-md">
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <div>
                 <h3
@@ -361,7 +361,7 @@ export default function AdvertisePage() {
           </div>
 
           {/* E-BLASTS */}
-          <div className="border border-gray-200 p-6 md:p-7">
+          <div className="border border-gray-200 p-6 md:p-7 rounded-md">
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <div>
                 <h3
@@ -380,7 +380,7 @@ export default function AdvertisePage() {
               CPM-priced for transparency.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="border border-gray-100 px-4 py-3">
+              <div className="border border-gray-100 px-4 py-3 rounded-md">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                   Dedicated e-Blast
                 </p>
@@ -388,7 +388,7 @@ export default function AdvertisePage() {
                   Exclusive email to the preferred market subscriber list.
                 </p>
               </div>
-              <div className="border border-gray-100 px-4 py-3">
+              <div className="border border-gray-100 px-4 py-3 rounded-md">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                   Newsletter banner
                 </p>
@@ -400,7 +400,7 @@ export default function AdvertisePage() {
           </div>
 
           {/* MOBILE */}
-          <div className="border border-gray-200 p-6 md:p-7">
+          <div className="border border-gray-200 p-6 md:p-7 rounded-md">
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <div>
                 <h3
@@ -420,7 +420,7 @@ export default function AdvertisePage() {
               availability.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="border border-gray-100 px-4 py-3">
+              <div className="border border-gray-100 px-4 py-3 rounded-md">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                   Web banners
                 </p>
@@ -429,7 +429,7 @@ export default function AdvertisePage() {
                   article top, sidebar, mid-inline, bottom
                 </p>
               </div>
-              <div className="border border-gray-100 px-4 py-3">
+              <div className="border border-gray-100 px-4 py-3 rounded-md">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                   Feed cards
                 </p>
@@ -438,7 +438,7 @@ export default function AdvertisePage() {
                   SPONSORED
                 </p>
               </div>
-              <div className="border border-gray-100 px-4 py-3">
+              <div className="border border-gray-100 px-4 py-3 rounded-md">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                   Splash / welcome
                 </p>
@@ -446,7 +446,7 @@ export default function AdvertisePage() {
                   1080{'\u00d7'}1920 fullscreen, first session of the day
                 </p>
               </div>
-              <div className="border border-gray-100 px-4 py-3">
+              <div className="border border-gray-100 px-4 py-3 rounded-md">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                   Push notification sponsor
                 </p>
@@ -455,7 +455,7 @@ export default function AdvertisePage() {
                   icon
                 </p>
               </div>
-              <div className="border border-gray-100 px-4 py-3">
+              <div className="border border-gray-100 px-4 py-3 rounded-md">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                   Mobile sticky banner
                 </p>
@@ -463,7 +463,7 @@ export default function AdvertisePage() {
                   320{'\u00d7'}50 / 320{'\u00d7'}100 persistent at bottom
                 </p>
               </div>
-              <div className="border border-gray-100 px-4 py-3">
+              <div className="border border-gray-100 px-4 py-3 rounded-md">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
                   Calendar event sponsor
                 </p>

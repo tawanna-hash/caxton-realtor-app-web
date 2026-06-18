@@ -671,7 +671,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <input type="text" placeholder="Suite / Unit (optional)" value={addr2} onChange={(e) => setAddr2(e.target.value)} className={ic} />
                 <div className="flex gap-2">
                   <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className={ic + ' flex-1'} />
-                  <input type="text" value="TX" disabled className="w-16 px-4 py-3.5 border border-gray-200 text-base font-light bg-gray-50 text-gray-400 mb-3 text-center" />
+                  <input type="text" value="TX" disabled className="w-16 px-4 py-3.5 border border-gray-200 text-base font-light bg-gray-50 text-gray-400 mb-3 text-center rounded-md" />
                   <input type="text" placeholder="Zip" value={zip} onChange={(e) => setZip(e.target.value)} className="w-24 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3" />
                 </div>
 
@@ -1250,7 +1250,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
           )}
           <p className="text-white text-lg font-semibold tracking-wide truncate">{info.name}</p>
         </div>
-        <button onClick={handleSwitch} className="text-xs uppercase tracking-wider text-white/80 font-medium border border-white/30 px-3 py-1.5 min-h-[44px] flex items-center gap-2 flex-shrink-0 ml-2">
+        <button onClick={handleSwitch} className="text-xs uppercase tracking-wider text-white/80 font-medium border border-white/30 px-3 py-1.5 min-h-[44px] flex items-center gap-2 flex-shrink-0 ml-2 rounded-md">
           <span>{other.name}</span>
           <span className="text-white/50">{'\u2192'}</span>
         </button>
@@ -1436,7 +1436,7 @@ function ArticleCard({ item, pub }: { item: any; pub: string }) {
       <button
         type="button"
         onClick={onTap}
-        className="block w-full text-left px-4 py-5 hover:bg-gray-50 transition-colors"
+        className="block w-full text-left px-4 py-5 hover:bg-gray-50 transition-colors rounded-md"
       >
         {body}
       </button>

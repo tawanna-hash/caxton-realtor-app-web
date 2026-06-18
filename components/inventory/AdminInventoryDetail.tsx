@@ -381,7 +381,7 @@ export default function AdminInventoryDetail({
             )}
           </div>
 
-          <section className="border border-gray-200 bg-white px-4 py-4">
+          <section className="border border-gray-200 bg-white px-4 py-4 rounded-md">
             <h3 className="text-xs uppercase tracking-wide text-gray-500 font-medium mb-3">
               Replace files
             </h3>
@@ -450,7 +450,7 @@ export default function AdminInventoryDetail({
         </div>
 
         <div className="lg:col-span-2 space-y-6">
-          <section className="border border-gray-200 bg-white px-5 py-5">
+          <section className="border border-gray-200 bg-white px-5 py-5 rounded-md">
             <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-3">
               Status
             </h2>
@@ -518,7 +518,7 @@ export default function AdminInventoryDetail({
             </div>
           </section>
 
-          <section className="border border-gray-200 bg-white px-5 py-5">
+          <section className="border border-gray-200 bg-white px-5 py-5 rounded-md">
             <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-4">
               Edit details
             </h2>
@@ -677,7 +677,7 @@ export default function AdminInventoryDetail({
                   type="button"
                   onClick={saveEdits}
                   disabled={busy}
-                  className="px-6 py-2.5 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2.5 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
                 >
                   {busy ? 'Saving…' : 'Save edits'}
                 </button>
@@ -696,7 +696,7 @@ export default function AdminInventoryDetail({
               type="button"
               onClick={deleteRow}
               disabled={busy}
-              className="px-4 py-2 text-sm font-medium text-red-900 border border-red-300 bg-white hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-medium text-red-900 border border-red-300 bg-white hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
             >
               Delete submission
             </button>

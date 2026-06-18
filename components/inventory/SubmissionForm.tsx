@@ -428,7 +428,7 @@ export default function SubmissionForm() {
           required
           disabled={submitting}
           onChange={onPdfChange}
-          className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:border file:border-gray-300 file:text-sm file:font-medium file:bg-white file:text-gray-900 hover:file:bg-gray-50 disabled:opacity-50"
+          className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:border file:border-gray-300 file:text-sm file:font-medium file:bg-white file:text-gray-900 hover:file:bg-gray-50 disabled:opacity-50 rounded-md"
         />
         <p className={helpStyle}>
           Max 25 MB. We will generate a thumbnail and host the full flyer for realtors to view.
@@ -515,7 +515,7 @@ export default function SubmissionForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full sm:w-auto px-8 py-3 text-base font-semibold text-white tracking-wide transition-opacity disabled:opacity-50 disabled:cursor-not-allowed bg-gray-900 hover:bg-gray-800"
+          className="w-full sm:w-auto px-8 py-3 text-base font-semibold text-white tracking-wide transition-opacity disabled:opacity-50 disabled:cursor-not-allowed bg-gray-900 hover:bg-gray-800 rounded-md"
         >
           {submitting ? 'Submitting…' : 'Submit for review'}
         </button>
