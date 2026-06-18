@@ -8,6 +8,7 @@
 // pulled from builder_inventory by name.
 
 import Link from 'next/link';
+import { useState } from 'react';
 import type {
   Advertiser,
   AdvertiserLocation,
@@ -404,14 +405,7 @@ function InventoryCardLink({
         className="flex items-stretch gap-3 p-3 border border-gray-200 rounded-md hover:border-gray-400 transition-colors"
       >
         <div className="shrink-0 w-24 h-24 bg-gray-100 border border-gray-200 rounded-md overflow-hidden">
-          {row.thumbnailUrl ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={row.thumbnailUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
-          ) : (
-            <span className="w-full h-full flex items-center justify-center text-gray-300 text-xl" aria-hidden="true">
-              🏠
-            </span>
-          )}
+          <ListingThumbnail src={row.thumbnailUrl ?? null} />
         </div>
         <div className="flex-1 min-w-0">
           {row.kind === 'promotion' && (
@@ -432,5 +426,32 @@ function InventoryCardLink({
         </div>
       </Link>
     </li>
+  );
+}
+
+// Small helper that renders a listing thumbnail with a graceful fallback
+// when the source URL fails to load. Some advertisers (notably David
+// Weekley Homes) source thumbnails from a CDN that blocks hotlinks, so
+// the `src` is set but every `<img>` ends up showing the browser's
+// broken-image icon. Swapping to the same 🏠 placeholder used when the
+// URL is missing entirely keeps the grid visually consistent.
+function ListingThumbnail({ src }: { src: string | null }) {
+  const [errored, setErrored] = useState(false);
+  if (!src || errored) {
+    return (
+      <span className="w-full h-full flex items-center justify-center text-gray-300 text-xl" aria-hidden="true">
+        🏠
+      </span>
+    );
+  }
+  return (
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src={src}
+      alt=""
+      className="w-full h-full object-cover"
+      loading="lazy"
+      onError={() => setErrored(true)}
+    />
   );
 }
