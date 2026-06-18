@@ -15,7 +15,6 @@ import { type PubKey } from '@/lib/pub-meta';
 
 import Link from 'next/link';
 import { useSyncExternalStore } from 'react';
-import { ArrowRight } from 'lucide-react';
 
 type SitePub = PubKey;
 
@@ -118,14 +117,9 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
                 />
                 <Link
                   href={`/advertisers/${a.slug}`}
-                  className="group flex-1 min-w-0 flex items-center gap-2 text-base text-gray-900 font-medium leading-tight hover:underline underline-offset-2"
+                  className="flex-1 min-w-0 text-base text-gray-900 font-medium leading-tight hover:underline underline-offset-2"
                 >
-                  <span className="flex-1 min-w-0">{a.name}</span>
-                  <ArrowRight
-                    className="flex-shrink-0 text-gray-400 group-hover:text-gray-700 transition-colors"
-                    strokeWidth={1.75}
-                    size={18}
-                  />
+                  {a.name}
                 </Link>
                 {site && (
                   <a
