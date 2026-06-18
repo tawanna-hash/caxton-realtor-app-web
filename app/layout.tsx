@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "./posthog-provider";
+import PushBootstrap from "@/components/PushBootstrap";
 
 const SITE_URL = "https://realtynewsnow.app";
 const SITE_NAME = "Realty News Now";
@@ -89,7 +90,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="antialiased font-sans">
-        <PostHogProvider>{children}</PostHogProvider>
+        <PostHogProvider>
+          <PushBootstrap />
+          {children}
+        </PostHogProvider>
       </body>
     </html>
   );
