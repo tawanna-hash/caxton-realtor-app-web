@@ -174,7 +174,7 @@ export default function GiveawayDetailPage() {
             </button>
           )}
           {winnerName ? (
-            <div className="text-sm bg-blue-50 border border-blue-200 px-4 py-2">
+            <div className="text-sm bg-blue-50 border border-blue-200 px-4 py-2 rounded-md">
               <span className="text-blue-700 text-xs uppercase tracking-wider">Winner:</span>{' '}
               <span className="font-medium text-[#021D40]">{winnerName}</span>
             </div>
@@ -192,7 +192,7 @@ export default function GiveawayDetailPage() {
       </div>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-3">{error}</div>
+        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-3 rounded-md">{error}</div>
       )}
 
       <section className="bg-white border border-gray-200 p-6 rounded-md">
@@ -385,7 +385,7 @@ function RulesSection({
       </div>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 mb-4">{error}</div>
+        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 mb-4 rounded-md">{error}</div>
       )}
 
       {rules.length === 0 && !adding && (
@@ -538,7 +538,7 @@ function EntriesSection({ giveawayId }: { giveawayId: string }) {
       </h2>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 mb-4">{error}</div>
+        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 mb-4 rounded-md">{error}</div>
       )}
 
       {loading && <p className="text-sm text-gray-500">Loading entries...</p>}

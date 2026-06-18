@@ -513,7 +513,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
           <pre className="text-xs text-white/80 bg-white/5 p-3 overflow-x-auto whitespace-pre-wrap break-all">{`<iframe src="${shareUrl}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`}</pre>
           <button
             onClick={handleCopyEmbed}
-            className="mt-3 w-full py-2.5 bg-white/10 text-white text-sm uppercase tracking-wider"
+            className="mt-3 w-full py-2.5 bg-white/10 text-white text-sm uppercase tracking-wider rounded-md"
           >
             Copy Embed Code
           </button>
@@ -594,7 +594,7 @@ function ActionButton({ label, onClick, icon }: { label: string; onClick: () => 
 function ActionPopup({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-[61] bg-black/80 flex items-center justify-center p-6" onClick={onClose}>
-      <div className="bg-black border border-white/20 max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-black border border-white/20 max-w-sm w-full p-6 rounded-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm uppercase tracking-[0.2em] text-white/80 font-medium">{title}</p>
           <button onClick={onClose} aria-label="Close" className="text-white/60 hover:text-white">

@@ -376,7 +376,7 @@ function DetailDrawer({
     return (
       <div className="fixed inset-0 z-50 flex">
         <button aria-label="Close" className="flex-1 bg-black/30" onClick={onClose} />
-        <div className="w-full max-w-3xl bg-white shadow-xl p-10 text-gray-500">Loading…</div>
+        <div className="w-full max-w-3xl bg-white shadow-xl p-10 text-gray-500 rounded-md">Loading…</div>
       </div>
     );
   }

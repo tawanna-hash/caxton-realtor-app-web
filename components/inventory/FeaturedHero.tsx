@@ -32,7 +32,7 @@ export default function FeaturedHero({ row, showNav, index, total, onPrev, onNex
         <button
           type="button"
           onClick={handleOpenFlyer}
-          className="relative aspect-[4/3] md:aspect-auto md:min-h-[360px] bg-gray-100 overflow-hidden focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2"
+          className="relative aspect-[4/3] md:aspect-auto md:min-h-[360px] bg-gray-100 overflow-hidden focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 rounded-md"
           aria-label={`Open flyer for ${row.title}`}
         >
           {row.thumbnailUrl ? (
@@ -80,7 +80,7 @@ export default function FeaturedHero({ row, showNav, index, total, onPrev, onNex
             <button
               type="button"
               onClick={handleOpenFlyer}
-              className="self-start inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white tracking-wide bg-gray-900 hover:bg-gray-800 transition-colors"
+              className="self-start inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white tracking-wide bg-gray-900 hover:bg-gray-800 transition-colors rounded-md"
             >
               View flyer
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -94,7 +94,7 @@ export default function FeaturedHero({ row, showNav, index, total, onPrev, onNex
                   type="button"
                   onClick={onPrev}
                   aria-label="Previous featured"
-                  className="p-2 border border-gray-300 hover:border-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  className="p-2 border border-gray-300 hover:border-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-900 rounded-md"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
@@ -104,7 +104,7 @@ export default function FeaturedHero({ row, showNav, index, total, onPrev, onNex
                   type="button"
                   onClick={onNext}
                   aria-label="Next featured"
-                  className="p-2 border border-gray-300 hover:border-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  className="p-2 border border-gray-300 hover:border-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-900 rounded-md"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />

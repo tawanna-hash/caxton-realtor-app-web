@@ -90,7 +90,7 @@ export default function EditReportDrawer({
         type="button"
         aria-label="Close edit panel"
         onClick={onClose}
-        className="flex-1 bg-black/40"
+        className="flex-1 bg-black/40 rounded-md"
       />
 
       {/* Drawer panel */}

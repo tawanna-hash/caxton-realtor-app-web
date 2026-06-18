@@ -512,7 +512,7 @@ function PolicySection() {
         {POLICY_NOTES.map((n) => (
           <div
             key={n.title}
-            className="rounded-md border-l-4 bg-gray-50 ring-1 ring-gray-200 p-4"
+            className="border-l-4 bg-gray-50 ring-1 ring-gray-200 p-4"
             style={{ borderLeftColor: n.color }}
           >
             <div className="text-sm font-semibold text-gray-900">{n.title}</div>

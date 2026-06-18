@@ -141,7 +141,7 @@ function PickerButton({
     <button
       type="button"
       onClick={onClick}
-      className="text-left border-2 px-5 py-4 transition-all"
+      className="text-left border-2 px-5 py-4 transition-all rounded-md"
       style={{
         borderColor: selected ? activeColor : '#d1d5db',
         backgroundColor: selected ? `${activeColor}10` : '#ffffff',

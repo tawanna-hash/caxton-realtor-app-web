@@ -21,7 +21,7 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="bg-white border border-gray-200 p-6">
+      <div className="bg-white border border-gray-200 p-6 rounded-md">
         <p className="text-sm text-red-600 mb-4">
           No reset token provided. The link you used may be invalid or incomplete.
         </p>
@@ -69,7 +69,7 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="bg-white border border-gray-200 p-6">
+      <div className="bg-white border border-gray-200 p-6 rounded-md">
         <p className="text-sm text-[#021D40] mb-2">Password updated.</p>
         <p className="text-sm text-gray-500">Redirecting you to the sign-in page...</p>
       </div>
@@ -111,7 +111,7 @@ function ResetPasswordForm() {
         />
       </div>
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2">{error}</div>
+        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 rounded-md">{error}</div>
       )}
       <button
         type="submit"
@@ -137,7 +137,7 @@ export default function AdminResetPasswordPage() {
           <PageTitle size="md">Set new password</PageTitle>
           <p className="text-sm text-gray-500 mt-1">Choose a new admin password</p>
         </div>
-        <Suspense fallback={<div className="bg-white border border-gray-200 p-6 text-sm text-gray-500">Loading...</div>}>
+        <Suspense fallback={<div className="bg-white border border-gray-200 p-6 text-sm text-gray-500 rounded-md">Loading...</div>}>
           <ResetPasswordForm />
         </Suspense>
       </div>

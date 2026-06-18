@@ -74,7 +74,7 @@ export default function GiveawaysPage() {
 
       {loading && <div className="text-sm text-gray-500">Loading giveaways...</div>}
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-3">{error}</div>
+        <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-4 py-3 rounded-md">{error}</div>
       )}
 
       {!loading && items.length === 0 && (

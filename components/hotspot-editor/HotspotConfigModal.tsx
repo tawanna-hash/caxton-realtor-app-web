@@ -567,7 +567,7 @@ function TypeSpecificForm({
             <button
               type="button"
               onClick={() => onChange({ ...config, source: 'upload', embed_url: undefined })}
-              className={`px-3 py-1.5 text-sm rounded-md border-l border-gray-300 ${config.source === 'upload' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'}`}
+              className={`px-3 py-1.5 text-sm border-l border-gray-300 ${config.source === 'upload' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'}`}
             >
               Upload file
             </button>

@@ -1295,7 +1295,7 @@ export default function InteractiveMagazineReader({
       {actionMode === 'embed' && (
         <ActionPopup title="Embed code" onClose={() => setActionMode(null)}>
           <pre className="text-xs text-white/80 bg-white/5 p-3 overflow-x-auto whitespace-pre-wrap break-all">{`<iframe src="${shareUrl}" width="800" height="600" frameborder="0" allowfullscreen></iframe>`}</pre>
-          <button onClick={handleCopyEmbed} className="mt-3 w-full py-2.5 bg-white/10 text-white text-sm uppercase tracking-wider">
+          <button onClick={handleCopyEmbed} className="mt-3 w-full py-2.5 bg-white/10 text-white text-sm uppercase tracking-wider rounded-md">
             Copy Embed Code
           </button>
         </ActionPopup>

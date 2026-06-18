@@ -47,7 +47,7 @@ export default function AdvertiseEmailPage() {
 
       {/* Audience stat ribbon */}
       <section className="mb-10 grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="border border-gray-200 px-4 py-4">
+        <div className="border border-gray-200 px-4 py-4 rounded-md">
           <p className="text-2xl font-semibold text-[#021D40] tracking-tight">
             43K
           </p>
@@ -55,7 +55,7 @@ export default function AdvertiseEmailPage() {
             RealtyLine email
           </p>
         </div>
-        <div className="border border-gray-200 px-4 py-4">
+        <div className="border border-gray-200 px-4 py-4 rounded-md">
           <p className="text-2xl font-semibold text-[#021D40] tracking-tight">
             21K
           </p>
@@ -63,7 +63,7 @@ export default function AdvertiseEmailPage() {
             Newsline San Antonio email
           </p>
         </div>
-        <div className="border border-gray-200 px-4 py-4">
+        <div className="border border-gray-200 px-4 py-4 rounded-md">
           <p className="text-2xl font-semibold text-[#021D40] tracking-tight">
             ~38%
           </p>
@@ -71,7 +71,7 @@ export default function AdvertiseEmailPage() {
             Avg open rate
           </p>
         </div>
-        <div className="border border-gray-200 px-4 py-4">
+        <div className="border border-gray-200 px-4 py-4 rounded-md">
           <p className="text-2xl font-semibold text-[#021D40] tracking-tight">
             Fri
           </p>
