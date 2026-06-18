@@ -9,6 +9,7 @@ import { redirect } from 'next/navigation';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 
+import PageTitle from '@/components/ui/PageTitle';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
@@ -90,12 +91,9 @@ export default async function PortalOrders() {
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Order history
         </div>
-        <h1
-          className="font-serif text-3xl text-gray-900"
-          style={{ fontFamily: 'Georgia, serif' }}
-        >
+        <PageTitle size="lg">
           My orders
-        </h1>
+        </PageTitle>
         <p className="text-gray-600 mt-1 text-sm">
           Every ad placement and sponsorship tied to {user.company || user.name}, newest first.
         </p>
@@ -105,7 +103,6 @@ export default async function PortalOrders() {
         <section className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center">
           <h2
             className="font-serif text-xl text-gray-900 mb-2"
-            style={{ fontFamily: 'Georgia, serif' }}
           >
             No orders yet
           </h2>
@@ -221,7 +218,6 @@ export default async function PortalOrders() {
       <section className="rounded-xl border border-gray-200 bg-gray-50 p-5">
         <h2
           className="font-serif text-lg text-gray-900 mb-1"
-          style={{ fontFamily: 'Georgia, serif' }}
         >
           Need to add another placement?
         </h2>

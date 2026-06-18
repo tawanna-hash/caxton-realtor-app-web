@@ -14,6 +14,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
+import PageTitle from '@/components/ui/PageTitle';
 type GifVariant = 'full' | 'teaser' | 'pingpong';
 
 type Magazine = {
@@ -141,7 +142,7 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Magazines</h1>
+          <PageTitle size="md">Magazines</PageTitle>
           <div className="flex items-center gap-3">
             <Link
               href="/admin/magazines/settings"

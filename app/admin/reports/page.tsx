@@ -9,6 +9,7 @@ import AdvertisersReportTab from './_components/AdvertisersReportTab';
 import EditReportDrawer from './_components/EditReportDrawer';
 import ReportPicker, { type PickerItem } from './_components/ReportPicker';
 
+import PageTitle from '@/components/ui/PageTitle';
 type DaysOption = 7 | 30 | 90 | 180;
 
 const DAYS_OPTIONS: Array<{ value: DaysOption; label: string }> = [
@@ -241,9 +242,9 @@ function AdminReportsPageInner() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
           Admin
         </p>
-        <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
+        <PageTitle size="md">
           Client Reports
-        </h1>
+        </PageTitle>
         <p className="text-sm text-gray-600 font-light mt-2 max-w-2xl">
           Generate engagement reports for client handoff.
           Pick an article and date range, then copy the

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import AdminInventoryCreateForm from '@/components/admin/AdminInventoryCreateForm';
 
+import PageTitle from '@/components/ui/PageTitle';
 export default function AdminInventoryNewPage() {
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
@@ -14,9 +15,9 @@ export default function AdminInventoryNewPage() {
         <span className="text-gray-900">New</span>
       </div>
       <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
+        <PageTitle size="md">
           Create promotion or listing
-        </h1>
+        </PageTitle>
         <p className="mt-2 text-sm text-gray-600 font-light max-w-2xl">
           Admin-side creation form. Submissions are published immediately —
           they skip the pending queue. Use an image for the card thumbnail; PDF

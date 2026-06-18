@@ -10,6 +10,7 @@ import { DateRangePicker } from './_components/DateRangePicker';
 import type { DaysOption } from './_components/DateRangePicker';
 import { NewsletterMetrics } from './_components/NewsletterMetrics';
 
+import PageTitle from '@/components/ui/PageTitle';
 export default function AdminMetricsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,9 +56,9 @@ export default function AdminMetricsPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
           Admin
         </p>
-        <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
+        <PageTitle size="md">
           Click Metrics
-        </h1>
+        </PageTitle>
         <p className="text-sm text-gray-600 font-light mt-2 max-w-2xl">
           Engagement on builder/developer surfaces. Filter pills,
           builder chips, inventory cards, and per-builder tabs.

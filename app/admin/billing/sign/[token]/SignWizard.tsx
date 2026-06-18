@@ -132,7 +132,7 @@ function Shell({
           >
             RealtyLine
           </div>
-          <h1 className="text-2xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+          <h1 className="text-2xl text-gray-900">
             Advertising Agreement
           </h1>
           <p className="text-sm text-gray-500 mt-1">Secure digital signing powered by RealtyLine</p>
@@ -525,7 +525,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
       <Shell step={1} onNext={() => setStep(2)}>
         <div className="text-center space-y-4">
           <div className="text-5xl">📋</div>
-          <h2 className="text-xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl text-gray-900">
             Welcome, {ag.rep_name ?? 'Advertiser'}
           </h2>
           <p className="text-sm text-gray-600 max-w-md mx-auto leading-relaxed">
@@ -559,7 +559,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
       >
         <div className="space-y-4">
           <Eyebrow>Advertiser Information</Eyebrow>
-          <h2 className="text-lg text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-lg text-gray-900">
             Your advertiser details
           </h2>
           <p className="text-sm text-gray-600">
@@ -636,7 +636,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
       >
         <div className="space-y-5">
           <Eyebrow>Insertion Order</Eyebrow>
-          <h2 className="text-lg text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-lg text-gray-900">
             Your ad details
           </h2>
 
@@ -820,7 +820,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
       >
         <div className="space-y-5">
           <Eyebrow>Billing &amp; Payment</Eyebrow>
-          <h2 className="text-lg text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-lg text-gray-900">
             Billing information
           </h2>
 
@@ -953,7 +953,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
     >
       <div className="space-y-5">
         <Eyebrow>Terms &amp; Digital Signature</Eyebrow>
-        <h2 className="text-lg text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-lg text-gray-900">
           Review &amp; sign the agreement
         </h2>
 

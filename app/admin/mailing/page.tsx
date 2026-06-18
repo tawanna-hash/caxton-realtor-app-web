@@ -9,6 +9,7 @@ import { ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { countAudienceSources, countBySegment, SEGMENTS } from '@/lib/mailing';
 
+import PageTitle from '@/components/ui/PageTitle';
 export const dynamic = 'force-dynamic';
 
 async function isAdmin(): Promise<boolean> {
@@ -82,7 +83,7 @@ export default async function MailingHubPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Audience
         </p>
-        <h1 className="font-serif text-3xl text-gray-900">Mailing List HUB</h1>
+        <PageTitle size="md">Mailing List HUB</PageTitle>
         <p className="mt-2 text-sm text-gray-600 max-w-2xl">
           Every audience source in one place — segments, board mirrors, app
           signups, and manual entries. Active advertisers and their staff sync

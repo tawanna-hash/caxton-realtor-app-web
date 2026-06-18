@@ -4,6 +4,7 @@ import { useId, useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { NewsArticle } from '@/lib/server/wp-news';
 
+import PageTitle from '@/components/ui/PageTitle';
 export type AdminArticle = NewsArticle & {
   hidden: boolean;
   editedFields: string[];
@@ -96,7 +97,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
       <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Content</p>
-          <h1 className="font-serif text-3xl text-gray-900">Articles</h1>
+          <PageTitle size="md">Articles</PageTitle>
           <p className="text-sm text-gray-600 mt-1">
             All articles pulled from WordPress feeds. Edits are saved locally and applied
             instantly to the public app — WordPress is untouched. Use Sync now to refresh

@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 import type { PublicationTheme } from '@/lib/publication-theme';
 
+import PageTitle from '@/components/ui/PageTitle';
 interface PublicAdvertiser {
   id: number;
   name: string;
@@ -125,7 +126,7 @@ function EmailGate({
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">{advertiser.name}</h1>
+          <PageTitle size="lg">{advertiser.name}</PageTitle>
           <p className="text-sm text-gray-600 mb-6">
             Performance report &mdash; sign in with your email to view.
           </p>
@@ -230,7 +231,7 @@ function Dashboard({
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">{advertiser.name}</h1>
+            <PageTitle size="lg">{advertiser.name}</PageTitle>
             <p className="text-sm text-gray-500 mt-1">Performance report</p>
           </div>
           <div className="flex gap-1">

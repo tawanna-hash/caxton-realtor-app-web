@@ -8,6 +8,7 @@ import type {
 } from '@/lib/builder-inventory';
 import EditInventoryModal from '@/components/inventory/EditInventoryModal';
 
+import PageTitle from '@/components/ui/PageTitle';
 type Tab = 'pending' | 'active' | 'rejected';
 
 const TAB_LABELS: Record<Tab, string> = {
@@ -76,9 +77,9 @@ export default function AdminInventoryPage() {
             <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
               Admin
             </p>
-            <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight">
+            <PageTitle size="md">
               Builder Inventory &amp; Promotions
-            </h1>
+            </PageTitle>
             <p className="text-sm text-gray-600 font-light mt-2 max-w-2xl">
               Submissions from builder and developer clients. Approve, reject, or
               feature each entry. Approved items appear on the public /inventory

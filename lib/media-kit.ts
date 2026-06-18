@@ -95,7 +95,7 @@ export interface PolicyNote {
 
 // ── Digital / App ad slots ─────────────────────────────────────────────────
 //
-// The 17-slot catalog that ships with the unified <AdSlot> engine
+// The 16-slot catalog that ships with the unified <AdSlot> engine
 // (June 2026). Same surface set the rate-card page in the printed Media
 // Kit PDF documents, kept in sync here so the admin reference page, the
 // Sign Wizard, and the generated agreement PDF all read from one source.
@@ -424,7 +424,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
 ];
 
 export const APP_AD_AUDIENCE_NOTE =
-  '17 ad spaces unified under <AdSlot>. PostHog ad_impression / ad_click tracking on every render. Unsold inventory auto-fills with RealtyLine House creatives.';
+  '16 ad spaces unified under <AdSlot>. PostHog ad_impression / ad_click tracking on every render. Unsold inventory auto-fills with RealtyLine House creatives.';
 
 // ── Packages ────────────────────────────────────────────────────────────────
 

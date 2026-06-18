@@ -7,6 +7,7 @@ import { adminApi } from '@/lib/admin-api';
 import { PUBLICATIONS, PUBLICATION_LABELS } from '@/lib/publications';
 import { formatPhone } from '@/lib/format-phone';
 
+import PageTitle from '@/components/ui/PageTitle';
 type Subscriber = {
   id: string;
   email: string;
@@ -103,7 +104,7 @@ export default function SubscribersPage() {
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">Subscribers</h1>
+          <PageTitle size="md">Subscribers</PageTitle>
           <p className="text-sm text-gray-500 mt-1">
             {data ? `${data.total.toLocaleString()} total` : 'Loading...'}
           </p>

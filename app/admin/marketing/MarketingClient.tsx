@@ -44,7 +44,7 @@ function Kpi({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <div className="text-xs uppercase tracking-wider text-gray-500">{label}</div>
-      <div className="font-serif text-2xl text-gray-900 mt-1" style={{ fontFamily: 'Georgia, serif' }}>
+      <div className="font-serif text-2xl text-gray-900 mt-1">
         {value}
       </div>
     </div>
@@ -321,7 +321,7 @@ function CreateDrawer({
       <button aria-label="Close" className="flex-1 bg-black/30" onClick={onCancel} />
       <div className="w-full max-w-xl bg-white shadow-xl overflow-y-auto">
         <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="font-serif text-xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="font-serif text-xl text-gray-900">
             New campaign
           </h2>
           <button onClick={onCancel} className="text-gray-500 hover:text-gray-900">✕</button>
@@ -398,7 +398,7 @@ function DetailDrawer({
               <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
                 Campaign
               </div>
-              <h2 className="font-serif text-2xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+              <h2 className="font-serif text-2xl text-gray-900">
                 {c.name}
               </h2>
               <div className="mt-2 flex items-center gap-2">
@@ -640,7 +640,7 @@ function DetailDrawer({
                 <>
                   <div className="rounded-xl border border-gray-200 bg-white p-4">
                     <div className="text-xs uppercase tracking-wider text-gray-500">Matching advertisers</div>
-                    <div className="font-serif text-3xl text-gray-900 mt-1" style={{ fontFamily: 'Georgia, serif' }}>
+                    <div className="font-serif text-3xl text-gray-900 mt-1">
                       {audience.count.toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">{summarizeAudience(c.audience_filter)}</div>

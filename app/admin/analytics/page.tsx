@@ -16,6 +16,7 @@ import { useCallback, useEffect, useState } from 'react';
 import KpiStrip from '@/components/KpiStrip';
 import HotspotPerformance from '@/components/HotspotPerformance';
 
+import PageTitle from '@/components/ui/PageTitle';
 // ============================================================
 // Types
 // ============================================================
@@ -435,7 +436,7 @@ export default function AdminAnalyticsPage() {
         {/* Page heading + filters */}
         <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-3">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-gray-900">PostHog Analytics</h1>
+            <PageTitle size="md">PostHog Analytics</PageTitle>
             <p className="text-sm text-gray-500 mt-0.5">
               Engagement report &mdash; <span className="font-mono text-gray-700">{publication}</span>
             </p>

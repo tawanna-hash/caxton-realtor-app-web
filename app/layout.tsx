@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "./posthog-provider";
 
@@ -6,6 +7,17 @@ const SITE_URL = "https://realtynewsnow.app";
 const SITE_NAME = "Realty News Now";
 const SITE_DESCRIPTION =
   "Free REALTOR® app for Texas real estate professionals — daily news, event calendars, rate cards, and pro tools for RealtyLine (Austin), Newsline (San Antonio), Houston, and Dallas.";
+
+// Body sans-serif for the whole app. Inter at weights 400/500/600/700 covers
+// every UI surface: body, eyebrows, button labels, admin tables, portal nav.
+// Display serif (Georgia) remains a system stack so we ship zero serif font
+// weight from the network — matches the magazine page's intentional look.
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans-app",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -24,7 +36,7 @@ export const metadata: Metadata = {
     "RealtyLine",
     "Newsline",
     "real estate magazine",
-    "REALTOR® tools",
+    "REALTOR\u00ae tools",
   ],
   alternates: { canonical: "/" },
   openGraph: {
@@ -75,8 +87,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="antialiased">
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <body className="antialiased font-sans">
         <PostHogProvider>{children}</PostHogProvider>
       </body>
     </html>

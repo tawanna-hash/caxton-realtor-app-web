@@ -90,7 +90,7 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
             />
           </div>
         )}
-        <h3 className={`${sizeClass} font-serif text-gray-900 leading-tight mb-3 group-hover:underline`} style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+        <h3 className={`${sizeClass} font-serif text-gray-900 leading-tight mb-3 group-hover:underline`}>
           {title}
         </h3>
         {summary && (
@@ -122,7 +122,7 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
             )}
           </div>
           <div className="mt-4 text-center md:text-left">
-            <p className="text-2xl font-serif text-gray-900" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>{magazine.issue_label}</p>
+            <p className="text-2xl font-serif text-gray-900">{magazine.issue_label}</p>
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 mt-1">{magazine.page_count} pages</p>
             <span className="mt-4 inline-block px-5 py-2.5 text-xs uppercase tracking-[0.2em] font-medium text-white rounded-md" style={{ backgroundColor: brandColor }}>
               Read This Issue →

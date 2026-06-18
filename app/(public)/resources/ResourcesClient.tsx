@@ -59,7 +59,6 @@ export default function ResourcesClient() {
         <p className={SECTION_EYEBROW}>Realtor Tools</p>
         <h2
           className="text-2xl md:text-3xl text-gray-900 mb-6"
-          style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
         >
           Calculators & quick references
         </h2>
@@ -125,7 +124,6 @@ export default function ResourcesClient() {
         <p className={SECTION_EYEBROW}>Downloadable Guides</p>
         <h2
           className="text-2xl md:text-3xl text-gray-900 mb-6"
-          style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
         >
           PDFs, checklists, and workbooks
         </h2>
@@ -141,7 +139,6 @@ export default function ResourcesClient() {
         <p className={SECTION_EYEBROW}>Curated Links</p>
         <h2
           className="text-2xl md:text-3xl text-gray-900 mb-6"
-          style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
         >
           Official sources & industry reference
         </h2>
@@ -190,7 +187,6 @@ function ToolCard({
       </div>
       <p
         className="text-xl text-gray-900 mb-2"
-        style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
       >
         {title}
       </p>

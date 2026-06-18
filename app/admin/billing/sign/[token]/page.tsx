@@ -23,7 +23,7 @@ export default async function SignPage({ params }: PageProps) {
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="bg-white rounded-xl border border-red-200 p-10 max-w-md text-center">
           <div className="text-3xl mb-3">⚠️</div>
-          <h1 className="text-xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">
             Link expired or invalid
           </h1>
           <p className="text-sm text-gray-600">
@@ -56,7 +56,7 @@ export default async function SignPage({ params }: PageProps) {
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="bg-white rounded-xl border border-emerald-200 p-10 max-w-md text-center">
           <div className="text-4xl mb-3">✓</div>
-          <h1 className="text-xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">
             Already signed
           </h1>
           <p className="text-sm text-gray-600">

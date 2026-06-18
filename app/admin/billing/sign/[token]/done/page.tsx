@@ -26,7 +26,7 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
             >
               RealtyLine
             </div>
-            <h1 className="text-2xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+            <h1 className="text-2xl text-gray-900">
               Agreement Signed!
             </h1>
           </div>

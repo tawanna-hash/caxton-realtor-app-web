@@ -10,6 +10,7 @@ import { adminApi } from '@/lib/admin-api';
 import { CampaignForm } from '../../_components/CampaignForm';
 import type { AdCampaign } from '../../_components/types';
 
+import PageTitle from '@/components/ui/PageTitle';
 export default function EditCampaignPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
@@ -35,7 +36,7 @@ export default function EditCampaignPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Edit campaign</h1>
+        <PageTitle size="md">Edit campaign</PageTitle>
         <p className="text-sm text-gray-700 mt-1">
           {campaign.advertiser_name} — {campaign.ad_space.display_name}
         </p>

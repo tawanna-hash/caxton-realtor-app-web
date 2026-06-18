@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
+import PageTitle from '@/components/ui/PageTitle';
 export type Publication = 'austin' | 'san_antonio';
 
 export type PublicationSettingsRow = {
@@ -101,7 +102,7 @@ export default function PublicationSettingsForm({ initialSettings }: Props) {
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Magazine Settings</h1>
+            <PageTitle size="md">Magazine Settings</PageTitle>
             <p className="text-sm text-gray-600 mt-1">
               Per-publication settings shared across every issue.
             </p>

@@ -25,7 +25,7 @@ export function Kpi({
       onClick={onClick}
     >
       <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">{label}</div>
-      <div className="text-2xl text-gray-900 mt-1" style={{ fontFamily: 'Georgia, serif' }}>{value}</div>
+      <div className="text-2xl text-gray-900 mt-1">{value}</div>
     </div>
   );
 }

@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import { getApiBase } from '@/lib/api-base';
 
-const SW = { fontFamily: 'Switzer, system-ui, sans-serif' };
+// Sans-serif body font is now wired globally via Inter in app/layout.tsx.
+// Empty marker object kept so existing `style={SW}` props remain valid
+// without re-touching every JSX site — next cleanup pass can drop them.
+const SW = {} as const;
 const API = getApiBase();
 
 export default function ForgotPasswordPage() {

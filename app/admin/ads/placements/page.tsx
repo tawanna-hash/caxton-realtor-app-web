@@ -20,6 +20,7 @@ import Link from 'next/link';
 import { APP_AD_SLOTS, type AppAdSlot } from '@/lib/media-kit';
 import { PlacementWireframe, hasWireframe } from '@/components/ads/PlacementWireframe';
 
+import PageTitle from '@/components/ui/PageTitle';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
@@ -154,7 +155,13 @@ export default function AdminAdsPlacementsPage() {
         <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
           Admin · Ads
         </div>
-        <h1 className="text-2xl font-semibold text-gray-900 mt-1">Placements</h1>
+        <PageTitle size="md">Placements</PageTitle>
+        <p className="text-sm uppercase tracking-[0.18em] text-gray-700 font-semibold mt-2">
+          Print {'\u00b7'} Digital {'\u00b7'} Social {'\u00b7'} Mobile.{' '}
+          <span className="text-gray-500 font-normal normal-case tracking-normal">
+            One powerful marketing platform.
+          </span>
+        </p>
         <p className="text-sm text-gray-600 mt-2 max-w-3xl">
           Visual reference for every digital ad slot in the app. Each card shows
           a wireframe of the host page with the placement highlighted in green.

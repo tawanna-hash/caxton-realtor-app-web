@@ -39,7 +39,6 @@ function VerifyContent() {
   return (
     <div
       className="min-h-screen bg-white flex flex-col justify-center py-12 px-6"
-      style={{ fontFamily: 'Switzer, system-ui, sans-serif' }}
     >
       <div className="w-full max-w-md mx-auto text-center">
         <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium mb-2">
@@ -90,7 +89,6 @@ function VerifyFallback() {
   return (
     <div
       className="min-h-screen bg-white flex flex-col justify-center py-12 px-6"
-      style={{ fontFamily: 'Switzer, system-ui, sans-serif' }}
     >
       <div className="w-full max-w-md mx-auto text-center">
         <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium mb-2">

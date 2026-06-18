@@ -59,7 +59,7 @@ export default function PortalFormClient({
   if (done) {
     return (
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6">
-        <div className="font-serif text-xl text-emerald-900" style={{ fontFamily: 'Georgia, serif' }}>
+        <div className="font-serif text-xl text-emerald-900">
           Thank you — your response is recorded.
         </div>
         <p className="text-emerald-800 text-sm mt-1">You can close this tab.</p>

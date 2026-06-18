@@ -341,7 +341,6 @@ export default function TitleRateCalculatorClient() {
             <p className={EYEBROW}>Estimated Total</p>
             <p
               className="text-4xl text-gray-900 mb-1"
-              style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
             >
               {fmtUSD(result.total, { cents: true })}
             </p>

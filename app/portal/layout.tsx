@@ -21,7 +21,7 @@ export default async function PortalLayout({ children }: { children: React.React
       <header className="relative border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between gap-4">
           <Link href="/portal" className="flex items-center gap-3">
-            <div className="font-serif text-xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+            <div className="font-serif text-xl text-gray-900">
               RealtyLine portal
             </div>
           </Link>

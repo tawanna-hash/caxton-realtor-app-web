@@ -183,7 +183,6 @@ export default function AdvertiserDetailClient({
                     <div className="flex items-baseline justify-between gap-2 mb-1">
                       <h3
                         className="text-base font-semibold text-gray-900"
-                        style={{ fontFamily: 'Georgia, serif' }}
                       >
                         {loc.label ? toTitleCaseName(loc.label) : 'Office'}
                       </h3>
@@ -277,7 +276,6 @@ export default function AdvertiserDetailClient({
                     <div className="min-w-0 flex-1">
                       <div
                         className="text-base font-semibold text-gray-900 truncate"
-                        style={{ fontFamily: 'Georgia, serif' }}
                       >
                         {toTitleCaseName(s.name)}
                       </div>
@@ -329,7 +327,6 @@ export default function AdvertiserDetailClient({
           <section className="border-t border-gray-200 pt-8 mb-10">
             <h2
               className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight mb-5"
-              style={{ fontFamily: 'Georgia, serif' }}
             >
               Active listings &amp; promotions
             </h2>

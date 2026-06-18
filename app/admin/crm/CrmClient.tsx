@@ -33,6 +33,7 @@ import {
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 import LocationsStaffEditor from './LocationsStaffEditor';
 import AdvertiserImageUploader from '@/components/AdvertiserImageUploader';
+import PageTitle from '@/components/ui/PageTitle';
 import {
   ADVERTISER_HEADER_STYLES,
   HEADER_STYLE_META,
@@ -132,9 +133,9 @@ export default function CrmClient({ initialRows }: Props) {
           <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             Admin · Advertisers
           </div>
-          <h1 className="text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+          <PageTitle size="md">
             Advertisers
-          </h1>
+          </PageTitle>
           <p className="text-sm text-gray-600 mt-1">
             Unified workspace for advertiser relationships. Search, filter,
             copy share links, view analytics, and edit contact details, status,
@@ -706,7 +707,7 @@ function EditDrawer({
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div>
             <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">CRM contact</div>
-            <h2 className="text-xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>{row.name}</h2>
+            <h2 className="text-xl text-gray-900">{row.name}</h2>
             <div className="text-xs text-gray-500 mt-0.5">{row.slug}</div>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>

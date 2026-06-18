@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi } from '@/lib/admin-api';
 
+import PageTitle from '@/components/ui/PageTitle';
 // Only allow same-origin relative paths under /admin to land in `next`.
 // Anything else (absolute URLs, protocol-relative, or non-admin paths)
 // falls back to the default landing page. This blocks open-redirect
@@ -74,7 +75,7 @@ function AdminLoginForm() {
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">Realty News Now Admin</h1>
+          <PageTitle size="md">Realty News Now Admin</PageTitle>
           <p className="text-sm text-gray-500 mt-1">Sign in to continue</p>
         </div>
         <form onSubmit={handleSubmit} className="bg-white border border-gray-200 p-6 space-y-4">

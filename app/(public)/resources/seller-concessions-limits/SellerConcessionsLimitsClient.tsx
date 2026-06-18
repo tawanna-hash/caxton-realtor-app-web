@@ -93,7 +93,6 @@ export default function SellerConcessionsLimitsClient() {
                 </p>
                 <h2
                   className="text-2xl md:text-3xl text-gray-900 leading-tight"
-                  style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
                 >
                   Seller concession <span className="text-[#021D40]">limits</span>
                 </h2>

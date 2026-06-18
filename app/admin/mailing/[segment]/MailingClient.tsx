@@ -32,6 +32,7 @@ import {
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 
+import PageTitle from '@/components/ui/PageTitle';
 type Stats = { total: number; verified: number; pending: number; near: number; far: number };
 type FilterKey = 'all' | 'verified' | 'pending';
 
@@ -485,7 +486,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
               Audience
             </p>
-            <h1 className="font-serif text-3xl text-gray-900">{label}</h1>
+            <PageTitle size="md">{label}</PageTitle>
             <p className="mt-2 text-sm text-gray-600 max-w-2xl">
               Click any row to edit details, verify the mailing address through
               USPS, or verify the email. Use the filters below to focus on

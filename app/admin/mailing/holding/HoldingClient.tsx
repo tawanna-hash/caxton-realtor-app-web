@@ -26,6 +26,7 @@ import type {
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 
+import PageTitle from '@/components/ui/PageTitle';
 type Counts = { total: number; verified: number; pending: number; near: number; far: number };
 type FilterKey = 'all' | 'verified' | 'pending';
 
@@ -389,7 +390,7 @@ export default function HoldingClient() {
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             Audience
           </p>
-          <h1 className="font-serif text-3xl text-gray-900">ABOR Members</h1>
+          <PageTitle size="md">ABOR Members</PageTitle>
           <p className="mt-2 text-sm text-gray-600 max-w-2xl">
             Austin Board of REALTORS agents scraped from UnlockMLS. Click any
             row to edit details, verify the mailing address through USPS, or

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getApiBase } from '@/lib/api-base';
 
+import PageTitle from '@/components/ui/PageTitle';
 const API_URL = getApiBase();
 
 function ResetPasswordForm() {
@@ -133,7 +134,7 @@ export default function AdminResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">Set new password</h1>
+          <PageTitle size="md">Set new password</PageTitle>
           <p className="text-sm text-gray-500 mt-1">Choose a new admin password</p>
         </div>
         <Suspense fallback={<div className="bg-white border border-gray-200 p-6 text-sm text-gray-500">Loading...</div>}>
