@@ -7,10 +7,14 @@ import { trackEvent, identifyUser } from "../../posthog-provider";
 import { useRouter } from 'next/navigation';
 import { useSwipeBack } from '@/hooks/use-swipe-back';
 import ProfilePanel from '@/components/ProfilePanel';
-import { startAuthentication } from '@/components/PasskeysPanel';
+import {
+  startAuthentication,
+  browserSupportsWebAuthnAutofill,
+} from '@/components/PasskeysPanel';
 import { getApiBase } from '@/lib/api-base';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
 import PushOptInBanner from '@/components/PushOptInBanner';
+import EnrollFaceIdBanner from '@/components/EnrollFaceIdBanner';
 import { SocialLinks } from '@/components/SocialLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import SaborReportCard from '@/components/SaborReportCard';
@@ -345,6 +349,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   const [mode, setMode] = useState<'choice' | 'signup' | 'login' | 'sent'>('choice');
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [passkeySupported, setPasskeySupported] = useState<boolean | null>(null);
+  const [conditionalArmed, setConditionalArmed] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     queueMicrotask(() => {
@@ -473,16 +478,19 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   }
 
 
-  async function handlePasskeyLogin() {
-    setError('');
-    setPasskeyLoading(true);
+  async function handlePasskeyLogin(opts?: { useAutofill?: boolean }) {
+    const useAutofill = opts?.useAutofill === true;
+    if (!useAutofill) {
+      setError('');
+      setPasskeyLoading(true);
+    }
     try {
-      // Step 1: get authentication options
+      // Step 1: get authentication options (no email for autofill flow)
       const beginRes = await fetch(API + '/auth/webauthn/authenticate/begin', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(email ? { email } : {}),
+        body: JSON.stringify(useAutofill ? {} : (email ? { email } : {})),
       });
       if (!beginRes.ok) {
         const data = await beginRes.json().catch(() => ({}));
@@ -490,8 +498,10 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       }
       const { options } = await beginRes.json();
 
-      // Step 2: invoke browser ceremony — triggers Touch ID / Face ID / Windows Hello
-      const assertion = await startAuthentication(options);
+      // Step 2: invoke browser ceremony. With useAutofill=true the browser
+      // surfaces matching passkeys inline in the email field (conditional UI);
+      // without it, the OS pops a modal sheet immediately.
+      const assertion = await startAuthentication(options, useAutofill);
 
       // Step 3: verify on server, session cookie is set by the response
       const finishRes = await fetch(API + '/auth/webauthn/authenticate/finish', {
@@ -513,7 +523,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       const meData = await meRes.json();
       const realtor = meData.realtor || meData;
 
-      trackEvent('passkey_signin_succeeded', { pub });
+      trackEvent('passkey_signin_succeeded', { pub, autofill: useAutofill });
       onAuth({
         id: realtor.id,
         email: realtor.email,
@@ -523,16 +533,54 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Sign-in failed';
-      if (/cancell|abort|NotAllow/i.test(msg)) {
+      // Conditional UI is a background listener. Errors here mean the user
+      // never engaged the suggestion, so do not surface them.
+      if (useAutofill) {
+        trackEvent('passkey_autofill_idle', { reason: msg.slice(0, 200), pub });
+        return;
+      }
+      // NotAllowedError fires when no matching passkey is found OR the user
+      // dismissed the sheet. Guide them to type their email if they have an
+      // older non-discoverable credential.
+      if (/NotAllow|not allowed by the user agent/i.test(msg)) {
+        if (!email) {
+          setError('Enter your email above, then tap Use Face ID / Touch ID again.');
+        } else {
+          setError('Face ID was cancelled or no passkey was found for that email.');
+        }
+      } else if (/cancell|abort/i.test(msg)) {
         setError('Sign-in cancelled');
       } else {
         setError(msg);
       }
       trackEvent('passkey_signin_failed', { reason: msg.slice(0, 200), pub });
     } finally {
-      setPasskeyLoading(false);
+      if (!useAutofill) setPasskeyLoading(false);
     }
   }
+
+  // Arm conditional UI (browser autofill) when the login screen opens. This
+  // surfaces available passkeys natively in the email field, so the user can
+  // tap their stored passkey and get Face ID inline without pressing the
+  // explicit "Use Face ID" button.
+  useEffect(() => {
+    if (mode !== 'login' || !passkeySupported || conditionalArmed) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const supported = await browserSupportsWebAuthnAutofill();
+        if (!supported || cancelled) return;
+        setConditionalArmed(true);
+        // Fire-and-forget: resolves only when the user picks a passkey
+        // suggestion in the email field. Errors are swallowed in the catch.
+        void handlePasskeyLogin({ useAutofill: true });
+      } catch {
+        // Autofill probing failed; manual button still works.
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, passkeySupported]);
   async function handlePasswordLogin() {
     setError('');
     setLoading(true);
@@ -552,6 +600,13 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       const meData = await meRes.json();
       const realtor = meData.realtor || meData;
       trackEvent('password_signin_succeeded', { pub });
+      // Hint the dashboard to prompt this user to enroll Face ID / Touch ID.
+      // The banner itself checks for an existing passkey before rendering.
+      try {
+        if (typeof window !== 'undefined' && typeof window.PublicKeyCredential === 'function') {
+          sessionStorage.setItem('rnn_offer_passkey_enroll', '1');
+        }
+      } catch {}
       onAuth({
         id: realtor.id,
         email: realtor.email,
@@ -776,7 +831,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
           {passkeySupported && (
             <>
               <button
-                onClick={handlePasskeyLogin}
+                onClick={() => handlePasskeyLogin()}
                 disabled={passkeyLoading}
                 className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 disabled:opacity-40 flex items-center justify-center gap-2"
                 style={{ backgroundColor: info.color }}
@@ -798,7 +853,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
               </div>
             </>
           )}
-          <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className={ic} autoComplete="email" />
+          <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className={ic} autoComplete="username webauthn" />
           <div className="relative mb-3">
             <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className={ic + ' pr-16'} autoComplete="current-password" onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordLogin(); }} />
             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-xs uppercase tracking-wider text-gray-400">{showPassword ? 'Hide' : 'Show'}</button>
@@ -1274,6 +1329,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
           }
         />
       )}
+      {!showPreLaunch && !user?.guest && <EnrollFaceIdBanner />}
       {user?.guest && (
         <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
           <p className="text-sm text-amber-700 font-light">Browsing as Guest</p>

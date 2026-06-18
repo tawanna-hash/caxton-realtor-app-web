@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
+import {
+  startRegistration,
+  startAuthentication,
+  browserSupportsWebAuthnAutofill,
+} from '@simplewebauthn/browser';
 import { trackEvent } from '../app/posthog-provider';
 import { getApiBase } from '@/lib/api-base';
 
@@ -251,7 +255,6 @@ export default function PasskeysPanel({ accentColor = '#021D40' }: Props) {
   );
 }
 
-// Re-export startAuthentication so the login screen can use it without
-// adding another @simplewebauthn/browser import — keeps the bundle path
-// the same.
-export { startAuthentication };
+// Re-export the simplewebauthn helpers the login screen needs so we don't
+// duplicate the @simplewebauthn/browser import path.
+export { startAuthentication, browserSupportsWebAuthnAutofill };
