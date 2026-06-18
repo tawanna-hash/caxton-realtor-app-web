@@ -32,20 +32,26 @@ export async function GET() {
   try {
     await ensureSchema();
     const sql = getSql();
+    // Use a single LEFT JOIN to invoices with conditional SUMs instead of
+    // two correlated subqueries per agreement row (which were running N*2
+    // extra scans of the invoices table). Same output shape, far fewer
+    // round trips on the planner side.
     const rows = (await sql`
       SELECT
         ag.*,
         adv.name AS advertiser_name,
-        COALESCE((
-          SELECT SUM(i.total_cents)::int FROM invoices i
-           WHERE i.agreement_id = ag.id AND i.status <> 'void'
-        ), 0) AS invoiced_cents,
-        COALESCE((
-          SELECT SUM(i.total_cents)::int FROM invoices i
-           WHERE i.agreement_id = ag.id AND i.status = 'paid'
-        ), 0) AS paid_cents
+        COALESCE(inv.invoiced_cents, 0)::int AS invoiced_cents,
+        COALESCE(inv.paid_cents, 0)::int     AS paid_cents
       FROM agreements ag
       LEFT JOIN advertisers adv ON adv.id = ag.advertiser_id
+      LEFT JOIN (
+        SELECT
+          agreement_id,
+          SUM(CASE WHEN status <> 'void' THEN total_cents ELSE 0 END) AS invoiced_cents,
+          SUM(CASE WHEN status = 'paid'  THEN total_cents ELSE 0 END) AS paid_cents
+        FROM invoices
+        GROUP BY agreement_id
+      ) inv ON inv.agreement_id = ag.id
       ORDER BY ag.updated_at DESC
     `) as unknown as AgreementWithAdvertiser[];
     return NextResponse.json({ agreements: rows });

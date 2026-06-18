@@ -67,16 +67,23 @@ export default async function CrmPage() {
       a.payment_mode, a.stripe_customer_id, a.card_last4,
       a.current_agreement_id, a.current_ad_size, a.current_frequency,
       a.current_ad_rate_cents, a.current_amount_cents, a.current_exp_date,
-      (SELECT COUNT(*)::int FROM magazine_hotspots h
-        WHERE h.advertiser_id = a.id)       AS hotspot_count,
-      (SELECT COUNT(*)::int FROM magazine_hotspot_clicks c
-         JOIN magazine_hotspots h ON c.hotspot_id = h.id
-        WHERE h.advertiser_id = a.id
-          AND c.occurred_at >= NOW() - INTERVAL '30 days') AS clicks_30d,
-      (SELECT MAX(c.occurred_at) FROM magazine_hotspot_clicks c
-         JOIN magazine_hotspots h ON c.hotspot_id = h.id
-        WHERE h.advertiser_id = a.id)       AS last_click_at
+      COALESCE(stats.hotspot_count, 0)::int AS hotspot_count,
+      COALESCE(stats.clicks_30d, 0)::int    AS clicks_30d,
+      stats.last_click_at                   AS last_click_at
     FROM advertisers a
+    LEFT JOIN (
+      -- Aggregate hotspot stats once per advertiser instead of running
+      -- three correlated subqueries per row (was the dominant cost of
+      -- /admin/crm page load).
+      SELECT
+        h.advertiser_id,
+        COUNT(DISTINCT h.id)::int                                                  AS hotspot_count,
+        COUNT(c.id) FILTER (WHERE c.occurred_at >= NOW() - INTERVAL '30 days')::int AS clicks_30d,
+        MAX(c.occurred_at)                                                          AS last_click_at
+      FROM magazine_hotspots h
+      LEFT JOIN magazine_hotspot_clicks c ON c.hotspot_id = h.id
+      GROUP BY h.advertiser_id
+    ) stats ON stats.advertiser_id = a.id
     ORDER BY a.updated_at DESC
   `.catch(() => [])) as unknown as AdvertiserCrmRow[];
 
