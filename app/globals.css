@@ -90,11 +90,8 @@
   --font-sans: var(--font-sans-app), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   /* Display serif matches the magazine page's intentional Georgia stack.
      System-installed everywhere — zero extra network weight. */
-  /* Happin redesign: serif slot intentionally points to Poppins so any
-     <font-serif> usage app-wide collapses to the same typeface. We do NOT
-     drop the variable because dozens of components reference `font-serif`
-     directly and ripping it out would touch every page. Aliasing is safer. */
-  --font-serif: var(--font-sans-app), system-ui, -apple-system, sans-serif;
+  /* Headlines stay Georgia (magazine look). System stack — zero network weight. */
+  --font-serif: Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Brand override: collapse the darkest grays in Tailwind's palette to the
@@ -322,14 +319,13 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Happin redesign: .font-serif is now an alias for Poppins. Every page that
-   uses font-serif (PageTitle, magazine headers, hero copy, legal page H1s)
-   automatically picks up Poppins Bold at -0.02em tracking — the Happin
-   headline pattern. Individual components may still override weight. */
+/* Magazine-style headlines: Georgia regular with tight tracking. Matches the
+   Magazine Archive header look the user picked. Components can still override
+   per-instance (e.g. font-semibold) but the default is intentionally light. */
 .font-serif {
   font-family: var(--font-serif);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 /* Belt-and-suspenders: ensure native form controls always render with readable
