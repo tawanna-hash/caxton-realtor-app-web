@@ -233,7 +233,7 @@ export default function MarketingClient({
         </select>
         <button
           onClick={() => setCreating(true)}
-          className="rounded-md bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800"
+          className="rounded-md bg-[#E06100] text-white px-4 py-2 text-sm font-medium hover:bg-[#FF7820]"
         >
           New campaign
         </button>
@@ -342,7 +342,7 @@ function CreateDrawer({
             <button
               onClick={onCreate}
               disabled={!newName.trim()}
-              className="rounded-md bg-gray-900 text-white px-4 py-2 text-sm disabled:opacity-50"
+              className="rounded-md bg-[#E06100] text-white px-4 py-2 text-sm disabled:opacity-50"
             >
               Create
             </button>
@@ -522,7 +522,7 @@ function DetailDrawer({
                 <button
                   onClick={() => { onCreateTask(newTask); setNewTask(''); }}
                   disabled={!newTask.trim()}
-                  className="rounded-md bg-gray-900 text-white px-4 py-2 text-sm disabled:opacity-50"
+                  className="rounded-md bg-[#E06100] text-white px-4 py-2 text-sm disabled:opacity-50"
                 >
                   Add
                 </button>
@@ -604,7 +604,7 @@ function DetailDrawer({
                       setOutreachDraft({ subject: '', body: '', channel: 'email' });
                     }}
                     disabled={!outreachDraft.subject.trim() || !outreachDraft.body.trim()}
-                    className="rounded-md bg-gray-900 text-white px-3 py-1.5 text-sm disabled:opacity-50"
+                    className="rounded-md bg-[#E06100] text-white px-3 py-1.5 text-sm disabled:opacity-50"
                   >
                     Schedule
                   </button>

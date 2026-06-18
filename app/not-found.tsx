@@ -24,7 +24,7 @@ export default function NotFound() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/dashboard"
-            className="inline-flex items-center justify-center min-h-[44px] px-6 py-3 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition"
+            className="inline-flex items-center justify-center min-h-[44px] px-6 py-3 bg-[#E06100] text-white text-sm font-medium rounded-md hover:bg-[#FF7820] transition"
           >
             Back to feed
           </Link>

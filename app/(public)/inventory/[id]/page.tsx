@@ -268,7 +268,7 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
                 href={row.flyerPdfUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full text-center px-4 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
+                className="block w-full text-center px-4 py-2.5 bg-[#E06100] text-white text-sm font-medium rounded-md hover:bg-[#FF7820] transition-colors"
               >
                 Download flyer
               </a>

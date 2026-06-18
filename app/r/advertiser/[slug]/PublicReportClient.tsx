@@ -243,7 +243,7 @@ function Dashboard({
                 className={
                   'px-3 py-1.5 text-sm font-medium rounded-md ' +
                   (preset === p
-                    ? 'bg-gray-900 text-white'
+                    ? 'bg-[#E06100] text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50')
                 }
               >

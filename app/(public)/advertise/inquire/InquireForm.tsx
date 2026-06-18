@@ -240,7 +240,7 @@ export default function InquireForm({
                 className={[
                   'px-4 py-2 rounded-full border text-sm font-medium transition',
                   active
-                    ? 'bg-[#021D40] text-white border-[#021D40]'
+                    ? 'bg-[#E06100] text-white border-[#021D40]'
                     : 'bg-white text-gray-800 border-gray-300 hover:border-[#021D40]',
                 ].join(' ')}
               >
@@ -454,7 +454,7 @@ export default function InquireForm({
       <button
         type="submit"
         disabled={disabled}
-        className="inline-flex items-center justify-center px-6 py-3 bg-[#021D40] text-white font-medium rounded-md hover:bg-[#03285a] disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+        className="inline-flex items-center justify-center px-6 py-3 bg-[#E06100] text-white font-medium rounded-md hover:bg-[#FF7820] disabled:bg-gray-400 disabled:cursor-not-allowed transition"
       >
         {disabled ? 'Sending…' : 'Send inquiry'}
       </button>

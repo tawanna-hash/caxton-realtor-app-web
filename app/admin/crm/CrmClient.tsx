@@ -154,7 +154,7 @@ export default function CrmClient({ initialRows }: Props) {
       </div>
 
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-md bg-gray-900 text-white text-sm px-4 py-2 shadow-lg">
+        <div className="fixed bottom-6 right-6 z-50 rounded-md bg-[#E06100] text-white text-sm px-4 py-2 shadow-lg">
           {toast}
         </div>
       )}
@@ -997,7 +997,7 @@ function EditDrawer({
                   type="button"
                   onClick={() => sendPortalLink('login')}
                   disabled={sendingLink || (!row.portal_email && !row.contact_email)}
-                  className="shrink-0 rounded-md bg-gray-900 text-white px-3 py-1.5 text-sm hover:bg-gray-800 disabled:opacity-50"
+                  className="shrink-0 rounded-md bg-[#E06100] text-white px-3 py-1.5 text-sm hover:bg-[#FF7820] disabled:opacity-50"
                 >
                   {sendingLink ? 'Sending…' : 'Send portal link'}
                 </button>
@@ -1043,7 +1043,7 @@ function EditDrawer({
                   type="button"
                   onClick={regenerateSubmissionToken}
                   disabled={tokenBusy}
-                  className="shrink-0 rounded-md bg-gray-900 text-white px-3 py-1.5 text-sm hover:bg-gray-800 disabled:opacity-50"
+                  className="shrink-0 rounded-md bg-[#E06100] text-white px-3 py-1.5 text-sm hover:bg-[#FF7820] disabled:opacity-50"
                 >
                   {tokenBusy
                     ? 'Working…'

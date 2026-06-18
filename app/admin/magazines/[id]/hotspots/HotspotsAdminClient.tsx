@@ -287,14 +287,14 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
             <button
               type="button"
               onClick={() => setViewMode('single')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-l-md ${viewMode === 'single' ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`px-3 py-1.5 text-sm font-medium rounded-l-md ${viewMode === 'single' ? 'bg-[#E06100] text-white' : 'text-gray-700 hover:bg-gray-50'}`}
             >
               Single
             </button>
             <button
               type="button"
               onClick={() => setViewMode('spread')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-r-md border-l border-gray-300 ${viewMode === 'spread' ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+              className={`px-3 py-1.5 text-sm font-medium rounded-r-md border-l border-gray-300 ${viewMode === 'spread' ? 'bg-[#E06100] text-white' : 'text-gray-700 hover:bg-gray-50'}`}
             >
               Spread
             </button>
@@ -441,7 +441,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
 
       {/* ===== IMPORT RESULT TOAST ===== */}
       {importResult && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 bg-gray-900 text-white text-sm rounded-md shadow-xl flex items-center gap-3">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 bg-[#E06100] text-white text-sm rounded-md shadow-xl flex items-center gap-3">
           <span>
             Imported <strong>{importResult.imported}</strong> of {importResult.total} embedded link{importResult.total === 1 ? '' : 's'} from the PDF.
           </span>
@@ -560,7 +560,7 @@ function EditorPage({
       <button
         type="button"
         onClick={onCreate}
-        className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 text-xs font-medium bg-gray-900 text-white rounded-full shadow-lg hover:bg-gray-800 whitespace-nowrap"
+        className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 text-xs font-medium bg-[#E06100] text-white rounded-full shadow-lg hover:bg-[#FF7820] whitespace-nowrap"
       >
         + Add hotspot to page {pageIdx + 1}
       </button>
@@ -801,7 +801,7 @@ function CopyFromPreviousDialog({
             type="button"
             onClick={() => sourceId !== null && onConfirm(sourceId, publishedOnly)}
             disabled={sourceId === null}
-            className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 disabled:opacity-40"
+            className="px-4 py-2 text-sm font-medium text-white bg-[#E06100] rounded-md hover:bg-[#FF7820] disabled:opacity-40"
           >
             Copy hotspots
           </button>

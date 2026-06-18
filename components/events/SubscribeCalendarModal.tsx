@@ -183,7 +183,7 @@ export function SubscribeCalendarModal({ open, onClose, pub }: Props) {
               <button
                 type="button"
                 onClick={handleCopy}
-                className="px-4 py-2 text-xs uppercase tracking-[0.15em] font-medium text-white bg-gray-900 hover:bg-gray-800 transition-colors rounded-md whitespace-nowrap"
+                className="px-4 py-2 text-xs uppercase tracking-[0.15em] font-medium text-white bg-[#E06100] hover:bg-[#FF7820] transition-colors rounded-md whitespace-nowrap"
               >
                 {copied ? 'Copied' : 'Copy'}
               </button>

@@ -238,7 +238,7 @@ export default function InquiriesInbox() {
             onClick={() => setUrl({ status: null })}
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
               activeStatus === 'all'
-                ? 'bg-gray-900 text-white border-gray-900'
+                ? 'bg-[#E06100] text-white border-gray-900'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
             }`}
           >
@@ -253,7 +253,7 @@ export default function InquiriesInbox() {
                 onClick={() => setUrl({ status: s })}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
                   active
-                    ? 'bg-gray-900 text-white border-gray-900'
+                    ? 'bg-[#E06100] text-white border-gray-900'
                     : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                 }`}
               >

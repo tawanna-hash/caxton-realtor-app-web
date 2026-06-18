@@ -186,7 +186,7 @@ export default function EventsPage() {
       onClick={() => setFilter(key)}
       className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
         filter === key
-          ? 'bg-[#021D40] text-white border-[#021D40]'
+          ? 'bg-[#E06100] text-white border-[#021D40]'
           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
       }`}
     >
@@ -221,7 +221,7 @@ export default function EventsPage() {
           </button>
           <Link
             href="/admin/events/new"
-            className="px-4 py-2 bg-[#021D40] text-white text-sm font-medium rounded-md hover:bg-[#021D40] transition-colors"
+            className="px-4 py-2 bg-[#E06100] text-white text-sm font-medium rounded-md hover:bg-[#E06100] transition-colors"
           >
             + New Event
           </Link>

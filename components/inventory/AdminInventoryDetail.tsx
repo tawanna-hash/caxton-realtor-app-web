@@ -486,7 +486,7 @@ export default function AdminInventoryDetail({
                     className={
                       'px-4 py-2 text-sm font-medium border transition-colors disabled:opacity-60 disabled:cursor-not-allowed ' +
                       (isActive
-                        ? 'border-gray-900 bg-gray-900 text-white'
+                        ? 'border-gray-900 bg-[#E06100] text-white'
                         : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500')
                     }
                   >
@@ -677,7 +677,7 @@ export default function AdminInventoryDetail({
                   type="button"
                   onClick={saveEdits}
                   disabled={busy}
-                  className="px-6 py-2.5 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
+                  className="px-6 py-2.5 text-sm font-semibold text-white bg-[#E06100] hover:bg-[#FF7820] transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
                 >
                   {busy ? 'Saving…' : 'Save edits'}
                 </button>

@@ -161,7 +161,7 @@ export default function TitleRateCalculatorClient() {
                   onClick={() => setTransactionType(t)}
                   className={`px-4 py-2 text-sm font-medium transition ${
                     transactionType === t
-                      ? 'bg-[#021D40] text-white'
+                      ? 'bg-[#E06100] text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -181,7 +181,7 @@ export default function TitleRateCalculatorClient() {
                 type="button"
                 onClick={() => setResidential(true)}
                 className={`px-4 py-2 text-sm font-medium transition ${
-                  residential ? 'bg-[#021D40] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  residential ? 'bg-[#E06100] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 Residential
@@ -190,7 +190,7 @@ export default function TitleRateCalculatorClient() {
                 type="button"
                 onClick={() => setResidential(false)}
                 className={`px-4 py-2 text-sm font-medium transition ${
-                  !residential ? 'bg-[#021D40] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  !residential ? 'bg-[#E06100] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 Non-residential
@@ -248,7 +248,7 @@ export default function TitleRateCalculatorClient() {
                       onClick={() => setReissueAge(opt.v)}
                       className={`px-3 py-1.5 text-xs font-medium rounded-md border transition ${
                         reissueAge === opt.v
-                          ? 'border-[#021D40] bg-[#021D40] text-white'
+                          ? 'border-[#021D40] bg-[#E06100] text-white'
                           : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                       }`}
                     >
