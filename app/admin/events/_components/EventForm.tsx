@@ -416,7 +416,7 @@ export function EventForm({
         <button
           type="submit"
           disabled={submitting}
-          className="px-5 py-2 bg-[#021D40] text-white text-sm font-medium rounded-md hover:bg-[#021D40] transition-colors disabled:opacity-50"
+          className="px-5 py-2 bg-[#E06100] text-white text-sm font-medium rounded-md hover:bg-[#E06100] transition-colors disabled:opacity-50"
         >
           {submitting ? 'Saving...' : mode === 'create' ? 'Create Event' : 'Save Changes'}
         </button>

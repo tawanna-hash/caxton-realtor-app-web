@@ -227,7 +227,7 @@ export default function AdvertisePage() {
                       className={
                         'border px-3 py-2.5 ' +
                         (p.premium
-                          ? 'border-[#021D40] bg-[#021D40] text-white'
+                          ? 'border-[#021D40] bg-[#E06100] text-white'
                           : p.popular
                             ? 'border-orange-200 bg-orange-50'
                             : 'border-gray-100')

@@ -108,7 +108,7 @@ function ResetPasswordInner() {
         <button
           onClick={handleSubmit}
           disabled={!token || loading || !newPassword || !confirmPassword}
-          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 bg-[#021D40] disabled:opacity-40"
+          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 bg-[#E06100] disabled:opacity-40"
         >
           {loading ? 'Updating\u2026' : 'Update Password'}
         </button>

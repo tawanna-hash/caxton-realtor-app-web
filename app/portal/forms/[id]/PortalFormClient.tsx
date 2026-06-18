@@ -114,7 +114,7 @@ export default function PortalFormClient({
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-gray-900 text-white px-5 py-2 text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
+          className="rounded-md bg-[#E06100] text-white px-5 py-2 text-sm font-medium hover:bg-[#FF7820] disabled:opacity-50"
         >
           {submitting ? 'Submitting…' : 'Submit'}
         </button>

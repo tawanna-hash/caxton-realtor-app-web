@@ -27,7 +27,7 @@ function ResetPasswordForm() {
         </p>
         <Link
           href="/admin/forgot-password"
-          className="block w-full text-center bg-[#021D40] text-white py-2.5 text-sm font-medium tracking-wide hover:bg-[#03285a] transition-colors"
+          className="block w-full text-center bg-[#E06100] text-white py-2.5 text-sm font-medium tracking-wide hover:bg-[#FF7820] transition-colors"
         >
           Request a new reset link
         </Link>
@@ -116,7 +116,7 @@ function ResetPasswordForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full bg-[#021D40] text-white py-2.5 text-sm font-medium tracking-wide hover:bg-[#03285a] disabled:opacity-60 transition-colors"
+        className="w-full bg-[#E06100] text-white py-2.5 text-sm font-medium tracking-wide hover:bg-[#FF7820] disabled:opacity-60 transition-colors"
       >
         {submitting ? 'Updating...' : 'Update Password'}
       </button>

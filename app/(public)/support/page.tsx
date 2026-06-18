@@ -35,7 +35,7 @@ export default function SupportPage() {
           </p>
           <a
             href={`mailto:${SUPPORT_EMAIL}?subject=Realty%20News%20Now%20Support`}
-            className="inline-flex items-center px-5 py-2.5 rounded-md bg-[#021D40] text-white font-medium hover:bg-[#021D40] transition"
+            className="inline-flex items-center px-5 py-2.5 rounded-md bg-[#E06100] text-white font-medium hover:bg-[#E06100] transition"
           >
             {SUPPORT_EMAIL}
           </a>

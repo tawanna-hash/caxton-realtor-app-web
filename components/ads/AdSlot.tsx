@@ -188,7 +188,7 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
           match the literal word "Ad" don't hide the whole container. */}
       <span
         aria-label="Promoted"
-        className="absolute right-2 top-2 z-10 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-white"
+        className="absolute right-2 top-2 z-10 rounded-md bg-[#E06100]/60 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-white"
       >
         <span aria-hidden="true">{'A' + 'd'}</span>
       </span>

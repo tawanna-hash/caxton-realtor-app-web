@@ -121,7 +121,7 @@ export default function InventoryGallery({ galleryUrls, thumbnailUrl, alt }: Pro
                 <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
               </svg>
             </button>
-            <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-md">
+            <div className="absolute bottom-3 right-3 bg-[#E06100]/60 text-white text-xs px-2 py-1 rounded-md">
               {active + 1} / {images.length}
             </div>
           </>

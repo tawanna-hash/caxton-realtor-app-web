@@ -218,7 +218,7 @@ export default function ActivityClient() {
                 key={b.id}
                 onClick={() => setBucket(b.id)}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium ${
-                  bucket === b.id ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  bucket === b.id ? 'bg-[#E06100] text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 {b.label}
