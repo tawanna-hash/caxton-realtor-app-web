@@ -18,6 +18,10 @@ import { PUB_META, type PubKey, isPreLaunchPub, isPubKey } from '@/lib/pub-meta'
 import { PreLaunchEmptyState } from '@/components/PreLaunchEmptyState';
 import { AdSlot as AdSlotComponent } from '@/components/ads/AdSlot';
 import { COMING_SOON_PUBS, type ComingSoonPubId } from '@/lib/coming-soon-pubs';
+import HeroNewsCard from '@/components/happin/HeroNewsCard';
+import ArticleRow from '@/components/happin/ArticleRow';
+import CategoryChipBar from '@/components/happin/CategoryChipBar';
+import AuthorMeta from '@/components/happin/AuthorMeta';
 
 const API = getApiBase();
 
@@ -1270,26 +1274,13 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
       {tab === 'n' && !showPreLaunch && (
         <div>
           <FeedTopBanner pub={pub} />
-          <div className="flex gap-2 overflow-x-auto px-4 py-3 bg-white border-b border-gray-200" style={{ scrollbarWidth: 'none' }}>
-            {CATS.map((c) => (
-              <button
-                key={c}
-                onClick={() => setCat(c)}
-                aria-pressed={cat === c}
-                // BUG-16: add flex-shrink-0 so long chips like "Featured Advertisers"
-                // don't get squeezed by sibling flex children and overflow the row.
-                className={
-                  cat === c
-                    ? 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
-                    : 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
-                }
-              >
-                {c}
-              </button>
-            ))}
-          </div>
+          <CategoryChipBar items={CATS} active={cat} onChange={setCat} />
           <div>
-            {feed.flatMap((item, idx) => {
+            {(() => {
+              // Index of the first real news article in the feed — it renders
+              // as the Happin HeroNewsCard; the rest use the ArticleRow layout.
+              const firstNewsIdx = feed.findIndex((it) => it.t === 'n');
+              return feed.flatMap((item, idx) => {
               const node = item.t === 's' ? (
                 <ArticleSkeleton key={'s' + idx} />
               ) : item.t === 'e' ? (
@@ -1302,9 +1293,28 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
                   buttonColor={info.color}
                 />
               ) : item.t === 'n' ? (
-                <article key={'n' + item.d.id} className="bg-white border-b border-gray-200">
-                  <ArticleCard item={item.d} pub={pub} />
-                </article>
+                idx === firstNewsIdx ? (
+                  <article key={'n' + item.d.id} className="bg-white border-b border-gray-200">
+                    <div className="px-4 py-5">
+                      <HeroNewsCard
+                        imageUrl={item.d.imageUrl}
+                        category={item.d.cat}
+                        headline={item.d.head}
+                        time={item.d.time}
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            const enriched = { ...item.d, title: item.d.head, pub };
+                            window.dispatchEvent(new CustomEvent('caxton:openArticle', { detail: enriched }));
+                          }
+                        }}
+                      />
+                    </div>
+                  </article>
+                ) : (
+                  <article key={'n' + item.d.id} className="bg-white border-b border-gray-200">
+                    <ArticleCard item={item.d} pub={pub} />
+                  </article>
+                )
               ) : item.t === 'm' ? (
                 <SaborReportCard key={'m' + idx + item.d.variant} variant={item.d.variant} />
               ) : (
@@ -1320,7 +1330,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
                 ];
               }
               return [node];
-            })}
+              });
+            })()}
             {/* Follow-us card pinned at the bottom of the feed, brand-colored
                 per pub. URLs live in lib/pub-meta.ts — placeholders render
                 as disabled icons until real URLs are wired in. */}
@@ -1405,44 +1416,27 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
 
 
 function ArticleCard({ item, pub }: { item: any; pub: string }) {
-  const body = (
-    <div className="flex items-start gap-4">
-      <div className="flex-1 min-w-0">
-        <span className="text-xs uppercase tracking-[0.15em] font-medium text-[#021D40] mb-2 block">{item.cat}</span>
-        <h3 className="text-lg text-gray-900 leading-snug mb-2 font-semibold">{item.head}</h3>
-        <p className="text-sm text-gray-500 leading-relaxed mb-3 font-light">{item.sum}</p>
-        <span className="text-xs text-gray-400 font-light">{item.time}</span>
-      </div>
-      {item.imageUrl && (
-        <div className="flex-shrink-0 w-32 h-28 bg-gray-100 border border-gray-200 overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={item.imageUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
-        </div>
-      )}
-    </div>
-  );
-
   // caxton-article-reader-b1-card
-  if (item) {
-    const onTap = () => {
-      if (typeof window !== 'undefined') {
-        // Enrich the dispatched item with title (mapped from head) and pub
-        // so the article_opened tracker captures the right fields.
-        const enriched = { ...item, title: item.head, pub };
-        window.dispatchEvent(new CustomEvent('caxton:openArticle', { detail: enriched }));
+  const onTap = item
+    ? () => {
+        if (typeof window !== 'undefined') {
+          // Enrich the dispatched item with title (mapped from head) and pub
+          // so the article_opened tracker captures the right fields.
+          const enriched = { ...item, title: item.head, pub };
+          window.dispatchEvent(new CustomEvent('caxton:openArticle', { detail: enriched }));
+        }
       }
-    };
-    return (
-      <button
-        type="button"
-        onClick={onTap}
-        className="block w-full text-left px-4 py-5 hover:bg-gray-50 transition-colors"
-      >
-        {body}
-      </button>
-    );
-  }
-  return <div className="px-4 py-5">{body}</div>;
+    : undefined;
+
+  return (
+    <ArticleRow
+      imageUrl={item.imageUrl}
+      category={item.cat}
+      headline={item.head}
+      time={item.time}
+      onClick={onTap}
+    />
+  );
 }
 
 function ArticleSkeleton() {
@@ -2121,23 +2115,45 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
       </div>
 
 
-      {/* Featured image — constrained to the same max-w-2xl column as the
-          article body, so it doesn't stretch edge-to-edge on wide desktop
-          windows (which also upscaled smaller source images and made them
-          look blurry). max-h cap prevents very tall portraits from dominating. */}
-      {article.imageUrl && (
-        <div className="w-full bg-gray-100">
-          <div className="max-w-2xl mx-auto">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+      {/* Single News hero — full-bleed image (or brand gradient fallback) with
+          floating back/share controls. Constrained to the same max-w-2xl column
+          as the body on wide desktop so smaller source images aren't upscaled. */}
+      <div className="relative w-full bg-gray-100">
+        <div className="relative max-w-2xl mx-auto">
+          {article.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={article.imageUrl}
               alt=""
-              className="w-full h-auto max-h-[60vh] object-cover"
+              className="w-full h-[260px] md:h-[360px] object-cover"
               loading="eager"
             />
-          </div>
+          ) : (
+            <div
+              className="w-full h-[200px] md:h-[280px]"
+              style={{ background: `linear-gradient(135deg, ${info.color}, #3D0740)` }}
+            />
+          )}
+          {/* Floating back button (top-left) */}
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Back"
+            className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center text-gray-900 hover:bg-gray-50 transition-colors"
+          >
+            <span className="text-lg leading-none">{'\u2039'}</span>
+          </button>
+          {/* Floating share button (top-right) */}
+          <button
+            type="button"
+            onClick={onShare}
+            aria-label="Share"
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center text-gray-900 hover:bg-gray-50 transition-colors"
+          >
+            <span className="text-base leading-none">{'\u21AA'}</span>
+          </button>
         </div>
-      )}
+      </div>
 
       {/* pb-52: clears the sticky ArticleActionBar (now bottom 80px+safe-area +
           ~62px pill) plus the BottomNav underneath, with breathing room.
@@ -2147,45 +2163,22 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
         {/* Top leaderboard ad — first thing in the article column */}
         <AdLeaderboard pub={pub} articleId={articleId} />
 
-        {/* Eyebrow */}
+        {/* Eyebrow — Happin blue uppercase category */}
         {(article.cat || article.category) && (
-          <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: info.color }}>
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold text-blue-600 mb-3">
             {article.cat || article.category}
           </p>
         )}
 
-        {/* Headline */}
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight leading-tight mb-3">
+        {/* Headline — Georgia via font-serif */}
+        <h1 className="font-serif text-2xl md:text-3xl text-gray-900 tracking-tight leading-tight mb-3">
           {headline}
         </h1>
 
-        {/* Byline */}
+        {/* Byline — Happin AuthorMeta row */}
         {(author?.name || dateLong) && (
-          <div className="flex items-center gap-3 mb-2 pb-6 border-b border-gray-200">
-            {author?.avatar && (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={author.avatar}
-                alt=""
-                width={96}
-                height={96}
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  // Hide the avatar element entirely when Gravatar 404s
-                  // (author has no registered Gravatar). Avoids broken-image icon.
-                  (e.currentTarget as HTMLImageElement).style.display = 'none';
-                }}
-                className="w-16 h-16 rounded-full object-cover bg-gray-100 flex-shrink-0"
-              />
-            )}
-            <div className="min-w-0 flex-1">
-              {author?.name && (
-                <p className="text-sm text-gray-900 font-medium leading-tight">By {author.name}</p>
-              )}
-              {dateLong && (
-                <p className="text-xs text-gray-500 font-light leading-tight mt-0.5">{dateLong}</p>
-              )}
-            </div>
+          <div className="mb-2 pb-6 border-b border-gray-200">
+            <AuthorMeta name={author?.name} avatar={author?.avatar} date={dateLong} />
           </div>
         )}
 
