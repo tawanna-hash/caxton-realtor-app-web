@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
       <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
         <div className="w-full max-w-md px-8 text-center">
           <div className="text-5xl mb-4">{"\u2709"}</div>
-          <h2 className="text-2xl text-gray-900 font-semibold mb-3">Check Your Email</h2>
+          <h1 className="text-2xl text-gray-900 font-semibold mb-3">Check Your Email</h1>
           <p className="text-lg text-gray-500 font-light mb-2">If an account exists for</p>
           <p className="text-lg text-[#021D40] font-semibold mb-6">{email}</p>
           <p className="text-base text-gray-400 font-light mb-8">we have sent a password reset link. It expires in 60 minutes.</p>
@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
       <div className="w-full max-w-md px-8">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-400 font-medium mb-2 text-center">Realty News Now</p>
-        <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Reset Your Password</h2>
+        <h1 className="text-2xl text-gray-900 font-semibold text-center mb-2">Reset Your Password</h1>
         <p className="text-sm text-gray-400 font-light text-center mb-6">Enter your email and we will send you a link to set a new password.</p>
         {error && <p className="text-base text-red-500 text-center mb-4 font-light">{error}</p>}
         <input

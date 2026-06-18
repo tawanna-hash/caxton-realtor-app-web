@@ -111,7 +111,7 @@ export default function ProfileClient() {
     <div className="max-w-md mx-auto">
       <div className="px-5 py-6" style={{ backgroundColor: accent }}>
         <p className="text-xs uppercase tracking-[0.2em] text-white/70">My Profile</p>
-        <p className="text-lg text-white font-medium truncate">{fullName}</p>
+        <h1 className="text-lg text-white font-medium truncate">{fullName}</h1>
         {user.email && (
           <p className="text-xs text-white/60 font-light truncate">{user.email}</p>
         )}

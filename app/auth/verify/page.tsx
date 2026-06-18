@@ -44,7 +44,7 @@ function VerifyContent() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-400 font-medium mb-2">
           Caxton Publications, Inc.
         </p>
-        <h2 className="text-2xl text-gray-900 font-semibold mb-8">Verifying your account</h2>
+        <h1 className="text-2xl text-gray-900 font-semibold mb-8">Verifying your account</h1>
 
         {status === 'verifying' && (
           <div>
@@ -94,7 +94,7 @@ function VerifyFallback() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-400 font-medium mb-2">
           Caxton Publications, Inc.
         </p>
-        <h2 className="text-2xl text-gray-900 font-semibold mb-8">Verifying your account</h2>
+        <h1 className="text-2xl text-gray-900 font-semibold mb-8">Verifying your account</h1>
         <div className="animate-spin rounded-full h-12 w-12 border-2 border-gray-200 border-t-[#021D40] mx-auto" />
       </div>
     </div>
