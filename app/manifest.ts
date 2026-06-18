@@ -6,8 +6,13 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'RNN',
     description:
       'Texas real estate news, magazine issues, and event alerts for RealtyLine and Newsline readers.',
-    start_url: '/dashboard',
+    // Use a stable 200 endpoint as start_url. The previous '/dashboard' value
+    // sometimes caused iOS standalone PWAs to show a 'couldn't load' error
+    // because of the redirect chain from '/' → '/dashboard'.
+    start_url: '/?source=pwa',
+    scope: '/',
     display: 'standalone',
+    orientation: 'portrait',
     background_color: '#ffffff',
     theme_color: '#021D40',
     icons: [
