@@ -1483,6 +1483,7 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
 // See the import at the top of this file.
 
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Kept for potential rollback; superseded by MasonryFeedCard in the Modern News redesign.
 function ArticleCard({ item, pub }: { item: any; pub: string }) {
   const body = (
     <div className="flex items-start gap-4">

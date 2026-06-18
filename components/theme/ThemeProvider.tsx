@@ -46,11 +46,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>('system');
   const [resolved, setResolved] = useState<ResolvedTheme>('light');
 
-  // Read stored preference on mount.
+  // Read stored preference on mount. Intentional setState-in-effect: we
+  // must initialize 'system' for SSR determinism, then hydrate the saved
+  // mode on the client. The pre-paint <head> script applies the .dark
+  // class first so users never see a flash.
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
       if (stored === 'light' || stored === 'dark' || stored === 'system') {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate saved theme on mount
         setThemeState(stored);
       }
     } catch {
