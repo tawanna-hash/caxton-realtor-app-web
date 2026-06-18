@@ -48,7 +48,6 @@ const PUB_COLORS: Record<string, string> = {
 // from the hamburger for less-frequent destinations (FAQs, About, Profile).
 const PUBLIC_DESKTOP_LINKS: { label: string; href: string }[] = [
   { label: 'Home',        href: '/dashboard' },
-  { label: 'Magazine',    href: '/magazine' },
   { label: 'Calendar',    href: '/calendar' },
   { label: 'Builders',    href: '/builders' },
   { label: 'Advertisers', href: '/advertisers' },
