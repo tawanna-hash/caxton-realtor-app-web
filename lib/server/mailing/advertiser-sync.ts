@@ -485,6 +485,43 @@ export async function refreshMailingAddressesForSegment(
   let skippedNoAdvertiser = 0;
   let skippedComplete = 0;
 
+  // Prefetch advertisers + staff once for the segment so the per-contact loop
+  // doesn't issue two extra round-trips per row (used to be the dominant cost
+  // for large segments).
+  const advertiserIds = Array.from(
+    new Set(rows.map((r) => r.advertiser_id).filter((v): v is number => v != null)),
+  );
+  const advertiserPartsById = new Map<number, LocationAddressParts>();
+  if (advertiserIds.length > 0) {
+    const advRows = (await sql`
+      SELECT id, address, address_2, city, state, zip
+        FROM advertisers
+       WHERE id = ANY(${advertiserIds}::int[])
+    `) as unknown as Array<LocationAddressParts & { id: number }>;
+    for (const r of advRows) {
+      const { id: _id, ...parts } = r;
+      advertiserPartsById.set(r.id, parts);
+    }
+  }
+
+  // Build a staff lookup keyed by (advertiser_id, lowercased email) for the
+  // staff-row branch below.
+  const staffEmails = rows
+    .filter((r) => r.is_staff && r.email && r.advertiser_id != null)
+    .map((r) => r.email!.toLowerCase());
+  const staffIdByKey = new Map<string, string>();
+  if (staffEmails.length > 0 && advertiserIds.length > 0) {
+    const staffRows = (await sql`
+      SELECT id, advertiser_id, LOWER(COALESCE(email, '')) AS lemail
+        FROM advertiser_staff
+       WHERE advertiser_id = ANY(${advertiserIds}::int[])
+         AND LOWER(COALESCE(email, '')) = ANY(${staffEmails})
+    `) as unknown as Array<{ id: string; advertiser_id: number; lemail: string }>;
+    for (const s of staffRows) {
+      staffIdByKey.set(`${s.advertiser_id}::${s.lemail}`, s.id);
+    }
+  }
+
   for (const row of rows) {
     if (!row.advertiser_id) {
       skippedNoAdvertiser += 1;
@@ -496,24 +533,14 @@ export async function refreshMailingAddressesForSegment(
       continue;
     }
 
-    // For staff rows, resolve the staff_id from advertiser_staff via email
-    // so we can prefer their assigned location.
+    // For staff rows, resolve the staff_id (was a per-row SQL call; now a
+    // map lookup against the prefetched set above).
     let staffId: string | null = null;
     if (row.is_staff && row.email) {
-      const staffRows = (await sql`
-        SELECT id FROM advertiser_staff
-         WHERE advertiser_id = ${row.advertiser_id}
-           AND LOWER(COALESCE(email, '')) = ${row.email.toLowerCase()}
-         LIMIT 1
-      `) as unknown as Array<{ id: string }>;
-      staffId = staffRows[0]?.id ?? null;
+      staffId = staffIdByKey.get(`${row.advertiser_id}::${row.email.toLowerCase()}`) ?? null;
     }
 
-    const advRows = (await sql`
-      SELECT address, address_2, city, state, zip
-        FROM advertisers WHERE id = ${row.advertiser_id} LIMIT 1
-    `) as unknown as Array<LocationAddressParts>;
-    const advParts: LocationAddressParts = advRows[0] ?? {
+    const advParts: LocationAddressParts = advertiserPartsById.get(row.advertiser_id) ?? {
       address: null, address_2: null, city: null, state: null, zip: null,
     };
     const locFallback = await loadLocationAddressForAdvertiser(

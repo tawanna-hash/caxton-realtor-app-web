@@ -28,7 +28,7 @@
 import { NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
-import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
+import { type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -225,21 +225,25 @@ export async function GET(req: Request) {
 
   // Write audit entries for the flips. Best-effort: a failure here doesn't
   // unwind the status update, which is the more important state change.
-  for (const ag of flipped) {
-    try {
-      const auditRows = (await sql`SELECT audit_log FROM agreements WHERE id = ${ag.id}`) as unknown as Array<{
-        audit_log: AgreementAuditEntry[] | null;
-      }>;
-      const newLog = appendAudit(auditRows[0]?.audit_log, {
-        event: 'agreement_expired',
-        timestamp: new Date().toISOString(),
-        details: `Auto-flipped to expired by lifecycle cron. exp_date=${ag.exp_date ?? ag.end_date ?? '—'}`,
-      });
-      await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${ag.id}`;
-    } catch (err) {
-      console.error('[agreement-lifecycle] audit write failed for', ag.id, err);
-    }
-  }
+  // Atomic JSONB append (single UPDATE per row instead of SELECT-then-UPDATE).
+  await Promise.all(
+    flipped.map(async (ag) => {
+      try {
+        const entry: AgreementAuditEntry = {
+          event: 'agreement_expired',
+          timestamp: new Date().toISOString(),
+          details: `Auto-flipped to expired by lifecycle cron. exp_date=${ag.exp_date ?? ag.end_date ?? '—'}`,
+        };
+        await sql`
+          UPDATE agreements
+             SET audit_log = COALESCE(audit_log, '[]'::jsonb) || ${JSON.stringify(entry)}::jsonb
+           WHERE id = ${ag.id}
+        `;
+      } catch (err) {
+        console.error('[agreement-lifecycle] audit write failed for', ag.id, err);
+      }
+    }),
+  );
 
   // ---- Step 2: scan still-active rows for reminder buckets -------------
   const live = (await sql`
@@ -336,22 +340,25 @@ export async function GET(req: Request) {
 
   // Record per-row reminder audit entries (only for the two reminder
   // buckets — expirations already wrote their own 'agreement_expired'
-  // entry above).
-  for (const row of [...countdownToSend, ...headsUpToSend]) {
-    try {
-      const auditRows = (await sql`SELECT audit_log FROM agreements WHERE id = ${row.agreement.id}`) as unknown as Array<{
-        audit_log: AgreementAuditEntry[] | null;
-      }>;
-      const newLog = appendAudit(auditRows[0]?.audit_log, {
-        event: 'lifecycle_reminder_notified',
-        timestamp: new Date().toISOString(),
-        details: `Lifecycle digest sent — bucket:${row.bucket} days:${row.daysUntil}`,
-      });
-      await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${row.agreement.id}`;
-    } catch (err) {
-      console.error('[agreement-lifecycle] reminder audit write failed for', row.agreement.id, err);
-    }
-  }
+  // entry above). Atomic JSONB append, one UPDATE per row in parallel.
+  await Promise.all(
+    [...countdownToSend, ...headsUpToSend].map(async (row) => {
+      try {
+        const entry: AgreementAuditEntry = {
+          event: 'lifecycle_reminder_notified',
+          timestamp: new Date().toISOString(),
+          details: `Lifecycle digest sent — bucket:${row.bucket} days:${row.daysUntil}`,
+        };
+        await sql`
+          UPDATE agreements
+             SET audit_log = COALESCE(audit_log, '[]'::jsonb) || ${JSON.stringify(entry)}::jsonb
+           WHERE id = ${row.agreement.id}
+        `;
+      } catch (err) {
+        console.error('[agreement-lifecycle] reminder audit write failed for', row.agreement.id, err);
+      }
+    }),
+  );
 
   return NextResponse.json({
     ok: true,
