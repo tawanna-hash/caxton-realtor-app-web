@@ -159,7 +159,7 @@ export default async function AdvertiseDigitalPage() {
                 ) : (
                   <Link
                     href={checkoutHref}
-                    className="inline-block w-full text-center bg-[#E06100] text-white text-sm font-semibold py-2.5 rounded-md hover:bg-[#E06100]"
+                    className="inline-block w-full text-center bg-[#021D40] text-white text-sm font-semibold py-2.5 rounded-md hover:bg-[#021D40]"
                   >
                     Book this placement
                   </Link>

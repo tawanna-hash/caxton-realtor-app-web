@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
         <button
           onClick={handleSubmit}
           disabled={loading || !email}
-          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 bg-[#E06100] disabled:opacity-40"
+          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 bg-[#021D40] disabled:opacity-40"
         >
           {loading ? 'Sending\u2026' : 'Send Reset Link'}
         </button>

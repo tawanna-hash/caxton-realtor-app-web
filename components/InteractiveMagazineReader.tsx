@@ -1233,7 +1233,7 @@ export default function InteractiveMagazineReader({
             onClick={goPrev}
             disabled={currentSpreadIdx === 0}
             aria-label="Previous spread"
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-[#E06100]/50 text-white/90 hover:bg-[#E06100]/70 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center backdrop-blur"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-black/50 text-white/90 hover:bg-black/70 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center backdrop-blur"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m15 18-6-6 6-6" />
@@ -1243,7 +1243,7 @@ export default function InteractiveMagazineReader({
             onClick={goNext}
             disabled={currentSpreadIdx >= spreads.length - 1}
             aria-label="Next spread"
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-[#E06100]/50 text-white/90 hover:bg-[#E06100]/70 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center backdrop-blur"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-black/50 text-white/90 hover:bg-black/70 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center backdrop-blur"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m9 18 6-6-6-6" />
@@ -1270,7 +1270,7 @@ export default function InteractiveMagazineReader({
               value={jumpInput}
               onChange={(e) => setJumpInput(e.target.value)}
               placeholder={`${currentPage + 1}`}
-              className="w-16 bg-[#E06100]/40 text-white text-center text-sm rounded-md px-2 py-1 placeholder-white/40 border border-white/20 backdrop-blur"
+              className="w-16 bg-black/40 text-white text-center text-sm rounded-md px-2 py-1 placeholder-white/40 border border-white/20 backdrop-blur"
               aria-label="Jump to page"
             />
             <span className="text-xs text-white/70">of {pageCount || '…'}</span>

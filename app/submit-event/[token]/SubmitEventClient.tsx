@@ -134,7 +134,7 @@ export default function SubmitEventClient({ token }: { token: string }) {
         </p>
         <button
           onClick={() => setSubmitOk(false)}
-          className="inline-flex items-center rounded-md bg-[#E06100] px-4 py-2 text-sm font-medium text-white hover:bg-[#FF7820]"
+          className="inline-flex items-center rounded-md bg-[#021D40] px-4 py-2 text-sm font-medium text-white hover:bg-[#03285a]"
         >
           Submit another event
         </button>
@@ -269,7 +269,7 @@ export default function SubmitEventClient({ token }: { token: string }) {
         <button
           type="submit"
           disabled={submitting}
-          className="inline-flex items-center justify-center rounded-md bg-[#E06100] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#FF7820] disabled:opacity-50 w-full sm:w-auto"
+          className="inline-flex items-center justify-center rounded-md bg-[#021D40] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#03285a] disabled:opacity-50 w-full sm:w-auto"
         >
           {submitting ? 'Submitting…' : 'Submit event for review'}
         </button>

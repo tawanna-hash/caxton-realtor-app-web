@@ -222,7 +222,7 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
           <div className="text-center py-6">
             <p className="text-xl font-semibold text-gray-900 mb-2">You&rsquo;re on the list</p>
             <p className="text-gray-600 mb-6">We&rsquo;ll email you the moment {market.name} launches.</p>
-            <button onClick={onClose} className="px-6 py-2 bg-[#E06100] text-white rounded-md">Close</button>
+            <button onClick={onClose} className="px-6 py-2 bg-gray-900 text-white rounded-md">Close</button>
           </div>
         ) : (
           <>
@@ -262,7 +262,7 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
               <button
                 type="submit"
                 disabled={status === 'submitting'}
-                className="w-full px-4 py-3 bg-[#E06100] text-white rounded-md font-semibold disabled:opacity-60"
+                className="w-full px-4 py-3 bg-gray-900 text-white rounded-md font-semibold disabled:opacity-60"
               >
                 {status === 'submitting' ? 'Submitting...' : 'Notify me'}
               </button>
@@ -1280,7 +1280,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
                 // don't get squeezed by sibling flex children and overflow the row.
                 className={
                   cat === c
-                    ? 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-semibold border border-gray-900 bg-[#E06100] text-white rounded-md transition-colors'
+                    ? 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
                     : 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
                 }
               >
@@ -1393,7 +1393,7 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
         <p className="text-base text-[#021D40] font-medium mb-1">{ad.biz}</p>
         <h3 className="text-xl text-gray-900 leading-snug mb-2 font-semibold">{ad.tag}</h3>
         <p className="text-lg text-gray-500 leading-relaxed mb-4 font-light">{ad.desc}</p>
-        <button onClick={() => onClick(ad)} className="w-full text-center py-3 text-base font-medium uppercase tracking-wider bg-[#E06100] text-white">Connect Now</button>
+        <button onClick={() => onClick(ad)} className="w-full text-center py-3 text-base font-medium uppercase tracking-wider bg-[#021D40] text-white">Connect Now</button>
       </div>
     </article>
   );
@@ -2261,7 +2261,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
 
       {/* Toast */}
       {toast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-[#E06100] text-white px-4 py-2 rounded-full text-sm font-medium z-50 shadow-lg">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium z-50 shadow-lg">
           {toast}
         </div>
       )}

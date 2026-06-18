@@ -247,7 +247,7 @@ export default function SelfServicePortalPage() {
                 key={it.step}
                 className="rounded-md border border-gray-200 bg-white p-5"
               >
-                <div className="w-7 h-7 rounded-full bg-[#E06100] text-white text-sm font-semibold flex items-center justify-center mb-3">
+                <div className="w-7 h-7 rounded-full bg-[#021D40] text-white text-sm font-semibold flex items-center justify-center mb-3">
                   {it.step}
                 </div>
                 <h4 className="text-base font-semibold text-gray-900 mb-1.5">
@@ -274,7 +274,7 @@ export default function SelfServicePortalPage() {
           </div>
           <Link
             href="/portal"
-            className="shrink-0 inline-flex items-center gap-2 border border-[#021D40] text-[#021D40] hover:bg-[#E06100] hover:text-white transition font-semibold px-5 py-2.5 rounded-full text-sm"
+            className="shrink-0 inline-flex items-center gap-2 border border-[#021D40] text-[#021D40] hover:bg-[#021D40] hover:text-white transition font-semibold px-5 py-2.5 rounded-full text-sm"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             Open advertiser portal

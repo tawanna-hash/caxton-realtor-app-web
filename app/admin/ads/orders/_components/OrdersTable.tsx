@@ -241,7 +241,7 @@ export default function OrdersTable() {
             onClick={() => setUrl({ source: null })}
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
               activeSource === 'all'
-                ? 'bg-[#E06100] text-white border-gray-900'
+                ? 'bg-gray-900 text-white border-gray-900'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
             }`}
           >
@@ -254,7 +254,7 @@ export default function OrdersTable() {
               onClick={() => setUrl({ source: s })}
               className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
                 activeSource === s
-                  ? 'bg-[#E06100] text-white border-gray-900'
+                  ? 'bg-gray-900 text-white border-gray-900'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
               }`}
             >
@@ -269,7 +269,7 @@ export default function OrdersTable() {
             onClick={() => setUrl({ status: null })}
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
               activeStatus === 'all'
-                ? 'bg-[#E06100] text-white border-gray-900'
+                ? 'bg-gray-900 text-white border-gray-900'
                 : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
             }`}
           >
@@ -282,7 +282,7 @@ export default function OrdersTable() {
               onClick={() => setUrl({ status: s })}
               className={`px-3 py-1.5 rounded-full text-xs font-medium border capitalize transition ${
                 activeStatus === s
-                  ? 'bg-[#E06100] text-white border-gray-900'
+                  ? 'bg-gray-900 text-white border-gray-900'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
               }`}
             >

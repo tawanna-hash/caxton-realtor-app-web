@@ -113,7 +113,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
         <div className="pt-3 mt-1 border-t border-gray-100">
           <Link
             href={`/advertise/checkout/${slot.slug}?pub=realtyline`}
-            className="inline-block w-full text-center bg-[#E06100] text-white text-sm font-semibold py-2 rounded-md hover:bg-[#E06100]"
+            className="inline-block w-full text-center bg-[#021D40] text-white text-sm font-semibold py-2 rounded-md hover:bg-[#021D40]"
           >
             Book this placement →
           </Link>
