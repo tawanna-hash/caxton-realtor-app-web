@@ -18,12 +18,6 @@ import { PUB_META, type PubKey, isPreLaunchPub, isPubKey } from '@/lib/pub-meta'
 import { PreLaunchEmptyState } from '@/components/PreLaunchEmptyState';
 import { AdSlot as AdSlotComponent } from '@/components/ads/AdSlot';
 import { COMING_SOON_PUBS, type ComingSoonPubId } from '@/lib/coming-soon-pubs';
-import ChipFilter from '@/components/modernnews/ChipFilter';
-import MasonryFeedCard from '@/components/modernnews/MasonryFeedCard';
-import SearchBar from '@/components/modernnews/SearchBar';
-import ArticleHero from '@/components/modernnews/ArticleHero';
-import GetStartedCTA from '@/components/modernnews/GetStartedCTA';
-import ThemeToggle from '@/components/theme/ThemeToggle';
 
 const API = getApiBase();
 
@@ -398,8 +392,8 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const ic = 'w-full px-4 py-3.5 border border-[var(--border-strong)] text-base font-light bg-[var(--surface-2)] text-[var(--text-primary)] rounded-lg focus:outline-none focus:border-[var(--accent)] mb-3 placeholder:text-[var(--text-muted)]';
-  const sc = 'w-full px-4 py-3.5 border border-[var(--border-strong)] text-base font-light bg-[var(--surface-2)] text-[var(--text-primary)] rounded-lg focus:outline-none focus:border-[var(--accent)] mb-3 appearance-none placeholder:text-[var(--text-muted)]';
+  const ic = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3 placeholder:text-[#d1d5db]';
+  const sc = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3 appearance-none placeholder:text-[#d1d5db]';
 
   function dismissGiveaway() {
     setShowGiveaway(false);
@@ -580,19 +574,14 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
   if (mode === 'sent') {
     return (
-      <div className="fixed inset-0 bg-[var(--surface-1)] text-[var(--text-primary)] flex flex-col items-center justify-center z-40" style={SW}>
+      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
         <div className="w-full max-w-md px-8 text-center">
-          <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-[var(--surface-2)] border border-[var(--border-subtle)]">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--accent)]" aria-hidden="true">
-              <rect x="3" y="5" width="18" height="14" rx="2" />
-              <path d="m3 7 9 6 9-6" />
-            </svg>
-          </div>
-          <h2 className="font-serif text-3xl text-[var(--text-primary)] mb-3">Check Your Email</h2>
-          <p className="text-base text-[var(--text-secondary)] font-light mb-2">We sent a magic link to</p>
-          <p className="text-base text-[var(--accent)] font-semibold mb-6">{email}</p>
-          <p className="text-sm text-[var(--text-muted)] font-light mb-8">Click the link in your email to sign in. It expires in 15 minutes.</p>
-          <p className="text-xs text-[var(--text-muted)] font-light">Check your spam folder if you do not see it.</p>
+          <div className="text-5xl mb-4">{'\u2709'}</div>
+          <h2 className="text-2xl text-gray-900 font-semibold mb-3">Check Your Email</h2>
+          <p className="text-lg text-gray-500 font-light mb-2">We sent a magic link to</p>
+          <p className="text-lg text-[#021D40] font-semibold mb-6">{email}</p>
+          <p className="text-base text-gray-400 font-light mb-8">Click the link in your email to sign in. It expires in 15 minutes.</p>
+          <p className="text-sm text-gray-300 font-light">Check your spam folder if you do not see it.</p>
         </div>
       </div>
     );
@@ -600,7 +589,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
   if (mode === 'signup') {
     return (
-      <div className="fixed inset-0 bg-[var(--surface-1)] text-[var(--text-primary)] z-40 overflow-y-auto" style={SW}>
+      <div className="fixed inset-0 bg-white z-40 overflow-y-auto" style={SW}>
         {showGiveaway && step === 1 && GIVEAWAY[pub] && (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center px-4 py-8 overflow-y-auto" style={SW}>
             <div className="bg-white max-w-sm w-full p-7 relative my-auto">
@@ -778,7 +767,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
   if (mode === 'login') {
     return (
-      <div className="fixed inset-0 bg-[var(--surface-1)] text-[var(--text-primary)] flex flex-col items-center justify-center z-40" style={SW}>
+      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
         <div className="w-full max-w-md px-8">
           <p className="text-sm uppercase tracking-[0.25em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
           <h2 className="text-2xl text-gray-900 font-semibold text-center mb-6">Welcome Back</h2>
@@ -822,28 +811,12 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   }
 
   return (
-    <div className="fixed inset-0 bg-[var(--surface-1)] text-[var(--text-primary)] flex flex-col items-center justify-center z-40" style={SW}>
-      <div className="w-full max-w-md px-8 flex flex-col items-center text-center">
-        {/* Kit-style hero illustration: stacked color blocks reading 'RNN' */}
-        <div className="relative mb-8 h-44 w-44">
-          <div className="absolute left-2 top-4 h-32 w-32 rounded-3xl rotate-[-8deg]" style={{ backgroundColor: '#021D40' }} />
-          <div className="absolute right-2 top-0 h-28 w-28 rounded-3xl rotate-[6deg]" style={{ backgroundColor: '#3D0740' }} />
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-24 w-24 rounded-3xl bg-[var(--accent)] flex items-center justify-center">
-            <span className="font-serif text-3xl text-white">RNN</span>
-          </div>
-        </div>
-        <p className="text-xs uppercase tracking-[0.25em] font-medium mb-3 text-[var(--text-muted)]">{info.name}</p>
-        <h2 className="font-serif text-3xl md:text-4xl text-[var(--text-primary)] mb-3 leading-tight">Sign In to Continue</h2>
-        <p className="text-sm text-[var(--text-secondary)] mb-8 font-light">
-          Local real estate news, market intel, and community events delivered daily.
-        </p>
-        <GetStartedCTA
-          label="Create Your Account"
-          onClick={() => setMode('signup')}
-          secondaryText="Already have an account?"
-          secondaryLinkLabel="Sign in"
-          secondaryOnClick={() => setMode('login')}
-        />
+    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
+      <div className="w-full max-w-md px-8">
+        <p className="text-sm uppercase tracking-[0.25em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
+        <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Sign In to Continue</h2>
+        <button onClick={() => setMode('signup')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3" style={{ backgroundColor: info.color }}>Create Your Account</button>
+        <button onClick={() => setMode('login')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-6 rounded-md">I Already Have an Account</button>
       </div>
     </div>
   );
@@ -1100,9 +1073,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
     } catch {}
   }, [pub]);
   const [profileOpen, setProfileOpen] = useState(false);
-  // Modern News kit: local headline search applied client-side to the
-  // already-loaded feed. Does NOT trigger network fetches.
-  const [searchQuery, setSearchQuery] = useState('');
   const track = useMetrics(user?.id || null);
   // For launched pubs (realtyline, newsline) `info` comes from the legacy
   // PUBS array which carries the marketing-copy tagline. For pre-launch
@@ -1272,7 +1242,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
   }
 
   return (
-    <div className="min-h-screen bg-[var(--surface-1)] text-[var(--text-primary)] pb-36" style={SW}>
+    <div className="min-h-screen bg-white pb-36" style={SW}>
       <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: info.color }}>
         <div className="min-w-0 flex-1">
           {!user?.guest && user?.firstName && (
@@ -1280,13 +1250,10 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
           )}
           <p className="text-white text-lg font-semibold tracking-wide truncate">{info.name}</p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-          <ThemeToggle className="text-white/85 hover:bg-white/10 border-white/30" />
-          <button onClick={handleSwitch} className="text-xs uppercase tracking-wider text-white/80 font-medium border border-white/30 px-3 py-1.5 flex items-center gap-2">
-            <span>{other.name}</span>
-            <span className="text-white/50">{'\u2192'}</span>
-          </button>
-        </div>
+        <button onClick={handleSwitch} className="text-xs uppercase tracking-wider text-white/80 font-medium border border-white/30 px-3 py-1.5 flex items-center gap-2 flex-shrink-0 ml-2">
+          <span>{other.name}</span>
+          <span className="text-white/50">{'\u2192'}</span>
+        </button>
       </div>
       {!showPreLaunch && (
         <DashboardHero pub={pub as "realtyline" | "newsline"} />
@@ -1303,103 +1270,57 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
       {tab === 'n' && !showPreLaunch && (
         <div>
           <FeedTopBanner pub={pub} />
-          <div className="px-4 pt-4 pb-2 bg-[var(--surface-1)]">
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search articles"
-            />
-          </div>
-          <div className="px-4 py-3 bg-[var(--surface-1)] border-b border-[var(--border-subtle)]">
-            <ChipFilter
-              items={CATS as unknown as ReadonlyArray<string>}
-              active={cat}
-              onChange={(next) => setCat(next as typeof cat)}
-            />
-          </div>
-          <div className="px-4 pt-4 pb-2">
-            {(() => {
-              // Modern News kit: group consecutive 'n' (news) items into a
-              // 2-col masonry block; render other row types (ads, sabor,
-              // newsletter, skeletons, empty) full-width between blocks.
-              // Preserves data order and the every-6 inline-ad interleave.
-              const blocks: React.ReactNode[] = [];
-              let group: Array<{ d: any; idx: number }> = [];
-              let bKey = 0;
-              const heightCycle: Array<'sm' | 'md' | 'lg'> = ['md', 'lg', 'sm', 'lg', 'md', 'sm'];
-              const flush = () => {
-                if (group.length === 0) return;
-                const g = group;
-                group = [];
-                blocks.push(
-                  <div key={'mn' + bKey++} className="grid grid-cols-2 gap-3 md:gap-4 mb-4">
-                    {g.map(({ d, idx: gIdx }, pos) => {
-                      const headline = decodeHtmlEntities(d.head || '');
-                      const onTap = () => {
-                        if (typeof window !== 'undefined') {
-                          const enriched = { ...d, title: d.head, pub };
-                          window.dispatchEvent(new CustomEvent('caxton:openArticle', { detail: enriched }));
-                        }
-                      };
-                      return (
-                        <MasonryFeedCard
-                          key={'n' + d.id + '-' + gIdx}
-                          imageUrl={d.imageUrl}
-                          category={d.cat}
-                          headline={headline}
-                          height={heightCycle[pos % heightCycle.length]}
-                          onClick={onTap}
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              };
-              const q = searchQuery.trim().toLowerCase();
-              feed.forEach((item, idx) => {
-                if (item.t === 'n') {
-                  if (q) {
-                    const hay = `${item.d.head || ''} ${item.d.sum || ''} ${item.d.cat || ''}`.toLowerCase();
-                    if (!hay.includes(q)) return;
-                  }
-                  group.push({ d: item.d, idx });
-                } else {
-                  flush();
-                  const node = item.t === 's' ? (
-                    <ArticleSkeleton key={'s' + idx} />
-                  ) : item.t === 'e' ? (
-                    <EmptyState key={'e' + idx} cat={item.d.cat} />
-                  ) : item.t === 'c' ? (
-                    <div key={'c' + idx} className="mb-4">
-                      <NewsletterCTA
-                        source="dashboard_feed"
-                        publication={info.id as 'realtyline' | 'newsline'}
-                        buttonColor={info.color}
-                      />
-                    </div>
-                  ) : item.t === 'm' ? (
-                    <div key={'m' + idx + item.d.variant} className="mb-4">
-                      <SaborReportCard variant={item.d.variant} />
-                    </div>
-                  ) : (
-                    <div key={'a' + item.d.id} className="mb-4">
-                      <AdCardTracked ad={item.d} onClick={handleAdClick} track={track} pub={pub} />
-                    </div>
-                  );
-                  blocks.push(node);
+          <div className="flex gap-2 overflow-x-auto px-4 py-3 bg-white border-b border-gray-200" style={{ scrollbarWidth: 'none' }}>
+            {CATS.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCat(c)}
+                aria-pressed={cat === c}
+                // BUG-16: add flex-shrink-0 so long chips like "Featured Advertisers"
+                // don't get squeezed by sibling flex children and overflow the row.
+                className={
+                  cat === c
+                    ? 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-semibold border border-gray-900 bg-gray-900 text-white rounded-md transition-colors'
+                    : 'flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-sm font-medium border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900 rounded-md transition-colors'
                 }
-                if (idx > 0 && idx % 6 === 0) {
-                  flush();
-                  blocks.push(
-                    <div key={'fic' + idx} className="mb-4">
-                      <AdSlotComponent slug="feed_inline_card" variant="bare" />
-                    </div>
-                  );
-                }
-              });
-              flush();
-              return blocks;
-            })()}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+          <div>
+            {feed.flatMap((item, idx) => {
+              const node = item.t === 's' ? (
+                <ArticleSkeleton key={'s' + idx} />
+              ) : item.t === 'e' ? (
+                <EmptyState key={'e' + idx} cat={item.d.cat} />
+              ) : item.t === 'c' ? (
+                <NewsletterCTA
+                  key={'c' + idx}
+                  source="dashboard_feed"
+                  publication={info.id as 'realtyline' | 'newsline'}
+                  buttonColor={info.color}
+                />
+              ) : item.t === 'n' ? (
+                <article key={'n' + item.d.id} className="bg-white border-b border-gray-200">
+                  <ArticleCard item={item.d} pub={pub} />
+                </article>
+              ) : item.t === 'm' ? (
+                <SaborReportCard key={'m' + idx + item.d.variant} variant={item.d.variant} />
+              ) : (
+                <AdCardTracked key={'a' + item.d.id} ad={item.d} onClick={handleAdClick} track={track} pub={pub} />
+              );
+              // Interleave a feed_inline_card ad every 6 items (renders only when a campaign is active)
+              if (idx > 0 && idx % 6 === 0) {
+                return [
+                  <div key={'fic' + idx} className="border-b border-gray-200">
+                    <AdSlotComponent slug="feed_inline_card" variant="bare" />
+                  </div>,
+                  node,
+                ];
+              }
+              return [node];
+            })}
             {/* Follow-us card pinned at the bottom of the feed, brand-colored
                 per pub. URLs live in lib/pub-meta.ts — placeholders render
                 as disabled icons until real URLs are wired in. */}
@@ -1483,7 +1404,6 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
 // See the import at the top of this file.
 
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Kept for potential rollback; superseded by MasonryFeedCard in the Modern News redesign.
 function ArticleCard({ item, pub }: { item: any; pub: string }) {
   const body = (
     <div className="flex items-start gap-4">
@@ -2166,9 +2086,9 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
 
   if (!article) {
     return (
-      <div className="fixed inset-0 bg-white z-30 flex items-center justify-center bg-[var(--surface-1)]" style={SW}>
+      <div className="fixed inset-0 bg-white z-30 flex items-center justify-center" style={SW}>
         <div className="text-center px-8">
-          <p className="text-[var(--text-secondary)] mb-4">Article not found</p>
+          <p className="text-gray-500 mb-4">Article not found</p>
           <button onClick={onBack} className="text-sm uppercase tracking-wider font-medium" style={{ color: info.color }}>
             ← Back
           </button>
@@ -2193,36 +2113,31 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
       className="fixed inset-0 bg-white z-30 overflow-y-auto"
       style={{ ...SW, ...swipeStyle }}
     >
-      {/* Header — sticky theme-aware app bar */}
-      <div className="sticky top-0 bg-[var(--surface-1)]/85 backdrop-blur-md z-10 border-b border-[var(--border-subtle)]">
-        <div className="flex items-center justify-between px-4 py-3">
-          <button
-            onClick={onBack}
-            aria-label="Back"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-2)] text-[var(--text-primary)] hover:opacity-90"
-          >
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-          </button>
-          <span className="text-xs uppercase tracking-[0.2em] text-[var(--text-muted)] font-medium">{info.name}</span>
-          <ThemeToggle />
+      {/* Header */}
+      <div className="sticky top-0 bg-white z-10 border-b border-gray-200">
+        <div className="flex items-center justify-end px-4 py-4">
+          <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.name}</span>
         </div>
       </div>
 
-      {/* Modern News kit hero: full-bleed image w/ overlaid headline + author chip */}
-      <div className="max-w-2xl mx-auto px-4 pt-4 md:pt-6">
-        <ArticleHero
-          imageUrl={article.imageUrl}
-          category={article.cat || article.category || null}
-          headline={headline}
-          authorName={author?.name || null}
-          authorAvatar={author?.avatar || null}
-          authorSecondary={dateLong || null}
-          height="lg"
-        />
-      </div>
+
+      {/* Featured image — constrained to the same max-w-2xl column as the
+          article body, so it doesn't stretch edge-to-edge on wide desktop
+          windows (which also upscaled smaller source images and made them
+          look blurry). max-h cap prevents very tall portraits from dominating. */}
+      {article.imageUrl && (
+        <div className="w-full bg-gray-100">
+          <div className="max-w-2xl mx-auto">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={article.imageUrl}
+              alt=""
+              className="w-full h-auto max-h-[60vh] object-cover"
+              loading="eager"
+            />
+          </div>
+        </div>
+      )}
 
       {/* pb-52: clears the sticky ArticleActionBar (now bottom 80px+safe-area +
           ~62px pill) plus the BottomNav underneath, with breathing room.
@@ -2232,9 +2147,47 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
         {/* Top leaderboard ad — first thing in the article column */}
         <AdLeaderboard pub={pub} articleId={articleId} />
 
-        {/* Eyebrow/headline/byline now live inside ArticleHero above.
-            Keep a thin separator below the hero to anchor the body column. */}
-        <div className="mb-6 pb-6 border-b border-[var(--border-subtle)]" />
+        {/* Eyebrow */}
+        {(article.cat || article.category) && (
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: info.color }}>
+            {article.cat || article.category}
+          </p>
+        )}
+
+        {/* Headline */}
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight leading-tight mb-3">
+          {headline}
+        </h1>
+
+        {/* Byline */}
+        {(author?.name || dateLong) && (
+          <div className="flex items-center gap-3 mb-2 pb-6 border-b border-gray-200">
+            {author?.avatar && (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={author.avatar}
+                alt=""
+                width={96}
+                height={96}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  // Hide the avatar element entirely when Gravatar 404s
+                  // (author has no registered Gravatar). Avoids broken-image icon.
+                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                }}
+                className="w-16 h-16 rounded-full object-cover bg-gray-100 flex-shrink-0"
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              {author?.name && (
+                <p className="text-sm text-gray-900 font-medium leading-tight">By {author.name}</p>
+              )}
+              {dateLong && (
+                <p className="text-xs text-gray-500 font-light leading-tight mt-0.5">{dateLong}</p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Article body — chunked with mid-article ads if long enough */}
         {cleanedHtml ? (
@@ -2250,7 +2203,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
             <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: cleanedHtml }} />
           )
         ) : (
-          <p className="text-base text-[var(--text-secondary)] leading-relaxed font-light">
+          <p className="text-base text-gray-700 leading-relaxed font-light">
             {decodeHtmlEntities(article.sum || '')}
           </p>
         )}
@@ -2273,7 +2226,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
 
         {/* Read on website fallback */}
         {article.link && (
-          <div className="mt-10 pt-6 border-t border-[var(--border-subtle)]">
+          <div className="mt-10 pt-6 border-t border-gray-200">
             <a
               href={article.link}
               target="_blank"
