@@ -78,7 +78,7 @@ export default function SelfServicePortalPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-indigo-700 font-semibold mb-3">
             Two ways to work with us
           </p>
-          <PageTitle>Choose your path</PageTitle>
+          <PageTitle size="md">Choose your path</PageTitle>
           <p className="text-base md:text-lg text-gray-700 font-light leading-relaxed max-w-2xl mx-auto mt-3">
             Whether you want to buy an ad in minutes or build a custom
             multi-market campaign, we&apos;ve got you covered.

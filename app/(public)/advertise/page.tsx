@@ -48,7 +48,7 @@ export default function AdvertisePage() {
             One powerful marketing platform.
           </span>
         </p>
-        <PageTitle>
+        <PageTitle size="md">
           Connect with our audience wherever they are, every day.
         </PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">

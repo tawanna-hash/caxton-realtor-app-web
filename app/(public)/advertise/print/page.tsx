@@ -27,7 +27,7 @@ export default function AdvertisePrintPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Advertise · Print
         </p>
-        <PageTitle>
+        <PageTitle size="md">
           Print + digital editions, sold by the issue or by agreement.
         </PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">

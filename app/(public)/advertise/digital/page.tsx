@@ -83,7 +83,7 @@ export default async function AdvertiseDigitalPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Advertise · Digital
         </p>
-        <PageTitle>
+        <PageTitle size="md">
           Every digital placement, live availability.
         </PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
