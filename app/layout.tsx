@@ -65,6 +65,16 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  // iOS uses apple-mobile-web-app-title for the Add-to-Home-Screen label.
+  // Without this, iOS Safari falls back to the document <title> (or in some
+  // cases an ancestor/cached value), which produced "Caxton Publications, Inc"
+  // instead of "Realty News Now" on the install sheet.
+  appleWebApp: {
+    capable: true,
+    title: "Realty News Now",
+    statusBarStyle: "default",
   },
   verification: {
     google: "VntUQ3nLhhIJvbL5UFaiLV4-o5B0C3sYJ_tEPdaBd8s",
