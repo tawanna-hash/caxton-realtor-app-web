@@ -119,16 +119,22 @@ export async function POST(req: NextRequest) {
     const origin = getOrigin(req);
     const results: BatchResult[] = [];
 
+    // Prefetch all advertisers in one query instead of one round-trip per id
+    // inside the loop. The remaining per-advertiser queries are aggregates
+    // that need a specific id; keeping those per-iteration but avoiding the
+    // extra SELECT here drops one DB round-trip per advertiser.
+    const allAdv = (await sql`
+      SELECT * FROM advertisers WHERE id = ANY(${ids}::int[])
+    `) as unknown as Advertiser[];
+    const advById = new Map<number, Advertiser>(allAdv.map((a) => [a.id, a]));
+
     for (const idNum of ids) {
       try {
-        const advRows = (await sql`
-          SELECT * FROM advertisers WHERE id = ${idNum}
-        `) as unknown as Advertiser[];
-        if (advRows.length === 0) {
+        const advertiser = advById.get(idNum);
+        if (!advertiser) {
           results.push({ id: idNum, name: `#${idNum}`, sent: false, error: 'advertiser not found' });
           continue;
         }
-        const advertiser = advRows[0];
         const recipient = (advertiser.contact_email || '').trim();
         if (!recipient) {
           results.push({ id: idNum, name: advertiser.name, sent: false, error: 'no contact email' });
