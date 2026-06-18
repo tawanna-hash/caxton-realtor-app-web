@@ -12,9 +12,17 @@ import { type PubKey } from '@/lib/pub-meta';
 // Names link to the per-advertiser detail page at /advertisers/[slug].
 // A small external-link icon next to the name opens the advertiser's
 // company website in a new tab (when set).
+//
+// In addition to the publication filter, the directory exposes:
+//   - a search input that filters by name / industry / tagline
+//   - a row of category chips derived from the visible advertiser set
+//   - a category / tagline subtitle on every row so the list scans
+//     like a real directory instead of a bare list of names
+// All filtering is client-side over the already-fetched list (under 30
+// rows in production), so there is no extra network cost.
 
 import Link from 'next/link';
-import { useSyncExternalStore } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 
 type SitePub = PubKey;
 
@@ -24,6 +32,8 @@ type DirEntry = {
   slug: string;
   website: string | null;
   publication: 'austin' | 'san_antonio';
+  industry: string | null;
+  tagline: string | null;
 };
 
 function normalizeUrl(raw: string | null | undefined): string | null {
@@ -84,8 +94,37 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
   );
 
   const dbPub = SITE_TO_DB[pub];
-  const filtered = advertisers.filter((a) => a.publication === dbPub);
+  const inPub = useMemo(
+    () => advertisers.filter((a) => a.publication === dbPub),
+    [advertisers, dbPub],
+  );
   const theme = themes[pub];
+
+  // Category chips are derived from the in-pub advertiser set so the
+  // list of options stays in sync as the pub switches. Sorted alpha for
+  // a stable order across renders.
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    for (const a of inPub) {
+      if (a.industry && a.industry.trim()) set.add(a.industry.trim());
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [inPub]);
+
+  // The search query matches name / industry / tagline so users can find
+  // an advertiser by what they do as well as by name.
+  const [query, setQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return inPub.filter((a) => {
+      if (activeCategory && a.industry !== activeCategory) return false;
+      if (!q) return true;
+      const hay = `${a.name} ${a.industry ?? ''} ${a.tagline ?? ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [inPub, query, activeCategory]);
 
   return (
     <section className="mb-10">
@@ -101,6 +140,57 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
           {filtered.length === 1 ? 'advertiser' : 'advertisers'}
         </span>
       </div>
+
+      {inPub.length > 0 && (
+        <div className="mb-4 space-y-3">
+          {/* Search */}
+          <label className="block">
+            <span className="sr-only">Search advertisers</span>
+            <div className="relative">
+              <svg
+                aria-hidden="true"
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              >
+                <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M10.5 10.5L13.5 13.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by name, category, or tagline"
+                className="w-full min-h-[44px] pl-9 pr-3 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent"
+              />
+            </div>
+          </label>
+
+          {/* Category chips */}
+          {categories.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <CategoryChip
+                label="All"
+                active={activeCategory === null}
+                accent={theme.accent}
+                onClick={() => setActiveCategory(null)}
+              />
+              {categories.map((c) => (
+                <CategoryChip
+                  key={c}
+                  label={c}
+                  active={activeCategory === c}
+                  accent={theme.accent}
+                  onClick={() => setActiveCategory(c === activeCategory ? null : c)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {filtered.length > 0 ? (
         <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">
           {filtered.map((a) => {
@@ -117,9 +207,18 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
                 />
                 <Link
                   href={`/advertisers/${a.slug}`}
-                  className="flex-1 min-w-0 text-base text-gray-900 font-medium leading-tight hover:underline underline-offset-2"
+                  className="flex-1 min-w-0 block hover:underline underline-offset-2"
                 >
-                  {a.name}
+                  <span className="block text-base text-gray-900 font-medium leading-tight truncate">
+                    {a.name}
+                  </span>
+                  {(a.industry || a.tagline) && (
+                    <span className="block text-xs text-gray-500 font-light leading-snug mt-0.5 truncate">
+                      {a.industry}
+                      {a.industry && a.tagline ? ' \u00b7 ' : ''}
+                      {a.tagline}
+                    </span>
+                  )}
                 </Link>
                 {site && (
                   <a
@@ -128,11 +227,11 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
                     rel="noopener noreferrer"
                     aria-label={`${a.name} website (opens in new tab)`}
                     title="Visit company website"
-                    className="shrink-0 w-8 h-8 inline-flex items-center justify-center text-gray-400 hover:text-gray-900 rounded-md hover:bg-gray-100 transition-colors"
+                    className="shrink-0 inline-flex items-center justify-center min-w-[44px] min-h-[44px] text-gray-400 hover:text-gray-900 rounded-md hover:bg-gray-100 transition-colors"
                   >
                     <svg
-                      width="14"
-                      height="14"
+                      width="16"
+                      height="16"
                       viewBox="0 0 14 14"
                       fill="none"
                       aria-hidden="true"
@@ -151,11 +250,44 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
             );
           })}
         </ul>
+      ) : inPub.length > 0 ? (
+        <p className="text-center text-gray-500 font-light py-12 border-t border-b border-gray-200">
+          No advertisers match{query.trim() ? ` \u201c${query.trim()}\u201d` : ''}
+          {activeCategory ? ` in ${activeCategory}` : ''}.
+        </p>
       ) : (
         <p className="text-center text-gray-500 font-light py-12 border-t border-b border-gray-200">
           No advertisers to display for {theme.label} right now.
         </p>
       )}
     </section>
+  );
+}
+
+function CategoryChip({
+  label,
+  active,
+  accent,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  accent: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className="px-3 py-1.5 text-xs font-medium rounded-full border transition-colors whitespace-nowrap"
+      style={
+        active
+          ? { backgroundColor: accent, borderColor: accent, color: '#fff' }
+          : { backgroundColor: '#fff', borderColor: '#d1d5db', color: '#374151' }
+      }
+    >
+      {label}
+    </button>
   );
 }

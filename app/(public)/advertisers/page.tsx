@@ -33,6 +33,8 @@ type AdvertiserRow = {
   slug: string;
   website: string | null;
   publication: 'austin' | 'san_antonio' | null;
+  industry: string | null;
+  tagline: string | null;
 };
 
 export default async function AdvertisersDirectoryPage() {
@@ -44,7 +46,7 @@ export default async function AdvertisersDirectoryPage() {
   // archived rows are hidden from the public directory. The default status
   // is 'advertiser'; legacy rows may have NULL or 'active'.
   const rows = (await sql`
-    SELECT id, name, slug, website, publication
+    SELECT id, name, slug, website, publication, industry, tagline
     FROM advertisers
     WHERE COALESCE(status, 'advertiser') IN ('advertiser', 'active')
     ORDER BY name ASC
@@ -57,6 +59,8 @@ export default async function AdvertisersDirectoryPage() {
     slug: r.slug,
     website: r.website,
     publication: (r.publication ?? 'austin') as 'austin' | 'san_antonio',
+    industry: r.industry,
+    tagline: r.tagline,
   }));
 
   // Houston/Dallas inherit RealtyLine's accent color (navy) since they're
