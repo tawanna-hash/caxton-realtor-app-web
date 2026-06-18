@@ -29,9 +29,14 @@ const CHALLENGE_TIMEOUT_MS = 5 * 60 * 1000;
 const AUTHENTICATION_TIMEOUT_MS = 60_000;
 
 export const POST = withErrorHandling(async (req: Request) => {
-  await rateLimit('auth');
-
   const input = beginAuthSchema.parse(await req.json());
+
+  // Skip rate-limiting the conditional-UI prefetch — it can fire on every
+  // page load with no user gesture and would otherwise eat the budget.
+  // The corresponding /finish route is still rate-limited.
+  if (!input.autofill) {
+    await rateLimit('auth');
+  }
 
   let realtorId: string | null = null;
   let allowCredentials: Array<{ id: string; transports?: string[] }> = [];

@@ -15,6 +15,9 @@ export const finishRegistrationSchema = z.object({
 
 export const beginAuthSchema = z.object({
   email: z.string().email().toLowerCase().optional(),
+  // Conditional-UI prefetch from the browser. Bypasses rate limiting since
+  // it can fire on every page load with no user gesture.
+  autofill: z.boolean().optional(),
 });
 
 export const finishAuthSchema = z.object({
