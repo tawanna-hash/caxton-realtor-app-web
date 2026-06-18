@@ -38,14 +38,15 @@
   --rnn-purple-800: #2c0530;
   --rnn-purple-900: #1e0322;
 
-  /* Blue */
+  /* Blue — Happin primary #006fff anchored at 600. Lighter shades remain
+     Tailwind blue defaults so admin/info pills stay legible. */
   --rnn-blue-50:  #eff6ff;
   --rnn-blue-100: #dbeafe;
   --rnn-blue-200: #bfdbfe;
   --rnn-blue-300: #93c5fd;
   --rnn-blue-400: #60a5fa;
-  --rnn-blue-500: #3b82f6;
-  --rnn-blue-600: #2563eb;
+  --rnn-blue-500: #437aff;
+  --rnn-blue-600: #006fff;
   --rnn-blue-700: #1d4ed8;
   --rnn-blue-800: #1e40af;
   --rnn-blue-900: #1e3a8a;
@@ -89,7 +90,11 @@
   --font-sans: var(--font-sans-app), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   /* Display serif matches the magazine page's intentional Georgia stack.
      System-installed everywhere — zero extra network weight. */
-  --font-serif: Georgia, "Times New Roman", serif;
+  /* Happin redesign: serif slot intentionally points to Poppins so any
+     <font-serif> usage app-wide collapses to the same typeface. We do NOT
+     drop the variable because dozens of components reference `font-serif`
+     directly and ripping it out would touch every page. Aliasing is safer. */
+  --font-serif: var(--font-sans-app), system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Brand override: collapse the darkest grays in Tailwind's palette to the
@@ -317,15 +322,14 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Apply the magazine page's display serif to every font-serif usage
-   app-wide. Matches the look of the Magazine Archive header: Georgia at
-   normal weight (400) with tight tracking — elegant, not bold. Components
-   can still override weight per use (e.g. `font-semibold`), but the
-   default is intentionally light to match the magazine page. */
+/* Happin redesign: .font-serif is now an alias for Poppins. Every page that
+   uses font-serif (PageTitle, magazine headers, hero copy, legal page H1s)
+   automatically picks up Poppins Bold at -0.02em tracking — the Happin
+   headline pattern. Individual components may still override weight. */
 .font-serif {
   font-family: var(--font-serif);
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 /* Belt-and-suspenders: ensure native form controls always render with readable

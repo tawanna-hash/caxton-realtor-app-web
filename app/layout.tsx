@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "./posthog-provider";
 
@@ -8,11 +8,11 @@ const SITE_NAME = "Realty News Now";
 const SITE_DESCRIPTION =
   "Free REALTOR® app for Texas real estate professionals — daily news, event calendars, rate cards, and pro tools for RealtyLine (Austin), Newsline (San Antonio), Houston, and Dallas.";
 
-// Body sans-serif for the whole app. Inter at weights 400/500/600/700 covers
-// every UI surface: body, eyebrows, button labels, admin tables, portal nav.
-// Display serif (Georgia) remains a system stack so we ship zero serif font
-// weight from the network — matches the magazine page's intentional look.
-const inter = Inter({
+// Happin redesign (June 2026): Poppins is the single typeface for the entire
+// app — headlines, body, eyebrows, buttons, admin tables, everything. Weights
+// 400 (body), 500 (medium labels), 600 (section headings), 700 (page titles
+// and bold display) match the Happin News & Blogs design system exactly.
+const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-sans-app",
@@ -87,7 +87,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
+    <html lang="en" className={poppins.variable} suppressHydrationWarning>
       <body className="antialiased font-sans">
         <PostHogProvider>{children}</PostHogProvider>
       </body>
