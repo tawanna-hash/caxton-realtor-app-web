@@ -29,6 +29,7 @@ import NewsletterCTA from '@/components/NewsletterCTA';
 import { ADMIN_NAV as ADMIN_GROUPS, isAdminGroupActive as isGroupActive } from '@/lib/admin-nav';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
+import ThemeToggle from '@/components/theme/ThemeToggle';
 
 // ============================================================
 // Types + constants
@@ -196,13 +197,13 @@ export default function AppShell({
 
   // Admin login page — no nav
   if (isLoginPage) {
-    return <div className="min-h-screen bg-white flex flex-col">{children}</div>;
+    return <div className="min-h-screen bg-[var(--surface-1)] text-[var(--text-primary)] flex flex-col">{children}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--surface-1)] text-[var(--text-primary)]">
       {/* ======== TOP BAR ======== */}
-      <header className={`sticky top-0 z-40 ${isAdmin ? 'bg-[#021D40] text-white' : 'bg-white text-gray-900 border-b border-gray-200'}`}>
+      <header className={`sticky top-0 z-40 backdrop-blur-md ${isAdmin ? 'bg-[#021D40] text-white' : 'bg-[var(--surface-1)]/85 text-[var(--text-primary)] border-b border-[var(--border-subtle)]'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           {/* Left: hamburger */}
           <button
@@ -211,7 +212,7 @@ export default function AppShell({
             className={`p-2 rounded-lg transition lg:hidden ${
               isAdmin
                 ? 'text-white/70 hover:text-white hover:bg-white/10'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-gray-200'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)] border border-[var(--border-subtle)]'
             }`}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -352,8 +353,8 @@ export default function AppShell({
                       aria-current={active ? 'page' : undefined}
                       className={`px-3 py-1.5 text-xs uppercase tracking-[0.15em] rounded-md transition ${
                         active
-                          ? 'text-gray-900 bg-gray-100 font-medium'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                          ? 'text-[var(--text-primary)] bg-[var(--surface-2)] font-medium'
+                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)]'
                       }`}
                     >
                       {link.label}
@@ -363,6 +364,12 @@ export default function AppShell({
               </nav>
             )}
 
+            {/* Theme toggle — public + admin. Admins get a transparent variant
+                that reads on the dark navy admin header. */}
+            <ThemeToggle
+              className={isAdmin ? 'text-white/85 hover:bg-white/10 border-white/30 bg-transparent' : ''}
+            />
+
             {/* Logout / auth */}
             {user || isAdmin ? (
               <button
@@ -371,7 +378,7 @@ export default function AppShell({
                 className={`p-2 rounded-lg transition ${
                   isAdmin
                     ? 'text-white/60 hover:text-white hover:bg-white/10'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-2)]'
                 }`}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
