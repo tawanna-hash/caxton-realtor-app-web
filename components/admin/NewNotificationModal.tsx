@@ -35,10 +35,22 @@ interface SubStats {
   unspecified: number;
 }
 
+export type EditableNotification = {
+  id: string;
+  title: string;
+  body: string;
+  category: Category;
+  deep_link_url: string | null;
+  target_audience: { market?: string; channels?: string[] } | null;
+  scheduled_for: string | null;
+  status: string;
+};
+
 type Props = {
   onClose: () => void;
   onSent: () => void;
   stats: SubStats;
+  existing?: EditableNotification | null;
 };
 
 const CATEGORIES: Array<{ value: Category; label: string }> = [
@@ -49,14 +61,26 @@ const CATEGORIES: Array<{ value: Category; label: string }> = [
   { value: 'weekly_digest', label: 'Weekly digest' },
 ];
 
-export default function NewNotificationModal({ onClose, onSent, stats }: Props) {
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [category, setCategory] = useState<Category>('breaking_news');
-  const [deepLinkUrl, setDeepLinkUrl] = useState('/dashboard');
-  const [market, setMarket] = useState<Market>('all');
-  const [schedule, setSchedule] = useState<'now' | 'later'>('now');
-  const [scheduledFor, setScheduledFor] = useState('');
+function toLocalInputValue(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const off = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - off * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+export default function NewNotificationModal({ onClose, onSent, stats, existing }: Props) {
+  const isEdit = !!existing;
+  const initialMarket = ((existing?.target_audience?.market as Market | undefined) || 'all') as Market;
+  const [title, setTitle] = useState(existing?.title || '');
+  const [body, setBody] = useState(existing?.body || '');
+  const [category, setCategory] = useState<Category>((existing?.category as Category) || 'breaking_news');
+  const [deepLinkUrl, setDeepLinkUrl] = useState(existing?.deep_link_url || '/dashboard');
+  const [market, setMarket] = useState<Market>(initialMarket);
+  const [schedule, setSchedule] = useState<'now' | 'later'>(
+    existing?.scheduled_for ? 'later' : 'now',
+  );
+  const [scheduledFor, setScheduledFor] = useState(toLocalInputValue(existing?.scheduled_for ?? null));
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const titleRef = useRef<HTMLInputElement | null>(null);
@@ -101,8 +125,12 @@ export default function NewNotificationModal({ onClose, onSent, stats }: Props) 
     setError(null);
 
     try {
-      const res = await fetch('/api/admin/notifications', {
-        method: 'POST',
+      const url = isEdit
+        ? `/api/admin/notifications/${existing!.id}`
+        : '/api/admin/notifications';
+      const method = isEdit ? 'PATCH' : 'POST';
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title.trim(),
@@ -131,6 +159,8 @@ export default function NewNotificationModal({ onClose, onSent, stats }: Props) 
   const sendLabel =
     schedule === 'now'
       ? `Send to ${reachCount.toLocaleString()} ${reachCount === 1 ? 'device' : 'devices'}`
+      : isEdit
+      ? 'Update schedule'
       : 'Schedule notification';
 
   return (
@@ -144,7 +174,7 @@ export default function NewNotificationModal({ onClose, onSent, stats }: Props) 
       >
         <header className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">New push notification</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{isEdit ? 'Edit push notification' : 'New push notification'}</h2>
             <p className="text-xs text-gray-500 mt-0.5">
               Sends to {stats.total.toLocaleString()} active web push subscribers
               {stats.austin || stats.san_antonio || stats.houston || stats.dallas
