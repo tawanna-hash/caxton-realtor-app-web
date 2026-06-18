@@ -9,7 +9,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import NewNotificationModal from '@/components/admin/NewNotificationModal';
+import NewNotificationModal, { type EditableNotification } from '@/components/admin/NewNotificationModal';
 
 type Status = 'draft' | 'scheduled' | 'sending' | 'sent' | 'cancelled';
 
@@ -80,7 +80,42 @@ function formatDate(iso: string | null): string {
 export default function NotificationsClient({ initialNotifications, initialStats }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<EditableNotification | null>(null);
   const [notifications] = useState(initialNotifications);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const openEdit = useCallback((n: Notification) => {
+    setEditing({
+      id: n.id,
+      title: n.title,
+      body: n.body,
+      category: n.category as EditableNotification['category'],
+      deep_link_url: n.deep_link_url,
+      target_audience: n.target_audience,
+      scheduled_for: n.scheduled_for,
+      status: n.status,
+    });
+    setOpen(true);
+  }, []);
+
+  const cancelNotification = useCallback(
+    async (n: Notification) => {
+      if (!confirm(`Cancel "${n.title}"? It will not be sent.`)) return;
+      setBusyId(n.id);
+      try {
+        const res = await fetch(`/api/admin/notifications/${n.id}`, { method: 'DELETE' });
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          alert(j?.error || 'Cancel failed');
+          return;
+        }
+        router.refresh();
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [router],
+  );
 
   const subscriberSummary = useMemo(() => {
     const parts: string[] = [];
@@ -94,8 +129,14 @@ export default function NotificationsClient({ initialNotifications, initialStats
 
   const onSent = useCallback(() => {
     setOpen(false);
+    setEditing(null);
     router.refresh();
   }, [router]);
+
+  const closeModal = useCallback(() => {
+    setOpen(false);
+    setEditing(null);
+  }, []);
 
   return (
     <>
@@ -103,7 +144,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
         <div className="text-sm text-gray-600">{subscriberSummary}</div>
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => { setEditing(null); setOpen(true); }}
           className="inline-flex items-center justify-center px-4 py-2 rounded-md text-white font-medium text-sm bg-[#021D40] hover:bg-[#03285a] transition-colors"
         >
           New notification
@@ -126,6 +167,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
                 <th className="text-left px-4 py-3 font-medium">Delivered</th>
                 <th className="text-left px-4 py-3 font-medium">Clicks</th>
                 <th className="text-left px-4 py-3 font-medium">Sent</th>
+                <th className="text-right px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -153,6 +195,30 @@ export default function NotificationsClient({ initialNotifications, initialStats
                   <td className="px-4 py-3 text-gray-700">{n.delivered_count}</td>
                   <td className="px-4 py-3 text-gray-700">{n.clicked_count}</td>
                   <td className="px-4 py-3 text-gray-700 text-xs">{formatDate(n.sent_at || n.created_at)}</td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    {(n.status === 'draft' || n.status === 'scheduled') ? (
+                      <div className="inline-flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(n)}
+                          disabled={busyId === n.id}
+                          className="text-xs font-medium text-[#021D40] hover:underline disabled:opacity-50"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => cancelNotification(n)}
+                          disabled={busyId === n.id}
+                          className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+                        >
+                          {busyId === n.id ? 'Cancelling...' : 'Cancel'}
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -162,9 +228,10 @@ export default function NotificationsClient({ initialNotifications, initialStats
 
       {open && (
         <NewNotificationModal
-          onClose={() => setOpen(false)}
+          onClose={closeModal}
           onSent={onSent}
           stats={initialStats}
+          existing={editing}
         />
       )}
     </>
