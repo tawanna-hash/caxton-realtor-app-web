@@ -103,7 +103,7 @@ export default function CommissionCalculatorClient() {
                   onClick={() => setSide(s)}
                   className={`px-4 py-2 text-sm font-medium transition ${
                     side === s
-                      ? 'bg-[#E06100] text-white'
+                      ? 'bg-[#021D40] text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
                 >

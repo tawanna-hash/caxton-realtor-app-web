@@ -35,7 +35,7 @@ export default function ComingSoon({
           </button>
           <Link
             href="/"
-            className="text-sm uppercase tracking-wider font-medium px-6 py-3 bg-[#E06100] text-white hover:bg-[#E06100]"
+            className="text-sm uppercase tracking-wider font-medium px-6 py-3 bg-[#021D40] text-white hover:bg-[#021D40]"
           >
             Return to app
           </Link>

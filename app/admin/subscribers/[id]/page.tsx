@@ -347,7 +347,7 @@ return (
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={enterEdit}
-              className="text-sm font-medium px-4 py-1.5 rounded-md bg-[#E06100] text-white hover:bg-[#E06100]"
+              className="text-sm font-medium px-4 py-1.5 rounded-md bg-[#021D40] text-white hover:bg-[#021D40]"
             >
               Edit
             </button>
@@ -365,7 +365,7 @@ return (
             <button
               onClick={save}
               disabled={saving}
-              className="text-sm font-medium px-4 py-1.5 rounded-md bg-[#E06100] text-white hover:bg-[#E06100] disabled:opacity-50"
+              className="text-sm font-medium px-4 py-1.5 rounded-md bg-[#021D40] text-white hover:bg-[#021D40] disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -570,7 +570,7 @@ return (
                       <button
                         onClick={doSendMagicLink}
                         disabled={sendingLink}
-                        className="text-sm font-medium px-3 py-1.5 rounded-md bg-[#E06100] text-white hover:bg-[#E06100] disabled:opacity-50"
+                        className="text-sm font-medium px-3 py-1.5 rounded-md bg-[#021D40] text-white hover:bg-[#021D40] disabled:opacity-50"
                       >
                         {sendingLink ? 'Sending…' : 'Confirm send'}
                       </button>

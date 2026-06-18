@@ -515,7 +515,7 @@ export default function SubmissionForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full sm:w-auto px-8 py-3 text-base font-semibold text-white tracking-wide transition-opacity disabled:opacity-50 disabled:cursor-not-allowed bg-[#E06100] hover:bg-[#FF7820] rounded-md"
+          className="w-full sm:w-auto px-8 py-3 text-base font-semibold text-white tracking-wide transition-opacity disabled:opacity-50 disabled:cursor-not-allowed bg-gray-900 hover:bg-gray-800 rounded-md"
         >
           {submitting ? 'Submitting…' : 'Submit for review'}
         </button>

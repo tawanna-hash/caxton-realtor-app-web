@@ -198,7 +198,7 @@ export default function AdvertisersReportTab() {
                     className={[
                       'px-3 py-1.5 text-sm border-r border-gray-300 last:border-r-0 transition-colors',
                       days === opt.value
-                        ? 'bg-[#E06100] text-white'
+                        ? 'bg-[#021D40] text-white'
                         : 'bg-white text-gray-700 hover:bg-gray-50',
                     ].join(' ')}
                   >
@@ -302,7 +302,7 @@ export default function AdvertisersReportTab() {
               type="button"
               onClick={handleSend}
               disabled={sending || selectedCount === 0}
-              className="bg-[#E06100] hover:bg-[#FF7820] text-white px-5 py-2.5 rounded-md text-sm font-medium disabled:opacity-40"
+              className="bg-[#021D40] hover:bg-[#03285a] text-white px-5 py-2.5 rounded-md text-sm font-medium disabled:opacity-40"
             >
               {sending ? 'Sending…' : `Send ${selectedCount || ''} report${selectedCount === 1 ? '' : 's'}`}
             </button>

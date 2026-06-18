@@ -145,7 +145,7 @@ export default function HotspotConfigModal({
                   key={t}
                   type="button"
                   onClick={() => changeType(t)}
-                  className={`px-3 py-2 text-sm rounded-md border ${type === t ? 'bg-[#E06100] text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                  className={`px-3 py-2 text-sm rounded-md border ${type === t ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
                 >
                   {TYPE_LABELS[t]}
                 </button>
@@ -221,7 +221,7 @@ export default function HotspotConfigModal({
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="px-4 py-2 text-sm font-medium text-white bg-[#E06100] rounded-md hover:bg-[#FF7820] disabled:opacity-40"
+              className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 disabled:opacity-40"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -412,7 +412,7 @@ function AdvertiserPicker({
               type="button"
               onClick={handleCreate}
               disabled={creating || !newName.trim()}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-[#E06100] rounded-md hover:bg-[#FF7820] disabled:opacity-40"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 disabled:opacity-40"
             >
               {creating ? 'Creating…' : 'Create + link'}
             </button>
@@ -560,14 +560,14 @@ function TypeSpecificForm({
             <button
               type="button"
               onClick={() => onChange({ ...config, source: 'embed', upload_url: undefined })}
-              className={`px-3 py-1.5 text-sm rounded-md ${config.source === 'embed' ? 'bg-[#E06100] text-white' : 'bg-white text-gray-700'}`}
+              className={`px-3 py-1.5 text-sm rounded-md ${config.source === 'embed' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'}`}
             >
               Embed URL
             </button>
             <button
               type="button"
               onClick={() => onChange({ ...config, source: 'upload', embed_url: undefined })}
-              className={`px-3 py-1.5 text-sm border-l border-gray-300 ${config.source === 'upload' ? 'bg-[#E06100] text-white' : 'bg-white text-gray-700'}`}
+              className={`px-3 py-1.5 text-sm border-l border-gray-300 ${config.source === 'upload' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'}`}
             >
               Upload file
             </button>

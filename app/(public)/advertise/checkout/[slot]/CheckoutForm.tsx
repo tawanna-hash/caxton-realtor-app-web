@@ -382,7 +382,7 @@ export default function CheckoutForm({
                     title={title}
                     className={`px-4 py-2 rounded-md border text-sm font-medium transition ${
                       active
-                        ? 'bg-[#E06100] text-white border-gray-900'
+                        ? 'bg-gray-900 text-white border-gray-900'
                         : allowed
                           ? 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                           : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
@@ -427,7 +427,7 @@ export default function CheckoutForm({
                   onClick={() => setBillingPeriod('weekly')}
                   className={`flex-1 px-4 py-2 rounded-md border text-sm font-medium transition ${
                     billingPeriod === 'weekly'
-                      ? 'bg-[#E06100] text-white border-gray-900'
+                      ? 'bg-gray-900 text-white border-gray-900'
                       : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                   }`}
                 >
@@ -439,7 +439,7 @@ export default function CheckoutForm({
                     onClick={() => setBillingPeriod('monthly')}
                     className={`flex-1 px-4 py-2 rounded-md border text-sm font-medium transition ${
                       billingPeriod === 'monthly'
-                        ? 'bg-[#E06100] text-white border-gray-900'
+                        ? 'bg-gray-900 text-white border-gray-900'
                         : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                     }`}
                   >
@@ -635,7 +635,7 @@ export default function CheckoutForm({
               type="button"
               disabled={!ready}
               onClick={prepareIntent}
-              className="w-full px-6 py-3 rounded-md bg-[#E06100] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#FF7820] transition"
+              className="w-full px-6 py-3 rounded-md bg-gray-900 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition"
             >
               {ready ? `Continue to card → ${formatUSD(previewTotal)}` : 'Complete steps above to continue'}
             </button>

@@ -95,7 +95,7 @@ export default function AdvertiseEmailPage() {
                 }`}
               >
                 {isPopular && (
-                  <span className="absolute -top-3 left-5 px-2 py-0.5 rounded-full bg-[#E06100] text-white text-[10px] font-semibold uppercase tracking-wider">
+                  <span className="absolute -top-3 left-5 px-2 py-0.5 rounded-full bg-[#021D40] text-white text-[10px] font-semibold uppercase tracking-wider">
                     Most popular
                   </span>
                 )}
@@ -121,7 +121,7 @@ export default function AdvertiseEmailPage() {
 
                 <Link
                   href={`/advertise/inquire?channel=email&package=${encodeURIComponent(id)}`}
-                  className="inline-flex items-center justify-center px-4 py-2.5 bg-[#E06100] text-white text-sm font-medium rounded-md hover:bg-[#FF7820] transition"
+                  className="inline-flex items-center justify-center px-4 py-2.5 bg-[#021D40] text-white text-sm font-medium rounded-md hover:bg-[#03285a] transition"
                 >
                   Request quote
                 </Link>
@@ -166,7 +166,7 @@ export default function AdvertiseEmailPage() {
         </p>
         <Link
           href="/advertise/inquire?channel=email"
-          className="inline-flex items-center justify-center px-5 py-2.5 border border-[#021D40] text-[#021D40] text-sm font-medium rounded-md hover:bg-[#E06100] hover:text-white transition"
+          className="inline-flex items-center justify-center px-5 py-2.5 border border-[#021D40] text-[#021D40] text-sm font-medium rounded-md hover:bg-[#021D40] hover:text-white transition"
         >
           Start an e-Blast inquiry
         </Link>

@@ -232,7 +232,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
                 onClick={() => patch({ status: s }, 'Status updated')}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
                   active
-                    ? 'bg-[#E06100] text-white border-gray-900 cursor-default'
+                    ? 'bg-gray-900 text-white border-gray-900 cursor-default'
                     : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                 }`}
               >
@@ -288,7 +288,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             onClick={() =>
               patch({ assignee: assignee.trim() || null }, 'Assignee saved')
             }
-            className="px-3 py-1.5 rounded-md text-sm font-medium bg-[#E06100] text-white hover:bg-[#FF7820] disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded-md text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             Save
           </button>
@@ -316,7 +316,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             type="button"
             disabled={saving || notes === (inquiry.notes ?? '')}
             onClick={() => patch({ notes: notes.trim() || null }, 'Notes saved')}
-            className="px-3 py-1.5 rounded-md text-sm font-medium bg-[#E06100] text-white hover:bg-[#FF7820] disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded-md text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             Save notes
           </button>

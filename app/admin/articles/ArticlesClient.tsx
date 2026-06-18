@@ -109,7 +109,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             type="button"
             onClick={handleSync}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-md bg-[#E06100] px-4 py-2 text-sm font-medium text-white hover:bg-[#E06100]/90 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
+            className="inline-flex items-center gap-2 rounded-md bg-[#021D40] px-4 py-2 text-sm font-medium text-white hover:bg-[#021D40]/90 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
           >
             {busy ? (
               <>
@@ -166,7 +166,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             onClick={() => setFilter(key)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
               filter === key
-                ? 'bg-[#E06100] text-white border-[#021D40]'
+                ? 'bg-[#021D40] text-white border-[#021D40]'
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
             }`}
           >
@@ -537,7 +537,7 @@ function EditModal({
               type="button"
               onClick={save}
               disabled={busy}
-              className="px-4 py-2 text-sm font-medium text-white bg-[#E06100] hover:bg-[#E06100]/90 rounded-md disabled:opacity-50 min-h-[44px]"
+              className="px-4 py-2 text-sm font-medium text-white bg-[#021D40] hover:bg-[#021D40]/90 rounded-md disabled:opacity-50 min-h-[44px]"
             >
               {saving ? 'Saving…' : 'Save changes'}
             </button>

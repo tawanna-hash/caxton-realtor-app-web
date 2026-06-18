@@ -408,7 +408,7 @@ export default function HoldingClient() {
             type="button"
             disabled={busy !== null}
             onClick={runVerifyDrain}
-            className="px-4 py-2 rounded-md border border-[#3D0740] text-[#3D0740] text-sm font-medium hover:bg-[#E06100] hover:text-white disabled:opacity-50"
+            className="px-4 py-2 rounded-md border border-[#3D0740] text-[#3D0740] text-sm font-medium hover:bg-[#3D0740] hover:text-white disabled:opacity-50"
             title="Verify every Pending contact in the background (batches of 150)."
           >
             {busy === 'drain' ? 'Verifying…' : 'Verify all Pending'}
@@ -417,7 +417,7 @@ export default function HoldingClient() {
             type="button"
             disabled={busy !== null}
             onClick={syncFromUnlockMLS}
-            className="px-4 py-2 rounded-md bg-[#E06100] text-white text-sm font-medium hover:bg-[#FF7820] disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-[#3D0740] text-white text-sm font-medium hover:bg-[#5a0e5f] disabled:opacity-50"
           >
             {busy === 'sync' ? 'Syncing…' : 'Sync from UnlockMLS'}
           </button>
@@ -1101,7 +1101,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#E06100] text-white hover:bg-[#FF7820] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-[#3D0740] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify with USPS'}
               </button>
@@ -1129,7 +1129,7 @@ function EditDrawer({
                 type="button"
                 disabled={emailBusy || !form.email}
                 onClick={onVerifyEmail}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#E06100] text-white hover:bg-[#FF7820] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-[#3D0740] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
               >
                 {emailBusy ? 'Verifying…' : 'Verify Email'}
               </button>
@@ -1194,7 +1194,7 @@ function EditDrawer({
             type="button"
             disabled={saving}
             onClick={save}
-            className="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-[#E06100] hover:bg-[#FF7820] disabled:opacity-50"
+            className="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-[#3D0740] hover:bg-[#5a0e5f] disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>

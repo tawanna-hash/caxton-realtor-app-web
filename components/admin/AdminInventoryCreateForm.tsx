@@ -202,7 +202,7 @@ export default function AdminInventoryCreateForm() {
             className={
               'px-4 py-2 text-sm font-medium border rounded-md transition-colors ' +
               (kind === 'promotion'
-                ? 'border-[#021D40] bg-[#E06100] text-white'
+                ? 'border-[#021D40] bg-[#021D40] text-white'
                 : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500')
             }
             aria-pressed={kind === 'promotion'}
@@ -215,7 +215,7 @@ export default function AdminInventoryCreateForm() {
             className={
               'px-4 py-2 text-sm font-medium border rounded-md transition-colors ' +
               (kind === 'listing'
-                ? 'border-[#021D40] bg-[#E06100] text-white'
+                ? 'border-[#021D40] bg-[#021D40] text-white'
                 : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500')
             }
             aria-pressed={kind === 'listing'}
@@ -449,7 +449,7 @@ export default function AdminInventoryCreateForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="bg-[#E06100] text-white px-4 py-2 text-sm font-medium hover:bg-[#FF7820] disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
+          className="bg-[#021D40] text-white px-4 py-2 text-sm font-medium hover:bg-[#03285a] disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
         >
           {submitting ? 'Publishing…' : kind === 'promotion' ? 'Publish Promotion' : 'Publish Listing'}
         </button>
