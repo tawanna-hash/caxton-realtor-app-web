@@ -930,5 +930,27 @@ export async function ensureSchema(): Promise<void> {
     console.warn('[ensureSchema] agreements->advertisers backfill failed:', err);
   }
 
+  // Web push subscriptions. Stores each browser's PushSubscription so the
+  // admin notification sender can fan out web_push deliveries. Tied to a
+  // realtor when the user is signed in; allows multiple devices per realtor
+  // (unique by endpoint). Anonymous subscriptions are permitted (realtor_id
+  // NULL) so we can still reach a logged-out browser that opted in.
+  await sql`
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      realtor_id UUID REFERENCES realtors(id) ON DELETE CASCADE,
+      endpoint TEXT NOT NULL UNIQUE,
+      p256dh TEXT NOT NULL,
+      auth TEXT NOT NULL,
+      user_agent TEXT,
+      market TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      revoked_at TIMESTAMPTZ
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS push_subscriptions_realtor_idx ON push_subscriptions(realtor_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS push_subscriptions_market_idx ON push_subscriptions(market)`;
+
   schemaEnsured = true;
 }
