@@ -118,8 +118,19 @@ interface InteractiveMagazineReaderProps {
 type ActionMode = null | 'share' | 'qr' | 'download' | 'email' | 'embed' | 'search';
 
 const ZOOM_LEVELS = [0.75, 1, 1.25, 1.5, 2, 3];
-const DEFAULT_ZOOM_IDX = 1; // 1.0x
+// Desktop opens at 75% so the full spread fits without scrolling; mobile keeps
+// 100% so pages fill the narrow viewport.
+const DEFAULT_ZOOM_IDX_DESKTOP = 0; // 0.75x
+const DEFAULT_ZOOM_IDX_MOBILE = 1;  // 1.0x
 const SPREAD_BREAKPOINT_PX = 1024;
+
+/** Pick the initial/reset zoom level for the current viewport. SSR-safe. */
+function getDefaultZoomIdx(): number {
+  if (typeof window === 'undefined') return DEFAULT_ZOOM_IDX_MOBILE;
+  return window.innerWidth >= SPREAD_BREAKPOINT_PX
+    ? DEFAULT_ZOOM_IDX_DESKTOP
+    : DEFAULT_ZOOM_IDX_MOBILE;
+}
 const SWIPE_THRESHOLD_PX = 50;       // min horizontal swipe to count as page nav
 const TAP_MAX_MOVE_PX = 10;          // movement above this = not a tap
 const TAP_MAX_DURATION_MS = 300;     // press above this = not a tap
@@ -267,7 +278,7 @@ export default function InteractiveMagazineReader({
   };
   const [doc, setDoc] = useState<PdfJsDoc | null>(null);
   const [currentPage, setCurrentPage] = useState(0); // zero-indexed
-  const [zoomIdx, setZoomIdx] = useState(DEFAULT_ZOOM_IDX);
+  const [zoomIdx, setZoomIdx] = useState<number>(() => getDefaultZoomIdx());
   const [actionMode, setActionMode] = useState<ActionMode>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -680,13 +691,14 @@ export default function InteractiveMagazineReader({
   }, [magazine.id]);
 
   const zoomReset = useCallback(() => {
-    setZoomIdx(DEFAULT_ZOOM_IDX);
+    setZoomIdx(getDefaultZoomIdx());
   }, []);
 
-  // Double-tap: toggle between 1x and 2x.
+  // Double-tap: toggle between the device default and 2x.
   const zoomToggle = useCallback(() => {
     setZoomIdx((idx) => {
-      const target = idx === DEFAULT_ZOOM_IDX ? ZOOM_LEVELS.indexOf(2) : DEFAULT_ZOOM_IDX;
+      const defaultIdx = getDefaultZoomIdx();
+      const target = idx === defaultIdx ? ZOOM_LEVELS.indexOf(2) : defaultIdx;
       return target >= 0 ? target : idx;
     });
   }, []);
