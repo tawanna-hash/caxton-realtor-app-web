@@ -265,7 +265,7 @@ function ComingSoonModal({
       <div
         ref={ref}
         tabIndex={-1}
-        className="bg-gray-900 border border-white/20 max-w-sm w-full p-6 rounded outline-none"
+        className="bg-gray-900 border border-white/20 max-w-sm w-full p-6 rounded-md outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <p className="text-sm uppercase tracking-[0.2em] text-white/80 font-medium mb-3">
@@ -276,7 +276,7 @@ function ComingSoonModal({
         </p>
         <button
           onClick={onClose}
-          className="w-full py-2.5 bg-white/10 text-white text-sm uppercase tracking-wider rounded"
+          className="w-full py-2.5 bg-white/10 text-white text-sm uppercase tracking-wider rounded-md"
         >
           Close
         </button>

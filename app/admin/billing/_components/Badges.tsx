@@ -21,7 +21,7 @@ export function Kpi({
     : '';
   return (
     <div
-      className={`rounded-xl border border-gray-200 bg-white p-4 ${borderCls} ${onClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
+      className={`rounded-md border border-gray-200 bg-white p-4 ${borderCls} ${onClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
       onClick={onClick}
     >
       <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">{label}</div>
@@ -48,7 +48,7 @@ export function DaysBadge({ days }: { days: number | null }) {
       ? 'bg-amber-100 text-amber-700 border-amber-300'
       : 'bg-emerald-100 text-emerald-700 border-emerald-300';
   const label = days < 0 ? `${Math.abs(days)}d overdue` : `${days}d left`;
-  return <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold border ${cls}`}>{label}</span>;
+  return <span className={`inline-block px-2 py-0.5 rounded-md text-xs font-semibold border ${cls}`}>{label}</span>;
 }
 
 export function ReminderStatusBadge({ status }: { status: string }) {

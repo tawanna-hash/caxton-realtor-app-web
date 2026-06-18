@@ -21,7 +21,7 @@ export default async function SignPage({ params }: PageProps) {
   if (!parsed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="bg-white rounded-xl border border-red-200 p-10 max-w-md text-center">
+        <div className="bg-white rounded-md border border-red-200 p-10 max-w-md text-center">
           <div className="text-3xl mb-3">⚠️</div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">
             Link expired or invalid
@@ -54,7 +54,7 @@ export default async function SignPage({ params }: PageProps) {
   if (ag.status === 'signed' || ag.status === 'active') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="bg-white rounded-xl border border-emerald-200 p-10 max-w-md text-center">
+        <div className="bg-white rounded-md border border-emerald-200 p-10 max-w-md text-center">
           <div className="text-4xl mb-3">✓</div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">
             Already signed
@@ -65,7 +65,7 @@ export default async function SignPage({ params }: PageProps) {
           </p>
           <a
             href={`/api/admin/agreements/${agreementId}/pdf`}
-            className="inline-block mt-4 px-4 py-2 rounded bg-[#dc2626] text-white text-sm hover:opacity-90"
+            className="inline-block mt-4 px-4 py-2 rounded-md bg-[#dc2626] text-white text-sm hover:opacity-90"
           >
             Download PDF
           </a>

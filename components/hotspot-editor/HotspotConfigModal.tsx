@@ -122,7 +122,7 @@ export default function HotspotConfigModal({
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full my-8 outline-none"
+        className="bg-white rounded-md shadow-xl max-w-2xl w-full my-8 outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -145,7 +145,7 @@ export default function HotspotConfigModal({
                   key={t}
                   type="button"
                   onClick={() => changeType(t)}
-                  className={`px-3 py-2 text-sm rounded border ${type === t ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
+                  className={`px-3 py-2 text-sm rounded-md border ${type === t ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
                 >
                   {TYPE_LABELS[t]}
                 </button>
@@ -167,7 +167,7 @@ export default function HotspotConfigModal({
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 placeholder="e.g. Chicago Title — Stacy Turchiano"
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
               />
               <p className="text-xs text-gray-500 mt-1">Shown to admins and as aria-label for accessibility. Not displayed to public readers.</p>
             </div>
@@ -194,7 +194,7 @@ export default function HotspotConfigModal({
           </div>
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-800">
               {error}
             </div>
           )}
@@ -205,7 +205,7 @@ export default function HotspotConfigModal({
           <button
             type="button"
             onClick={onRequestDelete}
-            className="px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 rounded"
+            className="px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 rounded-md"
           >
             Delete hotspot
           </button>
@@ -213,7 +213,7 @@ export default function HotspotConfigModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
@@ -221,7 +221,7 @@ export default function HotspotConfigModal({
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded hover:bg-gray-800 disabled:opacity-40"
+              className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 disabled:opacity-40"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -334,7 +334,7 @@ function AdvertiserPicker({
         value={selectedId === null ? '' : String(selectedId)}
         onChange={(e) => handleSelect(e.target.value)}
         disabled={loading}
-        className="w-full px-3 py-2 text-sm border border-gray-300 rounded bg-white"
+        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white"
       >
         <option value="">— None —</option>
         {advertisers.map((a) => (
@@ -364,7 +364,7 @@ function AdvertiserPicker({
       </div>
 
       {showNewForm && (
-        <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded space-y-2">
+        <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md space-y-2">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
             <input
@@ -372,7 +372,7 @@ function AdvertiserPicker({
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="e.g. Chicago Title"
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
               autoFocus
             />
           </div>
@@ -382,7 +382,7 @@ function AdvertiserPicker({
               <select
                 value={newPublication}
                 onChange={(e) => setNewPublication(e.target.value as 'austin' | 'san_antonio' | 'both')}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded bg-white"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md bg-white"
               >
                 <option value="austin">RealtyLine Austin</option>
                 <option value="san_antonio">Newsline San Antonio</option>
@@ -396,7 +396,7 @@ function AdvertiserPicker({
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
                 placeholder="ads@example.com"
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
               />
             </div>
           </div>
@@ -404,7 +404,7 @@ function AdvertiserPicker({
             <button
               type="button"
               onClick={() => { setShowNewForm(false); setNewName(''); setNewEmail(''); }}
-              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
@@ -412,7 +412,7 @@ function AdvertiserPicker({
               type="button"
               onClick={handleCreate}
               disabled={creating || !newName.trim()}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded hover:bg-gray-800 disabled:opacity-40"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 disabled:opacity-40"
             >
               {creating ? 'Creating…' : 'Create + link'}
             </button>
@@ -445,14 +445,14 @@ function TypeSpecificForm({
             value={config.url}
             onChange={(e) => onChange({ ...config, url: e.target.value })}
             placeholder="https://example.com"
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
           />
         </Field>
         <Field label="Open in">
           <select
             value={config.open_in ?? 'new_tab'}
             onChange={(e) => onChange({ ...config, open_in: e.target.value as 'new_tab' | 'same_tab' })}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
           >
             <option value="new_tab">New tab (recommended)</option>
             <option value="same_tab">Same tab</option>
@@ -471,7 +471,7 @@ function TypeSpecificForm({
             value={config.url}
             onChange={(e) => onChange({ ...config, url: e.target.value })}
             placeholder="https://matrix.unlockmls.com/..."
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
           />
         </Field>
         <Field label="Address (optional)">
@@ -479,7 +479,7 @@ function TypeSpecificForm({
             type="text"
             value={config.address ?? ''}
             onChange={(e) => onChange({ ...config, address: e.target.value })}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
           />
         </Field>
         <Field label="Price (optional)">
@@ -488,7 +488,7 @@ function TypeSpecificForm({
             value={config.price ?? ''}
             onChange={(e) => onChange({ ...config, price: e.target.value })}
             placeholder="$1,250,000"
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
           />
         </Field>
       </div>
@@ -504,7 +504,7 @@ function TypeSpecificForm({
             value={config.number}
             onChange={(e) => onChange({ ...config, number: e.target.value })}
             placeholder="+15125551234"
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
           />
           <p className="text-xs text-gray-500 mt-1">Use E.164 format (+1 followed by digits) for best results on all devices.</p>
         </Field>
@@ -513,7 +513,7 @@ function TypeSpecificForm({
             type="text"
             value={config.label ?? ''}
             onChange={(e) => onChange({ ...config, label: e.target.value })}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
           />
         </Field>
       </div>
@@ -529,7 +529,7 @@ function TypeSpecificForm({
             value={config.address}
             onChange={(e) => onChange({ ...config, address: e.target.value })}
             placeholder="agent@example.com"
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
           />
         </Field>
         <Field label="Subject (optional)">
@@ -537,7 +537,7 @@ function TypeSpecificForm({
             type="text"
             value={config.subject ?? ''}
             onChange={(e) => onChange({ ...config, subject: e.target.value })}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
           />
         </Field>
         <Field label="Body (optional)">
@@ -545,7 +545,7 @@ function TypeSpecificForm({
             value={config.body ?? ''}
             onChange={(e) => onChange({ ...config, body: e.target.value })}
             rows={3}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
           />
         </Field>
       </div>
@@ -556,18 +556,18 @@ function TypeSpecificForm({
     return (
       <div className="space-y-3">
         <Field label="Source">
-          <div className="inline-flex rounded border border-gray-300">
+          <div className="inline-flex rounded-md border border-gray-300">
             <button
               type="button"
               onClick={() => onChange({ ...config, source: 'embed', upload_url: undefined })}
-              className={`px-3 py-1.5 text-sm rounded-l ${config.source === 'embed' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'}`}
+              className={`px-3 py-1.5 text-sm rounded-md ${config.source === 'embed' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'}`}
             >
               Embed URL
             </button>
             <button
               type="button"
               onClick={() => onChange({ ...config, source: 'upload', embed_url: undefined })}
-              className={`px-3 py-1.5 text-sm rounded-r border-l border-gray-300 ${config.source === 'upload' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'}`}
+              className={`px-3 py-1.5 text-sm rounded-md border-l border-gray-300 ${config.source === 'upload' ? 'bg-gray-900 text-white' : 'bg-white text-gray-700'}`}
             >
               Upload file
             </button>
@@ -581,7 +581,7 @@ function TypeSpecificForm({
               value={config.embed_url ?? ''}
               onChange={(e) => onChange({ ...config, embed_url: e.target.value })}
               placeholder={type === 'video' ? 'https://www.youtube.com/embed/...' : 'https://soundcloud.com/...'}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
             />
             <p className="text-xs text-gray-500 mt-1">
               {type === 'video'
@@ -621,11 +621,11 @@ function TypeSpecificForm({
             {config.images.map((img, i) => (
               <div key={i} className="relative group">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={img.url} alt="" className="w-full h-20 object-cover rounded border border-gray-200" />
+                <img src={img.url} alt="" className="w-full h-20 object-cover rounded-md border border-gray-200" />
                 <button
                   type="button"
                   onClick={() => onChange({ ...config, images: config.images.filter((_, j) => j !== i) })}
-                  className="absolute top-1 right-1 px-1.5 py-0.5 text-xs bg-white border border-gray-300 rounded opacity-0 group-hover:opacity-100"
+                  className="absolute top-1 right-1 px-1.5 py-0.5 text-xs bg-white border border-gray-300 rounded-md opacity-0 group-hover:opacity-100"
                 >
                   Remove
                 </button>
@@ -665,7 +665,7 @@ function TypeSpecificForm({
             value={config.form_id ?? ''}
             onChange={(e) => onChange({ ...config, form_id: e.target.value })}
             placeholder="lead-capture-may-2026"
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
           />
         </Field>
       </div>
@@ -689,14 +689,14 @@ function TypeSpecificForm({
             type="text"
             value={config.caption ?? ''}
             onChange={(e) => onChange({ ...config, caption: e.target.value })}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
           />
         </Field>
         <Field label="Animation">
           <select
             value={config.animation ?? 'fade'}
             onChange={(e) => onChange({ ...config, animation: e.target.value as 'fade' | 'slide' | 'scale' })}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md"
           >
             <option value="fade">Fade</option>
             <option value="slide">Slide</option>
@@ -777,7 +777,7 @@ function BlobUpload({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
-          className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-40"
+          className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40"
         >
           {uploading ? `Uploading… ${progress}%` : 'Choose file'}
         </button>

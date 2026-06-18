@@ -59,7 +59,7 @@ export default async function PortalHome() {
         <Card label="Active agreements" value={agreements[0]?.n ?? 0} />
       </section>
 
-      <section className="rounded-xl border border-gray-200 bg-white p-6">
+      <section className="rounded-md border border-gray-200 bg-white p-6">
         <h2 className="font-serif text-xl text-gray-900 mb-3">
           What you can do here
         </h2>
@@ -82,7 +82,7 @@ function Card({ label, value, sub, href, tone = 'neutral' }: {
 }) {
   const ring = tone === 'attention' ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white';
   const body = (
-    <div className={`rounded-xl border p-4 ${ring}`}>
+    <div className={`rounded-md border p-4 ${ring}`}>
       <div className="text-xs uppercase tracking-wider text-gray-500">{label}</div>
       <div className="font-serif text-3xl text-gray-900 mt-1">
         {value}

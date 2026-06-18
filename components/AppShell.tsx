@@ -208,7 +208,7 @@ export default function AppShell({
           <button
             onClick={() => setDrawerOpen(true)}
             aria-label="Open menu"
-            className={`p-2 rounded-lg transition lg:hidden ${
+            className={`p-2 rounded-md transition lg:hidden ${
               isAdmin
                 ? 'text-white/70 hover:text-white hover:bg-white/10'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-gray-200'
@@ -227,7 +227,7 @@ export default function AppShell({
               {isAdmin ? 'Realty News Now Admin' : 'Realty News Now'}
             </Link>
             {isAdmin ? (
-              <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-white/60">
+              <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/10 text-white/60">
                 Internal
               </span>
             ) : null}
@@ -295,7 +295,7 @@ export default function AppShell({
                       {isOpen && (
                         <div
                           role="menu"
-                          className={`absolute ${menuAlign} mt-1.5 min-w-[16rem] rounded-lg bg-white text-gray-900 shadow-lg border border-gray-200 py-1.5 z-50`}
+                          className={`absolute ${menuAlign} mt-1.5 min-w-[16rem] rounded-md bg-white text-gray-900 shadow-lg border border-gray-200 py-1.5 z-50`}
                         >
                           <div className="px-3 pt-1.5 pb-1 text-[10px] uppercase tracking-[0.15em] text-gray-400 font-semibold">
                             {group.label}
@@ -368,7 +368,7 @@ export default function AppShell({
               <button
                 onClick={handleLogout}
                 aria-label="Log out"
-                className={`p-2 rounded-lg transition ${
+                className={`p-2 rounded-md transition ${
                   isAdmin
                     ? 'text-white/60 hover:text-white hover:bg-white/10'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'

@@ -171,7 +171,7 @@ function EditableField({
         value={value}
         onChange={(e) => onChange(name, e.target.value)}
         placeholder={placeholder}
-        className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#021D40] focus:border-[#021D40]"
+        className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#021D40] focus:border-[#021D40]"
       />
     </div>
   );
@@ -192,7 +192,7 @@ function EditableSelect({
       <select
         value={value}
         onChange={(e) => onChange(name, e.target.value)}
-        className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#021D40] focus:border-[#021D40]"
+        className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#021D40] focus:border-[#021D40]"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -204,7 +204,7 @@ function EditableSelect({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white border border-gray-200 rounded p-5 mb-4">
+    <section className="bg-white border border-gray-200 rounded-md p-5 mb-4">
       <h2 className="text-sm font-semibold text-[#021D40] uppercase tracking-wide mb-3">{title}</h2>
       <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6">{children}</dl>
     </section>
@@ -347,7 +347,7 @@ return (
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={enterEdit}
-              className="text-sm font-medium px-4 py-1.5 rounded bg-[#021D40] text-white hover:bg-[#021D40]"
+              className="text-sm font-medium px-4 py-1.5 rounded-md bg-[#021D40] text-white hover:bg-[#021D40]"
             >
               Edit
             </button>
@@ -365,7 +365,7 @@ return (
             <button
               onClick={save}
               disabled={saving}
-              className="text-sm font-medium px-4 py-1.5 rounded bg-[#021D40] text-white hover:bg-[#021D40] disabled:opacity-50"
+              className="text-sm font-medium px-4 py-1.5 rounded-md bg-[#021D40] text-white hover:bg-[#021D40] disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -374,7 +374,7 @@ return (
       </div>
 
       {actionMsg && (
-        <div className={`mb-4 px-4 py-2 rounded text-sm border ${
+        <div className={`mb-4 px-4 py-2 rounded-md text-sm border ${
           actionMsg.kind === 'ok'
             ? 'bg-green-50 border-green-200 text-green-800'
             : 'bg-red-50 border-red-200 text-red-800'
@@ -390,7 +390,7 @@ return (
 
       {loading && <div className="text-sm text-gray-500 py-8">Loading subscriber...</div>}
       {error && (
-        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-4">
+        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-4">
           Error: {error}
         </div>
       )}
@@ -404,7 +404,7 @@ return (
             <p className="text-sm text-gray-500 mt-1">{fmtVal(sub.email)}</p>
             <p className="text-xs text-gray-400 mt-1 font-mono">{sub.id}</p>
             {sub.status === 'inactive' && (
-              <span className="inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800 border border-yellow-200">
+              <span className="inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-md bg-yellow-100 text-yellow-800 border border-yellow-200">
                 INACTIVE
               </span>
             )}
@@ -549,7 +549,7 @@ return (
           </Section>
 
           {!editing && (
-            <section className="bg-white border border-gray-200 rounded p-5 mt-8">
+            <section className="bg-white border border-gray-200 rounded-md p-5 mt-8">
               <h2 className="text-sm font-semibold text-[#021D40] uppercase tracking-wide mb-4">Actions</h2>
 
               <div className="space-y-4">
@@ -570,7 +570,7 @@ return (
                       <button
                         onClick={doSendMagicLink}
                         disabled={sendingLink}
-                        className="text-sm font-medium px-3 py-1.5 rounded bg-[#021D40] text-white hover:bg-[#021D40] disabled:opacity-50"
+                        className="text-sm font-medium px-3 py-1.5 rounded-md bg-[#021D40] text-white hover:bg-[#021D40] disabled:opacity-50"
                       >
                         {sendingLink ? 'Sending…' : 'Confirm send'}
                       </button>
@@ -607,7 +607,7 @@ return (
                       <button
                         onClick={doDeactivate}
                         disabled={deactivating}
-                        className="text-sm font-medium px-3 py-1.5 rounded bg-yellow-600 text-white hover:bg-yellow-700 disabled:opacity-50"
+                        className="text-sm font-medium px-3 py-1.5 rounded-md bg-yellow-600 text-white hover:bg-yellow-700 disabled:opacity-50"
                       >
                         {deactivating ? 'Deactivating…' : 'Confirm deactivate'}
                       </button>
@@ -632,7 +632,7 @@ return (
                   </div>
                   <button
                     onClick={() => { setDeleteModalOpen(true); setDeleteConfirmText(''); setActionMsg(null); }}
-                    className="text-sm font-medium px-3 py-1.5 rounded border border-[#dc2626] text-[#dc2626] hover:bg-red-50"
+                    className="text-sm font-medium px-3 py-1.5 rounded-md border border-[#dc2626] text-[#dc2626] hover:bg-red-50"
                   >
                     Delete…
                   </button>
@@ -645,7 +645,7 @@ return (
 
       {deleteModalOpen && sub && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+          <div className="bg-white rounded-md max-w-md w-full p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-[#dc2626]">Delete this subscriber?</h3>
             <p className="text-sm text-gray-700 mt-2">
               This will hard-delete <span className="font-medium">{sub.email}</span> and cascade to their
@@ -661,7 +661,7 @@ return (
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder={sub.email}
               autoFocus
-              className="mt-2 block w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#dc2626] focus:border-[#dc2626]"
+              className="mt-2 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#dc2626] focus:border-[#dc2626]"
             />
             <div className="mt-5 flex justify-end gap-2">
               <button
@@ -674,7 +674,7 @@ return (
               <button
                 onClick={doDelete}
                 disabled={!deleteEnabled || deleting}
-                className="text-sm font-medium px-4 py-1.5 rounded bg-[#dc2626] text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="text-sm font-medium px-4 py-1.5 rounded-md bg-[#dc2626] text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {deleting ? 'Deleting…' : 'Delete subscriber'}
               </button>

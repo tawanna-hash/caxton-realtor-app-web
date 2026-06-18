@@ -347,7 +347,7 @@ export default function SocialClient() {
       </div>
 
       {/* ────────── Add form ────────── */}
-      <section className="mb-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+      <section className="mb-8 rounded-md border border-gray-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-medium text-gray-900 mb-3">Add a post</h2>
         <form onSubmit={handleAdd} className="space-y-3">
           <div>
@@ -497,7 +497,7 @@ export default function SocialClient() {
                 type="checkbox"
                 checked={isOpenHouse}
                 onChange={(e) => setIsOpenHouse(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded-md border-gray-300"
               />
               Open House (pins to top of feed)
             </label>
@@ -573,7 +573,7 @@ function SocialList({ title, posts, onPatch, onDelete }: ListProps) {
     return (
       <section className="mb-8">
         <h2 className="text-lg font-medium text-gray-900 mb-3">{title}</h2>
-        <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center">
+        <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center">
           <p className="text-sm text-gray-700 font-medium mb-1">No posts curated yet</p>
           <p className="text-xs text-gray-500">
             Paste a Facebook Page or Group post URL above to add one. Reels and personal-profile posts aren&apos;t supported.
@@ -595,7 +595,7 @@ function SocialList({ title, posts, onPatch, onDelete }: ListProps) {
           return (
             <article
               key={p.id}
-              className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm flex gap-4"
+              className="rounded-md border border-gray-200 bg-white p-4 shadow-sm flex gap-4"
             >
               {p.image_url ? (
                 <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md bg-gray-100">
@@ -621,14 +621,14 @@ function SocialList({ title, posts, onPatch, onDelete }: ListProps) {
                       <span
                         className={
                           isGroup
-                            ? 'inline-flex items-center rounded-sm bg-amber-100 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.15em] font-semibold text-amber-800'
-                            : 'inline-flex items-center rounded-sm bg-blue-100 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.15em] font-semibold text-[#1877F2]'
+                            ? 'inline-flex items-center rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.15em] font-semibold text-amber-800'
+                            : 'inline-flex items-center rounded-md bg-blue-100 px-1.5 py-0.5 text-[10px] uppercase tracking-[0.15em] font-semibold text-[#1877F2]'
                         }
                       >
                         {isGroup ? 'Group · Harvested' : 'Page · Auto'}
                       </span>
                       {p.is_open_house && (
-                        <span className="inline-flex items-center rounded-sm bg-[#C8A75B] px-1.5 py-0.5 text-[10px] uppercase tracking-[0.15em] font-semibold text-white">
+                        <span className="inline-flex items-center rounded-md bg-[#C8A75B] px-1.5 py-0.5 text-[10px] uppercase tracking-[0.15em] font-semibold text-white">
                           Open House
                         </span>
                       )}
@@ -667,7 +667,7 @@ function SocialList({ title, posts, onPatch, onDelete }: ListProps) {
                       onChange={(e) =>
                         onPatch(p.id, { is_active: e.target.checked })
                       }
-                      className="h-3.5 w-3.5 rounded border-gray-300"
+                      className="h-3.5 w-3.5 rounded-md border-gray-300"
                     />
                     Active
                   </label>
@@ -679,7 +679,7 @@ function SocialList({ title, posts, onPatch, onDelete }: ListProps) {
                       onChange={(e) =>
                         onPatch(p.id, { is_open_house: e.target.checked })
                       }
-                      className="h-3.5 w-3.5 rounded border-gray-300"
+                      className="h-3.5 w-3.5 rounded-md border-gray-300"
                     />
                     Open House
                   </label>
@@ -691,7 +691,7 @@ function SocialList({ title, posts, onPatch, onDelete }: ListProps) {
                       onChange={(e) =>
                         onPatch(p.id, { pub: e.target.value as SocialPub })
                       }
-                      className="rounded border border-gray-300 px-1.5 py-0.5 text-xs"
+                      className="rounded-md border border-gray-300 px-1.5 py-0.5 text-xs"
                     >
                       <option value="both">Both</option>
                       <option value="realtyline">RealtyLine</option>
@@ -710,7 +710,7 @@ function SocialList({ title, posts, onPatch, onDelete }: ListProps) {
                           display_order: Number(e.target.value) || 0,
                         })
                       }
-                      className="w-16 rounded border border-gray-300 px-1.5 py-0.5 text-xs"
+                      className="w-16 rounded-md border border-gray-300 px-1.5 py-0.5 text-xs"
                     />
                   </div>
 

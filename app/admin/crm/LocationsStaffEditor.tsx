@@ -13,7 +13,7 @@ import type { AdvertiserLocation, AdvertiserStaff } from '@/lib/advertisers';
 import { formatPhoneInput } from '@/lib/format-phone';
 import AdvertiserImageUploader from '@/components/AdvertiserImageUploader';
 
-const INPUT = 'w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
+const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
 
 type Props = {
   advertiserId: number;
@@ -413,7 +413,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search locations & staff — name, title, city, email, phone…"
-            className="w-full pl-9 pr-9 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-9 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {search && (
             <button
@@ -432,7 +432,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
       {/* Sync-from-website affordance (only shown when a parser exists
           for this advertiser's domain). */}
       {syncSource && (
-        <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 flex flex-wrap items-center gap-3">
+        <div className="rounded-md border border-gray-200 bg-white px-4 py-3 flex flex-wrap items-center gap-3">
           <div className="flex-1 min-w-[200px]">
             <div className="text-sm font-medium text-gray-800">
               Sync from {syncSource}
@@ -447,7 +447,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             type="button"
             onClick={handleWebsiteSync}
             disabled={syncing}
-            className={`px-3 py-1.5 rounded text-sm font-medium border transition-colors ${
+            className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
               syncing
                 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-wait'
                 : 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
@@ -459,7 +459,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
       )}
       {syncMsg && (
         <div
-          className={`text-xs px-3 py-2 rounded ${
+          className={`text-xs px-3 py-2 rounded-md ${
             syncMsg.startsWith('Sync failed')
               ? 'bg-red-50 text-red-700 border border-red-200'
               : 'bg-blue-50 text-blue-700 border border-blue-200'
@@ -493,7 +493,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             onPickImportFile();
           }
         }}
-        className={`rounded-lg border-2 border-dashed px-4 py-5 text-center cursor-pointer transition-colors ${
+        className={`rounded-md border-2 border-dashed px-4 py-5 text-center cursor-pointer transition-colors ${
           importing
             ? 'border-gray-200 bg-gray-100 cursor-wait'
             : dragOver
@@ -529,7 +529,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
       </div>
       {importMsg && (
         <div
-          className={`text-xs px-3 py-2 rounded ${
+          className={`text-xs px-3 py-2 rounded-md ${
             importMsg.startsWith('Import failed')
               ? 'bg-red-50 text-red-700 border border-red-200'
               : 'bg-blue-50 text-blue-700 border border-blue-200'
@@ -548,7 +548,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
           <button
             onClick={addLocation}
             type="button"
-            className="text-xs px-2 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="text-xs px-2 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
           >
             + Add location
           </button>
@@ -570,7 +570,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
           {filteredLocations.map((loc) => (
             <div
               key={loc.id}
-              className="rounded-lg border border-gray-200 bg-gray-50/50 p-3 space-y-2"
+              className="rounded-md border border-gray-200 bg-gray-50/50 p-3 space-y-2"
             >
               <div className="flex items-center gap-2">
                 <input
@@ -675,7 +675,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
           <button
             onClick={addStaff}
             type="button"
-            className="text-xs px-2 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="text-xs px-2 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
           >
             + Add staff
           </button>
@@ -697,7 +697,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
           {filteredStaff.map((s) => (
             <div
               key={s.id}
-              className="rounded-lg border border-gray-200 bg-gray-50/50 p-3 space-y-2"
+              className="rounded-md border border-gray-200 bg-gray-50/50 p-3 space-y-2"
             >
               <div className="flex items-center gap-2">
                 <input
@@ -768,7 +768,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
                           key={loc.id}
                           type="button"
                           onClick={() => toggleStaffLocation(s.id, loc.id)}
-                          className={`text-xs px-2 py-1 rounded border ${
+                          className={`text-xs px-2 py-1 rounded-md border ${
                             checked
                               ? 'bg-blue-600 text-white border-blue-600'
                               : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'

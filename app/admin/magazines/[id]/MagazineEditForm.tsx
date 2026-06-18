@@ -246,7 +246,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
         </PageTitle>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-800 px-3 py-2 rounded text-sm mb-4">
+          <div className="bg-red-50 border border-red-200 text-red-800 px-3 py-2 rounded-md text-sm mb-4">
             {error}
           </div>
         )}
@@ -325,9 +325,9 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
           <div className="flex items-start gap-4">
             {coverUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={coverUrl} alt="" className="w-24 h-32 object-cover bg-gray-100 rounded" />
+              <img src={coverUrl} alt="" className="w-24 h-32 object-cover bg-gray-100 rounded-md" />
             ) : (
-              <div className="w-24 h-32 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-xs">No cover</div>
+              <div className="w-24 h-32 bg-gray-100 rounded-md flex items-center justify-center text-gray-300 text-xs">No cover</div>
             )}
             <div className="flex-1">
               <input
@@ -368,7 +368,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
             <button
               onClick={handleReExtract}
               disabled={busy !== null || !readerUrl}
-              className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-900 px-3 py-1.5 rounded disabled:opacity-50 font-medium"
+              className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-900 px-3 py-1.5 rounded-md disabled:opacity-50 font-medium"
             >
               {busy === 'extract' ? 'Extracting…' : hasTexts ? 'Re-extract page text' : 'Extract page text from PDF'}
             </button>
@@ -404,9 +404,9 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
           ) : (
             <ul className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {pageUrls.map((url, idx) => (
-                <li key={url + idx} className="border border-gray-200 rounded p-2 text-xs">
+                <li key={url + idx} className="border border-gray-200 rounded-md p-2 text-xs">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="w-full h-32 object-cover bg-gray-100 rounded mb-1" />
+                  <img src={url} alt="" className="w-full h-32 object-cover bg-gray-100 rounded-md mb-1" />
                   <p className="text-gray-500">Page {idx + 1}</p>
                   <div className="flex items-center justify-between mt-1">
                     <div className="flex gap-1">

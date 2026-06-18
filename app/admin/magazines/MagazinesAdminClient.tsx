@@ -160,7 +160,7 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded mb-4">
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md mb-4">
             {error}
           </div>
         )}
@@ -229,9 +229,9 @@ function Column({
             >
               {m.cover_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={m.cover_url} alt="" className="w-32 h-40 object-cover bg-gray-100 rounded flex-shrink-0 border border-gray-200" />
+                <img src={m.cover_url} alt="" className="w-32 h-40 object-cover bg-gray-100 rounded-md flex-shrink-0 border border-gray-200" />
               ) : (
-                <div className="w-32 h-40 bg-gray-100 rounded flex items-center justify-center text-gray-300 text-xs flex-shrink-0 border border-gray-200">
+                <div className="w-32 h-40 bg-gray-100 rounded-md flex items-center justify-center text-gray-300 text-xs flex-shrink-0 border border-gray-200">
                   No cover
                 </div>
               )}
@@ -286,7 +286,7 @@ function Column({
                             type="button"
                             onClick={() => onGenerateGif(m, variant, !!url)}
                             disabled={busy || !hasPages}
-                            className="text-xs px-2.5 py-1 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="text-xs px-2.5 py-1 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                             title={!hasPages ? 'Upload pages first' : url ? 'Regenerate GIF' : 'Generate GIF'}
                           >
                             {busy ? 'Generating…' : url ? `${VARIANT_LABEL[variant]} · Regenerate` : VARIANT_LABEL[variant]}
@@ -305,7 +305,7 @@ function Column({
                               <button
                                 type="button"
                                 onClick={() => onCopy(m.id, variant, url)}
-                                className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded"
+                                className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md"
                               >
                                 {copied ? 'Copied' : 'Copy link'}
                               </button>

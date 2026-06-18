@@ -256,7 +256,7 @@ function KindBadge({ kind }: { kind: 'listing' | 'promotion' }) {
   return (
     <span
       className={
-        'inline-block text-xs font-medium px-2 py-0.5 rounded ' + styles
+        'inline-block text-xs font-medium px-2 py-0.5 rounded-md ' + styles
       }
     >
       {kind === 'listing' ? 'Listing' : 'Promotion'}

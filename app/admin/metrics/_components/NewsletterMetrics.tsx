@@ -28,7 +28,7 @@ function MiniBars({ series }: { series: Array<{ date: string; count: number }> }
         return (
           <div
             key={s.date}
-            className="flex-1 bg-[#021D40]/80 rounded-sm"
+            className="flex-1 bg-[#021D40]/80 rounded-md"
             style={{ height: `${Math.max(2, pct)}%` }}
             title={`${s.date}: ${s.count}`}
           />

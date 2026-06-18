@@ -183,19 +183,19 @@ export default function PasskeysPanel({ accentColor = '#021D40' }: Props) {
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg p-5 bg-white">
+    <div className="border border-gray-200 rounded-md p-5 bg-white">
       <h3 className="text-base font-semibold text-gray-900 mb-1">Passkeys</h3>
       <p className="text-sm text-gray-500 font-light mb-4">
         Sign in faster with your fingerprint, face, or device PIN — no email needed.
       </p>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded px-3 py-2 mb-3">
+        <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-md px-3 py-2 mb-3">
           {error}
         </div>
       )}
       {info && (
-        <div className="text-sm text-green-700 bg-green-50 border border-green-100 rounded px-3 py-2 mb-3">
+        <div className="text-sm text-green-700 bg-green-50 border border-green-100 rounded-md px-3 py-2 mb-3">
           {info}
         </div>
       )}
@@ -207,13 +207,13 @@ export default function PasskeysPanel({ accentColor = '#021D40' }: Props) {
           placeholder={defaultDeviceLabel()}
           value={deviceName}
           onChange={(e) => setDeviceName(e.target.value)}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm text-gray-900"
+          className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm text-gray-900"
           disabled={enrolling}
         />
         <button
           onClick={handleEnroll}
           disabled={enrolling}
-          className="mt-3 w-full py-3 text-sm font-medium uppercase tracking-wider text-white rounded disabled:opacity-50"
+          className="mt-3 w-full py-3 text-sm font-medium uppercase tracking-wider text-white rounded-md disabled:opacity-50"
           style={{ backgroundColor: accentColor }}
         >
           {enrolling ? 'Setting up…' : 'Add a passkey'}

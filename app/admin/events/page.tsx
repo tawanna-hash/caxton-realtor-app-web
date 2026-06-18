@@ -184,7 +184,7 @@ export default function EventsPage() {
     <button
       key={key}
       onClick={() => setFilter(key)}
-      className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors ${
+      className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
         filter === key
           ? 'bg-[#021D40] text-white border-[#021D40]'
           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
@@ -213,7 +213,7 @@ export default function EventsPage() {
                 ? 'No expired events to hide'
                 : `Hide ${expiredVisibleCount} event${expiredVisibleCount === 1 ? '' : 's'} whose start date is in the past`
             }
-            className="px-4 py-2 bg-white text-[#021D40] text-sm font-medium rounded border border-[#021D40] hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-white text-[#021D40] text-sm font-medium rounded-md border border-[#021D40] hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {bulkBusy
               ? 'Hiding\u2026'
@@ -221,7 +221,7 @@ export default function EventsPage() {
           </button>
           <Link
             href="/admin/events/new"
-            className="px-4 py-2 bg-[#021D40] text-white text-sm font-medium rounded hover:bg-[#021D40] transition-colors"
+            className="px-4 py-2 bg-[#021D40] text-white text-sm font-medium rounded-md hover:bg-[#021D40] transition-colors"
           >
             + New Event
           </Link>
@@ -259,7 +259,7 @@ export default function EventsPage() {
       {loading ? (
         <div className="text-sm text-gray-500 py-12 text-center">Loading events...</div>
       ) : items.length === 0 ? (
-        <div className="text-sm text-gray-500 py-12 text-center bg-white border border-gray-200 rounded">
+        <div className="text-sm text-gray-500 py-12 text-center bg-white border border-gray-200 rounded-md">
           No events found. <Link href="/admin/events/new" className="text-[#021D40] underline">Create one</Link>.
         </div>
       ) : (
@@ -292,7 +292,7 @@ export default function EventsPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded border ${PUB_STYLES[ev.publication] || ''}`}>
+                      <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md border ${PUB_STYLES[ev.publication] || ''}`}>
                         {PUBLICATION_FILTER_LABELS[ev.publication] || ev.publication}
                       </span>
                     </td>

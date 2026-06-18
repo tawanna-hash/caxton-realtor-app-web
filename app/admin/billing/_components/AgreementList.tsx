@@ -73,11 +73,11 @@ export function AgreementList({
   onEmail?: (r: AgreementWithAdvertiser) => void;
 }) {
   if (rows.length === 0) {
-    return <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-500">No agreements yet.</div>;
+    return <div className="rounded-md border border-gray-200 bg-white p-10 text-center text-sm text-gray-500">No agreements yet.</div>;
   }
   const buckets = groupRows(rows);
   return (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+    <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
       {/* Column header bar — shown once at the top, not per bucket */}
       <div className="grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
         <div className="col-span-3">Advertiser</div>
@@ -128,14 +128,14 @@ export function AgreementList({
                   <button
                     title="Send signing link email"
                     onClick={() => onEmail?.(r)}
-                    className="p-1 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
+                    className="p-1 text-xs rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50"
                   >✉</button>
                   <a
                     href={`/api/admin/agreements/${r.id}/pdf`}
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Download PDF"
-                    className="p-1 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
+                    className="p-1 text-xs rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50"
                   >PDF</a>
                 </div>
               </div>

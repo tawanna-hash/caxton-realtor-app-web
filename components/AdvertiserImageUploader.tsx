@@ -167,7 +167,7 @@ export default function AdvertiserImageUploader({
     }
   };
 
-  const rounded = shape === 'circle' ? 'rounded-full' : 'rounded-md';
+  const roundedClass = shape === 'circle' ? 'rounded-full' : 'rounded-md';
 
   return (
     <div className="flex items-start gap-3">
@@ -188,7 +188,7 @@ export default function AdvertiserImageUploader({
         }}
       />
       <div
-        className={`relative w-20 h-20 flex-shrink-0 border border-gray-300 bg-gray-50 overflow-hidden ${rounded}`}
+        className={`relative w-20 h-20 flex-shrink-0 border border-gray-300 bg-gray-50 overflow-hidden ${roundedClass}`}
       >
         {value ? (
           isPreviewableImage(value) ? (
@@ -230,7 +230,7 @@ export default function AdvertiserImageUploader({
             type="button"
             onClick={handlePick}
             disabled={uploading}
-            className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
+            className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
               uploading
                 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-wait'
                 : 'bg-blue-600 text-white border-blue-700 hover:bg-blue-700'
@@ -243,7 +243,7 @@ export default function AdvertiserImageUploader({
               type="button"
               onClick={() => onChange('')}
               disabled={uploading}
-              className="px-2.5 py-1 rounded text-xs font-medium border border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="px-2.5 py-1 rounded-md text-xs font-medium border border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               Remove
             </button>
@@ -253,7 +253,7 @@ export default function AdvertiserImageUploader({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder="…or paste an image URL (https://)"
-          className="w-full text-xs border border-gray-300 rounded px-2 py-1 placeholder:text-gray-400"
+          className="w-full text-xs border border-gray-300 rounded-md px-2 py-1 placeholder:text-gray-400"
         />
       </div>
     </div>

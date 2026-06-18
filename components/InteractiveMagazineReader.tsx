@@ -15,7 +15,7 @@
 //   stale-page bug where the right canvas could get stuck on a neighbor.
 // - Per-side latest-page guard refs as a second layer of defense.
 // - DPR capped at 2 (was forced minimum 2) for ~2x mobile perf win.
-// - Bitmap dims rounded and CSS dims derived from them, no sub-pixel blur.
+// - Bitmap dims rounded-md and CSS dims derived from them, no sub-pixel blur.
 // - Touch gestures: swipe to nav, pinch to zoom, double-tap to toggle zoom,
 //   one-finger drag to pan when zoomed in. Single tap (no drag) toggles chrome.
 // - Focus trap + focus restore + role=dialog + aria-modal + aria-live page
@@ -1171,7 +1171,7 @@ export default function InteractiveMagazineReader({
             <button
               type="button"
               onClick={handleHome}
-              className="text-[11px] uppercase tracking-[0.2em] text-white/90 hover:text-white font-medium border border-white/30 hover:border-white/50 rounded px-2 py-0.5 transition-colors"
+              className="text-[11px] uppercase tracking-[0.2em] text-white/90 hover:text-white font-medium border border-white/30 hover:border-white/50 rounded-md px-2 py-0.5 transition-colors"
               aria-label="Go to Realty News Now home"
             >
               Realty News Now
@@ -1258,7 +1258,7 @@ export default function InteractiveMagazineReader({
               value={jumpInput}
               onChange={(e) => setJumpInput(e.target.value)}
               placeholder={`${currentPage + 1}`}
-              className="w-16 bg-black/40 text-white text-center text-sm rounded px-2 py-1 placeholder-white/40 border border-white/20 backdrop-blur"
+              className="w-16 bg-black/40 text-white text-center text-sm rounded-md px-2 py-1 placeholder-white/40 border border-white/20 backdrop-blur"
               aria-label="Jump to page"
             />
             <span className="text-xs text-white/70">of {pageCount || '…'}</span>
@@ -1279,9 +1279,9 @@ export default function InteractiveMagazineReader({
         <ActionPopup title="Scan to share" onClose={() => setActionMode(null)}>
           {qrDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={qrDataUrl} alt="QR code" className="w-64 h-64 mx-auto bg-white p-2 rounded-lg" />
+            <img src={qrDataUrl} alt="QR code" className="w-64 h-64 mx-auto bg-white p-2 rounded-md" />
           ) : (
-            <div className="w-64 h-64 mx-auto bg-white/5 animate-pulse rounded-lg" />
+            <div className="w-64 h-64 mx-auto bg-white/5 animate-pulse rounded-md" />
           )}
           <p className="text-xs text-white/60 text-center mt-3 break-all">{shareUrl}</p>
         </ActionPopup>
@@ -1307,7 +1307,7 @@ export default function InteractiveMagazineReader({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Type to search…"
-            className="w-full bg-white/10 text-white text-sm rounded px-3 py-2 placeholder-white/40 border border-white/20"
+            className="w-full bg-white/10 text-white text-sm rounded-md px-3 py-2 placeholder-white/40 border border-white/20"
             autoFocus
           />
           <div className="mt-3 max-h-64 overflow-y-auto">
@@ -1326,7 +1326,7 @@ export default function InteractiveMagazineReader({
                         setActionMode(null);
                         jumpTo(r.pageIdx);
                       }}
-                      className="w-full text-left p-2 bg-white/5 hover:bg-white/10 rounded text-xs"
+                      className="w-full text-left p-2 bg-white/5 hover:bg-white/10 rounded-md text-xs"
                     >
                       <p className="text-white/90 font-semibold">Page {r.pageIdx + 1}</p>
                       <p className="text-white/60 mt-0.5">{r.snippet}</p>
@@ -1415,7 +1415,7 @@ function ActionButton({ label, onClick, icon }: { label: string; onClick: () => 
 function ActionPopup({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-[61] bg-black/80 flex items-center justify-center p-6" onClick={onClose}>
-      <div className="bg-black border border-white/20 max-w-sm w-full p-6 rounded" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-black border border-white/20 max-w-sm w-full p-6 rounded-md" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm uppercase tracking-[0.2em] text-white/80 font-medium">{title}</p>
           <button onClick={onClose} aria-label="Close" className="text-white/60 hover:text-white">

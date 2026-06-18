@@ -232,13 +232,13 @@ export default function InvestmentPropertyClient() {
 
         {/* ── Result card ────────────────────────────────────────── */}
         <div className="lg:col-span-2 print:col-span-5">
-          <div className="lg:sticky lg:top-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none">
+          <div className="lg:sticky lg:top-6 rounded-md border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none">
             <div className="flex items-start justify-between mb-1">
               <p className={EYEBROW}>Monthly Cash Flow</p>
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="text-xs px-3 py-1 border border-gray-300 rounded hover:border-[#021D40] hover:text-[#021D40] transition print:hidden"
+                className="text-xs px-3 py-1 border border-gray-300 rounded-md hover:border-[#021D40] hover:text-[#021D40] transition print:hidden"
               >
                 Print
               </button>
@@ -344,7 +344,7 @@ function FieldGroup({ title, children }: { title: string; children: React.ReactN
 
 function RatioTile({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className={`rounded-lg border px-3 py-2 ${accent ? 'border-[#fb923c]/40 bg-[#fb923c]/5' : 'border-gray-200 bg-gray-50'}`}>
+    <div className={`rounded-md border px-3 py-2 ${accent ? 'border-[#fb923c]/40 bg-[#fb923c]/5' : 'border-gray-200 bg-gray-50'}`}>
       <p className="text-[10px] uppercase tracking-wider text-gray-500">{label}</p>
       <p
         className="text-lg text-gray-900"

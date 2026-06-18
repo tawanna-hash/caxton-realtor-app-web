@@ -45,7 +45,7 @@ export default function ProfilePanel({ user, accentColor = '#021D40', onClose }:
       onClick={onClose}
     >
       <div
-        className="bg-white w-full sm:max-w-md sm:rounded-lg rounded-t-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white w-full sm:max-w-md sm:rounded-md rounded-t-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"

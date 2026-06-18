@@ -42,7 +42,7 @@ function StatusPill({ value }: { value: string }) {
 
 function Kpi({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
+    <div className="rounded-md border border-gray-200 bg-white p-4">
       <div className="text-xs uppercase tracking-wider text-gray-500">{label}</div>
       <div className="font-serif text-2xl text-gray-900 mt-1">
         {value}
@@ -217,12 +217,12 @@ export default function MarketingClient({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search campaigns…"
-          className="flex-1 min-w-[200px] rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="flex-1 min-w-[200px] rounded-md border border-gray-300 px-3 py-2 text-sm"
         />
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm"
         >
           <option value="all">All statuses</option>
           <option value="draft">Draft</option>
@@ -233,13 +233,13 @@ export default function MarketingClient({
         </select>
         <button
           onClick={() => setCreating(true)}
-          className="rounded-lg bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800"
+          className="rounded-md bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800"
         >
           New campaign
         </button>
       </section>
 
-      <section className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <section className="rounded-md border border-gray-200 bg-white overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600 text-left">
             <tr>
@@ -334,15 +334,15 @@ function CreateDrawer({
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Spring Builder Push 2026"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             />
           </label>
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={onCancel} className="rounded-lg border border-gray-300 px-4 py-2 text-sm">Cancel</button>
+            <button onClick={onCancel} className="rounded-md border border-gray-300 px-4 py-2 text-sm">Cancel</button>
             <button
               onClick={onCreate}
               disabled={!newName.trim()}
-              className="rounded-lg bg-gray-900 text-white px-4 py-2 text-sm disabled:opacity-50"
+              className="rounded-md bg-gray-900 text-white px-4 py-2 text-sm disabled:opacity-50"
             >
               Create
             </button>
@@ -434,7 +434,7 @@ function DetailDrawer({
                 <select
                   value={c.status}
                   onChange={(e) => onPatch({ status: e.target.value as MarketingCampaign['status'] })}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="rounded-md border border-gray-300 px-3 py-2 text-sm"
                 >
                   <option value="draft">Draft</option>
                   <option value="planning">Planning</option>
@@ -447,14 +447,14 @@ function DetailDrawer({
                 <input
                   defaultValue={c.type ?? ''}
                   onBlur={(e) => onPatch({ type: e.target.value || null })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                 />
               </Field>
               <Field label="Publication">
                 <select
                   defaultValue={c.publication ?? ''}
                   onChange={(e) => onPatch({ publication: e.target.value || null })}
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="rounded-md border border-gray-300 px-3 py-2 text-sm"
                 >
                   <option value="">(any)</option>
                   <option value="austin">Austin</option>
@@ -467,7 +467,7 @@ function DetailDrawer({
                   defaultValue={c.brief ?? ''}
                   onBlur={(e) => onPatch({ brief: e.target.value || null })}
                   rows={3}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                 />
               </Field>
               <Field label="Goal">
@@ -475,7 +475,7 @@ function DetailDrawer({
                   defaultValue={c.goal ?? ''}
                   onBlur={(e) => onPatch({ goal: e.target.value || null })}
                   rows={2}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                 />
               </Field>
               <div className="grid grid-cols-2 gap-3">
@@ -484,7 +484,7 @@ function DetailDrawer({
                     type="date"
                     defaultValue={c.start_date ?? ''}
                     onBlur={(e) => onPatch({ start_date: e.target.value || null })}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                   />
                 </Field>
                 <Field label="End date">
@@ -492,7 +492,7 @@ function DetailDrawer({
                     type="date"
                     defaultValue={c.end_date ?? ''}
                     onBlur={(e) => onPatch({ end_date: e.target.value || null })}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                   />
                 </Field>
               </div>
@@ -514,7 +514,7 @@ function DetailDrawer({
                   value={newTask}
                   onChange={(e) => setNewTask(e.target.value)}
                   placeholder="Add a task…"
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && newTask.trim()) { onCreateTask(newTask); setNewTask(''); }
                   }}
@@ -522,20 +522,20 @@ function DetailDrawer({
                 <button
                   onClick={() => { onCreateTask(newTask); setNewTask(''); }}
                   disabled={!newTask.trim()}
-                  className="rounded-lg bg-gray-900 text-white px-4 py-2 text-sm disabled:opacity-50"
+                  className="rounded-md bg-gray-900 text-white px-4 py-2 text-sm disabled:opacity-50"
                 >
                   Add
                 </button>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 {(['to_do', 'in_progress', 'done'] as const).map((col) => (
-                  <div key={col} className="rounded-lg bg-gray-50 p-3">
+                  <div key={col} className="rounded-md bg-gray-50 p-3">
                     <div className="text-xs font-medium uppercase tracking-wider text-gray-600 mb-2">
                       {col.replace('_', ' ')} ({tasksByStatus[col].length})
                     </div>
                     <div className="space-y-2">
                       {tasksByStatus[col].map((t) => (
-                        <div key={t.id} className="rounded-lg border border-gray-200 bg-white p-2 text-sm">
+                        <div key={t.id} className="rounded-md border border-gray-200 bg-white p-2 text-sm">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1">{t.title}</div>
                             <button onClick={() => onDeleteTask(t.id)} className="text-gray-400 hover:text-red-600 text-xs">✕</button>
@@ -545,7 +545,7 @@ function DetailDrawer({
                               <button
                                 key={s}
                                 onClick={() => onPatchTask(t.id, { status: s })}
-                                className="rounded border border-gray-200 px-1.5 py-0.5 text-gray-600 hover:bg-gray-100"
+                                className="rounded-md border border-gray-200 px-1.5 py-0.5 text-gray-600 hover:bg-gray-100"
                               >
                                 → {s.replace('_', ' ')}
                               </button>
@@ -562,13 +562,13 @@ function DetailDrawer({
 
           {tab === 'outreach' && (
             <div className="space-y-4">
-              <div className="rounded-xl border border-gray-200 p-4 space-y-3 bg-gray-50">
+              <div className="rounded-md border border-gray-200 p-4 space-y-3 bg-gray-50">
                 <div className="text-sm font-medium text-gray-700">New outreach</div>
                 <div className="grid grid-cols-3 gap-2">
                   <select
                     value={outreachDraft.channel}
                     onChange={(e) => setOutreachDraft({ ...outreachDraft, channel: e.target.value as 'email' })}
-                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="rounded-md border border-gray-300 px-3 py-2 text-sm"
                   >
                     <option value="email">Email</option>
                     <option value="sms">SMS</option>
@@ -578,7 +578,7 @@ function DetailDrawer({
                     value={outreachDraft.subject}
                     onChange={(e) => setOutreachDraft({ ...outreachDraft, subject: e.target.value })}
                     placeholder="Subject"
-                    className="col-span-2 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="col-span-2 rounded-md border border-gray-300 px-3 py-2 text-sm"
                   />
                 </div>
                 <textarea
@@ -586,7 +586,7 @@ function DetailDrawer({
                   onChange={(e) => setOutreachDraft({ ...outreachDraft, body: e.target.value })}
                   placeholder="Body…"
                   rows={3}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                 />
                 <div className="flex justify-end gap-2">
                   <button
@@ -594,7 +594,7 @@ function DetailDrawer({
                       onCreateOutreach({ ...outreachDraft, status: 'draft' });
                       setOutreachDraft({ subject: '', body: '', channel: 'email' });
                     }}
-                    className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
+                    className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
                   >
                     Save draft
                   </button>
@@ -604,7 +604,7 @@ function DetailDrawer({
                       setOutreachDraft({ subject: '', body: '', channel: 'email' });
                     }}
                     disabled={!outreachDraft.subject.trim() || !outreachDraft.body.trim()}
-                    className="rounded-lg bg-gray-900 text-white px-3 py-1.5 text-sm disabled:opacity-50"
+                    className="rounded-md bg-gray-900 text-white px-3 py-1.5 text-sm disabled:opacity-50"
                   >
                     Schedule
                   </button>
@@ -616,7 +616,7 @@ function DetailDrawer({
                   <div className="text-sm text-gray-500 py-6 text-center">No outreach yet.</div>
                 )}
                 {detail.outreach.map((o) => (
-                  <div key={o.id} className="rounded-lg border border-gray-200 bg-white p-3 text-sm">
+                  <div key={o.id} className="rounded-md border border-gray-200 bg-white p-3 text-sm">
                     <div className="flex items-center justify-between">
                       <div className="font-medium">{o.subject ?? '(no subject)'}</div>
                       <StatusPill value={o.status} />
@@ -638,14 +638,14 @@ function DetailDrawer({
                 <div className="text-sm text-gray-500">Resolving audience…</div>
               ) : (
                 <>
-                  <div className="rounded-xl border border-gray-200 bg-white p-4">
+                  <div className="rounded-md border border-gray-200 bg-white p-4">
                     <div className="text-xs uppercase tracking-wider text-gray-500">Matching advertisers</div>
                     <div className="font-serif text-3xl text-gray-900 mt-1">
                       {audience.count.toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">{summarizeAudience(c.audience_filter)}</div>
                   </div>
-                  <div className="rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="rounded-md border border-gray-200 overflow-hidden">
                     <table className="w-full text-sm">
                       <thead className="bg-gray-50 text-gray-600 text-left">
                         <tr>

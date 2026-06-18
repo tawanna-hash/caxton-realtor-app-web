@@ -81,7 +81,7 @@ const fmt = (n: number) => '$' + n.toLocaleString();
 function SectionHead({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 mb-4">
-      <div className="w-1 h-7 rounded-sm flex-shrink-0" style={{ background: ACCENT }} />
+      <div className="w-1 h-7 rounded-md flex-shrink-0" style={{ background: ACCENT }} />
       <h2 className="text-xl text-gray-900 m-0">
         {children}
       </h2>
@@ -107,7 +107,7 @@ function PackageCard({ pkg }: { pkg: Package }) {
 
   return (
     <div
-      className={`relative bg-white border border-gray-200 rounded-lg flex flex-col shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all ${topBorder}`}
+      className={`relative bg-white border border-gray-200 rounded-md flex flex-col shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all ${topBorder}`}
       style={topBorderStyle}
     >
       {(isPopular || isPremium) && (
@@ -146,7 +146,7 @@ function PackageCard({ pkg }: { pkg: Package }) {
 
         <div>
           <Eyebrow>Ad Sizes &amp; Monthly Rates</Eyebrow>
-          <div className="rounded border border-gray-200 overflow-hidden">
+          <div className="rounded-md border border-gray-200 overflow-hidden">
             <table className="w-full border-collapse">
               <thead>
                 <tr>
@@ -243,13 +243,13 @@ function AppSlotRow({ slot, striped }: { slot: AppAdSlot; striped: boolean }) {
         <div className="text-[11px] text-gray-500 font-mono mt-0.5">{slot.slug}</div>
       </td>
       <td className="px-3 py-2.5 align-top">
-        <span className="text-[11px] uppercase tracking-wide font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
+        <span className="text-[11px] uppercase tracking-wide font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md">
           {ZONE_LABEL[slot.zone]}
         </span>
       </td>
       <td className="px-3 py-2.5 align-top">
         <span
-          className="text-[11px] uppercase tracking-wide font-bold px-2 py-0.5 rounded text-white"
+          className="text-[11px] uppercase tracking-wide font-bold px-2 py-0.5 rounded-md text-white"
           style={{ background: isPremium ? PREMIUM : NAVY }}
         >
           {slot.tier}
@@ -285,7 +285,7 @@ function AppSlotRow({ slot, striped }: { slot: AppAdSlot; striped: boolean }) {
 
 function AppSlotsTable({ slots, activePubLabel }: { slots: AppAdSlot[]; activePubLabel: string }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+    <div className="bg-white border border-gray-200 rounded-md overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
@@ -357,10 +357,10 @@ function EBlastCard({ pkg, activePub }: { pkg: EBlast; activePub: PubTab }) {
   const cpm = subscribers > 0 && sends > 0 ? (price / sends) / (subscribers / 1000) : 0;
   const sendsLabel = sends === 1 ? '1 send' : `${sends} sends`;
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all">
+    <div className="bg-white border border-gray-200 rounded-md p-5 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all">
       <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
         <div className="text-[15px] font-bold text-gray-900">{pkg.name}</div>
-        <div className="bg-gray-50 px-3 py-1.5 rounded text-right">
+        <div className="bg-gray-50 px-3 py-1.5 rounded-md text-right">
           <div className="text-2xl font-extrabold" style={{ color: ACCENT }}>
             {fmt(price)}
           </div>
@@ -491,7 +491,7 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
         <div
           role="note"
           aria-label="Rate source of truth"
-          className="mt-6 flex items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3"
+          className="mt-6 flex items-start gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3"
         >
           <div
             aria-hidden="true"
@@ -507,7 +507,7 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
             </p>
             <p className="text-[13px] leading-relaxed text-emerald-900/80 mt-1">
               All rates on this page flow from a single source of truth
-              (<code className="px-1 py-0.5 bg-emerald-100 text-emerald-900 rounded text-[12px]">lib/media-kit.ts</code>). The same rates power the public ad-inquiry auto-reply, the self-serve checkout at <code className="px-1 py-0.5 bg-emerald-100 text-emerald-900 rounded text-[12px]">/advertise/checkout/[slot]</code>, the Stripe payment intent, and the generated advertising agreement PDF. Edit one place, every surface updates on next deploy.
+              (<code className="px-1 py-0.5 bg-emerald-100 text-emerald-900 rounded-md text-[12px]">lib/media-kit.ts</code>). The same rates power the public ad-inquiry auto-reply, the self-serve checkout at <code className="px-1 py-0.5 bg-emerald-100 text-emerald-900 rounded-md text-[12px]">/advertise/checkout/[slot]</code>, the Stripe payment intent, and the generated advertising agreement PDF. Edit one place, every surface updates on next deploy.
             </p>
           </div>
         </div>
@@ -528,7 +528,7 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
         </p>
 
         <div className="flex flex-wrap gap-2 mb-3">
-          <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wide font-semibold text-white px-2 py-1 rounded" style={{ background: PREMIUM }}>
+          <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wide font-semibold text-white px-2 py-1 rounded-md" style={{ background: PREMIUM }}>
             ★ Premium tier
           </span>
           <span className="text-[12px] text-gray-600 self-center">High-context placements (article tops, sidebars, calendar pins, splash, push).</span>
@@ -536,7 +536,7 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
         <AppSlotsTable slots={visibleSlots.filter((s) => s.tier === 'premium')} activePubLabel={activePub.label} />
 
         <div className="flex flex-wrap gap-2 mt-6 mb-3">
-          <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wide font-semibold text-white px-2 py-1 rounded" style={{ background: NAVY }}>
+          <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-wide font-semibold text-white px-2 py-1 rounded-md" style={{ background: NAVY }}>
             Standard tier
           </span>
           <span className="text-[12px] text-gray-600 self-center">Steady-reach inventory across feed, article, and calendar.</span>
@@ -568,7 +568,7 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
       {activePub.hasPrint && (
       <section>
         <SectionHead>Ad Rates by Size &amp; Frequency</SectionHead>
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-md overflow-hidden shadow-sm">
           <table className="w-full border-collapse">
             <thead>
               <tr>
@@ -669,7 +669,7 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
       {activePub.hasPrint && (
       <section>
         <SectionHead>2026 Print Deadlines</SectionHead>
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm divide-y divide-gray-200">
+        <div className="bg-white border border-gray-200 rounded-md overflow-hidden shadow-sm divide-y divide-gray-200">
           {PRINT_DEADLINES.map((d, i) => (
             <div
               key={d.month}

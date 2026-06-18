@@ -211,7 +211,7 @@ export default function ActivityClient() {
         </div>
 
         {/* Controls row */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 flex flex-wrap items-center gap-3">
+        <div className="bg-white border border-gray-200 rounded-md p-4 mb-4 flex flex-wrap items-center gap-3">
           <div className="flex gap-1 flex-wrap">
             {BUCKETS.map((b) => (
               <button
@@ -267,7 +267,7 @@ export default function ActivityClient() {
         </div>
 
         {/* Feed */}
-        <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-100">
+        <div className="bg-white border border-gray-200 rounded-md divide-y divide-gray-100">
           {events.length === 0 && !loading && (
             <div className="p-8 text-center text-gray-500 text-sm">No events match the current filter.</div>
           )}
@@ -282,7 +282,7 @@ export default function ActivityClient() {
                   className="w-full text-left px-4 py-3 flex items-center gap-3"
                 >
                   <span className="text-xs text-gray-500 font-mono w-20 shrink-0">{formatTime(e.timestamp)}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded font-medium shrink-0 ${badge.color}`}>{badge.label}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-md font-medium shrink-0 ${badge.color}`}>{badge.label}</span>
                   <span className="text-sm text-gray-900 truncate flex-1">{describeAction(e)}</span>
                   {e.publication && <span className="text-xs text-gray-500 hidden md:inline">{e.publication}</span>}
                   {e.city && <span className="text-xs text-gray-500 hidden md:inline">· {e.city}</span>}
@@ -313,7 +313,7 @@ export default function ActivityClient() {
 
 function Tile({ label, value, accent }: { label: string; value: number; accent?: string }) {
   return (
-    <div className={`border border-gray-200 rounded-lg px-4 py-3 ${accent ?? 'bg-white'}`}>
+    <div className={`border border-gray-200 rounded-md px-4 py-3 ${accent ?? 'bg-white'}`}>
       <div className="text-xs uppercase tracking-wider opacity-70">{label}</div>
       <div className="text-2xl font-semibold mt-1">{value.toLocaleString()}</div>
     </div>

@@ -127,7 +127,7 @@ function Shell({
         {/* Brand header */}
         <div className="text-center mb-6">
           <div
-            className="inline-block px-4 py-1 rounded text-white text-xs font-bold tracking-[0.2em] uppercase mb-3"
+            className="inline-block px-4 py-1 rounded-md text-white text-xs font-bold tracking-[0.2em] uppercase mb-3"
             style={{ background: ACCENT }}
           >
             RealtyLine
@@ -140,7 +140,7 @@ function Shell({
 
         <StepIndicator current={step} total={5} />
 
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8">
+        <div className="bg-white rounded-md border border-gray-200 shadow-sm p-8">
           {children}
         </div>
 
@@ -149,7 +149,7 @@ function Shell({
           {onBack ? (
             <button
               onClick={onBack}
-              className="px-4 py-2 rounded border border-gray-300 text-sm text-gray-700 hover:bg-gray-50"
+              className="px-4 py-2 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50"
             >
               ← Back
             </button>
@@ -161,7 +161,7 @@ function Shell({
               onClick={onNext}
               disabled={nextDisabled || saving}
               style={{ background: nextDisabled || saving ? undefined : ACCENT }}
-              className={`px-6 py-2 rounded text-white text-sm font-medium transition-opacity ${
+              className={`px-6 py-2 rounded-md text-white text-sm font-medium transition-opacity ${
                 nextDisabled || saving ? 'bg-gray-300 cursor-not-allowed' : 'hover:opacity-90'
               }`}
             >
@@ -219,7 +219,7 @@ function EditableField({
         readOnly={readOnly}
         maxLength={maxLength}
         inputMode={inputMode}
-        className={`w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 ${
+        className={`w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 ${
           readOnly ? 'bg-gray-100 text-gray-600 cursor-default' : ''
         }`}
       />
@@ -533,7 +533,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
             <strong>RealtyLine</strong> for{' '}
             <strong>{ag.company_name ?? 'your company'}</strong>.
           </p>
-          <div className="inline-block rounded-lg border-l-4 p-4 text-left text-sm text-gray-700 bg-amber-50 border-amber-400 max-w-md">
+          <div className="inline-block rounded-md border-l-4 p-4 text-left text-sm text-gray-700 bg-amber-50 border-amber-400 max-w-md">
             <p className="font-semibold mb-1">⚠️ Legal Notice</p>
             <p>
               This is a legally binding digital signature. By completing this process, you agree to
@@ -566,7 +566,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
             Fill in or update your information below. Fields marked <span className="text-red-500">*</span> are required.
           </p>
 
-          {error && <div className="text-sm text-red-600 bg-red-50 rounded p-3">{error}</div>}
+          {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <EditableField
@@ -640,7 +640,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
             Your ad details
           </h2>
 
-          {error && <div className="text-sm text-red-600 bg-red-50 rounded p-3">{error}</div>}
+          {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
 
           {/* Ad Size */}
           <div>
@@ -719,7 +719,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
             />
             <div>
               <div className="text-xs text-gray-600 mb-1">Total Monthly</div>
-              <div className="w-full px-3 py-2 rounded border border-gray-200 bg-gray-100 text-sm font-bold text-gray-900">
+              <div className="w-full px-3 py-2 rounded-md border border-gray-200 bg-gray-100 text-sm font-bold text-gray-900">
                 ${totalMonthly.toFixed(2)}
               </div>
             </div>
@@ -784,7 +784,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                           [m.k]: { ...prev[m.k]!, checked: prev[m.k]?.checked ?? false, year: yr },
                         }));
                       }}
-                      className="w-16 px-2 py-1 rounded border border-gray-300 text-xs focus:outline-none focus:ring-1 focus:ring-red-400 disabled:bg-gray-100 disabled:text-gray-400"
+                      className="w-16 px-2 py-1 rounded-md border border-gray-300 text-xs focus:outline-none focus:ring-1 focus:ring-red-400 disabled:bg-gray-100 disabled:text-gray-400"
                     />
                   </div>
                 );
@@ -824,7 +824,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
             Billing information
           </h2>
 
-          {error && <div className="text-sm text-red-600 bg-red-50 rounded p-3">{error}</div>}
+          {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
 
           {/* Bill To */}
           <div>
@@ -896,9 +896,9 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
               billing address securely; server populates DB fields from the
               PaymentMethod when the webhook fires. */}
           {paymentType === 'Credit Card' && (
-            <div className="space-y-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <div className="space-y-4 rounded-md border border-amber-200 bg-amber-50 p-4">
               {ccSurchargeTotal != null && (
-                <div className="text-sm text-amber-800 rounded border border-amber-300 bg-amber-100 p-3">
+                <div className="text-sm text-amber-800 rounded-md border border-amber-300 bg-amber-100 p-3">
                   A 3% credit card surcharge is automatically added to your ad rate.{' '}
                   <strong>New monthly: ${ccSurchargeTotal.toFixed(2)}</strong>
                 </div>
@@ -957,16 +957,16 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
           Review &amp; sign the agreement
         </h2>
 
-        {error && <div className="text-sm text-red-600 bg-red-50 rounded p-3">{error}</div>}
+        {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
 
         {paymentType === 'Credit Card' && confirmedPaymentIntentId && (
-          <div className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded p-3">
+          <div className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-md p-3">
             ✓ Card authorized. Your card will be charged the moment you click <strong>Sign Agreement</strong> below.
           </div>
         )}
 
         {/* Scrollable terms */}
-        <div className="h-52 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
+        <div className="h-52 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
           {TERMS_RL}
         </div>
 
@@ -990,14 +990,14 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
           onChange={setSignature}
         />
 
-        <div className="rounded border border-gray-200 p-3">
+        <div className="rounded-md border border-gray-200 p-3">
           <div className="text-xs text-gray-500 mb-1">Signature date *</div>
           <input
             type="date"
             value={signDate}
             onChange={(e) => setSignDate(e.target.value)}
             disabled={!termsAccepted}
-            className="px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 disabled:bg-gray-100"
+            className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 disabled:bg-gray-100"
           />
         </div>
 

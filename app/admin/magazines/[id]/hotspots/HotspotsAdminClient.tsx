@@ -331,7 +331,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
             <button
               type="button"
               onClick={publishAllDrafts}
-              className="text-xs font-medium px-3 py-1 bg-amber-900 text-white rounded hover:bg-amber-800"
+              className="text-xs font-medium px-3 py-1 bg-amber-900 text-white rounded-md hover:bg-amber-800"
             >
               Publish all drafts
             </button>
@@ -345,7 +345,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
           type="button"
           onClick={() => setCurrentPageIdx((i) => Math.max(0, i - (viewMode === 'spread' ? 2 : 1)))}
           disabled={currentPageIdx === 0}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+          className="px-3 py-1.5 text-sm border border-gray-300 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
         >
           ← Previous
         </button>
@@ -366,13 +366,13 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
               setCurrentPageIdx(n - 1);
             }
           }}
-          className="w-16 px-2 py-1 text-sm border border-gray-300 rounded text-center"
+          className="w-16 px-2 py-1 text-sm border border-gray-300 rounded-md text-center"
         />
         <button
           type="button"
           onClick={() => setCurrentPageIdx((i) => Math.min(magazine.page_count - 1, i + (viewMode === 'spread' ? 2 : 1)))}
           disabled={currentPageIdx >= magazine.page_count - 1}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+          className="px-3 py-1.5 text-sm border border-gray-300 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
         >
           Next →
         </button>
@@ -441,7 +441,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
 
       {/* ===== IMPORT RESULT TOAST ===== */}
       {importResult && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 bg-gray-900 text-white text-sm rounded shadow-xl flex items-center gap-3">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 bg-gray-900 text-white text-sm rounded-md shadow-xl flex items-center gap-3">
           <span>
             Imported <strong>{importResult.imported}</strong> of {importResult.total} embedded link{importResult.total === 1 ? '' : 's'} from the PDF.
           </span>
@@ -630,7 +630,7 @@ function DraggableHotspot({
     >
       {/* Type label */}
       <div className="absolute -top-6 left-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap pointer-events-none">
-        <span className={`px-1.5 py-0.5 bg-white border border-gray-300 rounded shadow-sm ${colors.text}`}>
+        <span className={`px-1.5 py-0.5 bg-white border border-gray-300 rounded-md shadow-sm ${colors.text}`}>
           {TYPE_LABELS[hotspot.type]}{hotspot.label ? ` · ${hotspot.label}` : ''}
         </span>
       </div>
@@ -640,14 +640,14 @@ function DraggableHotspot({
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            className="px-2 py-1 text-xs font-medium bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-50"
+            className="px-2 py-1 text-xs font-medium bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
           >
             Edit
           </button>
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onRequestDelete(); }}
-            className="px-2 py-1 text-xs font-medium bg-white border border-red-300 text-red-700 rounded shadow-sm hover:bg-red-50"
+            className="px-2 py-1 text-xs font-medium bg-white border border-red-300 text-red-700 rounded-md shadow-sm hover:bg-red-50"
           >
             Delete
           </button>
@@ -669,7 +669,7 @@ function DeleteConfirmDialog({
 }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6" onClick={onCancel}>
-      <div className="bg-white rounded shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-md shadow-xl max-w-sm w-full p-6" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-semibold text-gray-900 mb-2">Delete this hotspot?</h2>
         <p className="text-sm text-gray-700 mb-4">
           {hotspot.label
@@ -681,14 +681,14 @@ function DeleteConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700"
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
           >
             Delete
           </button>
@@ -713,13 +713,13 @@ function ImportPdfLinksDialog({
 }) {
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6" onClick={onCancel}>
-      <div className="bg-white rounded shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-md shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-semibold text-gray-900 mb-2">Import embedded PDF links</h2>
         <p className="text-sm text-gray-700 mb-4">
           This will download the magazine PDF, extract every clickable link, and create a draft hotspot for each one. You can then review and publish them.
         </p>
         {existingPdfImportCount > 0 && (
-          <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded p-3 mb-4">
+          <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3 mb-4">
             <strong>{existingPdfImportCount}</strong> existing PDF-imported hotspot{existingPdfImportCount === 1 ? '' : 's'} will be replaced. Manually-drawn hotspots are preserved.
           </p>
         )}
@@ -730,14 +730,14 @@ function ImportPdfLinksDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-700 rounded hover:bg-blue-800"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-700 rounded-md hover:bg-blue-800"
           >
             Start import
           </button>
@@ -760,7 +760,7 @@ function CopyFromPreviousDialog({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6" onClick={onCancel}>
-      <div className="bg-white rounded shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-md shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-semibold text-gray-900 mb-2">Copy hotspots from previous issue</h2>
         <p className="text-sm text-gray-700 mb-4">
           Hotspots from the selected issue will be <strong>added to this magazine</strong>{' '}
@@ -771,7 +771,7 @@ function CopyFromPreviousDialog({
         <select
           value={sourceId ?? ''}
           onChange={(e) => setSourceId(Number(e.target.value))}
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded mb-4"
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md mb-4"
         >
           {prevIssues.map((p) => (
             <option key={p.id} value={p.id}>
@@ -793,7 +793,7 @@ function CopyFromPreviousDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
           >
             Cancel
           </button>
@@ -801,7 +801,7 @@ function CopyFromPreviousDialog({
             type="button"
             onClick={() => sourceId !== null && onConfirm(sourceId, publishedOnly)}
             disabled={sourceId === null}
-            className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded hover:bg-gray-800 disabled:opacity-40"
+            className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-md hover:bg-gray-800 disabled:opacity-40"
           >
             Copy hotspots
           </button>

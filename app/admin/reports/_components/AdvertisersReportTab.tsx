@@ -228,11 +228,11 @@ export default function AdvertisersReportTab() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-gray-200 overflow-hidden">
+          <div className="rounded-md border border-gray-200 overflow-hidden">
             {loading ? (
               <div className="p-4 space-y-2 animate-pulse">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="h-5 bg-gray-200 rounded w-full" />
+                  <div key={i} className="h-5 bg-gray-200 rounded-md w-full" />
                 ))}
               </div>
             ) : advertisers.length === 0 ? (
@@ -310,7 +310,7 @@ export default function AdvertisersReportTab() {
           </div>
 
           {results ? (
-            <div className="rounded-lg border border-gray-200 overflow-hidden">
+            <div className="rounded-md border border-gray-200 overflow-hidden">
               <div className="px-4 py-2.5 bg-gray-50 border-b border-gray-200 text-sm font-medium text-gray-700">
                 {results.filter((r) => r.sent).length} sent · {results.filter((r) => !r.sent).length} failed
               </div>
@@ -339,7 +339,7 @@ export default function AdvertisersReportTab() {
               advertiser={activeAdvertiser}
             />
           ) : (
-            <div className="bg-white border border-gray-200 border-dashed rounded-lg p-10 text-center text-sm text-gray-500">
+            <div className="bg-white border border-gray-200 border-dashed rounded-md p-10 text-center text-sm text-gray-500">
               {loading ? 'Loading advertisers…' : 'Select an advertiser to view their dashboard.'}
             </div>
           )}

@@ -119,7 +119,7 @@ export default function PublicationSettingsForm({ initialSettings }: Props) {
           <h2 className="text-base font-semibold text-gray-900 mb-1">Google Analytics</h2>
           <p className="text-sm text-gray-600 mb-4">
             Each magazine in a publication will fire GA4 events (page views and a
-            <code className="px-1 mx-1 bg-gray-100 rounded text-xs">magazine_page_flip</code>
+            <code className="px-1 mx-1 bg-gray-100 rounded-md text-xs">magazine_page_flip</code>
             event on every page turn) into the property tied to its Measurement ID.
           </p>
 

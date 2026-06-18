@@ -51,7 +51,7 @@ function fmtUSD(n: number | null): string {
 
 function AudienceSection() {
   return (
-    <section className="rounded-xl bg-white ring-1 ring-gray-200 p-6">
+    <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900">Audience snapshot</h2>
       <p className="text-sm text-gray-700 mt-1">
         Network reach across all four RealtyLine + Newsline markets.
@@ -61,7 +61,7 @@ function AudienceSection() {
         {AUDIENCE_STATS.map((s) => (
           <div
             key={s.label}
-            className="rounded-lg bg-gray-50 ring-1 ring-gray-200 px-4 py-3"
+            className="rounded-md bg-gray-50 ring-1 ring-gray-200 px-4 py-3"
           >
             <div className="text-2xl font-semibold text-gray-900">{s.value}</div>
             <div className="text-xs uppercase tracking-wide text-gray-700 mt-1">
@@ -88,7 +88,7 @@ function AudienceSection() {
 
 function PubStat({ label, sub }: { label: string; sub: number }) {
   return (
-    <div className="rounded-lg bg-white ring-1 ring-gray-200 px-4 py-3">
+    <div className="rounded-md bg-white ring-1 ring-gray-200 px-4 py-3">
       <div className="text-base font-semibold text-gray-900">
         {sub.toLocaleString('en-US')}
       </div>
@@ -99,7 +99,7 @@ function PubStat({ label, sub }: { label: string; sub: number }) {
 
 function RateMatrixSection() {
   return (
-    <section className="rounded-xl bg-white ring-1 ring-gray-200 p-6">
+    <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900">Print rate matrix</h2>
       <p className="text-sm text-gray-700 mt-1">
         Monthly print rates by size and frequency commitment. Rates locked when
@@ -141,7 +141,7 @@ function RateMatrixSection() {
 
 function PackagesSection() {
   return (
-    <section className="rounded-xl bg-white ring-1 ring-gray-200 p-6">
+    <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900">Brand packages</h2>
       <p className="text-sm text-gray-700 mt-1">
         Five tiers from one-month to 12-month + premium. Discounts deepen with
@@ -160,7 +160,7 @@ function PackageCard({ pkg }: { pkg: Package }) {
   return (
     <div
       className={
-        'rounded-lg ring-1 p-4 ' +
+        'rounded-md ring-1 p-4 ' +
         (pkg.premium
           ? 'bg-[#021D40] text-white ring-[#021D40]'
           : pkg.popular
@@ -271,7 +271,7 @@ function PackageCard({ pkg }: { pkg: Package }) {
 function DigitalSlotsSection() {
   const slots = APP_AD_SLOTS;
   return (
-    <section className="rounded-xl bg-white ring-1 ring-gray-200 p-6">
+    <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">
@@ -352,7 +352,7 @@ function DigitalSlotsSection() {
           {([1, 2, 3, 4] as const).map((n) => (
             <div
               key={n}
-              className="rounded-lg bg-gray-50 ring-1 ring-gray-200 px-4 py-3"
+              className="rounded-md bg-gray-50 ring-1 ring-gray-200 px-4 py-3"
             >
               <div className="text-2xl font-semibold text-gray-900 tabular-nums">
                 {MARKET_MULTIPLIERS[n].toFixed(1)}
@@ -380,7 +380,7 @@ function ExampleBundle() {
     monthly: monthlyRateForMarkets(slot, n),
   }));
   return (
-    <div className="mt-4 rounded-lg bg-gray-50 ring-1 ring-gray-200 p-4">
+    <div className="mt-4 rounded-md bg-gray-50 ring-1 ring-gray-200 p-4">
       <div className="text-sm font-medium text-gray-900">
         Example: {slot.name}
       </div>
@@ -406,7 +406,7 @@ function ExampleBundle() {
 
 function EblastsSection() {
   return (
-    <section className="rounded-xl bg-white ring-1 ring-gray-200 p-6">
+    <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900">e-Blast packages</h2>
       <p className="text-sm text-gray-700 mt-1">
         Per-market pricing. Austin (Pkg 1 + 2) is flat-rate; Newsline / Houston
@@ -438,7 +438,7 @@ function EblastCard({ blast }: { blast: EBlast }) {
     });
   }
   return (
-    <div className="rounded-lg bg-gray-50 ring-1 ring-gray-200 p-4">
+    <div className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-4">
       <div className="text-base font-semibold text-gray-900">{blast.name}</div>
       <ul className="mt-2 space-y-1 text-sm text-gray-700">
         {blast.features.map((f) => (
@@ -472,7 +472,7 @@ function EblastCard({ blast }: { blast: EBlast }) {
 
 function DeadlinesSection() {
   return (
-    <section className="rounded-xl bg-white ring-1 ring-gray-200 p-6">
+    <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900">
         2026 print deadlines
       </h2>
@@ -506,13 +506,13 @@ function DeadlinesSection() {
 
 function PolicySection() {
   return (
-    <section className="rounded-xl bg-white ring-1 ring-gray-200 p-6">
+    <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
       <h2 className="text-lg font-semibold text-gray-900">Policy notes</h2>
       <div className="mt-4 space-y-3">
         {POLICY_NOTES.map((n) => (
           <div
             key={n.title}
-            className="rounded-lg border-l-4 bg-gray-50 ring-1 ring-gray-200 p-4"
+            className="rounded-md border-l-4 bg-gray-50 ring-1 ring-gray-200 p-4"
             style={{ borderLeftColor: n.color }}
           >
             <div className="text-sm font-semibold text-gray-900">{n.title}</div>

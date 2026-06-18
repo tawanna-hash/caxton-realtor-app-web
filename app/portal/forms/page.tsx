@@ -55,7 +55,7 @@ export default async function PortalFormsPage() {
           To complete ({pending.length})
         </h2>
         {pending.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-gray-500">
+          <div className="rounded-md border border-dashed border-gray-300 bg-white p-8 text-center text-gray-500">
             Nothing pending — you&apos;re all caught up.
           </div>
         ) : (
@@ -64,7 +64,7 @@ export default async function PortalFormsPage() {
               <Link
                 key={a.id}
                 href={`/portal/forms/${a.id}`}
-                className="block rounded-xl border border-gray-200 bg-white p-4 hover:border-gray-400"
+                className="block rounded-md border border-gray-200 bg-white p-4 hover:border-gray-400"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -89,7 +89,7 @@ export default async function PortalFormsPage() {
           </h2>
           <div className="space-y-3">
             {done.map((a) => (
-              <div key={a.id} className="rounded-xl border border-gray-200 bg-white p-4 opacity-80">
+              <div key={a.id} className="rounded-md border border-gray-200 bg-white p-4 opacity-80">
                 <div className="flex items-start justify-between gap-4">
                   <div className="font-medium text-gray-900">{a.form_title}</div>
                   <div className="text-xs text-gray-500">

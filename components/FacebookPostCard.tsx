@@ -113,7 +113,7 @@ export default function FacebookPostCard({ post, pub, track }: Props) {
             <FacebookGlyph />
             Social
             {post.is_open_house && (
-              <span className="ml-1 inline-flex items-center rounded-sm bg-[#C8A75B] px-1.5 py-0.5 text-[10px] uppercase tracking-[0.15em] font-semibold text-white">
+              <span className="ml-1 inline-flex items-center rounded-md bg-[#C8A75B] px-1.5 py-0.5 text-[10px] uppercase tracking-[0.15em] font-semibold text-white">
                 Open House
               </span>
             )}

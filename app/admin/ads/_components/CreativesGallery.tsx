@@ -153,7 +153,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
             <button
               type="button"
               onClick={() => setShowUpload(true)}
-              className="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+              className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
             >
               + Upload creative
             </button>
@@ -178,7 +178,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                   value={uploadAdvertiser}
                   onChange={(e) => setUploadAdvertiser(e.target.value)}
                   placeholder="RealtyLine House"
-                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                  className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
                 />
               </label>
               <label className="block">
@@ -188,7 +188,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                   value={uploadClickUrl}
                   onChange={(e) => setUploadClickUrl(e.target.value)}
                   placeholder="https://advertiser.com or mailto:info@myrealtyline.com"
-                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm font-mono"
+                  className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm font-mono"
                 />
               </label>
               <label className="block sm:col-span-2">
@@ -198,7 +198,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                   value={uploadAlt}
                   onChange={(e) => setUploadAlt(e.target.value)}
                   placeholder="Describe the image for accessibility"
-                  className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                  className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
                 />
               </label>
             </div>
@@ -244,7 +244,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                       type="text"
                       value={draft.advertiser_name}
                       onChange={(e) => setDraft({ ...draft, advertiser_name: e.target.value })}
-                      className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                      className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
                     />
                   </label>
                   <div className="grid grid-cols-2 gap-2">
@@ -254,7 +254,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                         type="number"
                         value={draft.width}
                         onChange={(e) => setDraft({ ...draft, width: e.target.value })}
-                        className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                        className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
                       />
                     </label>
                     <label className="block">
@@ -263,7 +263,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                         type="number"
                         value={draft.height}
                         onChange={(e) => setDraft({ ...draft, height: e.target.value })}
-                        className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                        className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
                       />
                     </label>
                   </div>
@@ -273,7 +273,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                       type="text"
                       value={draft.click_url}
                       onChange={(e) => setDraft({ ...draft, click_url: e.target.value })}
-                      className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm font-mono"
+                      className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm font-mono"
                     />
                   </label>
                   <label className="block">
@@ -282,7 +282,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                       type="text"
                       value={draft.alt_text}
                       onChange={(e) => setDraft({ ...draft, alt_text: e.target.value })}
-                      className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1 text-sm"
+                      className="mt-0.5 w-full rounded-md border border-gray-300 px-2 py-1 text-sm"
                     />
                   </label>
                   <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-100">
@@ -298,7 +298,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
                       type="button"
                       onClick={() => handleSave(c)}
                       disabled={busy}
-                      className="rounded bg-indigo-600 px-2 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                      className="rounded-md bg-indigo-600 px-2 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
                     >
                       {busy ? 'Saving…' : 'Save'}
                     </button>

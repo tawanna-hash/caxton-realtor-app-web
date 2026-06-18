@@ -88,14 +88,14 @@ export default function SelfServicePortalPage() {
         {/* Two-path hub */}
         <section className="grid gap-5 md:grid-cols-2 mb-12">
           {/* Self-service card */}
-          <article className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#3d0740] via-[#3d0740] to-[#5a0e5f] text-white p-7 md:p-8 shadow-lg">
+          <article className="relative rounded-md overflow-hidden bg-gradient-to-br from-[#3d0740] via-[#3d0740] to-[#5a0e5f] text-white p-7 md:p-8 shadow-lg">
             {/* From-$X chip */}
             <span className="absolute top-5 right-5 inline-flex items-center px-3 py-1 rounded-full bg-violet-200/90 text-violet-900 text-xs font-semibold">
               From ${minPrice}
             </span>
 
             {/* Cart icon */}
-            <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-6">
+            <div className="w-12 h-12 rounded-md bg-white/10 flex items-center justify-center mb-6">
               <svg
                 viewBox="0 0 24 24"
                 className="w-6 h-6 text-white"
@@ -156,7 +156,7 @@ export default function SelfServicePortalPage() {
         </section>
 
         {/* Bundle savings ladder \u2014 directly tied to MARKET_MULTIPLIERS */}
-        <section className="mb-12 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6 md:p-8">
+        <section className="mb-12 rounded-md border border-emerald-200 bg-emerald-50/60 p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-5">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-emerald-800 font-semibold mb-1.5">
@@ -180,7 +180,7 @@ export default function SelfServicePortalPage() {
                 <div
                   key={row.markets}
                   className={[
-                    'rounded-xl p-4 border',
+                    'rounded-md p-4 border',
                     isWinner
                       ? 'border-emerald-500 bg-white shadow-md'
                       : 'border-emerald-200 bg-white',
@@ -245,7 +245,7 @@ export default function SelfServicePortalPage() {
             ].map((it) => (
               <div
                 key={it.step}
-                className="rounded-xl border border-gray-200 bg-white p-5"
+                className="rounded-md border border-gray-200 bg-white p-5"
               >
                 <div className="w-7 h-7 rounded-full bg-[#021D40] text-white text-sm font-semibold flex items-center justify-center mb-3">
                   {it.step}
@@ -262,7 +262,7 @@ export default function SelfServicePortalPage() {
         </section>
 
         {/* Existing advertiser sign-in callout */}
-        <section className="rounded-2xl border border-gray-200 bg-white p-6 md:p-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <section className="rounded-md border border-gray-200 bg-white p-6 md:p-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-1">
               Already booked with us?

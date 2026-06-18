@@ -179,7 +179,7 @@ export default function AdvertiserDetailClient({
                   ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(locAddr)}`
                   : null;
                 return (
-                  <li key={loc.id} className="rounded-xl border border-gray-200 bg-white p-4">
+                  <li key={loc.id} className="rounded-md border border-gray-200 bg-white p-4">
                     <div className="flex items-baseline justify-between gap-2 mb-1">
                       <h3
                         className="text-base font-semibold text-gray-900"
@@ -188,7 +188,7 @@ export default function AdvertiserDetailClient({
                       </h3>
                       {loc.is_primary && (
                         <span
-                          className="text-[10px] uppercase tracking-[0.15em] font-medium px-1.5 py-0.5 rounded"
+                          className="text-[10px] uppercase tracking-[0.15em] font-medium px-1.5 py-0.5 rounded-md"
                           style={{ background: `${theme.accent}15`, color: theme.accent }}
                         >
                           HQ
@@ -254,7 +254,7 @@ export default function AdvertiserDetailClient({
               {sortedStaff.map((s) => {
                 const assignedLocations = locations.filter((l) => s.location_ids.includes(l.id));
                 return (
-                  <li key={s.id} className="flex gap-4 rounded-xl border border-gray-200 bg-white p-4">
+                  <li key={s.id} className="flex gap-4 rounded-md border border-gray-200 bg-white p-4">
                     {s.photo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -307,7 +307,7 @@ export default function AdvertiserDetailClient({
                           {assignedLocations.map((loc) => (
                             <span
                               key={loc.id}
-                              className="text-[10px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600"
+                              className="text-[10px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-600"
                             >
                               {toTitleCaseName(loc.label || loc.city || 'Office')}
                             </span>
@@ -403,7 +403,7 @@ function InventoryCardLink({
         href={`/inventory/${row.id}`}
         className="flex items-stretch gap-3 p-3 border border-gray-200 rounded-md hover:border-gray-400 transition-colors"
       >
-        <div className="shrink-0 w-24 h-24 bg-gray-100 border border-gray-200 rounded overflow-hidden">
+        <div className="shrink-0 w-24 h-24 bg-gray-100 border border-gray-200 rounded-md overflow-hidden">
           {row.thumbnailUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img src={row.thumbnailUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
@@ -416,7 +416,7 @@ function InventoryCardLink({
         <div className="flex-1 min-w-0">
           {row.kind === 'promotion' && (
             <span
-              className="inline-block text-[10px] uppercase tracking-wider font-semibold mb-1 px-1.5 py-0.5 rounded"
+              className="inline-block text-[10px] uppercase tracking-wider font-semibold mb-1 px-1.5 py-0.5 rounded-md"
               style={{ backgroundColor: `${accent}1a`, color: accent }}
             >
               Promotion

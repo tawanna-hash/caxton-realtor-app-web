@@ -27,7 +27,7 @@ export default function SupportPage() {
         <p className="text-sm font-semibold uppercase tracking-wider text-[#021D40] mb-5">
           Email us
         </p>
-        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+        <div className="rounded-md border border-gray-200 bg-gray-50 p-6">
           <p className="text-gray-700 font-light leading-relaxed mb-4">
             The fastest way to reach us is by email. Please include your account
             email, the device you&apos;re using (iPhone model + iOS version helps),
@@ -35,7 +35,7 @@ export default function SupportPage() {
           </p>
           <a
             href={`mailto:${SUPPORT_EMAIL}?subject=Realty%20News%20Now%20Support`}
-            className="inline-flex items-center px-5 py-2.5 rounded-lg bg-[#021D40] text-white font-medium hover:bg-[#021D40] transition"
+            className="inline-flex items-center px-5 py-2.5 rounded-md bg-[#021D40] text-white font-medium hover:bg-[#021D40] transition"
           >
             {SUPPORT_EMAIL}
           </a>

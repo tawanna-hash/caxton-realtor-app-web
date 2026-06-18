@@ -154,7 +154,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
   // ── Success card ──────────────────────────────────────────────────────
   if (created) {
     return (
-      <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+      <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4">
         <div className="text-sm font-semibold text-emerald-900">
           Booked. Agreement created
           {created.invoice?.number ? ` — invoice ${created.invoice.number}` : ''}.
@@ -175,13 +175,13 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
         <div className="mt-3 flex flex-wrap gap-2">
           <Link
             href={`/admin/agreements?agreement=${encodeURIComponent(created.agreement.id)}`}
-            className="inline-flex items-center px-3 py-1.5 rounded text-xs font-medium bg-emerald-700 text-white hover:bg-emerald-800"
+            className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-emerald-700 text-white hover:bg-emerald-800"
           >
             Open in Agreements →
           </Link>
           <Link
             href="/admin/ads/orders"
-            className="inline-flex items-center px-3 py-1.5 rounded text-xs font-medium border border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"
+            className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100"
           >
             View in Ad Orders →
           </Link>
@@ -194,7 +194,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mt-4 rounded-lg border border-blue-200 bg-blue-50/40 p-4 space-y-3"
+      className="mt-4 rounded-md border border-blue-200 bg-blue-50/40 p-4 space-y-3"
     >
       <div className="flex items-baseline justify-between">
         <h3 className="text-sm font-semibold text-gray-900">
@@ -214,7 +214,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
             setPackageId(e.target.value);
             setSize('');
           }}
-          className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
+          className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
         >
           <option value="">— pick —</option>
           {isPrint &&
@@ -242,7 +242,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
             <select
               value={size}
               onChange={(e) => setSize(e.target.value)}
-              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
+              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
             >
               {selectedPrintPackage.sizes.map((s) => (
                 <option key={s.size} value={s.size}>
@@ -261,7 +261,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
               max={24}
               value={months}
               onChange={(e) => setMonths(Math.max(1, Number(e.target.value) || 1))}
-              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
+              className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
             />
           </div>
         </div>
@@ -279,7 +279,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
             max={24}
             value={sends}
             onChange={(e) => setSends(Math.max(1, Number(e.target.value) || 1))}
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
+            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
           />
         </div>
       )}
@@ -294,7 +294,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
+            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
           />
         </div>
         <div>
@@ -305,7 +305,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
+            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
           />
         </div>
       </div>
@@ -318,7 +318,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
         <select
           value={paymentMode}
           onChange={(e) => setPaymentMode(e.target.value as PaymentMode)}
-          className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
+          className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
         >
           {(['link', 'invoice', 'check', 'card'] as PaymentMode[]).map((m) => (
             <option key={m} value={m}>
@@ -338,7 +338,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
             placeholder="https://buy.stripe.com/..."
             value={stripeLink}
             onChange={(e) => setStripeLink(e.target.value)}
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
+            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
           />
           <p className="mt-1 text-[11px] text-gray-600">
             Create the link in Stripe Dashboard, then paste it here. The
@@ -356,7 +356,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
           rows={2}
           value={memo}
           onChange={(e) => setMemo(e.target.value)}
-          className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
+          className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
           placeholder="e.g. agreed terms on phone with Jane, will send creative tomorrow"
         />
       </div>
@@ -370,7 +370,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
       </div>
 
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
           {error}
         </div>
       )}
@@ -379,7 +379,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
         <button
           type="submit"
           disabled={submitting || !packageId || previewCents <= 0}
-          className="inline-flex items-center px-3 py-1.5 rounded text-sm font-medium bg-blue-700 text-white hover:bg-blue-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-blue-700 text-white hover:bg-blue-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           {submitting ? 'Booking…' : 'Book it'}
         </button>

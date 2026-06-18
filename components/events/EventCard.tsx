@@ -26,7 +26,7 @@ export function EventCard({ event, pubColor, onClick }: EventCardProps) {
       <div className={`flex gap-4 ${isHero ? 'px-4 py-6' : 'px-4 py-5'}`}>
         {/* Date block */}
         <div
-          className={`flex-shrink-0 ${isHero ? 'w-20 h-20' : 'w-16 h-16'} flex flex-col items-center justify-center rounded`}
+          className={`flex-shrink-0 ${isHero ? 'w-20 h-20' : 'w-16 h-16'} flex flex-col items-center justify-center rounded-md`}
           style={{ backgroundColor: pubColor }}
         >
           <span className="text-xs uppercase text-white/60 font-medium leading-none tracking-wider">{mo}</span>

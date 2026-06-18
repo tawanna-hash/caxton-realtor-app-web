@@ -118,14 +118,14 @@ export default function SubscribersPage() {
         </button>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded p-4 mb-4 flex items-center gap-3">
+      <div className="bg-white border border-gray-200 rounded-md p-4 mb-4 flex items-center gap-3">
         <div className="flex items-center gap-2 flex-1">
           <input
             type="text"
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search email or name..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40]"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40]"
           />
           {q && (
             <button
@@ -140,7 +140,7 @@ export default function SubscribersPage() {
         <select
           value={market}
           onChange={(e) => { setMarket(e.target.value as any); setPage(1); }}
-          className="px-3 py-2 border border-gray-300 rounded text-sm text-gray-900"
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
         >
           <option value="">All markets</option>
           {PUBLICATIONS.map((p) => (
@@ -150,11 +150,11 @@ export default function SubscribersPage() {
       </div>
 
       {loading && <div className="text-sm text-gray-500 py-8">Loading subscribers...</div>}
-      {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-4">Error: {error}</div>}
+      {error && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-4">Error: {error}</div>}
 
       {!loading && !error && data && (
         <>
-          <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+          <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -201,14 +201,14 @@ export default function SubscribersPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-700 disabled:opacity-40 hover:bg-gray-50"
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-700 disabled:opacity-40 hover:bg-gray-50"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
                   disabled={page >= data.totalPages}
-                  className="px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-700 disabled:opacity-40 hover:bg-gray-50"
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-700 disabled:opacity-40 hover:bg-gray-50"
                 >
                   Next
                 </button>

@@ -16,10 +16,10 @@ export function InvoiceList({
   onOpen: (r: InvoiceWithAdvertiser) => void;
 }) {
   if (rows.length === 0) {
-    return <div className="rounded-xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-500">No invoices yet.</div>;
+    return <div className="rounded-md border border-gray-200 bg-white p-10 text-center text-sm text-gray-500">No invoices yet.</div>;
   }
   return (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+    <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
       <div className="grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
         <div className="col-span-2">Number</div>
         <div className="col-span-3">Advertiser</div>

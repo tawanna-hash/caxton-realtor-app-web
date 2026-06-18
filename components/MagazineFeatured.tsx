@@ -81,7 +81,7 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
           {label}
         </p>
         {img && (
-          <div className="relative w-full aspect-[16/10] overflow-hidden mb-4 bg-gray-100 rounded-lg">
+          <div className="relative w-full aspect-[16/10] overflow-hidden mb-4 bg-gray-100 rounded-md">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={img}

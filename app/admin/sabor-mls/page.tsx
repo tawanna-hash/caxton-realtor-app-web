@@ -187,12 +187,12 @@ export default function SaborMlsAdminPage() {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">{error}</div>
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">{error}</div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Editor */}
-        <div className="lg:col-span-3 bg-white border border-gray-200 rounded-lg p-5">
+        <div className="lg:col-span-3 bg-white border border-gray-200 rounded-md p-5">
           <h2 className="font-semibold mb-4">{editingId ? `Edit report #${editingId}` : 'New report'}</h2>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
@@ -257,7 +257,7 @@ export default function SaborMlsAdminPage() {
             <p className="text-sm font-medium text-gray-700 mb-2">4 supporting stats</p>
             <div className="grid grid-cols-2 gap-3">
               {form.mini_stats.map((m, i) => (
-                <div key={i} className="p-3 border border-gray-200 rounded">
+                <div key={i} className="p-3 border border-gray-200 rounded-md">
                   <input
                     value={m.value}
                     onChange={(e) => updateMini(i, 'value', e.target.value)}
@@ -304,7 +304,7 @@ export default function SaborMlsAdminPage() {
               type="button"
               onClick={save}
               disabled={saving}
-              className="px-5 py-2.5 bg-[#3D0740] text-white rounded font-medium disabled:opacity-60"
+              className="px-5 py-2.5 bg-[#3D0740] text-white rounded-md font-medium disabled:opacity-60"
             >
               {saving ? 'Saving\u2026' : editingId ? 'Update report' : 'Create report'}
             </button>
@@ -312,7 +312,7 @@ export default function SaborMlsAdminPage() {
               <button
                 type="button"
                 onClick={startNew}
-                className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded font-medium"
+                className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-md font-medium"
               >
                 Cancel
               </button>
@@ -332,12 +332,12 @@ export default function SaborMlsAdminPage() {
               {reports.map((r, i) => (
                 <li
                   key={r.id}
-                  className="border border-gray-200 rounded p-3 bg-white flex items-start justify-between gap-3"
+                  className="border border-gray-200 rounded-md p-3 bg-white flex items-start justify-between gap-3"
                 >
                   <div>
                     <p className="font-semibold">
                       {r.month_label}{' '}
-                      {i === 0 && <span className="ml-2 text-[10px] uppercase tracking-wider bg-[#3D0740] text-white px-2 py-0.5 rounded">Live</span>}
+                      {i === 0 && <span className="ml-2 text-[10px] uppercase tracking-wider bg-[#3D0740] text-white px-2 py-0.5 rounded-md">Live</span>}
                     </p>
                     <p className="text-sm text-gray-600">{r.released_at} \u00b7 {r.headline_value} {r.headline_delta}</p>
                     <p className="text-xs text-gray-500 mt-1">{r.headline_label}</p>

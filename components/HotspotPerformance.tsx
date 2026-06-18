@@ -57,7 +57,7 @@ export default function HotspotPerformance() {
   }, []);
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <section className="rounded-md border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-4">
         <div>
           <h3 className="text-sm font-semibold text-gray-900">Hotspot performance</h3>
@@ -155,7 +155,7 @@ function TableSkeleton({ rows, cols }: { rows: number; cols: number }) {
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex gap-3">
           {Array.from({ length: cols }).map((_, j) => (
-            <div key={j} className={`h-3 bg-gray-200 rounded ${j === 0 ? 'flex-1' : 'w-12'}`} />
+            <div key={j} className={`h-3 bg-gray-200 rounded-md ${j === 0 ? 'flex-1' : 'w-12'}`} />
           ))}
         </div>
       ))}

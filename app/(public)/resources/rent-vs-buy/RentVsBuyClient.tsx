@@ -244,7 +244,7 @@ export default function RentVsBuyClient() {
 
         {/* ── Chart + Table ───────────────────────────────────────── */}
         <div className="lg:col-span-3">
-          <div className="rounded-xl border border-gray-200 bg-white p-5 mb-6">
+          <div className="rounded-md border border-gray-200 bg-white p-5 mb-6">
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#021D40] mb-4">
               Year-by-year — cumulative cost
             </p>
@@ -263,7 +263,7 @@ export default function RentVsBuyClient() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="w-10 text-right text-[#021D40] font-medium">Buy</span>
-                      <div className="flex-1 h-3.5 bg-gray-100 rounded-sm overflow-hidden">
+                      <div className="flex-1 h-3.5 bg-gray-100 rounded-md overflow-hidden">
                         <div
                           className="h-full bg-[#021D40]"
                           style={{ width: `${Math.max(0, buyWidth)}%` }}
@@ -275,7 +275,7 @@ export default function RentVsBuyClient() {
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="w-10 text-right text-[#fb923c] font-medium">Rent</span>
-                      <div className="flex-1 h-3.5 bg-gray-100 rounded-sm overflow-hidden">
+                      <div className="flex-1 h-3.5 bg-gray-100 rounded-md overflow-hidden">
                         <div
                           className="h-full bg-[#fb923c]"
                           style={{ width: `${Math.max(0, rentWidth)}%` }}
@@ -292,7 +292,7 @@ export default function RentVsBuyClient() {
           </div>
 
           {/* Detail table */}
-          <div className="overflow-x-auto rounded-lg border border-gray-200">
+          <div className="overflow-x-auto rounded-md border border-gray-200">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
                 <tr>
@@ -376,7 +376,7 @@ function SummaryCard({
 }) {
   return (
     <div
-      className={`rounded-xl border p-5 ${
+      className={`rounded-md border p-5 ${
         accent ? 'border-[#fb923c]/40 bg-[#fb923c]/5' : 'border-gray-200 bg-white'
       }`}
     >

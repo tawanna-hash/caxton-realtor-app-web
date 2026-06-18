@@ -33,11 +33,11 @@ export default async function PortalFilesPage() {
       </header>
 
       {files.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center text-gray-500">
+        <div className="rounded-md border border-dashed border-gray-300 bg-white p-10 text-center text-gray-500">
           No files yet. Your account manager will upload here.
         </div>
       ) : (
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-600 text-left">
               <tr>

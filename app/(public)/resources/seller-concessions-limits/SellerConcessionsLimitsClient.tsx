@@ -84,7 +84,7 @@ export default function SellerConcessionsLimitsClient() {
       <div className="grid grid-cols-1 gap-8">
         {/* ── Reference card ─────────────────────────────────────── */}
         <div>
-          <article className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <article className="rounded-md border border-gray-200 bg-white shadow-sm overflow-hidden">
             {/* Card header: eyebrow + title + listing-price input */}
             <header className="px-6 md:px-8 pt-6 pb-5 border-b border-gray-100 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div>
@@ -213,7 +213,7 @@ function ListingPriceInput({
   const display = useMemo(() => fmtUSD(value), [value]);
 
   return (
-    <label className="inline-flex flex-col rounded-lg border border-gray-200 bg-white px-4 py-3 min-w-[180px]">
+    <label className="inline-flex flex-col rounded-md border border-gray-200 bg-white px-4 py-3 min-w-[180px]">
       <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500 text-right">
         Listing price
       </span>

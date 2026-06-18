@@ -187,7 +187,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
 
       {/* Table */}
       {filtered.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
+        <div className="rounded-md border border-gray-200 bg-white p-8 text-center">
           <p className="text-sm text-gray-600">
             {initialArticles.length === 0
               ? 'No articles loaded. Try Sync now to fetch from WordPress.'
@@ -195,7 +195,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
@@ -221,24 +221,24 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                           <img
                             src={a.imageThumb || a.imageUrl || ''}
                             alt=""
-                            className="w-12 h-12 object-cover rounded flex-shrink-0 bg-gray-100"
+                            className="w-12 h-12 object-cover rounded-md flex-shrink-0 bg-gray-100"
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).style.display = 'none';
                             }}
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded bg-gray-100 flex-shrink-0" aria-hidden="true" />
+                          <div className="w-12 h-12 rounded-md bg-gray-100 flex-shrink-0" aria-hidden="true" />
                         )}
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <p className="font-medium text-gray-900 line-clamp-2">{a.head}</p>
                             {a.editedFields.length > 0 && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
                                 Edited
                               </span>
                             )}
                             {a.hidden && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">
                                 Hidden
                               </span>
                             )}
@@ -251,7 +251,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${PUB_STYLES[a.publication]}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium border ${PUB_STYLES[a.publication]}`}
                       >
                         {PUB_LABEL[a.publication]}
                       </span>
@@ -399,7 +399,7 @@ function EditModal({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full my-8">
+      <div className="bg-white rounded-md shadow-xl max-w-3xl w-full my-8">
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
@@ -460,7 +460,7 @@ function EditModal({
               kind="featured"
               value={imageUrl}
               onChange={setImageUrl}
-              previewClassName="w-32 h-20 rounded"
+              previewClassName="w-32 h-20 rounded-md"
             />
           </Field>
 
@@ -497,7 +497,7 @@ function EditModal({
               type="checkbox"
               checked={hidden}
               onChange={(e) => setHidden(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-[#021D40] focus:ring-[#021D40]"
+              className="h-4 w-4 rounded-md border-gray-300 text-[#021D40] focus:ring-[#021D40]"
             />
             <span className="text-sm text-gray-700">
               Hide this article from the public app
@@ -576,7 +576,7 @@ function ImageUpload({
   kind,
   value,
   onChange,
-  previewClassName = 'w-16 h-16 rounded',
+  previewClassName = 'w-16 h-16 rounded-md',
 }: {
   kind: 'author' | 'featured';
   value: string;

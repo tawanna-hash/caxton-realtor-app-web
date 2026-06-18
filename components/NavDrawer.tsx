@@ -171,7 +171,7 @@ export default function NavDrawer({
           <button
             onClick={onClose}
             aria-label="Close menu"
-            className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition"
+            className="text-white/70 hover:text-white p-1.5 rounded-md hover:bg-white/10 transition"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -184,7 +184,7 @@ export default function NavDrawer({
           <div className="px-5 pt-6">
             <button
               onClick={onPubSwitch}
-              className="w-full flex items-center justify-between border border-white/25 rounded-lg px-4 py-3 text-white text-sm uppercase tracking-wider font-medium hover:bg-white/5 transition"
+              className="w-full flex items-center justify-between border border-white/25 rounded-md px-4 py-3 text-white text-sm uppercase tracking-wider font-medium hover:bg-white/5 transition"
             >
               <span>Switch to {PUB_NAMES[pub === 'realtyline' ? 'newsline' : 'realtyline']}</span>
               <span className="text-white/50">{'\u2192'}</span>
@@ -223,7 +223,7 @@ export default function NavDrawer({
                 return (
                   <div key={item.href + item.label}>
                     <div
-                      className={`flex items-stretch rounded-lg transition ${
+                      className={`flex items-stretch rounded-md transition ${
                         isActive
                           ? 'text-white bg-white/15'
                           : 'text-white/80 hover:text-white hover:bg-white/10'
@@ -294,7 +294,7 @@ export default function NavDrawer({
                   key={item.href + item.label}
                   href={item.href}
                   onClick={onClose}
-                  className={`flex items-center px-3 py-2.5 text-sm uppercase tracking-[0.1em] font-medium rounded-lg transition ${
+                  className={`flex items-center px-3 py-2.5 text-sm uppercase tracking-[0.1em] font-medium rounded-md transition ${
                     isActive
                       ? 'text-white bg-white/15'
                       : 'text-white/80 hover:text-white hover:bg-white/10'
@@ -346,7 +346,7 @@ export default function NavDrawer({
             {user || isAdmin ? (
               <button
                 onClick={onLogout}
-                className="block w-full text-left px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/80 font-medium rounded-lg hover:text-white hover:bg-white/10 transition"
+                className="block w-full text-left px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/80 font-medium rounded-md hover:text-white hover:bg-white/10 transition"
               >
                 Logout
               </button>
@@ -359,7 +359,7 @@ export default function NavDrawer({
                 <Link
                   href="/auth/sign-in"
                   onClick={onClose}
-                  className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white font-medium rounded-lg hover:bg-white/10 transition"
+                  className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white font-medium rounded-md hover:bg-white/10 transition"
                 >
                   Login
                 </Link>

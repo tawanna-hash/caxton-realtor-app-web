@@ -138,7 +138,7 @@ const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function Strip
             <PaymentElement options={{ layout: 'tabs' }} />
             {confirming && <p className="text-sm text-gray-500">Authorizing card…</p>}
             {innerError && (
-              <p className="text-sm text-red-600 bg-red-50 rounded p-2">{innerError}</p>
+              <p className="text-sm text-red-600 bg-red-50 rounded-md p-2">{innerError}</p>
             )}
           </div>
         );
@@ -175,7 +175,7 @@ const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function Strip
 
   if (!adRateCents || adRateCents <= 0) {
     return (
-      <div className="text-sm text-gray-600 bg-gray-50 rounded p-3 border border-gray-200">
+      <div className="text-sm text-gray-600 bg-gray-50 rounded-md p-3 border border-gray-200">
         Select an ad size & frequency on the previous step to enable card payment.
       </div>
     );
@@ -187,7 +187,7 @@ const StripePaymentBlock = forwardRef<StripePaymentHandle, Props>(function Strip
 
   if (error) {
     return (
-      <div className="text-sm text-amber-800 bg-amber-50 rounded p-3 border border-amber-200">
+      <div className="text-sm text-amber-800 bg-amber-50 rounded-md p-3 border border-amber-200">
         Card payment unavailable: {error}.<br />
         Your signature will still be saved. We&apos;ll follow up with an invoice link.
       </div>

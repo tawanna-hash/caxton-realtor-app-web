@@ -53,7 +53,7 @@ export function RenewalsPanel({
       </div>
 
       {activeTab === 'expiring' && (
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
           <div className="grid grid-cols-12 gap-2 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
             <div className="col-span-2">Client</div>
             <div className="col-span-2">Email</div>
@@ -82,12 +82,12 @@ export function RenewalsPanel({
                     <div className="col-span-1"><StatusPill value={r.status} options={AG_STATUS} /></div>
                     <div className="col-span-1 flex gap-1 justify-end">
                       <button
-                        className="px-2 py-1 text-xs rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="px-2 py-1 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
                         title="Send renewal email"
                         onClick={() => onSendRenewal?.(r)}
                       >Email</button>
                       <button
-                        className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
+                        className="px-2 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
                         onClick={() => onRenew(r)}
                       >Renew</button>
                     </div>
@@ -100,7 +100,7 @@ export function RenewalsPanel({
       )}
 
       {activeTab === 'all_renewals' && (
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
           <div className="grid grid-cols-12 gap-2 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
             <div className="col-span-2">Client</div>
             <div className="col-span-2">Email</div>
@@ -130,7 +130,7 @@ export function RenewalsPanel({
       )}
 
       {activeTab === 'reminders' && (
-        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
           <div className="grid grid-cols-12 gap-2 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
             <div className="col-span-2">Client</div>
             <div className="col-span-2">Company</div>
@@ -165,15 +165,15 @@ export function RenewalsPanel({
                       {noteId === r.id ? (
                         <div className="w-full space-y-1">
                           <textarea
-                            className="w-full text-xs px-2 py-1 border border-gray-300 rounded resize-none"
+                            className="w-full text-xs px-2 py-1 border border-gray-300 rounded-md resize-none"
                             rows={2}
                             value={noteText}
                             onChange={(e) => setNoteText(e.target.value)}
                             placeholder="Add a note…"
                           />
                           <div className="flex gap-1 justify-end">
-                            <button className="text-xs px-2 py-0.5 rounded border border-gray-300 text-gray-600" onClick={() => setNoteId(null)}>Cancel</button>
-                            <button className="text-xs px-2 py-0.5 rounded bg-blue-600 text-white" onClick={async () => {
+                            <button className="text-xs px-2 py-0.5 rounded-md border border-gray-300 text-gray-600" onClick={() => setNoteId(null)}>Cancel</button>
+                            <button className="text-xs px-2 py-0.5 rounded-md bg-blue-600 text-white" onClick={async () => {
                               await onReminderAction(r.id, { note: noteText });
                               setNoteId(null); setNoteText('');
                             }}>Save</button>
@@ -181,14 +181,14 @@ export function RenewalsPanel({
                         </div>
                       ) : (
                         <div className="flex gap-1 flex-wrap justify-end">
-                          <button className="px-2 py-0.5 text-xs rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          <button className="px-2 py-0.5 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
                             onClick={() => onSendReminder?.(r)}>Email</button>
                           {r.status === 'Pending' && <>
-                            <button className="px-2 py-0.5 text-xs rounded bg-emerald-600 text-white hover:bg-emerald-700"
+                            <button className="px-2 py-0.5 text-xs rounded-md bg-emerald-600 text-white hover:bg-emerald-700"
                               onClick={() => onReminderAction(r.id, { status: 'Completed' })}>Complete</button>
-                            <button className="px-2 py-0.5 text-xs rounded border border-blue-300 text-blue-700 hover:bg-blue-50"
+                            <button className="px-2 py-0.5 text-xs rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50"
                               onClick={() => { setNoteId(r.id); setNoteText(r.note ?? ''); }}>Note</button>
-                            <button className="px-2 py-0.5 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
+                            <button className="px-2 py-0.5 text-xs rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50"
                               onClick={() => onReminderAction(r.id, { status: 'Dismissed' })}>Dismiss</button>
                           </>}
                         </div>

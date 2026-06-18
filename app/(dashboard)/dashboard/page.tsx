@@ -217,12 +217,12 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-md w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
         {status === 'success' ? (
           <div className="text-center py-6">
             <p className="text-xl font-semibold text-gray-900 mb-2">You&rsquo;re on the list</p>
             <p className="text-gray-600 mb-6">We&rsquo;ll email you the moment {market.name} launches.</p>
-            <button onClick={onClose} className="px-6 py-2 bg-gray-900 text-white rounded-lg">Close</button>
+            <button onClick={onClose} className="px-6 py-2 bg-gray-900 text-white rounded-md">Close</button>
           </div>
         ) : (
           <>
@@ -238,7 +238,7 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-3 border border-gray-300 rounded-lg text-base"
+                className="w-full px-3 py-3 border border-gray-300 rounded-md text-base"
                 autoFocus
               />
               <input
@@ -246,7 +246,7 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
                 placeholder="Your name (optional)"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-3 border border-gray-300 rounded-lg text-base"
+                className="w-full px-3 py-3 border border-gray-300 rounded-md text-base"
               />
               {/* Honeypot: hidden from humans, present to bots. */}
               <input
@@ -262,7 +262,7 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
               <button
                 type="submit"
                 disabled={status === 'submitting'}
-                className="w-full px-4 py-3 bg-gray-900 text-white rounded-lg font-semibold disabled:opacity-60"
+                className="w-full px-4 py-3 bg-gray-900 text-white rounded-md font-semibold disabled:opacity-60"
               >
                 {status === 'submitting' ? 'Submitting...' : 'Notify me'}
               </button>
@@ -284,7 +284,7 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-3">Select a Publication</h2>
         <p className="text-lg text-gray-400 font-light text-center mb-8">Welcome, we are happy you are here!</p>
         <div className="relative">
-          <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 py-4 border border-gray-300 bg-white text-left rounded-lg">
+          <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 py-4 border border-gray-300 bg-white text-left rounded-md">
             <span className="text-lg text-gray-500 font-light">Choose your market...</span>
             <span className="text-gray-400 text-base">{open ? '\u25B2' : '\u25BC'}</span>
           </button>
@@ -293,7 +293,7 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
               {PUBS.map((pub) => (
                 <button key={pub.id} onClick={() => onSelect(pub.id)} className="w-full text-left px-4 py-5 border-b border-gray-100 bg-white hover:bg-gray-50">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded flex items-center justify-center flex-shrink-0" style={{ backgroundColor: pub.color }}>
+                    <div className="w-14 h-14 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: pub.color }}>
                       <span className="text-white text-base font-medium">{pub.id === 'realtyline' ? 'RL' : 'NS'}</span>
                     </div>
                     <div>
@@ -315,7 +315,7 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
                   className="w-full text-left px-4 py-5 border-b border-gray-100 bg-gray-50 hover:bg-gray-100"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded flex items-center justify-center flex-shrink-0 opacity-60" style={{ backgroundColor: pub.color }}>
+                    <div className="w-14 h-14 rounded-md flex items-center justify-center flex-shrink-0 opacity-60" style={{ backgroundColor: pub.color }}>
                       <span className="text-white text-base font-medium">{pub.monogram}</span>
                     </div>
                     <div className="flex-1">
@@ -694,7 +694,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <p className="text-sm text-gray-400 font-light mb-3">Choose which lists you want to receive. You can change these anytime.</p>
                 <div className="space-y-2 mb-6">
                   {SUBS.map((s) => (
-                    <label key={s.id} className="flex items-start gap-3 p-3 border border-gray-200 cursor-pointer rounded-lg">
+                    <label key={s.id} className="flex items-start gap-3 p-3 border border-gray-200 cursor-pointer rounded-md">
                       <input
                         type="checkbox"
                         checked={subs.includes(s.id)}
@@ -734,7 +734,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 </div>
 
                 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">Review Your Info</p>
-                <div className="bg-gray-50 border border-gray-200 p-4 mb-4 space-y-2 rounded-lg">
+                <div className="bg-gray-50 border border-gray-200 p-4 mb-4 space-y-2 rounded-md">
                   <p className="text-base text-gray-900 font-medium">{fullName}</p>
                   <p className="text-sm text-gray-500 font-light">{title || 'No title selected'}</p>
                   <p className="text-sm text-gray-500 font-light">{licenseType} {licenseNum}</p>
@@ -1342,7 +1342,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
             return (
               <article key={ev.id} className="bg-white border-b border-gray-200">
                 <div className="px-4 py-5 flex gap-4">
-                  <div className="flex-shrink-0 w-16 h-16 flex flex-col items-center justify-center rounded" style={{ backgroundColor: info.color }}>
+                  <div className="flex-shrink-0 w-16 h-16 flex flex-col items-center justify-center rounded-md" style={{ backgroundColor: info.color }}>
                     <span className="text-xs uppercase text-white/60 font-medium leading-none tracking-wider">{mo}</span>
                     <span className="text-xl font-medium text-white leading-none">{dy}</span>
                   </div>
@@ -1713,7 +1713,7 @@ function AdPopup({}: { pub: string; articleId: string }) {
 
   return (
     <div
-      className="fixed right-4 z-50 w-72 shadow-2xl rounded-lg overflow-hidden"
+      className="fixed right-4 z-50 w-72 shadow-2xl rounded-md overflow-hidden"
       // BUG-iPhone-17: was bottom-20 (80px), which collided with the
       // BottomNav + safe-area on tall iPhones. Lift it above BottomNav +
       // ActionBar so it doesn't cover the article pill or get hidden.

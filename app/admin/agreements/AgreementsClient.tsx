@@ -267,13 +267,13 @@ export default function AgreementsClient({
         </div>
         <div className="flex gap-2">
           {tab === 'renewals'
-            ? <button onClick={() => setTab('agreements')} className="px-4 py-2 rounded border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">All agreements &rarr;</button>
+            ? <button onClick={() => setTab('agreements')} className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">All agreements &rarr;</button>
             : <>
                 <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) { void handleUploadFile(f); } e.target.value = ''; }}
                 />
-                <button onClick={handleUploadClick} className="px-4 py-2 rounded border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">&uarr; Upload</button>
-                <button onClick={() => setCreateAg(true)} className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">+ New agreement</button>
+                <button onClick={handleUploadClick} className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">&uarr; Upload</button>
+                <button onClick={() => setCreateAg(true)} className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">+ New agreement</button>
               </>
           }
         </div>
@@ -281,7 +281,7 @@ export default function AgreementsClient({
 
       {/* Recently-signed banner (last 24h) */}
       {!signedBannerDismissed && recentlySigned.length > 0 && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 flex items-start gap-3">
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 flex items-start gap-3">
           <div className="flex-shrink-0 mt-0.5 text-emerald-600" aria-hidden>✓</div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-semibold text-emerald-900">
@@ -312,7 +312,7 @@ export default function AgreementsClient({
           <button
             type="button"
             onClick={dismissSignedBanner}
-            className="flex-shrink-0 text-emerald-700 hover:text-emerald-900 text-sm px-2 py-1 rounded hover:bg-emerald-100"
+            className="flex-shrink-0 text-emerald-700 hover:text-emerald-900 text-sm px-2 py-1 rounded-md hover:bg-emerald-100"
             aria-label="Dismiss notification"
           >
             Dismiss
@@ -354,10 +354,10 @@ export default function AgreementsClient({
       </div>
 
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-800 shadow-lg">
+        <div className="fixed bottom-6 right-6 z-50 rounded-md border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-800 shadow-lg">
           {toast}
         </div>
       )}
@@ -386,14 +386,14 @@ export default function AgreementsClient({
 
       {/* Filters */}
       {tab === 'agreements' && (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 flex flex-wrap gap-2 items-center">
+        <div className="rounded-md border border-gray-200 bg-white p-4 flex flex-wrap gap-2 items-center">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search advertiser, ad size&hellip;"
-            className="flex-1 min-w-[240px] px-3 py-2 rounded border border-gray-300 text-sm"
+            className="flex-1 min-w-[240px] px-3 py-2 rounded-md border border-gray-300 text-sm"
           />
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded border border-gray-300 text-sm">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-md border border-gray-300 text-sm">
             <option value="all">All statuses</option>
             {AG_STATUS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>

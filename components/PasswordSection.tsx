@@ -70,7 +70,7 @@ export default function PasswordSection({ accentColor = '#021D40', hasPassword }
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg p-5 bg-white">
+    <div className="border border-gray-200 rounded-md p-5 bg-white">
       <h3 className="text-base font-semibold text-gray-900 mb-1">
         {passwordExists ? 'Change password' : 'Set a password'}
       </h3>
@@ -81,12 +81,12 @@ export default function PasswordSection({ accentColor = '#021D40', hasPassword }
       </p>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded px-3 py-2 mb-3">
+        <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-md px-3 py-2 mb-3">
           {error}
         </div>
       )}
       {info && (
-        <div className="text-sm text-green-700 bg-green-50 border border-green-100 rounded px-3 py-2 mb-3">
+        <div className="text-sm text-green-700 bg-green-50 border border-green-100 rounded-md px-3 py-2 mb-3">
           {info}
         </div>
       )}
@@ -98,7 +98,7 @@ export default function PasswordSection({ accentColor = '#021D40', hasPassword }
             type={showPassword ? 'text' : 'password'}
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm text-gray-900 mb-3"
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm text-gray-900 mb-3"
             autoComplete="current-password"
             disabled={loading}
           />
@@ -110,7 +110,7 @@ export default function PasswordSection({ accentColor = '#021D40', hasPassword }
         type={showPassword ? 'text' : 'password'}
         value={newPassword}
         onChange={(e) => setNewPassword(e.target.value)}
-        className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm text-gray-900 mb-3"
+        className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm text-gray-900 mb-3"
         autoComplete="new-password"
         disabled={loading}
         placeholder="At least 8 characters"
@@ -121,7 +121,7 @@ export default function PasswordSection({ accentColor = '#021D40', hasPassword }
         type={showPassword ? 'text' : 'password'}
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
-        className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm text-gray-900 mb-3"
+        className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm text-gray-900 mb-3"
         autoComplete="new-password"
         disabled={loading}
       />
@@ -139,7 +139,7 @@ export default function PasswordSection({ accentColor = '#021D40', hasPassword }
       <button
         onClick={handleSubmit}
         disabled={loading || !newPassword || !confirmPassword || (passwordExists && !currentPassword)}
-        className="w-full py-3 text-sm font-medium uppercase tracking-wider text-white rounded disabled:opacity-50"
+        className="w-full py-3 text-sm font-medium uppercase tracking-wider text-white rounded-md disabled:opacity-50"
         style={{ backgroundColor: accentColor }}
       >
         {loading ? 'Updating\u2026' : passwordExists ? 'Change password' : 'Set password'}

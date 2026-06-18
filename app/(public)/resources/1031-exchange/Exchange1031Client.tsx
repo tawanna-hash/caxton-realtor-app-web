@@ -130,7 +130,7 @@ export default function Exchange1031Client() {
             />
           </FieldGroup>
 
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-amber-900 mb-2">
               Before Day 0
             </p>
@@ -142,7 +142,7 @@ export default function Exchange1031Client() {
             </p>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-gray-800 mb-2">
               Identification rules (pick one)
             </p>
@@ -157,7 +157,7 @@ export default function Exchange1031Client() {
         {/* ── Result / Timeline ───────────────────────────────────── */}
         <div className="lg:col-span-3 print:col-span-5 space-y-6">
           {/* Status banner */}
-          <div className={`rounded-xl border ${statusTone.border} ${statusTone.bg} p-5`}>
+          <div className={`rounded-md border ${statusTone.border} ${statusTone.bg} p-5`}>
             <div className="flex items-start justify-between mb-3">
               <div>
                 <p className={`text-[10px] uppercase tracking-wider font-semibold ${statusTone.label}`}>
@@ -210,7 +210,7 @@ export default function Exchange1031Client() {
           </div>
 
           {/* Milestone list */}
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none">
+          <div className="rounded-md border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none">
             <p className={EYEBROW}>Milestones</p>
             <ol className="mt-3 space-y-4">
               {timeline.milestones.map((m, idx) => (
@@ -266,7 +266,7 @@ function DeadlineCard({
   const upcoming = !missed;
   return (
     <div
-      className={`rounded-lg border px-3 py-3 ${
+      className={`rounded-md border px-3 py-3 ${
         missed
           ? 'border-rose-200 bg-rose-50'
           : 'border-white bg-white/70'

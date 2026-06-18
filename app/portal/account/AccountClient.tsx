@@ -91,7 +91,7 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
+      <div className="rounded-md border border-gray-200 bg-white p-6 space-y-4">
         <div className="grid grid-cols-2 gap-x-6 gap-y-1 pb-4 border-b border-gray-100 text-sm">
           <div>
             <div className="text-gray-500">Name</div>
@@ -117,20 +117,20 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
                   saveField(key, e.target.value);
                 }
               }}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             />
           </label>
         ))}
 
         {saveError && (
-          <div className="rounded-lg bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-sm">
+          <div className="rounded-md bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-sm">
             {saveError}
           </div>
         )}
       </div>
 
       {/* Default footer template */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6">
+      <div className="rounded-md border border-gray-200 bg-white p-6">
         <div className="flex items-start justify-between mb-1">
           <h2
             className="font-serif text-lg text-gray-900"
@@ -152,7 +152,7 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
                 key={id}
                 type="button"
                 onClick={() => saveFooterTemplate(id)}
-                className={`text-left rounded-xl border p-3 transition ${
+                className={`text-left rounded-md border p-3 transition ${
                   selected
                     ? 'border-[#021D40] ring-2 ring-[#021D40]/20 bg-white'
                     : 'border-gray-200 hover:border-gray-300 bg-white'

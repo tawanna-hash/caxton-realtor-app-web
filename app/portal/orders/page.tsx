@@ -100,7 +100,7 @@ export default async function PortalOrders() {
       </header>
 
       {rows.length === 0 ? (
-        <section className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center">
+        <section className="rounded-md border border-dashed border-gray-300 bg-white p-8 text-center">
           <h2
             className="font-serif text-xl text-gray-900 mb-2"
           >
@@ -112,14 +112,14 @@ export default async function PortalOrders() {
           </p>
           <Link
             href="/advertise/portal"
-            className="inline-flex items-center gap-2 rounded-lg bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-800 transition"
+            className="inline-flex items-center gap-2 rounded-md bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-800 transition"
           >
             Browse ad placements
             <span aria-hidden>{'\u2192'}</span>
           </Link>
         </section>
       ) : (
-        <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <section className="overflow-hidden rounded-md border border-gray-200 bg-white">
           {/* Desktop table */}
           <table className="hidden md:table w-full text-sm">
             <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
@@ -215,7 +215,7 @@ export default async function PortalOrders() {
         </section>
       )}
 
-      <section className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+      <section className="rounded-md border border-gray-200 bg-gray-50 p-5">
         <h2
           className="font-serif text-lg text-gray-900 mb-1"
         >
