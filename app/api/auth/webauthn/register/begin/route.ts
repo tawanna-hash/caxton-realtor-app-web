@@ -51,7 +51,12 @@ export const POST = withErrorHandling(async () => {
       transports: c.transports as AuthenticatorTransportFuture[],
     })),
     authenticatorSelection: {
-      residentKey: 'preferred',
+      // 'required' so iOS/Android store the credential as a discoverable
+      // passkey. Without this, iOS may register a non-discoverable credential
+      // that the user can only use if they type their email first — and the
+      // 'Use Face ID' button (which omits email) throws NotAllowedError.
+      residentKey: 'required',
+      requireResidentKey: true,
       userVerification: 'preferred',
     },
   });
