@@ -139,7 +139,7 @@ export default function PublicAdvertisePlacementsPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Advertise · Placements
         </p>
-        <PageTitle>
+        <PageTitle size="md">
           See exactly where your ad appears.
         </PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
