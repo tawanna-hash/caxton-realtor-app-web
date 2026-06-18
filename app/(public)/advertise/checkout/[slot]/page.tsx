@@ -9,6 +9,7 @@ import { notFound } from 'next/navigation';
 import { APP_AD_SLOTS } from '@/lib/media-kit';
 import { getBookedPubsForSlot } from '@/lib/server/slot-availability';
 import CheckoutForm from './CheckoutForm';
+import PageTitle from '@/components/ui/PageTitle';
 import type { Metadata } from 'next';
 
 type RouteCtx = {
@@ -100,13 +101,11 @@ export default async function CheckoutPage(ctx: RouteCtx) {
     <div className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-10 sm:py-14">
         <div className="mb-8">
-          <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-2">
+          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             {slot.tier} placement · {slot.zone}
           </p>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-            Book {slot.name}
-          </h1>
-          <p className="text-gray-600 text-base sm:text-lg leading-relaxed">
+          <PageTitle size="md">Book {slot.name}</PageTitle>
+          <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
             Choose your dates, upload your creative, accept the terms, and pay
             securely. Your ad goes live as soon as we verify the creative meets
             spec — usually within one business day.

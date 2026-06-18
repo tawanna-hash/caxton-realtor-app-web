@@ -10,6 +10,7 @@ import { generateICS } from '@/lib/events/ics';
 import { trackEvent } from '@/app/posthog-provider';
 import { DetailSection } from './DetailSection';
 import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
+import PageTitle from '@/components/ui/PageTitle';
 
 /**
  * Returns true only when the location string looks like a real physical
@@ -116,7 +117,7 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
           <button onClick={onBack} aria-label="Back" className="text-gray-900 p-2 -ml-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          <p className="text-sm uppercase tracking-[0.25em] text-gray-900 font-medium ml-2">Events</p>
+          <p className="text-sm uppercase tracking-[0.2em] text-gray-900 font-medium ml-2">Events</p>
         </div>
         <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
       </div>
@@ -138,9 +139,9 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
         )}
 
         {/* Title */}
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight leading-tight mb-2">
-          {title}
-        </h1>
+        <div className="mb-2">
+          <PageTitle size="md">{title}</PageTitle>
+        </div>
 
         {/* Subtitle: date · time · location */}
         {(event.startDate || event.location) && (

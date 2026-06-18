@@ -46,7 +46,7 @@ export default function PageHeader({
         <div className={align === 'center' ? 'text-center w-full' : 'min-w-0'}>
           {eyebrow ? (
             <p
-              className={`text-xs uppercase tracking-[0.25em] text-gray-500 font-medium mb-3 ${align === 'center' ? 'text-center' : ''}`.trim()}
+              className={`text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2 ${align === 'center' ? 'text-center' : ''}`.trim()}
             >
               {eyebrow}
             </p>

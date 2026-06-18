@@ -21,15 +21,16 @@ function fmtUsd(n: number): string {
 
 export default function AdvertisePrintPage() {
   return (
-    <main className="max-w-5xl mx-auto px-6 py-12 md:py-16">
-      <header className="mb-10">
+    <main className="min-h-screen bg-white">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+      <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Advertise · Print
         </p>
         <PageTitle>
           Print + digital editions, sold by the issue or by agreement.
         </PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
+        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           Every Brand package runs your creative in both the printed magazine
           and the matching digital edition. Longer agreements unlock event
           coverage, social shares, e-Blasts, and front-page logo placement.
@@ -158,6 +159,7 @@ export default function AdvertisePrintPage() {
           Start a print inquiry
         </Link>
       </section>
+        </div>
     </main>
   );
 }

@@ -78,7 +78,7 @@ function ResetPasswordInner() {
   return (
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
       <div className="w-full max-w-md px-8">
-        <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium mb-2 text-center">Realty News Now</p>
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-400 font-medium mb-2 text-center">Realty News Now</p>
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-6">Set a New Password</h2>
         {error && <p className="text-base text-red-500 text-center mb-4 font-light">{error}</p>}
         <div className="relative mb-3">

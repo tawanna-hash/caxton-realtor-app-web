@@ -7,15 +7,16 @@ export const metadata = {
 
 export default function FaqPage() {
   return (
-    <main className="max-w-3xl mx-auto px-6 py-12 md:py-16">
-      <header className="mb-10">
+    <main className="min-h-screen bg-white">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+      <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Frequently Asked Questions
         </p>
         <PageTitle>
           Common questions, quick answers.
         </PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
+        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           Don&apos;t see your question?{' '}
           <a
             href="mailto:hello@myrealtyline.com?subject=App%20Question"
@@ -261,6 +262,7 @@ export default function FaqPage() {
           and a real person will write back.
         </p>
       </footer>
+        </div>
     </main>
   );
 }

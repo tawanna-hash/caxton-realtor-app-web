@@ -28,15 +28,16 @@ function fmtUsd(n: number): string {
 
 export default function AdvertiseEmailPage() {
   return (
-    <main className="max-w-4xl mx-auto px-6 py-12 md:py-16">
-      <header className="mb-10">
+    <main className="min-h-screen bg-white">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+      <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Advertise · e-Blast
         </p>
         <PageTitle>
           Drop straight into 64,000+ real-estate inboxes.
         </PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
+        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           Your message, your design, sent as a dedicated email to RealtyLine
           and Newsline San Antonio subscribers — agents, brokers, builders, and lenders
           across Central and South Texas. Pick a package below and we&apos;ll
@@ -170,6 +171,7 @@ export default function AdvertiseEmailPage() {
           Start an e-Blast inquiry
         </Link>
       </section>
+        </div>
     </main>
   );
 }

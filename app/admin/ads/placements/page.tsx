@@ -156,7 +156,7 @@ export default function AdminAdsPlacementsPage() {
           Admin · Ads
         </div>
         <PageTitle size="md">Placements</PageTitle>
-        <p className="text-sm uppercase tracking-[0.18em] text-gray-700 font-semibold mt-2">
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-700 font-semibold mt-2">
           Print {'\u00b7'} Digital {'\u00b7'} Social {'\u00b7'} Mobile.{' '}
           <span className="text-gray-500 font-normal normal-case tracking-normal">
             One powerful marketing platform.

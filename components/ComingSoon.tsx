@@ -15,7 +15,7 @@ export default function ComingSoon({
   return (
     <div className="min-h-[calc(100vh-180px)] flex items-center justify-center px-6 py-16">
       <div className="max-w-md text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gray-400 font-medium mb-4">
+        <p className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium mb-4">
           Coming soon
         </p>
         <h1 className="text-3xl font-semibold text-[#021D40] tracking-tight mb-4">
