@@ -43,7 +43,7 @@ export default async function PortalAccountPage() {
     <div className="space-y-6">
       <header>
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Portal</div>
-        <h1 className="font-serif text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>Account</h1>
+        <h1 className="font-serif text-3xl text-gray-900">Account</h1>
         <p className="text-gray-600 mt-1">Keep your contact info current. Changes are saved automatically.</p>
       </header>
       <AccountClient initial={initial} />

@@ -245,7 +245,6 @@ export default function InvestmentPropertyClient() {
             </div>
             <p
               className={`text-4xl mb-1 ${cashFlowPositive ? 'text-gray-900' : 'text-rose-700'}`}
-              style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
             >
               {fmtUSD(result.monthlyCashFlow)}
             </p>
@@ -349,7 +348,6 @@ function RatioTile({ label, value, accent = false }: { label: string; value: str
       <p className="text-[10px] uppercase tracking-wider text-gray-500">{label}</p>
       <p
         className="text-lg text-gray-900"
-        style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
       >
         {value}
       </p>

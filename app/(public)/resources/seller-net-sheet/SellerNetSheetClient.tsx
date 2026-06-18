@@ -411,7 +411,6 @@ export default function SellerNetSheetClient() {
               className={`text-4xl mb-1 ${
                 result.netToSeller >= 0 ? 'text-gray-900' : 'text-rose-700'
               }`}
-              style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
             >
               {fmtUSD(result.netToSeller)}
             </p>

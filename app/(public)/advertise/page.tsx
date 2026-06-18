@@ -68,7 +68,6 @@ export default function AdvertisePage() {
             </p>
             <h2
               className="font-serif text-2xl text-gray-900 mb-1"
-              style={{ fontFamily: 'Georgia, serif' }}
             >
               Buy a placement in two minutes.
             </h2>
@@ -94,7 +93,6 @@ export default function AdvertisePage() {
         </p>
         <h2
           className="font-serif text-2xl md:text-3xl text-gray-900 leading-tight mb-3"
-          style={{ fontFamily: 'Georgia, serif' }}
         >
           {TOTAL_NETWORK_SUBS.toLocaleString('en-US')} engaged real estate
           subscribers across four Texas markets.
@@ -171,7 +169,6 @@ export default function AdvertisePage() {
         </p>
         <h2
           className="font-serif text-2xl md:text-3xl text-gray-900 leading-tight mb-3"
-          style={{ fontFamily: 'Georgia, serif' }}
         >
           Four channels. One integrated buy.
         </h2>
@@ -191,7 +188,6 @@ export default function AdvertisePage() {
                 </p>
                 <h3
                   className="font-serif text-xl text-gray-900 mt-1"
-                  style={{ fontFamily: 'Georgia, serif' }}
                 >
                   Print magazine
                 </h3>
@@ -405,7 +401,6 @@ export default function AdvertisePage() {
                 </p>
                 <h3
                   className="font-serif text-xl text-gray-900 mt-1"
-                  style={{ fontFamily: 'Georgia, serif' }}
                 >
                   Social
                 </h3>
@@ -431,7 +426,6 @@ export default function AdvertisePage() {
                 </p>
                 <h3
                   className="font-serif text-xl text-gray-900 mt-1"
-                  style={{ fontFamily: 'Georgia, serif' }}
                 >
                   E-Blasts
                 </h3>
@@ -474,7 +468,6 @@ export default function AdvertisePage() {
                 </p>
                 <h3
                   className="font-serif text-xl text-gray-900 mt-1"
-                  style={{ fontFamily: 'Georgia, serif' }}
                 >
                   Mobile web app
                 </h3>

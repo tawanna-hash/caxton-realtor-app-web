@@ -242,7 +242,6 @@ function Identity({
       </p>
       <h1
         className={`${nameCls} font-semibold text-gray-900 tracking-tight`}
-        style={{ fontFamily: 'Georgia, serif' }}
       >
         {data.name}
       </h1>
@@ -352,14 +351,12 @@ function Chip({ data, theme }: { data: AdvertiserHeaderData; theme: AdvertiserHe
       {data.tagline ? (
         <h1
           className="text-3xl sm:text-4xl font-semibold text-gray-900 tracking-tight leading-tight"
-          style={{ fontFamily: 'Georgia, serif' }}
         >
           {data.tagline}
         </h1>
       ) : (
         <h1
           className="text-3xl sm:text-4xl font-semibold text-gray-900 tracking-tight leading-tight"
-          style={{ fontFamily: 'Georgia, serif' }}
         >
           {data.name}
         </h1>
@@ -403,7 +400,6 @@ function Centered({ data, theme }: { data: AdvertiserHeaderData; theme: Advertis
       </div>
       <h1
         className="text-3xl sm:text-4xl font-semibold text-gray-900 tracking-tight"
-        style={{ fontFamily: 'Georgia, serif' }}
       >
         {data.name}
       </h1>

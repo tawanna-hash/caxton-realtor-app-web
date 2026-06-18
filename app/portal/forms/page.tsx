@@ -45,12 +45,12 @@ export default async function PortalFormsPage() {
     <div className="space-y-8">
       <header>
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Portal</div>
-        <h1 className="font-serif text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>Forms</h1>
+        <h1 className="font-serif text-3xl text-gray-900">Forms</h1>
         <p className="text-gray-600 mt-1">Short forms your account manager has asked you to complete.</p>
       </header>
 
       <section>
-        <h2 className="font-serif text-xl text-gray-900 mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+        <h2 className="font-serif text-xl text-gray-900 mb-3">
           To complete ({pending.length})
         </h2>
         {pending.length === 0 ? (
@@ -83,7 +83,7 @@ export default async function PortalFormsPage() {
 
       {done.length > 0 && (
         <section>
-          <h2 className="font-serif text-xl text-gray-900 mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="font-serif text-xl text-gray-900 mb-3">
             Submitted ({done.length})
           </h2>
           <div className="space-y-3">

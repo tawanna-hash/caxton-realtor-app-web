@@ -92,7 +92,6 @@ export default async function PortalOrders() {
         </div>
         <h1
           className="font-serif text-3xl text-gray-900"
-          style={{ fontFamily: 'Georgia, serif' }}
         >
           My orders
         </h1>
@@ -105,7 +104,6 @@ export default async function PortalOrders() {
         <section className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center">
           <h2
             className="font-serif text-xl text-gray-900 mb-2"
-            style={{ fontFamily: 'Georgia, serif' }}
           >
             No orders yet
           </h2>
@@ -221,7 +219,6 @@ export default async function PortalOrders() {
       <section className="rounded-xl border border-gray-200 bg-gray-50 p-5">
         <h2
           className="font-serif text-lg text-gray-900 mb-1"
-          style={{ fontFamily: 'Georgia, serif' }}
         >
           Need to add another placement?
         </h2>

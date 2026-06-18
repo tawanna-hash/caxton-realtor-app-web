@@ -1,11 +1,15 @@
 // components/ui/PageTitle.tsx
 //
 // Unified page-title style for the app. Matches the look of the
-// Magazine Archive header: serif (Georgia), large, medium weight (500),
-// gray-900.
+// Magazine page header: display serif (Georgia, "Times New Roman",
+// serif) at semibold (600), gray-900.
+//
+// Font family + weight are inherited from the global `.font-serif` rule
+// defined in app/globals.css (which pins Georgia @ 600 app-wide), so we
+// only need to apply the `font-serif` class — no inline style required.
 //
 // Use this for all top-level page titles (H1s) so type stays consistent
-// app-wide.
+// across public, admin, portal, and auth surfaces.
 
 import React from 'react';
 
@@ -19,8 +23,6 @@ type Props = {
   size?: 'lg' | 'md';
 };
 
-const SERIF_FONT = 'Georgia, "Times New Roman", serif';
-
 export default function PageTitle({
   children,
   className = '',
@@ -32,8 +34,7 @@ export default function PageTitle({
   const alignCls = align === 'center' ? 'text-center' : '';
   return (
     <h1
-      className={`${sizeCls} text-gray-900 tracking-tight mb-3 ${alignCls} ${className}`.trim()}
-      style={{ fontFamily: SERIF_FONT, fontWeight: 500 }}
+      className={`font-serif ${sizeCls} text-gray-900 tracking-tight mb-3 ${alignCls} ${className}`.trim()}
     >
       {children}
     </h1>

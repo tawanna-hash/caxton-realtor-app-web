@@ -261,7 +261,7 @@ export default function AgreementsClient({
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin · Agreements</div>
-          <h1 className="text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>Agreements</h1>
+          <h1 className="text-3xl text-gray-900">Agreements</h1>
           <p className="text-sm text-gray-600 mt-1">Contracts and renewals for every advertiser. Stripe charges land via the public Sign Wizard &mdash; see each agreement for payment status.</p>
         </div>
         <div className="flex gap-2">

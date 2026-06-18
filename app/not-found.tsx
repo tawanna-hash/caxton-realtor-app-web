@@ -14,7 +14,6 @@ export default function NotFound() {
         </p>
         <h1
           className="text-4xl text-gray-900 mb-4"
-          style={{ fontFamily: "Georgia, serif" }}
         >
           Page not found
         </h1>

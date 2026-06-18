@@ -36,7 +36,7 @@ export default async function PortalErrorPage({ searchParams }: PageProps) {
   return (
     <div className="max-w-lg mx-auto rounded-xl border border-gray-200 bg-white p-10 text-center">
       <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">RealtyLine portal</div>
-      <h1 className="font-serif text-2xl text-gray-900 mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+      <h1 className="font-serif text-2xl text-gray-900 mb-3">
         {msg.title}
       </h1>
       <p className="text-gray-600">{msg.body}</p>

@@ -102,7 +102,7 @@ export default function SubmitEventClient({ token }: { token: string }) {
   if (loadErr) {
     return (
       <div className="rounded-lg bg-white border border-red-200 p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-gray-900 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
+        <h1 className="text-xl font-semibold text-gray-900 mb-2">
           Submission link not found
         </h1>
         <p className="text-sm text-gray-700">
@@ -123,7 +123,7 @@ export default function SubmitEventClient({ token }: { token: string }) {
         <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-700 font-medium mb-2">
           Submitted
         </p>
-        <h1 className="text-2xl font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-3">
           Thanks — your event is queued for review
         </h1>
         <p className="text-sm text-gray-700 mb-6">
@@ -148,7 +148,6 @@ export default function SubmitEventClient({ token }: { token: string }) {
       </p>
       <h1
         className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2 tracking-tight"
-        style={{ fontFamily: 'Georgia, serif' }}
       >
         Realty News Now Calendar
       </h1>

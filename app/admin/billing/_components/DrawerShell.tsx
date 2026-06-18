@@ -22,7 +22,7 @@ export function DrawerShell({
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div>
             <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Billing</div>
-            <h2 className="text-xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>{title}</h2>
+            <h2 className="text-xl text-gray-900">{title}</h2>
             {subtitle && <div className="text-xs text-gray-500 mt-0.5 truncate">{subtitle}</div>}
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>

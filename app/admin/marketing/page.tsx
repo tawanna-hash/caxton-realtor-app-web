@@ -46,7 +46,7 @@ export default async function MarketingPage() {
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Admin · Marketing
         </div>
-        <h1 className="font-serif text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+        <h1 className="font-serif text-3xl text-gray-900">
           Campaign workspace
         </h1>
         <p className="text-gray-600 mt-2">

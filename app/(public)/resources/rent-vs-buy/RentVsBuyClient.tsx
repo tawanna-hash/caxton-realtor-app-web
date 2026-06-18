@@ -383,7 +383,6 @@ function SummaryCard({
       <p className="text-xs uppercase tracking-wider text-gray-500 mb-1">{label}</p>
       <p
         className="text-2xl text-gray-900"
-        style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
       >
         {value}
       </p>

@@ -134,7 +134,6 @@ export default function AccountClient({ initial }: { initial: InitialProps }) {
         <div className="flex items-start justify-between mb-1">
           <h2
             className="font-serif text-lg text-gray-900"
-            style={{ fontFamily: 'Georgia, serif' }}
           >
             Default footer template
           </h2>

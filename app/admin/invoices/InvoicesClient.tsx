@@ -111,7 +111,7 @@ export default function InvoicesClient({
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin · Invoices</div>
-          <h1 className="text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>Invoices</h1>
+          <h1 className="text-3xl text-gray-900">Invoices</h1>
           <p className="text-sm text-gray-600 mt-1">Billable charges and payment status. Stripe charges land via the public Sign Wizard.</p>
         </div>
         <div className="flex gap-2">

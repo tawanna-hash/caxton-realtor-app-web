@@ -27,7 +27,7 @@ export default async function PortalFilesPage() {
     <div className="space-y-6">
       <header>
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Portal</div>
-        <h1 className="font-serif text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>Files</h1>
+        <h1 className="font-serif text-3xl text-gray-900">Files</h1>
         <p className="text-gray-600 mt-1">Documents and assets we&apos;ve shared with you.</p>
       </header>
 

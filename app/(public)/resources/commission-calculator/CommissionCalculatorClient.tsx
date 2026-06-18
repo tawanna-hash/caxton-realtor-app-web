@@ -175,7 +175,6 @@ export default function CommissionCalculatorClient() {
             <p className={EYEBROW}>Your Take-Home</p>
             <p
               className="text-4xl text-gray-900 mb-1"
-              style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
             >
               {fmtUSD(result.agentNet)}
             </p>

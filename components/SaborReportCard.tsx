@@ -134,7 +134,6 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
           {/* Title */}
           <h3
             className="text-[20px] leading-tight font-bold text-gray-900 mb-1"
-            style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
           >
             {d.month_label} MLS Summary
           </h3>
@@ -146,7 +145,7 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
           <div className="flex items-baseline gap-2.5">
             <div
               className="text-[38px] font-bold leading-none"
-              style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: '#2c0530' }}
+              style={{ color: '#2c0530' }}
             >
               {d.headline_value}
             </div>
@@ -167,7 +166,6 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
               <div key={m.label}>
                 <div
                   className="text-[14px] font-bold text-gray-900"
-                  style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
                 >
                   {m.value}
                 </div>

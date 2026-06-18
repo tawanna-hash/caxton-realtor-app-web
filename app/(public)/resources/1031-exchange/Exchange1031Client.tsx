@@ -165,7 +165,6 @@ export default function Exchange1031Client() {
                 </p>
                 <p
                   className={`text-2xl ${statusTone.text}`}
-                  style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
                 >
                   {timeline.statusLabel}
                 </p>
@@ -278,7 +277,6 @@ function DeadlineCard({
       </p>
       <p
         className={`text-base ${missed ? 'text-rose-800' : 'text-gray-900'}`}
-        style={{ fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 500 }}
       >
         {fmtDateLong(date)}
       </p>

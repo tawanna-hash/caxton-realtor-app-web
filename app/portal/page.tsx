@@ -43,7 +43,7 @@ export default async function PortalHome() {
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Welcome back
         </div>
-        <h1 className="font-serif text-3xl text-gray-900" style={{ fontFamily: 'Georgia, serif' }}>
+        <h1 className="font-serif text-3xl text-gray-900">
           {user.name}
         </h1>
         <p className="text-gray-600 mt-1">
@@ -59,7 +59,7 @@ export default async function PortalHome() {
       </section>
 
       <section className="rounded-xl border border-gray-200 bg-white p-6">
-        <h2 className="font-serif text-xl text-gray-900 mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+        <h2 className="font-serif text-xl text-gray-900 mb-3">
           What you can do here
         </h2>
         <ul className="space-y-2 text-gray-700 text-sm">
@@ -83,7 +83,7 @@ function Card({ label, value, sub, href, tone = 'neutral' }: {
   const body = (
     <div className={`rounded-xl border p-4 ${ring}`}>
       <div className="text-xs uppercase tracking-wider text-gray-500">{label}</div>
-      <div className="font-serif text-3xl text-gray-900 mt-1" style={{ fontFamily: 'Georgia, serif' }}>
+      <div className="font-serif text-3xl text-gray-900 mt-1">
         {value}
       </div>
       {sub && <div className="text-sm text-gray-600 mt-1">{sub}</div>}
