@@ -18,11 +18,12 @@ const SECTION_EYEBROW = 'text-xs font-semibold uppercase tracking-[0.2em] text-[
 
 export default function ResourcesClient() {
   return (
-    <main className="max-w-5xl mx-auto px-6 py-12 md:py-16">
+    <main className="min-h-screen bg-white">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       {/* ── Page header ─────────────────────────────────────────────── */}
-      <header className="mb-12">
+      <header className="mb-8 sm:mb-10">
         <p className={EYEBROW}>REALTOR® Resources</p>
-        <PageTitle>Tools, partners, and training for Austin agents.</PageTitle>
+        <PageTitle size="md">Tools, partners, and training for Austin agents.</PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           A curated collection of downloadable guides and external
           links our team relies on. Have
@@ -155,6 +156,7 @@ export default function ResourcesClient() {
         recommendations, not endorsements — confirm fit for your transaction
         and client.
       </p>
+      </div>
     </main>
   );
 }
