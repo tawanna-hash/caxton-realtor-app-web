@@ -37,6 +37,8 @@ export const GET = withErrorHandling(async () => {
     total,
     austin: byMarket['austin'] || 0,
     san_antonio: byMarket['san_antonio'] || 0,
+    houston: byMarket['houston'] || 0,
+    dallas: byMarket['dallas'] || 0,
     unspecified: byMarket['unspecified'] || 0,
   });
 });

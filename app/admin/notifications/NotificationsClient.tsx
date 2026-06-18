@@ -32,6 +32,8 @@ interface SubStats {
   total: number;
   austin: number;
   san_antonio: number;
+  houston: number;
+  dallas: number;
   unspecified: number;
 }
 
@@ -85,6 +87,8 @@ export default function NotificationsClient({ initialNotifications, initialStats
     parts.push(`${initialStats.total.toLocaleString()} active subscribers`);
     if (initialStats.austin) parts.push(`${initialStats.austin.toLocaleString()} Austin`);
     if (initialStats.san_antonio) parts.push(`${initialStats.san_antonio.toLocaleString()} San Antonio`);
+    if (initialStats.houston) parts.push(`${initialStats.houston.toLocaleString()} Houston`);
+    if (initialStats.dallas) parts.push(`${initialStats.dallas.toLocaleString()} Dallas`);
     return parts.join(' · ');
   }, [initialStats]);
 
@@ -139,6 +143,10 @@ export default function NotificationsClient({ initialNotifications, initialStats
                       ? 'Austin'
                       : n.target_audience?.market === 'san_antonio'
                       ? 'San Antonio'
+                      : n.target_audience?.market === 'houston'
+                      ? 'Houston'
+                      : n.target_audience?.market === 'dallas'
+                      ? 'Dallas'
                       : '—'}
                   </td>
                   <td className="px-4 py-3"><StatusPill status={n.status} /></td>

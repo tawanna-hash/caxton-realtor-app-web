@@ -16,12 +16,16 @@ import { useEffect, useState } from 'react';
 
 type Status = 'unknown' | 'unsupported' | 'denied' | 'subscribed' | 'idle' | 'pending';
 
+export type PushMarket = 'austin' | 'san_antonio' | 'houston' | 'dallas';
+
 type Props = {
   realtorId?: string | null;
-  market?: 'austin' | 'san_antonio' | null;
+  market?: PushMarket | null;
   className?: string;
   /** When true, render nothing if push is unsupported / denied / already on. */
   hideWhenInactive?: boolean;
+  /** Optional override for the active CTA label. */
+  label?: string;
 };
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -33,7 +37,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return arr;
 }
 
-export default function PushOptInButton({ realtorId, market, className, hideWhenInactive }: Props) {
+export default function PushOptInButton({ realtorId, market, className, hideWhenInactive, label }: Props) {
   const [status, setStatus] = useState<Status>('unknown');
 
   useEffect(() => {
@@ -177,7 +181,7 @@ export default function PushOptInButton({ realtorId, market, className, hideWhen
         'inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-[#021D40] hover:bg-[#03285a] disabled:opacity-60'
       }
     >
-      {status === 'pending' ? 'Enabling...' : 'Enable notifications'}
+      {status === 'pending' ? 'Enabling...' : label || 'Enable notifications'}
     </button>
   );
 }
