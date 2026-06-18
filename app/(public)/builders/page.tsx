@@ -62,7 +62,7 @@ export default function BuildersHubPage() {
           <PageTitle size="md">
             Builders &amp; Developers
           </PageTitle>
-          <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
+          <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
             Explore communities, move-in ready homes, and current promotions
             from our builder and developer partners.
           </p>
