@@ -51,7 +51,7 @@ function formatDay(d: string): string {
   return `${months[mi] ?? m} ${parseInt(day, 10)}`;
 }
 
-export function TimeSeriesChart({ data }: Props) {
+export default function TimeSeriesChart({ data }: Props) {
   const pivoted = pivotTimeSeries(data);
   const events = Object.keys(EVENT_LABELS);
 

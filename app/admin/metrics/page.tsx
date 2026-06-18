@@ -4,7 +4,17 @@ import { useEffect, useState } from 'react';
 
 import type { Metrics } from './_types';
 import { EVENT_LABELS, SURFACE_LABELS, ACTION_LABELS } from './_types';
-import { TimeSeriesChart } from './_components/TimeSeriesChart';
+import dynamic from 'next/dynamic';
+
+// Lazy-load recharts so admin/metrics first paint isn't blocked by ~320 kB.
+const TimeSeriesChart = dynamic(() => import('./_components/TimeSeriesChart'), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white border border-gray-200 rounded-md p-8 text-center text-sm text-gray-400">
+      Loading chart…
+    </div>
+  ),
+});
 import { KPITile } from './_components/KPITile';
 import { DateRangePicker } from './_components/DateRangePicker';
 import type { DaysOption } from './_components/DateRangePicker';
