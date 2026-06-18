@@ -22,6 +22,7 @@ import ChipFilter from '@/components/modernnews/ChipFilter';
 import MasonryFeedCard from '@/components/modernnews/MasonryFeedCard';
 import SearchBar from '@/components/modernnews/SearchBar';
 import ArticleHero from '@/components/modernnews/ArticleHero';
+import GetStartedCTA from '@/components/modernnews/GetStartedCTA';
 import ThemeToggle from '@/components/theme/ThemeToggle';
 
 const API = getApiBase();
@@ -397,8 +398,8 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const ic = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3 placeholder:text-[#d1d5db]';
-  const sc = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3 appearance-none placeholder:text-[#d1d5db]';
+  const ic = 'w-full px-4 py-3.5 border border-[var(--border-strong)] text-base font-light bg-[var(--surface-2)] text-[var(--text-primary)] rounded-lg focus:outline-none focus:border-[var(--accent)] mb-3 placeholder:text-[var(--text-muted)]';
+  const sc = 'w-full px-4 py-3.5 border border-[var(--border-strong)] text-base font-light bg-[var(--surface-2)] text-[var(--text-primary)] rounded-lg focus:outline-none focus:border-[var(--accent)] mb-3 appearance-none placeholder:text-[var(--text-muted)]';
 
   function dismissGiveaway() {
     setShowGiveaway(false);
@@ -579,14 +580,19 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
   if (mode === 'sent') {
     return (
-      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
+      <div className="fixed inset-0 bg-[var(--surface-1)] text-[var(--text-primary)] flex flex-col items-center justify-center z-40" style={SW}>
         <div className="w-full max-w-md px-8 text-center">
-          <div className="text-5xl mb-4">{'\u2709'}</div>
-          <h2 className="text-2xl text-gray-900 font-semibold mb-3">Check Your Email</h2>
-          <p className="text-lg text-gray-500 font-light mb-2">We sent a magic link to</p>
-          <p className="text-lg text-[#021D40] font-semibold mb-6">{email}</p>
-          <p className="text-base text-gray-400 font-light mb-8">Click the link in your email to sign in. It expires in 15 minutes.</p>
-          <p className="text-sm text-gray-300 font-light">Check your spam folder if you do not see it.</p>
+          <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-[var(--surface-2)] border border-[var(--border-subtle)]">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--accent)]" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="m3 7 9 6 9-6" />
+            </svg>
+          </div>
+          <h2 className="font-serif text-3xl text-[var(--text-primary)] mb-3">Check Your Email</h2>
+          <p className="text-base text-[var(--text-secondary)] font-light mb-2">We sent a magic link to</p>
+          <p className="text-base text-[var(--accent)] font-semibold mb-6">{email}</p>
+          <p className="text-sm text-[var(--text-muted)] font-light mb-8">Click the link in your email to sign in. It expires in 15 minutes.</p>
+          <p className="text-xs text-[var(--text-muted)] font-light">Check your spam folder if you do not see it.</p>
         </div>
       </div>
     );
@@ -594,7 +600,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
   if (mode === 'signup') {
     return (
-      <div className="fixed inset-0 bg-white z-40 overflow-y-auto" style={SW}>
+      <div className="fixed inset-0 bg-[var(--surface-1)] text-[var(--text-primary)] z-40 overflow-y-auto" style={SW}>
         {showGiveaway && step === 1 && GIVEAWAY[pub] && (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center px-4 py-8 overflow-y-auto" style={SW}>
             <div className="bg-white max-w-sm w-full p-7 relative my-auto">
@@ -772,7 +778,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
   if (mode === 'login') {
     return (
-      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
+      <div className="fixed inset-0 bg-[var(--surface-1)] text-[var(--text-primary)] flex flex-col items-center justify-center z-40" style={SW}>
         <div className="w-full max-w-md px-8">
           <p className="text-sm uppercase tracking-[0.25em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
           <h2 className="text-2xl text-gray-900 font-semibold text-center mb-6">Welcome Back</h2>
@@ -816,12 +822,28 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   }
 
   return (
-    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
-      <div className="w-full max-w-md px-8">
-        <p className="text-sm uppercase tracking-[0.25em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
-        <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Sign In to Continue</h2>
-        <button onClick={() => setMode('signup')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3" style={{ backgroundColor: info.color }}>Create Your Account</button>
-        <button onClick={() => setMode('login')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-6 rounded-md">I Already Have an Account</button>
+    <div className="fixed inset-0 bg-[var(--surface-1)] text-[var(--text-primary)] flex flex-col items-center justify-center z-40" style={SW}>
+      <div className="w-full max-w-md px-8 flex flex-col items-center text-center">
+        {/* Kit-style hero illustration: stacked color blocks reading 'RNN' */}
+        <div className="relative mb-8 h-44 w-44">
+          <div className="absolute left-2 top-4 h-32 w-32 rounded-3xl rotate-[-8deg]" style={{ backgroundColor: '#021D40' }} />
+          <div className="absolute right-2 top-0 h-28 w-28 rounded-3xl rotate-[6deg]" style={{ backgroundColor: '#3D0740' }} />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-24 w-24 rounded-3xl bg-[var(--accent)] flex items-center justify-center">
+            <span className="font-serif text-3xl text-white">RNN</span>
+          </div>
+        </div>
+        <p className="text-xs uppercase tracking-[0.25em] font-medium mb-3 text-[var(--text-muted)]">{info.name}</p>
+        <h2 className="font-serif text-3xl md:text-4xl text-[var(--text-primary)] mb-3 leading-tight">Sign In to Continue</h2>
+        <p className="text-sm text-[var(--text-secondary)] mb-8 font-light">
+          Local real estate news, market intel, and community events delivered daily.
+        </p>
+        <GetStartedCTA
+          label="Create Your Account"
+          onClick={() => setMode('signup')}
+          secondaryText="Already have an account?"
+          secondaryLinkLabel="Sign in"
+          secondaryOnClick={() => setMode('login')}
+        />
       </div>
     </div>
   );

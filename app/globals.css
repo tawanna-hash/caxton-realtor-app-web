@@ -419,3 +419,75 @@ textarea::placeholder {
   margin: 0 0 1.2em 1.4em;
 }
 .caxton-article-prose li { margin-bottom: 0.35em; }
+
+/* ============================================================================
+   Dark-mode global skin
+   ----------------------------------------------------------------------------
+   The app has ~680 hardcoded utility classes (bg-white, bg-gray-50, text-gray-*,
+   border-gray-200, etc.) across public + admin pages. Rewriting each is
+   high-risk; instead we override those specific Tailwind utility selectors
+   inside .dark so the same markup re-themes automatically. Page-level
+   components that use CSS vars (--surface-1, --text-primary, etc.) are
+   unaffected — vars naturally swap. Use !important sparingly: only on the
+   handful of classes that lose to component-scoped Tailwind specificity.
+   ============================================================================ */
+.dark .bg-white { background-color: var(--surface-1); }
+.dark .bg-gray-50 { background-color: var(--surface-2); }
+.dark .bg-gray-100 { background-color: var(--surface-3); }
+.dark .bg-gray-200 { background-color: var(--surface-3); }
+.dark .bg-amber-50 { background-color: #2a2010; }
+.dark .bg-blue-50 { background-color: #0f1a2b; }
+.dark .bg-green-50 { background-color: #0f1f15; }
+.dark .bg-red-50 { background-color: #2a1010; }
+.dark .bg-orange-50 { background-color: #2a1810; }
+.dark .bg-yellow-50 { background-color: #2a2410; }
+.dark .bg-purple-50 { background-color: #1c0f2a; }
+
+.dark .text-gray-900 { color: var(--text-primary); }
+.dark .text-gray-800 { color: var(--text-primary); }
+.dark .text-gray-700 { color: var(--text-secondary); }
+.dark .text-gray-600 { color: var(--text-secondary); }
+.dark .text-gray-500 { color: var(--text-muted); }
+.dark .text-gray-400 { color: var(--text-muted); }
+.dark .text-amber-700 { color: #f4c266; }
+.dark .text-amber-800 { color: #f4c266; }
+
+.dark .border-gray-100 { border-color: var(--border-subtle); }
+.dark .border-gray-200 { border-color: var(--border-subtle); }
+.dark .border-gray-300 { border-color: var(--border-strong); }
+.dark .border-amber-200 { border-color: #4a3a1a; }
+.dark .border-blue-200 { border-color: #1c3a5c; }
+.dark .border-green-200 { border-color: #1c4a2c; }
+.dark .border-red-200 { border-color: #4a1c1c; }
+
+.dark .divide-gray-100 > * + * { border-color: var(--border-subtle); }
+.dark .divide-gray-200 > * + * { border-color: var(--border-subtle); }
+
+/* Hover variants used heavily in nav/buttons */
+.dark .hover\:bg-gray-50:hover { background-color: var(--surface-2); }
+.dark .hover\:bg-gray-100:hover { background-color: var(--surface-3); }
+.dark .hover\:text-gray-900:hover { color: var(--text-primary); }
+
+/* Form fields default-shipped as bg-white / text-gray-900 also need contrast */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="search"],
+.dark input[type="tel"],
+.dark input[type="number"],
+.dark input[type="url"],
+.dark input[type="date"],
+.dark textarea,
+.dark select {
+  background-color: var(--surface-2);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+/* Standalone shadow utilities tuned for dark surfaces */
+.dark .shadow,
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg {
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.6);
+}
