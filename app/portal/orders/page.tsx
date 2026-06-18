@@ -91,7 +91,7 @@ export default async function PortalOrders() {
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Order history
         </div>
-        <PageTitle size="lg">
+        <PageTitle size="md">
           My orders
         </PageTitle>
         <p className="text-gray-600 mt-1 text-sm">

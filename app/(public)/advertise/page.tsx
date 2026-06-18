@@ -39,7 +39,7 @@ export default function AdvertisePage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Advertise
         </p>
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-700 font-semibold mb-4">
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Print {'\u00b7'} Digital {'\u00b7'} Social {'\u00b7'} Mobile.{' '}
           <span className="text-gray-500 font-normal normal-case tracking-normal">
             One powerful marketing platform.
@@ -495,7 +495,7 @@ export default function AdvertisePage() {
       <hr className="border-gray-200 my-12" />
 
       <section className="bg-gray-50 border-l-4 border-[#021D40] px-6 py-6 md:px-8 md:py-8">
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-700 font-medium mb-4">
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Request a media kit
         </p>
         <p className="text-base text-gray-700 leading-relaxed font-light mb-6">

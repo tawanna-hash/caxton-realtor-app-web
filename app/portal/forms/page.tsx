@@ -46,7 +46,7 @@ export default async function PortalFormsPage() {
     <div className="space-y-8">
       <header>
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Portal</div>
-        <PageTitle size="lg">Forms</PageTitle>
+        <PageTitle size="md">Forms</PageTitle>
         <p className="text-gray-600 mt-1">Short forms your account manager has asked you to complete.</p>
       </header>
 

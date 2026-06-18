@@ -71,7 +71,7 @@ export default function AdminInventoryPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
