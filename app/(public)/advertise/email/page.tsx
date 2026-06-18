@@ -133,7 +133,7 @@ export default function AdvertiseEmailPage() {
 
       {/* What you provide */}
       <section className="mb-12 border-t border-gray-200 pt-8">
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           What you provide
         </p>
         <ul className="text-sm text-gray-800 space-y-2 max-w-2xl">

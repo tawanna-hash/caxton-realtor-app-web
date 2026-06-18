@@ -29,7 +29,7 @@ export default function SubscribePage() {
         <PageTitle size="md">
           Subscribe to Print. It&apos;s free!
         </PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
+        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           Pick your publication and we&apos;ll mail you every issue, no charge.
         </p>
       </header>

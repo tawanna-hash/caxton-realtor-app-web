@@ -52,7 +52,7 @@ export default function AboutPage() {
         <hr className="border-gray-200 my-10" />
 
         <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-4">
+          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             Partnerships &amp; memberships
           </p>
           <p className="text-base text-gray-700 leading-relaxed font-light mb-6">
@@ -124,7 +124,7 @@ export default function AboutPage() {
         </div>
 
         <div className="mt-10">
-          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-4">
+          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             Leadership
           </p>
           <dl className="space-y-3 text-base text-gray-700">

@@ -48,7 +48,7 @@ export default async function PortalFormPage({ params }: PageProps) {
     <div className="space-y-6">
       <header>
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Form</div>
-        <PageTitle size="lg">
+        <PageTitle size="md">
           {assignment.form_title}
         </PageTitle>
         {assignment.form_description && (

@@ -120,7 +120,7 @@ export default function AdvertisePrintPage() {
       {/* Print deadlines — calendar-aware buyers know when to commit */}
       {PRINT_DEADLINES.length > 0 && (
         <section className="mb-14">
-          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
+          <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             2026 print deadlines
           </p>
           <div className="border border-gray-200 rounded overflow-hidden">

@@ -51,7 +51,7 @@ export default function AdminMetricsPage() {
     : 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="mb-8">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
           Admin

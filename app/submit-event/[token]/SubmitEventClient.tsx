@@ -103,7 +103,7 @@ export default function SubmitEventClient({ token }: { token: string }) {
   if (loadErr) {
     return (
       <div className="rounded-lg bg-white border border-red-200 p-8 shadow-sm">
-        <PageTitle size="lg">
+        <PageTitle size="md">
           Submission link not found
         </PageTitle>
         <p className="text-sm text-gray-700">
@@ -124,7 +124,7 @@ export default function SubmitEventClient({ token }: { token: string }) {
         <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-700 font-medium mb-2">
           Submitted
         </p>
-        <PageTitle size="lg">
+        <PageTitle size="md">
           Thanks — your event is queued for review
         </PageTitle>
         <p className="text-sm text-gray-700 mb-6">
@@ -147,7 +147,7 @@ export default function SubmitEventClient({ token }: { token: string }) {
       <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500 font-medium mb-2">
         Submit an event
       </p>
-      <PageTitle size="lg">
+      <PageTitle size="md">
         Realty News Now Calendar
       </PageTitle>
       <p className="text-sm text-gray-700 mb-6">

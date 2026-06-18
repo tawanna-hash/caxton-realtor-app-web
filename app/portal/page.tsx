@@ -44,7 +44,7 @@ export default async function PortalHome() {
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Welcome back
         </div>
-        <PageTitle size="lg">
+        <PageTitle size="md">
           {user.name}
         </PageTitle>
         <p className="text-gray-600 mt-1">
