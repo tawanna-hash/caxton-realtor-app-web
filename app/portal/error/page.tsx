@@ -41,12 +41,18 @@ export default async function PortalErrorPage({ searchParams }: PageProps) {
         {msg.title}
       </PageTitle>
       <p className="text-gray-600">{msg.body}</p>
-      <div className="mt-6">
+      <div className="mt-6 flex flex-col sm:flex-row gap-2 items-center justify-center">
         <Link
-          href="/portal"
+          href="/auth/sign-in"
           className="inline-block rounded-md bg-gray-900 text-white px-5 py-2 text-sm font-medium hover:bg-gray-800"
         >
           Sign in again
+        </Link>
+        <Link
+          href="/"
+          className="inline-block rounded-md border border-gray-300 text-gray-900 px-5 py-2 text-sm font-medium hover:bg-gray-50"
+        >
+          Return home
         </Link>
       </div>
     </div>
