@@ -165,14 +165,6 @@ export default function AdvertisePage() {
 
       {/* ── Four channels ─────────────────────────────────────────────────── */}
       <section className="mb-12">
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-          Where your ads run
-        </p>
-        <h2
-          className="font-serif text-2xl md:text-3xl text-gray-900 leading-tight mb-3"
-        >
-          Four markets. One integrated buy.
-        </h2>
 
         <div className="space-y-6">
           {/* PRINT */}
