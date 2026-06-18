@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { ADMIN_NAV } from '@/lib/admin-nav';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
+import PushOptInButton from '@/components/PushOptInButton';
 
 type User = { id?: string; email?: string } | null;
 
@@ -344,12 +345,19 @@ export default function NavDrawer({
           {/* Auth section */}
           <div className="py-4 border-t border-white/10 space-y-1">
             {user || isAdmin ? (
-              <button
-                onClick={onLogout}
-                className="block w-full text-left px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/80 font-medium rounded-md hover:text-white hover:bg-white/10 transition"
-              >
-                Logout
-              </button>
+              <>
+                <div className="px-3 py-1">
+                  <PushOptInButton
+                    className="inline-flex items-center w-full justify-center px-3 py-2 rounded-md text-sm font-medium text-white bg-white/10 hover:bg-white/20 transition"
+                  />
+                </div>
+                <button
+                  onClick={onLogout}
+                  className="block w-full text-left px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/80 font-medium rounded-md hover:text-white hover:bg-white/10 transition"
+                >
+                  Logout
+                </button>
+              </>
             ) : (
               <>
                 {/* Direct link to the realtor sign-in page. Previously this
