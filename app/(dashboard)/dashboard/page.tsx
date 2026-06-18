@@ -490,7 +490,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(useAutofill ? {} : (email ? { email } : {})),
+        body: JSON.stringify(useAutofill ? { autofill: true } : (email ? { email } : {})),
       });
       if (!beginRes.ok) {
         const data = await beginRes.json().catch(() => ({}));
