@@ -34,7 +34,7 @@ export default function AdvertiseEmailPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Advertise · e-Blast
         </p>
-        <PageTitle>
+        <PageTitle size="md">
           Drop straight into 64,000+ real-estate inboxes.
         </PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">

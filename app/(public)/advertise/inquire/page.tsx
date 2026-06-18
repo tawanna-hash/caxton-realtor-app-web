@@ -54,7 +54,7 @@ export default async function AdvertiseInquirePage({
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Reserve a spot
         </p>
-        <PageTitle>
+        <PageTitle size="md">
           {slotLabel
             ? `Inquire about the ${slotLabel}`
             : 'Inquire about advertising'}
