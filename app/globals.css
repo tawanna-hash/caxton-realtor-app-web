@@ -317,14 +317,15 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Apply the magazine page's display serif (Georgia, weight 600) to every
-   font-serif usage app-wide. Components can still override weight per use,
-   but the default now matches the heading style used in MagazineFeatured
-   and PageTitle — no more drift between `Georgia, serif` and
-   `Georgia, "Times New Roman", serif`. */
+/* Apply the magazine page's display serif to every font-serif usage
+   app-wide. Matches the look of the Magazine Archive header: Georgia at
+   normal weight (400) with tight tracking — elegant, not bold. Components
+   can still override weight per use (e.g. `font-semibold`), but the
+   default is intentionally light to match the magazine page. */
 .font-serif {
   font-family: var(--font-serif);
-  font-weight: 600;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 /* Belt-and-suspenders: ensure native form controls always render with readable
