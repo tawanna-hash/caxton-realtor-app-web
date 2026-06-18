@@ -69,15 +69,15 @@ export function EventsList({ pub, events, loading, error, onBack, onSelect, topB
 
       {/* Body */}
       <div className="pb-24">
-        {/* Page header — Title + deck (matches inventory pattern) */}
-        <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
+        {/* Page header — matches the drawer-page kit (Builders, Resources, etc.) */}
+        <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12 mb-2">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             {pub === 'newsline' ? 'Newsline San Antonio' : 'RealtyLine Austin'}
           </p>
           <PageTitle size="md">
             Calendar of Events
           </PageTitle>
-          <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
+          <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
             {pub === 'newsline'
               ? `Explore San Antonio\u2019s most complete guide to real estate events with Newsline San Antonio. Our calendar highlights the best industry happenings \u2014 from networking mixers and training sessions to open houses, expos, and association meetings. Stay connected to the people, trends, and opportunities shaping the local real estate market. Whether you\u2019re an agent, broker, or industry partner, our calendar helps you make the most of every event that matters.`
               : `Explore Austin\u2019s most complete guide to real estate events with RealtyLine Austin. Our calendar highlights the best industry happenings \u2014 from networking mixers and training sessions to open houses, expos, and association meetings. Stay connected to the people, trends, and opportunities shaping the local real estate market. Whether you\u2019re an agent, broker, or industry partner, our calendar helps you make the most of every event that matters.`}
