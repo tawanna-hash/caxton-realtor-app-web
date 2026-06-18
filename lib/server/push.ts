@@ -125,9 +125,24 @@ export async function broadcastPush(
   let failed = 0;
   let revoked = 0;
 
+  console.log('[broadcastPush] start', {
+    notificationId,
+    marketFilter: marketFilter || 'all',
+    subscriberCount: subs.length,
+    title: payload.title,
+  });
+
   await Promise.all(
     subs.map(async (sub) => {
       const result = await sendPush(sub, { ...payload, notificationId });
+      console.log('[broadcastPush] sendPush result', {
+        notificationId,
+        subscriptionId: sub.id,
+        endpoint: sub.endpoint.slice(0, 60),
+        ok: result.ok,
+        gone: result.gone,
+        error: result.error,
+      });
       if (result.ok) {
         sent += 1;
         if (sub.realtor_id) {
@@ -170,5 +185,6 @@ export async function broadcastPush(
     }),
   );
 
+  console.log('[broadcastPush] done', { notificationId, sent, failed, revoked });
   return { sent, failed, revoked };
 }
