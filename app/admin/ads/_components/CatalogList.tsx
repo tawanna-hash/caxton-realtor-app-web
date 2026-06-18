@@ -55,7 +55,7 @@ export function CatalogList({ spaces, campaigns }: Props) {
                         <h4 className="font-medium text-gray-900">{s.display_name}</h4>
                         <p className="text-xs text-gray-500 font-mono mt-0.5">{s.slug}</p>
                       </div>
-                      <span className={`text-xs font-medium uppercase tracking-wide px-2 py-0.5 rounded ${TIER_COLORS[s.tier]}`}>
+                      <span className={`text-xs font-medium uppercase tracking-wide px-2 py-0.5 rounded-md ${TIER_COLORS[s.tier]}`}>
                         {s.tier}
                       </span>
                     </div>

@@ -151,14 +151,14 @@ function DrawCanvas({
   return (
     <div>
       <div
-        className={`relative rounded border-2 border-dashed bg-white ${
+        className={`relative rounded-md border-2 border-dashed bg-white ${
           enabled ? 'border-gray-300' : 'border-gray-200 bg-gray-50'
         }`}
         style={{ height: 180 }}
       >
         <canvas
           ref={canvasRef}
-          className="w-full h-full touch-none rounded"
+          className="w-full h-full touch-none rounded-md"
           style={{ cursor: enabled ? 'crosshair' : 'not-allowed' }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -220,7 +220,7 @@ function UploadField({
   return (
     <div>
       <label
-        className={`flex items-center justify-center w-full rounded border-2 border-dashed cursor-pointer transition-colors ${
+        className={`flex items-center justify-center w-full rounded-md border-2 border-dashed cursor-pointer transition-colors ${
           enabled ? 'border-gray-300 hover:border-gray-400 bg-white' : 'border-gray-200 bg-gray-50 cursor-not-allowed'
         }`}
         style={{ height: 120 }}
@@ -276,7 +276,7 @@ export default function SignaturePad({ initialSignerName, enabled, onChange }: P
 
   return (
     <div
-      className={`rounded border-2 p-4 space-y-4 transition-colors ${
+      className={`rounded-md border-2 p-4 space-y-4 transition-colors ${
         enabled ? 'border-amber-400 bg-amber-50/40' : 'border-gray-200'
       }`}
     >
@@ -303,7 +303,7 @@ export default function SignaturePad({ initialSignerName, enabled, onChange }: P
           onChange={(e) => setSignerName(e.target.value)}
           disabled={!enabled}
           placeholder="Full legal name"
-          className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 disabled:bg-gray-100 disabled:text-gray-400"
+          className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 disabled:bg-gray-100 disabled:text-gray-400"
         />
       </div>
 
@@ -312,7 +312,7 @@ export default function SignaturePad({ initialSignerName, enabled, onChange }: P
         <div>
           <div className="text-xs text-gray-500 mb-1">Preview</div>
           <div
-            className="w-full px-3 py-4 rounded border border-gray-300 bg-white text-2xl text-gray-900"
+            className="w-full px-3 py-4 rounded-md border border-gray-300 bg-white text-2xl text-gray-900"
             style={{ fontFamily: '"Brush Script MT", "Caveat", "Pacifico", cursive' }}
           >
             {signerName.trim() || <span className="text-gray-300 text-base">Your typed signature will appear here</span>}

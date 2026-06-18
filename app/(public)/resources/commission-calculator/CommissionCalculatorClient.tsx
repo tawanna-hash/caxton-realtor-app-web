@@ -171,7 +171,7 @@ export default function CommissionCalculatorClient() {
 
         {/* ── Result card ────────────────────────────────────────── */}
         <div className="lg:col-span-2">
-          <div className="sticky top-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="sticky top-6 rounded-md border border-gray-200 bg-white p-6 shadow-sm">
             <p className={EYEBROW}>Your Take-Home</p>
             <p
               className="text-4xl text-gray-900 mb-1"

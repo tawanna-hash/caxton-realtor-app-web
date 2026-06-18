@@ -190,14 +190,14 @@ function LogoTile({
 }: {
   data: AdvertiserHeaderData;
   size: number;
-  shape?: 'square' | 'rounded' | 'circle';
+  shape?: 'square' | 'rounded-md' | 'circle';
   bg?: 'gray' | 'white' | 'tint';
   border?: boolean;
   shadow?: boolean;
   accent: string;
 }) {
   const radius =
-    shape === 'circle' ? 'rounded-full' : shape === 'rounded' ? 'rounded-2xl' : 'rounded-md';
+    shape === 'circle' ? 'rounded-full' : shape === 'rounded-md' ? 'rounded-md' : 'rounded-md';
   const bgCls = bg === 'white' ? 'bg-white' : bg === 'tint' ? '' : 'bg-gray-50';
   const borderCls = border ? 'border border-gray-200' : '';
   const shadowCls = shadow ? 'shadow-md' : '';
@@ -300,7 +300,7 @@ function Borderless({ data, theme }: { data: AdvertiserHeaderData; theme: Advert
         bg="white"
         border={false}
         shadow
-        shape="rounded"
+        shape="rounded-md"
         accent={theme.accent}
       />
       <div className="flex-1 min-w-0">
@@ -315,7 +315,7 @@ function Banner({ data, theme }: { data: AdvertiserHeaderData; theme: Advertiser
   return (
     <header className="mb-8 sm:mb-10">
       <div
-        className="flex items-center justify-center py-10 rounded-xl mb-6"
+        className="flex items-center justify-center py-10 rounded-md mb-6"
         style={{ backgroundColor: `${theme.accent}0D` }}
       >
         {data.avatar_url && isBrowserRenderableImage(data.avatar_url) ? (
@@ -372,7 +372,7 @@ function Chip({ data, theme }: { data: AdvertiserHeaderData; theme: AdvertiserHe
 function Tint({ data, theme }: { data: AdvertiserHeaderData; theme: AdvertiserHeaderTheme }) {
   return (
     <header className="flex items-start gap-7 mb-8 sm:mb-10">
-      <LogoTile data={data} size={176} bg="tint" border={false} shape="rounded" accent={theme.accent} />
+      <LogoTile data={data} size={176} bg="tint" border={false} shape="rounded-md" accent={theme.accent} />
       <div className="flex-1 min-w-0">
         <Identity data={data} theme={theme} size="lg" />
         <Ctas data={data} accent={theme.accent} />

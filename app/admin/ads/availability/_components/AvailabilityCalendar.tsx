@@ -319,7 +319,7 @@ export default function AvailabilityCalendar() {
       )}
 
       {/* Month grid */}
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+      <div className="overflow-hidden rounded-md border border-gray-200 bg-white">
         <div className="grid grid-cols-7 bg-gray-50 text-xs font-medium text-gray-600 uppercase">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
             <div key={d} className="px-2 py-1.5 text-center border-b border-gray-200">
@@ -353,7 +353,7 @@ export default function AvailabilityCalendar() {
                     <Link
                       key={`${b.id}-${iso}`}
                       href={detailHref(b)}
-                      className={`block truncate rounded px-1.5 py-0.5 text-[10px] border ${CHANNEL_BADGE_CLASS[b.channel]} hover:opacity-80`}
+                      className={`block truncate rounded-md px-1.5 py-0.5 text-[10px] border ${CHANNEL_BADGE_CLASS[b.channel]} hover:opacity-80`}
                       title={`${b.advertiser_name ?? 'Unknown advertiser'} — ${b.slot_or_size ?? ''}`}
                     >
                       {b.advertiser_name ?? '—'}
@@ -392,7 +392,7 @@ export default function AvailabilityCalendar() {
             No bookings overlap this month.
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+          <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
             <table className="min-w-full text-sm">
               <thead className="bg-gray-50 text-left text-xs font-medium uppercase text-gray-600">
                 <tr>

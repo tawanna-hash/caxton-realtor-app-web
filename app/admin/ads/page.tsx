@@ -292,7 +292,7 @@ function KpiTile({ label, value, sub, href, accent = 'gray' }: KpiProps) {
   return (
     <Link
       href={href}
-      className={`block rounded-xl bg-white ring-1 ${accentRing} px-4 py-3 hover:ring-gray-300 hover:shadow-sm transition`}
+      className={`block rounded-md bg-white ring-1 ${accentRing} px-4 py-3 hover:ring-gray-300 hover:shadow-sm transition`}
     >
       <div className="text-xs uppercase tracking-wide text-gray-700">
         {label}
@@ -328,7 +328,7 @@ function SectionCard({
   const content = (
     <div
       className={
-        'h-full rounded-xl ring-1 p-5 transition hover:shadow-sm flex flex-col ' +
+        'h-full rounded-md ring-1 p-5 transition hover:shadow-sm flex flex-col ' +
         (isNavy
           ? 'bg-[#021D40] text-white ring-[#021D40] hover:bg-[#03285a]'
           : 'bg-white ring-gray-200 hover:ring-gray-300')

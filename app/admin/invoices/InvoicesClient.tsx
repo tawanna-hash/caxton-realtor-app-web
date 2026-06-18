@@ -116,7 +116,7 @@ export default function InvoicesClient({
           <p className="text-sm text-gray-600 mt-1">Billable charges and payment status. Stripe charges land via the public Sign Wizard.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setCreateInv(true)} className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700">+ New invoice</button>
+          <button onClick={() => setCreateInv(true)} className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">+ New invoice</button>
         </div>
       </div>
 
@@ -134,18 +134,18 @@ export default function InvoicesClient({
       </div>
 
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       {/* Filters */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 flex flex-wrap gap-2 items-center">
+      <div className="rounded-md border border-gray-200 bg-white p-4 flex flex-wrap gap-2 items-center">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search invoice #, advertiser&hellip;"
-          className="flex-1 min-w-[240px] px-3 py-2 rounded border border-gray-300 text-sm"
+          className="flex-1 min-w-[240px] px-3 py-2 rounded-md border border-gray-300 text-sm"
         />
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded border border-gray-300 text-sm">
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-md border border-gray-300 text-sm">
           <option value="all">All statuses</option>
           {INV_STATUS.map((s) => (
             <option key={s.value} value={s.value}>{s.label}</option>

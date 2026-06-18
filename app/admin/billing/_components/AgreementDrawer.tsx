@@ -611,7 +611,7 @@ export function AgreementDrawer({
       onClose={onClose}
     >
       {!isCreate && onGenerateInvoice && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-3 flex items-center justify-between">
+        <div className="rounded-md border border-blue-200 bg-blue-50/60 p-3 flex items-center justify-between">
           <div>
             <div className="text-xs uppercase tracking-[0.2em] text-blue-700 font-medium">Invoice</div>
             <div className="text-sm text-gray-800 mt-0.5">
@@ -623,7 +623,7 @@ export function AgreementDrawer({
           <button
             type="button"
             onClick={() => onGenerateInvoice({ advertiser_id: existing!.advertiser_id, agreement_id: existing!.id, amount_cents: existing!.amount_cents })}
-            className="px-3 py-1.5 rounded bg-blue-600 text-white text-xs hover:bg-blue-700"
+            className="px-3 py-1.5 rounded-md bg-blue-600 text-white text-xs hover:bg-blue-700"
           >
             Generate invoice
           </button>
@@ -749,7 +749,7 @@ export function AgreementDrawer({
           </div>
           <div>
             <div className="text-xs text-gray-600 mb-1">Total Monthly ($)</div>
-            <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm font-bold text-gray-900">
+            <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm font-bold text-gray-900">
               ${totalMonthly.toFixed(2)}
             </div>
             <div className="text-[10px] text-gray-400 mt-1">Rate − Discount + Premium</div>
@@ -775,7 +775,7 @@ export function AgreementDrawer({
         {/* Ad Timing grid */}
         <div>
           <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Ad Timing Term</div>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2 p-3 bg-gray-50 border border-gray-200 rounded">
+          <div className="grid grid-cols-2 gap-x-6 gap-y-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
             {MONTHS_LIST.map((m) => (
               <div key={m.k} className="flex items-center gap-2">
                 <input type="checkbox" id={`agm_${m.k}`}
@@ -789,7 +789,7 @@ export function AgreementDrawer({
                   disabled={!form.ad_timing_months[m.k]}
                   maxLength={4}
                   onChange={(e) => upd('ad_timing_years', { ...form.ad_timing_years, [m.k]: e.target.value })}
-                  className="w-14 px-2 py-1 text-xs rounded border border-gray-300 disabled:bg-gray-100 disabled:text-gray-400"
+                  className="w-14 px-2 py-1 text-xs rounded-md border border-gray-300 disabled:bg-gray-100 disabled:text-gray-400"
                   placeholder="Year"
                 />
               </div>
@@ -848,9 +848,9 @@ export function AgreementDrawer({
         </div>
 
         {form.payment_type === 'Credit Card' && (
-          <div className="rounded border border-amber-200 bg-amber-50/40 p-3 space-y-3">
+          <div className="rounded-md border border-amber-200 bg-amber-50/40 p-3 space-y-3">
             <div className="text-xs text-amber-800 font-medium">A 3% surcharge applies to credit card transactions</div>
-            <div className="text-xs text-amber-900 bg-amber-100 border border-amber-300 rounded p-2 leading-relaxed">
+            <div className="text-xs text-amber-900 bg-amber-100 border border-amber-300 rounded-md p-2 leading-relaxed">
               <strong>The actual card charge happens on the signing link.</strong>{' '}
               These fields below are reference metadata only — the advertiser will enter their
               card securely via Stripe on the Sign Wizard. Click <em>Send Signing Link</em>{' '}
@@ -903,7 +903,7 @@ export function AgreementDrawer({
           they just receive the updated PDF for their records. */}
       {!isUploaded && (
         <Section title="Terms &amp; Digital Signature">
-          <div className="max-h-40 overflow-y-auto rounded border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
+          <div className="max-h-40 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
             {TERMS_RL}
           </div>
           <label className="flex items-center gap-2 text-sm cursor-pointer mt-2">
@@ -919,7 +919,7 @@ export function AgreementDrawer({
                 className={INPUT} />
             </Field>
           </div>
-          <div className={`rounded border-2 p-3 space-y-1 mt-1 ${form.terms_accepted ? 'border-amber-400 bg-amber-50/40' : 'border-gray-200'}`}>
+          <div className={`rounded-md border-2 p-3 space-y-1 mt-1 ${form.terms_accepted ? 'border-amber-400 bg-amber-50/40' : 'border-gray-200'}`}>
             <div className="text-xs text-gray-600 font-medium">Type your full legal name to sign</div>
             <input value={form.signer_name}
               onChange={(e) => upd('signer_name', e.target.value)}
@@ -1002,7 +1002,7 @@ export function AgreementDrawer({
         {/* Drop zone */}
         <div
           ref={dropRef}
-          className="border-2 border-dashed border-gray-300 rounded p-4 text-center text-xs text-gray-500 cursor-pointer hover:border-blue-400"
+          className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center text-xs text-gray-500 cursor-pointer hover:border-blue-400"
           onClick={() => {
             const inp = document.createElement('input');
             inp.type = 'file'; inp.multiple = true;
@@ -1111,7 +1111,7 @@ export function AgreementDrawer({
                 onChange={(e) => setCustomMessage(e.target.value)}
                 rows={4}
                 placeholder="Leave blank to use the standard pitch. When filled in, this replaces the body paragraph of the signing email."
-                className="w-full rounded border border-gray-300 px-3 py-2 text-sm font-normal text-gray-800 placeholder:text-gray-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-normal text-gray-800 placeholder:text-gray-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-300"
               />
               <div className="mt-1 flex items-center justify-between text-[11px] text-gray-500">
                 <span>Plain text. Greeting, signing link, and signoff are added automatically.</span>
@@ -1137,7 +1137,7 @@ export function AgreementDrawer({
             type="button"
             onClick={handleDelete}
             disabled={saving}
-            className="px-3 py-2 rounded border border-rose-300 text-rose-700 text-sm hover:bg-rose-50 disabled:opacity-50"
+            className="px-3 py-2 rounded-md border border-rose-300 text-rose-700 text-sm hover:bg-rose-50 disabled:opacity-50"
           >
             Delete
           </button>
@@ -1148,17 +1148,17 @@ export function AgreementDrawer({
             href={`/api/admin/agreements/${existing!.id}/pdf`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-2 rounded border border-gray-300 text-gray-700 text-sm hover:bg-gray-50"
+            className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50"
           >
             Download PDF
           </a>
         )}
         <div className="flex-1" />
-        <button onClick={onClose} className="px-4 py-2 rounded border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button onClick={onClose} className="px-4 py-2 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
         <button
           onClick={() => save(false)}
           disabled={saving}
-          className="px-4 py-2 rounded border border-blue-500 bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 rounded-md border border-blue-500 bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
           title="Save the agreement with the currently selected status"
         >
           {saving ? 'Saving…' : (isCreate ? 'Save as Draft' : 'Save')}
@@ -1168,14 +1168,14 @@ export function AgreementDrawer({
             <button
               onClick={sendSigningLink}
               disabled={saving}
-              className="px-4 py-2 rounded border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50"
+              className="px-4 py-2 rounded-md border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50"
             >
               Send Signing Link
             </button>
             <button
               onClick={copySigningLink}
               disabled={saving}
-              className="px-4 py-2 rounded border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50"
+              className="px-4 py-2 rounded-md border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50"
               title="Copy signing link to clipboard"
             >
               Copy Link
@@ -1191,7 +1191,7 @@ export function AgreementDrawer({
             type="button"
             onClick={saveAndSendAmended}
             disabled={saving || sendingAmended}
-            className="px-4 py-2 rounded border border-amber-400 bg-amber-50 text-amber-800 text-sm hover:bg-amber-100 disabled:opacity-50"
+            className="px-4 py-2 rounded-md border border-amber-400 bg-amber-50 text-amber-800 text-sm hover:bg-amber-100 disabled:opacity-50"
             title="Save current edits, regenerate the PDF, and email it to the advertiser as an FYI"
           >
             {sendingAmended ? 'Sending…' : 'Save & send amended PDF'}
@@ -1200,7 +1200,7 @@ export function AgreementDrawer({
         <button
           onClick={() => save(true)}
           disabled={saving || !canSign}
-          className="px-4 py-2 rounded border border-gray-300 text-gray-700 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           title={
             cardRequiresSigningLink
               ? 'Credit Card payments must be signed via the public Sign Wizard so Stripe can charge the card. Use Send Signing Link instead.'

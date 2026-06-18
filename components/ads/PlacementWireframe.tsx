@@ -34,8 +34,8 @@ function Highlight({
   if (active) {
     return (
       <div className="relative">
-        <div className="absolute -inset-0.5 rounded border-2 border-dashed border-emerald-500 pointer-events-none" />
-        <div className="absolute -top-2 left-2 z-10 rounded-sm bg-emerald-500 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
+        <div className="absolute -inset-0.5 rounded-md border-2 border-dashed border-emerald-500 pointer-events-none" />
+        <div className="absolute -top-2 left-2 z-10 rounded-md bg-emerald-500 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
           Ad{label ? ` \u2014 ${label}` : ''}
         </div>
         {children}
@@ -55,24 +55,24 @@ function FeedWireframe({ active }: { active: string }) {
       </div>
       <div className="px-2 pt-2">
         <Highlight active={active === 'feed_top_banner'}>
-          <div className="h-6 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+          <div className="h-6 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
             Feed top banner
           </div>
         </Highlight>
       </div>
       <div className="flex-1 px-2 py-2 space-y-1.5">
-        <div className="h-7 bg-white rounded border border-gray-200" />
+        <div className="h-7 bg-white rounded-md border border-gray-200" />
         <Highlight active={active === 'feed_inline_card'}>
-          <div className="h-7 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+          <div className="h-7 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
             Feed inline card
           </div>
         </Highlight>
-        <div className="h-7 bg-white rounded border border-gray-200" />
-        <div className="h-7 bg-white rounded border border-gray-200" />
+        <div className="h-7 bg-white rounded-md border border-gray-200" />
+        <div className="h-7 bg-white rounded-md border border-gray-200" />
       </div>
       <div className="px-2 pb-1">
         <Highlight active={active === 'feed_sticky_bottom'}>
-          <div className="h-5 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+          <div className="h-5 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
             Sticky bottom
           </div>
         </Highlight>
@@ -92,7 +92,7 @@ function ArticleWireframe({ active }: { active: string }) {
       </div>
       <div className="px-2 pt-2">
         <Highlight active={active === 'article_top_leaderboard'}>
-          <div className="h-5 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+          <div className="h-5 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
             Top leaderboard 728×90
           </div>
         </Highlight>
@@ -103,24 +103,24 @@ function ArticleWireframe({ active }: { active: string }) {
       <div className="px-2 text-gray-500">By Jane Doe · 5 min read</div>
       <div className="flex-1 grid grid-cols-3 gap-1 px-2 py-2">
         <div className="col-span-2 space-y-1">
-          <div className="h-3 bg-gray-100 rounded" />
-          <div className="h-3 bg-gray-100 rounded" />
+          <div className="h-3 bg-gray-100 rounded-md" />
+          <div className="h-3 bg-gray-100 rounded-md" />
           <Highlight active={active === 'article_mid_inline'}>
-            <div className="h-6 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+            <div className="h-6 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
               Mid inline 300×250
             </div>
           </Highlight>
-          <div className="h-3 bg-gray-100 rounded" />
-          <div className="h-3 bg-gray-100 rounded" />
+          <div className="h-3 bg-gray-100 rounded-md" />
+          <div className="h-3 bg-gray-100 rounded-md" />
           <Highlight active={active === 'article_bottom'}>
-            <div className="h-5 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+            <div className="h-5 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
               Article bottom
             </div>
           </Highlight>
         </div>
         <div>
           <Highlight active={active === 'article_sidebar_desktop'}>
-            <div className="h-16 bg-gray-200 rounded flex items-center justify-center text-gray-500 text-center px-1">
+            <div className="h-16 bg-gray-200 rounded-md flex items-center justify-center text-gray-500 text-center px-1">
               Sidebar 300×600
             </div>
           </Highlight>
@@ -128,7 +128,7 @@ function ArticleWireframe({ active }: { active: string }) {
       </div>
       {active === 'article_interstitial' && (
         <div className="absolute inset-0 bg-gray-900/60 flex items-center justify-center">
-          <div className="w-3/4 h-3/4 bg-white rounded-lg border-2 border-dashed border-emerald-500 flex items-center justify-center text-gray-700 text-[9px] font-semibold">
+          <div className="w-3/4 h-3/4 bg-white rounded-md border-2 border-dashed border-emerald-500 flex items-center justify-center text-gray-700 text-[9px] font-semibold">
             Interstitial overlay
           </div>
         </div>
@@ -145,20 +145,20 @@ function CalendarWireframe({ active }: { active: string }) {
       </div>
       <div className="px-2 pt-2">
         <Highlight active={active === 'calendar_top_banner'}>
-          <div className="h-6 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+          <div className="h-6 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
             Calendar top banner
           </div>
         </Highlight>
       </div>
       <div className="flex-1 px-2 py-2 space-y-1.5">
-        <div className="h-7 bg-white rounded border border-gray-200" />
+        <div className="h-7 bg-white rounded-md border border-gray-200" />
         <Highlight active={active === 'calendar_event_sponsor'} label="Sponsored event">
-          <div className="h-9 bg-amber-50 rounded border-2 border-amber-400 flex items-center justify-center text-amber-700">
+          <div className="h-9 bg-amber-50 rounded-md border-2 border-amber-400 flex items-center justify-center text-amber-700">
             Sponsored event card
           </div>
         </Highlight>
-        <div className="h-7 bg-white rounded border border-gray-200" />
-        <div className="h-7 bg-white rounded border border-gray-200" />
+        <div className="h-7 bg-white rounded-md border border-gray-200" />
+        <div className="h-7 bg-white rounded-md border border-gray-200" />
       </div>
     </div>
   );
@@ -172,19 +172,19 @@ function AccountWireframe({ active }: { active: string }) {
       </div>
       <div className="px-2 pt-2">
         <Highlight active={active === 'account_splash'}>
-          <div className="h-12 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+          <div className="h-12 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
             Account page splash
           </div>
         </Highlight>
       </div>
       <div className="flex-1 px-2 py-2 space-y-1.5">
-        <div className="h-5 bg-white rounded border border-gray-200" />
-        <div className="h-5 bg-white rounded border border-gray-200" />
-        <div className="h-5 bg-white rounded border border-gray-200" />
+        <div className="h-5 bg-white rounded-md border border-gray-200" />
+        <div className="h-5 bg-white rounded-md border border-gray-200" />
+        <div className="h-5 bg-white rounded-md border border-gray-200" />
       </div>
       {active === 'splash_welcome' && (
         <div className="absolute inset-0 bg-gray-900/40 flex items-center justify-center">
-          <div className="w-3/4 h-1/2 bg-white rounded-lg border-2 border-dashed border-emerald-500 flex items-center justify-center text-gray-700 text-[9px] font-semibold text-center px-2">
+          <div className="w-3/4 h-1/2 bg-white rounded-md border-2 border-dashed border-emerald-500 flex items-center justify-center text-gray-700 text-[9px] font-semibold text-center px-2">
             First-launch welcome overlay
           </div>
         </div>
@@ -201,17 +201,17 @@ function NewsletterWireframe({ active }: { active: string }) {
       </div>
       <div className="px-2 pt-2">
         <Highlight active={active === 'newsletter_banner'}>
-          <div className="h-7 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+          <div className="h-7 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
             Newsletter banner 600×200
           </div>
         </Highlight>
       </div>
       <div className="flex-1 px-2 py-2 space-y-1">
-        <div className="h-3 bg-gray-100 rounded" />
-        <div className="h-3 bg-gray-100 rounded" />
-        <div className="h-3 bg-gray-100 rounded w-3/4" />
-        <div className="h-3 bg-gray-100 rounded" />
-        <div className="h-3 bg-gray-100 rounded w-2/3" />
+        <div className="h-3 bg-gray-100 rounded-md" />
+        <div className="h-3 bg-gray-100 rounded-md" />
+        <div className="h-3 bg-gray-100 rounded-md w-3/4" />
+        <div className="h-3 bg-gray-100 rounded-md" />
+        <div className="h-3 bg-gray-100 rounded-md w-2/3" />
       </div>
     </div>
   );
@@ -239,16 +239,16 @@ function BuildersWireframe({ active }: { active: string }) {
       </div>
       <div className="px-2 pt-2">
         <Highlight active={active === 'featured_builder_strip'}>
-          <div className="h-7 bg-gray-200 rounded flex items-center justify-center text-gray-500">
+          <div className="h-7 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
             Featured builder strip 1200×200
           </div>
         </Highlight>
       </div>
       <div className="flex-1 px-2 py-2 grid grid-cols-2 gap-1">
-        <div className="bg-white rounded border border-gray-200" />
-        <div className="bg-white rounded border border-gray-200" />
-        <div className="bg-white rounded border border-gray-200" />
-        <div className="bg-white rounded border border-gray-200" />
+        <div className="bg-white rounded-md border border-gray-200" />
+        <div className="bg-white rounded-md border border-gray-200" />
+        <div className="bg-white rounded-md border border-gray-200" />
+        <div className="bg-white rounded-md border border-gray-200" />
       </div>
     </div>
   );
@@ -262,7 +262,7 @@ function GiveawaysWireframe({ active }: { active: string }) {
       </div>
       <div className="flex-1 px-2 py-2">
         <Highlight active={active === 'giveaway_prize_sponsor'} label="Sponsored prize">
-          <div className="h-full bg-amber-50 rounded border-2 border-amber-400 flex flex-col items-center justify-center text-amber-700 px-2 text-center">
+          <div className="h-full bg-amber-50 rounded-md border-2 border-amber-400 flex flex-col items-center justify-center text-amber-700 px-2 text-center">
             <div className="font-semibold">Sponsored prize</div>
             <div className="text-[7px] mt-1">Builder logo + prize details</div>
           </div>

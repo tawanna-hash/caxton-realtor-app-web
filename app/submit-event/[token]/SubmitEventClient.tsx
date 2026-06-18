@@ -102,7 +102,7 @@ export default function SubmitEventClient({ token }: { token: string }) {
 
   if (loadErr) {
     return (
-      <div className="rounded-lg bg-white border border-red-200 p-8 shadow-sm">
+      <div className="rounded-md bg-white border border-red-200 p-8 shadow-sm">
         <PageTitle size="md">
           Submission link not found
         </PageTitle>
@@ -120,7 +120,7 @@ export default function SubmitEventClient({ token }: { token: string }) {
 
   if (submitOk) {
     return (
-      <div className="rounded-lg bg-white border border-emerald-200 p-8 shadow-sm">
+      <div className="rounded-md bg-white border border-emerald-200 p-8 shadow-sm">
         <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-700 font-medium mb-2">
           Submitted
         </p>
@@ -143,7 +143,7 @@ export default function SubmitEventClient({ token }: { token: string }) {
   }
 
   return (
-    <div className="rounded-lg bg-white border border-gray-200 p-6 sm:p-8 shadow-sm">
+    <div className="rounded-md bg-white border border-gray-200 p-6 sm:p-8 shadow-sm">
       <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500 font-medium mb-2">
         Submit an event
       </p>

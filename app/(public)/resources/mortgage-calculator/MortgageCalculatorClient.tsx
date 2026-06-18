@@ -346,7 +346,7 @@ function PaymentTab(p: PaymentTabProps) {
 
       {/* PITI breakdown card */}
       <div className="lg:col-span-2">
-        <div className="sticky top-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="sticky top-6 rounded-md border border-gray-200 bg-white p-6 shadow-sm">
           <p className={EYEBROW}>Estimated Monthly Payment</p>
           <p
             className="text-4xl text-gray-900 mb-1"
@@ -411,7 +411,7 @@ function PitiBar({ piti }: { piti: PitiBreakdown }) {
       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-600">
         {segs.map((s) => (
           <span key={s.key} className="inline-flex items-center gap-1">
-            <span className="w-2 h-2 rounded-sm" style={{ background: s.color }} />
+            <span className="w-2 h-2 rounded-md" style={{ background: s.color }} />
             {s.label} {Math.round((s.value / total) * 100)}%
           </span>
         ))}
@@ -526,7 +526,7 @@ function AffordabilityTab({ onReport }: { onReport: (fn: () => CalcReport) => vo
       </div>
 
       <div className="lg:col-span-2">
-        <div className="sticky top-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="sticky top-6 rounded-md border border-gray-200 bg-white p-6 shadow-sm">
           <p className={EYEBROW}>Estimated Max Price</p>
           <p
             className="text-4xl text-gray-900 mb-1"
@@ -614,13 +614,13 @@ function AmortizationTab(p: AmortizationTabProps) {
         <button
           type="button"
           onClick={downloadCsv}
-          className="text-xs px-3 py-1.5 border border-gray-300 rounded hover:border-[#021D40] hover:text-[#021D40] transition"
+          className="text-xs px-3 py-1.5 border border-gray-300 rounded-md hover:border-[#021D40] hover:text-[#021D40] transition"
         >
           Download CSV
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
+      <div className="overflow-x-auto rounded-md border border-gray-200">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
             <tr>
@@ -663,7 +663,7 @@ function StatCard({
 }) {
   return (
     <div
-      className={`rounded-xl border p-5 ${
+      className={`rounded-md border p-5 ${
         accent ? 'border-[#fb923c]/40 bg-[#fb923c]/5' : 'border-gray-200 bg-white'
       }`}
     >

@@ -8,7 +8,7 @@
 //
 // Design language matches Caxton admin:
 //   • serif Georgia titles, eyebrow text-sm uppercase tracking-[0.2em]
-//   • rounded-xl cards, gray-200 borders, blue-600 primary buttons
+//   • rounded-md cards, gray-200 borders, blue-600 primary buttons
 //
 // Existing transactional `/admin/advertisers` page is unchanged; this
 // page reads + writes the same row.
@@ -146,7 +146,7 @@ export default function CrmClient({ initialRows }: Props) {
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700"
+            className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
           >
             New advertiser
           </button>
@@ -154,30 +154,30 @@ export default function CrmClient({ initialRows }: Props) {
       </div>
 
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 rounded-lg bg-gray-900 text-white text-sm px-4 py-2 shadow-lg">
+        <div className="fixed bottom-6 right-6 z-50 rounded-md bg-gray-900 text-white text-sm px-4 py-2 shadow-lg">
           {toast}
         </div>
       )}
 
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
       {/* Filters ────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+      <div className="rounded-md border border-gray-200 bg-white p-4 space-y-3">
         <div className="flex flex-wrap gap-2 items-center">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search name, email, phone, city, tags…"
-            className="flex-1 min-w-[240px] px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 min-w-[240px] px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as AdvertiserType | 'all')}
-            className="px-3 py-2 rounded border border-gray-300 text-sm"
+            className="px-3 py-2 rounded-md border border-gray-300 text-sm"
           >
             <option value="all">All types</option>
             {TYPE_OPTIONS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -185,7 +185,7 @@ export default function CrmClient({ initialRows }: Props) {
           <select
             value={pubFilter}
             onChange={(e) => setPubFilter(e.target.value as PublicationKey | 'all')}
-            className="px-3 py-2 rounded border border-gray-300 text-sm"
+            className="px-3 py-2 rounded-md border border-gray-300 text-sm"
           >
             <option value="all">All publications</option>
             {PUBLICATION_OPTIONS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
@@ -208,7 +208,7 @@ export default function CrmClient({ initialRows }: Props) {
       </div>
 
       {/* List */}
-      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
         <div className="grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
           <div className="col-span-3">Contact</div>
           <div className="col-span-1">Status</div>
@@ -328,14 +328,14 @@ function CrmRow({
         <button
           type="button"
           onClick={onCopyLink}
-          className="px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+          className="px-2 py-1 text-xs rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
           title="Copy public share link"
         >
           Copy link
         </button>
         <Link
           href={`/admin/reports?tab=advertisers&advertiserId=${row.id}`}
-          className="px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+          className="px-2 py-1 text-xs rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
           title="Open advertiser analytics dashboard"
         >
           Open
@@ -343,7 +343,7 @@ function CrmRow({
         <button
           type="button"
           onClick={onOpen}
-          className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
+          className="px-2 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
         >
           Edit
         </button>
@@ -840,14 +840,14 @@ function EditDrawer({
           <Section title="Ad management">
             <div className="grid grid-cols-2 gap-3">
               <Field label="Publications">
-                <div className="flex flex-col gap-1.5 rounded border border-gray-300 bg-white px-3 py-2">
+                <div className="flex flex-col gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-2">
                   {PUBLICATION_OPTIONS.map((p) => (
                     <label key={p.id} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={publications.includes(p.id)}
                         onChange={() => togglePublication(p.id)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="h-4 w-4 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                       <span>{p.label}</span>
                     </label>
@@ -879,19 +879,19 @@ function EditDrawer({
               </Field>
             </div>
 
-            <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2">
+            <div className="mt-3 rounded-md border border-gray-200 bg-gray-50 p-3 space-y-2">
               <div className="text-xs uppercase tracking-wider text-gray-500">Public share link</div>
               <div className="flex gap-2 items-center">
                 <input
                   readOnly
                   value={shareUrl}
                   onClick={(e) => (e.target as HTMLInputElement).select()}
-                  className="flex-1 rounded border border-gray-300 px-2 py-1 text-xs font-mono bg-white"
+                  className="flex-1 rounded-md border border-gray-300 px-2 py-1 text-xs font-mono bg-white"
                 />
                 <button
                   type="button"
                   onClick={copyShareUrl}
-                  className="shrink-0 rounded border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-50"
+                  className="shrink-0 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-50"
                 >
                   {shareCopied ? 'Copied' : 'Copy'}
                 </button>
@@ -899,7 +899,7 @@ function EditDrawer({
                   type="button"
                   onClick={rotateShareToken}
                   disabled={shareBusy}
-                  className="shrink-0 rounded border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-50 disabled:opacity-50"
+                  className="shrink-0 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-50 disabled:opacity-50"
                 >
                   {shareBusy ? 'Rotating...' : 'Rotate token'}
                 </button>
@@ -982,7 +982,7 @@ function EditDrawer({
 
           {/* ── Portal Access (kept as-is) ───────────────────────────── */}
           <Section title="Portal access">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+            <div className="rounded-md border border-gray-200 bg-gray-50 p-4 space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-sm font-medium text-gray-900">Magic link</div>
@@ -997,13 +997,13 @@ function EditDrawer({
                   type="button"
                   onClick={() => sendPortalLink('login')}
                   disabled={sendingLink || (!row.portal_email && !row.contact_email)}
-                  className="shrink-0 rounded-lg bg-gray-900 text-white px-3 py-1.5 text-sm hover:bg-gray-800 disabled:opacity-50"
+                  className="shrink-0 rounded-md bg-gray-900 text-white px-3 py-1.5 text-sm hover:bg-gray-800 disabled:opacity-50"
                 >
                   {sendingLink ? 'Sending…' : 'Send portal link'}
                 </button>
               </div>
               {linkResult?.error && (
-                <div className="rounded-lg bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-xs">
+                <div className="rounded-md bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-xs">
                   {linkResult.error}
                 </div>
               )}
@@ -1020,7 +1020,7 @@ function EditDrawer({
                     readOnly
                     value={linkResult.url}
                     onClick={(e) => (e.target as HTMLInputElement).select()}
-                    className="w-full rounded border border-gray-300 px-2 py-1 text-xs font-mono"
+                    className="w-full rounded-md border border-gray-300 px-2 py-1 text-xs font-mono"
                   />
                 </div>
               )}
@@ -1029,7 +1029,7 @@ function EditDrawer({
 
           {/* ── Event Submission Link (kept as-is) ───────────────────── */}
           <Section title="Event submission link">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+            <div className="rounded-md border border-gray-200 bg-gray-50 p-4 space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-sm font-medium text-gray-900">Public submission form</div>
@@ -1043,7 +1043,7 @@ function EditDrawer({
                   type="button"
                   onClick={regenerateSubmissionToken}
                   disabled={tokenBusy}
-                  className="shrink-0 rounded-lg bg-gray-900 text-white px-3 py-1.5 text-sm hover:bg-gray-800 disabled:opacity-50"
+                  className="shrink-0 rounded-md bg-gray-900 text-white px-3 py-1.5 text-sm hover:bg-gray-800 disabled:opacity-50"
                 >
                   {tokenBusy
                     ? 'Working…'
@@ -1053,7 +1053,7 @@ function EditDrawer({
                 </button>
               </div>
               {tokenError && (
-                <div className="rounded-lg bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-xs">
+                <div className="rounded-md bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-xs">
                   {tokenError}
                 </div>
               )}
@@ -1064,12 +1064,12 @@ function EditDrawer({
                       readOnly
                       value={submissionUrl}
                       onClick={(e) => (e.target as HTMLInputElement).select()}
-                      className="flex-1 rounded border border-gray-300 px-2 py-1 text-xs font-mono"
+                      className="flex-1 rounded-md border border-gray-300 px-2 py-1 text-xs font-mono"
                     />
                     <button
                       type="button"
                       onClick={copySubmissionUrl}
-                      className="shrink-0 rounded border border-gray-300 px-2 py-1 text-xs bg-white hover:bg-gray-50"
+                      className="shrink-0 rounded-md border border-gray-300 px-2 py-1 text-xs bg-white hover:bg-gray-50"
                     >
                       {copied ? 'Copied' : 'Copy'}
                     </button>
@@ -1124,20 +1124,20 @@ function EditDrawer({
                 type="button"
                 onClick={deleteAdvertiser}
                 disabled={deleting}
-                className="px-3 py-1.5 rounded border border-red-200 text-red-700 text-xs hover:bg-red-50 disabled:opacity-50"
+                className="px-3 py-1.5 rounded-md border border-red-200 text-red-700 text-xs hover:bg-red-50 disabled:opacity-50"
                 title="Delete this advertiser (hotspots remain, links unlinked)"
               >
                 {deleting ? 'Deleting...' : 'Delete advertiser'}
               </button>
             </div>
             <div className="flex gap-2">
-              <button onClick={onClose} className="px-4 py-2 rounded border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">
+              <button onClick={onClose} className="px-4 py-2 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">
                 Cancel
               </button>
               <button
                 onClick={submit}
                 disabled={saving}
-                className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
               >
                 {saving ? 'Saving...' : 'Save changes'}
               </button>
@@ -1149,7 +1149,7 @@ function EditDrawer({
   );
 }
 
-const INPUT = 'w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
+const INPUT = 'w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -1212,39 +1212,39 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
           </p>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Ad size">
-              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{txt(row.current_ad_size)}</div>
+              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{txt(row.current_ad_size)}</div>
             </Field>
             <Field label="Frequency">
-              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{txt(row.current_frequency)}</div>
+              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{txt(row.current_frequency)}</div>
             </Field>
             <Field label="Ad rate">
-              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{fmtCents(row.current_ad_rate_cents)}</div>
+              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{fmtCents(row.current_ad_rate_cents)}</div>
             </Field>
             <Field label="Contract total">
-              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{fmtCents(row.current_amount_cents)}</div>
+              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{fmtCents(row.current_amount_cents)}</div>
             </Field>
             <Field label="Expires">
-              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{fmtDate(row.current_exp_date)}</div>
+              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{fmtDate(row.current_exp_date)}</div>
             </Field>
             <Field label="Payment mode">
-              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{txt(row.payment_mode)}</div>
+              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{txt(row.payment_mode)}</div>
             </Field>
             <Field label="Billing contact">
-              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{txt(row.billing_contact_name)}</div>
+              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{txt(row.billing_contact_name)}</div>
             </Field>
             <Field label="Billing phone">
-              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{txt(row.billing_contact_phone)}</div>
+              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{txt(row.billing_contact_phone)}</div>
             </Field>
             <Field label="Billing email" className="col-span-2">
-              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">{txt(row.billing_email)}</div>
+              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{txt(row.billing_email)}</div>
             </Field>
             <Field label="Card on file">
-              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm">
+              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">
                 {row.card_last4 ? `•••• ${row.card_last4}` : '—'}
               </div>
             </Field>
             <Field label="Stripe customer">
-              <div className="px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm font-mono text-xs">
+              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm font-mono text-xs">
                 {txt(row.stripe_customer_id)}
               </div>
             </Field>
@@ -1310,7 +1310,7 @@ function CreateAdvertiserModal({
       className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="w-full max-w-lg rounded-xl bg-white shadow-xl border border-gray-200">
+      <div className="w-full max-w-lg rounded-md bg-white shadow-xl border border-gray-200">
         <div className="px-5 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">New advertiser</h2>
           <p className="text-xs text-gray-500 mt-0.5">Create the contact record. You can fill in everything else from the edit drawer afterwards.</p>
@@ -1323,7 +1323,7 @@ function CreateAdvertiserModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g. La Cima"
               disabled={saving}
               autoFocus
@@ -1331,7 +1331,7 @@ function CreateAdvertiserModal({
           </label>
           <div className="block space-y-1">
             <span className="text-sm font-medium text-gray-700">Publications</span>
-            <div className="flex flex-col gap-1.5 rounded border border-gray-300 bg-white px-3 py-2">
+            <div className="flex flex-col gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-2">
               {PUBLICATION_OPTIONS.map((opt) => (
                 <label key={opt.id} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
                   <input
@@ -1339,7 +1339,7 @@ function CreateAdvertiserModal({
                     checked={publications.includes(opt.id)}
                     onChange={() => togglePublication(opt.id)}
                     disabled={saving}
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <span>{opt.label}</span>
                 </label>
@@ -1353,7 +1353,7 @@ function CreateAdvertiserModal({
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="contact@example.com"
               disabled={saving}
             />
@@ -1371,14 +1371,14 @@ function CreateAdvertiserModal({
         <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
             disabled={saving}
           >
             Cancel
           </button>
           <button
             onClick={save}
-            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
             disabled={saving || !name.trim()}
           >
             {saving ? 'Creating...' : 'Create'}

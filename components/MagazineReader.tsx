@@ -333,7 +333,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
           <button
             type="button"
             onClick={handleHome}
-            className="text-[11px] uppercase tracking-[0.2em] text-white/80 hover:text-white font-medium border border-white/20 hover:border-white/40 rounded px-2 py-0.5 transition-colors"
+            className="text-[11px] uppercase tracking-[0.2em] text-white/80 hover:text-white font-medium border border-white/20 hover:border-white/40 rounded-md px-2 py-0.5 transition-colors"
             aria-label="Go to Realty News Now home"
           >
             Realty News Now
@@ -460,7 +460,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
             value={jumpInput}
             onChange={(e) => setJumpInput(e.target.value)}
             placeholder={`${currentPage + 1}`}
-            className="w-14 bg-white/10 text-white text-center text-sm rounded px-2 py-1 placeholder-white/40 border border-white/10"
+            className="w-14 bg-white/10 text-white text-center text-sm rounded-md px-2 py-1 placeholder-white/40 border border-white/10"
             aria-label="Jump to page"
           />
           <span className="text-xs text-white/40">/ {magazine.page_count}</span>
@@ -495,9 +495,9 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
         <ActionPopup title="Scan to share" onClose={() => setActionMode(null)}>
           {qrDataUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={qrDataUrl} alt="QR code" className="w-64 h-64 mx-auto bg-white p-2 rounded-lg" />
+            <img src={qrDataUrl} alt="QR code" className="w-64 h-64 mx-auto bg-white p-2 rounded-md" />
           ) : (
-            <div className="w-64 h-64 mx-auto bg-white/5 animate-pulse rounded-lg" />
+            <div className="w-64 h-64 mx-auto bg-white/5 animate-pulse rounded-md" />
           )}
           <p className="text-xs text-white/60 text-center mt-3 break-all">{shareUrl}</p>
         </ActionPopup>
@@ -526,7 +526,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Type to search…"
-            className="w-full bg-white/10 text-white text-sm rounded px-3 py-2 placeholder-white/40 border border-white/20"
+            className="w-full bg-white/10 text-white text-sm rounded-md px-3 py-2 placeholder-white/40 border border-white/20"
             autoFocus
           />
           <div className="mt-3 max-h-64 overflow-y-auto">
@@ -551,7 +551,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
                           setActionMode(null);
                           jumpTo(m.page);
                         }}
-                        className="w-full text-left p-2 bg-white/5 hover:bg-white/10 rounded text-xs"
+                        className="w-full text-left p-2 bg-white/5 hover:bg-white/10 rounded-md text-xs"
                       >
                         <p className="text-white/90 font-semibold">Page {m.page + 1}</p>
                         <p className="text-white/60 mt-0.5">{snippet}</p>

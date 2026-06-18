@@ -185,7 +185,7 @@ export default function SellerNetSheetClient() {
       <div className="grid lg:grid-cols-5 gap-8">
         {/* ── Inputs (hidden on print) ───────────────────────────── */}
         <div className="lg:col-span-3 space-y-5 print:hidden">
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-md border border-gray-200 bg-white p-5">
             <p className={EYEBROW}>Transaction info</p>
             <p className="text-xs text-gray-500 mb-4">
               Used to personalize the printed and downloaded net sheet.
@@ -369,7 +369,7 @@ export default function SellerNetSheetClient() {
 
         {/* ── Net sheet card (also the print view) ───────────────── */}
         <div className="lg:col-span-2 print:col-span-5">
-          <div className="lg:sticky lg:top-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none">
+          <div className="lg:sticky lg:top-6 rounded-md border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none">
             {(sellerName.trim() || propertyAddress.trim() || agentName.trim()) && (
               <div className="mb-5 pb-4 border-b border-gray-100 text-xs text-gray-600 space-y-0.5">
                 {sellerName.trim() && (

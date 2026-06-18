@@ -115,7 +115,7 @@ export default async function MailingHubPage() {
               <Link
                 key={s.slug}
                 href={`/admin/mailing/${s.slug}`}
-                className="group block rounded-lg border border-gray-200 bg-white p-5 hover:shadow-sm transition"
+                className="group block rounded-md border border-gray-200 bg-white p-5 hover:shadow-sm transition"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div
@@ -150,7 +150,7 @@ export default async function MailingHubPage() {
             <Link
               key={t.href}
               href={t.href}
-              className="group block rounded-lg border border-gray-200 bg-white p-5 hover:shadow-sm transition"
+              className="group block rounded-md border border-gray-200 bg-white p-5 hover:shadow-sm transition"
             >
               <div className="flex items-start justify-between mb-3">
                 <div
@@ -171,7 +171,7 @@ export default async function MailingHubPage() {
       </div>
 
       {/* Footer hint */}
-      <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-6 py-6 text-center">
+      <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 px-6 py-6 text-center">
         <h3 className="font-serif text-lg text-gray-900 mb-1">
           Import and export from every segment
         </h3>
@@ -188,7 +188,7 @@ function KpiCard({
   label, value, sub, accent,
 }: { label: string; value: number; sub: string; accent?: string }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
+    <div className="rounded-md border border-gray-200 bg-white p-4">
       <div
         className="h-7 w-7 rounded-md mb-3"
         style={{ backgroundColor: accent ? `${accent}15` : '#f3f4f6' }}

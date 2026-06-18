@@ -211,7 +211,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
         <p className="text-xs uppercase tracking-wider text-gray-500 font-medium mb-1">
           Message
         </p>
-        <p className="text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 border border-gray-200 rounded p-3">
+        <p className="text-sm text-gray-900 whitespace-pre-wrap bg-gray-50 border border-gray-200 rounded-md p-3">
           {inquiry.message}
         </p>
       </div>
@@ -254,7 +254,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             onChange={(e) =>
               patch({ takeover: e.target.checked }, 'Takeover updated')
             }
-            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="mt-0.5 h-4 w-4 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500"
           />
           <span className="text-sm">
             <span className="font-medium text-gray-900">Take over manually</span>
@@ -280,7 +280,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             value={assignee}
             onChange={(e) => setAssignee(e.target.value)}
             placeholder="e.g. tawanna@newslinesa.com"
-            className="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <button
             type="button"
@@ -288,7 +288,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             onClick={() =>
               patch({ assignee: assignee.trim() || null }, 'Assignee saved')
             }
-            className="px-3 py-1.5 rounded text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded-md text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             Save
           </button>
@@ -309,14 +309,14 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
           placeholder="Context for the team — left blank by default."
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
         <div className="flex justify-end mt-2">
           <button
             type="button"
             disabled={saving || notes === (inquiry.notes ?? '')}
             onClick={() => patch({ notes: notes.trim() || null }, 'Notes saved')}
-            className="px-3 py-1.5 rounded text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 rounded-md text-sm font-medium bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
             Save notes
           </button>
@@ -336,7 +336,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
       <div className="flex flex-wrap items-center gap-2 pt-3 mt-4 border-t border-gray-100">
         <a
           href={replyHref}
-          className="inline-flex items-center px-3 py-1.5 rounded text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
+          className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
         >
           Reply by email
         </a>
@@ -345,7 +345,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             type="button"
             disabled={saving}
             onClick={() => patch({ status: 'replied' }, 'Marked replied')}
-            className="inline-flex items-center px-3 py-1.5 rounded text-sm font-medium border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
+            className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
           >
             Mark replied
           </button>
@@ -356,7 +356,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
           type="button"
           disabled={deleting || saving}
           onClick={handleDelete}
-          className="ml-auto inline-flex items-center px-3 py-1.5 rounded text-sm font-medium border border-red-300 bg-white text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="ml-auto inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium border border-red-300 bg-white text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
           title="Permanently delete this inquiry"
         >
           {deleting ? 'Deleting…' : 'Delete'}

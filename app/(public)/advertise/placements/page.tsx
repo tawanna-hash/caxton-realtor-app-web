@@ -71,7 +71,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
   const hostPage = HOST_PAGE_BY_SLUG[slot.slug] ?? ZONE_LABEL[slot.zone];
 
   return (
-    <article className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col">
+    <article className="rounded-md border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col">
       {/* Wireframe preview */}
       <div className="relative bg-gray-100 border-b border-gray-200 h-56 p-3">
         {hasWireframe(slot.slug) ? (
@@ -113,7 +113,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
         <div className="pt-3 mt-1 border-t border-gray-100">
           <Link
             href={`/advertise/checkout/${slot.slug}?pub=realtyline`}
-            className="inline-block w-full text-center bg-[#021D40] text-white text-sm font-semibold py-2 rounded hover:bg-[#021D40]"
+            className="inline-block w-full text-center bg-[#021D40] text-white text-sm font-semibold py-2 rounded-md hover:bg-[#021D40]"
           >
             Book this placement →
           </Link>

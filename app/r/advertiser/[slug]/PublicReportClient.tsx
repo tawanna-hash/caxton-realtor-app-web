@@ -125,14 +125,14 @@ function EmailGate({
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="bg-white border border-gray-200 rounded-lg p-8 shadow-sm">
+        <div className="bg-white border border-gray-200 rounded-md p-8 shadow-sm">
           <PageTitle size="md">{advertiser.name}</PageTitle>
           <p className="text-sm text-gray-600 mb-6">
             Performance report &mdash; sign in with your email to view.
           </p>
 
           {success ? (
-            <div className="p-4 bg-green-50 border border-green-200 rounded text-sm text-green-800">
+            <div className="p-4 bg-green-50 border border-green-200 rounded-md text-sm text-green-800">
               <p className="font-medium">Check your inbox.</p>
               <p className="mt-1">
                 If your email is on file, you&apos;ll receive a sign-in link.
@@ -153,12 +153,12 @@ function EmailGate({
                   required
                   autoComplete="email"
                   disabled={submitting}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="you@example.com"
                 />
               </div>
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded">
+                <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded-md">
                   {error}
                 </div>
               )}
@@ -166,7 +166,7 @@ function EmailGate({
                 type="submit"
                 disabled={submitting || !email.trim()}
                 style={{ backgroundColor: theme.primaryColor }}
-                className="w-full text-white py-2 rounded font-medium disabled:opacity-50 transition hover:brightness-110"
+                className="w-full text-white py-2 rounded-md font-medium disabled:opacity-50 transition hover:brightness-110"
               >
                 {submitting ? 'Sending…' : 'Email me a link'}
               </button>
@@ -241,7 +241,7 @@ function Dashboard({
                 type="button"
                 onClick={() => setPreset(p)}
                 className={
-                  'px-3 py-1.5 text-sm font-medium rounded ' +
+                  'px-3 py-1.5 text-sm font-medium rounded-md ' +
                   (preset === p
                     ? 'bg-gray-900 text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50')
@@ -254,7 +254,7 @@ function Dashboard({
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded">
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded-md">
             {error}
           </div>
         )}
@@ -278,7 +278,7 @@ function Dashboard({
               />
             </div>
 
-            <div className="bg-white border border-gray-200 rounded p-4 mb-6">
+            <div className="bg-white border border-gray-200 rounded-md p-4 mb-6">
               <h2 className="text-sm font-medium text-gray-700 mb-3">Clicks per day</h2>
               <div className="w-full h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -321,7 +321,7 @@ function Dashboard({
               </div>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-200">
                 <h2 className="text-sm font-medium text-gray-700">Where your readers clicked</h2>
               </div>
@@ -384,7 +384,7 @@ function Dashboard({
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-white border border-gray-200 rounded p-4">
+    <div className="bg-white border border-gray-200 rounded-md p-4">
       <div className="text-xs uppercase tracking-wider text-gray-500 mb-1">{label}</div>
       <div className="text-2xl font-semibold text-gray-900">{value}</div>
       {sub && <div className="text-xs text-gray-500 mt-1">{sub}</div>}

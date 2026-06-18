@@ -23,7 +23,7 @@ export default function AdminAdsInquiriesPage() {
         <PageTitle size="md">Ad inquiries</PageTitle>
         <p className="text-sm text-gray-700 mt-1">
           Every Print, Digital, and Email lead from{' '}
-          <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">/advertise/inquire</code>.
+          <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded-md">/advertise/inquire</code>.
           Reply, assign, takeover into manual booking, or mark won/lost.
         </p>
       </div>

@@ -67,7 +67,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
   const unitLabel = unit === 'per send' ? '/send' : unit === 'per push' ? '/push' : '/wk';
 
   return (
-    <article className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col">
+    <article className="rounded-md border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col">
       {/* Wireframe preview */}
       <div className="relative bg-gray-100 border-b border-gray-200 h-56 p-3">
         {hasWireframe(slot.slug) ? (

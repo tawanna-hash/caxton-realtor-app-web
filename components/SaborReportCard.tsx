@@ -115,7 +115,7 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
       className="bg-white border-b border-gray-200"
       aria-label={`SABOR MLS Summary Report ${d.month_label}`}
     >
-      <div className="bg-white mx-3 my-3 rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-white mx-3 my-3 rounded-md overflow-hidden shadow-sm">
         {/* Brand top strip */}
         <div className="h-1" style={{ background: `linear-gradient(90deg, ${NEWSLINE} 0%, #7a1f7e 100%)` }} />
 

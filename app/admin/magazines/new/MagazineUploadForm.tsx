@@ -635,7 +635,7 @@ export default function MagazineUploadForm() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-800 px-3 py-2 rounded text-sm">
+            <div className="bg-red-50 border border-red-200 text-red-800 px-3 py-2 rounded-md text-sm">
               {error}
             </div>
           )}

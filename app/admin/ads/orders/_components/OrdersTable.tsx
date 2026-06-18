@@ -297,18 +297,18 @@ export default function OrdersTable() {
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search advertiser, slot, size…"
-            className="border border-gray-300 rounded px-3 py-1.5 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>
 
       {error && (
-        <div className="border border-red-200 bg-red-50 text-red-800 text-sm px-4 py-2 rounded mb-4">
+        <div className="border border-red-200 bg-red-50 text-red-800 text-sm px-4 py-2 rounded-md mb-4">
           {error}
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
         {loading && !data ? (
           <div className="p-8 text-sm text-gray-600 text-center">Loading…</div>
         ) : !data || data.rows.length === 0 ? (
@@ -337,7 +337,7 @@ export default function OrdersTable() {
                   <tr key={`${row.source}:${row.id}`} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border ${CHANNEL_BADGE_CLASS[row.channel]}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border ${CHANNEL_BADGE_CLASS[row.channel]}`}
                       >
                         {AD_CHANNEL_LABEL[row.channel]}
                       </span>
@@ -347,7 +347,7 @@ export default function OrdersTable() {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${STATUS_BADGE_CLASS[row.status]}`}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${STATUS_BADGE_CLASS[row.status]}`}
                       >
                         {row.status}
                       </span>

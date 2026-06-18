@@ -265,7 +265,7 @@ export default function TitleRateCalculatorClient() {
           )}
 
           {/* Endorsements */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
+          <div className="rounded-md border border-gray-200 bg-white p-5">
             <p className={EYEBROW}>Endorsements</p>
             <p className="text-sm text-gray-600 mb-4">
               Check the boxes for endorsements requested at closing. Standard
@@ -337,7 +337,7 @@ export default function TitleRateCalculatorClient() {
 
         {/* ── Result card ────────────────────────────────────────── */}
         <div className="lg:col-span-2">
-          <div className="sticky top-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="sticky top-6 rounded-md border border-gray-200 bg-white p-6 shadow-sm">
             <p className={EYEBROW}>Estimated Total</p>
             <p
               className="text-4xl text-gray-900 mb-1"
@@ -500,7 +500,7 @@ function Toggle({ label, checked, onChange, hint, disabled = false }: ToggleProp
         checked={checked && !disabled}
         disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 rounded border-gray-400 text-[#021D40] focus:ring-[#021D40]/30"
+        className="mt-0.5 h-4 w-4 rounded-md border-gray-400 text-[#021D40] focus:ring-[#021D40]/30"
       />
       <span className="flex-1">
         <span className="block text-sm font-medium text-gray-900 leading-snug">{label}</span>

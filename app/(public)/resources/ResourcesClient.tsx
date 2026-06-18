@@ -143,7 +143,7 @@ export default function ResourcesClient() {
         >
           Official sources & industry reference
         </h2>
-        <ul className="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+        <ul className="divide-y divide-gray-200 border border-gray-200 rounded-md overflow-hidden">
           {RESOURCE_LINKS.map((l) => (
             <LinkRow key={l.href + l.title} link={l} />
           ))}
@@ -179,10 +179,10 @@ function ToolCard({
   return (
     <a
       href={href}
-      className="group block rounded-xl border border-gray-200 bg-gradient-to-br from-[#021D40]/5 to-white p-6 hover:border-[#021D40] hover:shadow-md transition"
+      className="group block rounded-md border border-gray-200 bg-gradient-to-br from-[#021D40]/5 to-white p-6 hover:border-[#021D40] hover:shadow-md transition"
     >
       <div className="flex items-start justify-between gap-3 mb-3">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#021D40] bg-[#021D40]/10 px-2 py-0.5 rounded">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#021D40] bg-[#021D40]/10 px-2 py-0.5 rounded-md">
           {badge}
         </span>
         <span className="text-[#021D40] opacity-0 group-hover:opacity-100 transition text-sm">→</span>
@@ -206,14 +206,14 @@ function GuideCard({ guide }: { guide: ResourceGuide }) {
       href={guide.href}
       target={isPlaceholder ? undefined : '_blank'}
       rel={isPlaceholder ? undefined : 'noopener noreferrer'}
-      className="block rounded-lg border border-gray-200 bg-white p-5 hover:border-[#021D40] hover:shadow-sm transition"
+      className="block rounded-md border border-gray-200 bg-white p-5 hover:border-[#021D40] hover:shadow-sm transition"
       onClick={(e) => {
         if (isPlaceholder) e.preventDefault();
       }}
     >
       <div className="flex items-start justify-between gap-3 mb-2">
         {guide.category && (
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#021D40] bg-[#021D40]/5 px-2 py-0.5 rounded">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#021D40] bg-[#021D40]/5 px-2 py-0.5 rounded-md">
             {guide.category}
           </span>
         )}

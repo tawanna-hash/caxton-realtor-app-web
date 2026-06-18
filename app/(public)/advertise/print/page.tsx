@@ -45,7 +45,7 @@ export default function AdvertisePrintPage() {
           {PACKAGES.map((pkg) => (
             <article
               key={pkg.id}
-              className={`relative flex flex-col border rounded p-5 ${
+              className={`relative flex flex-col border rounded-md p-5 ${
                 pkg.premium
                   ? 'border-[#c2410c] bg-amber-50/30'
                   : pkg.popular
@@ -108,7 +108,7 @@ export default function AdvertisePrintPage() {
 
               <Link
                 href={`/advertise/inquire?channel=print&package=${encodeURIComponent(pkg.id)}`}
-                className="inline-flex items-center justify-center px-4 py-2.5 bg-[#021D40] text-white text-sm font-medium rounded hover:bg-[#03285a] transition"
+                className="inline-flex items-center justify-center px-4 py-2.5 bg-[#021D40] text-white text-sm font-medium rounded-md hover:bg-[#03285a] transition"
               >
                 Request quote
               </Link>
@@ -123,7 +123,7 @@ export default function AdvertisePrintPage() {
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             2026 print deadlines
           </p>
-          <div className="border border-gray-200 rounded overflow-hidden">
+          <div className="border border-gray-200 rounded-md overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-600">
                 <tr>
@@ -154,7 +154,7 @@ export default function AdvertisePrintPage() {
         </p>
         <Link
           href="/advertise/inquire?channel=print"
-          className="inline-flex items-center justify-center px-5 py-2.5 border border-[#021D40] text-[#021D40] text-sm font-medium rounded hover:bg-[#021D40] hover:text-white transition"
+          className="inline-flex items-center justify-center px-5 py-2.5 border border-[#021D40] text-[#021D40] text-sm font-medium rounded-md hover:bg-[#021D40] hover:text-white transition"
         >
           Start a print inquiry
         </Link>

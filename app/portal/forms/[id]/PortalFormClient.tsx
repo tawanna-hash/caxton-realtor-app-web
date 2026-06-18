@@ -58,7 +58,7 @@ export default function PortalFormClient({
 
   if (done) {
     return (
-      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6">
+      <div className="rounded-md border border-emerald-200 bg-emerald-50 p-6">
         <div className="font-serif text-xl text-emerald-900">
           Thank you — your response is recorded.
         </div>
@@ -68,7 +68,7 @@ export default function PortalFormClient({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5 rounded-xl border border-gray-200 bg-white p-6">
+    <form onSubmit={onSubmit} className="space-y-5 rounded-md border border-gray-200 bg-white p-6">
       {schema.fields.map((field) => (
         <label key={field.key} className="block">
           <div className="text-sm font-medium text-gray-700 mb-1">
@@ -80,13 +80,13 @@ export default function PortalFormClient({
               value={answers[field.key] ?? ''}
               onChange={(e) => setField(field.key, e.target.value)}
               rows={4}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             />
           ) : field.type === 'select' ? (
             <select
               value={answers[field.key] ?? ''}
               onChange={(e) => setField(field.key, e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             >
               <option value="">(choose one)</option>
               {(field.options ?? []).map(opt => (
@@ -98,14 +98,14 @@ export default function PortalFormClient({
               type={field.type === 'tel' ? 'tel' : field.type === 'email' ? 'email' : field.type === 'url' ? 'url' : 'text'}
               value={answers[field.key] ?? ''}
               onChange={(e) => setField(field.key, e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             />
           )}
         </label>
       ))}
 
       {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-sm">
+        <div className="rounded-md bg-red-50 border border-red-200 text-red-800 px-3 py-2 text-sm">
           {error}
         </div>
       )}
@@ -114,7 +114,7 @@ export default function PortalFormClient({
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-lg bg-gray-900 text-white px-5 py-2 text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
+          className="rounded-md bg-gray-900 text-white px-5 py-2 text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
         >
           {submitting ? 'Submitting…' : 'Submit'}
         </button>

@@ -16,12 +16,12 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-xl border border-emerald-200 shadow-sm p-10 text-center space-y-5">
+        <div className="bg-white rounded-md border border-emerald-200 shadow-sm p-10 text-center space-y-5">
           <div className="text-5xl">✅</div>
 
           <div>
             <div
-              className="inline-block px-3 py-0.5 rounded text-white text-xs font-bold tracking-[0.2em] uppercase mb-3"
+              className="inline-block px-3 py-0.5 rounded-md text-white text-xs font-bold tracking-[0.2em] uppercase mb-3"
               style={{ background: '#dc2626' }}
             >
               RealtyLine
@@ -40,7 +40,7 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
             <p className="text-xs text-gray-400">Agreement #{id}</p>
           )}
 
-          <div className="bg-emerald-50 rounded-lg border border-emerald-200 p-4 text-sm text-emerald-800">
+          <div className="bg-emerald-50 rounded-md border border-emerald-200 p-4 text-sm text-emerald-800">
             <strong>What happens next:</strong>
             <ul className="list-disc list-inside mt-2 space-y-1 text-left">
               <li>You&apos;ll receive a confirmation email shortly</li>
@@ -53,7 +53,7 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
             href={`/api/sign/${token}/pdf`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block w-full py-3 rounded-lg text-white font-medium text-sm hover:opacity-90 transition-opacity"
+            className="inline-block w-full py-3 rounded-md text-white font-medium text-sm hover:opacity-90 transition-opacity"
             style={{ background: '#dc2626' }}
           >
             Download Signed Agreement PDF

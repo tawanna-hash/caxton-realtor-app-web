@@ -268,13 +268,13 @@ export default function InquiriesInbox() {
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search name, email, company…"
-            className="border border-gray-300 rounded px-3 py-1.5 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>
 
       {error && (
-        <div className="border border-red-200 bg-red-50 text-red-800 text-sm px-4 py-2 rounded mb-4">
+        <div className="border border-red-200 bg-red-50 text-red-800 text-sm px-4 py-2 rounded-md mb-4">
           {error}
         </div>
       )}
@@ -282,7 +282,7 @@ export default function InquiriesInbox() {
       {/* Two-column layout: list on the left, detail drawer on the right. */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-6">
         {/* List */}
-        <div className="bg-white border border-gray-200 rounded overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
           {loading && !data ? (
             <div className="p-8 text-sm text-gray-600 text-center">Loading…</div>
           ) : !data || data.rows.length === 0 ? (
@@ -304,17 +304,17 @@ export default function InquiriesInbox() {
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider border ${CHANNEL_BADGE_CLASS[row.channel]}`}
+                          className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border ${CHANNEL_BADGE_CLASS[row.channel]}`}
                         >
                           {AD_CHANNEL_LABEL[row.channel]}
                         </span>
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${STATUS_BADGE_CLASS[row.status]}`}
+                          className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${STATUS_BADGE_CLASS[row.status]}`}
                         >
                           {STATUS_LABEL[row.status]}
                         </span>
                         {row.takeover && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-orange-100 text-orange-800">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider bg-orange-100 text-orange-800">
                             Takeover
                           </span>
                         )}
@@ -355,7 +355,7 @@ export default function InquiriesInbox() {
         </div>
 
         {/* Detail drawer */}
-        <div className="bg-white border border-gray-200 rounded p-5 lg:sticky lg:top-4 lg:self-start">
+        <div className="bg-white border border-gray-200 rounded-md p-5 lg:sticky lg:top-4 lg:self-start">
           {selectedInquiry ? (
             <InquiryDetail
               key={selectedInquiry.id}

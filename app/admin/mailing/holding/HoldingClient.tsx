@@ -426,7 +426,7 @@ export default function HoldingClient() {
 
       {/* Verify-drain progress strip */}
       {drainJob && (
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="rounded-md border border-gray-200 bg-white p-4">
           <div className="flex items-baseline justify-between gap-3 flex-wrap mb-2">
             <div>
               <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium">
@@ -554,7 +554,7 @@ export default function HoldingClient() {
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-xs text-gray-600 uppercase tracking-wider">
             <tr>
@@ -702,7 +702,7 @@ function KpiCard({
   action?: { label: string; onClick: () => void };
 }) {
   return (
-    <div className={`relative rounded-lg border border-gray-200 bg-white p-4 ${action ? 'transition-shadow hover:shadow-md' : ''}`}>
+    <div className={`relative rounded-md border border-gray-200 bg-white p-4 ${action ? 'transition-shadow hover:shadow-md' : ''}`}>
       <div className="h-7 w-7 rounded-md mb-3" style={{ backgroundColor: accent ? `${accent}15` : '#f3f4f6' }} />
       <div className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</div>
       <div className="mt-1">

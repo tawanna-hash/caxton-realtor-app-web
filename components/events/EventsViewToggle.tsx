@@ -21,7 +21,7 @@ export function EventsViewToggle({ pub, value, onChange }: EventsViewToggleProps
         <button
           onClick={() => onChange('month')}
           aria-pressed={value === 'month'}
-          className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold rounded-sm transition-colors"
+          className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold rounded-md transition-colors"
           style={value === 'month' ? { backgroundColor: info.color, color: 'white' } : { color: '#6b7280' }}
         >
           Month
@@ -29,7 +29,7 @@ export function EventsViewToggle({ pub, value, onChange }: EventsViewToggleProps
         <button
           onClick={() => onChange('upcoming')}
           aria-pressed={value === 'upcoming'}
-          className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold rounded-sm transition-colors"
+          className="px-4 py-1.5 text-xs uppercase tracking-wider font-semibold rounded-md transition-colors"
           style={value === 'upcoming' ? { backgroundColor: info.color, color: 'white' } : { color: '#6b7280' }}
         >
           Upcoming

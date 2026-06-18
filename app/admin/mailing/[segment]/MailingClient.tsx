@@ -577,7 +577,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
 
       {/* Verify-drain progress strip (holding-only; inert here) */}
       {drainJob && (
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="rounded-md border border-gray-200 bg-white p-4">
           <div className="flex items-baseline justify-between gap-3 flex-wrap mb-2">
             <div>
               <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium">
@@ -680,7 +680,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+      <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-xs text-gray-600 uppercase tracking-wider">
             <tr>
@@ -862,7 +862,7 @@ function KpiCard({
   accent?: string;
 }) {
   return (
-    <div className="relative rounded-lg border border-gray-200 bg-white p-4">
+    <div className="relative rounded-md border border-gray-200 bg-white p-4">
       <div className="h-7 w-7 rounded-md mb-3" style={{ backgroundColor: accent ? `${accent}15` : '#f3f4f6' }} />
       <div className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</div>
       <div className="mt-1">
@@ -1462,7 +1462,7 @@ function AddDialog({
 
   return (
     <div className="fixed inset-0 z-30 bg-black/40 flex items-center justify-center px-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-md max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="font-serif text-xl text-gray-900 mb-4">Add contact</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="First name *" value={form.first_name}     onChange={(v) => set('first_name', v)} />
@@ -1650,7 +1650,7 @@ function ImportDialog({
 
   return (
     <div className="fixed inset-0 z-30 bg-black/40 flex items-center justify-center px-4">
-      <div className="bg-white rounded-lg max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-md max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="font-serif text-xl text-gray-900 mb-1">Import contacts</h2>
         <p className="text-sm text-gray-600 mb-4">CSV, TSV, or JSON. Headers will be auto-mapped — review and adjust before importing.</p>
 
@@ -1660,7 +1660,7 @@ function ImportDialog({
             onDragEnter={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition ${
+            className={`border-2 border-dashed rounded-md p-8 text-center transition ${
               isDragging ? 'border-gray-900 bg-gray-50' : 'border-gray-300'
             }`}
           >
@@ -1880,7 +1880,7 @@ function ColumnsDropdown({
             <button
               type="button"
               onClick={reset}
-              className="w-full text-left px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 rounded"
+              className="w-full text-left px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 rounded-md"
             >
               Reset to defaults
             </button>
@@ -1963,7 +1963,7 @@ function BulkEditDialog({
 
   return (
     <div className="fixed inset-0 z-30 bg-black/40 flex items-center justify-center px-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-md max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="font-serif text-xl text-gray-900 mb-1">
           Edit {ids.length} contact{ids.length === 1 ? '' : 's'}
         </h2>

@@ -148,14 +148,14 @@ export default function NewsletterSubscribersPage() {
         </button>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded p-4 mb-4 flex items-center gap-3 flex-wrap">
+      <div className="bg-white border border-gray-200 rounded-md p-4 mb-4 flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2 flex-1 min-w-[240px]">
           <input
             type="text"
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search email..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40]"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40]"
           />
           {q && (
             <button
@@ -177,7 +177,7 @@ export default function NewsletterSubscribersPage() {
             setPublication(e.target.value as '' | 'realtyline' | 'newsline');
             setPage(1);
           }}
-          className="px-3 py-2 border border-gray-300 rounded text-sm text-gray-900"
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
         >
           <option value="">All publications</option>
           <option value="realtyline">RealtyLine</option>
@@ -189,7 +189,7 @@ export default function NewsletterSubscribersPage() {
             setStatus(e.target.value as '' | 'active' | 'unsubscribed');
             setPage(1);
           }}
-          className="px-3 py-2 border border-gray-300 rounded text-sm text-gray-900"
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
         >
           <option value="">All statuses</option>
           <option value="active">Active</option>
@@ -199,14 +199,14 @@ export default function NewsletterSubscribersPage() {
 
       {loading && <div className="text-sm text-gray-500 py-8">Loading subscribers...</div>}
       {error && (
-        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-4">
+        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-4">
           Error: {error}
         </div>
       )}
 
       {!loading && !error && data && (
         <>
-          <div className="bg-white border border-gray-200 rounded overflow-x-auto">
+          <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -233,7 +233,7 @@ export default function NewsletterSubscribersPage() {
                     <td className="px-4 py-3">
                       <span
                         className={
-                          'inline-block px-2 py-0.5 text-xs rounded ' +
+                          'inline-block px-2 py-0.5 text-xs rounded-md ' +
                           (s.status === 'active'
                             ? 'bg-green-50 text-green-700 border border-green-200'
                             : 'bg-gray-100 text-gray-600 border border-gray-200')
@@ -259,14 +259,14 @@ export default function NewsletterSubscribersPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-700 disabled:opacity-40 hover:bg-gray-50"
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-700 disabled:opacity-40 hover:bg-gray-50"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
                   disabled={page >= data.totalPages}
-                  className="px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-700 disabled:opacity-40 hover:bg-gray-50"
+                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-700 disabled:opacity-40 hover:bg-gray-50"
                 >
                   Next
                 </button>

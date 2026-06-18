@@ -264,7 +264,7 @@ export default function BuyerClosingCostsClient() {
 
         {/* ── Result card ────────────────────────────────────────── */}
         <div className="lg:col-span-2 print:col-span-5">
-          <div className="lg:sticky lg:top-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none">
+          <div className="lg:sticky lg:top-6 rounded-md border border-gray-200 bg-white p-6 shadow-sm print:border-0 print:shadow-none">
             <p className={EYEBROW}>Estimated Cash to Close</p>
             <p
               className="text-4xl text-gray-900 mb-1"

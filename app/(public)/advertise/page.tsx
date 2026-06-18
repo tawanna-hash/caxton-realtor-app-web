@@ -58,7 +58,7 @@ export default function AdvertisePage() {
         </p>
       </header>
 
-      <section className="mb-12 rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50 to-fuchsia-50 p-6 md:p-7">
+      <section className="mb-12 rounded-md border border-purple-200 bg-gradient-to-br from-purple-50 to-fuchsia-50 p-6 md:p-7">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-purple-700 font-semibold mb-2">
@@ -76,7 +76,7 @@ export default function AdvertisePage() {
           </div>
           <Link
             href="/advertise/portal"
-            className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-800 transition"
+            className="shrink-0 inline-flex items-center gap-2 rounded-md bg-purple-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-purple-800 transition"
           >
             Open self-service portal
             <span aria-hidden>{'\u2192'}</span>

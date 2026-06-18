@@ -206,7 +206,7 @@ export default function MagazineDropZone({
   // ---- Rendered state when files are already staged ----
   if (hasFiles && stagedFilename) {
     return (
-      <div className="border border-emerald-200 bg-emerald-50 rounded-lg p-4 flex items-center justify-between">
+      <div className="border border-emerald-200 bg-emerald-50 rounded-md p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -238,7 +238,7 @@ export default function MagazineDropZone({
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        className={`w-full border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+        className={`w-full border-2 border-dashed rounded-md p-8 text-center transition-colors ${
           isDragging
             ? 'border-blue-500 bg-blue-50'
             : busy

@@ -148,9 +148,9 @@ export function EventForm({
   };
 
   const fieldClass =
-    'w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#021D40]/20 focus:border-[#021D40]';
+    'w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#021D40]/20 focus:border-[#021D40]';
   const labelClass = 'block text-xs font-medium text-gray-700 mb-1';
-  const sectionClass = 'bg-white border border-gray-200 rounded-lg p-6';
+  const sectionClass = 'bg-white border border-gray-200 rounded-md p-6';
   const sectionTitleClass = 'text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide';
 
   return (
@@ -416,7 +416,7 @@ export function EventForm({
         <button
           type="submit"
           disabled={submitting}
-          className="px-5 py-2 bg-[#021D40] text-white text-sm font-medium rounded hover:bg-[#021D40] transition-colors disabled:opacity-50"
+          className="px-5 py-2 bg-[#021D40] text-white text-sm font-medium rounded-md hover:bg-[#021D40] transition-colors disabled:opacity-50"
         >
           {submitting ? 'Saving...' : mode === 'create' ? 'Create Event' : 'Save Changes'}
         </button>

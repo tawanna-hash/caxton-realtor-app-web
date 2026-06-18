@@ -391,7 +391,7 @@ export default function AdminAnalyticsPage() {
 
         {/* Data freshness banner */}
         {report && !error ? (
-          <div className="rounded-lg px-4 py-2.5 flex items-center gap-3 text-sm border border-emerald-300 bg-emerald-50 text-emerald-900">
+          <div className="rounded-md px-4 py-2.5 flex items-center gap-3 text-sm border border-emerald-300 bg-emerald-50 text-emerald-900">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <polyline points="20 6 9 17 4 12" />
             </svg>
@@ -403,7 +403,7 @@ export default function AdminAnalyticsPage() {
         ) : null}
 
         {error ? (
-          <div className="rounded-lg px-4 py-2.5 flex items-start gap-3 text-sm border border-red-400 bg-red-50 text-red-900">
+          <div className="rounded-md px-4 py-2.5 flex items-start gap-3 text-sm border border-red-400 bg-red-50 text-red-900">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 mt-0.5">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
@@ -416,7 +416,7 @@ export default function AdminAnalyticsPage() {
         ) : null}
 
         {report && report.warnings.length > 0 ? (
-          <div className="rounded-lg px-4 py-2.5 flex items-start gap-3 text-sm border border-amber-300 bg-amber-50 text-amber-900">
+          <div className="rounded-md px-4 py-2.5 flex items-start gap-3 text-sm border border-amber-300 bg-amber-50 text-amber-900">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 mt-0.5">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
               <line x1="12" y1="9" x2="12" y2="13" />
@@ -502,7 +502,7 @@ export default function AdminAnalyticsPage() {
                 type="button"
                 onClick={() => setActiveKpi(key)}
                 disabled={!item}
-                className={`text-left rounded-xl border p-4 transition cursor-pointer bg-white disabled:cursor-default disabled:opacity-60 ${
+                className={`text-left rounded-md border p-4 transition cursor-pointer bg-white disabled:cursor-default disabled:opacity-60 ${
                   isActive
                     ? 'border-blue-500 ring-1 ring-blue-500 shadow-sm'
                     : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
@@ -686,7 +686,7 @@ export default function AdminAnalyticsPage() {
       </main>
 
       <aside className="min-w-0">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 flex flex-col xl:sticky xl:top-6 shadow-sm">
+        <div className="rounded-md border border-gray-200 bg-white p-5 flex flex-col xl:sticky xl:top-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
             <div>
               <h2 className="text-xs font-bold uppercase tracking-wider text-orange-600">Report compiler</h2>
@@ -707,7 +707,7 @@ export default function AdminAnalyticsPage() {
           <textarea
             readOnly
             value={promptText}
-            className="w-full bg-gray-50 text-gray-700 border border-gray-200 rounded-lg p-3 text-[11px] font-mono resize-none outline-none focus:border-blue-400 h-[560px] leading-relaxed select-all"
+            className="w-full bg-gray-50 text-gray-700 border border-gray-200 rounded-md p-3 text-[11px] font-mono resize-none outline-none focus:border-blue-400 h-[560px] leading-relaxed select-all"
           />
           <p className="text-[10px] text-gray-400 mt-3">
             Every clickable element + filter on this page updates this prompt with real PostHog data.
@@ -733,13 +733,13 @@ interface CardProps {
 
 function Card({ title, subtitle, hint, titleBadge, headerRight, children }: CardProps) {
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <section className="rounded-md border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-3">
         <div>
           <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 flex-wrap">
             {title}
             {titleBadge ? (
-              <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase rounded bg-amber-100 text-amber-800">
+              <span className="px-1.5 py-0.5 text-[9px] font-mono uppercase rounded-md bg-amber-100 text-amber-800">
                 {titleBadge}
               </span>
             ) : null}
@@ -762,10 +762,10 @@ function Card({ title, subtitle, hint, titleBadge, headerRight, children }: Card
 function KpiSkeleton() {
   return (
     <div className="animate-pulse">
-      <div className="h-2.5 bg-gray-200 rounded w-20" />
-      <div className="h-7 bg-gray-200 rounded w-16 mt-2" />
-      <div className="h-2 bg-gray-200 rounded w-12 mt-2" />
-      <div className="h-7 bg-gray-100 rounded mt-3" />
+      <div className="h-2.5 bg-gray-200 rounded-md w-20" />
+      <div className="h-7 bg-gray-200 rounded-md w-16 mt-2" />
+      <div className="h-2 bg-gray-200 rounded-md w-12 mt-2" />
+      <div className="h-7 bg-gray-100 rounded-md mt-3" />
     </div>
   );
 }
@@ -778,7 +778,7 @@ function TableSkeleton({ rows, cols }: { rows: number; cols: number }) {
           {Array.from({ length: cols }).map((_, j) => (
             <div
               key={j}
-              className={`h-3 bg-gray-200 rounded ${j === 0 ? 'flex-1' : 'w-12'}`}
+              className={`h-3 bg-gray-200 rounded-md ${j === 0 ? 'flex-1' : 'w-12'}`}
             />
           ))}
         </div>

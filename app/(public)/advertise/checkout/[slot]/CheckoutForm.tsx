@@ -314,7 +314,7 @@ export default function CheckoutForm({
 
   if (success) {
     return (
-      <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-6 sm:p-8 text-center">
+      <div className="rounded-md bg-emerald-50 border border-emerald-200 p-6 sm:p-8 text-center">
         <div className="text-emerald-700 text-4xl mb-3">✓</div>
         <h2 className="text-2xl font-bold text-emerald-900 mb-2">You&apos;re booked.</h2>
         <p className="text-emerald-800 mb-4">
@@ -331,7 +331,7 @@ export default function CheckoutForm({
   return (
     <div className="space-y-6">
       {/* ── Pricing card ─────────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+      <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           1 · Choose your run
         </h2>
@@ -380,7 +380,7 @@ export default function CheckoutForm({
                     aria-disabled={!allowed}
                     aria-pressed={active}
                     title={title}
-                    className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${
+                    className={`px-4 py-2 rounded-md border text-sm font-medium transition ${
                       active
                         ? 'bg-gray-900 text-white border-gray-900'
                         : allowed
@@ -390,7 +390,7 @@ export default function CheckoutForm({
                   >
                     {label}
                     {isComingSoon ? (
-                      <span className="ml-1.5 text-[10px] uppercase tracking-wider font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                      <span className="ml-1.5 text-[10px] uppercase tracking-wider font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-md">
                         Coming soon
                       </span>
                     ) : taken ? (
@@ -425,7 +425,7 @@ export default function CheckoutForm({
                 <button
                   type="button"
                   onClick={() => setBillingPeriod('weekly')}
-                  className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium transition ${
+                  className={`flex-1 px-4 py-2 rounded-md border text-sm font-medium transition ${
                     billingPeriod === 'weekly'
                       ? 'bg-gray-900 text-white border-gray-900'
                       : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -437,7 +437,7 @@ export default function CheckoutForm({
                   <button
                     type="button"
                     onClick={() => setBillingPeriod('monthly')}
-                    className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium transition ${
+                    className={`flex-1 px-4 py-2 rounded-md border text-sm font-medium transition ${
                       billingPeriod === 'monthly'
                         ? 'bg-gray-900 text-white border-gray-900'
                         : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -468,11 +468,11 @@ export default function CheckoutForm({
                 else if (billingPeriod === 'monthly') setMonths(v);
                 else setWeeks(v);
               }}
-              className="w-32 rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
+              className="w-32 rounded-md border border-gray-300 px-3 py-2 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
             />
           </Field>
 
-          <div className="rounded-lg bg-gray-50 border border-gray-200 p-4">
+          <div className="rounded-md bg-gray-50 border border-gray-200 p-4">
             <div className="flex justify-between text-sm text-gray-600 mb-1">
               <span>Subtotal</span>
               <span>{formatUSD(previewBaseCents)}</span>
@@ -490,7 +490,7 @@ export default function CheckoutForm({
       </div>
 
       {/* ── Contact ─────────────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+      <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           2 · Your info
         </h2>
@@ -511,7 +511,7 @@ export default function CheckoutForm({
       </div>
 
       {/* ── Dates ───────────────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+      <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           3 · Run dates
         </h2>
@@ -537,7 +537,7 @@ export default function CheckoutForm({
       </div>
 
       {/* ── Creative ────────────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+      <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           4 · Creative
         </h2>
@@ -546,9 +546,9 @@ export default function CheckoutForm({
         </p>
 
         {blobUrl ? (
-          <div className="rounded-lg border border-gray-200 p-3 mb-4 flex items-center gap-4">
+          <div className="rounded-md border border-gray-200 p-3 mb-4 flex items-center gap-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={blobUrl} alt="creative preview" className="max-h-24 rounded border border-gray-200" />
+            <img src={blobUrl} alt="creative preview" className="max-h-24 rounded-md border border-gray-200" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">{file?.name ?? 'creative.png'}</p>
               <button
@@ -564,7 +564,7 @@ export default function CheckoutForm({
             </div>
           </div>
         ) : (
-          <label className="block rounded-lg border-2 border-dashed border-gray-300 hover:border-gray-500 transition cursor-pointer p-6 text-center mb-4">
+          <label className="block rounded-md border-2 border-dashed border-gray-300 hover:border-gray-500 transition cursor-pointer p-6 text-center mb-4">
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp,image/gif"
@@ -595,11 +595,11 @@ export default function CheckoutForm({
       </div>
 
       {/* ── Terms ───────────────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+      <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           5 · Agreement terms
         </h2>
-        <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 text-xs text-gray-700 leading-relaxed max-h-44 overflow-y-auto mb-4">
+        <div className="rounded-md bg-gray-50 border border-gray-200 p-4 text-xs text-gray-700 leading-relaxed max-h-44 overflow-y-auto mb-4">
           <p className="mb-2"><strong>Insertion Order — Self-Serve.</strong> By checking the box below and authorizing payment, you (&quot;Advertiser&quot;) agree to the following:</p>
           <p className="mb-2">1. <strong>Creative Approval.</strong> RealtyLine Austin & Newsline San Antonio (&quot;Publisher&quot;) reserves the right to reject any creative that does not meet spec, contains misleading claims, or conflicts with editorial standards. If rejected, Publisher will issue a full refund within 5 business days.</p>
           <p className="mb-2">2. <strong>Placement & Delivery.</strong> The campaign runs from the start date through the end date selected, displayed in the placement and publication you selected. Impressions are best-effort against committed inventory; Publisher does not guarantee CTR or conversion outcomes.</p>
@@ -612,7 +612,7 @@ export default function CheckoutForm({
             type="checkbox"
             checked={termsAccepted}
             onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="mt-1 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+            className="mt-1 h-4 w-4 rounded-md border-gray-300 text-gray-900 focus:ring-gray-900"
           />
           <span className="text-sm text-gray-700">
             I have read and accept the terms above. I&apos;m authorized to book ads on behalf of {company || 'my company'}.
@@ -621,7 +621,7 @@ export default function CheckoutForm({
       </div>
 
       {/* ── Payment ─────────────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
+      <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 shadow-sm">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
           6 · Payment
         </h2>
@@ -635,7 +635,7 @@ export default function CheckoutForm({
               type="button"
               disabled={!ready}
               onClick={prepareIntent}
-              className="w-full px-6 py-3 rounded-lg bg-gray-900 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition"
+              className="w-full px-6 py-3 rounded-md bg-gray-900 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition"
             >
               {ready ? `Continue to card → ${formatUSD(previewTotal)}` : 'Complete steps above to continue'}
             </button>
@@ -668,7 +668,7 @@ export default function CheckoutForm({
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-800">
+        <div className="rounded-md bg-red-50 border border-red-200 p-4 text-sm text-red-800">
           {error}
         </div>
       )}
@@ -705,7 +705,7 @@ function Input({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       min={min}
-      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm"
+      className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm"
     />
   );
 }
@@ -766,7 +766,7 @@ function PayBlock({
         type="button"
         disabled={paying || !stripe || !elements}
         onClick={pay}
-        className="w-full px-6 py-3 rounded-lg bg-emerald-600 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-700 transition"
+        className="w-full px-6 py-3 rounded-md bg-emerald-600 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-700 transition"
       >
         {paying ? 'Processing…' : `Pay ${(intent.amountCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`}
       </button>

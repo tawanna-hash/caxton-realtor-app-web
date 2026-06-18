@@ -112,7 +112,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
           </p>
         </div>
 
-        <div className="rounded-xl bg-white border border-gray-200 p-5 sm:p-6 mb-6 shadow-sm">
+        <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 mb-6 shadow-sm">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
             Placement summary
           </h2>

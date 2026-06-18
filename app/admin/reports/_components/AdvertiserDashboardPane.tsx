@@ -85,7 +85,7 @@ function rangeLabel(preset: RangePreset): string {
 
 function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-white border border-gray-200 rounded p-4">
+    <div className="bg-white border border-gray-200 rounded-md p-4">
       <div className="text-xs uppercase tracking-wider text-gray-500 mb-1">{label}</div>
       <div className="text-2xl font-semibold text-gray-900">{value}</div>
       {sub && <div className="text-xs text-gray-500 mt-1">{sub}</div>}
@@ -141,7 +141,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
   const gradientId = `clicksGradient-pane-${advertiser.id}`;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+    <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
       <div className="px-5 py-4 border-b border-gray-200 flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <p className="text-[10px] uppercase tracking-wider text-gray-500">
@@ -161,7 +161,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                 type="button"
                 onClick={() => setPreset(p)}
                 className={
-                  'px-3 py-1.5 text-xs font-medium rounded ' +
+                  'px-3 py-1.5 text-xs font-medium rounded-md ' +
                   (preset === p
                     ? 'bg-[#021D40] text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50')
@@ -180,7 +180,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
             type="button"
             onClick={() => setDrawerOpen(true)}
             title="Edit the report's date range and personal message"
-            className="px-3 py-1.5 text-xs font-medium rounded border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
+            className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
           >
             Edit
           </button>
@@ -191,7 +191,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
             title={advertiser.contact_email
               ? 'Preview and send the performance report email'
               : 'Add a contact email on the Advertisers page to send a report'}
-            className="px-3 py-1.5 text-xs font-medium rounded bg-[#021D40] text-white hover:bg-[#03285a] disabled:opacity-40"
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#021D40] text-white hover:bg-[#03285a] disabled:opacity-40"
           >
             Send report email
           </button>
@@ -200,7 +200,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
 
       <div className="p-5">
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded">
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded-md">
             {error}
           </div>
         )}
@@ -224,7 +224,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
               />
             </div>
 
-            <div className="bg-white border border-gray-200 rounded p-4 mb-5">
+            <div className="bg-white border border-gray-200 rounded-md p-4 mb-5">
               <h3 className="text-sm font-medium text-gray-700 mb-3">Clicks per day</h3>
               <div className="w-full h-56">
                 <ResponsiveContainer width="100%" height="100%">
@@ -270,7 +270,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
               </div>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded overflow-hidden">
+            <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-200">
                 <h3 className="text-sm font-medium text-gray-700">Hotspot breakdown</h3>
               </div>
