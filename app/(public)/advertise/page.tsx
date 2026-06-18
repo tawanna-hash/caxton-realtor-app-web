@@ -4,9 +4,6 @@ import {
   APP_AD_SLOTS,
   PACKAGES,
   EBLASTS,
-  RATE_MATRIX,
-  FREQ_LABELS,
-  FREQ_TERMS,
   PUB_SUBSCRIBERS,
   AUDIENCE_STATS,
 } from '@/lib/media-kit';
@@ -186,42 +183,6 @@ export default function AdvertisePage() {
               mailed each month to subscribers.
             </p>
 
-            {/* Print rate matrix — live from media kit */}
-            <div className="overflow-x-auto -mx-2 mb-4">
-              <table className="min-w-full text-xs">
-                <thead>
-                  <tr className="text-left text-gray-500 uppercase tracking-wider">
-                    <th className="px-2 py-2 font-semibold">Size</th>
-                    {FREQ_LABELS.map((f, i) => (
-                      <th key={f} className="px-2 py-2 font-semibold">
-                        {f}
-                        <span className="block text-[10px] text-gray-400 font-normal normal-case tracking-normal">
-                          {FREQ_TERMS[i]}
-                        </span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {Object.entries(RATE_MATRIX).map(([size, prices]) => (
-                    <tr key={size}>
-                      <td className="px-2 py-2 font-medium text-gray-900">
-                        {size}
-                      </td>
-                      {prices.map((p, i) => (
-                        <td
-                          key={i}
-                          className="px-2 py-2 text-gray-900 tabular-nums"
-                        >
-                          ${p}
-                          <span className="text-gray-400">/mo</span>
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="border border-gray-100 px-4 py-3">
