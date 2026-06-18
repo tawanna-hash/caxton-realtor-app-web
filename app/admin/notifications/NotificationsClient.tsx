@@ -10,6 +10,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import NewNotificationModal, { type EditableNotification } from '@/components/admin/NewNotificationModal';
+import SubscribersSection from './SubscribersSection';
 
 type Status = 'draft' | 'scheduled' | 'sending' | 'sent' | 'cancelled';
 
@@ -225,6 +226,8 @@ export default function NotificationsClient({ initialNotifications, initialStats
           </table>
         )}
       </section>
+
+      <SubscribersSection />
 
       {open && (
         <NewNotificationModal
