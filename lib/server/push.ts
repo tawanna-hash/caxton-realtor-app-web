@@ -132,58 +132,84 @@ export async function broadcastPush(
     title: payload.title,
   });
 
-  await Promise.all(
-    subs.map(async (sub) => {
-      const result = await sendPush(sub, { ...payload, notificationId });
-      console.log('[broadcastPush] sendPush result', {
-        notificationId,
-        subscriptionId: sub.id,
-        endpoint: sub.endpoint.slice(0, 60),
-        ok: result.ok,
-        gone: result.gone,
-        error: result.error,
-      });
+  // Process in chunks to bound concurrency. A single chunk opens at most
+  // CHUNK_SIZE concurrent HTTPS connections to the push service and writes
+  // one batched INSERT per chunk to notification_deliveries.
+  const CHUNK_SIZE = 25;
+  type DeliveryRow = { realtor_id: string; delivered_at: string | null; failure_reason: string | null };
+
+  for (let i = 0; i < subs.length; i += CHUNK_SIZE) {
+    const chunk = subs.slice(i, i + CHUNK_SIZE);
+    const deliveries: DeliveryRow[] = [];
+    const goneEndpoints: string[] = [];
+
+    const results = await Promise.all(
+      chunk.map((sub) => sendPush(sub, { ...payload, notificationId })),
+    );
+
+    for (let j = 0; j < chunk.length; j++) {
+      const sub = chunk[j];
+      const result = results[j];
       if (result.ok) {
         sent += 1;
         if (sub.realtor_id) {
-          try {
-            await sql`
-              INSERT INTO notification_deliveries (notification_id, realtor_id, channel, delivered_at)
-              VALUES (${notificationId}::uuid, ${sub.realtor_id}::uuid, 'web_push', NOW())
-            `;
-          } catch (err) {
-            // Non-fatal — delivery still happened, just no audit row.
-            console.warn('[broadcastPush] delivery insert failed:', err);
-          }
+          deliveries.push({ realtor_id: sub.realtor_id, delivered_at: new Date().toISOString(), failure_reason: null });
         }
       } else if (result.gone) {
         revoked += 1;
-        await markSubscriptionGone(sub.endpoint);
+        goneEndpoints.push(sub.endpoint);
         if (sub.realtor_id) {
-          try {
-            await sql`
-              INSERT INTO notification_deliveries (notification_id, realtor_id, channel, failure_reason)
-              VALUES (${notificationId}::uuid, ${sub.realtor_id}::uuid, 'web_push', ${result.error ?? 'gone'})
-            `;
-          } catch (err) {
-            // ignore
-          }
+          deliveries.push({ realtor_id: sub.realtor_id, delivered_at: null, failure_reason: result.error ?? 'gone' });
         }
       } else {
         failed += 1;
         if (sub.realtor_id) {
-          try {
-            await sql`
-              INSERT INTO notification_deliveries (notification_id, realtor_id, channel, failure_reason)
-              VALUES (${notificationId}::uuid, ${sub.realtor_id}::uuid, 'web_push', ${result.error ?? 'unknown'})
-            `;
-          } catch (err) {
-            // ignore
-          }
+          deliveries.push({ realtor_id: sub.realtor_id, delivered_at: null, failure_reason: result.error ?? 'unknown' });
         }
       }
-    }),
-  );
+    }
+
+    // Batched delivery insert: one INSERT per chunk instead of one per sub.
+    if (deliveries.length > 0) {
+      try {
+        const realtorIds = deliveries.map((d) => d.realtor_id);
+        const deliveredAts = deliveries.map((d) => d.delivered_at);
+        const failureReasons = deliveries.map((d) => d.failure_reason);
+        await sql`
+          INSERT INTO notification_deliveries
+            (notification_id, realtor_id, channel, delivered_at, failure_reason)
+          SELECT
+            ${notificationId}::uuid,
+            r::uuid,
+            'web_push',
+            d,
+            f
+          FROM UNNEST(
+            ${realtorIds}::uuid[],
+            ${deliveredAts}::timestamptz[],
+            ${failureReasons}::text[]
+          ) AS t(r, d, f)
+        `;
+      } catch (err) {
+        // Non-fatal — pushes still went out, just no audit rows for this chunk.
+        console.warn('[broadcastPush] batched delivery insert failed:', err);
+      }
+    }
+
+    // Revoke dead endpoints in one statement per chunk.
+    if (goneEndpoints.length > 0) {
+      try {
+        await sql`
+          UPDATE push_subscriptions
+             SET revoked_at = NOW()
+           WHERE endpoint = ANY(${goneEndpoints})
+             AND revoked_at IS NULL
+        `;
+      } catch (err) {
+        console.warn('[broadcastPush] mark-gone batch failed:', err);
+      }
+    }
+  }
 
   console.log('[broadcastPush] done', { notificationId, sent, failed, revoked });
   return { sent, failed, revoked };

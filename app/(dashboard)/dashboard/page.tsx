@@ -201,7 +201,7 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
     setStatus('submitting');
     setError(null);
     try {
-      const res = await fetch(`${API}/api/market-interest`, {
+      const res = await fetch(`${API}/market-interest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ market: market.id, email: email.trim(), name: name.trim(), website }),
