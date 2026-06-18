@@ -173,11 +173,6 @@ export default function AdvertisePage() {
         >
           Four markets. One integrated buy.
         </h2>
-        <p className="text-base text-gray-700 leading-relaxed font-light mb-8 max-w-3xl">
-          Mix and match across all four {'\u2014'} or start with the market
-          that fits your audience and add the rest later. Every market is
-          priced independently in the media kit.
-        </p>
 
         <div className="space-y-6">
           {/* PRINT */}
