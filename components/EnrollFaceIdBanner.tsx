@@ -32,9 +32,9 @@ export default function EnrollFaceIdBanner() {
     if (typeof window === 'undefined') return;
     if (typeof window.PublicKeyCredential !== 'function') return;
 
-    const offered = sessionStorage.getItem(OFFER_KEY) === '1';
-    if (!offered) return;
-
+    // Show the banner whenever the user has no passkey yet, regardless of
+    // whether they signed in via password, magic link, or fresh signup.
+    // The 14-day dismiss cooldown still applies.
     try {
       const dismissedAt = Number(
         localStorage.getItem(DISMISS_KEY) || '0',
