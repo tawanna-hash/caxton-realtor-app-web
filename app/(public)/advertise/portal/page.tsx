@@ -71,11 +71,11 @@ export default function SelfServicePortalPage() {
   });
 
   return (
-    <main className="bg-gradient-to-b from-gray-50 to-white">
-      <div className="max-w-5xl mx-auto px-6 py-10 md:py-16">
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
         {/* Header */}
         <header className="mb-8 text-center">
-          <p className="text-xs uppercase tracking-[0.25em] text-indigo-700 font-semibold mb-3">
+          <p className="text-xs uppercase tracking-[0.2em] text-indigo-700 font-semibold mb-3">
             Two ways to work with us
           </p>
           <PageTitle>Choose your path</PageTitle>

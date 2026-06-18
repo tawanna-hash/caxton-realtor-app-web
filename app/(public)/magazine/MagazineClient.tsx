@@ -108,7 +108,7 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </Link>
           ) : null}
-          <p className="text-sm uppercase tracking-[0.25em] text-gray-900 font-medium ml-2">Magazine</p>
+          <p className="text-sm uppercase tracking-[0.2em] text-gray-900 font-medium ml-2">Magazine</p>
         </div>
         <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
       </div>

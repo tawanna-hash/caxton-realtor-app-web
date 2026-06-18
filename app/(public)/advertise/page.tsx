@@ -36,12 +36,13 @@ const TOTAL_NETWORK_SUBS = PUB_SUBSCRIBERS.both;
 
 export default function AdvertisePage() {
   return (
-    <main className="max-w-3xl mx-auto px-6 py-12 md:py-16">
-      <header className="mb-10">
+    <main className="min-h-screen bg-white">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+      <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Advertise
         </p>
-        <p className="text-sm uppercase tracking-[0.18em] text-gray-700 font-semibold mb-4">
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-700 font-semibold mb-4">
           Print {'\u00b7'} Digital {'\u00b7'} Social {'\u00b7'} Mobile.{' '}
           <span className="text-gray-500 font-normal normal-case tracking-normal">
             One powerful marketing platform.
@@ -50,7 +51,7 @@ export default function AdvertisePage() {
         <PageTitle>
           Connect with our audience wherever they are, every day.
         </PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
+        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           Whether they{'\u2019'}re reading our print edition, browsing our
           digital replica, engaging on social media, or accessing content
           through our mobile web app, your brand stays visible across every
@@ -600,6 +601,7 @@ export default function AdvertisePage() {
           we&apos;ll route you to the right team.
         </p>
       </footer>
+        </div>
     </main>
   );
 }

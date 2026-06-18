@@ -280,7 +280,7 @@ export default function BuilderPageClient({ builderName, initialRows }: Props) {
     <div className="min-h-screen bg-white">
       {/* Builder header */}
       <div className="bg-white border-b border-gray-200 px-4 py-6">
-        <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium">
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-400 font-medium">
           {PUB_LABEL[pub]} • Advertiser
         </p>
         <PageTitle size="md" className="mt-1">

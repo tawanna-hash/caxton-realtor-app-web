@@ -14,6 +14,7 @@
 // renders the 404 page so unpublished drafts don't leak.
 
 import Link from 'next/link';
+import PageTitle from '@/components/ui/PageTitle';
 import { notFound } from 'next/navigation';
 import { getBuilderInventoryById, type BuilderInventoryRow } from '@/lib/builder-inventory';
 import { builderNameToSlug } from '@/lib/builder-slug';
@@ -202,9 +203,7 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
               )}
             </div>
 
-            <h1 className="text-2xl font-semibold text-gray-900 leading-snug">
-              {row.title}
-            </h1>
+            <PageTitle size="md">{row.title}</PageTitle>
 
             {developerLine && (
               <p className="mt-2 text-sm text-gray-600">

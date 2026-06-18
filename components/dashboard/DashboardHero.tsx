@@ -45,7 +45,7 @@ export function DashboardHero({ pub, eyebrow, headline }: Props) {
       {(eyebrow || headline) && (
         <div className="absolute inset-0 flex flex-col justify-start p-6 sm:p-8 pointer-events-none">
           {eyebrow && (
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/70">
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/70">
               {eyebrow}
             </p>
           )}

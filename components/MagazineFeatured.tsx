@@ -107,7 +107,7 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
 
   return (
     <section className="bg-white px-4 md:px-8 py-12 border-t border-gray-100">
-      <p className="text-xs uppercase tracking-[0.25em] font-semibold mb-6" style={{ color: brandColor }}>
+      <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-6" style={{ color: brandColor }}>
         Current Issue
       </p>
 

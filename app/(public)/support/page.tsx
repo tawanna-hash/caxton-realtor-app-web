@@ -10,13 +10,14 @@ const SUPPORT_EMAIL = 'tawanna@myrealtyline.com';
 
 export default function SupportPage() {
   return (
-    <main className="max-w-3xl mx-auto px-6 py-12 md:py-16">
-      <header className="mb-10">
+    <main className="min-h-screen bg-white">
+      <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+      <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Support
         </p>
         <PageTitle>How can we help?</PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl">
+        <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           We&apos;re a small team and we read every message. Reach out and
           you&apos;ll hear back within one business day.
         </p>
@@ -164,6 +165,7 @@ export default function SupportPage() {
       <p className="text-sm text-gray-500 font-light mt-12 pt-6 border-t border-gray-100">
         Realty News Now is published by Caxton Publications, Inc.
       </p>
+        </div>
     </main>
   );
 }

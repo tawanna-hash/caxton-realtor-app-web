@@ -280,7 +280,7 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
   return (
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
       <div className="w-full max-w-md px-8">
-        <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium mb-2 text-center">Realty News Now</p>
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-400 font-medium mb-2 text-center">Realty News Now</p>
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-3">Select a Publication</h2>
         <p className="text-lg text-gray-400 font-light text-center mb-8">Welcome, we are happy you are here!</p>
         <div className="relative">
@@ -597,7 +597,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>
               <div className="text-center mt-2 mb-6">
-                <span className="inline-block px-4 py-2 text-white text-xs uppercase tracking-[0.25em] font-medium" style={{ backgroundColor: info.color }}>{info.name}</span>
+                <span className="inline-block px-4 py-2 text-white text-xs uppercase tracking-[0.2em] font-medium" style={{ backgroundColor: info.color }}>{info.name}</span>
               </div>
               <p className="text-center text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Subscribe and you could</p>
               <h2 className="text-center text-4xl font-bold uppercase tracking-tight leading-none mb-5" style={{ color: info.color }}>Win Free Fuel</h2>
@@ -615,7 +615,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         )}
         <div className="min-h-full flex flex-col items-center py-10">
           <div className="w-full max-w-md px-8">
-            <p className="text-sm uppercase tracking-[0.25em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
+            <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
             <h2 className="text-2xl text-gray-900 font-semibold text-center mb-8">Create Your Account</h2>
 
             {/* Step indicators */}
@@ -769,7 +769,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
     return (
       <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
         <div className="w-full max-w-md px-8">
-          <p className="text-sm uppercase tracking-[0.25em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
+          <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
           <h2 className="text-2xl text-gray-900 font-semibold text-center mb-6">Welcome Back</h2>
           {error && <p className="text-base text-red-500 text-center mb-4 font-light">{error}</p>}
           {passkeySupported && (
@@ -813,7 +813,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   return (
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
       <div className="w-full max-w-md px-8">
-        <p className="text-sm uppercase tracking-[0.25em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
+        <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Sign In to Continue</h2>
         <button onClick={() => setMode('signup')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3" style={{ backgroundColor: info.color }}>Create Your Account</button>
         <button onClick={() => setMode('login')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-6 rounded-md">I Already Have an Account</button>
@@ -1334,7 +1334,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
       {tab === 'e' && !showPreLaunch && (
         <div>
           <div className="px-4 py-4 border-b border-gray-200">
-            <p className="text-sm uppercase tracking-[0.25em] text-gray-400 font-medium">Upcoming in {info.city}</p>
+            <p className="text-sm uppercase tracking-[0.2em] text-gray-400 font-medium">Upcoming in {info.city}</p>
           </div>
           {EVTS.map((ev) => {
             const mo = ev.date.split(' ')[0];
@@ -1836,7 +1836,7 @@ function ReadNext({ allArticles, currentId, onSelect, pubColor }: { allArticles:
   if (others.length === 0) return null;
   return (
     <div className="mt-12 pt-8 border-t border-gray-200">
-      <p className="text-xs uppercase tracking-[0.25em] font-semibold text-gray-500 mb-5">Read Next</p>
+      <p className="text-xs uppercase tracking-[0.2em] font-semibold text-gray-500 mb-5">Read Next</p>
       <ul className="space-y-4">
         {others.map((a) => (
           <li key={a.id}>

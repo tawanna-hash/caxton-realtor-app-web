@@ -533,7 +533,7 @@ export default function SaborMembersClient() {
       {syncStatus && (
         <div className="rounded-lg border border-gray-200 bg-white p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">Last sync</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Last sync</p>
             <p className="font-serif text-lg text-gray-900 mt-1">
               {formatRelative(syncStatus.meta.last_run_at, mountedAtMs)}
             </p>
@@ -542,7 +542,7 @@ export default function SaborMembersClient() {
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">Last batch</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Last batch</p>
             <p className="font-serif text-lg text-gray-900 mt-1">
               {syncStatus.meta.last_total !== null
                 ? `${syncStatus.meta.last_inserted ?? 0} new · ${syncStatus.meta.last_updated ?? 0} updated`
@@ -555,14 +555,14 @@ export default function SaborMembersClient() {
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">Source</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Source</p>
             <p className="font-serif text-lg mt-1" style={{ color: '#2563eb' }}>
               Public
             </p>
             <p className="text-xs text-gray-500 mt-0.5">realtytexas.com · no auth</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">Dispatch</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Dispatch</p>
             <p
               className="font-serif text-lg mt-1"
               style={{ color: syncStatus.gh_dispatch_configured ? '#2563eb' : '#b91c1c' }}
