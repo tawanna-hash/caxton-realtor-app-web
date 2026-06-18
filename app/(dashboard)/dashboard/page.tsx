@@ -4,7 +4,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { trackEvent, identifyUser } from "../../posthog-provider";
-import { useRouter } from 'next/navigation';
 import { useSwipeBack } from '@/hooks/use-swipe-back';
 import ProfilePanel from '@/components/ProfilePanel';
 import {
@@ -1963,7 +1962,7 @@ function TagsRow({ article, pubColor }: { article: any; pubColor: string }) {
 // Sticky bottom action bar — Save / Share / Copy
 // ─────────────────────────────────────────────────────────────────────────
 
-function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onMagazine, onLatest }: { article: any; pubColor: string; saved: boolean; onBack: () => void; onSaveToggle: () => void; onShare: () => void; onCopy: () => void; onMagazine?: () => void; onLatest?: () => void }) {
+function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onLatest }: { article: any; pubColor: string; saved: boolean; onBack: () => void; onSaveToggle: () => void; onShare: () => void; onCopy: () => void; onLatest?: () => void }) {
   // BUG-04: AdPopup (z-50) sits at bottom-20 right-4 and was visually
   // covering the Latest/Share pills, so taps on those buttons hit the ad
   // instead. Bump this bar above the popup (z-60) so navigation always
@@ -1988,9 +1987,6 @@ function ArticleActionBar({ saved, onBack, onSaveToggle, onShare, onMagazine, on
         </ActionPillButton>
         <ActionPillButton onClick={onSaveToggle} label={saved ? 'Saved' : 'Save'} active={saved}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-        </ActionPillButton>
-        <ActionPillButton onClick={onMagazine} label="Magazine">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
         </ActionPillButton>
         <ActionPillButton onClick={onLatest} label="Latest">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8M10 10h8"/></svg>
@@ -2021,7 +2017,6 @@ function ActionPillButton({ children, label, onClick, active }: { children: Reac
 // ─────────────────────────────────────────────────────────────────────────
 
 function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectArticle }: ArticleReaderProps) {
-  const router = useRouter();
   const info = PUB_META[pub as PubKey] || PUB_META.realtyline;
   const [saved, setSaved] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -2324,7 +2319,6 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
         onSaveToggle={onSaveToggle}
         onShare={onShare}
         onCopy={onCopy}
-        onMagazine={() => { trackEvent('article_magazine_pill_clicked', { article_id: article.id, pub }); router.push('/magazine'); }}
         onLatest={() => { trackEvent('article_latest_pill_clicked', { article_id: article.id, pub }); if (onLatest) onLatest(); else onBack(); }}
       />
 
