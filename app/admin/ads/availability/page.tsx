@@ -7,13 +7,14 @@
 import { Suspense } from 'react';
 import AvailabilityCalendar from './_components/AvailabilityCalendar';
 
+import PageTitle from '@/components/ui/PageTitle';
 export const dynamic = 'force-dynamic';
 
 export default function AdminAdsAvailabilityPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Ad availability</h1>
+        <PageTitle size="md">Ad availability</PageTitle>
         <p className="text-sm text-gray-700 mt-1">
           See what is booked at a glance. Switch channels to view digital slot
           windows, print issue months, or email send dates. Click any booking

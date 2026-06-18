@@ -7,6 +7,7 @@ import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import type { PublicationId } from '@/lib/publications';
 
+import PageTitle from '@/components/ui/PageTitle';
 export default function NewGiveawayPage() {
   const router = useRouter();
   const { admin, loading: authLoading } = useAdmin();
@@ -56,7 +57,7 @@ export default function NewGiveawayPage() {
           &larr; Back to giveaways
         </Link>
       </div>
-      <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight mb-8">Create Giveaway</h1>
+      <PageTitle size="md">Create Giveaway</PageTitle>
 
       <form onSubmit={handleSubmit} className="bg-white border border-gray-200 p-6 space-y-5 rounded-md">
         <Field label="Title" required>

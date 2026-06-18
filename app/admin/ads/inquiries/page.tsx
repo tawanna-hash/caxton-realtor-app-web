@@ -13,13 +13,14 @@
 import { Suspense } from 'react';
 import InquiriesInbox from './_components/InquiriesInbox';
 
+import PageTitle from '@/components/ui/PageTitle';
 export const dynamic = 'force-dynamic';
 
 export default function AdminAdsInquiriesPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Ad inquiries</h1>
+        <PageTitle size="md">Ad inquiries</PageTitle>
         <p className="text-sm text-gray-700 mt-1">
           Every Print, Digital, and Email lead from{' '}
           <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">/advertise/inquire</code>.

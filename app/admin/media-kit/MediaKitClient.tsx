@@ -6,6 +6,7 @@
 // rates here always match what the Sign Wizard / agreement PDF use.
 
 import { useState } from 'react';
+import PageTitle from '@/components/ui/PageTitle';
 import {
   PACKAGES,
   EBLASTS,
@@ -423,9 +424,9 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
       {/* Page header */}
       <header>
         <Eyebrow>2026 Media Kit</Eyebrow>
-        <h1 className="text-3xl text-gray-900 mb-2">
+        <PageTitle size="md">
           Media Kit: Packages &amp; Rates
-        </h1>
+        </PageTitle>
         <p className="text-sm text-gray-600 max-w-3xl">
           Reference sheet for sales — packages, ad rates, e-blasts, print deadlines, and
           contract policies pulled from the master 2026 Media Kit. Pricing here always

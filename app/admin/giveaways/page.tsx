@@ -6,6 +6,7 @@ import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import { PUBLICATION_LABELS_WITH_BOTH, type PublicationId } from '@/lib/publications';
 
+import PageTitle from '@/components/ui/PageTitle';
 type Giveaway = {
   id: string;
   title: string;
@@ -58,7 +59,7 @@ export default function GiveawaysPage() {
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">Giveaways</h1>
+          <PageTitle size="md">Giveaways</PageTitle>
           <p className="text-sm text-gray-500 mt-1">
             {items.length} {items.length === 1 ? 'giveaway' : 'giveaways'}
           </p>

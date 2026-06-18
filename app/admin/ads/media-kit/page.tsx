@@ -7,6 +7,7 @@
 // pitch from either format and never go out of sync.
 
 import Link from 'next/link';
+import PageTitle from '@/components/ui/PageTitle';
 import {
   APP_AD_SLOTS,
   PACKAGES,
@@ -539,9 +540,9 @@ export default function MediaKitPage() {
             </span>
             Media Kit
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900 mt-1">
+          <PageTitle size="md">
             2026 Media Kit
-          </h1>
+          </PageTitle>
           <p className="text-sm uppercase tracking-[0.18em] text-gray-700 font-semibold mt-2">
             Print {'\u00b7'} Digital {'\u00b7'} Social {'\u00b7'} Mobile.{' '}
             <span className="text-gray-500 font-normal normal-case tracking-normal">

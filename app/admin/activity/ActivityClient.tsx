@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import PageTitle from '@/components/ui/PageTitle';
 type Event = {
   timestamp: string;
   event: string;
@@ -197,7 +198,7 @@ export default function ActivityClient() {
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin</div>
-        <h1 className="text-3xl text-gray-900 mb-1">Live activity</h1>
+        <PageTitle size="md">Live activity</PageTitle>
         <p className="text-sm text-gray-600 mb-6">Public app events in real time. Polls every 10 seconds. Admin paths excluded.</p>
 
         {/* Rollup tiles */}

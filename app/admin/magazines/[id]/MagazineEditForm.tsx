@@ -8,6 +8,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { upload } from '@vercel/blob/client';
 
+import PageTitle from '@/components/ui/PageTitle';
 type Pub = 'austin' | 'san_antonio';
 
 type Magazine = {
@@ -240,9 +241,9 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
           {savedVisible && <span className="text-xs text-green-600">Saved ✓</span>}
         </div>
 
-        <h1 className="text-2xl font-semibold text-gray-900 mb-4">
+        <PageTitle size="md">
           Edit: {initial.issue_label}
-        </h1>
+        </PageTitle>
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 px-3 py-2 rounded text-sm mb-4">

@@ -8,6 +8,7 @@ import { adminApi } from '@/lib/admin-api';
 import { EventForm, isoToLocalInput, type EventFormData } from '../_components/EventForm';
 import type { PublicationId } from '@/lib/publications';
 
+import PageTitle from '@/components/ui/PageTitle';
 type AdminEvent = {
   id: number;
   externalSource: string;
@@ -117,7 +118,7 @@ export default function EditEventPage() {
           ← Events
         </Link>
         <div className="flex items-baseline gap-3 mt-2">
-          <h1 className="text-2xl font-semibold text-gray-900">Edit Event</h1>
+          <PageTitle size="md">Edit Event</PageTitle>
           <span className="text-xs text-gray-500">
             {isManual ? 'Manual event' : `Scraped from ${event.externalSource}`}
           </span>

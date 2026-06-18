@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAdmin } from '@/hooks/use-admin';
 
+import PageTitle from '@/components/ui/PageTitle';
 type Subscriber = {
   id: number;
   email: string;
@@ -133,7 +134,7 @@ export default function NewsletterSubscribersPage() {
     <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">Newsletter</h1>
+          <PageTitle size="md">Newsletter</PageTitle>
           <p className="text-sm text-gray-500 mt-1">
             {data ? `${data.total.toLocaleString()} weekly-digest signups` : 'Loading...'}
           </p>

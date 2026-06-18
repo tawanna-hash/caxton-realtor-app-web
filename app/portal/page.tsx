@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 
+import PageTitle from '@/components/ui/PageTitle';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
@@ -43,9 +44,9 @@ export default async function PortalHome() {
         <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Welcome back
         </div>
-        <h1 className="font-serif text-3xl text-gray-900">
+        <PageTitle size="lg">
           {user.name}
-        </h1>
+        </PageTitle>
         <p className="text-gray-600 mt-1">
           Session ends {new Date(user.session_expires_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} or when you close your browser.
         </p>

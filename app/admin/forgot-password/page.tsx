@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { getApiBase } from '@/lib/api-base';
 
+import PageTitle from '@/components/ui/PageTitle';
 const API_URL = getApiBase();
 
 export default function AdminForgotPasswordPage() {
@@ -37,7 +38,7 @@ export default function AdminForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">Reset your password</h1>
+          <PageTitle size="md">Reset your password</PageTitle>
           <p className="text-sm text-gray-500 mt-1">Enter your admin email</p>
         </div>
         {submitted ? (

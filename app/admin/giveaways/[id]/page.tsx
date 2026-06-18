@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 
+import PageTitle from '@/components/ui/PageTitle';
 const RULE_ACTIONS = [
   { value: 'signup', label: 'Sign Up' },
   { value: 'follow_facebook', label: 'Follow on Facebook' },
@@ -158,7 +159,7 @@ export default function GiveawayDetailPage() {
 
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">{giveaway.title as string}</h1>
+          <PageTitle size="md">{giveaway.title as string}</PageTitle>
           <div className="text-xs uppercase tracking-wider text-gray-500 mt-1">
             Status: <span className="font-medium text-[#021D40]">{giveaway.status as string}</span>
           </div>

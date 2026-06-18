@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { EventForm, EMPTY_EVENT } from '../_components/EventForm';
 
+import PageTitle from '@/components/ui/PageTitle';
 export default function NewEventPage() {
   const { admin, loading } = useAdmin();
 
@@ -17,7 +18,7 @@ export default function NewEventPage() {
         <Link href="/admin/events" className="text-xs text-gray-500 hover:text-gray-900">
           ← Events
         </Link>
-        <h1 className="text-2xl font-semibold text-gray-900 mt-2">New Event</h1>
+        <PageTitle size="md">New Event</PageTitle>
         <p className="text-sm text-gray-500 mt-1">
           Create a manual event. It will appear in the public calendar with a Manual source tag.
         </p>

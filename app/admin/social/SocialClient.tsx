@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { adminApi } from '@/lib/admin-api';
 
+import PageTitle from '@/components/ui/PageTitle';
 type SocialPub = 'realtyline' | 'newsline' | 'both';
 type UrlKind = 'page' | 'group' | 'reel' | 'unknown';
 
@@ -335,7 +336,7 @@ export default function SocialClient() {
     <div className="p-6">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Social posts</h1>
+          <PageTitle size="md">Social posts</PageTitle>
           <p className="text-sm text-gray-700 mt-1">
             Curate Facebook posts that surface in the RealtyLine + Newsline San Antonio feeds.
             Page posts auto-fetch via the Graph API; Group posts use a one-click

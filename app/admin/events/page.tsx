@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
+import PageTitle from '@/components/ui/PageTitle';
 import {
   PUBLICATION_FILTER_LABELS,
   type PublicationId,
@@ -197,7 +198,7 @@ export default function EventsPage() {
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Events</h1>
+          <PageTitle size="md">Events</PageTitle>
           <p className="text-sm text-gray-500 mt-1">
             Manage scraped + manual events. Manual events appear in the public calendar; scraped events can be hidden.
           </p>

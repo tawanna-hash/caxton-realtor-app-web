@@ -13,6 +13,7 @@ import { adminApi } from '@/lib/admin-api';
 import { PUBLICATION_LABELS, type PublicationId } from '@/lib/publications';
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 
+import PageTitle from '@/components/ui/PageTitle';
 type Subscriber = Record<string, any> & { id: string };
 
 type EditableState = {
@@ -397,9 +398,9 @@ return (
       {!loading && !error && sub && (
         <>
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-[#021D40] tracking-tight">
+            <PageTitle size="md">
               {fmtVal(sub.first_name)} {fmtVal(sub.last_name)}
-            </h1>
+            </PageTitle>
             <p className="text-sm text-gray-500 mt-1">{fmtVal(sub.email)}</p>
             <p className="text-xs text-gray-400 mt-1 font-mono">{sub.id}</p>
             {sub.status === 'inactive' && (

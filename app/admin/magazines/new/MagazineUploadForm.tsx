@@ -28,6 +28,7 @@ import Link from 'next/link';
 import { upload } from '@vercel/blob/client';
 import MagazineDropZone from '@/components/MagazineDropZone';
 
+import PageTitle from '@/components/ui/PageTitle';
 type Pub = 'austin' | 'san_antonio';
 
 type StepStatus = 'pending' | 'running' | 'done' | 'error';
@@ -447,7 +448,7 @@ export default function MagazineUploadForm() {
           <Link href="/admin/magazines" className="text-sm text-blue-600 hover:underline">
             ← Back to magazines
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900 mt-2">New Magazine Issue</h1>
+          <PageTitle size="md">New Magazine Issue</PageTitle>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-md p-6 space-y-5">

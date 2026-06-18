@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import PageTitle from '@/components/ui/PageTitle';
 interface AdvertiserMeta {
   advertiserName: string;
   publication: string | null;
@@ -102,9 +103,9 @@ export default function SubmitEventClient({ token }: { token: string }) {
   if (loadErr) {
     return (
       <div className="rounded-lg bg-white border border-red-200 p-8 shadow-sm">
-        <h1 className="text-xl font-semibold text-gray-900 mb-2">
+        <PageTitle size="lg">
           Submission link not found
-        </h1>
+        </PageTitle>
         <p className="text-sm text-gray-700">
           {loadErr}. If you believe this is an error, please contact your
           Realty News Now representative for a fresh link.
@@ -123,9 +124,9 @@ export default function SubmitEventClient({ token }: { token: string }) {
         <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-700 font-medium mb-2">
           Submitted
         </p>
-        <h1 className="text-2xl font-semibold text-gray-900 mb-3">
+        <PageTitle size="lg">
           Thanks — your event is queued for review
-        </h1>
+        </PageTitle>
         <p className="text-sm text-gray-700 mb-6">
           Our team will review the details and add it to the Realty News Now
           Calendar once approved. Submitting on behalf of{' '}
@@ -146,11 +147,9 @@ export default function SubmitEventClient({ token }: { token: string }) {
       <p className="text-[10px] uppercase tracking-[0.3em] text-gray-500 font-medium mb-2">
         Submit an event
       </p>
-      <h1
-        className="text-2xl sm:text-3xl font-semibold text-gray-900 mb-2 tracking-tight"
-      >
+      <PageTitle size="lg">
         Realty News Now Calendar
-      </h1>
+      </PageTitle>
       <p className="text-sm text-gray-700 mb-6">
         Submitting on behalf of <strong>{meta.advertiserName}</strong>. Fill in
         what you have and we&rsquo;ll take it from here — our team reviews

@@ -14,6 +14,7 @@ import { CatalogList } from '../_components/CatalogList';
 import { CreativesGallery } from '../_components/CreativesGallery';
 import type { AdSpace, AdCreative, AdCampaign } from '../_components/types';
 
+import PageTitle from '@/components/ui/PageTitle';
 export const dynamic = 'force-dynamic';
 
 function AdsPageInner() {
@@ -64,7 +65,7 @@ function AdsPageInner() {
             <span className="mx-2" aria-hidden>{'\u203A'}</span>
             Inventory
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900 mt-1">Inventory</h1>
+          <PageTitle size="md">Inventory</PageTitle>
           <p className="text-sm text-gray-700 mt-1">
             Ad slots across all publications. Manage inventory and creatives.{' '}
             <Link href="/admin/ads/orders" className="text-blue-700 hover:underline">
