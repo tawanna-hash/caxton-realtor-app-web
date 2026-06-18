@@ -1,6 +1,6 @@
 // Service worker for Realty News Now web push notifications.
 // Handles incoming push events, notification clicks, and subscription changes.
-// SW_VERSION: 2026-06-18.2 (icon hardening + push fallback)
+// SW_VERSION: 2026-06-18.3 (passthrough fetch + ios pwa fix)
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -8,6 +8,18 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
+});
+
+// Pass-through fetch handler. Some iOS standalone PWAs hang on launch
+// ("couldn't load") when an active service worker has no fetch listener.
+// We deliberately do NOT cache anything — just forward to the network.
+self.addEventListener('fetch', (event) => {
+  // Only handle navigation and same-origin GETs to avoid surprises.
+  if (event.request.method !== 'GET') return;
+  // Let the browser handle it natively — calling respondWith with a
+  // network fetch is enough to satisfy iOS standalone's expectation
+  // that the SW is alive and serving the start_url.
+  event.respondWith(fetch(event.request).catch(() => Response.error()));
 });
 
 self.addEventListener('push', (event) => {
