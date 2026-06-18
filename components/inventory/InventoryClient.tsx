@@ -11,6 +11,7 @@ import { trackEvent } from '@/app/posthog-provider';
 import PageTitle from '@/components/ui/PageTitle';
 import { AdSlot } from '@/components/ads/AdSlot';
 import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
+import CategoryChipBar from '@/components/happin/CategoryChipBar';
 
 type Props = {
   initialRows: BuilderInventoryRow[];
@@ -276,33 +277,23 @@ export default function InventoryClient({ initialRows, allBuilders }: Props) {
         {/* Featured Builder strip (paid placement) */}
         <AdSlot slug="featured_builder_strip" className="mb-6" />
 
-        {/* Filter chips */}
+        {/* Filter chips — Happin CategoryChipBar (label-driven). The
+            page still tracks/syncs by Kind value, so we translate between
+            the chip label shown to the user and the underlying value. */}
         <div className="mb-6 flex flex-wrap items-center gap-2">
           <span className="text-xs uppercase tracking-[0.15em] text-gray-500 font-medium mr-2">
             Show:
           </span>
-          {KIND_CHIPS.map((chip) => {
-            const isActive = activeKind === chip.value;
-            return (
-              <button
-                key={chip.value}
-                type="button"
-                onClick={() => {
-                  trackEvent('inventory_filter_clicked', { filter: chip.value, previous_filter: activeKind, pub });
-                  setKind(chip.value);
-                }}
-                className={
-                  'px-3.5 py-1.5 text-sm font-medium border rounded-md transition-colors ' +
-                  (isActive
-                    ? 'border-gray-900 bg-white text-gray-900'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:text-gray-900')
-                }
-                aria-pressed={isActive}
-              >
-                {chip.label}
-              </button>
-            );
-          })}
+          <CategoryChipBar
+            className="flex-1 px-0 py-0 bg-transparent border-b-0"
+            items={KIND_CHIPS.map((c) => c.label)}
+            active={(KIND_CHIPS.find((c) => c.value === activeKind) ?? KIND_CHIPS[0]).label}
+            onChange={(label) => {
+              const next = (KIND_CHIPS.find((c) => c.label === label) ?? KIND_CHIPS[0]).value;
+              trackEvent('inventory_filter_clicked', { filter: next, previous_filter: activeKind, pub });
+              setKind(next);
+            }}
+          />
         </div>
 
         {/* Grid */}
