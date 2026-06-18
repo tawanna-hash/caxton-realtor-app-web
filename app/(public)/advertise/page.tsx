@@ -184,9 +184,6 @@ export default function AdvertisePage() {
           <div className="border border-gray-200 p-6 md:p-7">
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
-                  Market 01
-                </p>
                 <h3
                   className="font-serif text-xl text-gray-900 mt-1"
                 >
@@ -397,9 +394,6 @@ export default function AdvertisePage() {
           <div className="border border-gray-200 p-6 md:p-7">
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
-                  Market 02
-                </p>
                 <h3
                   className="font-serif text-xl text-gray-900 mt-1"
                 >
@@ -422,9 +416,6 @@ export default function AdvertisePage() {
           <div className="border border-gray-200 p-6 md:p-7">
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
-                  Market 03
-                </p>
                 <h3
                   className="font-serif text-xl text-gray-900 mt-1"
                 >
@@ -464,9 +455,6 @@ export default function AdvertisePage() {
           <div className="border border-gray-200 p-6 md:p-7">
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">
-                  Market 04
-                </p>
                 <h3
                   className="font-serif text-xl text-gray-900 mt-1"
                 >
