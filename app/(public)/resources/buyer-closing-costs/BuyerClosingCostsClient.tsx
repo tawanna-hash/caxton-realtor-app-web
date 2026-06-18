@@ -162,7 +162,7 @@ export default function BuyerClosingCostsClient() {
     <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
       <header className="mb-10 print:mb-4">
         <p className={EYEBROW}>REALTOR® Tool</p>
-        <PageTitle>Buyer Closing Costs</PageTitle>
+        <PageTitle size="md">Buyer Closing Costs</PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4 print:hidden">
           Estimate everything your buyer brings to the closing table. Lender
           fees, title services, prepaids, and escrow setup — sectioned to match

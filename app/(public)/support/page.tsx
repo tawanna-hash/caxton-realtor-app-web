@@ -16,7 +16,7 @@ export default function SupportPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Support
         </p>
-        <PageTitle>How can we help?</PageTitle>
+        <PageTitle size="md">How can we help?</PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           We&apos;re a small team and we read every message. Reach out and
           you&apos;ll hear back within one business day.

@@ -152,7 +152,7 @@ export default function MortgageCalculatorClient() {
       {/* ── Header ────────────────────────────────────────────────── */}
       <header className="mb-8">
         <p className={EYEBROW}>REALTOR® Tool</p>
-        <PageTitle>Mortgage Calculator</PageTitle>
+        <PageTitle size="md">Mortgage Calculator</PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           Build buyer quotes in seconds. PITI breakdown, affordability
           analysis, and a year-by-year amortization schedule — all

@@ -109,7 +109,7 @@ export default function Exchange1031Client() {
     <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
       <header className="mb-10 print:mb-4">
         <p className={EYEBROW}>REALTOR® Tool</p>
-        <PageTitle>1031 Exchange Timeline</PageTitle>
+        <PageTitle size="md">1031 Exchange Timeline</PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4 print:hidden">
           Track the two non-negotiable IRS deadlines on a like-kind exchange:
           the 45-day identification period and the 180-day replacement period.

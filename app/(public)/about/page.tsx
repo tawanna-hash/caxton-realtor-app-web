@@ -13,7 +13,7 @@ export default function AboutPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           About Us
         </p>
-        <PageTitle>
+        <PageTitle size="md">
           Putting A Face On Real Estate.
         </PageTitle>
       </header>

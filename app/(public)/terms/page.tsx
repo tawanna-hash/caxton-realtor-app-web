@@ -13,7 +13,7 @@ export default function TermsPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Terms of Use
         </p>
-        <PageTitle>
+        <PageTitle size="md">
           The rules of the road.
         </PageTitle>
         <p className="text-sm text-gray-500 font-light">

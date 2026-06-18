@@ -13,7 +13,7 @@ export default function PrivacyPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Privacy Notice
         </p>
-        <PageTitle>
+        <PageTitle size="md">
           How we handle your information.
         </PageTitle>
         <p className="text-sm text-gray-500 font-light">

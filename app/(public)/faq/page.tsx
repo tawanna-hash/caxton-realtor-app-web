@@ -13,7 +13,7 @@ export default function FaqPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Frequently Asked Questions
         </p>
-        <PageTitle>
+        <PageTitle size="md">
           Common questions, quick answers.
         </PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
