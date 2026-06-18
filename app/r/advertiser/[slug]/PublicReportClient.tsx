@@ -8,11 +8,18 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
-  Tooltip, CartesianGrid,
-} from 'recharts';
+import dynamic from 'next/dynamic';
 import type { PublicationTheme } from '@/lib/publication-theme';
+
+// Lazy-load recharts (~320 kB) so it isn't shipped on first paint.
+const DailyClicksAreaChart = dynamic(() => import('./DailyClicksAreaChart'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+      Loading chart…
+    </div>
+  ),
+});
 
 import PageTitle from '@/components/ui/PageTitle';
 interface PublicAdvertiser {
@@ -281,43 +288,12 @@ function Dashboard({
             <div className="bg-white border border-gray-200 rounded-md p-4 mb-6">
               <h2 className="text-sm font-medium text-gray-700 mb-3">Clicks per day</h2>
               <div className="w-full h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={data.daily_clicks} margin={{ top: 4, right: 12, bottom: 4, left: -10 }}>
-                    <defs>
-                      <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={theme.primaryColor} stopOpacity={0.4} />
-                        <stop offset="100%" stopColor={theme.primaryColor} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis
-                      dataKey="date"
-                      tick={{ fontSize: 11, fill: '#6b7280' }}
-                      tickFormatter={formatDate}
-                      minTickGap={20}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 11, fill: '#6b7280' }}
-                      allowDecimals={false}
-                    />
-                    <Tooltip
-                      labelFormatter={(label) => formatDate(String(label))}
-                      contentStyle={{
-                        fontSize: 12,
-                        background: 'white',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: 4,
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="clicks"
-                      stroke={theme.primaryColor}
-                      strokeWidth={2}
-                      fill={`url(#${gradientId})`}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <DailyClicksAreaChart
+                  data={data.daily_clicks}
+                  primaryColor={theme.primaryColor}
+                  gradientId={gradientId}
+                  formatDate={formatDate}
+                />
               </div>
             </div>
 

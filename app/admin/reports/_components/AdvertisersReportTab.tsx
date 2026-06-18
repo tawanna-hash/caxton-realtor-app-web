@@ -18,7 +18,17 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import AdvertiserDashboardPane from './AdvertiserDashboardPane';
+import dynamic from 'next/dynamic';
+
+// Lazy-load recharts so admin/reports first paint isn't blocked by ~320 kB.
+const AdvertiserDashboardPane = dynamic(() => import('./AdvertiserDashboardPane'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center py-12 text-sm text-gray-400">
+      Loading dashboard…
+    </div>
+  ),
+});
 
 type DaysOption = 7 | 30 | 90 | 180;
 const DAYS_OPTIONS: Array<{ value: DaysOption; label: string }> = [
