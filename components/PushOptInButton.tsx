@@ -14,7 +14,28 @@
 
 import { useEffect, useState } from 'react';
 
-type Status = 'unknown' | 'unsupported' | 'denied' | 'subscribed' | 'idle' | 'pending';
+type Status = 'unknown' | 'unsupported' | 'ios-needs-pwa' | 'denied' | 'subscribed' | 'idle' | 'pending';
+
+function detectIosSafari(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  // iPad on iPadOS 13+ reports MacIntel; check touch points to identify it.
+  type LegacyNav = Navigator & { standalone?: boolean; maxTouchPoints?: number };
+  const nav = navigator as LegacyNav;
+  const isiOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (ua.includes('Mac') && (nav.maxTouchPoints ?? 0) > 1);
+  return isiOS;
+}
+
+function isStandalonePWA(): boolean {
+  if (typeof window === 'undefined') return false;
+  type LegacyNav = Navigator & { standalone?: boolean };
+  return (
+    (navigator as LegacyNav).standalone === true ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+  );
+}
 
 export type PushMarket = 'austin' | 'san_antonio' | 'houston' | 'dallas';
 
@@ -43,7 +64,13 @@ export default function PushOptInButton({ realtorId, market, className, hideWhen
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      setStatus('unsupported');
+      // iOS Safari only exposes PushManager when the site is installed as
+      // a PWA. Give those users a useful instruction instead of a dead end.
+      if (detectIosSafari() && !isStandalonePWA()) {
+        setStatus('ios-needs-pwa');
+      } else {
+        setStatus('unsupported');
+      }
       return;
     }
     if (Notification.permission === 'denied') {
@@ -134,6 +161,23 @@ export default function PushOptInButton({ realtorId, market, className, hideWhen
         }
       >
         Notifications not supported
+      </button>
+    );
+  }
+
+  if (status === 'ios-needs-pwa') {
+    if (hideWhenInactive) return null;
+    return (
+      <button
+        type="button"
+        disabled
+        title="On iPhone, tap the Share icon in Safari and choose 'Add to Home Screen' to enable notifications."
+        className={
+          className ||
+          'inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-600 cursor-not-allowed'
+        }
+      >
+        Add to Home Screen for alerts
       </button>
     );
   }

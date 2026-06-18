@@ -2,10 +2,13 @@
 
 // components/PushOptInBanner.tsx
 //
-// Tiny inline opt-in pill that prompts users to enable web push. The
-// whole banner hides itself when push isn't actionable (unsupported,
-// already on, or permission denied), so it never clutters the feed for
-// users who already opted in or can't opt in at all.
+// Dashboard opt-in banner. Shows a compact but visible bell + "Enable
+// notifications" CTA when the visitor can subscribe. Dismissable via
+// localStorage so the user only sees it once unless they clear storage.
+// Self-hides when push is unsupported, denied, or already on.
+//
+// On iOS Safari (which only allows web push for installed PWAs), the
+// banner switches to an instruction to Add to Home Screen.
 
 import { useEffect, useState } from 'react';
 import PushOptInButton, { type PushMarket } from './PushOptInButton';
@@ -15,11 +18,40 @@ type Props = {
   market?: PushMarket | null;
 };
 
+const DISMISS_KEY = 'rnn:push-banner-dismissed';
+
+function isIosSafariNeedsPWA(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  type LegacyNav = Navigator & { standalone?: boolean; maxTouchPoints?: number };
+  const nav = navigator as LegacyNav;
+  const isiOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (ua.includes('Mac') && (nav.maxTouchPoints ?? 0) > 1);
+  if (!isiOS) return false;
+  const standalone =
+    nav.standalone === true ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  return !standalone && !('PushManager' in window);
+}
+
 export default function PushOptInBanner({ realtorId, market }: Props) {
-  const [actionable, setActionable] = useState<boolean | null>(null);
+  // null = still deciding; false = hide; true = show standard CTA;
+  // 'ios-pwa' = show Add-to-Home-Screen hint instead
+  const [actionable, setActionable] = useState<boolean | 'ios-pwa' | null>(null);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    if (localStorage.getItem(DISMISS_KEY) === '1') {
+      setDismissed(true);
+    }
+
+    if (isIosSafariNeedsPWA()) {
+      setActionable('ios-pwa');
+      return;
+    }
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       setActionable(false);
       return;
@@ -28,31 +60,91 @@ export default function PushOptInBanner({ realtorId, market }: Props) {
       setActionable(false);
       return;
     }
+
+    let cancelled = false;
+    const settle = (value: boolean) => {
+      if (!cancelled) setActionable(value);
+    };
+
+    // Race serviceWorker.ready against a 2s timeout so the banner appears
+    // even on a brand-new browser where the SW is still installing.
+    const timeout = setTimeout(() => settle(true), 2000);
+
     (async () => {
       try {
         const reg = await navigator.serviceWorker.ready;
         const sub = await reg.pushManager.getSubscription();
-        setActionable(!sub);
+        clearTimeout(timeout);
+        settle(!sub);
       } catch {
-        setActionable(true);
+        clearTimeout(timeout);
+        settle(true);
       }
     })();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, []);
 
-  if (!actionable) return null;
+  function handleDismiss() {
+    setDismissed(true);
+    try {
+      localStorage.setItem(DISMISS_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+  }
+
+  if (!actionable || dismissed) return null;
+
+  if (actionable === 'ios-pwa') {
+    return (
+      <div className="px-3 py-2 bg-amber-50 border-b border-amber-200 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span aria-hidden="true" className="text-base">🔔</span>
+          <span className="text-xs sm:text-sm text-amber-900 font-medium leading-snug">
+            Get alerts: tap Share → Add to Home Screen, then open from your home screen.
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleDismiss}
+          aria-label="Dismiss"
+          className="text-amber-700 hover:text-amber-900 text-lg leading-none px-1 flex-shrink-0"
+        >
+          ×
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="px-3 py-1 bg-amber-50 border-b border-amber-200 flex items-center justify-end gap-2">
-      <span className="text-[11px] text-amber-800 font-light hidden sm:inline">
-        Breaking news alerts
-      </span>
-      <PushOptInButton
-        hideWhenInactive
-        realtorId={realtorId ?? null}
-        market={market ?? null}
-        label="Turn on"
-        className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium text-white bg-[#021D40] hover:bg-[#03285a] whitespace-nowrap"
-      />
+    <div className="px-3 py-2 bg-amber-50 border-b border-amber-200 flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2 min-w-0">
+        <span aria-hidden="true" className="text-base">🔔</span>
+        <span className="text-xs sm:text-sm text-amber-900 font-medium truncate">
+          Get breaking news alerts
+        </span>
+      </div>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <PushOptInButton
+          hideWhenInactive
+          realtorId={realtorId ?? null}
+          market={market ?? null}
+          label="Enable"
+          className="inline-flex items-center px-3 py-1 rounded text-xs font-semibold text-white bg-[#021D40] hover:bg-[#03285a] whitespace-nowrap"
+        />
+        <button
+          type="button"
+          onClick={handleDismiss}
+          aria-label="Dismiss"
+          className="text-amber-700 hover:text-amber-900 text-lg leading-none px-1"
+        >
+          ×
+        </button>
+      </div>
     </div>
   );
 }
