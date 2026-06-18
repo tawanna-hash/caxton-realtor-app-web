@@ -10,6 +10,7 @@ import ProfilePanel from '@/components/ProfilePanel';
 import { startAuthentication } from '@/components/PasskeysPanel';
 import { getApiBase } from '@/lib/api-base';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
+import PushOptInBanner from '@/components/PushOptInBanner';
 import { SocialLinks } from '@/components/SocialLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import SaborReportCard from '@/components/SaborReportCard';
@@ -1257,6 +1258,11 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
       </div>
       {!showPreLaunch && (
         <DashboardHero pub={pub as "realtyline" | "newsline"} />
+      )}
+      {!showPreLaunch && (
+        <PushOptInBanner
+          market={pub === 'realtyline' ? 'austin' : pub === 'newsline' ? 'san_antonio' : null}
+        />
       )}
       {user?.guest && (
         <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between">

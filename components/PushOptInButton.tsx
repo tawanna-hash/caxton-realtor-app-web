@@ -20,6 +20,8 @@ type Props = {
   realtorId?: string | null;
   market?: 'austin' | 'san_antonio' | null;
   className?: string;
+  /** When true, render nothing if push is unsupported / denied / already on. */
+  hideWhenInactive?: boolean;
 };
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -31,7 +33,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return arr;
 }
 
-export default function PushOptInButton({ realtorId, market, className }: Props) {
+export default function PushOptInButton({ realtorId, market, className, hideWhenInactive }: Props) {
   const [status, setStatus] = useState<Status>('unknown');
 
   useEffect(() => {
@@ -111,7 +113,13 @@ export default function PushOptInButton({ realtorId, market, className }: Props)
     }
   }
 
+  if (status === 'unknown') {
+    // Detecting support — render nothing until we know.
+    return null;
+  }
+
   if (status === 'unsupported') {
+    if (hideWhenInactive) return null;
     return (
       <button
         type="button"
@@ -127,6 +135,7 @@ export default function PushOptInButton({ realtorId, market, className }: Props)
   }
 
   if (status === 'denied') {
+    if (hideWhenInactive) return null;
     return (
       <button
         type="button"
@@ -143,6 +152,7 @@ export default function PushOptInButton({ realtorId, market, className }: Props)
   }
 
   if (status === 'subscribed') {
+    if (hideWhenInactive) return null;
     return (
       <button
         type="button"
@@ -161,7 +171,7 @@ export default function PushOptInButton({ realtorId, market, className }: Props)
     <button
       type="button"
       onClick={handleSubscribe}
-      disabled={status === 'pending' || status === 'unknown'}
+      disabled={status === 'pending'}
       className={
         className ||
         'inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-[#021D40] hover:bg-[#03285a] disabled:opacity-60'
