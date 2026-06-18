@@ -19,7 +19,7 @@ export default function NewsletterLandingPage() {
       <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
         Newsletter
       </p>
-      <PageTitle>The Weekly Newsletter</PageTitle>
+      <PageTitle size="md">The Weekly Newsletter</PageTitle>
       <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mb-10">
         Every Friday. One short email. Everything we published that week —
         new builders, communities, inventory drops, giveaways, and events —

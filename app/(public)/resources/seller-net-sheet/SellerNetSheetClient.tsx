@@ -174,7 +174,7 @@ export default function SellerNetSheetClient() {
     <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
       <header className="mb-10 print:mb-4">
         <p className={EYEBROW}>REALTOR® Tool</p>
-        <PageTitle>Seller Net Sheet</PageTitle>
+        <PageTitle size="md">Seller Net Sheet</PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4 print:hidden">
           Estimate what your seller walks away with at closing. Texas-standard
           line items (owner&apos;s title policy, escrow, recording, doc prep,

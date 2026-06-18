@@ -132,7 +132,7 @@ export default function TitleRateCalculatorClient() {
     <main className="max-w-6xl mx-auto px-6 py-12 md:py-16 pb-44 print:pb-12">
       <header className="mb-10">
         <p className={EYEBROW}>REALTOR® Tool</p>
-        <PageTitle>Texas Title Rate Calculator</PageTitle>
+        <PageTitle size="md">Texas Title Rate Calculator</PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           Texas title insurance is{' '}
           <span className="font-medium text-gray-900">promulgated</span> — the
