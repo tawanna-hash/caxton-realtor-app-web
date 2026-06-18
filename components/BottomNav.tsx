@@ -2,13 +2,12 @@
 
 // components/BottomNav.tsx
 //
-// Fixed bottom tab bar: Feed / Magazine / Calendar / Builders / Advertisers / More.
+// Fixed bottom tab bar: Feed / Calendar / Builders / Advertisers / More.
 // Rendered by AppShell on every public-variant page and by the dashboard
 // (which doesn't use AppShell) in place of its prior inline nav.
 //
 // Tab semantics:
 //   Feed      route-then-dispatch to /dashboard news phase
-//   Magazine  push to /magazine (real route, built in S23)
 //   Calendar  push to /calendar (real list route, built in S20)
 //   Builders  push to /builders (real hub route, built in Stage C)
 //   Advertisers push to /advertisers (public directory)
@@ -30,7 +29,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
-import { Home, BookOpen, Calendar, Building2, Megaphone, MoreHorizontal } from 'lucide-react';
+import { Home, Calendar, Building2, Megaphone, MoreHorizontal } from 'lucide-react';
 
 type PubInfo = {
   name: string;
@@ -46,7 +45,7 @@ type Props = {
 
 // Destination routes the bar can navigate to. /dashboard isn't included
 // because Feed taps usually fire a same-page event rather than a route push.
-const PREFETCH_ROUTES = ['/magazine', '/calendar', '/builders', '/advertisers', '/dashboard'] as const;
+const PREFETCH_ROUTES = ['/calendar', '/builders', '/advertisers', '/dashboard'] as const;
 
 export default function BottomNav({ info, onMoreClick }: Props) {
   const pathname = usePathname();
@@ -85,7 +84,6 @@ export default function BottomNav({ info, onMoreClick }: Props) {
   }
 
   const isHome = matches('/dashboard', true);
-  const isMagazine = matches('/magazine');
   const isCalendar = matches('/calendar');
   const isBuilders = matches('/builders');
   const isAdvertisers = matches('/advertisers');
@@ -137,9 +135,6 @@ export default function BottomNav({ info, onMoreClick }: Props) {
       <div className="flex justify-around py-2 pb-3">
         <Tab label="Feed" active={isHome} accent={accent} onClick={goHome}>
           <Home strokeWidth={1.75} size={22} />
-        </Tab>
-        <Tab label="Magazine" active={isMagazine} accent={accent} onClick={() => navigate('/magazine')}>
-          <BookOpen strokeWidth={1.75} size={22} />
         </Tab>
         <Tab label="Calendar" active={isCalendar} accent={accent} onClick={() => navigate('/calendar')}>
           <Calendar strokeWidth={1.75} size={22} />
