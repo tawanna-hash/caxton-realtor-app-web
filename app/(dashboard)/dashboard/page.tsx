@@ -593,7 +593,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         {showGiveaway && step === 1 && GIVEAWAY[pub] && (
           <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center px-4 py-8 overflow-y-auto" style={SW}>
             <div className="bg-white max-w-sm w-full p-7 relative my-auto">
-              <button onClick={dismissGiveaway} aria-label="Close" className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 p-1">
+              <button onClick={dismissGiveaway} aria-label="Close" className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 p-1 min-w-[44px] min-h-[44px] flex items-center justify-center">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>
               <div className="text-center mt-2 mb-6">
@@ -1250,7 +1250,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
           )}
           <p className="text-white text-lg font-semibold tracking-wide truncate">{info.name}</p>
         </div>
-        <button onClick={handleSwitch} className="text-xs uppercase tracking-wider text-white/80 font-medium border border-white/30 px-3 py-1.5 flex items-center gap-2 flex-shrink-0 ml-2">
+        <button onClick={handleSwitch} className="text-xs uppercase tracking-wider text-white/80 font-medium border border-white/30 px-3 py-1.5 min-h-[44px] flex items-center gap-2 flex-shrink-0 ml-2">
           <span>{other.name}</span>
           <span className="text-white/50">{'\u2192'}</span>
         </button>
@@ -1724,7 +1724,7 @@ function AdPopup({}: { pub: string; articleId: string }) {
     >
       <button
         onClick={onClose}
-        className="absolute top-1 right-1 w-7 h-7 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center z-10"
+        className="absolute top-1 right-1 w-11 h-11 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center z-10"
         aria-label="Dismiss ad"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

@@ -1162,7 +1162,7 @@ export default function InteractiveMagazineReader({
             paddingTop: 'max(0.5rem, env(safe-area-inset-top))',
           }}
         >
-          <button onClick={onClose} aria-label="Close" className="text-white p-1.5 -ml-1.5">
+          <button onClick={onClose} aria-label="Close" className="text-white p-1.5 -ml-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m15 18-6-6 6-6" />
             </svg>
@@ -1182,13 +1182,13 @@ export default function InteractiveMagazineReader({
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => setActionMode('search')} aria-label="Search" className="text-white/80 hover:text-white p-1.5" title="Search">
+            <button onClick={() => setActionMode('search')} aria-label="Search" className="text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center" title="Search">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3" />
               </svg>
             </button>
-            <button onClick={zoomOut} disabled={zoomIdx === 0} aria-label="Zoom out" className="text-white/80 hover:text-white p-1.5 disabled:opacity-30">
+            <button onClick={zoomOut} disabled={zoomIdx === 0} aria-label="Zoom out" className="text-white/80 hover:text-white p-1.5 disabled:opacity-30 min-w-[44px] min-h-[44px] flex items-center justify-center">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3M8 11h6" />
@@ -1197,13 +1197,13 @@ export default function InteractiveMagazineReader({
             <button onClick={zoomReset} aria-label={`Zoom ${zoom}x — click to reset`} className="text-white/80 hover:text-white px-2 text-[10px] uppercase tracking-wider">
               {zoom}x
             </button>
-            <button onClick={zoomIn} disabled={zoomIdx === ZOOM_LEVELS.length - 1} aria-label="Zoom in" className="text-white/80 hover:text-white p-1.5 disabled:opacity-30">
+            <button onClick={zoomIn} disabled={zoomIdx === ZOOM_LEVELS.length - 1} aria-label="Zoom in" className="text-white/80 hover:text-white p-1.5 disabled:opacity-30 min-w-[44px] min-h-[44px] flex items-center justify-center">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3M11 8v6M8 11h6" />
               </svg>
             </button>
-            <button onClick={toggleFullscreen} aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} className="text-white/80 hover:text-white p-1.5" title="Fullscreen (F)">
+            <button onClick={toggleFullscreen} aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'} className="text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center" title="Fullscreen (F)">
               {isFullscreen ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v4H4M16 3v4h4M8 21v-4H4M16 21v-4h4" /></svg>
               ) : (
@@ -1403,7 +1403,7 @@ const ICONS = {
 
 function ActionButton({ label, onClick, icon }: { label: string; onClick: () => void; icon: string }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1 px-2 py-1 text-white/90 hover:text-white" aria-label={label}>
+    <button onClick={onClick} className="flex flex-col items-center justify-center gap-1 px-2 py-1 min-w-[44px] min-h-[44px] text-white/90 hover:text-white" aria-label={label}>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d={icon} />
       </svg>
