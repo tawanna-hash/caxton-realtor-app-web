@@ -7,6 +7,7 @@ import { getApiBase } from '@/lib/api-base';
 import PasswordSection from '@/components/PasswordSection';
 import PasskeysPanel from '@/components/PasskeysPanel';
 import PushOptInButton from '@/components/PushOptInButton';
+import DeleteAccountSection from '@/components/DeleteAccountSection';
 
 const API = getApiBase();
 
@@ -139,6 +140,8 @@ export default function ProfileClient() {
             }
           />
         </section>
+
+        <DeleteAccountSection accentColor={accent} email={user.email ?? ''} />
 
         <p className="text-xs text-gray-400 font-light text-center">
           More profile settings coming soon.

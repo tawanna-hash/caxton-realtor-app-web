@@ -361,5 +361,55 @@ export async function consumeResetTokenTx(
   );
 }
 
+/**
+ * Permanently delete a realtor account and all dependent rows.
+ *
+ * App Store Review Guideline 5.1.1(v) requires in-app account deletion when
+ * the app supports account creation. This is the destructive backing call.
+ *
+ * Most dependent tables (push_subscriptions, native_push_tokens, passkey
+ * tables, notification_preferences/deliveries, giveaway_entries,
+ * password_reset_tokens, webauthn_challenges) have ON DELETE CASCADE so
+ * they clear automatically.
+ *
+ * Two tables hold the realtor_id as NO ACTION for audit/historical reasons:
+ *   - email_log (delivery audit trail)
+ *   - giveaways.winner_realtor_id (preserves the historical fact that this
+ *     giveaway had a winner, even if the winner later deleted their account)
+ *
+ * For those we NULL the reference before DELETE so the audit/history row
+ * survives without the personal link.
+ *
+ * Returns true if a row was deleted, false if the id was not found.
+ */
+export async function deleteRealtorAccount(realtorId: string): Promise<boolean> {
+  return withNeonTransaction(async (client) => {
+    // Drop the personal back-references on tables we keep for history.
+    await client.query(
+      `UPDATE email_log SET realtor_id = NULL WHERE realtor_id = $1`,
+      [realtorId],
+    );
+    await client.query(
+      `UPDATE giveaways SET winner_realtor_id = NULL WHERE winner_realtor_id = $1`,
+      [realtorId],
+    );
+    // Drop the magic_links rows tied to this email so old magic links cannot
+    // resurrect the address. magic_links keys on email, not realtor_id.
+    const emailRow = await client.query(
+      `SELECT email FROM realtors WHERE id = $1`,
+      [realtorId],
+    );
+    const email = emailRow.rows[0]?.email as string | undefined;
+    if (email) {
+      await client.query(`DELETE FROM magic_links WHERE email = $1`, [email]);
+    }
+    const r = await client.query(
+      `DELETE FROM realtors WHERE id = $1`,
+      [realtorId],
+    );
+    return (r.rowCount ?? 0) > 0;
+  });
+}
+
 // Re-export for callers that want a transaction.
 export { withNeonTransaction };
