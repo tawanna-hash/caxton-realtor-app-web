@@ -94,13 +94,19 @@ function AdminReportsPageInner() {
   // Edit drawer (Events tab) — parallel to articleEditOpen above.
   const [eventEditOpen, setEventEditOpen] = useState(false);
 
-  // Load articles list on mount
+  // Load articles list. Re-fetches whenever the user changes the date-range
+  // selector so the picker's "N opens" badge always reflects the same window
+  // the generated report will use. Without this the picker would show opens
+  // over a fixed 180-day window while the report queries the user's selected
+  // window, leading to confusing mismatches (picker says "16 opens", report
+  // shows 0).
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setArticlesLoading(true);
+      setArticlesError(null);
       try {
-        const res = await fetch('/api/admin/reports/articles-list?days=180', {
+        const res = await fetch(`/api/admin/reports/articles-list?days=${days}`, {
           credentials: 'include',
         });
         const body = (await res.json().catch(() => null)) as
@@ -121,15 +127,17 @@ function AdminReportsPageInner() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [days]);
 
-  // Load events list on mount
+  // Load events list. Same pattern as the articles list above — re-fetch on
+  // date-range change so the picker badge matches the report window.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setEventsListLoading(true);
+      setEventsListError(null);
       try {
-        const res = await fetch('/api/admin/reports/events-list?days=180', {
+        const res = await fetch(`/api/admin/reports/events-list?days=${eventDays}`, {
           credentials: 'include',
         });
         const body = (await res.json().catch(() => null)) as
@@ -150,7 +158,7 @@ function AdminReportsPageInner() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [eventDays]);
 
   async function generateEventReport() {
     if (!selectedEventId) return;
