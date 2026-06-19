@@ -247,9 +247,14 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
       </div>
 
       {/* Sticky action bar — sits ABOVE the AppShell BottomNav (~68px tall, z-40).
-          We anchor at bottom-[68px] and use z-50 so the Register CTA stays
-          tappable on event detail pages. */}
-      <div className="fixed bottom-[68px] left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex gap-2 z-50" style={SW}>
+          On notched iPhones the BottomNav reserves env(safe-area-inset-bottom)
+          (~34px) at its lower edge, so a flat bottom-[68px] put the Register
+          bar UNDER the nav. We anchor with calc(68px + safe-area-inset-bottom)
+          so the CTA always clears the nav across every device. */}
+      <div
+        className="fixed left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex gap-2 z-50"
+        style={{ ...SW, bottom: 'calc(68px + env(safe-area-inset-bottom, 0px))' }}
+      >
         {event.website && (
           <button
             onClick={onRegister}
@@ -261,8 +266,10 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
         )}
       </div>
       {/* Floating action pill — shared <FloaterPill>. Stacked above the
-          Register bar (which itself sits above the BottomNav), so we offset
-          by ~148px. */}
+          Register bar (which itself sits above the BottomNav). FloaterPill
+          adds env(safe-area-inset-bottom) on top of bottomOffsetClass
+          automatically, so 148px = 68px (BottomNav) + ~60px (Register bar +
+          gap), and the inset stacks correctly on notched devices. */}
       <FloaterPill
         bottomOffsetClass="bottom-[148px]"
         actions={(() => {
