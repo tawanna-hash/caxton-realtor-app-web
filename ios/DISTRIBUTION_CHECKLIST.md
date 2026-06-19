@@ -1,0 +1,117 @@
+# iOS Distribution Checklist
+
+Working checklist matching Apple's 11-step "Prepare for app distribution"
+guide. Items handled in code live in this repo; items handled outside Xcode
+are tracked here so we know exactly what to do in App Store Connect.
+
+## In code (this repo)
+
+| Step | Item | Where | Value |
+|------|------|-------|-------|
+| 1 | Bundle ID | `App.xcodeproj/project.pbxproj` | `app.realtynewsnow` |
+| 3 | Version (CFBundleShortVersionString) | `MARKETING_VERSION` | `1.0` |
+| 3 | Build (CFBundleVersion) | `CURRENT_PROJECT_VERSION` | `1` (bump per upload) |
+| 5 | Deployment target | `IPHONEOS_DEPLOYMENT_TARGET` | `15.0` |
+| 5 | Device family | `TARGETED_DEVICE_FAMILY` | `1,2` (iPhone + iPad) |
+| 5 | Orientations | `Info.plist UISupportedInterfaceOrientations` | Portrait + Landscape |
+| 5 | Required device capabilities | `UIRequiredDeviceCapabilities` | `arm64` |
+| 6 | App icon set (17 sizes + 1024 marketing) | `Assets.xcassets/AppIcon.appiconset/` | RGB, no alpha |
+| 7 | Launch screen | `Base.lproj/LaunchScreen.storyboard` | storyboard-based |
+| 8 | Camera usage | `NSCameraUsageDescription` | set |
+| 8 | Photo library | `NSPhotoLibraryUsageDescription` | set |
+| 8 | Photo library add | `NSPhotoLibraryAddUsageDescription` | set |
+| 8 | Location | `NSLocationWhenInUseUsageDescription` | set |
+| 8 | Face ID | `NSFaceIDUsageDescription` | set |
+| 8 | App tracking transparency | `NSUserTrackingUsageDescription` | set |
+| 11 | Export compliance | `ITSAppUsesNonExemptEncryption` | `false` |
+| — | Privacy manifest | `PrivacyInfo.xcprivacy` | tracking=false, 3 RRA + 12 data types |
+| — | Push capability | `App.entitlements` `aps-environment` | `production` |
+| — | Background mode | `UIBackgroundModes` | `remote-notification` |
+
+## Outside Xcode (you do these)
+
+### Step 2 — Assign to a team
+
+Open `App.xcworkspace` in Xcode → select the `App` target → Signing &
+Capabilities → set **Team** to your Apple Developer Program team. The team
+ID is intentionally NOT committed to the repo so different machines can
+build with their own credentials. After you set it, Xcode will write
+`DEVELOPMENT_TEAM = <yourTeamID>;` into your local `project.pbxproj` —
+leave that uncommitted (or commit it once it stabilizes).
+
+### Step 4 — App category (App Store Connect)
+
+When you create the app record in App Store Connect → App Information:
+
+- **Primary category**: News
+- **Secondary category**: Business
+  - (News is the right primary because the app's main job is delivering
+    real-estate journalism; Business is the secondary because the user
+    base is industry professionals.)
+
+### Step 11 — Export compliance (already declared)
+
+`ITSAppUsesNonExemptEncryption=false` in Info.plist tells App Store Connect
+that the only crypto used is what Apple provides via standard APIs (HTTPS
+through URLSession / WKWebView). You will NOT be prompted on each upload.
+
+## Per-upload (every TestFlight / App Store build)
+
+1. Bump `CURRENT_PROJECT_VERSION` in Xcode (Build phase or General tab).
+   Strictly monotonic — App Store Connect rejects duplicates.
+2. Run `npx cap sync ios` if any web code changed and we ever switch from
+   the `server.url` hot-loading model to bundled assets.
+3. Product → Archive → Distribute App → App Store Connect.
+
+## App Store Connect record — content you'll need
+
+- **App name**: Realty News Now
+- **Subtitle** (30 chars max): Texas real-estate news, daily
+- **Promotional text** (170 chars): updates each release
+- **Description**: see `app_store_readiness_audit.md` for draft
+- **Keywords** (100 chars): real estate, Austin, San Antonio, REALTOR, listings, MLS, agents, brokers, Texas, ABoR
+- **Support URL**: https://realtynewsnow.app/support
+- **Marketing URL** (optional): https://realtynewsnow.app
+- **Privacy Policy URL**: https://realtynewsnow.app/privacy
+- **Screenshots**: 6.7" (iPhone 15 Pro Max), 6.5" (iPhone 11 Pro Max), 5.5" (iPhone 8 Plus), 12.9" iPad Pro. Minimum 3 per size.
+- **App Review notes**: see `app_store_readiness_audit.md` §"Reviewer notes"
+- **Sign-in for review**: provide a demo realtor account (NOT a real
+  advertiser's credentials). Mark the app as "Sign-in required: yes" and
+  include the demo credentials.
+
+## Push notifications — server-side prerequisites
+
+The app now registers an APNs device token and POSTs it to
+`/api/push/native`. To actually send pushes from the back end:
+
+1. In your Apple Developer account, generate an **APNs Authentication Key**
+   (.p8 file). Note the Key ID and your Team ID.
+2. Store these as env vars on the server:
+   - `APNS_KEY_ID`
+   - `APNS_TEAM_ID`
+   - `APNS_BUNDLE_ID` = `app.realtynewsnow`
+   - `APNS_PRIVATE_KEY_P8` (the .p8 contents, base64 or PEM)
+3. Wire an `apns2` (or similar) sender in `lib/server/push.ts` to fan out
+   to `native_push_tokens` alongside the existing web push fan-out.
+
+This is a follow-up — PR B set up the receive side, the sender ships next.
+
+## Wrapper risk (Guideline 4.2)
+
+The Capacitor config currently uses `server.url` to load
+`https://realtynewsnow.app` directly into the WKWebView. Apple flags this
+as a potential "wrapped website" rejection (Guideline 4.2 — Minimum
+Functionality). Mitigations already in place that we cite in the App Review
+notes:
+
+- Native push notifications (PR B)
+- Native share sheet (PR B)
+- Face ID sign-in capability (PR B — UI wires up in a follow-up)
+- Haptic feedback on key interactions (PR B)
+- Camera + photo library integration for listing uploads
+- Splash screen + native launch experience
+- iOS-tuned status bar styling
+
+If Apple still pushes back, the next step is to bundle the Next.js export
+into the app and remove `server.url`. That's a significant change so we
+defer it until we know whether the mitigations above are enough.

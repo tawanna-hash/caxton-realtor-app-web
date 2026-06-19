@@ -75,5 +75,17 @@
 		<string>sms</string>
 		<string>https</string>
 	</array>
+	<!-- Step 11: Export compliance. App uses only Apple-provided HTTPS / standard
+	     iOS crypto (URLSession, WKWebView). Declaring this lets App Store Connect
+	     skip the export compliance questionnaire on every upload. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<!-- Required when the app registers for remote notifications. Without this,
+	     iOS will deliver the device token but the app cannot wake to process
+	     silent notifications. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>
