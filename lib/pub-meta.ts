@@ -32,8 +32,7 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     email: 'info@myrealtyline.com',
     facebook: 'https://www.facebook.com/myrealtyline/',
     instagram: 'https://www.instagram.com/myrealtyline/',
-    // TODO(social): waiting on LinkedIn URL.
-    linkedin: '#',
+    linkedin: 'https://www.linkedin.com/company/myrealtyline/',
   },
   newsline: {
     name: 'Newsline San Antonio',
@@ -44,8 +43,7 @@ export const PUB_META: Record<PubKey, PubMeta> = {
     email: 'info@myrealtyline.com',
     facebook: 'https://www.facebook.com/newslinesa/',
     instagram: 'https://www.instagram.com/newsline_sanantonio/',
-    // TODO(social): waiting on LinkedIn URL.
-    linkedin: '#',
+    linkedin: 'https://www.linkedin.com/company/newsline-san-antonio/',
   },
   // RealtyLine Houston - activated 2026-06-15 (Phase 2 PR A).
   // Empty-shell content; surfaces render the "Content launches soon" empty
