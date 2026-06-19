@@ -1,7 +1,8 @@
 // app/api/admin/mailing/bulk/route.ts
 //
 // POST — bulk operations on the mailing list.
-// Body: { action: 'delete' | 'dedupe', ids?: string[], segment?: string }
+// Body: { action: 'delete' | 'dedupe' | 'patch' | 'delete-all-in-segment' | 'move',
+//         ids?: string[], segment?: string, target_segment?: string, ... }
 
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema } from '@/lib/db';
@@ -123,6 +124,34 @@ export async function POST(req: NextRequest) {
       }
       const result = await dedupeSegment(segment);
       return NextResponse.json({ ok: true, ...result });
+    }
+
+    if (action === 'move') {
+      // Re-assign selected contacts to a different mailing segment.
+      // Body: { action: 'move', ids: string[], target_segment: MailingSegment | slug }
+      const ids = Array.isArray(body.ids)
+        ? (body.ids as unknown[]).filter((v): v is string => typeof v === 'string' && UUID_RE.test(v))
+        : [];
+      if (ids.length === 0) {
+        return NextResponse.json({ error: 'no valid ids' }, { status: 400 });
+      }
+      const targetRaw = typeof body.target_segment === 'string' ? body.target_segment : null;
+      const target = targetRaw && (isMailingSegment(targetRaw) ? targetRaw : segmentFromSlug(targetRaw));
+      if (!target) {
+        return NextResponse.json({ error: 'invalid target_segment' }, { status: 400 });
+      }
+      let moved = 0;
+      const errors: { id: string; error: string }[] = [];
+      for (const id of ids) {
+        try {
+          const row = await updateMailingContact(id, { segment: target });
+          if (row) moved += 1;
+          else errors.push({ id, error: 'not found' });
+        } catch (err) {
+          errors.push({ id, error: errMessage(err) });
+        }
+      }
+      return NextResponse.json({ ok: true, moved, errors, target });
     }
 
     return NextResponse.json({ error: 'unknown action' }, { status: 400 });
