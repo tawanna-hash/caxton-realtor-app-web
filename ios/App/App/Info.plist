@@ -28,7 +28,7 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
@@ -54,6 +54,12 @@
 	<string>Realty News Now needs permission to save images and signed PDF agreements to your photo library.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Realty News Now uses your location to show nearby listings, market reports, and Houston-area real estate news relevant to you.</string>
+	<!-- Face ID is offered as a fast sign-in for returning users. The web app already supports passkeys; the iOS shell wires the same flow through LocalAuthentication so the prompt feels native. -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Use Face ID to sign in to your Realty News Now account faster without re-entering your password.</string>
+	<!-- ATT prompt is shown only if/when we add a third-party tracking SDK that requires it. PostHog with anonymous IDs and masked inputs does NOT require ATT, but declaring the string here keeps App Review unblocked if we add an ad SDK later. -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Allow tracking so Realty News Now can measure ad performance and show you relevant advertising partners across our publications.</string>
 	<!-- App Transport Security: realtynewsnow.app already uses HTTPS so default ATS is fine.
 	     We DO NOT enable NSAllowsArbitraryLoads. Listed below explicitly for App Review clarity. -->
 	<key>NSAppTransportSecurity</key>
