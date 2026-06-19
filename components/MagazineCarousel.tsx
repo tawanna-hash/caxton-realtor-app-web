@@ -104,7 +104,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   return (
     <div className="bg-gray-50 pt-10 pb-12">
       <div className="px-4 mb-6">
-        <PageTitle align="center">Magazine Archive</PageTitle>
+        <PageTitle align="center">Issues Archive</PageTitle>
       </div>
 
       <div className="flex items-center justify-center gap-8 mb-8 text-xs uppercase tracking-[0.2em] font-medium">

@@ -2,7 +2,7 @@ import MagazineClient from './MagazineClient';
 import { MagazineGA } from '@/components/MagazineGA';
 import { getMeasurementId } from '@/lib/publication-settings';
 
-export const metadata = { title: 'Magazine — Realty News Now' };
+export const metadata = { title: 'Issues — Realty News Now' };
 export const dynamic = 'force-dynamic';
 
 export default async function MagazinePage() {
