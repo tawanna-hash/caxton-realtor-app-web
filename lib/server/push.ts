@@ -214,3 +214,27 @@ export async function broadcastPush(
   console.log('[broadcastPush] done', { notificationId, sent, failed, revoked });
   return { sent, failed, revoked };
 }
+
+/**
+ * Run the web-push and APNs fan-outs in parallel for the same notification.
+ * This is the entry point admins (and the scheduled-send cron) should use
+ * so we never forget the native channel. APNs sender is lazy-imported so
+ * the heavy crypto library only loads when the function is actually called.
+ */
+export async function broadcastPushAll(
+  notificationId: string,
+  payload: PushPayload,
+  marketFilter?: PushMarketFilter,
+): Promise<{
+  web: { sent: number; failed: number; revoked: number };
+  ios: { sent: number; failed: number; revoked: number; skipped: boolean };
+}> {
+  const [web, ios] = await Promise.all([
+    broadcastPush(notificationId, payload, marketFilter),
+    (async () => {
+      const { broadcastNativePush } = await import('@/lib/server/native-push');
+      return broadcastNativePush(notificationId, payload, marketFilter);
+    })(),
+  ]);
+  return { web, ios };
+}
