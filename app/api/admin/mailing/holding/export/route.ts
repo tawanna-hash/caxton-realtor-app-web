@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { ensureSchema } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { listHoldingContacts } from '@/lib/mailing';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { withErrorHandling } from '@/lib/server/error';
 import { parseQuery } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
@@ -80,10 +80,8 @@ export const GET = withErrorHandling(async (req: Request) => {
     if (page.rows.length < 500) break;
   }
 
-  if (!all.length) {
-    throw new ApiError(404, `No rows found for source=${source}`);
-  }
-
+  // Always return a file (with headers only) even when the audience is
+  // empty — a 404 in a new tab looks like a broken export to the admin.
   const filenameBase = `mailing-holding-${source}-${new Date().toISOString().slice(0, 10)}`;
 
   if (format === 'json') {
