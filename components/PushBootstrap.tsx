@@ -13,10 +13,33 @@
 //      the subscription list accurate even when users come and go.
 
 import { useEffect } from 'react';
+import { isNative } from '@/lib/native/runtime';
+import { registerNativePush } from '@/lib/native/push';
 
 export default function PushBootstrap() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    // Native (iOS/Android app shell) path: register with APNs/FCM. The
+    // native plugin handles permission prompting; we don't auto-prompt
+    // here either — registerNativePush only requests when the user
+    // tapped 'Enable' (see PushOptInButton). Until then, this is a
+    // best-effort 'permissions already granted' check.
+    if (isNative()) {
+      (async () => {
+        try {
+          const { PushNotifications } = await import('@capacitor/push-notifications');
+          const perm = await PushNotifications.checkPermissions();
+          if (perm.receive === 'granted') {
+            await registerNativePush();
+          }
+        } catch {
+          /* ignore — best-effort */
+        }
+      })();
+      return;
+    }
+
     if (!('serviceWorker' in navigator)) return;
 
     let cancelled = false;

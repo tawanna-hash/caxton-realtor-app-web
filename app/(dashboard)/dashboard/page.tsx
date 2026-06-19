@@ -22,6 +22,8 @@ import { PUB_META, type PubKey, isPreLaunchPub, isPubKey } from '@/lib/pub-meta'
 import { PreLaunchEmptyState } from '@/components/PreLaunchEmptyState';
 import { AdSlot as AdSlotComponent } from '@/components/ads/AdSlot';
 import { COMING_SOON_PUBS, type ComingSoonPubId } from '@/lib/coming-soon-pubs';
+import { share as nativeShare } from '@/lib/native/share';
+import { haptics } from '@/lib/native/haptics';
 
 const API = getApiBase();
 
@@ -1823,17 +1825,11 @@ function ShareRow({ article, pubColor, onCopied }: { article: any; pubColor: str
   const enc = (s: string) => encodeURIComponent(s);
 
   const onShareNative = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title, url });
-        trackEvent('article_shared', { article_id: article?.id, channel: 'native_sharerow' });
-      } else {
-        await navigator.clipboard.writeText(url);
-        trackEvent('article_shared', { article_id: article?.id, channel: 'copy_fallback' });
-        onCopied();
-      }
-    } catch {
-      // user cancelled, ignore
+    haptics.light();
+    const res = await nativeShare({ title, url });
+    if (res.ok) {
+      trackEvent('article_shared', { article_id: article?.id, channel: res.method });
+      if (res.method === 'clipboard') onCopied();
     }
   };
 
@@ -2118,11 +2114,13 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
       sessionStorage.removeItem(key);
       setSaved(false);
       flashToast('Removed from saves');
+      haptics.light();
       trackEvent('article_unsaved', { article_id: article.id, pub });
     } else {
       sessionStorage.setItem(key, '1');
       setSaved(true);
       flashToast('Saved (this session)');
+      haptics.notify('success');
       trackEvent('article_saved', { article_id: article.id, pub });
     }
   };
@@ -2131,16 +2129,12 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
     if (!article) return;
     const url = canonicalShareUrl(article);
     const title = article.head || article.title || '';
-    try {
-      if (navigator.share) {
-        await navigator.share({ title, url });
-        trackEvent('article_shared', { article_id: article.id, channel: 'native', pub });
-      } else {
-        await navigator.clipboard.writeText(url);
-        flashToast('Link copied');
-        trackEvent('article_shared', { article_id: article.id, channel: 'copy', pub });
-      }
-    } catch {}
+    haptics.light();
+    const res = await nativeShare({ title, url });
+    if (res.ok) {
+      trackEvent('article_shared', { article_id: article.id, channel: res.method, pub });
+      if (res.method === 'clipboard') flashToast('Link copied');
+    }
   };
 
   const onCopy = async () => {
