@@ -22,7 +22,7 @@ import { ApiError } from './error';
 import { logger } from './logger';
 import { headers } from 'next/headers';
 
-type ConfigName = 'general' | 'auth' | 'passwordReset';
+type ConfigName = 'general' | 'auth' | 'passwordReset' | 'magicLinkRequest' | 'signWizard';
 
 const configs: Record<ConfigName, { tokens: number; windowMs: number; window: `${number}${'s' | 'm' | 'h'}` }> = {
   general:       { tokens: 100, windowMs:  60_000, window: '1m'  },
@@ -31,6 +31,14 @@ const configs: Record<ConfigName, { tokens: number; windowMs: number; window: `$
   // the gate. Brute-force protection still relies on the per-IP window.
   auth:          { tokens:  30, windowMs: 900_000, window: '15m' },
   passwordReset: { tokens:  20, windowMs: 900_000, window: '15m' },
+  // F-05: tight cap on advertiser magic-link requests so an attacker can't
+  // flood an advertiser's contact_email inbox with magic-link emails.
+  // 5 per 15min per IP is plenty for a legitimate user fat-fingering email.
+  magicLinkRequest: { tokens: 5, windowMs: 900_000, window: '15m' },
+  // F-06: cap mutations on the public sign wizard. The HMAC token IS the
+  // auth, but a leaked token shouldn't permit unlimited writes. 30/hr is
+  // way above any legitimate signing flow which is ~5 patches + 1 sign.
+  signWizard:    { tokens:  30, windowMs: 3_600_000, window: '1h' },
 };
 
 let cachedRedis: Redis | null = null;

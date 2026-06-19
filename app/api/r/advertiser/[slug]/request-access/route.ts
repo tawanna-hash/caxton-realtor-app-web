@@ -17,6 +17,14 @@ import {
 import type { Advertiser } from '@/lib/advertisers';
 import { getEmailProvider } from '@/lib/server/email';
 import { escapeHtml } from '@/lib/server/email/html';
+import { rateLimit } from '@/lib/server/rate-limit';
+import { ApiError } from '@/lib/server/error';
+
+// F-11: mask the local-part of an email before logging so PII doesn't land
+// in Vercel Logs. Keeps enough signal to debug (first char + domain).
+function maskEmail(email: string): string {
+  return email.replace(/^(.).+(@.+)$/, '$1***$2');
+}
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -70,6 +78,17 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
   const { slug } = await ctx.params;
   const url = new URL(req.url);
   const t = url.searchParams.get('t');
+
+  // F-05: cap magic-link requests per IP so this endpoint can't be used to
+  // flood an advertiser's contact_email inbox.
+  try {
+    await rateLimit('magicLinkRequest', slug);
+  } catch (err) {
+    if (err instanceof ApiError && err.statusCode === 429) {
+      return NextResponse.json({ error: 'too many requests' }, { status: 429 });
+    }
+    throw err;
+  }
 
   let body: { email?: string };
   try {
@@ -156,7 +175,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         console.log('[advertiser-grant] magic link:', magicLink);
       }
     } else {
-      console.log('[advertiser-grant] non-matching email attempt for', slug, ':', email);
+      // F-11: log masked email so PII doesn't end up in Vercel Logs.
+      console.log('[advertiser-grant] non-matching email attempt for', slug, ':', maskEmail(email));
     }
 
     return NextResponse.json({ ok: true });

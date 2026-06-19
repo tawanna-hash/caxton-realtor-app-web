@@ -16,6 +16,8 @@ import {
   syncAgreementToLocationsAndStaff,
 } from '@/lib/server/billing-crm-sync';
 import { notifyAgreementSigned } from '@/lib/server/agreement-signed-notify';
+import { rateLimit } from '@/lib/server/rate-limit';
+import { ApiError } from '@/lib/server/error';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -126,6 +128,18 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
   if (!parsed) return NextResponse.json({ error: 'invalid or expired token' }, { status: 401 });
   const { agreementId: id } = parsed;
 
+  // F-06: rate-limit signing mutations even though the HMAC token IS the auth.
+  // Keyed by agreementId so each token gets its own bucket (an attacker who
+  // leaked a token still hits a per-agreement ceiling).
+  try {
+    await rateLimit('signWizard', id);
+  } catch (err) {
+    if (err instanceof ApiError && err.statusCode === 429) {
+      return NextResponse.json({ error: 'too many requests' }, { status: 429 });
+    }
+    throw err;
+  }
+
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: 'invalid json' }, { status: 400 });
@@ -164,6 +178,16 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const rows = await sql`SELECT * FROM agreements WHERE id = ${id}` as unknown as Agreement[];
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const ag = rows[0];
+
+    // F-edge: replay guard. Once an agreement is signed, the sign wizard
+    // should not re-sign it. The admin's amend/re-sign flow goes through
+    // a separate admin endpoint.
+    if (ag.signed_at) {
+      return NextResponse.json(
+        { error: 'agreement already signed', signed_at: ag.signed_at },
+        { status: 409 },
+      );
+    }
 
     // Apply any last-second patches first
     if (patches) {
@@ -305,6 +329,16 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
   if (!parsed) return NextResponse.json({ error: 'invalid or expired token' }, { status: 401 });
   const { agreementId: id } = parsed;
 
+  // F-06: rate-limit sign-wizard mutations.
+  try {
+    await rateLimit('signWizard', id);
+  } catch (err) {
+    if (err instanceof ApiError && err.statusCode === 429) {
+      return NextResponse.json({ error: 'too many requests' }, { status: 429 });
+    }
+    throw err;
+  }
+
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: 'invalid json' }, { status: 400 });
@@ -314,8 +348,16 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     await ensureSchema();
     const sql = getSql();
 
-    const rows = await sql`SELECT id FROM agreements WHERE id = ${id}` as unknown as { id: string }[];
+    const rows = await sql`SELECT id, signed_at FROM agreements WHERE id = ${id}` as unknown as { id: string; signed_at: string | null }[];
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
+
+    // F-edge: don't allow field patches on an already-signed agreement.
+    if (rows[0].signed_at) {
+      return NextResponse.json(
+        { error: 'agreement already signed', signed_at: rows[0].signed_at },
+        { status: 409 },
+      );
+    }
 
     await applyPatches(sql, id, body);
     await sql`UPDATE agreements SET updated_at = NOW() WHERE id = ${id}`;
