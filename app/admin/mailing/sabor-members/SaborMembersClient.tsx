@@ -31,6 +31,7 @@ import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 
 import PageTitle from '@/components/ui/PageTitle';
+import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
 type Counts = { total: number; verified: number; pending: number; near: number; far: number };
 type FilterKey = 'all' | 'verified' | 'pending';
 
@@ -529,6 +530,7 @@ export default function SaborMembersClient() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+      <MailingBreadcrumb trail={[{ label: 'Mailing', href: '/admin/mailing' }, { label: 'SABOR Members' }]} />
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
@@ -541,11 +543,6 @@ export default function SaborMembersClient() {
             Click any row to edit details, verify the mailing address through
             USPS, or verify the email. Verified members can be promoted to the
             active mailing list.
-          </p>
-          <p className="mt-1 text-xs text-gray-500">
-            <Link href="/admin/mailing" className="underline hover:text-gray-700">
-              ← Back to Mailing List
-            </Link>
           </p>
         </div>
         <div className="flex items-center gap-2">

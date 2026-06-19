@@ -10,6 +10,7 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { countAudienceSources, countBySegment, SEGMENTS } from '@/lib/mailing';
 
 import PageTitle from '@/components/ui/PageTitle';
+import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
 export const dynamic = 'force-dynamic';
 
 async function isAdmin(): Promise<boolean> {
@@ -78,6 +79,7 @@ export default async function MailingHubPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <MailingBreadcrumb trail={[{ label: 'Mailing' }]} />
       {/* Header */}
       <div>
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
