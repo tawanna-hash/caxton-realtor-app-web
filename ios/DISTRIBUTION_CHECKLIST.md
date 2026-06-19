@@ -99,20 +99,41 @@ through URLSession / WKWebView). You will NOT be prompted on each upload.
 
 ## Push notifications — server-side prerequisites
 
-The app now registers an APNs device token and POSTs it to
-`/api/push/native`. To actually send pushes from the back end:
+The app registers an APNs device token via `/api/push/native` (PR B) and
+the server fans out via `apns2` (PR E). To turn pushes on in production,
+set four env vars in Vercel:
 
-1. In your Apple Developer account, generate an **APNs Authentication Key**
-   (.p8 file). Note the Key ID and your Team ID.
-2. Store these as env vars on the server:
-   - `APNS_KEY_ID`
-   - `APNS_TEAM_ID`
-   - `APNS_BUNDLE_ID` = `app.realtynewsnow`
-   - `APNS_PRIVATE_KEY_P8` (the .p8 contents, base64 or PEM)
-3. Wire an `apns2` (or similar) sender in `lib/server/push.ts` to fan out
-   to `native_push_tokens` alongside the existing web push fan-out.
+| Env var | Value | Where to find it |
+|---------|-------|------------------|
+| `APNS_BUNDLE_ID` | `app.realtynewsnow` | matches the iOS bundle id |
+| `APNS_TEAM_ID` | 10-char alphanumeric | developer.apple.com → Membership → Team ID |
+| `APNS_KEY_ID` | 10-char alphanumeric | developer.apple.com → Keys → (the APNs key you create) |
+| `APNS_PRIVATE_KEY_P8` | full `.p8` PEM contents | downloaded once when you create the key — save it; Apple won't show it again |
 
-This is a follow-up — PR B set up the receive side, the sender ships next.
+Steps:
+
+1. **Create the APNs Auth Key:** developer.apple.com → Certificates,
+   Identifiers & Profiles → Keys → + → check "Apple Push Notifications
+   service (APNs)" → Continue → Register. Download the .p8 file. Note
+   the **Key ID** shown on the confirmation page.
+2. **Note your Team ID** at the top right of the developer portal.
+3. **In Vercel** (Project Settings → Environment Variables), add the four
+   vars above for the **Production** environment. For `APNS_PRIVATE_KEY_P8`
+   paste the entire .p8 contents including the `-----BEGIN PRIVATE KEY-----`
+   and `-----END PRIVATE KEY-----` lines. Either real newlines or `\n` escapes work — the sender normalizes both.
+4. **Redeploy** so the new env vars load. The next admin broadcast or
+   /api/admin/push-test call will fan out to native_push_tokens.
+5. **One key works for all environments.** The same .p8 signs both
+   development and production pushes — the routing comes from
+   `aps-environment` in `App.entitlements` (currently `production`).
+
+**How to verify it's working:** POST to `/api/admin/push-test` with a
+logged-in admin session. The response now has a `.ios` block alongside
+`.web` showing per-token success/gone/failed counts.
+
+If any env var is missing, the server logs `[native-push] APNS_* env
+vars not fully set — native push disabled.` and the broadcast still
+delivers to web subscribers without failing.
 
 ## Wrapper risk (Guideline 4.2)
 

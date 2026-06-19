@@ -12,7 +12,7 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { withErrorHandling } from '@/lib/server/error';
 import { ensureSchema, getSql } from '@/lib/db';
-import { broadcastPush } from '@/lib/server/push';
+import { broadcastPushAll } from '@/lib/server/push';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -137,7 +137,7 @@ export const PATCH = withErrorHandling(
     if (sendNow) {
       try {
         if (newChannels.includes('web_push')) {
-          sendResult = await broadcastPush(
+          const both = await broadcastPushAll(
             id,
             {
               title: newTitle,
@@ -149,6 +149,12 @@ export const PATCH = withErrorHandling(
               ? (newMarket as Market)
               : undefined,
           );
+          sendResult = {
+            sent: both.web.sent + both.ios.sent,
+            failed: both.web.failed + both.ios.failed,
+            revoked: both.web.revoked + both.ios.revoked,
+          };
+          console.log('[admin/notifications PATCH] sent', { id, web: both.web, ios: both.ios });
         }
         await sql`
           UPDATE notifications

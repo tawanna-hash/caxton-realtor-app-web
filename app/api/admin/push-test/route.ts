@@ -14,6 +14,7 @@ import { requireAdmin } from '@/lib/server/auth/admin';
 import { withErrorHandling } from '@/lib/server/error';
 import { ensureSchema, getSql } from '@/lib/db';
 import { sendPush, type PushMarketFilter } from '@/lib/server/push';
+import { sendNativePush } from '@/lib/server/native-push';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -74,12 +75,65 @@ export const POST = withErrorHandling(async (req: Request) => {
     }),
   );
 
+  // Native iOS tokens. Same market filter so admins testing a regional
+  // notification get the matching slice of the audience.
+  type NativeTokenRow = { id: string; token: string; platform: 'ios' | 'android'; market: string | null };
+  const nativeTokens = (market && market !== 'all'
+    ? await sql`
+        SELECT id, token, platform, market
+          FROM native_push_tokens
+         WHERE revoked_at IS NULL
+           AND platform = 'ios'
+           AND market = ${market}
+      `
+    : await sql`
+        SELECT id, token, platform, market
+          FROM native_push_tokens
+         WHERE revoked_at IS NULL
+           AND platform = 'ios'
+      `) as unknown as NativeTokenRow[];
+
+  const nativeResults = await Promise.all(
+    nativeTokens.map(async (row) => {
+      const res = await sendNativePush(row.token, {
+        title,
+        body: text,
+        url,
+        tag: 'rnn-test',
+      });
+      return {
+        tokenId: row.id,
+        platform: row.platform,
+        market: row.market,
+        ...res,
+      };
+    }),
+  );
+
   return NextResponse.json({
     ok: true,
-    subscriberCount: subs.length,
-    sent: results.filter((r) => r.ok).length,
-    gone: results.filter((r) => r.gone).length,
-    failed: results.filter((r) => !r.ok && !r.gone).length,
-    results,
+    web: {
+      subscriberCount: subs.length,
+      sent: results.filter((r) => r.ok).length,
+      gone: results.filter((r) => r.gone).length,
+      failed: results.filter((r) => !r.ok && !r.gone).length,
+      results,
+    },
+    ios: {
+      tokenCount: nativeTokens.length,
+      sent: nativeResults.filter((r) => r.ok).length,
+      gone: nativeResults.filter((r) => r.gone).length,
+      failed: nativeResults.filter((r) => !r.ok && !r.gone).length,
+      results: nativeResults,
+    },
+    // Combined totals — preserved for any caller that was reading the
+    // old flat shape. Admins reading the new per-channel breakdown should
+    // prefer .web / .ios.
+    subscriberCount: subs.length + nativeTokens.length,
+    sent: results.filter((r) => r.ok).length + nativeResults.filter((r) => r.ok).length,
+    gone: results.filter((r) => r.gone).length + nativeResults.filter((r) => r.gone).length,
+    failed:
+      results.filter((r) => !r.ok && !r.gone).length +
+      nativeResults.filter((r) => !r.ok && !r.gone).length,
   });
 });

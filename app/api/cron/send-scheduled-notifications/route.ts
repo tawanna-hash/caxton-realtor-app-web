@@ -12,7 +12,7 @@
 
 import { NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
-import { broadcastPush } from '@/lib/server/push';
+import { broadcastPushAll } from '@/lib/server/push';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -96,7 +96,7 @@ export async function GET(req: Request) {
     try {
       let sendResult = { sent: 0, failed: 0, revoked: 0 };
       if (channels.includes('web_push')) {
-        sendResult = await broadcastPush(
+        const both = await broadcastPushAll(
           row.id,
           {
             title: row.title,
@@ -106,6 +106,15 @@ export async function GET(req: Request) {
           },
           market,
         );
+        // 'web_push' channel here means "the default push fan-out" — we
+        // include native iOS alongside it so an opted-in iPhone user gets
+        // exactly one push per notification, on whichever channel they have.
+        sendResult = {
+          sent: both.web.sent + both.ios.sent,
+          failed: both.web.failed + both.ios.failed,
+          revoked: both.web.revoked + both.ios.revoked,
+        };
+        console.log('[cron/send-scheduled-notifications] sent', { id: row.id, web: both.web, ios: both.ios });
       }
       await sql`
         UPDATE notifications
