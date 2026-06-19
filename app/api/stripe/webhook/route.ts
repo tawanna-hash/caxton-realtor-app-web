@@ -45,6 +45,28 @@ export async function POST(req: NextRequest) {
     await ensureSchema();
     const sql = getSql();
 
+    // F-edge: idempotency guard. Stripe retries 5xx for up to 3 days, so the
+    // same event.id can hit us repeatedly. Bail early if we've already
+    // processed this event. Race-safe: the INSERT is the leader-election.
+    try {
+      const insertResult = (await sql`
+        INSERT INTO stripe_webhook_events (event_id, event_type)
+        VALUES (${event.id}, ${event.type})
+        ON CONFLICT (event_id) DO NOTHING
+        RETURNING event_id
+      `) as unknown as { event_id: string }[];
+      if (insertResult.length === 0) {
+        // Already processed (or another concurrent invocation got there first).
+        console.log('[stripe-webhook] duplicate event ignored:', event.id);
+        return NextResponse.json({ received: true, deduped: true });
+      }
+    } catch (err) {
+      // Table missing in some preview env? Log and fall through — better to
+      // double-process (idempotent UPDATEs) than to drop a real payment event.
+      console.warn('[stripe-webhook] dedupe insert failed; proceeding:',
+        err instanceof Error ? err.message : 'unknown');
+    }
+
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent;
