@@ -66,8 +66,35 @@ function captureToPostHog(event: string, props: Record<string, unknown>): void {
   try { posthog.capture(event, props); } catch { /* swallow */ }
 }
 
+// Well-known browser-extension and plugin noise. None of these are real app
+// errors - they originate from Microsoft Office Smart Lookup, browser
+// extensions (LastPass, Grammarly, etc.), and cross-origin script tags
+// whose details the browser hides. Dropping these stops the alert spam.
+const NOISE_PATTERNS: RegExp[] = [
+  /Object Not Found Matching Id/i,           // MS Office / Edge Smart Lookup
+  /^Script error\.?$/i,                       // Cross-origin script (no detail)
+  /ResizeObserver loop (limit exceeded|completed with undelivered notifications)/i,
+  /Non-Error promise rejection captured/i,
+  /Loading chunk \d+ failed/i,                // Stale deploy chunk, harmless
+  /ChunkLoadError/i,
+  /Failed to fetch dynamically imported module/i,
+  /The operation was aborted/i,               // User navigation / fetch abort
+  /AbortError/i,
+  /NetworkError when attempting to fetch/i,   // User offline
+  /Load failed/i,                             // Safari network
+  /chrome-extension:\/\//i,                   // Extension errors
+  /moz-extension:\/\//i,
+  /safari-extension:\/\//i,
+];
+
+function isNoiseError(message: string, source?: string): boolean {
+  const combined = `${message} ${source || ''}`;
+  return NOISE_PATTERNS.some((rx) => rx.test(combined));
+}
+
 function onError(message: string, source?: string, lineno?: number, colno?: number, errorObj?: unknown): void {
   if (errorBudget.remaining <= 0) return;
+  if (isNoiseError(message, source)) return;
   errorBudget.remaining -= 1;
   const detail = [source && `${source}:${lineno}:${colno}`, errorObj instanceof Error ? errorObj.stack : null]
     .filter(Boolean)
