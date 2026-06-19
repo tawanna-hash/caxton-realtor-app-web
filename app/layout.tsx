@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "./posthog-provider";
 import PushBootstrap from "@/components/PushBootstrap";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const SITE_URL = "https://realtynewsnow.app";
 const SITE_NAME = "Realty News Now";
@@ -104,6 +105,10 @@ export default function RootLayout({
           <PushBootstrap />
           {children}
         </PostHogProvider>
+        {/* Vercel Speed Insights — collects real-user Core Web Vitals (LCP,
+            CLS, INP, FCP, TTFB) and surfaces them in the Vercel dashboard.
+            Loaded after the app tree so it never blocks initial render. */}
+        <SpeedInsights />
       </body>
     </html>
   );

@@ -15,7 +15,33 @@ import type { Advertiser, AdvertiserLocation, AdvertiserStaff } from '@/lib/adve
 import { listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
 import AdvertiserDetailClient from './AdvertiserDetailClient';
 
-export const dynamic = 'force-dynamic';
+// Advertiser detail pages change infrequently (edits happen via /admin, not
+// per-request). Switching from force-dynamic to ISR with a 10-minute revalidate
+// window cuts cold-cache mobile LCP dramatically (was 4.2s on hollywood-crawford
+// in PSI) by serving cached HTML from Vercel's edge instead of running 4-6
+// serial Neon queries on every visit. The page still revalidates in the
+// background so edits surface within ~10 min without a manual purge.
+export const revalidate = 600;
+
+// Pre-render the active advertiser slugs at build time. This makes the very
+// first visit after a deploy fast too — no on-demand render. New advertisers
+// fall through to on-demand rendering and get cached on first hit.
+export async function generateStaticParams() {
+  try {
+    await ensureSchema();
+    const sql = getSql();
+    const rows = (await sql`
+      SELECT slug FROM advertisers
+      WHERE COALESCE(status, 'advertiser') IN ('advertiser', 'active')
+    `) as unknown as Array<{ slug: string }>;
+    return rows.map((r) => ({ slug: r.slug }));
+  } catch {
+    // If the DB is unreachable at build time (rare — build runs against
+    // production Neon), fall back to fully on-demand rendering. The page
+    // still works, it just won't be pre-rendered.
+    return [];
+  }
+}
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -33,9 +59,20 @@ export async function generateMetadata({ params }: PageProps) {
   `) as unknown as Array<{ name: string; tagline: string | null }>;
   if (rows.length === 0) return { title: 'Advertiser not found' };
   const r = rows[0];
+  // Per-page canonical — without this the root layout's `alternates.canonical:
+  // '/'` propagates and every advertiser page tells Google its canonical URL
+  // is the homepage. That made all advertiser pages compete with `/` in the
+  // index instead of standing on their own (PSI SEO flag on every page).
+  const canonical = `/advertisers/${slug}`;
   return {
     title: `${r.name} — Realty News Now`,
     description: r.tagline ?? `${r.name} on Realty News Now.`,
+    alternates: { canonical },
+    openGraph: {
+      url: canonical,
+      title: `${r.name} — Realty News Now`,
+      description: r.tagline ?? `${r.name} on Realty News Now.`,
+    },
   };
 }
 
