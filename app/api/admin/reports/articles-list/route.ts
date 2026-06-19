@@ -7,11 +7,6 @@
 //
 // Query params:
 //   days (optional, default 60) - window to scan, clamped 1..365
-//
-// Resilience: PostHog and WP are queried independently. Either failing
-// must not blank out the picker. We always return 200 with whatever
-// subset we could assemble, and surface a `warning` field when one of
-// the upstreams failed so the UI can hint at degraded data.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
@@ -25,14 +20,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-async function verifyAdmin(): Promise<boolean> {
-  try {
-    const admin = await getCurrentAdmin();
-    return admin !== null;
-  } catch {
-    return false;
-  }
-}
+type PostHogRow = { title: string | null; pub: string | null; opens: number };
+type LiveRow = { id: string; head: string; pub: 'realtyline' | 'newsline' };
 
 async function runHogQL(query: string): Promise<unknown[]> {
   const res = await fetch(
@@ -55,39 +44,21 @@ async function runHogQL(query: string): Promise<unknown[]> {
   return data.results ?? [];
 }
 
-type PostHogRow = { title: string | null; pub: string | null; opens: number };
-type LiveRow = { id: string; head: string; pub: 'realtyline' | 'newsline' };
-
-async function fetchPostHogRows(days: number): Promise<{
+async function fetchPostHogRows(days: number, log: (s: string) => void): Promise<{
   byId: Map<string, PostHogRow>;
   warning: string | null;
 }> {
   if (!POSTHOG_API_KEY || !POSTHOG_PROJECT_ID) {
-    return { byId: new Map(), warning: 'PostHog env vars missing - showing WP articles only.' };
+    log('posthog: env missing');
+    return { byId: new Map(), warning: 'PostHog env vars missing.' };
   }
   try {
+    log('posthog: querying');
     const raw = await runHogQL(`
       SELECT
         properties.article_id AS article_id,
-        nullIf(
-          coalesce(
-            any(properties.article_title),
-            any(properties.title),
-            any(properties.article_head),
-            any(properties.head),
-            ''
-          ),
-          ''
-        ) AS title,
-        nullIf(
-          coalesce(
-            any(properties.pub),
-            any(properties.publication),
-            any(properties.pub_id),
-            ''
-          ),
-          ''
-        ) AS pub,
+        nullIf(coalesce(any(properties.article_title), any(properties.title), any(properties.article_head), any(properties.head), ''), '') AS title,
+        nullIf(coalesce(any(properties.pub), any(properties.publication), any(properties.pub_id), ''), '') AS pub,
         count() AS opens
       FROM events
       WHERE event = 'article_opened'
@@ -97,82 +68,121 @@ async function fetchPostHogRows(days: number): Promise<{
       ORDER BY opens DESC
       LIMIT 200
     `);
+    log(`posthog: ok, ${raw.length} rows`);
     const byId = new Map<string, PostHogRow>();
     for (const r of raw) {
       const row = r as [string, string | null, string | null, number];
       const id = String(row[0]);
-      byId.set(id, {
-        title: row[1] ?? null,
-        pub: row[2] ?? null,
-        opens: Number(row[3]),
-      });
+      byId.set(id, { title: row[1] ?? null, pub: row[2] ?? null, opens: Number(row[3]) });
     }
     return { byId, warning: null };
   } catch (err) {
-    console.error('[articles-list] PostHog query failed', err);
-    return {
-      byId: new Map(),
-      warning: 'Open-count data unavailable (PostHog query failed). Showing articles without engagement counts.',
-    };
+    const msg = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    log(`posthog: FAILED ${msg}`);
+    console.error('[articles-list] PostHog failed:', msg, stack);
+    return { byId: new Map(), warning: `PostHog: ${msg}` };
   }
 }
 
-async function fetchLiveArticles(): Promise<{ live: LiveRow[]; warning: string | null }> {
+async function fetchLiveArticles(log: (s: string) => void): Promise<{ live: LiveRow[]; warning: string | null }> {
   const live: LiveRow[] = [];
   const warnings: string[] = [];
+
+  log('wp: austin start');
   try {
-    const austin = await getNewsRaw('austin').catch((err) => {
-      console.error('[articles-list] getNewsRaw(austin) failed', err);
-      warnings.push('RealtyLine Austin article list unavailable.');
-      return [] as Awaited<ReturnType<typeof getNewsRaw>>;
-    });
+    const austin = await getNewsRaw('austin');
+    log(`wp: austin ok, ${austin.length} articles`);
     for (const a of austin) live.push({ id: String(a.id), head: a.head, pub: 'realtyline' });
   } catch (err) {
-    console.error('[articles-list] austin fetch threw', err);
-    warnings.push('RealtyLine Austin article list unavailable.');
+    const msg = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    log(`wp: austin FAILED ${msg}`);
+    console.error('[articles-list] austin failed:', msg, stack);
+    warnings.push(`Austin: ${msg}`);
   }
+
+  log('wp: sa start');
   try {
-    const sa = await getNewsRaw('san_antonio').catch((err) => {
-      console.error('[articles-list] getNewsRaw(san_antonio) failed', err);
-      warnings.push('Newsline San Antonio article list unavailable.');
-      return [] as Awaited<ReturnType<typeof getNewsRaw>>;
-    });
+    const sa = await getNewsRaw('san_antonio');
+    log(`wp: sa ok, ${sa.length} articles`);
     for (const a of sa) live.push({ id: String(a.id), head: a.head, pub: 'newsline' });
   } catch (err) {
-    console.error('[articles-list] san_antonio fetch threw', err);
-    warnings.push('Newsline San Antonio article list unavailable.');
+    const msg = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    log(`wp: sa FAILED ${msg}`);
+    console.error('[articles-list] sa failed:', msg, stack);
+    warnings.push(`SA: ${msg}`);
   }
-  return {
-    live,
-    warning: warnings.length > 0 ? warnings.join(' ') : null,
-  };
+
+  return { live, warning: warnings.length > 0 ? warnings.join(' | ') : null };
 }
 
 export async function GET(req: NextRequest) {
-  const isAdmin = await verifyAdmin();
-  if (!isAdmin) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const daysRaw = req.nextUrl.searchParams.get('days');
-  const daysParsed = daysRaw ? parseInt(daysRaw, 10) : 60;
-  const days = Number.isFinite(daysParsed) && daysParsed >= 1 && daysParsed <= 365
-    ? daysParsed
-    : 60;
+  const trace: string[] = [];
+  const log = (s: string) => {
+    const stamp = `${Date.now()}`;
+    trace.push(`[${stamp}] ${s}`);
+    console.log(`[articles-list] ${s}`);
+  };
 
   try {
-    // Run PostHog + WP independently. Either side failing produces a warning
-    // but never blanks out the dropdown.
-    const [posthog, liveResult] = await Promise.all([
-      fetchPostHogRows(days),
-      fetchLiveArticles(),
-    ]);
+    log('start');
+
+    // Auth - explicit try around getCurrentAdmin so we capture token-decode throws.
+    let isAdmin = false;
+    try {
+      const admin = await getCurrentAdmin();
+      isAdmin = admin !== null;
+      log(`auth: ${isAdmin ? 'admin' : 'no admin'}`);
+    } catch (authErr) {
+      const msg = authErr instanceof Error ? authErr.message : String(authErr);
+      const stack = authErr instanceof Error ? authErr.stack : undefined;
+      log(`auth: THREW ${msg}`);
+      console.error('[articles-list] auth threw:', msg, stack);
+      return NextResponse.json(
+        { ok: false, error: 'Auth check failed', detail: msg, trace },
+        { status: 500 },
+      );
+    }
+
+    if (!isAdmin) {
+      return NextResponse.json({ ok: false, error: 'Unauthorized', trace }, { status: 401 });
+    }
+
+    const daysRaw = req.nextUrl.searchParams.get('days');
+    const daysParsed = daysRaw ? parseInt(daysRaw, 10) : 60;
+    const days = Number.isFinite(daysParsed) && daysParsed >= 1 && daysParsed <= 365 ? daysParsed : 60;
+    log(`days=${days}`);
+
+    let posthog: { byId: Map<string, PostHogRow>; warning: string | null } = { byId: new Map(), warning: null };
+    let liveResult: { live: LiveRow[]; warning: string | null } = { live: [], warning: null };
+
+    try {
+      posthog = await fetchPostHogRows(days, log);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      log(`posthog wrapper THREW ${msg}`);
+      console.error('[articles-list] posthog wrapper threw:', e);
+      posthog = { byId: new Map(), warning: `PostHog wrapper: ${msg}` };
+    }
+
+    try {
+      liveResult = await fetchLiveArticles(log);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      log(`wp wrapper THREW ${msg}`);
+      console.error('[articles-list] wp wrapper threw:', e);
+      liveResult = { live: [], warning: `WP wrapper: ${msg}` };
+    }
+
+    log(`merging: ${posthog.byId.size} ph, ${liveResult.live.length} wp`);
 
     const posthogById = posthog.byId;
     const live = liveResult.live;
-
     const seen = new Set<string>();
     const articles: Array<{ article_id: string; title: string; pub: string | null; opens: number }> = [];
+
     for (const l of live) {
       seen.add(l.id);
       const ph = posthogById.get(l.id);
@@ -198,21 +208,27 @@ export async function GET(req: NextRequest) {
       return a.title.localeCompare(b.title);
     });
 
+    log(`returning ${articles.length} articles`);
     const warnings = [posthog.warning, liveResult.warning].filter(Boolean) as string[];
-    const warning = warnings.length > 0 ? warnings.join(' ') : undefined;
+    const warning = warnings.length > 0 ? warnings.join(' | ') : undefined;
 
     return NextResponse.json({
       ok: true,
       articles,
       range_days: days,
+      trace,
       ...(warning ? { warning } : {}),
     });
   } catch (err) {
-    console.error('[articles-list] fatal', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    console.error('[articles-list] FATAL:', msg, stack);
     return NextResponse.json(
       {
         ok: false,
-        error: err instanceof Error ? err.message : 'Unknown error',
+        error: msg,
+        stack: stack?.split('\n').slice(0, 8),
+        trace,
         articles: [],
       },
       { status: 500 },
