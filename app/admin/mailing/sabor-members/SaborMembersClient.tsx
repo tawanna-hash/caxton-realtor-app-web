@@ -32,6 +32,7 @@ import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 
 import PageTitle from '@/components/ui/PageTitle';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
+import ExportMenu from '@/components/admin/ExportMenu';
 type Counts = { total: number; verified: number; pending: number; near: number; far: number };
 type FilterKey = 'all' | 'verified' | 'pending';
 
@@ -463,7 +464,13 @@ export default function SaborMembersClient() {
 
   const handleExport = (format: 'csv' | 'tsv' | 'json') => {
     const url = `/api/admin/mailing/holding/export?source=${encodeURIComponent(HOLDING_SOURCE)}&format=${format}`;
-    window.open(url, '_blank');
+    const a = document.createElement('a');
+    a.href = url;
+    a.rel = 'noopener';
+    a.target = '_self';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   const handleRefreshAddresses = async () => {
@@ -568,20 +575,7 @@ export default function SaborMembersClient() {
 
       {/* Secondary actions row — Dedupe / Export / Refresh / Delete all */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative inline-block group">
-          <button
-            type="button"
-            disabled={busy !== null}
-            className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-          >
-            Export ▾
-          </button>
-          <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-10 bg-white border border-gray-200 rounded-md shadow-sm py-1 min-w-[140px]">
-            <button onClick={() => handleExport('csv')}  className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50">CSV</button>
-            <button onClick={() => handleExport('tsv')}  className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50">TSV</button>
-            <button onClick={() => handleExport('json')} className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50">JSON</button>
-          </div>
-        </div>
+        <ExportMenu disabled={busy !== null} onSelect={handleExport} />
         <button
           type="button"
           onClick={handleDedupe}
