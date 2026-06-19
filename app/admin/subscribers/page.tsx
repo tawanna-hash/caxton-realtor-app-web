@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import { PUBLICATIONS, PUBLICATION_LABELS } from '@/lib/publications';
@@ -47,15 +47,32 @@ function formatDate(s: string | null) {
   return new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+// useSearchParams() requires a Suspense boundary in the app router.
+// Wrap the inner component so the boundary stays tight.
 export default function SubscribersPage() {
+  return (
+    <Suspense fallback={null}>
+      <SubscribersInner />
+    </Suspense>
+  );
+}
+
+function SubscribersInner() {
   const { admin, loading: authLoading } = useAdmin();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Initial market filter can be deep-linked via ?market=austin|san_antonio
+  // (used by the Mailing Hub publication-split tiles).
+  const initialMarket: '' | 'austin' | 'san_antonio' = (() => {
+    const m = searchParams?.get('market');
+    return m === 'austin' || m === 'san_antonio' ? m : '';
+  })();
   const [data, setData] = useState<ListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(50);
-  const [market, setMarket] = useState<'' | 'austin' | 'san_antonio'>('');
+  const [market, setMarket] = useState<'' | 'austin' | 'san_antonio'>(initialMarket);
   const [q, setQ] = useState('');
   const [qInput, setQInput] = useState('');
   const [exporting, setExporting] = useState(false);

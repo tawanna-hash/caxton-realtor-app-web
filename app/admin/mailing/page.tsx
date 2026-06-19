@@ -46,33 +46,53 @@ export default async function MailingHubPage() {
 
   // Accents: each tile uses a distinct palette hue so they remain visually
   // distinguishable while staying in the 4-color lockdown.
-  const audienceTiles: AudienceTile[] = [
+  //
+  // Audience pages are split by publication so each sub-section above has
+  // its own board mirror + app-signups + manual-subscribe entry.
+  const austinAudienceTiles: AudienceTile[] = [
     {
       label: 'ABOR Members',
       href: '/admin/mailing/holding',
       caption: 'Austin Board of REALTORS — staging & review queue.',
-      accent: '#6b7280',  // neutral
+      accent: '#6b7280',
       initial: 'A',
     },
+    {
+      label: 'App Subscribers — RealtyLine Austin',
+      href: '/admin/subscribers?market=austin',
+      caption: 'RealtyLine Austin newsletter signups from realtynewsnow.app.',
+      accent: '#ea580c',
+      initial: 'A',
+    },
+    {
+      label: 'Manual Subscribe',
+      href: '/subscribe',
+      caption: 'Add a RealtyLine Austin subscriber by hand (public form).',
+      accent: '#3D0740',
+      initial: 'M',
+    },
+  ];
+
+  const sanAntonioAudienceTiles: AudienceTile[] = [
     {
       label: 'SABOR Members',
       href: '/admin/mailing/sabor-members',
       caption: 'San Antonio Board of REALTORS mirror.',
-      accent: '#2563eb',  // blue-600
+      accent: '#2563eb',
       initial: 'S',
     },
     {
-      label: 'App Subscribers',
-      href: '/admin/subscribers',
-      caption: 'Newsletter signups from realtynewsnow.app.',
-      accent: '#ea580c',  // orange-600
+      label: 'App Subscribers — Newsline San Antonio',
+      href: '/admin/subscribers?market=san_antonio',
+      caption: 'Newsline San Antonio newsletter signups from realtynewsnow.app.',
+      accent: '#ea580c',
       initial: 'N',
     },
     {
       label: 'Manual Subscribe',
       href: '/subscribe',
-      caption: 'Add a subscriber by hand (public form).',
-      accent: '#3D0740',  // purple-700 (brand)
+      caption: 'Add a Newsline San Antonio subscriber by hand (public form).',
+      accent: '#3D0740',
       initial: 'M',
     },
   ];
@@ -171,33 +191,51 @@ export default async function MailingHubPage() {
         );
       })()}
 
-      {/* Audience pages — every page under Audience nav, surfaced as a tile here */}
-      <div>
-        <h2 className="font-serif text-xl text-gray-900 mb-3">Audience pages</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {audienceTiles.map((t) => (
-            <Link
-              key={t.href}
-              href={t.href}
-              className="group block rounded-md border border-gray-200 bg-white p-5 hover:shadow-sm transition"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div
-                  className="h-10 w-10 rounded-md flex items-center justify-center text-sm font-semibold"
-                  style={{ backgroundColor: `${t.accent}15`, color: t.accent }}
-                >
-                  {t.initial}
-                </div>
+      {/* Audience pages — split by publication so each section above has
+          its own board mirror + app signups + manual-subscribe entry. */}
+      {(() => {
+        const renderAudienceTile = (t: AudienceTile) => (
+          <Link
+            key={t.href}
+            href={t.href}
+            className="group block rounded-md border border-gray-200 bg-white p-5 hover:shadow-sm transition"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div
+                className="h-10 w-10 rounded-md flex items-center justify-center text-sm font-semibold"
+                style={{ backgroundColor: `${t.accent}15`, color: t.accent }}
+              >
+                {t.initial}
               </div>
-              <div className="font-serif text-lg text-gray-900">{t.label}</div>
-              <p className="mt-1 text-sm text-gray-600">{t.caption}</p>
-              <div className="mt-3 text-xs font-medium text-gray-700 group-hover:text-gray-900">
-                Open page
+            </div>
+            <div className="font-serif text-lg text-gray-900">{t.label}</div>
+            <p className="mt-1 text-sm text-gray-600">{t.caption}</p>
+            <div className="mt-3 text-xs font-medium text-gray-700 group-hover:text-gray-900">
+              Open page
+            </div>
+          </Link>
+        );
+        return (
+          <div className="space-y-8">
+            <div>
+              <div className="flex items-baseline gap-3 mb-3">
+                <h2 className="font-serif text-xl text-gray-900">RealtyLine Austin audience pages</h2>
               </div>
-            </Link>
-          ))}
-        </div>
-      </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {austinAudienceTiles.map(renderAudienceTile)}
+              </div>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-3 mb-3">
+                <h2 className="font-serif text-xl text-gray-900">Newsline San Antonio audience pages</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sanAntonioAudienceTiles.map(renderAudienceTile)}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Footer hint */}
       <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 px-6 py-6 text-center">
