@@ -2,7 +2,7 @@
 
 // components/BottomNav.tsx
 //
-// Fixed bottom tab bar: Feed / Calendar / Builders / Advertisers / More.
+// Fixed bottom tab bar: Feed / Calendar / Builders / Issues / Advertisers / More.
 // Rendered by AppShell on every public-variant page and by the dashboard
 // (which doesn't use AppShell) in place of its prior inline nav.
 //
@@ -29,7 +29,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
-import { Home, Calendar, Building2, Megaphone, MoreHorizontal } from 'lucide-react';
+import { Home, Calendar, Building2, BookOpen, Megaphone, MoreHorizontal } from 'lucide-react';
 
 type PubInfo = {
   name: string;
@@ -45,7 +45,7 @@ type Props = {
 
 // Destination routes the bar can navigate to. /dashboard isn't included
 // because Feed taps usually fire a same-page event rather than a route push.
-const PREFETCH_ROUTES = ['/calendar', '/builders', '/advertisers', '/dashboard'] as const;
+const PREFETCH_ROUTES = ['/calendar', '/builders', '/magazine', '/advertisers', '/dashboard'] as const;
 
 export default function BottomNav({ info, onMoreClick }: Props) {
   const pathname = usePathname();
@@ -86,6 +86,7 @@ export default function BottomNav({ info, onMoreClick }: Props) {
   const isHome = matches('/dashboard', true);
   const isCalendar = matches('/calendar');
   const isBuilders = matches('/builders');
+  const isMagazine = matches('/magazine');
   const isAdvertisers = matches('/advertisers');
 
   function navigate(target: string) {
@@ -142,6 +143,9 @@ export default function BottomNav({ info, onMoreClick }: Props) {
         <Tab label="Builders" active={isBuilders} accent={accent} onClick={() => navigate('/builders')}>
           <Building2 strokeWidth={1.75} size={22} />
         </Tab>
+        <Tab label="Issues" active={isMagazine} accent={accent} onClick={() => navigate('/magazine')}>
+          <BookOpen strokeWidth={1.75} size={22} />
+        </Tab>
         <Tab label="Advertisers" active={isAdvertisers} accent={accent} onClick={() => navigate('/advertisers')}>
           <Megaphone strokeWidth={1.75} size={22} />
         </Tab>
@@ -174,14 +178,19 @@ function Tab({
       // - active:scale-95 gives a quick "press" feel under the finger
       // - WebkitTapHighlightColor:transparent kills iOS's grey flash so
       //   our own pressed-state is the only thing the user sees
-      className="flex flex-col items-center justify-center flex-1 px-1 gap-1 min-h-[44px] transition-transform duration-75 active:scale-95"
+      // px-0 so six tabs fit on a 320px-wide iPhone SE without truncating
+      // the all-caps labels; flex-1 still distributes width evenly.
+      className="flex flex-col items-center justify-center flex-1 px-0 gap-1 min-h-[44px] transition-transform duration-75 active:scale-95"
       style={{
         color: active ? accent : '#9ca3af',
         WebkitTapHighlightColor: 'transparent',
       }}
     >
       {children}
-      <span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap">
+      {/* Tracking tightened from -wider to -tight so 'Advertisers' (11 chars)
+          fits inside its ~53px tab slice on a 320px-wide iPhone SE without
+          truncation. The label set is fixed so this won't break other text. */}
+      <span className="text-[10px] font-medium uppercase tracking-tight whitespace-nowrap">
         {label}
       </span>
     </button>

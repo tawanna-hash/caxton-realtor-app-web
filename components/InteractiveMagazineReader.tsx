@@ -1074,7 +1074,7 @@ export default function InteractiveMagazineReader({
       ref={containerRef}
       role="dialog"
       aria-modal="true"
-      aria-label={`${magazine.issue_label} — interactive magazine`}
+      aria-label={`${magazine.issue_label} — interactive issue`}
       tabIndex={-1}
       className="fixed inset-0 z-[60] bg-gray-900 flex flex-col select-none outline-none"
     >

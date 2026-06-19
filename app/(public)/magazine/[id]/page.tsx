@@ -34,11 +34,11 @@ export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
   const idNum = Number(id);
   if (!Number.isInteger(idNum) || idNum < 1) {
-    return { title: 'Magazine — Realty News Now' };
+    return { title: 'Issues — Realty News Now' };
   }
   try {
     const mag = await fetchMagazineById(idNum);
-    if (!mag) return { title: 'Magazine — Realty News Now' };
+    if (!mag) return { title: 'Issues — Realty News Now' };
     return {
       title: `${mag.issue_label} — Realty News Now`,
       description: `Read ${mag.issue_label} from ${mag.publication === 'austin' ? 'RealtyLine' : 'Newsline San Antonio'}.`,
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: PageProps) {
       },
     };
   } catch {
-    return { title: 'Magazine — Realty News Now' };
+    return { title: 'Issues — Realty News Now' };
   }
 }
 
