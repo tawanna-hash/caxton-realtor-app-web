@@ -4,6 +4,24 @@ Working checklist matching Apple's 11-step "Prepare for app distribution"
 guide. Items handled in code live in this repo; items handled outside Xcode
 are tracked here so we know exactly what to do in App Store Connect.
 
+## Toolchain requirements (Apple-enforced at submission)
+
+Apple requires apps to be built with the latest Apple SDKs and packaged via
+Xcode. Current floor (as of June 2026):
+
+| Tool | Minimum on build machine | Notes |
+|------|--------------------------|-------|
+| Xcode | **16.0+** | enforced for App Store and TestFlight uploads |
+| iOS SDK | **18.0+** | bundled with Xcode 16 |
+| macOS | macOS Sonoma 14.5 or newer | required to install Xcode 16 |
+| CocoaPods | 1.15+ | `sudo gem install cocoapods` |
+
+The project itself is aligned to this:
+- Capacitor 7.6 (requires Xcode 16+, iOS 14 minimum — we target 15)
+- All 9 Capacitor plugins on v7
+- `objectVersion = 56` and `LastUpgradeCheck = 1600` in `project.pbxproj`
+- Swift 5 (Xcode 16 ships Swift 6 toolchain, which compiles Swift 5 code unchanged)
+
 ## In code (this repo)
 
 | Step | Item | Where | Value |
