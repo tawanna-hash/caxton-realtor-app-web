@@ -27,36 +27,30 @@ export default async function OpenGraphImage() {
           flexDirection: 'column',
           justifyContent: 'space-between',
           padding: '72px',
-          background:
-            'linear-gradient(135deg, #021D40 0%, #021D40 55%, #021D40 100%)',
+          background: '#000000',
           color: '#ffffff',
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       >
-        {/* Top mark */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        {/* Top mark — RNN wordmark */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div
             style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '12px',
-              background: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#021D40',
-              fontSize: '32px',
+              fontSize: '64px',
               fontWeight: 800,
+              letterSpacing: '-0.04em',
+              color: '#ffffff',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
             }}
           >
-            R
+            RNN
           </div>
           <div
             style={{
-              fontSize: '24px',
-              letterSpacing: '0.18em',
+              fontSize: '22px',
+              letterSpacing: '0.22em',
               textTransform: 'uppercase',
-              color: '#93c5fd',
+              color: '#9ca3af',
               fontWeight: 600,
             }}
           >
@@ -81,7 +75,7 @@ export default async function OpenGraphImage() {
             style={{
               fontSize: '32px',
               lineHeight: 1.3,
-              color: '#93c5fd',
+              color: '#d1d5db',
               maxWidth: '900px',
               fontWeight: 400,
             }}
@@ -98,7 +92,7 @@ export default async function OpenGraphImage() {
             justifyContent: 'space-between',
             alignItems: 'flex-end',
             fontSize: '22px',
-            color: '#93c5fd',
+            color: '#9ca3af',
           }}
         >
           <div style={{ display: 'flex', gap: '32px' }}>
