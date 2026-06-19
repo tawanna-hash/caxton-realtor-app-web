@@ -24,6 +24,7 @@ import {
   isSaborSegment,
   guessField,
   splitFullName,
+  SEGMENTS,
   type MailingColumnId,
   type MailingContactRow,
   type MailingSegment,
@@ -344,6 +345,41 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
     await reload();
   }
 
+  async function handleMove(target: MailingSegment) {
+    if (selectedIds.size === 0) return;
+    if (target === segment) {
+      alert('Those contacts are already in this list.');
+      return;
+    }
+    const targetLabel = SEGMENTS.find((s) => s.segment === target)?.label ?? target;
+    if (!confirm(`Move ${selectedIds.size} contact(s) to "${targetLabel}"?`)) return;
+    setBusy('Moving\u2026');
+    try {
+      const res = await fetch('/api/admin/mailing/bulk', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'move',
+          ids: Array.from(selectedIds),
+          target_segment: target,
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
+      }
+      const j = await res.json() as { moved: number };
+      alert(`Moved ${j.moved.toLocaleString()} contact(s) to ${targetLabel}.`);
+      setSelectedIds(new Set());
+      await reload();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function handleDelete() {
     if (selectedIds.size === 0) return;
     if (!confirm(`Delete ${selectedIds.size} contact(s)? This cannot be undone.`)) return;
@@ -656,6 +692,12 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
           >
             Edit {selectedIds.size}
           </button>
+          <MoveToMenu
+            currentSegment={segment}
+            disabled={busy !== null}
+            count={selectedIds.size}
+            onMove={(target) => handleMove(target)}
+          />
           <button
             type="button"
             onClick={handleDelete}
@@ -861,6 +903,74 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
 // ============================================================
 // Subcomponents
 // ============================================================
+
+function MoveToMenu({
+  currentSegment, count, disabled, onMove,
+}: {
+  currentSegment: MailingSegment;
+  count: number;
+  disabled: boolean;
+  onMove: (target: MailingSegment) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (!t || !t.closest('[data-move-to-menu]')) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('click', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const targets = SEGMENTS.filter((s) => s.segment !== currentSegment);
+
+  return (
+    <div className="relative" data-move-to-menu>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={disabled}
+        className="px-3 py-1.5 rounded-md border border-[#3D0740] text-[#3D0740] text-xs font-medium hover:bg-[#3D0740]/5 disabled:opacity-50 inline-flex items-center gap-1"
+      >
+        Move {count} to
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div
+          className="absolute right-0 top-full mt-1 z-20 min-w-[260px] rounded-md border border-gray-200 bg-white shadow-lg py-1"
+          role="menu"
+        >
+          {targets.map((s) => (
+            <button
+              key={s.segment}
+              type="button"
+              onClick={() => { setOpen(false); onMove(s.segment); }}
+              className="w-full text-left px-3 py-2 text-xs text-gray-800 hover:bg-gray-50"
+              role="menuitem"
+            >
+              <div className="flex items-center gap-2">
+                <span
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{ backgroundColor: s.accent }}
+                  aria-hidden
+                />
+                <span className="font-medium text-gray-900">{s.label}</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function KpiCard({
   label, value, sub, accent, action,
