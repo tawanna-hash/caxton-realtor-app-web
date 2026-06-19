@@ -8,7 +8,6 @@
  */
 
 import { unstable_cache } from 'next/cache';
-import DOMPurify from 'isomorphic-dompurify';
 import { logger } from './logger';
 
 // Allowlist for sanitized article HTML. Wide enough to preserve WordPress formatting
@@ -32,15 +31,62 @@ const ARTICLE_ALLOWED_ATTR = [
   'allow','allowfullscreen','frameborder','referrerpolicy','sandbox',
 ];
 
+// Lazy-loaded DOMPurify. The module pulls jsdom at first call which can fail
+// in serverless cold starts when the bundler doesn't include the native deps.
+// We defer the import + cache it after first successful load, and fall back to
+// a regex-based scrubber (strip <script>, on* attrs, javascript: URLs) if
+// DOMPurify itself can't load. Tighter security when it works; never crashes.
+type Sanitizer = (html: string) => string;
+let sanitizer: Sanitizer | null = null;
+let sanitizerLoadAttempted = false;
+
+async function getSanitizer(): Promise<Sanitizer> {
+  if (sanitizer) return sanitizer;
+  if (sanitizerLoadAttempted) return sanitizer ?? fallbackScrub;
+  sanitizerLoadAttempted = true;
+  try {
+    const mod = await import('isomorphic-dompurify');
+    const DOMPurify = mod.default ?? mod;
+    sanitizer = (html: string) =>
+      DOMPurify.sanitize(html, {
+        ALLOWED_TAGS: ARTICLE_ALLOWED_TAGS,
+        ALLOWED_ATTR: ARTICLE_ALLOWED_ATTR,
+        ALLOW_DATA_ATTR: false,
+        FORBID_TAGS: ['script','style','object','embed','form','input','button','meta','link'],
+        FORBID_ATTR: ['onerror','onload','onclick','onmouseover','onfocus','onblur','onchange','onsubmit','style'],
+        ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+      });
+    return sanitizer;
+  } catch (err) {
+    logger.error({ err: err instanceof Error ? err.message : String(err) }, 'DOMPurify load failed - using fallback scrubber');
+    sanitizer = fallbackScrub;
+    return sanitizer;
+  }
+}
+
+// Regex fallback when DOMPurify can't load. Less thorough but defends against
+// the obvious XSS vectors (script tags, inline handlers, javascript: URLs).
+function fallbackScrub(html: string): string {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/<(object|embed|form|input|button|meta|link)\b[^>]*>/gi, '')
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
+    .replace(/\son\w+\s*=\s*[^\s>]+/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/\sstyle\s*=\s*"[^"]*"/gi, '')
+    .replace(/\sstyle\s*=\s*'[^']*'/gi, '');
+}
+
+// Synchronous wrapper that uses whichever sanitizer is already loaded; on first
+// call it kicks off the async load but returns the fallback for that single
+// call. After that all calls use DOMPurify (if it loaded) or the fallback.
 function sanitizeArticleHtml(html: string): string {
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ARTICLE_ALLOWED_TAGS,
-    ALLOWED_ATTR: ARTICLE_ALLOWED_ATTR,
-    ALLOW_DATA_ATTR: false,
-    FORBID_TAGS: ['script','style','object','embed','form','input','button','meta','link'],
-    FORBID_ATTR: ['onerror','onload','onclick','onmouseover','onfocus','onblur','onchange','onsubmit','style'],
-    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
-  });
+  if (sanitizer) return sanitizer(html);
+  // Fire-and-forget the load so subsequent calls get the real sanitizer.
+  void getSanitizer();
+  return fallbackScrub(html);
 }
 
 // -----------------------------------------------------------------------------
