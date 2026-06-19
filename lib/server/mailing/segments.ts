@@ -84,3 +84,33 @@ export function isMailingSegment(v: unknown): v is MailingSegment {
     v === 'non-advertiser-sa'
   );
 }
+
+// ============================================================
+// Geographic anchor for each mailing segment.
+//
+// Address verification + the "Within 60 mi" KPI use a board-of-REALTORS
+// office as the reference point. Newsline San Antonio audiences anchor on
+// SABOR (San Antonio Board of REALTORS); RealtyLine Austin audiences anchor
+// on ABoR (Austin Board of REALTORS) — and ATX additionally checks the Five
+// Points office. The 'realtor' segment is Texas-wide so it inherits the
+// ABoR/Five Points anchors as the default Austin-centric view.
+// ============================================================
+
+export type SegmentAnchor = 'sabor' | 'abor';
+
+export function anchorForSegment(seg: MailingSegment): SegmentAnchor {
+  switch (seg) {
+    case 'manual-newsline':
+    case 'active-advertiser-sa':
+    case 'non-advertiser-sa':
+      return 'sabor';
+    case 'active-advertiser-atx':
+    case 'non-advertiser-atx':
+    case 'realtor':
+      return 'abor';
+  }
+}
+
+export function isSaborSegment(seg: MailingSegment): boolean {
+  return anchorForSegment(seg) === 'sabor';
+}

@@ -377,6 +377,95 @@ export default function HoldingClient() {
     }
   };
 
+  // ------------------------------------------------------------------
+  // Toolbar actions: Dedupe / Export / Refresh addresses / Delete all
+  // (mirrors the segment-page toolbar but scoped to UnlockMLS holding rows).
+  // ------------------------------------------------------------------
+  const HOLDING_SOURCE = 'unlockmls';
+  const AUDIENCE_LABEL = 'ABOR Members';
+
+  const handleDedupe = async () => {
+    if (!confirm(`Dedupe ${AUDIENCE_LABEL}? Rows with the same email (or license number, or name+phone) will be merged, keeping the oldest.`)) return;
+    setBusy('dedupe');
+    try {
+      const res = await fetch('/api/admin/mailing/holding/bulk', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'dedupe', source: HOLDING_SOURCE }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
+      showToast(`Removed ${j.removed ?? 0} duplicate(s).`);
+      await reload();
+    } catch (err) {
+      showToast(`Dedupe failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleExport = (format: 'csv' | 'tsv' | 'json') => {
+    const url = `/api/admin/mailing/holding/export?source=${encodeURIComponent(HOLDING_SOURCE)}&format=${format}`;
+    window.open(url, '_blank');
+  };
+
+  const handleRefreshAddresses = async () => {
+    if (!confirm(`Fill in blank address fields in ${AUDIENCE_LABEL} from each matched advertiser? Members are matched by email or license number. Admin edits are preserved.`)) return;
+    setBusy('refresh-addr');
+    try {
+      const res = await fetch('/api/admin/mailing/holding/refresh-addresses', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: HOLDING_SOURCE }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
+      showToast(
+        `Scanned ${j.scanned ?? 0} \u00b7 updated ${j.updated ?? 0} \u00b7 skipped ${j.skippedComplete ?? 0} complete, ${j.skippedNoMatch ?? 0} no match`,
+      );
+      await reload();
+    } catch (err) {
+      showToast(`Refresh failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    const inAudience = counts?.total ?? 0;
+    if (inAudience === 0) {
+      showToast(`No contacts in ${AUDIENCE_LABEL} to delete.`);
+      return;
+    }
+    const first = window.prompt(
+      `\u26a0 This will permanently delete ALL ${inAudience.toLocaleString()} contact(s) in ${AUDIENCE_LABEL}. ` +
+        `This cannot be undone.\n\nType DELETE to confirm:`,
+    );
+    if (first !== 'DELETE') return;
+    if (!confirm(`Final check: delete all ${inAudience.toLocaleString()} contacts in ${AUDIENCE_LABEL}?`)) return;
+    setBusy('delete-all');
+    try {
+      const res = await fetch('/api/admin/mailing/holding/bulk', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete-all-in-source',
+          source: HOLDING_SOURCE,
+          confirm: 'DELETE_ALL',
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
+      showToast(`Deleted ${(j.removed ?? 0).toLocaleString()} contact(s) from ${AUDIENCE_LABEL}.`);
+      setSelectedIds(new Set());
+      await reload();
+    } catch (err) {
+      showToast(`Delete failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const allSelected = useMemo(
     () => rows.length > 0 && rows.every((r) => selectedIds.has(r.id)),
     [rows, selectedIds],
@@ -422,6 +511,50 @@ export default function HoldingClient() {
             {busy === 'sync' ? 'Syncing…' : 'Sync from UnlockMLS'}
           </button>
         </div>
+      </div>
+
+
+      {/* Secondary actions row — Dedupe / Export / Refresh / Delete all */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative inline-block group">
+          <button
+            type="button"
+            disabled={busy !== null}
+            className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Export ▾
+          </button>
+          <div className="absolute left-0 top-full mt-1 hidden group-hover:block z-10 bg-white border border-gray-200 rounded-md shadow-sm py-1 min-w-[140px]">
+            <button onClick={() => handleExport('csv')}  className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50">CSV</button>
+            <button onClick={() => handleExport('tsv')}  className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50">TSV</button>
+            <button onClick={() => handleExport('json')} className="block w-full text-left px-3 py-1.5 text-sm hover:bg-gray-50">JSON</button>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handleDedupe}
+          disabled={busy !== null}
+          className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+        >
+          {busy === 'dedupe' ? 'Deduping…' : 'Dedupe'}
+        </button>
+        <button
+          type="button"
+          onClick={handleRefreshAddresses}
+          disabled={busy !== null}
+          className="px-3 py-1.5 text-sm rounded-md border border-[#3D0740] text-[#3D0740] hover:bg-[#3D0740]/5 disabled:opacity-50"
+          title="Fill in blank address fields from each matched advertiser. Matches by email or license number. Admin edits are preserved."
+        >
+          {busy === 'refresh-addr' ? 'Refreshing…' : 'Refresh addresses from advertisers'}
+        </button>
+        <button
+          type="button"
+          onClick={handleDeleteAll}
+          disabled={busy !== null}
+          className="px-3 py-1.5 text-sm rounded-md border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-50"
+        >
+          {busy === 'delete-all' ? 'Deleting…' : 'Delete all'}
+        </button>
       </div>
 
       {/* Verify-drain progress strip */}

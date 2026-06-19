@@ -148,7 +148,7 @@ export async function loadLocationAddressForAdvertiser(
   return rows[0] ?? null;
 }
 
-function mergeAddresses(
+export function mergeAddresses(
   primary: LocationAddressParts,
   fallback: LocationAddressParts | null,
 ): LocationAddressParts {
@@ -894,4 +894,244 @@ export async function upsertStaffMailingByStaffId(
     }
   }
   return { added, updated, skipped: false };
+}
+
+// ============================================================
+// Refresh addresses for holding-stage rows (SABOR / UnlockMLS).
+//
+// Holding rows come from external feeds (RAMCO/SABOR or UnlockMLS) and
+// typically do NOT have advertiser_id set. We match each holding row to an
+// advertiser by:
+//   1. license_number  ↔ advertisers.license_number
+//   2. email           ↔ advertiser_staff.email   (then staff.advertiser_id)
+//
+// For each matched row, fill in blank address fields from the advertiser
+// (preferring the staff-assigned location for email matches). Admin edits
+// are preserved — only NULL/empty cells get written.
+// ============================================================
+
+export async function refreshHoldingAddressesFromAdvertisers(
+  externalSource: string,
+): Promise<{
+  scanned: number;
+  updated: number;
+  skippedNoMatch: number;
+  skippedComplete: number;
+}> {
+  const sql = getSql();
+
+  const rows = (await sql`
+    SELECT id, license_number, email,
+           address, address_2, city, state, zip
+      FROM mailing_contacts
+     WHERE stage = 'holding'
+       AND external_source = ${externalSource}
+  `) as unknown as Array<{
+    id: string;
+    license_number: string | null;
+    email: string | null;
+    address: string | null;
+    address_2: string | null;
+    city: string | null;
+    state: string | null;
+    zip: string | null;
+  }>;
+
+  let updated = 0;
+  let skippedNoMatch = 0;
+  let skippedComplete = 0;
+
+  // Skip rows that already have a complete address (preserve admin edits).
+  const candidates = rows.filter((r) => !(r.address && r.city && r.zip));
+  skippedComplete += rows.length - candidates.length;
+  if (candidates.length === 0) {
+    return { scanned: rows.length, updated, skippedNoMatch, skippedComplete };
+  }
+
+  // Prefetch advertiser matches by license_number (lowercased).
+  const licenses = Array.from(
+    new Set(
+      candidates
+        .map((r) => r.license_number?.trim().toLowerCase())
+        .filter((v): v is string => !!v),
+    ),
+  );
+  const advByLicense = new Map<string, { id: number; parts: LocationAddressParts }>();
+  if (licenses.length > 0) {
+    const advRows = (await sql`
+      SELECT id, LOWER(TRIM(license_number)) AS llicense,
+             address, address_2, city, state, zip
+        FROM advertisers
+       WHERE LOWER(TRIM(license_number)) = ANY(${licenses})
+    `) as unknown as Array<{
+      id: number;
+      llicense: string;
+      address: string | null;
+      address_2: string | null;
+      city: string | null;
+      state: string | null;
+      zip: string | null;
+    }>;
+    for (const r of advRows) {
+      advByLicense.set(r.llicense, {
+        id: r.id,
+        parts: {
+          address: r.address,
+          address_2: r.address_2,
+          city: r.city,
+          state: r.state,
+          zip: r.zip,
+        },
+      });
+    }
+  }
+
+  // Prefetch staff matches by email (lowercased).
+  const emails = Array.from(
+    new Set(
+      candidates
+        .map((r) => r.email?.trim().toLowerCase())
+        .filter((v): v is string => !!v),
+    ),
+  );
+  const staffByEmail = new Map<string, { staffId: string; advertiserId: number }>();
+  if (emails.length > 0) {
+    const staffRows = (await sql`
+      SELECT id, advertiser_id, LOWER(TRIM(email)) AS lemail
+        FROM advertiser_staff
+       WHERE LOWER(TRIM(email)) = ANY(${emails})
+         AND advertiser_id IS NOT NULL
+    `) as unknown as Array<{ id: string; advertiser_id: number; lemail: string }>;
+    for (const s of staffRows) {
+      // First match wins (rare duplicates).
+      if (!staffByEmail.has(s.lemail)) {
+        staffByEmail.set(s.lemail, { staffId: s.id, advertiserId: s.advertiser_id });
+      }
+    }
+  }
+
+  // Cache per-advertiser address parts so we don't re-fetch.
+  const advPartsById = new Map<number, LocationAddressParts>();
+  for (const v of advByLicense.values()) advPartsById.set(v.id, v.parts);
+
+  // For staff-matched advertisers we may not have prefetched their parts —
+  // load any missing ones now in one round-trip.
+  const missingAdvIds = Array.from(
+    new Set(
+      Array.from(staffByEmail.values())
+        .map((s) => s.advertiserId)
+        .filter((id) => !advPartsById.has(id)),
+    ),
+  );
+  if (missingAdvIds.length > 0) {
+    const advRows = (await sql`
+      SELECT id, address, address_2, city, state, zip
+        FROM advertisers
+       WHERE id = ANY(${missingAdvIds}::int[])
+    `) as unknown as Array<LocationAddressParts & { id: number }>;
+    for (const r of advRows) {
+      const { id: _id, ...parts } = r;
+      advPartsById.set(r.id, parts);
+    }
+  }
+
+  for (const row of candidates) {
+    // Resolve advertiser + (optional) staffId for this holding row.
+    let advertiserId: number | null = null;
+    let staffId: string | null = null;
+
+    const lic = row.license_number?.trim().toLowerCase();
+    if (lic && advByLicense.has(lic)) {
+      advertiserId = advByLicense.get(lic)!.id;
+    }
+    if (!advertiserId) {
+      const em = row.email?.trim().toLowerCase();
+      if (em && staffByEmail.has(em)) {
+        const s = staffByEmail.get(em)!;
+        advertiserId = s.advertiserId;
+        staffId = s.staffId;
+      }
+    }
+
+    if (!advertiserId) {
+      skippedNoMatch += 1;
+      continue;
+    }
+
+    const advParts: LocationAddressParts = advPartsById.get(advertiserId) ?? {
+      address: null, address_2: null, city: null, state: null, zip: null,
+    };
+    const locFallback = await loadLocationAddressForAdvertiser(advertiserId, { staffId });
+    const merged = mergeAddresses(advParts, locFallback);
+
+    if (!merged.address && !merged.city && !merged.zip) {
+      // Advertiser exists but has no address anywhere — nothing to write.
+      skippedNoMatch += 1;
+      continue;
+    }
+
+    // Fill blanks only — preserve admin edits.
+    await sql`
+      UPDATE mailing_contacts
+         SET address   = COALESCE(NULLIF(address,   ''), ${merged.address}),
+             address_2 = COALESCE(NULLIF(address_2, ''), ${merged.address_2}),
+             city      = COALESCE(NULLIF(city,      ''), ${merged.city}),
+             state     = COALESCE(NULLIF(state,     ''), ${merged.state}),
+             zip       = COALESCE(NULLIF(zip,       ''), ${merged.zip})
+       WHERE id = ${row.id}
+    `;
+    updated += 1;
+  }
+
+  return {
+    scanned: rows.length,
+    updated,
+    skippedNoMatch,
+    skippedComplete,
+  };
+}
+
+// ============================================================
+// Delete + dedupe helpers for holding-stage rows (by external_source).
+// ============================================================
+
+export async function deleteAllHoldingForSource(externalSource: string): Promise<number> {
+  const sql = getSql();
+  const rows = (await sql`
+    DELETE FROM mailing_contacts
+     WHERE stage = 'holding'
+       AND external_source = ${externalSource}
+     RETURNING id
+  `) as unknown as Array<{ id: string }>;
+  return rows.length;
+}
+
+export async function dedupeHoldingForSource(
+  externalSource: string,
+): Promise<{ removed: number }> {
+  const sql = getSql();
+  const result = (await sql`
+    WITH groups AS (
+      SELECT id,
+             ROW_NUMBER() OVER (
+               PARTITION BY
+                 CASE
+                   WHEN COALESCE(email, '') <> '' THEN 'e:' || LOWER(email)
+                   WHEN COALESCE(license_number, '') <> '' THEN 'l:' || LOWER(license_number)
+                   ELSE 'n:' ||
+                        LOWER(COALESCE(first_name, '')) || '|' ||
+                        LOWER(COALESCE(last_name, ''))  || '|' ||
+                        REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g')
+                 END
+               ORDER BY created_at ASC, id ASC
+             ) AS rn
+        FROM mailing_contacts
+       WHERE stage = 'holding'
+         AND external_source = ${externalSource}
+    )
+    DELETE FROM mailing_contacts
+     WHERE id IN (SELECT id FROM groups WHERE rn > 1)
+     RETURNING id
+  `) as unknown as Array<{ id: string }>;
+  return { removed: result.length };
 }
