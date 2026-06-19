@@ -8,7 +8,40 @@
  */
 
 import { unstable_cache } from 'next/cache';
+import DOMPurify from 'isomorphic-dompurify';
 import { logger } from './logger';
+
+// Allowlist for sanitized article HTML. Wide enough to preserve WordPress formatting
+// (headings, lists, blockquotes, tables, figures, embeds) while stripping <script>,
+// event handlers, javascript: URLs, <object>/<embed>, etc.
+const ARTICLE_ALLOWED_TAGS = [
+  'p','br','hr','strong','em','b','i','u','s','sub','sup','mark','small',
+  'a','span','div','section','article',
+  'h1','h2','h3','h4','h5','h6',
+  'ul','ol','li','dl','dt','dd',
+  'blockquote','cite','q',
+  'img','figure','figcaption','picture','source',
+  'table','thead','tbody','tfoot','tr','td','th','caption','colgroup','col',
+  'code','pre','kbd','samp','var',
+  'iframe',
+];
+const ARTICLE_ALLOWED_ATTR = [
+  'href','src','srcset','sizes','alt','title','class','id','target','rel',
+  'width','height','loading','decoding',
+  'colspan','rowspan','scope','align',
+  'allow','allowfullscreen','frameborder','referrerpolicy','sandbox',
+];
+
+function sanitizeArticleHtml(html: string): string {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ARTICLE_ALLOWED_TAGS,
+    ALLOWED_ATTR: ARTICLE_ALLOWED_ATTR,
+    ALLOW_DATA_ATTR: false,
+    FORBID_TAGS: ['script','style','object','embed','form','input','button','meta','link'],
+    FORBID_ATTR: ['onerror','onload','onclick','onmouseover','onfocus','onblur','onchange','onsubmit','style'],
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+  });
+}
 
 // -----------------------------------------------------------------------------
 // Types
@@ -249,7 +282,7 @@ function enrichFromEmbed(post: WpPost): Partial<NewsArticle> {
   }
 
   const rawContent = post.content?.rendered;
-  if (typeof rawContent === 'string') out.contentHtml = rawContent;
+  if (typeof rawContent === 'string') out.contentHtml = sanitizeArticleHtml(rawContent);
 
   const rawExcerpt = post.excerpt?.rendered;
   if (typeof rawExcerpt === 'string' && rawExcerpt.trim()) {
