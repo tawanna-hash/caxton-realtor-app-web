@@ -135,6 +135,32 @@ If any env var is missing, the server logs `[native-push] APNS_* env
 vars not fully set — native push disabled.` and the broadcast still
 delivers to web subscribers without failing.
 
+## Account deletion (Guideline 5.1.1(v))
+
+Apple requires apps that support account creation to also offer in-app
+account deletion. Implemented in PR F.
+
+- UI: profile screen (`/profile`) → "Delete account" card with a confirm
+  modal that requires the user to type their email before the destructive
+  button enables.
+- Endpoint: `DELETE /api/auth/account` — requires an authenticated
+  session and `{ confirmEmail }` matching the current user's email.
+- Backing call: `deleteRealtorAccount()` in `lib/server/realtors-store.ts`
+  runs in a single transaction. CASCADE FKs clear push subscriptions,
+  native push tokens, passkeys, notification preferences/deliveries,
+  giveaway entries, password reset tokens, and WebAuthn challenges.
+  `email_log.realtor_id` and `giveaways.winner_realtor_id` are NULLed
+  (audit/history preserved without the personal link). `magic_links` rows
+  keyed by the email are deleted so old links cannot resurrect the address.
+- Session cookie is cleared on the response. Client clears local storage
+  and redirects to `/?account_deleted=1`.
+
+**Reviewer instructions to include in App Review notes:**
+Sign in with the demo account, tap the profile icon (top right of the
+dashboard) or open `/profile`, scroll to the "Delete account" card, tap
+"Delete my account", type the demo email to confirm, then tap
+"Permanently delete".
+
 ## Wrapper risk (Guideline 4.2)
 
 The Capacitor config currently uses `server.url` to load
