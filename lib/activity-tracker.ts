@@ -120,17 +120,26 @@ function onFormSubmit(e: SubmitEvent): void {
     if (emailInput?.value && /\S+@\S+\.\S+/.test(emailInput.value)) email = emailInput.value;
   } catch { /* ignore */ }
 
+  const methodUpper = (form.method || 'GET').toUpperCase();
   captureToPostHog('form_submitted', {
     form_name: name,
     form_action: form.action || undefined,
-    form_method: form.method || undefined,
+    form_method: methodUpper,
   });
+
+  // GET forms are search/filter widgets (magazine search, directory filter,
+  // etc.) — they reload the page with a query string and aren't real lead
+  // submissions. Keep them in the PostHog dashboard for traffic visibility,
+  // but don't email Tawanna. Only POST/PUT/PATCH/DELETE submissions fire the
+  // inbox alert (newsletter signup, advertiser request, giveaway entry, etc.).
+  if (methodUpper === 'GET') return;
+
   sendAlert({
     kind: 'form_submit',
     title: name.slice(0, 180),
-    detail: `Action: ${form.action || '(same page)'} · Method: ${(form.method || 'GET').toUpperCase()}`,
+    detail: `Action: ${form.action || '(same page)'} · Method: ${methodUpper}`,
     email,
-    metadata: { form_action: form.action || null, form_method: form.method || null },
+    metadata: { form_action: form.action || null, form_method: methodUpper },
   });
 }
 
