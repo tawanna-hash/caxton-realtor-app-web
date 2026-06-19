@@ -21,6 +21,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  isSaborSegment,
   guessField,
   splitFullName,
   type MailingColumnId,
@@ -234,9 +235,9 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
       if (j.row) mergeRow(j.row);
       const verdict = j.verdict ?? 'Unknown';
-      // Manual Newsline San Antonio anchors on SABOR (San Antonio); other segments
-      // anchor on ABoR (Austin). Show whichever applies in the toast.
-      const isSabor = segment === 'manual-newsline';
+      // San Antonio segments (manual-newsline, active-advertiser-sa, non-advertiser-sa)
+      // anchor on SABOR. Austin segments anchor on ABoR. Show whichever applies in the toast.
+      const isSabor = isSaborSegment(segment);
       const distVal = isSabor
         ? j.distance_sabor_mi
         : j.distance_abor_mi;
@@ -607,7 +608,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         <KpiCard
           label="Within 60 mi"
           value={stats?.near ?? 0}
-          sub={segment === 'manual-newsline' ? 'near SABOR' : 'near ABoR or Five Points'}
+          sub={isSaborSegment(segment) ? 'near SABOR' : 'near ABoR or Five Points'}
           accent="#2563eb"
         />
         <KpiCard
@@ -1049,9 +1050,9 @@ function ProximityBadges({
   row: MailingContactRow;
   segment: MailingSegment;
 }) {
-  // Manual Newsline San Antonio Contacts anchor on SABOR (9110 IH-10 W, San Antonio).
+  // San Antonio segments anchor on SABOR (9110 IH-10 W, San Antonio).
   // All other mailing-stage segments keep the Austin/Five-Points dual anchor.
-  if (segment === 'manual-newsline') {
+  if (isSaborSegment(segment)) {
     const dS = row.distance_sabor_mi;
     if (dS === null || dS === undefined) {
       return <span className="text-[11px] text-gray-400">—</span>;
@@ -1269,7 +1270,7 @@ function EditDrawer({
                   USPS: {row.addr_usps_normalized}
                 </div>
               )}
-              {segment === 'manual-newsline'
+              {isSaborSegment(segment)
                 ? (row.distance_sabor_mi !== null && row.distance_sabor_mi !== undefined && (
                     <div className="text-[11px] text-gray-500">
                       {row.distance_sabor_mi.toFixed(1)} mi to SABOR
