@@ -823,29 +823,18 @@ export default function InteractiveMagazineReader({
 
   // ---- Action handlers ----
   async function handleShare() {
-    const shareData = {
+    const { share: nativeShare } = await import('@/lib/native/share');
+    const { haptics } = await import('@/lib/native/haptics');
+    haptics.light();
+    const res = await nativeShare({
       title: magazine.issue_label,
       text: `Read ${magazine.issue_label} from RealtyLine`,
       url: shareUrl,
-    };
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share(shareData);
-        trackEvent('flipbook_shared', { magazine_id: magazine.id, channel: 'native' });
-        return;
-      } catch {
-        /* user cancelled */
-      }
-    }
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        trackEvent('flipbook_shared', { magazine_id: magazine.id, channel: 'copy' });
-        setActionMode('share');
-        return;
-      } catch {
-        /* clipboard failed */
-      }
+    });
+    if (res.ok) {
+      trackEvent('flipbook_shared', { magazine_id: magazine.id, channel: res.method });
+      if (res.method === 'clipboard') setActionMode('share');
+      return;
     }
     setActionMode('share');
   }

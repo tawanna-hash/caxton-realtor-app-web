@@ -48,17 +48,12 @@ export default function ResourceFloater({
   const onShare = useCallback(async () => {
     if (typeof window === 'undefined') return;
     const url = window.location.href;
-    const shareData = { title: shareTitle, text: shareText, url };
-    try {
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share(shareData);
-      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        await navigator.clipboard.writeText(url);
-        window.alert('Link copied to clipboard');
-      }
-    } catch (err) {
-      // user cancelled - no-op
-      console.log('[ResourceFloater] share cancelled or failed:', err);
+    const { share: nativeShare } = await import('@/lib/native/share');
+    const { haptics } = await import('@/lib/native/haptics');
+    haptics.light();
+    const res = await nativeShare({ title: shareTitle, text: shareText, url });
+    if (res.ok && res.method === 'clipboard') {
+      window.alert('Link copied to clipboard');
     }
   }, [shareTitle, shareText]);
 

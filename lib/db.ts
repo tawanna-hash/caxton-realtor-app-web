@@ -952,5 +952,25 @@ export async function ensureSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS push_subscriptions_realtor_idx ON push_subscriptions(realtor_id)`;
   await sql`CREATE INDEX IF NOT EXISTS push_subscriptions_market_idx ON push_subscriptions(market)`;
 
+  // Native (iOS / Android) push tokens. Separate from push_subscriptions
+  // because APNs/FCM tokens are opaque strings, not VAPID-encrypted
+  // endpoints, and need a different sender library on the back end.
+  await sql`
+    CREATE TABLE IF NOT EXISTS native_push_tokens (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      realtor_id UUID REFERENCES realtors(id) ON DELETE CASCADE,
+      token TEXT NOT NULL UNIQUE,
+      platform TEXT NOT NULL CHECK (platform IN ('ios','android')),
+      user_agent TEXT,
+      market TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      revoked_at TIMESTAMPTZ
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS native_push_tokens_realtor_idx ON native_push_tokens(realtor_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS native_push_tokens_market_idx ON native_push_tokens(market)`;
+  await sql`CREATE INDEX IF NOT EXISTS native_push_tokens_platform_idx ON native_push_tokens(platform)`;
+
   schemaEnsured = true;
 }

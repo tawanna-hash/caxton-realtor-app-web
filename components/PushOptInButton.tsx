@@ -13,6 +13,9 @@
 // dismissable banner) to let users opt in to notifications.
 
 import { useEffect, useState } from 'react';
+import { isNative } from '@/lib/native/runtime';
+import { registerNativePush } from '@/lib/native/push';
+import { haptics } from '@/lib/native/haptics';
 
 type Status = 'unknown' | 'unsupported' | 'ios-needs-pwa' | 'denied' | 'subscribed' | 'idle' | 'pending';
 
@@ -63,6 +66,24 @@ export default function PushOptInButton({ realtorId, market, className, hideWhen
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    // Native app shell: report status from the Capacitor plugin instead
+    // of from the browser PushManager (which isn't present in the WKWebView).
+    if (isNative()) {
+      (async () => {
+        try {
+          const { PushNotifications } = await import('@capacitor/push-notifications');
+          const perm = await PushNotifications.checkPermissions();
+          if (perm.receive === 'granted') setStatus('subscribed');
+          else if (perm.receive === 'denied') setStatus('denied');
+          else setStatus('idle');
+        } catch {
+          setStatus('unsupported');
+        }
+      })();
+      return;
+    }
+
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       // iOS Safari only exposes PushManager when the site is installed as
       // a PWA. Give those users a useful instruction instead of a dead end.
@@ -90,6 +111,24 @@ export default function PushOptInButton({ realtorId, market, className, hideWhen
 
   async function handleSubscribe() {
     setStatus('pending');
+
+    // Native (iOS / Android app): use the Capacitor plugin path.
+    if (isNative()) {
+      const res = await registerNativePush({
+        realtorId: realtorId ?? null,
+        market: market ?? null,
+      });
+      if (res.ok) {
+        haptics.notify('success');
+        setStatus('subscribed');
+      } else if (res.reason === 'denied') {
+        setStatus('denied');
+      } else {
+        setStatus('idle');
+      }
+      return;
+    }
+
     try {
       const perm = await Notification.requestPermission();
       if (perm !== 'granted') {
