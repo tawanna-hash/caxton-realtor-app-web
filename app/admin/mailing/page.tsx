@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
-import { countAudienceSources, countBySegment, SEGMENTS } from '@/lib/mailing';
+import { anchorForSegment, countAudienceSources, countBySegment, SEGMENTS } from '@/lib/mailing';
 
 import PageTitle from '@/components/ui/PageTitle';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
@@ -107,42 +107,69 @@ export default async function MailingHubPage() {
         <KpiCard label="Non-Advertisers — SA"  value={counts['non-advertiser-sa']}      sub="Newsline San Antonio"         accent="#ea580c" />
       </div>
 
-      {/* Segment tiles */}
-      <div>
-        <h2 className="font-serif text-xl text-gray-900 mb-3">Segments</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {SEGMENTS.map((s) => {
-            const c = counts[s.segment];
-            return (
-              <Link
-                key={s.slug}
-                href={`/admin/mailing/${s.slug}`}
-                className="group block rounded-md border border-gray-200 bg-white p-5 hover:shadow-sm transition"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div
-                    className="h-10 w-10 rounded-md flex items-center justify-center text-sm font-semibold"
-                    style={{ backgroundColor: `${s.accent}15`, color: s.accent }}
-                  >
-                    {s.label.charAt(0)}
-                  </div>
-                  <span
-                    className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: `${s.accent}15`, color: s.accent }}
-                  >
-                    {c.toLocaleString()}
-                  </span>
+      {/* Segment tiles — split by publication */}
+      {(() => {
+        // RealtyLine Austin = ABoR-anchored segments (ATX advertisers,
+        // ATX non-advertisers, and the Texas-wide REALTORS list which is
+        // Austin-centric). Newsline San Antonio = SABOR-anchored segments
+        // (manual Newsline contacts, SA advertisers, SA non-advertisers).
+        const austinSegments  = SEGMENTS.filter((s) => anchorForSegment(s.segment) === 'abor');
+        const sanAntonioSegments = SEGMENTS.filter((s) => anchorForSegment(s.segment) === 'sabor');
+
+        const renderTile = (s: typeof SEGMENTS[number]) => {
+          const c = counts[s.segment];
+          return (
+            <Link
+              key={s.slug}
+              href={`/admin/mailing/${s.slug}`}
+              className="group block rounded-md border border-gray-200 bg-white p-5 hover:shadow-sm transition"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div
+                  className="h-10 w-10 rounded-md flex items-center justify-center text-sm font-semibold"
+                  style={{ backgroundColor: `${s.accent}15`, color: s.accent }}
+                >
+                  {s.label.charAt(0)}
                 </div>
-                <div className="font-serif text-lg text-gray-900">{s.label}</div>
-                <p className="mt-1 text-sm text-gray-600">{s.caption}</p>
-                <div className="mt-3 text-xs font-medium text-gray-700 group-hover:text-gray-900">
-                  Open list
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+                <span
+                  className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                  style={{ backgroundColor: `${s.accent}15`, color: s.accent }}
+                >
+                  {c.toLocaleString()}
+                </span>
+              </div>
+              <div className="font-serif text-lg text-gray-900">{s.label}</div>
+              <p className="mt-1 text-sm text-gray-600">{s.caption}</p>
+              <div className="mt-3 text-xs font-medium text-gray-700 group-hover:text-gray-900">
+                Open list
+              </div>
+            </Link>
+          );
+        };
+
+        return (
+          <div className="space-y-8">
+            <div>
+              <div className="flex items-baseline gap-3 mb-3">
+                <h2 className="font-serif text-xl text-gray-900">RealtyLine Austin</h2>
+                <span className="text-xs uppercase tracking-[0.15em] text-gray-500">ABoR-anchored segments</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {austinSegments.map(renderTile)}
+              </div>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-3 mb-3">
+                <h2 className="font-serif text-xl text-gray-900">Newsline San Antonio</h2>
+                <span className="text-xs uppercase tracking-[0.15em] text-gray-500">SABOR-anchored segments</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sanAntonioSegments.map(renderTile)}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Audience pages — every page under Audience nav, surfaced as a tile here */}
       <div>
