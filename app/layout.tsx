@@ -65,10 +65,10 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  // icons: intentionally omitted — brand icon assets were stripped
-  // in PR #296 for a fresh-build reset. Add new favicon/apple-touch-icon
-  // PNGs to /public and re-declare this `icons` block when the new
-  // brand assets are ready.
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
   // iOS uses apple-mobile-web-app-title for the Add-to-Home-Screen label.
   // Without this, iOS Safari falls back to the document <title> (or in some
   // cases an ancestor/cached value), which produced "Caxton Publications, Inc"
