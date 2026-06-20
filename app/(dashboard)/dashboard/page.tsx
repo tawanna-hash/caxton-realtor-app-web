@@ -279,7 +279,19 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
   const [open, setOpen] = useState(false);
   const [notifyFor, setNotifyFor] = useState<{ id: ComingSoonPubId; name: string } | null>(null);
   return (
-    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
+    // BUG-pub-selector-clip: previously the content block used
+    // justify-center which left ~60% of the screen blank above the picker
+    // and meant the dropdown panel had to grow downward into the BottomNav,
+    // clipping the coming-soon markets. Top-anchor the content so the
+    // picker sits in the upper third of the screen and the dropdown has
+    // room to expand below without colliding with the BottomNav.
+    <div
+      className="fixed inset-0 bg-white flex flex-col items-center z-40"
+      style={{
+        ...SW,
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 80px)',
+      }}
+    >
       <div className="w-full max-w-md px-8">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-400 font-medium mb-2 text-center">Realty News Now</p>
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-3">Select a Publication</h2>
@@ -290,7 +302,18 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
             <span className="text-gray-400 text-base">{open ? '\u25B2' : '\u25BC'}</span>
           </button>
           {open && (
-            <div className="absolute top-full left-0 right-0 border border-gray-300 border-t-0 bg-white z-10">
+            // BUG-pub-selector-clip: the dropdown previously rendered at
+            // full natural height and was clipped at the bottom by the
+            // BottomNav, hiding the coming-soon markets (Houston/Dallas)
+            // entirely. Constrain to the viewport with vh + safe-area
+            // padding and let the list scroll inside the panel.
+            <div
+              className="absolute top-full left-0 right-0 border border-gray-300 border-t-0 bg-white z-10 overflow-y-auto overscroll-contain"
+              style={{
+                maxHeight:
+                  'calc(100vh - 280px - env(safe-area-inset-bottom, 0px))',
+              }}
+            >
               {PUBS.map((pub) => (
                 <button key={pub.id} onClick={() => onSelect(pub.id)} className="w-full text-left px-4 py-5 border-b border-gray-100 bg-white hover:bg-gray-50">
                   <div className="flex items-center gap-4">
@@ -779,7 +802,12 @@ export default function DashboardPage() {
       }
     } catch {}
 
-    // Check if we already have a server session.
+    // Check if we already have a server session. If there is NO realtor on
+    // the server, we must override any saved localStorage phase that would
+    // render protected content (feed/article). The edge proxy already
+    // blocks unauthenticated access to /dashboard, but when the dashboard
+    // is reached via the documented ?auth=login|signup bypass for the
+    // sign-in form, the AuthGate must be the only thing visible.
     fetch(`${API}/auth/me`, { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -794,9 +822,22 @@ export default function DashboardPage() {
           if (!savedPhaseForAuth || !contentPhases.includes(savedPhaseForAuth)) {
             setPhase('feed');
           }
+        } else {
+          // No server session — force the AuthGate regardless of saved phase.
+          // This closes a content-leak window where a stale localStorage
+          // 'caxton_phase=feed' could briefly render feed components for a
+          // signed-out visitor who reached /dashboard?auth=login.
+          setUser(null);
+          setPhase('auth');
+          try { localStorage.removeItem('caxton_phase'); } catch {}
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        // Treat /api/auth/me network failures as logged-out for safety.
+        if (cancelled) return;
+        setUser(null);
+        setPhase('auth');
+      });
 
     setHydrated(true);
     return () => {
