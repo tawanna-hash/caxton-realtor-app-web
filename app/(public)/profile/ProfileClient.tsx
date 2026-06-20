@@ -5,7 +5,6 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { getApiBase } from '@/lib/api-base';
 import PasswordSection from '@/components/PasswordSection';
-import PasskeysPanel from '@/components/PasskeysPanel';
 import PushOptInButton from '@/components/PushOptInButton';
 import DeleteAccountSection from '@/components/DeleteAccountSection';
 
@@ -121,7 +120,6 @@ export default function ProfileClient() {
 
       <div className="p-5 space-y-5">
         <PasswordSection accentColor={accent} hasPassword={!!user.hasPassword} />
-        <PasskeysPanel accentColor={accent} />
 
         <section className="rounded-md border border-gray-200 bg-white p-4">
           <h2 className="text-sm font-medium text-gray-900 mb-1">Notifications</h2>

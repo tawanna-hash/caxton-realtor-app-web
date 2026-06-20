@@ -27,7 +27,7 @@ type ConfigName = 'general' | 'auth' | 'passwordReset' | 'magicLinkRequest' | 's
 const configs: Record<ConfigName, { tokens: number; windowMs: number; window: `${number}${'s' | 'm' | 'h'}` }> = {
   general:       { tokens: 100, windowMs:  60_000, window: '1m'  },
   // Auth is intentionally generous so legitimate flows — conditional-UI
-  // passkey prefetch, retry-after-typo, magic link + password — don't trip
+  // retry-after-typo, magic link + password — don't trip
   // the gate. Brute-force protection still relies on the per-IP window.
   auth:          { tokens:  30, windowMs: 900_000, window: '15m' },
   passwordReset: { tokens:  20, windowMs: 900_000, window: '15m' },

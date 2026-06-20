@@ -2,7 +2,7 @@
  * /api/auth/account  DELETE
  *
  * Permanently deletes the current realtor's account, all related data
- * (push subscriptions, passkeys, notification preferences, etc.) and clears
+ * (push subscriptions, notification preferences, etc.) and clears
  * the session cookie.
  *
  * Required by App Store Review Guideline 5.1.1(v): an app that supports
