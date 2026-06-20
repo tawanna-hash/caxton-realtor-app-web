@@ -66,7 +66,11 @@ function PlatformIcon({ k }: { k: PlatformKey }) {
 }
 
 export function SocialLinks({ pub, variant = 'feed', heading }: Props) {
+  // Defensive: a stale localStorage value or a pre-launch market may yield a
+  // pub key that isn't in PUB_META. Render nothing rather than crashing the
+  // entire screen with 'undefined is not an object (evaluating o.facebook)'.
   const meta = PUB_META[pub];
+  if (!meta) return null;
   const urls: Record<PlatformKey, string | undefined> = {
     facebook: meta.facebook,
     instagram: meta.instagram,
