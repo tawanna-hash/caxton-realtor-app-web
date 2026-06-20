@@ -6,12 +6,16 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'RNN',
     description:
       'Texas real estate news, magazine issues, and event alerts for RealtyLine and Newsline readers.',
-    // Launch directly at /dashboard (a stable 200) instead of '/' which
-    // 307-redirects to /dashboard. Safari/WebKit can show 'This page
-    // couldn't load' on Add-to-Home-Screen when start_url issues a 3xx
-    // during service-worker activation, so we point at the final URL.
-    // ?source=pwa is kept as an analytics breadcrumb for PostHog.
-    start_url: '/dashboard?source=pwa',
+    // start_url is '/?source=pwa' (NOT '/dashboard'). PR #237 (Jun 18 2026)
+    // shipped exactly this value to fix the iOS Add-to-Home-Screen
+    // 'couldn't load' error that the user reported live. Pointing start_url
+    // at /dashboard — even though /dashboard is itself a 200 — reproduces
+    // the failure on real iPhones. The combination that works is:
+    //   start_url '/?source=pwa' + the passthrough SW fetch handler in sw.js.
+    // The redirect from '/' to '/dashboard' is fine for Safari to follow
+    // once the SW is satisfied. Do NOT change this without testing on a
+    // real iPhone Add-to-Home-Screen launch.
+    start_url: '/?source=pwa',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
