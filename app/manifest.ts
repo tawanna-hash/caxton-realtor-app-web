@@ -6,10 +6,12 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'RNN',
     description:
       'Texas real estate news, magazine issues, and event alerts for RealtyLine and Newsline readers.',
-    // Use a stable 200 endpoint as start_url. The previous '/dashboard' value
-    // sometimes caused iOS standalone PWAs to show a 'couldn't load' error
-    // because of the redirect chain from '/' → '/dashboard'.
-    start_url: '/?source=pwa',
+    // Launch directly at /dashboard (a stable 200) instead of '/' which
+    // 307-redirects to /dashboard. Safari/WebKit can show 'This page
+    // couldn't load' on Add-to-Home-Screen when start_url issues a 3xx
+    // during service-worker activation, so we point at the final URL.
+    // ?source=pwa is kept as an analytics breadcrumb for PostHog.
+    start_url: '/dashboard?source=pwa',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
