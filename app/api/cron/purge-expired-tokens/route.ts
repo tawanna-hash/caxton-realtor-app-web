@@ -7,7 +7,6 @@
 //
 // Targets (all with `expires_at` columns):
 //   - magic_links                 (15-min realtor magic links)
-//   - webauthn_challenges         (5-min WebAuthn challenges)
 //   - password_reset_tokens       (1-hr realtor reset tokens)
 //   - admin_password_resets       (admin reset tokens)
 //   - advertiser_email_grants     (advertiser magic-link grants)
@@ -53,17 +52,6 @@ export async function GET(req: NextRequest) {
           DELETE FROM magic_links
           WHERE expires_at < NOW() - INTERVAL '30 days'
           RETURNING token
-        `) as unknown as unknown[];
-        return r.length;
-      },
-    },
-    {
-      name: 'webauthn_challenges',
-      run: async () => {
-        const r = (await sql`
-          DELETE FROM webauthn_challenges
-          WHERE expires_at < NOW() - INTERVAL '30 days'
-          RETURNING id
         `) as unknown as unknown[];
         return r.length;
       },

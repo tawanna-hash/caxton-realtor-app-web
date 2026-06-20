@@ -367,9 +367,9 @@ export async function consumeResetTokenTx(
  * App Store Review Guideline 5.1.1(v) requires in-app account deletion when
  * the app supports account creation. This is the destructive backing call.
  *
- * Most dependent tables (push_subscriptions, native_push_tokens, passkey
+ * Most dependent tables (push_subscriptions, native_push_tokens,
  * tables, notification_preferences/deliveries, giveaway_entries,
- * password_reset_tokens, webauthn_challenges) have ON DELETE CASCADE so
+ * password_reset_tokens) have ON DELETE CASCADE so
  * they clear automatically.
  *
  * Two tables hold the realtor_id as NO ACTION for audit/historical reasons:

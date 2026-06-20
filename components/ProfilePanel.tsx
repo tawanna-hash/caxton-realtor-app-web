@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from 'react';
-import PasskeysPanel from './PasskeysPanel';
 import PasswordSection from './PasswordSection';
 
 type User = {
@@ -21,7 +20,7 @@ type Props = {
 
 /**
  * Slide-up modal overlay containing the user's profile-level controls.
- * Today this is just PasskeysPanel + the user's name/email; the file
+ * Today this is just the user's name/email; the file
  * exists as a home for future profile fields (notification preferences,
  * mailing address, etc.) without expanding the dashboard page further.
  */
@@ -73,7 +72,6 @@ export default function ProfilePanel({ user, accentColor = '#021D40', onClose }:
 
         <div className="p-5 space-y-5">
           <PasswordSection accentColor={accentColor} hasPassword={!!user?.hasPassword} />
-          <PasskeysPanel accentColor={accentColor} />
 
           <p className="text-xs text-gray-400 font-light text-center">
             More profile settings coming soon.

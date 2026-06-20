@@ -6,14 +6,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { trackEvent, identifyUser } from "../../posthog-provider";
 import { useSwipeBack } from '@/hooks/use-swipe-back';
 import ProfilePanel from '@/components/ProfilePanel';
-import {
-  startAuthentication,
-  browserSupportsWebAuthnAutofill,
-} from '@/components/PasskeysPanel';
 import { getApiBase } from '@/lib/api-base';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
 import PushOptInBanner from '@/components/PushOptInBanner';
-import EnrollFaceIdBanner from '@/components/EnrollFaceIdBanner';
 import { SocialLinks } from '@/components/SocialLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import SaborReportCard from '@/components/SaborReportCard';
@@ -348,13 +343,9 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   // Honor /auth/sign-in and /auth/sign-up aliases via ?auth=login|signup so
   // visitors land directly on the right form instead of the 'choice' screen.
   const [mode, setMode] = useState<'choice' | 'signup' | 'login' | 'sent'>('choice');
-  const [passkeyLoading, setPasskeyLoading] = useState(false);
-  const [passkeySupported, setPasskeySupported] = useState<boolean | null>(null);
-  const [conditionalArmed, setConditionalArmed] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     queueMicrotask(() => {
-      setPasskeySupported(typeof window.PublicKeyCredential === 'function');
       try {
         const params = new URLSearchParams(window.location.search);
         const wanted = params.get('auth');
@@ -479,109 +470,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   }
 
 
-  async function handlePasskeyLogin(opts?: { useAutofill?: boolean }) {
-    const useAutofill = opts?.useAutofill === true;
-    if (!useAutofill) {
-      setError('');
-      setPasskeyLoading(true);
-    }
-    try {
-      // Step 1: get authentication options (no email for autofill flow)
-      const beginRes = await fetch(API + '/auth/webauthn/authenticate/begin', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(useAutofill ? { autofill: true } : (email ? { email } : {})),
-      });
-      if (!beginRes.ok) {
-        const data = await beginRes.json().catch(() => ({}));
-        throw new Error(data.error || `Could not start sign-in (HTTP ${beginRes.status})`);
-      }
-      const { options } = await beginRes.json();
-
-      // Step 2: invoke browser ceremony. With useAutofill=true the browser
-      // surfaces matching passkeys inline in the email field (conditional UI);
-      // without it, the OS pops a modal sheet immediately.
-      const assertion = await startAuthentication(options, useAutofill);
-
-      // Step 3: verify on server, session cookie is set by the response
-      const finishRes = await fetch(API + '/auth/webauthn/authenticate/finish', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ response: assertion }),
-      });
-      if (!finishRes.ok) {
-        const data = await finishRes.json().catch(() => ({}));
-        throw new Error(data.error || `Sign-in failed (HTTP ${finishRes.status})`);
-      }
-
-      // Step 4: hydrate user via /auth/me
-      const meRes = await fetch(API + '/auth/me', { credentials: 'include' });
-      if (!meRes.ok) {
-        throw new Error('Signed in but could not load your account');
-      }
-      const meData = await meRes.json();
-      const realtor = meData.realtor || meData;
-
-      trackEvent('passkey_signin_succeeded', { pub, autofill: useAutofill });
-      onAuth({
-        id: realtor.id,
-        email: realtor.email,
-        firstName: realtor.first_name,
-        lastName: realtor.last_name,
-        ...realtor,
-      });
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Sign-in failed';
-      // Conditional UI is a background listener. Errors here mean the user
-      // never engaged the suggestion, so do not surface them.
-      if (useAutofill) {
-        trackEvent('passkey_autofill_idle', { reason: msg.slice(0, 200), pub });
-        return;
-      }
-      // NotAllowedError fires when no matching passkey is found OR the user
-      // dismissed the sheet. Guide them to type their email if they have an
-      // older non-discoverable credential.
-      if (/NotAllow|not allowed by the user agent/i.test(msg)) {
-        if (!email) {
-          setError('Enter your email above, then tap Use Face ID / Touch ID again.');
-        } else {
-          setError('Face ID was cancelled or no passkey was found for that email.');
-        }
-      } else if (/cancell|abort/i.test(msg)) {
-        setError('Sign-in cancelled');
-      } else {
-        setError(msg);
-      }
-      trackEvent('passkey_signin_failed', { reason: msg.slice(0, 200), pub });
-    } finally {
-      if (!useAutofill) setPasskeyLoading(false);
-    }
-  }
-
-  // Arm conditional UI (browser autofill) when the login screen opens. This
-  // surfaces available passkeys natively in the email field, so the user can
-  // tap their stored passkey and get Face ID inline without pressing the
-  // explicit "Use Face ID" button.
-  useEffect(() => {
-    if (mode !== 'login' || !passkeySupported || conditionalArmed) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const supported = await browserSupportsWebAuthnAutofill();
-        if (!supported || cancelled) return;
-        setConditionalArmed(true);
-        // Fire-and-forget: resolves only when the user picks a passkey
-        // suggestion in the email field. Errors are swallowed in the catch.
-        void handlePasskeyLogin({ useAutofill: true });
-      } catch {
-        // Autofill probing failed; manual button still works.
-      }
-    })();
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, passkeySupported]);
   async function handlePasswordLogin() {
     setError('');
     setLoading(true);
@@ -601,13 +489,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       const meData = await meRes.json();
       const realtor = meData.realtor || meData;
       trackEvent('password_signin_succeeded', { pub });
-      // Hint the dashboard to prompt this user to enroll Face ID / Touch ID.
-      // The banner itself checks for an existing passkey before rendering.
-      try {
-        if (typeof window !== 'undefined' && typeof window.PublicKeyCredential === 'function') {
-          sessionStorage.setItem('rnn_offer_passkey_enroll', '1');
-        }
-      } catch {}
       onAuth({
         id: realtor.id,
         email: realtor.email,
@@ -721,7 +602,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-xs uppercase tracking-wider text-gray-400">{showPassword ? 'Hide' : 'Show'}</button>
                 </div>
                 <input type={showPassword ? 'text' : 'password'} placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={ic} autoComplete="new-password" />
-                <p className="text-xs text-gray-400 font-light mb-2">Used for sign-in. You can also use Touch ID / Face ID after signing in.</p>
+                <p className="text-xs text-gray-400 font-light mb-2">Used for sign-in.</p>
 
                 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3 mt-4">Mailing Address</p>
                 <input type="text" placeholder="Street Address" value={addr1} onChange={(e) => setAddr1(e.target.value)} className={ic} />
@@ -829,32 +710,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
           <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
           <h2 className="text-2xl text-gray-900 font-semibold text-center mb-6">Welcome Back</h2>
           {error && <p className="text-base text-red-500 text-center mb-4 font-light">{error}</p>}
-          {passkeySupported && (
-            <>
-              <button
-                onClick={() => handlePasskeyLogin()}
-                disabled={passkeyLoading}
-                className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 disabled:opacity-40 flex items-center justify-center gap-2"
-                style={{ backgroundColor: info.color }}
-              >
-                {passkeyLoading ? 'Verifying…' : (
-                  <>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                    Use Face ID / Touch ID
-                  </>
-                )}
-              </button>
-              <div className="flex items-center gap-3 my-4">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-xs text-gray-400 uppercase tracking-wider">or with password</span>
-                <div className="flex-1 h-px bg-gray-200" />
-              </div>
-            </>
-          )}
-          <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className={ic} autoComplete="username webauthn" />
+          <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className={ic} autoComplete="username" />
           <div className="relative mb-3">
             <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className={ic + ' pr-16'} autoComplete="current-password" onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordLogin(); }} />
             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-xs uppercase tracking-wider text-gray-400">{showPassword ? 'Hide' : 'Show'}</button>
@@ -1330,7 +1186,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
           }
         />
       )}
-      {!showPreLaunch && !user?.guest && <EnrollFaceIdBanner />}
       {user?.guest && (
         <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
           <p className="text-sm text-amber-700 font-light">Browsing as Guest</p>

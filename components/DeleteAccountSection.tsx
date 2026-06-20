@@ -88,7 +88,7 @@ export default function DeleteAccountSection({ accentColor = '#021D40', email }:
         <h2 className="text-sm font-medium text-red-900 mb-1">Delete account</h2>
         <p className="text-xs text-red-900/70 font-light mb-3">
           Permanently delete your account and all associated data, including saved
-          articles, sign-in passkeys, push subscriptions, and notification
+          articles, push subscriptions, and notification
           preferences. This cannot be undone.
         </p>
         <button
@@ -126,7 +126,7 @@ export default function DeleteAccountSection({ accentColor = '#021D40', email }:
               <ul className="text-xs text-gray-700 font-light mt-2 ml-4 list-disc space-y-1">
                 <li>Your profile and sign-in credentials</li>
                 <li>Saved articles, reading history, and preferences</li>
-                <li>Passkeys and password</li>
+                <li>Password</li>
                 <li>Push notification subscriptions</li>
                 <li>Giveaway entries you have submitted</li>
               </ul>
