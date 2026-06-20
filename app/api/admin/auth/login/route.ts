@@ -5,20 +5,15 @@
 
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { z } from 'zod';
 import { query } from '@/lib/server/db/neon';
 import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { signAdminSessionToken } from '@/lib/server/jwt';
 import { setAdminSessionCookie } from '@/lib/server/auth/cookies';
 import { getRequestIp, getRequestUserAgent } from '@/lib/server/auth/admin';
 import { rateLimit } from '@/lib/server/rate-limit';
+import { adminLoginSchema } from '@/lib/server/schemas/auth-admin';
 
 export const runtime = 'nodejs';
-
-const loginSchema = z.object({
-  email: z.string().email().toLowerCase(),
-  password: z.string().min(1).max(200),
-});
 
 // Constant-time dummy bcrypt hash so login response time doesn't leak whether
 // an email exists. cost=12 to match what real admin hashes use.
@@ -27,7 +22,7 @@ const DUMMY_HASH =
 
 export const POST = withErrorHandling(async (req: Request) => {
   await rateLimit('adminAuth');
-  const input = loginSchema.parse(await req.json());
+  const input = adminLoginSchema.parse(await req.json());
 
   const rows = await query<{
     id: string;

@@ -6,7 +6,6 @@
 
 import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { headers } from 'next/headers';
 import { query } from '@/lib/server/db/neon';
 import { withErrorHandling } from '@/lib/server/error';
@@ -15,18 +14,15 @@ import { rateLimit } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/server/logger';
 import { getEmailProvider } from '@/lib/server/email';
 import { renderPasswordResetEmail } from '@/lib/server/email/templates';
+import { adminForgotPasswordSchema } from '@/lib/server/schemas/auth-admin';
 
 export const runtime = 'nodejs';
-
-const forgotPasswordSchema = z.object({
-  email: z.string().email().toLowerCase(),
-});
 
 const EXPIRY_MINUTES = 15;
 
 export const POST = withErrorHandling(async (req: Request) => {
-  await rateLimit('auth');
-  const input = forgotPasswordSchema.parse(await req.json());
+  await rateLimit('adminAuth');
+  const input = adminForgotPasswordSchema.parse(await req.json());
 
   const rows = await query<{
     id: string;
