@@ -13,7 +13,6 @@
  * the existing app — no new product claims are made here.
  */
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/server/auth/user';
@@ -44,14 +43,9 @@ export default async function HomePage({ searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-gradient-to-b from-white via-purple-50 to-white text-slate-900">
       <div className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center px-6 py-12 text-center">
-        <Image
-          src="/icon-512.png"
-          alt="Realty News Now"
-          width={96}
-          height={96}
-          priority
-          className="mb-6 rounded-2xl shadow-lg"
-        />
+        {/* Brand mark intentionally omitted — icon PNGs were stripped in
+            PR #296 for a fresh-build reset. Restore the <Image src="/icon-512.png" />
+            block here when the new brand assets land. */}
         <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
           Realty News Now
         </h1>
