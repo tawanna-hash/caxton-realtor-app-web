@@ -12,7 +12,9 @@
  *
  * Runtime: Edge. `jsonwebtoken` (used by lib/server/jwt.ts) depends on Node
  * `crypto` and won't bundle here, so we verify with `jose` directly using the
- * same HS256 + JWT_SECRET. Payload-shape check mirrors verifyAdminSessionToken().
+ * same HS256 + ADMIN_JWT_SECRET (falling back to JWT_SECRET for existing
+ * sessions issued before the rotation). Payload-shape check mirrors
+ * verifyAdminSessionToken() in lib/server/jwt.ts.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -134,7 +136,7 @@ function isPublicAdminPath(pathname: string): boolean {
   return false;
 }
 
-async function isValidAdminToken(token: string, secret: string): Promise<boolean> {
+async function verifyWithSecret(token: string, secret: string): Promise<boolean> {
   try {
     const key = new TextEncoder().encode(secret);
     const { payload } = await jwtVerify(token, key, { algorithms: ['HS256'] });
@@ -146,6 +148,27 @@ async function isValidAdminToken(token: string, secret: string): Promise<boolean
   } catch {
     return false;
   }
+}
+
+/**
+ * Verify an admin session token at the Edge. Tries ADMIN_JWT_SECRET first
+ * (the canonical signing key after the M1 rotation), then falls back to
+ * JWT_SECRET so admin sessions issued before ADMIN_JWT_SECRET was
+ * provisioned keep working until they expire (7d max). Once those have
+ * aged out the fallback becomes dead weight — kept as cheap insurance.
+ *
+ * Mirrors verifyAdminSessionToken() in lib/server/jwt.ts.
+ */
+async function isValidAdminToken(
+  token: string,
+  realtorSecret: string,
+  adminSecret: string | undefined,
+): Promise<boolean> {
+  if (adminSecret && adminSecret.length >= 32) {
+    if (await verifyWithSecret(token, adminSecret)) return true;
+    if (adminSecret === realtorSecret) return false;
+  }
+  return verifyWithSecret(token, realtorSecret);
 }
 
 // ============================================================================
@@ -230,8 +253,9 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const secret = process.env.JWT_SECRET;
-  if (!secret || secret.length < 32) {
+  const realtorSecret = process.env.JWT_SECRET;
+  const adminSecret = process.env.ADMIN_JWT_SECRET;
+  if (!realtorSecret || realtorSecret.length < 32) {
     // Fail closed: if the server is misconfigured we refuse to serve the
     // admin UI at all rather than letting it render unauthenticated.
     const url = req.nextUrl.clone();
@@ -241,7 +265,7 @@ export async function proxy(req: NextRequest) {
   }
 
   const token = req.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
-  if (token && (await isValidAdminToken(token, secret))) {
+  if (token && (await isValidAdminToken(token, realtorSecret, adminSecret))) {
     return NextResponse.next();
   }
 

@@ -4,20 +4,27 @@
  *   - Realtor session: { realtorId, email }                — cookie caxton_session_v2
  *   - Admin session:   { adminId,   email, type:'admin' }  — cookie caxton_admin_session_v2
  *
- * Secrets (F-07 from prod audit):
- *   - JWT_SECRET        signs realtor sessions.
- *   - ADMIN_JWT_SECRET  signs admin sessions when set. If unset, admin
- *                       sessions fall back to JWT_SECRET for backward
- *                       compatibility (existing sessions stay valid).
+ * Secrets:
+ *   - JWT_SECRET        signs realtor sessions. Required everywhere.
+ *   - ADMIN_JWT_SECRET  signs admin sessions. REQUIRED in production
+ *                       (NODE_ENV === 'production'). In dev/test it falls
+ *                       back to JWT_SECRET so local environments don't need
+ *                       to provision a second secret.
+ *
+ * Why required in prod: previously, if ADMIN_JWT_SECRET was unset, admin
+ * sessions silently used JWT_SECRET. A leaked JWT_SECRET (a realtor-level
+ * event) would then escalate to admin compromise. Forcing the env var split
+ * means realtor and admin sessions cannot be cross-forged.
  *
  * Verification: admin tokens are tried against ADMIN_JWT_SECRET first, then
  * against JWT_SECRET. This means rotating in a new ADMIN_JWT_SECRET is a
  * zero-downtime operation:
- *   1. Set ADMIN_JWT_SECRET in Vercel env.
+ *   1. Set ADMIN_JWT_SECRET in Vercel env (DONE — provisioned 2026-06-20).
  *   2. New admin logins are signed with the admin secret; existing sessions
  *      keep verifying against JWT_SECRET until they expire (7d).
  *   3. After 7 days every admin session is signed with the admin secret and
- *      JWT_SECRET fallback is dead weight.
+ *      the JWT_SECRET fallback in verifyAdminSessionToken is dead weight
+ *      (kept indefinitely as cheap insurance).
  *
  * MUST match the encoding the Express API used during the cutover so
  * existing live sessions stay valid. Algorithm: HS256 (jsonwebtoken default).
@@ -44,7 +51,16 @@ function getRealtorSecret(): Secret {
   return secret;
 }
 
-/** Primary admin-signing secret. Falls back to JWT_SECRET if not configured. */
+/**
+ * Primary admin-signing secret.
+ *
+ * Production: ADMIN_JWT_SECRET is required. Throw at sign time if missing
+ * so the failure is loud and the bug doesn't silently degrade admin sessions
+ * to the realtor JWT key.
+ *
+ * Dev / test: fall back to JWT_SECRET so local environments don't need to
+ * provision a second secret to sign in to /admin.
+ */
 function getAdminSecret(): Secret {
   const adminSecret = process.env.ADMIN_JWT_SECRET;
   if (adminSecret) {
@@ -53,8 +69,14 @@ function getAdminSecret(): Secret {
     }
     return adminSecret;
   }
-  // Backward-compat: before ADMIN_JWT_SECRET is provisioned, admin sessions
-  // use the realtor secret. This is the pre-audit behavior.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'ADMIN_JWT_SECRET must be set in production. ' +
+      'Provision a 32+ character random secret in Vercel and redeploy.',
+    );
+  }
+  // Dev / test: reuse the realtor secret so local /admin login works
+  // without forcing every contributor to set a second env var.
   return getRealtorSecret();
 }
 
