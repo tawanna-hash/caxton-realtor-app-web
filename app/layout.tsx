@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "./posthog-provider";
 import PushBootstrap from "@/components/PushBootstrap";
+import NativeSplashBootstrap from "@/components/NativeSplashBootstrap";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const SITE_URL = "https://realtynewsnow.app";
@@ -109,6 +110,10 @@ export default function RootLayout({
       <body className="antialiased font-sans">
         <PostHogProvider>
           <PushBootstrap />
+          {/* Native iOS shell only: dismiss the Capacitor splash screen as
+              soon as React has painted, instead of waiting for the 1500ms
+              auto-hide timeout. No-op on web. */}
+          <NativeSplashBootstrap />
           {children}
         </PostHogProvider>
         {/* Vercel Speed Insights — collects real-user Core Web Vitals (LCP,
