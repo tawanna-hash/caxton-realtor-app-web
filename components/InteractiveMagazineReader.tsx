@@ -475,8 +475,14 @@ export default function InteractiveMagazineReader({
 
         const stage = stageRef.current;
         if (!stage) return;
-        const stageH = Math.max(stage.clientHeight - 16, 100);
-        const stageW = Math.max(stage.clientWidth - 16, 100);
+        // Base the page-fit math on the SCROLL container (the viewport box),
+        // not the stage. At zoom>1 the stage uses width:max-content so its
+        // clientWidth equals the canvas width — which would feed back and
+        // recursively re-scale on every render. The scroll container is the
+        // stable viewport box we want to fit-to.
+        const viewport = scrollRef.current ?? stage;
+        const stageH = Math.max(viewport.clientHeight - 16, 100);
+        const stageW = Math.max(viewport.clientWidth - 16, 100);
         const natural = page.getViewport({ scale: 1 });
         const aspect = natural.width / natural.height;
         const perPageWidth = spreadMode ? Math.max(Math.floor((stageW - 8) / 2), 100) : stageW;
@@ -1125,11 +1131,22 @@ export default function InteractiveMagazineReader({
         ) : (
           <div
             ref={stageRef}
-            className="flex items-center justify-center gap-2"
+            className={`flex gap-2 ${zoom > 1 ? 'items-start justify-start' : 'items-center justify-center'}`}
             style={{
+              // At zoom=1, the stage fills the viewport so the page is centered.
+              // At zoom>1, the stage shrinks to the canvas's intrinsic width so
+              // the scroll container has real horizontal overflow to pan into
+              // (otherwise flex centering clamps the layout and left/right
+              // edges of the page are unreachable when zoomed in on mobile).
+              width: zoom > 1 ? 'max-content' : 'auto',
               minWidth: '100%',
               minHeight: '100%',
-              padding: chromeVisible ? '64px 16px' : '16px',
+              // When zoomed, drop horizontal padding so the user can pan all
+              // the way to the page edges. Keep vertical padding to clear the
+              // floating top chrome.
+              padding: zoom > 1
+                ? (chromeVisible ? '64px 0' : '16px 0')
+                : (chromeVisible ? '64px 16px' : '16px'),
             }}
           >
             {/* Left page (or placeholder for cover) */}
