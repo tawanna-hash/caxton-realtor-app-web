@@ -117,7 +117,7 @@ interface InteractiveMagazineReaderProps {
 
 type ActionMode = null | 'share' | 'qr' | 'download' | 'email' | 'embed' | 'search';
 
-const ZOOM_LEVELS = [0.75, 1, 1.25, 1.5, 2, 3];
+const ZOOM_LEVELS = [0.75, 1, 1.25, 1.5, 2, 3, 5, 10];
 // Desktop opens at 75% so the full spread fits without scrolling; mobile keeps
 // 100% so pages fill the narrow viewport.
 const DEFAULT_ZOOM_IDX_DESKTOP = 0; // 0.75x
@@ -494,7 +494,13 @@ export default function InteractiveMagazineReader({
         const displayScale = displayWidth / natural.width;
         // Cap DPR at 2 so 3x phone screens don't render at 4x cost.
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const renderScale = displayScale * dpr;
+        // Cap the effective render scale so very high zoom levels (5x, 10x)
+        // don't blow up the bitmap to gigapixel sizes on mobile. Above ~4x
+        // PDF render scale, pages are already near-print-DPI and the user
+        // gets pixel-upscaling either way — the canvas keeps its CSS size
+        // (displayWidth) so layout/pan still works as expected.
+        const MAX_RENDER_SCALE = 4;
+        const renderScale = Math.min(displayScale * dpr, MAX_RENDER_SCALE);
         const renderViewport = page.getViewport({ scale: renderScale });
 
         // Render offscreen first so the visible canvas keeps showing the
@@ -537,8 +543,12 @@ export default function InteractiveMagazineReader({
         }
 
         // Atomic visual swap + overlay update.
-        const cssDisplayW = offscreen.width / dpr;
-        const cssDisplayH = offscreen.height / dpr;
+        // CSS display size = the zoomed display size (independent of the
+        // render-scale cap), so 5x/10x zoom still produces a 5x/10x layout.
+        // The bitmap may be smaller than the CSS size (capped at
+        // MAX_RENDER_SCALE) — the browser will upscale, which is fine.
+        const cssDisplayW = displayWidth;
+        const cssDisplayH = displayHeight;
         canvas.width = offscreen.width;
         canvas.height = offscreen.height;
         canvas.style.width = `${cssDisplayW}px`;

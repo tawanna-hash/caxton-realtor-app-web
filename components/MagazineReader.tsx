@@ -22,7 +22,7 @@ interface MagazineReaderProps {
 
 type ActionMode = null | 'share' | 'qr' | 'download' | 'email' | 'embed' | 'search';
 
-const ZOOM_LEVELS = [1, 1.5, 2];
+const ZOOM_LEVELS = [1, 1.5, 2, 3, 5, 10];
 
 // Minimal type for the HTMLFlipBook ref API we use.
 interface FlipBookAPI {
