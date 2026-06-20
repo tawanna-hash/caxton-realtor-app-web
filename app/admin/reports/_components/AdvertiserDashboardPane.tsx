@@ -163,7 +163,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                 className={
                   'px-3 py-1.5 text-xs font-medium rounded-md ' +
                   (preset === p
-                    ? 'bg-[#021D40] text-white'
+                    ? 'bg-[#301D5D] text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50')
                 }
               >
@@ -191,7 +191,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
             title={advertiser.contact_email
               ? 'Preview and send the performance report email'
               : 'Add a contact email on the Advertisers page to send a report'}
-            className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#021D40] text-white hover:bg-[#03285a] disabled:opacity-40"
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#301D5D] text-white hover:bg-[#493676] disabled:opacity-40"
           >
             Send report email
           </button>
@@ -234,8 +234,8 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                   >
                     <defs>
                       <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#021D40" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="#021D40" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#301D5D" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor="#301D5D" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -261,7 +261,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                     <Area
                       type="monotone"
                       dataKey="clicks"
-                      stroke="#021D40"
+                      stroke="#301D5D"
                       strokeWidth={2}
                       fill={`url(#${gradientId})`}
                     />

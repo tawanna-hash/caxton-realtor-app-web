@@ -161,7 +161,7 @@ export default function TitleRateCalculatorClient() {
                   onClick={() => setTransactionType(t)}
                   className={`px-4 py-2 text-sm font-medium transition ${
                     transactionType === t
-                      ? 'bg-[#021D40] text-white'
+                      ? 'bg-[#301D5D] text-white'
                       : 'bg-white text-gray-700 hover:bg-gray-50'
                   }`}
                 >
@@ -181,7 +181,7 @@ export default function TitleRateCalculatorClient() {
                 type="button"
                 onClick={() => setResidential(true)}
                 className={`px-4 py-2 text-sm font-medium transition ${
-                  residential ? 'bg-[#021D40] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  residential ? 'bg-[#301D5D] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 Residential
@@ -190,7 +190,7 @@ export default function TitleRateCalculatorClient() {
                 type="button"
                 onClick={() => setResidential(false)}
                 className={`px-4 py-2 text-sm font-medium transition ${
-                  !residential ? 'bg-[#021D40] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  !residential ? 'bg-[#301D5D] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 Non-residential
@@ -248,7 +248,7 @@ export default function TitleRateCalculatorClient() {
                       onClick={() => setReissueAge(opt.v)}
                       className={`px-3 py-1.5 text-xs font-medium rounded-md border transition ${
                         reissueAge === opt.v
-                          ? 'border-[#021D40] bg-[#021D40] text-white'
+                          ? 'border-[#301D5D] bg-[#301D5D] text-white'
                           : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                       }`}
                     >
@@ -403,7 +403,7 @@ export default function TitleRateCalculatorClient() {
           href="https://www.tdi.texas.gov/title/documents/titlerates2026.pdf"
           target="_blank"
           rel="noopener noreferrer"
-          className="underline hover:text-[#021D40]"
+          className="underline hover:text-[#301D5D]"
         >
           TDI titlerates2026.pdf
         </a>
@@ -491,7 +491,7 @@ function Toggle({ label, checked, onChange, hint, disabled = false }: ToggleProp
         disabled
           ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
           : checked
-            ? 'border-[#021D40] bg-[#021D40]/[0.03] cursor-pointer'
+            ? 'border-[#301D5D] bg-[#301D5D]/[0.03] cursor-pointer'
             : 'border-gray-300 bg-white hover:bg-gray-50 cursor-pointer'
       }`}
     >
@@ -500,7 +500,7 @@ function Toggle({ label, checked, onChange, hint, disabled = false }: ToggleProp
         checked={checked && !disabled}
         disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 h-4 w-4 rounded-md border-gray-400 text-[#021D40] focus:ring-[#021D40]/30"
+        className="mt-0.5 h-4 w-4 rounded-md border-gray-400 text-[#301D5D] focus:ring-[#301D5D]/30"
       />
       <span className="flex-1">
         <span className="block text-sm font-medium text-gray-900 leading-snug">{label}</span>

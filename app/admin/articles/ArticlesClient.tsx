@@ -23,8 +23,8 @@ const PUB_LABEL: Record<NewsArticle['publication'], string> = {
 };
 
 const PUB_STYLES: Record<NewsArticle['publication'], string> = {
-  austin: 'bg-[#021D40]/10 text-[#021D40] border-[#021D40]/20',
-  san_antonio: 'bg-[#3D0740]/10 text-[#3D0740] border-[#3D0740]/20',
+  austin: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
+  san_antonio: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
 };
 
 function formatDate(iso: string | undefined): string {
@@ -109,7 +109,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             type="button"
             onClick={handleSync}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-md bg-[#021D40] px-4 py-2 text-sm font-medium text-white hover:bg-[#021D40]/90 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
+            className="inline-flex items-center gap-2 rounded-md bg-[#301D5D] px-4 py-2 text-sm font-medium text-white hover:bg-[#301D5D]/90 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
           >
             {busy ? (
               <>
@@ -166,7 +166,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             onClick={() => setFilter(key)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
               filter === key
-                ? 'bg-[#021D40] text-white border-[#021D40]'
+                ? 'bg-[#301D5D] text-white border-[#301D5D]'
                 : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
             }`}
           >
@@ -181,7 +181,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search title, author, or category…"
-          className="ml-auto flex-1 sm:flex-none sm:w-80 px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+          className="ml-auto flex-1 sm:flex-none sm:w-80 px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D]/30 focus:border-[#301D5D]"
         />
       </div>
 
@@ -268,7 +268,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
                         <button
                           type="button"
                           onClick={() => setEditing(a)}
-                          className="text-[#021D40] hover:underline text-xs font-medium"
+                          className="text-[#301D5D] hover:underline text-xs font-medium"
                         >
                           Edit
                         </button>
@@ -423,7 +423,7 @@ function EditModal({
               type="text"
               value={head}
               onChange={(e) => setHead(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D]/30 focus:border-[#301D5D]"
             />
           </Field>
 
@@ -432,7 +432,7 @@ function EditModal({
               type="text"
               value={cat}
               onChange={(e) => setCat(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D]/30 focus:border-[#301D5D]"
             />
           </Field>
 
@@ -442,7 +442,7 @@ function EditModal({
                 type="text"
                 value={authorName}
                 onChange={(e) => setAuthorName(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D]/30 focus:border-[#301D5D]"
               />
             </Field>
             <Field label="Author photo" hint="Upload an image or paste a URL">
@@ -469,7 +469,7 @@ function EditModal({
               value={excerpt}
               onChange={(e) => setExcerpt(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40] resize-y"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D]/30 focus:border-[#301D5D] resize-y"
             />
           </Field>
 
@@ -478,7 +478,7 @@ function EditModal({
               value={contentHtml}
               onChange={(e) => setContentHtml(e.target.value)}
               rows={10}
-              className="w-full px-3 py-2 rounded-md border border-gray-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40] resize-y"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[#301D5D]/30 focus:border-[#301D5D] resize-y"
             />
           </Field>
 
@@ -488,7 +488,7 @@ function EditModal({
               value={tagsCsv}
               onChange={(e) => setTagsCsv(e.target.value)}
               placeholder="tag1, tag2, tag3"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+              className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D]/30 focus:border-[#301D5D]"
             />
           </Field>
 
@@ -497,7 +497,7 @@ function EditModal({
               type="checkbox"
               checked={hidden}
               onChange={(e) => setHidden(e.target.checked)}
-              className="h-4 w-4 rounded-md border-gray-300 text-[#021D40] focus:ring-[#021D40]"
+              className="h-4 w-4 rounded-md border-gray-300 text-[#301D5D] focus:ring-[#301D5D]"
             />
             <span className="text-sm text-gray-700">
               Hide this article from the public app
@@ -537,7 +537,7 @@ function EditModal({
               type="button"
               onClick={save}
               disabled={busy}
-              className="px-4 py-2 text-sm font-medium text-white bg-[#021D40] hover:bg-[#021D40]/90 rounded-md disabled:opacity-50 min-h-[44px]"
+              className="px-4 py-2 text-sm font-medium text-white bg-[#301D5D] hover:bg-[#301D5D]/90 rounded-md disabled:opacity-50 min-h-[44px]"
             >
               {saving ? 'Saving…' : 'Save changes'}
             </button>
@@ -703,7 +703,7 @@ function ImageUpload({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder="or paste image URL…"
-            className="w-full px-3 py-1.5 rounded-md border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-[#021D40]/30 focus:border-[#021D40]"
+            className="w-full px-3 py-1.5 rounded-md border border-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-[#301D5D]/30 focus:border-[#301D5D]"
           />
         </div>
       </div>

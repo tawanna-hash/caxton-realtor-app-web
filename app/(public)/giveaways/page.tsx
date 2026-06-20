@@ -27,7 +27,7 @@ export default function Page() {
             We&apos;re finalizing our giveaway calendar. Check back soon, or{' '}
             <a
               href="/subscribe"
-              className="text-[#021D40] font-medium underline underline-offset-2"
+              className="text-[#301D5D] font-medium underline underline-offset-2"
             >
               subscribe
             </a>{' '}

@@ -304,7 +304,7 @@ export default function SaborMlsAdminPage() {
               type="button"
               onClick={save}
               disabled={saving}
-              className="px-5 py-2.5 bg-[#3D0740] text-white rounded-md font-medium disabled:opacity-60"
+              className="px-5 py-2.5 bg-[#301D5D] text-white rounded-md font-medium disabled:opacity-60"
             >
               {saving ? 'Saving\u2026' : editingId ? 'Update report' : 'Create report'}
             </button>
@@ -337,7 +337,7 @@ export default function SaborMlsAdminPage() {
                   <div>
                     <p className="font-semibold">
                       {r.month_label}{' '}
-                      {i === 0 && <span className="ml-2 text-[10px] uppercase tracking-wider bg-[#3D0740] text-white px-2 py-0.5 rounded-md">Live</span>}
+                      {i === 0 && <span className="ml-2 text-[10px] uppercase tracking-wider bg-[#301D5D] text-white px-2 py-0.5 rounded-md">Live</span>}
                     </p>
                     <p className="text-sm text-gray-600">{r.released_at} \u00b7 {r.headline_value} {r.headline_delta}</p>
                     <p className="text-xs text-gray-500 mt-1">{r.headline_label}</p>

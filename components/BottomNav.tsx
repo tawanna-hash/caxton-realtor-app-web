@@ -122,7 +122,7 @@ export default function BottomNav({ info, onMoreClick }: Props) {
     }
   }
 
-  const accent = info?.color ?? '#021D40';
+  const accent = info?.color ?? '#301D5D';
 
   return (
     <nav

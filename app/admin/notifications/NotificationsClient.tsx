@@ -146,7 +146,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
         <button
           type="button"
           onClick={() => { setEditing(null); setOpen(true); }}
-          className="inline-flex items-center justify-center px-4 py-2 rounded-md text-white font-medium text-sm bg-[#021D40] hover:bg-[#03285a] transition-colors"
+          className="inline-flex items-center justify-center px-4 py-2 rounded-md text-white font-medium text-sm bg-[#301D5D] hover:bg-[#493676] transition-colors"
         >
           New notification
         </button>
@@ -203,7 +203,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
                           type="button"
                           onClick={() => openEdit(n)}
                           disabled={busyId === n.id}
-                          className="text-xs font-medium text-[#021D40] hover:underline disabled:opacity-50"
+                          className="text-xs font-medium text-[#301D5D] hover:underline disabled:opacity-50"
                         >
                           Edit
                         </button>

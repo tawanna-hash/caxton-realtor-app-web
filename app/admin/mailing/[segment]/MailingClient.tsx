@@ -541,7 +541,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               type="button"
               disabled
               title="Coming soon for this segment"
-              className="px-4 py-2 rounded-md border border-[#3D0740] text-[#3D0740] text-sm font-medium opacity-50 cursor-not-allowed"
+              className="px-4 py-2 rounded-md border border-[#301D5D] text-[#301D5D] text-sm font-medium opacity-50 cursor-not-allowed"
             >
               Verify all Pending
             </button>
@@ -550,7 +550,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               onClick={handleVerifyAddresses}
               disabled={busy !== null}
               className="px-4 py-2 rounded-md text-white text-sm font-medium disabled:opacity-50"
-              style={{ backgroundColor: '#3D0740' }}
+              style={{ backgroundColor: '#301D5D' }}
               title="Run USPS Address API on selected rows (or this page if none selected)"
             >
               Verify USPS{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
@@ -576,7 +576,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             <button
               onClick={() => handleRefreshAddresses(false)}
               disabled={busy !== null}
-              className="px-3 py-1.5 text-sm rounded-md border border-[#3D0740] text-[#3D0740] hover:bg-[#3D0740]/5 disabled:opacity-50"
+              className="px-3 py-1.5 text-sm rounded-md border border-[#301D5D] text-[#301D5D] hover:bg-[#301D5D]/5 disabled:opacity-50"
               title="Walk every row and fill in blank address fields from the linked advertiser's locations (preferring each staff member's assigned location). Preserves admin edits."
             >
               Refresh addresses from advertisers
@@ -624,7 +624,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
           </div>
           <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
             <div
-              className="h-full bg-[#3D0740] transition-all"
+              className="h-full bg-[#301D5D] transition-all"
               style={{
                 width: `${drainJob.total > 0 ? Math.min(100, Math.round((drainJob.processed / drainJob.total) * 100)) : 0}%`,
               }}
@@ -676,7 +676,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
           placeholder="Search name, email, company…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="px-3 py-2 rounded-md border border-gray-300 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-[#3D0740]"
+          className="px-3 py-2 rounded-md border border-gray-300 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-[#301D5D]"
         />
       </div>
 
@@ -688,7 +688,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             type="button"
             onClick={() => setShowBulkEdit(true)}
             disabled={busy !== null}
-            className="px-3 py-1.5 rounded-md border border-[#3D0740] text-[#3D0740] text-xs font-medium hover:bg-[#3D0740]/5 disabled:opacity-50"
+            className="px-3 py-1.5 rounded-md border border-[#301D5D] text-[#301D5D] text-xs font-medium hover:bg-[#301D5D]/5 disabled:opacity-50"
           >
             Edit {selectedIds.size}
           </button>
@@ -936,7 +936,7 @@ function MoveToMenu({
         type="button"
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
-        className="px-3 py-1.5 rounded-md border border-[#3D0740] text-[#3D0740] text-xs font-medium hover:bg-[#3D0740]/5 disabled:opacity-50 inline-flex items-center gap-1"
+        className="px-3 py-1.5 rounded-md border border-[#301D5D] text-[#301D5D] text-xs font-medium hover:bg-[#301D5D]/5 disabled:opacity-50 inline-flex items-center gap-1"
       >
         Move {count} to
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -996,7 +996,7 @@ function KpiCard({
           title={action.label}
           aria-label={action.label}
           className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-white shadow-sm hover:opacity-90"
-          style={{ backgroundColor: accent ?? '#3D0740' }}
+          style={{ backgroundColor: accent ?? '#301D5D' }}
         >
           {/* Download glyph (inline SVG, no icon lib dep) */}
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1014,7 +1014,7 @@ function KpiCard({
 function FilterChip({
   active, onClick, label, count, accent,
 }: { active: boolean; onClick: () => void; label: string; count: number; accent?: string }) {
-  const bg = active ? (accent ?? '#3D0740') : '#f3f4f6';
+  const bg = active ? (accent ?? '#301D5D') : '#f3f4f6';
   const fg = active ? 'white' : '#374151';
   return (
     <button
@@ -1424,7 +1424,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#3D0740] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify with USPS'}
               </button>
@@ -1452,7 +1452,7 @@ function EditDrawer({
                 type="button"
                 disabled={emailBusy || !form.email}
                 onClick={onVerifyEmail}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#3D0740] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
               >
                 {emailBusy ? 'Verifying…' : 'Verify Email'}
               </button>
@@ -1490,7 +1490,7 @@ function EditDrawer({
                 onChange={(e) => setField('email_notes', e.target.value)}
                 rows={5}
                 placeholder="Notes about this contact&apos;s email — e.g. bounced 5/30, verified via phone, alternate address..."
-                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#3D0740] resize-y"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#301D5D] resize-y"
               />
               <span className="mt-1 block text-[10px] text-gray-500">
                 Each verifier run auto-appends a timestamped line. Edit freely.
@@ -1517,7 +1517,7 @@ function EditDrawer({
             type="button"
             disabled={saving}
             onClick={save}
-            className="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-[#3D0740] hover:bg-[#5a0e5f] disabled:opacity-50"
+            className="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-[#301D5D] hover:bg-[#5a0e5f] disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>
@@ -1549,7 +1549,7 @@ function DrawerField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         inputMode={inputMode}
-        className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#3D0740]"
+        className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D]"
       />
     </label>
   );
@@ -2162,7 +2162,7 @@ function BulkEditDialog({
             type="button"
             onClick={save}
             disabled={saving || !anyEnabled}
-            className="px-3 py-1.5 text-sm rounded-md bg-[#3D0740] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
+            className="px-3 py-1.5 text-sm rounded-md bg-[#301D5D] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
           >
             {saving ? 'Applying…' : `Apply to ${ids.length}`}
           </button>

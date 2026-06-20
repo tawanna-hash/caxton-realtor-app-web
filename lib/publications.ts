@@ -38,7 +38,7 @@ export const PUBLICATIONS: readonly Publication[] = [
     market: 'Austin',
     label: 'RealtyLine Austin',
     filterLabel: 'RealtyLine',
-    pillStyle: 'bg-[#021D40]/10 text-[#021D40] border-[#021D40]/20',
+    pillStyle: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
   },
   {
     id: 'san_antonio',
@@ -46,7 +46,7 @@ export const PUBLICATIONS: readonly Publication[] = [
     market: 'San Antonio',
     label: 'Newsline San Antonio',
     filterLabel: 'Newsline San Antonio',
-    pillStyle: 'bg-[#3D0740]/10 text-[#3D0740] border-[#3D0740]/20',
+    pillStyle: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
   },
 ] as const;
 

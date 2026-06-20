@@ -18,7 +18,7 @@ export default function ComingSoon({
         <p className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium mb-4">
           Coming soon
         </p>
-        <h1 className="text-3xl font-semibold text-[#021D40] tracking-tight mb-4">
+        <h1 className="text-3xl font-semibold text-[#301D5D] tracking-tight mb-4">
           {title}
         </h1>
         {description && (
@@ -35,7 +35,7 @@ export default function ComingSoon({
           </button>
           <Link
             href="/"
-            className="text-sm uppercase tracking-wider font-medium px-6 py-3 bg-[#021D40] text-white hover:bg-[#021D40]"
+            className="text-sm uppercase tracking-wider font-medium px-6 py-3 bg-[#301D5D] text-white hover:bg-[#301D5D]"
           >
             Return to app
           </Link>

@@ -1076,7 +1076,7 @@ export const CONCESSION_DISPLAY: ConcessionDisplayGroup[] = [
   {
     program: 'conventional',
     programLabel: 'Conventional',
-    accent: '#021D40',
+    accent: '#301D5D',
     scenarios: [
       {
         occupancyLabel: 'Primary & secondary home',

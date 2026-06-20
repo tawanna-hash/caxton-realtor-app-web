@@ -80,7 +80,7 @@ export async function notifyAdminsPendingEvent({
   const subject = `[Realty News Now] Pending event — ${title.slice(0, 80)}`;
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
-      <h2 style="color: #021D40; margin: 0 0 12px;">New event awaiting review</h2>
+      <h2 style="color: #301D5D; margin: 0 0 12px;">New event awaiting review</h2>
       <p style="color: #444; font-size: 14px; line-height: 1.5; margin: 0 0 16px;">
         A new event landed in the admin queue via ${sourceLabel}. Review it
         and approve to publish to the Calendar.
@@ -99,7 +99,7 @@ export async function notifyAdminsPendingEvent({
 
       <p style="margin: 24px 0 8px;">
         <a href="${reviewUrl}"
-           style="display: inline-block; background: #021D40; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 500;">
+           style="display: inline-block; background: #301D5D; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 500;">
           Review in admin
         </a>
       </p>

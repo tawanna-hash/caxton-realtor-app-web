@@ -175,7 +175,7 @@ export default function Exchange1031Client() {
             <div className="mb-2">
               <div className="relative h-3 rounded-full bg-white/60 overflow-hidden border border-gray-200">
                 <div
-                  className="absolute inset-y-0 left-0 bg-[#021D40]"
+                  className="absolute inset-y-0 left-0 bg-[#301D5D]"
                   style={{ width: `${timeline.progress * 100}%` }}
                 />
                 {/* 45-day marker — 45/180 = 25% */}
@@ -244,7 +244,7 @@ export default function Exchange1031Client() {
 function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#021D40] mb-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#301D5D] mb-3">
         {title}
       </p>
       <div className="space-y-4">{children}</div>
@@ -292,7 +292,7 @@ function MilestoneRow({ milestone }: { milestone: ExchangeMilestone }) {
   const today = milestone.daysFromToday === 0;
   const deadline = milestone.isDeadline;
 
-  const dotColor = deadline ? 'bg-rose-600' : past ? 'bg-gray-400' : 'bg-[#021D40]';
+  const dotColor = deadline ? 'bg-rose-600' : past ? 'bg-gray-400' : 'bg-[#301D5D]';
   const labelColor = deadline ? 'text-rose-800' : 'text-gray-900';
   const badgeBg = deadline
     ? 'bg-rose-100 text-rose-800 border-rose-200'
@@ -342,8 +342,8 @@ function statusToneFor(status: string) {
       return {
         border: 'border-[#fb923c]/40',
         bg: 'bg-[#fb923c]/5',
-        label: 'text-[#021D40]',
-        text: 'text-[#021D40]',
+        label: 'text-[#301D5D]',
+        text: 'text-[#301D5D]',
       };
     case 'Expired':
       return {

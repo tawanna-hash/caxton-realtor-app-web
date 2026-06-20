@@ -13,7 +13,7 @@ type Props = {
   hasPassword: boolean;
 };
 
-export default function PasswordSection({ accentColor = '#021D40', hasPassword }: Props) {
+export default function PasswordSection({ accentColor = '#301D5D', hasPassword }: Props) {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
