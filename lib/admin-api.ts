@@ -186,35 +186,4 @@ export const adminApi = {
     adminFetch(`/admin/ads/campaigns/${id}`, { method: 'DELETE' }),
   toggleAdCampaign: (id: string) =>
     adminFetch(`/admin/ads/campaigns/${id}/toggle`, { method: 'POST' }),
-
-  // Featured Facebook posts (→ surfaced in feed via the Social pill)
-  // Page URLs (facebook.com/{page}/posts/...) are auto-fetched via the
-  // Graph API. Group URLs (facebook.com/groups/{id}/posts/...) require
-  // manual caption + image (Meta deprecated the Groups API in 2024).
-  listSocialPosts: () => adminFetch('/admin/social'),
-  addSocialPost: (data: {
-    url: string;
-    pub: 'realtyline' | 'newsline' | 'both';
-    is_open_house?: boolean;
-    message?: string | null;
-    image_url?: string | null;
-    posted_at?: string | null;
-  }) => adminFetch('/admin/social', { method: 'POST', body: data }),
-  // Pre-flight: fetch the public HTML of a Facebook URL and return whatever
-  // caption / image / posted-at we can pull from OpenGraph tags. UI uses
-  // this to pre-fill the manual-entry form for Group posts before the admin
-  // submits. Returns { kind, harvested, message, imageUrl, postedAt, reason? }.
-  harvestSocialPost: (data: { url: string }) =>
-    adminFetch('/admin/social/harvest', { method: 'POST', body: data }),
-  updateSocialPost: (
-    id: number,
-    patch: {
-      pub?: 'realtyline' | 'newsline' | 'both';
-      is_open_house?: boolean;
-      is_active?: boolean;
-      display_order?: number;
-    }
-  ) => adminFetch(`/admin/social/${id}`, { method: 'PATCH', body: patch }),
-  deleteSocialPost: (id: number) =>
-    adminFetch(`/admin/social/${id}`, { method: 'DELETE' }),
 };
