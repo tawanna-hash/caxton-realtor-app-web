@@ -779,7 +779,12 @@ export default function DashboardPage() {
       }
     } catch {}
 
-    // Check if we already have a server session.
+    // Check if we already have a server session. If there is NO realtor on
+    // the server, we must override any saved localStorage phase that would
+    // render protected content (feed/article). The edge proxy already
+    // blocks unauthenticated access to /dashboard, but when the dashboard
+    // is reached via the documented ?auth=login|signup bypass for the
+    // sign-in form, the AuthGate must be the only thing visible.
     fetch(`${API}/auth/me`, { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -794,9 +799,22 @@ export default function DashboardPage() {
           if (!savedPhaseForAuth || !contentPhases.includes(savedPhaseForAuth)) {
             setPhase('feed');
           }
+        } else {
+          // No server session — force the AuthGate regardless of saved phase.
+          // This closes a content-leak window where a stale localStorage
+          // 'caxton_phase=feed' could briefly render feed components for a
+          // signed-out visitor who reached /dashboard?auth=login.
+          setUser(null);
+          setPhase('auth');
+          try { localStorage.removeItem('caxton_phase'); } catch {}
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        // Treat /api/auth/me network failures as logged-out for safety.
+        if (cancelled) return;
+        setUser(null);
+        setPhase('auth');
+      });
 
     setHydrated(true);
     return () => {
