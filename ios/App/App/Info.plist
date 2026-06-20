@@ -61,8 +61,6 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID to sign in to your Realty News Now account faster without re-entering your password.</string>
 	<!-- ATT prompt is shown only if/when we add a third-party tracking SDK that requires it. PostHog with anonymous IDs and masked inputs does NOT require ATT, but declaring the string here keeps App Review unblocked if we add an ad SDK later. -->
-	<key>NSUserTrackingUsageDescription</key>
-	<string>Allow tracking so Realty News Now can measure ad performance and show you relevant advertising partners across our publications.</string>
 	<!-- App Transport Security: realtynewsnow.app already uses HTTPS so default ATS is fine.
 	     We DO NOT enable NSAllowsArbitraryLoads. Listed below explicitly for App Review clarity. -->
 	<key>NSAppTransportSecurity</key>
