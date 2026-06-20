@@ -293,6 +293,12 @@ export default function InteractiveMagazineReader({
   const [spreadMode, setSpreadMode] = useState(false); // becomes true on desktop
   const [chromeVisible, setChromeVisible] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+  // Grab tool toggle. When ON: cursor is always grab/grabbing, text-layer
+  // selection is suppressed, and links are click-through-only (no drag-to-
+  // select). When OFF: dragging still pans (existing behavior) but the user
+  // can also select text and follow links normally. Defaults to ON so the
+  // moment a user zooms in they can immediately drag to explore the page.
+  const [grabActive, setGrabActive] = useState(true);
 
   // Hotspots fetched once on mount. Filtered per-page in the render below.
   const [hotspots, setHotspots] = useState<PublicHotspot[]>([]);
@@ -864,7 +870,9 @@ export default function InteractiveMagazineReader({
 
   // ---- Mouse pan handlers (desktop) ----
   function handleMouseDown(e: React.MouseEvent) {
-    if ((e.target as HTMLElement).tagName === 'A') return;
+    // When grab is OFF, don't intercept clicks on links — let the browser
+    // handle the navigation. When grab is ON, drag-from-anywhere pans.
+    if (!grabActive && (e.target as HTMLElement).tagName === 'A') return;
     if (!scrollRef.current) return;
     dragStateRef.current = {
       startX: e.clientX,
@@ -1088,9 +1096,13 @@ export default function InteractiveMagazineReader({
         ref={scrollRef}
         className="absolute inset-0 overflow-auto flex items-center justify-center"
         style={{
-          cursor: isDragging ? 'grabbing' : 'grab',
+          cursor: grabActive ? (isDragging ? 'grabbing' : 'grab') : 'auto',
           touchAction: zoom > 1 ? 'none' : 'pan-y',
           WebkitOverflowScrolling: 'touch',
+          // When grab is ON, suppress text-layer selection on the entire
+          // stage so a drag is unambiguously a pan, not a text selection.
+          userSelect: grabActive ? 'none' : 'auto',
+          WebkitUserSelect: grabActive ? 'none' : 'auto',
         }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -1195,8 +1207,24 @@ export default function InteractiveMagazineReader({
                 <path d="m21 21-4.3-4.3M8 11h6" />
               </svg>
             </button>
-            <button onClick={zoomReset} aria-label={`Zoom ${zoom}x — click to reset`} className="text-white/80 hover:text-white px-2 text-[10px] uppercase tracking-wider">
+            <button onClick={zoomReset} aria-label={`Zoom ${zoom}x — click to reset`} className="text-white/80 hover:text-white px-2 text-[10px] uppercase tracking-wider min-w-[44px] min-h-[44px] flex items-center justify-center">
               {zoom}x
+            </button>
+            {/* Grab tool toggle. Hand icon. When ON drag pans; when OFF drag
+                selects text and links work normally. Defaults to ON. */}
+            <button
+              onClick={() => setGrabActive((g) => !g)}
+              aria-label={grabActive ? 'Disable grab tool (allow text selection)' : 'Enable grab tool (drag to move the page)'}
+              aria-pressed={grabActive}
+              className={`p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors ${grabActive ? 'text-white bg-white/20 rounded' : 'text-white/80 hover:text-white'}`}
+              title={grabActive ? 'Grab tool ON — drag to move the page' : 'Grab tool OFF — click to enable drag-to-pan'}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 11V6a2 2 0 0 0-4 0v5" />
+                <path d="M14 10V4a2 2 0 0 0-4 0v6" />
+                <path d="M10 10.5V6a2 2 0 0 0-4 0v8" />
+                <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+              </svg>
             </button>
             <button onClick={zoomIn} disabled={zoomIdx === ZOOM_LEVELS.length - 1} aria-label="Zoom in" className="text-white/80 hover:text-white p-1.5 disabled:opacity-30 min-w-[44px] min-h-[44px] flex items-center justify-center">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

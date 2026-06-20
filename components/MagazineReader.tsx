@@ -59,6 +59,14 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
   const [dims, setDims] = useState({ w: 400, h: 560 });
   const [zoomIdx, setZoomIdx] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // Grab/pan tool. When ON, mouse drag pans the zoomed page around the
+  // viewport (HTMLFlipBook's mouse events are suppressed so dragging doesn't
+  // trigger page flips). Auto-enables when the user first zooms in.
+  const [grabActive, setGrabActive] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
+  const [grabHintShown, setGrabHintShown] = useState(false);
+  const panRef = useRef<{ startX: number; startY: number; scrollLeft: number; scrollTop: number } | null>(null);
+  const scrollStageRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [jumpInput, setJumpInput] = useState('');
   const flipBookRef = useRef<FlipBookAPI | null>(null);
@@ -199,11 +207,47 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
     setJumpInput('');
   }
 
+  // Toggle handler for the grab tool button.
+  function toggleGrab() {
+    setGrabActive((g) => {
+      const next = !g;
+      if (next) setGrabHintShown(true);
+      return next;
+    });
+  }
+
+  // Mouse pan handlers — only fire when grab is active.
+  function handlePanMouseDown(e: React.MouseEvent) {
+    if (!grabActive || !scrollStageRef.current) return;
+    panRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      scrollLeft: scrollStageRef.current.scrollLeft,
+      scrollTop: scrollStageRef.current.scrollTop,
+    };
+    setIsPanning(true);
+    e.preventDefault();
+  }
+  function handlePanMouseMove(e: React.MouseEvent) {
+    if (!panRef.current || !scrollStageRef.current) return;
+    const dx = e.clientX - panRef.current.startX;
+    const dy = e.clientY - panRef.current.startY;
+    scrollStageRef.current.scrollLeft = panRef.current.scrollLeft - dx;
+    scrollStageRef.current.scrollTop = panRef.current.scrollTop - dy;
+  }
+  function handlePanMouseUp() {
+    panRef.current = null;
+    setIsPanning(false);
+  }
+
   function cycleZoom(delta: 1 | -1) {
     setZoomIdx((prev) => {
       const next = prev + delta;
       if (next < 0) return 0;
       if (next >= ZOOM_LEVELS.length) return ZOOM_LEVELS.length - 1;
+      // Auto-enable grab when zooming in, auto-disable when returning to 1x.
+      if (ZOOM_LEVELS[next] > 1 && !grabActive) setGrabActive(true);
+      if (ZOOM_LEVELS[next] === 1 && grabActive) setGrabActive(false);
       trackEvent('flipbook_zoom', { magazine_id: magazine.id, level: ZOOM_LEVELS[next] });
       return next;
     });
@@ -365,6 +409,23 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
           >
             <span className="text-[10px] uppercase tracking-wider">{zoom}x</span>
           </button>
+          {/* Grab/pan tool toggle. Only meaningful when zoomed in. */}
+          {zoom > 1 && (
+            <button
+              onClick={toggleGrab}
+              aria-label={grabActive ? 'Disable grab tool' : 'Enable grab tool to drag the page'}
+              aria-pressed={grabActive}
+              className={`p-1 transition-colors ${grabActive ? 'text-white bg-white/20 rounded' : 'text-white/80 hover:text-white'}`}
+              title={grabActive ? 'Grab tool ON — click to disable' : 'Grab tool — drag to move the page'}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 11V6a2 2 0 0 0-4 0v5" />
+                <path d="M14 10V4a2 2 0 0 0-4 0v6" />
+                <path d="M10 10.5V6a2 2 0 0 0-4 0v8" />
+                <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+              </svg>
+            </button>
+          )}
           <button
             onClick={toggleFullscreen}
             aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
@@ -384,13 +445,40 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
         </div>
       </div>
 
-      {/* Flipbook canvas */}
-      <div className="flex-1 flex items-center justify-center overflow-auto">
+      {/* Flipbook canvas. When grab is active we attach mouse handlers to the
+          scroll wrapper, switch the cursor to grab/grabbing, and tell
+          HTMLFlipBook to ignore its own mouse events so dragging doesn't
+          flip pages. */}
+      <div
+        ref={scrollStageRef}
+        className="flex-1 flex items-center justify-center overflow-auto relative"
+        style={{
+          cursor: grabActive ? (isPanning ? 'grabbing' : 'grab') : 'default',
+        }}
+        onMouseDown={handlePanMouseDown}
+        onMouseMove={handlePanMouseMove}
+        onMouseUp={handlePanMouseUp}
+        onMouseLeave={handlePanMouseUp}
+      >
+        {grabActive && grabHintShown && (
+          <div
+            className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-full bg-black/70 text-white text-xs whitespace-nowrap"
+            aria-hidden="true"
+          >
+            Drag to move the page — click the hand again to flip pages
+          </div>
+        )}
         <div
           style={{
             transform: `scale(${zoom})`,
             transformOrigin: 'center center',
             transition: 'transform 200ms ease-out',
+            // While grabbing: disable text/image selection and stop the
+            // FlipBook from receiving raw pointer events. The pan handlers
+            // are on the parent so the drag still works through this layer.
+            userSelect: grabActive ? 'none' : 'auto',
+            WebkitUserSelect: grabActive ? 'none' : 'auto',
+            pointerEvents: grabActive ? 'none' : 'auto',
           }}
         >
           <HTMLFlipBook
@@ -410,11 +498,11 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
             maxShadowOpacity={0.5}
             showCover={true}
             mobileScrollSupport={false}
-            clickEventForward={true}
-            useMouseEvents={true}
+            clickEventForward={!grabActive}
+            useMouseEvents={!grabActive}
             swipeDistance={30}
-            showPageCorners={true}
-            disableFlipByClick={false}
+            showPageCorners={!grabActive}
+            disableFlipByClick={grabActive}
             startZIndex={0}
             style={{}}
             className=""
