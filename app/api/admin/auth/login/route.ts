@@ -26,7 +26,7 @@ const DUMMY_HASH =
   '$2b$12$invalidsaltinvalidsaltinvalidsaltinvalidsaltinvalidsa';
 
 export const POST = withErrorHandling(async (req: Request) => {
-  await rateLimit('auth');
+  await rateLimit('adminAuth');
   const input = loginSchema.parse(await req.json());
 
   const rows = await query<{

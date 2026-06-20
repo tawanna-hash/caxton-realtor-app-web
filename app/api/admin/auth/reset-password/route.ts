@@ -5,11 +5,11 @@
 
 import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { withNeonTransaction } from '@/lib/server/db/neon';
 import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { getRequestIp, getRequestUserAgent } from '@/lib/server/auth/admin';
+import { hashPassword } from '@/lib/server/auth/passwords';
 import { rateLimit } from '@/lib/server/rate-limit';
 
 export const runtime = 'nodejs';
@@ -50,7 +50,7 @@ export const POST = withErrorHandling(async (req: Request) => {
     }
     if (!reset.active) throw new ApiError(403, 'This admin account is not active');
 
-    const passwordHash = await bcrypt.hash(input.newPassword, 10);
+    const passwordHash = await hashPassword(input.newPassword);
 
     await client.query(
       `UPDATE admins SET password_hash = $1 WHERE id = $2`,
