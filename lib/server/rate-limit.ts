@@ -22,14 +22,19 @@ import { ApiError } from './error';
 import { logger } from './logger';
 import { headers } from 'next/headers';
 
-type ConfigName = 'general' | 'auth' | 'passwordReset' | 'magicLinkRequest' | 'signWizard';
+type ConfigName = 'general' | 'auth' | 'adminAuth' | 'passwordReset' | 'magicLinkRequest' | 'signWizard';
 
 const configs: Record<ConfigName, { tokens: number; windowMs: number; window: `${number}${'s' | 'm' | 'h'}` }> = {
   general:       { tokens: 100, windowMs:  60_000, window: '1m'  },
-  // Auth is intentionally generous so legitimate flows — conditional-UI
-  // retry-after-typo, magic link + password — don't trip
+  // Realtor-facing auth. Intentionally generous so legitimate flows —
+  // conditional-UI retry-after-typo, magic link + password — don't trip
   // the gate. Brute-force protection still relies on the per-IP window.
   auth:          { tokens:  30, windowMs: 900_000, window: '15m' },
+  // Admin login lives on its own bucket so a brute-force attempt against
+  // the realtor login (or vice versa) can't lock the other flow out from
+  // the same IP. Admin attempts should also be tighter — fewer real users,
+  // higher blast radius if compromised.
+  adminAuth:     { tokens:  10, windowMs: 900_000, window: '15m' },
   passwordReset: { tokens:  20, windowMs: 900_000, window: '15m' },
   // F-05: tight cap on advertiser magic-link requests so an attacker can't
   // flood an advertiser's contact_email inbox with magic-link emails.
