@@ -21,20 +21,19 @@ import {
 // so that Edge middleware can import them without dragging in `next/headers`.
 export { ADMIN_SESSION_COOKIE_NAME, LEGACY_ADMIN_SESSION_COOKIE_NAME };
 
+/**
+ * Read the current admin session from the `caxton_admin_session_v2` cookie.
+ *
+ * NOTE: there used to be an `Authorization: Bearer <jwt>` fallback here for
+ * the old Express server. It was removed because no current client uses it
+ * and leaving it in place meant any CORS-permissive endpoint could accept a
+ * leaked admin JWT outside the cookie's httpOnly + sameSite=lax protection.
+ * If we ever need Bearer admin auth (e.g. for a CLI), add it back behind an
+ * explicit per-endpoint allowlist.
+ */
 export async function getCurrentAdmin(): Promise<AdminSessionPayload | null> {
-  // Prefer cookie; fall back to Authorization: Bearer header for legacy
-  // API clients (none in our web app, but the original Express server
-  // supported it).
   const cookieStore = await cookies();
-  let token = cookieStore.get(ADMIN_SESSION_COOKIE_NAME)?.value ?? null;
-
-  if (!token) {
-    const auth = (await headers()).get('authorization') ?? '';
-    if (auth.toLowerCase().startsWith('bearer ')) {
-      token = auth.slice(7).trim();
-    }
-  }
-
+  const token = cookieStore.get(ADMIN_SESSION_COOKIE_NAME)?.value ?? null;
   if (!token) return null;
   return verifyAdminSessionToken(token);
 }
