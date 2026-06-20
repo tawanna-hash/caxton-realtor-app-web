@@ -182,54 +182,12 @@ export const POST = withErrorHandling(async (req: Request) => {
     });
   }
 
-  // ───── action: fb-status ─────
+  // ───── action: fb-status ───── (REMOVED 2026-06-20: FB ingestion deleted)
   if (action === 'fb-status') {
-    const social = (await sql`
-      SELECT COUNT(*)::text                                       AS total,
-             COUNT(*) FILTER (WHERE is_active = TRUE)::text       AS active,
-             COUNT(*) FILTER (WHERE refreshed_at IS NULL)::text   AS never_refreshed,
-             MIN(refreshed_at)::text                              AS oldest_refresh,
-             MAX(refreshed_at)::text                              AS newest_refresh,
-             MIN(posted_at)::text                                 AS oldest_post,
-             MAX(posted_at)::text                                 AS newest_post
-        FROM featured_social_posts
-    `) as unknown as Array<Record<string, string>>;
-
-    const eventsCounts = (await sql`
-      SELECT COUNT(*)::text                                                AS total,
-             COUNT(*) FILTER (WHERE hidden = TRUE)::text                   AS hidden,
-             COUNT(*) FILTER (WHERE hidden = TRUE AND external_source = 'facebook-llm')::text  AS pending_fb,
-             COUNT(*) FILTER (WHERE external_source = 'facebook-llm')::text                   AS fb_total
-        FROM events
-    `) as unknown as Array<Record<string, string>>;
-
-    const unscanned = (await sql`
-      SELECT COUNT(*)::text AS unscanned
-        FROM featured_social_posts p
-       WHERE p.is_active = TRUE
-         AND NOT EXISTS (
-           SELECT 1 FROM events e WHERE e.source_post_id = p.id
-         )
-    `) as unknown as Array<Record<string, string>>;
-
-    const recentPosts = (await sql`
-      SELECT id, pub, posted_at, refreshed_at,
-             LEFT(COALESCE(message, ''), 80) AS message_preview,
-             permalink_url
-        FROM featured_social_posts
-       WHERE is_active = TRUE
-       ORDER BY posted_at DESC NULLS LAST
-       LIMIT 5
-    `) as unknown as Array<Record<string, unknown>>;
-
     return NextResponse.json({
-      action:        'fb-status',
-      featured_social_posts: social[0] ?? null,
-      events:        eventsCounts[0] ?? null,
-      unscanned_active_posts: unscanned[0] ?? null,
-      gemini_key_set: !!process.env.GEMINI_API_KEY,
-      facebook_token_set: !!process.env.FACEBOOK_PAGE_TOKEN || !!process.env.FACEBOOK_ACCESS_TOKEN || !!process.env.FB_ACCESS_TOKEN,
-      recent_active_posts: recentPosts,
+      action: 'fb-status',
+      removed: true,
+      note: 'Facebook ingestion was removed on 2026-06-20. featured_social_posts table is retained for historical FK integrity only.',
     });
   }
 
