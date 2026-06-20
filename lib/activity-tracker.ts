@@ -68,11 +68,12 @@ function captureToPostHog(event: string, props: Record<string, unknown>): void {
 
 // Well-known browser-extension and plugin noise. None of these are real app
 // errors - they originate from Microsoft Office Smart Lookup, browser
-// extensions (LastPass, Grammarly, etc.), and cross-origin script tags
-// whose details the browser hides. Dropping these stops the alert spam.
+// extensions (LastPass, Grammarly, etc.). Dropping these stops the alert spam.
+// NOTE: 'Script error.' is NOT in this list anymore - the unmask logic in
+// onError() now captures cross-origin masked errors with context instead of
+// silently dropping them.
 const NOISE_PATTERNS: RegExp[] = [
   /Object Not Found Matching Id/i,           // MS Office / Edge Smart Lookup
-  /^Script error\.?$/i,                       // Cross-origin script (no detail)
   /ResizeObserver loop (limit exceeded|completed with undelivered notifications)/i,
   /Non-Error promise rejection captured/i,
   /Loading chunk \d+ failed/i,                // Stale deploy chunk, harmless
@@ -92,23 +93,69 @@ function isNoiseError(message: string, source?: string): boolean {
   return NOISE_PATTERNS.some((rx) => rx.test(combined));
 }
 
+// Collect environment context that's useful even when the actual error
+// message is masked by the browser's cross-origin policy. When a script
+// loaded without proper CORS headers throws, window.onerror gets called
+// with message='Script error.', source/lineno/colno=undefined, errorObj=null.
+// In that case at minimum we want to know which page, which route, which
+// browser, and what the user was doing.
+function buildErrorContext(): string {
+  try {
+    const parts: string[] = [];
+    parts.push(`url=${window.location.href}`);
+    if (document.referrer) parts.push(`referrer=${document.referrer}`);
+    parts.push(`ua=${navigator.userAgent}`);
+    parts.push(`viewport=${window.innerWidth}x${window.innerHeight}`);
+    parts.push(`online=${navigator.onLine}`);
+    if (document.visibilityState) parts.push(`visibility=${document.visibilityState}`);
+    return parts.join(' | ');
+  } catch {
+    return '';
+  }
+}
+
 function onError(message: string, source?: string, lineno?: number, colno?: number, errorObj?: unknown): void {
   if (errorBudget.remaining <= 0) return;
   if (isNoiseError(message, source)) return;
   errorBudget.remaining -= 1;
-  const detail = [source && `${source}:${lineno}:${colno}`, errorObj instanceof Error ? errorObj.stack : null]
-    .filter(Boolean)
-    .join('\n');
+
+  // 'Script error.' with no source/lineno is the well-known cross-origin
+  // masking pattern. Tag it explicitly so the alert email is honest about
+  // what we know vs. what the browser hid.
+  const isMasked =
+    String(message) === 'Script error.' &&
+    !source &&
+    lineno === undefined &&
+    !errorObj;
+
+  const ctx = buildErrorContext();
+  const stack = errorObj instanceof Error ? errorObj.stack : null;
+  const detailParts: string[] = [];
+  if (isMasked) {
+    detailParts.push(
+      '[BROWSER-MASKED: error came from a cross-origin script without CORS headers — actual message and stack hidden by the browser. The context below is what we can still see.]',
+    );
+  }
+  if (source) detailParts.push(`${source}:${lineno}:${colno}`);
+  if (stack) detailParts.push(stack);
+  if (ctx) detailParts.push(ctx);
+  const detail = detailParts.join('\n');
+
   captureToPostHog('client_error', {
     $exception_message: message,
     $exception_source: source,
     $exception_lineno: lineno,
     $exception_colno: colno,
     $exception_stack: errorObj instanceof Error ? errorObj.stack : undefined,
+    masked_by_browser: isMasked,
+    page_url: typeof window !== 'undefined' ? window.location.href : undefined,
+    user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
   });
   sendAlert({
     kind: 'client_error',
-    title: String(message).slice(0, 180),
+    title: isMasked
+      ? `Script error (masked) on ${window.location.pathname}`
+      : String(message).slice(0, 180),
     detail: detail.slice(0, 1800) || undefined,
   });
 }
@@ -177,7 +224,7 @@ export function installActivityTracker(): void {
 
   window.addEventListener('error', (e) => {
     onError(e.message, e.filename, e.lineno, e.colno, e.error);
-  });
+  }, true); // capture phase so we see errors before any swallowing handler runs
   window.addEventListener('unhandledrejection', (e) => {
     const reason = e.reason;
     const message = reason instanceof Error

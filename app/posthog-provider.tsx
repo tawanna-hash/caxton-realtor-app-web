@@ -23,6 +23,12 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       api_host: host,
       capture_pageview: false,
       capture_pageleave: true,
+      // crossorigin='anonymous' on the recorder/loader scripts so the
+      // browser unmasks any error they throw. Without this, errors from
+      // PostHog-loaded scripts hit window.onerror as the literal string
+      // 'Script error.' with no stack and no message — which is what was
+      // landing in the /admin/activity alert email.
+      cross_subdomain_cookie: false,
       session_recording: {
         maskAllInputs: true,
       },
