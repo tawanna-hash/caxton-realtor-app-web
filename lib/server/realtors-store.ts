@@ -295,7 +295,7 @@ export async function insertPasswordResetToken(
   userAgent: string | null,
 ): Promise<void> {
   await query(
-    `INSERT INTO password_reset_tokens (realtor_id, token, expires_at, ip_address, user_agent)
+    `INSERT INTO password_reset_tokens (realtor_id, token_hash, expires_at, ip_address, user_agent)
      VALUES ($1, $2, $3, $4, $5)`,
     [realtorId, tokenHash, expiresAt, ipAddress, userAgent],
   );
@@ -329,7 +329,7 @@ export async function lockResetTokenTx(
   const { rows } = await client.query<ResetTokenRow>(
     `SELECT id, realtor_id, expires_at, consumed_at
      FROM password_reset_tokens
-     WHERE token = $1
+     WHERE token_hash = $1 AND realtor_id IS NOT NULL
      FOR UPDATE`,
     [tokenHash],
   );

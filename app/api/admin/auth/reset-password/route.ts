@@ -31,9 +31,9 @@ export const POST = withErrorHandling(async (req: Request) => {
       active: boolean;
     }>(
       `SELECT pr.id, pr.admin_id, pr.expires_at, pr.consumed_at, a.active
-       FROM admin_password_resets pr
+       FROM password_reset_tokens pr
        JOIN admins a ON a.id = pr.admin_id
-       WHERE pr.token_hash = $1`,
+       WHERE pr.token_hash = $1 AND pr.admin_id IS NOT NULL`,
       [tokenHash],
     );
 
@@ -53,7 +53,7 @@ export const POST = withErrorHandling(async (req: Request) => {
     );
 
     const consumed = await client.query(
-      `UPDATE admin_password_resets SET consumed_at = NOW()
+      `UPDATE password_reset_tokens SET consumed_at = NOW()
        WHERE id = $1 AND consumed_at IS NULL`,
       [reset.id],
     );

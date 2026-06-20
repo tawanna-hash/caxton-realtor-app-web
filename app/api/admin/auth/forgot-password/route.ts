@@ -49,7 +49,7 @@ export const POST = withErrorHandling(async (req: Request) => {
   const userAgent = await getRequestUserAgent();
 
   await query(
-    `INSERT INTO admin_password_resets (admin_id, token_hash, expires_at, ip_address, user_agent)
+    `INSERT INTO password_reset_tokens (admin_id, token_hash, expires_at, ip_address, user_agent)
      VALUES ($1, $2, $3, $4, $5)`,
     [admin.id, tokenHash, expiresAt, ip, userAgent],
   );
