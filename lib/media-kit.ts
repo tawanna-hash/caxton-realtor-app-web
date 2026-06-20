@@ -143,6 +143,16 @@ export interface AppAdSlot {
    * same allow-list when creating the Stripe payment intent.
    */
   availablePubs?: Array<MediaKitPub>;
+  /**
+   * If true, this slot rotates through multiple active campaigns (up to 5)
+   * client-side. Each creative dwells 6s and cross-fades over 2s into the
+   * next. Implementation lives in components/ads/AdSlot.tsx via the
+   * ROTATING_SLUGS set — keep these two lists in sync.
+   * Used by /admin/ads/placements and /advertise/placements to surface a
+   * “Rotates with other partners” badge so sales + advertisers know the
+   * placement is shared with up to 4 other creatives.
+   */
+  rotates?: boolean;
 }
 
 // Publication scope used by the rate-card and checkout system. Mirrors
@@ -251,6 +261,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     notes: 'Per giveaway, typically 2–4 weeks. Sponsor pays prize + visibility.',
   },
   {
+    rotates: true,
     slug: 'article_top_leaderboard',
     name: 'Article Top Leaderboard',
     zone: 'article',
@@ -311,6 +322,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     notes: 'Top of /account + /profile, every visit. Rotates per session.',
   },
   {
+    rotates: true,
     slug: 'newsletter_banner',
     name: 'Newsletter Banner',
     zone: 'newsletter',
@@ -350,6 +362,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
   },
   // ---- Standard tier ----
   {
+    rotates: true,
     slug: 'feed_top_banner',
     name: 'Feed Top Banner',
     zone: 'feed',
@@ -374,6 +387,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     notes: 'Every 6th feed card. Marked SPONSORED.',
   },
   {
+    rotates: true,
     slug: 'feed_sticky_bottom',
     name: 'Feed Sticky Bottom',
     zone: 'feed',
@@ -410,6 +424,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     notes: '100% of article completions.',
   },
   {
+    rotates: true,
     slug: 'calendar_top_banner',
     name: 'Calendar Top Banner',
     zone: 'calendar',

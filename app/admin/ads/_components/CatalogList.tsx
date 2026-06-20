@@ -7,6 +7,17 @@
 import type { AdSpace, AdCampaign } from './types';
 import { ZONE_LABELS, TIER_COLORS, formatSizes, isCampaignActive } from './types';
 
+// Slugs that rotate through multiple active creatives in <AdSlot>. Keep in
+// sync with ROTATING_SLUGS in components/ads/AdSlot.tsx and the `rotates`
+// flags on entries in lib/media-kit.ts.
+const ROTATING_SLUGS = new Set([
+  'feed_top_banner',
+  'feed_sticky_bottom',
+  'newsletter_banner',
+  'article_top_leaderboard',
+  'calendar_top_banner',
+]);
+
 interface Props {
   spaces: AdSpace[];
   campaigns: AdCampaign[];
@@ -33,6 +44,9 @@ export function CatalogList({ spaces, campaigns }: Props) {
           live (active + within date range). Slot definitions are read-only —
           contact engineering to add new slots.
         </p>
+        <p className="mt-2">
+          Slots tagged <span className="inline-flex items-center gap-1 align-middle rounded-full bg-blue-100 text-blue-800 border border-blue-300 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">Rotates</span> auto-cycle through every active campaign on that slot — up to 5 at a time, 6s dwell, 2s cross-fade. Load up multiple creatives on the same slot and they will share the surface.
+        </p>
       </div>
       {zoneOrder.map((zone) => {
         const items = byZone[zone];
@@ -55,9 +69,23 @@ export function CatalogList({ spaces, campaigns }: Props) {
                         <h4 className="font-medium text-gray-900">{s.display_name}</h4>
                         <p className="text-xs text-gray-500 font-mono mt-0.5">{s.slug}</p>
                       </div>
-                      <span className={`text-xs font-medium uppercase tracking-wide px-2 py-0.5 rounded-md ${TIER_COLORS[s.tier]}`}>
-                        {s.tier}
-                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {ROTATING_SLUGS.has(s.slug) && (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+                            title="Rotates with up to 5 active campaigns. 6s dwell, 2s cross-fade."
+                          >
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                              <path d="M21 12a9 9 0 1 1-3-6.7" />
+                              <polyline points="21 3 21 9 15 9" />
+                            </svg>
+                            Rotates
+                          </span>
+                        )}
+                        <span className={`text-xs font-medium uppercase tracking-wide px-2 py-0.5 rounded-md ${TIER_COLORS[s.tier]}`}>
+                          {s.tier}
+                        </span>
+                      </div>
                     </div>
                     <p className="text-xs text-gray-700 mb-2">{formatSizes(s.sizes_json)}</p>
                     {s.notes && (
