@@ -6,18 +6,22 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'RNN',
     description:
       'Texas real estate news, magazine issues, and event alerts for RealtyLine and Newsline readers.',
-    // start_url is '/?source=pwa' (NOT '/dashboard'). PR #237 (Jun 18 2026)
-    // shipped exactly this value to fix the iOS Add-to-Home-Screen
-    // 'couldn't load' error that the user reported live. Pointing start_url
-    // at /dashboard — even though /dashboard is itself a 200 — reproduces
-    // the failure on real iPhones. The combination that works is:
-    //   start_url '/?source=pwa' + the passthrough SW fetch handler in sw.js.
-    // The redirect from '/' to '/dashboard' is fine for Safari to follow
-    // once the SW is satisfied. Do NOT change this without testing on a
-    // real iPhone Add-to-Home-Screen launch.
+    // display: 'browser' (NOT 'standalone'). History on this exact bug:
+    // PRs #138-#144 (Jan) cycled through standalone fixes and ended with
+    // PR #144 surrendering to 'display: browser' because the dashboard
+    // bootstraps auth fetch + localStorage + PostHog on first paint and
+    // the iOS standalone WebView has an isolated cookie jar / stricter
+    // tracker blocking, intermittently failing to bootstrap before iOS
+    // bails with 'This page couldn't load'. PRs #236-#237 (Jun)
+    // reintroduced standalone without re-solving that fragility and the
+    // failure returned. 'browser' keeps the home-screen icon branded and
+    // installable while launching into Safari with the user's existing
+    // session — no isolated WebView, no auth re-bootstrap, no error.
+    // Do NOT change to 'standalone' without first making the dashboard
+    // resilient to a cookieless first paint AND testing on a real iPhone.
     start_url: '/?source=pwa',
     scope: '/',
-    display: 'standalone',
+    display: 'browser',
     orientation: 'portrait',
     background_color: '#000000',
     theme_color: '#000000',

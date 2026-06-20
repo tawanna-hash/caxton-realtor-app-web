@@ -72,8 +72,14 @@ export const metadata: Metadata = {
   // Without this, iOS Safari falls back to the document <title> (or in some
   // cases an ancestor/cached value), which produced "Caxton Publications, Inc"
   // instead of "Realty News Now" on the install sheet.
+  // capable: false launches the home-screen icon in regular Safari
+  // instead of the iOS standalone WebView. See app/manifest.ts and PR
+  // #144 for the full history — standalone WebView's isolated cookie
+  // jar breaks the dashboard's auth bootstrap and surfaces as 'This
+  // page couldn't load'. Title is still set so the install sheet shows
+  // 'Realty News Now', not the document <title>.
   appleWebApp: {
-    capable: true,
+    capable: false,
     title: "Realty News Now",
     statusBarStyle: "default",
   },
