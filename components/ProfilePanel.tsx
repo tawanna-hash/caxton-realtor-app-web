@@ -24,7 +24,7 @@ type Props = {
  * exists as a home for future profile fields (notification preferences,
  * mailing address, etc.) without expanding the dashboard page further.
  */
-export default function ProfilePanel({ user, accentColor = '#021D40', onClose }: Props) {
+export default function ProfilePanel({ user, accentColor = '#301D5D', onClose }: Props) {
   // Close on Escape.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {

@@ -44,7 +44,7 @@ export function NumberField({
             const n = parseFloat(e.target.value);
             onChange(Number.isFinite(n) ? n : 0);
           }}
-          className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#021D40] focus:outline-none focus:ring-1 focus:ring-[#021D40]/30 ${
+          className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#301D5D] focus:outline-none focus:ring-1 focus:ring-[#301D5D]/30 ${
             prefix ? 'pl-7' : ''
           } ${suffix ? 'pr-8' : ''}`}
         />
@@ -74,7 +74,7 @@ export function DateField({ label, value, onChange, hint }: DateFieldProps) {
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#021D40] focus:outline-none focus:ring-1 focus:ring-[#021D40]/30"
+        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#301D5D] focus:outline-none focus:ring-1 focus:ring-[#301D5D]/30"
       />
       {hint && <span className="block text-xs text-gray-500 mt-1">{hint}</span>}
     </label>
@@ -104,7 +104,7 @@ export function SelectField<T extends number | string>({
           const coerced = (typeof options[0].v === 'number' ? Number(raw) : raw) as T;
           onChange(coerced);
         }}
-        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#021D40] focus:outline-none focus:ring-1 focus:ring-[#021D40]/30 bg-white"
+        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#301D5D] focus:outline-none focus:ring-1 focus:ring-[#301D5D]/30 bg-white"
       >
         {options.map((o) => (
           <option key={String(o.v)} value={String(o.v)}>

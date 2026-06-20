@@ -26,7 +26,7 @@ export const PUB_META: Record<PubKey, PubMeta> = {
   realtyline: {
     name: 'RealtyLine',
     city: 'Austin',
-    color: '#021D40',
+    color: '#301D5D',
     tagline: 'Reach 71,000+ Texas real estate professionals',
     reach: '71,000+ Texas REALTORS',
     email: 'info@myrealtyline.com',
@@ -37,7 +37,7 @@ export const PUB_META: Record<PubKey, PubMeta> = {
   newsline: {
     name: 'Newsline San Antonio',
     city: 'San Antonio',
-    color: '#3D0740',
+    color: '#301D5D',
     tagline: 'Reach 24,000+ San Antonio real estate professionals',
     reach: '24,000+ San Antonio REALTORS',
     email: 'info@myrealtyline.com',
@@ -53,7 +53,7 @@ export const PUB_META: Record<PubKey, PubMeta> = {
   'realtyline-houston': {
     name: 'RealtyLine Houston',
     city: 'Houston',
-    color: '#021D40', // inherits RealtyLine navy
+    color: '#301D5D', // unified RNN brand purple
     tagline: 'Coming soon to Houston real estate professionals',
     reach: 'Houston REALTORS',
     email: 'info@myrealtyline.com',
@@ -65,7 +65,7 @@ export const PUB_META: Record<PubKey, PubMeta> = {
   'realtyline-dallas': {
     name: 'RealtyLine Dallas/FTW',
     city: 'Dallas',
-    color: '#021D40', // inherits RealtyLine navy
+    color: '#301D5D', // unified RNN brand purple
     tagline: 'Coming soon to Dallas real estate professionals',
     reach: 'Dallas REALTORS',
     email: 'info@myrealtyline.com',

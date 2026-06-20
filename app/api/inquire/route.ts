@@ -154,21 +154,21 @@ export async function POST(req: NextRequest) {
 
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; padding: 24px;">
-      <h2 style="color: #021D40; margin: 0 0 16px 0;">New ad inquiry${soldOut ? ' <span style="color:#c2410c;font-size:14px;font-weight:600;">(slot sold out)</span>' : ''}</h2>
+      <h2 style="color: #301D5D; margin: 0 0 16px 0;">New ad inquiry${soldOut ? ' <span style="color:#c2410c;font-size:14px;font-weight:600;">(slot sold out)</span>' : ''}</h2>
       <p style="color: #444; font-size: 14px; margin: 0 0 24px 0;">
         Submitted via realtynewsnow.app${data.slot_label ? ` — ${escapeHtml(data.slot_label)}` : ''}
       </p>
       ${soldOut ? noticeBlock('Buyer was auto-emailed a sold-out notice with alternative placement suggestions.') : ''}
       <table style="border-collapse: collapse; width: 100%;">
         <tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Name</td><td style="padding: 6px 0; font-size: 14px;">${escapeHtml(data.name)}</td></tr>
-        <tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Email</td><td style="padding: 6px 0; font-size: 14px;"><a href="mailto:${escapeHtml(data.email)}" style="color: #021D40;">${escapeHtml(data.email)}</a></td></tr>
+        <tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Email</td><td style="padding: 6px 0; font-size: 14px;"><a href="mailto:${escapeHtml(data.email)}" style="color: #301D5D;">${escapeHtml(data.email)}</a></td></tr>
         ${data.phone ? `<tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Phone</td><td style="padding: 6px 0; font-size: 14px;">${escapeHtml(data.phone)}</td></tr>` : ''}
         ${data.company ? `<tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Company</td><td style="padding: 6px 0; font-size: 14px;">${escapeHtml(data.company)}</td></tr>` : ''}
         ${data.slot_label ? `<tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Slot</td><td style="padding: 6px 0; font-size: 14px;">${escapeHtml(data.slot_label)} <span style="color:#999">(${escapeHtml(data.slot)})</span></td></tr>` : ''}
         <tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Channel</td><td style="padding: 6px 0; font-size: 14px;"><strong>${escapeHtml(channelLabel)}</strong></td></tr>
         <tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Publication</td><td style="padding: 6px 0; font-size: 14px;">${escapeHtml(data.pub)}</td></tr>
         ${data.package_id ? `<tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Package</td><td style="padding: 6px 0; font-size: 14px;">${escapeHtml(data.package_id)}</td></tr>` : ''}
-        ${inquiryRow ? `<tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Inbox</td><td style="padding: 6px 0; font-size: 14px;"><a href="https://realtynewsnow.app/admin/ads/inquiries/${inquiryRow.id}" style="color: #021D40;">Open in admin</a></td></tr>` : ''}
+        ${inquiryRow ? `<tr><td style="padding: 6px 12px 6px 0; color: #666; font-size: 13px; vertical-align: top; white-space: nowrap;">Inbox</td><td style="padding: 6px 0; font-size: 14px;"><a href="https://realtynewsnow.app/admin/ads/inquiries/${inquiryRow.id}" style="color: #301D5D;">Open in admin</a></td></tr>` : ''}
       </table>
       <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee;">
         <p style="color: #666; font-size: 13px; margin: 0 0 8px 0;">Message:</p>

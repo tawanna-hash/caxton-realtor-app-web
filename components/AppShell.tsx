@@ -37,9 +37,9 @@ import BillingAlertsBadge from '@/components/BillingAlertsBadge';
 type User = { id?: string; email?: string } | null;
 
 const PUB_COLORS: Record<string, string> = {
-  realtyline: '#021D40',
-  newsline: '#3D0740',
-  realtynewsnow: '#021D40',
+  realtyline: '#301D5D',
+  newsline: '#301D5D',
+  realtynewsnow: '#301D5D',
 };
 
 // Top-bar links shown to public (non-admin) visitors on desktop (lg+).
@@ -201,7 +201,7 @@ export default function AppShell({
   return (
     <div className="min-h-screen bg-white">
       {/* ======== TOP BAR ======== */}
-      <header className={`sticky top-0 z-40 ${isAdmin ? 'bg-[#021D40] text-white' : 'bg-white text-gray-900 border-b border-gray-200'}`}>
+      <header className={`sticky top-0 z-40 ${isAdmin ? 'bg-[#301D5D] text-white' : 'bg-white text-gray-900 border-b border-gray-200'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           {/* Left: hamburger */}
           <button

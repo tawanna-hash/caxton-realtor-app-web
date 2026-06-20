@@ -61,8 +61,8 @@ const PUB_TABS: PubTab[] = [
 ];
 
 const ACCENT = '#dc2626';
-const PREMIUM = '#3D0740';
-const NAVY = '#021D40';
+const PREMIUM = '#301D5D';
+const NAVY = '#301D5D';
 const GOLD = '#c2410c';
 
 const ZONE_LABEL: Record<AppAdSlot['zone'], string> = {

@@ -44,14 +44,14 @@ export default function SubscribePage() {
             label="RealtyLine"
             sublabel="Austin"
             selected={selection === 'realtyline'}
-            activeColor="#021D40"
+            activeColor="#301D5D"
             onClick={() => setSelection('realtyline')}
           />
           <PickerButton
             label="Newsline San Antonio"
             sublabel="San Antonio"
             selected={selection === 'newslinesa'}
-            activeColor="#3D0740"
+            activeColor="#301D5D"
             onClick={() => setSelection('newslinesa')}
           />
           <PickerButton
@@ -81,7 +81,7 @@ export default function SubscribePage() {
           <SubscribeForm
             publication="RealtyLine"
             market="Austin"
-            accentColor="#021D40"
+            accentColor="#301D5D"
             formId="realtyline"
             active={true}
             onActivate={() => {}}
@@ -96,7 +96,7 @@ export default function SubscribePage() {
           <SubscribeForm
             publication="Newsline San Antonio"
             market="San Antonio"
-            accentColor="#3D0740"
+            accentColor="#301D5D"
             formId="newslinesa"
             active={true}
             onActivate={() => {}}
@@ -109,7 +109,7 @@ export default function SubscribePage() {
           Questions about subscriptions?{' '}
           <a
             href="mailto:hello@myrealtyline.com?subject=Subscription%20Question"
-            className="text-[#021D40] font-medium underline underline-offset-2"
+            className="text-[#301D5D] font-medium underline underline-offset-2"
           >
             hello@myrealtyline.com
           </a>

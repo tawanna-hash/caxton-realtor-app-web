@@ -151,7 +151,7 @@ export default function AdminMetricsPage() {
                         </span>
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-md overflow-hidden">
-                        <div className="h-full bg-[#021D40]" style={{ width: `${pct}%` }} />
+                        <div className="h-full bg-[#301D5D]" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   );

@@ -51,7 +51,7 @@ const FALLBACK: SaborReportData = {
   page_count: 112,
 };
 
-const NEWSLINE = '#3D0740';
+const NEWSLINE = '#301D5D';
 
 export default function SaborReportCard({ variant = 'inline' }: Props) {
   const [data, setData] = useState<SaborReportData | null>(null);

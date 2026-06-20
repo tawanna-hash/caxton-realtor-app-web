@@ -61,7 +61,7 @@ function ResetPasswordInner() {
     }
   }
 
-  const ic = "w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3";
+  const ic = "w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#301D5D] mb-3";
 
   if (done) {
     return (
@@ -108,7 +108,7 @@ function ResetPasswordInner() {
         <button
           onClick={handleSubmit}
           disabled={!token || loading || !newPassword || !confirmPassword}
-          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 bg-[#021D40] disabled:opacity-40"
+          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 bg-[#301D5D] disabled:opacity-40"
         >
           {loading ? 'Updating\u2026' : 'Update Password'}
         </button>

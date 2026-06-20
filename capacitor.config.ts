@@ -35,13 +35,13 @@ const config: CapacitorConfig = {
     contentInset: 'always',
     scrollEnabled: true,
     limitsNavigationsToAppBoundDomains: false,
-    backgroundColor: '#0a3d91',
+    backgroundColor: '#301D5D',
   },
   plugins: {
     SplashScreen: {
       launchShowDuration: 1500,
       launchAutoHide: true,
-      backgroundColor: '#0a3d91',
+      backgroundColor: '#301D5D',
       showSpinner: false,
       iosSpinnerStyle: 'small',
       splashFullScreen: true,
@@ -49,7 +49,7 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       style: 'LIGHT',
-      backgroundColor: '#0a3d91',
+      backgroundColor: '#301D5D',
       overlaysWebView: false,
     },
   },

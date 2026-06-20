@@ -40,9 +40,9 @@ export function escapeHtml(s: string | null | undefined): string {
 // Brand tokens. Keep in lockstep with the public site / admin chrome.
 // Bumping a value here updates every transactional email at once.
 export const BRAND = {
-  primary: '#021D40',
-  primaryDark: '#021D40',
-  text: '#021D40',
+  primary: '#301D5D',
+  primaryDark: '#301D5D',
+  text: '#301D5D',
   bodyText: '#333',
   muted: '#666',
   faint: '#999',

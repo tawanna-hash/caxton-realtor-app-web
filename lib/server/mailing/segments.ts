@@ -53,7 +53,7 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
     slug:    'realtors',
     label:   'REALTORS',
     caption: 'Licensed real estate agents — your core audience.',
-    accent:  '#3D0740',
+    accent:  '#301D5D',
   },
 ];
 

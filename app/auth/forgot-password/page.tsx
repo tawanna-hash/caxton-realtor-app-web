@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
     }
   }
 
-  const ic = "w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3";
+  const ic = "w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#301D5D] mb-3";
 
   if (submitted) {
     return (
@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
           <div className="text-5xl mb-4">{"\u2709"}</div>
           <h1 className="text-2xl text-gray-900 font-semibold mb-3">Check Your Email</h1>
           <p className="text-lg text-gray-500 font-light mb-2">If an account exists for</p>
-          <p className="text-lg text-[#021D40] font-semibold mb-6">{email}</p>
+          <p className="text-lg text-[#301D5D] font-semibold mb-6">{email}</p>
           <p className="text-base text-gray-400 font-light mb-8">we have sent a password reset link. It expires in 60 minutes.</p>
           <p className="text-sm text-gray-300 font-light mb-6">Check your spam folder if you do not see it.</p>
           <a href="/dashboard" className="text-sm text-gray-500 font-light underline">Back to sign in</a>
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
         <button
           onClick={handleSubmit}
           disabled={loading || !email}
-          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 bg-[#021D40] disabled:opacity-40"
+          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 bg-[#301D5D] disabled:opacity-40"
         >
           {loading ? 'Sending\u2026' : 'Send Reset Link'}
         </button>

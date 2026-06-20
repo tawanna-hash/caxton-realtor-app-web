@@ -37,7 +37,7 @@ const PH = 792;
 const MARGIN = 48;
 const CONTENT_W = PW - MARGIN * 2;
 
-const NAVY = rgb(0.008, 0.114, 0.251); // #021D40
+const NAVY = rgb(0.008, 0.114, 0.251); // #301D5D
 const DARK = rgb(0.1, 0.1, 0.1);
 const GRAY = rgb(0.45, 0.45, 0.45);
 const LGRAY = rgb(0.85, 0.85, 0.85);

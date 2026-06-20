@@ -171,7 +171,7 @@ function EditableField({
         value={value}
         onChange={(e) => onChange(name, e.target.value)}
         placeholder={placeholder}
-        className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#021D40] focus:border-[#021D40]"
+        className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#301D5D] focus:border-[#301D5D]"
       />
     </div>
   );
@@ -192,7 +192,7 @@ function EditableSelect({
       <select
         value={value}
         onChange={(e) => onChange(name, e.target.value)}
-        className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#021D40] focus:border-[#021D40]"
+        className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#301D5D] focus:border-[#301D5D]"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -205,7 +205,7 @@ function EditableSelect({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="bg-white border border-gray-200 rounded-md p-5 mb-4">
-      <h2 className="text-sm font-semibold text-[#021D40] uppercase tracking-wide mb-3">{title}</h2>
+      <h2 className="text-sm font-semibold text-[#301D5D] uppercase tracking-wide mb-3">{title}</h2>
       <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6">{children}</dl>
     </section>
   );
@@ -340,14 +340,14 @@ export default function SubscriberDetailPage({ params }: { params: Promise<{ id:
 return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
-        <Link href="/admin/subscribers" className="text-sm text-gray-500 hover:text-[#021D40]">
+        <Link href="/admin/subscribers" className="text-sm text-gray-500 hover:text-[#301D5D]">
           ← Back to Subscribers
         </Link>
         {!loading && !error && sub && !editing && (
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={enterEdit}
-              className="text-sm font-medium px-4 py-1.5 rounded-md bg-[#021D40] text-white hover:bg-[#021D40]"
+              className="text-sm font-medium px-4 py-1.5 rounded-md bg-[#301D5D] text-white hover:bg-[#301D5D]"
             >
               Edit
             </button>
@@ -365,7 +365,7 @@ return (
             <button
               onClick={save}
               disabled={saving}
-              className="text-sm font-medium px-4 py-1.5 rounded-md bg-[#021D40] text-white hover:bg-[#021D40] disabled:opacity-50"
+              className="text-sm font-medium px-4 py-1.5 rounded-md bg-[#301D5D] text-white hover:bg-[#301D5D] disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -550,7 +550,7 @@ return (
 
           {!editing && (
             <section className="bg-white border border-gray-200 rounded-md p-5 mt-8">
-              <h2 className="text-sm font-semibold text-[#021D40] uppercase tracking-wide mb-4">Actions</h2>
+              <h2 className="text-sm font-semibold text-[#301D5D] uppercase tracking-wide mb-4">Actions</h2>
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
@@ -570,7 +570,7 @@ return (
                       <button
                         onClick={doSendMagicLink}
                         disabled={sendingLink}
-                        className="text-sm font-medium px-3 py-1.5 rounded-md bg-[#021D40] text-white hover:bg-[#021D40] disabled:opacity-50"
+                        className="text-sm font-medium px-3 py-1.5 rounded-md bg-[#301D5D] text-white hover:bg-[#301D5D] disabled:opacity-50"
                       >
                         {sendingLink ? 'Sending…' : 'Confirm send'}
                       </button>

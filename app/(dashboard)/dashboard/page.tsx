@@ -23,8 +23,8 @@ import { haptics } from '@/lib/native/haptics';
 const API = getApiBase();
 
 const PUBS = [
-  { id: 'realtyline', name: 'RealtyLine', city: 'Austin', tagline: 'Putting A Face on Real Estate since 1995', color: '#021D40' },
-  { id: 'newsline', name: 'Newsline San Antonio', city: 'San Antonio', tagline: 'Founded 1982 - Relaunched 2025', color: '#3D0740' },
+  { id: 'realtyline', name: 'RealtyLine', city: 'Austin', tagline: 'Putting A Face on Real Estate since 1995', color: '#301D5D' },
+  { id: 'newsline', name: 'Newsline San Antonio', city: 'San Antonio', tagline: 'Founded 1982 - Relaunched 2025', color: '#301D5D' },
 ];
 
 // BUG-09 / share-404 fix: Share URLs must deep-link into the app. The WP
@@ -172,7 +172,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [onDone]);
   return (
-    <div className="fixed inset-0 bg-[#021D40] flex flex-col items-center justify-center z-50 transition-opacity duration-500" style={{ ...SW, opacity: fade ? 0 : 1 }}>
+    <div className="fixed inset-0 bg-[#301D5D] flex flex-col items-center justify-center z-50 transition-opacity duration-500" style={{ ...SW, opacity: fade ? 0 : 1 }}>
       <p className="text-3xl text-white font-semibold tracking-wide text-center px-8">Realty News Now</p>
       <div className="mt-4 flex gap-1">
         <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-pulse" style={{ animationDelay: '0s' }} />
@@ -413,8 +413,8 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const ic = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3 placeholder:text-[#d1d5db]';
-  const sc = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3 appearance-none placeholder:text-[#d1d5db]';
+  const ic = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#301D5D] mb-3 placeholder:text-[#d1d5db]';
+  const sc = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#301D5D] mb-3 appearance-none placeholder:text-[#d1d5db]';
 
   function dismissGiveaway() {
     setShowGiveaway(false);
@@ -540,7 +540,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
           <div className="text-5xl mb-4">{'\u2709'}</div>
           <h2 className="text-2xl text-gray-900 font-semibold mb-3">Check Your Email</h2>
           <p className="text-lg text-gray-500 font-light mb-2">We sent a magic link to</p>
-          <p className="text-lg text-[#021D40] font-semibold mb-6">{email}</p>
+          <p className="text-lg text-[#301D5D] font-semibold mb-6">{email}</p>
           <p className="text-base text-gray-400 font-light mb-8">Click the link in your email to sign in. It expires in 15 minutes.</p>
           <p className="text-sm text-gray-300 font-light">Check your spam folder if you do not see it.</p>
         </div>
@@ -581,11 +581,11 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
             {/* Step indicators */}
             <div className="flex items-center justify-center gap-2 mb-6">
-              <div className={step >= 1 ? 'w-3 h-3 rounded-full bg-[#021D40]' : 'w-3 h-3 rounded-full bg-gray-200'} />
+              <div className={step >= 1 ? 'w-3 h-3 rounded-full bg-[#301D5D]' : 'w-3 h-3 rounded-full bg-gray-200'} />
               <div className="w-8 h-px bg-gray-200" />
-              <div className={step >= 2 ? 'w-3 h-3 rounded-full bg-[#021D40]' : 'w-3 h-3 rounded-full bg-gray-200'} />
+              <div className={step >= 2 ? 'w-3 h-3 rounded-full bg-[#301D5D]' : 'w-3 h-3 rounded-full bg-gray-200'} />
               <div className="w-8 h-px bg-gray-200" />
-              <div className={step >= 3 ? 'w-3 h-3 rounded-full bg-[#021D40]' : 'w-3 h-3 rounded-full bg-gray-200'} />
+              <div className={step >= 3 ? 'w-3 h-3 rounded-full bg-[#301D5D]' : 'w-3 h-3 rounded-full bg-gray-200'} />
             </div>
 
             {error && <p className="text-base text-red-500 text-center mb-4 font-light">{error}</p>}
@@ -596,7 +596,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">License Number</p>
                 <div className="flex gap-2 mb-3">
                   {LICENSE_TYPES.map((lt) => (
-                    <button key={lt} onClick={() => setLicenseType(lt)} className={licenseType === lt ? 'flex-1 py-3 text-base font-medium text-center border-2 border-[#021D40] text-[#021D40]' : 'flex-1 py-3 text-base font-light text-center border border-gray-300 text-gray-500'}>{lt}</button>
+                    <button key={lt} onClick={() => setLicenseType(lt)} className={licenseType === lt ? 'flex-1 py-3 text-base font-medium text-center border-2 border-[#301D5D] text-[#301D5D]' : 'flex-1 py-3 text-base font-light text-center border border-gray-300 text-gray-500'}>{lt}</button>
                   ))}
                 </div>
                 <input type="text" placeholder={licenseType === 'TREC #' ? 'TREC License Number' : 'NMLS ID Number'} value={licenseNum} onChange={(e) => setLicenseNum(e.target.value)} className={ic} />
@@ -633,7 +633,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <div className="flex gap-2">
                   <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className={ic + ' flex-1'} />
                   <input type="text" value="TX" disabled className="w-16 px-4 py-3.5 border border-gray-200 text-base font-light bg-gray-50 text-gray-400 mb-3 text-center rounded-md" />
-                  <input type="text" placeholder="Zip" value={zip} onChange={(e) => setZip(e.target.value)} className="w-24 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#021D40] mb-3" />
+                  <input type="text" placeholder="Zip" value={zip} onChange={(e) => setZip(e.target.value)} className="w-24 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#301D5D] mb-3" />
                 </div>
 
                 <div className="flex gap-2 mt-2">
@@ -663,7 +663,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                           if (e.target.checked) setSubs([...subs, s.id]);
                           else setSubs(subs.filter((x) => x !== s.id));
                         }}
-                        className="mt-1 w-4 h-4 accent-[#021D40]"
+                        className="mt-1 w-4 h-4 accent-[#301D5D]"
                       />
                       <div className="flex-1">
                         <p className="text-base text-gray-900 font-medium">{s.label}</p>
@@ -1359,10 +1359,10 @@ function AdCardTracked({ ad, onClick, track, pub }: { ad: any; onClick: (ad: any
           <span className="flex-1" />
           <span className="text-sm text-gray-400 italic font-light">{ad.page}</span>
         </div>
-        <p className="text-base text-[#021D40] font-medium mb-1">{ad.biz}</p>
+        <p className="text-base text-[#301D5D] font-medium mb-1">{ad.biz}</p>
         <h3 className="text-xl text-gray-900 leading-snug mb-2 font-semibold">{ad.tag}</h3>
         <p className="text-lg text-gray-500 leading-relaxed mb-4 font-light">{ad.desc}</p>
-        <button onClick={() => onClick(ad)} className="w-full text-center py-3 text-base font-medium uppercase tracking-wider bg-[#021D40] text-white">Connect Now</button>
+        <button onClick={() => onClick(ad)} className="w-full text-center py-3 text-base font-medium uppercase tracking-wider bg-[#301D5D] text-white">Connect Now</button>
       </div>
     </article>
   );
@@ -1377,7 +1377,7 @@ function ArticleCard({ item, pub }: { item: any; pub: string }) {
   const body = (
     <div className="flex items-start gap-4">
       <div className="flex-1 min-w-0">
-        <span className="text-xs uppercase tracking-[0.15em] font-medium text-[#021D40] mb-2 block">{item.cat}</span>
+        <span className="text-xs uppercase tracking-[0.15em] font-medium text-[#301D5D] mb-2 block">{item.cat}</span>
         <h3 className="text-lg text-gray-900 leading-snug mb-2 font-semibold">{item.head}</h3>
         <p className="text-sm text-gray-500 leading-relaxed mb-3 font-light">{item.sum}</p>
         <span className="text-xs text-gray-400 font-light">{item.time}</span>
@@ -2225,7 +2225,7 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
       {/* Inline styles for the article prose */}
       <style jsx>{`
         :global(.caxton-article-prose) {
-          color: #021D40;
+          color: #301D5D;
           font-size: 1.0625rem;
           line-height: 1.7;
         }

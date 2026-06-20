@@ -294,7 +294,7 @@ function notificationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): str
   const norm = usps.normalized;
   return `
 <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
-  <h2 style="color: #021D40; margin: 0 0 16px;">New print subscription — ${escapeHtml(pubLabel(p.publication))}</h2>
+  <h2 style="color: #301D5D; margin: 0 0 16px;">New print subscription — ${escapeHtml(pubLabel(p.publication))}</h2>
   <p style="color: #6b7280; font-size: 14px; margin: 0 0 24px;">
     Submitted at ${new Date().toISOString()}
   </p>
@@ -325,7 +325,7 @@ function notificationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): str
 }
 
 function confirmationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): string {
-  const accent = p.publication === 'realtyline' ? '#021D40' : '#3D0740';
+  const accent = p.publication === 'realtyline' ? '#301D5D' : '#301D5D';
   const norm = usps.normalized;
   return `
 <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 24px;">

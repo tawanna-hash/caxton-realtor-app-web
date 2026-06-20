@@ -82,7 +82,7 @@ function AdsPageInner() {
           </Link>
           <Link
             href="/admin/ads/campaigns/new"
-            className="rounded-md bg-[#021D40] px-4 py-2 text-white text-sm font-medium hover:bg-[#03285a]"
+            className="rounded-md bg-[#301D5D] px-4 py-2 text-white text-sm font-medium hover:bg-[#493676]"
           >
             + New campaign
           </Link>

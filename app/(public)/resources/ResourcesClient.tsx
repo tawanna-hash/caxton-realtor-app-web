@@ -14,7 +14,7 @@ import {
 } from '@/lib/realtor-resources';
 
 const EYEBROW = 'text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2';
-const SECTION_EYEBROW = 'text-xs font-semibold uppercase tracking-[0.2em] text-[#021D40] mb-4';
+const SECTION_EYEBROW = 'text-xs font-semibold uppercase tracking-[0.2em] text-[#301D5D] mb-4';
 
 export default function ResourcesClient() {
   return (
@@ -30,7 +30,7 @@ export default function ResourcesClient() {
           something to add?{' '}
           <a
             href="mailto:hello@myrealtyline.com?subject=Resources%20Page%20Suggestion"
-            className="text-[#021D40] font-medium underline underline-offset-2"
+            className="text-[#301D5D] font-medium underline underline-offset-2"
           >
             Send us a suggestion
           </a>
@@ -48,7 +48,7 @@ export default function ResourcesClient() {
           <a
             key={j.href}
             href={j.href}
-            className="px-3 py-1.5 rounded-full border border-gray-300 text-gray-700 hover:border-[#021D40] hover:text-[#021D40] transition"
+            className="px-3 py-1.5 rounded-full border border-gray-300 text-gray-700 hover:border-[#301D5D] hover:text-[#301D5D] transition"
           >
             {j.label}
           </a>
@@ -179,13 +179,13 @@ function ToolCard({
   return (
     <a
       href={href}
-      className="group block rounded-md border border-gray-200 bg-gradient-to-br from-[#021D40]/5 to-white p-6 hover:border-[#021D40] hover:shadow-md transition"
+      className="group block rounded-md border border-gray-200 bg-gradient-to-br from-[#301D5D]/5 to-white p-6 hover:border-[#301D5D] hover:shadow-md transition"
     >
       <div className="flex items-start justify-between gap-3 mb-3">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#021D40] bg-[#021D40]/10 px-2 py-0.5 rounded-md">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#301D5D] bg-[#301D5D]/10 px-2 py-0.5 rounded-md">
           {badge}
         </span>
-        <span className="text-[#021D40] opacity-0 group-hover:opacity-100 transition text-sm">→</span>
+        <span className="text-[#301D5D] opacity-0 group-hover:opacity-100 transition text-sm">→</span>
       </div>
       <p
         className="text-xl text-gray-900 mb-2"
@@ -206,14 +206,14 @@ function GuideCard({ guide }: { guide: ResourceGuide }) {
       href={guide.href}
       target={isPlaceholder ? undefined : '_blank'}
       rel={isPlaceholder ? undefined : 'noopener noreferrer'}
-      className="block rounded-md border border-gray-200 bg-white p-5 hover:border-[#021D40] hover:shadow-sm transition"
+      className="block rounded-md border border-gray-200 bg-white p-5 hover:border-[#301D5D] hover:shadow-sm transition"
       onClick={(e) => {
         if (isPlaceholder) e.preventDefault();
       }}
     >
       <div className="flex items-start justify-between gap-3 mb-2">
         {guide.category && (
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#021D40] bg-[#021D40]/5 px-2 py-0.5 rounded-md">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#301D5D] bg-[#301D5D]/5 px-2 py-0.5 rounded-md">
             {guide.category}
           </span>
         )}

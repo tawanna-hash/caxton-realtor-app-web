@@ -21,8 +21,8 @@ import { useCallback } from 'react';
 type Pub = PubKey;
 
 const PUBS: { id: Pub; label: string; color: string }[] = [
-  { id: 'realtyline', label: 'RealtyLine Austin', color: '#021D40' },
-  { id: 'newsline',   label: 'Newsline San Antonio',       color: '#3D0740' },
+  { id: 'realtyline', label: 'RealtyLine Austin', color: '#301D5D' },
+  { id: 'newsline',   label: 'Newsline San Antonio',       color: '#301D5D' },
 ];
 
 export function PubSwitcher({ current }: { current: string }) {

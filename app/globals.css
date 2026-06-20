@@ -34,7 +34,7 @@
   --rnn-purple-400: #a558a8;
   --rnn-purple-500: #7a1f7e;
   --rnn-purple-600: #5a0e5f;
-  --rnn-purple-700: #3D0740;
+  --rnn-purple-700: #301D5D;
   --rnn-purple-800: #2c0530;
   --rnn-purple-900: #1e0322;
 
@@ -93,14 +93,14 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Brand override: collapse the darkest grays in Tailwind's palette to the
-     brand navy (#021D40). Applies app-wide across RealtyLine + Newsline so all
+     brand navy (#301D5D). Applies app-wide across RealtyLine + Newsline so all
      primary text (headings, body, labels, buttons) reads as navy. Muted text
      (gray-500/400/300) is intentionally NOT remapped — hierarchy still works.
      If a component needs literal neutral dark gray, use `text-neutral-900`
      or an arbitrary value like `text-[#171717]`. */
-  --color-gray-900: #021D40;
-  --color-gray-800: #021D40;
-  --color-gray-700: #021D40;
+  --color-gray-900: #301D5D;
+  --color-gray-800: #301D5D;
+  --color-gray-700: #301D5D;
 
   /* ==========================================================================
      Four-color lockdown — remap off-palette Tailwind hues into the allowed

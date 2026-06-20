@@ -33,7 +33,7 @@ type Props = {
   email: string;
 };
 
-export default function DeleteAccountSection({ accentColor = '#021D40', email }: Props) {
+export default function DeleteAccountSection({ accentColor = '#301D5D', email }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState('');

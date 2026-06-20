@@ -68,7 +68,7 @@ export default async function MailingHubPage() {
       label: 'Manual Subscribe',
       href: '/subscribe',
       caption: 'Add a RealtyLine Austin subscriber by hand (public form).',
-      accent: '#3D0740',
+      accent: '#301D5D',
       initial: 'M',
     },
   ];
@@ -92,7 +92,7 @@ export default async function MailingHubPage() {
       label: 'Manual Subscribe',
       href: '/subscribe',
       caption: 'Add a Newsline San Antonio subscriber by hand (public form).',
-      accent: '#3D0740',
+      accent: '#301D5D',
       initial: 'M',
     },
   ];
@@ -116,12 +116,12 @@ export default async function MailingHubPage() {
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
         <KpiCard label="Segments total"      value={counts.total}                       sub="all mailing segments" />
-        <KpiCard label="Manual Newsline San Antonio"     value={counts['manual-newsline']}          sub="manual entries"      accent="#3D0740" />
+        <KpiCard label="Manual Newsline San Antonio"     value={counts['manual-newsline']}          sub="manual entries"      accent="#301D5D" />
         <KpiCard label="REALTORS"            value={counts.realtor}                     sub="licensed agents"     accent="#5a0e5f" />
         <KpiCard label="ABOR Members"        value={sources.aborMembers}                sub="UnlockMLS holding"   accent="#6b7280" />
         <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#1d4ed8" />
         <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="newsletter signups"  accent="#2563eb" />
-        <KpiCard label="Active — ATX"        value={counts['active-advertiser-atx']}    sub="RealtyLine ATX"      accent="#021D40" />
+        <KpiCard label="Active — ATX"        value={counts['active-advertiser-atx']}    sub="RealtyLine ATX"      accent="#301D5D" />
         <KpiCard label="Active — SA"         value={counts['active-advertiser-sa']}     sub="Newsline San Antonio"         accent="#3b82f6" />
         <KpiCard label="Non-Advertisers — ATX" value={counts['non-advertiser-atx']}     sub="RealtyLine ATX"      accent="#f97316" />
         <KpiCard label="Non-Advertisers — SA"  value={counts['non-advertiser-sa']}      sub="Newsline San Antonio"         accent="#ea580c" />

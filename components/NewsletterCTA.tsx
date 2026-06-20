@@ -17,10 +17,10 @@ type Publication = PubKey;
 // Brand color per publication. Falls back to neutral if unknown.
 // Houston/Dallas inherit RealtyLine navy.
 const PUB_COLORS: Record<Publication, string> = {
-  realtyline: '#021D40',
+  realtyline: '#301D5D',
   newsline: '#7f1d1d',
-  'realtyline-houston': '#021D40',
-  'realtyline-dallas': '#021D40',
+  'realtyline-houston': '#301D5D',
+  'realtyline-dallas': '#301D5D',
 };
 
 type Props = {
@@ -134,7 +134,7 @@ export default function NewsletterCTA({
               disabled={submitting}
               // BUG-19: relied on focus:outline-none with no visible :focus-visible fallback.
               // Add an explicit focus-visible ring so keyboard users see focus.
-              className="flex-1 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#021D40]/40 focus:border-[#021D40] placeholder:text-[#d1d5db] disabled:opacity-60"
+              className="flex-1 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#301D5D]/40 focus:border-[#301D5D] placeholder:text-[#d1d5db] disabled:opacity-60"
             />
             <button
               onClick={handleSubmit}

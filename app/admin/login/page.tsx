@@ -96,7 +96,7 @@ function AdminLoginForm() {
               className={`w-full border px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none ${
                 emailError
                   ? 'border-red-400 focus:border-red-500'
-                  : 'border-gray-300 focus:border-[#021D40]'
+                  : 'border-gray-300 focus:border-[#301D5D]'
               }`}
             />
             {emailError && (
@@ -114,12 +114,12 @@ function AdminLoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                className="w-full border border-gray-300 px-3 py-2 pr-16 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#021D40]"
+                className="w-full border border-gray-300 px-3 py-2 pr-16 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#301D5D]"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs uppercase tracking-wider text-gray-500 hover:text-[#021D40] px-2 py-1"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs uppercase tracking-wider text-gray-500 hover:text-[#301D5D] px-2 py-1"
               >
                 {showPassword ? 'Hide' : 'Show'}
               </button>
@@ -131,12 +131,12 @@ function AdminLoginForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-[#021D40] text-white py-2.5 text-sm font-medium tracking-wide hover:bg-[#03285a] disabled:opacity-60 transition-colors"
+            className="w-full bg-[#301D5D] text-white py-2.5 text-sm font-medium tracking-wide hover:bg-[#493676] disabled:opacity-60 transition-colors"
           >
             {submitting ? 'Signing in...' : 'Sign In'}
           </button>
           <div className="text-center pt-1">
-            <Link href="/admin/forgot-password" className="text-sm text-gray-500 hover:text-[#021D40]">
+            <Link href="/admin/forgot-password" className="text-sm text-gray-500 hover:text-[#301D5D]">
               Forgot password?
             </Link>
           </div>
