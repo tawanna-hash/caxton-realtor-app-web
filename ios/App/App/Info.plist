@@ -52,6 +52,9 @@
 	<string>Realty News Now needs access to your photo library so you can upload images for your listings, advertiser profile, and signed agreements.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Realty News Now needs permission to save images and signed PDF agreements to your photo library.</string>
+	<!-- Contacts is requested only when the user taps Share-to-Contact for a listing/advertiser/agreement. Optional. -->
+	<key>NSContactsUsageDescription</key>
+	<string>Realty News Now uses your contacts only when you choose to share a listing, advertiser, or signed agreement with someone from your address book.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Realty News Now uses your location to show nearby listings, market reports, and Houston-area real estate news relevant to you.</string>
 	<!-- Face ID is offered as a fast sign-in for returning users. The web app already supports passkeys; the iOS shell wires the same flow through LocalAuthentication so the prompt feels native. -->
