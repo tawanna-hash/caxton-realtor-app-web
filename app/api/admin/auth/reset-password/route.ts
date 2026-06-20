@@ -5,23 +5,18 @@
 
 import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
 import { withNeonTransaction } from '@/lib/server/db/neon';
 import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { getRequestIp, getRequestUserAgent } from '@/lib/server/auth/admin';
 import { hashPassword } from '@/lib/server/auth/passwords';
 import { rateLimit } from '@/lib/server/rate-limit';
+import { adminResetPasswordSchema } from '@/lib/server/schemas/auth-admin';
 
 export const runtime = 'nodejs';
 
-const resetPasswordSchema = z.object({
-  token: z.string().min(1).max(200),
-  newPassword: z.string().min(8).max(200),
-});
-
 export const POST = withErrorHandling(async (req: Request) => {
-  await rateLimit('auth');
-  const input = resetPasswordSchema.parse(await req.json());
+  await rateLimit('adminAuth');
+  const input = adminResetPasswordSchema.parse(await req.json());
 
   const tokenHash = crypto.createHash('sha256').update(input.token).digest('hex');
   const ip = await getRequestIp();
