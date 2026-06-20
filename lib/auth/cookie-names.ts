@@ -7,12 +7,11 @@
  * lib/server/auth/admin.ts and lib/server/auth/user.ts and re-export
  * these names so existing imports keep working.
  *
- * Renamed `_v2` during the Express → Next.js cutover. The legacy names
- * are still listed so the cookie-clearing path can expire them.
+ * Renamed `_v2` during the Express → Next.js cutover. Legacy names were
+ * retired in the Wave 3 cleanup — any leftover Express-era cookies have
+ * long since expired client-side.
  */
 
 export const ADMIN_SESSION_COOKIE_NAME = 'caxton_admin_session_v2';
-export const LEGACY_ADMIN_SESSION_COOKIE_NAME = 'caxton_admin_session';
 
 export const SESSION_COOKIE_NAME = 'caxton_session_v2';
-export const LEGACY_SESSION_COOKIE_NAME = 'caxton_session';

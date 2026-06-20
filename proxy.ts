@@ -19,10 +19,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
-import {
-  ADMIN_SESSION_COOKIE_NAME,
-  LEGACY_ADMIN_SESSION_COOKIE_NAME,
-} from './lib/auth/cookie-names';
+import { ADMIN_SESSION_COOKIE_NAME } from './lib/auth/cookie-names';
 import {
   PUB_KEYS,
   PRE_LAUNCH_PUB_KEYS,
@@ -179,10 +176,7 @@ const PUB_KEY_SET = new Set<string>(PUB_KEYS);
 const PRE_LAUNCH_SET = new Set<string>(PRE_LAUNCH_PUB_KEYS);
 
 function hasAdminCookie(req: NextRequest): boolean {
-  return (
-    req.cookies.has(ADMIN_SESSION_COOKIE_NAME) ||
-    req.cookies.has(LEGACY_ADMIN_SESSION_COOKIE_NAME)
-  );
+  return req.cookies.has(ADMIN_SESSION_COOKIE_NAME);
 }
 
 const PRE_LAUNCH_PREVIEW_PATHS = new Set<string>([

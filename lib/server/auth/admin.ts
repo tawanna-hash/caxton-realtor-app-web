@@ -11,15 +11,12 @@
 import { cookies, headers } from 'next/headers';
 import { ApiError } from '../error';
 import { verifyAdminSessionToken, type AdminSessionPayload } from '../jwt';
-import {
-  ADMIN_SESSION_COOKIE_NAME,
-  LEGACY_ADMIN_SESSION_COOKIE_NAME,
-} from '@/lib/auth/cookie-names';
+import { ADMIN_SESSION_COOKIE_NAME } from '@/lib/auth/cookie-names';
 
 // Re-exported so existing call sites (`from '@/lib/server/auth/admin'`)
-// keep working. The canonical declarations live in lib/auth/cookie-names.ts
-// so that Edge middleware can import them without dragging in `next/headers`.
-export { ADMIN_SESSION_COOKIE_NAME, LEGACY_ADMIN_SESSION_COOKIE_NAME };
+// keep working. The canonical declaration lives in lib/auth/cookie-names.ts
+// so that Edge middleware can import it without dragging in `next/headers`.
+export { ADMIN_SESSION_COOKIE_NAME };
 
 /**
  * Read the current admin session from the `caxton_admin_session_v2` cookie.

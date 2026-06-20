@@ -11,14 +11,11 @@
 import { cookies } from 'next/headers';
 import { ApiError } from '../error';
 import { verifySessionToken, type RealtorSessionPayload } from '../jwt';
-import {
-  SESSION_COOKIE_NAME,
-  LEGACY_SESSION_COOKIE_NAME,
-} from '@/lib/auth/cookie-names';
+import { SESSION_COOKIE_NAME } from '@/lib/auth/cookie-names';
 
-// Re-exported so existing call sites keep working. Canonical declarations
-// live in lib/auth/cookie-names.ts (see admin.ts for the same pattern).
-export { SESSION_COOKIE_NAME, LEGACY_SESSION_COOKIE_NAME };
+// Re-exported so existing call sites keep working. Canonical declaration
+// lives in lib/auth/cookie-names.ts (see admin.ts for the same pattern).
+export { SESSION_COOKIE_NAME };
 
 /**
  * Read the current realtor session from the `caxton_session_v2` cookie.
