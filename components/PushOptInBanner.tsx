@@ -9,6 +9,10 @@
 //
 // On iOS Safari (which only allows web push for installed PWAs), the
 // banner switches to an instruction to Add to Home Screen.
+//
+// When the page is running INSIDE the native Capacitor iOS app, we never
+// show either variant: the native app handles push through Capacitor's
+// native push plugin, and the user is obviously not in a web browser.
 
 import { useEffect, useState } from 'react';
 import PushOptInButton, { type PushMarket } from './PushOptInButton';
@@ -20,8 +24,32 @@ type Props = {
 
 const DISMISS_KEY = 'rnn:push-banner-dismissed';
 
+type CapacitorWindow = Window & {
+  Capacitor?: { isNativePlatform?: () => boolean; getPlatform?: () => string };
+};
+
+function isCapacitorNative(): boolean {
+  if (typeof window === 'undefined') return false;
+  const w = window as CapacitorWindow;
+  const cap = w.Capacitor;
+  if (!cap) return false;
+  try {
+    if (typeof cap.isNativePlatform === 'function' && cap.isNativePlatform()) return true;
+    if (typeof cap.getPlatform === 'function') {
+      const p = cap.getPlatform();
+      return p === 'ios' || p === 'android';
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
 function isIosSafariNeedsPWA(): boolean {
   if (typeof navigator === 'undefined') return false;
+  // Never show the A2HS instruction inside the native shell - the app IS
+  // already installed and notifications come through Capacitor Push.
+  if (isCapacitorNative()) return false;
   const ua = navigator.userAgent;
   type LegacyNav = Navigator & { standalone?: boolean; maxTouchPoints?: number };
   const nav = navigator as LegacyNav;
@@ -48,6 +76,13 @@ export default function PushOptInBanner({ realtorId, market }: Props) {
       setDismissed(true);
     }
 
+    // Inside the native Capacitor iOS app, the banner has nothing useful
+    // to say: native push is wired through @capacitor/push-notifications,
+    // not the web PushManager. Hide it entirely.
+    if (isCapacitorNative()) {
+      setActionable(false);
+      return;
+    }
     if (isIosSafariNeedsPWA()) {
       setActionable('ios-pwa');
       return;
