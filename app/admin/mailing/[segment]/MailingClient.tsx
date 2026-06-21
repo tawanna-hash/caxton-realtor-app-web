@@ -164,10 +164,9 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
   const HUB_TAGGED_SEGMENTS: MailingSegment[] = [
     'realtyline-atx-print',
     'newsline-sa-print',
-    'abor-holding',
-    'sabor-holding',
     'email-only-atx',
     'email-only-sa',
+    'realtor',
   ];
   const isHubTagged = HUB_TAGGED_SEGMENTS.includes(segment);
   const isVisible = (id: ColumnId) => {
@@ -822,10 +821,9 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
 
         {(segment === 'realtyline-atx-print'
           || segment === 'newsline-sa-print'
-          || segment === 'abor-holding'
-          || segment === 'sabor-holding'
           || segment === 'email-only-atx'
-          || segment === 'email-only-sa') && (
+          || segment === 'email-only-sa'
+          || segment === 'realtor') && (
           <>
             <span className="mx-1 h-5 w-px bg-gray-200" aria-hidden />
             <FilterChip
