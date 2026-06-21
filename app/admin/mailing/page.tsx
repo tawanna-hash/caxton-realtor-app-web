@@ -111,6 +111,26 @@ export default async function MailingHubPage() {
           signups, and manual entries. Active advertisers and their staff sync
           into the Advertisers segment automatically.
         </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <span className="text-xs uppercase tracking-[0.15em] text-gray-500 font-medium">
+            Download email-only list
+          </span>
+          <a
+            href="/api/admin/mailing/publication-list?pub=realtyline"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#301D5D] text-[#301D5D] text-xs font-semibold hover:bg-[#301D5D] hover:text-white transition"
+          >
+            RealtyLine (Austin) CSV
+          </a>
+          <a
+            href="/api/admin/mailing/publication-list?pub=newsline"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#1d4ed8] text-[#1d4ed8] text-xs font-semibold hover:bg-[#1d4ed8] hover:text-white transition"
+          >
+            Newsline (San Antonio) CSV
+          </a>
+          <span className="text-xs text-gray-500">
+            Merges segments + board mirrors + app subscribers + newsletter signups, deduped by email.
+          </span>
+        </div>
       </div>
 
       {/* KPI strip */}
