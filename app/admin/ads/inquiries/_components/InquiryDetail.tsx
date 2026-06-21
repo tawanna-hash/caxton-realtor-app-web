@@ -279,7 +279,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
             type="text"
             value={assignee}
             onChange={(e) => setAssignee(e.target.value)}
-            placeholder="e.g. tawanna@newslinesa.com"
+            placeholder="e.g. tawanna@myrealtyline.com"
             className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <button

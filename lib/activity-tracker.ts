@@ -93,6 +93,23 @@ function isNoiseError(message: string, source?: string): boolean {
   return NOISE_PATTERNS.some((rx) => rx.test(combined));
 }
 
+// A 'meaningful' error message has actual diagnostic content. The Jun 20
+// flood of '[Realty News Now] Client error: undefined' alerts came from
+// promises rejecting with no message: `reason instanceof Error` was true
+// but `reason.message` was undefined, which String()-coerced to 'undefined'
+// and bypassed the noise filter. Anything that boils down to the literal
+// strings below is unactionable garbage — drop the email alert (but still
+// send to PostHog for telemetry).
+function hasMeaningfulMessage(message: string): boolean {
+  const trimmed = String(message ?? '').trim();
+  if (!trimmed) return false;
+  const lower = trimmed.toLowerCase();
+  if (lower === 'undefined' || lower === 'null' || lower === 'nan') return false;
+  if (lower === '[object object]' || lower === '[object error]') return false;
+  if (lower === 'unhandled promise rejection') return false; // fallback string when reason is unknown
+  return true;
+}
+
 // Collect environment context that's useful even when the actual error
 // message is masked by the browser's cross-origin policy. When a script
 // loaded without proper CORS headers throws, window.onerror gets called
@@ -118,6 +135,11 @@ function onError(message: string, source?: string, lineno?: number, colno?: numb
   if (errorBudget.remaining <= 0) return;
   if (isNoiseError(message, source)) return;
   errorBudget.remaining -= 1;
+
+  // Guard against the 'undefined'/'null'/empty alert spam pattern. We still
+  // ship to PostHog (telemetry dashboard) but skip the inbox alert so
+  // Tawanna's mailbox doesn't drown in non-actionable noise.
+  const skipEmailAlert = !hasMeaningfulMessage(message);
 
   // 'Script error.' with no source/lineno is the well-known cross-origin
   // masking pattern. Tag it explicitly so the alert email is honest about
@@ -148,9 +170,11 @@ function onError(message: string, source?: string, lineno?: number, colno?: numb
     $exception_colno: colno,
     $exception_stack: errorObj instanceof Error ? errorObj.stack : undefined,
     masked_by_browser: isMasked,
+    skipped_email_alert: skipEmailAlert,
     page_url: typeof window !== 'undefined' ? window.location.href : undefined,
     user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
   });
+  if (skipEmailAlert) return; // telemetry-only; don't email garbage 'undefined' errors
   sendAlert({
     kind: 'client_error',
     title: isMasked
@@ -227,9 +251,23 @@ export function installActivityTracker(): void {
   }, true); // capture phase so we see errors before any swallowing handler runs
   window.addEventListener('unhandledrejection', (e) => {
     const reason = e.reason;
-    const message = reason instanceof Error
-      ? reason.message
-      : typeof reason === 'string' ? reason : 'Unhandled promise rejection';
+    // Be defensive: an Error with no .message string-coerces to 'undefined'
+    // which used to bypass the noise filter. Fall back to constructor name
+    // (e.g. 'TypeError') when message is empty so the alert is at least
+    // identifiable, and let hasMeaningfulMessage() in onError() drop totally
+    // empty cases from the inbox alert path (still goes to PostHog).
+    let message: string;
+    if (reason instanceof Error) {
+      message = (reason.message && String(reason.message).trim())
+        || reason.name
+        || 'Error';
+    } else if (typeof reason === 'string' && reason.trim()) {
+      message = reason;
+    } else if (reason && typeof reason === 'object') {
+      try { message = JSON.stringify(reason).slice(0, 200); } catch { message = 'Unhandled promise rejection'; }
+    } else {
+      message = 'Unhandled promise rejection';
+    }
     onError(message, undefined, undefined, undefined, reason instanceof Error ? reason : undefined);
   });
 

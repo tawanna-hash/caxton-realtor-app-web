@@ -18,7 +18,10 @@ import { withErrorHandling, ApiError } from '@/lib/server/error';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const ALERT_RECIPIENT = process.env.ACTIVITY_ALERT_TO ?? 'tawanna@newslinesa.com';
+// Empty string disables alerts entirely. Falsy check below already handles
+// undefined/null. We default to tawanna@myrealtyline.com — newslinesa.com
+// is the publication domain but mail goes through myrealtyline.com.
+const ALERT_RECIPIENT = process.env.ACTIVITY_ALERT_TO ?? 'tawanna@myrealtyline.com';
 
 const AlertSchema = z.object({
   kind: z.enum(['form_submit', 'client_error']),
