@@ -116,34 +116,34 @@ export default async function MailingHubPage() {
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <span className="text-xs uppercase tracking-[0.15em] text-gray-500 font-medium">
-            Download email-only list
+            Open email list
           </span>
-          <a
-            href="/api/admin/mailing/publication-list?list=realtyline&format=csv"
+          <Link
+            href="/admin/mailing/publication/realtyline"
             className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#301D5D] text-[#301D5D] text-xs font-semibold hover:bg-[#301D5D] hover:text-white transition"
           >
-            <span>RealtyLine (Austin) CSV</span>
+            <span>RealtyLine (Austin)</span>
             <span
               className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#301D5D]/10 text-[#301D5D] group-hover/dl:bg-white/20 group-hover/dl:text-white"
               title={`${realtylineCount.total.toLocaleString()} unique deliverable emails`}
             >
               {realtylineCount.total.toLocaleString()}
             </span>
-          </a>
-          <a
-            href="/api/admin/mailing/publication-list?list=newsline&format=csv"
+          </Link>
+          <Link
+            href="/admin/mailing/publication/newsline"
             className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#1d4ed8] text-[#1d4ed8] text-xs font-semibold hover:bg-[#1d4ed8] hover:text-white transition"
           >
-            <span>Newsline (San Antonio) CSV</span>
+            <span>Newsline (San Antonio)</span>
             <span
               className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#1d4ed8]/10 text-[#1d4ed8] group-hover/dl:bg-white/20 group-hover/dl:text-white"
               title={`${newslineCount.total.toLocaleString()} unique deliverable emails`}
             >
               {newslineCount.total.toLocaleString()}
             </span>
-          </a>
+          </Link>
           <span className="text-xs text-gray-500">
-            Merges segments + board mirrors + app subscribers + newsletter signups, deduped by email.
+            Merges segments + board mirrors + app subscribers + newsletter signups, deduped by email. CSV download lives inside.
           </span>
         </div>
       </div>
