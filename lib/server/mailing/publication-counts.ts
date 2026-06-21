@@ -117,6 +117,7 @@ export async function countPublicationList(pub: Pub): Promise<PublicationCount> 
       SELECT DISTINCT email
         FROM src
        WHERE email ~ '^[^[:space:]@]+@[^[:space:]@]+\\.[^[:space:]@]+$'
+         AND email NOT IN (SELECT email FROM email_suppressions)
     ),
     joined AS (
       SELECT v.email,

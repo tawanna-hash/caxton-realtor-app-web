@@ -5,7 +5,7 @@
 //         ids?: string[], segment?: string, target_segment?: string, ... }
 
 import { NextRequest, NextResponse } from 'next/server';
-import { ensureSchema } from '@/lib/db';
+import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import {
   dedupeSegment,
@@ -16,6 +16,7 @@ import {
   updateMailingContact,
   type MailingContactInput,
 } from '@/lib/mailing';
+import { suppressEmailsBatch } from '@/lib/server/email-suppressions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,8 +47,46 @@ export async function POST(req: NextRequest) {
       if (ids.length === 0) {
         return NextResponse.json({ error: 'no valid ids' }, { status: 400 });
       }
+      // Snapshot emails + metadata BEFORE delete so the suppression list
+      // captures every removed contact. Without this step the ABOR /
+      // SABOR sync would silently re-insert these emails on the next
+      // run.
+      const sql = getSql();
+      const snap = (await sql.query(
+        `SELECT id, email, first_name, last_name, segment, stage, external_id, external_source
+           FROM mailing_contacts WHERE id = ANY($1::uuid[]) AND email IS NOT NULL`,
+        [ids],
+      )) as Array<{
+        id: string;
+        email: string | null;
+        first_name: string | null;
+        last_name: string | null;
+        segment: string | null;
+        stage: string | null;
+        external_id: string | null;
+        external_source: string | null;
+      }>;
       const removed = await deleteMailingContacts(ids);
-      return NextResponse.json({ ok: true, removed });
+      const suppressed = await suppressEmailsBatch(
+        snap.map((r) => ({
+          email: r.email,
+          source_id: r.id,
+          snapshot: {
+            first_name: r.first_name,
+            last_name: r.last_name,
+            segment: r.segment,
+            stage: r.stage,
+            external_id: r.external_id,
+            external_source: r.external_source,
+          },
+        })),
+        {
+          reason: 'admin_bulk_delete',
+          source_table: 'mailing_contacts',
+          suppressed_by: admin.email,
+        },
+      );
+      return NextResponse.json({ ok: true, removed, suppressed });
     }
 
     if (action === 'patch') {
@@ -112,8 +151,23 @@ export async function POST(req: NextRequest) {
       if (body.confirm !== 'DELETE_ALL') {
         return NextResponse.json({ error: 'confirm token required' }, { status: 400 });
       }
+      // Snapshot every email in the segment before the wipe.
+      const sql = getSql();
+      const snap = (await sql.query(
+        `SELECT id, email FROM mailing_contacts
+          WHERE segment = $1 AND email IS NOT NULL`,
+        [segment],
+      )) as Array<{ id: string; email: string | null }>;
       const removed = await deleteAllInSegment(segment);
-      return NextResponse.json({ ok: true, removed });
+      const suppressed = await suppressEmailsBatch(
+        snap.map((r) => ({ email: r.email, source_id: r.id })),
+        {
+          reason: 'admin_bulk_delete',
+          source_table: 'mailing_contacts',
+          suppressed_by: admin.email,
+        },
+      );
+      return NextResponse.json({ ok: true, removed, suppressed });
     }
 
     if (action === 'dedupe') {

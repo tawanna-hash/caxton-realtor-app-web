@@ -29,6 +29,7 @@ import {
   segmentFromSlug,
   type MailingSegment,
 } from '@/lib/server/mailing/segments';
+import { suppressEmailsBatch } from '@/lib/server/email-suppressions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -166,7 +167,7 @@ export async function POST(req: NextRequest) {
     while (true) {
       const batchRows = (sl
         ? await sqlW`
-            SELECT id FROM mailing_contacts
+            SELECT id, email FROM mailing_contacts
              WHERE segment = ${segment} AND stage = 'mailing'
                AND (
                  ${filter} = 'all'
@@ -186,7 +187,7 @@ export async function POST(req: NextRequest) {
              ORDER BY created_at DESC, id DESC
              LIMIT ${BATCH_SIZE}`
         : await sqlW`
-            SELECT id FROM mailing_contacts
+            SELECT id, email FROM mailing_contacts
              WHERE segment = ${segment} AND stage = 'mailing'
                AND (
                  ${filter} = 'all'
@@ -196,12 +197,24 @@ export async function POST(req: NextRequest) {
                )
              ORDER BY created_at DESC, id DESC
              LIMIT ${BATCH_SIZE}`
-      ) as unknown as { id: string }[];
+      ) as unknown as { id: string; email: string | null }[];
 
       if (batchRows.length === 0) break;
       const ids = batchRows.map((r) => r.id);
 
       if (action === 'delete') {
+        // Tombstone the emails first so the next ABOR / SABOR sync
+        // won't re-insert them. We do this BEFORE the delete so a
+        // worker crash mid-batch never leaves rows deleted without
+        // a corresponding suppression entry.
+        await suppressEmailsBatch(
+          batchRows.map((r) => ({ email: r.email, source_id: r.id })),
+          {
+            reason: 'admin_bulk_delete',
+            source_table: 'mailing_contacts',
+            suppressed_by: admin.email,
+          },
+        );
         await sqlW`DELETE FROM mailing_contacts WHERE id = ANY(${ids}::uuid[])`;
       } else {
         await sqlW`

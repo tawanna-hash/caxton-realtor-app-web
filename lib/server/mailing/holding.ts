@@ -213,13 +213,44 @@ export async function promoteHoldingContacts(ids: string[]): Promise<PromoteResu
  * list rows).
  */
 export async function rejectHoldingContacts(ids: string[]): Promise<number> {
-  if (ids.length === 0) return 0;
+  const r = await rejectHoldingContactsWithSnapshot(ids);
+  return r.removed;
+}
+
+/**
+ * Same as rejectHoldingContacts but also returns the email + source
+ * metadata of every deleted row so the caller can write a permanent
+ * suppression entry. We RETURNING the columns we need so the snapshot
+ * and the delete are atomic — no risk of the row being modified between
+ * the SELECT and the DELETE.
+ */
+export async function rejectHoldingContactsWithSnapshot(ids: string[]): Promise<{
+  removed: number;
+  rows: Array<{
+    id: string;
+    email: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    segment: string | null;
+    external_id: string | null;
+    external_source: string | null;
+  }>;
+}> {
+  if (ids.length === 0) return { removed: 0, rows: [] };
   const sql = getSql();
   const rows = (await sql`
     DELETE FROM mailing_contacts
      WHERE id = ANY(${ids}::uuid[])
        AND stage = 'holding'
-     RETURNING id
-  `) as unknown as Array<{ id: string }>;
-  return rows.length;
+     RETURNING id, email, first_name, last_name, segment, external_id, external_source
+  `) as unknown as Array<{
+    id: string;
+    email: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    segment: string | null;
+    external_id: string | null;
+    external_source: string | null;
+  }>;
+  return { removed: rows.length, rows };
 }

@@ -146,6 +146,12 @@ export default async function MailingHubPage() {
             Merges segments + board mirrors + app subscribers + newsletter signups, deduped by email. CSV download lives inside.
           </span>
         </div>
+        <div className="mt-3 text-xs text-gray-500">
+          Deleting a contact in Mailing or Holding now permanently tombstones the email so future ABOR/SABOR syncs skip it.{' '}
+          <Link href="/admin/mailing/suppressions" className="font-semibold text-[#301D5D] hover:underline">
+            View suppression list →
+          </Link>
+        </div>
       </div>
 
       {/* KPI strip */}

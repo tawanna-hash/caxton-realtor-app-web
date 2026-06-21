@@ -6,6 +6,7 @@
 import { getSql } from '@/lib/db';
 import { isMailingSegment, type MailingSegment } from './segments';
 import { normString } from './_internal';
+import { suppressedSubset } from '@/lib/server/email-suppressions';
 
 // ============================================================
 
@@ -36,16 +37,34 @@ export interface UpsertHoldingResult {
   inserted: number;
   updated: number;
   unchanged: number;
+  /** Inputs whose email is in the permanent suppression list and were skipped. */
+  suppressed_skipped: number;
 }
 
 export async function upsertHoldingContacts(
   inputs: ExternalContactInput[],
 ): Promise<UpsertHoldingResult> {
-  if (inputs.length === 0) return { inserted: 0, updated: 0, unchanged: 0 };
+  if (inputs.length === 0) return { inserted: 0, updated: 0, unchanged: 0, suppressed_skipped: 0 };
   const sql = getSql();
   let inserted = 0;
   let updated = 0;
   let unchanged = 0;
+  let suppressed_skipped = 0;
+
+  // Pre-load the suppression set for every email in this batch in one
+  // query. This is what makes a Mailing-Hub delete permanent: even if
+  // the upstream ABOR / SABOR scraper still sees the contact, we
+  // refuse to re-insert it as a NEW holding row.
+  //
+  // Suppression keys on lower(email). We only skip the brand-new-insert
+  // path — if the email already exists in mailing_contacts (e.g. it was
+  // never deleted, only the scraper is re-syncing) we still merge
+  // updates into the existing row. The smart-merge above won't reset
+  // unsubscribed_at or override an admin's manual edits.
+  const inputEmails = inputs
+    .map((i) => (typeof i.email === 'string' ? i.email.trim().toLowerCase() : ''))
+    .filter((e) => e.length > 0);
+  const suppressed = await suppressedSubset(inputEmails);
 
   for (const inp of inputs) {
     const segment: MailingSegment = isMailingSegment(inp.segment) ? inp.segment : 'realtor';
@@ -95,6 +114,19 @@ export async function upsertHoldingContacts(
          WHERE LOWER(email) = LOWER(${inp.email})
          LIMIT 1
       `) as unknown as typeof existing;
+    }
+
+    // Suppression gate: if the email is on the permanent suppression
+    // list AND the contact doesn't already exist in mailing_contacts,
+    // skip this input entirely. (If it DOES already exist, the row was
+    // likely re-created intentionally by an admin and we let the
+    // smart-merge update flow through.)
+    if (existing.length === 0 && inp.email) {
+      const norm = inp.email.trim().toLowerCase();
+      if (suppressed.has(norm)) {
+        suppressed_skipped += 1;
+        continue;
+      }
     }
 
     if (existing.length > 0) {
@@ -188,6 +220,6 @@ export async function upsertHoldingContacts(
     }
   }
 
-  return { inserted, updated, unchanged };
+  return { inserted, updated, unchanged, suppressed_skipped };
 }
 

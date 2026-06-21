@@ -1023,5 +1023,30 @@ export async function ensureSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS email_verifications_status_idx ON email_verifications(status)`;
   await sql`CREATE INDEX IF NOT EXISTS email_verifications_verified_at_idx ON email_verifications(verified_at)`;
 
+  // ---- email_suppressions ----------------------------------------------
+  // Permanent-delete tombstone keyed by lower(email). When an admin
+  // deletes a contact from the Mailing Hub we write a row here so:
+  //   1. The publication-list / counts views exclude the email forever.
+  //   2. The holding-stage upsert (ABOR / SABOR scraper) skips it on
+  //      every subsequent sync, instead of silently re-inserting it.
+  //   3. Public subscribe / signup endpoints can refuse to re-add it.
+  //
+  // The table snapshots the source row's table + id at the moment of
+  // deletion so a human can later see WHERE the email used to live and,
+  // if needed, remove the suppression to allow re-onboarding.
+  await sql`
+    CREATE TABLE IF NOT EXISTS email_suppressions (
+      email           TEXT PRIMARY KEY,
+      reason          TEXT NOT NULL DEFAULT 'admin_delete',
+      source_table    TEXT,
+      source_id       TEXT,
+      source_snapshot JSONB,
+      suppressed_by   TEXT,
+      suppressed_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS email_suppressions_suppressed_at_idx ON email_suppressions(suppressed_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS email_suppressions_reason_idx ON email_suppressions(reason)`;
+
   schemaEnsured = true;
 }

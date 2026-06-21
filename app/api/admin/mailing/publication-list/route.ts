@@ -19,6 +19,7 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { getSql } from '@/lib/db';
+import { suppressedSubset } from '@/lib/server/email-suppressions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -179,7 +180,20 @@ async function buildList(pub: Pub): Promise<{ rows: Row[]; stats: Record<string,
     }
   }
 
-  const rows = Array.from(map.values()).sort((a, b) => a.email.localeCompare(b.email));
+  // Filter out anything in the permanent suppression list. This is the
+  // tombstone that makes a Mailing-Hub delete truly permanent: even if
+  // the holding sync didn't yet honor the suppression (race window) the
+  // CSV export must never include a suppressed address.
+  let rows = Array.from(map.values()).sort((a, b) => a.email.localeCompare(b.email));
+  let dropped_suppressed = 0;
+  if (rows.length > 0) {
+    const suppressedSet = await suppressedSubset(rows.map((r) => r.email));
+    if (suppressedSet.size > 0) {
+      const before = rows.length;
+      rows = rows.filter((r) => !suppressedSet.has(r.email));
+      dropped_suppressed = before - rows.length;
+    }
+  }
 
   // Single batched lookup against the unified email_verifications table —
   // every email is already lower-cased + valid by this point.
@@ -201,6 +215,7 @@ async function buildList(pub: Pub): Promise<{ rows: Row[]; stats: Record<string,
       raw_pulled: raw.length,
       dropped_invalid_email,
       dropped_status,
+      dropped_suppressed,
       collapsed_duplicates: collapsed,
       final_unique_emails: rows.length,
     },
@@ -250,6 +265,7 @@ export const GET = withErrorHandling(async (req: Request) => {
       'X-Mailing-Collapsed': String(stats.collapsed_duplicates),
       'X-Mailing-Dropped-Invalid': String(stats.dropped_invalid_email),
       'X-Mailing-Dropped-Status': String(stats.dropped_status),
+      'X-Mailing-Dropped-Suppressed': String(stats.dropped_suppressed),
       'Cache-Control': 'no-store',
     },
   });

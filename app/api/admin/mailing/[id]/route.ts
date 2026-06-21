@@ -4,7 +4,7 @@
 // DELETE — remove a mailing contact
 
 import { NextRequest, NextResponse } from 'next/server';
-import { ensureSchema } from '@/lib/db';
+import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import {
   deleteMailingContact,
@@ -14,6 +14,7 @@ import {
   type MailingContactInput,
   type MailingSegment,
 } from '@/lib/mailing';
+import { suppressEmail } from '@/lib/server/email-suppressions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -90,9 +91,49 @@ export async function DELETE(req: NextRequest, ctx: RouteCtx) {
   }
   try {
     await ensureSchema();
+    // Snapshot the row BEFORE delete so we can record the email +
+    // source metadata into the permanent suppression list. This makes
+    // the delete permanent: future ABOR / SABOR / subscribe re-imports
+    // will skip this email instead of silently re-inserting it.
+    const sql = getSql();
+    const snap = (await sql.query(
+      `SELECT id, email, first_name, last_name, segment, stage, external_id, external_source
+         FROM mailing_contacts WHERE id = $1 LIMIT 1`,
+      [id],
+    )) as Array<{
+      id: string;
+      email: string | null;
+      first_name: string | null;
+      last_name: string | null;
+      segment: string | null;
+      stage: string | null;
+      external_id: string | null;
+      external_source: string | null;
+    }>;
+    const row = snap[0] ?? null;
+
     const ok = await deleteMailingContact(id);
     if (!ok) return NextResponse.json({ error: 'not found' }, { status: 404 });
-    return NextResponse.json({ ok: true });
+
+    let suppressed = false;
+    if (row?.email) {
+      suppressed = await suppressEmail({
+        email: row.email,
+        reason: 'admin_delete',
+        source_table: 'mailing_contacts',
+        source_id: row.id,
+        source_snapshot: {
+          first_name: row.first_name,
+          last_name: row.last_name,
+          segment: row.segment,
+          stage: row.stage,
+          external_id: row.external_id,
+          external_source: row.external_source,
+        },
+        suppressed_by: admin.email,
+      });
+    }
+    return NextResponse.json({ ok: true, suppressed });
   } catch (err) {
     console.error('[admin/mailing DELETE]', errMessage(err));
     return NextResponse.json({ error: 'delete failed', detail: errMessage(err) }, { status: 500 });
