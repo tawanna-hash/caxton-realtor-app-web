@@ -148,6 +148,10 @@ export default async function MailingHubPage() {
         </div>
         <div className="mt-3 text-xs text-gray-500">
           Deleting a contact in Mailing or Holding now permanently tombstones the email so future ABOR/SABOR syncs skip it.{' '}
+          <Link href="/admin/mailing/tags" className="font-semibold text-[#301D5D] hover:underline">
+            Manage tags →
+          </Link>
+          {' · '}
           <Link href="/admin/mailing/suppressions" className="font-semibold text-[#301D5D] hover:underline">
             View suppression list →
           </Link>
