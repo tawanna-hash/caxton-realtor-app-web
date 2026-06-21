@@ -1597,6 +1597,11 @@ function EditDrawer({
     mobile_phone:   formatPhone(row.mobile_phone),
     email_notes:    row.email_notes ?? '',
   });
+  // Tags are managed separately from `form` because they're an array, not
+  // a string. The editor keeps the canonical tag order from the DB and
+  // dedupes on add. Internal `_was:` provenance markers are preserved
+  // round-trip but rendered read-only.
+  const [tags, setTags] = useState<string[]>(Array.isArray(row.tags) ? row.tags : []);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -1621,11 +1626,12 @@ function EditDrawer({
         mobile_phone:   formatPhone(row.mobile_phone),
         email_notes:    row.email_notes ?? '',
       });
+      setTags(Array.isArray(row.tags) ? row.tags : []);
     });
   }, [row.id, row.updated_at, row.first_name, row.last_name, row.title,
       row.email, row.company, row.address, row.address_2, row.city,
       row.state, row.zip, row.license_number, row.phone, row.mobile_phone,
-      row.email_notes]);
+      row.email_notes, row.tags]);
 
   const setField = (k: keyof typeof form, v: string) => {
     setForm((prev) => ({ ...prev, [k]: v }));
@@ -1638,7 +1644,7 @@ function EditDrawer({
       const res = await fetch(`/api/admin/mailing/${row.id}`, {
         method: 'PATCH', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form }),
+        body: JSON.stringify({ ...form, tags }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
@@ -1769,6 +1775,17 @@ function EditDrawer({
             <DrawerField label="Mobile / Cell" value={form.mobile_phone}  onChange={(v) => setField('mobile_phone', v)} type="tel" />
           </div>
 
+          {/* Tags editor — add from the library catalog or type a custom
+              tag. Removing a tag here only affects this contact; use the
+              global Tag Library (/admin/mailing/tags) to rename or delete
+              tags everywhere. */}
+          <div>
+            <span className="block text-[11px] uppercase tracking-wider text-gray-500 font-semibold mb-1">
+              Tags
+            </span>
+            <TagsEditor tags={tags} onChange={setTags} />
+          </div>
+
           {/* Email notes — free-text journal for verifier outcomes,
               bounce reports, manual confirmations, etc. Each verify
               run auto-appends a timestamped line; the user can also
@@ -1816,6 +1833,159 @@ function EditDrawer({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────
+// Tags editor — chips with remove + typeahead-add
+//
+// Pulls the global tag catalog from /api/admin/mailing/tags once per mount
+// so the suggestion list is always live. Adding an unknown tag is allowed:
+// it just becomes a new tag in the library on save.
+
+const TAG_STYLES: Record<string, { bg: string; fg: string; label?: string }> = {
+  'active-advertiser':    { bg: '#dbeafe', fg: '#1d4ed8', label: 'Active Advertiser' },
+  'non-advertiser':       { bg: '#fed7aa', fg: '#9a3412', label: 'Non-Advertiser' },
+  'manual':               { bg: '#ede9fe', fg: '#301D5D', label: 'Manual' },
+  'REALTOR':              { bg: '#dcfce7', fg: '#16a34a' },
+  'Loan Officer':         { bg: '#fef3c7', fg: '#d97706' },
+  'Business Development': { bg: '#e2e8f0', fg: '#475569' },
+};
+
+function tagStyle(tag: string) {
+  return TAG_STYLES[tag] ?? { bg: '#f3f4f6', fg: '#374151' };
+}
+
+function TagsEditor({
+  tags, onChange,
+}: {
+  tags: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const [input, setInput] = useState('');
+  const [library, setLibrary] = useState<string[]>([]);
+  const [showSuggest, setShowSuggest] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/admin/mailing/tags', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : { tags: [] }))
+      .then((j: { tags?: { tag: string }[] }) => {
+        if (cancelled) return;
+        const all = (j.tags ?? []).map((t) => t.tag).filter((t) => !t.startsWith('_was:'));
+        setLibrary(all);
+      })
+      .catch(() => { /* non-fatal — fall back to typing custom tags */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Always prepend the canonical library tags so users see the brand
+  // categories first even if no one has used them yet.
+  const CORE = ['REALTOR', 'Loan Officer', 'Business Development'];
+  const catalog = useMemo(() => {
+    const set = new Set<string>([...CORE, ...library]);
+    return Array.from(set);
+  }, [library]);
+
+  const suggestions = useMemo(() => {
+    const q = input.trim().toLowerCase();
+    return catalog
+      .filter((t) => !tags.includes(t))
+      .filter((t) => (q ? t.toLowerCase().includes(q) : true))
+      .slice(0, 8);
+  }, [catalog, input, tags]);
+
+  const addTag = (raw: string) => {
+    const t = raw.trim();
+    if (!t) return;
+    if (tags.includes(t)) { setInput(''); return; }
+    onChange([...tags, t]);
+    setInput('');
+  };
+
+  const removeTag = (t: string) => {
+    onChange(tags.filter((x) => x !== t));
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5 min-h-[2rem] rounded-md border border-gray-300 px-2 py-1.5 bg-white">
+        {tags.length === 0 && (
+          <span className="text-xs text-gray-400 self-center">No tags yet — start typing below.</span>
+        )}
+        {tags.map((t) => {
+          const s = tagStyle(t);
+          const isProvenance = t.startsWith('_was:');
+          return (
+            <span
+              key={t}
+              className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium"
+              style={{
+                background: isProvenance ? '#f3f4f6' : s.bg,
+                color: isProvenance ? '#6b7280' : s.fg,
+              }}
+            >
+              {s.label || t}
+              <button
+                type="button"
+                onClick={() => removeTag(t)}
+                className="ml-0.5 rounded-full hover:bg-black/10 px-1 text-[10px] leading-none"
+                aria-label={`Remove ${t}`}
+                title={`Remove ${t}`}
+              >
+                ×
+              </button>
+            </span>
+          );
+        })}
+      </div>
+
+      <div className="relative">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => { setInput(e.target.value); setShowSuggest(true); }}
+          onFocus={() => setShowSuggest(true)}
+          onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') { e.preventDefault(); addTag(input); }
+            if (e.key === ',')     { e.preventDefault(); addTag(input); }
+            if (e.key === 'Backspace' && !input && tags.length > 0) {
+              removeTag(tags[tags.length - 1]);
+            }
+          }}
+          placeholder="Add a tag — pick a suggestion or type a new one and press Enter"
+          className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D]"
+        />
+        {showSuggest && suggestions.length > 0 && (
+          <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-lg max-h-56 overflow-y-auto">
+            {suggestions.map((t) => {
+              const s = tagStyle(t);
+              return (
+                <button
+                  type="button"
+                  key={t}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => addTag(t)}
+                  className="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-50"
+                >
+                  <span
+                    className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium"
+                    style={{ background: s.bg, color: s.fg }}
+                  >
+                    {s.label || t}
+                  </span>
+                  <span className="text-[10px] text-gray-400">add</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      <p className="text-[10px] text-gray-500">
+        Press Enter or comma to add. Click × to remove. New tags are saved to the library on save.
+      </p>
     </div>
   );
 }
