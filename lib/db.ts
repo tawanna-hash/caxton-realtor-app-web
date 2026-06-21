@@ -996,5 +996,32 @@ export async function ensureSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS admin_jobs_status_idx ON admin_jobs(status, created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS admin_jobs_created_by_idx ON admin_jobs(created_by, created_at DESC)`;
 
+  // ---- email_verifications -------------------------------------------
+  // Unified lookup keyed by lower(email). Any admin table (mailing_contacts,
+  // realtors, newsletter_subscribers) can LEFT JOIN on lower(email) to
+  // render a status badge without owning the verification machinery itself.
+  // Status values:
+  //   'valid'         — deliverable
+  //   'invalid'       — bounced / rejected / undeliverable
+  //   'risky'         — catch-all, role-based, full-mailbox, greylist
+  //   'unknown'       — verifier timed out / inconclusive
+  //   'pending'       — queued, not yet verified
+  await sql`
+    CREATE TABLE IF NOT EXISTS email_verifications (
+      email        TEXT PRIMARY KEY,
+      status       TEXT NOT NULL DEFAULT 'pending'
+                     CHECK (status IN ('valid','invalid','risky','unknown','pending')),
+      sub_status   TEXT,
+      provider     TEXT NOT NULL DEFAULT 'smtp',
+      verified_at  TIMESTAMPTZ,
+      risk_score   INTEGER,
+      raw          JSONB,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS email_verifications_status_idx ON email_verifications(status)`;
+  await sql`CREATE INDEX IF NOT EXISTS email_verifications_verified_at_idx ON email_verifications(verified_at)`;
+
   schemaEnsured = true;
 }

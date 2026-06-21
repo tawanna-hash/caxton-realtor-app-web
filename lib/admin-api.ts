@@ -119,7 +119,7 @@ export const adminApi = {
   deleteSubscriber: (id: string) =>
     adminFetch(`/admin/subscribers/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
-  listSubscribers: (params: { page?: number; pageSize?: number; market?: 'austin' | 'san_antonio'; q?: string; sort?: string; dir?: 'asc' | 'desc' } = {}) => {
+  listSubscribers: (params: { page?: number; pageSize?: number; market?: 'austin' | 'san_antonio'; q?: string; sort?: string; dir?: 'asc' | 'desc'; verified?: string } = {}) => {
     const qs = new URLSearchParams();
     if (params.page) qs.set('page', String(params.page));
     if (params.pageSize) qs.set('pageSize', String(params.pageSize));
@@ -127,6 +127,7 @@ export const adminApi = {
     if (params.q) qs.set('q', params.q);
     if (params.sort) qs.set('sort', params.sort);
     if (params.dir) qs.set('dir', params.dir);
+    if (params.verified) qs.set('verified', params.verified);
     const suffix = qs.toString() ? `?${qs.toString()}` : '';
     return adminFetch(`/admin/subscribers${suffix}`);
   },

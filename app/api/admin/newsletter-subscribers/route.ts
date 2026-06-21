@@ -22,6 +22,7 @@ export const runtime = 'nodejs';
 
 const ALLOWED_PUBS = new Set(['realtyline', 'newsline']);
 const ALLOWED_STATUS = new Set(['active', 'unsubscribed']);
+const ALLOWED_VERIFIED = new Set(['valid','invalid','risky','unknown','pending','unverified']);
 
 export const GET = withErrorHandling(async (req: Request) => {
   await requireAdmin();
@@ -42,6 +43,9 @@ export const GET = withErrorHandling(async (req: Request) => {
   const qRaw = (url.searchParams.get('q') || '').trim().toLowerCase();
   const q = qRaw ? `%${qRaw}%` : null;
 
+  const verifiedParam = url.searchParams.get('verified') || '';
+  const verified = ALLOWED_VERIFIED.has(verifiedParam) ? verifiedParam : null;
+
   if (qRaw.length > 254) throw new ApiError(400, 'q too long');
 
   const SORT_ALLOW = new Set(['created_at', 'email', 'publication', 'source', 'status']);
@@ -54,15 +58,26 @@ export const GET = withErrorHandling(async (req: Request) => {
 
   // We use coalesced predicates so the same parameterized query handles
   // every combination of filters.
+  // LEFT JOIN the unified email_verifications lookup so the UI can render
+  // a colored status badge alongside each row's email.
   const rows = (await sql.query(
-    `SELECT id, email, publication, source, status, created_at, updated_at
-     FROM newsletter_subscribers
-     WHERE ($1::text IS NULL OR publication = $1)
-       AND ($2::text IS NULL OR status = $2)
-       AND ($3::text IS NULL OR email ILIKE $3)
-     ORDER BY ${sort} ${dir} NULLS LAST, id ASC
+    `SELECT n.id, n.email, n.publication, n.source, n.status, n.created_at, n.updated_at,
+            ev.status      AS email_verification_status,
+            ev.sub_status  AS email_verification_reason,
+            ev.verified_at AS email_verified_at
+     FROM newsletter_subscribers n
+     LEFT JOIN email_verifications ev ON ev.email = lower(n.email)
+     WHERE ($1::text IS NULL OR n.publication = $1)
+       AND ($2::text IS NULL OR n.status = $2)
+       AND ($3::text IS NULL OR n.email ILIKE $3)
+       AND (
+             $6::text IS NULL
+         OR ($6 = 'unverified' AND ev.status IS NULL)
+         OR ($6 <> 'unverified' AND ev.status = $6)
+       )
+     ORDER BY n.${sort} ${dir} NULLS LAST, n.id ASC
      LIMIT $4 OFFSET $5`,
-    [publication, status, q, pageSize, offset],
+    [publication, status, q, pageSize, offset, verified],
   )) as Array<{
     id: number;
     email: string;
@@ -71,15 +86,25 @@ export const GET = withErrorHandling(async (req: Request) => {
     status: string;
     created_at: string;
     updated_at: string;
+    email_verification_status: string | null;
+    email_verification_reason: string | null;
+    email_verified_at: string | null;
   }>;
 
-  const countRows = (await sql`
-    SELECT COUNT(*)::int AS total
-    FROM newsletter_subscribers
-    WHERE (${publication}::text IS NULL OR publication = ${publication})
-      AND (${status}::text IS NULL OR status = ${status})
-      AND (${q}::text IS NULL OR email ILIKE ${q})
-  `) as Array<{ total: number }>;
+  const countRows = (await sql.query(
+    `SELECT COUNT(*)::int AS total
+     FROM newsletter_subscribers n
+     LEFT JOIN email_verifications ev ON ev.email = lower(n.email)
+     WHERE ($1::text IS NULL OR n.publication = $1)
+       AND ($2::text IS NULL OR n.status = $2)
+       AND ($3::text IS NULL OR n.email ILIKE $3)
+       AND (
+             $4::text IS NULL
+         OR ($4 = 'unverified' AND ev.status IS NULL)
+         OR ($4 <> 'unverified' AND ev.status = $4)
+       )`,
+    [publication, status, q, verified],
+  )) as Array<{ total: number }>;
 
   const total = countRows[0]?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));

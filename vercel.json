@@ -89,6 +89,10 @@
       "schedule": "0 3 * * *"
     },
     {
+      "path": "/api/cron/verify-subscribers-newsletter",
+      "schedule": "0 13 * * *"
+    },
+    {
       "path": "/api/cron/verify-pending-batch",
       "schedule": "0 */6 * * *"
     },

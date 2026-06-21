@@ -17,6 +17,8 @@ export interface ListSubscribersOptions {
   q?: string;
   sort?: string;
   dir?: 'asc' | 'desc';
+  /** Filter by unified verification status. 'unverified' = no row exists. */
+  verified?: string;
 }
 
 // Allowlist guards the dynamic ORDER BY against injection. Anything not in
@@ -34,6 +36,8 @@ export interface ListSubscribersResult {
   subscribers: Record<string, unknown>[];
 }
 
+const VERIFIED_FILTER_VALUES = new Set(['valid','invalid','risky','unknown','pending','unverified']);
+
 export async function listSubscribers(
   opts: ListSubscribersOptions,
 ): Promise<ListSubscribersResult> {
@@ -41,18 +45,31 @@ export async function listSubscribers(
   const params: unknown[] = [];
   if (opts.market) {
     params.push(opts.market);
-    where.push(`market = $${params.length}`);
+    where.push(`r.market = $${params.length}`);
   }
   if (opts.q && opts.q.trim()) {
     params.push(`%${opts.q.trim()}%`);
     const i = params.length;
-    where.push(`(email ILIKE $${i} OR first_name ILIKE $${i} OR last_name ILIKE $${i})`);
+    where.push(`(r.email ILIKE $${i} OR r.first_name ILIKE $${i} OR r.last_name ILIKE $${i})`);
+  }
+  // Verified-status filter. 'unverified' selects rows with NO entry in
+  // email_verifications; any other status filters on that column.
+  if (opts.verified && VERIFIED_FILTER_VALUES.has(opts.verified)) {
+    if (opts.verified === 'unverified') {
+      where.push(`ev.status IS NULL`);
+    } else {
+      params.push(opts.verified);
+      where.push(`ev.status = $${params.length}`);
+    }
   }
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const offset = (opts.page - 1) * opts.pageSize;
 
   const countRows = await query<{ total: number }>(
-    `SELECT COUNT(*)::int AS total FROM realtors ${whereSql}`,
+    `SELECT COUNT(*)::int AS total
+       FROM realtors r
+       LEFT JOIN email_verifications ev ON ev.email = lower(r.email)
+       ${whereSql}`,
     params,
   );
   const total = countRows[0]?.total ?? 0;
@@ -60,18 +77,25 @@ export async function listSubscribers(
   const sortCol = (opts.sort && SUBSCRIBER_SORT_ALLOWLIST.has(opts.sort)) ? opts.sort : 'created_at';
   const sortDir = opts.dir === 'asc' ? 'ASC' : 'DESC';
   params.push(opts.pageSize, offset);
+  // LEFT JOIN the unified email_verifications lookup so the UI can render
+  // a status badge next to each row's email column. `r.*` is aliased so
+  // the table prefix doesn't break existing field consumers downstream.
   const listSql = `
     SELECT
-      id, email, first_name, last_name, market,
-      license_type, trec_license_number, nmls_license_number, title,
-      mobile, city, state, zip,
-      birthday_month, birthday_day,
-      fb_handle, ig_handle, li_handle,
-      subscriptions, status,
-      created_at, last_login_at, last_app_open_at
-    FROM realtors
+      r.id, r.email, r.first_name, r.last_name, r.market,
+      r.license_type, r.trec_license_number, r.nmls_license_number, r.title,
+      r.mobile, r.city, r.state, r.zip,
+      r.birthday_month, r.birthday_day,
+      r.fb_handle, r.ig_handle, r.li_handle,
+      r.subscriptions, r.status,
+      r.created_at, r.last_login_at, r.last_app_open_at,
+      ev.status      AS email_verification_status,
+      ev.sub_status  AS email_verification_reason,
+      ev.verified_at AS email_verified_at
+    FROM realtors r
+    LEFT JOIN email_verifications ev ON ev.email = lower(r.email)
     ${whereSql}
-    ORDER BY ${sortCol} ${sortDir} NULLS LAST, id ASC
+    ORDER BY r.${sortCol} ${sortDir} NULLS LAST, r.id ASC
     LIMIT $${params.length - 1} OFFSET $${params.length}
   `;
   const rows = await query(listSql, params);

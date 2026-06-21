@@ -5,6 +5,7 @@ import { useAdmin } from '@/hooks/use-admin';
 
 import PageTitle from '@/components/ui/PageTitle';
 import { Pager } from '@/app/admin/_components/Pager';
+import EmailBadge, { type EmailBadgeStatus } from '@/app/admin/_components/EmailBadge';
 
 type Subscriber = {
   id: number;
@@ -14,6 +15,9 @@ type Subscriber = {
   status: string;
   created_at: string;
   updated_at: string;
+  email_verification_status?: EmailBadgeStatus;
+  email_verification_reason?: string | null;
+  email_verified_at?: string | null;
 };
 
 type ListResponse = {
@@ -37,6 +41,7 @@ function buildQuery(params: {
   q: string;
   sort?: string;
   dir?: 'asc' | 'desc';
+  verified?: string;
 }) {
   const qs = new URLSearchParams();
   qs.set('page', String(params.page));
@@ -46,6 +51,7 @@ function buildQuery(params: {
   if (params.q) qs.set('q', params.q);
   if (params.sort) qs.set('sort', params.sort);
   if (params.dir) qs.set('dir', params.dir);
+  if (params.verified) qs.set('verified', params.verified);
   return qs.toString();
 }
 
@@ -58,6 +64,7 @@ export default function NewsletterSubscribersPage() {
   const [pageSize] = useState(50);
   const [publication, setPublication] = useState<'' | 'realtyline' | 'newsline'>('');
   const [status, setStatus] = useState<'' | 'active' | 'unsubscribed'>('');
+  const [verified, setVerified] = useState<'' | 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending' | 'unverified'>('');
   const [q, setQ] = useState('');
   const [qInput, setQInput] = useState('');
   const [exporting, setExporting] = useState(false);
@@ -70,7 +77,7 @@ export default function NewsletterSubscribersPage() {
   useEffect(() => {
     if (!admin) return;
     let cancelled = false;
-    const qs = buildQuery({ page, pageSize, publication, status, q, sort, dir });
+    const qs = buildQuery({ page, pageSize, publication, status, q, sort, dir, verified });
     (async () => {
       try {
         const res = await fetch(`/api/admin/newsletter-subscribers?${qs}`, {
@@ -94,7 +101,7 @@ export default function NewsletterSubscribersPage() {
     return () => {
       cancelled = true;
     };
-  }, [admin, page, pageSize, publication, status, q, sort, dir]);
+  }, [admin, page, pageSize, publication, status, q, sort, dir, verified]);
 
   useEffect(() => { setSelectedIds(new Set()); }, [page, publication, status, q, sort, dir]);
 
@@ -226,6 +233,23 @@ export default function NewsletterSubscribersPage() {
           <option value="active">Active</option>
           <option value="unsubscribed">Unsubscribed</option>
         </select>
+        <select
+          value={verified}
+          onChange={(e) => {
+            setVerified(e.target.value as '' | 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending' | 'unverified');
+            setPage(1);
+          }}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+          title="Filter by email verification status"
+        >
+          <option value="">All verification statuses</option>
+          <option value="valid">Valid</option>
+          <option value="invalid">Invalid</option>
+          <option value="risky">Risky</option>
+          <option value="unknown">Unknown</option>
+          <option value="pending">Pending</option>
+          <option value="unverified">Unverified</option>
+        </select>
       </div>
 
       {loading && <div className="text-sm text-gray-500 py-8">Loading subscribers...</div>}
@@ -296,7 +320,15 @@ export default function NewsletterSubscribersPage() {
                         onChange={(e) => toggleRow(s.id, e.target.checked)}
                       />
                     </td>
-                    <td className="px-4 py-3 text-gray-900">{s.email}</td>
+                    <td className="px-4 py-3 text-gray-900">
+                      <div className="flex items-center gap-2">
+                        <span>{s.email}</span>
+                        <EmailBadge
+                          status={s.email_verification_status ?? null}
+                          title={s.email_verification_reason ?? undefined}
+                        />
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-gray-600">{s.publication}</td>
                     <td className="px-4 py-3 text-gray-600">{s.source}</td>
                     <td className="px-4 py-3">

@@ -16,6 +16,9 @@ export const SUBSCRIBER_SORT_COLUMNS = [
 ] as const;
 export type SubscriberSortColumn = typeof SUBSCRIBER_SORT_COLUMNS[number];
 
+export const VERIFIED_FILTER_OPTIONS = ['valid','invalid','risky','unknown','pending','unverified'] as const;
+export type VerifiedFilter = typeof VERIFIED_FILTER_OPTIONS[number];
+
 export const listSubscribersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(500).default(50),
@@ -23,6 +26,7 @@ export const listSubscribersQuerySchema = z.object({
   q: z.string().max(200).optional(),
   sort: z.enum(SUBSCRIBER_SORT_COLUMNS).default('created_at'),
   dir: z.enum(['asc', 'desc']).default('desc'),
+  verified: z.enum(VERIFIED_FILTER_OPTIONS).optional(),
 });
 
 export const subscriberIdParamSchema = z.object({

@@ -35,6 +35,7 @@ type Row = {
   source_table: string;
   source_segment: string;
   status: string;
+  verification_status: string;
 };
 
 function configFor(pub: Pub) {
@@ -131,24 +132,28 @@ async function buildList(pub: Pub): Promise<{ rows: Row[]; stats: Record<string,
     raw.push({
       email: r.email, first_name: r.first_name, last_name: r.last_name,
       source_table: 'mailing_contacts', source_segment: r.segment, status: r.status,
+      verification_status: 'unverified',
     });
   }
   for (const r of holdingRows) {
     raw.push({
       email: r.email, first_name: r.first_name, last_name: r.last_name,
       source_table: 'mailing_contacts', source_segment: cfg.holdingLabel, status: r.status,
+      verification_status: 'unverified',
     });
   }
   for (const r of realtorRows) {
     raw.push({
       email: r.email, first_name: r.first_name, last_name: r.last_name,
       source_table: 'realtors', source_segment: 'app-subscribers', status: r.status,
+      verification_status: 'unverified',
     });
   }
   for (const r of newsletterRows) {
     raw.push({
       email: r.email, first_name: '', last_name: '',
       source_table: 'newsletter_subscribers', source_segment: 'weekly-digest', status: r.status,
+      verification_status: 'unverified',
     });
   }
 
@@ -175,6 +180,21 @@ async function buildList(pub: Pub): Promise<{ rows: Row[]; stats: Record<string,
   }
 
   const rows = Array.from(map.values()).sort((a, b) => a.email.localeCompare(b.email));
+
+  // Single batched lookup against the unified email_verifications table —
+  // every email is already lower-cased + valid by this point.
+  if (rows.length > 0) {
+    const emails = rows.map(r => r.email);
+    const verifs = (await sql.query(
+      `SELECT email, status FROM email_verifications WHERE email = ANY($1::text[])`,
+      [emails],
+    )) as Array<{ email: string; status: string }>;
+    const vmap = new Map(verifs.map(v => [v.email, v.status]));
+    for (const r of rows) {
+      r.verification_status = vmap.get(r.email) ?? 'unverified';
+    }
+  }
+
   return {
     rows,
     stats: {
@@ -206,7 +226,7 @@ export const GET = withErrorHandling(async (req: Request) => {
   // CSV
   const today = new Date().toISOString().slice(0, 10);
   const filename = `${pub}-emails-${today}.csv`;
-  const header = 'email,first_name,last_name,source_table,source_segment,status\n';
+  const header = 'email,first_name,last_name,source_table,source_segment,status,verification_status\n';
   let body = header;
   for (const r of rows) {
     body += [
@@ -216,6 +236,7 @@ export const GET = withErrorHandling(async (req: Request) => {
       csvField(r.source_table),
       csvField(r.source_segment),
       csvField(r.status),
+      csvField(r.verification_status),
     ].join(',') + '\n';
   }
   return new NextResponse(body, {

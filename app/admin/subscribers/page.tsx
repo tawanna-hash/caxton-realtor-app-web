@@ -9,6 +9,7 @@ import { formatPhone } from '@/lib/format-phone';
 
 import PageTitle from '@/components/ui/PageTitle';
 import { Pager } from '@/app/admin/_components/Pager';
+import EmailBadge, { type EmailBadgeStatus } from '@/app/admin/_components/EmailBadge';
 
 type Subscriber = {
   id: string;
@@ -34,6 +35,9 @@ type Subscriber = {
   created_at: string;
   last_login_at: string | null;
   last_app_open_at: string | null;
+  email_verification_status?: EmailBadgeStatus;
+  email_verification_reason?: string | null;
+  email_verified_at?: string | null;
 };
 
 type ListResponse = {
@@ -75,6 +79,7 @@ function SubscribersInner() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(50);
   const [market, setMarket] = useState<'' | 'austin' | 'san_antonio'>(initialMarket);
+  const [verified, setVerified] = useState<'' | 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending' | 'unverified'>('');
   const [q, setQ] = useState('');
   const [qInput, setQInput] = useState('');
   const [exporting, setExporting] = useState(false);
@@ -87,7 +92,7 @@ function SubscribersInner() {
   useEffect(() => {
     if (!admin) return;
     setLoading(true);
-    adminApi.listSubscribers({ page, pageSize, market: market || undefined, q: q || undefined, sort, dir })
+    adminApi.listSubscribers({ page, pageSize, market: market || undefined, q: q || undefined, sort, dir, verified: verified || undefined })
       .then((res: ListResponse) => {
         setData(res);
         setLoading(false);
@@ -96,11 +101,11 @@ function SubscribersInner() {
         setError(err.message);
         setLoading(false);
       });
-  }, [admin, page, pageSize, market, q, sort, dir]);
+  }, [admin, page, pageSize, market, q, sort, dir, verified]);
 
   // Reset selection on any filter/page change to avoid cross-context deletes
   // (defence-in-depth — selection is only used by Export selected below).
-  useEffect(() => { setSelectedIds(new Set()); }, [page, market, q, sort, dir]);
+  useEffect(() => { setSelectedIds(new Set()); }, [page, market, q, sort, dir, verified]);
 
   function toggleSort(col: typeof sort) {
     if (sort === col) setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -202,6 +207,20 @@ function SubscribersInner() {
             <option key={p.id} value={p.id}>{p.label}</option>
           ))}
         </select>
+        <select
+          value={verified}
+          onChange={(e) => { setVerified(e.target.value as any); setPage(1); }}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
+          title="Filter by email verification status"
+        >
+          <option value="">All verification statuses</option>
+          <option value="valid">Valid</option>
+          <option value="invalid">Invalid</option>
+          <option value="risky">Risky</option>
+          <option value="unknown">Unknown</option>
+          <option value="pending">Pending</option>
+          <option value="unverified">Unverified</option>
+        </select>
       </div>
 
       {loading && <div className="text-sm text-gray-500 py-8">Loading subscribers...</div>}
@@ -269,7 +288,15 @@ function SubscribersInner() {
                       />
                     </td>
                     <td className="px-4 py-3 text-gray-900">{s.first_name} {s.last_name}</td>
-                    <td className="px-4 py-3 text-gray-700">{s.email}</td>
+                    <td className="px-4 py-3 text-gray-700">
+                      <div className="flex items-center gap-2">
+                        <span>{s.email}</span>
+                        <EmailBadge
+                          status={s.email_verification_status ?? null}
+                          title={s.email_verification_reason ?? undefined}
+                        />
+                      </div>
+                    </td>
                     <td className="px-4 py-3 text-gray-600">{PUBLICATION_LABELS[s.market as keyof typeof PUBLICATION_LABELS] || s.market}</td>
                     <td className="px-4 py-3 text-gray-600">
                       {s.license_type === 'TREC' && s.trec_license_number ? `TREC ${s.trec_license_number}` :
