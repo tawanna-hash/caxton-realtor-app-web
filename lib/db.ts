@@ -972,5 +972,29 @@ export async function ensureSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS native_push_tokens_market_idx ON native_push_tokens(market)`;
   await sql`CREATE INDEX IF NOT EXISTS native_push_tokens_platform_idx ON native_push_tokens(platform)`;
 
+  // admin_jobs — background work queue for bulk admin operations that
+  // can't finish synchronously inside an HTTP request (e.g. delete or
+  // move thousands of mailing contacts). Routes enqueue a job here,
+  // hand off processing to waitUntil(), and the UI polls
+  // /api/admin/jobs/[id] for progress.
+  await sql`
+    CREATE TABLE IF NOT EXISTS admin_jobs (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      kind        TEXT NOT NULL,
+      scope       JSONB NOT NULL,
+      params      JSONB NOT NULL,
+      status      TEXT NOT NULL DEFAULT 'queued',
+      total       INTEGER,
+      processed   INTEGER NOT NULL DEFAULT 0,
+      error       TEXT,
+      created_by  UUID,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      started_at  TIMESTAMPTZ,
+      finished_at TIMESTAMPTZ
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS admin_jobs_status_idx ON admin_jobs(status, created_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS admin_jobs_created_by_idx ON admin_jobs(created_by, created_at DESC)`;
+
   schemaEnsured = true;
 }

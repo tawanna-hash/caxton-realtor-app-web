@@ -37,6 +37,8 @@ import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 import PageTitle from '@/components/ui/PageTitle';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
 import ExportMenu from '@/components/admin/ExportMenu';
+import { Pager } from '@/app/admin/_components/Pager';
+import { pollJob } from '@/app/admin/_hooks/useBulkSelection';
 type Stats = { total: number; verified: number; pending: number; near: number; far: number };
 type FilterKey = 'all' | 'verified' | 'pending';
 
@@ -122,6 +124,12 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
   const [offset, setOffset] = useState<number>(0);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // filterAll === true means "every row matching the current segment+search+filter"
+  // is selected, not just the IDs on this page. Bulk delete/move with
+  // filterAll uses the async /bulk-async route and polls a job row.
+  const [filterAll, setFilterAll] = useState<boolean>(false);
+  const [jobProgress, setJobProgress] = useState<{ processed: number; total: number | null } | null>(null);
+  const [mounted, setMounted] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showBulkEdit, setShowBulkEdit] = useState(false);
@@ -187,13 +195,14 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
   }, [segment, filter, sort, dir, offset, search]);
 
   useEffect(() => { queueMicrotask(() => { void reload(); }); }, [reload]);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => { queueMicrotask(() => { setOffset(0); }); }, 300);
+    const t = setTimeout(() => { queueMicrotask(() => { setOffset(0); setFilterAll(false); }); }, 300);
     return () => clearTimeout(t);
   }, [search]);
 
-  useEffect(() => { queueMicrotask(() => { setOffset(0); setSelectedIds(new Set()); }); }, [filter, segment]);
+  useEffect(() => { queueMicrotask(() => { setOffset(0); setSelectedIds(new Set()); setFilterAll(false); }); }, [filter, segment]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -402,6 +411,83 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
     } finally {
       setBusy(null);
     }
+  }
+
+
+  // ------------------------------------------------------------------
+  // Filter-mode bulk actions. Used when the user clicks "Select all M
+  // matching this filter" — we don't ship IDs over the wire; the server
+  // re-derives the row set from segment+search+filter, then runs the
+  // mutation in a background worker. We poll /api/admin/jobs/[id] for
+  // progress and refresh once it lands.
+  // ------------------------------------------------------------------
+  async function runFilterBulk(action: 'delete' | 'move', targetSegment?: MailingSegment) {
+    const expected = total;
+    if (expected <= 0) return;
+    const targetLabel = targetSegment
+      ? (SEGMENTS.find((s) => s.segment === targetSegment)?.label ?? targetSegment)
+      : '';
+    const verb = action === 'delete' ? 'Delete' : `Move to "${targetLabel}"`;
+    const phrase = action === 'delete'
+      ? `permanently DELETE all ${expected.toLocaleString()} contact(s) matching this filter`
+      : `MOVE all ${expected.toLocaleString()} contact(s) matching this filter to "${targetLabel}"`;
+    const typed = window.prompt(
+      `\u26a0 This will ${phrase}. This cannot be undone.\n\nType ${action.toUpperCase()} to confirm:`,
+    );
+    if (typed !== action.toUpperCase()) return;
+
+    setBusy(`${verb}\u2026`);
+    setJobProgress({ processed: 0, total: expected });
+    try {
+      const res = await fetch('/api/admin/mailing/bulk-async', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          scope: { segment, query: search.trim(), filter },
+          target_segment: targetSegment,
+          expected_count: expected,
+          confirm: 'BULK_FILTER',
+        }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        if (res.status === 409 && j?.actual != null) {
+          throw new Error(
+            `The matching row count changed since you selected (now ${Number(j.actual).toLocaleString()}, was ${Number(j.expected ?? expected).toLocaleString()}). Reload and try again.`,
+          );
+        }
+        throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
+      }
+      const { job_id, estimated_total } = await res.json() as { job_id: string; estimated_total: number };
+      setJobProgress({ processed: 0, total: estimated_total });
+      const final = await pollJob(job_id, (p) => {
+        setJobProgress({ processed: p.processed, total: p.total ?? estimated_total });
+        setBusy(`${verb} ${p.processed.toLocaleString()}/${(p.total ?? estimated_total).toLocaleString()}\u2026`);
+      });
+      if (final.status === 'failed') {
+        throw new Error(final.error || 'Background job failed.');
+      }
+      alert(`${action === 'delete' ? 'Deleted' : 'Moved'} ${final.processed.toLocaleString()} contact(s).`);
+      setSelectedIds(new Set());
+      setFilterAll(false);
+      await reload();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(null);
+      setJobProgress(null);
+    }
+  }
+
+  async function handleFilterDelete() { await runFilterBulk('delete'); }
+  async function handleFilterMove(target: MailingSegment) {
+    if (target === segment) {
+      alert('Those contacts are already in this list.');
+      return;
+    }
+    await runFilterBulk('move', target);
   }
 
   async function handleDeleteAllInSegment() {
@@ -680,7 +766,54 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         />
       </div>
 
-      {selectedIds.size > 0 && (
+      {mounted && filterAll && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-md bg-indigo-50 border border-indigo-200">
+          <span className="text-sm text-indigo-900 font-medium">All {total.toLocaleString()} matching this filter selected.</span>
+          <div className="flex-1" />
+          <MoveToMenu
+            currentSegment={segment}
+            disabled={busy !== null}
+            count={total}
+            onMove={(target) => handleFilterMove(target)}
+          />
+          <button
+            type="button"
+            onClick={handleFilterDelete}
+            disabled={busy !== null}
+            className="px-3 py-1.5 rounded-md border border-red-300 text-red-700 text-xs font-medium hover:bg-red-50 disabled:opacity-50"
+          >
+            Delete {total.toLocaleString()}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setFilterAll(false); setSelectedIds(new Set()); }}
+            className="px-3 py-1.5 rounded-md text-indigo-700 text-xs hover:text-indigo-900"
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
+      {mounted && !filterAll && selectedIds.size > 0 && allSelected && total > rows.length && (
+        <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-50 border border-indigo-100 text-sm">
+          <span className="text-indigo-900">All {selectedIds.size} on this page selected.</span>
+          <button
+            type="button"
+            onClick={() => { setFilterAll(true); setSelectedIds(new Set()); }}
+            className="text-indigo-700 font-medium underline underline-offset-2 hover:text-indigo-900"
+          >
+            Select all {total.toLocaleString()} matching this filter
+          </button>
+        </div>
+      )}
+
+      {jobProgress && (
+        <div className="px-4 py-2 rounded-md bg-amber-50 border border-amber-200 text-sm text-amber-900">
+          Working in background\u2026 {jobProgress.processed.toLocaleString()} / {(jobProgress.total ?? 0).toLocaleString()}
+        </div>
+      )}
+
+      {mounted && !filterAll && selectedIds.size > 0 && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-md bg-gray-50 border border-gray-200">
           <span className="text-sm text-gray-700">{selectedIds.size} selected</span>
           <div className="flex-1" />
@@ -849,25 +982,14 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-gray-600">
-        <div>
-          {total > 0 ? `Showing ${offset + 1}–${Math.min(offset + rows.length, total)} of ${total}` : ''}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            disabled={offset === 0 || loading}
-            onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-            className="px-3 py-1.5 rounded-md border border-gray-300 disabled:opacity-50"
-          >Previous</button>
-          <button
-            type="button"
-            disabled={offset + PAGE_SIZE >= total || loading}
-            onClick={() => setOffset(offset + PAGE_SIZE)}
-            className="px-3 py-1.5 rounded-md border border-gray-300 disabled:opacity-50"
-          >Next</button>
-        </div>
-      </div>
+      <Pager
+        currentPage={Math.floor(offset / PAGE_SIZE) + 1}
+        totalItems={total}
+        pageSize={PAGE_SIZE}
+        disabled={loading}
+        onPageChange={(p) => setOffset((p - 1) * PAGE_SIZE)}
+        summary={total > 0 ? `Showing ${offset + 1}–${Math.min(offset + rows.length, total)} of ${total.toLocaleString()}` : ''}
+      />
 
       {/* Edit drawer */}
       {editing && (
