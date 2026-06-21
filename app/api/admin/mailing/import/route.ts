@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { isMailingSegment, segmentFromSlug, splitFullName } from '@/lib/mailing';
+import { marketForSegment } from '@/lib/server/mailing/email-only-routing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -164,7 +165,37 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ok: true, inserted, skipped });
+    // After the import is complete, auto-route any newly inserted rows
+    // that landed with email-but-no-address into the email-only segment
+    // for their market. This keeps the parent segment focused on
+    // mailable contacts. The classification rule is duplicated from
+    // lib/server/mailing/email-only-routing.ts to keep this a single SQL.
+    let reclassified = 0;
+    if (inserted > 0) {
+      const market = marketForSegment(segment);
+      const target = market === 'san_antonio' ? 'email-only-sa' : 'email-only-atx';
+      if (target !== segment) {
+        const reclassRows = (await sql`
+          UPDATE mailing_contacts
+             SET segment = ${target}
+           WHERE segment = ${segment}
+             AND stage = 'mailing'
+             AND source = 'import'
+             AND email IS NOT NULL
+             AND length(trim(email)) > 0
+             AND lower(trim(email)) ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'
+             AND (address IS NULL OR length(trim(address)) = 0)
+             AND (city    IS NULL OR length(trim(city))    = 0)
+             AND (state   IS NULL OR length(trim(state))   = 0)
+             AND (zip     IS NULL OR length(trim(zip))     = 0)
+             AND created_at > NOW() - INTERVAL '5 minutes'
+           RETURNING id
+        `) as unknown as Array<{ id: string }>;
+        reclassified = reclassRows.length;
+      }
+    }
+
+    return NextResponse.json({ ok: true, inserted, skipped, reclassified });
   } catch (err) {
     console.error('[admin/mailing import]', errMessage(err));
     return NextResponse.json({ error: 'import failed', detail: errMessage(err) }, { status: 500 });

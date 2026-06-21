@@ -197,6 +197,28 @@ export async function promoteHoldingContacts(ids: string[]): Promise<PromoteResu
              promoted_at = NOW()
        WHERE id = ANY(${eligible}::uuid[])
     `;
+    // After promotion, auto-route any rows that landed without a
+    // mailing address into the email-only segment for their market.
+    // The 'realtor' segment is Austin-anchored, anything ABOR-derived
+    // → email-only-atx; SABOR-derived rows already carry a SA segment
+    // so they route to email-only-sa.
+    await sql`
+      UPDATE mailing_contacts
+         SET segment = CASE
+           WHEN segment IN ('active-advertiser-sa','non-advertiser-sa','manual-newsline')
+             THEN 'email-only-sa'
+           ELSE 'email-only-atx'
+         END
+       WHERE id = ANY(${eligible}::uuid[])
+         AND stage = 'mailing'
+         AND email IS NOT NULL
+         AND length(trim(email)) > 0
+         AND lower(trim(email)) ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'
+         AND (address IS NULL OR length(trim(address)) = 0)
+         AND (city    IS NULL OR length(trim(city))    = 0)
+         AND (state   IS NULL OR length(trim(state))   = 0)
+         AND (zip     IS NULL OR length(trim(zip))     = 0)
+    `;
   }
 
   return {

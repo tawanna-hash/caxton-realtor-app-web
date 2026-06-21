@@ -10,7 +10,9 @@ export type MailingSegment =
   | 'active-advertiser-atx'
   | 'active-advertiser-sa'
   | 'non-advertiser-atx'
-  | 'non-advertiser-sa';
+  | 'non-advertiser-sa'
+  | 'email-only-atx'
+  | 'email-only-sa';
 
 export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; caption: string; accent: string }[] = [
   {
@@ -55,6 +57,20 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
     caption: 'Licensed real estate agents — your core audience.',
     accent:  '#301D5D',
   },
+  {
+    segment: 'email-only-atx',
+    slug:    'email-only-atx',
+    label:   'Email-Only — RealtyLine ATX',
+    caption: 'Austin contacts with a valid email but no mailing address. Auto-routed here on save + sync.',
+    accent:  '#0e7490',
+  },
+  {
+    segment: 'email-only-sa',
+    slug:    'email-only-sa',
+    label:   'Email-Only — Newsline San Antonio',
+    caption: 'San Antonio contacts with a valid email but no mailing address. Auto-routed here on save + sync.',
+    accent:  '#0891b2',
+  },
 ];
 
 export function segmentFromSlug(slug: string): MailingSegment | null {
@@ -81,7 +97,9 @@ export function isMailingSegment(v: unknown): v is MailingSegment {
     v === 'active-advertiser-atx' ||
     v === 'active-advertiser-sa' ||
     v === 'non-advertiser-atx' ||
-    v === 'non-advertiser-sa'
+    v === 'non-advertiser-sa' ||
+    v === 'email-only-atx' ||
+    v === 'email-only-sa'
   );
 }
 
@@ -103,10 +121,12 @@ export function anchorForSegment(seg: MailingSegment): SegmentAnchor {
     case 'manual-newsline':
     case 'active-advertiser-sa':
     case 'non-advertiser-sa':
+    case 'email-only-sa':
       return 'sabor';
     case 'active-advertiser-atx':
     case 'non-advertiser-atx':
     case 'realtor':
+    case 'email-only-atx':
       return 'abor';
   }
 }

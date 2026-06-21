@@ -6,6 +6,43 @@ import { getSql } from '@/lib/db';
 import { isMailingSegment, type MailingSegment } from './segments';
 import type { MailingContactRow, MailingContactInput } from './types';
 import { normString } from './_internal';
+import { classifyTargetSegment } from './email-only-routing';
+
+// Auto-route the row to the email-only segment for its market if it has
+// an email but no address (or back out of email-only when an address is
+// added). Idempotent — no-ops when the current segment is already the
+// right one. Only runs against rows in the 'mailing' stage; holding rows
+// are routed separately by the external-upsert path.
+async function reclassifySegment(id: string): Promise<void> {
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT segment, stage, email, address, city, state, zip
+      FROM mailing_contacts WHERE id = ${id}
+  `) as unknown as Array<{
+    segment: string;
+    stage: string | null;
+    email: string | null;
+    address: string | null;
+    city: string | null;
+    state: string | null;
+    zip: string | null;
+  }>;
+  const r = rows[0];
+  if (!r) return;
+  if (r.stage && r.stage !== 'mailing') return;
+  if (!isMailingSegment(r.segment)) return;
+  const target = classifyTargetSegment({
+    current_segment: r.segment,
+    email: r.email,
+    address: r.address,
+    city: r.city,
+    state: r.state,
+    zip: r.zip,
+  });
+  if (target !== r.segment) {
+    await sql`UPDATE mailing_contacts SET segment = ${target} WHERE id = ${id}`;
+  }
+}
 
 // ============================================================
 
@@ -40,7 +77,11 @@ export async function createMailingContact(input: MailingContactInput): Promise<
        ${tags}::jsonb)
     RETURNING *
   `) as unknown as MailingContactRow[];
-  return rows[0];
+  const created = rows[0];
+  // Auto-route to email-only segment if the new row has email but no address.
+  await reclassifySegment(created.id);
+  const after = (await sql`SELECT * FROM mailing_contacts WHERE id = ${created.id}`) as unknown as MailingContactRow[];
+  return after[0] ?? created;
 }
 
 const PATCHABLE_FIELDS: (keyof MailingContactInput)[] = [
@@ -93,6 +134,9 @@ export async function updateMailingContact(id: string, input: MailingContactInpu
       case 'source':         await sql`UPDATE mailing_contacts SET source         = ${v} WHERE id = ${id}`; break;
     }
   }
+  // After applying caller's patches, reclassify so address/email edits
+  // automatically move the row into / out of the email-only segment.
+  await reclassifySegment(id);
   const rows = (await sql`SELECT * FROM mailing_contacts WHERE id = ${id}`) as unknown as MailingContactRow[];
   return rows[0] ?? null;
 }

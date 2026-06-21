@@ -8,6 +8,7 @@ import type { MailingSegment } from './segments';
 import { splitFullName } from './import-fields';
 import type { Sql } from './_internal';
 import { parsePublications } from '@/lib/publication-theme';
+import { sweepEmailOnlyRouting } from './email-only-routing';
 
 // Map an advertisers.publication CSV string to the set of mailing
 // segments it should land in. Houston/Dallas don't have dedicated
@@ -328,6 +329,10 @@ export async function syncAdvertisersFromAdvertisers(): Promise<{
     }
   }
 
+  // Sweep email-only routing across mailing-stage rows so any rows this
+  // sync just inserted without an address land in the right segment.
+  await sweepEmailOnlyRouting();
+
   return { added, skipped, errors };
 }
 
@@ -439,6 +444,9 @@ export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number
       added += 1;
     }
   }
+  // Route the rows we just touched in case they came back with an email
+  // but no address.
+  await sweepEmailOnlyRouting();
   return { added, updated };
 }
 
@@ -580,6 +588,9 @@ export async function refreshMailingAddressesForSegment(
     updated += 1;
   }
 
+  // Filling in addresses can move rows OUT of email-only — sweep to
+  // catch them.
+  await sweepEmailOnlyRouting();
   return { scanned: rows.length, updated, skippedNoAdvertiser, skippedComplete };
 }
 
@@ -757,6 +768,7 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
     }
   }
 
+  await sweepEmailOnlyRouting();
   return { advertisersAdded, staffAdded, skipped, errors };
 }
 
@@ -893,6 +905,7 @@ export async function upsertStaffMailingByStaffId(
       added += 1;
     }
   }
+  await sweepEmailOnlyRouting();
   return { added, updated, skipped: false };
 }
 
