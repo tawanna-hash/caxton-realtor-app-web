@@ -155,7 +155,8 @@ export async function geocodeAddress(input: GeocodeInput): Promise<GeocodeResult
 
   // Census had no match — fall back to Nominatim (OpenStreetMap).
   // The same fallback was used to locate SABOR HQ itself.
-  const nomi = await geocodeViaNominatim(oneline);
+  const expect = { state: input.state, zip: input.zip, city: input.city };
+  const nomi = await geocodeViaNominatim(oneline, expect);
   if (nomi.ok) return nomi;
 
   // Final fallback — city+state+zip only. Loses street-level precision
@@ -165,13 +166,14 @@ export async function geocodeAddress(input: GeocodeInput): Promise<GeocodeResult
     .filter(Boolean)
     .join(', ');
   if (cityFallback && cityFallback !== oneline) {
-    const cityHit = await geocodeViaNominatim(cityFallback);
+    const cityHit = await geocodeViaNominatim(cityFallback, expect);
     if (cityHit.ok) {
       return { ...cityHit, matched: `${cityHit.matched ?? cityFallback} (city-level)` };
     }
   }
 
-  // ZIP-only as last resort.
+  // ZIP-only as last resort. No state-check needed — the ZIP itself
+  // pins the result to the right area.
   const zipOnly = (input.zip ?? '').trim();
   if (zipOnly && zipOnly.length >= 5) {
     const zipHit = await geocodeViaNominatim(`${zipOnly}, USA`);
@@ -187,14 +189,25 @@ export async function geocodeAddress(input: GeocodeInput): Promise<GeocodeResult
  * Nominatim fallback. Free, no API key. ~1 req/sec rate limit per the
  * usage policy — callers should serialize calls (the backfill route
  * already iterates rows sequentially).
+ *
+ * The optional `expect` argument is the input the caller wants the
+ * match to be located in. If the matched result has a state or ZIP that
+ * disagrees, the hit is rejected. This protects against fuzzy matches
+ * like "CEDAR PARK, TX 78630" returning a residential road named
+ * "Cedar" in Deer Park, Harris County — which haversines to ~165 mi
+ * from the real Cedar Park and was the reason a contact's proximity
+ * displayed as "Outside 60 mi" when she lives 15 mi from ABoR.
  */
-async function geocodeViaNominatim(oneline: string): Promise<GeocodeResult> {
+async function geocodeViaNominatim(
+  oneline: string,
+  expect?: { state?: string | null; zip?: string | null; city?: string | null },
+): Promise<GeocodeResult> {
   const params = new URLSearchParams({
     q:               oneline,
     format:          'json',
     limit:           '1',
     countrycodes:    'us',
-    addressdetails:  '0',
+    addressdetails:  '1',
   });
   const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
 
@@ -216,7 +229,20 @@ async function geocodeViaNominatim(oneline: string): Promise<GeocodeResult> {
     return { ok: false, error: `nominatim ${res.status}` };
   }
 
-  let arr: { lat?: string; lon?: string; display_name?: string }[];
+  let arr: {
+    lat?: string;
+    lon?: string;
+    display_name?: string;
+    address?: {
+      state?: string;
+      'ISO3166-2-lvl4'?: string;
+      postcode?: string;
+      city?: string;
+      town?: string;
+      village?: string;
+      county?: string;
+    };
+  }[];
   try {
     arr = await res.json();
   } catch {
@@ -231,6 +257,35 @@ async function geocodeViaNominatim(oneline: string): Promise<GeocodeResult> {
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
     return { ok: false, error: 'bad coords' };
   }
+
+  // Reject hits that disagree with the input state/ZIP. This is what
+  // catches the "Cedar (road) in Deer Park" case described above.
+  if (expect) {
+    const wantState = (expect.state ?? '').trim().toUpperCase();
+    if (wantState) {
+      const iso = (hit.address?.['ISO3166-2-lvl4'] ?? '').toUpperCase();
+      const isoState = iso.startsWith('US-') ? iso.slice(3) : '';
+      const gotState = (hit.address?.state ?? '').trim();
+      // Accept full state name ("Texas") OR ISO2 ("TX") match.
+      const stateOk =
+        (isoState && isoState === wantState) ||
+        (gotState && gotState.toUpperCase().startsWith(wantState));
+      if (!stateOk) {
+        return { ok: false, error: `nominatim state mismatch (got ${gotState || isoState || '?'} want ${wantState})` };
+      }
+    }
+    const wantZip = (expect.zip ?? '').trim().slice(0, 5);
+    if (wantZip.length === 5) {
+      const gotZip = (hit.address?.postcode ?? '').trim().slice(0, 5);
+      // Allow no postcode on the hit (road-level matches don't always carry one),
+      // but if it IS present and the first three digits disagree, reject —
+      // 786xx (Austin metro) vs 775xx (east Houston) etc.
+      if (gotZip && gotZip.slice(0, 3) !== wantZip.slice(0, 3)) {
+        return { ok: false, error: `nominatim zip mismatch (got ${gotZip} want ${wantZip})` };
+      }
+    }
+  }
+
   const here: LatLon = { lat, lon };
   return {
     ok:             true,
