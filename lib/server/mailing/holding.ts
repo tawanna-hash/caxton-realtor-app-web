@@ -197,9 +197,27 @@ export async function promoteHoldingContacts(ids: string[]): Promise<PromoteResu
              promoted_at = NOW()
        WHERE id = ANY(${eligible}::uuid[])
     `;
+    // ABoR / Austin holding rows historically came in with segment='realtor'.
+    // Now that the three Austin print lists are merged into a single
+    // 'realtyline-atx-print' segment, promote those rows into the merged
+    // segment and tag them as 'non-advertiser' so the combined list keeps
+    // them distinguishable from active advertisers.
+    await sql`
+      UPDATE mailing_contacts
+         SET segment = 'realtyline-atx-print',
+             tags = COALESCE((
+               SELECT jsonb_agg(DISTINCT t)
+                 FROM jsonb_array_elements_text(
+                   COALESCE(tags, '[]'::jsonb) || '["non-advertiser"]'::jsonb
+                 ) AS t
+             ), '[]'::jsonb)
+       WHERE id = ANY(${eligible}::uuid[])
+         AND stage = 'mailing'
+         AND segment = 'realtor'
+    `;
     // After promotion, auto-route any rows that landed without a
     // mailing address into the email-only segment for their market.
-    // The 'realtor' segment is Austin-anchored, anything ABOR-derived
+    // realtyline-atx-print is Austin-anchored, anything ABOR-derived
     // → email-only-atx; SABOR-derived rows already carry a SA segment
     // so they route to email-only-sa.
     await sql`

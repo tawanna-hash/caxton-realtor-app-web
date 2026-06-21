@@ -78,6 +78,7 @@ export function marketForSegment(seg: MailingSegment): Market {
     case 'active-advertiser-atx':
     case 'non-advertiser-atx':
     case 'realtor':           // realtor segment is Texas-wide; defaults to Austin
+    case 'realtyline-atx-print':
     case 'email-only-atx':
       return 'austin';
   }
@@ -108,7 +109,7 @@ export function classifyTargetSegment(input: RoutingInput): MailingSegment {
 
   // No longer email-only — move OUT of the email-only segment.
   if (input.current_segment === 'email-only-sa') return 'manual-newsline';
-  if (input.current_segment === 'email-only-atx') return 'realtor';
+  if (input.current_segment === 'email-only-atx') return 'realtyline-atx-print';
 
   return input.current_segment;
 }
@@ -153,7 +154,7 @@ export async function sweepEmailOnlyRouting(): Promise<{ to_email_only: number; 
     UPDATE mailing_contacts
        SET segment = CASE
          WHEN segment = 'email-only-sa'  THEN 'manual-newsline'
-         WHEN segment = 'email-only-atx' THEN 'realtor'
+         WHEN segment = 'email-only-atx' THEN 'realtyline-atx-print'
          ELSE segment
        END
      WHERE stage = 'mailing'

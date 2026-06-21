@@ -42,7 +42,7 @@ type Cfg = {
 function configFor(pub: Pub): Cfg {
   return pub === 'realtyline'
     ? {
-        segments: ['active-advertiser-atx', 'non-advertiser-atx', 'email-only-atx'],
+        segments: ['realtyline-atx-print', 'email-only-atx'],
         market: 'austin',
         holdingSource: 'unlockmls',
         newsletterPub: 'realtyline',

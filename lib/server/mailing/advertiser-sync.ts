@@ -19,9 +19,9 @@ function segmentsForPublication(pubCsv: string | null | undefined): MailingSegme
   const out = new Set<MailingSegment>();
   for (const k of keys) {
     if (k === 'san_antonio') out.add('active-advertiser-sa');
-    else out.add('active-advertiser-atx'); // austin + houston + dallas
+    else out.add('realtyline-atx-print'); // austin + houston + dallas (merged ATX print list)
   }
-  if (out.size === 0) out.add('active-advertiser-atx');
+  if (out.size === 0) out.add('realtyline-atx-print');
   return Array.from(out);
 }
 
@@ -233,6 +233,18 @@ async function findAdvertiserMailingId(sql: Sql, src: MailingSourceRow): Promise
   return rows[0]?.id ?? null;
 }
 
+
+// Build the tags JSON for an insert based on the destination segment.
+// realtyline-atx-print rows get an 'active-advertiser' tag (so the merged
+// list can filter active vs non-advertiser); SA + manual-newsline keep the
+// existing tag shape.
+function buildAdvertiserTagsJson(segment: MailingSegment, opts: { staff?: boolean } = {}): string {
+  const tags: string[] = ['advertiser'];
+  if (opts.staff) tags.push('staff');
+  if (segment === 'realtyline-atx-print') tags.push('active-advertiser');
+  return JSON.stringify(tags);
+}
+
 async function insertAdvertiserMailing(
   sql: Sql,
   src: MailingSourceRow,
@@ -439,7 +451,7 @@ export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number
            ${primary.website},
            'hook:advertiser-upsert',
            ${adv.id},
-           '["advertiser"]'::jsonb)
+           ${buildAdvertiserTagsJson(seg)}::jsonb)
       `;
       added += 1;
     }
@@ -687,7 +699,7 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
                ${primary.website},
                'backfill:active-advertiser',
                ${adv.id},
-               '["advertiser"]'::jsonb)
+               ${buildAdvertiserTagsJson(seg)}::jsonb)
           `;
           advertisersAdded += 1;
         } catch (err) {
@@ -757,7 +769,7 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
                ${adv.website ?? null},
                'backfill:active-advertiser:staff',
                ${adv.id},
-               '["advertiser","staff"]'::jsonb)
+               ${buildAdvertiserTagsJson(seg, { staff: true })}::jsonb)
           `;
           staffAdded += 1;
         } catch (err) {
@@ -871,10 +883,12 @@ export async function upsertStaffMailingByStaffId(
                zip            = ${merged.zip},
                website        = ${staff.website ?? null},
                advertiser_id  = ${staff.advertiser_id},
-               tags           = CASE
-                 WHEN tags @> '["staff"]'::jsonb THEN tags
-                 ELSE COALESCE(tags, '[]'::jsonb) || '["staff"]'::jsonb
-               END
+               tags           = COALESCE((
+                 SELECT jsonb_agg(DISTINCT t)
+                   FROM jsonb_array_elements_text(
+                     COALESCE(tags, '[]'::jsonb) || ${buildAdvertiserTagsJson(seg, { staff: true })}::jsonb
+                   ) AS t
+               ), '[]'::jsonb)
          WHERE id = ${existingId}
       `;
       updated += 1;
@@ -900,7 +914,7 @@ export async function upsertStaffMailingByStaffId(
            ${staff.website ?? null},
            'hook:staff-upsert',
            ${staff.advertiser_id},
-           '["advertiser","staff"]'::jsonb)
+           ${buildAdvertiserTagsJson(seg, { staff: true })}::jsonb)
       `;
       added += 1;
     }

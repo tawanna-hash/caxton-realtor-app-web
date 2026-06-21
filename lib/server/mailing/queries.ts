@@ -18,6 +18,7 @@ export async function listMailingContacts(opts: {
   segment: MailingSegment;
   search?: string;
   filter?: 'all' | 'verified' | 'pending';
+  tagFilter?: string | null;
   sort?: MailingColumnId;
   dir?: 'asc' | 'desc';
   limit?: number;
@@ -27,6 +28,7 @@ export async function listMailingContacts(opts: {
   const segment = opts.segment;
   const search  = (opts.search ?? '').trim();
   const filter  = opts.filter ?? 'all';
+  const tagFilter = (opts.tagFilter ?? '').trim() || null;
   const sort    = opts.sort && isSortableColumn(opts.sort) ? opts.sort : 'created_at';
   const dir     = opts.dir === 'asc' ? 'asc' : 'desc';
   const limit   = Math.min(Math.max(opts.limit ?? 100, 1), 500);
@@ -46,6 +48,10 @@ export async function listMailingContacts(opts: {
              OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
              OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
                                         AND (email_status IS NULL OR email_status <> 'Valid'))
+           )
+           AND (
+             ${tagFilter}::text IS NULL
+             OR tags @> jsonb_build_array(${tagFilter}::text)
            )
            AND (
              LOWER(COALESCE(first_name, '')) LIKE ${search_like}
@@ -84,6 +90,10 @@ export async function listMailingContacts(opts: {
              OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
                                         AND (email_status IS NULL OR email_status <> 'Valid'))
            )
+           AND (
+             ${tagFilter}::text IS NULL
+             OR tags @> jsonb_build_array(${tagFilter}::text)
+           )
          ORDER BY
            CASE WHEN ${sort} = 'first_name'  AND ${dir} = 'asc'  THEN LOWER(COALESCE(first_name, ''))  END ASC  NULLS LAST,
            CASE WHEN ${sort} = 'first_name'  AND ${dir} = 'desc' THEN LOWER(COALESCE(first_name, ''))  END DESC NULLS LAST,
@@ -115,6 +125,10 @@ export async function listMailingContacts(opts: {
                                         AND (email_status IS NULL OR email_status <> 'Valid'))
            )
            AND (
+             ${tagFilter}::text IS NULL
+             OR tags @> jsonb_build_array(${tagFilter}::text)
+           )
+           AND (
              LOWER(COALESCE(first_name, '')) LIKE ${search_like}
              OR LOWER(COALESCE(last_name, '')) LIKE ${search_like}
              OR LOWER(COALESCE(email, ''))     LIKE ${search_like}
@@ -134,6 +148,10 @@ export async function listMailingContacts(opts: {
              OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
                                         AND (email_status IS NULL OR email_status <> 'Valid'))
            )
+           AND (
+             ${tagFilter}::text IS NULL
+             OR tags @> jsonb_build_array(${tagFilter}::text)
+           )
       `) as unknown as Array<{ c: number }>;
 
   return { rows, total: totalRow[0]?.c ?? 0 };
@@ -151,6 +169,7 @@ export async function countBySegment(): Promise<Record<MailingSegment | 'total',
     total: 0,
     'manual-newsline':       0,
     realtor:                 0,
+    'realtyline-atx-print':  0,
     'active-advertiser-atx': 0,
     'active-advertiser-sa':  0,
     'non-advertiser-atx':    0,

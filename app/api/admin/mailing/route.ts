@@ -51,6 +51,7 @@ const listQuerySchema = paginationSchema.extend({
   segment: segmentParam,
   search:  z.string().trim().min(1).max(200).optional(),
   filter:  z.enum(['all', 'verified', 'pending']).optional(),
+  tag:     z.string().trim().min(1).max(100).optional(),
   sort:    z.string().min(1).max(64).optional(),
   dir:     z.enum(['asc', 'desc']).default('desc'),
 });
@@ -84,7 +85,7 @@ export const GET = withErrorHandling(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
 
-  const { segment, search, filter, sort, dir, limit, offset } = parseQuery(req, listQuerySchema);
+  const { segment, search, filter, tag, sort, dir, limit, offset } = parseQuery(req, listQuerySchema);
 
   // `sort` is a string from the query — narrow to the column whitelist
   // before passing into the SQL builder. Anything else is dropped.
@@ -94,6 +95,7 @@ export const GET = withErrorHandling(async (req: Request) => {
     segment,
     search,
     filter,
+    tagFilter: tag,
     sort: safeSort,
     dir,
     limit,

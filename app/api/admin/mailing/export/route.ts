@@ -35,12 +35,14 @@ const HEADERS = [
   'zip',
   'website',
   'notes',
+  'tag',
   'created_at',
 ] as const;
 
 const exportQuerySchema = z.object({
   segment: z.string().min(1),
   format:  z.enum(['csv', 'tsv', 'json']).default('csv'),
+  tag:     z.string().trim().min(1).max(100).optional(),
 });
 
 function csvCell(v: unknown, delim: string): string {
@@ -63,7 +65,7 @@ function toDelimited(rows: Record<string, unknown>[], delim: string): string {
 
 export const GET = withErrorHandling(async (req: Request) => {
   await requireAdmin();
-  const { segment: segRaw, format } = parseQuery(req, exportQuerySchema);
+  const { segment: segRaw, format, tag } = parseQuery(req, exportQuerySchema);
 
   const seg: MailingSegment | null = isMailingSegment(segRaw)
     ? segRaw
@@ -74,25 +76,39 @@ export const GET = withErrorHandling(async (req: Request) => {
 
   const { rows } = await listMailingContacts({
     segment: seg,
+    tagFilter: tag,
     sort: 'created_at',
     dir: 'desc',
     limit: 500,
     offset: 0,
   });
   // For export we want all rows — paginate through to collect them.
-  const all: Record<string, unknown>[] = rows as unknown as Record<string, unknown>[];
+  // Flatten the JSON tags array into a single human-friendly column.
+  const flattenTag = (raw: unknown): string => {
+    if (!Array.isArray(raw)) return '';
+    const visible = (raw as unknown[])
+      .filter((t): t is string => typeof t === 'string')
+      .filter((t) => !t.startsWith('_was:') && t !== 'staff' && t !== 'advertiser');
+    return visible.join(', ');
+  };
+  const expandRow = (r: Record<string, unknown>): Record<string, unknown> => ({
+    ...r,
+    tag: flattenTag((r as { tags?: unknown }).tags),
+  });
+  const all: Record<string, unknown>[] = (rows as unknown as Record<string, unknown>[]).map(expandRow);
   let offset = rows.length;
   // Cap exports at 50k to avoid runaway responses.
   while (offset < 50_000) {
     const page = await listMailingContacts({
       segment: seg,
+      tagFilter: tag,
       sort: 'created_at',
       dir: 'desc',
       limit: 500,
       offset,
     });
     if (page.rows.length === 0) break;
-    for (const r of page.rows) all.push(r as unknown as Record<string, unknown>);
+    for (const r of page.rows) all.push(expandRow(r as unknown as Record<string, unknown>));
     offset += page.rows.length;
     if (page.rows.length < 500) break;
   }

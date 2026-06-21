@@ -69,12 +69,14 @@ type ColumnId =
   | 'city'
   | 'proximity'
   | 'address'
-  | 'email_verify';
+  | 'email_verify'
+  | 'tag';
 
 type ColumnDef = { id: ColumnId; label: string; alwaysOn?: boolean };
 
 const COLUMNS: ColumnDef[] = [
   { id: 'name',         label: 'Name',      alwaysOn: true },
+  { id: 'tag',          label: 'Tag' },
   { id: 'email',        label: 'Email' },
   { id: 'phone',        label: 'Phone' },
   { id: 'company',      label: 'Company' },
@@ -85,7 +87,7 @@ const COLUMNS: ColumnDef[] = [
 ];
 
 const DEFAULT_VISIBLE: Record<ColumnId, boolean> = {
-  name: true, email: true, phone: true, company: true, city: true,
+  name: true, tag: true, email: true, phone: true, company: true, city: true,
   proximity: true, address: true, email_verify: true,
 };
 
@@ -120,6 +122,10 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
 
   const [search, setSearch] = useState<string>('');
   const [filter, setFilter] = useState<FilterKey>('all');
+  // Tag filter for the merged realtyline-atx-print segment. 'all' shows every row;
+  // 'active-advertiser' / 'non-advertiser' filter by the tag column. Ignored
+  // on every other segment.
+  const [tagFilter, setTagFilter] = useState<'all' | 'active-advertiser' | 'non-advertiser'>('all');
   const [sort, setSort] = useState<MailingColumnId>('created_at');
   const [dir, setDir] = useState<'asc' | 'desc'>('desc');
   const [offset, setOffset] = useState<number>(0);
@@ -150,7 +156,12 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
     if (typeof window === 'undefined') return;
     try { window.localStorage.setItem(COLUMNS_LS_KEY, JSON.stringify(visibleCols)); } catch {}
   }, [visibleCols]);
-  const isVisible = (id: ColumnId) => visibleCols[id];
+  // 'tag' column is only meaningful in the merged realtyline-atx-print segment
+  // (other segments are single-purpose lists where every row has the same tag).
+  const isVisible = (id: ColumnId) => {
+    if (id === 'tag') return segment === 'realtyline-atx-print' && visibleCols[id];
+    return visibleCols[id];
+  };
 
   // verify-all-pending drain state. Holding-only for now; the button is
   // rendered disabled so the visual stays in parity without backend work.
@@ -178,6 +189,9 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         offset: String(offset),
       });
       if (search.trim()) params.set('search', search.trim());
+      if (segment === 'realtyline-atx-print' && tagFilter !== 'all') {
+        params.set('tag', tagFilter);
+      }
       const res = await fetch(`/api/admin/mailing?${params.toString()}`, { credentials: 'include' });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
@@ -194,7 +208,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [segment, filter, sort, dir, offset, search, pageSize]);
+  }, [segment, filter, sort, dir, offset, search, pageSize, tagFilter]);
 
   useEffect(() => { queueMicrotask(() => { void reload(); }); }, [reload]);
   useEffect(() => { setMounted(true); }, []);
@@ -659,7 +673,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         <button onClick={handleDedupe} className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50">
           Dedupe
         </button>
-        {(segment === 'active-advertiser-atx' || segment === 'active-advertiser-sa') && (
+        {(segment === 'active-advertiser-atx' || segment === 'active-advertiser-sa' || segment === 'realtyline-atx-print') && (
           <div className="relative inline-block group">
             <button
               onClick={() => handleRefreshAddresses(false)}
@@ -756,6 +770,32 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         <FilterChip active={filter === 'all'}      onClick={() => setFilter('all')}      label="All"      count={stats?.total ?? 0} />
         <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={stats?.verified ?? 0} accent="#3b82f6" />
         <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={stats?.pending ?? 0}  accent="#f97316" />
+
+        {segment === 'realtyline-atx-print' && (
+          <>
+            <span className="mx-1 h-5 w-px bg-gray-200" aria-hidden />
+            <FilterChip
+              active={tagFilter === 'all'}
+              onClick={() => { setTagFilter('all'); setOffset(0); }}
+              label="All tags"
+              count={stats?.total ?? 0}
+            />
+            <FilterChip
+              active={tagFilter === 'active-advertiser'}
+              onClick={() => { setTagFilter('active-advertiser'); setOffset(0); }}
+              label="Active Advertiser"
+              count={tagFilter === 'active-advertiser' ? total : 0}
+              accent="#1d4ed8"
+            />
+            <FilterChip
+              active={tagFilter === 'non-advertiser'}
+              onClick={() => { setTagFilter('non-advertiser'); setOffset(0); }}
+              label="Non-Advertiser"
+              count={tagFilter === 'non-advertiser' ? total : 0}
+              accent="#9a3412"
+            />
+          </>
+        )}
 
         <div className="flex-1" />
 
@@ -893,6 +933,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                 />
               </th>
               {isVisible('name')  && <SortHeader col="first_name" label="Name"    sort={sort} dir={dir} onSort={handleSort} />}
+              {isVisible('tag')   && <th className="px-3 py-3 text-left font-semibold">Tag</th>}
               {isVisible('email') && <SortHeader col="email"      label="Email"   sort={sort} dir={dir} onSort={handleSort} />}
               {isVisible('phone') && <th className="px-3 py-3 text-left font-semibold">Phone</th>}
               {isVisible('company') && <SortHeader col="company" label="Company" sort={sort} dir={dir} onSort={handleSort} />}
@@ -934,6 +975,11 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
                     <td className="px-3 py-2">
                       <div className="text-gray-900 font-medium">{fullName || '—'}</div>
                       {r.title && <div className="text-[11px] text-gray-500">{toTitleCaseRole(r.title)}</div>}
+                    </td>
+                  )}
+                  {isVisible('tag') && (
+                    <td className="px-3 py-2">
+                      <TagChips tags={r.tags} />
                     </td>
                   )}
                   {isVisible('email') && (
@@ -1148,6 +1194,43 @@ function KpiCard({
           <span>CSV</span>
         </button>
       )}
+    </div>
+  );
+}
+
+// TagChips renders the human-meaningful tags on a mailing row in the merged
+// realtyline-atx-print segment. We strip provenance ('_was:*') tags, the
+// historical 'staff' marker, and the legacy 'advertiser' wrapper tag so the
+// admin only sees the audience tags ('active-advertiser', 'non-advertiser').
+function TagChips({ tags }: { tags: string[] | null | undefined }) {
+  if (!Array.isArray(tags) || tags.length === 0) return <span className="text-xs text-gray-400">—</span>;
+  const visible = tags.filter((t) => !t.startsWith('_was:') && t !== 'staff' && t !== 'advertiser');
+  if (visible.length === 0) return <span className="text-xs text-gray-400">—</span>;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {visible.map((t) => {
+        let label = t;
+        let bg = '#e5e7eb';
+        let fg = '#374151';
+        if (t === 'active-advertiser') {
+          label = 'Active Advertiser';
+          bg = '#dbeafe';
+          fg = '#1d4ed8';
+        } else if (t === 'non-advertiser') {
+          label = 'Non-Advertiser';
+          bg = '#fed7aa';
+          fg = '#9a3412';
+        }
+        return (
+          <span
+            key={t}
+            className="px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap"
+            style={{ backgroundColor: bg, color: fg }}
+          >
+            {label}
+          </span>
+        );
+      })}
     </div>
   );
 }

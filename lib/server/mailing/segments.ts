@@ -7,6 +7,7 @@
 export type MailingSegment =
   | 'manual-newsline'
   | 'realtor'
+  | 'realtyline-atx-print'
   | 'active-advertiser-atx'
   | 'active-advertiser-sa'
   | 'non-advertiser-atx'
@@ -16,11 +17,11 @@ export type MailingSegment =
 
 export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; caption: string; accent: string }[] = [
   {
-    segment: 'active-advertiser-atx',
-    slug:    'active-advertisers-atx',
-    label:   'Active Advertisers - RealtyLine ATX',
-    caption: 'Currently-active RealtyLine ATX advertisers and their staff.',
-    accent:  '#2563eb',
+    segment: 'realtyline-atx-print',
+    slug:    'realtyline-austin-print-mailing',
+    label:   'RealtyLine Austin Print Mailing',
+    caption: 'Combined Austin print audience — Active Advertisers + REALTORS, tagged by source.',
+    accent:  '#301D5D',
   },
   {
     segment: 'active-advertiser-sa',
@@ -28,13 +29,6 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
     label:   'Active Advertisers - Newsline San Antonio',
     caption: 'Currently-active Newsline San Antonio advertisers and their staff.',
     accent:  '#3b82f6',
-  },
-  {
-    segment: 'non-advertiser-atx',
-    slug:    'non-advertisers-atx',
-    label:   'Non-Advertisers - RealtyLine ATX',
-    caption: 'RealtyLine ATX prospects who haven’t run an ad yet.',
-    accent:  '#f97316',
   },
   {
     segment: 'non-advertiser-sa',
@@ -49,13 +43,6 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
     label:   'Manual Newsline San Antonio Contacts',
     caption: 'Newsline San Antonio contacts entered or imported manually.',
     accent:  '#3b82f6',
-  },
-  {
-    segment: 'realtor',
-    slug:    'realtors',
-    label:   'REALTORS',
-    caption: 'Licensed real estate agents — your core audience.',
-    accent:  '#301D5D',
   },
   {
     segment: 'email-only-atx',
@@ -78,11 +65,20 @@ export function segmentFromSlug(slug: string): MailingSegment | null {
   if (m) return m.segment;
   // Back-compat: old slug 'advertisers' → new segment 'manual-newsline'.
   if (slug === 'advertisers') return 'manual-newsline';
-  // Back-compat for legacy segment slugs prior to the per-publication split:
-  //   /admin/mailing/active-advertisers → ATX variant
-  //   /admin/mailing/non-advertisers    → ATX variant
-  if (slug === 'active-advertisers') return 'active-advertiser-atx';
-  if (slug === 'non-advertisers') return 'non-advertiser-atx';
+  // Back-compat for legacy URLs that point at retired Austin segments.
+  // The three Austin lists (Active Advertisers ATX, Non-Advertisers ATX,
+  // and REALTORS) were merged into a single 'realtyline-atx-print'
+  // segment with row-level tags on 2026-06-21, so any old bookmark or
+  // saved CSV link should resolve to the new combined page.
+  if (
+    slug === 'active-advertisers' ||
+    slug === 'active-advertisers-atx' ||
+    slug === 'non-advertisers' ||
+    slug === 'non-advertisers-atx' ||
+    slug === 'realtors'
+  ) {
+    return 'realtyline-atx-print';
+  }
   return null;
 }
 
@@ -94,6 +90,7 @@ export function isMailingSegment(v: unknown): v is MailingSegment {
   return (
     v === 'manual-newsline' ||
     v === 'realtor' ||
+    v === 'realtyline-atx-print' ||
     v === 'active-advertiser-atx' ||
     v === 'active-advertiser-sa' ||
     v === 'non-advertiser-atx' ||
@@ -126,6 +123,7 @@ export function anchorForSegment(seg: MailingSegment): SegmentAnchor {
     case 'active-advertiser-atx':
     case 'non-advertiser-atx':
     case 'realtor':
+    case 'realtyline-atx-print':
     case 'email-only-atx':
       return 'abor';
   }

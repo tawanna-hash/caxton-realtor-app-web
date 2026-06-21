@@ -48,7 +48,7 @@ async function reclassifySegment(id: string): Promise<void> {
 
 export async function createMailingContact(input: MailingContactInput): Promise<MailingContactRow> {
   const sql = getSql();
-  const segment = isMailingSegment(input.segment) ? input.segment : 'non-advertiser-atx';
+  const segment = isMailingSegment(input.segment) ? input.segment : 'realtyline-atx-print';
   const first_name = normString(input.first_name) ?? normString(input.email) ?? '(no name)';
   const tags = Array.isArray(input.tags) ? JSON.stringify(input.tags) : '[]';
 
