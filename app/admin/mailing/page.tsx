@@ -116,13 +116,13 @@ export default async function MailingHubPage() {
             Download email-only list
           </span>
           <a
-            href="/api/admin/mailing/publication-list?pub=realtyline"
+            href="/api/admin/mailing/publication-list?list=realtyline&format=csv"
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#301D5D] text-[#301D5D] text-xs font-semibold hover:bg-[#301D5D] hover:text-white transition"
           >
             RealtyLine (Austin) CSV
           </a>
           <a
-            href="/api/admin/mailing/publication-list?pub=newsline"
+            href="/api/admin/mailing/publication-list?list=newsline&format=csv"
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#1d4ed8] text-[#1d4ed8] text-xs font-semibold hover:bg-[#1d4ed8] hover:text-white transition"
           >
             Newsline (San Antonio) CSV

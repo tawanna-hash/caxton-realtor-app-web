@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/mailing/publication-list?pub=realtyline|newsline[&format=csv|json]
+ * GET /api/admin/mailing/publication-list?list=realtyline|newsline[&format=csv|json]
  *
  * Returns the unified email-only list for one publication, merging:
  *   - mailing_contacts (stage='mailing') for the publication's segments
@@ -190,9 +190,9 @@ async function buildList(pub: Pub): Promise<{ rows: Row[]; stats: Record<string,
 export const GET = withErrorHandling(async (req: Request) => {
   await requireAdmin();
   const url = new URL(req.url);
-  const pubParam = (url.searchParams.get('pub') || '').toLowerCase();
+  const pubParam = (url.searchParams.get('list') || url.searchParams.get('pub') || '').toLowerCase();
   if (pubParam !== 'realtyline' && pubParam !== 'newsline') {
-    throw new ApiError(400, 'invalid_pub', "pub must be 'realtyline' or 'newsline'");
+    throw new ApiError(400, 'invalid_list', "list must be 'realtyline' or 'newsline'");
   }
   const pub = pubParam as Pub;
   const format = (url.searchParams.get('format') || 'csv').toLowerCase();
