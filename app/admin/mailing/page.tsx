@@ -8,6 +8,7 @@ import { redirect } from 'next/navigation';
 import { ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { anchorForSegment, countAudienceSources, countBySegment, SEGMENTS } from '@/lib/mailing';
+import { countPublicationList } from '@/lib/server/mailing/publication-counts';
 
 import PageTitle from '@/components/ui/PageTitle';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
@@ -39,9 +40,11 @@ export default async function MailingHubPage() {
   //    and app subscribers (realtors table). These match what each
   //    dedicated page reports, so the HUB tiles agree with their
   //    destination pages.
-  const [counts, sources] = await Promise.all([
+  const [counts, sources, realtylineCount, newslineCount] = await Promise.all([
     countBySegment(),
     countAudienceSources(),
+    countPublicationList('realtyline'),
+    countPublicationList('newsline'),
   ]);
 
   // Accents: each tile uses a distinct palette hue so they remain visually
@@ -117,15 +120,27 @@ export default async function MailingHubPage() {
           </span>
           <a
             href="/api/admin/mailing/publication-list?list=realtyline&format=csv"
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#301D5D] text-[#301D5D] text-xs font-semibold hover:bg-[#301D5D] hover:text-white transition"
+            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#301D5D] text-[#301D5D] text-xs font-semibold hover:bg-[#301D5D] hover:text-white transition"
           >
-            RealtyLine (Austin) CSV
+            <span>RealtyLine (Austin) CSV</span>
+            <span
+              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#301D5D]/10 text-[#301D5D] group-hover/dl:bg-white/20 group-hover/dl:text-white"
+              title={`${realtylineCount.total.toLocaleString()} unique deliverable emails`}
+            >
+              {realtylineCount.total.toLocaleString()}
+            </span>
           </a>
           <a
             href="/api/admin/mailing/publication-list?list=newsline&format=csv"
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#1d4ed8] text-[#1d4ed8] text-xs font-semibold hover:bg-[#1d4ed8] hover:text-white transition"
+            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#1d4ed8] text-[#1d4ed8] text-xs font-semibold hover:bg-[#1d4ed8] hover:text-white transition"
           >
-            Newsline (San Antonio) CSV
+            <span>Newsline (San Antonio) CSV</span>
+            <span
+              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#1d4ed8]/10 text-[#1d4ed8] group-hover/dl:bg-white/20 group-hover/dl:text-white"
+              title={`${newslineCount.total.toLocaleString()} unique deliverable emails`}
+            >
+              {newslineCount.total.toLocaleString()}
+            </span>
           </a>
           <span className="text-xs text-gray-500">
             Merges segments + board mirrors + app subscribers + newsletter signups, deduped by email.
