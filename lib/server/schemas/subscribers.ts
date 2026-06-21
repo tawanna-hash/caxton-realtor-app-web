@@ -4,11 +4,25 @@
 
 import { z } from 'zod';
 
+export const SUBSCRIBER_SORT_COLUMNS = [
+  'created_at',
+  'last_app_open_at',
+  'last_login_at',
+  'email',
+  'first_name',
+  'last_name',
+  'market',
+  'city',
+] as const;
+export type SubscriberSortColumn = typeof SUBSCRIBER_SORT_COLUMNS[number];
+
 export const listSubscribersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(500).default(50),
   market: z.enum(['austin', 'san_antonio']).optional(),
   q: z.string().max(200).optional(),
+  sort: z.enum(SUBSCRIBER_SORT_COLUMNS).default('created_at'),
+  dir: z.enum(['asc', 'desc']).default('desc'),
 });
 
 export const subscriberIdParamSchema = z.object({

@@ -29,6 +29,7 @@ import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 import PageTitle from '@/components/ui/PageTitle';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
 import ExportMenu from '@/components/admin/ExportMenu';
+import { Pager } from '@/app/admin/_components/Pager';
 type Counts = { total: number; verified: number; pending: number; near: number; far: number };
 type FilterKey = 'all' | 'verified' | 'pending';
 
@@ -777,25 +778,14 @@ export default function HoldingClient() {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-gray-600">
-        <div>
-          {total > 0 ? `Showing ${offset + 1}–${Math.min(offset + rows.length, total)} of ${total}` : ''}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            disabled={offset === 0 || loading}
-            onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-            className="px-3 py-1.5 rounded-md border border-gray-300 disabled:opacity-50"
-          >Previous</button>
-          <button
-            type="button"
-            disabled={offset + PAGE_SIZE >= total || loading}
-            onClick={() => setOffset(offset + PAGE_SIZE)}
-            className="px-3 py-1.5 rounded-md border border-gray-300 disabled:opacity-50"
-          >Next</button>
-        </div>
-      </div>
+      <Pager
+        currentPage={Math.floor(offset / PAGE_SIZE) + 1}
+        totalItems={total}
+        pageSize={PAGE_SIZE}
+        disabled={loading}
+        onPageChange={(p) => setOffset((p - 1) * PAGE_SIZE)}
+        summary={total > 0 ? `Showing ${offset + 1}–${Math.min(offset + rows.length, total)} of ${total.toLocaleString()}` : ''}
+      />
 
       {/* Edit drawer */}
       {editing && (

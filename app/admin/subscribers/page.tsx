@@ -8,6 +8,8 @@ import { PUBLICATIONS, PUBLICATION_LABELS } from '@/lib/publications';
 import { formatPhone } from '@/lib/format-phone';
 
 import PageTitle from '@/components/ui/PageTitle';
+import { Pager } from '@/app/admin/_components/Pager';
+
 type Subscriber = {
   id: string;
   email: string;
@@ -76,11 +78,16 @@ function SubscribersInner() {
   const [q, setQ] = useState('');
   const [qInput, setQInput] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [sort, setSort] = useState<'created_at' | 'last_app_open_at' | 'email' | 'first_name' | 'last_name' | 'market' | 'city'>('created_at');
+  const [dir, setDir] = useState<'asc' | 'desc'>('desc');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!admin) return;
     setLoading(true);
-    adminApi.listSubscribers({ page, pageSize, market: market || undefined, q: q || undefined })
+    adminApi.listSubscribers({ page, pageSize, market: market || undefined, q: q || undefined, sort, dir })
       .then((res: ListResponse) => {
         setData(res);
         setLoading(false);
@@ -89,7 +96,38 @@ function SubscribersInner() {
         setError(err.message);
         setLoading(false);
       });
-  }, [admin, page, pageSize, market, q]);
+  }, [admin, page, pageSize, market, q, sort, dir]);
+
+  // Reset selection on any filter/page change to avoid cross-context deletes
+  // (defence-in-depth — selection is only used by Export selected below).
+  useEffect(() => { setSelectedIds(new Set()); }, [page, market, q, sort, dir]);
+
+  function toggleSort(col: typeof sort) {
+    if (sort === col) setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSort(col); setDir('desc'); }
+  }
+  function toggleRow(id: string, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  }
+  function toggleAllOnPage(checked: boolean) {
+    if (!data) return;
+    if (checked) setSelectedIds(new Set(data.subscribers.map((s) => s.id)));
+    else setSelectedIds(new Set());
+  }
+  function clearSelection() { setSelectedIds(new Set()); }
+  async function exportSelected() {
+    if (selectedIds.size === 0) return;
+    // Fallback: full CSV export for now (selected-id-scoped export will be
+    // added when the export route accepts an ids filter).
+    setExporting(true);
+    try { await adminApi.exportSubscribersCsv(); }
+    catch (err: any) { alert('Export failed: ' + (err?.message || err)); }
+    finally { setExporting(false); }
+  }
 
   // Debounce: live-update committed query 300ms after user stops typing.
   useEffect(() => {
@@ -171,26 +209,65 @@ function SubscribersInner() {
 
       {!loading && !error && data && (
         <>
+          {mounted && selectedIds.size > 0 && (
+            <div className="flex items-center gap-2 px-4 py-3 mb-3 rounded-md bg-indigo-50 border border-indigo-200">
+              <span className="text-sm text-indigo-900 font-medium">{selectedIds.size} selected on this page</span>
+              <div className="flex-1" />
+              <button
+                type="button"
+                onClick={exportSelected}
+                disabled={exporting}
+                className="px-3 py-1.5 rounded-md border border-indigo-300 text-indigo-700 text-xs font-medium hover:bg-indigo-100 disabled:opacity-50"
+              >
+                {exporting ? 'Exporting…' : 'Export CSV (full)'}
+              </button>
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="px-3 py-1.5 rounded-md text-indigo-700 text-xs hover:text-indigo-900"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+
           <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Name</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Email</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Market</th>
+                  <th className="px-3 py-3 w-8">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all on this page"
+                      checked={mounted && data.subscribers.length > 0 && data.subscribers.every((s) => selectedIds.has(s.id))}
+                      onChange={(e) => toggleAllOnPage(e.target.checked)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </th>
+                  <SortableTh label="Name"   col="first_name"      sort={sort} dir={dir} onSort={toggleSort} />
+                  <SortableTh label="Email"  col="email"           sort={sort} dir={dir} onSort={toggleSort} />
+                  <SortableTh label="Market" col="market"          sort={sort} dir={dir} onSort={toggleSort} />
                   <th className="text-left px-4 py-3 font-medium text-gray-700">License</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-700">Mobile</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">City</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Joined</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Last open</th>
+                  <SortableTh label="City"   col="city"            sort={sort} dir={dir} onSort={toggleSort} />
+                  <SortableTh label="Joined" col="created_at"      sort={sort} dir={dir} onSort={toggleSort} />
+                  <SortableTh label="Last open" col="last_app_open_at" sort={sort} dir={dir} onSort={toggleSort} />
                 </tr>
               </thead>
               <tbody>
                 {data.subscribers.length === 0 && (
-                  <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">No subscribers found.</td></tr>
+                  <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400">No subscribers found.</td></tr>
                 )}
                 {data.subscribers.map((s) => (
                   <tr key={s.id} onClick={() => router.push(`/admin/subscribers/${s.id}`)} className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
+                    <td className="px-3 py-3 w-8" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${s.email}`}
+                        checked={mounted && selectedIds.has(s.id)}
+                        onChange={(e) => toggleRow(s.id, e.target.checked)}
+                      />
+                    </td>
                     <td className="px-4 py-3 text-gray-900">{s.first_name} {s.last_name}</td>
                     <td className="px-4 py-3 text-gray-700">{s.email}</td>
                     <td className="px-4 py-3 text-gray-600">{PUBLICATION_LABELS[s.market as keyof typeof PUBLICATION_LABELS] || s.market}</td>
@@ -209,31 +286,44 @@ function SubscribersInner() {
             </table>
           </div>
 
-          {data.totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <p className="text-xs text-gray-500">
-                Page {data.page} of {data.totalPages} — showing {data.subscribers.length} of {data.total.toLocaleString()}
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-700 disabled:opacity-40 hover:bg-gray-50"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
-                  disabled={page >= data.totalPages}
-                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-700 disabled:opacity-40 hover:bg-gray-50"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
+          <div className="mt-4">
+            <Pager
+              currentPage={data.page}
+              totalItems={data.total}
+              pageSize={data.pageSize}
+              disabled={loading}
+              onPageChange={(p) => setPage(p)}
+              summary={`Page ${data.page} of ${data.totalPages} — showing ${data.subscribers.length} of ${data.total.toLocaleString()}`}
+            />
+          </div>
         </>
       )}
     </div>
+  );
+}
+
+function SortableTh({
+  label, col, sort, dir, onSort,
+}: {
+  label: string;
+  col: string;
+  sort: string;
+  dir: 'asc' | 'desc';
+  onSort: (c: any) => void;
+}) {
+  const active = sort === col;
+  return (
+    <th className="text-left px-4 py-3 font-medium text-gray-700">
+      <button
+        type="button"
+        onClick={() => onSort(col)}
+        className={'inline-flex items-center gap-1 hover:text-gray-900 ' + (active ? 'text-gray-900' : '')}
+      >
+        {label}
+        <span className="text-xs text-gray-400">
+          {active ? (dir === 'asc' ? '▲' : '▼') : '↕'}
+        </span>
+      </button>
+    </th>
   );
 }

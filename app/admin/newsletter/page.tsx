@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAdmin } from '@/hooks/use-admin';
 
 import PageTitle from '@/components/ui/PageTitle';
+import { Pager } from '@/app/admin/_components/Pager';
+
 type Subscriber = {
   id: number;
   email: string;
@@ -33,6 +35,8 @@ function buildQuery(params: {
   publication: string;
   status: string;
   q: string;
+  sort?: string;
+  dir?: 'asc' | 'desc';
 }) {
   const qs = new URLSearchParams();
   qs.set('page', String(params.page));
@@ -40,6 +44,8 @@ function buildQuery(params: {
   if (params.publication) qs.set('publication', params.publication);
   if (params.status) qs.set('status', params.status);
   if (params.q) qs.set('q', params.q);
+  if (params.sort) qs.set('sort', params.sort);
+  if (params.dir) qs.set('dir', params.dir);
   return qs.toString();
 }
 
@@ -55,11 +61,16 @@ export default function NewsletterSubscribersPage() {
   const [q, setQ] = useState('');
   const [qInput, setQInput] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [sort, setSort] = useState<'created_at' | 'email' | 'publication' | 'source' | 'status'>('created_at');
+  const [dir, setDir] = useState<'asc' | 'desc'>('desc');
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!admin) return;
     let cancelled = false;
-    const qs = buildQuery({ page, pageSize, publication, status, q });
+    const qs = buildQuery({ page, pageSize, publication, status, q, sort, dir });
     (async () => {
       try {
         const res = await fetch(`/api/admin/newsletter-subscribers?${qs}`, {
@@ -83,7 +94,27 @@ export default function NewsletterSubscribersPage() {
     return () => {
       cancelled = true;
     };
-  }, [admin, page, pageSize, publication, status, q]);
+  }, [admin, page, pageSize, publication, status, q, sort, dir]);
+
+  useEffect(() => { setSelectedIds(new Set()); }, [page, publication, status, q, sort, dir]);
+
+  function toggleSort(col: typeof sort) {
+    if (sort === col) setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSort(col); setDir('desc'); }
+  }
+  function toggleRow(id: number, checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  }
+  function toggleAllOnPage(checked: boolean) {
+    if (!data) return;
+    if (checked) setSelectedIds(new Set(data.subscribers.map((s) => s.id)));
+    else setSelectedIds(new Set());
+  }
+  function clearSelection() { setSelectedIds(new Set()); }
 
   // Debounce committed q 300ms after user stops typing.
   useEffect(() => {
@@ -206,27 +237,65 @@ export default function NewsletterSubscribersPage() {
 
       {!loading && !error && data && (
         <>
+          {mounted && selectedIds.size > 0 && (
+            <div className="flex items-center gap-2 px-4 py-3 mb-3 rounded-md bg-indigo-50 border border-indigo-200">
+              <span className="text-sm text-indigo-900 font-medium">{selectedIds.size} selected on this page</span>
+              <div className="flex-1" />
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={exporting}
+                className="px-3 py-1.5 rounded-md border border-indigo-300 text-indigo-700 text-xs font-medium hover:bg-indigo-100 disabled:opacity-50"
+              >
+                {exporting ? 'Exporting…' : 'Export CSV (full)'}
+              </button>
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="px-3 py-1.5 rounded-md text-indigo-700 text-xs hover:text-indigo-900"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+
           <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Email</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Publication</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Source</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Status</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-700">Joined</th>
+                  <th className="px-3 py-3 w-8">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all on this page"
+                      checked={mounted && data.subscribers.length > 0 && data.subscribers.every((s) => selectedIds.has(s.id))}
+                      onChange={(e) => toggleAllOnPage(e.target.checked)}
+                    />
+                  </th>
+                  <SortableTh label="Email"       col="email"       sort={sort} dir={dir} onSort={toggleSort} />
+                  <SortableTh label="Publication" col="publication" sort={sort} dir={dir} onSort={toggleSort} />
+                  <SortableTh label="Source"      col="source"      sort={sort} dir={dir} onSort={toggleSort} />
+                  <SortableTh label="Status"      col="status"      sort={sort} dir={dir} onSort={toggleSort} />
+                  <SortableTh label="Joined"      col="created_at"  sort={sort} dir={dir} onSort={toggleSort} />
                 </tr>
               </thead>
               <tbody>
                 {data.subscribers.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
                       No newsletter subscribers found.
                     </td>
                   </tr>
                 )}
                 {data.subscribers.map((s) => (
                   <tr key={s.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="px-3 py-3 w-8">
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${s.email}`}
+                        checked={mounted && selectedIds.has(s.id)}
+                        onChange={(e) => toggleRow(s.id, e.target.checked)}
+                      />
+                    </td>
                     <td className="px-4 py-3 text-gray-900">{s.email}</td>
                     <td className="px-4 py-3 text-gray-600">{s.publication}</td>
                     <td className="px-4 py-3 text-gray-600">{s.source}</td>
@@ -249,32 +318,44 @@ export default function NewsletterSubscribersPage() {
             </table>
           </div>
 
-          {data.totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <p className="text-xs text-gray-500">
-                Page {data.page} of {data.totalPages} — showing {data.subscribers.length} of{' '}
-                {data.total.toLocaleString()}
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-700 disabled:opacity-40 hover:bg-gray-50"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
-                  disabled={page >= data.totalPages}
-                  className="px-3 py-1.5 border border-gray-300 rounded-md text-sm text-gray-700 disabled:opacity-40 hover:bg-gray-50"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
+          <div className="mt-4">
+            <Pager
+              currentPage={data.page}
+              totalItems={data.total}
+              pageSize={data.pageSize}
+              disabled={loading}
+              onPageChange={(p) => setPage(p)}
+              summary={`Page ${data.page} of ${data.totalPages} — showing ${data.subscribers.length} of ${data.total.toLocaleString()}`}
+            />
+          </div>
         </>
       )}
     </div>
+  );
+}
+
+function SortableTh({
+  label, col, sort, dir, onSort,
+}: {
+  label: string;
+  col: string;
+  sort: string;
+  dir: 'asc' | 'desc';
+  onSort: (c: any) => void;
+}) {
+  const active = sort === col;
+  return (
+    <th className="text-left px-4 py-3 font-medium text-gray-700">
+      <button
+        type="button"
+        onClick={() => onSort(col)}
+        className={'inline-flex items-center gap-1 hover:text-gray-900 ' + (active ? 'text-gray-900' : '')}
+      >
+        {label}
+        <span className="text-xs text-gray-400">
+          {active ? (dir === 'asc' ? '▲' : '▼') : '↕'}
+        </span>
+      </button>
+    </th>
   );
 }

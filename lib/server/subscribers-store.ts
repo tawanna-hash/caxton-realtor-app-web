@@ -15,7 +15,16 @@ export interface ListSubscribersOptions {
   pageSize: number;
   market?: 'austin' | 'san_antonio';
   q?: string;
+  sort?: string;
+  dir?: 'asc' | 'desc';
 }
+
+// Allowlist guards the dynamic ORDER BY against injection. Anything not in
+// this set silently falls back to created_at DESC.
+const SUBSCRIBER_SORT_ALLOWLIST = new Set([
+  'created_at', 'last_app_open_at', 'last_login_at',
+  'email', 'first_name', 'last_name', 'market', 'city',
+]);
 
 export interface ListSubscribersResult {
   page: number;
@@ -48,6 +57,8 @@ export async function listSubscribers(
   );
   const total = countRows[0]?.total ?? 0;
 
+  const sortCol = (opts.sort && SUBSCRIBER_SORT_ALLOWLIST.has(opts.sort)) ? opts.sort : 'created_at';
+  const sortDir = opts.dir === 'asc' ? 'ASC' : 'DESC';
   params.push(opts.pageSize, offset);
   const listSql = `
     SELECT
@@ -60,7 +71,7 @@ export async function listSubscribers(
       created_at, last_login_at, last_app_open_at
     FROM realtors
     ${whereSql}
-    ORDER BY created_at DESC
+    ORDER BY ${sortCol} ${sortDir} NULLS LAST, id ASC
     LIMIT $${params.length - 1} OFFSET $${params.length}
   `;
   const rows = await query(listSql, params);

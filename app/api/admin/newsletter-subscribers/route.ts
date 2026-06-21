@@ -44,20 +44,26 @@ export const GET = withErrorHandling(async (req: Request) => {
 
   if (qRaw.length > 254) throw new ApiError(400, 'q too long');
 
+  const SORT_ALLOW = new Set(['created_at', 'email', 'publication', 'source', 'status']);
+  const sortParam = (url.searchParams.get('sort') || 'created_at').toLowerCase();
+  const sort = SORT_ALLOW.has(sortParam) ? sortParam : 'created_at';
+  const dir = (url.searchParams.get('dir') || 'desc').toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
   const offset = (page - 1) * pageSize;
   const sql = getSql();
 
   // We use coalesced predicates so the same parameterized query handles
   // every combination of filters.
-  const rows = (await sql`
-    SELECT id, email, publication, source, status, created_at, updated_at
-    FROM newsletter_subscribers
-    WHERE (${publication}::text IS NULL OR publication = ${publication})
-      AND (${status}::text IS NULL OR status = ${status})
-      AND (${q}::text IS NULL OR email ILIKE ${q})
-    ORDER BY created_at DESC
-    LIMIT ${pageSize} OFFSET ${offset}
-  `) as Array<{
+  const rows = (await sql.query(
+    `SELECT id, email, publication, source, status, created_at, updated_at
+     FROM newsletter_subscribers
+     WHERE ($1::text IS NULL OR publication = $1)
+       AND ($2::text IS NULL OR status = $2)
+       AND ($3::text IS NULL OR email ILIKE $3)
+     ORDER BY ${sort} ${dir} NULLS LAST, id ASC
+     LIMIT $4 OFFSET $5`,
+    [publication, status, q, pageSize, offset],
+  )) as Array<{
     id: number;
     email: string;
     publication: string;

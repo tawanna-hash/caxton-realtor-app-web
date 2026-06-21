@@ -119,12 +119,14 @@ export const adminApi = {
   deleteSubscriber: (id: string) =>
     adminFetch(`/admin/subscribers/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
-  listSubscribers: (params: { page?: number; pageSize?: number; market?: 'austin' | 'san_antonio'; q?: string } = {}) => {
+  listSubscribers: (params: { page?: number; pageSize?: number; market?: 'austin' | 'san_antonio'; q?: string; sort?: string; dir?: 'asc' | 'desc' } = {}) => {
     const qs = new URLSearchParams();
     if (params.page) qs.set('page', String(params.page));
     if (params.pageSize) qs.set('pageSize', String(params.pageSize));
     if (params.market) qs.set('market', params.market);
     if (params.q) qs.set('q', params.q);
+    if (params.sort) qs.set('sort', params.sort);
+    if (params.dir) qs.set('dir', params.dir);
     const suffix = qs.toString() ? `?${qs.toString()}` : '';
     return adminFetch(`/admin/subscribers${suffix}`);
   },
