@@ -21,7 +21,20 @@ export type PagerProps = {
   /** Optional label rendered to the left of the buttons. */
   summary?: React.ReactNode;
   className?: string;
+  /**
+   * When provided, the Pager renders a "per page" dropdown next to the
+   * summary. Use PAGE_SIZE_OPTIONS for the standard 10/25/50/100/200
+   * list. Pass `null` (or omit) to hide the dropdown.
+   */
+  pageSizeOptions?: readonly number[];
+  onPageSizeChange?: (size: number) => void;
 };
+
+/**
+ * Standard rows-per-page choices for the Mailing Hub child pages.
+ * Shared so every page is consistent.
+ */
+export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200] as const;
 
 /** Build a compact page-window like: 1 … 7 8 [9] 10 11 … 42 */
 function buildPageList(current: number, totalPages: number): (number | 'ellipsis')[] {
@@ -49,20 +62,43 @@ export function Pager({
   disabled = false,
   summary,
   className = '',
+  pageSizeOptions,
+  onPageSizeChange,
 }: PagerProps) {
+  // Per-page dropdown. Always rendered when both prop hooks are present
+  // so it stays visible even when the table fits on one page.
+  const showPerPage = !!pageSizeOptions && !!onPageSizeChange;
+  const PerPageSelect = showPerPage ? (
+    <label className="flex items-center gap-1.5 text-xs text-gray-600">
+      <span>Rows</span>
+      <select
+        value={pageSize}
+        disabled={disabled}
+        onChange={(e) => onPageSizeChange?.(parseInt(e.target.value, 10))}
+        className="text-xs px-1.5 py-1 rounded border border-gray-300 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+      >
+        {pageSizeOptions!.map((n) => (
+          <option key={n} value={n}>
+            {n}
+          </option>
+        ))}
+      </select>
+    </label>
+  ) : null;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const safeCurrent = Math.min(Math.max(1, currentPage), totalPages);
   const pages = buildPageList(safeCurrent, totalPages);
 
   if (totalItems <= pageSize) {
-    // Still render the summary so the table footer never visually jumps
-    // when the page count drops to 1 after filtering.
-    return summary ? (
-      <div className={`flex items-center justify-between gap-3 ${className}`}>
+    // Still render the summary + per-page so the table footer never
+    // visually jumps when the page count drops to 1 after filtering.
+    if (!summary && !showPerPage) return null;
+    return (
+      <div className={`flex items-center justify-between gap-3 flex-wrap ${className}`}>
         <div className="text-xs text-gray-500">{summary}</div>
-        <div />
+        {PerPageSelect}
       </div>
-    ) : null;
+    );
   }
 
   const baseBtn =
@@ -72,7 +108,10 @@ export function Pager({
 
   return (
     <div className={`flex items-center justify-between gap-3 flex-wrap ${className}`}>
-      <div className="text-xs text-gray-500">{summary}</div>
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="text-xs text-gray-500">{summary}</div>
+        {PerPageSelect}
+      </div>
       <nav aria-label="Pagination" className="flex items-center gap-1">
         <button
           type="button"

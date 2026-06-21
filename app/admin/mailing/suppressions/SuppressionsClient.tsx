@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
+import { PAGE_SIZE_OPTIONS } from '@/app/admin/_components/Pager';
 
 type Row = {
   email: string;
@@ -28,7 +29,7 @@ type ApiResponse = {
   q: string;
 };
 
-const PAGE_SIZE = 100;
+const DEFAULT_PAGE_SIZE = 100;
 const ACCENT = '#301D5D';
 
 const REASON_LABEL: Record<string, string> = {
@@ -49,6 +50,7 @@ export default function SuppressionsClient() {
   const [rows, setRows] = useState<Row[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -71,8 +73,8 @@ export default function SuppressionsClient() {
     setError(null);
     try {
       const params = new URLSearchParams({
-        limit: String(PAGE_SIZE),
-        offset: String((page - 1) * PAGE_SIZE),
+        limit: String(pageSize),
+        offset: String((page - 1) * pageSize),
       });
       if (debouncedQuery) params.set('q', debouncedQuery);
       const r = await fetch(`/api/admin/email-suppressions?${params.toString()}`, {
@@ -88,7 +90,7 @@ export default function SuppressionsClient() {
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedQuery]);
+  }, [page, debouncedQuery, pageSize]);
 
   useEffect(() => {
     void load();
@@ -115,7 +117,7 @@ export default function SuppressionsClient() {
     }
   };
 
-  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const safePage = Math.min(page, pageCount);
 
   const snapshotName = useCallback((snap: Record<string, unknown> | null): string => {
@@ -268,17 +270,28 @@ export default function SuppressionsClient() {
       </div>
 
       {/* Pagination */}
-      {pageCount > 1 && (
-        <div className="flex items-center justify-between text-sm text-gray-600">
+      <div className="flex items-center justify-between text-sm text-gray-600 flex-wrap gap-3">
+        <div className="flex items-center gap-4 flex-wrap">
           <div>
             Showing{' '}
             <span className="font-semibold">
-              {((safePage - 1) * PAGE_SIZE + 1).toLocaleString()}–
-              {Math.min(safePage * PAGE_SIZE, total).toLocaleString()}
+              {((safePage - 1) * pageSize + 1).toLocaleString()}–
+              {Math.min(safePage * pageSize, total).toLocaleString()}
             </span>{' '}
             of <span className="font-semibold">{total.toLocaleString()}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-xs text-gray-600">
+            <span>Rows</span>
+            <select
+              value={pageSize}
+              onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
+              className="text-xs px-1.5 py-1 rounded border border-gray-300 bg-white"
+            >
+              {PAGE_SIZE_OPTIONS.map((n) => (<option key={n} value={n}>{n}</option>))}
+            </select>
+          </label>
+        </div>
+        <div className="flex items-center gap-2" style={{ visibility: pageCount > 1 ? 'visible' : 'hidden' }}>
             <button
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -298,9 +311,8 @@ export default function SuppressionsClient() {
             >
               Next →
             </button>
-          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -37,7 +37,8 @@ import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 import PageTitle from '@/components/ui/PageTitle';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
 import ExportMenu from '@/components/admin/ExportMenu';
-import { Pager } from '@/app/admin/_components/Pager';
+import { Pager } from '@/app/admin/_components/Pager'  // imports below extended;
+import { PAGE_SIZE_OPTIONS } from '@/app/admin/_components/Pager';
 import { pollJob } from '@/app/admin/_hooks/useBulkSelection';
 type Stats = { total: number; verified: number; pending: number; near: number; far: number };
 type FilterKey = 'all' | 'verified' | 'pending';
@@ -49,7 +50,7 @@ type Props = {
   accent: string;
 };
 
-const PAGE_SIZE = 100;
+const DEFAULT_PAGE_SIZE = 100;
 const NEAR_RADIUS_MI = 60;
 const SORTABLE: MailingColumnId[] = [
   'first_name', 'last_name', 'email', 'company', 'city', 'state', 'created_at',
@@ -122,6 +123,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
   const [sort, setSort] = useState<MailingColumnId>('created_at');
   const [dir, setDir] = useState<'asc' | 'desc'>('desc');
   const [offset, setOffset] = useState<number>(0);
+  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   // filterAll === true means "every row matching the current segment+search+filter"
@@ -172,7 +174,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         filter,
         sort,
         dir,
-        limit: String(PAGE_SIZE),
+        limit: String(pageSize),
         offset: String(offset),
       });
       if (search.trim()) params.set('search', search.trim());
@@ -192,7 +194,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [segment, filter, sort, dir, offset, search]);
+  }, [segment, filter, sort, dir, offset, search, pageSize]);
 
   useEffect(() => { queueMicrotask(() => { void reload(); }); }, [reload]);
   useEffect(() => { setMounted(true); }, []);
@@ -983,11 +985,13 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
 
       {/* Pagination */}
       <Pager
-        currentPage={Math.floor(offset / PAGE_SIZE) + 1}
+        currentPage={Math.floor(offset / pageSize) + 1}
         totalItems={total}
-        pageSize={PAGE_SIZE}
+        pageSize={pageSize}
         disabled={loading}
-        onPageChange={(p) => setOffset((p - 1) * PAGE_SIZE)}
+        onPageChange={(p) => setOffset((p - 1) * pageSize)}
+        pageSizeOptions={PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(n) => { setPageSize(n); setOffset(0); }}
         summary={total > 0 ? `Showing ${offset + 1}–${Math.min(offset + rows.length, total)} of ${total.toLocaleString()}` : ''}
       />
 

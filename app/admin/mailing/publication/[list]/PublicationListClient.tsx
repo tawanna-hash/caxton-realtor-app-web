@@ -12,6 +12,7 @@ import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
 import EmailBadge, { type EmailBadgeStatus } from '@/app/admin/_components/EmailBadge';
+import { PAGE_SIZE_OPTIONS } from '@/app/admin/_components/Pager';
 import type { PublicationCount } from '@/lib/server/mailing/publication-counts';
 
 type Pub = 'realtyline' | 'newsline';
@@ -39,8 +40,7 @@ type ApiResponse = {
 type VerifFilter = 'all' | 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending' | 'unverified';
 type SourceFilter = 'all' | 'mailing_contacts' | 'realtors' | 'newsletter_subscribers';
 
-const PAGE_SIZE = 50;
-
+const DEFAULT_PAGE_SIZE = 50;
 const PUB_LABEL: Record<Pub, string> = {
   realtyline: 'RealtyLine (Austin)',
   newsline: 'Newsline (San Antonio)',
@@ -64,6 +64,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
   const [verifFilter, setVerifFilter] = useState<VerifFilter>('all');
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
 
   useEffect(() => {
     let cancelled = false;
@@ -113,9 +114,9 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
     });
   }, [rows, query, verifFilter, sourceFilter]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, pageCount);
-  const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pageRows = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const accent = PUB_ACCENT[pub];
 
@@ -260,12 +261,24 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
       </div>
 
       {/* Pager */}
-      {!loading && pageCount > 1 && (
-        <div className="flex items-center justify-between text-sm text-gray-600">
-          <div>
-            Page <span className="font-semibold">{safePage}</span> of {pageCount}
+      {!loading && (
+        <div className="flex items-center justify-between text-sm text-gray-600 flex-wrap gap-3">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div>
+              Page <span className="font-semibold">{safePage}</span> of {pageCount}
+            </div>
+            <label className="flex items-center gap-1.5 text-xs text-gray-600">
+              <span>Rows</span>
+              <select
+                value={pageSize}
+                onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
+                className="text-xs px-1.5 py-1 rounded border border-gray-300 bg-white"
+              >
+                {PAGE_SIZE_OPTIONS.map((n) => (<option key={n} value={n}>{n}</option>))}
+              </select>
+            </label>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" style={{ visibility: pageCount > 1 ? 'visible' : 'hidden' }}>
             <button
               type="button"
               onClick={() => setPage(1)}
