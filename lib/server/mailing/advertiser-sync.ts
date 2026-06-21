@@ -9,6 +9,7 @@ import { splitFullName } from './import-fields';
 import type { Sql } from './_internal';
 import { parsePublications } from '@/lib/publication-theme';
 import { sweepEmailOnlyRouting } from './email-only-routing';
+import { isSuppressed, suppressedSubset } from '@/lib/server/email-suppressions';
 
 // Map an advertisers.publication CSV string to the set of mailing
 // segments it should land in. Houston/Dallas don't have dedicated
@@ -256,6 +257,10 @@ async function insertAdvertiserMailing(
   advertiser_id: number | null,
   source_tag: string,
 ): Promise<void> {
+  // Suppression gate: if this email was permanently deleted from the
+  // Mailing Hub, refuse to re-insert it. The admin must explicitly lift
+  // the suppression to bring it back.
+  if (await isSuppressed(src.email)) return;
   // Legacy sync path now writes into the merged 'newsline-sa-print'
   // segment with the active-advertiser tag, mirroring the SA-side merge.
   await sql`
@@ -388,6 +393,11 @@ export async function upsertAdvertiserMailingByAdvertiserId(advertiserId: number
   if (adv.status !== 'advertiser') return { added: 0, updated: 0 };
   const primaryBase = advertiserToSource(adv);
   if (!primaryBase || !primaryBase.email) return { added: 0, updated: 0 };
+
+  // Suppression gate: if this email was permanently deleted from the
+  // Mailing Hub, refuse to re-insert it. (Suppression is recoverable —
+  // an admin can lift it from the suppressions list.)
+  if (await isSuppressed(primaryBase.email)) return { added: 0, updated: 0 };
 
   // Backfill missing address parts from the advertiser's primary location
   // (USPS verification needs a full street/city/state/zip).
@@ -645,6 +655,29 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
      WHERE COALESCE(status, 'prospect') = 'advertiser'
   `) as unknown as Array<AdvertiserSyncRow & { publication: string }>;
 
+  // Pre-load the staff emails per advertiser so we can build one big
+  // suppression set across primary + staff emails in a single query.
+  const advertiserIds = advertisers.map((a) => a.id);
+  const staffEmailRows = advertiserIds.length > 0
+    ? (await sql`
+        SELECT email FROM advertiser_staff
+         WHERE advertiser_id = ANY(${advertiserIds}::int[])
+      `) as unknown as Array<{ email: string | null }>
+    : [];
+  const allEmails: string[] = [];
+  for (const a of advertisers) {
+    const primaryBase = advertiserToSource(a);
+    if (primaryBase?.email) allEmails.push(primaryBase.email);
+  }
+  for (const s of staffEmailRows) {
+    if (s.email) allEmails.push(s.email);
+  }
+  const suppressedSet = await suppressedSubset(allEmails);
+  const isSup = (email: string | null | undefined): boolean => {
+    if (!email) return false;
+    return suppressedSet.has(email.trim().toLowerCase());
+  };
+
   const findInSegment = async (
     seg: MailingSegment,
     email: string | null,
@@ -677,7 +710,7 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
       : null;
 
     // Primary contact for this advertiser, into each target segment.
-    if (primary && primary.email) {
+    if (primary && primary.email && !isSup(primary.email)) {
       for (const seg of segments) {
         try {
           const existing = await findInSegment(seg, primary.email);
@@ -732,6 +765,8 @@ export async function backfillActiveAdvertisersSegment(): Promise<{
     for (const s of staffRows) {
       const email = (s.email ?? '').trim();
       if (!email) continue;
+      // Suppression gate — deleted staff emails stay deleted.
+      if (isSup(email)) continue;
       const { first_name, last_name } = splitFullName(s.name ?? '');
       // Prefer this staff member's assigned-location address, falling back
       // to the advertiser's primary location.
@@ -837,6 +872,10 @@ export async function upsertStaffMailingByStaffId(
   if (staff.status !== 'advertiser') return { added: 0, updated: 0, skipped: true };
   const email = (staff.email ?? '').trim();
   if (!email) return { added: 0, updated: 0, skipped: true };
+
+  // Suppression gate — if this staff email was deleted from the Mailing
+  // Hub, refuse to re-insert. Admin can lift via the suppressions list.
+  if (await isSuppressed(email)) return { added: 0, updated: 0, skipped: true };
 
   // Backfill staff's mailing address from their assigned location (or the
   // advertiser's primary location) when the advertisers row itself has
