@@ -56,6 +56,13 @@ export type MailingContactRow = {
   email_suggestion:    string  | null;
   email_check:         Record<string, unknown> | null;
   email_notes:         string  | null;
+  // Manual override of the probe verdict. When set, the effective
+  // verification status the rest of the app should use is
+  // (email_override_status ?? email_status). See crm-schema.ts.
+  email_override_status: 'Valid' | 'Invalid' | null;
+  email_override_by:     string | null;
+  email_override_at:     string | null;
+  email_override_reason: string | null;
   created_at: string;
   updated_at: string;
 };

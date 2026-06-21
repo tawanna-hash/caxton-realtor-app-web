@@ -397,6 +397,114 @@ export async function persistEmailVerificationAnyStage(
   return rows[0] ?? null;
 }
 
+// ============================================================
+// Manual email-verification override
+// ============================================================
+
+/**
+ * Set or clear the manual override of the email verification verdict
+ * for a single mailing_contacts row.
+ *
+ * The override lives in dedicated columns (email_override_status / _by /
+ * _at / _reason) and is the "effective" verdict the rest of the app
+ * should use — see types.ts. We deliberately do NOT touch email_status
+ * here; it stays as the last SMTP-probe result so we can re-probe in the
+ * future and surface drift between the technical signal and the manual
+ * call.
+ *
+ * Allowed transitions:
+ *   - Pending  → Valid    (the common case — Google Workspace / M365
+ *                          block the probe but the address is real)
+ *   - Pending  → Invalid  (manually mark a bouncing address invalid)
+ *   - Valid    → Invalid  (post-bounce takedown of a previously-valid row)
+ *   - any      → null     (clear the override; revert to email_status)
+ *
+ * Disallowed:
+ *   - Invalid  → Valid    (we refuse to manually "un-bounce" a row; if
+ *                          it really is good, re-probe it instead)
+ *
+ * Caller is responsible for `requireAdmin()` and for passing the admin's
+ * email as `by`. The transition rule above is enforced here (it returns
+ * `null` for a disallowed transition so the route layer can map that to
+ * a 409 Conflict response).
+ *
+ * The override action is also appended to email_notes as a timestamped
+ * audit line, so the running notes journal carries the manual record
+ * alongside the auto-appended probe lines.
+ */
+export interface OverrideInput {
+  status: 'Valid' | 'Invalid' | null;
+  by:     string;
+  reason: string | null;
+}
+
+export type OverrideOutcome =
+  | { ok: true;  row: MailingContactRow }
+  | { ok: false; code: 'not_found' | 'forbidden_transition'; message: string };
+
+export async function persistEmailOverride(
+  id: string,
+  input: OverrideInput,
+): Promise<OverrideOutcome> {
+  const sql = getSql();
+
+  // Read the existing row so we can validate the transition and build a
+  // descriptive audit line.
+  const existingRows = (await sql`
+    SELECT * FROM mailing_contacts WHERE id = ${id}
+  `) as unknown as MailingContactRow[];
+  const existing = existingRows[0];
+  if (!existing) {
+    return { ok: false, code: 'not_found', message: 'Contact not found.' };
+  }
+
+  // Enforce the one-way rule: a probe-Invalid row can't be flipped to Valid.
+  // The user must re-probe to clear the Invalid signal.
+  if (input.status === 'Valid' && existing.email_status === 'Invalid') {
+    return {
+      ok: false,
+      code: 'forbidden_transition',
+      message:
+        "Can't override Invalid to Valid manually. Re-run the verifier first; if the probe now succeeds, the row will become Valid on its own.",
+    };
+  }
+
+  // Build the audit line. For sets we include the new verdict + reason;
+  // for clears we just record that the override was lifted.
+  const auditLine =
+    input.status === null
+      ? `Manual override cleared by ${input.by}`
+      : `Manual override: ${input.status} by ${input.by}` +
+        (input.reason ? ` — ${input.reason}` : '');
+
+  // Bind a sentinel so we can branch the `email_override_at` column
+  // between NOW() and NULL with a single statement — the neon serverless
+  // `sql` tagged template doesn't support nested raw-SQL fragments.
+  const isClear = input.status === null;
+  const overrideBy = isClear ? null : input.by;
+  const overrideReason = isClear ? null : input.reason;
+
+  const rows = (await sql`
+    UPDATE mailing_contacts
+       SET email_override_status = ${input.status},
+           email_override_by     = ${overrideBy},
+           email_override_at     = CASE WHEN ${isClear} THEN NULL ELSE NOW() END,
+           email_override_reason = ${overrideReason},
+           email_notes           = CONCAT_WS(
+             E'\n',
+             NULLIF(email_notes, ''),
+             CONCAT('[', to_char(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI'), '] ', ${auditLine}::text)
+           ),
+           updated_at            = NOW()
+     WHERE id = ${id}
+     RETURNING *
+  `) as unknown as MailingContactRow[];
+
+  const updated = rows[0];
+  if (!updated) return { ok: false, code: 'not_found', message: 'Contact not found.' };
+  return { ok: true, row: updated };
+}
+
 /**
  * Persist a successful geocode (lat/lon + pre-computed distances).
  */

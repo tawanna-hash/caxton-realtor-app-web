@@ -101,9 +101,9 @@ export async function POST(req: NextRequest) {
          WHERE segment = ${segment} AND stage = 'mailing'
            AND (
              ${filter} = 'all'
-             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
              OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                        AND (email_status IS NULL OR email_status <> 'Valid'))
+                                        AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
            )
            AND (
              LOWER(COALESCE(first_name, '')) LIKE ${search_like}
@@ -119,9 +119,9 @@ export async function POST(req: NextRequest) {
          WHERE segment = ${segment} AND stage = 'mailing'
            AND (
              ${filter} = 'all'
-             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+             OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
              OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                        AND (email_status IS NULL OR email_status <> 'Valid'))
+                                        AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
            )`
   ) as unknown as { n: number }[];
   const actualTotal = countRows[0]?.n ?? 0;
@@ -170,9 +170,9 @@ export async function POST(req: NextRequest) {
              WHERE segment = ${segment} AND stage = 'mailing'
                AND (
                  ${filter} = 'all'
-                 OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+                 OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
                  OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                            AND (email_status IS NULL OR email_status <> 'Valid'))
+                                            AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
                )
                AND (
                  LOWER(COALESCE(first_name, '')) LIKE ${sl}
@@ -190,9 +190,9 @@ export async function POST(req: NextRequest) {
              WHERE segment = ${segment} AND stage = 'mailing'
                AND (
                  ${filter} = 'all'
-                 OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+                 OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
                  OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                            AND (email_status IS NULL OR email_status <> 'Valid'))
+                                            AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
                )
              ORDER BY created_at DESC, id DESC
              LIMIT ${BATCH_SIZE}`
