@@ -680,6 +680,18 @@ export default function HoldingClient() {
         </div>
       )}
 
+      {/* Top pager mirrors the bottom one. */}
+      <Pager
+        currentPage={Math.floor(offset / pageSize) + 1}
+        totalItems={total}
+        pageSize={pageSize}
+        disabled={loading}
+        onPageChange={(p) => setOffset((p - 1) * pageSize)}
+        pageSizeOptions={PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(n) => { setPageSize(n); setOffset(0); }}
+        summary={total > 0 ? `Showing ${offset + 1}–${Math.min(offset + rows.length, total)} of ${total.toLocaleString()}` : ''}
+      />
+
       {/* Table */}
       <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
         <table className="min-w-full text-sm">

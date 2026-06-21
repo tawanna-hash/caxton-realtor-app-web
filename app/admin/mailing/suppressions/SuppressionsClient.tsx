@@ -148,6 +148,52 @@ export default function SuppressionsClient() {
     [],
   );
 
+  const pagerNode = !loading ? (
+    <div className="flex items-center justify-between text-sm text-gray-600 flex-wrap gap-3">
+      <div className="flex items-center gap-4 flex-wrap">
+        <div>
+          Showing{' '}
+          <span className="font-semibold">
+            {total === 0 ? 0 : ((safePage - 1) * pageSize + 1).toLocaleString()}–
+            {Math.min(safePage * pageSize, total).toLocaleString()}
+          </span>{' '}
+          of <span className="font-semibold">{total.toLocaleString()}</span>
+        </div>
+        <label className="flex items-center gap-1.5 text-xs text-gray-600">
+          <span>Rows</span>
+          <select
+            value={pageSize}
+            onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
+            className="text-xs px-1.5 py-1 rounded border border-gray-300 bg-white"
+          >
+            {PAGE_SIZE_OPTIONS.map((n) => (<option key={n} value={n}>{n}</option>))}
+          </select>
+        </label>
+      </div>
+      <div className="flex items-center gap-2" style={{ visibility: pageCount > 1 ? 'visible' : 'hidden' }}>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={safePage <= 1}
+            className="px-3 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50"
+          >
+            ← Prev
+          </button>
+          <span className="text-xs">
+            Page {safePage} of {pageCount}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+            disabled={safePage >= pageCount}
+            className="px-3 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50"
+          >
+            Next →
+          </button>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <MailingBreadcrumb
@@ -196,6 +242,8 @@ export default function SuppressionsClient() {
           Failed to load suppressions: {error}
         </div>
       )}
+
+      {pagerNode}
 
       <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
@@ -270,49 +318,7 @@ export default function SuppressionsClient() {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-gray-600 flex-wrap gap-3">
-        <div className="flex items-center gap-4 flex-wrap">
-          <div>
-            Showing{' '}
-            <span className="font-semibold">
-              {((safePage - 1) * pageSize + 1).toLocaleString()}–
-              {Math.min(safePage * pageSize, total).toLocaleString()}
-            </span>{' '}
-            of <span className="font-semibold">{total.toLocaleString()}</span>
-          </div>
-          <label className="flex items-center gap-1.5 text-xs text-gray-600">
-            <span>Rows</span>
-            <select
-              value={pageSize}
-              onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
-              className="text-xs px-1.5 py-1 rounded border border-gray-300 bg-white"
-            >
-              {PAGE_SIZE_OPTIONS.map((n) => (<option key={n} value={n}>{n}</option>))}
-            </select>
-          </label>
-        </div>
-        <div className="flex items-center gap-2" style={{ visibility: pageCount > 1 ? 'visible' : 'hidden' }}>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={safePage <= 1}
-              className="px-3 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50"
-            >
-              ← Prev
-            </button>
-            <span className="text-xs">
-              Page {safePage} of {pageCount}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-              disabled={safePage >= pageCount}
-              className="px-3 py-1 rounded border border-gray-300 text-xs font-medium disabled:opacity-50"
-            >
-              Next →
-            </button>
-        </div>
-      </div>
+      {pagerNode}
     </div>
   );
 }

@@ -865,6 +865,21 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         </div>
       )}
 
+      {/* Top pagination — same controls as the bottom pager, mirrored
+          here so changing page/size doesn't require scrolling past every
+          row. Both <Pager> instances share the same state so they stay
+          in sync. */}
+      <Pager
+        currentPage={Math.floor(offset / pageSize) + 1}
+        totalItems={total}
+        pageSize={pageSize}
+        disabled={loading}
+        onPageChange={(p) => setOffset((p - 1) * pageSize)}
+        pageSizeOptions={PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(n) => { setPageSize(n); setOffset(0); }}
+        summary={total > 0 ? `Showing ${offset + 1}–${Math.min(offset + rows.length, total)} of ${total.toLocaleString()}` : ''}
+      />
+
       {/* Table */}
       <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
         <table className="min-w-full text-sm">

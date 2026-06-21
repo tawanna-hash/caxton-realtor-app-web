@@ -120,6 +120,34 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
 
   const accent = PUB_ACCENT[pub];
 
+  // Pager rendered both above and below the table so users don't need to
+  // scroll past every row to change page size or page number.
+  const pagerNode = !loading ? (
+    <div className="flex items-center justify-between text-sm text-gray-600 flex-wrap gap-3">
+      <div className="flex items-center gap-4 flex-wrap">
+        <div>
+          Page <span className="font-semibold">{safePage}</span> of {pageCount}
+        </div>
+        <label className="flex items-center gap-1.5 text-xs text-gray-600">
+          <span>Rows</span>
+          <select
+            value={pageSize}
+            onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
+            className="text-xs px-1.5 py-1 rounded border border-gray-300 bg-white"
+          >
+            {PAGE_SIZE_OPTIONS.map((n) => (<option key={n} value={n}>{n}</option>))}
+          </select>
+        </label>
+      </div>
+      <div className="flex items-center gap-2" style={{ visibility: pageCount > 1 ? 'visible' : 'hidden' }}>
+        <button type="button" onClick={() => setPage(1)} disabled={safePage === 1} className="px-2 py-1 rounded border border-gray-300 disabled:opacity-40">« First</button>
+        <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage === 1} className="px-2 py-1 rounded border border-gray-300 disabled:opacity-40">‹ Prev</button>
+        <button type="button" onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={safePage === pageCount} className="px-2 py-1 rounded border border-gray-300 disabled:opacity-40">Next ›</button>
+        <button type="button" onClick={() => setPage(pageCount)} disabled={safePage === pageCount} className="px-2 py-1 rounded border border-gray-300 disabled:opacity-40">Last »</button>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <MailingBreadcrumb
@@ -213,6 +241,9 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
         </div>
       )}
 
+      {/* Top pager mirrors the bottom one. */}
+      {pagerNode}
+
       {/* Table */}
       <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
@@ -261,59 +292,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
       </div>
 
       {/* Pager */}
-      {!loading && (
-        <div className="flex items-center justify-between text-sm text-gray-600 flex-wrap gap-3">
-          <div className="flex items-center gap-4 flex-wrap">
-            <div>
-              Page <span className="font-semibold">{safePage}</span> of {pageCount}
-            </div>
-            <label className="flex items-center gap-1.5 text-xs text-gray-600">
-              <span>Rows</span>
-              <select
-                value={pageSize}
-                onChange={(e) => { setPageSize(parseInt(e.target.value, 10)); setPage(1); }}
-                className="text-xs px-1.5 py-1 rounded border border-gray-300 bg-white"
-              >
-                {PAGE_SIZE_OPTIONS.map((n) => (<option key={n} value={n}>{n}</option>))}
-              </select>
-            </label>
-          </div>
-          <div className="flex items-center gap-2" style={{ visibility: pageCount > 1 ? 'visible' : 'hidden' }}>
-            <button
-              type="button"
-              onClick={() => setPage(1)}
-              disabled={safePage === 1}
-              className="px-2 py-1 rounded border border-gray-300 disabled:opacity-40"
-            >
-              « First
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={safePage === 1}
-              className="px-2 py-1 rounded border border-gray-300 disabled:opacity-40"
-            >
-              ‹ Prev
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-              disabled={safePage === pageCount}
-              className="px-2 py-1 rounded border border-gray-300 disabled:opacity-40"
-            >
-              Next ›
-            </button>
-            <button
-              type="button"
-              onClick={() => setPage(pageCount)}
-              disabled={safePage === pageCount}
-              className="px-2 py-1 rounded border border-gray-300 disabled:opacity-40"
-            >
-              Last »
-            </button>
-          </div>
-        </div>
-      )}
+      {pagerNode}
 
       <div className="text-xs text-gray-500">
         <Link href="/admin/mailing" className="underline hover:text-gray-700">
