@@ -18,7 +18,7 @@ function segmentsForPublication(pubCsv: string | null | undefined): MailingSegme
   const keys = parsePublications(pubCsv);
   const out = new Set<MailingSegment>();
   for (const k of keys) {
-    if (k === 'san_antonio') out.add('active-advertiser-sa');
+    if (k === 'san_antonio') out.add('newsline-sa-print');
     else out.add('realtyline-atx-print'); // austin + houston + dallas (merged ATX print list)
   }
   if (out.size === 0) out.add('realtyline-atx-print');
@@ -207,11 +207,14 @@ function additionalToSource(ac: AdditionalContact, parent: { company: string | n
 
 /** Find an existing Advertisers-segment row matching this source. */
 async function findAdvertiserMailingId(sql: Sql, src: MailingSourceRow): Promise<string | null> {
+  // The legacy 'manual-newsline' bucket was merged into 'newsline-sa-print'
+  // on 2026-06-21. Match in either segment so re-runs after the merge
+  // still dedupe against pre-merge rows.
   const email = (src.email ?? '').trim().toLowerCase();
   if (email) {
     const rows = (await sql`
       SELECT id FROM mailing_contacts
-       WHERE segment = 'manual-newsline'
+       WHERE segment IN ('newsline-sa-print','manual-newsline')
          AND LOWER(COALESCE(email, '')) = ${email}
        LIMIT 1
     `) as unknown as Array<{ id: string }>;
@@ -224,7 +227,7 @@ async function findAdvertiserMailingId(sql: Sql, src: MailingSourceRow): Promise
   const last  = (src.last_name  ?? '').toLowerCase();
   const rows = (await sql`
     SELECT id FROM mailing_contacts
-     WHERE segment = 'manual-newsline'
+     WHERE segment IN ('newsline-sa-print','manual-newsline')
        AND LOWER(COALESCE(first_name, '')) = ${first}
        AND LOWER(COALESCE(last_name, ''))  = ${last}
        AND REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') = ${phoneDigits}
@@ -235,13 +238,15 @@ async function findAdvertiserMailingId(sql: Sql, src: MailingSourceRow): Promise
 
 
 // Build the tags JSON for an insert based on the destination segment.
-// realtyline-atx-print rows get an 'active-advertiser' tag (so the merged
-// list can filter active vs non-advertiser); SA + manual-newsline keep the
-// existing tag shape.
+// Merged-print segments (realtyline-atx-print, newsline-sa-print) get an
+// 'active-advertiser' tag so the combined list can filter by audience
+// type. Other segments keep the existing tag shape.
 function buildAdvertiserTagsJson(segment: MailingSegment, opts: { staff?: boolean } = {}): string {
   const tags: string[] = ['advertiser'];
   if (opts.staff) tags.push('staff');
-  if (segment === 'realtyline-atx-print') tags.push('active-advertiser');
+  if (segment === 'realtyline-atx-print' || segment === 'newsline-sa-print') {
+    tags.push('active-advertiser');
+  }
   return JSON.stringify(tags);
 }
 
@@ -251,12 +256,14 @@ async function insertAdvertiserMailing(
   advertiser_id: number | null,
   source_tag: string,
 ): Promise<void> {
+  // Legacy sync path now writes into the merged 'newsline-sa-print'
+  // segment with the active-advertiser tag, mirroring the SA-side merge.
   await sql`
     INSERT INTO mailing_contacts
       (segment, first_name, last_name, email, phone, company, title, license_number,
        address, address_2, city, state, zip, website, source, advertiser_id, tags)
     VALUES
-      ('manual-newsline',
+      ('newsline-sa-print',
        ${src.first_name || (src.email ?? '(no name)')},
        ${src.last_name},
        ${src.email},
@@ -272,7 +279,7 @@ async function insertAdvertiserMailing(
        ${src.website},
        ${source_tag},
        ${advertiser_id},
-       '["advertiser"]'::jsonb)
+       ${buildAdvertiserTagsJson('newsline-sa-print')}::jsonb)
   `;
 }
 

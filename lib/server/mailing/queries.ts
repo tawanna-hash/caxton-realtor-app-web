@@ -170,6 +170,7 @@ export async function countBySegment(): Promise<Record<MailingSegment | 'total',
     'manual-newsline':       0,
     realtor:                 0,
     'realtyline-atx-print':  0,
+    'newsline-sa-print':     0,
     'active-advertiser-atx': 0,
     'active-advertiser-sa':  0,
     'non-advertiser-atx':    0,
@@ -210,6 +211,7 @@ export async function segmentStats(segment: MailingSegment): Promise<SegmentStat
   // segments keep the Austin/Five-Points dual anchor.
   const useSaborAnchor =
     segment === 'manual-newsline' ||
+    segment === 'newsline-sa-print' ||
     segment === 'active-advertiser-sa' ||
     segment === 'non-advertiser-sa';
   const rows = useSaborAnchor

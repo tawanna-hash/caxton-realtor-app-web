@@ -223,7 +223,7 @@ export async function promoteHoldingContacts(ids: string[]): Promise<PromoteResu
     await sql`
       UPDATE mailing_contacts
          SET segment = CASE
-           WHEN segment IN ('active-advertiser-sa','non-advertiser-sa','manual-newsline')
+           WHEN segment IN ('active-advertiser-sa','non-advertiser-sa','manual-newsline','newsline-sa-print')
              THEN 'email-only-sa'
            ELSE 'email-only-atx'
          END

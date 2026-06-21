@@ -73,6 +73,7 @@ export function marketForSegment(seg: MailingSegment): Market {
     case 'active-advertiser-sa':
     case 'non-advertiser-sa':
     case 'manual-newsline':
+    case 'newsline-sa-print':
     case 'email-only-sa':
       return 'san_antonio';
     case 'active-advertiser-atx':
@@ -108,7 +109,7 @@ export function classifyTargetSegment(input: RoutingInput): MailingSegment {
   }
 
   // No longer email-only — move OUT of the email-only segment.
-  if (input.current_segment === 'email-only-sa') return 'manual-newsline';
+  if (input.current_segment === 'email-only-sa') return 'newsline-sa-print';
   if (input.current_segment === 'email-only-atx') return 'realtyline-atx-print';
 
   return input.current_segment;
@@ -131,7 +132,7 @@ export async function sweepEmailOnlyRouting(): Promise<{ to_email_only: number; 
   const toRows = (await sql`
     UPDATE mailing_contacts
        SET segment = CASE
-         WHEN segment IN ('active-advertiser-sa','non-advertiser-sa','manual-newsline')
+         WHEN segment IN ('active-advertiser-sa','non-advertiser-sa','manual-newsline','newsline-sa-print')
            THEN 'email-only-sa'
          ELSE 'email-only-atx'
        END
@@ -148,12 +149,12 @@ export async function sweepEmailOnlyRouting(): Promise<{ to_email_only: number; 
   `) as unknown as Array<{ id: string }>;
 
   // Pass 2: rows that gained an address and should leave email-only.
-  //   - email-only-sa  → manual-newsline (the SA generic catch-all)
-  //   - email-only-atx → realtor (the ATX/Texas-wide catch-all)
+  //   - email-only-sa  → newsline-sa-print (the merged SA print list)
+  //   - email-only-atx → realtyline-atx-print (the merged ATX print list)
   const fromRows = (await sql`
     UPDATE mailing_contacts
        SET segment = CASE
-         WHEN segment = 'email-only-sa'  THEN 'manual-newsline'
+         WHEN segment = 'email-only-sa'  THEN 'newsline-sa-print'
          WHEN segment = 'email-only-atx' THEN 'realtyline-atx-print'
          ELSE segment
        END

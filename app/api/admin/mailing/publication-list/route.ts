@@ -49,7 +49,7 @@ function configFor(pub: Pub) {
         newsletterPub: 'realtyline',
       }
     : {
-        segments: ['active-advertiser-sa', 'non-advertiser-sa', 'manual-newsline', 'email-only-sa'],
+        segments: ['newsline-sa-print', 'email-only-sa'],
         market: 'san_antonio',
         holdingSource: 'ramco-sabor',
         holdingLabel: 'sabor-members',

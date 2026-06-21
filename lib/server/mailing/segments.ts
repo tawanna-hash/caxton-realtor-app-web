@@ -8,6 +8,7 @@ export type MailingSegment =
   | 'manual-newsline'
   | 'realtor'
   | 'realtyline-atx-print'
+  | 'newsline-sa-print'
   | 'active-advertiser-atx'
   | 'active-advertiser-sa'
   | 'non-advertiser-atx'
@@ -24,25 +25,11 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
     accent:  '#301D5D',
   },
   {
-    segment: 'active-advertiser-sa',
-    slug:    'active-advertisers-sa',
-    label:   'Active Advertisers - Newsline San Antonio',
-    caption: 'Currently-active Newsline San Antonio advertisers and their staff.',
-    accent:  '#3b82f6',
-  },
-  {
-    segment: 'non-advertiser-sa',
-    slug:    'non-advertisers-sa',
-    label:   'Non-Advertisers - Newsline San Antonio',
-    caption: 'Newsline San Antonio prospects who haven’t run an ad yet.',
-    accent:  '#ea580c',
-  },
-  {
-    segment: 'manual-newsline',
-    slug:    'manual-newsline-contacts',
-    label:   'Manual Newsline San Antonio Contacts',
-    caption: 'Newsline San Antonio contacts entered or imported manually.',
-    accent:  '#3b82f6',
+    segment: 'newsline-sa-print',
+    slug:    'newsline-san-antonio-print-mailing',
+    label:   'Newsline San Antonio Print Mailing',
+    caption: 'Combined San Antonio print audience — Active Advertisers + Non-Advertisers + Manual contacts, tagged by source.',
+    accent:  '#1d4ed8',
   },
   {
     segment: 'email-only-atx',
@@ -79,6 +66,17 @@ export function segmentFromSlug(slug: string): MailingSegment | null {
   ) {
     return 'realtyline-atx-print';
   }
+  // Back-compat for retired Newsline San Antonio segment slugs. The three
+  // SA lists (Active Advertisers SA, Non-Advertisers SA, Manual Newsline
+  // San Antonio) were merged into a single 'newsline-sa-print' segment
+  // with row-level tags on 2026-06-21.
+  if (
+    slug === 'active-advertisers-sa' ||
+    slug === 'non-advertisers-sa' ||
+    slug === 'manual-newsline-contacts'
+  ) {
+    return 'newsline-sa-print';
+  }
   return null;
 }
 
@@ -91,6 +89,7 @@ export function isMailingSegment(v: unknown): v is MailingSegment {
     v === 'manual-newsline' ||
     v === 'realtor' ||
     v === 'realtyline-atx-print' ||
+    v === 'newsline-sa-print' ||
     v === 'active-advertiser-atx' ||
     v === 'active-advertiser-sa' ||
     v === 'non-advertiser-atx' ||
@@ -116,6 +115,7 @@ export type SegmentAnchor = 'sabor' | 'abor';
 export function anchorForSegment(seg: MailingSegment): SegmentAnchor {
   switch (seg) {
     case 'manual-newsline':
+    case 'newsline-sa-print':
     case 'active-advertiser-sa':
     case 'non-advertiser-sa':
     case 'email-only-sa':

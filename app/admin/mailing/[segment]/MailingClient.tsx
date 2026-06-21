@@ -122,10 +122,11 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
 
   const [search, setSearch] = useState<string>('');
   const [filter, setFilter] = useState<FilterKey>('all');
-  // Tag filter for the merged realtyline-atx-print segment. 'all' shows every row;
-  // 'active-advertiser' / 'non-advertiser' filter by the tag column. Ignored
-  // on every other segment.
-  const [tagFilter, setTagFilter] = useState<'all' | 'active-advertiser' | 'non-advertiser'>('all');
+  // Tag filter for the merged print segments (realtyline-atx-print and
+  // newsline-sa-print). 'all' shows every row; the rest filter by tag.
+  // SA also has a 'manual' bucket for the legacy Manual Newsline rows.
+  // Ignored on every other segment.
+  const [tagFilter, setTagFilter] = useState<'all' | 'active-advertiser' | 'non-advertiser' | 'manual'>('all');
   const [sort, setSort] = useState<MailingColumnId>('created_at');
   const [dir, setDir] = useState<'asc' | 'desc'>('desc');
   const [offset, setOffset] = useState<number>(0);
@@ -156,10 +157,16 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
     if (typeof window === 'undefined') return;
     try { window.localStorage.setItem(COLUMNS_LS_KEY, JSON.stringify(visibleCols)); } catch {}
   }, [visibleCols]);
-  // 'tag' column is only meaningful in the merged realtyline-atx-print segment
-  // (other segments are single-purpose lists where every row has the same tag).
+  // 'tag' column is only meaningful in the merged print segments
+  // (realtyline-atx-print, newsline-sa-print). Other segments are
+  // single-purpose lists where every row has the same tag.
   const isVisible = (id: ColumnId) => {
-    if (id === 'tag') return segment === 'realtyline-atx-print' && visibleCols[id];
+    if (id === 'tag') {
+      return (
+        (segment === 'realtyline-atx-print' || segment === 'newsline-sa-print') &&
+        visibleCols[id]
+      );
+    }
     return visibleCols[id];
   };
 
@@ -189,7 +196,10 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         offset: String(offset),
       });
       if (search.trim()) params.set('search', search.trim());
-      if (segment === 'realtyline-atx-print' && tagFilter !== 'all') {
+      if (
+        (segment === 'realtyline-atx-print' || segment === 'newsline-sa-print') &&
+        tagFilter !== 'all'
+      ) {
         params.set('tag', tagFilter);
       }
       const res = await fetch(`/api/admin/mailing?${params.toString()}`, { credentials: 'include' });
@@ -673,7 +683,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         <button onClick={handleDedupe} className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50">
           Dedupe
         </button>
-        {(segment === 'active-advertiser-atx' || segment === 'active-advertiser-sa' || segment === 'realtyline-atx-print') && (
+        {(segment === 'active-advertiser-atx' || segment === 'active-advertiser-sa' || segment === 'realtyline-atx-print' || segment === 'newsline-sa-print') && (
           <div className="relative inline-block group">
             <button
               onClick={() => handleRefreshAddresses(false)}
@@ -771,7 +781,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={stats?.verified ?? 0} accent="#3b82f6" />
         <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={stats?.pending ?? 0}  accent="#f97316" />
 
-        {segment === 'realtyline-atx-print' && (
+        {(segment === 'realtyline-atx-print' || segment === 'newsline-sa-print') && (
           <>
             <span className="mx-1 h-5 w-px bg-gray-200" aria-hidden />
             <FilterChip
@@ -794,6 +804,15 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               count={tagFilter === 'non-advertiser' ? total : 0}
               accent="#9a3412"
             />
+            {segment === 'newsline-sa-print' && (
+              <FilterChip
+                active={tagFilter === 'manual'}
+                onClick={() => { setTagFilter('manual'); setOffset(0); }}
+                label="Manual"
+                count={tagFilter === 'manual' ? total : 0}
+                accent="#301D5D"
+              />
+            )}
           </>
         )}
 
@@ -1220,6 +1239,10 @@ function TagChips({ tags }: { tags: string[] | null | undefined }) {
           label = 'Non-Advertiser';
           bg = '#fed7aa';
           fg = '#9a3412';
+        } else if (t === 'manual') {
+          label = 'Manual';
+          bg = '#ede9fe';
+          fg = '#301D5D';
         }
         return (
           <span

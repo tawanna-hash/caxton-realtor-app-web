@@ -157,13 +157,11 @@ export default async function MailingHubPage() {
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
         <KpiCard label="Segments total"      value={counts.total}                       sub="all mailing segments" />
-        <KpiCard label="Manual Newsline San Antonio"     value={counts['manual-newsline']}          sub="manual entries"      accent="#301D5D" />
         <KpiCard label="RealtyLine ATX Print" value={counts['realtyline-atx-print']}    sub="advertisers + REALTORS" accent="#301D5D" />
+        <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="advertisers + non-advertisers + manual" accent="#1d4ed8" />
         <KpiCard label="ABOR Members"        value={sources.aborMembers}                sub="UnlockMLS holding"   accent="#6b7280" />
-        <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#1d4ed8" />
+        <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#2563eb" />
         <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="newsletter signups"  accent="#2563eb" />
-        <KpiCard label="Active — SA"         value={counts['active-advertiser-sa']}     sub="Newsline San Antonio"         accent="#3b82f6" />
-        <KpiCard label="Non-Advertisers — SA"  value={counts['non-advertiser-sa']}      sub="Newsline San Antonio"         accent="#ea580c" />
       </div>
 
       {/* Segment tiles — split by publication */}
