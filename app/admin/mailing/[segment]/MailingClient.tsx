@@ -126,7 +126,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
   // newsline-sa-print). 'all' shows every row; the rest filter by tag.
   // SA also has a 'manual' bucket for the legacy Manual Newsline rows.
   // Ignored on every other segment.
-  const [tagFilter, setTagFilter] = useState<'all' | 'active-advertiser' | 'non-advertiser' | 'manual'>('all');
+  const [tagFilter, setTagFilter] = useState<'all' | 'active-advertiser' | 'non-advertiser' | 'manual' | 'REALTOR' | 'Loan Officer' | 'Business Development'>('all');
   const [sort, setSort] = useState<MailingColumnId>('created_at');
   const [dir, setDir] = useState<'asc' | 'desc'>('desc');
   const [offset, setOffset] = useState<number>(0);
@@ -157,15 +157,22 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
     if (typeof window === 'undefined') return;
     try { window.localStorage.setItem(COLUMNS_LS_KEY, JSON.stringify(visibleCols)); } catch {}
   }, [visibleCols]);
-  // 'tag' column is only meaningful in the merged print segments
-  // (realtyline-atx-print, newsline-sa-print). Other segments are
-  // single-purpose lists where every row has the same tag.
+  // 'tag' column shows on every Mailing Hub child page so the REALTOR /
+  // Loan Officer / Business Development library tags are visible everywhere.
+  // The merged print segments also show their per-segment audience tags
+  // (active-advertiser / non-advertiser / manual).
+  const HUB_TAGGED_SEGMENTS: MailingSegment[] = [
+    'realtyline-atx-print',
+    'newsline-sa-print',
+    'abor-holding',
+    'sabor-holding',
+    'email-only-atx',
+    'email-only-sa',
+  ];
+  const isHubTagged = HUB_TAGGED_SEGMENTS.includes(segment);
   const isVisible = (id: ColumnId) => {
     if (id === 'tag') {
-      return (
-        (segment === 'realtyline-atx-print' || segment === 'newsline-sa-print') &&
-        visibleCols[id]
-      );
+      return isHubTagged && visibleCols[id];
     }
     return visibleCols[id];
   };
@@ -196,10 +203,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         offset: String(offset),
       });
       if (search.trim()) params.set('search', search.trim());
-      if (
-        (segment === 'realtyline-atx-print' || segment === 'newsline-sa-print') &&
-        tagFilter !== 'all'
-      ) {
+      if (isHubTagged && tagFilter !== 'all') {
         params.set('tag', tagFilter);
       }
       const res = await fetch(`/api/admin/mailing?${params.toString()}`, { credentials: 'include' });
@@ -816,6 +820,38 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
           </>
         )}
 
+        {(segment === 'realtyline-atx-print'
+          || segment === 'newsline-sa-print'
+          || segment === 'abor-holding'
+          || segment === 'sabor-holding'
+          || segment === 'email-only-atx'
+          || segment === 'email-only-sa') && (
+          <>
+            <span className="mx-1 h-5 w-px bg-gray-200" aria-hidden />
+            <FilterChip
+              active={tagFilter === 'REALTOR'}
+              onClick={() => { setTagFilter('REALTOR'); setOffset(0); }}
+              label="REALTOR"
+              count={tagFilter === 'REALTOR' ? total : 0}
+              accent="#16a34a"
+            />
+            <FilterChip
+              active={tagFilter === 'Loan Officer'}
+              onClick={() => { setTagFilter('Loan Officer'); setOffset(0); }}
+              label="Loan Officer"
+              count={tagFilter === 'Loan Officer' ? total : 0}
+              accent="#d97706"
+            />
+            <FilterChip
+              active={tagFilter === 'Business Development'}
+              onClick={() => { setTagFilter('Business Development'); setOffset(0); }}
+              label="Business Development"
+              count={tagFilter === 'Business Development' ? total : 0}
+              accent="#475569"
+            />
+          </>
+        )}
+
         <div className="flex-1" />
 
         <input
@@ -1243,6 +1279,18 @@ function TagChips({ tags }: { tags: string[] | null | undefined }) {
           label = 'Manual';
           bg = '#ede9fe';
           fg = '#301D5D';
+        } else if (t === 'REALTOR') {
+          label = 'REALTOR';
+          bg = '#dcfce7';
+          fg = '#16a34a';
+        } else if (t === 'Loan Officer') {
+          label = 'Loan Officer';
+          bg = '#fef3c7';
+          fg = '#d97706';
+        } else if (t === 'Business Development') {
+          label = 'Business Development';
+          bg = '#e2e8f0';
+          fg = '#475569';
         }
         return (
           <span
