@@ -508,7 +508,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       <div className="fixed inset-0 bg-white z-40 overflow-y-auto" style={SW}>
         <div className="min-h-full flex flex-col items-center py-10">
           <div className="w-full max-w-md px-8">
-            <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
+            <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
             <h2 className="text-2xl text-gray-900 font-semibold text-center mb-8">Create Your Account</h2>
 
             {/* Step indicators */}
@@ -661,7 +661,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
     return (
       <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
         <div className="w-full max-w-md px-8">
-          <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
+          <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
           <h2 className="text-2xl text-gray-900 font-semibold text-center mb-6">Welcome Back</h2>
           {error && <p className="text-base text-red-500 text-center mb-4 font-light">{error}</p>}
           <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className={ic} autoComplete="username" />
@@ -680,7 +680,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   return (
     <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
       <div className="w-full max-w-md px-8">
-        <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
+        <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Sign In to Continue</h2>
         <button onClick={() => setMode('signup')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3" style={{ backgroundColor: info.color }}>Create Your Account</button>
         <button onClick={() => setMode('login')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-6 rounded-md">I Already Have an Account</button>
