@@ -2529,32 +2529,59 @@ function BulkEditDialog({
   const [values, setValues] = useState<Record<BulkEditField, string>>({
     company: '', title: '', city: '', state: '', zip: '', source: '', notes: '',
   });
+  // Tag bulk-edit state. tagsEnabled gates the section; mode picks add /
+  // remove / replace; tagList is the working set of chips for the action.
+  const [tagsEnabled, setTagsEnabled] = useState(false);
+  const [tagsMode, setTagsMode] = useState<'add' | 'remove' | 'replace'>('add');
+  const [tagList, setTagList] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const anyEnabled = Object.values(enabled).some(Boolean);
+  const anyFieldEnabled = Object.values(enabled).some(Boolean);
+  const anyEnabled = anyFieldEnabled || tagsEnabled;
 
   async function save() {
     if (!anyEnabled) {
       setErr('Toggle at least one field to apply.');
       return;
     }
-    const patch: Record<string, string> = {};
-    for (const f of BULK_EDIT_FIELDS) {
-      if (enabled[f.id]) patch[f.id] = values[f.id];
+    if (tagsEnabled && tagsMode !== 'replace' && tagList.length === 0) {
+      setErr(`Add at least one tag to ${tagsMode}.`);
+      return;
     }
     setSaving(true);
     setErr(null);
     try {
-      const res = await fetch('/api/admin/mailing/bulk', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'patch', ids, patch }),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
-      onDone(Number(j?.updated ?? 0));
+      let updated = 0;
+      // 1) Field patch (company / title / city / ...).
+      if (anyFieldEnabled) {
+        const patch: Record<string, string> = {};
+        for (const f of BULK_EDIT_FIELDS) {
+          if (enabled[f.id]) patch[f.id] = values[f.id];
+        }
+        const res = await fetch('/api/admin/mailing/bulk', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'patch', ids, patch }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
+        updated = Math.max(updated, Number(j?.updated ?? 0));
+      }
+      // 2) Tag bulk action (add / remove / replace).
+      if (tagsEnabled) {
+        const res = await fetch('/api/admin/mailing/bulk', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'tags', ids, mode: tagsMode, tags: tagList }),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
+        updated = Math.max(updated, Number(j?.updated ?? 0));
+      }
+      onDone(updated);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
@@ -2570,7 +2597,8 @@ function BulkEditDialog({
         </h2>
         <p className="text-xs text-gray-500 mb-4">
           Toggle a field to overwrite it on every selected row. Leave a field
-          off to keep the existing value unchanged.
+          off to keep the existing value unchanged. Use the Tags section to
+          add, remove, or replace tags in bulk.
         </p>
         <div className="space-y-3">
           {BULK_EDIT_FIELDS.filter((f) => f.id !== 'notes').map((f) => (
@@ -2610,6 +2638,49 @@ function BulkEditDialog({
               placeholder={enabled.notes ? 'New notes…' : '(field off — value unchanged)'}
               className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-50 disabled:text-gray-400"
             />
+          </div>
+
+          {/* Tags bulk-edit section */}
+          <div className="border-t border-gray-200 pt-4 mt-2">
+            <div className="flex items-center justify-between mb-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={tagsEnabled}
+                  onChange={(e) => setTagsEnabled(e.target.checked)}
+                />
+                Tags
+              </label>
+              {tagsEnabled && (
+                <div className="flex items-center gap-1 text-xs">
+                  {(['add', 'remove', 'replace'] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setTagsMode(m)}
+                      className={
+                        'px-2 py-1 rounded-md border ' +
+                        (tagsMode === m
+                          ? 'bg-[#301D5D] text-white border-[#301D5D]'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50')
+                      }
+                    >
+                      {m === 'add' ? 'Add' : m === 'remove' ? 'Remove' : 'Replace'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {tagsEnabled && (
+              <>
+                <p className="text-[11px] text-gray-500 mb-2">
+                  {tagsMode === 'add' && `Add these tags to all ${ids.length} selected contacts (existing tags are kept).`}
+                  {tagsMode === 'remove' && `Strip these tags from all ${ids.length} selected contacts.`}
+                  {tagsMode === 'replace' && `Replace the tag list on all ${ids.length} selected contacts with exactly the tags below (empty = clear all tags).`}
+                </p>
+                <TagsEditor tags={tagList} onChange={setTagList} />
+              </>
+            )}
           </div>
         </div>
         {err && <div className="mt-3 text-sm text-red-700">{err}</div>}

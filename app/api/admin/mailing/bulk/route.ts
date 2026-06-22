@@ -208,6 +208,74 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, moved, errors, target });
     }
 
+    if (action === 'tags') {
+      // Bulk tag edit. Body:
+      //   { action: 'tags', ids: string[], mode: 'add'|'remove'|'replace', tags: string[] }
+      // - 'add': union the given tags into each row's existing tags (idempotent).
+      // - 'remove': strip the given tags from each row's existing tags.
+      // - 'replace': overwrite the tags array with exactly the given list.
+      const ids = Array.isArray(body.ids)
+        ? (body.ids as unknown[]).filter((v): v is string => typeof v === 'string' && UUID_RE.test(v))
+        : [];
+      if (ids.length === 0) {
+        return NextResponse.json({ error: 'no valid ids' }, { status: 400 });
+      }
+      const mode = body.mode;
+      if (mode !== 'add' && mode !== 'remove' && mode !== 'replace') {
+        return NextResponse.json({ error: "mode must be 'add', 'remove', or 'replace'" }, { status: 400 });
+      }
+      const tags = Array.isArray(body.tags)
+        ? (body.tags as unknown[])
+            .filter((t): t is string => typeof t === 'string')
+            .map((t) => t.trim())
+            .filter((t) => t.length > 0)
+        : [];
+      if (tags.length === 0 && mode !== 'replace') {
+        return NextResponse.json({ error: 'tags array required' }, { status: 400 });
+      }
+      const sql = getSql();
+      const tagsJson = JSON.stringify(tags);
+      let updated = 0;
+      if (mode === 'add') {
+        const rows = (await sql.query(
+          `UPDATE mailing_contacts
+              SET tags = COALESCE((
+                    SELECT jsonb_agg(DISTINCT t)
+                      FROM jsonb_array_elements_text(
+                        COALESCE(tags, '[]'::jsonb) || $2::jsonb
+                      ) AS t
+                  ), '[]'::jsonb)
+            WHERE id = ANY($1::uuid[])
+          RETURNING id`,
+          [ids, tagsJson],
+        )) as Array<{ id: string }>;
+        updated = rows.length;
+      } else if (mode === 'remove') {
+        const rows = (await sql.query(
+          `UPDATE mailing_contacts
+              SET tags = COALESCE((
+                    SELECT jsonb_agg(t)
+                      FROM jsonb_array_elements_text(COALESCE(tags, '[]'::jsonb)) AS t
+                     WHERE NOT (t = ANY($2::text[]))
+                  ), '[]'::jsonb)
+            WHERE id = ANY($1::uuid[])
+          RETURNING id`,
+          [ids, tags],
+        )) as Array<{ id: string }>;
+        updated = rows.length;
+      } else {
+        const rows = (await sql.query(
+          `UPDATE mailing_contacts
+              SET tags = $2::jsonb
+            WHERE id = ANY($1::uuid[])
+          RETURNING id`,
+          [ids, tagsJson],
+        )) as Array<{ id: string }>;
+        updated = rows.length;
+      }
+      return NextResponse.json({ ok: true, updated, mode, tags });
+    }
+
     return NextResponse.json({ error: 'unknown action' }, { status: 400 });
   } catch (err) {
     console.error('[admin/mailing bulk]', errMessage(err));
