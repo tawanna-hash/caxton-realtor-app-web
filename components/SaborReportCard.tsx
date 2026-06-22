@@ -176,6 +176,24 @@ export default function SaborReportCard({ variant = 'inline' }: Props) {
             ))}
           </div>
 
+          {/* Member disclaimer / deep-link to the full Market Stats download */}
+          <p
+            className="text-[11px] leading-snug text-gray-500 pt-3"
+            style={{ borderTop: '1px dashed #e5e7eb' }}
+          >
+            SABOR members can{' '}
+            <a
+              href="https://sabor.mysolidearth.com/authenticate"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline font-medium"
+              style={{ color: NEWSLINE }}
+            >
+              sign in to download the full Market Stats report
+            </a>
+            .
+          </p>
+
         </div>
       </div>
     </article>

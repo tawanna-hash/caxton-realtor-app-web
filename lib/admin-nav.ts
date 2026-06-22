@@ -71,7 +71,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Events',    href: '/admin/events',    description: 'Calendar publications' },
       { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries' },
       { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
-      { label: 'SABOR MLS', href: '/admin/sabor-mls', description: 'San Antonio MLS report card' },
+      { label: 'SABOR Report', href: '/admin/content/saborreport', description: 'San Antonio MLS monthly report card' },
       { label: 'Notifications', href: '/admin/notifications', description: 'Web push to subscribers' },
     ],
   },
