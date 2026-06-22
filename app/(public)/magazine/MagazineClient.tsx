@@ -119,12 +119,26 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
         )}
       </div>
       <MagazineGuestCTA brandColor={info.color} />
-      <MagazineCarousel
-        publication={pub}
-        brandColor={info.color}
-        onOpen={(m: Magazine) => setOpenMag(m)}
-        onMagazinesLoaded={(mags: Magazine[]) => { if (mags.length > 0) setCurrentMag(mags[0]); }}
-      />
+      {/* Quick-jump pill: scrolls to the issues archive below the current
+          issue spotlight. Hidden until currentMag has loaded so the page
+          doesn't show a jump-to-nothing affordance during the initial
+          fetch. */}
+      {currentMag && (
+        <div className="px-4 pt-6 pb-2 flex justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              const el = document.getElementById('archives');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-white text-xs uppercase tracking-[0.2em] font-medium text-gray-700 hover:bg-gray-50"
+            aria-label="Jump to issues archive"
+          >
+            <span>Browse Issues Archive</span>
+            <span className="text-gray-400">{'\u2193'}</span>
+          </button>
+        </div>
+      )}
       {currentMag && (
         <MagazineFeatured
           magazine={currentMag}
@@ -135,6 +149,14 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
           }}
         />
       )}
+      <div id="archives" style={{ scrollMarginTop: 72 }}>
+        <MagazineCarousel
+          publication={pub}
+          brandColor={info.color}
+          onOpen={(m: Magazine) => setOpenMag(m)}
+          onMagazinesLoaded={(mags: Magazine[]) => { if (mags.length > 0) setCurrentMag(mags[0]); }}
+        />
+      </div>
       {openMag && (
         <MagazineReaderRouter
           magazine={openMag}
