@@ -187,6 +187,9 @@ async function isValidAdminToken(
 //   /support                — support contact (must be reachable without sign-in)
 //   /subscribe              — newsletter signup (top-of-funnel)
 //   /submit-event           — public event submission form
+//   /magazine, /magazine/*  — published issues are top-of-funnel content;
+//                             everything else (feed, calendar, advertisers,
+//                             builders, etc.) still requires an account
 //   /manifest.webmanifest   — PWA manifest (static, but explicit for clarity)
 //
 // Note: /admin/* is handled by its own gate above and never reaches this code.
@@ -203,10 +206,12 @@ const REALTOR_PUBLIC_PREFIXES: ReadonlyArray<string> = [
   '/support',
   '/subscribe',
   '/submit-event',
+  '/magazine/',
 ];
 
 const REALTOR_PUBLIC_EXACT = new Set<string>([
   '/',
+  '/magazine',
   '/manifest.webmanifest',
 ]);
 
