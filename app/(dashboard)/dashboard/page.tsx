@@ -1112,9 +1112,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
     <div className="min-h-screen bg-white pb-36" style={SW}>
       <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: info.color }}>
         <div className="min-w-0 flex-1">
-          {!user?.guest && user?.firstName && (
-            <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-medium">Welcome, {user.firstName}</p>
-          )}
+          <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-medium">
+            Welcome, {user?.firstName || (user?.guest ? 'Guest' : 'Subscriber')}
+          </p>
           <button
             type="button"
             onClick={() => setMarketDrawerOpen(true)}
