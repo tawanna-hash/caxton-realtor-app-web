@@ -531,7 +531,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
             // switch to a fast nearest-neighbour pass at high zoom and make
             // small type look blocky. 'high-quality' is a CSS Working spec
             // value missing from lib.dom.d.ts — hence the cast.
-            ...({ imageRendering: 'high-quality' } as React.CSSProperties),
+            ...({ imageRendering: 'high-quality' } as unknown as React.CSSProperties),
           }}
         >
           <HTMLFlipBook
@@ -571,7 +571,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
                   draggable={false}
                   loading={idx < 4 ? 'eager' : 'lazy'}
                   decoding="async"
-                  style={{ imageRendering: 'high-quality' } as React.CSSProperties}
+                  style={{ imageRendering: 'high-quality' } as unknown as React.CSSProperties}
                 />
               </div>
             ))}
