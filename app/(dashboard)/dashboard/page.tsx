@@ -978,7 +978,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
           color: pubMetaEntry.color,
         }
       : PUBS[0]);
-  const other = PUBS.find((p) => p.id !== pub) || PUBS[1];
   // Pre-launch markets short-circuit every content surface to the shared
   // empty state (Phase 2 PR C). They still get the branded header above
   // and the bottom nav below — only the tab body is replaced.
@@ -1103,25 +1102,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
     });
   }
 
-  function handleSwitch() {
-    // Persist the new pub then hard-reload so every pub-scoped fetch
-    // (articles, ads, events) re-runs from scratch. The previous soft
-    // setState path left stale data visible (BUG-03).
-    try {
-      const maxAge = 60 * 60 * 24 * 365;
-      document.cookie = `caxton_pub=${other.id}; path=/; max-age=${maxAge}; SameSite=Lax`;
-      localStorage.setItem('caxton_pub', other.id);
-      localStorage.removeItem('caxton_selected_article');
-      localStorage.removeItem('caxton_selected_event');
-      window.dispatchEvent(new Event('savedPubChange'));
-    } catch {}
-    setCat('All');
-    setTab('n');
-    onSwitch(other.id);
-    if (typeof window !== 'undefined') {
-      window.location.assign('/');
-    }
-  }
 
   function handleAdClick(ad: any) {
     track('ad_click', { adId: ad.id, advertiser: ad.biz, publication: pub });
@@ -1145,10 +1125,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
             <span className="text-white/70 text-xl leading-none">{'\u203A'}</span>
           </button>
         </div>
-        <button onClick={handleSwitch} className="text-xs uppercase tracking-wider text-white/80 font-medium border border-white/30 px-3 py-1.5 min-h-[44px] flex items-center gap-2 flex-shrink-0 ml-2 rounded-md">
-          <span>{other.name}</span>
-          <span className="text-white/50">{'\u2192'}</span>
-        </button>
       </div>
       {!showPreLaunch && (
         <DashboardHero pub={pub as "realtyline" | "newsline"} />
