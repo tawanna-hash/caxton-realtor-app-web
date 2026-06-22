@@ -148,8 +148,8 @@ export const GET = withErrorHandling(async (req: Request, ctx: RouteCtx) => {
         AND c.occurred_at >= ${fromIso}
         AND c.occurred_at <= ${toIso}
       WHERE h.advertiser_id = ${idNum}
-      GROUP BY h.id, m.publication, m.issue_label
-      ORDER BY clicks DESC, h.id
+      GROUP BY h.id, m.publication, m.issue_label, m.sort_date
+      ORDER BY m.sort_date DESC NULLS LAST, h.page_idx ASC, h.id ASC
     `) as unknown as Array<{
       hotspot_id: number;
       magazine_id: number;
