@@ -958,6 +958,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
     } catch {}
   }, [pub]);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [marketDrawerOpen, setMarketDrawerOpen] = useState(false);
+  const [marketNotifyFor, setMarketNotifyFor] = useState<{ id: ComingSoonPubId; name: string } | null>(null);
   const track = useMetrics(user?.id || null);
   // For launched pubs (realtyline, newsline) `info` comes from the legacy
   // PUBS array which carries the marketing-copy tagline. For pre-launch
@@ -1133,7 +1135,15 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
           {!user?.guest && user?.firstName && (
             <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-medium">Welcome, {user.firstName}</p>
           )}
-          <p className="text-white text-lg font-semibold tracking-wide truncate">{info.name}</p>
+          <button
+            type="button"
+            onClick={() => setMarketDrawerOpen(true)}
+            className="flex items-center gap-1.5 text-white text-lg font-semibold tracking-wide truncate min-h-[44px]"
+            aria-label="Select your market"
+          >
+            <span className="truncate">Select Your Market</span>
+            <span className="text-white/70 text-xl leading-none">{'\u203A'}</span>
+          </button>
         </div>
         <button onClick={handleSwitch} className="text-xs uppercase tracking-wider text-white/80 font-medium border border-white/30 px-3 py-1.5 min-h-[44px] flex items-center gap-2 flex-shrink-0 ml-2 rounded-md">
           <span>{other.name}</span>
@@ -1261,6 +1271,104 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
       {profileOpen && (
         <ProfilePanel user={user} accentColor={info.color} onClose={() => setProfileOpen(false)} />
       )}
+      {marketDrawerOpen && (
+        <div
+          className="fixed inset-0 z-50 flex justify-end"
+          onClick={() => setMarketDrawerOpen(false)}
+        >
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="relative w-full max-w-md h-full bg-white shadow-2xl overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+            style={SW}
+          >
+            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+              <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium">Select Your Market</p>
+              <button
+                type="button"
+                onClick={() => setMarketDrawerOpen(false)}
+                className="text-gray-400 text-2xl leading-none min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Close"
+              >
+                {'\u00D7'}
+              </button>
+            </div>
+            <div>
+              {/* Active markets */}
+              {[
+                { id: 'realtyline', label: 'RealtyLine Austin', monogram: 'RL' },
+                { id: 'newsline', label: 'Newsline San Antonio', monogram: 'NS' },
+              ].map((m) => {
+                const isCurrent = pub === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => {
+                      setMarketDrawerOpen(false);
+                      if (isCurrent) return;
+                      try {
+                        const maxAge = 60 * 60 * 24 * 365;
+                        document.cookie = `caxton_pub=${m.id}; path=/; max-age=${maxAge}; SameSite=Lax`;
+                        localStorage.setItem('caxton_pub', m.id);
+                        localStorage.removeItem('caxton_selected_article');
+                        localStorage.removeItem('caxton_selected_event');
+                        window.dispatchEvent(new Event('savedPubChange'));
+                      } catch {}
+                      onSwitch(m.id);
+                      if (typeof window !== 'undefined') {
+                        window.location.assign('/');
+                      }
+                    }}
+                    className="w-full text-left px-4 py-5 border-b border-gray-100 bg-white hover:bg-gray-50 flex items-center gap-4"
+                  >
+                    <div
+                      className="w-12 h-12 rounded-md flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: '#301D5D' }}
+                    >
+                      <span className="text-white text-sm font-medium">{m.monogram}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-semibold text-gray-900">{m.label}</p>
+                    </div>
+                    {isCurrent && (
+                      <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Current</span>
+                    )}
+                  </button>
+                );
+              })}
+              {/* Coming-soon markets */}
+              {[
+                { id: 'realtyline-houston' as ComingSoonPubId, label: 'RealtyLine Houston', monogram: 'RH' },
+                { id: 'realtyline-dallas' as ComingSoonPubId, label: 'RealtyLine Dallas/Ft. Worth', monogram: 'RD' },
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => {
+                    setMarketDrawerOpen(false);
+                    setMarketNotifyFor({ id: m.id, name: m.label });
+                    trackEvent('coming_soon_market_click', { market: m.id });
+                  }}
+                  className="w-full text-left px-4 py-5 border-b border-gray-100 bg-gray-50 hover:bg-gray-100 flex items-center gap-4"
+                >
+                  <div
+                    className="w-12 h-12 rounded-md flex items-center justify-center flex-shrink-0 opacity-60"
+                    style={{ backgroundColor: '#301D5D' }}
+                  >
+                    <span className="text-white text-sm font-medium">{m.monogram}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-semibold text-gray-700">{m.label}</p>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 flex-shrink-0">Coming Soon</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {marketNotifyFor && <NotifyMeModal market={marketNotifyFor} onClose={() => setMarketNotifyFor(null)} />}
     </div>
   );
 }
