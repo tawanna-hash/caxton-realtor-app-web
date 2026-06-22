@@ -122,6 +122,12 @@ export default function AdminInventoryCreateForm() {
       if (!imageFile && !pdfFile) {
         throw new Error('Please attach an image (preferred) or a PDF.');
       }
+      // Promotions MUST have an expiration date now that the auto-expire cron
+      // hides them after expires_at passes. Without one, the promo would run
+      // forever — defeats the whole point of the auto-expire system.
+      if (kind === 'promotion' && !expiresAt) {
+        throw new Error('Expiration date is required for promotions.');
+      }
 
       const fd = new FormData();
       fd.append('mode', 'admin');
@@ -389,15 +395,19 @@ export default function AdminInventoryCreateForm() {
               />
             </div>
             <div>
-              <label htmlFor="expiresAt" className={labelStyle}>Expires (optional)</label>
+              <label htmlFor="expiresAt" className={labelStyle}>
+                Expires <span className="text-red-600">*</span>
+              </label>
               <input
                 id="expiresAt"
                 type="date"
+                required
                 value={expiresAt}
                 onChange={(e) => setExpiresAt(e.target.value)}
                 disabled={submitting}
                 className={fieldStyle}
               />
+              <p className="text-xs text-gray-500 mt-1">Promotion auto-hides after this date (end of day Central).</p>
             </div>
           </div>
         </div>

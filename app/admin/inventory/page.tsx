@@ -9,12 +9,13 @@ import type {
 import EditInventoryModal from '@/components/inventory/EditInventoryModal';
 
 import PageTitle from '@/components/ui/PageTitle';
-type Tab = 'pending' | 'active' | 'rejected';
+type Tab = 'pending' | 'active' | 'rejected' | 'expired';
 
 const TAB_LABELS: Record<Tab, string> = {
   pending: 'Pending review',
   active: 'Active',
   rejected: 'Rejected',
+  expired: 'Expired',
 };
 
 // Sort-key identifies which row field to sort by; direction picks asc/desc.
@@ -368,10 +369,12 @@ function EmptyState({ tab, onSwitchTab }: { tab: Tab; onSwitchTab: (t: Tab) => v
     pending: 'No submissions waiting for review.',
     active: 'No active submissions yet.',
     rejected: 'No rejected submissions.',
+    expired: 'No promotions have auto-expired yet.',
   };
   const cta: Partial<Record<Tab, { label: string; target: Tab }>> = {
     pending: { label: 'View active submissions →', target: 'active' },
     rejected: { label: 'View active submissions →', target: 'active' },
+    expired: { label: 'View active submissions →', target: 'active' },
   };
   const action = cta[tab];
   return (

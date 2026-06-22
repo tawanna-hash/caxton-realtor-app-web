@@ -23,7 +23,7 @@ const sql = neon(process.env.DATABASE_URL!);
 // ─────────────────────────────────────────────────────────────────────────
 
 export type Kind = 'listing' | 'promotion';
-export type Status = 'pending' | 'active' | 'rejected';
+export type Status = 'pending' | 'active' | 'rejected' | 'expired';
 // Publication scope for a builder_inventory row. Mirrors the CHECK
 // constraint in the table (see migration 2026_06_15__widen_builder_inventory_publication_check).
 // 'both' covers Austin + San Antonio (the original launched markets). Pre-launch
@@ -335,6 +335,38 @@ const MIGRATIONS: Migration[] = [
           'both'
         ))
       `;
+    },
+  },
+  {
+    // Add 'expired' to the status CHECK constraint so the auto-expire
+    // cron can flip promos whose expires_at has passed. Public reads still
+    // filter to status='active' so expired rows disappear from the feed
+    // automatically. Admin can review them under the new Expired tab.
+    name: '2026_06_22__add_status_expired',
+    up: async () => {
+      const checks = (await sql`
+        SELECT conname FROM pg_constraint
+        WHERE conrelid = 'builder_inventory'::regclass
+          AND conname LIKE '%status%check%'
+      `) as { conname: string }[];
+      for (const r of checks) {
+        await sql.query(
+          `ALTER TABLE builder_inventory DROP CONSTRAINT IF EXISTS "${r.conname}"`,
+        );
+      }
+      await sql`
+        ALTER TABLE builder_inventory
+        ADD CONSTRAINT builder_inventory_status_check
+        CHECK (status IN ('pending','active','rejected','expired'))
+      `;
+      // Index to make the hourly auto-expire scan cheap. Only indexes
+      // active promotions with a non-null expiry — the only rows the cron
+      // ever needs to look at.
+      await sql`CREATE INDEX IF NOT EXISTS idx_builder_inv_promo_expiry
+                ON builder_inventory (expires_at)
+                WHERE kind = 'promotion'
+                  AND status = 'active'
+                  AND expires_at IS NOT NULL`;
     },
   },
 ];

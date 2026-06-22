@@ -20,7 +20,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const listInventoryQuerySchema = z.object({
-  status: z.enum(['pending', 'active', 'rejected']).default('pending'),
+  status: z.enum(['pending', 'active', 'rejected', 'expired']).default('pending'),
   // Raised from 200 to 2000 on 2026-06-22 because the active queue grew past
   // 200 (currently ~666) and newly-created promotions were getting hidden
   // behind the older listings in the truncated window.
@@ -42,7 +42,7 @@ export const GET = withErrorHandling(async (req: Request) => {
     GROUP BY status
   `) as { status: Status; count: number }[];
 
-  const counts: Record<Status, number> = { pending: 0, active: 0, rejected: 0 };
+  const counts: Record<Status, number> = { pending: 0, active: 0, rejected: 0, expired: 0 };
   for (const r of countRows) counts[r.status] = r.count;
 
   return NextResponse.json({ rows, counts });

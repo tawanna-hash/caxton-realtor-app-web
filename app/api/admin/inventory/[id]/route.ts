@@ -45,7 +45,7 @@ function parseId(idParam: string): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-const VALID_STATUS: Status[] = ['pending', 'active', 'rejected'];
+const VALID_STATUS: Status[] = ['pending', 'active', 'rejected', 'expired'];
 const VALID_PUBLICATION: Publication[] = ['realtyline', 'newsline', 'both'];
 const VALID_PROMO: PromoType[] = ['rate_buydown', 'incentive', 'event', 'broker_bonus', 'other'];
 
