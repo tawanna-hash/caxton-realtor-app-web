@@ -207,7 +207,11 @@ function additionalToSource(ac: AdditionalContact, parent: { company: string | n
 }
 
 /** Find an existing Advertisers-segment row matching this source. */
-async function findAdvertiserMailingId(sql: Sql, src: MailingSourceRow): Promise<string | null> {
+async function findAdvertiserMailingId(
+  sql: Sql,
+  src: MailingSourceRow,
+  advertiserId?: number | null,
+): Promise<string | null> {
   // The legacy 'manual-newsline' bucket was merged into 'newsline-sa-print'
   // on 2026-06-21. Match in either segment so re-runs after the merge
   // still dedupe against pre-merge rows.
@@ -223,18 +227,34 @@ async function findAdvertiserMailingId(sql: Sql, src: MailingSourceRow): Promise
     return null;
   }
   const phoneDigits = digits(src.phone);
-  if (!phoneDigits) return null;
-  const first = (src.first_name ?? '').toLowerCase();
-  const last  = (src.last_name  ?? '').toLowerCase();
-  const rows = (await sql`
-    SELECT id FROM mailing_contacts
-     WHERE segment IN ('newsline-sa-print','manual-newsline')
-       AND LOWER(COALESCE(first_name, '')) = ${first}
-       AND LOWER(COALESCE(last_name, ''))  = ${last}
-       AND REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') = ${phoneDigits}
-     LIMIT 1
-  `) as unknown as Array<{ id: string }>;
-  return rows[0]?.id ?? null;
+  if (phoneDigits) {
+    const first = (src.first_name ?? '').toLowerCase();
+    const last  = (src.last_name  ?? '').toLowerCase();
+    const rows = (await sql`
+      SELECT id FROM mailing_contacts
+       WHERE segment IN ('newsline-sa-print','manual-newsline')
+         AND LOWER(COALESCE(first_name, '')) = ${first}
+         AND LOWER(COALESCE(last_name, ''))  = ${last}
+         AND REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') = ${phoneDigits}
+       LIMIT 1
+    `) as unknown as Array<{ id: string }>;
+    if (rows[0]) return rows[0].id;
+  }
+  // Last-resort dedupe for no-email / no-phone advertiser rows: match by
+  // advertiser_id + first_name. Without this, every sync run inserts a
+  // fresh duplicate for advertisers whose email is null.
+  if (advertiserId != null) {
+    const first = (src.first_name ?? '').toLowerCase();
+    const rows = (await sql`
+      SELECT id FROM mailing_contacts
+       WHERE segment IN ('newsline-sa-print','manual-newsline')
+         AND advertiser_id = ${advertiserId}
+         AND LOWER(COALESCE(first_name, '')) = ${first}
+       LIMIT 1
+    `) as unknown as Array<{ id: string }>;
+    if (rows[0]) return rows[0].id;
+  }
+  return null;
 }
 
 
@@ -319,7 +339,7 @@ export async function syncAdvertisersFromAdvertisers(): Promise<{
         const fallback = await loadLocationAddressForAdvertiser(adv.id);
         const merged = mergeAddresses(primaryBase, fallback);
         const primary = { ...primaryBase, ...merged };
-        const existingId = await findAdvertiserMailingId(sql, primary);
+        const existingId = await findAdvertiserMailingId(sql, primary, adv.id);
         if (existingId) {
           skipped += 1;
         } else {
@@ -339,7 +359,7 @@ export async function syncAdvertisersFromAdvertisers(): Promise<{
       const src = additionalToSource(ac, { company: adv.company });
       if (!src) continue;
       try {
-        const existingId = await findAdvertiserMailingId(sql, src);
+        const existingId = await findAdvertiserMailingId(sql, src, adv.id);
         if (existingId) {
           skipped += 1;
         } else {
