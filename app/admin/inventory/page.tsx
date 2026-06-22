@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type {
   BuilderInventoryRow,
@@ -17,6 +17,53 @@ const TAB_LABELS: Record<Tab, string> = {
   rejected: 'Rejected',
 };
 
+// Sort-key identifies which row field to sort by; direction picks asc/desc.
+// Defaults to newest-first (createdAt desc), matching prior behavior before
+// the sort UI landed.
+type SortKey =
+  | 'createdAt'
+  | 'builderName'
+  | 'title'
+  | 'city'
+  | 'publication'
+  | 'kind';
+type SortDir = 'asc' | 'desc';
+
+const SORT_OPTIONS: Array<{ key: SortKey; dir: SortDir; label: string }> = [
+  { key: 'createdAt',    dir: 'desc', label: 'Newest first' },
+  { key: 'createdAt',    dir: 'asc',  label: 'Oldest first' },
+  { key: 'builderName',  dir: 'asc',  label: 'Builder A \u2192 Z' },
+  { key: 'builderName',  dir: 'desc', label: 'Builder Z \u2192 A' },
+  { key: 'title',        dir: 'asc',  label: 'Title A \u2192 Z' },
+  { key: 'title',        dir: 'desc', label: 'Title Z \u2192 A' },
+  { key: 'city',         dir: 'asc',  label: 'City A \u2192 Z' },
+  { key: 'city',         dir: 'desc', label: 'City Z \u2192 A' },
+  { key: 'publication',  dir: 'asc',  label: 'Publication A \u2192 Z' },
+  { key: 'kind',         dir: 'asc',  label: 'Kind (Listing first)' },
+  { key: 'kind',         dir: 'desc', label: 'Kind (Promotion first)' },
+];
+
+function sortRows(rows: BuilderInventoryRow[], key: SortKey, dir: SortDir): BuilderInventoryRow[] {
+  const mult = dir === 'asc' ? 1 : -1;
+  const copy = rows.slice();
+  copy.sort((a, b) => {
+    let av: string | number = '';
+    let bv: string | number = '';
+    if (key === 'createdAt') {
+      av = new Date(a.createdAt).getTime();
+      bv = new Date(b.createdAt).getTime();
+    } else {
+      av = (a[key] ?? '').toString().toLowerCase();
+      bv = (b[key] ?? '').toString().toLowerCase();
+    }
+    if (av < bv) return -1 * mult;
+    if (av > bv) return  1 * mult;
+    // Stable tiebreak by id so equal keys don't shuffle on re-sort.
+    return (a.id - b.id) * mult;
+  });
+  return copy;
+}
+
 export default function AdminInventoryPage() {
   const [tab, setTab] = useState<Tab>('active');
   const [rows, setRows] = useState<BuilderInventoryRow[] | null>(null);
@@ -24,6 +71,8 @@ export default function AdminInventoryPage() {
   const [counts, setCounts] = useState<Record<Status, number> | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [sortKey, setSortKey] = useState<SortKey>('createdAt');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +117,25 @@ export default function AdminInventoryPage() {
   const handleChanged = useCallback(() => {
     setReloadKey((k) => k + 1);
   }, []);
+
+  // Toggle sort direction when clicking the same column header; otherwise
+  // switch to the new column with a sensible default direction (desc for
+  // dates, asc for text fields).
+  const setSort = useCallback((key: SortKey) => {
+    setSortKey((prevKey) => {
+      if (prevKey === key) {
+        setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+        return prevKey;
+      }
+      setSortDir(key === 'createdAt' ? 'desc' : 'asc');
+      return key;
+    });
+  }, []);
+
+  const sortedRows = useMemo(
+    () => (rows ? sortRows(rows, sortKey, sortDir) : null),
+    [rows, sortKey, sortDir],
+  );
 
   return (
     <div className="min-h-screen bg-white">
@@ -137,6 +205,33 @@ export default function AdminInventoryPage() {
           <p className="text-sm text-gray-500 font-light">Loading…</p>
         )}
 
+        {rows != null && rows.length > 0 && (
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-gray-500">
+              Showing {rows.length} {rows.length === 1 ? 'item' : 'items'}
+            </p>
+            <label className="flex items-center gap-2 text-sm">
+              <span className="text-gray-500">Sort by</span>
+              <select
+                value={`${sortKey}:${sortDir}`}
+                onChange={(e) => {
+                  const [k, d] = e.target.value.split(':') as [SortKey, SortDir];
+                  setSortKey(k);
+                  setSortDir(d);
+                }}
+                className="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#301D5D]/30"
+                aria-label="Sort builder inventory"
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={`${opt.key}:${opt.dir}`} value={`${opt.key}:${opt.dir}`}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
+
         {rows != null && rows.length === 0 && !error && (
           <EmptyState tab={tab} onSwitchTab={setTab} />
         )}
@@ -147,22 +242,22 @@ export default function AdminInventoryPage() {
           onChanged={handleChanged}
         />
 
-        {rows != null && rows.length > 0 && (
+        {sortedRows != null && sortedRows.length > 0 && (
           <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr className="text-left text-xs uppercase tracking-wider text-gray-500">
                   <th className="px-4 py-3 font-medium w-20" />
-                  <th className="px-4 py-3 font-medium">Submitted</th>
-                  <th className="px-4 py-3 font-medium">Builder / Title</th>
-                  <th className="px-4 py-3 font-medium">Kind</th>
-                  <th className="px-4 py-3 font-medium">Publication</th>
+                  <SortableHeader label="Submitted" k="createdAt" sortKey={sortKey} sortDir={sortDir} onSort={setSort} />
+                  <SortableHeader label="Builder / Title" k="builderName" sortKey={sortKey} sortDir={sortDir} onSort={setSort} />
+                  <SortableHeader label="Kind" k="kind" sortKey={sortKey} sortDir={sortDir} onSort={setSort} />
+                  <SortableHeader label="Publication" k="publication" sortKey={sortKey} sortDir={sortDir} onSort={setSort} />
                   <th className="px-4 py-3 font-medium">Submitter</th>
                   <th className="px-4 py-3 font-medium" />
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {sortedRows.map((r) => (
                   <tr key={r.id} className="border-b border-gray-200 last:border-b-0">
                     <td className="px-4 py-3">
                       <div className="w-16 h-16 bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center rounded-md">
@@ -261,5 +356,38 @@ function KindBadge({ kind }: { kind: 'listing' | 'promotion' }) {
     >
       {kind === 'listing' ? 'Listing' : 'Promotion'}
     </span>
+  );
+}
+
+function SortableHeader({
+  label,
+  k,
+  sortKey,
+  sortDir,
+  onSort,
+}: {
+  label: string;
+  k: SortKey;
+  sortKey: SortKey;
+  sortDir: SortDir;
+  onSort: (k: SortKey) => void;
+}) {
+  const active = sortKey === k;
+  const arrow = active ? (sortDir === 'asc' ? '\u25B2' : '\u25BC') : '';
+  return (
+    <th className="px-4 py-3 font-medium">
+      <button
+        type="button"
+        onClick={() => onSort(k)}
+        className={
+          'inline-flex items-center gap-1 uppercase tracking-wider ' +
+          (active ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700')
+        }
+        aria-label={'Sort by ' + label}
+      >
+        <span>{label}</span>
+        {arrow ? <span className="text-[10px]">{arrow}</span> : null}
+      </button>
+    </th>
   );
 }
