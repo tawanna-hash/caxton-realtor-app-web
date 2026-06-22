@@ -181,19 +181,6 @@ export default function NavDrawer({
           </button>
         </div>
 
-        {/* Publication switcher */}
-        {!isAdmin && pub !== 'realtynewsnow' ? (
-          <div className="px-5 pt-6">
-            <button
-              onClick={onPubSwitch}
-              className="w-full flex items-center justify-between border border-white/25 rounded-md px-4 py-3 text-white text-sm uppercase tracking-wider font-medium hover:bg-white/5 transition"
-            >
-              <span>Switch to {PUB_NAMES[pub === 'realtyline' ? 'newsline' : 'realtyline']}</span>
-              <span className="text-white/50">{'\u2192'}</span>
-            </button>
-          </div>
-        ) : null}
-
         {/* Sections */}
         <div className="px-5 py-6 space-y-1">
           {DRAWER_SECTIONS.map((section) => {
