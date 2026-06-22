@@ -12,6 +12,7 @@ import PushOptInBanner from '@/components/PushOptInBanner';
 import { SocialLinks } from '@/components/SocialLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import SaborReportCard from '@/components/SaborReportCard';
+import RealtyLineReportCard from '@/components/RealtyLineReportCard';
 import { SW } from '@/lib/style-constants';
 import { PUB_META, type PubKey, isPreLaunchPub, isPubKey } from '@/lib/pub-meta';
 import { PreLaunchEmptyState } from '@/components/PreLaunchEmptyState';
@@ -1034,7 +1035,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
   const CATS = pub === 'realtyline' ? RL_CATS : NS_CATS;
   const filt = cat === 'All' ? NEWS : NEWS.filter((n) => n.cat === cat);
 
-  const feed: { t: 'n' | 'a' | 'c' | 's' | 'e' | 'm'; d?: any }[] = [];
+  const feed: { t: 'n' | 'a' | 'c' | 's' | 'e' | 'm' | 'r'; d?: any }[] = [];
   const isLoadingFirstFetch = newsLoading && liveNews === null;
 
   const isEmptyAfterLoad = !isLoadingFirstFetch && filt.length === 0;
@@ -1075,6 +1076,36 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
   })();
   const showSaborInline = saborEligible && saborReleasedAt !== undefined && !showSaborHero;
 
+  // RealtyLine MLS card — RealtyLine Austin only. Same hero-then-inline
+  // cadence as SABOR: pinned at top for the first 7 days from released_at,
+  // then slotted inline every 5 articles. The card itself fetches its
+  // data; we only decide placement here.
+  const [realtylineReleasedAt, setRealtylineReleasedAt] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (pub !== 'realtyline' || cat !== 'All') return;
+    let alive = true;
+    fetch('/api/realtyline-mls/current', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!alive) return;
+        const released = (j?.report?.released_at as string | undefined) ?? null;
+        setRealtylineReleasedAt(released);
+      })
+      .catch(() => {
+        if (alive) setRealtylineReleasedAt(null);
+      });
+    return () => { alive = false; };
+  }, [pub, cat]);
+  const realtylineEligible = pub === 'realtyline' && cat === 'All';
+  const showRealtylineHero = (() => {
+    if (!realtylineEligible) return false;
+    if (realtylineReleasedAt === undefined) return false; // still loading
+    if (realtylineReleasedAt === null) return true;       // no data yet: behave as hero
+    const ageDays = (mountEpoch - new Date(realtylineReleasedAt).getTime()) / 86_400_000;
+    return ageDays >= 0 && ageDays <= 7;
+  })();
+  const showRealtylineInline = realtylineEligible && realtylineReleasedAt !== undefined && !showRealtylineHero;
+
   if (isLoadingFirstFetch) {
     for (let i = 0; i < 3; i++) feed.push({ t: 's', d: { id: i } });
   } else if (isEmptyAfterLoad) {
@@ -1089,6 +1120,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
     if (showSaborHero) {
       feed.push({ t: 'm', d: { variant: 'hero' } });
     }
+    if (showRealtylineHero) {
+      feed.push({ t: 'r', d: { variant: 'hero' } });
+    }
 
     filt.forEach((item, i) => {
       feed.push({ t: 'n', d: item });
@@ -1098,6 +1132,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
       // Inline placement: every 5th article, after the initial newsletter CTA
       if (showSaborInline && i > 0 && (i + 1) % 5 === 0) {
         feed.push({ t: 'm', d: { variant: 'inline' } });
+      }
+      if (showRealtylineInline && i > 0 && (i + 1) % 5 === 0) {
+        feed.push({ t: 'r', d: { variant: 'inline' } });
       }
     });
   }
@@ -1193,6 +1230,8 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
                 </article>
               ) : item.t === 'm' ? (
                 <SaborReportCard key={'m' + idx + item.d.variant} variant={item.d.variant} />
+              ) : item.t === 'r' ? (
+                <RealtyLineReportCard key={'r' + idx + item.d.variant} variant={item.d.variant} />
               ) : (
                 <AdCardTracked key={'a' + item.d.id} ad={item.d} onClick={handleAdClick} track={track} pub={pub} />
               );
