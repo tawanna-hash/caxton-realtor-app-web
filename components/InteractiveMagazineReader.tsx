@@ -293,6 +293,13 @@ export default function InteractiveMagazineReader({
   const [spreadMode, setSpreadMode] = useState(false); // becomes true on desktop
   const [chromeVisible, setChromeVisible] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+  // Pan offset applied as translate(panX, panY) on the stage. This is the
+  // single source of truth for where the zoomed page sits inside the viewport.
+  // We do NOT use scrollLeft/scrollTop anymore — the legacy reader had the
+  // same grab-hand bug and was fixed by switching to a transform-based pan
+  // (commit bd63010); doing the same here.
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
   // Grab tool toggle. When ON: cursor is always grab/grabbing, text-layer
   // selection is suppressed, and links are click-through-only (no drag-to-
   // select). When OFF: dragging still pans (existing behavior) but the user
@@ -318,16 +325,17 @@ export default function InteractiveMagazineReader({
   const leftLatestPageRef = useRef<number | null>(null);
   const rightLatestPageRef = useRef<number | null>(null);
 
-  // Mouse pan state (existing).
-  const dragStateRef = useRef<{ startX: number; startY: number; scrollLeft: number; scrollTop: number } | null>(null);
+  // Mouse pan state. We snapshot the pan offset at drag-start so move events
+  // apply a delta from that anchor (avoids accumulating rounding error).
+  const dragStateRef = useRef<{ startX: number; startY: number; startPanX: number; startPanY: number } | null>(null);
 
   // Touch gesture state.
   const touchStateRef = useRef<{
     startX: number;
     startY: number;
     startTime: number;
-    startScrollLeft: number;
-    startScrollTop: number;
+    startPanX: number;
+    startPanY: number;
     moved: boolean;
     // Pinch
     pinching: boolean;
@@ -370,6 +378,14 @@ export default function InteractiveMagazineReader({
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, []);
+
+  // Reset pan offset whenever the zoom level changes or the user flips to a
+  // new page. Without this the page would stay translated off-screen from a
+  // prior drag, leaving the user looking at blank space.
+  useEffect(() => {
+    setPanX(0);
+    setPanY(0);
+  }, [zoomIdx, currentPage]);
 
   // ---- Load PDF on mount ----
   useEffect(() => {
@@ -887,28 +903,34 @@ export default function InteractiveMagazineReader({
   }
 
   // ---- Mouse pan handlers (desktop) ----
+  // Transform-based pan. The stage is translated by (panX, panY); we never
+  // touch scrollLeft/scrollTop. This matches the legacy reader's fix and
+  // works reliably across browsers and iOS Safari.
   function handleMouseDown(e: React.MouseEvent) {
     // When grab is OFF, don't intercept clicks on links — let the browser
     // handle the navigation. When grab is ON, drag-from-anywhere pans.
     if (!grabActive && (e.target as HTMLElement).tagName === 'A') return;
-    if (!scrollRef.current) return;
+    // Only pan when zoomed in — at fit-to-width there's nothing to pan.
+    if (zoom <= 1) return;
     dragStateRef.current = {
       startX: e.clientX,
       startY: e.clientY,
-      scrollLeft: scrollRef.current.scrollLeft,
-      scrollTop: scrollRef.current.scrollTop,
+      startPanX: panX,
+      startPanY: panY,
     };
     setIsDragging(true);
     e.preventDefault();
   }
   function handleMouseMove(e: React.MouseEvent) {
-    if (!dragStateRef.current || !scrollRef.current) return;
-    const dx = e.clientX - dragStateRef.current.startX;
-    const dy = e.clientY - dragStateRef.current.startY;
-    scrollRef.current.scrollLeft = dragStateRef.current.scrollLeft - dx;
-    scrollRef.current.scrollTop = dragStateRef.current.scrollTop - dy;
+    const state = dragStateRef.current;
+    if (!state) return;
+    const dx = e.clientX - state.startX;
+    const dy = e.clientY - state.startY;
+    setPanX(state.startPanX + dx);
+    setPanY(state.startPanY + dy);
   }
   function handleMouseUp() {
+    if (!dragStateRef.current) return;
     dragStateRef.current = null;
     setIsDragging(false);
   }
@@ -921,14 +943,12 @@ export default function InteractiveMagazineReader({
   }
 
   function handleTouchStart(e: React.TouchEvent) {
-    const scroll = scrollRef.current;
-    if (!scroll) return;
     if (e.touches.length === 2) {
       // Pinch start
       const dist = distance(e.touches[0], e.touches[1]);
       touchStateRef.current = {
         startX: 0, startY: 0, startTime: Date.now(),
-        startScrollLeft: scroll.scrollLeft, startScrollTop: scroll.scrollTop,
+        startPanX: panX, startPanY: panY,
         moved: true, // pinch always "moves"
         pinching: true,
         pinchStartDistance: dist,
@@ -940,7 +960,7 @@ export default function InteractiveMagazineReader({
       const t = e.touches[0];
       touchStateRef.current = {
         startX: t.clientX, startY: t.clientY, startTime: Date.now(),
-        startScrollLeft: scroll.scrollLeft, startScrollTop: scroll.scrollTop,
+        startPanX: panX, startPanY: panY,
         moved: false,
         pinching: false,
         pinchStartDistance: 0,
@@ -951,8 +971,7 @@ export default function InteractiveMagazineReader({
 
   function handleTouchMove(e: React.TouchEvent) {
     const state = touchStateRef.current;
-    const scroll = scrollRef.current;
-    if (!state || !scroll) return;
+    if (!state) return;
 
     // Pinch zoom
     if (state.pinching && e.touches.length === 2) {
@@ -976,10 +995,11 @@ export default function InteractiveMagazineReader({
       if (Math.hypot(dx, dy) > TAP_MAX_MOVE_PX) {
         state.moved = true;
       }
-      // If zoomed in, pan. Otherwise let the swipe-on-end logic handle nav.
+      // If zoomed in, pan via transform. Otherwise let the swipe-on-end
+      // logic handle page navigation.
       if (zoom > 1) {
-        scroll.scrollLeft = state.startScrollLeft - dx;
-        scroll.scrollTop = state.startScrollTop - dy;
+        setPanX(state.startPanX + dx);
+        setPanY(state.startPanY + dy);
         e.preventDefault();
       }
     }
@@ -996,12 +1016,10 @@ export default function InteractiveMagazineReader({
       if (e.touches.length === 0) {
         touchStateRef.current = null;
       } else if (e.touches.length === 1) {
-        const scroll = scrollRef.current;
         const t = e.touches[0];
         touchStateRef.current = {
           startX: t.clientX, startY: t.clientY, startTime: Date.now(),
-          startScrollLeft: scroll?.scrollLeft ?? 0,
-          startScrollTop: scroll?.scrollTop ?? 0,
+          startPanX: panX, startPanY: panY,
           moved: false,
           pinching: false, pinchStartDistance: 0, pinchStartZoomIdx: zoomIdx,
         };
@@ -1109,14 +1127,17 @@ export default function InteractiveMagazineReader({
         {doc ? `Showing ${pageLabel}` : loadProgress}
       </div>
 
-      {/* Stage — the page area */}
+      {/* Stage — the page area.
+          Pan is done via translate on the inner stage div (see below), so the
+          viewport itself is overflow:hidden. This is the same architecture
+          the legacy reader switched to in commit bd63010 to fix the grab
+          hand on Safari and iOS. */}
       <div
         ref={scrollRef}
-        className="absolute inset-0 overflow-auto flex items-center justify-center"
+        className="absolute inset-0 overflow-hidden flex items-center justify-center"
         style={{
-          cursor: grabActive ? (isDragging ? 'grabbing' : 'grab') : 'auto',
+          cursor: grabActive && zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'auto',
           touchAction: zoom > 1 ? 'none' : 'pan-y',
-          WebkitOverflowScrolling: 'touch',
           // When grab is ON, suppress text-layer selection on the entire
           // stage so a drag is unambiguously a pan, not a text selection.
           userSelect: grabActive ? 'none' : 'auto',
@@ -1145,20 +1166,23 @@ export default function InteractiveMagazineReader({
             ref={stageRef}
             className={`flex gap-2 ${zoom > 1 ? 'items-start justify-start' : 'items-center justify-center'}`}
             style={{
-              // At zoom=1, the stage fills the viewport so the page is centered.
-              // At zoom>1, the stage shrinks to the canvas's intrinsic width so
-              // the scroll container has real horizontal overflow to pan into
-              // (otherwise flex centering clamps the layout and left/right
-              // edges of the page are unreachable when zoomed in on mobile).
+              // Width auto so the stage hugs the canvas content; the viewport
+              // (scrollRef) handles the visible window and the transform below
+              // moves the stage inside it.
               width: zoom > 1 ? 'max-content' : 'auto',
-              minWidth: '100%',
-              minHeight: '100%',
-              // When zoomed, drop horizontal padding so the user can pan all
-              // the way to the page edges. Keep vertical padding to clear the
-              // floating top chrome.
+              minWidth: zoom > 1 ? undefined : '100%',
+              minHeight: zoom > 1 ? undefined : '100%',
               padding: zoom > 1
                 ? (chromeVisible ? '64px 0' : '16px 0')
                 : (chromeVisible ? '64px 16px' : '16px'),
+              // Transform-based pan. translate3d engages the compositor for
+              // smooth movement; the transition is disabled while dragging
+              // so the page tracks the cursor 1:1 instead of feeling laggy.
+              transform: zoom > 1 ? `translate3d(${panX}px, ${panY}px, 0)` : 'none',
+              transition: isDragging
+                ? 'none'
+                : 'transform 200ms ease',
+              willChange: zoom > 1 ? 'transform' : 'auto',
             }}
           >
             {/* Left page (or placeholder for cover) */}

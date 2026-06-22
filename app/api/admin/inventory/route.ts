@@ -21,7 +21,10 @@ export const dynamic = 'force-dynamic';
 
 const listInventoryQuerySchema = z.object({
   status: z.enum(['pending', 'active', 'rejected']).default('pending'),
-  limit:  z.coerce.number().int().min(1).max(200).default(200),
+  // Raised from 200 to 2000 on 2026-06-22 because the active queue grew past
+  // 200 (currently ~666) and newly-created promotions were getting hidden
+  // behind the older listings in the truncated window.
+  limit:  z.coerce.number().int().min(1).max(2000).default(2000),
 });
 
 export const GET = withErrorHandling(async (req: Request) => {

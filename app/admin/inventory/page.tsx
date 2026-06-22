@@ -29,6 +29,15 @@ type SortKey =
   | 'kind';
 type SortDir = 'asc' | 'desc';
 
+// Kind filter — lets the admin narrow the (potentially huge) Active tab
+// down to just promotions or just listings without changing the sort.
+type KindFilter = 'all' | 'listing' | 'promotion';
+const KIND_FILTER_OPTIONS: Array<{ value: KindFilter; label: string }> = [
+  { value: 'all',       label: 'All' },
+  { value: 'promotion', label: 'Promotions' },
+  { value: 'listing',   label: 'Listings' },
+];
+
 const SORT_OPTIONS: Array<{ key: SortKey; dir: SortDir; label: string }> = [
   { key: 'createdAt',    dir: 'desc', label: 'Newest first' },
   { key: 'createdAt',    dir: 'asc',  label: 'Oldest first' },
@@ -73,6 +82,9 @@ export default function AdminInventoryPage() {
   const [reloadKey, setReloadKey] = useState(0);
   const [sortKey, setSortKey] = useState<SortKey>('createdAt');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  // Default to 'promotion' so newly-created promos are visible immediately
+  // after admin creates them (the most common reason to land on this page).
+  const [kindFilter, setKindFilter] = useState<KindFilter>('all');
 
   useEffect(() => {
     let cancelled = false;
@@ -132,9 +144,16 @@ export default function AdminInventoryPage() {
     });
   }, []);
 
+  // Apply kind filter before sorting so the count + sort reflect the filter.
+  const filteredRows = useMemo(() => {
+    if (!rows) return null;
+    if (kindFilter === 'all') return rows;
+    return rows.filter((r) => r.kind === kindFilter);
+  }, [rows, kindFilter]);
+
   const sortedRows = useMemo(
-    () => (rows ? sortRows(rows, sortKey, sortDir) : null),
-    [rows, sortKey, sortDir],
+    () => (filteredRows ? sortRows(filteredRows, sortKey, sortDir) : null),
+    [filteredRows, sortKey, sortDir],
   );
 
   return (
@@ -206,10 +225,38 @@ export default function AdminInventoryPage() {
         )}
 
         {rows != null && rows.length > 0 && (
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-gray-500">
-              Showing {rows.length} {rows.length === 1 ? 'item' : 'items'}
-            </p>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3">
+              <p className="text-xs text-gray-500">
+                Showing {sortedRows?.length ?? 0}
+                {(sortedRows?.length ?? 0) !== rows.length
+                  ? ` of ${rows.length}`
+                  : ''}{' '}
+                {(sortedRows?.length ?? 0) === 1 ? 'item' : 'items'}
+              </p>
+              <div className="flex items-center gap-1" role="tablist" aria-label="Filter by kind">
+                {KIND_FILTER_OPTIONS.map((opt) => {
+                  const active = kindFilter === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setKindFilter(opt.value)}
+                      className={
+                        'text-xs px-2.5 py-1 rounded-md border transition-colors ' +
+                        (active
+                          ? 'border-[#301D5D] bg-[#301D5D] text-white'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500')
+                      }
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <label className="flex items-center gap-2 text-sm">
               <span className="text-gray-500">Sort by</span>
               <select
