@@ -269,6 +269,14 @@ function isPreLaunchPreviewPath(pathname: string): boolean {
 }
 
 function handlePubPermalink(req: NextRequest): NextResponse | null {
+  // The ?pub= permalink is a user-facing URL concept (deep-link a visitor
+  // into a specific publication). It must NOT fire on API routes, which
+  // pass pub=realtyline|newsline as a real query argument — e.g.
+  // /api/ads/active?slot=feed_top_banner&pub=newsline. Without this guard
+  // the proxy 308-redirects the API call to the same URL minus ?pub=,
+  // dropping the parameter and breaking every ad slot.
+  if (req.nextUrl.pathname.startsWith('/api/')) return null;
+
   const param = req.nextUrl.searchParams.get('pub');
   if (!param) return null;
 

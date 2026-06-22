@@ -1,10 +1,7 @@
-import { redirect } from 'next/navigation';
+// Legacy admin path. The SABOR MLS editor canonical home is at
+// /admin/content/saborreport (grouped under the Content nav), but bookmarks
+// and external links to /admin/sabor-mls should keep landing on the FULL
+// editor rather than a redirect to a different URL. So we just re-export
+// the same client component here.
 
-/**
- * Legacy admin path. The SABOR MLS editor moved to
- * /admin/content/saborreport (now grouped under the Content nav).
- * Keep this stub so existing bookmarks and external links keep working.
- */
-export default function SaborMlsLegacyRedirect() {
-  redirect('/admin/content/saborreport');
-}
+export { default } from '../content/saborreport/page';
