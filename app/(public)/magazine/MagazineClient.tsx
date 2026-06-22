@@ -7,6 +7,7 @@ import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReaderRouter from '@/components/MagazineReaderRouter';
 import MagazineFeatured from '@/components/MagazineFeatured';
 import MagazineGuestCTA from '@/components/MagazineGuestCTA';
+import MarketSelectorButton from '@/components/MarketSelectorButton';
 import type { Magazine } from '@/lib/magazines';
 
 // Local pub type mirrors CalendarClient. Values are the dashboard SPA's
@@ -111,7 +112,11 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
           ) : null}
           <p className="text-sm uppercase tracking-[0.2em] text-gray-900 font-medium ml-2">Issues</p>
         </div>
-        <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
+        {showBack ? (
+          <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
+        ) : (
+          <MarketSelectorButton currentPub={pub} labelClassName="text-gray-500" reloadTo="/magazine" />
+        )}
       </div>
       <MagazineGuestCTA brandColor={info.color} />
       <MagazineCarousel
