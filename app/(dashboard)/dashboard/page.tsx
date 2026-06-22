@@ -122,36 +122,8 @@ const SOCIALS: Record<string, { fb: string; ig: string; li: string }> = {
   },
 };
 
-type Giveaway = {
-  headline: string;
-  intro: string;
-  ctaIntro: string;
-  outro: string;
-  fbHandle: string;
-  igHandle: string;
-  liHandle: string;
-};
-
-const GIVEAWAY: Record<string, Giveaway> = {
-  realtyline: {
-    headline: "WHO DOESN\u2019T LOVE FREE GAS?!",
-    intro: "Sign up today and you\u2019re automatically entered in our Quarterly Gas Giveaway \u2014 no purchase, no catch.",
-    ctaIntro: "Want to DOUBLE your chances? Follow us on all three:",
-    outro: "Then tag us in a Facebook shoutout. Three clicks. One tank closer to free.",
-    fbHandle: '@myrealtyline',
-    igHandle: '@myrealtyline',
-    liHandle: 'RealtyLine',
-  },
-  newsline: {
-    headline: "WHO DOESN\u2019T LOVE FREE GAS?!",
-    intro: "Sign up today and you\u2019re automatically entered in our Quarterly Gas Giveaway \u2014 no purchase, no catch.",
-    ctaIntro: "Want to DOUBLE your chances? Follow us on all three:",
-    outro: "Then tag us in a Facebook shoutout. Three clicks. One tank closer to free.",
-    fbHandle: '@newslinesa',
-    igHandle: '@newsline_sanantonio',
-    liHandle: 'Newsline San Antonio',
-  },
-};
+// Giveaway popup removed Jun 22 2026 per Tawanna — the
+// "Win Free Fuel" / quarterly gas giveaway is no longer offered.
 
 function useMetrics(userId: string | null) {
   const track = useCallback((event: string, data: Record<string, any>) => {
@@ -398,30 +370,13 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showGiveaway, setShowGiveaway] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const info = PUBS.find((p) => p.id === pub) || PUBS[0];
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !window.localStorage.getItem('caxton_giveaway_seen')) {
-      queueMicrotask(() => {
-        setShowGiveaway(true);
-        trackEvent('giveaway_popup_shown', { pub });
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   const ic = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#301D5D] mb-3 placeholder:text-[#d1d5db]';
   const sc = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-[#301D5D] mb-3 appearance-none placeholder:text-[#d1d5db]';
-
-  function dismissGiveaway() {
-    setShowGiveaway(false);
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('caxton_giveaway_seen', '1');
-    }
-  }
 
   async function handleSignup() {
     setLoading(true);
@@ -551,29 +506,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   if (mode === 'signup') {
     return (
       <div className="fixed inset-0 bg-white z-40 overflow-y-auto" style={SW}>
-        {showGiveaway && step === 1 && GIVEAWAY[pub] && (
-          <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center px-4 py-8 overflow-y-auto" style={SW}>
-            <div className="bg-white max-w-sm w-full p-7 relative my-auto">
-              <button onClick={dismissGiveaway} aria-label="Close" className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 p-1 min-w-[44px] min-h-[44px] flex items-center justify-center">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-              </button>
-              <div className="text-center mt-2 mb-6">
-                <span className="inline-block px-4 py-2 text-white text-xs uppercase tracking-[0.2em] font-medium" style={{ backgroundColor: info.color }}>{info.name}</span>
-              </div>
-              <p className="text-center text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Subscribe and you could</p>
-              <h2 className="text-center text-4xl font-bold uppercase tracking-tight leading-none mb-5" style={{ color: info.color }}>Win Free Fuel</h2>
-              <p className="text-base text-gray-600 font-light text-center leading-relaxed mb-5">Sign up now and you{"\u2019"}ll automatically be entered in our Fuel Giveaway.</p>
-              <p className="text-base text-gray-800 font-medium text-center mb-3">Triple Your Chances By Connecting With Us</p>
-              <div className="space-y-2 mb-5">
-                <a href={SOCIALS[pub]?.fb || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-md">Facebook · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.fbHandle}</span></a>
-                <a href={SOCIALS[pub]?.ig || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-md">Instagram · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.igHandle}</span></a>
-                <a href={SOCIALS[pub]?.li || '#'} target="_blank" rel="noopener noreferrer" className="block text-center py-2.5 border border-gray-300 text-base text-gray-700 font-light rounded-md">LinkedIn · <span className="text-gray-900 font-medium">{GIVEAWAY[pub]?.liHandle}</span></a>
-              </div>
-              <button onClick={() => { trackEvent('giveaway_continue_signup', { pub }); dismissGiveaway(); }} className="w-full py-3.5 text-base font-medium uppercase tracking-[0.15em] text-white" style={{ backgroundColor: info.color }}>Continue Signup</button>
-              <p className="text-center text-[11px] text-gray-400 mt-4 font-light leading-relaxed px-2">Winner will be notified via email. By entering, winner agrees to be photographed and featured in an upcoming issue.</p>
-            </div>
-          </div>
-        )}
         <div className="min-h-full flex flex-col items-center py-10">
           <div className="w-full max-w-md px-8">
             <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>{info.name}</p>
@@ -687,7 +619,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 </div>
 
                 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">Social Handles (optional)</p>
-                <p className="text-sm text-gray-400 font-light mb-3">For our giveaways: tell us your social handles so we can verify your follow when picking winners. We never message or tag you here.</p>
                 <div className="space-y-2 mb-6">
                   <input type="text" placeholder="Facebook handle (e.g. @yourname)" value={fbHandle} onChange={(e) => setFbHandle(e.target.value)} className={ic + ' mb-0'} />
                   <input type="text" placeholder="Instagram handle (e.g. @yourname)" value={igHandle} onChange={(e) => setIgHandle(e.target.value)} className={ic + ' mb-0'} />
