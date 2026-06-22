@@ -6,6 +6,7 @@ import Link from 'next/link';
 import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReaderRouter from '@/components/MagazineReaderRouter';
 import MagazineFeatured from '@/components/MagazineFeatured';
+import MagazineGuestCTA from '@/components/MagazineGuestCTA';
 import type { Magazine } from '@/lib/magazines';
 
 // Local pub type mirrors CalendarClient. Values are the dashboard SPA's
@@ -112,6 +113,7 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
         </div>
         <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
       </div>
+      <MagazineGuestCTA brandColor={info.color} />
       <MagazineCarousel
         publication={pub}
         brandColor={info.color}
