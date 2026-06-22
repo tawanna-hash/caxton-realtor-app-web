@@ -479,6 +479,12 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
             userSelect: grabActive ? 'none' : 'auto',
             WebkitUserSelect: grabActive ? 'none' : 'auto',
             pointerEvents: grabActive ? 'none' : 'auto',
+            // Force smooth resampling when the browser upscales the page
+            // JPEG beyond 1x (legacy reader: source is a fixed-res JPEG, so
+            // zoom is pure transform). Chrome/Safari default to 'auto', which
+            // can switch to a fast nearest-neighbour pass at high zoom and
+            // make small type look blocky.
+            imageRendering: 'high-quality',
           }}
         >
           <HTMLFlipBook
@@ -517,6 +523,8 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
                   className="w-full h-full object-contain"
                   draggable={false}
                   loading={idx < 4 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  style={{ imageRendering: 'high-quality' }}
                 />
               </div>
             ))}

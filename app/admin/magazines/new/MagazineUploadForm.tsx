@@ -102,7 +102,11 @@ export default function MagazineUploadForm() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pageFiles, setPageFiles] = useState<File[]>([]);
   const [pageSource, setPageSource] = useState<PageSource>('pdf-render');
-  const [renderDpi, setRenderDpi] = useState<number>(150);
+  // Default render DPI was bumped from 150 to 220 so fine print (legal
+  // copy, contact info, MLS tables) stays readable at 2-3x zoom in the
+  // reader. JPEG quality is also raised below from 0.85 to 0.92 for the
+  // same reason — text and thin lines were softening under compression.
+  const [renderDpi, setRenderDpi] = useState<number>(220);
 
   const [running, setRunning] = useState(false);
   const [steps, setSteps] = useState<StepState[]>([]);
@@ -210,7 +214,7 @@ export default function MagazineUploadForm() {
         canvas.toBlob(
           (b) => (b ? resolve(b) : reject(new Error('canvas.toBlob returned null'))),
           'image/jpeg',
-          0.85,
+          0.92,
         );
       });
       out.push(blob);
@@ -608,8 +612,8 @@ export default function MagazineUploadForm() {
                   className="border border-gray-300 rounded-md px-3 py-1.5 text-sm text-gray-900"
                 >
                   <option value={100}>100 DPI (small, fast)</option>
-                  <option value={150}>150 DPI (recommended)</option>
-                  <option value={200}>200 DPI (high)</option>
+                  <option value={150}>150 DPI (legacy default)</option>
+                  <option value={220}>220 DPI (recommended, sharp at 2-3x zoom)</option>
                   <option value={300}>300 DPI (print-quality, large)</option>
                 </select>
               </div>

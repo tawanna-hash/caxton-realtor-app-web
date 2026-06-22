@@ -492,14 +492,16 @@ export default function InteractiveMagazineReader({
         const displayWidth = cssWidth * zoom;
         const displayHeight = cssHeight * zoom;
         const displayScale = displayWidth / natural.width;
-        // Cap DPR at 2 so 3x phone screens don't render at 4x cost.
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        // Cap DPR at 3 (was 2) so Retina / 3x phone screens render at full
+        // device resolution. This is the single biggest lever for fine-detail
+        // legibility (legal copy, MLS tables) on iPhone, where window.devicePixelRatio is 3.
+        const dpr = Math.min(window.devicePixelRatio || 1, 3);
         // Cap the effective render scale so very high zoom levels (5x, 10x)
-        // don't blow up the bitmap to gigapixel sizes on mobile. Above ~4x
-        // PDF render scale, pages are already near-print-DPI and the user
-        // gets pixel-upscaling either way — the canvas keeps its CSS size
-        // (displayWidth) so layout/pan still works as expected.
-        const MAX_RENDER_SCALE = 4;
+        // don't blow up the bitmap to gigapixel sizes on mobile. We bumped
+        // this from 4 to 6 because users zoom into MLS tables and contact
+        // info that were getting browser-upscaled (blurry) beyond ~3x at the
+        // old cap. 6 keeps bitmaps under ~36MP at typical viewports.
+        const MAX_RENDER_SCALE = 6;
         const renderScale = Math.min(displayScale * dpr, MAX_RENDER_SCALE);
         const renderViewport = page.getViewport({ scale: renderScale });
 
