@@ -65,7 +65,15 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
   const [grabActive, setGrabActive] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
   const [grabHintShown, setGrabHintShown] = useState(false);
-  const panRef = useRef<{ startX: number; startY: number; scrollLeft: number; scrollTop: number } | null>(null);
+  // Pan offset in CSS pixels, applied via translate(panX, panY) on the
+  // zoomed inner. We can't use scrollLeft/scrollTop because CSS transform
+  // scale() doesn't grow the layout box — the parent overflow:auto has
+  // nothing to scroll. translate() on the same transformed element moves
+  // the page within the viewport, which is what users expect from a
+  // grab/hand tool.
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+  const panRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null);
   const scrollStageRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [jumpInput, setJumpInput] = useState('');
@@ -216,28 +224,49 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
     });
   }
 
-  // Mouse pan handlers — only fire when grab is active.
-  function handlePanMouseDown(e: React.MouseEvent) {
-    if (!grabActive || !scrollStageRef.current) return;
-    panRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      scrollLeft: scrollStageRef.current.scrollLeft,
-      scrollTop: scrollStageRef.current.scrollTop,
-    };
+  // Mouse + touch pan handlers — only fire when grab is active.
+  // Drives the panX/panY state above; the inner div applies it as a
+  // translate() prefix on the same transform as scale(zoom), so dragging
+  // physically moves the magazine page within the viewport.
+  function startPan(clientX: number, clientY: number) {
+    if (!grabActive) return;
+    panRef.current = { startX: clientX, startY: clientY, panX, panY };
     setIsPanning(true);
+  }
+  function movePan(clientX: number, clientY: number) {
+    if (!panRef.current) return;
+    const dx = clientX - panRef.current.startX;
+    const dy = clientY - panRef.current.startY;
+    setPanX(panRef.current.panX + dx);
+    setPanY(panRef.current.panY + dy);
+  }
+  function endPan() {
+    panRef.current = null;
+    setIsPanning(false);
+  }
+  function handlePanMouseDown(e: React.MouseEvent) {
+    if (!grabActive) return;
+    startPan(e.clientX, e.clientY);
     e.preventDefault();
   }
   function handlePanMouseMove(e: React.MouseEvent) {
-    if (!panRef.current || !scrollStageRef.current) return;
-    const dx = e.clientX - panRef.current.startX;
-    const dy = e.clientY - panRef.current.startY;
-    scrollStageRef.current.scrollLeft = panRef.current.scrollLeft - dx;
-    scrollStageRef.current.scrollTop = panRef.current.scrollTop - dy;
+    movePan(e.clientX, e.clientY);
   }
   function handlePanMouseUp() {
-    panRef.current = null;
-    setIsPanning(false);
+    endPan();
+  }
+  function handlePanTouchStart(e: React.TouchEvent) {
+    if (!grabActive || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    startPan(t.clientX, t.clientY);
+  }
+  function handlePanTouchMove(e: React.TouchEvent) {
+    if (!panRef.current || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    movePan(t.clientX, t.clientY);
+  }
+  function handlePanTouchEnd() {
+    endPan();
   }
 
   function cycleZoom(delta: 1 | -1) {
@@ -248,6 +277,10 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
       // Auto-enable grab when zooming in, auto-disable when returning to 1x.
       if (ZOOM_LEVELS[next] > 1 && !grabActive) setGrabActive(true);
       if (ZOOM_LEVELS[next] === 1 && grabActive) setGrabActive(false);
+      // Re-center the page whenever zoom changes so the user doesn't
+      // lose the page off-screen after a previous pan.
+      setPanX(0);
+      setPanY(0);
       trackEvent('flipbook_zoom', { magazine_id: magazine.id, level: ZOOM_LEVELS[next] });
       return next;
     });
@@ -327,6 +360,10 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
       const prev = currentPage;
       const next = e.data;
       setCurrentPage(next);
+      // Recenter the page after a flip so the user doesn't land on a new
+      // page already panned off-screen.
+      setPanX(0);
+      setPanY(0);
       trackEvent('flipbook_page_turned', {
         magazine_id: magazine.id,
         from_page: prev,
@@ -451,14 +488,19 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
           flip pages. */}
       <div
         ref={scrollStageRef}
-        className="flex-1 flex items-center justify-center overflow-auto relative"
+        className="flex-1 flex items-center justify-center overflow-hidden relative"
         style={{
           cursor: grabActive ? (isPanning ? 'grabbing' : 'grab') : 'default',
+          // Stop the browser's native touch panning so our handlers can run.
+          touchAction: grabActive ? 'none' : 'auto',
         }}
         onMouseDown={handlePanMouseDown}
         onMouseMove={handlePanMouseMove}
         onMouseUp={handlePanMouseUp}
         onMouseLeave={handlePanMouseUp}
+        onTouchStart={handlePanTouchStart}
+        onTouchMove={handlePanTouchMove}
+        onTouchEnd={handlePanTouchEnd}
       >
         {grabActive && grabHintShown && (
           <div
@@ -470,9 +512,14 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
         )}
         <div
           style={{
-            transform: `scale(${zoom})`,
+            // translate() comes first so pan is in screen-space pixels (not
+            // multiplied by scale); scale() then magnifies the positioned
+            // page. Standard pan-then-zoom composition.
+            transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
             transformOrigin: 'center center',
-            transition: 'transform 200ms ease-out',
+            // Skip the 200ms ease during an active drag so the page tracks
+            // the cursor 1:1 instead of lagging by a frame.
+            transition: isPanning ? 'none' : 'transform 200ms ease-out',
             // While grabbing: disable text/image selection and stop the
             // FlipBook from receiving raw pointer events. The pan handlers
             // are on the parent so the drag still works through this layer.
@@ -480,11 +527,11 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
             WebkitUserSelect: grabActive ? 'none' : 'auto',
             pointerEvents: grabActive ? 'none' : 'auto',
             // Force smooth resampling when the browser upscales the page
-            // JPEG beyond 1x (legacy reader: source is a fixed-res JPEG, so
-            // zoom is pure transform). Chrome/Safari default to 'auto', which
-            // can switch to a fast nearest-neighbour pass at high zoom and
-            // make small type look blocky.
-            imageRendering: 'high-quality',
+            // JPEG beyond 1x. Chrome/Safari default to 'auto' which can
+            // switch to a fast nearest-neighbour pass at high zoom and make
+            // small type look blocky. 'high-quality' is a CSS Working spec
+            // value missing from lib.dom.d.ts — hence the cast.
+            ...({ imageRendering: 'high-quality' } as React.CSSProperties),
           }}
         >
           <HTMLFlipBook
@@ -524,7 +571,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
                   draggable={false}
                   loading={idx < 4 ? 'eager' : 'lazy'}
                   decoding="async"
-                  style={{ imageRendering: 'high-quality' }}
+                  style={{ imageRendering: 'high-quality' } as React.CSSProperties}
                 />
               </div>
             ))}
