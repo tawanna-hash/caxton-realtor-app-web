@@ -109,15 +109,15 @@ export default function RealtyLineReportCard({ variant = 'inline' }: Props) {
             indicators: 'Indicadores del mes',
             listings: 'Listados',
             priceBands: 'Por rango de precio (% de ventas)',
-            members: 'Los miembros de ABoR pueden',
-            signInLink: 'iniciar sesion para descargar el informe completo',
+            members: 'Los miembros de ABOR pueden',
+            signInLink: 'iniciar sesion en ABOR para descargar el informe completo',
           }
         : {
             indicators: 'Monthly indicators',
             listings: 'Listings',
             priceBands: 'By price band (share of sales)',
-            members: 'ABoR members can',
-            signInLink: 'sign in to download the full Central Texas Housing report',
+            members: 'ABOR members can',
+            signInLink: 'sign in to ABOR to download the full Central Texas Housing report',
           },
     [lang],
   );
@@ -157,7 +157,7 @@ export default function RealtyLineReportCard({ variant = 'inline' }: Props) {
     <article
       id={`realtyline-card-${variant}`}
       className="bg-white border-b border-gray-200"
-      aria-label={`RealtyLine MLS Summary Report ${d.month_label}`}
+      aria-label={`ABOR MLS Summary Report ${d.month_label}`}
     >
       <div className="bg-white mx-3 my-3 rounded-md overflow-hidden shadow-sm">
         {/* Brand top strip */}
@@ -171,7 +171,7 @@ export default function RealtyLineReportCard({ variant = 'inline' }: Props) {
               style={{ background: 'rgba(61,7,64,0.06)', color: NEWSLINE }}
             >
               <span aria-hidden>{'\u25CF'}</span>
-              <span>RealtyLine Report</span>
+              <span>ABOR Report</span>
             </span>
             <div className="inline-flex items-center rounded-full p-0.5" style={{ background: 'rgba(48,29,93,0.08)' }}>
               <button
@@ -302,7 +302,7 @@ export default function RealtyLineReportCard({ variant = 'inline' }: Props) {
           >
             {sectionLabels.members}{' '}
             <a
-              href="https://www.abor.com/market-statistics/"
+              href="https://austin.clareityiam.net/idp/login"
               target="_blank"
               rel="noopener noreferrer"
               className="underline font-medium"

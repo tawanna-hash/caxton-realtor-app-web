@@ -227,7 +227,7 @@ export default function RealtyLineMlsAdminPage() {
     <div className="max-w-6xl mx-auto px-6 py-8">
       <div className="mb-6">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin</p>
-        <PageTitle size="md">RealtyLine Report</PageTitle>
+        <PageTitle size="md">ABOR Report</PageTitle>
         <p className="text-gray-600 mt-2 max-w-2xl">
           Update the monthly Central Texas Housing Market Report (ABoR) that appears on the dashboard and in the
           RealtyLine Austin feed. Captures every field on the official ABoR infographic, with English + Spanish
