@@ -73,6 +73,14 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
   const [openMag, setOpenMag] = useState<Magazine | null>(null);
   const [currentMag, setCurrentMag] = useState<Magazine | null>(null);
   const [autoOpenLatest, setAutoOpenLatest] = useState<boolean>(false);
+  // Guest article gate: probe /api/auth/me once on mount so we know
+  // whether to intercept article link clicks with a sign-up modal.
+  // Defaults to 'guest' so a network failure errs on showing the modal
+  // (worst case: a signed-in user sees an account-creation pitch they
+  // can dismiss; better than letting guests through to a route that
+  // does not exist yet).
+  const [authState, setAuthState] = useState<'loading' | 'guest' | 'authed'>('loading');
+  const [showArticleGate, setShowArticleGate] = useState(false);
 
   // Honor caxton:openLatestMagazine if the user lands here from the existing
   // BottomNav dispatch (will be removed in C2 once nav routes here directly).
@@ -99,6 +107,26 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
     }
     // initialMagazine is a server-passed prop, never changes after mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Probe /api/auth/me once on mount to decide whether article clicks
+  // should pass through (authed) or open the create-account gate (guest).
+  // Endpoint returns { realtor: null } for guests, { realtor: {...} } for
+  // signed-in users (always 200, never 401 -- BUG-23 contract).
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((j) => {
+        if (cancelled) return;
+        setAuthState(j && j.realtor ? 'authed' : 'guest');
+      })
+      .catch(() => {
+        if (!cancelled) setAuthState('guest');
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -145,7 +173,13 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
           brandColor={info.color}
           onOpenMagazine={() => setOpenMag(currentMag)}
           onOpenArticle={() => {
-            /* TODO(S23-followup): no /article/[id] route exists yet. Wire when articles are extracted from the dashboard SPA. */
+            // Guests must create an account to read full articles; the
+            // gate modal below renders the brand-colored Create account
+            // and Sign in CTAs. Signed-in users currently no-op until
+            // /article/[id] is wired (S23-followup).
+            if (authState !== 'authed') {
+              setShowArticleGate(true);
+            }
           }}
         />
       )}
@@ -164,6 +198,70 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
           onClose={() => setOpenMag(null)}
         />
       )}
+      {showArticleGate && (
+        <GuestArticleGateModal
+          brandColor={info.color}
+          onClose={() => setShowArticleGate(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function GuestArticleGateModal({
+  brandColor,
+  onClose,
+}: {
+  brandColor: string;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md bg-white rounded-md shadow-2xl p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none w-8 h-8 flex items-center justify-center"
+        >
+          {'\u00D7'}
+        </button>
+        <p
+          className="text-[10px] uppercase tracking-[0.25em] font-semibold mb-3"
+          style={{ color: brandColor }}
+        >
+          Realtor Account Required
+        </p>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          Create a free account to read articles.
+        </h3>
+        <p className="text-sm text-gray-600 leading-relaxed mb-5">
+          Magazine PDFs are free to read. Full articles, the advertiser
+          directory, events calendar, and the weekly feed are unlocked
+          with a free realtor account.
+        </p>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/auth/sign-up"
+            className="inline-flex items-center justify-center px-4 py-2.5 text-xs font-medium uppercase tracking-[0.1em] text-white rounded-md"
+            style={{ backgroundColor: brandColor }}
+          >
+            Create Account
+          </Link>
+          <Link
+            href="/auth/sign-in"
+            className="inline-flex items-center justify-center px-4 py-2.5 text-xs font-medium uppercase tracking-[0.1em] text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Sign In
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
