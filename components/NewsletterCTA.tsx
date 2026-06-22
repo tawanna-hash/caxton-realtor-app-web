@@ -15,10 +15,12 @@ import { useEffect, useState } from 'react';
 type Publication = PubKey;
 
 // Brand color per publication. Falls back to neutral if unknown.
-// Houston/Dallas inherit RealtyLine navy.
+// All Realty News Now markets use the unified RNN navy so the
+// newsletter Sign Up button matches the Read This Issue button on
+// the magazine spotlight and any other brand CTA on the page.
 const PUB_COLORS: Record<Publication, string> = {
   realtyline: '#301D5D',
-  newsline: '#7f1d1d',
+  newsline: '#301D5D',
   'realtyline-houston': '#301D5D',
   'realtyline-dallas': '#301D5D',
 };
