@@ -7,5 +7,15 @@
 	     installed directly from Xcode against a personal Apple ID team). -->
 	<key>aps-environment</key>
 	<string>production</string>
+
+	<!-- Universal Links: lets iOS open https://realtynewsnow.app/* URLs
+	     directly in this app instead of Safari. The matching
+	     apple-app-site-association file is served at
+	     https://realtynewsnow.app/.well-known/apple-app-site-association
+	     and declares APP_ID 3JU7K7AMUY.app.realtynewsnow. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:realtynewsnow.app</string>
+	</array>
 </dict>
 </plist>

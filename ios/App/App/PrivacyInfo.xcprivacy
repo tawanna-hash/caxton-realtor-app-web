@@ -260,6 +260,19 @@
         <string>35F9.1</string>
       </array>
     </dict>
+
+    <!-- Disk space: Capacitor's filesystem plugin queries available
+         storage before writing files. Reason E174.1 = display info
+         about disk space to the user / write a file only when there's
+         enough space. -->
+    <dict>
+      <key>NSPrivacyAccessedAPIType</key>
+      <string>NSPrivacyAccessedAPICategoryDiskSpace</string>
+      <key>NSPrivacyAccessedAPITypeReasons</key>
+      <array>
+        <string>E174.1</string>
+      </array>
+    </dict>
   </array>
 </dict>
 </plist>
