@@ -100,8 +100,22 @@ export interface SignupRow {
   passwordHash: string | null;
 }
 
-export async function insertRealtor(client: PoolClient, row: SignupRow): Promise<void> {
-  await client.query(
+/**
+ * Insert a new realtor.
+ *
+ * Returns the new id, plus the resolved email_verified_at value (NULL when the
+ * caller didn't auto-verify, a timestamp when it did). Callers that want to
+ * issue an instant session — e.g. signup-with-password on iOS where the
+ * follow-up magic-link click leaves us stranded in a separate cookie jar —
+ * pass `autoVerifyEmail: true` when a strong password has been validated.
+ */
+export async function insertRealtor(
+  client: PoolClient,
+  row: SignupRow,
+  opts: { autoVerifyEmail?: boolean } = {},
+): Promise<{ id: string; emailVerifiedAt: Date | null }> {
+  const autoVerify = !!opts.autoVerifyEmail;
+  const { rows } = await client.query<{ id: string; email_verified_at: Date | null }>(
     `INSERT INTO realtors (
        email, first_name, last_name, market,
        master_list_consent_at, master_list_consent_text, master_list_consent_ip,
@@ -111,7 +125,8 @@ export async function insertRealtor(client: PoolClient, row: SignupRow): Promise
        birthday_month, birthday_day,
        subscriptions,
        fb_handle, ig_handle, li_handle,
-       password_hash, password_set_at
+       password_hash, password_set_at,
+       email_verified_at
      ) VALUES (
        $1, $2, $3, $4,
        NOW(), $5, $6,
@@ -121,8 +136,10 @@ export async function insertRealtor(client: PoolClient, row: SignupRow): Promise
        $17, $18,
        $19,
        $20, $21, $22,
-       $23, CASE WHEN $23 IS NOT NULL THEN NOW() ELSE NULL END
-     )`,
+       $23, CASE WHEN $23 IS NOT NULL THEN NOW() ELSE NULL END,
+       CASE WHEN $24::boolean THEN NOW() ELSE NULL END
+     )
+     RETURNING id, email_verified_at`,
     [
       row.email,
       row.firstName,
@@ -147,8 +164,12 @@ export async function insertRealtor(client: PoolClient, row: SignupRow): Promise
       row.igHandle,
       row.liHandle,
       row.passwordHash,
+      autoVerify,
     ],
   );
+  const r = rows[0];
+  if (!r) throw new Error('insertRealtor returned no row');
+  return { id: r.id, emailVerifiedAt: r.email_verified_at };
 }
 
 export async function findRealtorByEmailTx(
@@ -409,6 +430,93 @@ export async function deleteRealtorAccount(realtorId: string): Promise<boolean> 
     );
     return (r.rowCount ?? 0) > 0;
   });
+}
+
+// -----------------------------------------------------------------------------
+// Sign in with Apple support
+// -----------------------------------------------------------------------------
+
+export interface RealtorWithApple extends RealtorBasic {
+  apple_sub: string | null;
+  first_name: string;
+  last_name: string;
+}
+
+/** Look up a realtor by their stable Apple `sub` identifier. */
+export async function findRealtorByAppleSub(
+  appleSub: string,
+): Promise<RealtorWithApple | null> {
+  const rows = await query<RealtorWithApple>(
+    `SELECT id, email, email_verified_at, apple_sub, first_name, last_name
+       FROM realtors
+      WHERE apple_sub = $1
+      LIMIT 1`,
+    [appleSub],
+  );
+  return rows[0] ?? null;
+}
+
+/**
+ * Attach an Apple `sub` to an existing realtor (matched by email on first
+ * Apple sign-in). Also verifies their email since Apple has done so.
+ */
+export async function attachAppleSubToRealtor(
+  realtorId: string,
+  appleSub: string,
+): Promise<void> {
+  await query(
+    `UPDATE realtors
+        SET apple_sub = $2,
+            email_verified_at = COALESCE(email_verified_at, NOW())
+      WHERE id = $1`,
+    [realtorId, appleSub],
+  );
+}
+
+/**
+ * Create a brand-new realtor from a Sign in with Apple flow. Apple only
+ * shares first/last name on the FIRST authorization, so callers should be
+ * prepared for blank names — we accept whatever we got and let the user
+ * edit later from their profile screen.
+ *
+ * Email is auto-verified because Apple verifies it for us.
+ */
+export async function insertRealtorViaApple(
+  client: PoolClient,
+  args: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    appleSub: string;
+    consentText: string;
+    ipAddress: string | null;
+  },
+): Promise<{ id: string; email: string }> {
+  const { rows } = await client.query<{ id: string; email: string }>(
+    `INSERT INTO realtors (
+       email, first_name, last_name, market,
+       master_list_consent_at, master_list_consent_text, master_list_consent_ip,
+       subscriptions,
+       apple_sub,
+       email_verified_at
+     ) VALUES (
+       $1, $2, $3, 'austin',
+       NOW(), $4, $5,
+       ARRAY['daily_brief']::text[],
+       $6,
+       NOW()
+     )
+     RETURNING id, email`,
+    [
+      args.email,
+      args.firstName || '',
+      args.lastName || '',
+      args.consentText,
+      args.ipAddress,
+      args.appleSub,
+    ],
+  );
+  return rows[0];
 }
 
 // Re-export for callers that want a transaction.

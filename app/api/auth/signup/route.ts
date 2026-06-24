@@ -21,6 +21,9 @@ import {
   type SignupRow,
 } from '@/lib/server/realtors-store';
 import { getRequestIp } from '@/lib/server/auth/admin';
+import { signSessionToken } from '@/lib/server/jwt';
+import { setRealtorSessionCookie } from '@/lib/server/auth/cookies';
+import { logger } from '@/lib/server/logger';
 
 export const runtime = 'nodejs';
 
@@ -76,6 +79,18 @@ export const POST = withErrorHandling(async (req: Request) => {
   // bcrypt CPU work. Password is optional during the rollout.
   const passwordHash = input.password ? await bcrypt.hash(input.password, 12) : null;
 
+  // Auto-verify path: when the user sets a strong password at signup we treat
+  // password possession as proof-of-intent and skip the magic-link round trip.
+  // This is the critical fix for iOS Capacitor users — the magic link opens
+  // in Safari (separate cookie jar from the in-app WKWebView) so they could
+  // never complete signup. With a password set, we issue the session cookie
+  // directly in the response that the in-app fetch() already trusts.
+  const autoSignIn = !!passwordHash;
+
+  // Captured inside the transaction, used outside it to set the cookie.
+  let newRealtorId: string | null = null;
+  let newRealtorEmail: string | null = null;
+
   await withNeonTransaction(async (client) => {
     const existing = await findRealtorByEmailTx(client, input.email);
 
@@ -119,19 +134,42 @@ export const POST = withErrorHandling(async (req: Request) => {
       liHandle: input.liHandle ?? null,
       passwordHash,
     };
-    await insertRealtor(client, row);
+    const inserted = await insertRealtor(client, row, { autoVerifyEmail: autoSignIn });
+    newRealtorId = inserted.id;
+    newRealtorEmail = input.email;
 
-    await createAndSendMagicLink({
-      email: input.email,
-      firstName: input.firstName,
-      purpose: 'signup_verification',
-      ipAddress: ipAddress ?? undefined,
-      userAgent,
-    });
+    if (!autoSignIn) {
+      // No password set — fall back to the legacy magic-link verification
+      // flow. (Web users without password support still go through email.)
+      await createAndSendMagicLink({
+        email: input.email,
+        firstName: input.firstName,
+        purpose: 'signup_verification',
+        ipAddress: ipAddress ?? undefined,
+        userAgent,
+      });
+    }
   });
+
+  // Brand-new account with password -> issue a session cookie right now so
+  // the in-app WebView is signed in on the very next request. The client
+  // sees `autoSignedIn: true` and routes straight to the feed instead of
+  // "Check your email".
+  if (autoSignIn && newRealtorId && newRealtorEmail) {
+    const token = signSessionToken({ realtorId: newRealtorId, email: newRealtorEmail });
+    const response = NextResponse.json({
+      success: true,
+      autoSignedIn: true,
+      message: 'Account created. You are signed in.',
+    });
+    await setRealtorSessionCookie(response, token);
+    logger.info({ realtorId: newRealtorId }, 'Signup auto-sign-in succeeded');
+    return response;
+  }
 
   return NextResponse.json({
     success: true,
+    autoSignedIn: false,
     message: `Check your email for a verification link. It expires in ${MAGIC_LINK_EXPIRY_MINUTES} minutes.`,
   });
 });

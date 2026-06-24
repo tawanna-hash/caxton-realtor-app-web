@@ -4,6 +4,7 @@ import "./globals.css";
 import { PostHogProvider } from "./posthog-provider";
 import PushBootstrap from "@/components/PushBootstrap";
 import NativeSplashBootstrap from "@/components/NativeSplashBootstrap";
+import DeepLinkBootstrap from "@/components/DeepLinkBootstrap";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const SITE_URL = "https://realtynewsnow.app";
@@ -114,6 +115,10 @@ export default function RootLayout({
               soon as React has painted, instead of waiting for the 1500ms
               auto-hide timeout. No-op on web. */}
           <NativeSplashBootstrap />
+          {/* Native iOS shell only: catch incoming Universal Link taps
+              (e.g. magic-link emails) and route the WebView to the deep
+              path so cold-launches don't strand users on the homepage. */}
+          <DeepLinkBootstrap />
           {children}
         </PostHogProvider>
         {/* Vercel Speed Insights — collects real-user Core Web Vitals (LCP,
