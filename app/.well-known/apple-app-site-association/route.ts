@@ -12,7 +12,7 @@
 //
 // App ID format: <TEAM_ID>.<BUNDLE_ID>
 //   Team ID:    3JU7K7AMUY   (Caxton Publications, from developer.apple.com)
-//   Bundle ID:  com.realtynewsnow.app  (from caxton-realtor-ios/app.json)
+//   Bundle ID:  app.realtynewsnow  (from caxton-realtor-ios/app.json)
 //
 // Paths "*" + "NOT" /api/* and /.well-known/* means every public page on
 // realtynewsnow.app opens in-app when the user has the app installed.
@@ -25,7 +25,7 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-static';
 export const revalidate = 3600; // 1 hour — Apple caches it, but allow updates
 
-const APP_ID = '3JU7K7AMUY.com.realtynewsnow.app';
+const APP_ID = '3JU7K7AMUY.app.realtynewsnow';
 
 const AASA = {
   applinks: {
