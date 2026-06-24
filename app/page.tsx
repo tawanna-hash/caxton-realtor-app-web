@@ -17,6 +17,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/server/auth/user';
+import LandingAppleButton from '@/components/LandingAppleButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,6 +74,7 @@ export default async function HomePage({ searchParams }: PageProps) {
           >
             Create an account
           </Link>
+          <LandingAppleButton />
         </div>
 
         <footer className="mt-16 text-xs text-slate-500">

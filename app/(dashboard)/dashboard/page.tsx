@@ -602,6 +602,24 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
             {/* Step 1: License + Identity */}
             {step === 1 && (
               <div>
+                {isAppleSignInAvailable() && (
+                  <>
+                    <button
+                      onClick={handleAppleSignIn}
+                      disabled={loading}
+                      aria-label="Sign up with Apple"
+                      className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-black text-white disabled:opacity-40 mb-3"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.04c-.02-2.7 2.2-3.99 2.3-4.06-1.26-1.84-3.21-2.09-3.9-2.12-1.66-.17-3.24.97-4.08.97-.85 0-2.15-.95-3.54-.92-1.82.03-3.5 1.06-4.44 2.69-1.89 3.28-.48 8.13 1.36 10.79.9 1.3 1.97 2.76 3.36 2.7 1.35-.05 1.86-.87 3.49-.87 1.62 0 2.08.87 3.51.84 1.45-.02 2.37-1.32 3.26-2.63 1.02-1.51 1.45-2.97 1.47-3.05-.03-.01-2.82-1.08-2.85-4.29zm-2.69-7.86c.75-.9 1.25-2.16 1.11-3.41-1.07.04-2.37.71-3.14 1.61-.7.79-1.31 2.07-1.14 3.29 1.19.09 2.41-.6 3.17-1.49z"/></svg>
+                      <span>Sign up with Apple</span>
+                    </button>
+                    <div className="flex items-center my-4" aria-hidden="true">
+                      <div className="flex-1 h-px bg-gray-200" />
+                      <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or fill out manually</span>
+                      <div className="flex-1 h-px bg-gray-200" />
+                    </div>
+                  </>
+                )}
                 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">License Number</p>
                 <div className="flex gap-2 mb-3">
                   {LICENSE_TYPES.map((lt) => (
@@ -747,6 +765,24 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-xs uppercase tracking-wider text-gray-400">{showPassword ? 'Hide' : 'Show'}</button>
           </div>
           <button onClick={handlePasswordLogin} disabled={loading || !email || !password} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Signing in…' : 'Sign In'}</button>
+          {isAppleSignInAvailable() && (
+            <>
+              <div className="flex items-center my-3" aria-hidden="true">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+              <button
+                onClick={handleAppleSignIn}
+                disabled={loading}
+                aria-label="Sign in with Apple"
+                className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-black text-white disabled:opacity-40 mb-3"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.04c-.02-2.7 2.2-3.99 2.3-4.06-1.26-1.84-3.21-2.09-3.9-2.12-1.66-.17-3.24.97-4.08.97-.85 0-2.15-.95-3.54-.92-1.82.03-3.5 1.06-4.44 2.69-1.89 3.28-.48 8.13 1.36 10.79.9 1.3 1.97 2.76 3.36 2.7 1.35-.05 1.86-.87 3.49-.87 1.62 0 2.08.87 3.51.84 1.45-.02 2.37-1.32 3.26-2.63 1.02-1.51 1.45-2.97 1.47-3.05-.03-.01-2.82-1.08-2.85-4.29zm-2.69-7.86c.75-.9 1.25-2.16 1.11-3.41-1.07.04-2.37.71-3.14 1.61-.7.79-1.31 2.07-1.14 3.29 1.19.09 2.41-.6 3.17-1.49z"/></svg>
+                <span>Sign in with Apple</span>
+              </button>
+            </>
+          )}
           <button onClick={() => { if (typeof window !== 'undefined') window.location.href = '/auth/forgot-password'; }} className="w-full text-center py-2 text-sm text-gray-500 font-light">Forgot password?</button>
           <button onClick={() => setMode('choice')} className="w-full text-center py-2 text-base text-gray-400 font-light">Back</button>
         </div>
