@@ -14,7 +14,7 @@ import {
   listBuilderInventory,
   type Publication as DbPublication,
 } from '@/lib/builder-inventory';
-import { builderNameToSlug } from '@/lib/builder-slug';
+import { summarizeBuilders, type BuilderSummary } from '@/lib/builder-summary';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,16 +34,7 @@ const PUB_ALIAS: Record<string, DbPublication | 'all'> = {
   both: 'both',
 };
 
-type BuilderSummary = {
-  name: string;
-  slug: string;
-  communitiesCount: number;
-  inventoryCount: number;
-  promotionsCount: number;
-  totalCount: number;
-  thumbnailUrl: string | null;
-  cities: string[];
-};
+export type { BuilderSummary };
 
 export async function GET(req: NextRequest) {
   const raw = (req.nextUrl.searchParams.get('pub') ?? 'realtyline').toLowerCase();
@@ -60,46 +51,7 @@ export async function GET(req: NextRequest) {
       limit: 500,
     });
 
-    // Aggregate by builder_name.
-    const byBuilder = new Map<string, BuilderSummary>();
-    for (const r of rows) {
-      const key = r.builderName.trim();
-      if (!key || key.toLowerCase() === 'test') continue;
-      let s = byBuilder.get(key);
-      if (!s) {
-        s = {
-          name: key,
-          slug: builderNameToSlug(key),
-          communitiesCount: 0,
-          inventoryCount: 0,
-          promotionsCount: 0,
-          totalCount: 0,
-          thumbnailUrl: null,
-          cities: [],
-        };
-        byBuilder.set(key, s);
-      }
-      s.totalCount += 1;
-      if (r.kind === 'promotion') s.promotionsCount += 1;
-      else if (r.homeType === 'community') s.communitiesCount += 1;
-      else s.inventoryCount += 1;
-
-      // Capture first non-null thumbnail (featured rows sort first, so this is
-      // already the best candidate from the listBuilderInventory ordering).
-      if (!s.thumbnailUrl && r.thumbnailUrl) {
-        s.thumbnailUrl = r.thumbnailUrl;
-      }
-      if (r.city && !s.cities.includes(r.city)) {
-        s.cities.push(r.city);
-      }
-    }
-
-    const builders = Array.from(byBuilder.values()).sort((a, b) => {
-      // Builders with more rows first, then alpha.
-      if (b.totalCount !== a.totalCount) return b.totalCount - a.totalCount;
-      return a.name.localeCompare(b.name);
-    });
-
+    const builders = summarizeBuilders(rows);
     return NextResponse.json({ builders });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown error';

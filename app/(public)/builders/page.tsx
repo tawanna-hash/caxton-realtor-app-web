@@ -1,67 +1,81 @@
 // app/(public)/builders/page.tsx
 //
-// Builder / Developer Advertisers hub.
-// Reached from the BottomNav "Builders" tab.
+// Builders & Developers hub — Phase 2 redesign.
 //
-// Clean, minimal design matching the rest of the app:
-// white background, gray-700 typography, simple section header,
-// list of three navigational rows (Communities, Move-in Ready, Promotions).
+// Layout mirrors the iOS BuildersScreen.tsx:
+//   1. Eyebrow + headline + lede
+//   2. AdSlot strip (featured_builder_strip — kept from old design)
+//   3. Three quick-link rows: Communities / Move-in Ready / Promotions
+//   4. List of builder cards, each linking to /builders/[slug]
 //
-// Server component — pure static markup.
+// Server component. Aggregates rows via summarizeBuilders() so the list is
+// always in sync with /api/builders and the native iOS Builders screen.
 
 import Link from 'next/link';
-import { Home, Building2, Tag, ArrowRight } from 'lucide-react';
+import Image from 'next/image';
+import { Home, Building2, Tag, ArrowRight, ChevronRight } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
 import { AdSlot } from '@/components/ads/AdSlot';
+import { listBuilderInventory } from '@/lib/builder-inventory';
+import { summarizeBuilders } from '@/lib/builder-summary';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Builder & Developer Advertisers \u2014 Realty News Now',
+  title: 'Builders & Developers — Realty News Now',
   description:
-    'New home communities, move-in ready homes, and promotions from Austin builders and developers.',
+    'New home communities, move-in ready homes, and promotions from Austin and San Antonio builders and developers.',
 };
 
-type LinkItem = {
+const QUICK_LINKS: {
   label: string;
   description: string;
   href: string;
   Icon: typeof Home;
-};
-
-const LINKS: LinkItem[] = [
+}[] = [
   {
     label: 'New Home Communities',
     description: 'Master-planned developments and active community listings.',
-    href: '/communities?pub=realtyline',
+    href: '/communities',
     Icon: Building2,
   },
   {
     label: 'Move-in Ready Homes',
     description: 'Specific homes available now from builder partners.',
-    href: '/inventory?kind=listing&pub=realtyline',
+    href: '/inventory?kind=listing',
     Icon: Home,
   },
   {
     label: 'Promotions',
     description: 'Current incentives, rate buy-downs, and limited-time offers.',
-    href: '/inventory?kind=promotion&pub=realtyline',
+    href: '/inventory?kind=promotion',
     Icon: Tag,
   },
 ];
 
-export default function BuildersHubPage() {
+export default async function BuildersHubPage() {
+  // Hub is intentionally pub-agnostic: we want to show every active builder
+  // across both publications so the directory feels complete. Page-level
+  // filtering by publication happens on /communities + /inventory, where the
+  // user can toggle scope.
+  const rows = await listBuilderInventory({
+    status: 'active',
+    publication: 'both',
+    limit: 500,
+  });
+  const builders = summarizeBuilders(rows);
+
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
-        <header className="mb-8 sm:mb-10">
+        <header className="mb-8">
           <Link
             href="/advertisers"
             className="inline-block text-sm uppercase tracking-[0.2em] text-gray-500 hover:text-gray-900 font-medium mb-2 transition-colors"
           >
             Advertisers
           </Link>
-          <PageTitle size="md">
-            Builders &amp; Developers
-          </PageTitle>
+          <PageTitle size="md">Builders &amp; Developers</PageTitle>
           <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
             Explore communities, move-in ready homes, and current promotions
             from our builder and developer partners.
@@ -71,7 +85,7 @@ export default function BuildersHubPage() {
         <AdSlot slug="featured_builder_strip" className="mb-6" />
 
         <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">
-          {LINKS.map(({ label, description, href, Icon }) => (
+          {QUICK_LINKS.map(({ label, description, href, Icon }) => (
             <li key={label}>
               <Link
                 href={href}
@@ -89,14 +103,87 @@ export default function BuildersHubPage() {
                   </span>
                 </span>
                 <ArrowRight
-                  className="flex-shrink-0 text-gray-400 group-hover:text-gray-700 transition-colors"
                   strokeWidth={1.75}
                   size={18}
+                  className="flex-shrink-0 text-gray-400 group-hover:text-gray-700 transition-colors"
                 />
               </Link>
             </li>
           ))}
         </ul>
+
+        {builders.length > 0 && (
+          <section className="mt-10">
+            <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-3">
+              Builders
+            </h2>
+            <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">
+              {builders.map((b) => {
+                const countsParts: string[] = [];
+                if (b.communitiesCount)
+                  countsParts.push(
+                    `${b.communitiesCount} ${
+                      b.communitiesCount === 1 ? 'community' : 'communities'
+                    }`,
+                  );
+                if (b.inventoryCount)
+                  countsParts.push(`${b.inventoryCount} move-in ready`);
+                if (b.promotionsCount)
+                  countsParts.push(
+                    `${b.promotionsCount} ${
+                      b.promotionsCount === 1 ? 'promo' : 'promos'
+                    }`,
+                  );
+                const counts = countsParts.join(' · ');
+                const cities = b.cities.slice(0, 3).join(', ');
+
+                return (
+                  <li key={b.slug}>
+                    <Link
+                      href={`/builders/${b.slug}`}
+                      className="flex items-center gap-4 py-4 group hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-md"
+                    >
+                      <div className="relative flex-shrink-0 w-14 h-14 rounded-md bg-gray-50 overflow-hidden flex items-center justify-center">
+                        {b.thumbnailUrl ? (
+                          <Image
+                            src={b.thumbnailUrl}
+                            alt=""
+                            fill
+                            sizes="56px"
+                            className="object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <Building2 strokeWidth={1.5} size={20} className="text-gray-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-base font-semibold text-gray-900 truncate">
+                          {b.name}
+                        </div>
+                        {counts && (
+                          <div className="text-sm text-gray-600 truncate mt-0.5">
+                            {counts}
+                          </div>
+                        )}
+                        {cities && (
+                          <div className="text-xs text-gray-500 truncate mt-0.5">
+                            {cities}
+                          </div>
+                        )}
+                      </div>
+                      <ChevronRight
+                        strokeWidth={1.75}
+                        size={18}
+                        className="flex-shrink-0 text-gray-400 group-hover:text-gray-700 transition-colors"
+                      />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
       </div>
     </main>
   );
