@@ -13,7 +13,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Home, Building2, Tag, ArrowRight, ChevronRight } from 'lucide-react';
+import { Building2, ChevronRight } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { listBuilderInventory } from '@/lib/builder-inventory';
@@ -27,32 +27,6 @@ export const metadata = {
   description:
     'New home communities, move-in ready homes, and promotions from local builders and developers.',
 };
-
-const QUICK_LINKS: {
-  label: string;
-  description: string;
-  href: string;
-  Icon: typeof Home;
-}[] = [
-  {
-    label: 'New Home Communities',
-    description: 'Master-planned developments and active community listings.',
-    href: '/communities',
-    Icon: Building2,
-  },
-  {
-    label: 'Move-in Ready Homes',
-    description: 'Specific homes available now from builder partners.',
-    href: '/inventory?kind=listing',
-    Icon: Home,
-  },
-  {
-    label: 'Promotions',
-    description: 'Current incentives, rate buy-downs, and limited-time offers.',
-    href: '/inventory?kind=promotion',
-    Icon: Tag,
-  },
-];
 
 export default async function BuildersHubPage() {
   // Each market is standalone — scope to the active publication only.
@@ -83,36 +57,8 @@ export default async function BuildersHubPage() {
 
         <AdSlot slug="featured_builder_strip" className="mb-6" />
 
-        <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">
-          {QUICK_LINKS.map(({ label, description, href, Icon }) => (
-            <li key={label}>
-              <Link
-                href={href}
-                className="flex items-center gap-4 px-1 py-5 group"
-              >
-                <span className="flex-shrink-0 w-10 h-10 rounded-md border border-gray-300 flex items-center justify-center text-gray-700 group-hover:border-gray-400 group-hover:text-gray-900 transition-colors">
-                  <Icon strokeWidth={1.75} size={20} />
-                </span>
-                <span className="flex-1 min-w-0">
-                  <span className="block text-base font-medium text-gray-900 leading-tight">
-                    {label}
-                  </span>
-                  <span className="block text-sm text-gray-600 font-light leading-snug mt-1">
-                    {description}
-                  </span>
-                </span>
-                <ArrowRight
-                  strokeWidth={1.75}
-                  size={18}
-                  className="flex-shrink-0 text-gray-400 group-hover:text-gray-700 transition-colors"
-                />
-              </Link>
-            </li>
-          ))}
-        </ul>
-
         {builders.length > 0 && (
-          <section className="mt-10">
+          <section>
             <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-3">
               Builders
             </h2>
