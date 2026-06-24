@@ -758,6 +758,43 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       ADD COLUMN IF NOT EXISTS email_notes         text
   `);
 
+  // ----------------------------------------------------------------
+  // Manual verification override.
+  //
+  // When a row sits in email_status='Pending' because the SMTP probe
+  // is blocked (Google Workspace, M365, Proofpoint typically refuse
+  // RCPT TO probes from cloud IPs), an admin can manually promote the
+  // row to Valid (or demote a Valid row to Invalid after a hard bounce)
+  // without losing the underlying probe verdict. The override is the
+  // "effective" status the rest of the app uses; email_status stays
+  // as the last probe result so we can re-probe later and see the
+  // override decoupled from the technical signal.
+  //
+  //   effective_status = email_override_status ?? email_status
+  //
+  // email_override_by + _at + _reason exist for the audit trail. Set
+  // and cleared via /api/admin/mailing/email-override. A re-probe
+  // does NOT clear the override — only an explicit "Clear override"
+  // call does.
+  // ----------------------------------------------------------------
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_override_status text
+        CHECK (email_override_status IS NULL OR email_override_status IN ('Valid','Invalid'))
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_override_by     text
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_override_at     timestamptz
+  `);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+      ADD COLUMN IF NOT EXISTS email_override_reason text
+  `);
+
   // ───────────────────────────────────────────────────────────────────
   // verify_jobs — background queue-drain runs.
   //

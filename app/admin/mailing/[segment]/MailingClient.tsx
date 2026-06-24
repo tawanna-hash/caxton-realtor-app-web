@@ -333,6 +333,51 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
   };
 
   // ------------------------------------------------------------------
+  // Manual override — promote/demote SMTP verdict.
+  //   action 'set'   -> persist override Valid | Invalid (+ optional reason)
+  //   action 'clear' -> remove override; effective status reverts to probe
+  // The drawer wires both per-button callbacks through to this helper.
+  // ------------------------------------------------------------------
+  const applyEmailOverride = async (
+    id: string,
+    action: 'set' | 'clear',
+    status?: 'Valid' | 'Invalid',
+    reason?: string,
+  ) => {
+    setBusy(`override-${id}`);
+    try {
+      const body: Record<string, unknown> = { id, action };
+      if (action === 'set') {
+        body.status = status;
+        if (reason && reason.trim()) body.reason = reason.trim();
+      }
+      const res = await fetch('/api/admin/mailing/email-override', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 409) {
+          throw new Error(j?.error || 'Cannot promote an Invalid probe verdict to Valid — re-run the probe first.');
+        }
+        throw new Error(j?.detail || j?.error || `HTTP ${res.status}`);
+      }
+      if (j.row) mergeRow(j.row);
+      if (action === 'clear') {
+        showToast('Override cleared.');
+      } else {
+        showToast(`Marked as ${status}.`);
+      }
+      await reload();
+    } catch (err) {
+      showToast(`Override failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  // ------------------------------------------------------------------
   // Bulk USPS verify — selected rows, or all rows on the current page
   // if nothing is selected. USPS v3 is single-address per request, so
   // we loop, throttled to ~5/sec.
@@ -1118,6 +1163,9 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
           onSaved={(row) => { mergeRow(row); showToast('Saved.'); }}
           onVerifyAddress={() => verifyAddress(editing.id)}
           onVerifyEmail={() => verifyEmail(editing.id)}
+          onEmailOverride={(action, status, reason) =>
+            applyEmailOverride(editing.id, action, status, reason)
+          }
           busy={busy}
         />
       )}
@@ -1571,7 +1619,7 @@ function ProximityBadges({
 // ============================================================
 
 function EditDrawer({
-  row, segment, onClose, onSaved, onVerifyAddress, onVerifyEmail, busy,
+  row, segment, onClose, onSaved, onVerifyAddress, onVerifyEmail, onEmailOverride, busy,
 }: {
   row: MailingContactRow;
   segment: MailingSegment;
@@ -1579,6 +1627,11 @@ function EditDrawer({
   onSaved: (row: MailingContactRow) => void;
   onVerifyAddress: () => void;
   onVerifyEmail: () => void;
+  onEmailOverride: (
+    action: 'set' | 'clear',
+    status?: 'Valid' | 'Invalid',
+    reason?: string,
+  ) => void | Promise<void>;
   busy: string | null;
 }) {
   const [form, setForm] = useState({
@@ -1659,6 +1712,42 @@ function EditDrawer({
   const fullName = [form.first_name, form.last_name].filter(Boolean).join(' ') || 'Contact';
   const addrBusy = busy === `addr-${row.id}`;
   const emailBusy = busy === `email-${row.id}`;
+  const overrideBusy = busy === `override-${row.id}`;
+
+  // Manual override state
+  //   probeStatus     = what the SMTP probe last returned (raw verdict)
+  //   overrideStatus  = manual override on top of probe, if any
+  //   effectiveStatus = override wins; this is what KPIs / segments see
+  // The Mark-as-Valid path is blocked on Invalid probes (re-probe first).
+  const probeStatus: VerifyStatus = (row.email_status ?? 'Pending') as VerifyStatus;
+  const overrideStatus = row.email_override_status ?? null;
+  const effectiveStatus: VerifyStatus = (overrideStatus ?? probeStatus) as VerifyStatus;
+  const isOverridden = overrideStatus !== null;
+  // Invalid probes can only become Valid by re-running the probe.
+  const canMarkValid = probeStatus !== 'Invalid' && effectiveStatus !== 'Valid';
+  const canMarkInvalid = effectiveStatus !== 'Invalid';
+
+  const [overrideReason, setOverrideReason] = useState('');
+
+  const formattedOverrideAt = row.email_override_at
+    ? new Date(row.email_override_at).toLocaleDateString(undefined, {
+        month: 'numeric', day: 'numeric', year: '2-digit',
+      })
+    : null;
+  // Show just the local part of the admin email to keep the badge tight.
+  const overrideByShort = row.email_override_by
+    ? row.email_override_by.split('@')[0]
+    : null;
+
+  const handleOverride = async (
+    action: 'set' | 'clear',
+    status?: 'Valid' | 'Invalid',
+  ) => {
+    const reason = action === 'set' ? overrideReason : undefined;
+    await onEmailOverride(action, status, reason);
+    // Clear reason after successful submit; row prop will refresh from parent.
+    if (action === 'set') setOverrideReason('');
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
@@ -1733,28 +1822,107 @@ function EditDrawer({
               <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">
                 Email Verification
               </div>
-              <div className="text-sm">
-                {row.email_status === 'Valid' && (
-                  <span className="text-green-700 font-medium">✓ Valid (SMTP)</span>
+              {/* Effective verdict — override (if any) wins over the probe */}
+              <div className="text-sm flex items-center gap-2 flex-wrap">
+                {effectiveStatus === 'Valid' && (
+                  <span className="text-green-700 font-medium">
+                    ✓ Valid{isOverridden ? '' : ' (SMTP)'}
+                  </span>
                 )}
-                {row.email_status === 'Invalid' && (
+                {effectiveStatus === 'Invalid' && (
                   <span className="text-red-700 font-medium">✗ Invalid</span>
                 )}
-                {(!row.email_status || row.email_status === 'Pending') && (
+                {effectiveStatus === 'Pending' && (
                   <span className="text-gray-600">Pending</span>
                 )}
+                {isOverridden && (
+                  <span
+                    className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300"
+                    title={
+                      `Manual override: ${overrideStatus}` +
+                      (overrideByShort ? ` by ${overrideByShort}` : '') +
+                      (formattedOverrideAt ? ` on ${formattedOverrideAt}` : '') +
+                      (row.email_override_reason ? ` — ${row.email_override_reason}` : '')
+                    }
+                  >
+                    Override
+                  </span>
+                )}
               </div>
+              {/* When overridden, surface the raw probe result for auditing */}
+              {isOverridden && (
+                <div className="text-[11px] text-gray-500 leading-tight">
+                  Probe: <span className="font-medium">{probeStatus}</span>
+                  {overrideByShort && (
+                    <> · by {overrideByShort}</>
+                  )}
+                  {formattedOverrideAt && (
+                    <> · {formattedOverrideAt}</>
+                  )}
+                </div>
+              )}
+              {isOverridden && row.email_override_reason && (
+                <div className="text-[11px] text-gray-600 italic leading-tight">
+                  “{row.email_override_reason}”
+                </div>
+              )}
               <div className="text-[11px] text-gray-500 leading-tight break-all">
                 {row.email ?? <span className="italic">no email</span>}
               </div>
-              <button
-                type="button"
-                disabled={emailBusy || !form.email}
-                onClick={onVerifyEmail}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
-              >
-                {emailBusy ? 'Verifying…' : 'Verify Email'}
-              </button>
+
+              {/* Action row: probe + manual overrides */}
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                <button
+                  type="button"
+                  disabled={emailBusy || overrideBusy || !form.email}
+                  onClick={onVerifyEmail}
+                  className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
+                >
+                  {emailBusy ? 'Verifying…' : 'Verify Email'}
+                </button>
+                {canMarkValid && (
+                  <button
+                    type="button"
+                    disabled={emailBusy || overrideBusy || !form.email}
+                    onClick={() => { void handleOverride('set', 'Valid'); }}
+                    className="text-xs px-2.5 py-1 rounded-md bg-green-700 text-white hover:bg-green-800 disabled:opacity-50"
+                    title="Manually mark this email as Valid (e.g. for Google Workspace inboxes that block SMTP probes from cloud IPs)"
+                  >
+                    {overrideBusy ? 'Working…' : 'Mark as Valid'}
+                  </button>
+                )}
+                {canMarkInvalid && (
+                  <button
+                    type="button"
+                    disabled={emailBusy || overrideBusy || !form.email}
+                    onClick={() => { void handleOverride('set', 'Invalid'); }}
+                    className="text-xs px-2.5 py-1 rounded-md bg-red-700 text-white hover:bg-red-800 disabled:opacity-50"
+                    title="Manually mark this email as Invalid"
+                  >
+                    {overrideBusy ? 'Working…' : 'Mark as Invalid'}
+                  </button>
+                )}
+                {isOverridden && (
+                  <button
+                    type="button"
+                    disabled={emailBusy || overrideBusy}
+                    onClick={() => { void handleOverride('clear'); }}
+                    className="text-xs px-2.5 py-1 rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 disabled:opacity-50"
+                    title="Remove the manual override; effective status will revert to the SMTP probe verdict"
+                  >
+                    Clear override
+                  </button>
+                )}
+              </div>
+              {/* Optional reason input — stored on the override row + audit log */}
+              <input
+                type="text"
+                value={overrideReason}
+                onChange={(e) => setOverrideReason(e.target.value)}
+                placeholder="Optional reason (e.g. confirmed via reply, Google Workspace)"
+                maxLength={500}
+                className="w-full mt-1 px-2 py-1 text-[11px] rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-[#301D5D]"
+              />
             </div>
           </div>
 

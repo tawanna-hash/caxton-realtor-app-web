@@ -46,9 +46,9 @@ export async function listHoldingContacts(opts: {
      WHERE stage = 'holding'
        AND (
          ${filter} = 'all'
-         OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+         OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
          OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                    AND (email_status IS NULL OR email_status <> 'Valid'))
+                                    AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
        )
        AND (
          ${source}::text IS NULL
@@ -86,9 +86,9 @@ export async function listHoldingContacts(opts: {
      WHERE stage = 'holding'
        AND (
          ${filter} = 'all'
-         OR (${filter} = 'verified' AND (addr_status = 'Valid' OR email_status = 'Valid'))
+         OR (${filter} = 'verified' AND (addr_status = 'Valid' OR COALESCE(email_override_status, email_status) = 'Valid'))
          OR (${filter} = 'pending'  AND (addr_status  IS NULL OR addr_status  <> 'Valid')
-                                    AND (email_status IS NULL OR email_status <> 'Valid'))
+                                    AND (COALESCE(email_override_status, email_status) IS NULL OR COALESCE(email_override_status, email_status) <> 'Valid'))
        )
        AND (
          ${source}::text IS NULL
