@@ -15,6 +15,8 @@
  * any existing realtor record.
  */
 
+import { Capacitor } from '@capacitor/core';
+import { SignInWithApple } from '@capacitor-community/apple-sign-in';
 import { isNative, nativePlatform } from './runtime';
 
 export interface AppleSignInResult {
@@ -32,10 +34,19 @@ export interface AppleSignInResult {
 
 /**
  * Returns true on iOS Capacitor builds where Sign in with Apple is
- * supported. The button should be hidden otherwise (per Apple HIG).
+ * supported AND the native plugin is registered with the bridge. The
+ * button should be hidden otherwise (per Apple HIG).
  */
 export function isAppleSignInAvailable(): boolean {
-  return isNative() && nativePlatform() === 'ios';
+  if (!isNative() || nativePlatform() !== 'ios') return false;
+  // Capacitor.isPluginAvailable confirms the native side actually has
+  // the SignInWithApple class linked in. If pod install missed it, the
+  // button stays hidden so users aren't shown a non-functional control.
+  try {
+    return Capacitor.isPluginAvailable('SignInWithApple');
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -48,20 +59,6 @@ export function isAppleSignInAvailable(): boolean {
  */
 export async function signInWithApple(): Promise<AppleSignInResult | null> {
   if (!isAppleSignInAvailable()) return null;
-
-  // Dynamic import so the web bundle doesn't pull in the native plugin.
-  let SignInWithApple: typeof import('@capacitor-community/apple-sign-in').SignInWithApple;
-  try {
-    ({ SignInWithApple } = await import('@capacitor-community/apple-sign-in'));
-  } catch {
-    // Plugin not yet installed in this build — treat as unavailable so the
-    // app still loads. Surfaces as a button that does nothing; the user
-    // would have to use email/password instead.
-    if (typeof console !== 'undefined') {
-      console.warn('[apple-sign-in] plugin not installed; skipping');
-    }
-    return null;
-  }
 
   let resp;
   try {
