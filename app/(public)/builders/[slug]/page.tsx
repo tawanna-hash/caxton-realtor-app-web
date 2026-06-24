@@ -17,6 +17,7 @@ import { ArrowRight } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
 import { listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
 import { slugToBuilderName } from '@/lib/builder-slug-server';
+import { getServerPub } from '@/lib/publication';
 import BuilderInventoryRowCard from '@/components/builders/BuilderInventoryRowCard';
 
 export const dynamic = 'force-dynamic';
@@ -78,10 +79,12 @@ export default async function Page({ params }: PageProps) {
     notFound();
   }
 
+  // Each market is standalone — scope to the active publication only.
+  const pub = await getServerPub();
   const rows = await listBuilderInventory({
     status: 'active',
     builderName,
-    publication: 'both',
+    publication: pub,
     limit: 500,
   });
   const bucketed = bucketRows(rows);

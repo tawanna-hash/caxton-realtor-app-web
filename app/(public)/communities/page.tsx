@@ -3,15 +3,18 @@
 // Builder communities directory — Phase 2 redesign.
 //
 // Layout mirrors the iOS CommunitiesScreen.tsx:
-//   - Eyebrow row (publication, optionally builder)
-//   - One-line lede
+//   - Optional builder eyebrow
+//   - Headline + one-line lede
 //   - Vertical list of BuilderInventoryRowCard rows
 //
+// Each market is standalone — the page is scoped to the active publication
+// (cookie `caxton_pub`, set by the market picker). There is no aggregate
+// view: Austin and San Antonio are separate products.
+//
 // Server component. Optional ?builder= filters to a single builder.
-// Optional ?pub= scopes the publication; defaults to 'both' so the directory
-// surfaces every active community across Austin + San Antonio.
 
-import { listBuilderInventory, type Publication } from '@/lib/builder-inventory';
+import { listBuilderInventory } from '@/lib/builder-inventory';
+import { getServerPub } from '@/lib/publication';
 import BuilderInventoryRowCard from '@/components/builders/BuilderInventoryRowCard';
 import BuildersBreadcrumb from '@/components/BuildersBreadcrumb';
 import PageTitle from '@/components/ui/PageTitle';
@@ -22,41 +25,16 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Builder Communities — Realty News Now',
   description:
-    'New home communities and master-planned developments from Austin and San Antonio builders and developers.',
+    'New home communities and master-planned developments from local builders and developers.',
 };
-
-const PUB_LABEL: Record<Publication, string> = {
-  realtyline: 'RealtyLine Austin',
-  newsline: 'Newsline San Antonio',
-  'realtyline-houston': 'RealtyLine Houston',
-  'realtyline-dallas': 'RealtyLine Dallas/FTW',
-  both: 'Austin & San Antonio',
-};
-
-function normalizePub(raw: string | undefined): Publication {
-  switch (raw) {
-    case 'realtyline':
-    case 'newsline':
-    case 'realtyline-houston':
-    case 'realtyline-dallas':
-    case 'both':
-      return raw;
-    case 'austin':
-      return 'realtyline';
-    case 'san_antonio':
-      return 'newsline';
-    default:
-      return 'both';
-  }
-}
 
 type PageProps = {
-  searchParams: Promise<{ builder?: string; pub?: string }>;
+  searchParams: Promise<{ builder?: string }>;
 };
 
 export default async function Page({ searchParams }: PageProps) {
-  const { builder, pub: pubRaw } = await searchParams;
-  const pub = normalizePub(pubRaw);
+  const { builder } = await searchParams;
+  const pub = await getServerPub();
 
   const rows = await listBuilderInventory({
     status: 'active',
@@ -72,10 +50,12 @@ export default async function Page({ searchParams }: PageProps) {
       <main className="min-h-screen bg-white">
         <div className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
           <header className="mb-6">
-            <div className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">
-              {builder ? `${PUB_LABEL[pub]} · ${builder}` : PUB_LABEL[pub]}
-            </div>
-            <PageTitle size="md" className="mt-2">
+            {builder && (
+              <div className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">
+                {builder}
+              </div>
+            )}
+            <PageTitle size="md" className={builder ? 'mt-2' : ''}>
               {builder ? `${builder} Communities` : 'New Home Communities'}
             </PageTitle>
             <p className="text-base text-gray-700 font-light leading-relaxed mt-3">

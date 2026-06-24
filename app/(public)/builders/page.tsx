@@ -18,13 +18,14 @@ import PageTitle from '@/components/ui/PageTitle';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { listBuilderInventory } from '@/lib/builder-inventory';
 import { summarizeBuilders } from '@/lib/builder-summary';
+import { getServerPub } from '@/lib/publication';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Builders & Developers — Realty News Now',
   description:
-    'New home communities, move-in ready homes, and promotions from Austin and San Antonio builders and developers.',
+    'New home communities, move-in ready homes, and promotions from local builders and developers.',
 };
 
 const QUICK_LINKS: {
@@ -54,13 +55,11 @@ const QUICK_LINKS: {
 ];
 
 export default async function BuildersHubPage() {
-  // Hub is intentionally pub-agnostic: we want to show every active builder
-  // across both publications so the directory feels complete. Page-level
-  // filtering by publication happens on /communities + /inventory, where the
-  // user can toggle scope.
+  // Each market is standalone — scope to the active publication only.
+  const pub = await getServerPub();
   const rows = await listBuilderInventory({
     status: 'active',
-    publication: 'both',
+    publication: pub,
     limit: 500,
   });
   const builders = summarizeBuilders(rows);

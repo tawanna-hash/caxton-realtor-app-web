@@ -5,13 +5,16 @@
 // Layout mirrors the iOS InventoryScreen.tsx:
 //   - Title swaps based on ?kind=listing|promotion (defaults to listing)
 //   - Optional ?builder= filters to a single builder
-//   - Optional ?pub= scopes the publication; defaults to 'both'
-//   - Vertical list of BuilderInventoryRowCard rows
+//
+// Each market is standalone — the page is scoped to the active publication
+// (cookie `caxton_pub`, set by the market picker). There is no aggregate
+// view: Austin and San Antonio are separate products.
 //
 // Server component. Inventory submission/detail flows remain at
 // /inventory/submit and /inventory/[id]; those routes are untouched.
 
-import { listBuilderInventory, type Publication, type Kind } from '@/lib/builder-inventory';
+import { listBuilderInventory, type Kind } from '@/lib/builder-inventory';
+import { getServerPub } from '@/lib/publication';
 import BuilderInventoryRowCard from '@/components/builders/BuilderInventoryRowCard';
 import BuildersBreadcrumb from '@/components/BuildersBreadcrumb';
 import PageTitle from '@/components/ui/PageTitle';
@@ -22,47 +25,22 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Move-in Ready & Promotions — Realty News Now',
   description:
-    'Move-in ready homes and current promotions from every builder and developer in Austin and San Antonio.',
+    'Move-in ready homes and current promotions from local builders and developers.',
 };
-
-const PUB_LABEL: Record<Publication, string> = {
-  realtyline: 'RealtyLine Austin',
-  newsline: 'Newsline San Antonio',
-  'realtyline-houston': 'RealtyLine Houston',
-  'realtyline-dallas': 'RealtyLine Dallas/FTW',
-  both: 'Austin & San Antonio',
-};
-
-function normalizePub(raw: string | undefined): Publication {
-  switch (raw) {
-    case 'realtyline':
-    case 'newsline':
-    case 'realtyline-houston':
-    case 'realtyline-dallas':
-    case 'both':
-      return raw;
-    case 'austin':
-      return 'realtyline';
-    case 'san_antonio':
-      return 'newsline';
-    default:
-      return 'both';
-  }
-}
 
 function normalizeKind(raw: string | undefined): Kind {
   return raw === 'promotion' ? 'promotion' : 'listing';
 }
 
 type PageProps = {
-  searchParams: Promise<{ kind?: string; builder?: string; pub?: string }>;
+  searchParams: Promise<{ kind?: string; builder?: string }>;
 };
 
 export default async function Page({ searchParams }: PageProps) {
   const params = await searchParams;
   const kind = normalizeKind(params.kind);
   const builder = params.builder;
-  const pub = normalizePub(params.pub);
+  const pub = await getServerPub();
 
   const rows = await listBuilderInventory({
     status: 'active',
@@ -73,8 +51,6 @@ export default async function Page({ searchParams }: PageProps) {
   });
 
   const heading = kind === 'promotion' ? 'Promotions' : 'Move-in Ready Homes';
-  const eyebrowParts = [PUB_LABEL[pub]];
-  if (builder) eyebrowParts.push(builder);
 
   return (
     <>
@@ -82,10 +58,12 @@ export default async function Page({ searchParams }: PageProps) {
       <main className="min-h-screen bg-white">
         <div className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
           <header className="mb-6">
-            <div className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">
-              {eyebrowParts.join(' · ')}
-            </div>
-            <PageTitle size="md" className="mt-2">
+            {builder && (
+              <div className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">
+                {builder}
+              </div>
+            )}
+            <PageTitle size="md" className={builder ? 'mt-2' : ''}>
               {builder ? `${builder} ${heading}` : heading}
             </PageTitle>
             <p className="text-base text-gray-700 font-light leading-relaxed mt-3">
