@@ -624,7 +624,19 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
   if (mode === 'signup') {
     return (
-      <div className="fixed inset-0 bg-white z-40 overflow-y-auto" style={SW}>
+      <div
+        className="fixed inset-0 bg-white z-40 overflow-y-auto"
+        style={{
+          ...SW,
+          // Reserve room for iOS notch (top) + home indicator (bottom) +
+          // any active soft keyboard. Without this padding the final
+          // "Continue" button can sit behind the home strip / keyboard
+          // toolbar and be unreachable.
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom:
+            'calc(env(safe-area-inset-bottom) + var(--kb-inset-bottom, 0px) + 40px)',
+        }}
+      >
         <div className="min-h-full flex flex-col items-center py-10">
           <div className="w-full max-w-md px-8">
             <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
@@ -797,7 +809,16 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
   if (mode === 'login') {
     return (
-      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
+      <div
+        className="fixed inset-0 bg-white z-40 overflow-y-auto"
+        style={{
+          ...SW,
+          paddingTop: 'calc(env(safe-area-inset-top) + 24px)',
+          paddingBottom:
+            'calc(env(safe-area-inset-bottom) + var(--kb-inset-bottom, 0px) + 40px)',
+        }}
+      >
+        <div className="min-h-full flex flex-col items-center justify-center">
         <div className="w-full max-w-md px-8">
           <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
           <h2 className="text-2xl text-gray-900 font-semibold text-center mb-6">Welcome Back</h2>
@@ -829,12 +850,22 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
           <button onClick={() => { if (typeof window !== 'undefined') window.location.href = '/auth/forgot-password'; }} className="w-full text-center py-2 text-sm text-gray-500 font-light">Forgot password?</button>
           <button onClick={() => setMode('choice')} className="w-full text-center py-2 text-base text-gray-400 font-light">Back</button>
         </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
+    <div
+      className="fixed inset-0 bg-white z-40 overflow-y-auto"
+      style={{
+        ...SW,
+        paddingTop: 'calc(env(safe-area-inset-top) + 24px)',
+        paddingBottom:
+          'calc(env(safe-area-inset-bottom) + var(--kb-inset-bottom, 0px) + 40px)',
+      }}
+    >
+      <div className="min-h-full flex flex-col items-center justify-center">
       <div className="w-full max-w-md px-8">
         <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Sign In to Continue</h2>
@@ -858,6 +889,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
             </button>
           </>
         )}
+      </div>
       </div>
     </div>
   );
