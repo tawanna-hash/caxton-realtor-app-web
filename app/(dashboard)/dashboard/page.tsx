@@ -609,7 +609,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
   if (mode === 'sent') {
     return (
-      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-40" style={SW}>
+      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50" style={SW}>
         <div className="w-full max-w-md px-8 text-center">
           <div className="text-5xl mb-4">{'\u2709'}</div>
           <h2 className="text-2xl text-gray-900 font-semibold mb-3">Check Your Email</h2>
@@ -625,7 +625,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   if (mode === 'signup') {
     return (
       <div
-        className="fixed inset-0 bg-white z-40 overflow-y-auto"
+        className="fixed inset-0 bg-white z-50 overflow-y-auto"
         style={{
           ...SW,
           // Reserve room for iOS notch (top) + home indicator (bottom) +
@@ -810,7 +810,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   if (mode === 'login') {
     return (
       <div
-        className="fixed inset-0 bg-white z-40 overflow-y-auto"
+        className="fixed inset-0 bg-white z-50 overflow-y-auto"
         style={{
           ...SW,
           paddingTop: 'calc(env(safe-area-inset-top) + 24px)',
@@ -857,7 +857,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
   return (
     <div
-      className="fixed inset-0 bg-white z-40 overflow-y-auto"
+      className="fixed inset-0 bg-white z-50 overflow-y-auto"
       style={{
         ...SW,
         paddingTop: 'calc(env(safe-area-inset-top) + 24px)',
