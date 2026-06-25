@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import PasswordSection from './PasswordSection';
 import BiometricToggle from './BiometricToggle';
+import NativePushToggle from './NativePushToggle';
 
 type User = {
   email?: string;
@@ -77,6 +78,10 @@ export default function ProfilePanel({ user, accentColor = '#301D5D', onClose }:
           {/* Native-only: Face ID / Touch ID app-lock toggle. Renders
               nothing on web or on devices without biometrics. */}
           <BiometricToggle accentColor={accentColor} />
+
+          {/* Native-only: push-notifications toggle. Renders nothing on
+              web — web push has its own banner CTA elsewhere. */}
+          <NativePushToggle accentColor={accentColor} />
 
           <p className="text-xs text-gray-400 font-light text-center">
             More profile settings coming soon.

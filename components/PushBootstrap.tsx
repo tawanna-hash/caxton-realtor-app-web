@@ -11,35 +11,61 @@
 //   2. If a push subscription already exists, refresh its server row
 //      (last_seen_at) by POSTing /api/push/subscribe again. This keeps
 //      the subscription list accurate even when users come and go.
+//   3. (Native) Install pushNotificationActionPerformed handlers so a
+//      tap on a notification navigates to data.url, then opportunistically
+//      re-register if permission is already granted.
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { isNative } from '@/lib/native/runtime';
-import { registerNativePush } from '@/lib/native/push';
+import { installNativePushHandlers, registerNativePush } from '@/lib/native/push';
+import { PushNotifications } from '@capacitor/push-notifications';
 
 export default function PushBootstrap() {
+  const router = useRouter();
+
+  // Native: install push handlers + (if already granted) refresh the
+  // server-side token. Listen for caxton:push-nav so a notification tap
+  // routes through Next's client router for instant SPA navigation.
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (!isNative()) return;
 
-    // Native (iOS/Android app shell) path: register with APNs/FCM. The
-    // native plugin handles permission prompting; we don't auto-prompt
-    // here either — registerNativePush only requests when the user
-    // tapped 'Enable' (see PushOptInButton). Until then, this is a
-    // best-effort 'permissions already granted' check.
-    if (isNative()) {
-      (async () => {
-        try {
-          const { PushNotifications } = await import('@capacitor/push-notifications');
-          const perm = await PushNotifications.checkPermissions();
-          if (perm.receive === 'granted') {
-            await registerNativePush();
-          }
-        } catch {
-          /* ignore — best-effort */
+    let cancelled = false;
+
+    const onNav = (e: Event) => {
+      const detail = (e as CustomEvent<{ target?: string }>).detail;
+      const target = detail?.target;
+      if (typeof target !== 'string' || target.length === 0) return;
+      // Use replace so the system 'Open' from a notification doesn't stack
+      // a phantom history entry the user can't back out of.
+      router.replace(target);
+    };
+    window.addEventListener('caxton:push-nav', onNav);
+
+    (async () => {
+      try {
+        await installNativePushHandlers();
+        if (cancelled) return;
+        const perm = await PushNotifications.checkPermissions();
+        if (perm.receive === 'granted') {
+          await registerNativePush();
         }
-      })();
-      return;
-    }
+      } catch {
+        /* best-effort */
+      }
+    })();
 
+    return () => {
+      cancelled = true;
+      window.removeEventListener('caxton:push-nav', onNav);
+    };
+  }, [router]);
+
+  // Web: register service worker + refresh subscription row.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isNative()) return;
     if (!('serviceWorker' in navigator)) return;
 
     let cancelled = false;

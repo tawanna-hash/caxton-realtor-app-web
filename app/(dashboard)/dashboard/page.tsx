@@ -10,6 +10,7 @@ import ProfilePanel from '@/components/ProfilePanel';
 import { getApiBase } from '@/lib/api-base';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
 import PushOptInBanner from '@/components/PushOptInBanner';
+import NativePushBanner from '@/components/NativePushBanner';
 import { SocialLinks } from '@/components/SocialLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import SaborReportCard from '@/components/SaborReportCard';
@@ -1408,6 +1409,22 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
       )}
       {!showPreLaunch && (
         <PushOptInBanner
+          market={
+            pub === 'realtyline'
+              ? 'austin'
+              : pub === 'newsline'
+              ? 'san_antonio'
+              : pub === 'realtyline-houston'
+              ? 'houston'
+              : pub === 'realtyline-dallas'
+              ? 'dallas'
+              : null
+          }
+        />
+      )}
+      {!showPreLaunch && (
+        <NativePushBanner
+          realtorId={user?.id ?? null}
           market={
             pub === 'realtyline'
               ? 'austin'
