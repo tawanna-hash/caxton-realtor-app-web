@@ -9,13 +9,30 @@
 // Presentational: parent owns drawerOpen state, user/auth state, and the pub
 // switch + logout handlers. This component just renders.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { ADMIN_NAV } from '@/lib/admin-nav';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
 import PushOptInButton from '@/components/PushOptInButton';
+import { isNative } from '@/lib/native/runtime';
+
+// Push notifications work in: the native iOS app (Capacitor + APNs) and any
+// browser that exposes ServiceWorker + PushManager. iOS Safari (non-PWA, non-
+// native) doesn't, so we hide the whole Notifications block there — users on
+// that path should install the iOS app instead.
+function usePushSupported(): boolean {
+  const [supported, setSupported] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const next = isNative()
+      ? true
+      : 'serviceWorker' in navigator && 'PushManager' in window;
+    queueMicrotask(() => setSupported(next));
+  }, []);
+  return supported;
+}
 
 type User = { id?: string; email?: string } | null;
 
@@ -143,6 +160,7 @@ export default function NavDrawer({
   onPubSwitch,
 }: Props) {
   const pathname = usePathname();
+  const pushSupported = usePushSupported();
 
   // Collapsible parent state. Auto-open any parent whose subitem matches the
   // current pathname so users see where they are without a manual click.
@@ -439,11 +457,16 @@ export default function NavDrawer({
           <div className="py-4 border-t border-white/10 space-y-1">
             {user || isAdmin ? (
               <>
-                <div className="px-3 py-1">
-                  <PushOptInButton
-                    className="inline-flex items-center w-full justify-center px-3 py-2 rounded-md text-sm font-medium text-white bg-white/10 hover:bg-white/20 transition"
-                  />
-                </div>
+                {pushSupported && (
+                  <div className="px-3 pt-1 pb-2">
+                    <p className="text-[11px] uppercase tracking-[0.15em] text-white/50 font-medium mb-2 px-1">
+                      Notifications
+                    </p>
+                    <PushOptInButton
+                      className="inline-flex items-center w-full justify-center px-3 py-2 rounded-md text-sm font-medium text-white bg-white/10 hover:bg-white/20 transition"
+                    />
+                  </div>
+                )}
                 <button
                   onClick={onLogout}
                   className="block w-full text-left px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/80 font-medium rounded-md hover:text-white hover:bg-white/10 transition"

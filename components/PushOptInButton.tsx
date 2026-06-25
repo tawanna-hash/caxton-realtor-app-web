@@ -86,16 +86,15 @@ export default function PushOptInButton({ realtorId, market, className, hideWhen
 
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       // iOS Safari only exposes PushManager when the site is installed as
-      // a PWA. Give those users a useful instruction instead of a dead end.
-      if (detectIosSafari() && !isStandalonePWA()) {
-        setStatus('ios-needs-pwa');
-      } else {
-        setStatus('unsupported');
-      }
+      // a PWA. The native iOS app handles push directly via APNs, so the
+      // legacy A2HS branch (still present below) is rendered as null.
+      const next =
+        detectIosSafari() && !isStandalonePWA() ? 'ios-needs-pwa' : 'unsupported';
+      queueMicrotask(() => setStatus(next));
       return;
     }
     if (Notification.permission === 'denied') {
-      setStatus('denied');
+      queueMicrotask(() => setStatus('denied'));
       return;
     }
     (async () => {
@@ -205,20 +204,10 @@ export default function PushOptInButton({ realtorId, market, className, hideWhen
   }
 
   if (status === 'ios-needs-pwa') {
-    if (hideWhenInactive) return null;
-    return (
-      <button
-        type="button"
-        disabled
-        title="On iPhone, tap the Share icon in Safari and choose 'Add to Home Screen' to enable notifications."
-        className={
-          className ||
-          'inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-600 cursor-not-allowed'
-        }
-      >
-        Add to Home Screen for alerts
-      </button>
-    );
+    // The native iOS app handles push directly via APNs. On iOS Safari
+    // the legacy A2HS prompt is misleading because users are pointed at
+    // the native app instead. Hide the button entirely in this branch.
+    return null;
   }
 
   if (status === 'denied') {
