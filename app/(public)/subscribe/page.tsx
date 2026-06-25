@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
+import { haptics } from '@/lib/native/haptics';
 
 type Selection = 'realtyline' | 'newslinesa' | 'both' | null;
 
@@ -265,14 +266,17 @@ function SubscribeForm({
           body?.error ||
             'Something went wrong on our end. Please try again in a moment.',
         );
+        void haptics.notify('error');
         return;
       }
 
       setSubmitted(true);
+      void haptics.notify('success');
     } catch {
       setErrorMessage(
         'We could not reach the server. Check your connection and try again.',
       );
+      void haptics.notify('error');
     } finally {
       setSubmitting(false);
     }

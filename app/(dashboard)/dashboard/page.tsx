@@ -25,6 +25,7 @@ import { haptics } from '@/lib/native/haptics';
 import { isAppleSignInAvailable, signInWithApple } from '@/lib/native/apple-sign-in';
 import { openExternal } from '@/lib/native/external-link';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
+import MarketSwitcherSheet from '@/components/MarketSwitcherSheet';
 
 const API = getApiBase();
 
@@ -161,6 +162,9 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
   );
 }
 
+// iOS HIG: bottom sheet (was a center modal). Grabber, safe-area-inset-bottom
+// CTA, body scroll lock, Esc + backdrop dismiss. Matches the
+// MarketSwitcherSheet pattern so the picker→sheet flow feels consistent.
 function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; name: string }; onClose: () => void }) {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -168,6 +172,21 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
   const [website, setWebsite] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
+
+  // iOS HIG: lock body scroll while the sheet is open so the underlying
+  // page doesn't bleed through when the keyboard lifts the layout.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  // Esc dismiss (Bluetooth keyboards / Stage Manager).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -184,32 +203,66 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
         const j = await res.json().catch(() => ({}));
         setError(j?.detail || j?.error || 'Something went wrong. Please try again.');
         setStatus('error');
+        void haptics.notify('error');
         return;
       }
       setStatus('success');
+      void haptics.notify('success');
       trackEvent('market_interest_signup', { market: market.id });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error');
       setStatus('error');
+      void haptics.notify('error');
     }
   }
 
+  // iOS HIG: bottom sheet shell with grabber + safe-area-inset-bottom.
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-md w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-[60] flex items-end justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Notify me when ${market.name} launches`}
+    >
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      />
+      <div
+        className="relative w-full max-w-md bg-white rounded-t-2xl shadow-2xl pb-[env(safe-area-inset-bottom)] animate-[sheetUp_220ms_ease-out]"
+        style={{ animationName: 'sheetUp' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-center pt-2.5 pb-1">
+          <span className="w-9 h-1 rounded-full bg-gray-300" aria-hidden />
+        </div>
+        <div className="px-5 pt-2 pb-5">
         {status === 'success' ? (
           <div className="text-center py-6">
             <p className="text-xl font-semibold text-gray-900 mb-2">You&rsquo;re on the list</p>
             <p className="text-gray-600 mb-6">We&rsquo;ll email you the moment {market.name} launches.</p>
-            <button onClick={onClose} className="px-6 py-2 bg-gray-900 text-white rounded-md">Close</button>
+            <button
+              onClick={onClose}
+              className="w-full min-h-[48px] px-6 py-3 bg-gray-900 text-white rounded-md font-semibold"
+            >
+              Close
+            </button>
           </div>
         ) : (
           <>
             <div className="flex items-start justify-between mb-2">
-              <h3 className="text-xl font-semibold text-gray-900">Notify me when {market.name} launches</h3>
-              <button onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-2">&times;</button>
+              <h3 className="text-lg font-semibold text-gray-900">Notify me when {market.name} launches</h3>
+              <button
+                onClick={onClose}
+                aria-label="Close"
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-2 min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2"
+              >
+                &times;
+              </button>
             </div>
-            <p className="text-sm text-gray-500 mb-5">No spam. One email at launch.</p>
+            <p className="text-sm text-gray-500 mb-4">No spam. One email at launch.</p>
             <form onSubmit={submit} className="space-y-3">
               <input
                 type="email"
@@ -217,7 +270,7 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-3 border border-gray-300 rounded-md text-base"
+                className="w-full px-3 py-3.5 border border-gray-300 rounded-md text-base"
                 autoFocus
               />
               <input
@@ -225,7 +278,7 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
                 placeholder="Your name (optional)"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-3 border border-gray-300 rounded-md text-base"
+                className="w-full px-3 py-3.5 border border-gray-300 rounded-md text-base"
               />
               {/* Honeypot: hidden from humans, present to bots. */}
               <input
@@ -241,14 +294,22 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
               <button
                 type="submit"
                 disabled={status === 'submitting'}
-                className="w-full px-4 py-3 bg-gray-900 text-white rounded-md font-semibold disabled:opacity-60"
+                onClick={() => { void haptics.light(); }}
+                className="w-full min-h-[48px] px-4 py-3 bg-gray-900 text-white rounded-md font-semibold disabled:opacity-60"
               >
                 {status === 'submitting' ? 'Submitting...' : 'Notify me'}
               </button>
             </form>
           </>
         )}
+        </div>
       </div>
+      <style jsx>{`
+        @keyframes sheetUp {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -1133,6 +1194,11 @@ export default function DashboardPage() {
   );
 }
 
+// onSwitch is still passed by the parent (legacy contract) but is no
+// longer invoked from Feed — MarketSwitcherSheet calls persistPub() and
+// hard-reloads to '/' directly. Keep the prop so parent typings remain
+// stable.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- legacy prop kept for parent typing stability
 function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number; onRefresh: () => void }) {
   const [tab, setTab] = useState('n');
 
@@ -1192,6 +1258,29 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
   const [profileOpen, setProfileOpen] = useState(false);
   const [marketDrawerOpen, setMarketDrawerOpen] = useState(false);
   const [marketNotifyFor, setMarketNotifyFor] = useState<{ id: ComingSoonPubId; name: string } | null>(null);
+
+  // iOS HIG: surface the Notify-Me bottom sheet when MarketSwitcherSheet
+  // (mounted from any page via the header title-as-switcher) sent the
+  // user to /?notify=<id>. Strips the query so a refresh doesn't reopen.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    queueMicrotask(() => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('notify');
+        if (!id) return;
+        const meta = COMING_SOON_PUBS.find((p) => p.id === id);
+        if (meta) {
+          setMarketNotifyFor({ id: meta.id, name: meta.name });
+          trackEvent('coming_soon_market_click', { market: meta.id, via: 'url' });
+        }
+        const url = new URL(window.location.href);
+        url.searchParams.delete('notify');
+        window.history.replaceState(null, '', url.toString());
+      } catch {}
+    });
+  }, []);
+
   const track = useMetrics(user?.id || null);
   // For launched pubs (realtyline, newsline) `info` comes from the legacy
   // PUBS array which carries the marketing-copy tagline. For pre-launch
@@ -1578,104 +1667,16 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
       {profileOpen && (
         <ProfilePanel user={user} accentColor={info.color} onClose={() => setProfileOpen(false)} />
       )}
-      {marketDrawerOpen && (
-        <div
-          className="fixed inset-0 z-50 flex justify-end"
-          onClick={() => setMarketDrawerOpen(false)}
-        >
-          <div className="absolute inset-0 bg-black/40" />
-          <div
-            className="relative w-full max-w-md h-full bg-white shadow-2xl overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-            style={SW}
-          >
-            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
-              <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium">Select Your Market</p>
-              <button
-                type="button"
-                onClick={() => setMarketDrawerOpen(false)}
-                className="text-gray-400 text-2xl leading-none min-h-[44px] min-w-[44px] flex items-center justify-center"
-                aria-label="Close"
-              >
-                {'\u00D7'}
-              </button>
-            </div>
-            <div>
-              {/* Active markets */}
-              {[
-                { id: 'realtyline', label: 'RealtyLine Austin', monogram: 'RL' },
-                { id: 'newsline', label: 'Newsline San Antonio', monogram: 'NS' },
-              ].map((m) => {
-                const isCurrent = pub === m.id;
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => {
-                      void haptics.medium();
-                      setMarketDrawerOpen(false);
-                      if (isCurrent) return;
-                      try {
-                        const maxAge = 60 * 60 * 24 * 365;
-                        document.cookie = `caxton_pub=${m.id}; path=/; max-age=${maxAge}; SameSite=Lax`;
-                        localStorage.setItem('caxton_pub', m.id);
-                        localStorage.removeItem('caxton_selected_article');
-                        localStorage.removeItem('caxton_selected_event');
-                        window.dispatchEvent(new Event('savedPubChange'));
-                      } catch {}
-                      onSwitch(m.id);
-                      if (typeof window !== 'undefined') {
-                        window.location.assign('/');
-                      }
-                    }}
-                    className="w-full text-left px-4 py-5 border-b border-gray-100 bg-white hover:bg-gray-50 flex items-center gap-4"
-                  >
-                    <div
-                      className="w-12 h-12 rounded-md flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: '#301D5D' }}
-                    >
-                      <span className="text-white text-sm font-medium">{m.monogram}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-base font-semibold text-gray-900">{m.label}</p>
-                    </div>
-                    {isCurrent && (
-                      <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Current</span>
-                    )}
-                  </button>
-                );
-              })}
-              {/* Coming-soon markets */}
-              {[
-                { id: 'realtyline-houston' as ComingSoonPubId, label: 'RealtyLine Houston', monogram: 'RH' },
-                { id: 'realtyline-dallas' as ComingSoonPubId, label: 'RealtyLine Dallas/Ft. Worth', monogram: 'RD' },
-              ].map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => {
-                    setMarketDrawerOpen(false);
-                    setMarketNotifyFor({ id: m.id, name: m.label });
-                    trackEvent('coming_soon_market_click', { market: m.id });
-                  }}
-                  className="w-full text-left px-4 py-5 border-b border-gray-100 bg-gray-50 hover:bg-gray-100 flex items-center gap-4"
-                >
-                  <div
-                    className="w-12 h-12 rounded-md flex items-center justify-center flex-shrink-0 opacity-60"
-                    style={{ backgroundColor: '#301D5D' }}
-                  >
-                    <span className="text-white text-sm font-medium">{m.monogram}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-semibold text-gray-700">{m.label}</p>
-                  </div>
-                  <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 flex-shrink-0">Coming Soon</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* iOS HIG: market picker is the shared MarketSwitcherSheet now
+          (used by AppShell header + onboarding too). Single source of
+          truth — the old custom side-drawer was removed during the
+          dedupe pass. Coming-soon picks route via the ?notify= URL
+          query string and are caught by the effect above. */}
+      <MarketSwitcherSheet
+        open={marketDrawerOpen}
+        currentPub={pub}
+        onClose={() => setMarketDrawerOpen(false)}
+      />
       {marketNotifyFor && <NotifyMeModal market={marketNotifyFor} onClose={() => setMarketNotifyFor(null)} />}
     </div>
   );

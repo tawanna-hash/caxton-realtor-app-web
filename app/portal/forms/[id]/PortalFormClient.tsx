@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { PortalFormSchema } from '@/lib/portal';
+import { haptics } from '@/lib/native/haptics';
 
 export default function PortalFormClient({
   assignmentId,
@@ -34,6 +35,7 @@ export default function PortalFormClient({
     for (const field of schema.fields) {
       if (field.required && !(answers[field.key] ?? '').trim()) {
         setError(`Please complete: ${field.label}`);
+        void haptics.notify('error');
         return;
       }
     }
@@ -47,9 +49,11 @@ export default function PortalFormClient({
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setError(data?.error ?? 'Submit failed');
+        void haptics.notify('error');
         return;
       }
       setDone(true);
+      void haptics.notify('success');
       router.refresh();
     } finally {
       setSubmitting(false);

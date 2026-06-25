@@ -2,6 +2,7 @@
 
 import { type PubKey } from '@/lib/pub-meta';
 import { useEffect, useMemo, useState } from 'react';
+import { haptics } from '@/lib/native/haptics';
 import { useRouter } from 'next/navigation';
 import { APP_AD_SLOTS, PACKAGES, EBLASTS } from '@/lib/media-kit';
 import {
@@ -106,6 +107,7 @@ export default function InquireForm({
     if (!payload.name || !payload.email || !payload.message) {
       setStatus('error');
       setErrorMsg('Name, email, and message are required.');
+      void haptics.notify('error');
       return;
     }
 
@@ -121,6 +123,7 @@ export default function InquireForm({
         } | null;
         setStatus('error');
         setErrorMsg(body?.error ?? `Submit failed (${res.status})`);
+        void haptics.notify('error');
         return;
       }
       setSubmitted({
@@ -130,9 +133,11 @@ export default function InquireForm({
         company: payload.company,
       });
       setStatus('success');
+      void haptics.notify('success');
     } catch (err) {
       setStatus('error');
       setErrorMsg(err instanceof Error ? err.message : 'Network error');
+      void haptics.notify('error');
     }
   }
 
