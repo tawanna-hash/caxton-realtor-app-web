@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { Magazine } from '@/lib/magazines';
 import { trackEvent } from '../app/posthog-provider';
+import { usePtrRefresh } from '@/hooks/use-ptr-refresh';
 
 // Loose shape — the news feed comes from WordPress via /api/news/[publication]
 // and uses inconsistent field names (head/title, sum/excerpt/summary, etc.).
@@ -30,6 +31,9 @@ interface MagazineFeaturedProps {
 
 export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine, onOpenArticle }: MagazineFeaturedProps) {
   const [liveNews, setLiveNews] = useState<NewsArticle[] | null>(null);
+  // Pull-to-refresh nonce — increments on every PTR so the news fetch
+  // below re-runs.
+  const ptrNonce = usePtrRefresh();
 
   // Fetch news directly. Feed isn't mounted on the magazines phase,
   // so we cannot rely on its caxton:newsList event firing.
@@ -50,7 +54,8 @@ export default function MagazineFeatured({ magazine, brandColor, onOpenMagazine,
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [magazine.publication]);
+    // ptrNonce intentionally retriggers the fetch on pull-to-refresh.
+  }, [magazine.publication, ptrNonce]);
 
   // Normalize apostrophes so straight (U+0027) and curly (U+2019) both match.
   const normalizeApostrophe = (str: string) => str.replace(/\u2019/g, "'");

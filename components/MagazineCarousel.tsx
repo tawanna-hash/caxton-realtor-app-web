@@ -5,6 +5,7 @@ import type { Magazine } from '@/lib/magazines';
 import { fetchMagazines } from '@/lib/magazines';
 import { trackEvent } from '../app/posthog-provider';
 import PageTitle from '@/components/ui/PageTitle';
+import { usePtrRefresh } from '@/hooks/use-ptr-refresh';
 
 interface MagazineCarouselProps {
   publication: string;
@@ -21,6 +22,9 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('all');
   const scrollerRef = useRef<HTMLDivElement | null>(null);
+  // PTR nonce — see hooks/use-ptr-refresh. Bumps on every pull-to-refresh
+  // so the fetch effect below re-runs.
+  const ptrNonce = usePtrRefresh();
 
   // Stable ref to the callback so it doesn't retrigger the fetch effect each render.
   const loadedCbRef = useRef(onMagazinesLoaded);
@@ -53,7 +57,8 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
     return () => {
       cancelled = true;
     };
-  }, [publication]);
+    // ptrNonce intentionally retriggers the fetch on pull-to-refresh.
+  }, [publication, ptrNonce]);
 
   function scrollByCards(direction: 1 | -1) {
     trackEvent('magazine_carousel_arrow_clicked', { direction: direction === 1 ? 'next' : 'prev', publication });

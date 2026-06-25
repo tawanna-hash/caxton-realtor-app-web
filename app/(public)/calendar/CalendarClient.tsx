@@ -6,6 +6,7 @@ import { EventsList } from '@/components/events/EventsList';
 import type { CalendarEvent } from '@/lib/events-store';
 import { usePublication } from '@/lib/use-publication';
 import { PubSwitcher } from '@/components/PubSwitcher';
+import { usePtrRefresh } from '@/hooks/use-ptr-refresh';
 
 type View = 'month' | 'upcoming';
 
@@ -23,6 +24,9 @@ export default function CalendarClient() {
   const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  // Increments on every PTR. Plumbed into the fetch effect below so a
+  // pull-to-refresh re-runs the /api/events/<market> request.
+  const ptrNonce = usePtrRefresh();
 
   // S22 hybrid-view state
   const [view, setView] = useState<View>('month');
@@ -84,7 +88,8 @@ export default function CalendarClient() {
     return () => {
       cancelled = true;
     };
-  }, [pub]);
+    // ptrNonce intentionally retriggers the fetch on pull-to-refresh.
+  }, [pub, ptrNonce]);
 
   function handlePrevMonth() {
     setDisplayMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1));
