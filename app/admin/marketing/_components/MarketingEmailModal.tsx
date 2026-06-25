@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { MarketingCampaign, AudienceFilter, OutreachAudienceSource } from '@/lib/marketing-campaigns';
+import RichTextEditor from './RichTextEditor';
 
 // ── Types ────────────────────────────────────────────────────────────
 type SubscriberFilter = {
@@ -78,7 +79,10 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
   const [replyTo, setReplyTo]   = useState<string>(adminEmail ?? '');
   const [subject, setSubject]   = useState('');
   const [previewText, setPreviewText] = useState('');
-  const [body, setBody] = useState('Hi {{first_name}},\n\n— {{rep_name}}');
+  // Body is rich text — stored as HTML. Default seeds a friendly greeting.
+  const [body, setBody] = useState<string>(
+    '<p>Hi {{first_name}},</p><p><br></p><p>— {{rep_name}}</p>',
+  );
 
   // Scheduling
   const [mode, setMode] = useState<'send_now' | 'schedule'>('send_now');
@@ -231,10 +235,6 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
 
   function toggleSource(s: OutreachAudienceSource) {
     setSources((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
-  }
-
-  function insertToken(token: string) {
-    setBody((prev) => prev + token);
   }
 
   // ── Render ───────────────────────────────────────────────────────
@@ -440,33 +440,17 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
                 />
               </label>
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <div className="text-xs font-medium text-gray-600">Body</div>
-                  <div className="flex flex-wrap gap-1">
-                    {TOKENS.slice(0, 4).map((t) => (
-                      <button
-                        key={t.key}
-                        onClick={() => insertToken(t.key)}
-                        className="rounded-md border border-gray-300 bg-white px-1.5 py-0.5 text-[10px] font-mono text-gray-700 hover:bg-gray-50"
-                        title={t.label}
-                      >
-                        {t.key}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <textarea
+                <div className="text-xs font-medium text-gray-600 mb-1">Body</div>
+                <RichTextEditor
                   value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  rows={10}
-                  className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm font-mono"
+                  onChange={setBody}
+                  placeholder="Write your email…"
+                  minHeight={260}
+                  tokens={TOKENS.map((t) => ({ key: t.key, label: t.label }))}
                 />
                 <div className="text-[11px] text-gray-500 mt-1">
-                  Plain text auto-formats into paragraphs. Use HTML if you need it. Tokens:
-                  {' '}
-                  {TOKENS.map((t) => (
-                    <code key={t.key} className="text-[10px]">{t.key}{' '}</code>
-                  ))}
+                  Use the toolbar to format. Insert recipient fields with the
+                  <strong> {`{ } Token`}</strong> menu.
                 </div>
               </div>
             </section>

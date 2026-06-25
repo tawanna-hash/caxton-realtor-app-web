@@ -47,12 +47,15 @@ export function substituteTokens(input: string, ctx: TokenContext): string {
   });
 }
 
-// ── Body normalization (markdown-ish → HTML) ───────────────────────
-// Users paste plain text with line breaks; we convert blank-line-separated
-// paragraphs + single line breaks into <p>/<br>. If the input already
-// looks like HTML (contains a tag), we pass it through unchanged.
+// ── Body normalization (markdown-ish + HTML → email-ready HTML) ────
+// Two paths:
+//   1) Plain text (no tags): convert blank-line-separated paragraphs +
+//      single line breaks into styled <p>/<br>.
+//   2) Rich-text-editor HTML: rewrite block elements with inline styles
+//      so they render correctly in every major email client (Gmail strips
+//      <style> tags). We also defang dangerous tags/attributes.
 export function bodyToHtml(body: string): string {
-  if (/<[a-z][^>]*>/i.test(body)) return body;
+  if (/<[a-z][^>]*>/i.test(body)) return inlineStyleHtml(sanitizeHtml(body));
   const escaped = body
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -61,6 +64,54 @@ export function bodyToHtml(body: string): string {
     `<p style="margin:0 0 14px 0; line-height:1.55; color:#1f2937;">${p.replace(/\n/g, '<br>')}</p>`,
   );
   return paragraphs.join('\n');
+}
+
+// ── HTML sanitizer (server-side) ───────────────────────────────────
+// Removes scripts, iframes, on* handlers, and javascript: URLs. We keep
+// it permissive on tags (paragraphs / headings / lists / links etc.)
+// because the source is our own contentEditable editor, not user-generated
+// open input. This is defense in depth, not the primary trust boundary.
+export function sanitizeHtml(html: string): string {
+  return html
+    // Drop full <script>, <style>, <iframe>, <object>, <embed> blocks.
+    .replace(/<\s*(script|style|iframe|object|embed|link|meta)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+    .replace(/<\s*(script|style|iframe|object|embed|link|meta)[^>]*\/?>/gi, '')
+    // Strip inline event handlers (onclick=, onerror=, etc.).
+    .replace(/\s+on[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    // Block javascript: / data: URLs in href/src.
+    .replace(/(href|src)\s*=\s*("|')\s*(javascript:|data:(?!image\/))[^"']*\2/gi, '$1=$2#$2');
+}
+
+// ── Inline-style rewriter ──────────────────────────────────────────
+// Email clients (especially Gmail) strip <style> tags. We post-process
+// rich-text HTML to attach inline styles to common block elements.
+export function inlineStyleHtml(html: string): string {
+  const REPLACEMENTS: Array<[RegExp, string]> = [
+    // Paragraphs.
+    [/<p(\s[^>]*)?>/gi, '<p$1 style="margin:0 0 14px 0;line-height:1.55;color:#1f2937;">'],
+    // Headings.
+    [/<h2(\s[^>]*)?>/gi, '<h2$1 style="font-family:Georgia,serif;font-size:22px;font-weight:600;line-height:1.3;margin:18px 0 10px;color:#111827;">'],
+    [/<h3(\s[^>]*)?>/gi, '<h3$1 style="font-family:Georgia,serif;font-size:18px;font-weight:600;line-height:1.3;margin:16px 0 8px;color:#111827;">'],
+    [/<h1(\s[^>]*)?>/gi, '<h1$1 style="font-family:Georgia,serif;font-size:26px;font-weight:600;line-height:1.25;margin:18px 0 10px;color:#111827;">'],
+    // Lists.
+    [/<ul(\s[^>]*)?>/gi, '<ul$1 style="margin:8px 0 14px 20px;padding:0;list-style:disc;color:#1f2937;">'],
+    [/<ol(\s[^>]*)?>/gi, '<ol$1 style="margin:8px 0 14px 20px;padding:0;list-style:decimal;color:#1f2937;">'],
+    [/<li(\s[^>]*)?>/gi, '<li$1 style="margin:4px 0;line-height:1.5;">'],
+    // Links.
+    [/<a(\s[^>]*?)>/gi, '<a$1 style="color:#301D5D;text-decoration:underline;">'],
+    // Blockquote.
+    [/<blockquote(\s[^>]*)?>/gi, '<blockquote$1 style="margin:8px 0 14px;padding:8px 14px;border-left:3px solid #301D5D;background:#fafafa;color:#4b5563;font-style:italic;">'],
+    // Horizontal rule.
+    [/<hr(\s[^>]*)?\/?\s*>/gi, '<hr style="border:0;border-top:1px solid #e5e7eb;margin:18px 0;" />'],
+    // Emphasis.
+    [/<strong(\s[^>]*)?>/gi, '<strong$1 style="font-weight:600;">'],
+    [/<b(\s[^>]*)?>/gi, '<b$1 style="font-weight:600;">'],
+    [/<em(\s[^>]*)?>/gi, '<em$1 style="font-style:italic;">'],
+    [/<i(\s[^>]*)?>/gi, '<i$1 style="font-style:italic;">'],
+  ];
+  let out = html;
+  for (const [re, sub] of REPLACEMENTS) out = out.replace(re, sub);
+  return out;
 }
 
 // ── Wrap the body in a branded outer HTML email ────────────────────
