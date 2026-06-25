@@ -1,10 +1,23 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+
+// On the server `useLayoutEffect` warns about hydration mismatch even when
+// it never runs. Use `useEffect` on the server and `useLayoutEffect` in the
+// browser — the standard React idiom for this exact problem (the React
+// team uses this same shim in their own code).
+const useEffectForLayoutLikeRefMirror =
+  typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 interface UseSwipeBackOptions {
   /** Called when the swipe completes past threshold or with sufficient velocity. */
   onBack: () => void;
+  /**
+   * Fired the moment the swipe is past threshold and the back animation
+   * starts — ~200ms before `onBack`. Use for haptics so the user feels the
+   * commit at the natural moment instead of after navigation.
+   */
+  onCommit?: () => void;
   /** Width in px of the left-edge zone where a swipe may start. Default: 24. */
   edgeWidth?: number;
   /** Distance threshold (fraction of screen width) to trigger back. Default: 0.30. */
@@ -35,7 +48,7 @@ interface UseSwipeBackResult {
  * Mobile-only by design — no mouse handlers.
  */
 export function useSwipeBack(opts: UseSwipeBackOptions): UseSwipeBackResult {
-  const { onBack, edgeWidth = 24, distanceThreshold = 0.30, velocityThreshold = 0.5, disabled = false } = opts;
+  const { onBack, onCommit, edgeWidth = 24, distanceThreshold = 0.30, velocityThreshold = 0.5, disabled = false } = opts;
   const elRef = useRef<HTMLElement | null>(null);
   const [translateX, setTranslateX] = useState(0);
   const [animating, setAnimating] = useState(false);
@@ -48,6 +61,19 @@ export function useSwipeBack(opts: UseSwipeBackOptions): UseSwipeBackResult {
   const velocityRef = useRef(0);
   const armedRef = useRef(false);
   const decidedRef = useRef(false);
+
+  // Mirror of translateX for use inside touchend, which is registered once
+  // in a stable effect and so closes over a stale value of translateX. The
+  // React-compiler lint rules (set-state-in-effect, immutability,
+  // refs-during-render) reject every "obvious" sync pattern, so we use a
+  // useLayoutEffect: it runs synchronously after commit, before the browser
+  // paints, and is explicitly allowed to mutate refs. The end result is the
+  // same — the ref always carries the freshest translateX by the time the
+  // user's finger leaves the screen.
+  const translateXRef = useRef(0);
+  useEffectForLayoutLikeRefMirror(() => {
+    translateXRef.current = translateX;
+  }, [translateX]);
 
   useEffect(() => {
     if (disabled) return;
@@ -124,7 +150,9 @@ export function useSwipeBack(opts: UseSwipeBackOptions): UseSwipeBackResult {
       const velocityPassed = v > velocityThreshold && offset > 30; // Some minimum to avoid accidental flicks
 
       if (distancePassed || velocityPassed) {
-        // Animate off-screen, then fire onBack
+        // Animate off-screen, then fire onBack. Notify onCommit immediately
+        // so callers can trigger haptics at the moment the gesture locks in.
+        try { onCommit?.(); } catch { /* ignore */ }
         setAnimating(true);
         setTranslateX(w);
         window.setTimeout(() => {
@@ -153,12 +181,7 @@ export function useSwipeBack(opts: UseSwipeBackOptions): UseSwipeBackResult {
       el.removeEventListener('touchend', onTouchEnd);
       el.removeEventListener('touchcancel', onTouchEnd);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [disabled, edgeWidth, distanceThreshold, velocityThreshold, onBack]);
-
-  // Keep a ref of the latest translateX for use inside touchend (closure capture issue)
-  const translateXRef = useRef(0);
-  useEffect(() => { translateXRef.current = translateX; }, [translateX]);
+  }, [disabled, edgeWidth, distanceThreshold, velocityThreshold, onBack, onCommit]);
 
   const ref = (el: HTMLElement | null) => { elRef.current = el; };
 

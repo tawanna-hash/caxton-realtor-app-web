@@ -29,6 +29,7 @@ import PushForegroundToast from '@/components/PushForegroundToast';
 import NativeStatusBar from '@/components/NativeStatusBar';
 import NativeNetworkBanner from '@/components/NativeNetworkBanner';
 import NativeAppLifecycle from '@/components/NativeAppLifecycle';
+import SwipeBackShell from '@/components/SwipeBackShell';
 import { AdSlot } from '@/components/ads/AdSlot';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import { ADMIN_NAV as ADMIN_GROUPS, isAdminGroupActive as isGroupActive } from '@/lib/admin-nav';
@@ -411,7 +412,15 @@ export default function AppShell({
       <NativeStatusBar />
       <NativeNetworkBanner />
       <NativeAppLifecycle />
-      <main className="flex-1 pb-20">{children}</main>
+      {/* SwipeBackShell wraps just the main content — the sticky chrome
+          (header, drawer, BottomNav) intentionally stays put while only
+          the page contents track the finger. The shell maps the AppShell
+          variant to the area the swipe-back rules expect. */}
+      <main className="flex-1 pb-20">
+        <SwipeBackShell area={isAdmin ? 'admin' : 'public'}>
+          {children}
+        </SwipeBackShell>
+      </main>
       {!isAdmin ? (
         <>
           {/* Inline newsletter signup — shown on every public page above the footer. */}

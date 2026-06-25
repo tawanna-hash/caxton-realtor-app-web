@@ -10,6 +10,7 @@
 import Link from 'next/link';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 import PortalNav from '@/components/PortalNav';
+import SwipeBackShell from '@/components/SwipeBackShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +40,9 @@ export default async function PortalLayout({ children }: { children: React.React
           )}
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-10">{children}</main>
+      <main className="mx-auto max-w-5xl px-6 py-10">
+        <SwipeBackShell area="portal">{children}</SwipeBackShell>
+      </main>
       <footer className="border-t border-gray-200 mt-16">
         <div className="mx-auto max-w-5xl px-6 py-6 text-xs text-gray-500">
           Session-only access. Closing your browser signs you out.
