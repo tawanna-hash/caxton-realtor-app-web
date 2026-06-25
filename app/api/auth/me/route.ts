@@ -34,9 +34,17 @@ export const GET = withErrorHandling(async () => {
   });
 
   const { password_set_at: passwordSetAt, ...rest } = realtor;
+  // Also expose camelCase aliases so client code that expects firstName /
+  // lastName works without a snake_case lookup. The login route returns
+  // camelCase, so without these the post-login `user` object disagrees with
+  // the post-rehydrate `user` object, which is how the dashboard greeting
+  // ended up reading 'Welcome, Subscriber' for signed-in users on cold
+  // launch (https://realtynewsnow.app/dashboard).
   return NextResponse.json({
     realtor: {
       ...rest,
+      firstName: rest.first_name ?? null,
+      lastName: rest.last_name ?? null,
       hasPassword: passwordSetAt !== null,
       passwordSetAt,
     },

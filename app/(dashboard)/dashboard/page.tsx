@@ -1426,7 +1426,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
       <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: info.color }}>
         <div className="min-w-0 flex-1">
           <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-medium">
-            Welcome, {user?.firstName || (user?.guest ? 'Guest' : 'Subscriber')}
+            Welcome, {user?.firstName || user?.first_name || (user?.fullName ? String(user.fullName).split(' ')[0] : null) || (user?.name ? String(user.name).split(' ')[0] : null) || (user?.email ? String(user.email).split('@')[0] : null) || (user?.guest ? 'Guest' : 'Subscriber')}
           </p>
           <button
             type="button"
