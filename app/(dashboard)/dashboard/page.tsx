@@ -341,18 +341,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   // Honor /auth/sign-in and /auth/sign-up aliases via ?auth=login|signup so
   // visitors land directly on the right form instead of the 'choice' screen.
   const [mode, setMode] = useState<'choice' | 'signup' | 'login' | 'sent'>('choice');
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    queueMicrotask(() => {
-      try {
-        const params = new URLSearchParams(window.location.search);
-        const wanted = params.get('auth');
-        if (wanted === 'login' || wanted === 'signup') {
-          setMode(wanted);
-        }
-      } catch {}
-    });
-  }, []);
   const [step, setStep] = useState(1);
   const [licenseType, setLicenseType] = useState('TREC #');
   const [licenseNum, setLicenseNum] = useState('');
@@ -375,6 +363,35 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Read query params after all state hooks are declared so the lint rule
+  // (react-hooks/immutability) doesn't flag forward references.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    queueMicrotask(() => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const wanted = params.get('auth');
+        if (wanted === 'login' || wanted === 'signup') {
+          setMode(wanted);
+        }
+        // Came from LandingAppleButton after a no-account rejection.
+        // Surface a friendly explanation so the user knows why they're
+        // looking at the signup form.
+        if (params.get('reason') === 'no_apple_account') {
+          setError(
+            'No Realty News Now account is linked to this Apple ID yet. Create your account below, then sign in with Apple next time.',
+          );
+          // Clean the URL so the message doesn't reappear on refresh.
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('reason');
+            window.history.replaceState(null, '', url.toString());
+          } catch {}
+        }
+      } catch {}
+    });
+  }, []);
 
   const info = PUBS.find((p) => p.id === pub) || PUBS[0];
 
@@ -507,7 +524,21 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Apple sign-in failed');
+        // 404 + error: 'account_not_found' — the server rejected because no
+        // realtor is linked to this Apple ID. Route the user to signup with
+        // a clear explanation instead of the generic failure copy.
+        if (res.status === 404 && data?.error === 'account_not_found') {
+          trackEvent('apple_signin_no_account', { pub });
+          void haptics.notify('warning');
+          setError(
+            data?.message ||
+              'No Realty News Now account is linked to this Apple ID. Create an account first, then sign in with Apple.',
+          );
+          setMode('signup');
+          setLoading(false);
+          return;
+        }
+        throw new Error(data.message || data.error || 'Apple sign-in failed');
       }
       const meRes = await fetch(API + '/auth/me', { credentials: 'include' });
       if (!meRes.ok) throw new Error('Signed in but could not load your account');

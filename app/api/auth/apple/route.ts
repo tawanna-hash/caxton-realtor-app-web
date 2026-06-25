@@ -15,8 +15,9 @@
  *      - If found, signs them in.
  *      - If not found, tries to match by verified email; if matched,
  *        attaches the apple_sub to the existing row.
- *      - Otherwise creates a fresh realtor (Apple has already verified the
- *        email so we trust it).
+ *      - Otherwise responds 404 — we DO NOT auto-create accounts via
+ *        Apple sign-in. The realtor must register first (which collects
+ *        license number, market, and other fields Apple can't provide).
  *   6. Issues our session cookie (`caxton_session_v2`) and returns
  *      `{ success: true, autoSignedIn: true, realtor }`.
  *
@@ -30,12 +31,9 @@ import {
   findRealtorByAppleSub,
   findRealtorByEmail,
   attachAppleSubToRealtor,
-  insertRealtorViaApple,
-  withNeonTransaction,
 } from '@/lib/server/realtors-store';
 import { signSessionToken } from '@/lib/server/jwt';
 import { setRealtorSessionCookie } from '@/lib/server/auth/cookies';
-import { getRequestIp } from '@/lib/server/auth/admin';
 import { logger } from '@/lib/server/logger';
 
 // Apple's expected issuer & JWKS endpoint
@@ -114,8 +112,6 @@ export async function POST(req: NextRequest) {
     typeof body.email === 'string' ? body.email.toLowerCase() : null;
   const email = tokenEmail ?? clientEmail ?? null;
 
-  const ipAddress = await getRequestIp();
-
   // 1) Existing realtor with this apple_sub? Sign them in.
   const existingByApple = await findRealtorByAppleSub(appleSub);
   if (existingByApple) {
@@ -123,6 +119,10 @@ export async function POST(req: NextRequest) {
   }
 
   // 2) Existing realtor with the same email but no apple_sub yet? Link them.
+  //    This is the legitimate "I signed up with email and now want to use
+  //    Sign in with Apple" upgrade path. We require email_verified=true on
+  //    the Apple JWT (Apple itself guarantees email ownership) so we trust
+  //    the link without an extra confirmation step.
   if (email) {
     const existingByEmail = await findRealtorByEmail(email);
     if (existingByEmail) {
@@ -135,32 +135,23 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 3) Brand-new realtor. We MUST have an email — without one we can't seed
-  //    a useful profile. (Happens if client lost the email between calls.)
-  if (!email) {
-    return NextResponse.json(
-      {
-        error:
-          'We need your email to create your account. Open Settings → Apple ID → Sign-In with Apple → Realty News Now and choose "Stop Using Apple ID", then try again.',
-      },
-      { status: 400 },
-    );
-  }
-
-  const created = await withNeonTransaction(async (client) => {
-    return insertRealtorViaApple(client, {
-      email,
-      firstName: body.givenName ?? '',
-      lastName: body.familyName ?? '',
-      appleSub,
-      consentText:
-        'Created account via Sign in with Apple on iOS. User agreed to receive communications from Caxton Publications, Inc.',
-      ipAddress,
-    });
-  });
-
-  logger.info({ realtorId: created.id }, 'Created realtor via Apple sign-in');
-  return issueSession(created.id, created.email);
+  // 3) No matching account. We do NOT auto-create via Apple sign-in —
+  //    registration requires license number + market + other fields Apple
+  //    can't provide. Tell the client to send the user through the signup
+  //    form. The 'account_not_found' code lets the UI render a tailored
+  //    error and CTA instead of the generic failure copy.
+  logger.info(
+    { hasEmail: !!email, appleSub: appleSub.slice(0, 8) + '…' },
+    'Apple sign-in rejected — no matching account',
+  );
+  return NextResponse.json(
+    {
+      error: 'account_not_found',
+      message:
+        'No Realty News Now account is linked to this Apple ID yet. Please create an account first, then sign in with Apple.',
+    },
+    { status: 404 },
+  );
 }
 
 async function issueSession(realtorId: string, email: string) {

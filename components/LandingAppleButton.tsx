@@ -52,7 +52,14 @@ export default function LandingAppleButton() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Apple sign-in failed');
+        // 404 + error: 'account_not_found' — no realtor is linked to this
+        // Apple ID yet. Send the user to the dashboard auth flow with a
+        // ?signup=1 hint so the AuthGate opens the signup form.
+        if (res.status === 404 && data?.error === 'account_not_found') {
+          window.location.href = '/dashboard?auth=signup&reason=no_apple_account';
+          return;
+        }
+        throw new Error(data.message || data.error || 'Apple sign-in failed');
       }
       // Hard navigation so the new caxton_session_v2 cookie is included on
       // the next request and the dashboard server component sees us as
