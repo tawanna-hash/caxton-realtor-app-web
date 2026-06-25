@@ -26,7 +26,6 @@
 import { useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
-import { haptics } from '@/lib/native/haptics';
 
 // Routes that own their own PTR or should not refresh on pull.
 function isOptedOut(pathname: string | null): boolean {
@@ -45,7 +44,9 @@ export default function GlobalPullToRefresh() {
 
   const onRefresh = useCallback(async () => {
     if (optedOut) return;
-    void haptics.medium();
+    // Haptics are now handled inside usePullToRefresh itself (light tap on
+    // arming, medium notify on commit) so callers don't need to add their
+    // own — doing both would fire two medium events in quick succession.
     // Re-run the server segment for the current route.
     router.refresh();
     // Let client-side components know to refetch their own data.

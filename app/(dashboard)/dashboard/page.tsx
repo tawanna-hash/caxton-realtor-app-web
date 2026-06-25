@@ -23,6 +23,7 @@ import { COMING_SOON_PUBS, type ComingSoonPubId } from '@/lib/coming-soon-pubs';
 import { share as nativeShare } from '@/lib/native/share';
 import { haptics } from '@/lib/native/haptics';
 import { isAppleSignInAvailable, signInWithApple } from '@/lib/native/apple-sign-in';
+import { openExternal } from '@/lib/native/external-link';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 
 const API = getApiBase();
@@ -1111,7 +1112,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
   // server logic re-runs (no client-side events fetch today, but this keeps
   // the gesture useful and forward-compatible).
   const ptr = usePullToRefresh(async () => {
-    void haptics.medium();
+    // Haptics handled inside usePullToRefresh now — don't double-fire.
     if (tab === 'n') {
       onRefresh();
     } else if (tab === 'e') {
@@ -1341,7 +1342,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
   function handleAdClick(ad: any) {
     void haptics.light();
     track('ad_click', { adId: ad.id, advertiser: ad.biz, publication: pub });
-    window.open(ad.url, '_blank', 'noopener,noreferrer');
+    // In-app browser on iOS — advertisers' destination pages should not
+    // hard-eject users into Safari.
+    void openExternal(ad.url);
   }
 
   return (

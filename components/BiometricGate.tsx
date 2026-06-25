@@ -27,8 +27,13 @@ import {
   isBiometricAvailable,
   type BiometricAvailability,
 } from '@/lib/native/biometric';
+import { haptics } from '@/lib/native/haptics';
 
-const RESUME_LOCK_MS = 5 * 60 * 1000; // 5 minutes
+// 60 seconds matches the threshold most iOS banking / e-mail apps use.
+// Long enough that a quick switch to Messages or the camera doesn't make
+// the user re-auth; short enough that putting the phone down on a desk
+// always locks back up.
+const RESUME_LOCK_MS = 60 * 1000;
 
 type Phase = 'idle' | 'locked' | 'authenticating' | 'unlocked';
 
@@ -53,6 +58,7 @@ export default function BiometricGate() {
       allowDeviceCredential: true,
     });
     if (res.ok) {
+      void haptics.notify('success');
       setPhase('unlocked');
       return;
     }
@@ -111,6 +117,9 @@ export default function BiometricGate() {
           if (state.isActive) {
             const away = Date.now() - lastActiveAt.current;
             if (away >= RESUME_LOCK_MS) {
+              // Small warning haptic so users feel the re-lock event even
+              // when their phone is silent.
+              void haptics.notify('warning');
               setPhase('locked');
               setError(null);
             }

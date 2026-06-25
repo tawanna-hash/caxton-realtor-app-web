@@ -17,6 +17,7 @@
 // indicator can switch from "Pull to refresh" to "Release to refresh".
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { haptics } from '@/lib/native/haptics';
 
 export type PullToRefreshState = {
   pulling: boolean;
@@ -35,12 +36,17 @@ export function usePullToRefresh(onRefresh: () => void | Promise<void>) {
   const [refreshing, setRefreshing] = useState(false);
   const startY = useRef<number | null>(null);
   const activeRef = useRef(false);
+  // Track whether the arming-threshold haptic already fired for this pull.
+  // Reset on touchend / touchcancel / finish() so each fresh pull gets one
+  // tap when it crosses the threshold — matches Mail / Messages feel.
+  const armedHapticRef = useRef(false);
 
   const finish = useCallback(() => {
     setPulling(false);
     setDistance(0);
     startY.current = null;
     activeRef.current = false;
+    armedHapticRef.current = false;
   }, []);
 
   useEffect(() => {
@@ -73,6 +79,13 @@ export function usePullToRefresh(onRefresh: () => void | Promise<void>) {
         const eased = Math.min(MAX_PX, dy * 0.55);
         setPulling(true);
         setDistance(eased);
+        // Fire one light haptic the moment we cross the arming threshold,
+        // so the user feels the "release to refresh" state lock in even
+        // before they see the label change. Mirrors iOS Mail / Messages.
+        if (!armedHapticRef.current && eased >= TRIGGER_PX) {
+          armedHapticRef.current = true;
+          void haptics.light();
+        }
         // Block native scroll while we own the gesture.
         if (e.cancelable) e.preventDefault();
       }
@@ -82,6 +95,10 @@ export function usePullToRefresh(onRefresh: () => void | Promise<void>) {
       if (!activeRef.current) return;
       const armed = distance >= TRIGGER_PX;
       if (armed && !refreshing) {
+        // Medium notification haptic when the refresh actually commits —
+        // distinct from the light "armed" tap on the way down so the user
+        // can feel that the action took.
+        void haptics.medium();
         setRefreshing(true);
         setPulling(false);
         setDistance(TRIGGER_PX); // hold the indicator while loading

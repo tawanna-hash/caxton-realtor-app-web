@@ -12,6 +12,7 @@ import { DetailSection } from './DetailSection';
 import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
 import PageTitle from '@/components/ui/PageTitle';
 import { share as nativeShare } from '@/lib/native/share';
+import { openExternal } from '@/lib/native/external-link';
 
 /**
  * Returns true only when the location string looks like a real physical
@@ -77,7 +78,8 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
   const onRegister = () => {
     if (!event.website) return;
     trackEvent('event_register_clicked', { event_id: event.id, event_title: event.title, website: event.website, pub });
-    window.open(event.website, '_blank', 'noopener,noreferrer');
+    // Use the in-app browser on iOS so users stay inside Realty News Now.
+    void openExternal(event.website);
   };
 
   const onShare = async () => {
