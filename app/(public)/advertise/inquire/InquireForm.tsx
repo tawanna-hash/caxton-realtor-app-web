@@ -245,8 +245,8 @@ export default function InquireForm({
                 className={[
                   'px-4 py-2 rounded-full border text-sm font-medium transition',
                   active
-                    ? 'bg-[#301D5D] text-white border-[#301D5D]'
-                    : 'bg-white text-gray-800 border-gray-300 hover:border-[#301D5D]',
+                    ? 'bg-brand-700 text-white border-brand-700'
+                    : 'bg-white text-gray-800 border-gray-300 hover:border-brand-700',
                 ].join(' ')}
               >
                 {AD_CHANNEL_LABEL[c]}
@@ -274,7 +274,7 @@ export default function InquireForm({
             value={slot}
             onChange={(e) => setSlot(e.target.value)}
             disabled={disabled}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-base bg-white focus:outline-none focus:ring-2 focus:ring-[#301D5D] focus:border-transparent"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-base bg-white focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent"
           >
             <option value="">— Not sure yet, let&apos;s talk —</option>
             {APP_AD_SLOTS.map((s) => (
@@ -304,7 +304,7 @@ export default function InquireForm({
             value={pkg}
             onChange={(e) => setPkg(e.target.value)}
             disabled={disabled}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-base bg-white focus:outline-none focus:ring-2 focus:ring-[#301D5D] focus:border-transparent"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-base bg-white focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent"
           >
             <option value="">— Not sure yet, let&apos;s talk —</option>
             {PACKAGES.map((p) => (
@@ -330,7 +330,7 @@ export default function InquireForm({
             value={pkg}
             onChange={(e) => setPkg(e.target.value)}
             disabled={disabled}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-base bg-white focus:outline-none focus:ring-2 focus:ring-[#301D5D] focus:border-transparent"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-base bg-white focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent"
           >
             <option value="">— Not sure yet, let&apos;s talk —</option>
             {EBLASTS.map((e) => (
@@ -356,7 +356,7 @@ export default function InquireForm({
           required
           autoComplete="name"
           disabled={disabled}
-          className="w-full border border-gray-300 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#301D5D] focus:border-transparent"
+          className="w-full border border-gray-300 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent"
         />
       </div>
 
@@ -375,7 +375,7 @@ export default function InquireForm({
             required
             autoComplete="email"
             disabled={disabled}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#301D5D] focus:border-transparent"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent"
           />
         </div>
         <div>
@@ -391,7 +391,7 @@ export default function InquireForm({
             type="tel"
             autoComplete="tel"
             disabled={disabled}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#301D5D] focus:border-transparent"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent"
           />
         </div>
       </div>
@@ -409,7 +409,7 @@ export default function InquireForm({
           type="text"
           autoComplete="organization"
           disabled={disabled}
-          className="w-full border border-gray-300 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#301D5D] focus:border-transparent"
+          className="w-full border border-gray-300 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent"
         />
       </div>
 
@@ -436,7 +436,7 @@ export default function InquireForm({
               ? `Interested in the ${selectedLabel} (${AD_CHANNEL_LABEL[channel]}).`
               : `Interested in ${AD_CHANNEL_LABEL[channel].toLowerCase()} advertising.`
           }
-          className="w-full border border-gray-300 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#301D5D] focus:border-transparent"
+          className="w-full border border-gray-300 rounded-md px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent"
         />
       </div>
 
@@ -459,7 +459,7 @@ export default function InquireForm({
       <button
         type="submit"
         disabled={disabled}
-        className="inline-flex items-center justify-center px-6 py-3 bg-[#301D5D] text-white font-medium rounded-md hover:bg-[#493676] disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+        className="inline-flex items-center justify-center px-6 py-3 bg-brand-700 text-white font-medium rounded-md hover:bg-[#493676] disabled:bg-gray-400 disabled:cursor-not-allowed transition"
       >
         {disabled ? 'Sending…' : 'Send inquiry'}
       </button>

@@ -96,7 +96,7 @@ export default async function AdvertiseDigitalPage() {
         <p className="mt-4">
           <Link
             href="/advertise/placements"
-            className="text-sm font-semibold text-[#301D5D] underline underline-offset-2 hover:text-[#301D5D]"
+            className="text-sm font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-700"
           >
             See where each ad appears in the app →
           </Link>
@@ -133,7 +133,7 @@ export default async function AdvertiseDigitalPage() {
                 )}
               </div>
 
-              <h3 className={`text-lg font-semibold mb-1 ${soldOut ? 'text-gray-500' : 'text-[#301D5D]'}`}>
+              <h3 className={`text-lg font-semibold mb-1 ${soldOut ? 'text-gray-500' : 'text-brand-700'}`}>
                 {slot.name}
               </h3>
 
@@ -159,7 +159,7 @@ export default async function AdvertiseDigitalPage() {
                 ) : (
                   <Link
                     href={checkoutHref}
-                    className="inline-block w-full text-center bg-[#301D5D] text-white text-sm font-semibold py-2.5 rounded-md hover:bg-[#301D5D]"
+                    className="inline-block w-full text-center bg-brand-700 text-white text-sm font-semibold py-2.5 rounded-md hover:bg-brand-700"
                   >
                     Book this placement
                   </Link>
@@ -173,7 +173,7 @@ export default async function AdvertiseDigitalPage() {
       <footer className="mt-12 pt-8 border-t border-gray-200 text-sm text-gray-600">
         <p>
           Need something custom or want to combine placements?{' '}
-          <Link href="/advertise/inquire" className="text-[#301D5D] underline font-semibold">
+          <Link href="/advertise/inquire" className="text-brand-700 underline font-semibold">
             Talk to our team
           </Link>{' '}
           — we&apos;ll send a custom quote within one business day.

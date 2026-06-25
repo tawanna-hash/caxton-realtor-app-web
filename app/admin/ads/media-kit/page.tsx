@@ -162,7 +162,7 @@ function PackageCard({ pkg }: { pkg: Package }) {
       className={
         'rounded-md ring-1 p-4 ' +
         (pkg.premium
-          ? 'bg-[#301D5D] text-white ring-[#301D5D]'
+          ? 'bg-brand-700 text-white ring-brand-700'
           : pkg.popular
             ? 'bg-orange-50 ring-orange-200'
             : 'bg-gray-50 ring-gray-200')
@@ -192,7 +192,7 @@ function PackageCard({ pkg }: { pkg: Package }) {
           </span>
         )}
         {pkg.premium && (
-          <span className="rounded-full bg-white text-[#301D5D] text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5">
+          <span className="rounded-full bg-white text-brand-700 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5">
             Premium
           </span>
         )}
@@ -564,7 +564,7 @@ export default function MediaKitPage() {
           </Link>
           <a
             href="/admin/ads/media-kit/pdf"
-            className="rounded-md bg-[#301D5D] px-4 py-2 text-white text-sm font-medium hover:bg-[#493676]"
+            className="rounded-md bg-brand-700 px-4 py-2 text-white text-sm font-medium hover:bg-[#493676]"
             target="_blank"
             rel="noopener noreferrer"
           >

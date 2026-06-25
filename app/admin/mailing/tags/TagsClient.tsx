@@ -235,7 +235,7 @@ export default function TagsClient() {
                           <button
                             onClick={() => void doRename(r.tag, renaming.to)}
                             disabled={isBusy}
-                            className="rounded bg-[#301D5D] px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                            className="rounded bg-brand-700 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
                           >
                             {isBusy ? 'Saving…' : 'Save'}
                           </button>

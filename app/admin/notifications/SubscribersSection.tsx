@@ -288,7 +288,7 @@ export default function SubscribersSection() {
                           type="button"
                           onClick={() => sendTest(sub)}
                           disabled={busy === sub.id}
-                          className="text-xs font-medium text-[#301D5D] hover:underline disabled:opacity-50"
+                          className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
                         >
                           {busy === sub.id ? 'Sending…' : 'Send test'}
                         </button>

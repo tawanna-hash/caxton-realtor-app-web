@@ -292,7 +292,7 @@ export default function SellerNetSheetClient() {
                 <button
                   type="button"
                   onClick={() => setTitleAuto(true)}
-                  className="text-xs text-[#301D5D] underline underline-offset-2 mt-1"
+                  className="text-xs text-brand-700 underline underline-offset-2 mt-1"
                 >
                   Reset to auto
                 </button>
@@ -553,7 +553,7 @@ function NumberField({
             const n = parseFloat(e.target.value);
             onChange(Number.isFinite(n) ? n : 0);
           }}
-          className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#301D5D] focus:outline-none focus:ring-1 focus:ring-[#301D5D]/30 ${
+          className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-700/30 ${
             prefix ? 'pl-7' : ''
           } ${suffix ? 'pr-8' : ''}`}
         />
@@ -600,7 +600,7 @@ function TextField({
         className={`w-full rounded-md border px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-1 ${
           empty
             ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-500/30'
-            : 'border-gray-300 focus:border-[#301D5D] focus:ring-[#301D5D]/30'
+            : 'border-gray-300 focus:border-brand-700 focus:ring-brand-700/30'
         }`}
       />
       {empty ? (
@@ -631,7 +631,7 @@ function SelectField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-[#301D5D] focus:outline-none focus:ring-1 focus:ring-[#301D5D]/30"
+        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-700/30"
       >
         {options.map((opt) => (
           <option key={opt} value={opt}>
@@ -662,7 +662,7 @@ function DateField({
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#301D5D] focus:outline-none focus:ring-1 focus:ring-[#301D5D]/30"
+        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-700/30"
       />
       {hint && <span className="block text-xs text-gray-500 mt-1">{hint}</span>}
     </label>

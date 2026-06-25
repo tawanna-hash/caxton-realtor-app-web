@@ -504,7 +504,7 @@ export default function HoldingClient() {
             type="button"
             disabled={busy !== null}
             onClick={runVerifyDrain}
-            className="px-4 py-2 rounded-md border border-[#301D5D] text-[#301D5D] text-sm font-medium hover:bg-[#301D5D] hover:text-white disabled:opacity-50"
+            className="px-4 py-2 rounded-md border border-brand-700 text-brand-700 text-sm font-medium hover:bg-brand-700 hover:text-white disabled:opacity-50"
             title="Verify every Pending contact in the background (batches of 150)."
           >
             {busy === 'drain' ? 'Verifying…' : 'Verify all Pending'}
@@ -513,7 +513,7 @@ export default function HoldingClient() {
             type="button"
             disabled={busy !== null}
             onClick={syncFromUnlockMLS}
-            className="px-4 py-2 rounded-md bg-[#301D5D] text-white text-sm font-medium hover:bg-[#5a0e5f] disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-brand-700 text-white text-sm font-medium hover:bg-[#5a0e5f] disabled:opacity-50"
           >
             {busy === 'sync' ? 'Syncing…' : 'Sync from UnlockMLS'}
           </button>
@@ -536,7 +536,7 @@ export default function HoldingClient() {
           type="button"
           onClick={handleRefreshAddresses}
           disabled={busy !== null}
-          className="px-3 py-1.5 text-sm rounded-md border border-[#301D5D] text-[#301D5D] hover:bg-[#301D5D]/5 disabled:opacity-50"
+          className="px-3 py-1.5 text-sm rounded-md border border-brand-700 text-brand-700 hover:bg-brand-700/5 disabled:opacity-50"
           title="Fill in blank address fields from each matched advertiser. Matches by email or license number. Admin edits are preserved."
         >
           {busy === 'refresh-addr' ? 'Refreshing…' : 'Refresh addresses from advertisers'}
@@ -591,7 +591,7 @@ export default function HoldingClient() {
           </div>
           <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
             <div
-              className="h-full bg-[#301D5D] transition-all"
+              className="h-full bg-brand-700 transition-all"
               style={{
                 width: `${drainJob.total > 0 ? Math.min(100, Math.round((drainJob.processed / drainJob.total) * 100)) : 0}%`,
               }}
@@ -635,7 +635,7 @@ export default function HoldingClient() {
           placeholder="Search name, email, company…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="px-3 py-2 rounded-md border border-gray-300 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-[#301D5D]"
+          className="px-3 py-2 rounded-md border border-gray-300 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-brand-700"
         />
       </div>
 
@@ -1231,7 +1231,7 @@ function EditDrawer({
                 type="button"
                 disabled={addrBusy}
                 onClick={onVerifyAddress}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-brand-700 text-white hover:bg-[#5a0e5f] disabled:opacity-50"
               >
                 {addrBusy ? 'Verifying…' : 'Verify with USPS'}
               </button>
@@ -1259,7 +1259,7 @@ function EditDrawer({
                 type="button"
                 disabled={emailBusy || !form.email}
                 onClick={onVerifyEmail}
-                className="text-xs px-2.5 py-1 rounded-md bg-[#301D5D] text-white hover:bg-[#5a0e5f] disabled:opacity-50"
+                className="text-xs px-2.5 py-1 rounded-md bg-brand-700 text-white hover:bg-[#5a0e5f] disabled:opacity-50"
               >
                 {emailBusy ? 'Verifying…' : 'Verify Email'}
               </button>
@@ -1297,7 +1297,7 @@ function EditDrawer({
                 onChange={(e) => setField('email_notes', e.target.value)}
                 rows={5}
                 placeholder="Notes about this contact's email — e.g. bounced 5/30, verified via phone, alternate address..."
-                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#301D5D] resize-y"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-700 resize-y"
               />
               <span className="mt-1 block text-[10px] text-gray-500">
                 Each verifier run auto-appends a timestamped line. Edit freely.
@@ -1324,7 +1324,7 @@ function EditDrawer({
             type="button"
             disabled={saving}
             onClick={save}
-            className="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-[#301D5D] hover:bg-[#5a0e5f] disabled:opacity-50"
+            className="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#5a0e5f] disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>
@@ -1356,7 +1356,7 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         inputMode={inputMode}
-        className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D]"
+        className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700"
       />
     </label>
   );

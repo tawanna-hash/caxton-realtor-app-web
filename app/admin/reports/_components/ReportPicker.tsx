@@ -102,7 +102,7 @@ export default function ReportPicker({
           onKeyDown={handleKey}
           placeholder={placeholder}
           aria-label="Search list"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 pl-9 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D]/30 focus:border-[#301D5D]"
+          className="w-full border border-gray-300 rounded-md px-3 py-2 pl-9 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-brand-700/30 focus:border-brand-700"
         />
         {/* Magnifying glass */}
         <svg
@@ -173,7 +173,7 @@ export default function ReportPicker({
                 className={[
                   'w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors',
                   isSelected
-                    ? 'bg-[#301D5D]/5'
+                    ? 'bg-brand-700/5'
                     : isActive
                       ? 'bg-gray-50'
                       : 'bg-white hover:bg-gray-50',
@@ -214,7 +214,7 @@ export default function ReportPicker({
                 {isSelected && (
                   <svg
                     viewBox="0 0 20 20"
-                    className="shrink-0 w-4 h-4 text-[#301D5D]"
+                    className="shrink-0 w-4 h-4 text-brand-700"
                     aria-hidden="true"
                   >
                     <path

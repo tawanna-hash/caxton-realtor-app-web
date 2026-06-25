@@ -6,31 +6,16 @@
 
 import { NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
+import { withErrorHandling } from '@/lib/server/error';
+import { pushResubscribeBodySchema } from '@/lib/server/schemas/push';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type Body = {
-  oldEndpoint?: string | null;
-  subscription: {
-    endpoint: string;
-    keys: { p256dh: string; auth: string };
-  };
-};
-
-export async function POST(req: Request): Promise<Response> {
+export const POST = withErrorHandling(async (req: Request): Promise<Response> => {
   await ensureSchema();
-  let body: Body;
-  try {
-    body = (await req.json()) as Body;
-  } catch {
-    return NextResponse.json({ error: 'invalid json' }, { status: 400 });
-  }
-
-  const sub = body?.subscription;
-  if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) {
-    return NextResponse.json({ error: 'missing subscription fields' }, { status: 400 });
-  }
+  const body = pushResubscribeBodySchema.parse(await req.json());
+  const sub = body.subscription;
   const sql = getSql();
 
   if (body.oldEndpoint && body.oldEndpoint !== sub.endpoint) {
@@ -57,4 +42,4 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   return NextResponse.json({ ok: true });
-}
+});

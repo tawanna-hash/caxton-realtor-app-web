@@ -208,7 +208,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. New issue: October 2026"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent"
                   disabled={sending}
                 />
                 <div
@@ -229,7 +229,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
                   onChange={(e) => setBody(e.target.value)}
                   rows={3}
                   placeholder="e.g. Tap to read this month's San Antonio cover story."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D] focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-transparent resize-none"
                   disabled={sending}
                 />
                 <div
@@ -246,7 +246,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as Category)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#301D5D]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-700"
                   disabled={sending}
                 >
                   {CATEGORIES.map((c) => (
@@ -264,7 +264,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
                   value={deepLinkUrl}
                   onChange={(e) => setDeepLinkUrl(e.target.value)}
                   placeholder="/dashboard"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-700"
                   disabled={sending}
                 />
                 <div className="text-xs text-gray-500 mt-1">
@@ -289,7 +289,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
                       disabled={sending}
                       className={`px-3 py-2 rounded-md text-sm border transition-colors ${
                         market === opt.v
-                          ? 'bg-[#301D5D] text-white border-[#301D5D]'
+                          ? 'bg-brand-700 text-white border-brand-700'
                           : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                       }`}
                     >
@@ -308,7 +308,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
                     disabled={sending}
                     className={`flex-1 px-3 py-2 rounded-md text-sm border transition-colors ${
                       schedule === 'now'
-                        ? 'bg-[#301D5D] text-white border-[#301D5D]'
+                        ? 'bg-brand-700 text-white border-brand-700'
                         : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                     }`}
                   >
@@ -320,7 +320,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
                     disabled={sending}
                     className={`flex-1 px-3 py-2 rounded-md text-sm border transition-colors ${
                       schedule === 'later'
-                        ? 'bg-[#301D5D] text-white border-[#301D5D]'
+                        ? 'bg-brand-700 text-white border-brand-700'
                         : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                     }`}
                   >
@@ -332,7 +332,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
                     type="datetime-local"
                     value={scheduledFor}
                     onChange={(e) => setScheduledFor(e.target.value)}
-                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#301D5D]"
+                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-700"
                     disabled={sending}
                   />
                 )}
@@ -344,7 +344,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
               <div className="text-sm font-medium text-gray-700 mb-2">Preview</div>
               <div className="bg-gray-100 rounded-xl p-4">
                 <div className="bg-white rounded-lg shadow-md p-3 flex gap-3">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-md bg-[#301D5D] text-white text-xs font-bold flex items-center justify-center">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-md bg-brand-700 text-white text-xs font-bold flex items-center justify-center">
                     RNN
                   </div>
                   <div className="flex-1 min-w-0">
@@ -416,7 +416,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
               <button
                 type="submit"
                 disabled={!canSubmit || titleTooLong || bodyTooLong}
-                className="px-4 py-2 rounded-md text-sm font-medium text-white bg-[#301D5D] hover:bg-[#493676] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#493676] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 {sending ? 'Sending...' : sendLabel}
               </button>

@@ -87,6 +87,32 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  /* ==========================================================================
+     Brand tokens (canonical) — use these instead of raw #301D5D hex literals.
+     `bg-brand-700`, `text-brand-700`, `border-brand-700`, `ring-brand-700`,
+     etc. all resolve to the brand purple. `brand` alone maps to 700.
+     ========================================================================== */
+  --color-brand-50:  var(--rnn-purple-50);
+  --color-brand-100: var(--rnn-purple-100);
+  --color-brand-200: var(--rnn-purple-200);
+  --color-brand-300: var(--rnn-purple-300);
+  --color-brand-400: var(--rnn-purple-400);
+  --color-brand-500: var(--rnn-purple-500);
+  --color-brand-600: var(--rnn-purple-600);
+  --color-brand-700: var(--rnn-purple-700);
+  --color-brand-800: var(--rnn-purple-800);
+  --color-brand-900: var(--rnn-purple-900);
+  --color-brand: var(--rnn-purple-700);
+
+  /* Ink scale — typographic neutrals matched to the brand. Use for body
+     text + headings so they stay on-brand against light surfaces. */
+  --color-ink-900: #301D5D;
+  --color-ink-700: #4a3a7a;
+  --color-ink-500: #6b5a96;
+  --color-ink-400: #8c7eb3;
+  --color-ink-300: #b3a9cd;
+
   /* App-wide sans is Inter, wired in app/layout.tsx via next/font/google
      and exposed as the CSS variable --font-sans-app. Tailwind's `font-sans`
      utility resolves through this token, so every surface (public, admin,

@@ -110,7 +110,7 @@ export default function SubscribePage() {
           Questions about subscriptions?{' '}
           <a
             href="mailto:hello@myrealtyline.com?subject=Subscription%20Question"
-            className="text-[#301D5D] font-medium underline underline-offset-2"
+            className="text-brand-700 font-medium underline underline-offset-2"
           >
             hello@myrealtyline.com
           </a>

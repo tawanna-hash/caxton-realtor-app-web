@@ -28,8 +28,8 @@ type AdminEvent = {
 type SortKey = 'title' | 'pub' | 'when' | 'source' | 'status';
 
 const PUB_STYLES: Record<PublicationId, string> = {
-  austin: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
-  san_antonio: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
+  austin: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
+  san_antonio: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
 };
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -186,7 +186,7 @@ export default function EventsPage() {
       onClick={() => setFilter(key)}
       className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
         filter === key
-          ? 'bg-[#301D5D] text-white border-[#301D5D]'
+          ? 'bg-brand-700 text-white border-brand-700'
           : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
       }`}
     >
@@ -213,7 +213,7 @@ export default function EventsPage() {
                 ? 'No expired events to hide'
                 : `Hide ${expiredVisibleCount} event${expiredVisibleCount === 1 ? '' : 's'} whose start date is in the past`
             }
-            className="px-4 py-2 bg-white text-[#301D5D] text-sm font-medium rounded-md border border-[#301D5D] hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-white text-brand-700 text-sm font-medium rounded-md border border-brand-700 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {bulkBusy
               ? 'Hiding\u2026'
@@ -221,7 +221,7 @@ export default function EventsPage() {
           </button>
           <Link
             href="/admin/events/new"
-            className="px-4 py-2 bg-[#301D5D] text-white text-sm font-medium rounded-md hover:bg-[#301D5D] transition-colors"
+            className="px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-brand-700 transition-colors"
           >
             + New Event
           </Link>
@@ -260,7 +260,7 @@ export default function EventsPage() {
         <div className="text-sm text-gray-500 py-12 text-center">Loading events...</div>
       ) : items.length === 0 ? (
         <div className="text-sm text-gray-500 py-12 text-center bg-white border border-gray-200 rounded-md">
-          No events found. <Link href="/admin/events/new" className="text-[#301D5D] underline">Create one</Link>.
+          No events found. <Link href="/admin/events/new" className="text-brand-700 underline">Create one</Link>.
         </div>
       ) : (
         <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
@@ -282,7 +282,7 @@ export default function EventsPage() {
                 return (
                   <tr key={ev.id} className={ev.hidden ? 'bg-gray-50' : ''}>
                     <td className="px-4 py-3">
-                      <Link href={`/admin/events/${ev.id}`} className="font-medium text-gray-900 hover:text-[#301D5D] hover:underline">
+                      <Link href={`/admin/events/${ev.id}`} className="font-medium text-gray-900 hover:text-brand-700 hover:underline">
                         {ev.title}
                       </Link>
                       {hasEdits && !isManual && (
@@ -310,7 +310,7 @@ export default function EventsPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <Link href={`/admin/events/${ev.id}`} className="text-xs text-[#301D5D] hover:underline mr-3">
+                      <Link href={`/admin/events/${ev.id}`} className="text-xs text-brand-700 hover:underline mr-3">
                         Edit
                       </Link>
                       <button

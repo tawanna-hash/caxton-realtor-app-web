@@ -90,7 +90,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
             <div className="text-[10px] uppercase tracking-[0.15em] text-gray-500 font-semibold">
               {slot.tier} · {ZONE_LABEL[slot.zone]}
             </div>
-            <h3 className="text-base font-semibold text-[#301D5D] leading-tight mt-0.5">
+            <h3 className="text-base font-semibold text-brand-700 leading-tight mt-0.5">
               {slot.name}
             </h3>
           </div>
@@ -134,7 +134,7 @@ function PlacementCard({ slot }: { slot: AppAdSlot }) {
         <div className="pt-3 mt-1 border-t border-gray-100">
           <Link
             href={`/advertise/checkout/${slot.slug}?pub=realtyline`}
-            className="inline-block w-full text-center bg-[#301D5D] text-white text-sm font-semibold py-2 rounded-md hover:bg-[#301D5D]"
+            className="inline-block w-full text-center bg-brand-700 text-white text-sm font-semibold py-2 rounded-md hover:bg-brand-700"
           >
             Book this placement →
           </Link>
@@ -181,7 +181,7 @@ export default function PublicAdvertisePlacementsPage() {
         <div className="mt-5 flex flex-wrap gap-3 text-sm">
           <Link
             href="/advertise/digital"
-            className="text-[#301D5D] underline font-semibold"
+            className="text-brand-700 underline font-semibold"
           >
             See live availability →
           </Link>

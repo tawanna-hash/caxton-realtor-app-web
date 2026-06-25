@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { neon } from '@neondatabase/serverless';
+import { withErrorHandling } from '@/lib/server/error';
 import {
   createBuilderInventory,
   ensureBuilderInventorySchema,
@@ -60,7 +61,7 @@ function readFloat(fd: FormData, key: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async (req: NextRequest) => {
   try {
     const fd = await req.formData();
 
@@ -312,4 +313,4 @@ ${row.description ? `<p style="margin: 16px 0 8px; font-size: 14px;"><strong>Des
       { status: 500 },
     );
   }
-}
+});

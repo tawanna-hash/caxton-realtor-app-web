@@ -183,7 +183,7 @@ function PreviewSection({
         {hasMore && (
           <Link
             href={viewAllHref}
-            className="inline-flex items-center gap-1 text-sm font-medium text-[#301D5D] hover:text-[#7B5BC4] transition-colors"
+            className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:text-[#7B5BC4] transition-colors"
           >
             View all
             <ArrowRight strokeWidth={1.75} size={14} />

@@ -7,75 +7,42 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { updateRenewalReminder } from '@/lib/renewal-reminders';
-import type { RenewalReminderStatus } from '@/lib/types/renewal-reminder';
+import { ApiError, withErrorHandling } from '@/lib/server/error';
+import { idParamSchema } from '@/lib/server/schemas/_common';
+import { renewalReminderPatchSchema } from '@/lib/server/schemas/renewal-reminders';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const VALID_STATUSES = new Set<RenewalReminderStatus>(['Pending', 'Completed', 'Dismissed']);
-
-function errMessage(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
-}
-
 type RouteCtx = { params: Promise<{ id: string }> };
 
-export async function PATCH(req: NextRequest, ctx: RouteCtx) {
+export const PATCH = withErrorHandling(async (req: NextRequest, ctx: RouteCtx) => {
   const admin = await getCurrentAdmin();
-  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!admin) throw new ApiError(401, 'Unauthorized');
 
-  const { id } = await ctx.params;
-  if (!UUID_RE.test(id)) return NextResponse.json({ error: 'invalid id' }, { status: 400 });
+  const { id } = idParamSchema.parse(await ctx.params);
+  const patch = renewalReminderPatchSchema.parse(await req.json());
 
-  let body: Record<string, unknown>;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'invalid json' }, { status: 400 });
-  }
+  await ensureSchema();
+  // Strip out undefined keys so updateRenewalReminder only patches what was sent.
+  const cleaned: Parameters<typeof updateRenewalReminder>[1] = {};
+  if (patch.status !== undefined)      cleaned.status = patch.status;
+  if (patch.note !== undefined)        cleaned.note = patch.note ?? null;
+  if (patch.remind_date !== undefined) cleaned.remind_date = patch.remind_date ?? null;
 
-  const patch: Parameters<typeof updateRenewalReminder>[1] = {};
+  const reminder = await updateRenewalReminder(id, cleaned);
+  if (!reminder) throw new ApiError(404, 'not found');
+  return NextResponse.json({ reminder });
+});
 
-  if (typeof body.status === 'string' && VALID_STATUSES.has(body.status as RenewalReminderStatus)) {
-    patch.status = body.status as RenewalReminderStatus;
-  }
-  if (typeof body.note === 'string' || body.note === null) {
-    patch.note = body.note as string | null;
-  }
-  if (typeof body.remind_date === 'string' || body.remind_date === null) {
-    patch.remind_date = body.remind_date as string | null;
-  }
-
-  if (Object.keys(patch).length === 0) {
-    return NextResponse.json({ error: 'no patchable fields provided' }, { status: 400 });
-  }
-
-  try {
-    await ensureSchema();
-    const reminder = await updateRenewalReminder(id, patch);
-    if (!reminder) return NextResponse.json({ error: 'not found' }, { status: 404 });
-    return NextResponse.json({ reminder });
-  } catch (err) {
-    console.error('[admin/renewal-reminders PATCH]', errMessage(err));
-    return NextResponse.json({ error: 'patch failed', detail: errMessage(err) }, { status: 500 });
-  }
-}
-
-export async function DELETE(_req: NextRequest, ctx: RouteCtx) {
+export const DELETE = withErrorHandling(async (_req: NextRequest, ctx: RouteCtx) => {
   const admin = await getCurrentAdmin();
-  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!admin) throw new ApiError(401, 'Unauthorized');
 
-  const { id } = await ctx.params;
-  if (!UUID_RE.test(id)) return NextResponse.json({ error: 'invalid id' }, { status: 400 });
+  const { id } = idParamSchema.parse(await ctx.params);
 
-  try {
-    await ensureSchema();
-    const sql = getSql();
-    await sql`DELETE FROM renewal_reminders WHERE id = ${id}`;
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error('[admin/renewal-reminders DELETE]', errMessage(err));
-    return NextResponse.json({ error: 'delete failed', detail: errMessage(err) }, { status: 500 });
-  }
-}
+  await ensureSchema();
+  const sql = getSql();
+  await sql`DELETE FROM renewal_reminders WHERE id = ${id}`;
+  return NextResponse.json({ ok: true });
+});

@@ -238,7 +238,7 @@ export default function InvestmentPropertyClient() {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="text-xs px-3 py-1 border border-gray-300 rounded-md hover:border-[#301D5D] hover:text-[#301D5D] transition print:hidden"
+                className="text-xs px-3 py-1 border border-gray-300 rounded-md hover:border-brand-700 hover:text-brand-700 transition print:hidden"
               >
                 Print
               </button>
@@ -334,7 +334,7 @@ export default function InvestmentPropertyClient() {
 function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#301D5D] mb-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-brand-700 mb-3">
         {title}
       </p>
       <div className="space-y-4">{children}</div>

@@ -23,7 +23,11 @@ const sql = neon(process.env.DATABASE_URL!);
 // ─────────────────────────────────────────────────────────────────────────
 
 export type Kind = 'listing' | 'promotion';
-export type Status = 'pending' | 'active' | 'rejected' | 'expired';
+// Re-export from lib/types/ — Single Source of Truth.
+import type { BuilderInventoryStatus } from './types/builder-inventory';
+export type Status = BuilderInventoryStatus;
+export type { BuilderInventoryStatus };
+export { BUILDER_INVENTORY_STATUSES } from './types/builder-inventory';
 // Publication scope for a builder_inventory row. Mirrors the CHECK
 // constraint in the table (see migration 2026_06_15__widen_builder_inventory_publication_check).
 // 'both' covers Austin + San Antonio (the original launched markets). Pre-launch

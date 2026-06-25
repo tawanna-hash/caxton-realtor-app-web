@@ -230,7 +230,7 @@ export default function AdvertiserReportDrawer({
                     className={[
                       'px-3 py-1.5 text-sm border-r border-gray-300 last:border-r-0 transition-colors',
                       days === opt.value
-                        ? 'bg-[#301D5D] text-white'
+                        ? 'bg-brand-700 text-white'
                         : 'bg-white text-gray-700 hover:bg-gray-50',
                     ].join(' ')}
                   >
@@ -323,7 +323,7 @@ export default function AdvertiserReportDrawer({
                   type="button"
                   onClick={handleSend}
                   disabled={sending || !canSend || loadingPreview}
-                  className="bg-[#301D5D] hover:bg-[#493676] text-white px-5 py-2 rounded-md text-sm font-medium disabled:opacity-40"
+                  className="bg-brand-700 hover:bg-[#493676] text-white px-5 py-2 rounded-md text-sm font-medium disabled:opacity-40"
                 >
                   {sending ? 'Sending…' : 'Send to this advertiser'}
                 </button>

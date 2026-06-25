@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { ApiError, withErrorHandling } from '@/lib/server/error';
 import type {
   RealtyLineReport,
   IndicatorStat,
@@ -150,116 +151,96 @@ async function ensureSchema() {
   await sql`CREATE INDEX IF NOT EXISTS realtyline_mls_reports_released_at_idx ON realtyline_mls_reports (released_at DESC)`;
 }
 
-export async function GET() {
+export const GET = withErrorHandling(async () => {
   const admin = await getCurrentAdmin();
-  if (!admin) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
-  try {
-    await ensureSchema();
-    const sql = getSql();
-    const rows = await sql`
-      SELECT id, month_label, month_label_es, released_at::text AS released_at,
-             subtitle_en, subtitle_es,
-             headline_value, headline_delta, headline_delta_direction,
-             headline_label_en, headline_label_es,
-             indicator_stats, listing_counts, price_bands,
-             page_count, pdf_storage_key, created_at, updated_at
-        FROM realtyline_mls_reports
-       ORDER BY released_at DESC
-    `;
-    return NextResponse.json({ ok: true, reports: rows });
-  } catch (err) {
-    console.error('[admin/realtyline-mls GET]', err);
-    return NextResponse.json({ ok: false, error: 'failed to list reports' }, { status: 500 });
-  }
-}
+  if (!admin) throw new ApiError(401, 'unauthorized');
+  await ensureSchema();
+  const sql = getSql();
+  const rows = await sql`
+    SELECT id, month_label, month_label_es, released_at::text AS released_at,
+           subtitle_en, subtitle_es,
+           headline_value, headline_delta, headline_delta_direction,
+           headline_label_en, headline_label_es,
+           indicator_stats, listing_counts, price_bands,
+           page_count, pdf_storage_key, created_at, updated_at
+      FROM realtyline_mls_reports
+     ORDER BY released_at DESC
+  `;
+  return NextResponse.json({ ok: true, reports: rows });
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async (req: NextRequest) => {
   const admin = await getCurrentAdmin();
-  if (!admin) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
-  try {
-    await ensureSchema();
-    const body = await req.json();
-    const v = validate(body);
-    if (!v.ok) return NextResponse.json({ ok: false, error: v.error }, { status: 400 });
-    const d = v.data;
-    const sql = getSql();
-    const rows = await sql`
-      INSERT INTO realtyline_mls_reports
-        (month_label, month_label_es, released_at,
-         subtitle_en, subtitle_es,
-         headline_value, headline_delta, headline_delta_direction,
-         headline_label_en, headline_label_es,
-         indicator_stats, listing_counts, price_bands,
-         page_count, pdf_storage_key)
-      VALUES
-        (${d.month_label}, ${d.month_label_es}, ${d.released_at},
-         ${d.subtitle_en}, ${d.subtitle_es},
-         ${d.headline_value}, ${d.headline_delta}, ${d.headline_delta_direction},
-         ${d.headline_label_en}, ${d.headline_label_es},
-         ${JSON.stringify(d.indicator_stats)}::jsonb,
-         ${JSON.stringify(d.listing_counts)}::jsonb,
-         ${JSON.stringify(d.price_bands)}::jsonb,
-         ${d.page_count}, ${d.pdf_storage_key})
-      RETURNING id
-    `;
-    return NextResponse.json({ ok: true, id: (rows as { id: number }[])[0]?.id });
-  } catch (err) {
-    console.error('[admin/realtyline-mls POST]', err);
-    return NextResponse.json({ ok: false, error: 'failed to save report' }, { status: 500 });
-  }
-}
+  if (!admin) throw new ApiError(401, 'unauthorized');
+  await ensureSchema();
+  const body = await req.json();
+  const v = validate(body);
+  if (!v.ok) throw new ApiError(400, v.error);
+  const d = v.data;
+  const sql = getSql();
+  const rows = await sql`
+    INSERT INTO realtyline_mls_reports
+      (month_label, month_label_es, released_at,
+       subtitle_en, subtitle_es,
+       headline_value, headline_delta, headline_delta_direction,
+       headline_label_en, headline_label_es,
+       indicator_stats, listing_counts, price_bands,
+       page_count, pdf_storage_key)
+    VALUES
+      (${d.month_label}, ${d.month_label_es}, ${d.released_at},
+       ${d.subtitle_en}, ${d.subtitle_es},
+       ${d.headline_value}, ${d.headline_delta}, ${d.headline_delta_direction},
+       ${d.headline_label_en}, ${d.headline_label_es},
+       ${JSON.stringify(d.indicator_stats)}::jsonb,
+       ${JSON.stringify(d.listing_counts)}::jsonb,
+       ${JSON.stringify(d.price_bands)}::jsonb,
+       ${d.page_count}, ${d.pdf_storage_key})
+    RETURNING id
+  `;
+  return NextResponse.json({ ok: true, id: (rows as { id: number }[])[0]?.id });
+});
 
-export async function PATCH(req: NextRequest) {
+export const PATCH = withErrorHandling(async (req: NextRequest) => {
   const admin = await getCurrentAdmin();
-  if (!admin) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
-  try {
-    await ensureSchema();
-    const id = Number(req.nextUrl.searchParams.get('id'));
-    if (!Number.isFinite(id) || id <= 0) return NextResponse.json({ ok: false, error: 'invalid id' }, { status: 400 });
-    const body = await req.json();
-    const v = validate(body);
-    if (!v.ok) return NextResponse.json({ ok: false, error: v.error }, { status: 400 });
-    const d = v.data;
-    const sql = getSql();
-    await sql`
-      UPDATE realtyline_mls_reports
-         SET month_label              = ${d.month_label},
-             month_label_es           = ${d.month_label_es},
-             released_at              = ${d.released_at},
-             subtitle_en              = ${d.subtitle_en},
-             subtitle_es              = ${d.subtitle_es},
-             headline_value           = ${d.headline_value},
-             headline_delta           = ${d.headline_delta},
-             headline_delta_direction = ${d.headline_delta_direction},
-             headline_label_en        = ${d.headline_label_en},
-             headline_label_es        = ${d.headline_label_es},
-             indicator_stats          = ${JSON.stringify(d.indicator_stats)}::jsonb,
-             listing_counts           = ${JSON.stringify(d.listing_counts)}::jsonb,
-             price_bands              = ${JSON.stringify(d.price_bands)}::jsonb,
-             page_count               = ${d.page_count},
-             pdf_storage_key          = ${d.pdf_storage_key},
-             updated_at               = NOW()
-       WHERE id = ${id}
-    `;
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error('[admin/realtyline-mls PATCH]', err);
-    return NextResponse.json({ ok: false, error: 'failed to update report' }, { status: 500 });
-  }
-}
+  if (!admin) throw new ApiError(401, 'unauthorized');
+  await ensureSchema();
+  const id = Number(req.nextUrl.searchParams.get('id'));
+  if (!Number.isFinite(id) || id <= 0) throw new ApiError(400, 'invalid id');
+  const body = await req.json();
+  const v = validate(body);
+  if (!v.ok) throw new ApiError(400, v.error);
+  const d = v.data;
+  const sql = getSql();
+  await sql`
+    UPDATE realtyline_mls_reports
+       SET month_label              = ${d.month_label},
+           month_label_es           = ${d.month_label_es},
+           released_at              = ${d.released_at},
+           subtitle_en              = ${d.subtitle_en},
+           subtitle_es              = ${d.subtitle_es},
+           headline_value           = ${d.headline_value},
+           headline_delta           = ${d.headline_delta},
+           headline_delta_direction = ${d.headline_delta_direction},
+           headline_label_en        = ${d.headline_label_en},
+           headline_label_es        = ${d.headline_label_es},
+           indicator_stats          = ${JSON.stringify(d.indicator_stats)}::jsonb,
+           listing_counts           = ${JSON.stringify(d.listing_counts)}::jsonb,
+           price_bands              = ${JSON.stringify(d.price_bands)}::jsonb,
+           page_count               = ${d.page_count},
+           pdf_storage_key          = ${d.pdf_storage_key},
+           updated_at               = NOW()
+     WHERE id = ${id}
+  `;
+  return NextResponse.json({ ok: true });
+});
 
-export async function DELETE(req: NextRequest) {
+export const DELETE = withErrorHandling(async (req: NextRequest) => {
   const admin = await getCurrentAdmin();
-  if (!admin) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
-  try {
-    await ensureSchema();
-    const id = Number(req.nextUrl.searchParams.get('id'));
-    if (!Number.isFinite(id) || id <= 0) return NextResponse.json({ ok: false, error: 'invalid id' }, { status: 400 });
-    const sql = getSql();
-    await sql`DELETE FROM realtyline_mls_reports WHERE id = ${id}`;
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error('[admin/realtyline-mls DELETE]', err);
-    return NextResponse.json({ ok: false, error: 'failed to delete report' }, { status: 500 });
-  }
-}
+  if (!admin) throw new ApiError(401, 'unauthorized');
+  await ensureSchema();
+  const id = Number(req.nextUrl.searchParams.get('id'));
+  if (!Number.isFinite(id) || id <= 0) throw new ApiError(400, 'invalid id');
+  const sql = getSql();
+  await sql`DELETE FROM realtyline_mls_reports WHERE id = ${id}`;
+  return NextResponse.json({ ok: true });
+});

@@ -176,7 +176,7 @@ export default function MortgageCalculatorClient() {
             onClick={() => setTab(t.id)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition ${
               tab === t.id
-                ? 'border-[#301D5D] text-[#301D5D]'
+                ? 'border-brand-700 text-brand-700'
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
@@ -614,7 +614,7 @@ function AmortizationTab(p: AmortizationTabProps) {
         <button
           type="button"
           onClick={downloadCsv}
-          className="text-xs px-3 py-1.5 border border-gray-300 rounded-md hover:border-[#301D5D] hover:text-[#301D5D] transition"
+          className="text-xs px-3 py-1.5 border border-gray-300 rounded-md hover:border-brand-700 hover:text-brand-700 transition"
         >
           Download CSV
         </button>
@@ -709,7 +709,7 @@ function NumberField({ label, value, onChange, prefix, suffix, step = 1, hint }:
             const n = parseFloat(e.target.value);
             onChange(Number.isFinite(n) ? n : 0);
           }}
-          className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#301D5D] focus:outline-none focus:ring-1 focus:ring-[#301D5D]/30 ${
+          className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-700/30 ${
             prefix ? 'pl-7' : ''
           } ${suffix ? 'pr-8' : ''}`}
         />
@@ -747,7 +747,7 @@ function SelectField<T extends number | string>({
           const coerced = (typeof options[0].v === 'number' ? Number(raw) : raw) as T;
           onChange(coerced);
         }}
-        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-[#301D5D] focus:outline-none focus:ring-1 focus:ring-[#301D5D]/30 bg-white"
+        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-700/30 bg-white"
       >
         {options.map((o) => (
           <option key={String(o.v)} value={String(o.v)}>

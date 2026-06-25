@@ -5,59 +5,64 @@
 // are admin-managed).
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 import { coerceFooterTemplateId } from '@/lib/footer-templates';
+import { ApiError, withErrorHandling } from '@/lib/server/error';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const SELF_UPDATABLE = ['company', 'phone', 'office_phone', 'website',
-  'address', 'address_2', 'city', 'state', 'zip',
-  'footer_template'] as const;
+// Allow-list of self-updatable fields. Each must be a nullable string.
+const nullableString = z.string().max(500).nullable().optional();
 
-export async function PATCH(req: NextRequest) {
+const portalAccountPatchSchema = z.object({
+  company: nullableString,
+  phone: nullableString,
+  office_phone: nullableString,
+  website: nullableString,
+  address: nullableString,
+  address_2: nullableString,
+  city: nullableString,
+  state: nullableString,
+  zip: nullableString,
+  // footer_template gets normalized via coerceFooterTemplateId; accept any
+  // input here and let the helper validate.
+  footer_template: z.unknown().optional(),
+}).strict();
+
+export const PATCH = withErrorHandling(async (req: NextRequest) => {
   const user = await getCurrentPortalUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user) throw new ApiError(401, 'Unauthorized');
 
-  let body: Record<string, unknown>;
-  try { body = await req.json(); } catch {
-    return NextResponse.json({ error: 'invalid json' }, { status: 400 });
+  const body = portalAccountPatchSchema.parse(await req.json());
+
+  await ensureSchema();
+  const sql = getSql();
+  const updated: string[] = [];
+
+  // Helper: coerce undefined-or-string to nullable string for SQL.
+  const norm = (v: string | null | undefined): string | null =>
+    typeof v === 'string' ? v : null;
+
+  if ('company' in body)      { await sql`UPDATE advertisers SET company = ${norm(body.company)} WHERE id = ${user.advertiser_id}`;      updated.push('company'); }
+  if ('phone' in body)        { await sql`UPDATE advertisers SET phone = ${norm(body.phone)} WHERE id = ${user.advertiser_id}`;        updated.push('phone'); }
+  if ('office_phone' in body) { await sql`UPDATE advertisers SET office_phone = ${norm(body.office_phone)} WHERE id = ${user.advertiser_id}`; updated.push('office_phone'); }
+  if ('website' in body)      { await sql`UPDATE advertisers SET website = ${norm(body.website)} WHERE id = ${user.advertiser_id}`;      updated.push('website'); }
+  if ('address' in body)      { await sql`UPDATE advertisers SET address = ${norm(body.address)} WHERE id = ${user.advertiser_id}`;      updated.push('address'); }
+  if ('address_2' in body)    { await sql`UPDATE advertisers SET address_2 = ${norm(body.address_2)} WHERE id = ${user.advertiser_id}`;    updated.push('address_2'); }
+  if ('city' in body)         { await sql`UPDATE advertisers SET city = ${norm(body.city)} WHERE id = ${user.advertiser_id}`;         updated.push('city'); }
+  if ('state' in body)        { await sql`UPDATE advertisers SET state = ${norm(body.state)} WHERE id = ${user.advertiser_id}`;        updated.push('state'); }
+  if ('zip' in body)          { await sql`UPDATE advertisers SET zip = ${norm(body.zip)} WHERE id = ${user.advertiser_id}`;          updated.push('zip'); }
+  if ('footer_template' in body) {
+    const tpl = coerceFooterTemplateId(body.footer_template);
+    await sql`UPDATE advertisers SET footer_template = ${tpl} WHERE id = ${user.advertiser_id}`;
+    updated.push('footer_template');
   }
 
-  try {
-    await ensureSchema();
-    const sql = getSql();
-    const updated: string[] = [];
-
-    for (const field of SELF_UPDATABLE) {
-      if (!(field in body)) continue;
-      const raw = body[field as keyof typeof body];
-      const v = typeof raw === 'string' ? raw : null;
-      switch (field) {
-        case 'company':      await sql`UPDATE advertisers SET company = ${v} WHERE id = ${user.advertiser_id}`; break;
-        case 'phone':        await sql`UPDATE advertisers SET phone = ${v} WHERE id = ${user.advertiser_id}`; break;
-        case 'office_phone': await sql`UPDATE advertisers SET office_phone = ${v} WHERE id = ${user.advertiser_id}`; break;
-        case 'website':      await sql`UPDATE advertisers SET website = ${v} WHERE id = ${user.advertiser_id}`; break;
-        case 'address':      await sql`UPDATE advertisers SET address = ${v} WHERE id = ${user.advertiser_id}`; break;
-        case 'address_2':    await sql`UPDATE advertisers SET address_2 = ${v} WHERE id = ${user.advertiser_id}`; break;
-        case 'city':         await sql`UPDATE advertisers SET city = ${v} WHERE id = ${user.advertiser_id}`; break;
-        case 'state':        await sql`UPDATE advertisers SET state = ${v} WHERE id = ${user.advertiser_id}`; break;
-        case 'zip':          await sql`UPDATE advertisers SET zip = ${v} WHERE id = ${user.advertiser_id}`; break;
-        case 'footer_template': {
-          const tpl = coerceFooterTemplateId(v);
-          await sql`UPDATE advertisers SET footer_template = ${tpl} WHERE id = ${user.advertiser_id}`;
-          break;
-        }
-      }
-      updated.push(field);
-    }
-
-    if (updated.length === 0) {
-      return NextResponse.json({ error: 'no updatable fields' }, { status: 400 });
-    }
-    return NextResponse.json({ ok: true, updated_fields: updated });
-  } catch (err) {
-    return NextResponse.json({ error: 'patch failed', detail: err instanceof Error ? err.message : 'error' }, { status: 500 });
+  if (updated.length === 0) {
+    throw new ApiError(400, 'no updatable fields');
   }
-}
+  return NextResponse.json({ ok: true, updated_fields: updated });
+});

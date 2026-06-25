@@ -163,7 +163,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                 className={
                   'px-3 py-1.5 text-xs font-medium rounded-md ' +
                   (preset === p
-                    ? 'bg-[#301D5D] text-white'
+                    ? 'bg-brand-700 text-white'
                     : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50')
                 }
               >
@@ -191,7 +191,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
             title={advertiser.contact_email
               ? 'Preview and send the performance report email'
               : 'Add a contact email on the Advertisers page to send a report'}
-            className="px-3 py-1.5 text-xs font-medium rounded-md bg-[#301D5D] text-white hover:bg-[#493676] disabled:opacity-40"
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-brand-700 text-white hover:bg-[#493676] disabled:opacity-40"
           >
             Send report email
           </button>

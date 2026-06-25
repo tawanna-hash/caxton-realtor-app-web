@@ -6,38 +6,28 @@
 // revoked_at. The token row is kept for analytics + so re-enabling
 // upserts cleanly via /api/push/native (ON CONFLICT resets revoked_at).
 //
-// Match strategy:
-//   1. If body.token is present, match by token (exact, most reliable).
-//   2. Else fall back to user_agent matching for the same realtor — best
-//      effort for older clients that didn't cache the token locally.
-//
 // Always returns ok:true so the UI flips even when nothing matched —
 // the user's intent ("stop pushing me") is honored regardless.
 
 import { NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
+import { withErrorHandling } from '@/lib/server/error';
+import { pushNativeDisableBodySchema } from '@/lib/server/schemas/push';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type Body = {
-  token?: string | null;
-  userAgent?: string | null;
-};
-
-export async function POST(req: Request): Promise<Response> {
+export const POST = withErrorHandling(async (req: Request): Promise<Response> => {
   await ensureSchema();
 
-  let body: Body = {};
-  try {
-    body = (await req.json()) as Body;
-  } catch {
-    // Empty body is fine — we'll fall back to UA matching from headers.
-  }
+  // Empty body is fine — fall back to UA matching from headers.
+  let raw: unknown = {};
+  try { raw = await req.json(); } catch { /* empty body */ }
+  const body = pushNativeDisableBodySchema.parse(raw ?? {});
 
   const sql = getSql();
-  const token = (body.token || '').trim() || null;
-  const userAgent = body.userAgent || req.headers.get('user-agent') || null;
+  const token = (body.token ?? '').trim() || null;
+  const userAgent = body.userAgent ?? req.headers.get('user-agent') ?? null;
 
   if (token) {
     await sql`
@@ -49,7 +39,6 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   if (userAgent) {
-    // Best-effort UA fallback. Only revokes rows still active.
     await sql`
       UPDATE native_push_tokens
          SET revoked_at = NOW()
@@ -60,4 +49,4 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   return NextResponse.json({ ok: true, matched: 'none' });
-}
+});

@@ -249,7 +249,7 @@ export default function RealtyLineMlsAdminPage() {
               <button
                 type="button"
                 onClick={prefillLabels}
-                className="text-xs font-medium px-3 py-1.5 border border-[#301D5D] text-[#301D5D] rounded-md hover:bg-[#301D5D] hover:text-white transition"
+                className="text-xs font-medium px-3 py-1.5 border border-brand-700 text-brand-700 rounded-md hover:bg-brand-700 hover:text-white transition"
               >
                 Pre-fill labels (EN + ES)
               </button>
@@ -504,7 +504,7 @@ export default function RealtyLineMlsAdminPage() {
                 type="button"
                 onClick={save}
                 disabled={saving}
-                className="px-5 py-2.5 bg-[#301D5D] text-white rounded-md font-medium disabled:opacity-60"
+                className="px-5 py-2.5 bg-brand-700 text-white rounded-md font-medium disabled:opacity-60"
               >
                 {saving ? 'Saving\u2026' : editingId ? 'Update report' : 'Create report'}
               </button>
@@ -538,7 +538,7 @@ export default function RealtyLineMlsAdminPage() {
                   <div>
                     <p className="font-semibold">
                       {r.month_label}{' '}
-                      {i === 0 && <span className="ml-2 text-[10px] uppercase tracking-wider bg-[#301D5D] text-white px-2 py-0.5 rounded-md">Live</span>}
+                      {i === 0 && <span className="ml-2 text-[10px] uppercase tracking-wider bg-brand-700 text-white px-2 py-0.5 rounded-md">Live</span>}
                     </p>
                     <p className="text-sm text-gray-600">{r.released_at} {'\u00b7'} {r.headline_value} {r.headline_delta}</p>
                     <p className="text-xs text-gray-500 mt-1">{r.headline_label_en || ''}</p>

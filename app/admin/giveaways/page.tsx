@@ -66,7 +66,7 @@ export default function GiveawaysPage() {
         </div>
         <Link
           href="/admin/giveaways/new"
-          className="bg-[#301D5D] text-white px-4 py-2 text-sm font-medium hover:bg-[#493676] rounded-md transition-colors"
+          className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-[#493676] rounded-md transition-colors"
         >
           + Create Giveaway
         </Link>
@@ -80,7 +80,7 @@ export default function GiveawaysPage() {
       {!loading && items.length === 0 && (
         <div className="bg-white border border-gray-200 p-12 text-center rounded-md">
           <p className="text-gray-500 mb-4">No giveaways yet.</p>
-          <Link href="/admin/giveaways/new" className="text-sm font-medium text-[#301D5D] underline">
+          <Link href="/admin/giveaways/new" className="text-sm font-medium text-brand-700 underline">
             Create your first giveaway
           </Link>
         </div>
@@ -91,10 +91,10 @@ export default function GiveawaysPage() {
           <Link
             key={g.id}
             href={`/admin/giveaways/${g.id}`}
-            className="bg-white border border-gray-200 p-5 hover:border-[#301D5D] transition-colors block rounded-md"
+            className="bg-white border border-gray-200 p-5 hover:border-brand-700 transition-colors block rounded-md"
           >
             <div className="flex items-start justify-between gap-3 mb-3">
-              <h2 className="font-semibold text-[#301D5D] leading-tight">{g.title}</h2>
+              <h2 className="font-semibold text-brand-700 leading-tight">{g.title}</h2>
               <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 border whitespace-nowrap ${STATUS_STYLES[g.status] || ''}`}>
                 {g.status}
               </span>
@@ -105,13 +105,13 @@ export default function GiveawaysPage() {
               {formatDate(g.starts_at)} - {formatDate(g.ends_at)}
             </div>
             <div className="flex items-center gap-4 text-xs text-gray-600 pt-3 border-t border-gray-100">
-              <span><strong className="text-[#301D5D]">{g.participant_count ?? 0}</strong> entries</span>
-              <span><strong className="text-[#301D5D]">{g.ticket_count ?? 0}</strong> tickets</span>
+              <span><strong className="text-brand-700">{g.participant_count ?? 0}</strong> entries</span>
+              <span><strong className="text-brand-700">{g.ticket_count ?? 0}</strong> tickets</span>
             </div>
             {g.winner_name && (
               <div className="mt-3 pt-3 border-t border-gray-100 text-xs">
                 <span className="text-gray-500">Winner: </span>
-                <span className="font-medium text-[#301D5D]">{g.winner_name}</span>
+                <span className="font-medium text-brand-700">{g.winner_name}</span>
               </div>
             )}
           </Link>

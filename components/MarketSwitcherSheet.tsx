@@ -119,7 +119,7 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
                   <span
                     className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold ${
                       isCurrent
-                        ? 'bg-[#301D5D] text-white'
+                        ? 'bg-brand-700 text-white'
                         : 'bg-gray-100 text-gray-600'
                     }`}
                   >
@@ -197,7 +197,7 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-3 text-center text-base font-medium text-[#301D5D] hover:bg-gray-50 rounded-md transition"
+            className="w-full py-3 text-center text-base font-medium text-brand-700 hover:bg-gray-50 rounded-md transition"
           >
             Cancel
           </button>

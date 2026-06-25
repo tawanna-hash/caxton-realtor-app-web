@@ -76,7 +76,7 @@ function VerifyContent() {
             <p className="mt-4 text-base text-red-800">{message}</p>
             <a
               href="/dashboard"
-              className="mt-6 inline-block text-sm uppercase tracking-wider font-medium text-[#301D5D] border-b border-[#301D5D] pb-0.5"
+              className="mt-6 inline-block text-sm uppercase tracking-wider font-medium text-brand-700 border-b border-brand-700 pb-0.5"
             >
               Back to the app
             </a>

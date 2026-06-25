@@ -48,7 +48,7 @@ export default function AdvertiseEmailPage() {
       {/* Audience stat ribbon */}
       <section className="mb-10 grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="border border-gray-200 px-4 py-4 rounded-md">
-          <p className="text-2xl font-semibold text-[#301D5D] tracking-tight">
+          <p className="text-2xl font-semibold text-brand-700 tracking-tight">
             43K
           </p>
           <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
@@ -56,7 +56,7 @@ export default function AdvertiseEmailPage() {
           </p>
         </div>
         <div className="border border-gray-200 px-4 py-4 rounded-md">
-          <p className="text-2xl font-semibold text-[#301D5D] tracking-tight">
+          <p className="text-2xl font-semibold text-brand-700 tracking-tight">
             21K
           </p>
           <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
@@ -64,7 +64,7 @@ export default function AdvertiseEmailPage() {
           </p>
         </div>
         <div className="border border-gray-200 px-4 py-4 rounded-md">
-          <p className="text-2xl font-semibold text-[#301D5D] tracking-tight">
+          <p className="text-2xl font-semibold text-brand-700 tracking-tight">
             ~38%
           </p>
           <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
@@ -72,7 +72,7 @@ export default function AdvertiseEmailPage() {
           </p>
         </div>
         <div className="border border-gray-200 px-4 py-4 rounded-md">
-          <p className="text-2xl font-semibold text-[#301D5D] tracking-tight">
+          <p className="text-2xl font-semibold text-brand-700 tracking-tight">
             Fri
           </p>
           <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
@@ -91,16 +91,16 @@ export default function AdvertiseEmailPage() {
               <article
                 key={id}
                 className={`relative flex flex-col border rounded-md p-6 ${
-                  isPopular ? 'border-[#301D5D]' : 'border-gray-200'
+                  isPopular ? 'border-brand-700' : 'border-gray-200'
                 }`}
               >
                 {isPopular && (
-                  <span className="absolute -top-3 left-5 px-2 py-0.5 rounded-full bg-[#301D5D] text-white text-[10px] font-semibold uppercase tracking-wider">
+                  <span className="absolute -top-3 left-5 px-2 py-0.5 rounded-full bg-brand-700 text-white text-[10px] font-semibold uppercase tracking-wider">
                     Most popular
                   </span>
                 )}
 
-                <h3 className="text-xl font-semibold text-[#301D5D] mb-1">
+                <h3 className="text-xl font-semibold text-brand-700 mb-1">
                   {eb.name}
                 </h3>
                 <p className="text-3xl font-semibold text-gray-900 tabular-nums mb-1">
@@ -113,7 +113,7 @@ export default function AdvertiseEmailPage() {
                 <ul className="text-sm text-gray-700 space-y-1.5 my-4 flex-1">
                   {eb.features.map((f) => (
                     <li key={f} className="flex gap-2">
-                      <span aria-hidden className="text-[#301D5D] font-bold">·</span>
+                      <span aria-hidden className="text-brand-700 font-bold">·</span>
                       <span>{f}</span>
                     </li>
                   ))}
@@ -121,7 +121,7 @@ export default function AdvertiseEmailPage() {
 
                 <Link
                   href={`/advertise/inquire?channel=email&package=${encodeURIComponent(id)}`}
-                  className="inline-flex items-center justify-center px-4 py-2.5 bg-[#301D5D] text-white text-sm font-medium rounded-md hover:bg-[#493676] transition"
+                  className="inline-flex items-center justify-center px-4 py-2.5 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-[#493676] transition"
                 >
                   Request quote
                 </Link>
@@ -166,7 +166,7 @@ export default function AdvertiseEmailPage() {
         </p>
         <Link
           href="/advertise/inquire?channel=email"
-          className="inline-flex items-center justify-center px-5 py-2.5 border border-[#301D5D] text-[#301D5D] text-sm font-medium rounded-md hover:bg-[#301D5D] hover:text-white transition"
+          className="inline-flex items-center justify-center px-5 py-2.5 border border-brand-700 text-brand-700 text-sm font-medium rounded-md hover:bg-brand-700 hover:text-white transition"
         >
           Start an e-Blast inquiry
         </Link>

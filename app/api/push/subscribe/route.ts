@@ -6,38 +6,21 @@
 
 import { NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
+import { withErrorHandling } from '@/lib/server/error';
+import { pushSubscribeBodySchema } from '@/lib/server/schemas/push';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type Body = {
-  subscription: {
-    endpoint: string;
-    keys: { p256dh: string; auth: string };
-  };
-  realtorId?: string | null;
-  market?: 'austin' | 'san_antonio' | null;
-  userAgent?: string;
-};
-
-export async function POST(req: Request): Promise<Response> {
+export const POST = withErrorHandling(async (req: Request): Promise<Response> => {
   await ensureSchema();
-  let body: Body;
-  try {
-    body = (await req.json()) as Body;
-  } catch {
-    return NextResponse.json({ error: 'invalid json' }, { status: 400 });
-  }
-
-  const sub = body?.subscription;
-  if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) {
-    return NextResponse.json({ error: 'missing subscription fields' }, { status: 400 });
-  }
+  const body = pushSubscribeBodySchema.parse(await req.json());
+  const sub = body.subscription;
 
   const sql = getSql();
-  const realtorId = body.realtorId || null;
-  const market = body.market || null;
-  const userAgent = body.userAgent || req.headers.get('user-agent') || null;
+  const realtorId = body.realtorId ?? null;
+  const market = body.market ?? null;
+  const userAgent = body.userAgent ?? req.headers.get('user-agent') ?? null;
 
   await sql`
     INSERT INTO push_subscriptions (realtor_id, endpoint, p256dh, auth, user_agent, market)
@@ -53,4 +36,4 @@ export async function POST(req: Request): Promise<Response> {
   `;
 
   return NextResponse.json({ ok: true });
-}
+});

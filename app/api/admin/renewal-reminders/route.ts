@@ -7,73 +7,46 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getRenewalReminders, createRenewalReminder } from '@/lib/renewal-reminders';
-import type { RenewalReminderStatus } from '@/lib/types/renewal-reminder';
+import { ApiError, withErrorHandling } from '@/lib/server/error';
+import { parseQuery } from '@/lib/server/schemas/_common';
+import {
+  renewalReminderCreateSchema,
+  renewalReminderListQuerySchema,
+} from '@/lib/server/schemas/renewal-reminders';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const VALID_STATUSES = new Set<RenewalReminderStatus>(['Pending', 'Completed', 'Dismissed']);
-
-function errMessage(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
-}
-
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandling(async (req: NextRequest) => {
   const admin = await getCurrentAdmin();
-  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!admin) throw new ApiError(401, 'Unauthorized');
 
-  try {
-    await ensureSchema();
-    const { searchParams } = new URL(req.url);
-    const rawStatus = searchParams.get('status');
-    const statusFilter =
-      rawStatus && VALID_STATUSES.has(rawStatus as RenewalReminderStatus)
-        ? (rawStatus as RenewalReminderStatus)
-        : undefined;
+  await ensureSchema();
+  const { status } = parseQuery(req, renewalReminderListQuerySchema);
+  const reminders = await getRenewalReminders(status);
+  return NextResponse.json({ reminders });
+});
 
-    const reminders = await getRenewalReminders(statusFilter);
-    return NextResponse.json({ reminders });
-  } catch (err) {
-    console.error('[admin/renewal-reminders GET]', errMessage(err));
-    return NextResponse.json({ error: 'list failed', detail: errMessage(err) }, { status: 500 });
-  }
-}
-
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling(async (req: NextRequest) => {
   const admin = await getCurrentAdmin();
-  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!admin) throw new ApiError(401, 'Unauthorized');
 
-  let body: Record<string, unknown>;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'invalid json' }, { status: 400 });
-  }
+  const body = renewalReminderCreateSchema.parse(await req.json());
 
-  const agreementId = typeof body.agreement_id === 'string' ? body.agreement_id : null;
-  if (!agreementId) {
-    return NextResponse.json({ error: 'agreement_id required' }, { status: 400 });
-  }
-
-  try {
-    await ensureSchema();
-    const reminder = await createRenewalReminder({
-      agreement_id:  agreementId,
-      company_name:  (body.company_name  as string | undefined) ?? null,
-      rep_name:      (body.rep_name      as string | undefined) ?? null,
-      email:         (body.email         as string | undefined) ?? null,
-      ad_size:       (body.ad_size       as string | undefined) ?? null,
-      frequency:     (body.frequency     as string | undefined) ?? null,
-      ad_rate_cents: typeof body.ad_rate_cents === 'number' ? body.ad_rate_cents : null,
-      exp_date:      (body.exp_date      as string | undefined) ?? null,
-      remind_date:   (body.remind_date   as string | undefined) ?? null,
-      note:          (body.note          as string | undefined) ?? null,
-      triggered_by:  admin.email ?? 'manual',
-    });
-    if (!reminder) throw new Error('insert returned null');
-    return NextResponse.json({ reminder }, { status: 201 });
-  } catch (err) {
-    console.error('[admin/renewal-reminders POST]', errMessage(err));
-    return NextResponse.json({ error: 'create failed', detail: errMessage(err) }, { status: 500 });
-  }
-}
+  await ensureSchema();
+  const reminder = await createRenewalReminder({
+    agreement_id: body.agreement_id,
+    company_name: body.company_name ?? null,
+    rep_name: body.rep_name ?? null,
+    email: body.email ?? null,
+    ad_size: body.ad_size ?? null,
+    frequency: body.frequency ?? null,
+    ad_rate_cents: body.ad_rate_cents ?? null,
+    exp_date: body.exp_date ?? null,
+    remind_date: body.remind_date ?? null,
+    note: body.note ?? null,
+    triggered_by: admin.email ?? 'manual',
+  });
+  if (!reminder) throw new ApiError(500, 'create failed');
+  return NextResponse.json({ reminder }, { status: 201 });
+});

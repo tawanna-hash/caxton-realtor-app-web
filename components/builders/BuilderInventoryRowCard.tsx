@@ -98,7 +98,7 @@ export default function BuilderInventoryRowCard({
           <Icon strokeWidth={1.5} size={22} className="text-gray-400" />
         )}
         {row.featured ? (
-          <span className="absolute top-1 left-1 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-sm bg-[#301D5D] text-white">
+          <span className="absolute top-1 left-1 text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-sm bg-brand-700 text-white">
             Featured
           </span>
         ) : null}

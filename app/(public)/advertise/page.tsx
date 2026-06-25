@@ -104,7 +104,7 @@ export default function AdvertisePage() {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="border border-gray-200 px-4 py-5 rounded-md">
-            <p className="text-3xl font-semibold text-[#301D5D] tracking-tight">
+            <p className="text-3xl font-semibold text-brand-700 tracking-tight">
               {(PUB_SUBSCRIBERS.realtyline / 1000).toFixed(0)}K
             </p>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
@@ -114,7 +114,7 @@ export default function AdvertisePage() {
             </p>
           </div>
           <div className="border border-gray-200 px-4 py-5 rounded-md">
-            <p className="text-3xl font-semibold text-[#301D5D] tracking-tight">
+            <p className="text-3xl font-semibold text-brand-700 tracking-tight">
               {(PUB_SUBSCRIBERS.newsline / 1000).toFixed(0)}K
             </p>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
@@ -124,7 +124,7 @@ export default function AdvertisePage() {
             </p>
           </div>
           <div className="border border-gray-200 px-4 py-5 rounded-md">
-            <p className="text-3xl font-semibold text-[#301D5D] tracking-tight">
+            <p className="text-3xl font-semibold text-brand-700 tracking-tight">
               {(PUB_SUBSCRIBERS['realtyline-houston'] / 1000).toFixed(0)}K
             </p>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
@@ -134,7 +134,7 @@ export default function AdvertisePage() {
             </p>
           </div>
           <div className="border border-gray-200 px-4 py-5 rounded-md">
-            <p className="text-3xl font-semibold text-[#301D5D] tracking-tight">
+            <p className="text-3xl font-semibold text-brand-700 tracking-tight">
               {(PUB_SUBSCRIBERS['realtyline-dallas'] / 1000).toFixed(0)}K
             </p>
             <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
@@ -227,7 +227,7 @@ export default function AdvertisePage() {
                       className={
                         'border px-3 py-2.5 ' +
                         (p.premium
-                          ? 'border-[#301D5D] bg-[#301D5D] text-white'
+                          ? 'border-brand-700 bg-brand-700 text-white'
                           : p.popular
                             ? 'border-orange-200 bg-orange-50'
                             : 'border-gray-100')
@@ -476,13 +476,13 @@ export default function AdvertisePage() {
             <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs">
               <Link
                 href="/advertise/placements"
-                className="font-semibold text-[#301D5D] underline underline-offset-2 hover:text-[#493676]"
+                className="font-semibold text-brand-700 underline underline-offset-2 hover:text-[#493676]"
               >
                 See where every placement appears {'\u2192'}
               </Link>
               <Link
                 href="/advertise/digital"
-                className="font-semibold text-[#301D5D] underline underline-offset-2 hover:text-[#493676]"
+                className="font-semibold text-brand-700 underline underline-offset-2 hover:text-[#493676]"
               >
                 Browse all {DIGITAL_SLOT_COUNT} placements with live pricing{' '}
                 {'\u2192'}
@@ -494,7 +494,7 @@ export default function AdvertisePage() {
 
       <hr className="border-gray-200 my-12" />
 
-      <section className="bg-gray-50 border-l-4 border-[#301D5D] px-6 py-6 md:px-8 md:py-8">
+      <section className="bg-gray-50 border-l-4 border-brand-700 px-6 py-6 md:px-8 md:py-8">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
           Request a media kit
         </p>
@@ -506,24 +506,24 @@ export default function AdvertisePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-[#301D5D] mb-2">
+            <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-2">
               RealtyLine {'\u2014'} Austin
             </p>
             <a
               href="mailto:hello@myrealtyline.com?subject=Media%20Kit%20Request%20%E2%80%94%20RealtyLine"
-              className="text-base font-medium text-[#301D5D] underline underline-offset-2"
+              className="text-base font-medium text-brand-700 underline underline-offset-2"
             >
               hello@myrealtyline.com
             </a>
           </div>
 
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-[#301D5D] mb-2">
+            <p className="text-sm font-semibold uppercase tracking-wider text-brand-700 mb-2">
               Newsline San Antonio {'\u2014'} San Antonio
             </p>
             <a
               href="mailto:hello@newslinesa.com?subject=Media%20Kit%20Request%20%E2%80%94%20Newsline"
-              className="text-base font-medium text-[#301D5D] underline underline-offset-2"
+              className="text-base font-medium text-brand-700 underline underline-offset-2"
             >
               hello@newslinesa.com
             </a>

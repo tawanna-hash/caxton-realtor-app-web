@@ -120,11 +120,11 @@ export default async function MailingHubPage() {
           </span>
           <Link
             href="/admin/mailing/publication/realtyline"
-            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#301D5D] text-[#301D5D] text-xs font-semibold hover:bg-[#301D5D] hover:text-white transition"
+            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
           >
             <span>RealtyLine (Austin)</span>
             <span
-              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#301D5D]/10 text-[#301D5D] group-hover/dl:bg-white/20 group-hover/dl:text-white"
+              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-700/10 text-brand-700 group-hover/dl:bg-white/20 group-hover/dl:text-white"
               title={`${realtylineCount.total.toLocaleString()} unique deliverable emails`}
             >
               {realtylineCount.total.toLocaleString()}
@@ -148,11 +148,11 @@ export default async function MailingHubPage() {
         </div>
         <div className="mt-3 text-xs text-gray-500">
           Deleting a contact in Mailing or Holding now permanently tombstones the email so future ABOR/SABOR syncs skip it.{' '}
-          <Link href="/admin/mailing/tags" className="font-semibold text-[#301D5D] hover:underline">
+          <Link href="/admin/mailing/tags" className="font-semibold text-brand-700 hover:underline">
             Manage tags →
           </Link>
           {' · '}
-          <Link href="/admin/mailing/suppressions" className="font-semibold text-[#301D5D] hover:underline">
+          <Link href="/admin/mailing/suppressions" className="font-semibold text-brand-700 hover:underline">
             View suppression list →
           </Link>
         </div>

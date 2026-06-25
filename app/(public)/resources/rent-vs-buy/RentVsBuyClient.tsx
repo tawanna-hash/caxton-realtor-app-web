@@ -245,7 +245,7 @@ export default function RentVsBuyClient() {
         {/* ── Chart + Table ───────────────────────────────────────── */}
         <div className="lg:col-span-3">
           <div className="rounded-md border border-gray-200 bg-white p-5 mb-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#301D5D] mb-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-brand-700 mb-4">
               Year-by-year — cumulative cost
             </p>
             <div className="space-y-2">
@@ -262,10 +262,10 @@ export default function RentVsBuyClient() {
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="w-10 text-right text-[#301D5D] font-medium">Buy</span>
+                      <span className="w-10 text-right text-brand-700 font-medium">Buy</span>
                       <div className="flex-1 h-3.5 bg-gray-100 rounded-md overflow-hidden">
                         <div
-                          className="h-full bg-[#301D5D]"
+                          className="h-full bg-brand-700"
                           style={{ width: `${Math.max(0, buyWidth)}%` }}
                         />
                       </div>
@@ -357,7 +357,7 @@ export default function RentVsBuyClient() {
 function FieldGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[#301D5D] mb-3">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-brand-700 mb-3">
         {title}
       </p>
       <div className="space-y-3">{children}</div>

@@ -27,7 +27,9 @@ import type { MailingSegment } from './segments';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export type Market = 'austin' | 'san_antonio';
+// Re-export from lib/types/markets — Single Source of Truth.
+import type { Market } from '@/lib/types/markets';
+export type { Market };
 
 export interface RoutingInput {
   current_segment: MailingSegment;

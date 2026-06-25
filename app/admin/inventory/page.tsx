@@ -176,7 +176,7 @@ export default function AdminInventoryPage() {
           </div>
           <Link
             href="/admin/inventory/new"
-            className="shrink-0 bg-[#301D5D] text-white px-4 py-2 text-sm font-medium hover:bg-[#493676] rounded-md transition-colors whitespace-nowrap"
+            className="shrink-0 bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-[#493676] rounded-md transition-colors whitespace-nowrap"
           >
             + Create Promotion
           </Link>
@@ -248,7 +248,7 @@ export default function AdminInventoryPage() {
                       className={
                         'text-xs px-2.5 py-1 rounded-md border transition-colors ' +
                         (active
-                          ? 'border-[#301D5D] bg-[#301D5D] text-white'
+                          ? 'border-brand-700 bg-brand-700 text-white'
                           : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500')
                       }
                     >
@@ -267,7 +267,7 @@ export default function AdminInventoryPage() {
                   setSortKey(k);
                   setSortDir(d);
                 }}
-                className="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#301D5D]/30"
+                className="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-700/30"
                 aria-label="Sort builder inventory"
               >
                 {SORT_OPTIONS.map((opt) => (
@@ -384,7 +384,7 @@ function EmptyState({ tab, onSwitchTab }: { tab: Tab; onSwitchTab: (t: Tab) => v
         <button
           type="button"
           onClick={() => onSwitchTab(action.target)}
-          className="text-sm font-medium text-[#301D5D] underline"
+          className="text-sm font-medium text-brand-700 underline"
         >
           {action.label}
         </button>

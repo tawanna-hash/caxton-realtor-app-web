@@ -97,9 +97,9 @@ export default function MarketOnboardingPicker() {
                 <button
                   type="button"
                   onClick={() => handlePick(p.id)}
-                  className="w-full flex items-center gap-4 px-4 py-4 rounded-xl border border-gray-200 hover:border-[#301D5D] hover:bg-gray-50 active:bg-gray-100 transition text-left"
+                  className="w-full flex items-center gap-4 px-4 py-4 rounded-xl border border-gray-200 hover:border-brand-700 hover:bg-gray-50 active:bg-gray-100 transition text-left"
                 >
-                  <span className="w-12 h-12 rounded-full bg-[#301D5D] text-white flex items-center justify-center text-sm font-semibold">
+                  <span className="w-12 h-12 rounded-full bg-brand-700 text-white flex items-center justify-center text-sm font-semibold">
                     {p.monogram}
                   </span>
                   <span className="flex-1">

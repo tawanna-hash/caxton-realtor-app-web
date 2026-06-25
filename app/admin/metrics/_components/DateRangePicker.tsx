@@ -31,7 +31,7 @@ export function DateRangePicker({ value, onChange, disabled = false }: Props) {
               'px-4 py-2 text-sm font-medium transition-colors',
               !isFirst ? 'border-l border-gray-200' : '',
               isActive
-                ? 'bg-[#301D5D] text-white'
+                ? 'bg-brand-700 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50',
               disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
             ].filter(Boolean).join(' ')}

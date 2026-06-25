@@ -143,7 +143,7 @@ export default function SelfServicePortalPage() {
 
             <Link
               href="/advertise/placements"
-              className="inline-flex items-center gap-2 bg-violet-200 hover:bg-violet-100 active:scale-[0.98] transition text-[#301D5D] font-semibold px-5 py-3 rounded-full text-sm md:text-base"
+              className="inline-flex items-center gap-2 bg-violet-200 hover:bg-violet-100 active:scale-[0.98] transition text-brand-700 font-semibold px-5 py-3 rounded-full text-sm md:text-base"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               Browse Products
@@ -247,7 +247,7 @@ export default function SelfServicePortalPage() {
                 key={it.step}
                 className="rounded-md border border-gray-200 bg-white p-5"
               >
-                <div className="w-7 h-7 rounded-full bg-[#301D5D] text-white text-sm font-semibold flex items-center justify-center mb-3">
+                <div className="w-7 h-7 rounded-full bg-brand-700 text-white text-sm font-semibold flex items-center justify-center mb-3">
                   {it.step}
                 </div>
                 <h4 className="text-base font-semibold text-gray-900 mb-1.5">
@@ -274,7 +274,7 @@ export default function SelfServicePortalPage() {
           </div>
           <Link
             href="/portal"
-            className="shrink-0 inline-flex items-center gap-2 border border-[#301D5D] text-[#301D5D] hover:bg-[#301D5D] hover:text-white transition font-semibold px-5 py-2.5 rounded-full text-sm"
+            className="shrink-0 inline-flex items-center gap-2 border border-brand-700 text-brand-700 hover:bg-brand-700 hover:text-white transition font-semibold px-5 py-2.5 rounded-full text-sm"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             Open advertiser portal

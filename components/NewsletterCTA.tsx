@@ -136,7 +136,7 @@ export default function NewsletterCTA({
               disabled={submitting}
               // BUG-19: relied on focus:outline-none with no visible :focus-visible fallback.
               // Add an explicit focus-visible ring so keyboard users see focus.
-              className="flex-1 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#301D5D]/40 focus:border-[#301D5D] placeholder:text-[#d1d5db] disabled:opacity-60"
+              className="flex-1 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-700/40 focus:border-brand-700 placeholder:text-[#d1d5db] disabled:opacity-60"
             />
             <button
               onClick={handleSubmit}

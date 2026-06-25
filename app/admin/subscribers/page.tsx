@@ -172,7 +172,7 @@ function SubscribersInner() {
         <button
           onClick={handleExport}
           disabled={exporting}
-          className="bg-[#301D5D] text-white px-4 py-2 text-sm font-medium hover:bg-[#493676] rounded-md transition-colors disabled:opacity-50"
+          className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-[#493676] rounded-md transition-colors disabled:opacity-50"
         >
           {exporting ? 'Exporting...' : 'Export CSV'}
         </button>
@@ -185,7 +185,7 @@ function SubscribersInner() {
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search email or name..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#301D5D]"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700"
           />
           {q && (
             <button
