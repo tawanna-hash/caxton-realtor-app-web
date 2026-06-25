@@ -14,7 +14,7 @@ import { requireAdmin } from '@/lib/server/auth/admin';
 import { withErrorHandling } from '@/lib/server/error';
 import { ensureSchema, getSql } from '@/lib/db';
 import { sendPush, type PushMarketFilter } from '@/lib/server/push';
-import { sendNativePush } from '@/lib/server/native-push';
+import { getApnsConfigStatus, sendNativePush } from '@/lib/server/native-push';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -125,6 +125,9 @@ export const POST = withErrorHandling(async (req: Request) => {
       gone: nativeResults.filter((r) => r.gone).length,
       failed: nativeResults.filter((r) => !r.ok && !r.gone).length,
       results: nativeResults,
+      // Surface APNs config so admins seeing all-failures know it's an
+      // env-vars problem, not a token / network problem.
+      config: getApnsConfigStatus(),
     },
     // Combined totals — preserved for any caller that was reading the
     // old flat shape. Admins reading the new per-channel breakdown should

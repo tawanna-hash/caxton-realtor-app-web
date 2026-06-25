@@ -33,6 +33,39 @@ type NativeRow = {
 };
 
 let cachedClient: ApnsClient | null | undefined;
+let lastClientError: string | null = null;
+
+/** True when APNS_* env vars are all set and the client constructed cleanly. */
+export function isApnsConfigured(): boolean {
+  return getApnsClient() !== null;
+}
+
+/** Human-readable diagnosis for the admin UI when isApnsConfigured() is false. */
+export function getApnsConfigStatus(): {
+  configured: boolean;
+  reason: string | null;
+  hasKeyId: boolean;
+  hasTeamId: boolean;
+  hasBundleId: boolean;
+  hasKey: boolean;
+} {
+  const hasKeyId = !!process.env.APNS_KEY_ID;
+  const hasTeamId = !!process.env.APNS_TEAM_ID;
+  const hasBundleId = !!process.env.APNS_BUNDLE_ID;
+  const hasKey = !!process.env.APNS_PRIVATE_KEY_P8;
+  const configured = isApnsConfigured();
+  let reason: string | null = null;
+  if (!configured) {
+    if (!hasKeyId || !hasTeamId || !hasBundleId || !hasKey) {
+      reason = 'env-missing';
+    } else if (lastClientError) {
+      reason = lastClientError;
+    } else {
+      reason = 'unknown';
+    }
+  }
+  return { configured, reason, hasKeyId, hasTeamId, hasBundleId, hasKey };
+}
 
 /**
  * Return a shared ApnsClient or null if env vars are missing.
@@ -71,9 +104,11 @@ function getApnsClient(): ApnsClient | null {
       // App.entitlements + production gateway here is the right pairing
       // for TestFlight + App Store builds.
     });
+    lastClientError = null;
     return cachedClient;
   } catch (err) {
     console.error('[native-push] failed to construct APNs client:', err);
+    lastClientError = (err as Error).message || 'construct-failed';
     cachedClient = null;
     return null;
   }
