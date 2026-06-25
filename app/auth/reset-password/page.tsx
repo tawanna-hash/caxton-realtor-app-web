@@ -17,6 +17,7 @@ function ResetPasswordInner() {
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
@@ -80,17 +81,22 @@ function ResetPasswordInner() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-400 font-medium mb-2 text-center">Realty News Now</p>
         <h1 className="text-2xl text-gray-900 font-semibold text-center mb-6">Set a New Password</h1>
         {error && <p className="text-base text-red-500 text-center mb-4 font-light">{error}</p>}
+        <div className="relative mb-3">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            placeholder="New password (at least 8 characters)"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className={ic + ' pr-16 mb-0'}
+            autoComplete="new-password"
+            disabled={!token || loading}
+          />
+          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-xs uppercase tracking-wider text-gray-400">
+            {showPassword ? 'Hide' : 'Show'}
+          </button>
+        </div>
         <input
-          type="password"
-          placeholder="New password (at least 8 characters)"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          className={ic}
-          autoComplete="new-password"
-          disabled={!token || loading}
-        />
-        <input
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           placeholder="Confirm new password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
