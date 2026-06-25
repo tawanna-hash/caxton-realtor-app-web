@@ -30,6 +30,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, useTransition } from 'react';
 import { Home, Calendar, Building2, BookOpen, Megaphone, MoreHorizontal } from 'lucide-react';
+import { haptics } from '@/lib/native/haptics';
 
 type PubInfo = {
   name: string;
@@ -172,7 +173,7 @@ function Tab({
 }) {
   return (
     <button
-      onClick={onClick}
+      onClick={() => { void haptics.light(); onClick(); }}
       aria-current={active ? 'page' : undefined}
       // BUG-12: bump tap target to >=44px (WCAG 2.5.5 / Apple HIG)
       // - active:scale-95 gives a quick "press" feel under the finger

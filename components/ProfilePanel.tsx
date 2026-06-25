@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import PasswordSection from './PasswordSection';
+import BiometricToggle from './BiometricToggle';
 
 type User = {
   email?: string;
@@ -72,6 +73,10 @@ export default function ProfilePanel({ user, accentColor = '#301D5D', onClose }:
 
         <div className="p-5 space-y-5">
           <PasswordSection accentColor={accentColor} hasPassword={!!user?.hasPassword} />
+
+          {/* Native-only: Face ID / Touch ID app-lock toggle. Renders
+              nothing on web or on devices without biometrics. */}
+          <BiometricToggle accentColor={accentColor} />
 
           <p className="text-xs text-gray-400 font-light text-center">
             More profile settings coming soon.

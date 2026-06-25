@@ -1297,6 +1297,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
 
 
   function handleAdClick(ad: any) {
+    void haptics.light();
     track('ad_click', { adId: ad.id, advertiser: ad.biz, publication: pub });
     window.open(ad.url, '_blank', 'noopener,noreferrer');
   }
@@ -1352,7 +1353,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
           </p>
           <button
             type="button"
-            onClick={() => setMarketDrawerOpen(true)}
+            onClick={() => { void haptics.light(); setMarketDrawerOpen(true); }}
             className="flex items-center gap-1.5 text-white text-lg font-semibold tracking-wide truncate min-h-[44px]"
             aria-label="Select your market"
           >
@@ -1395,7 +1396,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
             {CATS.map((c) => (
               <button
                 key={c}
-                onClick={() => setCat(c)}
+                onClick={() => { void haptics.selection(); setCat(c); }}
                 aria-pressed={cat === c}
                 // BUG-16: add flex-shrink-0 so long chips like "Featured Advertisers"
                 // don't get squeezed by sibling flex children and overflow the row.
@@ -1518,6 +1519,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
                     key={m.id}
                     type="button"
                     onClick={() => {
+                      void haptics.medium();
                       setMarketDrawerOpen(false);
                       if (isCurrent) return;
                       try {
