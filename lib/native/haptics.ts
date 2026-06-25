@@ -5,6 +5,7 @@
 // natively, so the bundle on realtynewsnow.app never tries to import the
 // platform-specific code paths in a way that would break SSR.
 
+import { Haptics, ImpactStyle as Style, NotificationType } from '@capacitor/haptics';
 import { isNative } from './runtime';
 
 type ImpactStyle = 'light' | 'medium' | 'heavy';
@@ -12,7 +13,6 @@ type ImpactStyle = 'light' | 'medium' | 'heavy';
 async function impact(style: ImpactStyle): Promise<void> {
   if (!isNative()) return;
   try {
-    const { Haptics, ImpactStyle: Style } = await import('@capacitor/haptics');
     const map = { light: Style.Light, medium: Style.Medium, heavy: Style.Heavy };
     await Haptics.impact({ style: map[style] });
   } catch {
@@ -31,7 +31,6 @@ export const haptics = {
   async notify(type: 'success' | 'warning' | 'error'): Promise<void> {
     if (!isNative()) return;
     try {
-      const { Haptics, NotificationType } = await import('@capacitor/haptics');
       const map = {
         success: NotificationType.Success,
         warning: NotificationType.Warning,
@@ -46,7 +45,6 @@ export const haptics = {
   async selection(): Promise<void> {
     if (!isNative()) return;
     try {
-      const { Haptics } = await import('@capacitor/haptics');
       await Haptics.selectionChanged();
     } catch {
       /* ignore */

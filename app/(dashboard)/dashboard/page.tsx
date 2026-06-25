@@ -21,6 +21,7 @@ import { COMING_SOON_PUBS, type ComingSoonPubId } from '@/lib/coming-soon-pubs';
 import { share as nativeShare } from '@/lib/native/share';
 import { haptics } from '@/lib/native/haptics';
 import { isAppleSignInAvailable, signInWithApple } from '@/lib/native/apple-sign-in';
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 
 const API = getApiBase();
 
@@ -428,6 +429,8 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
               const meData = await meRes.json().catch(() => ({}));
               const realtor = meData?.realtor || meData;
               if (realtor?.id) {
+                void haptics.notify('success');
+                try { window.dispatchEvent(new CustomEvent('caxton:authSuccess', { detail: { mode: 'signup' } })); } catch {}
                 onAuth({
                   id: realtor.id,
                   email: realtor.email,
@@ -483,6 +486,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   async function handleAppleSignIn() {
     setError('');
     setLoading(true);
+    void haptics.medium();
     try {
       const result = await signInWithApple();
       if (!result) {
@@ -510,6 +514,8 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       const meData = await meRes.json();
       const realtor = meData.realtor || meData;
       trackEvent('apple_signin_succeeded', { pub });
+      void haptics.notify('success');
+      try { window.dispatchEvent(new CustomEvent('caxton:authSuccess', { detail: { mode: 'apple' } })); } catch {}
       onAuth({
         id: realtor.id,
         email: realtor.email,
@@ -544,6 +550,8 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       const meData = await meRes.json();
       const realtor = meData.realtor || meData;
       trackEvent('password_signin_succeeded', { pub });
+      void haptics.notify('success');
+      try { window.dispatchEvent(new CustomEvent('caxton:authSuccess', { detail: { mode: 'password' } })); } catch {}
       onAuth({
         id: realtor.id,
         email: realtor.email,
@@ -634,7 +642,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                   {TITLES.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
 
-                <button onClick={() => setStep(2)} disabled={!fullName || !licenseNum} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mt-4 disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
+                <button onClick={() => { void haptics.light(); setStep(2); }} disabled={!fullName || !licenseNum} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mt-4 disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
                 <button onClick={() => setMode('choice')} className="w-full text-center py-2 text-base text-gray-400 font-light mt-2">Back</button>
               </div>
             )}
@@ -664,11 +672,12 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 </div>
 
                 <div className="flex gap-2 mt-2">
-                  <button onClick={() => setStep(1)} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
+                  <button onClick={() => { void haptics.light(); setStep(1); }} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
                   <button onClick={() => {
-                    if (!password || password.length < 8) { setError('Password must be at least 8 characters'); return; }
-                    if (password !== confirmPassword) { setError('Passwords do not match'); return; }
+                    if (!password || password.length < 8) { setError('Password must be at least 8 characters'); void haptics.notify('error'); return; }
+                    if (password !== confirmPassword) { setError('Passwords do not match'); void haptics.notify('error'); return; }
                     setError('');
+                    void haptics.light();
                     setStep(3);
                   }} disabled={!email || !password || !confirmPassword} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider text-white disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
                 </div>
@@ -741,8 +750,8 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <p className="text-xs text-gray-400 font-light mb-4">By creating an account, you agree to receive communications from Caxton Publications, Inc. We will send a magic link to your email - no password needed.</p>
 
                 <div className="flex gap-2">
-                  <button onClick={() => setStep(2)} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
-                  <button onClick={handleSignup} disabled={loading} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider text-white disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Sending...' : 'Create Account'}</button>
+                  <button onClick={() => { void haptics.light(); setStep(2); }} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
+                  <button onClick={() => { void haptics.medium(); void handleSignup(); }} disabled={loading} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider text-white disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Sending...' : 'Create Account'}</button>
                 </div>
               </div>
             )}
@@ -764,7 +773,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
             <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className={ic + ' pr-16'} autoComplete="current-password" onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordLogin(); }} />
             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-xs uppercase tracking-wider text-gray-400">{showPassword ? 'Hide' : 'Show'}</button>
           </div>
-          <button onClick={handlePasswordLogin} disabled={loading || !email || !password} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Signing in…' : 'Sign In'}</button>
+          <button onClick={() => { void haptics.medium(); void handlePasswordLogin(); }} disabled={loading || !email || !password} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Signing in…' : 'Sign In'}</button>
           {isAppleSignInAvailable() && (
             <>
               <div className="flex items-center my-3" aria-hidden="true">
@@ -1047,11 +1056,28 @@ export default function DashboardPage() {
         onSelectArticle={(a: any) => setSelectedArticle(a)}
       />
     );
-  return <Feed pub={pub} user={user} onSwitch={(id) => { setPub(id); }} newsRefreshNonce={newsRefreshNonce} />;
+  return (
+    <Feed
+      pub={pub}
+      user={user}
+      onSwitch={(id) => { setPub(id); }}
+      newsRefreshNonce={newsRefreshNonce}
+      onRefresh={() => { setNewsRefreshNonce((n) => n + 1); }}
+    />
+  );
 }
 
-function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number }) {
+function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number; onRefresh: () => void }) {
   const [tab, setTab] = useState('n');
+
+  // Pull-to-refresh on touch devices. Only active when scrolled to top and
+  // user is on the news tab — calls onRefresh() which bumps newsRefreshNonce
+  // in the parent, forcing the /news effect below to refetch.
+  const ptr = usePullToRefresh(async () => {
+    if (tab !== 'n') return;
+    void haptics.medium();
+    onRefresh();
+  });
 
   // Read saved cat synchronously on mount so the first client paint shows
   // the correct pill (no 'All' → 'Social' flash). On the server this falls
@@ -1277,6 +1303,48 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce }: { pub: string; user: an
 
   return (
     <div className="min-h-screen bg-white pb-36" style={SW}>
+      {/* Pull-to-refresh indicator. Renders above the header while the user
+          drags down from scrollY=0. Translates with the gesture and locks
+          at TRIGGER_PX while refreshing. */}
+      {(ptr.pulling || ptr.refreshing) && (
+        <div
+          aria-live="polite"
+          role="status"
+          className="fixed top-0 left-0 right-0 z-40 flex items-center justify-center pointer-events-none"
+          style={{
+            height: Math.max(ptr.distance, ptr.refreshing ? 56 : 0),
+            paddingTop: 'env(safe-area-inset-top)',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0))',
+            transition: ptr.refreshing ? 'height 200ms ease' : 'none',
+          }}
+        >
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] font-medium text-gray-500">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              className={ptr.refreshing ? 'animate-spin' : undefined}
+              style={ptr.refreshing ? undefined : { transform: `rotate(${Math.min(180, ptr.distance * 2)}deg)` }}
+            >
+              <path d="M21 12a9 9 0 1 1-3-6.7" />
+              <path d="M21 3v6h-6" />
+            </svg>
+            <span>
+              {ptr.refreshing
+                ? 'Refreshing'
+                : ptr.armed
+                ? 'Release to refresh'
+                : 'Pull to refresh'}
+            </span>
+          </div>
+        </div>
+      )}
       <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: info.color }}>
         <div className="min-w-0 flex-1">
           <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-medium">
@@ -1581,6 +1649,7 @@ function ArticleCard({ item, pub }: { item: any; pub: string }) {
       if (typeof window !== 'undefined') {
         // Enrich the dispatched item with title (mapped from head) and pub
         // so the article_opened tracker captures the right fields.
+        void haptics.light();
         const enriched = { ...item, title: item.head, pub };
         window.dispatchEvent(new CustomEvent('caxton:openArticle', { detail: enriched }));
       }

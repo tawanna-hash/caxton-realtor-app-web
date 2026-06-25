@@ -8,6 +8,7 @@
 // All entry points are guarded so calling them on web is a quick no-op that
 // reports unavailable rather than throwing.
 
+import { BiometricAuth } from '@aparajita/capacitor-biometric-auth';
 import { isNative, nativePlatform } from './runtime';
 
 export type BiometryKind = 'face' | 'fingerprint' | 'iris' | 'none';
@@ -20,13 +21,8 @@ export type BiometricAvailability = {
   label: string | null;
 };
 
-async function loadPlugin() {
-  if (!isNative()) return null;
-  try {
-    return await import('@aparajita/capacitor-biometric-auth');
-  } catch {
-    return null;
-  }
+function pluginAvailable(): boolean {
+  return isNative();
 }
 
 function describeBiometry(typeCode: number | undefined): BiometricAvailability['kind'] {
@@ -46,12 +42,10 @@ function describeLabel(kind: BiometryKind, platform: 'ios' | 'android' | 'web'):
 }
 
 export async function isBiometricAvailable(): Promise<BiometricAvailability> {
-  const plugin = await loadPlugin();
-  if (!plugin) {
+  if (!pluginAvailable()) {
     return { available: false, reason: 'web-runtime', kind: 'none', label: null };
   }
   try {
-    const { BiometricAuth } = plugin;
     const info = await BiometricAuth.checkBiometry();
     const kind = describeBiometry(info?.biometryType as number | undefined);
     return {
@@ -79,10 +73,8 @@ export async function authenticateBiometric(opts: {
   cancelTitle?: string;
   allowDeviceCredential?: boolean;
 }): Promise<AuthResult> {
-  const plugin = await loadPlugin();
-  if (!plugin) return { ok: false, reason: 'unavailable' };
+  if (!pluginAvailable()) return { ok: false, reason: 'unavailable' };
   try {
-    const { BiometricAuth } = plugin;
     await BiometricAuth.authenticate({
       reason: opts.reason ?? 'Sign in to Realty News Now',
       cancelTitle: opts.cancelTitle ?? 'Cancel',

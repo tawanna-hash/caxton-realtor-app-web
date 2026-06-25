@@ -6,6 +6,7 @@
 //   2. Web Share API (`navigator.share`) when available.
 //   3. Clipboard copy of the URL with a small confirmation flag returned.
 
+import { Share } from '@capacitor/share';
 import { isNative } from './runtime';
 
 export type ShareInput = {
@@ -27,7 +28,6 @@ export async function share(input: ShareInput): Promise<ShareResult> {
   // 1. Capacitor native
   if (isNative()) {
     try {
-      const { Share } = await import('@capacitor/share');
       const can = await Share.canShare();
       if (can?.value) {
         await Share.share({

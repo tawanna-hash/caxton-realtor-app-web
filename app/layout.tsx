@@ -5,6 +5,8 @@ import { PostHogProvider } from "./posthog-provider";
 import PushBootstrap from "@/components/PushBootstrap";
 import NativeSplashBootstrap from "@/components/NativeSplashBootstrap";
 import DeepLinkBootstrap from "@/components/DeepLinkBootstrap";
+import BiometricGate from "@/components/BiometricGate";
+import BiometricEnrollPrompt from "@/components/BiometricEnrollPrompt";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const SITE_URL = "https://realtynewsnow.app";
@@ -120,6 +122,13 @@ export default function RootLayout({
               path so cold-launches don't strand users on the homepage. */}
           <DeepLinkBootstrap />
           {children}
+          {/* Native iOS shell only: opt-in Face ID / Touch ID lock that
+              overlays the UI on cold launch and resume-from-background.
+              No-op on web (renders nothing when isNative()===false). */}
+          <BiometricGate />
+          {/* One-time enroll prompt — appears only on native, only if the
+              gate isn't already enabled, and only once per device. */}
+          <BiometricEnrollPrompt />
         </PostHogProvider>
         {/* Vercel Speed Insights — collects real-user Core Web Vitals (LCP,
             CLS, INP, FCP, TTFB) and surfaces them in the Vercel dashboard.
