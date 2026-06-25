@@ -3,6 +3,11 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Native iOS keyboard inset — kept at 0 on web and updated in real time
+     by lib/native/keyboard.ts on iOS. Use with `padding-bottom:
+     max(env(safe-area-inset-bottom), var(--kb-inset-bottom))` on any
+     sticky composer/footer that needs to lift above the keyboard. */
+  --kb-inset-bottom: 0px;
   /* The app's components are built for a light surface (bg-white, text-gray-900,
      etc). Pin the color scheme to light so the OS/browser dark mode doesn't
      recolor inherited text, form controls, or scrollbars into an unreadable

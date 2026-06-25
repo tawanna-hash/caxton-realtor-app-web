@@ -7,6 +7,9 @@ import NativeSplashBootstrap from "@/components/NativeSplashBootstrap";
 import DeepLinkBootstrap from "@/components/DeepLinkBootstrap";
 import BiometricGate from "@/components/BiometricGate";
 import BiometricEnrollPrompt from "@/components/BiometricEnrollPrompt";
+import NativeKeyboard from "@/components/NativeKeyboard";
+import ExternalLinkInterceptor from "@/components/ExternalLinkInterceptor";
+import NativeScrollToTop from "@/components/NativeScrollToTop";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const SITE_URL = "https://realtynewsnow.app";
@@ -121,6 +124,9 @@ export default function RootLayout({
               (e.g. magic-link emails) and route the WebView to the deep
               path so cold-launches don't strand users on the homepage. */}
           <DeepLinkBootstrap />
+          <NativeKeyboard />
+          <ExternalLinkInterceptor />
+          <NativeScrollToTop />
           {children}
           {/* Native iOS shell only: opt-in Face ID / Touch ID lock that
               overlays the UI on cold launch and resume-from-background.
