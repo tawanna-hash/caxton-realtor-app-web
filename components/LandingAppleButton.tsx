@@ -14,6 +14,7 @@
 
 import { useState, useSyncExternalStore } from 'react';
 import { isAppleSignInAvailable, signInWithApple } from '@/lib/native/apple-sign-in';
+import { haptics } from '@/lib/native/haptics';
 
 // Subscribe-free external store — the availability flag never changes during
 // the lifetime of a page (you can't switch between web and native Capacitor
@@ -32,6 +33,7 @@ export default function LandingAppleButton() {
   async function handleAppleSignIn() {
     setError(null);
     setLoading(true);
+    void haptics.light();
     try {
       const result = await signInWithApple();
       if (!result) {
@@ -56,17 +58,20 @@ export default function LandingAppleButton() {
         // Apple ID yet. Send the user to the dashboard auth flow with a
         // ?signup=1 hint so the AuthGate opens the signup form.
         if (res.status === 404 && data?.error === 'account_not_found') {
+          void haptics.notify('warning');
           window.location.href = '/dashboard?auth=signup&reason=no_apple_account';
           return;
         }
         throw new Error(data.message || data.error || 'Apple sign-in failed');
       }
+      void haptics.notify('success');
       // Hard navigation so the new caxton_session_v2 cookie is included on
       // the next request and the dashboard server component sees us as
       // signed in.
       window.location.href = '/dashboard';
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Apple sign-in failed';
+      void haptics.notify('error');
       setError(msg);
       setLoading(false);
     }

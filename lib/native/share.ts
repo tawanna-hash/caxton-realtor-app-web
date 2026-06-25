@@ -8,6 +8,7 @@
 
 import { Share } from '@capacitor/share';
 import { isNative } from './runtime';
+import { haptics } from './haptics';
 
 export type ShareInput = {
   /** Optional dialog title (iOS shows this in the share sheet header). */
@@ -30,6 +31,7 @@ export async function share(input: ShareInput): Promise<ShareResult> {
     try {
       const can = await Share.canShare();
       if (can?.value) {
+        void haptics.selection();
         await Share.share({
           title: input.title,
           text: input.text,

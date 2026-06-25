@@ -11,6 +11,7 @@ import { trackEvent } from '@/app/posthog-provider';
 import { DetailSection } from './DetailSection';
 import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
 import PageTitle from '@/components/ui/PageTitle';
+import { share as nativeShare } from '@/lib/native/share';
 
 /**
  * Returns true only when the location string looks like a real physical
@@ -80,24 +81,21 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
   };
 
   const onShare = async () => {
-    const shareData = {
-      title: title,
+    // Unified share helper: tries Capacitor (iOS UIActivityViewController),
+    // then Web Share, then clipboard. Cancellation is handled silently.
+    const res = await nativeShare({
+      title,
       text: title,
       url: event.link,
-    };
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-        trackEvent('event_shared', { event_id: event.id, channel: 'native', pub });
-      } else {
-        await navigator.clipboard.writeText(event.link);
+      dialogTitle: 'Share Event',
+    });
+    if (res.ok) {
+      trackEvent('event_shared', { event_id: event.id, channel: res.method, pub });
+      if (res.method === 'clipboard') {
         alert('Event link copied to clipboard');
-        trackEvent('event_shared', { event_id: event.id, channel: 'copy', pub });
       }
-    } catch (err) {
-      // User cancelled or share failed
-      console.log('[Share] cancelled or failed:', err);
     }
+    // ok:false is either a cancellation or 'unsupported' — both silent.
   };
 
   const onDirections = () => {

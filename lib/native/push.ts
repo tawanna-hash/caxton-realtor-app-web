@@ -238,3 +238,19 @@ export async function getNativePushPermission(): Promise<
     return 'unsupported';
   }
 }
+
+/**
+ * Clear all delivered notifications from Notification Center and reset the
+ * iOS app icon badge to zero. Called when the app comes to foreground or
+ * when the user opens the dashboard — the user has clearly seen any
+ * pending notifications, so the system tray should reflect that.
+ */
+export async function clearDeliveredAndBadge(): Promise<void> {
+  if (!isNative()) return;
+  try {
+    // Removes the notifications from Notification Center (the tray).
+    await PushNotifications.removeAllDeliveredNotifications();
+  } catch {
+    /* ignore */
+  }
+}
