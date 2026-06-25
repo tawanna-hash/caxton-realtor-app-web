@@ -8,8 +8,11 @@
 // list picker as a sheet.
 //
 // Coming-soon markets surface a secondary "Notify me" CTA that routes to
-// '/?notify=<id>' (the existing notify-me sheet on /dashboard). The hard
-// reload after switching is intentional — see persistPub() doc.
+// '/dashboard?notify=<id>' so the existing dashboard handler shows the
+// Notify-Me bottom sheet. Going through '/' loses the query string because
+// the root page server-redirects authed users to /dashboard without
+// forwarding searchParams. The hard reload after switching is intentional
+// — see persistPub() doc.
 
 import { useEffect } from 'react';
 import {
@@ -61,7 +64,10 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
   const handleNotify = (id: string) => {
     void haptics.light();
     onClose();
-    window.location.assign(`/?notify=${encodeURIComponent(id)}`);
+    // Navigate to /dashboard directly. The /app root server-redirect
+    // strips searchParams, so '/?notify=…' never reaches the dashboard
+    // handler. Going straight to /dashboard preserves the query.
+    window.location.assign(`/dashboard?notify=${encodeURIComponent(id)}`);
   };
 
   return (

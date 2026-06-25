@@ -1512,22 +1512,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
           </div>
         </div>
       )}
-      <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: info.color }}>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-[0.25em] text-white/50 font-medium">
-            Welcome, {user?.firstName || user?.first_name || (user?.fullName ? String(user.fullName).split(' ')[0] : null) || (user?.name ? String(user.name).split(' ')[0] : null) || (user?.email ? String(user.email).split('@')[0] : null) || (user?.guest ? 'Guest' : 'Subscriber')}
-          </p>
-          <button
-            type="button"
-            onClick={() => { void haptics.light(); setMarketDrawerOpen(true); }}
-            className="flex items-center gap-1.5 text-white text-lg font-semibold tracking-wide truncate min-h-[44px]"
-            aria-label="Select your market"
-          >
-            <span className="truncate">Select Your Market</span>
-            <span className="text-white/70 text-xl leading-none">{'\u203A'}</span>
-          </button>
-        </div>
-      </div>
+      {/* Redundant "Welcome, {user} / Select Your Market" banner removed —
+          the AppShell header now handles title-as-switcher with the same
+          MarketSwitcherSheet, per iOS HIG dedupe pass. */}
       {!showPreLaunch && (
         <DashboardHero pub={pub as "realtyline" | "newsline"} />
       )}

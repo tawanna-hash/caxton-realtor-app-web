@@ -22,18 +22,26 @@ import LandingAppleButton from '@/components/LandingAppleButton';
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-  searchParams?: Promise<{ next?: string }>;
+  searchParams?: Promise<{ next?: string; notify?: string }>;
 }
 
 export default async function HomePage({ searchParams }: PageProps) {
   const user = await getCurrentUser();
   const params = (await searchParams) ?? {};
   const next = typeof params.next === 'string' ? params.next : undefined;
+  // ?notify=<pub-id> is set by MarketSwitcherSheet when a logged-in user
+  // taps a coming-soon market. Forward it onto /dashboard so the bottom
+  // sheet still surfaces; without this the query gets dropped by the
+  // bare redirect('/dashboard') below.
+  const notify = typeof params.notify === 'string' ? params.notify : undefined;
 
   if (user) {
     // Already signed in — go to the app. Honor ?next= if present and same-origin.
-    const dest = isSafeNext(next) ? next : '/dashboard';
-    redirect(dest as string);
+    let dest = isSafeNext(next) ? (next as string) : '/dashboard';
+    if (notify && !dest.includes('?')) {
+      dest = `${dest}?notify=${encodeURIComponent(notify)}`;
+    }
+    redirect(dest);
   }
 
   // Preserve ?next= into the sign-in / sign-up CTAs so post-auth bounces back
