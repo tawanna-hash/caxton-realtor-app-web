@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- TODO(S18-lint-debt): retype dashboard properly. 34 `any` types remain pending a proper types pass. */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { trackEvent, identifyUser } from "../../posthog-provider";
 import { useSwipeBack } from '@/hooks/use-swipe-back';
 import ProfilePanel from '@/components/ProfilePanel';
@@ -1101,13 +1102,22 @@ export default function DashboardPage() {
 function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number; onRefresh: () => void }) {
   const [tab, setTab] = useState('n');
 
-  // Pull-to-refresh on touch devices. Only active when scrolled to top and
-  // user is on the news tab — calls onRefresh() which bumps newsRefreshNonce
-  // in the parent, forcing the /news effect below to refetch.
+  // Pull-to-refresh on touch devices. Active when scrolled to top and on
+  // any tab — strategy varies by tab (see below).
+  const router = useRouter();
+  // PTR is tab-aware. News tab bumps newsRefreshNonce so the /news effect
+  // re-fetches. Events tab triggers a router.refresh() so the route's
+  // server logic re-runs (no client-side events fetch today, but this keeps
+  // the gesture useful and forward-compatible).
   const ptr = usePullToRefresh(async () => {
-    if (tab !== 'n') return;
     void haptics.medium();
-    onRefresh();
+    if (tab === 'n') {
+      onRefresh();
+    } else if (tab === 'e') {
+      router.refresh();
+    } else {
+      router.refresh();
+    }
   });
 
   // Read saved cat synchronously on mount so the first client paint shows

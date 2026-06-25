@@ -24,6 +24,7 @@ import { getApiBase } from '@/lib/api-base';
 import { Footer } from '@/components/footer';
 import NavDrawer from '@/components/NavDrawer';
 import BottomNav from '@/components/BottomNav';
+import GlobalPullToRefresh from '@/components/GlobalPullToRefresh';
 import { AdSlot } from '@/components/ads/AdSlot';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import { ADMIN_NAV as ADMIN_GROUPS, isAdminGroupActive as isGroupActive } from '@/lib/admin-nav';
@@ -399,6 +400,9 @@ export default function AppShell({
       />
 
       {/* ======== MAIN CONTENT ======== */}
+      {/* App-wide pull-to-refresh — public variant only. Dashboard manages
+          its own tab-aware PTR so this component opts itself out there. */}
+      {!isAdmin && <GlobalPullToRefresh />}
       <main className="flex-1 pb-20">{children}</main>
       {!isAdmin ? (
         <>
