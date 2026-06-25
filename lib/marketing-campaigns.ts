@@ -65,6 +65,8 @@ export interface MarketingCampaignTask {
   updated_at: string;
 }
 
+export type OutreachAudienceSource = 'advertisers' | 'subscribers' | 'manual' | 'segment';
+
 export interface MarketingCampaignOutreach {
   id: string;
   campaign_id: string;
@@ -82,6 +84,36 @@ export interface MarketingCampaignOutreach {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  // Composer extensions (nullable for back-compat with older rows).
+  from_name?: string | null;
+  reply_to?: string | null;
+  preview_text?: string | null;
+  audience_sources?: OutreachAudienceSource[];
+  subscriber_ids?: number[];
+  manual_emails?: string[];
+}
+
+export interface MarketingCampaignOutreachRecipient {
+  id: string;
+  outreach_id: string;
+  recipient_type: 'advertiser' | 'subscriber' | 'manual';
+  recipient_id: number | null;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  company: string | null;
+  status: 'pending' | 'sent' | 'failed' | 'bounced' | 'unsubscribed';
+  message_id: string | null;
+  error: string | null;
+  unsub_token: string | null;
+  sent_at: string | null;
+  delivered_at: string | null;
+  opened_at: string | null;
+  open_count: number;
+  clicked_at: string | null;
+  click_count: number;
+  unsubscribed_at: string | null;
+  created_at: string;
 }
 
 // ── Allow-lists ─────────────────────────────────────────────────
@@ -97,7 +129,11 @@ export const TASK_PATCHABLE_FIELDS = [
 export const OUTREACH_PATCHABLE_FIELDS = [
   'channel','subject','body','template_id','status',
   'scheduled_for','sent_at','recipient_ids','recipient_count','stats','error_message',
+  'from_name','reply_to','preview_text','audience_sources','subscriber_ids','manual_emails',
 ] as const;
+
+export const AUDIENCE_SOURCE_VALUES = new Set<OutreachAudienceSource>(
+  ['advertisers','subscribers','manual','segment']);
 
 // ── Validation sets ─────────────────────────────────────────────
 export const CAMPAIGN_STATUS_VALUES = new Set<MarketingCampaignStatus>(

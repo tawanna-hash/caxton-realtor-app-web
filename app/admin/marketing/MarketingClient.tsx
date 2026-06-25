@@ -11,6 +11,7 @@ import type {
 } from '@/lib/marketing-campaigns';
 import { summarizeAudience } from '@/lib/marketing-campaigns';
 import { toTitleCaseName } from '@/lib/format-name';
+import MarketingEmailModal from './_components/MarketingEmailModal';
 
 type CampaignDetail = {
   campaign: MarketingCampaign;
@@ -67,6 +68,10 @@ export default function MarketingClient({
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
+  // Email composer modal — opened from the top-level button (then pick a
+  // campaign) or from inside a campaign drawer (campaign already known).
+  const [emailModalCampaign, setEmailModalCampaign] = useState<MarketingCampaign | null>(null);
+  const [pickingCampaignForEmail, setPickingCampaignForEmail] = useState(false);
 
   // ── KPIs ────────────────────────────────────────────────
   const kpis = useMemo(() => {
@@ -232,6 +237,12 @@ export default function MarketingClient({
           <option value="archived">Archived</option>
         </select>
         <button
+          onClick={() => setPickingCampaignForEmail(true)}
+          className="rounded-md border border-brand-700 bg-white px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-50"
+        >
+          Compose email
+        </button>
+        <button
           onClick={() => setCreating(true)}
           className="rounded-md bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-gray-800"
         >
@@ -301,8 +312,69 @@ export default function MarketingClient({
           onDeleteTask={deleteTask}
           onCreateOutreach={(payload) => createOutreach(openId, payload)}
           onDelete={() => deleteCampaign(openId)}
+          onComposeEmail={() => detail && setEmailModalCampaign(detail.campaign)}
         />
       )}
+
+      {pickingCampaignForEmail && (
+        <PickCampaignDrawer
+          campaigns={campaigns}
+          onCancel={() => setPickingCampaignForEmail(false)}
+          onPick={(c) => {
+            setPickingCampaignForEmail(false);
+            setEmailModalCampaign(c);
+          }}
+        />
+      )}
+
+      {emailModalCampaign && (
+        <MarketingEmailModal
+          open={true}
+          campaign={emailModalCampaign}
+          adminEmail={adminEmail}
+          onClose={() => setEmailModalCampaign(null)}
+          onSent={() => {
+            void loadCampaigns();
+            if (openId) void loadDetail(openId);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Pick-a-campaign mini-picker (for top-level Compose email) ─────
+function PickCampaignDrawer({
+  campaigns, onCancel, onPick,
+}: {
+  campaigns: MarketingCampaignWithStats[];
+  onCancel: () => void;
+  onPick: (c: MarketingCampaign) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <button aria-label="Close" className="flex-1 bg-black/30" onClick={onCancel} />
+      <div className="w-full max-w-md bg-white shadow-xl overflow-y-auto">
+        <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="font-serif text-xl text-gray-900">Choose a campaign</h2>
+          <button onClick={onCancel} className="text-gray-500 hover:text-gray-900">✕</button>
+        </div>
+        <div className="p-2">
+          {campaigns.length === 0 && (
+            <div className="p-6 text-sm text-gray-500">No campaigns yet. Create one first.</div>
+          )}
+          {campaigns.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => onPick(c)}
+              className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-gray-50"
+            >
+              <span className="font-medium text-gray-900">{c.name}</span>
+              <span className="text-xs text-gray-500">{c.status}</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -355,7 +427,7 @@ function CreateDrawer({
 
 // ─── Detail Drawer ──────────────────────────────────────────────────
 function DetailDrawer({
-  loading, detail, audience, onClose, onPatch, onCreateTask, onPatchTask, onDeleteTask, onCreateOutreach, onDelete,
+  loading, detail, audience, onClose, onPatch, onCreateTask, onPatchTask, onDeleteTask, onCreateOutreach, onDelete, onComposeEmail,
 }: {
   loading: boolean;
   detail: CampaignDetail | null;
@@ -367,6 +439,7 @@ function DetailDrawer({
   onDeleteTask: (id: string) => void;
   onCreateOutreach: (payload: Partial<MarketingCampaignOutreach>) => void;
   onDelete: () => void;
+  onComposeEmail: () => void;
 }) {
   const [tab, setTab] = useState<'overview' | 'tasks' | 'outreach' | 'audience'>('overview');
   const [newTask, setNewTask] = useState('');
@@ -562,8 +635,21 @@ function DetailDrawer({
 
           {tab === 'outreach' && (
             <div className="space-y-4">
+              <div className="rounded-md border border-brand-200 bg-brand-50 p-4 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-brand-900">Send a marketing email</div>
+                  <div className="text-xs text-brand-700/80">Compose, preview, schedule, and send to advertisers, subscribers, or a manual list.</div>
+                </div>
+                <button
+                  onClick={onComposeEmail}
+                  className="shrink-0 rounded-md bg-brand-700 text-white px-3 py-1.5 text-sm font-medium hover:bg-brand-800"
+                >
+                  Compose email
+                </button>
+              </div>
+
               <div className="rounded-md border border-gray-200 p-4 space-y-3 bg-gray-50">
-                <div className="text-sm font-medium text-gray-700">New outreach</div>
+                <div className="text-sm font-medium text-gray-700">New outreach record (manual / SMS / drip)</div>
                 <div className="grid grid-cols-3 gap-2">
                   <select
                     value={outreachDraft.channel}

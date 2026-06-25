@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/marketing-sends",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/cron/sync-advertisers",
       "schedule": "0 * * * *"
     },

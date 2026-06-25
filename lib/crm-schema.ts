@@ -416,6 +416,51 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       FOR EACH ROW EXECUTE FUNCTION trg_mco_set_updated_at()
   `);
 
+  // Extend marketing_campaign_outreach with new columns for the email composer
+  // (from_name, audience snapshot, tracking aggregates). All idempotent ALTERs.
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS from_name text`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS reply_to text`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS preview_text text`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS audience_sources jsonb NOT NULL DEFAULT '[]'::jsonb`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS subscriber_ids jsonb NOT NULL DEFAULT '[]'::jsonb`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS manual_emails jsonb NOT NULL DEFAULT '[]'::jsonb`);
+
+  // Per-recipient delivery + tracking ledger. One row per recipient per outreach.
+  // recipient_type discriminates the source so we can resolve back to an entity:
+  //   'advertiser'  -> advertisers.id (integer)
+  //   'subscriber'  -> newsletter_subscribers.id (integer)
+  //   'manual'      -> ad-hoc email pasted by sender (no FK)
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS marketing_campaign_outreach_recipients (
+      id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      outreach_id     uuid NOT NULL REFERENCES marketing_campaign_outreach(id) ON DELETE CASCADE,
+      recipient_type  text NOT NULL
+                       CHECK (recipient_type IN ('advertiser','subscriber','manual')),
+      recipient_id    integer,
+      email           text NOT NULL,
+      first_name      text,
+      last_name       text,
+      company         text,
+      status          text NOT NULL DEFAULT 'pending'
+                       CHECK (status IN ('pending','sent','failed','bounced','unsubscribed')),
+      message_id      text,
+      error           text,
+      unsub_token     text,
+      sent_at         timestamptz,
+      delivered_at    timestamptz,
+      opened_at       timestamptz,
+      open_count      integer NOT NULL DEFAULT 0,
+      clicked_at      timestamptz,
+      click_count     integer NOT NULL DEFAULT 0,
+      unsubscribed_at timestamptz,
+      created_at      timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mcor_outreach ON marketing_campaign_outreach_recipients(outreach_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mcor_email    ON marketing_campaign_outreach_recipients(lower(email))`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mcor_status   ON marketing_campaign_outreach_recipients(status)`);
+  await step(() => sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_mcor_unsub_token ON marketing_campaign_outreach_recipients(unsub_token) WHERE unsub_token IS NOT NULL`);
+
   // ============================================================
   // Step 5 — Client portal: magic links, files, forms, assignments.
   // Mirrors app/api/admin/migrate-portal/route.ts.

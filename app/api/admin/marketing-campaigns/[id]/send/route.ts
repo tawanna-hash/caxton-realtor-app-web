@@ -1,0 +1,113 @@
+// app/api/admin/marketing-campaigns/[id]/send/route.ts
+//
+// POST — Create an outreach under the campaign and either send it immediately
+// (mode=send_now) or persist as status=scheduled for the cron to pick up.
+//
+// Materializes the recipient ledger up-front so the count is final and the
+// audience snapshot is preserved against future edits.
+
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { requireAdmin } from '@/lib/server/auth/admin';
+import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { parseJson } from '@/lib/server/schemas/_common';
+import { getSql, ensureSchema } from '@/lib/db';
+import { sendOutreachSchema } from '@/lib/server/schemas/marketing-outreach';
+import { materializeAudience, insertRecipientsLedger, dispatchOutreach } from '@/lib/server/marketing-send';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export const POST = withErrorHandling(async (
+  req: NextRequest,
+  ctx: { params: Promise<{ id: string }> },
+) => {
+  const admin = await requireAdmin();
+  const { id } = await ctx.params;
+  if (!UUID_RE.test(id)) throw new ApiError(400, 'invalid id');
+
+  const input = await parseJson(req as unknown as Request, sendOutreachSchema);
+  await ensureSchema();
+  const sql = getSql();
+
+  // Confirm the campaign exists; pull publication so we pick the right brand.
+  const campRows = (await sql`
+    SELECT id, publication FROM marketing_campaigns WHERE id = ${id}
+  `) as unknown as Array<{ id: string; publication: string | null }>;
+  if (campRows.length === 0) throw new ApiError(404, 'campaign not found');
+  const camp = campRows[0];
+
+  // Build the recipient list NOW so we can persist the snapshot.
+  const seeds = await materializeAudience({
+    sources: input.sources,
+    advertiserFilter: input.advertiser_filter,
+    subscriberFilter: input.subscriber_filter,
+    manualEmails: input.manual_emails,
+  });
+  if (seeds.length === 0) throw new ApiError(422, 'no recipients matched');
+
+  const initialStatus = input.mode === 'schedule' ? 'scheduled' : 'sending';
+  const created = (await sql`
+    INSERT INTO marketing_campaign_outreach (
+      campaign_id, channel, subject, body, status, scheduled_for,
+      recipient_ids, recipient_count, audience_sources, subscriber_ids, manual_emails,
+      from_name, reply_to, preview_text, created_by
+    ) VALUES (
+      ${id}, 'email',
+      ${input.subject}, ${input.body},
+      ${initialStatus},
+      ${input.scheduled_for ?? null},
+      ${JSON.stringify(seeds.filter(s => s.recipient_type === 'advertiser').map(s => s.recipient_id))}::jsonb,
+      ${seeds.length},
+      ${JSON.stringify(input.sources)}::jsonb,
+      ${JSON.stringify(seeds.filter(s => s.recipient_type === 'subscriber').map(s => s.recipient_id))}::jsonb,
+      ${JSON.stringify(seeds.filter(s => s.recipient_type === 'manual').map(s => s.email))}::jsonb,
+      ${input.from_name ?? null},
+      ${input.reply_to ?? null},
+      ${input.preview_text ?? null},
+      ${admin.email ?? null}
+    ) RETURNING *
+  `) as unknown as Array<{ id: string }>;
+  const outreach = created[0];
+
+  // Insert the per-recipient ledger.
+  await insertRecipientsLedger(outreach.id, seeds);
+
+  // If scheduling for later, we're done — cron will pick it up.
+  if (input.mode === 'schedule') {
+    return NextResponse.json({
+      outreach_id: outreach.id,
+      status: 'scheduled',
+      scheduled_for: input.scheduled_for,
+      recipient_count: seeds.length,
+    });
+  }
+
+  // Otherwise, dispatch now. We do this synchronously so the API returns
+  // accurate counts. Resend pacing is built into dispatchOutreach.
+  const brand: 'realtyline' | 'newsline' | 'caxton' =
+    camp.publication === 'newsline' ? 'newsline'
+    : camp.publication === 'realtyline' ? 'realtyline'
+    : 'realtyline';
+
+  const result = await dispatchOutreach({
+    outreachId: outreach.id,
+    subject: input.subject,
+    body: input.body,
+    previewText: input.preview_text,
+    fromName: input.from_name,
+    replyTo: input.reply_to,
+    repName: admin.email ?? null,
+    brand,
+  });
+
+  return NextResponse.json({
+    outreach_id: outreach.id,
+    status: result.failed > 0 && result.sent === 0 ? 'failed' : 'sent',
+    sent: result.sent,
+    failed: result.failed,
+    total: result.total,
+  });
+});

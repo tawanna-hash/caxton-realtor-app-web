@@ -1,0 +1,75 @@
+// app/api/admin/marketing-campaigns/[id]/test/route.ts
+//
+// POST — Render the email body with sample tokens and send a single test
+// message to a chosen address. Does NOT touch the recipient ledger or
+// create an outreach row.
+
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { requireAdmin } from '@/lib/server/auth/admin';
+import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { parseJson } from '@/lib/server/schemas/_common';
+import { getSql, ensureSchema } from '@/lib/db';
+import { testSendSchema } from '@/lib/server/schemas/marketing-outreach';
+import { buildEmail } from '@/lib/marketing-email';
+import { sendEmail } from '@/lib/email';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export const POST = withErrorHandling(async (
+  req: NextRequest,
+  ctx: { params: Promise<{ id: string }> },
+) => {
+  const admin = await requireAdmin();
+  const { id } = await ctx.params;
+  if (!UUID_RE.test(id)) throw new ApiError(400, 'invalid id');
+
+  const input = await parseJson(req as unknown as Request, testSendSchema);
+  await ensureSchema();
+  const sql = getSql();
+  const campRows = (await sql`
+    SELECT publication FROM marketing_campaigns WHERE id = ${id}
+  `) as unknown as Array<{ publication: string | null }>;
+  if (campRows.length === 0) throw new ApiError(404, 'campaign not found');
+  const brand: 'realtyline' | 'newsline' | 'caxton' =
+    campRows[0].publication === 'newsline' ? 'newsline'
+    : campRows[0].publication === 'realtyline' ? 'realtyline'
+    : 'realtyline';
+
+  // Build a one-off recipient using the test address + sample placeholders.
+  // We use a fixed pseudo-id so the open/click tracking pixel renders, but
+  // we never persist anything.
+  const built = buildEmail({
+    subject: `[TEST] ${input.subject}`,
+    body: input.body,
+    previewText: input.preview_text,
+    recipient: {
+      id: 'test-preview-recipient',
+      email: input.to,
+      first_name: 'Sam',
+      last_name:  'Sample',
+      company:    'Acme Realty',
+      unsub_token: 'test-token-not-real',
+    },
+    repName: admin.email ?? null,
+    brand,
+  });
+
+  const from = input.from_name
+    ? `${input.from_name} <${(process.env.EMAIL_FROM ?? 'hello@myrealtyline.com').replace(/^.*<|>$/g, '')}>`
+    : undefined;
+
+  const res = await sendEmail({
+    to: input.to,
+    from,
+    replyTo: input.reply_to,
+    subject: built.subject,
+    html: built.html,
+  });
+  if (!res.ok) throw new ApiError(502, `Resend send failed: ${res.error}`);
+
+  return NextResponse.json({ ok: true, messageId: res.messageId });
+});

@@ -1,0 +1,205 @@
+// lib/marketing-email.ts
+//
+// Email rendering + send pipeline for marketing campaign outreach.
+// Token substitution, CAN-SPAM footer, open/click tracking wrappers,
+// and per-recipient send orchestration.
+
+import crypto from 'node:crypto';
+import { sendEmail } from './email';
+import type { MarketingCampaignOutreachRecipient } from './marketing-campaigns';
+
+// ── Public site base for tracking + unsubscribe links ──────────────
+// Falls back to the realtynewsnow.app domain (Cloudflare blocks the .com).
+export function getPublicBase(): string {
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.PUBLIC_BASE_URL ||
+    'https://realtynewsnow.app'
+  ).replace(/\/$/, '');
+}
+
+// ── Token substitution ─────────────────────────────────────────────
+// Supports {{first_name}}, {{last_name}}, {{full_name}}, {{company}},
+// {{email}}, {{unsubscribe_url}}, {{rep_name}}.
+export interface TokenContext {
+  first_name?: string | null;
+  last_name?: string | null;
+  full_name?: string | null;
+  company?: string | null;
+  email?: string | null;
+  unsubscribe_url?: string | null;
+  rep_name?: string | null;
+  [key: string]: string | null | undefined;
+}
+
+export function substituteTokens(input: string, ctx: TokenContext): string {
+  // Replace {{token}} and {{ token }} with the value, falling back to a
+  // friendly default ("there" for first_name) when the field is empty.
+  return input.replace(/\{\{\s*([a-z_]+)\s*\}\}/gi, (_match, key: string) => {
+    const k = key.toLowerCase();
+    const v = ctx[k];
+    if (v != null && String(v).trim() !== '') return String(v);
+    // Sensible fallbacks per token.
+    if (k === 'first_name') return 'there';
+    if (k === 'full_name')  return 'there';
+    if (k === 'company')    return '';
+    return '';
+  });
+}
+
+// ── Body normalization (markdown-ish → HTML) ───────────────────────
+// Users paste plain text with line breaks; we convert blank-line-separated
+// paragraphs + single line breaks into <p>/<br>. If the input already
+// looks like HTML (contains a tag), we pass it through unchanged.
+export function bodyToHtml(body: string): string {
+  if (/<[a-z][^>]*>/i.test(body)) return body;
+  const escaped = body
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  const paragraphs = escaped.split(/\n{2,}/).map((p) =>
+    `<p style="margin:0 0 14px 0; line-height:1.55; color:#1f2937;">${p.replace(/\n/g, '<br>')}</p>`,
+  );
+  return paragraphs.join('\n');
+}
+
+// ── Wrap the body in a branded outer HTML email ────────────────────
+export interface RenderOptions {
+  subject: string;
+  previewText?: string | null;
+  bodyHtml: string;
+  unsubscribeUrl: string;
+  trackingPixelUrl?: string | null;
+  brand?: 'realtyline' | 'newsline' | 'caxton';
+}
+
+export function renderEmail(opts: RenderOptions): string {
+  const brand = opts.brand ?? 'realtyline';
+  const accent = brand === 'newsline' ? '#0e7490' : '#301D5D';
+  const wordmark = brand === 'newsline' ? 'Newsline' : brand === 'caxton' ? 'Caxton' : 'RealtyLine';
+  const tagline = brand === 'newsline'
+    ? 'San Antonio real estate news'
+    : brand === 'caxton'
+      ? 'Caxton Publications'
+      : 'Austin real estate news';
+
+  const pixel = opts.trackingPixelUrl
+    ? `<img src="${opts.trackingPixelUrl}" alt="" width="1" height="1" style="display:block;border:0;outline:none;text-decoration:none;" />`
+    : '';
+
+  const preheader = opts.previewText
+    ? `<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#fff;">${escapeHtml(opts.previewText)}</div>`
+    : '';
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(opts.subject)}</title>
+</head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+${preheader}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:24px 0;">
+  <tr><td align="center">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <tr><td style="background:${accent};padding:20px 28px;color:#fff;">
+        <div style="font-family:Georgia,serif;font-size:20px;font-weight:600;letter-spacing:0.5px;">${wordmark}</div>
+        <div style="font-size:12px;opacity:0.85;margin-top:2px;">${tagline}</div>
+      </td></tr>
+      <tr><td style="padding:28px;">
+        ${opts.bodyHtml}
+      </td></tr>
+      <tr><td style="padding:16px 28px 24px;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;line-height:1.6;">
+        <div>You're receiving this email because you're connected with ${wordmark}.</div>
+        <div style="margin-top:6px;">
+          <a href="${opts.unsubscribeUrl}" style="color:#6b7280;text-decoration:underline;">Unsubscribe</a>
+          &nbsp;·&nbsp; Caxton Publications, Austin, TX, USA
+        </div>
+        ${pixel}
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>`;
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── Rewrite anchor tags to go through the click-tracking endpoint ──
+export function rewriteLinks(html: string, recipientId: string): string {
+  const base = getPublicBase();
+  return html.replace(/<a\s+([^>]*?)href=("|')([^"']+)(\2)([^>]*)>/gi, (full, pre: string, q: string, href: string, _q2: string, post: string) => {
+    // Skip mailto/tel/anchor links and our own unsubscribe links.
+    if (/^(mailto:|tel:|#)/i.test(href)) return full;
+    if (href.includes('/api/track/click/')) return full;
+    if (href.includes('/unsubscribe/')) return full;
+    const tracked = `${base}/api/track/click/${recipientId}?u=${encodeURIComponent(href)}`;
+    return `<a ${pre}href=${q}${tracked}${q}${post}>`;
+  });
+}
+
+// ── Token generation ───────────────────────────────────────────────
+export function makeUnsubToken(): string {
+  return crypto.randomBytes(24).toString('base64url');
+}
+
+// ── Build the per-recipient HTML for a single send ─────────────────
+export interface BuildEmailInput {
+  subject: string;
+  body: string;             // raw body w/ tokens
+  previewText?: string | null;
+  recipient: Pick<MarketingCampaignOutreachRecipient, 'id' | 'email' | 'first_name' | 'last_name' | 'company' | 'unsub_token'>;
+  repName?: string | null;
+  brand?: 'realtyline' | 'newsline' | 'caxton';
+}
+
+export interface BuiltEmail {
+  subject: string;
+  html: string;
+}
+
+export function buildEmail(input: BuildEmailInput): BuiltEmail {
+  const base = getPublicBase();
+  const unsubscribeUrl = input.recipient.unsub_token
+    ? `${base}/unsubscribe/${input.recipient.unsub_token}`
+    : `${base}/unsubscribe`;
+  const ctx: TokenContext = {
+    first_name: input.recipient.first_name,
+    last_name:  input.recipient.last_name,
+    full_name:  [input.recipient.first_name, input.recipient.last_name].filter(Boolean).join(' ') || null,
+    company:    input.recipient.company,
+    email:      input.recipient.email,
+    rep_name:   input.repName ?? 'The RealtyLine Team',
+    unsubscribe_url: unsubscribeUrl,
+  };
+  const subject = substituteTokens(input.subject, ctx);
+  const bodyWithTokens = substituteTokens(input.body, ctx);
+  const bodyHtmlRaw = bodyToHtml(bodyWithTokens);
+  const bodyHtml = rewriteLinks(bodyHtmlRaw, input.recipient.id);
+  const trackingPixelUrl = `${base}/api/track/open/${input.recipient.id}`;
+  const html = renderEmail({
+    subject,
+    previewText: input.previewText ?? null,
+    bodyHtml,
+    unsubscribeUrl,
+    trackingPixelUrl,
+    brand: input.brand,
+  });
+  return { subject, html };
+}
+
+// ── Convenience: send a single recipient and return result ─────────
+export async function sendOneRecipient(input: BuildEmailInput & { from?: string; replyTo?: string }) {
+  const built = buildEmail(input);
+  return sendEmail({
+    to: input.recipient.email,
+    from: input.from,
+    replyTo: input.replyTo,
+    subject: built.subject,
+    html: built.html,
+  });
+}
