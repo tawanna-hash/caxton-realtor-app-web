@@ -43,6 +43,22 @@ const PUB_NAMES: Record<string, string> = {
   newsline: 'Newsline San Antonio',
 };
 
+// Full publication menu surfaced from the hamburger drawer. Mirrors the
+// 'Select Your Market' drawer on the /dashboard hero so the switcher is
+// reachable from every page (calendar, magazine, articles, admin, etc.),
+// not only the feed. Commit 7566795 dropped this from the drawer on the
+// assumption that the dashboard drawer was sufficient, but users land on
+// non-dashboard routes constantly (deep links, push taps, share opens) and
+// need a global way to switch markets.
+const PUB_ACTIVE: { id: 'realtyline' | 'newsline'; label: string; monogram: string }[] = [
+  { id: 'realtyline', label: 'RealtyLine Austin', monogram: 'RL' },
+  { id: 'newsline', label: 'Newsline San Antonio', monogram: 'NS' },
+];
+const PUB_COMING_SOON: { id: string; label: string; monogram: string }[] = [
+  { id: 'realtyline-houston', label: 'RealtyLine Houston', monogram: 'RH' },
+  { id: 'realtyline-dallas', label: 'RealtyLine Dallas/Ft. Worth', monogram: 'RD' },
+];
+
 // Admin nav is defined in lib/admin-nav.ts so this drawer and the
 // desktop top-bar in AppShell.tsx always render the same groups.
 // We adapt each canonical link into the drawer's NavItem shape
@@ -180,6 +196,95 @@ export default function NavDrawer({
             </svg>
           </button>
         </div>
+
+        {/* Publication switcher — always visible (except admin) so users
+            can change markets from any page, not only /dashboard. */}
+        {!isAdmin && (
+          <div className="px-5 pt-6 pb-2">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-white/40 font-medium mb-3">
+              Select Your Market
+            </p>
+            <div className="space-y-1.5">
+              {PUB_ACTIVE.map((m) => {
+                const isCurrent = pub === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => {
+                      if (isCurrent) {
+                        onClose();
+                        return;
+                      }
+                      try {
+                        const maxAge = 60 * 60 * 24 * 365;
+                        document.cookie = `caxton_pub=${m.id}; path=/; max-age=${maxAge}; SameSite=Lax`;
+                        localStorage.setItem('caxton_pub', m.id);
+                        localStorage.removeItem('caxton_selected_article');
+                        localStorage.removeItem('caxton_selected_event');
+                        window.dispatchEvent(new Event('savedPubChange'));
+                      } catch {
+                        /* ignore */
+                      }
+                      // Use the host-level switcher hook if AppShell wired one
+                      // up; otherwise fall through to a full navigation so
+                      // server components re-render with the new cookie.
+                      try { onPubSwitch(); } catch { /* ignore */ }
+                      onClose();
+                      if (typeof window !== 'undefined') {
+                        window.location.assign('/');
+                      }
+                    }}
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-md transition ${
+                      isCurrent
+                        ? 'bg-white/15 ring-1 ring-white/30'
+                        : 'hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="w-9 h-9 rounded-md bg-white/15 flex items-center justify-center flex-shrink-0">
+                      <span className="text-white text-xs font-semibold">{m.monogram}</span>
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-sm font-semibold text-white truncate">{m.label}</p>
+                    </div>
+                    {isCurrent && (
+                      <span className="text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-200 flex-shrink-0">
+                        Current
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+              {PUB_COMING_SOON.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    if (typeof window !== 'undefined') {
+                      // Route the user to /dashboard with a query that the
+                      // dashboard's NotifyMeModal listens for. If the modal
+                      // isn't wired for that hash, the user still lands on
+                      // a known page rather than a 404.
+                      window.location.assign(`/?notify=${encodeURIComponent(m.id)}`);
+                    }
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-md hover:bg-white/5 transition opacity-80"
+                >
+                  <div className="w-9 h-9 rounded-md bg-white/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white/70 text-xs font-semibold">{m.monogram}</span>
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium text-white/80 truncate">{m.label}</p>
+                  </div>
+                  <span className="text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-200 flex-shrink-0">
+                    Coming Soon
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Sections */}
         <div className="px-5 py-6 space-y-1">
