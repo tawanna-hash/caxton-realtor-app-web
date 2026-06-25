@@ -45,22 +45,15 @@ function isCapacitorNative(): boolean {
   return false;
 }
 
+// Previously this helper detected mobile-Safari-without-PWA and recommended
+// "Add to Home Screen" so iOS users could receive web push. Now that we ship
+// a real native iOS app via App Store / TestFlight, the A2HS path is no
+// longer the right answer: iOS users should download the app instead of
+// installing a web shortcut. The banner's iOS branch is therefore disabled.
+// Kept as a stub returning false so the rest of the component compiles
+// without removing the state-machine entry it used to populate.
 function isIosSafariNeedsPWA(): boolean {
-  if (typeof navigator === 'undefined') return false;
-  // Never show the A2HS instruction inside the native shell - the app IS
-  // already installed and notifications come through Capacitor Push.
-  if (isCapacitorNative()) return false;
-  const ua = navigator.userAgent;
-  type LegacyNav = Navigator & { standalone?: boolean; maxTouchPoints?: number };
-  const nav = navigator as LegacyNav;
-  const isiOS =
-    /iPad|iPhone|iPod/.test(ua) ||
-    (ua.includes('Mac') && (nav.maxTouchPoints ?? 0) > 1);
-  if (!isiOS) return false;
-  const standalone =
-    nav.standalone === true ||
-    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-  return !standalone && !('PushManager' in window);
+  return false;
 }
 
 export default function PushOptInBanner({ realtorId, market }: Props) {
