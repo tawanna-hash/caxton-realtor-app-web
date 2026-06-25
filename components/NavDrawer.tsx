@@ -17,6 +17,10 @@ import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
 import PushOptInButton from '@/components/PushOptInButton';
 import { isNative } from '@/lib/native/runtime';
+import {
+  PUB_ACTIVE as SHARED_PUB_ACTIVE,
+  PUB_COMING_SOON as SHARED_PUB_COMING_SOON,
+} from '@/lib/publications';
 
 // Push notifications work in: the native iOS app (Capacitor + APNs) and any
 // browser that exposes ServiceWorker + PushManager. iOS Safari (non-PWA, non-
@@ -55,26 +59,10 @@ interface NavSection {
   groups?: { label: string; links: NavItem[] }[];
 }
 
-const PUB_NAMES: Record<string, string> = {
-  realtyline: 'RealtyLine Austin',
-  newsline: 'Newsline San Antonio',
-};
-
-// Full publication menu surfaced from the hamburger drawer. Mirrors the
-// 'Select Your Market' drawer on the /dashboard hero so the switcher is
-// reachable from every page (calendar, magazine, articles, admin, etc.),
-// not only the feed. Commit 7566795 dropped this from the drawer on the
-// assumption that the dashboard drawer was sufficient, but users land on
-// non-dashboard routes constantly (deep links, push taps, share opens) and
-// need a global way to switch markets.
-const PUB_ACTIVE: { id: 'realtyline' | 'newsline'; label: string; monogram: string }[] = [
-  { id: 'realtyline', label: 'RealtyLine Austin', monogram: 'RL' },
-  { id: 'newsline', label: 'Newsline San Antonio', monogram: 'NS' },
-];
-const PUB_COMING_SOON: { id: string; label: string; monogram: string }[] = [
-  { id: 'realtyline-houston', label: 'RealtyLine Houston', monogram: 'RH' },
-  { id: 'realtyline-dallas', label: 'RealtyLine Dallas/Ft. Worth', monogram: 'RD' },
-];
+// Re-export the shared catalog under the original names so the JSX below
+// keeps reading PUB_ACTIVE / PUB_COMING_SOON without a deeper refactor.
+const PUB_ACTIVE = SHARED_PUB_ACTIVE;
+const PUB_COMING_SOON = SHARED_PUB_COMING_SOON;
 
 // Admin nav is defined in lib/admin-nav.ts so this drawer and the
 // desktop top-bar in AppShell.tsx always render the same groups.

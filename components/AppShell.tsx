@@ -35,6 +35,8 @@ import NewsletterCTA from '@/components/NewsletterCTA';
 import { ADMIN_NAV as ADMIN_GROUPS, isAdminGroupActive as isGroupActive } from '@/lib/admin-nav';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
+import MarketSwitcherSheet from '@/components/MarketSwitcherSheet';
+import { getActivePub } from '@/lib/publications';
 
 // ============================================================
 // Types + constants
@@ -86,11 +88,17 @@ export default function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [marketSheetOpen, setMarketSheetOpen] = useState(false);
   const [user, setUser] = useState<User>(null);
   const isAdmin = variant === 'admin';
   // Server + first client render agree on 'realtynewsnow' to avoid hydration mismatch.
   // Actual pub is read from localStorage post-mount in the useEffect below.
   const [pub, setPub] = useState<string>('realtynewsnow');
+  // Resolve the current pub metadata for the header title-as-switcher.
+  // Null when the user hasn't picked yet (first launch) or when the
+  // stored id isn't a known active pub — in which case the header falls
+  // back to the plain 'Realty News Now' brand link.
+  const currentPubMeta = getActivePub(pub);
   useEffect(() => {
     // Defer the localStorage read into a microtask so the first commit lands
     // before this setState — avoids react-hooks/set-state-in-effect.
@@ -226,16 +234,44 @@ export default function AppShell({
             </svg>
           </button>
 
-          {/* Center: brand + badge */}
+          {/* Center: brand + badge
+              For signed-in (non-admin) users the title is the
+              title-as-switcher (iOS HIG pattern). Tapping it opens the
+              MarketSwitcherSheet. Admin keeps the static brand. */}
           <div className="flex items-center gap-2">
-            <Link href={isAdmin ? '/admin' : '/'} className="text-sm sm:text-base font-semibold tracking-tight">
-              {isAdmin ? 'Realty News Now Admin' : 'Realty News Now'}
-            </Link>
             {isAdmin ? (
-              <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/10 text-white/60">
-                Internal
-              </span>
-            ) : null}
+              <>
+                <Link href="/admin" className="text-sm sm:text-base font-semibold tracking-tight">
+                  Realty News Now Admin
+                </Link>
+                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/10 text-white/60">
+                  Internal
+                </span>
+              </>
+            ) : currentPubMeta ? (
+              <button
+                type="button"
+                onClick={() => setMarketSheetOpen(true)}
+                aria-haspopup="dialog"
+                aria-expanded={marketSheetOpen}
+                aria-label={`Switch publication. Current: ${currentPubMeta.label}`}
+                className="flex flex-col items-center leading-tight px-2 py-0.5 rounded-md hover:bg-gray-50 active:bg-gray-100 transition"
+              >
+                <span className="flex items-center gap-1 text-sm sm:text-base font-semibold tracking-tight text-gray-900">
+                  {currentPubMeta.label}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
+                <span className="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-medium">
+                  Realty News Now
+                </span>
+              </button>
+            ) : (
+              <Link href="/" className="text-sm sm:text-base font-semibold tracking-tight">
+                Realty News Now
+              </Link>
+            )}
           </div>
 
           {/* Right: desktop admin dropdowns (hidden on mobile) + logout */}
@@ -387,6 +423,17 @@ export default function AppShell({
         onLogout={handleLogout}
         onPubSwitch={handlePubSwitch}
       />
+
+      {/* ======== MARKET SWITCHER SHEET ========
+          iOS HIG title-as-switcher pattern. Triggered from the header
+          title for non-admin users; renders nothing while closed. */}
+      {!isAdmin && (
+        <MarketSwitcherSheet
+          open={marketSheetOpen}
+          currentPub={pub}
+          onClose={() => setMarketSheetOpen(false)}
+        />
+      )}
 
       {/* ======== MAIN CONTENT ======== */}
       {/* App-wide pull-to-refresh — public variant only. Dashboard manages

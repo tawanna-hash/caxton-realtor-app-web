@@ -10,6 +10,7 @@ import BiometricEnrollPrompt from "@/components/BiometricEnrollPrompt";
 import NativeKeyboard from "@/components/NativeKeyboard";
 import ExternalLinkInterceptor from "@/components/ExternalLinkInterceptor";
 import NativeScrollToTop from "@/components/NativeScrollToTop";
+import MarketOnboardingPicker from "@/components/MarketOnboardingPicker";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const SITE_URL = "https://realtynewsnow.app";
@@ -127,6 +128,10 @@ export default function RootLayout({
           <NativeKeyboard />
           <ExternalLinkInterceptor />
           <NativeScrollToTop />
+          {/* First-launch market picker. Shows once when caxton_pub isn't
+              set yet (no cookie, no localStorage). Self-dismisses after a
+              choice and stays hidden on every subsequent launch. */}
+          <MarketOnboardingPicker />
           {children}
           {/* Native iOS shell only: opt-in Face ID / Touch ID lock that
               overlays the UI on cold launch and resume-from-background.

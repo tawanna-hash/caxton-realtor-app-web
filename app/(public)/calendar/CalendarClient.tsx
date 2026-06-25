@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { EventsList } from '@/components/events/EventsList';
 import type { CalendarEvent } from '@/lib/events-store';
 import { usePublication } from '@/lib/use-publication';
-import { PubSwitcher } from '@/components/PubSwitcher';
 import { usePtrRefresh } from '@/hooks/use-ptr-refresh';
 
 type View = 'month' | 'upcoming';
@@ -117,7 +116,10 @@ export default function CalendarClient() {
       onSelectDay={setSelectedDay}
       onPrevMonth={handlePrevMonth}
       onNextMonth={handleNextMonth}
-      topBanner={<PubSwitcher current={pub} />}
+      // Publication switching now lives in the global header (iOS HIG
+      // title-as-switcher pattern). The dedicated PubSwitcher pill-pair
+      // banner is removed — the same control is one tap away in the title.
+      topBanner={null}
     />
   );
 }
