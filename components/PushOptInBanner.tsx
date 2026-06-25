@@ -66,26 +66,26 @@ export default function PushOptInBanner({ realtorId, market }: Props) {
     if (typeof window === 'undefined') return;
 
     if (localStorage.getItem(DISMISS_KEY) === '1') {
-      setDismissed(true);
+      queueMicrotask(() => setDismissed(true));
     }
 
     // Inside the native Capacitor iOS app, the banner has nothing useful
     // to say: native push is wired through @capacitor/push-notifications,
     // not the web PushManager. Hide it entirely.
     if (isCapacitorNative()) {
-      setActionable(false);
+      queueMicrotask(() => setActionable(false));
       return;
     }
     if (isIosSafariNeedsPWA()) {
-      setActionable('ios-pwa');
+      queueMicrotask(() => setActionable('ios-pwa'));
       return;
     }
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      setActionable(false);
+      queueMicrotask(() => setActionable(false));
       return;
     }
     if (Notification.permission === 'denied') {
-      setActionable(false);
+      queueMicrotask(() => setActionable(false));
       return;
     }
 

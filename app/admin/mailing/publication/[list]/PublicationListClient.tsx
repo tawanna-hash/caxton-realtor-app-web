@@ -68,8 +68,10 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
+    queueMicrotask(() => {
+      setLoading(true);
+      setError(null);
+    });
     fetch(`/api/admin/mailing/publication-list?list=${pub}&format=json`, {
       credentials: 'same-origin',
       cache: 'no-store',
@@ -95,7 +97,7 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
 
   // Reset to page 1 whenever filters/search change.
   useEffect(() => {
-    setPage(1);
+    queueMicrotask(() => setPage(1));
   }, [query, verifFilter, sourceFilter]);
 
   const filtered = useMemo(() => {

@@ -28,7 +28,7 @@ export default function MagazineGuestCTA({ brandColor }: { brandColor: string })
     // visitor while they browse multiple issues.
     try {
       if (typeof window !== 'undefined' && window.sessionStorage.getItem(DISMISS_KEY) === '1') {
-        setDismissed(true);
+        queueMicrotask(() => setDismissed(true));
       }
     } catch {
       // sessionStorage can throw in private modes — fall through to fetch.

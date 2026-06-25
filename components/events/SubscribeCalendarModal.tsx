@@ -50,7 +50,7 @@ export function SubscribeCalendarModal({ open, onClose, pub }: Props) {
 
   // Reset copy state when modal closes.
   useEffect(() => {
-    if (!open) setCopied(false);
+    if (!open) queueMicrotask(() => setCopied(false));
   }, [open]);
 
   if (!open) return null;

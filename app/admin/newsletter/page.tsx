@@ -72,7 +72,7 @@ export default function NewsletterSubscribersPage() {
   const [dir, setDir] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { queueMicrotask(() => setMounted(true)); }, []);
 
   useEffect(() => {
     if (!admin) return;
@@ -103,7 +103,7 @@ export default function NewsletterSubscribersPage() {
     };
   }, [admin, page, pageSize, publication, status, q, sort, dir, verified]);
 
-  useEffect(() => { setSelectedIds(new Set()); }, [page, publication, status, q, sort, dir]);
+  useEffect(() => { queueMicrotask(() => setSelectedIds(new Set())); }, [page, publication, status, q, sort, dir]);
 
   function toggleSort(col: typeof sort) {
     if (sort === col) setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -366,14 +366,14 @@ export default function NewsletterSubscribersPage() {
   );
 }
 
-function SortableTh({
+function SortableTh<C extends string>({
   label, col, sort, dir, onSort,
 }: {
   label: string;
-  col: string;
+  col: C;
   sort: string;
   dir: 'asc' | 'desc';
-  onSort: (c: any) => void;
+  onSort: (c: C) => void;
 }) {
   const active = sort === col;
   return (

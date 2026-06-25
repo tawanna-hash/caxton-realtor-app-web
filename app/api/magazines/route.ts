@@ -35,8 +35,9 @@ export async function GET(req: NextRequest) {
       LIMIT 50
     `;
     return NextResponse.json(rows);
-  } catch (err: any) {
-    console.error('[api/magazines] query failed:', err?.message);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('[api/magazines] query failed:', message);
     return NextResponse.json({ error: 'database error' }, { status: 500 });
   }
 }

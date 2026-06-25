@@ -103,7 +103,7 @@ export default function AdvertiserReportDrawer({
   // expose the picker in view mode, so this effectively just runs once). In
   // edit mode, the admin clicks "Refresh preview" to re-render.
   useEffect(() => {
-    fetchPreview();
+    queueMicrotask(() => { void fetchPreview(); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [advertiser.id]);
 

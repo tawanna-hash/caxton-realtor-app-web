@@ -65,7 +65,7 @@ export default function SuppressionsClient() {
 
   // Reset to page 1 whenever the search changes.
   useEffect(() => {
-    setPage(1);
+    queueMicrotask(() => setPage(1));
   }, [debouncedQuery]);
 
   const load = useCallback(async () => {
@@ -93,7 +93,7 @@ export default function SuppressionsClient() {
   }, [page, debouncedQuery, pageSize]);
 
   useEffect(() => {
-    void load();
+    queueMicrotask(() => { void load(); });
   }, [load]);
 
   const unsuppress = async (email: string) => {

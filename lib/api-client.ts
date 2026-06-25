@@ -54,6 +54,6 @@ export const api = {
 
     logout: () => request('/auth/logout', { method: 'POST' }),
 
-    me: () => request<{ realtor: any }>('/auth/me'),
+    me: () => request<{ realtor: unknown }>('/auth/me'),
   },
 };

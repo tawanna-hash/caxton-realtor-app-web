@@ -383,8 +383,10 @@ export default function InteractiveMagazineReader({
   // new page. Without this the page would stay translated off-screen from a
   // prior drag, leaving the user looking at blank space.
   useEffect(() => {
-    setPanX(0);
-    setPanY(0);
+    queueMicrotask(() => {
+      setPanX(0);
+      setPanY(0);
+    });
   }, [zoomIdx, currentPage]);
 
   // ---- Load PDF on mount ----

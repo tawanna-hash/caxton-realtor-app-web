@@ -76,29 +76,6 @@ export async function GET() {
   return NextResponse.json({ tags: rows });
 }
 
-function addTagSql(table: string, tag: string) {
-  // Adds `tag` to every row's tags jsonb. Idempotent (DISTINCT).
-  return `UPDATE ${table}
-            SET tags = COALESCE((
-                    SELECT jsonb_agg(DISTINCT t)
-                      FROM jsonb_array_elements_text(COALESCE(tags,'[]'::jsonb) || $1::jsonb) AS t
-                  ), '[]'::jsonb),
-                updated_at = now()
-          WHERE NOT (tags @> $1::jsonb)`;
-}
-
-function removeTagsSql(table: string) {
-  // Removes any tag whose value is in $1::text[] from every row.
-  return `UPDATE ${table}
-            SET tags = COALESCE((
-                    SELECT jsonb_agg(t)
-                      FROM jsonb_array_elements_text(COALESCE(tags,'[]'::jsonb)) AS t
-                     WHERE t <> ALL($1::text[])
-                  ), '[]'::jsonb),
-                updated_at = now()
-          WHERE tags ?| $1::text[]`;
-}
-
 export async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

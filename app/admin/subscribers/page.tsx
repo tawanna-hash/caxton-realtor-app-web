@@ -87,11 +87,11 @@ function SubscribersInner() {
   const [dir, setDir] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { queueMicrotask(() => setMounted(true)); }, []);
 
   useEffect(() => {
     if (!admin) return;
-    setLoading(true);
+    queueMicrotask(() => setLoading(true));
     adminApi.listSubscribers({ page, pageSize, market: market || undefined, q: q || undefined, sort, dir, verified: verified || undefined })
       .then((res: ListResponse) => {
         setData(res);
@@ -105,7 +105,7 @@ function SubscribersInner() {
 
   // Reset selection on any filter/page change to avoid cross-context deletes
   // (defence-in-depth — selection is only used by Export selected below).
-  useEffect(() => { setSelectedIds(new Set()); }, [page, market, q, sort, dir, verified]);
+  useEffect(() => { queueMicrotask(() => setSelectedIds(new Set())); }, [page, market, q, sort, dir, verified]);
 
   function toggleSort(col: typeof sort) {
     if (sort === col) setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -130,7 +130,7 @@ function SubscribersInner() {
     // added when the export route accepts an ids filter).
     setExporting(true);
     try { await adminApi.exportSubscribersCsv(); }
-    catch (err: any) { alert('Export failed: ' + (err?.message || err)); }
+    catch (err) { alert('Export failed: ' + (err instanceof Error ? err.message : String(err))); }
     finally { setExporting(false); }
   }
 
@@ -149,8 +149,8 @@ function SubscribersInner() {
     setExporting(true);
     try {
       await adminApi.exportSubscribersCsv();
-    } catch (err: any) {
-      alert('Export failed: ' + (err?.message || err));
+    } catch (err) {
+      alert('Export failed: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setExporting(false);
     }
@@ -199,7 +199,7 @@ function SubscribersInner() {
         </div>
         <select
           value={market}
-          onChange={(e) => { setMarket(e.target.value as any); setPage(1); }}
+          onChange={(e) => { setMarket(e.target.value as '' | 'austin' | 'san_antonio'); setPage(1); }}
           className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
         >
           <option value="">All markets</option>
@@ -209,7 +209,7 @@ function SubscribersInner() {
         </select>
         <select
           value={verified}
-          onChange={(e) => { setVerified(e.target.value as any); setPage(1); }}
+          onChange={(e) => { setVerified(e.target.value as '' | 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending' | 'unverified'); setPage(1); }}
           className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
           title="Filter by email verification status"
         >
@@ -329,14 +329,14 @@ function SubscribersInner() {
   );
 }
 
-function SortableTh({
+function SortableTh<C extends string>({
   label, col, sort, dir, onSort,
 }: {
   label: string;
-  col: string;
+  col: C;
   sort: string;
   dir: 'asc' | 'desc';
-  onSort: (c: any) => void;
+  onSort: (c: C) => void;
 }) {
   const active = sort === col;
   return (

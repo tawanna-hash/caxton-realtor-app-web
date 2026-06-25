@@ -81,7 +81,7 @@ export default function TagsClient() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   const visibleRows = useMemo(() => {
     // Hide provenance tags (_was:*) from the main list by default; they show

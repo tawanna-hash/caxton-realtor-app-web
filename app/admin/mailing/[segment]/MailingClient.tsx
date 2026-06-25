@@ -224,7 +224,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
   }, [segment, filter, sort, dir, offset, search, pageSize, tagFilter]);
 
   useEffect(() => { queueMicrotask(() => { void reload(); }); }, [reload]);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { queueMicrotask(() => setMounted(true)); }, []);
 
   useEffect(() => {
     const t = setTimeout(() => { queueMicrotask(() => { setOffset(0); setFilterAll(false); }); }, 300);

@@ -86,7 +86,7 @@ export default function SubscribersSection() {
   }, []);
 
   useEffect(() => {
-    load();
+    queueMicrotask(() => { void load(); });
   }, [load]);
 
   useEffect(() => {

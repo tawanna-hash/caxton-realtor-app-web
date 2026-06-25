@@ -77,16 +77,18 @@ export function useBulkSelection(opts: UseBulkSelectionOpts): UseBulkSelectionRe
   const [filterEstimate, setFilterEstimate] = useState<number>(0);
 
   // Hydration-safe: only flip mounted after first client render.
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { queueMicrotask(() => setMounted(true)); }, []);
 
   // Reset whenever the scope (segment + search + filter) changes.
   const prevScope = useRef(scopeKey);
   useEffect(() => {
     if (prevScope.current !== scopeKey) {
       prevScope.current = scopeKey;
-      setMode('none');
-      setPageIdsState(EMPTY);
-      setFilterEstimate(0);
+      queueMicrotask(() => {
+        setMode('none');
+        setPageIdsState(EMPTY);
+        setFilterEstimate(0);
+      });
     }
   }, [scopeKey]);
 
@@ -98,8 +100,10 @@ export function useBulkSelection(opts: UseBulkSelectionOpts): UseBulkSelectionRe
     if (prevOffset.current !== pageOffset) {
       prevOffset.current = pageOffset;
       if (mode === 'page') {
-        setMode('none');
-        setPageIdsState(EMPTY);
+        queueMicrotask(() => {
+          setMode('none');
+          setPageIdsState(EMPTY);
+        });
       }
     }
   }, [pageOffset, resetOnPageChange, mode]);
@@ -123,7 +127,7 @@ export function useBulkSelection(opts: UseBulkSelectionOpts): UseBulkSelectionRe
 
   // Whenever pageIds shrinks to 0, snap mode back to 'none'.
   useEffect(() => {
-    if (mode === 'page' && pageIds.size === 0) setMode('none');
+    if (mode === 'page' && pageIds.size === 0) queueMicrotask(() => setMode('none'));
   }, [mode, pageIds]);
 
   const setPageIds = useCallback((ids: string[], checked: boolean) => {
