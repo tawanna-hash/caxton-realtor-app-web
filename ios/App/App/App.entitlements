@@ -17,17 +17,5 @@
 	<array>
 		<string>applinks:realtynewsnow.app</string>
 	</array>
-
-	<!-- Sign in with Apple: required by ASAuthorizationAppleIDProvider.
-	     Without this entitlement, the iOS plugin from
-	     @capacitor-community/apple-sign-in returns an authorization error
-	     and isPluginAvailable('SignInWithApple') still resolves true,
-	     so the only way to know it's missing is the runtime failure.
-	     Must also be enabled in the Apple Developer portal for the
-	     bundle ID app.realtynewsnow under Team 3JU7K7AMUY. -->
-	<key>com.apple.developer.applesignin</key>
-	<array>
-		<string>Default</string>
-	</array>
 </dict>
 </plist>
