@@ -40,7 +40,7 @@ The project itself is aligned to this:
 | 8 | Photo library add | `NSPhotoLibraryAddUsageDescription` | set |
 | 8 | Location | `NSLocationWhenInUseUsageDescription` | set |
 | 8 | Face ID | `NSFaceIDUsageDescription` | set |
-| 8 | App tracking transparency | `NSUserTrackingUsageDescription` | set |
+| 8 | App tracking transparency | `NSUserTrackingUsageDescription` | intentionally omitted (no ATT calls; would block App Privacy review) |
 | 11 | Export compliance | `ITSAppUsesNonExemptEncryption` | `false` |
 | — | Privacy manifest | `PrivacyInfo.xcprivacy` | tracking=false, 3 RRA + 12 data types |
 | — | Push capability | `App.entitlements` `aps-environment` | `production` |

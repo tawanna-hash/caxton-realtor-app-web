@@ -60,9 +60,7 @@
 	<!-- Face ID is offered as a fast sign-in for returning users. The web app already supports passkeys; the iOS shell wires the same flow through LocalAuthentication so the prompt feels native. -->
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID to sign in to your Realty News Now account faster without re-entering your password.</string>
-	<!-- ATT prompt is shown only if/when we add a third-party tracking SDK that requires it. PostHog with anonymous IDs and masked inputs does NOT require ATT, but declaring the string here keeps App Review unblocked if we add an ad SDK later. -->
-	<key>NSUserTrackingUsageDescription</key>
-	<string>Realty News Now uses this only to show ads that are more relevant to your interests across the app. You can decline and the app will still work.</string>
+	<!-- NSUserTrackingUsageDescription intentionally NOT declared. We do not call ATTrackingManager.requestTrackingAuthorization anywhere in the app and PostHog runs with anonymous IDs + masked inputs. App Privacy questionnaire must show "Data Not Used for Tracking". If we add a tracking SDK later, restore this key, bump the App Privacy answers, and resubmit. -->
 	<!-- App Transport Security: realtynewsnow.app already uses HTTPS so default ATS is fine.
 	     We DO NOT enable NSAllowsArbitraryLoads. Listed below explicitly for App Review clarity. -->
 	<key>NSAppTransportSecurity</key>
