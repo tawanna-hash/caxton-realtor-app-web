@@ -87,25 +87,23 @@ export const POST = withErrorHandling(async (req: Request) => {
   // directly in the response that the in-app fetch() already trusts.
   const autoSignIn = !!passwordHash;
 
-  // Captured inside the transaction, used outside it to set the cookie.
+  // Captured inside the transaction, used outside it for cookie + email.
   let newRealtorId: string | null = null;
   let newRealtorEmail: string | null = null;
+  let existedAlready = false;
+  let alreadyVerified = false;
 
+  // -- DB phase (transactional) ---------------------------------------------
+  // Only DB writes go inside the transaction. Email sends (Resend) are
+  // deliberately deferred until after commit - a transient Resend outage
+  // must not roll back a successfully created account and leave the user
+  // stuck on a 500.
   await withNeonTransaction(async (client) => {
     const existing = await findRealtorByEmailTx(client, input.email);
 
     if (existing) {
-      // Already verified -> treat as login. Otherwise resend verification.
-      const purpose: 'login' | 'signup_verification' = existing.email_verified_at
-        ? 'login'
-        : 'signup_verification';
-      await createAndSendMagicLink({
-        email: input.email,
-        firstName: input.firstName,
-        purpose,
-        ipAddress: ipAddress ?? undefined,
-        userAgent,
-      });
+      existedAlready = true;
+      alreadyVerified = !!existing.email_verified_at;
       return;
     }
 
@@ -137,24 +135,12 @@ export const POST = withErrorHandling(async (req: Request) => {
     const inserted = await insertRealtor(client, row, { autoVerifyEmail: autoSignIn });
     newRealtorId = inserted.id;
     newRealtorEmail = input.email;
-
-    if (!autoSignIn) {
-      // No password set — fall back to the legacy magic-link verification
-      // flow. (Web users without password support still go through email.)
-      await createAndSendMagicLink({
-        email: input.email,
-        firstName: input.firstName,
-        purpose: 'signup_verification',
-        ipAddress: ipAddress ?? undefined,
-        userAgent,
-      });
-    }
   });
 
-  // Brand-new account with password -> issue a session cookie right now so
-  // the in-app WebView is signed in on the very next request. The client
-  // sees `autoSignedIn: true` and routes straight to the feed instead of
-  // "Check your email".
+  // -- Auto-sign-in path ----------------------------------------------------
+  // Brand-new account WITH password -> issue a session cookie right now so
+  // the in-app WebView is signed in on the next request. We do NOT send a
+  // magic link here; the client routes straight to the feed.
   if (autoSignIn && newRealtorId && newRealtorEmail) {
     const token = signSessionToken({ realtorId: newRealtorId, email: newRealtorEmail });
     const response = NextResponse.json({
@@ -165,6 +151,30 @@ export const POST = withErrorHandling(async (req: Request) => {
     await setRealtorSessionCookie(response, token);
     logger.info({ realtorId: newRealtorId }, 'Signup auto-sign-in succeeded');
     return response;
+  }
+
+  // -- Magic-link path (post-commit, best-effort) ---------------------------
+  // Determine which email to send: existing+verified -> login link;
+  // existing+unverified or brand-new -> signup_verification link.
+  const purpose: 'login' | 'signup_verification' =
+    existedAlready && alreadyVerified ? 'login' : 'signup_verification';
+
+  try {
+    await createAndSendMagicLink({
+      email: input.email,
+      firstName: input.firstName,
+      purpose,
+      ipAddress: ipAddress ?? undefined,
+      userAgent,
+    });
+  } catch (err) {
+    // The account already exists at this point (either we just created it,
+    // or it was already there). Do not fail the request just because email
+    // delivery hiccuped - log and return the same shape we always do.
+    logger.error(
+      { err, email: input.email, purpose, realtorId: newRealtorId },
+      'Signup completed but magic-link send failed; account is intact',
+    );
   }
 
   return NextResponse.json({

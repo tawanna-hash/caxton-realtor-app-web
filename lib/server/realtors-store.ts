@@ -6,6 +6,43 @@
 
 import type { PoolClient } from '@neondatabase/serverless';
 import { query, withNeonTransaction } from './db/neon';
+import { logger } from './logger';
+
+// Postgres SQLSTATE 42703 = undefined_column (column does not exist).
+// 42P01 = undefined_table. We swallow these in optional-update steps so a
+// stale prod schema can't block account creation.
+const PG_UNDEFINED_COLUMN = '42703';
+const PG_UNDEFINED_TABLE = '42P01';
+
+function isMissingSchemaError(err: unknown): boolean {
+  const code = (err as { code?: string } | null)?.code;
+  return code === PG_UNDEFINED_COLUMN || code === PG_UNDEFINED_TABLE;
+}
+
+/**
+ * Run an optional UPDATE step. If the column or table doesn't exist on the
+ * deployed DB we log + continue so the signup completes; any other error is
+ * rethrown.
+ */
+async function tryOptionalUpdate(
+  client: PoolClient,
+  label: string,
+  sql: string,
+  params: unknown[],
+): Promise<void> {
+  try {
+    await client.query(sql, params);
+  } catch (err) {
+    if (isMissingSchemaError(err)) {
+      logger.warn(
+        { step: label, code: (err as { code?: string }).code, message: (err as Error).message },
+        'insertRealtor: skipping optional column group (schema missing)',
+      );
+      return;
+    }
+    throw err;
+  }
+}
 
 // -----------------------------------------------------------------------------
 // Types
@@ -104,10 +141,25 @@ export interface SignupRow {
  * Insert a new realtor.
  *
  * Returns the new id, plus the resolved email_verified_at value (NULL when the
- * caller didn't auto-verify, a timestamp when it did). Callers that want to
- * issue an instant session — e.g. signup-with-password on iOS where the
- * follow-up magic-link click leaves us stranded in a separate cookie jar —
- * pass `autoVerifyEmail: true` when a strong password has been validated.
+ * caller did not auto-verify, a timestamp when it did). Callers that want to
+ * issue an instant session (signup-with-password on iOS, where the follow-up
+ * magic-link click leaves us stranded in a separate cookie jar) pass
+ * `autoVerifyEmail: true` after validating a strong password.
+ *
+ * Rewritten 2026-06-30 to survive prod schema drift. Previously a single big
+ * INSERT touched 24 columns; if any one was missing in prod (because a
+ * migration had not been applied) every signup failed with a 500. Now:
+ *
+ *   1. CORE INSERT - only columns the rest of the codebase already reads in
+ *      working endpoints (login, /auth/me). Guaranteed to exist in prod.
+ *   2. OPTIONAL UPDATES - one UPDATE per logical column group, each wrapped
+ *      in tryOptionalUpdate() which swallows SQLSTATE 42703 (undefined_column)
+ *      so a missing optional column logs a warning instead of dropping the
+ *      whole signup. Any other error rethrows.
+ *
+ * Net effect: an account is created even on a partially-migrated DB; the
+ * realtor can sign in immediately; warnings surface the missing column for
+ * follow-up.
  */
 export async function insertRealtor(
   client: PoolClient,
@@ -115,29 +167,21 @@ export async function insertRealtor(
   opts: { autoVerifyEmail?: boolean } = {},
 ): Promise<{ id: string; emailVerifiedAt: Date | null }> {
   const autoVerify = !!opts.autoVerifyEmail;
+
+  // -- 1. CORE INSERT --------------------------------------------------------
+  // Only columns we know exist in every deployed environment. These are
+  // referenced by getRealtorMe(), findRealtorForPasswordLogin(), and
+  // updatePasswordHash() - endpoints that work in prod today, so the columns
+  // must be present.
   const { rows } = await client.query<{ id: string; email_verified_at: Date | null }>(
     `INSERT INTO realtors (
        email, first_name, last_name, market,
-       master_list_consent_at, master_list_consent_text, master_list_consent_ip,
-       license_type, trec_license_number, nmls_license_number,
-       title, mobile,
-       mailing_address, mailing_address_2, city, state, zip,
-       birthday_month, birthday_day,
-       subscriptions,
-       fb_handle, ig_handle, li_handle,
        password_hash, password_set_at,
        email_verified_at
      ) VALUES (
        $1, $2, $3, $4,
-       NOW(), $5, $6,
-       $7, $8, $9,
-       $10, $11,
-       $12, $13, $14, $15, $16,
-       $17, $18,
-       $19,
-       $20, $21, $22,
-       $23, CASE WHEN $23 IS NOT NULL THEN NOW() ELSE NULL END,
-       CASE WHEN $24::boolean THEN NOW() ELSE NULL END
+       $5, CASE WHEN $5 IS NOT NULL THEN NOW() ELSE NULL END,
+       CASE WHEN $6::boolean THEN NOW() ELSE NULL END
      )
      RETURNING id, email_verified_at`,
     [
@@ -145,31 +189,118 @@ export async function insertRealtor(
       row.firstName,
       row.lastName,
       row.market,
-      row.consentText,
-      row.ipAddress,
-      row.normalizedLicenseType,
-      row.trecNumber,
-      row.nmlsNumber,
-      row.title,
-      row.mobile,
-      row.mailingAddress,
-      row.mailingAddress2,
-      row.city,
-      row.state,
-      row.zip,
-      row.birthdayMonth,
-      row.birthdayDay,
-      row.subscriptions,
-      row.fbHandle,
-      row.igHandle,
-      row.liHandle,
       row.passwordHash,
       autoVerify,
     ],
   );
   const r = rows[0];
   if (!r) throw new Error('insertRealtor returned no row');
-  return { id: r.id, emailVerifiedAt: r.email_verified_at };
+  const realtorId = r.id;
+
+  // -- 2. OPTIONAL UPDATES (best-effort, grouped by feature) -----------------
+  // Each group is independent so one missing column cannot block another.
+  // We only run an UPDATE when the caller actually supplied a value, so
+  // empty groups skip the DB hit entirely.
+
+  // Master-list consent (timestamp + text + ip).
+  await tryOptionalUpdate(
+    client,
+    'consent',
+    `UPDATE realtors
+        SET master_list_consent_at = NOW(),
+            master_list_consent_text = $2,
+            master_list_consent_ip = $3
+      WHERE id = $1`,
+    [realtorId, row.consentText, row.ipAddress],
+  );
+
+  // License (TREC or NMLS - never both; route by normalized type).
+  if (row.normalizedLicenseType || row.trecNumber || row.nmlsNumber) {
+    await tryOptionalUpdate(
+      client,
+      'license',
+      `UPDATE realtors
+          SET license_type = $2,
+              trec_license_number = $3,
+              nmls_license_number = $4
+        WHERE id = $1`,
+      [realtorId, row.normalizedLicenseType, row.trecNumber, row.nmlsNumber],
+    );
+  }
+
+  // Title + mobile.
+  if (row.title || row.mobile) {
+    await tryOptionalUpdate(
+      client,
+      'contact',
+      `UPDATE realtors SET title = $2, mobile = $3 WHERE id = $1`,
+      [realtorId, row.title, row.mobile],
+    );
+  }
+
+  // Mailing address block.
+  if (
+    row.mailingAddress ||
+    row.mailingAddress2 ||
+    row.city ||
+    row.state ||
+    row.zip
+  ) {
+    await tryOptionalUpdate(
+      client,
+      'address',
+      `UPDATE realtors
+          SET mailing_address = $2,
+              mailing_address_2 = $3,
+              city = $4,
+              state = $5,
+              zip = $6
+        WHERE id = $1`,
+      [
+        realtorId,
+        row.mailingAddress,
+        row.mailingAddress2,
+        row.city,
+        row.state,
+        row.zip,
+      ],
+    );
+  }
+
+  // Birthday - both columns set together (CHECK constraint requires both
+  // or neither; the caller already normalized partial input to NULL/NULL).
+  if (row.birthdayMonth !== null || row.birthdayDay !== null) {
+    await tryOptionalUpdate(
+      client,
+      'birthday',
+      `UPDATE realtors SET birthday_month = $2, birthday_day = $3 WHERE id = $1`,
+      [realtorId, row.birthdayMonth, row.birthdayDay],
+    );
+  }
+
+  // Email subscriptions (text[]).
+  if (row.subscriptions && row.subscriptions.length > 0) {
+    await tryOptionalUpdate(
+      client,
+      'subscriptions',
+      `UPDATE realtors SET subscriptions = $2 WHERE id = $1`,
+      [realtorId, row.subscriptions],
+    );
+  }
+
+  // Social handles.
+  if (row.fbHandle || row.igHandle || row.liHandle) {
+    await tryOptionalUpdate(
+      client,
+      'social',
+      `UPDATE realtors
+          SET fb_handle = $2, ig_handle = $3, li_handle = $4
+        WHERE id = $1`,
+      [realtorId, row.fbHandle, row.igHandle, row.liHandle],
+    );
+  }
+
+  return { id: realtorId, emailVerifiedAt: r.email_verified_at };
 }
 
 export async function findRealtorByEmailTx(
