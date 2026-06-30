@@ -818,12 +818,20 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
                 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">Birthday (optional)</p>
                 <p className="text-sm text-gray-400 font-light mb-3">So we can wish you a happy birthday!</p>
-                <div className="flex gap-2 mb-6">
-                  <select value={bdayMonth} onChange={(e) => setBdayMonth(e.target.value)} className={sc + ' flex-1' + (!bdayMonth ? ' text-[#d1d5db]' : ' text-gray-900')}>
+                <div className="flex gap-2 mb-6 items-stretch">
+                  <select
+                    value={bdayMonth}
+                    onChange={(e) => setBdayMonth(e.target.value)}
+                    className={'px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 appearance-none placeholder:text-[#d1d5db] flex-1 min-w-0' + (!bdayMonth ? ' text-[#d1d5db]' : ' text-gray-900')}
+                  >
                     <option value="">Month</option>
                     {MONTHS.map((m) => <option key={m} value={m}>{m}</option>)}
                   </select>
-                  <select value={bdayDay} onChange={(e) => setBdayDay(e.target.value)} className={sc + ' w-24' + (!bdayDay ? ' text-[#d1d5db]' : ' text-gray-900')}>
+                  <select
+                    value={bdayDay}
+                    onChange={(e) => setBdayDay(e.target.value)}
+                    className={'px-3 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 appearance-none placeholder:text-[#d1d5db] w-20 shrink-0' + (!bdayDay ? ' text-[#d1d5db]' : ' text-gray-900')}
+                  >
                     <option value="">Day</option>
                     {DAYS.map((d) => <option key={d} value={String(d)}>{d}</option>)}
                   </select>
