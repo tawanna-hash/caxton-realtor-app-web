@@ -742,9 +742,9 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                     <button key={lt} onClick={() => setLicenseType(lt)} className={licenseType === lt ? 'flex-1 py-3 text-base font-medium text-center border-2 border-brand-700 text-brand-700' : 'flex-1 py-3 text-base font-light text-center border border-gray-300 text-gray-500'}>{lt}</button>
                   ))}
                 </div>
-                <input type="text" placeholder={licenseType === 'TREC #' ? 'TREC License Number' : 'NMLS ID Number'} value={licenseNum} onChange={(e) => setLicenseNum(e.target.value)} className={ic} />
+                <input type="text" placeholder={licenseType === 'TREC #' ? 'TREC License Number' : 'NMLS ID Number'} value={licenseNum} onChange={(e) => setLicenseNum(e.target.value)} className={ic} autoComplete="off" autoCapitalize="characters" inputMode={licenseType === 'TREC #' ? 'numeric' : 'text'} />
 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3 mt-6">Your Information</p>
-                <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} className={ic} />
+                <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} className={ic} autoComplete="name" autoCapitalize="words" />
                 <select value={title} onChange={(e) => setTitle(e.target.value)} className={sc + (!title ? ' text-[#d1d5db]' : ' text-gray-900')}>
                   <option value="">Select Title / Role</option>
                   {TITLES.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -771,17 +771,19 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <p className="text-xs text-gray-400 font-light mb-2">Used for sign-in.</p>
 
                 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3 mt-4">Mailing Address</p>
-                <input type="text" placeholder="Street Address" value={addr1} onChange={(e) => setAddr1(e.target.value)} className={ic} />
-                <input type="text" placeholder="Suite / Unit (optional)" value={addr2} onChange={(e) => setAddr2(e.target.value)} className={ic} />
+                <input type="text" placeholder="Street Address" value={addr1} onChange={(e) => setAddr1(e.target.value)} className={ic} autoComplete="address-line1" />
+                <input type="text" placeholder="Suite / Unit (optional)" value={addr2} onChange={(e) => setAddr2(e.target.value)} className={ic} autoComplete="address-line2" />
                 <div className="flex gap-2">
-                  <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className={ic + ' flex-1'} />
+                  <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className={ic + ' flex-1'} autoComplete="address-level2" />
                   <input type="text" value="TX" disabled className="w-16 px-4 py-3.5 border border-gray-200 text-base font-light bg-gray-50 text-gray-400 mb-3 text-center rounded-md" />
-                  <input type="text" placeholder="Zip" value={zip} onChange={(e) => setZip(e.target.value)} className="w-24 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3" />
+                  <input type="text" placeholder="Zip" value={zip} onChange={(e) => setZip(e.target.value)} className="w-24 px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3" autoComplete="postal-code" inputMode="numeric" />
                 </div>
 
                 <div className="flex gap-2 mt-2">
                   <button onClick={() => { void haptics.light(); setStep(1); }} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
                   <button onClick={() => {
+                    const trimmedEmail = email.trim();
+                    if (!trimmedEmail || !trimmedEmail.includes('@') || !trimmedEmail.includes('.')) { setError('Enter a valid email address'); void haptics.notify('error'); return; }
                     if (!password || password.length < 8) { setError('Password must be at least 8 characters'); void haptics.notify('error'); return; }
                     if (password !== confirmPassword) { setError('Passwords do not match'); void haptics.notify('error'); return; }
                     setError('');
