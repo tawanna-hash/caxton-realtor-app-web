@@ -180,7 +180,7 @@ export async function insertRealtor(
        email_verified_at
      ) VALUES (
        $1, $2, $3, $4,
-       $5, CASE WHEN $5 IS NOT NULL THEN NOW() ELSE NULL END,
+       $5::text, CASE WHEN $5::text IS NOT NULL THEN NOW() ELSE NULL END,
        CASE WHEN $6::boolean THEN NOW() ELSE NULL END
      )
      RETURNING id, email_verified_at`,
