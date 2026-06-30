@@ -466,30 +466,37 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
     setLoading(true);
     setError('');
     try {
+      // Trim everything so trailing whitespace from iOS autofill or paste
+      // never trips zod's email() / non-empty validators.
+      const trimmedFullName = fullName.trim();
+      const trimmedEmail = email.trim().toLowerCase();
+      const firstName = trimmedFullName.split(/\s+/)[0] || trimmedFullName;
+      const lastName = trimmedFullName.split(/\s+/).slice(1).join(' ') || '';
+
       const res = await fetch(API + '/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          firstName: fullName.split(' ')[0] || fullName,
-          lastName: fullName.split(' ').slice(1).join(' ') || '',
-          email,
+          firstName,
+          lastName,
+          email: trimmedEmail,
           market: pub === 'realtyline' ? 'austin' : 'san_antonio',
           licenseType,
-          licenseNumber: licenseNum || undefined,
+          licenseNumber: licenseNum.trim() || undefined,
           title: title || undefined,
-          mobile: mobile || undefined,
-          mailingAddress: addr1 || undefined,
-          mailingAddress2: addr2 || undefined,
-          city: city || undefined,
+          mobile: mobile.trim() || undefined,
+          mailingAddress: addr1.trim() || undefined,
+          mailingAddress2: addr2.trim() || undefined,
+          city: city.trim() || undefined,
           state: 'TX',
-          zip: zip || undefined,
+          zip: zip.trim() || undefined,
           birthdayMonth: bdayMonth || undefined,
           birthdayDay: bdayDay || undefined,
           subscriptions: subs,
-          fbHandle: fbHandle || undefined,
-          igHandle: igHandle || undefined,
-          liHandle: liHandle || undefined,
+          fbHandle: fbHandle.trim() || undefined,
+          igHandle: igHandle.trim() || undefined,
+          liHandle: liHandle.trim() || undefined,
           password: password || undefined,
           consentText: 'I agree to receive communications from Caxton Publications, Inc.',
         }),
@@ -503,7 +510,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         // never sign the in-app WebView in. Calling /auth/me with credentials
         // confirms the cookie landed, then we hand the realtor to onAuth.
         if (data?.autoSignedIn) {
-          trackEvent('signup_auto_signed_in', { mode: 'signup', email, pub });
+          trackEvent('signup_auto_signed_in', { mode: 'signup', email: trimmedEmail, pub });
           try {
             const meRes = await fetch(API + '/auth/me', { credentials: 'include' });
             if (meRes.ok) {
@@ -527,14 +534,52 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
             // Fall through to 'sent' so the user can still complete via email.
           }
         }
-        trackEvent('magic_link_requested', { mode: 'signup', email, pub });
+        trackEvent('magic_link_requested', { mode: 'signup', email: trimmedEmail, pub });
+        void haptics.notify('success');
         setMode('sent');
       } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.message || 'Something went wrong. Please try again.');
+        const data: {
+          message?: string;
+          error?: string;
+          details?: Record<string, string[] | undefined>;
+        } = await res.json().catch(() => ({}));
+        // Build the most specific error we can. The server returns errors
+        // under `error` (top-level) and field-level zod errors under
+        // `details` — the client was previously only reading `message`,
+        // so every signup failure looked identical ("Something went wrong").
+        let msg = '';
+        if (data.details && typeof data.details === 'object') {
+          const fields = Object.entries(data.details)
+            .map(([field, errs]) => {
+              const first = Array.isArray(errs) ? errs[0] : undefined;
+              if (!first) return null;
+              const pretty = field
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, (c) => c.toUpperCase());
+              return `${pretty}: ${first}`;
+            })
+            .filter(Boolean) as string[];
+          if (fields.length) msg = fields.join('. ');
+        }
+        if (!msg) msg = data.error || data.message || '';
+        if (!msg) {
+          msg =
+            res.status === 429
+              ? 'Too many signup attempts. Wait a minute and try again.'
+              : res.status >= 500
+                ? 'Our server hit a snag. Please try again in a moment.'
+                : 'Something went wrong. Please try again.';
+        }
+        // eslint-disable-next-line no-console
+        console.error('[signup] error', { status: res.status, data });
+        setError(msg);
+        void haptics.notify('error');
       }
-    } catch {
-      setError('Cannot reach server. Is the API running?');
+    } catch (netErr) {
+      // eslint-disable-next-line no-console
+      console.error('[signup] network error', netErr);
+      setError('Cannot reach server. Check your connection and try again.');
+      void haptics.notify('error');
     }
     setLoading(false);
   }

@@ -38,7 +38,14 @@ export function handleApiError(err: unknown): NextResponse {
   // Anything else → 500, log details, expose only generic message in prod
   logger.error({ err }, 'Unhandled API error');
   const body: Record<string, unknown> = { error: 'Internal server error' };
-  if (process.env.NODE_ENV !== 'production' && err instanceof Error) {
+  // Surface the real message in non-prod always, OR in prod when the env flag
+  // EXPOSE_API_ERROR_MESSAGES=1 is set. This lets us debug from inside the
+  // Capacitor TestFlight build (where we can't see browser devtools) without
+  // leaking stack traces to anonymous traffic. Stack is never returned.
+  const expose =
+    process.env.NODE_ENV !== 'production' ||
+    process.env.EXPOSE_API_ERROR_MESSAGES === '1';
+  if (expose && err instanceof Error) {
     body.message = err.message;
   }
   return NextResponse.json(body, { status: 500 });
