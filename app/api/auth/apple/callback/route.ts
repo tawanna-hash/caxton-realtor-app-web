@@ -130,23 +130,28 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  // 3. Exchange code → tokens. Apple gives us back an id_token (matches the
-  //    one in the form body). We still verify because the form body could in
-  //    principle be tampered with; the token endpoint result is authoritative.
-  let tokenResp;
+  // 3. Verify id_token signature + nonce.
+  //    Apple posts the id_token directly in the form body (response_type=
+  //    "code id_token"). The id_token is signed by Apple's JWKS; verifying it
+  //    is sufficient to authenticate the user. The code exchange is only
+  //    needed to obtain a refresh_token, which we don't currently use.
+  //    We attempt the exchange but fall back to the form-body id_token if it
+  //    fails (e.g., the Services ID's Web URLs haven't propagated yet).
+  let idTokenToVerify = idToken;
   try {
-    tokenResp = await exchangeCodeForTokens(code);
+    const tokenResp = await exchangeCodeForTokens(code);
+    idTokenToVerify = tokenResp.id_token;
   } catch (err) {
-    logger.error({ err }, 'Apple token exchange failed');
-    return redirectBack(
-      `${origin}/dashboard?auth=login&apple_error=token_exchange`,
+    logger.warn(
+      { err: err instanceof Error ? err.message : String(err) },
+      'Apple token exchange failed; falling back to form-body id_token',
     );
   }
 
   // 4. Verify id_token signature + nonce.
   let claims;
   try {
-    claims = await verifyAppleIdToken(tokenResp.id_token, nonceHmac);
+    claims = await verifyAppleIdToken(idTokenToVerify, nonceHmac);
   } catch (err) {
     logger.error({ err }, 'Apple id_token verification failed');
     return redirectBack(

@@ -173,15 +173,24 @@ export async function insertRealtor(
   // referenced by getRealtorMe(), findRealtorForPasswordLogin(), and
   // updatePasswordHash() - endpoints that work in prod today, so the columns
   // must be present.
+  // We compute the two derived timestamps in JS to avoid referencing the same
+  // $N placeholder in multiple expressions (which has caused intermittent
+  // 42P08 ambiguous_parameter errors from the planner on Neon's pooled
+  // connections). Now every $N appears exactly once, each with an explicit
+  // type, so type inference is bulletproof.
+  const nowTs = new Date();
+  const passwordSetAt: Date | null = row.passwordHash ? nowTs : null;
+  const emailVerifiedAt: Date | null = autoVerify ? nowTs : null;
+
   const { rows } = await client.query<{ id: string; email_verified_at: Date | null }>(
     `INSERT INTO realtors (
        email, first_name, last_name, market,
        password_hash, password_set_at,
        email_verified_at
      ) VALUES (
-       $1, $2, $3, $4,
-       $5::text, CASE WHEN $5::text IS NOT NULL THEN NOW() ELSE NULL END,
-       CASE WHEN $6::boolean THEN NOW() ELSE NULL END
+       $1::text, $2::text, $3::text, $4::text,
+       $5::text, $6::timestamptz,
+       $7::timestamptz
      )
      RETURNING id, email_verified_at`,
     [
@@ -190,7 +199,8 @@ export async function insertRealtor(
       row.lastName,
       row.market,
       row.passwordHash,
-      autoVerify,
+      passwordSetAt,
+      emailVerifiedAt,
     ],
   );
   const r = rows[0];
