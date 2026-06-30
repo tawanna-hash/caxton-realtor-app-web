@@ -5,6 +5,19 @@
 
 import { query, withNeonTransaction } from './db/neon';
 import { EDITABLE_FIELDS } from './schemas/subscribers';
+import { logger } from './logger';
+
+// Postgres error codes for schema drift that should be tolerated
+// when cascade-deleting subscribers in environments where optional
+// satellite tables/columns may not exist yet.
+const PG_UNDEFINED_TABLE = '42P01';
+const PG_UNDEFINED_COLUMN = '42703';
+
+function isMissingSchemaError(err: unknown): err is { code: string } {
+  if (!err || typeof err !== 'object') return false;
+  const code = (err as { code?: unknown }).code;
+  return code === PG_UNDEFINED_TABLE || code === PG_UNDEFINED_COLUMN;
+}
 
 // -----------------------------------------------------------------------------
 // List + detail
@@ -282,28 +295,87 @@ export async function deleteSubscriberCascade(
       giveaways_nulled: 0,
     };
 
-    const r1 = await client.query('UPDATE email_log SET realtor_id = NULL WHERE realtor_id = $1', [id]);
-    counts.email_log_nulled = r1.rowCount ?? 0;
-    const r2 = await client.query(
+    // Each optional satellite-table touch runs in its own SAVEPOINT so that
+    // a missing table/column in this environment (schema drift) does NOT
+    // abort the whole outer transaction. Postgres aborts the entire tx on
+    // any error unless we roll back to a savepoint first.
+    async function runStep(
+      label: string,
+      sql: string,
+      params: unknown[],
+    ): Promise<number> {
+      const sp = `sp_${label}`;
+      await client.query(`SAVEPOINT ${sp}`);
+      try {
+        const r = await client.query(sql, params);
+        await client.query(`RELEASE SAVEPOINT ${sp}`);
+        return r.rowCount ?? 0;
+      } catch (err) {
+        await client.query(`ROLLBACK TO SAVEPOINT ${sp}`);
+        await client.query(`RELEASE SAVEPOINT ${sp}`);
+        if (isMissingSchemaError(err)) {
+          logger.warn(
+            { err, step: label, id },
+            '[deleteSubscriberCascade] skipping step — missing table/column',
+          );
+          return 0;
+        }
+        throw err;
+      }
+    }
+
+    counts.email_log_nulled = await runStep(
+      'email_log_null',
+      'UPDATE email_log SET realtor_id = NULL WHERE realtor_id = $1',
+      [id],
+    );
+    counts.giveaways_nulled = await runStep(
+      'giveaways_null',
       'UPDATE giveaways SET winner_realtor_id = NULL WHERE winner_realtor_id = $1',
       [id],
     );
-    counts.giveaways_nulled = r2.rowCount ?? 0;
-
-    const r3 = await client.query('DELETE FROM event_rsvps WHERE realtor_id = $1', [id]);
-    counts.event_rsvps = r3.rowCount ?? 0;
-    const r4 = await client.query(
+    counts.event_rsvps = await runStep(
+      'event_rsvps_del',
+      'DELETE FROM event_rsvps WHERE realtor_id = $1',
+      [id],
+    );
+    counts.notification_deliveries = await runStep(
+      'notif_deliveries_del',
       'DELETE FROM notification_deliveries WHERE realtor_id = $1',
       [id],
     );
-    counts.notification_deliveries = r4.rowCount ?? 0;
 
     if (deletedEmail) {
-      const r5 = await client.query('DELETE FROM magic_links WHERE email = $1', [
-        deletedEmail.toLowerCase(),
-      ]);
-      counts.magic_links = r5.rowCount ?? 0;
+      counts.magic_links = await runStep(
+        'magic_links_del',
+        'DELETE FROM magic_links WHERE email = $1',
+        [deletedEmail.toLowerCase()],
+      );
     }
+
+    // Best-effort cleanup of other satellite tables that may or may not be
+    // wired up with ON DELETE CASCADE in this environment. Counts not
+    // surfaced — these are belt-and-suspenders.
+    await runStep(
+      'giveaway_entries_del',
+      'DELETE FROM giveaway_entries WHERE realtor_id = $1',
+      [id],
+    );
+    await runStep(
+      'mailchimp_subs_del',
+      'DELETE FROM mailchimp_subscriptions WHERE realtor_id = $1',
+      [id],
+    );
+    await runStep(
+      'notif_prefs_del',
+      'DELETE FROM notification_preferences WHERE realtor_id = $1',
+      [id],
+    );
+    await runStep(
+      'push_subs_del',
+      'DELETE FROM push_subscriptions WHERE realtor_id = $1',
+      [id],
+    );
 
     await client.query('DELETE FROM realtors WHERE id = $1', [id]);
 
