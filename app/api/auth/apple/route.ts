@@ -26,6 +26,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import {
   findRealtorByAppleSub,
@@ -52,6 +53,28 @@ interface ApplePayload {
   email?: string;
   email_verified?: boolean | string;
   is_private_email?: boolean | string;
+  nonce?: string;
+  nonce_supported?: boolean;
+}
+
+function sha256Hex(input: string): string {
+  return createHash('sha256').update(input, 'utf8').digest('hex');
+}
+
+/** Constant-time comparison of two hex strings. False on length mismatch. */
+function timingSafeHexEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  const ab = Buffer.from(a, 'utf8');
+  const bb = Buffer.from(b, 'utf8');
+  if (ab.length !== bb.length) return false;
+  return timingSafeEqual(ab, bb);
+}
+
+/** Apple sometimes returns 'true'/'false' strings; normalize to boolean. */
+function parseAppleBool(v: unknown): boolean {
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'string') return v.toLowerCase() === 'true';
+  return false;
 }
 
 export async function POST(req: NextRequest) {
@@ -60,6 +83,7 @@ export async function POST(req: NextRequest) {
     email?: string | null;
     givenName?: string | null;
     familyName?: string | null;
+    rawNonce?: string | null;
   };
 
   try {
@@ -68,7 +92,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
   }
 
-  const { identityToken } = body;
+  const { identityToken, rawNonce } = body;
   if (!identityToken || typeof identityToken !== 'string') {
     return NextResponse.json({ error: 'identityToken is required.' }, { status: 400 });
   }
@@ -86,6 +110,8 @@ export async function POST(req: NextRequest) {
     const verified = await jwtVerify(identityToken, getAppleJwks(), {
       issuer: APPLE_ISSUER,
       audience: expectedAudience,
+      // jose enforces `exp` automatically. Allow small clock-skew tolerance.
+      clockTolerance: 30,
     });
     payload = verified.payload as ApplePayload;
   } catch (err) {
@@ -104,6 +130,33 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Nonce binding per Apple AuthenticationServices spec. The client sent
+  // SHA256(rawNonce) to ASAuthorizationAppleIDRequest; Apple echoes that
+  // hash into the JWT's `nonce` claim. We verify in constant time.
+  // https://developer.apple.com/documentation/authenticationservices
+  if (typeof rawNonce === 'string' && rawNonce.length > 0) {
+    const jwtNonce = typeof payload.nonce === 'string' ? payload.nonce : '';
+    const expectedNonce = sha256Hex(rawNonce);
+    if (!jwtNonce || !timingSafeHexEqual(jwtNonce, expectedNonce)) {
+      logger.warn(
+        { appleSub: appleSub.slice(0, 8) + '…', hasJwtNonce: !!jwtNonce },
+        'Apple sign-in: nonce binding failed',
+      );
+      return NextResponse.json(
+        { error: 'Invalid Apple identity token: nonce mismatch.' },
+        { status: 401 },
+      );
+    }
+  } else {
+    // Legacy clients that shipped before rawNonce was wired through still
+    // work, but log so we can spot stale installs. Newer clients always
+    // send rawNonce.
+    logger.info(
+      { appleSub: appleSub.slice(0, 8) + '…' },
+      'Apple sign-in: client did not send rawNonce (legacy build)',
+    );
+  }
+
   // Apple may include email in the token; otherwise the client sends it
   // (only on the very first authorization). After that we just have the sub.
   const tokenEmail =
@@ -111,6 +164,9 @@ export async function POST(req: NextRequest) {
   const clientEmail =
     typeof body.email === 'string' ? body.email.toLowerCase() : null;
   const email = tokenEmail ?? clientEmail ?? null;
+  // Only the JWT-embedded email is trustworthy for auto-linking; the
+  // client-supplied body field is informational only.
+  const tokenEmailVerified = parseAppleBool(payload.email_verified);
 
   // 1) Existing realtor with this apple_sub? Sign them in.
   const existingByApple = await findRealtorByAppleSub(appleSub);
@@ -119,17 +175,17 @@ export async function POST(req: NextRequest) {
   }
 
   // 2) Existing realtor with the same email but no apple_sub yet? Link them.
-  //    This is the legitimate "I signed up with email and now want to use
-  //    Sign in with Apple" upgrade path. We require email_verified=true on
-  //    the Apple JWT (Apple itself guarantees email ownership) so we trust
-  //    the link without an extra confirmation step.
-  if (email) {
-    const existingByEmail = await findRealtorByEmail(email);
+  //    The upgrade path "I signed up with email and now want Sign in with
+  //    Apple". We only auto-link when the email is inside the signed JWT
+  //    AND Apple marked it email_verified=true. A client-supplied email is
+  //    never trusted for cross-account linking.
+  if (tokenEmail && tokenEmailVerified) {
+    const existingByEmail = await findRealtorByEmail(tokenEmail);
     if (existingByEmail) {
       await attachAppleSubToRealtor(existingByEmail.id, appleSub);
       logger.info(
         { realtorId: existingByEmail.id },
-        'Linked Apple sub to existing realtor',
+        'Linked Apple sub to existing realtor (verified email)',
       );
       return issueSession(existingByEmail.id, existingByEmail.email);
     }

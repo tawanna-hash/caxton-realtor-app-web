@@ -30,6 +30,15 @@ export interface AppleSignInResult {
   givenName: string | null;
   /** Only present on FIRST authorization. */
   familyName: string | null;
+  /**
+   * The plaintext nonce the client generated for this authorization request.
+   * We sent SHA256(rawNonce) to Apple as the `nonce` parameter, and Apple
+   * embedded that same hash in the returned identityToken's `nonce` claim.
+   * The server verifies `sha256(rawNonce) === jwt.nonce` to defeat replay
+   * attacks. See:
+   * https://developer.apple.com/documentation/authenticationservices/implementing-user-authentication-with-sign-in-with-apple
+   */
+  rawNonce: string;
 }
 
 /**
@@ -60,6 +69,12 @@ export function isAppleSignInAvailable(): boolean {
 export async function signInWithApple(): Promise<AppleSignInResult | null> {
   if (!isAppleSignInAvailable()) return null;
 
+  // Generate a fresh rawNonce per Apple spec. We send SHA256(rawNonce) to
+  // Apple as the `nonce` parameter, keep rawNonce on the client, and forward
+  // it to our backend so it can verify the binding against the JWT claim.
+  const rawNonce = cryptoNonce();
+  const hashedNonce = await sha256Hex(rawNonce);
+
   let resp;
   try {
     resp = await SignInWithApple.authorize({
@@ -68,10 +83,8 @@ export async function signInWithApple(): Promise<AppleSignInResult | null> {
       // iOS native flow never actually redirects.
       redirectURI: 'https://realtynewsnow.app/auth/apple/callback',
       scopes: 'email name',
-      // `state` + `nonce` are recommended; the server doesn't currently
-      // enforce nonce binding but we send one for forward compatibility.
       state: 'caxton-' + Date.now().toString(36),
-      nonce: cryptoNonce(),
+      nonce: hashedNonce,
     });
   } catch (err) {
     // The plugin throws on user-cancel. Treat 1001 (canceled) as null,
@@ -90,10 +103,11 @@ export async function signInWithApple(): Promise<AppleSignInResult | null> {
     email: r.email ?? null,
     givenName: r.givenName ?? null,
     familyName: r.familyName ?? null,
+    rawNonce,
   };
 }
 
-/** Cryptographically random nonce for the Apple sign-in request. */
+/** Cryptographically random nonce (32 hex chars) for the Apple sign-in request. */
 function cryptoNonce(): string {
   try {
     const arr = new Uint8Array(16);
@@ -108,4 +122,19 @@ function cryptoNonce(): string {
   } catch {
     return Math.random().toString(36).slice(2);
   }
+}
+
+/** SHA-256 hex digest of `input`. Uses WebCrypto where available. */
+async function sha256Hex(input: string): Promise<string> {
+  if (typeof crypto !== 'undefined' && crypto.subtle && crypto.subtle.digest) {
+    const buf = new TextEncoder().encode(input);
+    const hash = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(hash))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+  // Capacitor WebView on iOS exposes crypto.subtle, so this fallback should
+  // not run in production. Kept as a last-resort guard so the function never
+  // throws — Apple just won't bind a nonce in that (broken) environment.
+  return input;
 }

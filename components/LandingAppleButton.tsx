@@ -50,6 +50,7 @@ export default function LandingAppleButton() {
           email: result.email,
           givenName: result.givenName,
           familyName: result.familyName,
+          rawNonce: result.rawNonce,
         }),
       });
       if (!res.ok) {

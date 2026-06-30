@@ -584,6 +584,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
           email: result.email,
           givenName: result.givenName,
           familyName: result.familyName,
+          rawNonce: result.rawNonce,
         }),
       });
       if (!res.ok) {
