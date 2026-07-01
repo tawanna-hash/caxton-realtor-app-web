@@ -40,11 +40,33 @@ The project itself is aligned to this:
 | 8 | Photo library add | `NSPhotoLibraryAddUsageDescription` | set |
 | 8 | Location | `NSLocationWhenInUseUsageDescription` | set |
 | 8 | Face ID | `NSFaceIDUsageDescription` | set |
-| 8 | App tracking transparency | `NSUserTrackingUsageDescription` | intentionally omitted (no ATT calls; would block App Privacy review) |
+| 8 | App tracking transparency | `NSUserTrackingUsageDescription` | **intentionally omitted** — see "ATT re-enablement rules" below |
 | 11 | Export compliance | `ITSAppUsesNonExemptEncryption` | `false` |
 | — | Privacy manifest | `PrivacyInfo.xcprivacy` | tracking=false, 3 RRA + 12 data types |
 | — | Push capability | `App.entitlements` `aps-environment` | `production` |
 | — | Background mode | `UIBackgroundModes` | `remote-notification` |
+
+## ATT re-enablement rules (READ BEFORE ADDING TRACKING)
+
+**1.0.2 shipped without `NSUserTrackingUsageDescription`.** Apple's App Store
+Connect scanner blocks submission if the binary declares this key while the
+App Privacy questionnaire says "Data Not Used for Tracking." If a future
+release introduces any tracking (ad SDK, IDFA sharing, cross-site tracking):
+
+1. Restore the key in `ios/App/App/Info.plist` with a user-facing string.
+2. Update `lib/native/tracking.ts` — set `ENABLE_PROMPT = true` AND convert
+   the `AppTrackingTransparency` import from dynamic to **static top-level**
+   (standing rule: Capacitor plugin imports must be static).
+3. Install `@capacitor-community/app-tracking-transparency` (currently NOT a
+   dependency).
+4. In App Store Connect → App Privacy, change the tracking answer from
+   "Data Not Used for Tracking" to declare what you're tracking.
+5. Bump the build number and re-submit.
+
+**Historical context**: commit `1eddec4` (feat(ios 1.0.3)) added the key and
+the stub preemptively. That was reverted for 1.0.2 by commits `8201adf` and
+`752be6e` because Apple's scanner flags the literal string anywhere in the
+plist source — even inside XML comments.
 
 ## Outside Xcode (you do these)
 
