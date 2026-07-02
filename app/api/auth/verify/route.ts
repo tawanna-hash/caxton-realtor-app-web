@@ -24,8 +24,9 @@ import {
   markVerifiedAndLogin,
   withNeonTransaction,
 } from '@/lib/server/realtors-store';
-import { signSessionToken } from '@/lib/server/jwt';
-import { setRealtorSessionCookie } from '@/lib/server/auth/cookies';
+import { signIn, INTERNAL_TRUSTED_PROVIDER_ID } from '@/lib/server/auth/authjs';
+import { signInternalTrustToken } from '@/lib/server/auth/internal-trust-token';
+import { logger } from '@/lib/server/logger';
 
 export const runtime = 'nodejs';
 
@@ -56,15 +57,27 @@ export const POST = withErrorHandling(async (req: Request) => {
     return { realtorId: realtor.id, email: result.email!, isNewUser };
   });
 
-  const sessionToken = signSessionToken({
+  const trustToken = signInternalTrustToken({
     realtorId: txResult.realtorId,
     email: txResult.email,
   });
 
-  const response = NextResponse.json({
+  try {
+    await signIn(INTERNAL_TRUSTED_PROVIDER_ID, {
+      realtorId: txResult.realtorId,
+      token: trustToken,
+      redirect: false,
+    });
+  } catch (err) {
+    // The account is already marked verified at this point — a failure
+    // here just means the auto-sign-in didn't happen; the user can still
+    // sign in manually.
+    logger.error({ err, realtorId: txResult.realtorId }, 'Verify succeeded but auto-sign-in failed');
+    return NextResponse.json({ success: true, isNewUser: txResult.isNewUser });
+  }
+
+  return NextResponse.json({
     success: true,
     isNewUser: txResult.isNewUser,
   });
-  await setRealtorSessionCookie(response, sessionToken);
-  return response;
 });

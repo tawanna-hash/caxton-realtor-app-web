@@ -50,7 +50,7 @@ let cachedRedis: Redis | null = null;
 let warnedMissing = false;
 const limiters: Partial<Record<ConfigName, Ratelimit>> = {};
 
-function getRedis(): Redis | null {
+export function getRedis(): Redis | null {
   if (cachedRedis) return cachedRedis;
   const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;

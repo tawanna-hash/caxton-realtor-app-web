@@ -22,7 +22,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { getCurrentUser } from '@/lib/server/auth/user';
-import { clearRealtorSessionCookie } from '@/lib/server/auth/cookies';
+import { signOut } from '@/lib/server/auth/authjs';
 import { getRealtorMe, deleteRealtorAccount } from '@/lib/server/realtors-store';
 import { logger } from '@/lib/server/logger';
 
@@ -51,9 +51,8 @@ export const DELETE = withErrorHandling(async (req: NextRequest) => {
   if (!realtor) {
     // Already gone — clear the cookie so the client lands on the sign-in
     // screen instead of looping.
-    const response = NextResponse.json({ ok: true, alreadyDeleted: true });
-    await clearRealtorSessionCookie(response);
-    return response;
+    await signOut({ redirect: false });
+    return NextResponse.json({ ok: true, alreadyDeleted: true });
   }
 
   if (confirmEmail !== realtor.email.trim().toLowerCase()) {
@@ -74,7 +73,6 @@ export const DELETE = withErrorHandling(async (req: NextRequest) => {
     );
   }
 
-  const response = NextResponse.json({ ok: true });
-  await clearRealtorSessionCookie(response);
-  return response;
+  await signOut({ redirect: false });
+  return NextResponse.json({ ok: true });
 });
