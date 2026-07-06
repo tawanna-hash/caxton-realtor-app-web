@@ -1,12 +1,10 @@
-import NextAuth, { CredentialsSignin, customFetch } from "next-auth";
+import NextAuth, { customFetch } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Apple from "next-auth/providers/apple";
-import bcrypt from "bcryptjs";
 import { getPool } from "@/lib/server/db/neon";
-import { findRealtorForPasswordLogin, bumpLoginNow } from "@/lib/server/realtors-store";
-import { passwordLoginSchema } from "@/lib/server/schemas/auth";
 import { signAppleClientSecret } from "./apple-client-secret";
 import { verifyAndClaimInternalTrustToken } from "./internal-trust-token";
+import { verifyCredentials, EmailNotVerifiedError } from "./verify-credentials";
 import { realtorAdapter } from "./adapter";
 import { logger } from "@/lib/server/logger";
 
@@ -15,20 +13,9 @@ import { logger } from "@/lib/server/logger";
 // /api/auth/providers listing by id rather than a hardcoded string.
 export const INTERNAL_TRUSTED_PROVIDER_ID = "internal-trusted";
 
-// Thrown from the Credentials authorize() below when the password is
-// correct but the account hasn't completed email verification. A
-// CredentialsSignin subclass propagates through signIn({ redirect: false })
-// as a catchable error (plain Error instances do not — @auth/core only
-// re-throws AuthError instances from a raw, non-redirect signIn() call and
-// otherwise swallows them into a redirect-URL response).
-export class EmailNotVerifiedError extends CredentialsSignin {
-  code = "email_not_verified";
-}
-
-// Matches the shape of a real bcrypt hash so the compare() below takes
-// roughly the same time as a real check — prevents timing-based account
-// enumeration on unknown emails / accounts with no password set yet.
-const DUMMY_HASH = "$2b$12$0000000000000000000000.0000000000000000000000000000000";
+// Re-exported so existing call sites (app/api/auth/password-login/route.ts)
+// don't need to know it actually lives in ./verify-credentials.
+export { EmailNotVerifiedError };
 
 // -----------------------------------------------------------------------
 // Apple client_secret JWT — module-scope cache
@@ -133,34 +120,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(creds) {
-        const parsed = passwordLoginSchema.safeParse(creds);
-        if (!parsed.success) return null;
-        const { email, password } = parsed.data;
-
-        const realtor = await findRealtorForPasswordLogin(email);
-
-        if (!realtor || !realtor.password_hash) {
-          // Compare against a dummy hash so the response time is roughly
-          // the same as a real password check, whether or not the account
-          // exists — this is the same anti-enumeration measure the manual
-          // password-login route used before this migration.
-          await bcrypt.compare(password, DUMMY_HASH);
+        if (typeof creds?.email !== "string" || typeof creds?.password !== "string") {
           return null;
         }
-
-        const ok = await bcrypt.compare(password, realtor.password_hash);
-        if (!ok) return null;
-
-        if (!realtor.email_verified_at) {
-          throw new EmailNotVerifiedError();
-        }
-
-        await bumpLoginNow(realtor.id);
+        const result = await verifyCredentials(creds.email, creds.password);
+        if (!result) return null;
 
         return {
-          id: realtor.id,
-          email: realtor.email,
-          emailVerified: realtor.email_verified_at,
+          id: result.realtorId,
+          email: result.email,
+          emailVerified: result.emailVerified,
         };
       },
     }),
