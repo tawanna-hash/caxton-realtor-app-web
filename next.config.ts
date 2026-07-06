@@ -124,6 +124,16 @@ const nextConfig: NextConfig = {
       { source: '/subscriptions', destination: '/newsletter', permanent: false },
       { source: '/contact', destination: '/about', permanent: false },
       { source: '/five-points', destination: '/communities', permanent: false },
+      // Legacy /auth/* pages replaced by the /dashboard modal auth pattern.
+      // Everything routes through the dashboard, which drives the Auth.js flow.
+      { source: '/auth/sign-in', destination: '/dashboard?auth=login', permanent: false },
+      { source: '/auth/sign-up', destination: '/dashboard?auth=signup', permanent: false },
+      { source: '/auth/signup', destination: '/dashboard?auth=signup', permanent: false },
+      { source: '/auth/forgot-password', destination: '/dashboard?auth=forgot', permanent: false },
+      { source: '/auth/reset-password', destination: '/dashboard?auth=reset', permanent: false },
+      // Preserve query string on /auth/verify so magic-link tokens still work.
+      // Verify page reads ?token= and calls /api/auth/verify.
+      { source: '/auth/verify', destination: '/dashboard?auth=verify', permanent: false },
     ];
   },
   // Security headers applied to every response.
