@@ -186,11 +186,13 @@ export async function insertRealtor(
     `INSERT INTO realtors (
        email, first_name, last_name, market,
        password_hash, password_set_at,
-       email_verified_at
+       email_verified_at,
+       master_list_consent_at, master_list_consent_text
      ) VALUES (
        $1::text, $2::text, $3::text, $4::market_enum,
        $5::text, $6::timestamptz,
-       $7::timestamptz
+       $7::timestamptz,
+       $8::timestamptz, $9::text
      )
      RETURNING id, email_verified_at`,
     [
@@ -201,6 +203,8 @@ export async function insertRealtor(
       row.passwordHash,
       passwordSetAt,
       emailVerifiedAt,
+      nowTs,
+      row.consentText,
     ],
   );
   const r = rows[0];
@@ -212,17 +216,15 @@ export async function insertRealtor(
   // We only run an UPDATE when the caller actually supplied a value, so
   // empty groups skip the DB hit entirely.
 
-  // Master-list consent (timestamp + text + ip).
-  await tryOptionalUpdate(
-    client,
-    'consent',
-    `UPDATE realtors
-        SET master_list_consent_at = NOW(),
-            master_list_consent_text = $2,
-            master_list_consent_ip = $3::inet
-      WHERE id = $1`,
-    [realtorId, row.consentText, row.ipAddress],
-  );
+  // Master-list consent IP (best-effort; NOT NULL fields already set in INSERT).
+  if (row.ipAddress) {
+    await tryOptionalUpdate(
+      client,
+      'consent-ip',
+      `UPDATE realtors SET master_list_consent_ip = $2::inet WHERE id = $1`,
+      [realtorId, row.ipAddress],
+    );
+  }
 
   // License (TREC or NMLS - never both; route by normalized type).
   if (row.normalizedLicenseType || row.trecNumber || row.nmlsNumber) {
