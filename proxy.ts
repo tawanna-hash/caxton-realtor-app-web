@@ -14,14 +14,29 @@
  * Everything that used to live in middleware.ts is now here.
  *
  * Runtime: Edge. `jsonwebtoken` (used by lib/server/jwt.ts) depends on Node
- * `crypto` and won't bundle here, so we verify with `jose` directly using the
- * same HS256 + ADMIN_JWT_SECRET (falling back to JWT_SECRET for existing
- * sessions issued before the rotation). Payload-shape check mirrors
- * verifyAdminSessionToken() in lib/server/jwt.ts.
+ * `crypto` and won't bundle here.
+ *
+ * Admin gate: verified with `jose` directly, HS256 + ADMIN_JWT_SECRET
+ * (falling back to JWT_SECRET for existing sessions issued before the
+ * rotation). Payload-shape check mirrors verifyAdminSessionToken() in
+ * lib/server/jwt.ts. Admin auth is NOT part of the Auth.js migration —
+ * untouched here.
+ *
+ * Realtor gate: the caxton_session_v2 cookie is now an Auth.js-issued JWT,
+ * which is an *encrypted* JWE (A256CBC-HS512), not a plain signed JWT — a
+ * hand-rolled jose jwtVerify() (as this file used before the Auth.js
+ * migration) cannot parse it at all. We use next-auth/jwt's getToken(),
+ * Auth.js's own Edge-safe (Web Crypto, no Node APIs) helper for exactly
+ * this case, with cookieName explicitly set to caxton_session_v2 so its
+ * salt (which defaults to the cookie name) matches what
+ * lib/server/auth/authjs.ts's cookies.sessionToken.name produces at
+ * sign-in (see @auth/core/lib/actions/callback/index.js's
+ * `salt = options.cookies.sessionToken.name`).
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
+import { getToken } from 'next-auth/jwt';
 import { ADMIN_SESSION_COOKIE_NAME, SESSION_COOKIE_NAME } from './lib/auth/cookie-names';
 import {
   PUB_KEYS,
@@ -225,20 +240,25 @@ function isPublicRealtorPath(pathname: string): boolean {
 }
 
 /**
- * Verify a realtor session token at the Edge. Mirrors verifySessionToken()
- * in lib/server/jwt.ts — HS256 against JWT_SECRET, payload must contain
- * realtorId (string) and email (string).
+ * Verify a realtor session at the Edge via Auth.js's getToken() — decrypts
+ * the caxton_session_v2 JWE and returns the claims lib/server/auth/authjs.ts's
+ * jwt() callback puts there (realtorId, email). See file header for why this
+ * replaced a hand-rolled jose jwtVerify().
  */
 async function isValidRealtorToken(
-  token: string,
+  req: NextRequest,
   realtorSecret: string,
 ): Promise<boolean> {
   try {
-    const key = new TextEncoder().encode(realtorSecret);
-    const { payload } = await jwtVerify(token, key, { algorithms: ['HS256'] });
+    const token = await getToken({
+      req,
+      secret: realtorSecret,
+      cookieName: SESSION_COOKIE_NAME,
+    });
     return (
-      typeof payload.realtorId === 'string' &&
-      typeof payload.email === 'string'
+      !!token &&
+      typeof token.realtorId === 'string' &&
+      typeof token.email === 'string'
     );
   } catch {
     return false;
@@ -385,8 +405,7 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(url, 307);
   }
 
-  const sessionToken = req.cookies.get(SESSION_COOKIE_NAME)?.value;
-  if (sessionToken && (await isValidRealtorToken(sessionToken, realtorSecret))) {
+  if (await isValidRealtorToken(req, realtorSecret)) {
     return NextResponse.next();
   }
 

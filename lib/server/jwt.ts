@@ -1,11 +1,16 @@
 /**
- * JWT signing and verification. Two payload shapes:
+ * JWT signing and verification for admin sessions.
  *
- *   - Realtor session: { realtorId, email }                — cookie caxton_session_v2
- *   - Admin session:   { adminId,   email, type:'admin' }  — cookie caxton_admin_session_v2
+ *   - Admin session: { adminId, email, type:'admin' }  — cookie caxton_admin_session_v2
+ *
+ * Realtor sessions are issued/verified by Auth.js now (lib/server/auth/authjs.ts)
+ * — the signSessionToken/verifySessionToken functions that used to live here
+ * were removed as part of the Auth.js migration (Phase 5). RealtorSessionPayload
+ * stays exported since lib/server/auth/user.ts's getCurrentUser()/requireUser()
+ * still return that shape (mapped from an Auth.js session, not a raw JWT).
  *
  * Secrets:
- *   - JWT_SECRET        signs realtor sessions. Required everywhere.
+ *   - JWT_SECRET        also reused as Auth.js's session secret. Required everywhere.
  *   - ADMIN_JWT_SECRET  signs admin sessions. REQUIRED in production
  *                       (NODE_ENV === 'production'). In dev/test it falls
  *                       back to JWT_SECRET so local environments don't need
@@ -83,10 +88,6 @@ function getAdminSecret(): Secret {
 function getExpiry(): SignOptions['expiresIn'] {
   // jsonwebtoken accepts ms-style strings like '7d', '1h', or a number of seconds.
   return (process.env.JWT_EXPIRY as SignOptions['expiresIn']) ?? '7d';
-}
-
-export function signSessionToken(payload: RealtorSessionPayload): string {
-  return jwt.sign(payload, getRealtorSecret(), { expiresIn: getExpiry() });
 }
 
 export function signAdminSessionToken(

@@ -4,12 +4,11 @@
 
 import { NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/server/error';
-import { clearRealtorSessionCookie } from '@/lib/server/auth/cookies';
+import { signOut } from '@/lib/server/auth/authjs';
 
 export const runtime = 'nodejs';
 
 export const POST = withErrorHandling(async () => {
-  const response = NextResponse.json({ success: true });
-  await clearRealtorSessionCookie(response);
-  return response;
+  await signOut({ redirect: false });
+  return NextResponse.json({ success: true });
 });

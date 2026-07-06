@@ -17,8 +17,7 @@ import {
   applyPasswordResetTx,
   consumeResetTokenTx,
 } from '@/lib/server/realtors-store';
-import { signSessionToken } from '@/lib/server/jwt';
-import { setRealtorSessionCookie } from '@/lib/server/auth/cookies';
+import { signIn } from '@/lib/server/auth/authjs';
 import { logger } from '@/lib/server/logger';
 
 export const runtime = 'nodejs';
@@ -55,10 +54,20 @@ export const POST = withErrorHandling(async (req: Request) => {
     return { realtorId: tokenRow.realtor_id, email: updated.email };
   });
 
-  const token = signSessionToken({ realtorId: result.realtorId, email: result.email });
-  const response = NextResponse.json({ success: true });
-  await setRealtorSessionCookie(response, token);
+  try {
+    await signIn('credentials', {
+      email: result.email,
+      password: input.newPassword,
+      redirect: false,
+    });
+  } catch (err) {
+    // Password was already reset successfully at this point — a failure
+    // here just means the auto-sign-in didn't happen; the user can still
+    // sign in manually with the new password.
+    logger.error({ err, realtorId: result.realtorId }, 'Password reset succeeded but auto-sign-in failed');
+    return NextResponse.json({ success: true });
+  }
 
-  logger.info({ realtorId: result.realtorId }, 'Password reset succeeded');
-  return response;
+  logger.info({ realtorId: result.realtorId }, 'Password reset succeeded (Auth.js)');
+  return NextResponse.json({ success: true });
 });

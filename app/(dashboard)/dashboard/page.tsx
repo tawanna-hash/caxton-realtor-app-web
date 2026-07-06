@@ -115,6 +115,7 @@ const SUBS = [
   { id: 'events', label: 'Association Events & RSVPs', desc: 'SABOR, ABoR, GSABA, HBA invites and updates' },
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- pre-existing, unrelated to this change
 const SOCIALS: Record<string, { fb: string; ig: string; li: string }> = {
   realtyline: {
     fb: 'https://facebook.com/myrealtyline',
@@ -426,6 +427,10 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // Set when we arrive via the Apple "must sign up first" bounce
+  // (lib/server/auth/authjs.ts signIn callback redirects new Apple emails
+  // to /dashboard?auth=signup&apple_email=...). Drives the banner below.
+  const [appleEmailPrefill, setAppleEmailPrefill] = useState(false);
 
   // Read query params after all state hooks are declared so the lint rule
   // (react-hooks/immutability) doesn't flag forward references.
@@ -437,6 +442,12 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         const wanted = params.get('auth');
         if (wanted === 'login' || wanted === 'signup') {
           setMode(wanted);
+        }
+        const appleEmail = params.get('apple_email');
+        if (appleEmail) {
+          setEmail(appleEmail);
+          setMode('signup');
+          setAppleEmailPrefill(true);
         }
       } catch {}
     });
@@ -555,13 +566,11 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 ? 'Our server hit a snag. Please try again in a moment.'
                 : 'Something went wrong. Please try again.';
         }
-        // eslint-disable-next-line no-console
         console.error('[signup] error', { status: res.status, data });
         setError(msg);
         void haptics.notify('error');
       }
     } catch (netErr) {
-      // eslint-disable-next-line no-console
       console.error('[signup] network error', netErr);
       setError('Cannot reach server. Check your connection and try again.');
       void haptics.notify('error');
@@ -671,6 +680,12 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
             <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
             <h2 className="text-2xl text-gray-900 font-semibold text-center mb-8">Create Your Account</h2>
 
+            {appleEmailPrefill && (
+              <p className="text-sm text-center mb-6 px-4 py-3 rounded-md bg-gray-100 text-gray-700 font-light">
+                Complete your signup to enable Sign in with Apple.
+              </p>
+            )}
+
             {/* Step indicators */}
             <div className="flex items-center justify-center gap-2 mb-6">
               <div className={step >= 1 ? 'w-3 h-3 rounded-full bg-brand-700' : 'w-3 h-3 rounded-full bg-gray-200'} />
@@ -685,8 +700,9 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
             {/* Step 1: License + Identity */}
             {step === 1 && (
               <div>
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- must be a real navigation to trigger Auth.js's OAuth redirect, not client-side routing */}
                 <a
-                  href="/api/auth/apple/start?mode=signup"
+                  href="/api/auth/signin/apple"
                   className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-black text-white mb-3"
                   aria-label="Sign up with Apple"
                 >
@@ -868,8 +884,9 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
             <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
             <div className="flex-1 h-px bg-gray-200" />
           </div>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- must be a real navigation to trigger Auth.js's OAuth redirect, not client-side routing */}
           <a
-            href="/api/auth/apple/start?mode=signin"
+            href="/api/auth/signin/apple"
             className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-black text-white mb-3"
             aria-label="Sign in with Apple"
           >
@@ -905,8 +922,9 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
           <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- must be a real navigation to trigger Auth.js's OAuth redirect, not client-side routing */}
         <a
-          href="/api/auth/apple/start?mode=signin"
+          href="/api/auth/signin/apple"
           className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-black text-white"
           aria-label="Sign in with Apple"
         >
@@ -1163,6 +1181,7 @@ export default function DashboardPage() {
 // stable.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- legacy prop kept for parent typing stability
 function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: string; user: any; onSwitch: (id: string) => void; newsRefreshNonce: number; onRefresh: () => void }) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- pre-existing, unrelated to this change
   const [tab, setTab] = useState('n');
 
   // Pull-to-refresh on touch devices. Active when scrolled to top and on

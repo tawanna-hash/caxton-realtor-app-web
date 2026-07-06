@@ -21,8 +21,7 @@ import {
   type SignupRow,
 } from '@/lib/server/realtors-store';
 import { getRequestIp } from '@/lib/server/auth/admin';
-import { signSessionToken } from '@/lib/server/jwt';
-import { setRealtorSessionCookie } from '@/lib/server/auth/cookies';
+import { signIn } from '@/lib/server/auth/authjs';
 import { logger } from '@/lib/server/logger';
 
 export const runtime = 'nodejs';
@@ -137,20 +136,33 @@ export const POST = withErrorHandling(async (req: Request) => {
     newRealtorEmail = input.email;
   });
 
-  // -- Auto-sign-in path ----------------------------------------------------
+  // -- Auto-sign-in path via Auth.js -----------------------------------------
   // Brand-new account WITH password -> issue a session cookie right now so
   // the in-app WebView is signed in on the next request. We do NOT send a
   // magic link here; the client routes straight to the feed.
-  if (autoSignIn && newRealtorId && newRealtorEmail) {
-    const token = signSessionToken({ realtorId: newRealtorId, email: newRealtorEmail });
-    const response = NextResponse.json({
-      success: true,
-      autoSignedIn: true,
-      message: 'Account created. You are signed in.',
-    });
-    await setRealtorSessionCookie(response, token);
-    logger.info({ realtorId: newRealtorId }, 'Signup auto-sign-in succeeded');
-    return response;
+  if (autoSignIn && newRealtorId && newRealtorEmail && input.password) {
+    try {
+      // redirect: false → do not throw a NEXT_REDIRECT; return the response
+      // so we can also return JSON. Auth.js sets the cookie on the response.
+      await signIn('credentials', {
+        email: newRealtorEmail,
+        password: input.password,
+        redirect: false,
+      });
+      logger.info({ realtorId: newRealtorId }, 'Signup auto-sign-in succeeded (Auth.js)');
+      return NextResponse.json({
+        success: true,
+        autoSignedIn: true,
+        message: 'Account created. You are signed in.',
+      });
+    } catch (err) {
+      logger.error({ err, realtorId: newRealtorId }, 'Signup succeeded but auto-sign-in failed');
+      return NextResponse.json({
+        success: true,
+        autoSignedIn: false,
+        message: 'Account created. Please sign in.',
+      });
+    }
   }
 
   // -- Magic-link path (post-commit, best-effort) ---------------------------

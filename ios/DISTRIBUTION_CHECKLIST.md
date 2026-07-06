@@ -183,6 +183,19 @@ dashboard) or open `/profile`, scroll to the "Delete account" card, tap
 "Delete my account", type the demo email to confirm, then tap
 "Permanently delete".
 
+## Sign in with Apple
+
+Sign in with Apple uses Auth.js v5 with the built-in Apple provider (web
+OAuth flow, response_mode=form_post). The callback URL is
+https://realtynewsnow.app/api/auth/callback/apple. Apple Services ID is
+`app.realtynewsnow.web`. The Capacitor plugin
+`@capacitor-community/apple-sign-in` is NOT used and NOT installed.
+
+**Standing rule**: each user must complete manual signup before Apple
+sign-in is allowed. The signIn callback in lib/server/auth/authjs.ts
+rejects Apple sign-ins whose email has no matching realtors row and
+redirects to /dashboard?auth=signup&apple_email=<email>.
+
 ## Wrapper risk (Guideline 4.2)
 
 The Capacitor config currently uses `server.url` to load
