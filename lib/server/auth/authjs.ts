@@ -7,6 +7,7 @@ import { verifyAndClaimInternalTrustToken } from "./internal-trust-token";
 import { verifyCredentials, EmailNotVerifiedError } from "./verify-credentials";
 import { realtorAdapter } from "./adapter";
 import { logger } from "@/lib/server/logger";
+import { attachAppleSubToRealtor, findRealtorByAppleSub } from '@/lib/server/realtors-store';
 
 // Provider id for the internal-trusted Credentials provider below. Exported
 // so app/api/auth/[...nextauth]/route.ts can filter it out of the
@@ -206,7 +207,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return "/dashboard?auth=login&apple_error=no_email";
         }
 
-        // Look up an existing realtor by email.
+        // First, try to find realtor by apple_sub (returning Apple user).
+        const appleSub = account.providerAccountId;
+        if (appleSub) {
+          const byApple = await findRealtorByAppleSub(appleSub);
+          if (byApple) {
+            user.id = byApple.id;
+            return true;
+          }
+        }
+
+        // No existing apple_sub link — look up realtor by email.
         const { rows } = await getPool().query(
           `SELECT id, email_verified_at
              FROM realtors
@@ -216,18 +227,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const existing = rows[0];
 
         if (!existing) {
-          // No realtor row — bounce to signup with email pre-filled.
-          // The signup form should read ?apple_email= and pre-populate.
           return `/dashboard?auth=signup&apple_email=${encodeURIComponent(user.email)}`;
         }
 
         if (!existing.email_verified_at) {
-          // Realtor exists but never verified. Reject until they finish.
           return `/dashboard?auth=login&apple_error=unverified_email&email=${encodeURIComponent(user.email)}`;
         }
 
-        // Realtor exists and is verified — allow the sign-in.
-        // The adapter will attach the Apple identity via linkAccount().
+        // Realtor exists and is verified — link apple_sub to their row,
+        // then allow sign-in. This is the missing step that was leaving
+        // users bouncing back to signup on subsequent Apple attempts.
+        if (appleSub) {
+          try {
+            await attachAppleSubToRealtor(existing.id, appleSub);
+          } catch (err) {
+            logger.error({ err, realtorId: existing.id }, "Failed to link apple_sub");
+          }
+        }
+        user.id = existing.id;
         return true;
       }
 
