@@ -30,5 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "verimail-tool", "verimail-tool/**", "census-batch-api", "census-batch-api/**"]
 }
