@@ -230,9 +230,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return `/dashboard?auth=signup&apple_email=${encodeURIComponent(user.email)}`;
         }
 
-        if (!existing.email_verified_at) {
-          return `/dashboard?auth=login&apple_error=unverified_email&email=${encodeURIComponent(user.email)}`;
-        }
+        // Apple has already verified this email for us. If our realtor row
+        // is still unverified (e.g. password signup pending email click),
+        // auto-verify now via attachAppleSubToRealtor() below (COALESCE fills it).
+        // No branch needed — fall through to the linking block.
 
         // Realtor exists and is verified — link apple_sub to their row,
         // then allow sign-in. This is the missing step that was leaving
