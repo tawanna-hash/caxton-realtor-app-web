@@ -2,17 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- 'production' is the right value for TestFlight + App Store builds.
-	     Switch to 'development' only when running on a sandbox (debug build
-	     installed directly from Xcode against a personal Apple ID team). -->
 	<key>aps-environment</key>
 	<string>production</string>
-
-	<!-- Universal Links: lets iOS open https://realtynewsnow.app/* URLs
-	     directly in this app instead of Safari. The matching
-	     apple-app-site-association file is served at
-	     https://realtynewsnow.app/.well-known/apple-app-site-association
-	     and declares APP_ID 3JU7K7AMUY.app.realtynewsnow. -->
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:realtynewsnow.app</string>

@@ -459,12 +459,51 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   const sc = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3 appearance-none placeholder:text-[#d1d5db]';
 
 
-  // Native form-POST sign-in with Apple — bypasses next-auth/react's fetch()
-  // which Capacitor's WKWebView cannot follow across origins. We build a real
-  // <form> and submit it so the browser follows the 302 to appleid.apple.com
-  // as a genuine top-level navigation.
+  // Apple Sign In:
+  // - Native iOS (Capacitor): ASAuthorizationController via
+  //   @capacitor-community/apple-sign-in, then POST the identityToken to
+  //   /api/auth/apple/native which verifies it and mints caxton_session_v2.
+  // - Web: existing form POST to /api/auth/signin/apple (Auth.js provider).
   async function handleAppleSignIn() {
     try {
+      const { Capacitor } = await import('@capacitor/core');
+      if (Capacitor.isNativePlatform()) {
+        const { SignInWithApple } = await import('@capacitor-community/apple-sign-in');
+        const result = await SignInWithApple.authorize({
+          clientId: 'app.realtynewsnow',
+          redirectURI: 'https://realtynewsnow.app/api/auth/callback/apple',
+          scopes: 'email name',
+          state: crypto.randomUUID(),
+          nonce: crypto.randomUUID(),
+        });
+        const res = await fetch('/api/auth/apple/native', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            identityToken: result.response.identityToken,
+            email: result.response.email ?? undefined,
+            fullName:
+              result.response.givenName || result.response.familyName
+                ? { givenName: result.response.givenName ?? '', familyName: result.response.familyName ?? '' }
+                : undefined,
+          }),
+        });
+        if (res.status === 404) {
+          const data = await res.json();
+          const q = new URLSearchParams({ auth: 'signup', apple_email: data.apple_email ?? '' });
+          window.location.href = `/dashboard?${q.toString()}`;
+          return;
+        }
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data.message || 'Apple sign-in failed');
+          return;
+        }
+        window.location.href = '/dashboard';
+        return;
+      }
+
       const csrfRes = await fetch('/api/auth/csrf', { credentials: 'include' });
       const { csrfToken } = await csrfRes.json();
       const form = document.createElement('form');
@@ -483,7 +522,8 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       document.body.appendChild(form);
       form.submit();
     } catch (err) {
-      console.error('[apple signin] failed to build form', err);
+      console.error('[apple signin] failed', err);
+      setError('Apple sign-in failed. Please try again.');
     }
   }
 
