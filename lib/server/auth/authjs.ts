@@ -199,6 +199,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // -- Apple provider: enforce "must sign up first" rule ---------------
       if (account?.provider === "apple") {
         logger.info({ appleEmail: user.email, appleSub: account.providerAccountId }, "Apple sign-in attempt");
+        logger.info({ appleEmail: user.email, appleSub: account.providerAccountId }, "Apple sign-in attempt");
         if (!user.email) {
           // Apple did not release the email (private relay revoked, or
           // second sign-in where we asked for `name email` scope again).
