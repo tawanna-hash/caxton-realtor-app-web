@@ -188,7 +188,7 @@ export async function insertRealtor(
        password_hash, password_set_at,
        email_verified_at
      ) VALUES (
-       $1::text, $2::text, $3::text, $4::text,
+       $1::text, $2::text, $3::text, $4::market_enum,
        $5::text, $6::timestamptz,
        $7::timestamptz
      )
@@ -219,7 +219,7 @@ export async function insertRealtor(
     `UPDATE realtors
         SET master_list_consent_at = NOW(),
             master_list_consent_text = $2,
-            master_list_consent_ip = $3
+            master_list_consent_ip = $3::inet
       WHERE id = $1`,
     [realtorId, row.consentText, row.ipAddress],
   );
