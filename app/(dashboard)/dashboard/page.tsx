@@ -5,7 +5,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { trackEvent, identifyUser } from "../../posthog-provider";
-import { signIn } from 'next-auth/react';
 import { useSwipeBack } from '@/hooks/use-swipe-back';
 import ProfilePanel from '@/components/ProfilePanel';
 import { getApiBase } from '@/lib/api-base';
@@ -459,6 +458,35 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   const ic = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3 placeholder:text-[#d1d5db]';
   const sc = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3 appearance-none placeholder:text-[#d1d5db]';
 
+
+  // Native form-POST sign-in with Apple — bypasses next-auth/react's fetch()
+  // which Capacitor's WKWebView cannot follow across origins. We build a real
+  // <form> and submit it so the browser follows the 302 to appleid.apple.com
+  // as a genuine top-level navigation.
+  async function handleAppleSignIn() {
+    try {
+      const csrfRes = await fetch('/api/auth/csrf', { credentials: 'include' });
+      const { csrfToken } = await csrfRes.json();
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/api/auth/signin/apple';
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrfToken';
+      csrfInput.value = csrfToken;
+      form.appendChild(csrfInput);
+      const cbInput = document.createElement('input');
+      cbInput.type = 'hidden';
+      cbInput.name = 'callbackUrl';
+      cbInput.value = '/dashboard';
+      form.appendChild(cbInput);
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err) {
+      console.error('[apple signin] failed to build form', err);
+    }
+  }
+
   async function handleSignup() {
     setLoading(true);
     setError('');
@@ -703,7 +731,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
               <div>
                 <button
           type="button"
-          onClick={() => signIn('apple', { callbackUrl: '/dashboard' })}
+          onClick={() => handleAppleSignIn()}
           className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-black text-white mb-3"
           aria-label="Sign up with Apple"
         >
@@ -887,7 +915,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
           </div>
           <button
           type="button"
-          onClick={() => signIn('apple', { callbackUrl: '/dashboard' })}
+          onClick={() => handleAppleSignIn()}
           className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-black text-white mb-3"
           aria-label="Sign in with Apple"
         >
@@ -925,7 +953,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         </div>
         <button
           type="button"
-          onClick={() => signIn('apple', { callbackUrl: '/dashboard' })}
+          onClick={() => handleAppleSignIn()}
           className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-black text-white"
           aria-label="Sign in with Apple"
         >

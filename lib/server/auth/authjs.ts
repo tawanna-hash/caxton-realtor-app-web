@@ -274,8 +274,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
 
   pages: {
-    signIn: "/dashboard?auth=login",
-    error: "/dashboard?auth=login",
+    signIn: "/dashboard",
+    error: "/dashboard",
   },
 
   events: {
