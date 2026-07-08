@@ -1106,9 +1106,9 @@ export default function DashboardPage() {
     }
   }, [phase]);
 
-  if (phase === 'splash') return <SplashScreen onDone={() => { trackEvent('splash_dismissed'); setPhase('auth'); }} />;
-  if (phase === 'select') return <PubSelector onSelect={(id) => { trackEvent('pub_selected', { pub: id }); setPub(id); try { localStorage.setItem('caxton_market_onboarded', '1'); } catch {} setPhase('feed'); }} />;
-  if (phase === 'auth') return <AuthGate pub={pub || 'realtyline'} onAuth={(u) => { setUser(u); identifyUser(u?.id || null, { email: u?.email }); trackEvent('auth_completed', { is_guest: !!u?.guest, pub }); const hasPub = pub === 'realtyline' || pub === 'newsline'; setPhase(hasPub ? 'feed' : 'select'); }} />;
+  if (phase === 'splash') return <SplashScreen onDone={() => { trackEvent('splash_dismissed'); setPhase('select'); }} />;
+  if (phase === 'select') return <PubSelector onSelect={(id) => { trackEvent('pub_selected', { pub: id }); setPub(id); setPhase('auth'); }} />;
+  if (phase === 'auth') return <AuthGate pub={pub} onAuth={(u) => { setUser(u); identifyUser(u?.id || null, { email: u?.email }); trackEvent('auth_completed', { is_guest: !!u?.guest, pub }); setPhase('feed'); }} />;
 
   
   // caxton-article-reader-b1-phase
@@ -1186,9 +1186,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
   // newly-active pub (or 'All' if nothing's saved / saved value is invalid).
   useEffect(() => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- pre-existing, unrelated to auth-flow reorder
       const saved = window.localStorage.getItem(`caxton_cat_${pub}`);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- pre-existing, unrelated to auth-flow reorder
       const validCats = pub === 'realtyline' ? RL_CATS : NS_CATS;
       // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional sync of cat to current pub on pub change
       setCatState('All');
