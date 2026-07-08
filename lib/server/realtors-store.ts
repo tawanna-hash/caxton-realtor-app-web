@@ -581,6 +581,7 @@ export async function deleteRealtorAccount(realtorId: string): Promise<boolean> 
 
 export interface RealtorWithApple extends RealtorBasic {
   apple_sub: string | null;
+  google_sub: string | null;
   first_name: string;
   last_name: string;
 }
@@ -590,7 +591,7 @@ export async function findRealtorByAppleSub(
   appleSub: string,
 ): Promise<RealtorWithApple | null> {
   const rows = await query<RealtorWithApple>(
-    `SELECT id, email, email_verified_at, apple_sub, first_name, last_name
+    `SELECT id, email, email_verified_at, apple_sub, google_sub, first_name, last_name
        FROM realtors
       WHERE apple_sub = $1
       LIMIT 1`,
@@ -660,6 +661,40 @@ export async function insertRealtorViaApple(
     ],
   );
   return rows[0];
+}
+
+/**
+ * Look up a realtor by their Google `sub` (stable per-account id from the
+ * verified Google ID token). Used by /api/auth/google/native.
+ */
+export async function findRealtorByGoogleSub(
+  googleSub: string,
+): Promise<RealtorWithApple | null> {
+  const rows = await query<RealtorWithApple>(
+    `SELECT id, email, email_verified_at, apple_sub, google_sub, first_name, last_name
+       FROM realtors
+      WHERE google_sub = $1
+      LIMIT 1`,
+    [googleSub],
+  );
+  return rows[0] ?? null;
+}
+
+/**
+ * Link a Google `sub` to an existing realtor account (matched by email).
+ * Also auto-verifies the email since Google already verified it for us.
+ */
+export async function attachGoogleSubToRealtor(
+  realtorId: string,
+  googleSub: string,
+): Promise<void> {
+  await query(
+    `UPDATE realtors
+        SET google_sub = $2,
+            email_verified_at = COALESCE(email_verified_at, NOW())
+      WHERE id = $1`,
+    [realtorId, googleSub],
+  );
 }
 
 // Re-export for callers that want a transaction.
