@@ -480,6 +480,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       const { Capacitor } = await import('@capacitor/core');
       if (Capacitor.isNativePlatform()) {
         const { SignInWithApple } = await import('@capacitor-community/apple-sign-in');
+        console.log('[apple signin] native flow start');
         const result = await SignInWithApple.authorize({
           clientId: 'app.realtynewsnow',
           redirectURI: 'https://realtynewsnow.app/api/auth/callback/apple',
@@ -487,6 +488,11 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
           state: crypto.randomUUID(),
           nonce: crypto.randomUUID(),
         });
+        console.log('[apple signin] got token', {
+          hasToken: !!result?.response?.identityToken,
+          email: result?.response?.email ?? null,
+        });
+        console.log('[apple signin] posting to /api/auth/apple/native');
         const res = await fetch('/api/auth/apple/native', {
           method: 'POST',
           credentials: 'include',
@@ -500,6 +506,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 : undefined,
           }),
         });
+        console.log('[apple signin] server responded', res.status);
         if (res.status === 404) {
           const data = await res.json();
           const q = new URLSearchParams({ auth: 'signup', apple_email: data.apple_email ?? '' });
