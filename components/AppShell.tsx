@@ -109,7 +109,12 @@ export default function AppShell({
       const fromCookie = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
       const fromLs = localStorage.getItem('caxton_pub');
       const saved = fromCookie || fromLs;
-      if (saved === 'realtyline' || saved === 'newsline') setPub(saved);
+      // Defer setState so React commits the initial render first — mirrors
+      // the queueMicrotask pattern used by the openMenu / pathname effect
+      // below and satisfies react-hooks/set-state-in-effect.
+      if (saved === 'realtyline' || saved === 'newsline') {
+        queueMicrotask(() => { setPub(saved); });
+      }
     } catch {}
 
     // Listen for cross-tab pub changes (NavDrawer's pub switch dispatches this event)
@@ -141,9 +146,11 @@ export default function AppShell({
       await fetch(logoutUrl, { method: 'POST', credentials: 'include' });
     } catch {}
     if (!isAdmin) {
+      // Flow reorder (2026-07-08): logout preserves the user's market pick
+      // so they land back on their remembered feed after re-authenticating.
+      // We clear ONLY session/phase state — keep caxton_pub cookie +
+      // caxton_pub / caxton_market_onboarded in localStorage.
       try {
-        document.cookie = 'caxton_pub=; path=/; max-age=0; SameSite=Lax';
-        localStorage.removeItem('caxton_pub');
         localStorage.removeItem('caxton_phase');
         localStorage.removeItem('caxton_selected_article');
         localStorage.removeItem('caxton_selected_event');
@@ -151,7 +158,7 @@ export default function AppShell({
     }
     setUser(null);
     setDrawerOpen(false);
-    router.push(isAdmin ? '/admin/login' : '/');
+    router.push(isAdmin ? '/admin/login' : '/dashboard?auth=login');
   }, [isAdmin, router]);
 
   const handlePubSwitch = useCallback(() => {
