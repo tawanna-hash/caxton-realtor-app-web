@@ -52,11 +52,6 @@ const config: CapacitorConfig = {
       backgroundColor: '#301D5D',
       overlaysWebView: false,
     },
-    GoogleAuth: {
-      scopes: ['profile', 'email'],
-      serverClientId: '289673802092-chk4jfi5q888r7dj87fo4fc630r9100m.apps.googleusercontent.com',
-      forceCodeForRefreshToken: false,
-    },
   },
 };
 

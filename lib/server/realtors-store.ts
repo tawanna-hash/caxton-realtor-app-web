@@ -587,35 +587,11 @@ export interface RealtorWithApple extends RealtorBasic {
 }
 
 /** Look up a realtor by their stable Apple `sub` identifier. */
-export async function findRealtorByAppleSub(
-  appleSub: string,
-): Promise<RealtorWithApple | null> {
-  const rows = await query<RealtorWithApple>(
-    `SELECT id, email, email_verified_at, apple_sub, google_sub, first_name, last_name
-       FROM realtors
-      WHERE apple_sub = $1
-      LIMIT 1`,
-    [appleSub],
-  );
-  return rows[0] ?? null;
-}
 
 /**
  * Attach an Apple `sub` to an existing realtor (matched by email on first
  * Apple sign-in). Also verifies their email since Apple has done so.
  */
-export async function attachAppleSubToRealtor(
-  realtorId: string,
-  appleSub: string,
-): Promise<void> {
-  await query(
-    `UPDATE realtors
-        SET apple_sub = $2,
-            email_verified_at = COALESCE(email_verified_at, NOW())
-      WHERE id = $1`,
-    [realtorId, appleSub],
-  );
-}
 
 /**
  * Create a brand-new realtor from a Sign in with Apple flow. Apple only
@@ -667,35 +643,11 @@ export async function insertRealtorViaApple(
  * Look up a realtor by their Google `sub` (stable per-account id from the
  * verified Google ID token). Used by /api/auth/google/native.
  */
-export async function findRealtorByGoogleSub(
-  googleSub: string,
-): Promise<RealtorWithApple | null> {
-  const rows = await query<RealtorWithApple>(
-    `SELECT id, email, email_verified_at, apple_sub, google_sub, first_name, last_name
-       FROM realtors
-      WHERE google_sub = $1
-      LIMIT 1`,
-    [googleSub],
-  );
-  return rows[0] ?? null;
-}
 
 /**
  * Link a Google `sub` to an existing realtor account (matched by email).
  * Also auto-verifies the email since Google already verified it for us.
  */
-export async function attachGoogleSubToRealtor(
-  realtorId: string,
-  googleSub: string,
-): Promise<void> {
-  await query(
-    `UPDATE realtors
-        SET google_sub = $2,
-            email_verified_at = COALESCE(email_verified_at, NOW())
-      WHERE id = $1`,
-    [realtorId, googleSub],
-  );
-}
 
 // Re-export for callers that want a transaction.
 export { withNeonTransaction };

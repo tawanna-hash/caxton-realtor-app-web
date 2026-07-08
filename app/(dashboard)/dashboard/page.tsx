@@ -430,8 +430,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   // Set when we arrive via the Apple "must sign up first" bounce
   // (lib/server/auth/authjs.ts signIn callback redirects new Apple emails
   // to /dashboard?auth=signup&apple_email=...). Drives the banner below.
-  const [appleEmailPrefill, setAppleEmailPrefill] = useState(false);
-  const [googleEmailPrefill, setGoogleEmailPrefill] = useState(false);
 
   // Read query params after all state hooks are declared so the lint rule
   // (react-hooks/immutability) doesn't flag forward references.
@@ -444,22 +442,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         if (wanted === 'login' || wanted === 'signup') {
           setMode(wanted);
         }
-        const appleEmail = params.get('apple_email');
-        if (appleEmail) {
-          setEmail(appleEmail);
-          setMode('signup');
-          setAppleEmailPrefill(true);
-        }
-        const googleEmail = params.get('google_email');
-        if (googleEmail) {
-          setEmail(googleEmail);
-          const gFirst = params.get('google_first_name') ?? '';
-          const gLast = params.get('google_last_name') ?? '';
-          const combined = [gFirst, gLast].filter(Boolean).join(' ').trim();
-          if (combined) setFullName(combined);
-          setMode('signup');
-          setGoogleEmailPrefill(true);
-        }
       } catch {}
     });
   }, []);
@@ -468,161 +450,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
 
   const ic = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3 placeholder:text-[#d1d5db]';
   const sc = 'w-full px-4 py-3.5 border border-gray-300 text-base font-light bg-white focus:outline-none focus:border-brand-700 mb-3 appearance-none placeholder:text-[#d1d5db]';
-
-
-  // Apple Sign In:
-  // - Native iOS (Capacitor): ASAuthorizationController via
-  //   @capacitor-community/apple-sign-in, then POST the identityToken to
-  //   /api/auth/apple/native which verifies it and mints caxton_session_v2.
-  // - Web: existing form POST to /api/auth/signin/apple (Auth.js provider).
-  async function handleAppleSignIn() {
-    try {
-      const { Capacitor } = await import('@capacitor/core');
-      if (Capacitor.isNativePlatform()) {
-        const { SignInWithApple } = await import('@capacitor-community/apple-sign-in');
-        console.log('[apple signin] native flow start');
-        const result = await SignInWithApple.authorize({
-          clientId: 'app.realtynewsnow',
-          redirectURI: 'https://realtynewsnow.app/api/auth/callback/apple',
-          scopes: 'email name',
-          state: crypto.randomUUID(),
-          nonce: crypto.randomUUID(),
-        });
-        console.log('[apple signin] got token', {
-          hasToken: !!result?.response?.identityToken,
-          email: result?.response?.email ?? null,
-        });
-        console.log('[apple signin] posting to /api/auth/apple/native');
-        const res = await fetch('/api/auth/apple/native', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            identityToken: result.response.identityToken,
-            email: result.response.email ?? undefined,
-            fullName:
-              result.response.givenName || result.response.familyName
-                ? { givenName: result.response.givenName ?? '', familyName: result.response.familyName ?? '' }
-                : undefined,
-          }),
-        });
-        console.log('[apple signin] server responded', res.status);
-        if (res.status === 404) {
-          const data = await res.json();
-          const q = new URLSearchParams({ auth: 'signup', apple_email: data.apple_email ?? '' });
-          window.location.href = `/dashboard?${q.toString()}`;
-          return;
-        }
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          setError(data.message || 'Apple sign-in failed');
-          return;
-        }
-        window.location.href = '/dashboard';
-        return;
-      }
-
-      const csrfRes = await fetch('/api/auth/csrf', { credentials: 'include' });
-      const { csrfToken } = await csrfRes.json();
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = '/api/auth/signin/apple';
-      const csrfInput = document.createElement('input');
-      csrfInput.type = 'hidden';
-      csrfInput.name = 'csrfToken';
-      csrfInput.value = csrfToken;
-      form.appendChild(csrfInput);
-      const cbInput = document.createElement('input');
-      cbInput.type = 'hidden';
-      cbInput.name = 'callbackUrl';
-      cbInput.value = '/dashboard';
-      form.appendChild(cbInput);
-      document.body.appendChild(form);
-      form.submit();
-    } catch (err) {
-      console.error('[apple signin] failed', err);
-      setError('Apple sign-in failed. Please try again.');
-    }
-  }
-
-  // Google Sign In (mirrors Apple):
-  // - Native Android (Capacitor): @codetrix-studio/capacitor-google-auth,
-  //   then POST the idToken to /api/auth/google/native which verifies it
-  //   and mints caxton_session_v2.
-  // - Web: existing form POST to /api/auth/signin/google (Auth.js provider).
-  // Product rule (matches Apple): must sign up first — no account creation
-  // via Google. 404 signup_required bounces to /dashboard?auth=signup&...
-  async function handleGoogleSignIn() {
-    try {
-      const { Capacitor } = await import('@capacitor/core');
-      if (Capacitor.isNativePlatform()) {
-        const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
-        try {
-          await GoogleAuth.initialize({
-            clientId: '289673802092-chk4jfi5q888r7dj87fo4fc630r9100m.apps.googleusercontent.com',
-            scopes: ['email', 'profile'],
-            grantOfflineAccess: false,
-          });
-        } catch {}
-        const result = await GoogleAuth.signIn();
-        const idToken = result?.authentication?.idToken;
-        if (!idToken) {
-          setError('Google sign-in failed');
-          return;
-        }
-        const res = await fetch('/api/auth/google/native', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            idToken,
-            email: result.email ?? undefined,
-            givenName: result.givenName ?? undefined,
-            familyName: result.familyName ?? undefined,
-          }),
-        });
-        if (res.status === 404) {
-          const data = await res.json();
-          const q = new URLSearchParams({
-            auth: 'signup',
-            google_email: data.google_email ?? '',
-            google_first_name: data.google_first_name ?? '',
-            google_last_name: data.google_last_name ?? '',
-          });
-          window.location.href = `/dashboard?${q.toString()}`;
-          return;
-        }
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          setError(data.message || 'Google sign-in failed');
-          return;
-        }
-        window.location.href = '/dashboard';
-        return;
-      }
-
-      const csrfRes = await fetch('/api/auth/csrf', { credentials: 'include' });
-      const { csrfToken } = await csrfRes.json();
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = '/api/auth/signin/google';
-      const csrfInput = document.createElement('input');
-      csrfInput.type = 'hidden';
-      csrfInput.name = 'csrfToken';
-      csrfInput.value = csrfToken;
-      form.appendChild(csrfInput);
-      const cbInput = document.createElement('input');
-      cbInput.type = 'hidden';
-      cbInput.name = 'callbackUrl';
-      cbInput.value = '/dashboard';
-      form.appendChild(cbInput);
-      document.body.appendChild(form);
-      form.submit();
-    } catch (err) {
-      console.error('[google signin] failed', err);
-      setError('Google sign-in failed. Please try again.');
-    }
-  }
 
   async function handleSignup() {
     setLoading(true);
@@ -846,17 +673,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
             <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
             <h2 className="text-2xl text-gray-900 font-semibold text-center mb-8">Create Your Account</h2>
 
-            {appleEmailPrefill && (
-              <p className="text-sm text-center mb-6 px-4 py-3 rounded-md bg-gray-100 text-gray-700 font-light">
-                Complete your signup to enable Sign in with Apple.
-              </p>
-            )}
-            {googleEmailPrefill && (
-              <p className="text-sm text-center mb-6 px-4 py-3 rounded-md bg-gray-100 text-gray-700 font-light">
-                Complete your signup to enable Sign in with Google.
-              </p>
-            )}
-
             {/* Step indicators */}
             <div className="flex items-center justify-center gap-2 mb-6">
               <div className={step >= 1 ? 'w-3 h-3 rounded-full bg-brand-700' : 'w-3 h-3 rounded-full bg-gray-200'} />
@@ -871,24 +687,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
             {/* Step 1: License + Identity */}
             {step === 1 && (
               <div>
-                <button
-          type="button"
-          onClick={() => handleAppleSignIn()}
-          className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-black text-white mb-3"
-          aria-label="Sign up with Apple"
-        >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.04c-.02-2.7 2.2-3.99 2.3-4.06-1.26-1.84-3.21-2.09-3.9-2.12-1.66-.17-3.24.97-4.08.97-.85 0-2.15-.95-3.54-.92-1.82.03-3.5 1.06-4.44 2.69-1.89 3.28-.48 8.13 1.36 10.79.9 1.3 1.97 2.76 3.36 2.7 1.35-.05 1.86-.87 3.49-.87 1.62 0 2.08.87 3.51.84 1.45-.02 2.37-1.32 3.26-2.63 1.02-1.51 1.45-2.97 1.47-3.05-.03-.01-2.82-1.08-2.85-4.29zm-2.69-7.86c.75-.9 1.25-2.16 1.11-3.41-1.07.04-2.37.71-3.14 1.61-.7.79-1.31 2.07-1.14 3.29 1.19.09 2.41-.6 3.17-1.49z"/></svg>
-                  <span>Sign up with Apple</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleGoogleSignIn()}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-white border border-gray-300 text-gray-700 mb-3"
-                  aria-label="Sign up with Google"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.24 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.11a6.6 6.6 0 0 1 0-4.22V7.05H2.18a11 11 0 0 0 0 9.9l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.05l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
-                  <span>Sign up with Google</span>
-                </button>
                 <div className="flex items-center my-3" aria-hidden="true">
                   <div className="flex-1 h-px bg-gray-200" />
                   <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
@@ -1064,24 +862,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
             <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
             <div className="flex-1 h-px bg-gray-200" />
           </div>
-          <button
-          type="button"
-          onClick={() => handleAppleSignIn()}
-          className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-black text-white mb-3"
-          aria-label="Sign in with Apple"
-        >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.04c-.02-2.7 2.2-3.99 2.3-4.06-1.26-1.84-3.21-2.09-3.9-2.12-1.66-.17-3.24.97-4.08.97-.85 0-2.15-.95-3.54-.92-1.82.03-3.5 1.06-4.44 2.69-1.89 3.28-.48 8.13 1.36 10.79.9 1.3 1.97 2.76 3.36 2.7 1.35-.05 1.86-.87 3.49-.87 1.62 0 2.08.87 3.51.84 1.45-.02 2.37-1.32 3.26-2.63 1.02-1.51 1.45-2.97 1.47-3.05-.03-.01-2.82-1.08-2.85-4.29zm-2.69-7.86c.75-.9 1.25-2.16 1.11-3.41-1.07.04-2.37.71-3.14 1.61-.7.79-1.31 2.07-1.14 3.29 1.19.09 2.41-.6 3.17-1.49z"/></svg>
-            <span>Sign in with Apple</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleGoogleSignIn()}
-            className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-white border border-gray-300 text-gray-700 mb-3"
-            aria-label="Sign in with Google"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.24 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.11a6.6 6.6 0 0 1 0-4.22V7.05H2.18a11 11 0 0 0 0 9.9l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.05l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
-            <span>Sign in with Google</span>
-          </button>
           <button onClick={() => { if (typeof window !== 'undefined') window.location.href = '/auth/forgot-password'; }} className="w-full text-center py-2 text-sm text-gray-500 font-light">Forgot password?</button>
           <button onClick={() => setMode('choice')} className="w-full text-center py-2 text-base text-gray-400 font-light">Back</button>
         </div>
@@ -1111,24 +891,6 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
           <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
-        <button
-          type="button"
-          onClick={() => handleAppleSignIn()}
-          className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-black text-white"
-          aria-label="Sign in with Apple"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.04c-.02-2.7 2.2-3.99 2.3-4.06-1.26-1.84-3.21-2.09-3.9-2.12-1.66-.17-3.24.97-4.08.97-.85 0-2.15-.95-3.54-.92-1.82.03-3.5 1.06-4.44 2.69-1.89 3.28-.48 8.13 1.36 10.79.9 1.3 1.97 2.76 3.36 2.7 1.35-.05 1.86-.87 3.49-.87 1.62 0 2.08.87 3.51.84 1.45-.02 2.37-1.32 3.26-2.63 1.02-1.51 1.45-2.97 1.47-3.05-.03-.01-2.82-1.08-2.85-4.29zm-2.69-7.86c.75-.9 1.25-2.16 1.11-3.41-1.07.04-2.37.71-3.14 1.61-.7.79-1.31 2.07-1.14 3.29 1.19.09 2.41-.6 3.17-1.49z"/></svg>
-          <span>Sign in with Apple</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => handleGoogleSignIn()}
-          className="w-full flex items-center justify-center gap-2 py-3.5 text-base font-medium rounded-md bg-white border border-gray-300 text-gray-700 mt-3"
-          aria-label="Sign in with Google"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.24 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.11a6.6 6.6 0 0 1 0-4.22V7.05H2.18a11 11 0 0 0 0 9.9l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.05l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
-          <span>Sign in with Google</span>
-        </button>
       </div>
       </div>
     </div>
