@@ -251,30 +251,33 @@ export default function AppShell({
                   Internal
                 </span>
               </>
-            ) : currentPubMeta ? (
-              <button
-                type="button"
-                onClick={() => setMarketSheetOpen(true)}
-                aria-haspopup="dialog"
-                aria-expanded={marketSheetOpen}
-                aria-label={`Switch publication. Current: ${currentPubMeta.label}`}
-                className="flex flex-col items-center leading-tight px-2 py-0.5 rounded-md hover:bg-gray-50 active:bg-gray-100 transition"
-              >
-                <span className="flex items-center gap-1 text-sm sm:text-base font-semibold tracking-tight text-gray-900">
-                  {currentPubMeta.label}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </span>
-                <span className="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-medium">
-                  Realty News Now
-                </span>
-              </button>
-            ) : (
-              <Link href="/" className="text-sm sm:text-base font-semibold tracking-tight">
-                Realty News Now
-              </Link>
-            )}
+            ) : (() => {
+              // Always render the switcher. Fall back to the RealtyLine
+              // meta if lookup returned null (fresh WebView, no cookie/ls
+              // yet, unknown pub value, etc.) — the switcher must be
+              // available on every page.
+              const meta = currentPubMeta ?? { id: 'realtyline', label: 'RealtyLine', monogram: 'RL' };
+              return (
+                <button
+                  type="button"
+                  onClick={() => setMarketSheetOpen(true)}
+                  aria-haspopup="dialog"
+                  aria-expanded={marketSheetOpen}
+                  aria-label={`Switch publication. Current: ${meta.label}`}
+                  className="flex flex-col items-center leading-tight px-2 py-0.5 rounded-md hover:bg-gray-50 active:bg-gray-100 transition"
+                >
+                  <span className="flex items-center gap-1 text-sm sm:text-base font-semibold tracking-tight text-gray-900">
+                    {meta.label}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </span>
+                  <span className="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-medium">
+                    Realty News Now
+                  </span>
+                </button>
+              );
+            })()}
           </div>
 
           {/* Right: desktop admin dropdowns (hidden on mobile) + logout */}
