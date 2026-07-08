@@ -91,9 +91,9 @@ export default function AppShell({
   const [marketSheetOpen, setMarketSheetOpen] = useState(false);
   const [user, setUser] = useState<User>(null);
   const isAdmin = variant === 'admin';
-  // Server + first client render agree on 'realtynewsnow' to avoid hydration mismatch.
+  // Server + first client render default to 'realtyline'. Real value is read from cookie/localStorage in useEffect below.
   // Actual pub is read from localStorage post-mount in the useEffect below.
-  const [pub, setPub] = useState<string>('realtynewsnow');
+  const [pub, setPub] = useState<string>('realtyline');
   // Resolve the current pub metadata for the header title-as-switcher.
   // Null when the user hasn't picked yet (first launch) or when the
   // stored id isn't a known active pub — in which case the header falls
@@ -102,12 +102,15 @@ export default function AppShell({
   useEffect(() => {
     // Defer the localStorage read into a microtask so the first commit lands
     // before this setState — avoids react-hooks/set-state-in-effect.
-    queueMicrotask(() => {
-      try {
-        const saved = localStorage.getItem('caxton_pub');
-        if (saved) setPub(saved);
-      } catch {}
-    });
+    try {
+      // Cookie is source of truth (set server-side and by handlePubSwitch).
+      // localStorage is a legacy mirror. Read both, prefer cookie.
+      const cookieMatch = document.cookie.match(/(?:^|;\s*)caxton_pub=([^;]+)/);
+      const fromCookie = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
+      const fromLs = localStorage.getItem('caxton_pub');
+      const saved = fromCookie || fromLs;
+      if (saved === 'realtyline' || saved === 'newsline') setPub(saved);
+    } catch {}
 
     // Listen for cross-tab pub changes (NavDrawer's pub switch dispatches this event)
     function onPubChange() {
