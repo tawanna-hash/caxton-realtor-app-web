@@ -1171,7 +1171,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
     // Always default to 'All' on feed mount. Saved category is ignored so
     // every sign-in / navigation to feed starts fresh.
     return 'All';
-  }
   })();
   const [cat, setCatState] = useState(initialCat);
 
