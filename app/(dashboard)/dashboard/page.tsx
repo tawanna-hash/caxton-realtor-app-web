@@ -1168,14 +1168,10 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
   // with the saved value — React tolerates this since the difference is
   // inside our component's state, not the rendered HTML.
   const initialCat = (() => {
-    if (typeof window === 'undefined') return 'All';
-    try {
-      const saved = window.localStorage.getItem(`caxton_cat_${pub}`);
-      const validCats = pub === 'realtyline' ? RL_CATS : NS_CATS;
-      return saved && validCats.includes(saved) ? saved : 'All';
-    } catch {
-      return 'All';
-    }
+    // Always default to 'All' on feed mount. Saved category is ignored so
+    // every sign-in / navigation to feed starts fresh.
+    return 'All';
+  }
   })();
   const [cat, setCatState] = useState(initialCat);
 
@@ -1194,7 +1190,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
       const saved = window.localStorage.getItem(`caxton_cat_${pub}`);
       const validCats = pub === 'realtyline' ? RL_CATS : NS_CATS;
       // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional sync of cat to current pub on pub change
-      setCatState(saved && validCats.includes(saved) ? saved : 'All');
+      setCatState('All');
     } catch {}
   }, [pub]);
   const [profileOpen, setProfileOpen] = useState(false);
