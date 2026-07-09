@@ -64,6 +64,22 @@ export const EVENT_LABELS: Record<string, string> = {
   // Ad slot tracking (paid placements rendered via <AdSlot>)
   ad_impression: 'Ad impressions',
   ad_click: 'Ad clicks',
+  // Server-side CRM / lifecycle events (fired from API routes via
+  // lib/server/posthog.ts captureServerEvent).
+  advertiser_linked: 'CRM — Advertiser linked to agreement',
+  advertiser_signed: 'CRM — Advertiser signed agreement',
+  agreement_create_failed: 'CRM — Agreement create failed',
+  amended_pdf_sent: 'CRM — Amended agreement PDF sent',
+  dispatch_failed: 'Email — Dispatch failed',
+  email_sent: 'Email — Sent',
+  giveaway_entered: 'Giveaway — Entry recorded',
+  invoice_create_failed: 'CRM — Invoice create failed',
+  issue_charge_failed: 'Billing — Issue charge failed',
+  issue_charge_succeeded: 'Billing — Issue charge succeeded',
+  locations_staff_seeded: 'CRM — Locations + staff seeded',
+  pdf_generation_failed: 'PDF — Generation failed',
+  renewal_email_sent: 'CRM — Renewal email sent',
+  verify_failed: 'Verify — Failed',
 };
 
 export const SURFACE_LABELS: Record<string, string> = {

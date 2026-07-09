@@ -99,6 +99,23 @@ const ALL_CONVERSION_EVENT_OPTIONS = [
   'magic_link_requested',
   'giveaway_continue_signup',
   'newsletter_signup',
+  // Server-side CRM / lifecycle events (fired from API routes via
+  // lib/server/posthog.ts captureServerEvent). See app/admin/metrics/_types.ts
+  // EVENT_LABELS for the human-readable label mapping.
+  'advertiser_linked',
+  'advertiser_signed',
+  'agreement_create_failed',
+  'amended_pdf_sent',
+  'dispatch_failed',
+  'email_sent',
+  'giveaway_entered',
+  'invoice_create_failed',
+  'issue_charge_failed',
+  'issue_charge_succeeded',
+  'locations_staff_seeded',
+  'pdf_generation_failed',
+  'renewal_email_sent',
+  'verify_failed',
 ];
 
 const SPARKLINE_PATHS: Record<Trend, string> = {
