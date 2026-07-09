@@ -14,6 +14,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { trackEvent } from '../../app/posthog-provider';
 
 type Market = 'realtyline' | 'newsline';
 
@@ -78,7 +79,11 @@ export default function TrendingTicker({ market, className = '' }: Props) {
         const r = await fetch(`/api/trending?market=${encodeURIComponent(market)}`, { cache: 'no-store' });
         if (!r.ok) return;
         const j = await r.json() as { items?: TrendingItem[] };
-        if (!cancelled) setItems(j.items ?? []);
+        if (!cancelled) {
+          const arr = j.items ?? [];
+          setItems(arr);
+          trackEvent('trending_loaded', { market, count: arr.length });
+        }
       } catch {
         if (!cancelled) setItems([]);
       }
@@ -102,17 +107,45 @@ export default function TrendingTicker({ market, className = '' }: Props) {
   const dismiss = useCallback(() => {
     try { window.localStorage.setItem(todayKey(), '1'); } catch { /* ignore */ }
     setDismissed(true);
-  }, []);
+    const item = items[safeIndex];
+    trackEvent('trending_dismissed', {
+      market,
+      trending_id: item?.id ?? null,
+      headline: item?.headline ?? null,
+      position: safeIndex,
+      total: items.length,
+    });
+  }, [items, safeIndex, market]);
 
   const prev = useCallback(() => {
     setIndex((i) => (i - 1 + items.length) % items.length);
-  }, [items.length]);
+    trackEvent('trending_nav', { market, dir: 'prev', total: items.length });
+  }, [items.length, market]);
 
   const next = useCallback(() => {
     setIndex((i) => (i + 1) % items.length);
-  }, [items.length]);
+    trackEvent('trending_nav', { market, dir: 'next', total: items.length });
+  }, [items.length, market]);
 
   const current = useMemo(() => items[safeIndex] ?? null, [items, safeIndex]);
+
+  // Fire impression once per (item, market) pair while the ticker is visible.
+  // Uses a ref-tracked set so re-renders don't re-fire, but rotating back to
+  // an item after seeing others will fire again (intentional — real re-view).
+  const lastImpressionRef = useRef<string>('');
+  useEffect(() => {
+    if (dismissed || !current) return;
+    const key = `${market}:${current.id}`;
+    if (lastImpressionRef.current === key) return;
+    lastImpressionRef.current = key;
+    trackEvent('trending_impression', {
+      market,
+      trending_id: current.id,
+      headline: current.headline,
+      position: safeIndex,
+      total: items.length,
+    });
+  }, [current, dismissed, market, safeIndex, items.length]);
 
   if (dismissed || !current) return null;
 
@@ -129,6 +162,16 @@ export default function TrendingTicker({ market, className = '' }: Props) {
     >
       <a
         href={current.article_url}
+        onClick={() => {
+          trackEvent('trending_click', {
+            market,
+            trending_id: current.id,
+            headline: current.headline,
+            article_url: current.article_url,
+            position: safeIndex,
+            total: items.length,
+          });
+        }}
         className="flex items-center gap-3 p-3 sm:p-4 no-underline text-neutral-900 hover:bg-neutral-50 transition-colors"
       >
         {current.thumbnail_url ? (
