@@ -19,6 +19,7 @@ import { KPITile } from './_components/KPITile';
 import { DateRangePicker } from './_components/DateRangePicker';
 import type { DaysOption } from './_components/DateRangePicker';
 import { NewsletterMetrics } from './_components/NewsletterMetrics';
+import { TrendingMetrics } from './_components/TrendingMetrics';
 
 import PageTitle from '@/components/ui/PageTitle';
 export default function AdminMetricsPage() {
@@ -327,6 +328,8 @@ export default function AdminMetricsPage() {
               )}
             </div>
           </section>
+
+          <TrendingMetrics days={days} />
 
           <NewsletterMetrics days={days} />
 

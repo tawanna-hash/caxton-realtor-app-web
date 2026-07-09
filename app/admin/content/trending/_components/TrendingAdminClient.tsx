@@ -57,6 +57,33 @@ export default function TrendingAdminClient() {
     queueMicrotask(() => { void reload(); });
   }, [reload]);
 
+
+  // ---- PostHog stats (per-item impressions/clicks/CTR, 30d) ----
+  const [trendingStats, setTrendingStats] = useState<Record<string, { impressions: number; clicks: number; ctr: number }>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch('/api/admin/metrics/trending?days=30', { credentials: 'include' });
+        if (!r.ok) return;
+        const body = (await r.json()) as {
+          ok: boolean;
+          metrics: { top_items: Array<{ trending_id: string; impressions: number; clicks: number; ctr: number }> };
+        };
+        if (cancelled) return;
+        const map: Record<string, { impressions: number; clicks: number; ctr: number }> = {};
+        for (const it of body.metrics.top_items) {
+          map[it.trending_id] = { impressions: it.impressions, clicks: it.clicks, ctr: it.ctr };
+        }
+        setTrendingStats(map);
+      } catch {
+        // silent — inline stats are optional
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const filtered = useMemo(() => {
     return items.filter((it) => {
       if (marketFilter !== 'all' && !it.markets.includes(marketFilter)) return false;
@@ -239,6 +266,15 @@ export default function TrendingAdminClient() {
                     <span className="text-[10px] text-gray-500 tabular-nums">#{it.sort_order}</span>
                   </div>
                   <div className="text-sm font-medium text-gray-900 truncate">{it.headline}</div>
+                  {trendingStats[it.id] && (
+                    <div className="mt-0.5 text-xs text-gray-500 tabular-nums">
+                      <span title="Impressions">👁 {trendingStats[it.id].impressions.toLocaleString()}</span>
+                      <span className="mx-1.5 text-gray-300">·</span>
+                      <span title="Clicks">👆 {trendingStats[it.id].clicks.toLocaleString()}</span>
+                      <span className="mx-1.5 text-gray-300">·</span>
+                      <span title="Click-through rate">{trendingStats[it.id].ctr}%</span>
+                    </div>
+                  )}
                   <div className="text-xs text-gray-600 mt-0.5">
                     Published: {fmtDate(it.published_at)} · Expires: {fmtDate(it.expires_at)}
                   </div>
