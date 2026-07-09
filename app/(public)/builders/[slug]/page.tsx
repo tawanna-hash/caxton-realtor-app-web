@@ -8,8 +8,9 @@
 //   - Each section shows up to PREVIEW rows then a "View all" link to
 //     /communities or /inventory pre-filtered to ?builder=<name>
 //
-// Server component. No tabs, no floater pill — the iOS version doesn't have
-// them, so the web mirrors. /api/builders/[slug]/pdf is unaffected.
+// Server component. Mounts a client <BuilderDetailFloater> at the bottom
+// for Back / Download listings PDF / Share actions (see admin metrics
+// surface pivot). /api/builders/[slug]/pdf serves the download.
 
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -19,6 +20,7 @@ import { listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-in
 import { slugToBuilderName } from '@/lib/builder-slug-server';
 import { getServerPub } from '@/lib/publication';
 import BuilderInventoryRowCard from '@/components/builders/BuilderInventoryRowCard';
+import BuilderDetailFloater from '@/components/builders/BuilderDetailFloater';
 
 export const dynamic = 'force-dynamic';
 
@@ -150,6 +152,8 @@ export default async function Page({ params }: PageProps) {
           viewAllHref={`/inventory?kind=promotion&builder=${encodeURIComponent(builderName)}`}
         />
       </div>
+
+      <BuilderDetailFloater builderName={builderName} slug={slug} />
     </main>
   );
 }
