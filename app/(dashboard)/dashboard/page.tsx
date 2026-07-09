@@ -210,6 +210,8 @@ function NotifyMeModal({ market, onClose }: { market: { id: ComingSoonPubId; nam
       setStatus('success');
       void haptics.notify('success');
       trackEvent('market_interest_signup', { market: market.id });
+      // Dual-fire under the semantic name admin dashboards expect.
+      trackEvent('newsletter_signup', { market: market.id });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Network error');
       setStatus('error');

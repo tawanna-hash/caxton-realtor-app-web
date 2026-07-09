@@ -98,6 +98,7 @@ const ALL_CONVERSION_EVENT_OPTIONS = [
   'event_added_to_calendar',
   'magic_link_requested',
   'giveaway_continue_signup',
+  'newsletter_signup',
 ];
 
 const SPARKLINE_PATHS: Record<Trend, string> = {
