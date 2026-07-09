@@ -59,11 +59,15 @@ export default function BuilderInventoryRowCard({
 
   const title = variant === 'community' ? row.communityName || row.title : row.title;
 
-  // Destination logic: external sourceUrl wins; otherwise route to the
-  // builder's detail page. We deliberately don't link to /inventory/[id]
-  // here — the iOS version opens the source page externally, so we mirror.
-  const href = row.sourceUrl || `/builders/${builderNameToSlug(row.builderName)}`;
-  const external = !!row.sourceUrl;
+  // Destination logic:
+  //   - community variant: go to /communities/[id] (internal detail page
+  //     with floater pill for back/website/download/share/inventory).
+  //   - listing/promotion: external sourceUrl wins; otherwise route to
+  //     the builder's detail page. Mirrors iOS Linking.openURL behavior.
+  const communityHref = `/communities/${row.id}`;
+  const fallbackHref = row.sourceUrl || `/builders/${builderNameToSlug(row.builderName)}`;
+  const href = variant === 'community' ? communityHref : fallbackHref;
+  const external = variant === 'community' ? false : !!row.sourceUrl;
 
   const onClick = () => {
     trackEvent('builder_row_card_clicked', {
