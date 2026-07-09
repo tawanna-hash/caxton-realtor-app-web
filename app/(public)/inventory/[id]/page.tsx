@@ -285,6 +285,8 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
         rowId={row.id}
         builderName={row.builderName}
         externalUrl={pickBuilderSiteUrl(row)}
+        flyerPdfUrl={row.flyerPdfUrl}
+        shareTitle={`${row.builderName} — ${row.title}`}
       />
     </main>
   );
