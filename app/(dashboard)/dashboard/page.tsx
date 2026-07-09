@@ -25,6 +25,7 @@ import { haptics } from '@/lib/native/haptics';
 import { openExternal } from '@/lib/native/external-link';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import MarketSwitcherSheet from '@/components/MarketSwitcherSheet';
+import TrendingTicker from '@/components/feed/TrendingTicker';
 
 const API = getApiBase();
 
@@ -1186,8 +1187,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
   // newly-active pub (or 'All' if nothing's saved / saved value is invalid).
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem(`caxton_cat_${pub}`);
-      const validCats = pub === 'realtyline' ? RL_CATS : NS_CATS;
       // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional sync of cat to current pub on pub change
       setCatState('All');
     } catch {}
@@ -1498,6 +1497,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
       {tab === 'n' && !showPreLaunch && (
         <div>
           <FeedTopBanner pub={pub} />
+          {(pub === 'realtyline' || pub === 'newsline') && (
+            <TrendingTicker market={pub} className="mx-4 mt-3" />
+          )}
           <div className="flex gap-2 overflow-x-auto px-4 py-3 bg-white border-b border-gray-200" style={{ scrollbarWidth: 'none' }}>
             {CATS.map((c) => (
               <button

@@ -66,6 +66,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: 'Content',
     links: [
+      { label: 'Trending',  href: '/admin/content/trending', description: 'Rotating feed ticker CTAs' },
       { label: 'Articles',  href: '/admin/articles',  description: 'WordPress feeds & sync' },
       { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions' },
       { label: 'Events',    href: '/admin/events',    description: 'Calendar publications' },
