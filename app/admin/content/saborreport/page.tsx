@@ -20,7 +20,7 @@
  * click so the editor just types numbers month over month.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAdmin } from '@/hooks/use-admin';
 
 import PageTitle from '@/components/ui/PageTitle';
@@ -60,6 +60,133 @@ export default function SaborMlsAdminPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<SaborReport>(blankForm());
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  async function importGraphic(file: File) {
+    setImporting(true);
+    setImportMsg('Reading graphic and calling extractor (10-30s)...');
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await fetch('/api/admin/sabor-mls/import-graphic', {
+        method: 'POST',
+        credentials: 'include',
+        body: fd,
+      });
+      const rawText = await res.text();
+      let data: Record<string, unknown> = {};
+      try {
+        data = rawText ? (JSON.parse(rawText) as Record<string, unknown>) : {};
+      } catch {
+        data = { error: rawText.slice(0, 200) || `HTTP ${res.status}` };
+      }
+      if (!res.ok || !data.ok) {
+        const detail =
+          typeof data?.detail === 'string' ? (data.detail as string) :
+          typeof data?.error === 'string' ? (data.error as string) :
+          `HTTP ${res.status}`;
+        throw new Error(detail);
+      }
+      const extracted = (data.extracted ?? {}) as {
+        month_label?: string;
+        released_at?: string;
+        subtitle_en?: string;
+        headline_value?: string;
+        headline_delta?: string;
+        headline_delta_direction?: DeltaDirection;
+        headline_label_en?: string;
+        indicator_stats?: Array<Partial<IndicatorStat>>;
+        listing_counts?: Array<Partial<ListingCount>>;
+        price_bands?: Array<Partial<PriceBand>>;
+      };
+
+      setForm((prev) => {
+        const next: SaborReport = { ...prev };
+        if (extracted.month_label) {
+          next.month_label = extracted.month_label;
+          next.month_label_es = translateMonthLabel(extracted.month_label);
+        }
+        if (extracted.released_at) next.released_at = extracted.released_at;
+        if (extracted.subtitle_en) next.subtitle_en = extracted.subtitle_en;
+        if (extracted.headline_value) next.headline_value = extracted.headline_value;
+        if (extracted.headline_delta) next.headline_delta = extracted.headline_delta;
+        if (extracted.headline_delta_direction) next.headline_delta_direction = extracted.headline_delta_direction;
+        if (extracted.headline_label_en) next.headline_label_en = extracted.headline_label_en;
+
+        // Merge indicator_stats by key — only overwrite fields the model returned.
+        if (Array.isArray(extracted.indicator_stats)) {
+          const byKey = new Map(extracted.indicator_stats.map((s) => [s.key, s]));
+          next.indicator_stats = prev.indicator_stats.map((s) => {
+            const m = byKey.get(s.key);
+            if (!m) return s;
+            return {
+              ...s,
+              value: m.value ?? s.value,
+              delta: m.delta ?? s.delta,
+              delta_direction: m.delta_direction ?? s.delta_direction,
+            };
+          });
+        }
+        if (Array.isArray(extracted.listing_counts)) {
+          const byKey = new Map(extracted.listing_counts.map((s) => [s.key, s]));
+          next.listing_counts = prev.listing_counts.map((s) => {
+            const m = byKey.get(s.key);
+            if (!m) return s;
+            return {
+              ...s,
+              value: m.value ?? s.value,
+              delta: m.delta ?? s.delta,
+              delta_direction: m.delta_direction ?? s.delta_direction,
+            };
+          });
+        }
+        if (Array.isArray(extracted.price_bands)) {
+          const byKey = new Map(extracted.price_bands.map((b) => [b.key, b]));
+          next.price_bands = prev.price_bands.map((b) => {
+            const m = byKey.get(b.key);
+            if (!m) return b;
+            return { ...b, share: m.share ?? b.share };
+          });
+        }
+        return next;
+      });
+
+      const counts = [
+        extracted.indicator_stats?.length
+          ? `${extracted.indicator_stats.length} indicators`
+          : null,
+        extracted.listing_counts?.length
+          ? `${extracted.listing_counts.length} listing counts`
+          : null,
+        extracted.price_bands?.length
+          ? `${extracted.price_bands.length} price bands`
+          : null,
+      ].filter(Boolean).join(', ');
+      setImportMsg(`Autopopulated: ${counts || 'headline fields'}. Review, then Save.`);
+      setTimeout(() => setImportMsg(null), 10_000);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'import failed';
+      setImportMsg(`Import failed: ${msg}`);
+      setTimeout(() => setImportMsg(null), 15_000);
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  function onPickFile() {
+    if (importing) return;
+    fileInputRef.current?.click();
+  }
+
+  async function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (e.target) e.target.value = '';
+    if (!file) return;
+    await importGraphic(file);
+  }
+
 
   async function load() {
     setLoading(true);
@@ -253,7 +380,27 @@ export default function SaborMlsAdminPage() {
               >
                 Pre-fill labels (EN + ES)
               </button>
+              <button
+                type="button"
+                onClick={onPickFile}
+                disabled={importing}
+                className="text-xs font-medium px-3 py-1.5 border border-brand-700 bg-brand-700 text-white rounded-md hover:bg-brand-800 transition disabled:opacity-60"
+              >
+                {importing ? 'Extracting…' : 'Upload graphic to autopopulate'}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"
+                onChange={onFileChange}
+                className="hidden"
+              />
             </div>
+            {importMsg && (
+              <p className="text-xs text-gray-700 mb-3 px-3 py-2 border border-gray-200 rounded-md bg-gray-50">
+                {importMsg}
+              </p>
+            )}
 
             <div className="grid grid-cols-2 gap-4 mb-4">
               <Field label="Month label (English)">
