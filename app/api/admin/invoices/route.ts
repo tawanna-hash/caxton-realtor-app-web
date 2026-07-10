@@ -13,6 +13,7 @@ import {
   type InvoiceWithAdvertiser,
 } from '@/lib/invoices';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -154,6 +155,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ invoice: rows[0] }, { status: 201 });
   } catch (err) {
     console.error('[admin/invoices POST]', errMessage(err));
+    captureServerEvent('invoice_create_failed', admin?.email ?? 'server', {
+      surface: 'admin_invoices',
+      detail: errMessage(err),
+    });
+    await flushServerEvents();
     return NextResponse.json({ error: 'create failed', detail: errMessage(err) }, { status: 500 });
   }
 }

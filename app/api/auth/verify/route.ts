@@ -27,6 +27,7 @@ import {
 import { signIn, INTERNAL_TRUSTED_PROVIDER_ID } from '@/lib/server/auth/authjs';
 import { signInternalTrustToken } from '@/lib/server/auth/internal-trust-token';
 import { logger } from '@/lib/server/logger';
+import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 
 export const runtime = 'nodejs';
 
@@ -37,6 +38,11 @@ export const POST = withErrorHandling(async (req: Request) => {
 
   const result = await verifyMagicLink(token);
   if (!result.valid) {
+    captureServerEvent('verify_failed', 'server', {
+      surface: 'auth_verify',
+      reason: result.reason ?? 'unknown',
+    });
+    await flushServerEvents();
     throw new ApiError(400, `Invalid or expired link (${result.reason ?? 'unknown'})`);
   }
 

@@ -18,6 +18,7 @@ import {
 import { notifyAgreementSigned } from '@/lib/server/agreement-signed-notify';
 import { rateLimit } from '@/lib/server/rate-limit';
 import { ApiError } from '@/lib/server/error';
+import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -244,6 +245,13 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
           desiredStatus: 'advertiser',
         });
         advertiserOutcome = result.outcome;
+        if (['created', 'matched', 'linked'].includes(String(result.outcome))) {
+          captureServerEvent('advertiser_linked', updatedRows[0].id, {
+            surface: 'sign',
+            outcome: result.outcome,
+            agreement_id: updatedRows[0].id,
+          });
+        }
         if (result.outcome !== 'skipped') {
           // Audit the advertiser link/create.
           const advLog = appendAudit(updatedRows[0].audit_log, {
@@ -287,6 +295,13 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       try {
         const created = await syncAgreementToLocationsAndStaff(finalAg);
         if (created.length > 0) {
+          captureServerEvent('locations_staff_seeded', finalAg.id, {
+            surface: 'sign',
+            agreement_id: finalAg.id,
+            created_count: created.length,
+          });
+        }
+        if (created.length > 0) {
           const locLog = appendAudit(finalAg.audit_log, {
             event: 'locations_staff_seeded',
             timestamp: new Date().toISOString(),
@@ -316,6 +331,12 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       }
     }
 
+    captureServerEvent('advertiser_signed', updatedRows[0].id, {
+      surface: 'sign',
+      agreement_id: updatedRows[0].id,
+      advertiser_outcome: advertiserOutcome,
+    });
+    await flushServerEvents();
     return NextResponse.json({ ok: true, advertiserOutcome });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'unknown error';

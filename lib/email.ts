@@ -31,6 +31,8 @@ export interface SendEmailResult {
   error?: string;
 }
 
+import { captureServerEvent } from '@/lib/server/posthog';
+
 // myrealtyline.com is verified in Resend. realtynewsnow.app is not (yet).
 // hello@ is the role mailbox that forwards to a monitored inbox; noreply@
 // was a dead address that silently dropped sends. Override with EMAIL_FROM.
@@ -73,14 +75,33 @@ export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult
 
     const body = await res.text();
     if (!res.ok) {
-      return { ok: false, error: `Resend ${res.status}: ${body}` };
+      const error = `Resend ${res.status}: ${body}`;
+      captureServerEvent('dispatch_failed', 'server', {
+        subject: opts.subject,
+        recipient_count: recipients.length,
+        status: res.status,
+        error,
+      });
+      return { ok: false, error };
     }
 
     let data: { id?: string } = {};
     try { data = JSON.parse(body) as { id?: string }; } catch { /* ignore */ }
 
+    captureServerEvent('email_sent', 'server', {
+      subject: opts.subject,
+      recipient_count: recipients.length,
+      message_id: data.id ?? null,
+      has_attachments: !!(opts.attachments && opts.attachments.length > 0),
+    });
     return { ok: true, messageId: data.id };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : 'fetch error' };
+    const error = err instanceof Error ? err.message : 'fetch error';
+    captureServerEvent('dispatch_failed', 'server', {
+      subject: opts.subject,
+      recipient_count: recipients.length,
+      error,
+    });
+    return { ok: false, error };
   }
 }

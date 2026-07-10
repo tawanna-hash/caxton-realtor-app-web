@@ -25,6 +25,7 @@ import {
   syncAgreementToLocationsAndStaff,
 } from '@/lib/server/billing-crm-sync';
 import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
+import { captureServerEvent } from '@/lib/server/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -263,6 +264,14 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       if (savedAg.advertiser_id) {
         try {
           const created = await syncAgreementToLocationsAndStaff(savedAg);
+          if (created.length > 0) {
+            captureServerEvent('locations_staff_seeded', admin?.email ?? 'server', {
+              surface: 'admin_agreements',
+              agreement_id: id,
+              created_count: created.length,
+              source: 'patch',
+            });
+          }
           if (created.length > 0) {
             const locLog = appendAudit(savedAg.audit_log, {
               event: 'locations_staff_seeded',

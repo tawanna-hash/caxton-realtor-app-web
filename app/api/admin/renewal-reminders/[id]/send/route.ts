@@ -14,6 +14,7 @@ import type { RenewalReminder } from '@/lib/types/renewal-reminder';
 import { ApiError, withErrorHandling } from '@/lib/server/error';
 import { idParamSchema } from '@/lib/server/schemas/_common';
 import { renewalReminderSendBodySchema } from '@/lib/server/schemas/renewal-reminders';
+import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -96,5 +97,13 @@ export const POST = withErrorHandling(async (req: NextRequest, ctx: RouteCtx) =>
     await sql`UPDATE renewal_reminders SET status = 'Completed' WHERE id = ${id}`;
   }
 
+  captureServerEvent('renewal_email_sent', admin?.email ?? 'server', {
+    surface: 'admin_renewal_reminders',
+    reminder_id: id,
+    recipient,
+    message_id: result.messageId,
+    source: 'renewal-reminders',
+  });
+  await flushServerEvents();
   return NextResponse.json({ ok: true, messageId: result.messageId, sentTo: recipient });
 });

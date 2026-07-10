@@ -13,6 +13,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
+import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -111,6 +112,13 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         details: `${issueMonth} \u2014 ${msg}`,
       });
       await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${ag.id}`;
+      captureServerEvent('issue_charge_failed', admin?.email ?? 'server', {
+        surface: 'admin_agreements',
+        agreement_id: id,
+        detail: msg,
+        stage: 'stripe_charge',
+      });
+      await flushServerEvents();
       return NextResponse.json({ error: 'charge failed', detail: msg }, { status: 402 });
     }
 
@@ -138,6 +146,14 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     });
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${ag.id}`;
 
+    if (succeeded) {
+      captureServerEvent('issue_charge_succeeded', admin?.email ?? 'server', {
+        surface: 'admin_agreements',
+        agreement_id: id,
+        payment_intent_id: pi.id,
+      });
+      await flushServerEvents();
+    }
     return NextResponse.json({
       ok: succeeded,
       issueChargeId,

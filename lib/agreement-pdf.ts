@@ -197,7 +197,7 @@ function humanDate(iso: string | Date | null | undefined): string {
   } catch { return s; }
 }
 
-export async function generateAgreementPdfBuffer(ag: Agreement): Promise<Uint8Array> {
+async function generateAgreementPdfBufferInner(ag: Agreement): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
   const bold = await doc.embedFont(GEORGIA_BOLD);
@@ -475,4 +475,23 @@ export async function generateAgreementPdfBuffer(ag: Agreement): Promise<Uint8Ar
   }
 
   return doc.save();
+}
+
+
+// Public wrapper — instrumented for pdf_generation_failed analytics.
+// The underlying generation logic lives in generateAgreementPdfBufferInner
+// above; this wrapper adds a captureServerEvent on thrown errors so
+// /admin/metrics can surface PDF outages without patching every caller.
+export async function generateAgreementPdfBuffer(ag: Agreement): Promise<Uint8Array> {
+  try {
+    return await generateAgreementPdfBufferInner(ag);
+  } catch (err) {
+    const { captureServerEvent } = await import('@/lib/server/posthog');
+    captureServerEvent('pdf_generation_failed', 'server', {
+      kind: 'agreement',
+      agreement_id: ag.id ?? null,
+      error: err instanceof Error ? err.message : 'unknown error',
+    });
+    throw err;
+  }
 }

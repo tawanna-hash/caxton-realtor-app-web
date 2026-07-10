@@ -17,6 +17,7 @@ import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
 import { syncAgreementToAdvertiser } from '@/lib/server/billing-crm-sync';
 import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
 import type { Agreement } from '@/lib/agreements';
+import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -222,11 +223,20 @@ export async function POST(req: NextRequest) {
     // mirror fails.
     let linkedAdvertiserId: number | null = createdAg.advertiser_id ?? null;
     try {
+      const _advertiserLinkedFireCreatedAg = createdAg;
       const advRes = await ensureAdvertiserForAgreement(createdAg, {
         desiredStatus: status === 'signed' ? 'advertiser' : 'prospect',
       });
       if (advRes.outcome !== 'skipped') {
         linkedAdvertiserId = advRes.advertiserId;
+      }
+      if (advRes && ['created', 'matched', 'linked'].includes(String(advRes.outcome))) {
+        captureServerEvent('advertiser_linked', admin?.email ?? 'server', {
+          surface: 'admin_agreements',
+          outcome: advRes.outcome,
+          agreement_id: _advertiserLinkedFireCreatedAg.id,
+          source: 'post',
+        });
       }
     } catch (e) {
       console.error('[admin/agreements POST] ensureAdvertiserForAgreement failed', errMessage(e));
@@ -248,6 +258,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ agreement: finalAg }, { status: 201 });
   } catch (err) {
     console.error('[admin/agreements POST]', errMessage(err));
+    captureServerEvent('agreement_create_failed', admin?.email ?? 'server', {
+      surface: 'admin_agreements',
+      detail: errMessage(err),
+    });
+    await flushServerEvents();
     return NextResponse.json({ error: 'create failed', detail: errMessage(err) }, { status: 500 });
   }
 }

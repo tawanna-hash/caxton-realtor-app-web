@@ -19,6 +19,7 @@ import { generateAgreementPdfBuffer } from '@/lib/agreement-pdf';
 import { sendEmail } from '@/lib/email';
 import { amendedAgreementEmail } from '@/lib/email-templates';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
+import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -132,6 +133,13 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     });
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb, updated_at = NOW() WHERE id = ${id}`;
 
+    captureServerEvent('amended_pdf_sent', admin?.email ?? 'server', {
+      surface: 'admin_agreements',
+      agreement_id: id,
+      recipient,
+      message_id: result.messageId,
+    });
+    await flushServerEvents();
     return NextResponse.json({ ok: true, sentTo: recipient, messageId: result.messageId });
   } catch (err) {
     console.error('[admin/agreements/:id/send-amended]', errMessage(err));

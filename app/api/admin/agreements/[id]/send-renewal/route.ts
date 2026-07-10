@@ -10,6 +10,7 @@ import { signToken } from '@/lib/sign-token';
 import { sendEmail } from '@/lib/email';
 import { renewalEmail } from '@/lib/email-templates';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
+import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -93,6 +94,14 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     });
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${id}`;
 
+    captureServerEvent('renewal_email_sent', admin?.email ?? 'server', {
+      surface: 'admin_agreements',
+      agreement_id: id,
+      recipient,
+      message_id: result.messageId,
+      source: 'send-renewal',
+    });
+    await flushServerEvents();
     return NextResponse.json({ ok: true, messageId: result.messageId, sentTo: recipient });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'unknown error';

@@ -20,6 +20,7 @@ import { requireAdmin } from '@/lib/server/auth/admin';
 import { verifyEmail } from '@/lib/email-verify';
 import { withErrorHandling } from '@/lib/server/error';
 import { parseJson } from '@/lib/server/schemas/_common';
+import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,6 +37,15 @@ export const POST = withErrorHandling(async (req: Request) => {
   const { email } = await parseJson(req, singleSchema);
 
   const result = await verifyEmail(email);
+
+  if (result.verdict !== 'Valid') {
+    captureServerEvent('verify_failed', email || 'server', {
+      surface: 'admin_email_verify',
+      verdict: result.verdict,
+      email,
+    });
+    await flushServerEvents();
+  }
 
   return NextResponse.json({
     ok:         true,
