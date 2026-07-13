@@ -244,7 +244,11 @@ export function buildEmail(input: BuildEmailInput): BuiltEmail {
 }
 
 // ── Convenience: send a single recipient and return result ─────────
-export async function sendOneRecipient(input: BuildEmailInput & { from?: string; replyTo?: string }) {
+export async function sendOneRecipient(input: BuildEmailInput & {
+  from?: string;
+  replyTo?: string;
+  attachments?: Array<{ filename: string; content: string; contentType?: string }>;
+}) {
   const built = buildEmail(input);
   return sendEmail({
     to: input.recipient.email,
@@ -252,5 +256,6 @@ export async function sendOneRecipient(input: BuildEmailInput & { from?: string;
     replyTo: input.replyTo,
     subject: built.subject,
     html: built.html,
+    attachments: input.attachments,
   });
 }

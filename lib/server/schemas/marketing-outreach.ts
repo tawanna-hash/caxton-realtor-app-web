@@ -33,6 +33,17 @@ export const subscriberFilterSchema = z.object({
 // Email regex (RFC 5322-lite, good enough for opt-in marketing entry).
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// ── Email attachment payload (base64) ─────────────────────────────
+// filename: shown in the recipient's mail client.
+// content_base64: raw base64 (no data: prefix).
+// content_type: MIME type — Resend will sniff if omitted.
+export const emailAttachmentSchema = z.object({
+  filename: z.string().trim().min(1).max(255),
+  content_base64: z.string().min(1),
+  content_type: z.string().trim().max(200).optional(),
+});
+export type EmailAttachmentInput = z.infer<typeof emailAttachmentSchema>;
+
 export const audiencePreviewSchema = z.object({
   sources: z.array(audienceSourceSchema).min(1, 'pick at least one source'),
   advertiser_filter: audienceFilterSchema.optional(),
@@ -48,6 +59,7 @@ export const composeSchema = z.object({
   from_name:    z.string().trim().max(120).optional(),
   reply_to:     z.string().regex(emailRe, 'invalid reply-to email').optional(),
   preview_text: z.string().trim().max(150).optional(),
+  attachments:  z.array(emailAttachmentSchema).max(20).optional(),
 }).strict();
 
 export const sendOutreachSchema = composeSchema.extend({

@@ -101,6 +101,11 @@ export const POST = withErrorHandling(async (
     replyTo: input.reply_to,
     repName: admin.email ?? null,
     brand,
+    attachments: input.attachments?.map((a) => ({
+      filename: a.filename,
+      content: a.content_base64,
+      contentType: a.content_type,
+    })),
   });
 
   return NextResponse.json({

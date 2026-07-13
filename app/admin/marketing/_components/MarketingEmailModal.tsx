@@ -1,7 +1,7 @@
 // app/admin/marketing/_components/MarketingEmailModal.tsx
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MarketingCampaign, AudienceFilter, OutreachAudienceSource } from '@/lib/marketing-campaigns';
 import RichTextEditor from './RichTextEditor';
 
@@ -76,6 +76,51 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
 
   // Compose
   const [fromName, setFromName] = useState('RealtyLine');
+  const [attachments, setAttachments] = useState<Array<{ filename: string; content_base64: string; content_type: string; size: number }>>([]);
+  const [attaching, setAttaching] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  function formatBytes(n: number): string {
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+    if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(n / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  }
+
+  async function addFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setAttaching(true);
+    try {
+      const arr = Array.from(files);
+      const encoded = await Promise.all(arr.map(async (f) => {
+        const buf = await f.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        let bin = '';
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        const content_base64 = btoa(bin);
+        return {
+          filename: f.name,
+          content_base64,
+          content_type: f.type || 'application/octet-stream',
+          size: f.size,
+        };
+      }));
+      setAttachments((prev) => [...prev, ...encoded]);
+    } finally {
+      setAttaching(false);
+    }
+  }
+
+  function removeAttachment(idx: number) {
+    setAttachments((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  const attachmentsTotalBytes = attachments.reduce((sum, a) => sum + a.size, 0);
+  const attachmentsPayload = attachments.map((a) => ({
+    filename: a.filename,
+    content_base64: a.content_base64,
+    content_type: a.content_type,
+  }));
   const [replyTo, setReplyTo]   = useState<string>(adminEmail ?? '');
   const [subject, setSubject]   = useState('');
   const [previewText, setPreviewText] = useState('');
@@ -178,6 +223,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
         body: JSON.stringify({
           subject, body, from_name: fromName, reply_to: replyTo || undefined,
           preview_text: previewText || undefined, to: testTo,
+          attachments: attachmentsPayload.length > 0 ? attachmentsPayload : undefined,
         }),
       });
       if (res.ok) {
@@ -214,6 +260,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
           manual_emails:     sources.includes('manual') ? manualEmails : undefined,
           mode,
           scheduled_for: scheduledIso,
+          attachments: attachmentsPayload.length > 0 ? attachmentsPayload : undefined,
         }),
       });
       if (res.ok) {
@@ -310,7 +357,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
                       className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
                     >
                       <option value="">Any publication</option>
-                      <option value="realtyline">RealtyLine (Austin)</option>
+                      <option value="realtyline">RealtyLine Austin</option>
                       <option value="newsline">Newsline (San Antonio)</option>
                     </select>
                   </div>
@@ -502,6 +549,56 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
                 </button>
               </div>
             </section>
+
+            {/* Attachments */}
+            <section className="border-t border-gray-200 px-6 py-4">
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-900">Attachments</h3>
+                <span className="text-xs text-gray-500">
+                  {attachments.length} file{attachments.length === 1 ? '' : 's'} · {formatBytes(attachmentsTotalBytes)}
+                </span>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="*/*"
+                onChange={(e) => { void addFiles(e.target.files); if (e.target) e.target.value = ''; }}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={attaching}
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+              >
+                {attaching ? 'Reading files…' : 'Add files'}
+              </button>
+              {attachments.length > 0 && (
+                <ul className="mt-3 space-y-1">
+                  {attachments.map((a, i) => (
+                    <li key={i} className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs">
+                      <span className="truncate pr-2 text-gray-800">{a.filename}</span>
+                      <span className="flex items-center gap-3 shrink-0">
+                        <span className="text-gray-500">{formatBytes(a.size)}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(i)}
+                          className="text-red-600 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {attachmentsTotalBytes > 38 * 1024 * 1024 && (
+                <p className="mt-2 text-xs text-amber-700">
+                  Heads up: Resend caps total attachment payload around 40&nbsp;MB per email. Sends over that limit will fail.
+                </p>
+              )}
+            </section>
           </div>
 
           {/* RIGHT: preview */}
@@ -517,7 +614,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
                 <div className="bg-brand-700 px-6 py-4 text-white">
                   <div className="font-serif text-lg">{fromName || 'RealtyLine'}</div>
                   <div className="text-xs opacity-80">
-                    {campaign.publication === 'newsline' ? 'San Antonio real estate news' : 'Austin real estate news'}
+                    {campaign.publication === 'newsline' ? 'San Antonio real estate news' : 'Advertise Where REALTORS\u00ae Flip The Pages'}
                   </div>
                 </div>
                 <div className="px-6 py-3 border-b border-gray-100">

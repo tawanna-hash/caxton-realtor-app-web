@@ -68,6 +68,11 @@ export const POST = withErrorHandling(async (
     replyTo: input.reply_to,
     subject: built.subject,
     html: built.html,
+    attachments: input.attachments?.map((a) => ({
+      filename: a.filename,
+      content: a.content_base64,
+      contentType: a.content_type,
+    })),
   });
   if (!res.ok) throw new ApiError(502, `Resend send failed: ${res.error}`);
 
