@@ -31,6 +31,17 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
               open_count = open_count + 1
           WHERE id = ${id}
         `;
+        // Roll up to the CRM advertiser row (best-effort — silently no-ops
+        // for recipients whose email isn't in advertisers, e.g. one-off
+        // manual sends we haven't synced yet).
+        await sql`
+          UPDATE advertisers a
+          SET last_opened_at = now(),
+              open_count = COALESCE(a.open_count, 0) + 1
+          FROM marketing_campaign_outreach_recipients r
+          WHERE r.id = ${id}
+            AND lower(a.contact_email) = lower(r.email)
+        `;
       } catch {
         // Swallow — tracking failures must never error the pixel.
       }

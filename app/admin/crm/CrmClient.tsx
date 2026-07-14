@@ -61,6 +61,7 @@ export default function CrmClient({ initialRows }: Props) {
   const [statusFilter, setStatusFilter] = useState<AdvertiserStatus | 'all'>('all');
   const [typeFilter, setTypeFilter] = useState<AdvertiserType | 'all'>('all');
   const [pubFilter, setPubFilter] = useState<PublicationKey | 'all'>('all');
+  const [tagFilter, setTagFilter] = useState<string | 'all'>('all');
   const [editing, setEditing] = useState<AdvertiserCrmRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +83,9 @@ export default function CrmClient({ initialRows }: Props) {
         const advPubs = parsePublications(r.publication);
         if (!advPubs.includes(pubFilter)) return false;
       }
+      if (tagFilter !== 'all') {
+        if (!(r.tags ?? []).includes(tagFilter)) return false;
+      }
       if (!q) return true;
       const hay = [
         r.name, r.company, r.first_name, r.last_name,
@@ -91,7 +95,7 @@ export default function CrmClient({ initialRows }: Props) {
       ].filter(Boolean).join(' ').toLowerCase();
       return hay.includes(q);
     });
-  }, [rows, query, statusFilter, typeFilter, pubFilter]);
+  }, [rows, query, statusFilter, typeFilter, pubFilter, tagFilter]);
 
   // ── counts for filter chips ─────────────────────────────────────
   const statusCounts = useMemo(() => {
@@ -204,6 +208,19 @@ export default function CrmClient({ initialRows }: Props) {
               onClick={() => setStatusFilter(s.value)}
             />
           ))}
+        </div>
+
+        {/* Tag chips — surface marketing-outreach prospects */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-xs uppercase tracking-wider text-gray-500">Tags</span>
+          <StatusChip label="All" active={tagFilter === 'all'} count={rows.length} onClick={() => setTagFilter('all')} />
+          <StatusChip
+            label="Marketing outreach"
+            tone="bg-amber-50 text-amber-800 border-amber-200"
+            active={tagFilter === 'marketing-outreach'}
+            count={rows.filter((r) => (r.tags ?? []).includes('marketing-outreach')).length}
+            onClick={() => setTagFilter('marketing-outreach')}
+          />
         </div>
       </div>
 
