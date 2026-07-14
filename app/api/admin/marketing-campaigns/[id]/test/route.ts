@@ -35,9 +35,12 @@ export const POST = withErrorHandling(async (
     SELECT publication FROM marketing_campaigns WHERE id = ${id}
   `) as unknown as Array<{ publication: string | null }>;
   if (campRows.length === 0) throw new ApiError(404, 'campaign not found');
+  // marketing_campaigns.publication is stored as 'austin' | 'san_antonio' | 'both'
+  // (see lib/server/schemas keys). Map to the brand the renderer expects.
+  const pub = campRows[0].publication;
   const brand: 'realtyline' | 'newsline' | 'caxton' =
-    campRows[0].publication === 'newsline' ? 'newsline'
-    : campRows[0].publication === 'realtyline' ? 'realtyline'
+    pub === 'san_antonio' ? 'newsline'
+    : pub === 'both' ? 'caxton'
     : 'realtyline';
 
   // Build a one-off recipient using the test address + sample placeholders.

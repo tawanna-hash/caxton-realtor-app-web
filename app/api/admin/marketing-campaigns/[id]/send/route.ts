@@ -88,9 +88,11 @@ export const POST = withErrorHandling(async (
 
   // Otherwise, dispatch now. We do this synchronously so the API returns
   // accurate counts. Resend pacing is built into dispatchOutreach.
+  // marketing_campaigns.publication is stored as 'austin' | 'san_antonio' | 'both'.
+  // Map to the brand the renderer expects.
   const brand: 'realtyline' | 'newsline' | 'caxton' =
-    camp.publication === 'newsline' ? 'newsline'
-    : camp.publication === 'realtyline' ? 'realtyline'
+    camp.publication === 'san_antonio' ? 'newsline'
+    : camp.publication === 'both' ? 'caxton'
     : 'realtyline';
 
   const { attachments: resendAttachments } = await fetchBlobAttachments(input.attachments);
