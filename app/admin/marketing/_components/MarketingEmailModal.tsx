@@ -67,6 +67,64 @@ function bodyToHtml(body: string): string {
   ).join('\n');
 }
 
+// ── Autosave draft ───────────────────────────────────────────────────
+// Global draft — one shared composer state across all campaigns. Rehydrated
+// on mount when `open` flips true. Cleared after a successful real send.
+const DRAFT_KEY = 'marketing-composer-draft';
+const DRAFT_VERSION = 1;
+
+interface ComposerDraft {
+  v: number;
+  subject: string;
+  body: string;
+  previewText: string;
+  fromName: string;
+  replyTo: string;
+  testTo: string;
+  sources: OutreachAudienceSource[];
+  advertiserFilter: AudienceFilter;
+  subscriberFilter: SubscriberFilter;
+  manualText: string;
+  mode: 'send_now' | 'schedule';
+  scheduledFor: string;
+  attachments: Array<{ filename: string; url: string; content_type: string; size: number }>;
+  savedAt: number;
+}
+
+function loadDraft(): ComposerDraft | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as ComposerDraft;
+    if (parsed.v !== DRAFT_VERSION) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveDraft(draft: Omit<ComposerDraft, 'v' | 'savedAt'>) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(
+      DRAFT_KEY,
+      JSON.stringify({ ...draft, v: DRAFT_VERSION, savedAt: Date.now() }),
+    );
+  } catch {
+    // quota / disabled storage — silently skip
+  }
+}
+
+function clearDraft() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 // ── Component ────────────────────────────────────────────────────────
 export default function MarketingEmailModal({ open, onClose, campaign, adminEmail, onSent }: Props) {
   // Audience source toggles
@@ -80,6 +138,8 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
   const [attachments, setAttachments] = useState<Array<{ filename: string; url: string; content_type: string; size: number }>>([]);
   const [attaching, setAttaching] = useState(false);
   const [attachError, setAttachError] = useState<string | null>(null);
+  const [draftRestored, setDraftRestored] = useState<boolean>(false);
+  const didHydrateRef = useRef<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   function formatBytes(n: number): string {
@@ -147,6 +207,71 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [testTo, setTestTo] = useState<string>(adminEmail ?? '');
+
+  // ── Autosave: hydrate on first open ────────────────────────────
+  // Batch-restore all fields from localStorage. Wrapped in a callback
+  // so the setState calls happen inside a handler-style function, not
+  // directly within the effect body (satisfies set-state-in-effect).
+  const hydrateFromDraft = useCallback(() => {
+    const draft = loadDraft();
+    if (!draft) return;
+    setSubject(draft.subject);
+    setBody(draft.body);
+    setPreviewText(draft.previewText);
+    setFromName(draft.fromName);
+    setReplyTo(draft.replyTo);
+    setTestTo(draft.testTo);
+    setSources(draft.sources);
+    setAdvertiserFilter(draft.advertiserFilter);
+    setSubscriberFilter(draft.subscriberFilter);
+    setManualText(draft.manualText);
+    setMode(draft.mode);
+    setScheduledFor(draft.scheduledFor);
+    setAttachments(draft.attachments);
+    setDraftRestored(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open || didHydrateRef.current) return;
+    didHydrateRef.current = true;
+    hydrateFromDraft();
+  }, [open, hydrateFromDraft]);
+
+  // ── Autosave: debounced write on every change ──────────────────
+  useEffect(() => {
+    if (!open) return;
+    const t = window.setTimeout(() => {
+      saveDraft({
+        subject, body, previewText, fromName, replyTo, testTo,
+        sources, advertiserFilter, subscriberFilter, manualText,
+        mode, scheduledFor, attachments,
+      });
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [
+    open, subject, body, previewText, fromName, replyTo, testTo,
+    sources, advertiserFilter, subscriberFilter, manualText,
+    mode, scheduledFor, attachments,
+  ]);
+
+  function discardDraft() {
+    if (!window.confirm('Discard the current draft? This cannot be undone.')) return;
+    clearDraft();
+    setSubject('');
+    setBody('');
+    setPreviewText('');
+    setFromName('RealtyLine');
+    setReplyTo(adminEmail ?? '');
+    setTestTo(adminEmail ?? '');
+    setSources(['advertisers']);
+    setAdvertiserFilter(campaign.audience_filter ?? {});
+    setSubscriberFilter({ status: 'active' });
+    setManualText('');
+    setMode('send_now');
+    setScheduledFor('');
+    setAttachments([]);
+    setDraftRestored(false);
+  }
 
   // Parse manual emails (one per line or comma-separated).
   const manualEmails = useMemo(() => {
@@ -277,6 +402,8 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
         } else {
           setSuccess(`Sent ${j.sent} of ${j.total}. ${j.failed > 0 ? `${j.failed} failed.` : ''}`);
         }
+        clearDraft();
+        setDraftRestored(false);
         onSent?.();
       } else {
         const j = await res.json().catch(() => ({}));
@@ -301,13 +428,27 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
             <div className="text-xs uppercase tracking-[0.18em] text-gray-500">Marketing email</div>
             <h2 className="font-serif text-xl text-gray-900">{campaign.name}</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-            aria-label="Close"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            {draftRestored && (
+              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
+                Draft restored
+              </span>
+            )}
+            <button
+              onClick={discardDraft}
+              className="rounded-md px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+              title="Discard the saved draft and reset all fields"
+            >
+              Discard draft
+            </button>
+            <button
+              onClick={onClose}
+              className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {/* Body */}
