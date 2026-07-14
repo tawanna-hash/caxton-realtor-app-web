@@ -143,6 +143,13 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   // Indexes
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_type   ON advertisers(type)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_status ON advertisers(status)`);
+  // ── Marketing outreach tracking (Session 24) ─────────────────────
+  // Populated by lib/server/marketing-prospect-sync.ts after each
+  // real dispatchOutreach send. Never touched by dry-runs / tests.
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS last_contacted_at timestamptz`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS outreach_count integer NOT NULL DEFAULT 0`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_last_contacted ON advertisers(last_contacted_at DESC NULLS LAST)`);
+
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_email  ON advertisers(lower(contact_email))`);
 
   // ============================================================

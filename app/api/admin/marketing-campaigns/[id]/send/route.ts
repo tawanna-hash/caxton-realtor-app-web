@@ -96,6 +96,7 @@ export const POST = withErrorHandling(async (
   const { attachments: resendAttachments } = await fetchBlobAttachments(input.attachments);
   const result = await dispatchOutreach({
     outreachId: outreach.id,
+      sourceLabel: Array.isArray(input.sources) ? input.sources.join("+") : "outreach",
     subject: input.subject,
     body: input.body,
     previewText: input.preview_text,

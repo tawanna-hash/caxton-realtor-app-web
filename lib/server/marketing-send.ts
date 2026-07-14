@@ -6,6 +6,7 @@
 import { getSql } from '@/lib/db';
 import { resolveAudience, type AudienceFilter, type OutreachAudienceSource } from '@/lib/marketing-campaigns';
 import { sendOneRecipient, makeUnsubToken } from '@/lib/marketing-email';
+import { syncProspectFromOutreach } from '@/lib/server/marketing-prospect-sync';
 
 export interface MaterializeAudienceInput {
   sources: OutreachAudienceSource[];
@@ -164,6 +165,7 @@ export interface DispatchInput {
   repName?: string | null;
   brand?: 'realtyline' | 'newsline' | 'caxton';
   attachments?: Array<{ filename: string; content: string; contentType?: string }>;
+  sourceLabel?: string;
 }
 
 export interface DispatchResult {
@@ -214,6 +216,18 @@ export async function dispatchOutreach(input: DispatchInput): Promise<DispatchRe
         SET status = 'sent', sent_at = now(), message_id = ${res.messageId ?? null}
         WHERE id = ${r.id}
       `;
+      // CRM sync — best-effort, never fails the send loop.
+      try {
+        await syncProspectFromOutreach({
+          email: r.email,
+          first_name: r.first_name,
+          last_name: r.last_name,
+          company: r.company,
+          source: input.sourceLabel ?? 'outreach',
+        });
+      } catch (err) {
+        console.warn('[dispatchOutreach] prospect sync failed for', r.email, err);
+      }
     } else {
       failed++;
       await sql`
