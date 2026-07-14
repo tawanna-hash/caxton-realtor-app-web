@@ -47,6 +47,26 @@ const TOKENS = [
   { key: '{{rep_name}}',   label: 'Sender (you)',         sample: 'Your name' },
 ];
 
+
+// Map campaign publication -> brand display info. Mirrors the server-side
+// brand mapping in the send + test routes so the composer preview and the
+// eventual email agree.
+function brandForPublication(pub: string | null | undefined): {
+  key: 'realtyline' | 'newsline' | 'caxton';
+  name: string;
+  tagline: string;
+  badgeTone: string;
+} {
+  switch (pub) {
+    case 'san_antonio':
+      return { key: 'newsline', name: 'Newsline San Antonio', tagline: 'San Antonio real estate news', badgeTone: 'bg-amber-100 text-amber-900 border-amber-300' };
+    case 'both':
+      return { key: 'caxton', name: 'Caxton Publications', tagline: 'RealtyLine \u00b7 Newsline San Antonio', badgeTone: 'bg-purple-100 text-purple-900 border-purple-300' };
+    default:
+      return { key: 'realtyline', name: 'RealtyLine', tagline: 'Advertise Where REALTORS\u00ae Flip The Pages', badgeTone: 'bg-blue-100 text-blue-900 border-blue-300' };
+  }
+}
+
 // ── Token substitution (mirrors lib/marketing-email.ts) ─────────────
 function substituteTokens(input: string, ctx: Record<string, string>): string {
   return input.replace(/\{\{\s*([a-z_]+)\s*\}\}/gi, (_m, key: string) => {
@@ -134,7 +154,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
   const [manualText, setManualText] = useState('');
 
   // Compose
-  const [fromName, setFromName] = useState('RealtyLine');
+  const [fromName, setFromName] = useState(() => brandForPublication(campaign.publication).name);
   const [attachments, setAttachments] = useState<Array<{ filename: string; url: string; content_type: string; size: number }>>([]);
   const [attaching, setAttaching] = useState(false);
   const [attachError, setAttachError] = useState<string | null>(null);
@@ -260,7 +280,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     setSubject('');
     setBody('');
     setPreviewText('');
-    setFromName('RealtyLine');
+    setFromName(brandForPublication(campaign.publication).name);
     setReplyTo(adminEmail ?? '');
     setTestTo(adminEmail ?? '');
     setSources(['advertisers']);
@@ -337,7 +357,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     full_name:  [sample?.first_name, sample?.last_name].filter(Boolean).join(' ') || 'Sam Sample',
     company:    sample?.company ?? 'Acme Realty',
     email:      sample?.email ?? 'sam@acme.test',
-    rep_name:   adminEmail ?? 'The RealtyLine Team',
+    rep_name:   adminEmail ?? `The ${brandForPublication(campaign.publication).name} Team`,
   };
   const renderedSubject = substituteTokens(subject || '(no subject)', tokenCtx);
   const renderedBody    = bodyToHtml(substituteTokens(body, tokenCtx));
@@ -426,7 +446,14 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <div>
             <div className="text-xs uppercase tracking-[0.18em] text-gray-500">Marketing email</div>
-            <h2 className="font-serif text-xl text-gray-900">{campaign.name}</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-serif text-xl text-gray-900">{campaign.name}</h2>
+              {(() => { const b = brandForPublication(campaign.publication); return (
+                <span className={`text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded border ${b.badgeTone}`} title={`Sends as ${b.name}`}>
+                  {b.name}
+                </span>
+              ); })()}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {draftRestored && (
@@ -763,9 +790,9 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
             <div className="flex-1 overflow-y-auto p-6">
               <div className="mx-auto max-w-[600px] rounded-lg bg-white shadow-sm overflow-hidden">
                 <div className="bg-brand-700 px-6 py-4 text-white">
-                  <div className="font-serif text-lg">{fromName || 'RealtyLine'}</div>
+                  <div className="font-serif text-lg">{fromName || brandForPublication(campaign.publication).name}</div>
                   <div className="text-xs opacity-80">
-                    {campaign.publication === 'newsline' ? 'San Antonio real estate news' : 'Advertise Where REALTORS\u00ae Flip The Pages'}
+                    {brandForPublication(campaign.publication).tagline}
                   </div>
                 </div>
                 <div className="px-6 py-3 border-b border-gray-100">
@@ -777,7 +804,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
                   dangerouslySetInnerHTML={{ __html: renderedBody }}
                 />
                 <div className="border-t border-gray-100 px-6 py-3 text-[11px] text-gray-500">
-                  You&apos;re receiving this because you&apos;re connected with {fromName || 'RealtyLine'}.
+                  You&apos;re receiving this because you&apos;re connected with {fromName || brandForPublication(campaign.publication).name}.
                   {' '}<u>Unsubscribe</u> · Caxton Publications, Austin, TX
                 </div>
               </div>
