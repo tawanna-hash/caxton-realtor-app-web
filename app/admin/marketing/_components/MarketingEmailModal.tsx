@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MarketingCampaign, AudienceFilter, OutreachAudienceSource } from '@/lib/marketing-campaigns';
 import RichTextEditor from './RichTextEditor';
+import { upload } from '@vercel/blob/client';
 
 // ── Types ────────────────────────────────────────────────────────────
 type SubscriberFilter = {
@@ -76,8 +77,9 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
 
   // Compose
   const [fromName, setFromName] = useState('RealtyLine');
-  const [attachments, setAttachments] = useState<Array<{ filename: string; content_base64: string; content_type: string; size: number }>>([]);
+  const [attachments, setAttachments] = useState<Array<{ filename: string; url: string; content_type: string; size: number }>>([]);
   const [attaching, setAttaching] = useState(false);
+  const [attachError, setAttachError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   function formatBytes(n: number): string {
@@ -90,22 +92,27 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
   async function addFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     setAttaching(true);
+    setAttachError(null);
     try {
       const arr = Array.from(files);
-      const encoded = await Promise.all(arr.map(async (f) => {
-        const buf = await f.arrayBuffer();
-        const bytes = new Uint8Array(buf);
-        let bin = '';
-        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-        const content_base64 = btoa(bin);
+      const uploaded = await Promise.all(arr.map(async (f) => {
+        // Upload direct to Vercel Blob (bypasses the 4.5MB route ingress cap).
+        const blob = await upload(`marketing-attachments/${Date.now()}-${f.name}`, f, {
+          access: 'public',
+          handleUploadUrl: '/api/admin/marketing-attachments/upload-url',
+          contentType: f.type || 'application/octet-stream',
+        });
         return {
           filename: f.name,
-          content_base64,
+          url: blob.url,
           content_type: f.type || 'application/octet-stream',
           size: f.size,
         };
       }));
-      setAttachments((prev) => [...prev, ...encoded]);
+      setAttachments((prev) => [...prev, ...uploaded]);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'upload failed';
+      setAttachError(msg);
     } finally {
       setAttaching(false);
     }
@@ -118,7 +125,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
   const attachmentsTotalBytes = attachments.reduce((sum, a) => sum + a.size, 0);
   const attachmentsPayload = attachments.map((a) => ({
     filename: a.filename,
-    content_base64: a.content_base64,
+    url: a.url,
     content_type: a.content_type,
   }));
   const [replyTo, setReplyTo]   = useState<string>(adminEmail ?? '');
@@ -597,6 +604,9 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
                 <p className="mt-2 text-xs text-amber-700">
                   Heads up: Resend caps total attachment payload around 40&nbsp;MB per email. Sends over that limit will fail.
                 </p>
+              )}
+              {attachError && (
+                <p className="mt-2 text-xs text-red-700">Upload failed: {attachError}</p>
               )}
             </section>
           </div>

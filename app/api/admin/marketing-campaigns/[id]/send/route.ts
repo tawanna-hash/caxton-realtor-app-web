@@ -14,6 +14,7 @@ import { parseJson } from '@/lib/server/schemas/_common';
 import { getSql, ensureSchema } from '@/lib/db';
 import { sendOutreachSchema } from '@/lib/server/schemas/marketing-outreach';
 import { materializeAudience, insertRecipientsLedger, dispatchOutreach } from '@/lib/server/marketing-send';
+import { fetchBlobAttachments } from '@/lib/server/blob-fetch';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -92,6 +93,7 @@ export const POST = withErrorHandling(async (
     : camp.publication === 'realtyline' ? 'realtyline'
     : 'realtyline';
 
+  const { attachments: resendAttachments } = await fetchBlobAttachments(input.attachments);
   const result = await dispatchOutreach({
     outreachId: outreach.id,
     subject: input.subject,
@@ -101,11 +103,7 @@ export const POST = withErrorHandling(async (
     replyTo: input.reply_to,
     repName: admin.email ?? null,
     brand,
-    attachments: input.attachments?.map((a) => ({
-      filename: a.filename,
-      content: a.content_base64,
-      contentType: a.content_type,
-    })),
+    attachments: resendAttachments.length > 0 ? resendAttachments : undefined,
   });
 
   return NextResponse.json({

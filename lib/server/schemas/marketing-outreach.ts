@@ -33,13 +33,14 @@ export const subscriberFilterSchema = z.object({
 // Email regex (RFC 5322-lite, good enough for opt-in marketing entry).
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// ── Email attachment payload (base64) ─────────────────────────────
-// filename: shown in the recipient's mail client.
-// content_base64: raw base64 (no data: prefix).
-// content_type: MIME type — Resend will sniff if omitted.
+// ── Email attachment payload (remote Vercel Blob URL) ─────────────
+// The client uploads each file directly to Vercel Blob (bypassing the
+// 4.5MB Vercel-route ingress cap), then posts only the resulting URLs
+// here. Server-side, fetchBlobAttachments() re-fetches each URL and
+// converts to Resend's base64 shape.
 export const emailAttachmentSchema = z.object({
   filename: z.string().trim().min(1).max(255),
-  content_base64: z.string().min(1),
+  url: z.string().url().max(2000),
   content_type: z.string().trim().max(200).optional(),
 });
 export type EmailAttachmentInput = z.infer<typeof emailAttachmentSchema>;

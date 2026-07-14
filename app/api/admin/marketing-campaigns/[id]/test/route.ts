@@ -13,6 +13,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { testSendSchema } from '@/lib/server/schemas/marketing-outreach';
 import { buildEmail } from '@/lib/marketing-email';
 import { sendEmail } from '@/lib/email';
+import { fetchBlobAttachments } from '@/lib/server/blob-fetch';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,17 +63,14 @@ export const POST = withErrorHandling(async (
     ? `${input.from_name} <${(process.env.EMAIL_FROM ?? 'hello@myrealtyline.com').replace(/^.*<|>$/g, '')}>`
     : undefined;
 
+  const { attachments: resendAttachments } = await fetchBlobAttachments(input.attachments);
   const res = await sendEmail({
     to: input.to,
     from,
     replyTo: input.reply_to,
     subject: built.subject,
     html: built.html,
-    attachments: input.attachments?.map((a) => ({
-      filename: a.filename,
-      content: a.content_base64,
-      contentType: a.content_type,
-    })),
+    attachments: resendAttachments.length > 0 ? resendAttachments : undefined,
   });
   if (!res.ok) throw new ApiError(502, `Resend send failed: ${res.error}`);
 
