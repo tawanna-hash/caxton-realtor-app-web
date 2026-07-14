@@ -232,7 +232,8 @@ export default function CrmClient({ initialRows }: Props) {
           <div className="col-span-2">Publication</div>
           <div className="col-span-2">Hotspots / 30d</div>
           <div className="col-span-1">Gate</div>
-          <div className="col-span-3 text-right">Actions</div>
+          <div className="col-span-1">Opens</div>
+          <div className="col-span-2 text-right">Actions</div>
         </div>
 
         {filtered.length === 0 ? (
@@ -341,7 +342,17 @@ function CrmRow({
           </span>
         )}
       </div>
-      <div className="col-span-3 flex items-center justify-end gap-1.5 flex-wrap">
+      <div className="col-span-1 text-xs">
+        {row.open_count && row.open_count > 0 ? (
+          <div className="flex flex-col leading-tight">
+            <span className="font-medium text-emerald-700">{row.open_count}</span>
+            <span className="text-gray-500">{formatShortDate(row.last_opened_at)}</span>
+          </div>
+        ) : (
+          <span className="text-gray-400">-</span>
+        )}
+      </div>
+      <div className="col-span-2 flex items-center justify-end gap-1.5 flex-wrap">
         <button
           type="button"
           onClick={onCopyLink}
@@ -367,6 +378,14 @@ function CrmRow({
       </div>
     </div>
   );
+}
+
+
+function formatShortDate(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function publicationTone(key: PublicationKey): string {
