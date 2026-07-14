@@ -98,6 +98,14 @@ export default function CrmClient({ initialRows }: Props) {
   }, [rows, query, statusFilter, typeFilter, pubFilter, tagFilter]);
 
   // ── counts for filter chips ─────────────────────────────────────
+  // Recent bounces — any advertiser with a bounce flag set. We keep this
+  // pure (no Date.now) so React can dedupe renders; the webhook sets the
+  // flag and it stays visible until the user resolves the row.
+  const recentBounces = useMemo(
+    () => rows.filter((r) => !!r.last_bounced_at),
+    [rows],
+  );
+
   const statusCounts = useMemo(() => {
     const c: Record<AdvertiserStatus, number> = { prospect: 0, advertiser: 0, archived: 0 };
     for (const r of rows) c[r.status ?? 'prospect'] = (c[r.status ?? 'prospect'] ?? 0) + 1;
@@ -196,6 +204,28 @@ export default function CrmClient({ initialRows }: Props) {
           </select>
         </div>
 
+        {recentBounces.length > 0 && (
+            <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900 flex items-start gap-3">
+            <span className="text-lg leading-none">⚠</span>
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold">
+                {recentBounces.length} advertiser{recentBounces.length === 1 ? '' : 's'} with recent bounce{recentBounces.length === 1 ? '' : 's'}
+              </div>
+              <div className="mt-1 text-xs text-red-800 truncate">
+                {recentBounces.slice(0, 5).map((r) => r.contact_email ?? r.name).filter(Boolean).join(', ')}
+                {recentBounces.length > 5 ? ` … (+${recentBounces.length - 5} more)` : ''}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setTagFilter(tagFilter === '__bounced__' ? 'all' : '__bounced__')}
+              className="text-xs font-semibold px-3 py-1.5 rounded-md border border-red-400 bg-white hover:bg-red-100 text-red-800 whitespace-nowrap"
+            >
+              {tagFilter === '__bounced__' ? 'Clear filter' : 'View all bounces'}
+            </button>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2">
           <StatusChip label="All" active={statusFilter === 'all'} count={rows.length} onClick={() => setStatusFilter('all')} />
           {STATUS_OPTIONS.map((s) => (
@@ -220,6 +250,13 @@ export default function CrmClient({ initialRows }: Props) {
             active={tagFilter === 'marketing-outreach'}
             count={rows.filter((r) => (r.tags ?? []).includes('marketing-outreach')).length}
             onClick={() => setTagFilter('marketing-outreach')}
+          />
+          <StatusChip
+            label="Bounced"
+            tone="bg-red-50 text-red-800 border-red-300"
+            active={tagFilter === '__bounced__'}
+            count={rows.filter((r) => !!r.last_bounced_at).length}
+            onClick={() => setTagFilter(tagFilter === '__bounced__' ? 'all' : '__bounced__')}
           />
         </div>
       </div>
@@ -343,7 +380,17 @@ function CrmRow({
         )}
       </div>
       <div className="col-span-1 text-xs">
-        {row.open_count && row.open_count > 0 ? (
+        {row.last_bounced_at ? (
+          <div className="flex flex-col leading-tight gap-0.5">
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-800 border border-red-300 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider w-fit"
+              title={`Last bounce: ${row.last_bounce_type ?? 'unknown'} on ${formatShortDate(row.last_bounced_at)}`}
+            >
+              Bounced
+            </span>
+            <span className="text-gray-500">{formatShortDate(row.last_bounced_at)}</span>
+          </div>
+        ) : row.open_count && row.open_count > 0 ? (
           <div className="flex flex-col leading-tight">
             <span className="font-medium text-emerald-700">{row.open_count}</span>
             <span className="text-gray-500">{formatShortDate(row.last_opened_at)}</span>

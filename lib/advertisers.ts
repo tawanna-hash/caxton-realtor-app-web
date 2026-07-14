@@ -82,6 +82,9 @@ export interface Advertiser {
   outreach_count?: number | null;
   last_opened_at?: string | null;
   open_count?: number | null;
+  last_bounced_at?: string | null;
+  bounce_count?: number | null;
+  last_bounce_type?: string | null;
 
   // Default footer template applied to downloadable tools (calculator PDFs).
   // Valid IDs live in lib/footer-templates.ts. The app coerces unknown values

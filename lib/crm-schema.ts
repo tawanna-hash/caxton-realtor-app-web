@@ -151,6 +151,12 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS last_opened_at timestamptz`);
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS open_count integer NOT NULL DEFAULT 0`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_last_opened ON advertisers(last_opened_at DESC NULLS LAST)`);
+  // Bounce tracking — rolled up from Resend webhook when an outreach email
+  // hard-bounces. Also used for the CRM row badge + admin banner.
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS last_bounced_at timestamptz`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS bounce_count integer NOT NULL DEFAULT 0`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS last_bounce_type text`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_last_bounced ON advertisers(last_bounced_at DESC NULLS LAST)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_last_contacted ON advertisers(last_contacted_at DESC NULLS LAST)`);
 
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_advertisers_email  ON advertisers(lower(contact_email))`);

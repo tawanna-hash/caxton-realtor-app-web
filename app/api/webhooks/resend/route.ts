@@ -23,6 +23,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { exec } from '@/lib/server/db/neon';
 import { logger } from '@/lib/server/logger';
+import { handleBounceAlert } from '@/lib/server/bounce-alert';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -147,6 +148,13 @@ export async function POST(req: NextRequest) {
           },
           '[resend-webhook] email.bounced processed',
         );
+        // Roll up to advertiser + fire admin alert (best-effort, never throws)
+        await handleBounceAlert({ emailId, bounceType }).catch((err) => {
+          logger.error(
+            { err: err instanceof Error ? err.message : 'unknown', emailId },
+            '[resend-webhook] bounce-alert handler failed',
+          );
+        });
         break;
       }
 
