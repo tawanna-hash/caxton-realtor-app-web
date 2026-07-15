@@ -1034,6 +1034,72 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   // self-serve booking was digital).
   await step(() => sql`ALTER TABLE ad_campaigns ADD COLUMN IF NOT EXISTS channel    text NOT NULL DEFAULT 'digital'`);
   await step(() => sql`ALTER TABLE agreements   ADD COLUMN IF NOT EXISTS channel    text NOT NULL DEFAULT 'digital'`);
+
+  // ─── Commit 5: insertion_orders + tearsheets ────────────────────────────
+  // IOs sit between agreements (money terms) and ad_campaigns (what runs).
+  // Tearsheets are proof-of-run, attached to an IO + optionally a campaign.
+  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS io_number          text UNIQUE`);
+  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS io_sent_at         timestamptz`);
+  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS io_acknowledged_at timestamptz`);
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS insertion_orders (
+      id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      io_number       text UNIQUE NOT NULL,
+      agreement_id    uuid REFERENCES agreements(id) ON DELETE SET NULL,
+      advertiser_id   int  REFERENCES advertisers(id) ON DELETE SET NULL,
+      campaign_ids    uuid[] NOT NULL DEFAULT ARRAY[]::uuid[],
+      channel         text NOT NULL DEFAULT 'digital',
+      publication     text,
+      flight_start    date,
+      flight_end      date,
+      line_items      jsonb NOT NULL DEFAULT '[]'::jsonb,
+      total_cents     int  NOT NULL DEFAULT 0,
+      status          text NOT NULL DEFAULT 'draft',
+      notes           text,
+      sent_at         timestamptz,
+      acknowledged_at timestamptz,
+      created_by      text,
+      created_at      timestamptz NOT NULL DEFAULT now(),
+      updated_at      timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_io_advertiser ON insertion_orders(advertiser_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_io_agreement  ON insertion_orders(agreement_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_io_status     ON insertion_orders(status)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_io_channel    ON insertion_orders(channel)`);
+
+  // Simple counter table for IO-2026-0001 style numbering.
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS io_counters (
+      year int PRIMARY KEY,
+      last_seq int NOT NULL DEFAULT 0
+    )
+  `);
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS tearsheets (
+      id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      io_id          uuid REFERENCES insertion_orders(id) ON DELETE CASCADE,
+      campaign_id    uuid REFERENCES ad_campaigns(id) ON DELETE SET NULL,
+      advertiser_id  int  REFERENCES advertisers(id) ON DELETE SET NULL,
+      channel        text NOT NULL DEFAULT 'digital',
+      publication    text,
+      issue_date     date,
+      issue_label    text,
+      file_url       text,
+      file_type      text,
+      status         text NOT NULL DEFAULT 'pending',
+      sent_to        text,
+      sent_at        timestamptz,
+      created_by     text,
+      created_at     timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_ts_advertiser ON tearsheets(advertiser_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_ts_io         ON tearsheets(io_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_ts_campaign   ON tearsheets(campaign_id)`);
+
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_ad_campaigns_channel ON ad_campaigns(channel)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_channel    ON agreements(channel)`);
 }
