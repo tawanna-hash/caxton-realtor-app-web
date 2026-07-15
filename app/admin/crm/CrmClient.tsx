@@ -32,6 +32,7 @@ import {
 } from '@/lib/publication-theme';
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 import LocationsStaffEditor from './LocationsStaffEditor';
+import AdvertiserChannelTabs from './AdvertiserChannelTabs';
 import AdvertiserImageUploader from '@/components/AdvertiserImageUploader';
 import { MARKETS, MARKET_META, isMarketLive, type Market } from '@/lib/types/markets';
 import PageTitle from '@/components/ui/PageTitle';
@@ -921,6 +922,9 @@ function EditDrawer({
         </div>
 
         <div className="p-6 space-y-6">
+          {/* ── Channel activity tabs (Print / Digital / Email / App) ── */}
+          <AdvertiserChannelTabs advertiserId={row.id} />
+
           {/* ── Status (top-level select, per spec) ─────────────────── */}
           <Section title="Status">
             <div className="grid grid-cols-2 gap-3">
