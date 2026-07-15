@@ -14,7 +14,7 @@
 // page reads + writes the same row.
 
 import { useCallback, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import type {
   AdvertiserCrmRow,
@@ -33,6 +33,7 @@ import {
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 import LocationsStaffEditor from './LocationsStaffEditor';
 import AdvertiserImageUploader from '@/components/AdvertiserImageUploader';
+import { MARKETS, MARKET_META, isMarketLive, type Market } from '@/lib/types/markets';
 import PageTitle from '@/components/ui/PageTitle';
 import {
   ADVERTISER_HEADER_STYLES,
@@ -67,6 +68,70 @@ export default function CrmClient({ initialRows }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // ── Market tabs <-> ?market= URL param <-> pubFilter ─────────────
+  // Dashboard cards deep-link here with ?market=austin etc.; the tab
+  // reflects the current publication filter and pushes the URL when
+  // the user clicks a different tab. We keep pubFilter as the source
+  // of truth for filtering (chips already read from it).
+  //
+  // Rather than mirroring URL -> state with an effect (which triggers a
+  // cascading render and lints against react-hooks/set-state-in-effect),
+  // we derive activeMarket directly from either the URL or pubFilter
+  // per render and let handleMarketTab keep them in sync when the user
+  // clicks a tab.
+  const marketFromUrl: Market | null = (() => {
+    const raw = searchParams?.get('market');
+    if (!raw) return null;
+    return (MARKETS as readonly string[]).includes(raw) ? (raw as Market) : null;
+  })();
+
+  const activeMarket: Market | 'all' = (() => {
+    if (marketFromUrl) return marketFromUrl;
+    if (pubFilter === 'all') return 'all';
+    for (const m of MARKETS) {
+      if ((MARKET_META[m].publication as string) === (pubFilter as string)) return m;
+    }
+    return 'all';
+  })();
+
+  const handleMarketTab = useCallback(
+    (market: Market | 'all') => {
+      if (market === 'all') {
+        setPubFilter('all');
+        router.replace('/admin/crm');
+        return;
+      }
+      const pub = MARKET_META[market].publication;
+      // Cast is safe: MARKET_META publication brand slugs are a subset of
+      // PublicationKey; the type refinement isn't tracked through the
+      // record lookup so we assert it here.
+      setPubFilter(pub as unknown as PublicationKey);
+      router.replace(`/admin/crm?market=${market}`);
+    },
+    [router],
+  );
+
+  const marketCounts = useMemo(() => {
+    const counts: Record<Market | 'all', number> = {
+      all: rows.length,
+      austin: 0,
+      san_antonio: 0,
+      houston: 0,
+      dallas: 0,
+    };
+    for (const r of rows) {
+      const advPubs = parsePublications(r.publication);
+      for (const m of MARKETS) {
+        const brand = MARKET_META[m].publication as unknown as PublicationKey;
+        if (advPubs.includes(brand)) {
+          counts[m] += 1;
+        }
+      }
+    }
+    return counts;
+  }, [rows]);
 
   const flash = useCallback((msg: string) => {
     setToast(msg);
@@ -176,6 +241,65 @@ export default function CrmClient({ initialRows }: Props) {
           {error}
         </div>
       )}
+
+      {/* Market tabs ──────────────────────────────────────────── */}
+      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Markets">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeMarket === 'all'}
+          onClick={() => handleMarketTab('all')}
+          className={
+            'px-4 py-2 rounded-md text-sm font-medium border transition-colors ' +
+            (activeMarket === 'all'
+              ? 'bg-gray-900 text-white border-gray-900'
+              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50')
+          }
+        >
+          All markets
+          <span className={
+            'ml-2 tabular-nums text-xs ' +
+            (activeMarket === 'all' ? 'text-gray-300' : 'text-gray-500')
+          }>
+            {marketCounts.all}
+          </span>
+        </button>
+        {MARKETS.map((market) => {
+          const meta = MARKET_META[market];
+          const live = isMarketLive(market);
+          const isActive = activeMarket === market;
+          return (
+            <button
+              key={market}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => handleMarketTab(market)}
+              className={
+                'px-4 py-2 rounded-md text-sm font-medium border transition-colors ' +
+                (isActive
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50') +
+                (live ? '' : ' opacity-60')
+              }
+              title={live ? undefined : `${meta.label} — coming soon`}
+            >
+              {meta.label}
+              {!live && (
+                <span className="ml-2 text-[10px] uppercase tracking-wider text-amber-600 font-semibold">
+                  Soon
+                </span>
+              )}
+              <span className={
+                'ml-2 tabular-nums text-xs ' +
+                (isActive ? 'text-gray-300' : 'text-gray-500')
+              }>
+                {marketCounts[market]}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       {/* Filters ────────────────────────────────────────────────── */}
       <div className="rounded-md border border-gray-200 bg-white p-4 space-y-3">
