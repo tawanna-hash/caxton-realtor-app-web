@@ -61,6 +61,7 @@ export const GET = withErrorHandling(async () => {
     print: 0,
     digital: 0,
     email: 0,
+    app: 0,
   };
   for (const r of rows) {
     const c = r.channel === 'print' || r.channel === 'email' ? r.channel : 'digital';

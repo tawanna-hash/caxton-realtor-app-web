@@ -209,6 +209,7 @@ export async function countOrdersByChannel(): Promise<Record<AdChannel | 'all', 
     print: 0,
     digital: 0,
     email: 0,
+    app: 0,
   };
   for (const r of rows) {
     const c = asChannel(r.channel);

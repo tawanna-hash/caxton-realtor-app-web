@@ -33,7 +33,7 @@ interface Props {
 }
 
 const FALLBACK: UnreadResponse = {
-  unread: { all: 0, print: 0, digital: 0, email: 0 },
+  unread: { all: 0, print: 0, digital: 0, email: 0, app: 0 },
   total: 0,
 };
 

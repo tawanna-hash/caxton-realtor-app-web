@@ -45,6 +45,7 @@ const CHANNEL_BADGE_CLASS: Record<AdChannel, string> = {
   print: 'bg-rose-50 text-rose-800 border-rose-200',
   digital: 'bg-sky-50 text-sky-800 border-sky-200',
   email: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  app: 'bg-purple-100 text-purple-800 border-purple-200',
 };
 
 const SOURCE_LABEL: Record<OrderSource, string> = {

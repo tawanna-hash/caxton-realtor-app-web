@@ -3,31 +3,35 @@
 // Channel taxonomy for the ad-management funnel.
 //
 //   • PRINT   — Brand [1/3/6/12/12 Plus] packages, sold by issue/duration.
-//   • DIGITAL — APP_AD_SLOTS (the 16 on-site placements), sold by week/month.
+//   • DIGITAL — On-site web placements across realtynewsnow.app, sold by week/month.
 //   • EMAIL   — e-Blast packages (Solo, Weekly inclusion), sold by send.
+//   • APP     — In-app placements inside the iOS / Android RealtyLine + Newsline apps.
 //
 // Every inquiry, agreement, and campaign carries this tag so admin
 // inboxes, pipeline views, and reporting can slice by channel. Keep
 // this file as the single source — UI labels, badges, and routing all
 // import from here.
 
-export type AdChannel = 'print' | 'digital' | 'email';
+export type AdChannel = 'print' | 'digital' | 'email' | 'app';
 
-export const AD_CHANNELS: readonly AdChannel[] = ['print', 'digital', 'email'] as const;
+export const AD_CHANNELS: readonly AdChannel[] = ['print', 'digital', 'email', 'app'] as const;
 
 export const AD_CHANNEL_LABEL: Record<AdChannel, string> = {
   print: 'Print',
   digital: 'Digital',
   email: 'Email',
+  app: 'App',
 };
 
 export const AD_CHANNEL_DESCRIPTION: Record<AdChannel, string> = {
   print:
     'Full-page, half-page, or quarter-page ad in the monthly print + digital-replica edition.',
   digital:
-    'On-site placements across realtynewsnow.app: feed banners, article slots, calendar sponsorships, push, etc.',
+    'On-site placements across realtynewsnow.app: feed banners, article slots, calendar sponsorships, etc.',
   email:
     'Solo or weekly e-Blast to RealtyLine and/or Newsline San Antonio subscribers.',
+  app:
+    'In-app placements inside the iOS and Android RealtyLine + Newsline apps (splash, feed, article, calendar).',
 };
 
 /**
@@ -42,12 +46,13 @@ export function deriveChannelFromSlot(
   const v = slotOrPackageId.toLowerCase();
   if (v.startsWith('brand')) return 'print';
   if (v.startsWith('eblast') || v.startsWith('e-blast')) return 'email';
-  // Everything else in the catalog is a digital app-slot slug.
+  if (v.startsWith('app-') || v.startsWith('app_')) return 'app';
+  // Everything else is an on-site (web) digital placement.
   return 'digital';
 }
 
 export function isAdChannel(v: unknown): v is AdChannel {
-  return v === 'print' || v === 'digital' || v === 'email';
+  return v === 'print' || v === 'digital' || v === 'email' || v === 'app';
 }
 
 /**
@@ -60,5 +65,6 @@ export function deriveChannelFromAgreementType(
 ): AdChannel {
   if (type === 'print_ad') return 'print';
   if (type === 'eblast') return 'email';
+  if (type === 'app_ad') return 'app';
   return 'digital';
 }
