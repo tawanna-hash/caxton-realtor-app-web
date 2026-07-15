@@ -26,6 +26,28 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   const io = await getInsertionOrder(id);
   if (!io) return NextResponse.json({ error: 'not found' }, { status: 404 });
 
+  // If the advertiser/agency provided their own IO PDF, proxy it through
+  // rather than generating our own. Most-recent-upload-wins.
+  if (io.pdf_url) {
+    try {
+      const r = await fetch(io.pdf_url);
+      if (r.ok) {
+        const buf = await r.arrayBuffer();
+        return new NextResponse(Buffer.from(buf), {
+          status: 200,
+          headers: {
+            'content-type': r.headers.get('content-type') ?? 'application/pdf',
+            'content-disposition': `inline; filename="${io.io_number}.pdf"`,
+            'cache-control': 'no-store',
+          },
+        });
+      }
+      // Fall through to generated renderer on non-2xx.
+    } catch {
+      // Fall through to generated renderer on fetch failure.
+    }
+  }
+
   // Advertiser lookup
   let advertiserName = '—';
   let advertiserEmail: string | null = null;

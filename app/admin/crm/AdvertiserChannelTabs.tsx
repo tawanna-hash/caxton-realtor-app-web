@@ -179,47 +179,90 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
     };
   }, [advertiserId, active]);
 
-  const createIo = useCallback(async () => {
-    const flightStart = window.prompt('Flight start date (YYYY-MM-DD):');
-    if (!flightStart) return;
-    const flightEnd = window.prompt('Flight end date (YYYY-MM-DD):');
-    if (!flightEnd) return;
-    const totalStr = window.prompt('Total amount in dollars (e.g. 1200):');
-    if (!totalStr) return;
-    const total_cents = Math.round(parseFloat(totalStr) * 100);
-    if (!Number.isFinite(total_cents) || total_cents <= 0) {
-      alert('Invalid total');
+  /**
+   * Upload an advertiser/agency-provided IO PDF.
+   *
+   * If `existingIoId` is given, attaches the file to that IO (replaces
+   * the existing pdf_url). Otherwise creates a new draft IO first, then
+   * uploads to that new row.
+   */
+  const uploadIoFile = useCallback(
+    async (file: File, existingIoId?: string) => {
+      setIoBusy(true);
+      try {
+        let targetId = existingIoId;
+
+        // No existing IO → create an empty draft first so we can attach
+        // the file to it. Ops can edit the flight dates / total later.
+        if (!targetId) {
+          const createRes = await fetch('/api/admin/insertion-orders', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              advertiser_id: advertiserId,
+              channel: active,
+              status: 'draft',
+            }),
+          });
+          if (!createRes.ok) {
+            const err = (await createRes.json().catch(() => ({}))) as { error?: string };
+            throw new Error(err.error ?? `HTTP ${createRes.status}`);
+          }
+          const created = (await createRes.json()) as { io: InsertionOrderWithAdvertiser };
+          setIos((prev) => [created.io, ...prev]);
+          targetId = created.io.id;
+        }
+
+        const fd = new FormData();
+        fd.append('file', file);
+        const upRes = await fetch(
+          `/api/admin/insertion-orders/${targetId}/upload`,
+          { method: 'POST', body: fd },
+        );
+        if (!upRes.ok) {
+          const err = (await upRes.json().catch(() => ({}))) as { error?: string };
+          throw new Error(err.error ?? `HTTP ${upRes.status}`);
+        }
+        const upData = (await upRes.json()) as { io: InsertionOrderWithAdvertiser };
+        setIos((prev) =>
+          prev.map((io) => (io.id === upData.io.id ? { ...io, ...upData.io } : io)),
+        );
+      } catch (e) {
+        alert(e instanceof Error ? e.message : 'upload failed');
+      } finally {
+        setIoBusy(false);
+      }
+    },
+    [advertiserId, active],
+  );
+
+  /**
+   * Clear the uploaded PDF from an IO. Falls back to the generated
+   * renderer for that IO.
+   */
+  const clearIoPdf = useCallback(async (ioId: string) => {
+    if (!window.confirm('Remove the uploaded IO PDF? The generated version will be used instead.')) {
       return;
     }
-    const notes = window.prompt('Notes (optional):') || null;
-
     setIoBusy(true);
     try {
-      const r = await fetch('/api/admin/insertion-orders', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          advertiser_id: advertiserId,
-          channel: active,
-          flight_start: flightStart,
-          flight_end: flightEnd,
-          total_cents,
-          notes,
-          status: 'draft',
-        }),
+      const r = await fetch(`/api/admin/insertion-orders/${ioId}/upload`, {
+        method: 'DELETE',
       });
       if (!r.ok) {
         const err = (await r.json().catch(() => ({}))) as { error?: string };
         throw new Error(err.error ?? `HTTP ${r.status}`);
       }
       const data = (await r.json()) as { io: InsertionOrderWithAdvertiser };
-      setIos((prev) => [data.io, ...prev]);
+      setIos((prev) =>
+        prev.map((io) => (io.id === data.io.id ? { ...io, ...data.io } : io)),
+      );
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'create failed');
+      alert(e instanceof Error ? e.message : 'clear failed');
     } finally {
       setIoBusy(false);
     }
-  }, [advertiserId, active]);
+  }, []);
 
   const bucket = buckets?.[active] ?? { campaigns: [], agreements: [], inquiries: [] };
   const counts: Record<AdChannel, number> = {
@@ -434,17 +477,29 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
               <h4 className="text-sm font-semibold text-gray-900">
                 Insertion orders ({ios.length})
               </h4>
-              <button
-                type="button"
-                onClick={createIo}
-                disabled={ioBusy}
-                className="text-xs px-2 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+              <label
+                className={
+                  'text-xs px-2 py-1 rounded-md border border-gray-300 bg-white cursor-pointer ' +
+                  (ioBusy ? 'opacity-50 pointer-events-none' : 'hover:bg-gray-50')
+                }
               >
-                {ioBusy ? 'Creating…' : '+ New IO'}
-              </button>
+                {ioBusy ? 'Uploading…' : '+ Upload IO'}
+                <input
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void uploadIoFile(f);
+                    e.currentTarget.value = '';
+                  }}
+                />
+              </label>
             </div>
             {ios.length === 0 ? (
-              <div className="text-xs text-gray-500 py-2">No insertion orders yet.</div>
+              <div className="text-xs text-gray-500 py-2">
+                No insertion orders yet. Upload a PDF from the advertiser or agency.
+              </div>
             ) : (
               <div className="rounded-md border border-gray-200 divide-y divide-gray-100 bg-white">
                 {ios.map((io) => (
@@ -472,6 +527,38 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                     >
                       PDF
                     </a>
+                    <label
+                      className={
+                        'text-xs px-2 py-0.5 rounded border cursor-pointer ' +
+                        (ioBusy
+                          ? 'opacity-50 pointer-events-none border-gray-300 text-gray-500'
+                          : 'border-gray-300 text-gray-700 hover:bg-gray-50')
+                      }
+                      title={io.pdf_url ? 'Replace uploaded PDF' : 'Upload advertiser PDF'}
+                    >
+                      {io.pdf_url ? 'Replace' : 'Upload'}
+                      <input
+                        type="file"
+                        accept="application/pdf,image/png,image/jpeg"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) void uploadIoFile(f, io.id);
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </label>
+                    {io.pdf_url ? (
+                      <button
+                        type="button"
+                        onClick={() => void clearIoPdf(io.id)}
+                        disabled={ioBusy}
+                        className="text-xs px-2 py-0.5 rounded border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                        title="Clear uploaded PDF (revert to generated)"
+                      >
+                        Clear
+                      </button>
+                    ) : null}
                   </div>
                 ))}
               </div>

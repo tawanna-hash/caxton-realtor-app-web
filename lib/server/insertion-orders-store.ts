@@ -43,6 +43,7 @@ interface RawIo {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  pdf_url: string | null;
 }
 
 function normalizeStatus(s: string): IoStatus {
@@ -71,6 +72,7 @@ function normalizeLineItems(v: unknown): IoLineItem[] {
 
 function toIo(r: RawIo): InsertionOrder {
   return {
+    pdf_url: r.pdf_url ?? null,
     id: r.id,
     io_number: r.io_number,
     agreement_id: r.agreement_id,
@@ -299,4 +301,24 @@ export async function listInsertionOrders(
     advertiser_name: r.advertiser_name,
     advertiser_email: r.advertiser_email,
   }));
+}
+
+/**
+ * Overwrite the pdf_url for an IO. Used by the upload endpoint after
+ * pushing the advertiser/agency-provided PDF to Vercel Blob. Passing
+ * null clears the field (fallback to the branded renderer).
+ */
+export async function setInsertionOrderPdfUrl(
+  id: string,
+  pdfUrl: string | null,
+): Promise<InsertionOrder | null> {
+  const rows = await query<RawIo>(
+    `UPDATE insertion_orders
+        SET pdf_url = $2,
+            updated_at = NOW()
+      WHERE id = $1
+      RETURNING *`,
+    [id, pdfUrl],
+  );
+  return rows[0] ? toIo(rows[0]) : null;
 }

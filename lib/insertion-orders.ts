@@ -56,6 +56,7 @@ export interface InsertionOrder {
   notes: string | null;
   sent_at: string | null;
   acknowledged_at: string | null;
+  pdf_url: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;

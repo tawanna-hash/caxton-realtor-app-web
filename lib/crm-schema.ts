@@ -1068,6 +1068,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_io_agreement  ON insertion_orders(agreement_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_io_status     ON insertion_orders(status)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_io_channel    ON insertion_orders(channel)`);
+  await step(() => sql`ALTER TABLE insertion_orders ADD COLUMN IF NOT EXISTS pdf_url text`);
 
   // Simple counter table for IO-2026-0001 style numbering.
   await step(() => sql`
