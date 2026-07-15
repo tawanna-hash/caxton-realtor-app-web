@@ -13,6 +13,7 @@ import {
   IO_STATUS_LABEL,
   TEARSHEET_STATUS_LABEL,
   type InsertionOrderWithAdvertiser,
+  type Tearsheet,
   type TearsheetWithAdvertiser,
 } from '@/lib/insertion-orders';
 import {
@@ -124,6 +125,9 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
   // own tables).
   const [ios, setIos] = useState<InsertionOrderWithAdvertiser[]>([]);
   const [tearsheets, setTearsheets] = useState<TearsheetWithAdvertiser[]>([]);
+  const [tsBusy, setTsBusy] = useState(false);
+  const [tsIssueLabel, setTsIssueLabel] = useState('');
+  const [tsIssueDate, setTsIssueDate] = useState('');
   const [ioBusy, setIoBusy] = useState(false);
 
   useEffect(() => {
@@ -261,6 +265,65 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
       alert(e instanceof Error ? e.message : 'clear failed');
     } finally {
       setIoBusy(false);
+    }
+  }, []);
+
+  /** Upload a new tearsheet. Optionally linked to a specific campaign. */
+  const uploadTearsheet = useCallback(
+    async (file: File, campaignId?: string) => {
+      setTsBusy(true);
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('channel', active);
+        fd.append('advertiser_id', String(advertiserId));
+        if (campaignId) fd.append('campaign_id', campaignId);
+        if (tsIssueLabel.trim()) fd.append('issue_label', tsIssueLabel.trim());
+        if (tsIssueDate.trim()) fd.append('issue_date', tsIssueDate.trim());
+        const r = await fetch('/api/admin/tearsheets/upload', {
+          method: 'POST',
+          body: fd,
+        });
+        if (!r.ok) {
+          const err = (await r.json().catch(() => ({}))) as { error?: string };
+          throw new Error(err.error ?? `HTTP ${r.status}`);
+        }
+        const data = (await r.json()) as { tearsheet: Tearsheet };
+        const withAdv: TearsheetWithAdvertiser = {
+          ...data.tearsheet,
+          advertiser_name: null,
+          advertiser_email: null,
+          io_number: null,
+        };
+        setTearsheets((prev) => [withAdv, ...prev]);
+        setTsIssueLabel('');
+        setTsIssueDate('');
+      } catch (e) {
+        alert(e instanceof Error ? e.message : 'upload failed');
+      } finally {
+        setTsBusy(false);
+      }
+    },
+    [advertiserId, active, tsIssueLabel, tsIssueDate],
+  );
+
+  /** Delete a tearsheet row. */
+  const deleteTearsheet = useCallback(async (tsId: string) => {
+    if (!window.confirm('Delete this tearsheet? This cannot be undone.')) return;
+    setTsBusy(true);
+    try {
+      const r = await fetch(`/api/admin/tearsheets/${tsId}`, {
+        method: 'DELETE',
+      });
+      if (!r.ok) {
+        const err = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error ?? `HTTP ${r.status}`);
+      }
+      setTearsheets((prev) => prev.filter((t) => t.id !== tsId));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'delete failed');
+    } finally {
+      setTsBusy(false);
     }
   }, []);
 
@@ -567,11 +630,50 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
 
           {/* Tearsheets */}
           <section>
-            <h4 className="text-sm font-semibold text-gray-900 mb-2">
-              Tearsheets ({tearsheets.length})
-            </h4>
+            <div className="mb-2 space-y-2">
+              <h4 className="text-sm font-semibold text-gray-900">
+                Tearsheets ({tearsheets.length})
+              </h4>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  value={tsIssueLabel}
+                  onChange={(e) => setTsIssueLabel(e.target.value)}
+                  placeholder="Issue label (e.g. Aug 2026 print)"
+                  className="text-xs px-2 py-1 rounded border border-gray-300 bg-white flex-1 min-w-[180px]"
+                  disabled={tsBusy}
+                />
+                <input
+                  type="date"
+                  value={tsIssueDate}
+                  onChange={(e) => setTsIssueDate(e.target.value)}
+                  className="text-xs px-2 py-1 rounded border border-gray-300 bg-white"
+                  disabled={tsBusy}
+                />
+                <label
+                  className={
+                    'text-xs px-2 py-1 rounded-md border border-gray-300 bg-white cursor-pointer ' +
+                    (tsBusy ? 'opacity-50 pointer-events-none' : 'hover:bg-gray-50')
+                  }
+                >
+                  {tsBusy ? 'Uploading…' : '+ Upload tearsheet'}
+                  <input
+                    type="file"
+                    accept="application/pdf,image/png,image/jpeg"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void uploadTearsheet(f);
+                      e.currentTarget.value = '';
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
             {tearsheets.length === 0 ? (
-              <div className="text-xs text-gray-500 py-2">No tearsheets yet.</div>
+              <div className="text-xs text-gray-500 py-2">
+                No tearsheets yet. Upload a proof-of-run PDF or image.
+              </div>
             ) : (
               <div className="rounded-md border border-gray-200 divide-y divide-gray-100 bg-white">
                 {tearsheets.map((t) => (
@@ -605,6 +707,15 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                         View
                       </a>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => void deleteTearsheet(t.id)}
+                      disabled={tsBusy}
+                      className="text-xs px-2 py-0.5 rounded border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      title="Delete tearsheet"
+                    >
+                      Delete
+                    </button>
                   </div>
                 ))}
               </div>
