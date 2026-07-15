@@ -1,12 +1,11 @@
 // Unified orders pipeline — campaigns (digital self-serve) + agreements
 // (print/email/multi-channel) on one screen, tagged by channel.
-
-'use client';
+// Now also hosts IO and Tearsheet views via the ?view= param.
 
 import { Suspense } from 'react';
-import OrdersTable from './_components/OrdersTable';
-
 import PageTitle from '@/components/ui/PageTitle';
+import OrdersPageClient from './_components/OrdersPageClient';
+
 export const dynamic = 'force-dynamic';
 
 export default function AdminAdsOrdersPage() {
@@ -15,13 +14,12 @@ export default function AdminAdsOrdersPage() {
       <div className="mb-6">
         <PageTitle size="md">Ad orders</PageTitle>
         <p className="text-sm text-gray-700 mt-1">
-          Every booked Print, Digital, and Email order in one pipeline.
-          Self-serve checkouts land as campaigns; admin-drafted print/email
-          orders land as agreements. Click a row to open the underlying record.
+          Every booked Print, Digital, Email, and App order in one pipeline —
+          plus insertion orders and tearsheets. Switch views below.
         </p>
       </div>
-      <Suspense fallback={<div className="text-sm text-gray-600">Loading orders…</div>}>
-        <OrdersTable />
+      <Suspense fallback={<div className="text-sm text-gray-600">Loading…</div>}>
+        <OrdersPageClient />
       </Suspense>
     </div>
   );

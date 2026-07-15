@@ -8,7 +8,13 @@
 // Data comes from GET /api/admin/advertisers/[id]/channels which
 // returns per-channel buckets of campaigns / agreements / inquiries.
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  IO_STATUS_LABEL,
+  TEARSHEET_STATUS_LABEL,
+  type InsertionOrderWithAdvertiser,
+  type TearsheetWithAdvertiser,
+} from '@/lib/insertion-orders';
 import {
   AD_CHANNELS,
   AD_CHANNEL_LABEL,
@@ -113,6 +119,12 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
   const [buckets, setBuckets] = useState<Record<AdChannel, Bucket> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // IOs + tearsheets for the ACTIVE channel (fetched separately from
+  // /api/admin/advertisers/[id]/channels because they live in their
+  // own tables).
+  const [ios, setIos] = useState<InsertionOrderWithAdvertiser[]>([]);
+  const [tearsheets, setTearsheets] = useState<TearsheetWithAdvertiser[]>([]);
+  const [ioBusy, setIoBusy] = useState(false);
 
   useEffect(() => {
     // Load defaults are already 'loading=true / error=null' via useState
@@ -137,10 +149,77 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+
     return () => {
       cancelled = true;
     };
   }, [advertiserId]);
+
+  // Side-load IOs + tearsheets whenever the active channel changes.
+  useEffect(() => {
+    let cancelled = false;
+    const q = new URLSearchParams({
+      advertiser_id: String(advertiserId),
+      channel: active,
+    }).toString();
+
+    Promise.all([
+      fetch(`/api/admin/insertion-orders?${q}`, { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : { rows: [] })),
+      fetch(`/api/admin/tearsheets?${q}`, { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : { rows: [] })),
+    ]).then(([ioData, tsData]) => {
+      if (cancelled) return;
+      setIos((ioData?.rows ?? []) as InsertionOrderWithAdvertiser[]);
+      setTearsheets((tsData?.rows ?? []) as TearsheetWithAdvertiser[]);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [advertiserId, active]);
+
+  const createIo = useCallback(async () => {
+    const flightStart = window.prompt('Flight start date (YYYY-MM-DD):');
+    if (!flightStart) return;
+    const flightEnd = window.prompt('Flight end date (YYYY-MM-DD):');
+    if (!flightEnd) return;
+    const totalStr = window.prompt('Total amount in dollars (e.g. 1200):');
+    if (!totalStr) return;
+    const total_cents = Math.round(parseFloat(totalStr) * 100);
+    if (!Number.isFinite(total_cents) || total_cents <= 0) {
+      alert('Invalid total');
+      return;
+    }
+    const notes = window.prompt('Notes (optional):') || null;
+
+    setIoBusy(true);
+    try {
+      const r = await fetch('/api/admin/insertion-orders', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          advertiser_id: advertiserId,
+          channel: active,
+          flight_start: flightStart,
+          flight_end: flightEnd,
+          total_cents,
+          notes,
+          status: 'draft',
+        }),
+      });
+      if (!r.ok) {
+        const err = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(err.error ?? `HTTP ${r.status}`);
+      }
+      const data = (await r.json()) as { io: InsertionOrderWithAdvertiser };
+      setIos((prev) => [data.io, ...prev]);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'create failed');
+    } finally {
+      setIoBusy(false);
+    }
+  }, [advertiserId, active]);
 
   const bucket = buckets?.[active] ?? { campaigns: [], agreements: [], inquiries: [] };
   const counts: Record<AdChannel, number> = {
@@ -348,6 +427,102 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                 </ul>
               )}
             </section>
+
+          {/* Insertion orders */}
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-sm font-semibold text-gray-900">
+                Insertion orders ({ios.length})
+              </h4>
+              <button
+                type="button"
+                onClick={createIo}
+                disabled={ioBusy}
+                className="text-xs px-2 py-1 rounded-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+              >
+                {ioBusy ? 'Creating…' : '+ New IO'}
+              </button>
+            </div>
+            {ios.length === 0 ? (
+              <div className="text-xs text-gray-500 py-2">No insertion orders yet.</div>
+            ) : (
+              <div className="rounded-md border border-gray-200 divide-y divide-gray-100 bg-white">
+                {ios.map((io) => (
+                  <div key={io.id} className="flex items-center gap-3 px-3 py-2 text-sm">
+                    <span className="font-mono text-xs text-gray-700 min-w-[110px]">
+                      {io.io_number}
+                    </span>
+                    <span className="flex-1 truncate text-gray-700">
+                      {formatDateRange(io.flight_start, io.flight_end)}
+                    </span>
+                    <span className="tabular-nums text-gray-900">
+                      {formatMoney(io.total_cents)}
+                    </span>
+                    <span className={
+                      'text-xs px-2 py-0.5 rounded border ' +
+                      statusBadgeClass(io.status)
+                    }>
+                      {IO_STATUS_LABEL[io.status]}
+                    </span>
+                    <a
+                      href={`/api/admin/insertion-orders/${io.id}/pdf`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      PDF
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Tearsheets */}
+          <section>
+            <h4 className="text-sm font-semibold text-gray-900 mb-2">
+              Tearsheets ({tearsheets.length})
+            </h4>
+            {tearsheets.length === 0 ? (
+              <div className="text-xs text-gray-500 py-2">No tearsheets yet.</div>
+            ) : (
+              <div className="rounded-md border border-gray-200 divide-y divide-gray-100 bg-white">
+                {tearsheets.map((t) => (
+                  <div key={t.id} className="flex items-center gap-3 px-3 py-2 text-sm">
+                    <span className="flex-1 truncate text-gray-700">
+                      {t.issue_label ?? '—'}
+                      {t.issue_date && (
+                        <span className="text-xs text-gray-500 ml-2">
+                          {new Date(t.issue_date).toLocaleDateString()}
+                        </span>
+                      )}
+                    </span>
+                    {t.io_number && (
+                      <span className="font-mono text-xs text-gray-500">
+                        {t.io_number}
+                      </span>
+                    )}
+                    <span className={
+                      'text-xs px-2 py-0.5 rounded border ' +
+                      statusBadgeClass(t.status)
+                    }>
+                      {TEARSHEET_STATUS_LABEL[t.status]}
+                    </span>
+                    {t.file_url && (
+                      <a
+                        href={t.file_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        View
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
           </>
         )}
       </div>
