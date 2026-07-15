@@ -206,6 +206,9 @@ export interface BuildEmailInput {
   recipient: Pick<MarketingCampaignOutreachRecipient, 'id' | 'email' | 'first_name' | 'last_name' | 'company' | 'unsub_token'>;
   repName?: string | null;
   brand?: 'realtyline' | 'newsline' | 'caxton';
+  // Non-per-recipient tokens resolved at send time (e.g. media-kit stats:
+  // print_subscribers / email_subscribers). Merged into the token context.
+  extraTokens?: Record<string, string>;
 }
 
 export interface BuiltEmail {
@@ -219,6 +222,7 @@ export function buildEmail(input: BuildEmailInput): BuiltEmail {
     ? `${base}/unsubscribe/${input.recipient.unsub_token}`
     : `${base}/unsubscribe`;
   const ctx: TokenContext = {
+    ...input.extraTokens,
     first_name: input.recipient.first_name,
     last_name:  input.recipient.last_name,
     full_name:  [input.recipient.first_name, input.recipient.last_name].filter(Boolean).join(' ') || null,
@@ -246,7 +250,7 @@ export function buildEmail(input: BuildEmailInput): BuiltEmail {
 // ── Convenience: send a single recipient and return result ─────────
 export async function sendOneRecipient(input: BuildEmailInput & {
   from?: string;
-  replyTo?: string;
+  replyTo?: string | string[];
   attachments?: Array<{ filename: string; content: string; contentType?: string }>;
 }) {
   const built = buildEmail(input);

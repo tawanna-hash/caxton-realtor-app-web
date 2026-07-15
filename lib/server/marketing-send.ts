@@ -153,6 +153,75 @@ export async function insertRecipientsLedger(
   return inserted;
 }
 
+// ── Recurring child spawn ──────────────────────────────────────────
+// A recurring parent stores the audience DEFINITION (sources + filters).
+// On each fire the dispatcher calls this to (1) insert a fresh child
+// outreach row referencing the parent and (2) re-materialize the audience
+// into the child's recipients ledger — so newly added advertisers are
+// included and unsubscribed ones excluded on every send.
+export interface RecurringParentRow {
+  id: string;
+  campaign_id: string;
+  subject: string | null;
+  body: string | null;
+  from_name: string | null;
+  reply_to: string | null;
+  reply_to_addresses: string[] | null;
+  preview_text: string | null;
+  audience_sources: OutreachAudienceSource[] | null;
+  advertiser_filter: AudienceFilter | null;
+  subscriber_filter: MaterializeAudienceInput['subscriberFilter'] | null;
+  manual_emails: string[] | null;
+  attachments: Array<{ filename: string; url: string; content_type?: string }> | null;
+  created_by: string | null;
+}
+
+export interface SpawnChildResult {
+  childId: string;
+  recipientCount: number;
+}
+
+export async function spawnRecurringChild(parent: RecurringParentRow): Promise<SpawnChildResult> {
+  const sql = getSql();
+  const sources = (parent.audience_sources ?? []) as OutreachAudienceSource[];
+
+  // Re-materialize the audience fresh at fire time.
+  const seeds = await materializeAudience({
+    sources,
+    advertiserFilter: parent.advertiser_filter ?? undefined,
+    subscriberFilter: parent.subscriber_filter ?? undefined,
+    manualEmails: parent.manual_emails ?? undefined,
+  });
+
+  const created = (await sql`
+    INSERT INTO marketing_campaign_outreach (
+      campaign_id, channel, subject, body, status, scheduled_for,
+      recipient_ids, recipient_count, audience_sources, subscriber_ids, manual_emails,
+      from_name, reply_to, preview_text, created_by,
+      recurrence_parent_id, advertiser_filter, subscriber_filter, attachments, reply_to_addresses
+    ) VALUES (
+      ${parent.campaign_id}, 'email',
+      ${parent.subject}, ${parent.body},
+      'sending', now(),
+      ${JSON.stringify(seeds.filter(s => s.recipient_type === 'advertiser').map(s => s.recipient_id))}::jsonb,
+      ${seeds.length},
+      ${JSON.stringify(sources)}::jsonb,
+      ${JSON.stringify(seeds.filter(s => s.recipient_type === 'subscriber').map(s => s.recipient_id))}::jsonb,
+      ${JSON.stringify(seeds.filter(s => s.recipient_type === 'manual').map(s => s.email))}::jsonb,
+      ${parent.from_name}, ${parent.reply_to}, ${parent.preview_text}, ${parent.created_by},
+      ${parent.id},
+      ${parent.advertiser_filter ? JSON.stringify(parent.advertiser_filter) : null}::jsonb,
+      ${parent.subscriber_filter ? JSON.stringify(parent.subscriber_filter) : null}::jsonb,
+      ${JSON.stringify(parent.attachments ?? [])}::jsonb,
+      ${JSON.stringify(parent.reply_to_addresses ?? [])}::jsonb
+    ) RETURNING id
+  `) as unknown as Array<{ id: string }>;
+  const childId = created[0].id;
+
+  await insertRecipientsLedger(childId, seeds);
+  return { childId, recipientCount: seeds.length };
+}
+
 // Fan out a single outreach: render + send each recipient via Resend,
 // updating the ledger per-row, and finally aggregate stats onto the outreach.
 export interface DispatchInput {
@@ -161,11 +230,13 @@ export interface DispatchInput {
   body: string;
   previewText?: string | null;
   fromName?: string | null;
-  replyTo?: string | null;
+  replyTo?: string | string[] | null;
   repName?: string | null;
   brand?: 'realtyline' | 'newsline' | 'caxton';
   attachments?: Array<{ filename: string; content: string; contentType?: string }>;
   sourceLabel?: string;
+  // Non-per-recipient tokens (media-kit stats) resolved once at send time.
+  extraTokens?: Record<string, string>;
 }
 
 export interface DispatchResult {
@@ -208,6 +279,7 @@ export async function dispatchOutreach(input: DispatchInput): Promise<DispatchRe
       from,
       replyTo: input.replyTo ?? undefined,
       attachments: input.attachments,
+      extraTokens: input.extraTokens,
     });
     if (res.ok) {
       sent++;

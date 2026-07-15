@@ -5,6 +5,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MarketingCampaign, AudienceFilter, OutreachAudienceSource } from '@/lib/marketing-campaigns';
 import RichTextEditor from './RichTextEditor';
 import { upload } from '@vercel/blob/client';
+import { previewFireTimes } from '@/lib/recurrence';
+
+// Default reply-to fan-out for advertiser sales replies.
+const DEFAULT_REPLY_TO = ['tawanna@myrealtyline.com', 'caroline@myrealtyline.com', 'doren@myrealtyline.com'];
 
 // ── Types ────────────────────────────────────────────────────────────
 type SubscriberFilter = {
@@ -45,6 +49,8 @@ const TOKENS = [
   { key: '{{company}}',    label: 'Recipient company',    sample: 'Acme Realty' },
   { key: '{{email}}',      label: 'Recipient email',      sample: 'sam@acme.test' },
   { key: '{{rep_name}}',   label: 'Sender (you)',         sample: 'Your name' },
+  { key: '{{print_subscribers}}', label: 'Print subscribers (live)', sample: '12,500' },
+  { key: '{{email_subscribers}}', label: 'Email subscribers (live)', sample: '8,200' },
 ];
 
 
@@ -100,6 +106,7 @@ interface ComposerDraft {
   previewText: string;
   fromName: string;
   replyTo: string;
+  replyToExtra: string;
   testTo: string;
   sources: OutreachAudienceSource[];
   advertiserFilter: AudienceFilter;
@@ -107,6 +114,9 @@ interface ComposerDraft {
   manualText: string;
   mode: 'send_now' | 'schedule';
   scheduledFor: string;
+  recurring: boolean;
+  recurEveryDays: number;
+  recurUntil: string;
   attachments: Array<{ filename: string; url: string; content_type: string; size: number }>;
   savedAt: number;
 }
@@ -209,6 +219,9 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     content_type: a.content_type,
   }));
   const [replyTo, setReplyTo]   = useState<string>(adminEmail ?? '');
+  // Additional reply-to addresses (comma/newline separated). Replies fan out
+  // to every address. Seeded with the sales team defaults.
+  const [replyToExtra, setReplyToExtra] = useState<string>(DEFAULT_REPLY_TO.join(', '));
   const [subject, setSubject]   = useState('');
   const [previewText, setPreviewText] = useState('');
   // Body is rich text — stored as HTML. Default seeds a friendly greeting.
@@ -219,6 +232,14 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
   // Scheduling
   const [mode, setMode] = useState<'send_now' | 'schedule'>('send_now');
   const [scheduledFor, setScheduledFor] = useState<string>('');
+
+  // Recurrence
+  const [recurring, setRecurring] = useState<boolean>(false);
+  const [recurEveryDays, setRecurEveryDays] = useState<number>(4);
+  const [recurUntil, setRecurUntil] = useState<string>('');
+
+  // Live media-kit stats for token preview (fetched once on open).
+  const [mediaKitStats, setMediaKitStats] = useState<{ print_subscribers: number; email_subscribers: number } | null>(null);
 
   // Audience preview + sending state
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
@@ -240,6 +261,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     setPreviewText(draft.previewText);
     setFromName(draft.fromName);
     setReplyTo(draft.replyTo);
+    setReplyToExtra(draft.replyToExtra ?? DEFAULT_REPLY_TO.join(', '));
     setTestTo(draft.testTo);
     setSources(draft.sources);
     setAdvertiserFilter(draft.advertiserFilter);
@@ -247,6 +269,9 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     setManualText(draft.manualText);
     setMode(draft.mode);
     setScheduledFor(draft.scheduledFor);
+    setRecurring(draft.recurring ?? false);
+    setRecurEveryDays(draft.recurEveryDays ?? 4);
+    setRecurUntil(draft.recurUntil ?? '');
     setAttachments(draft.attachments);
     setDraftRestored(true);
   }, []);
@@ -262,16 +287,16 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     if (!open) return;
     const t = window.setTimeout(() => {
       saveDraft({
-        subject, body, previewText, fromName, replyTo, testTo,
+        subject, body, previewText, fromName, replyTo, replyToExtra, testTo,
         sources, advertiserFilter, subscriberFilter, manualText,
-        mode, scheduledFor, attachments,
+        mode, scheduledFor, recurring, recurEveryDays, recurUntil, attachments,
       });
     }, 300);
     return () => window.clearTimeout(t);
   }, [
-    open, subject, body, previewText, fromName, replyTo, testTo,
+    open, subject, body, previewText, fromName, replyTo, replyToExtra, testTo,
     sources, advertiserFilter, subscriberFilter, manualText,
-    mode, scheduledFor, attachments,
+    mode, scheduledFor, recurring, recurEveryDays, recurUntil, attachments,
   ]);
 
   function discardDraft() {
@@ -282,6 +307,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     setPreviewText('');
     setFromName(brandForPublication(campaign.publication).name);
     setReplyTo(adminEmail ?? '');
+    setReplyToExtra(DEFAULT_REPLY_TO.join(', '));
     setTestTo(adminEmail ?? '');
     setSources(['advertisers']);
     setAdvertiserFilter(campaign.audience_filter ?? {});
@@ -289,6 +315,9 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     setManualText('');
     setMode('send_now');
     setScheduledFor('');
+    setRecurring(false);
+    setRecurEveryDays(4);
+    setRecurUntil('');
     setAttachments([]);
     setDraftRestored(false);
   }
@@ -347,6 +376,59 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     }
   }, [open]);
 
+  // Fetch live media-kit stats once per open for the {{print_subscribers}} /
+  // {{email_subscribers}} token preview. Best-effort — preview falls back to
+  // the raw token if unavailable.
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch('/api/admin/media-kit-stats');
+        if (!res.ok) return;
+        const j = await res.json() as { print_subscribers: number; email_subscribers: number };
+        if (!cancelled) setMediaKitStats(j);
+      } catch {
+        // ignore — preview will show the raw token
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open]);
+
+  // Combined reply-to list: primary reply-to first, then the extra addresses,
+  // deduped (case-insensitive). Sent as reply_to_addresses.
+  const replyToAddresses = useMemo(() => {
+    const parts = [replyTo, ...replyToExtra.split(/[,\n]/)]
+      .map((s) => s.trim())
+      .filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s));
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const p of parts) {
+      const k = p.toLowerCase();
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push(p);
+    }
+    return out;
+  }, [replyTo, replyToExtra]);
+
+  // Next fire times for the recurrence preview (America/Chicago).
+  const recurrencePreview = useMemo(() => {
+    if (!recurring || mode !== 'schedule' || !scheduledFor) return [];
+    const first = new Date(scheduledFor);
+    if (Number.isNaN(first.getTime())) return [];
+    const until = recurUntil ? new Date(recurUntil) : null;
+    return previewFireTimes(first, recurEveryDays, until, 5);
+  }, [recurring, mode, scheduledFor, recurEveryDays, recurUntil]);
+
+  // Inline validation: stop date must not precede the first fire.
+  const recurUntilError = useMemo(() => {
+    if (!recurring || !recurUntil || !scheduledFor) return null;
+    return new Date(recurUntil).getTime() < new Date(scheduledFor).getTime()
+      ? 'Stop date is before the first send.'
+      : null;
+  }, [recurring, recurUntil, scheduledFor]);
+
   if (!open) return null;
 
   // Build the rendered preview HTML (client-side, mirrors server renderer).
@@ -358,6 +440,8 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     company:    sample?.company ?? 'Acme Realty',
     email:      sample?.email ?? 'sam@acme.test',
     rep_name:   adminEmail ?? `The ${brandForPublication(campaign.publication).name} Team`,
+    print_subscribers: mediaKitStats ? mediaKitStats.print_subscribers.toLocaleString('en-US') : '',
+    email_subscribers: mediaKitStats ? mediaKitStats.email_subscribers.toLocaleString('en-US') : '',
   };
   const renderedSubject = substituteTokens(subject || '(no subject)', tokenCtx);
   const renderedBody    = bodyToHtml(substituteTokens(body, tokenCtx));
@@ -374,6 +458,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           subject, body, from_name: fromName, reply_to: replyTo || undefined,
+          reply_to_addresses: replyToAddresses.length > 0 ? replyToAddresses : undefined,
           preview_text: previewText || undefined, to: testTo,
           attachments: attachmentsPayload.length > 0 ? attachmentsPayload : undefined,
         }),
@@ -394,10 +479,18 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     if (!subject.trim() || !body.trim()) { setError('Subject and body are required.'); return; }
     if (!preview || preview.count === 0) { setError('No recipients match the audience.'); return; }
     if (mode === 'schedule' && !scheduledFor) { setError('Pick a date and time to schedule.'); return; }
+    if (recurring && mode !== 'schedule') { setError('Recurring sends must be scheduled — pick "Schedule for later".'); return; }
+    if (recurUntilError) { setError(recurUntilError); return; }
     if (mode === 'send_now' && !confirm(`Send to ${preview.count} recipient${preview.count === 1 ? '' : 's'} now?`)) return;
     setBusy('sending');
     try {
       const scheduledIso = scheduledFor ? new Date(scheduledFor).toISOString() : undefined;
+      const recurrence = recurring
+        ? {
+            interval_days: recurEveryDays,
+            until: recurUntil ? new Date(recurUntil).toISOString() : null,
+          }
+        : undefined;
       const res = await fetch(`/api/admin/marketing-campaigns/${campaign.id}/send`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -405,6 +498,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
           subject, body,
           from_name: fromName || undefined,
           reply_to:  replyTo || undefined,
+          reply_to_addresses: replyToAddresses.length > 0 ? replyToAddresses : undefined,
           preview_text: previewText || undefined,
           sources,
           advertiser_filter: sources.includes('advertisers') ? advertiserFilter : undefined,
@@ -412,13 +506,17 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
           manual_emails:     sources.includes('manual') ? manualEmails : undefined,
           mode,
           scheduled_for: scheduledIso,
+          recurrence,
           attachments: attachmentsPayload.length > 0 ? attachmentsPayload : undefined,
         }),
       });
       if (res.ok) {
         const j = await res.json();
         if (mode === 'schedule') {
-          setSuccess(`Scheduled ${j.recipient_count} recipient${j.recipient_count === 1 ? '' : 's'} for ${new Date(scheduledFor).toLocaleString()}.`);
+          const when = new Date(scheduledFor).toLocaleString();
+          setSuccess(recurring
+            ? `Recurring campaign scheduled — first send ${when}, repeating every ${recurEveryDays} day${recurEveryDays === 1 ? '' : 's'}. Audience is re-resolved on each send.`
+            : `Scheduled ${j.recipient_count} recipient${j.recipient_count === 1 ? '' : 's'} for ${when}.`);
         } else {
           setSuccess(`Sent ${j.sent} of ${j.total}. ${j.failed > 0 ? `${j.failed} failed.` : ''}`);
         }
@@ -635,7 +733,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
                   />
                 </label>
                 <label className="block">
-                  <div className="text-xs font-medium text-gray-600 mb-1">Reply-to</div>
+                  <div className="text-xs font-medium text-gray-600 mb-1">Reply-to (primary)</div>
                   <input
                     value={replyTo}
                     onChange={(e) => setReplyTo(e.target.value)}
@@ -643,6 +741,22 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
                   />
                 </label>
               </div>
+              <label className="block">
+                <div className="text-xs font-medium text-gray-600 mb-1">Additional reply-to addresses</div>
+                <textarea
+                  value={replyToExtra}
+                  onChange={(e) => setReplyToExtra(e.target.value)}
+                  placeholder="one@example.com, two@example.com"
+                  rows={2}
+                  className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm font-mono"
+                />
+                <div className="text-[11px] text-gray-500 mt-1">
+                  Replies fan out to every address below.{' '}
+                  {replyToAddresses.length > 0
+                    ? `Sending to: ${replyToAddresses.join(', ')}`
+                    : 'No valid reply-to addresses — using the sender default.'}
+                </div>
+              </label>
               <label className="block">
                 <div className="text-xs font-medium text-gray-600 mb-1">Subject</div>
                 <input
@@ -707,6 +821,60 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
                   onChange={(e) => setScheduledFor(e.target.value)}
                   className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
                 />
+              )}
+
+              {/* Recurrence */}
+              {mode === 'schedule' && (
+                <div className="rounded-md border border-gray-200 bg-gray-50 p-3 space-y-2">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-800">
+                    <input
+                      type="checkbox"
+                      checked={recurring}
+                      onChange={(e) => setRecurring(e.target.checked)}
+                    />
+                    Send on a recurring schedule
+                  </label>
+                  {recurring && (
+                    <div className="space-y-2 pl-6">
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <span>Every</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={90}
+                          value={recurEveryDays}
+                          onChange={(e) => setRecurEveryDays(Math.min(90, Math.max(1, Number(e.target.value) || 1)))}
+                          className="w-16 rounded-md border border-gray-300 px-2 py-1 text-sm"
+                        />
+                        <span>days</span>
+                      </div>
+                      <label className="block text-sm text-gray-700">
+                        <div className="text-xs font-medium text-gray-600 mb-1">Stop after (optional)</div>
+                        <input
+                          type="datetime-local"
+                          value={recurUntil}
+                          onChange={(e) => setRecurUntil(e.target.value)}
+                          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
+                        />
+                      </label>
+                      {recurUntilError && (
+                        <p className="text-xs text-red-700">{recurUntilError}</p>
+                      )}
+                      {recurrencePreview.length > 0 && !recurUntilError && (
+                        <div className="text-xs text-gray-600">
+                          <div className="font-medium text-gray-700 mb-1">Next {recurrencePreview.length} sends (America/Chicago):</div>
+                          <ul className="space-y-0.5">
+                            {recurrencePreview.map((d, i) => (
+                              <li key={i} className="font-mono">
+                                {d.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'medium', timeStyle: 'short' })}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
               <div className="flex items-center gap-2 pt-2">
                 <input

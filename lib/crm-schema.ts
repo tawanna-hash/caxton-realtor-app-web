@@ -441,6 +441,28 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS subscriber_ids jsonb NOT NULL DEFAULT '[]'::jsonb`);
   await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS manual_emails jsonb NOT NULL DEFAULT '[]'::jsonb`);
 
+  // Recurring-send support. A recurring "parent" outreach re-materializes its
+  // audience and spawns a child send every `recurrence_interval_days` starting
+  // at `next_run_at`, until `recurrence_until` (inclusive). Children reference
+  // the parent via `recurrence_parent_id`. All columns nullable/additive so
+  // existing one-shot rows are unaffected (recurrence_interval_days IS NULL).
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS recurrence_interval_days integer`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS recurrence_until timestamptz`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS recurrence_parent_id uuid REFERENCES marketing_campaign_outreach(id) ON DELETE CASCADE`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS next_run_at timestamptz`);
+  // Audience DEFINITION (not just the materialized snapshot) so recurring
+  // parents can re-resolve the list on each fire. Mirrors the composer's
+  // advertiser/subscriber filter shapes.
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS advertiser_filter jsonb`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS subscriber_filter jsonb`);
+  // Attachments (remote Vercel Blob URLs) persisted so recurring children can
+  // reuse the same files without the composer re-uploading.
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS attachments jsonb NOT NULL DEFAULT '[]'::jsonb`);
+  // Multi reply-to. Array of addresses threaded to Resend's reply_to.
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS reply_to_addresses jsonb NOT NULL DEFAULT '[]'::jsonb`);
+  // Claim recurring parents by their next fire time.
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mco_next_run ON marketing_campaign_outreach(next_run_at) WHERE next_run_at IS NOT NULL`);
+
   // Per-recipient delivery + tracking ledger. One row per recipient per outreach.
   // recipient_type discriminates the source so we can resolve back to an entity:
   //   'advertiser'  -> advertisers.id (integer)

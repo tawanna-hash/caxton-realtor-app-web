@@ -20,7 +20,7 @@ export interface SendEmailOptions {
   from?: string;
   subject: string;
   html: string;
-  replyTo?: string;
+  replyTo?: string | string[];
   cc?: string | string[];
   attachments?: EmailAttachment[];
 }
@@ -51,7 +51,13 @@ export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult
     subject: opts.subject,
     html: opts.html,
   };
-  if (opts.replyTo) payload.reply_to = opts.replyTo;
+  if (opts.replyTo) {
+    // Resend accepts reply_to as a string or an array of addresses.
+    const rt = Array.isArray(opts.replyTo)
+      ? opts.replyTo.filter((a) => a && a.trim() !== '')
+      : opts.replyTo;
+    if (Array.isArray(rt) ? rt.length > 0 : rt) payload.reply_to = rt;
+  }
   if (opts.cc) payload.cc = Array.isArray(opts.cc) ? opts.cc : [opts.cc];
   if (opts.attachments && opts.attachments.length > 0) {
     // Resend expects { filename, content, content_type? } with content

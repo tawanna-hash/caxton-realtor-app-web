@@ -59,9 +59,20 @@ export const composeSchema = z.object({
   body:         z.string().trim().min(1, 'body required').max(200_000),
   from_name:    z.string().trim().max(120).optional(),
   reply_to:     z.string().regex(emailRe, 'invalid reply-to email').optional(),
+  // Multi reply-to: replies fan out to every address (Resend accepts an array).
+  reply_to_addresses: z.array(z.string().regex(emailRe, 'invalid reply-to email')).max(10).optional(),
   preview_text: z.string().trim().max(150).optional(),
   attachments:  z.array(emailAttachmentSchema).max(20).optional(),
 }).strict();
+
+// ── Recurrence config ──────────────────────────────────────────────
+// Present only when the campaign sends on a recurring schedule. `until`
+// is the inclusive stop date (null = no auto-stop).
+export const recurrenceSchema = z.object({
+  interval_days: z.number().int().min(1).max(90),
+  until: z.string().datetime({ offset: true }).nullish(),
+}).strict();
+export type RecurrenceInput = z.infer<typeof recurrenceSchema>;
 
 export const sendOutreachSchema = composeSchema.extend({
   sources: z.array(audienceSourceSchema).min(1),
@@ -70,9 +81,19 @@ export const sendOutreachSchema = composeSchema.extend({
   manual_emails: z.array(z.string().regex(emailRe)).max(2000).optional(),
   mode: z.enum(['send_now', 'schedule']).default('send_now'),
   scheduled_for: z.string().datetime({ offset: true }).optional(),
+  recurrence: recurrenceSchema.optional(),
 }).strict().refine(
   (v) => v.mode !== 'schedule' || !!v.scheduled_for,
   { message: 'scheduled_for required when mode=schedule', path: ['scheduled_for'] },
+).refine(
+  // Recurrence requires a scheduled first fire.
+  (v) => !v.recurrence || (v.mode === 'schedule' && !!v.scheduled_for),
+  { message: 'recurrence requires mode=schedule with a scheduled_for first fire', path: ['recurrence'] },
+).refine(
+  // Stop date must not precede the first fire.
+  (v) => !v.recurrence?.until || !v.scheduled_for ||
+    new Date(v.recurrence.until).getTime() >= new Date(v.scheduled_for).getTime(),
+  { message: 'recurrence stop date is before the first send', path: ['recurrence', 'until'] },
 );
 export type SendOutreachInput = z.infer<typeof sendOutreachSchema>;
 

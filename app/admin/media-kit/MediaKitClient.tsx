@@ -391,6 +391,8 @@ function EBlastCard({ pkg, activePub }: { pkg: EBlast; activePub: PubTab }) {
 type MediaKitClientProps = {
   /** ISO timestamp of the most recent change to lib/media-kit.ts. */
   lastSyncedISO: string;
+  /** Live subscriber counts backing the {{print_subscribers}} / {{email_subscribers}} email tokens. */
+  liveStats: { print_subscribers: number; email_subscribers: number };
 };
 
 function formatSyncedDate(iso: string): string {
@@ -407,7 +409,7 @@ function formatSyncedDate(iso: string): string {
   }
 }
 
-export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
+export default function MediaKitClient({ lastSyncedISO, liveStats }: MediaKitClientProps) {
   const lastSyncedLabel = formatSyncedDate(lastSyncedISO);
   const [activePubId, setActivePubId] = useState<PubTab['id']>('austin');
   const activePub = PUB_TABS.find((p) => p.id === activePubId) ?? PUB_TABS[0]!;
@@ -483,6 +485,26 @@ export default function MediaKitClient({ lastSyncedISO }: MediaKitClientProps) {
               </div>
             );
           })}
+        </div>
+
+        {/* Live subscriber counts — the same figures rendered into marketing
+            emails via the {{print_subscribers}} / {{email_subscribers}} tokens
+            at send time. Shown here so reps can sanity-check the numbers. */}
+        <div className="flex flex-wrap gap-2 mt-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-dashed border-gray-300 rounded-full">
+            <span className="text-xs text-gray-500">Live print subscribers:</span>
+            <span className="text-sm font-bold" style={{ color: ACCENT }}>
+              {liveStats.print_subscribers.toLocaleString('en-US')}
+            </span>
+            <code className="text-[10px] text-gray-400">{'{{print_subscribers}}'}</code>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-dashed border-gray-300 rounded-full">
+            <span className="text-xs text-gray-500">Live email subscribers:</span>
+            <span className="text-sm font-bold" style={{ color: ACCENT }}>
+              {liveStats.email_subscribers.toLocaleString('en-US')}
+            </span>
+            <code className="text-[10px] text-gray-400">{'{{email_subscribers}}'}</code>
+          </div>
         </div>
 
         {/* Source-of-truth banner — confirms this page and every downstream

@@ -15,6 +15,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { sendOutreachSchema } from '@/lib/server/schemas/marketing-outreach';
 import { materializeAudience, insertRecipientsLedger, dispatchOutreach } from '@/lib/server/marketing-send';
 import { fetchBlobAttachments } from '@/lib/server/blob-fetch';
+import { getMediaKitStats, formatStat } from '@/lib/media-kit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,12 +50,20 @@ export const POST = withErrorHandling(async (
   });
   if (seeds.length === 0) throw new ApiError(422, 'no recipients matched');
 
+  const isRecurring = !!input.recurrence;
   const initialStatus = input.mode === 'schedule' ? 'scheduled' : 'sending';
+  // Recurring parents fire off `next_run_at`; the first fire is the scheduled
+  // datetime. One-shots leave next_run_at NULL and rely on scheduled_for.
+  const nextRunAt = isRecurring ? (input.scheduled_for ?? null) : null;
+  const replyToAddresses = input.reply_to_addresses ?? [];
+
   const created = (await sql`
     INSERT INTO marketing_campaign_outreach (
       campaign_id, channel, subject, body, status, scheduled_for,
       recipient_ids, recipient_count, audience_sources, subscriber_ids, manual_emails,
-      from_name, reply_to, preview_text, created_by
+      from_name, reply_to, preview_text, created_by,
+      recurrence_interval_days, recurrence_until, next_run_at,
+      advertiser_filter, subscriber_filter, attachments, reply_to_addresses
     ) VALUES (
       ${id}, 'email',
       ${input.subject}, ${input.body},
@@ -68,13 +77,24 @@ export const POST = withErrorHandling(async (
       ${input.from_name ?? null},
       ${input.reply_to ?? null},
       ${input.preview_text ?? null},
-      ${admin.email ?? null}
+      ${admin.email ?? null},
+      ${input.recurrence?.interval_days ?? null},
+      ${input.recurrence?.until ?? null},
+      ${nextRunAt},
+      ${input.advertiser_filter ? JSON.stringify(input.advertiser_filter) : null}::jsonb,
+      ${input.subscriber_filter ? JSON.stringify(input.subscriber_filter) : null}::jsonb,
+      ${JSON.stringify(input.attachments ?? [])}::jsonb,
+      ${JSON.stringify(replyToAddresses)}::jsonb
     ) RETURNING *
   `) as unknown as Array<{ id: string }>;
   const outreach = created[0];
 
-  // Insert the per-recipient ledger.
-  await insertRecipientsLedger(outreach.id, seeds);
+  // A recurring parent is a template — it never sends directly. Each fire
+  // spawns a child with its own freshly-materialized ledger, so we skip the
+  // parent ledger here. One-shots (and immediate sends) get their ledger now.
+  if (!isRecurring) {
+    await insertRecipientsLedger(outreach.id, seeds);
+  }
 
   // If scheduling for later, we're done — cron will pick it up.
   if (input.mode === 'schedule') {
@@ -82,6 +102,8 @@ export const POST = withErrorHandling(async (
       outreach_id: outreach.id,
       status: 'scheduled',
       scheduled_for: input.scheduled_for,
+      recurrence_interval_days: input.recurrence?.interval_days ?? null,
+      recurrence_until: input.recurrence?.until ?? null,
       recipient_count: seeds.length,
     });
   }
@@ -96,6 +118,7 @@ export const POST = withErrorHandling(async (
     : 'realtyline';
 
   const { attachments: resendAttachments } = await fetchBlobAttachments(input.attachments);
+  const stats = await getMediaKitStats(sql as never);
   const result = await dispatchOutreach({
     outreachId: outreach.id,
       sourceLabel: Array.isArray(input.sources) ? input.sources.join("+") : "outreach",
@@ -103,10 +126,14 @@ export const POST = withErrorHandling(async (
     body: input.body,
     previewText: input.preview_text,
     fromName: input.from_name,
-    replyTo: input.reply_to,
+    replyTo: replyToAddresses.length > 0 ? replyToAddresses : input.reply_to,
     repName: admin.email ?? null,
     brand,
     attachments: resendAttachments.length > 0 ? resendAttachments : undefined,
+    extraTokens: {
+      print_subscribers: formatStat(stats.print_subscribers),
+      email_subscribers: formatStat(stats.email_subscribers),
+    },
   });
 
   return NextResponse.json({
