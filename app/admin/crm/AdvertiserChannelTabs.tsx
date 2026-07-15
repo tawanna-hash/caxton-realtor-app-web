@@ -407,39 +407,97 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                 </div>
               ) : (
                 <ul className="space-y-2">
-                  {bucket.campaigns.map((c) => (
-                    <li
-                      key={c.id}
-                      className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm flex items-center justify-between gap-3"
-                    >
-                      <div className="min-w-0">
-                        <div className="text-gray-900 font-medium truncate">
-                          {c.ad_space_slug}
+                  {bucket.campaigns.map((c) => {
+                    const rowTs = tearsheets.filter((t) => t.campaign_id === c.id);
+                    return (
+                      <li key={c.id} className="space-y-1">
+                        <div className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-gray-900 font-medium truncate">
+                              {c.ad_space_slug}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-0.5">
+                              {formatDateRange(c.start_date, c.end_date)} ·{' '}
+                              {(c.pubs ?? [c.publication]).join(', ')}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <div className="text-right">
+                              <span
+                                className={
+                                  'inline-block px-2 py-0.5 rounded border text-xs font-medium ' +
+                                  (c.active
+                                    ? statusBadgeClass('active')
+                                    : statusBadgeClass('expired'))
+                                }
+                              >
+                                {c.active ? 'Active' : 'Ended'}
+                              </span>
+                              {c.price_total && (
+                                <div className="text-xs text-gray-500 mt-0.5 tabular-nums">
+                                  ${Number(c.price_total).toLocaleString()}
+                                </div>
+                              )}
+                            </div>
+                            <label
+                              className={
+                                'text-xs px-2 py-0.5 rounded border border-gray-300 bg-white cursor-pointer ' +
+                                (tsBusy ? 'opacity-50 pointer-events-none' : 'hover:bg-gray-50')
+                              }
+                              title="Upload tearsheet for this campaign"
+                            >
+                              + TS
+                              <input
+                                type="file"
+                                accept="application/pdf,image/png,image/jpeg"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  if (f) void uploadTearsheet(f, c.id);
+                                  e.currentTarget.value = '';
+                                }}
+                              />
+                            </label>
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {formatDateRange(c.start_date, c.end_date)} ·{' '}
-                          {(c.pubs ?? [c.publication]).join(', ')}
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span
-                          className={
-                            'inline-block px-2 py-0.5 rounded border text-xs font-medium ' +
-                            (c.active
-                              ? statusBadgeClass('active')
-                              : statusBadgeClass('expired'))
-                          }
-                        >
-                          {c.active ? 'Active' : 'Ended'}
-                        </span>
-                        {c.price_total && (
-                          <div className="text-xs text-gray-500 mt-0.5 tabular-nums">
-                            ${Number(c.price_total).toLocaleString()}
+                        {rowTs.length > 0 && (
+                          <div className="ml-4 pl-3 border-l-2 border-purple-200 space-y-1">
+                            {rowTs.map((t) => (
+                              <div key={t.id} className="flex items-center gap-2 text-xs text-gray-600">
+                                <span className="text-gray-400">Tearsheet:</span>
+                                <span className="flex-1 truncate">
+                                  {t.issue_label ?? '—'}
+                                  {t.issue_date && (
+                                    <span className="text-gray-400 ml-2">
+                                      {new Date(t.issue_date).toLocaleDateString()}
+                                    </span>
+                                  )}
+                                </span>
+                                {t.file_url && (
+                                  <a
+                                    href={t.file_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    View
+                                  </a>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => void deleteTearsheet(t.id)}
+                                  disabled={tsBusy}
+                                  className="text-red-600 hover:underline disabled:opacity-50"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            ))}
                           </div>
                         )}
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </section>
