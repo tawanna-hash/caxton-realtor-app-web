@@ -669,6 +669,57 @@ export const PUB_SUBSCRIBERS: Record<MediaKitPub, number> = {
   'both':               130000, // legacy bundle = full network
 };
 
+// ── Live subscriber stats (for {{print_subscribers}} / {{email_subscribers}}) ──
+//
+// The Media Kit page renders the marketing-rounded figures above (PUB_SUBSCRIBERS
+// / AUDIENCE_STATS). The composer's dynamic tokens instead want the *live* opt-in
+// counts, resolved fresh on each send so a recurring campaign reflects the list
+// as it stands that day. Sources:
+//   • print_subscribers      (app/api/print-subscribe) — status='active'
+//   • newsletter_subscribers (email list)              — status='active'
+//
+// Parameterized on `sql` (Neon tagged-template) — same convention as
+// resolveAudience() — so this module stays free of server-only imports and safe
+// to include in the client bundle.
+
+export interface MediaKitStats {
+  print_subscribers: number;
+  email_subscribers: number;
+}
+
+export async function getMediaKitStats(
+  sql: <T = Record<string, unknown>>(strings: TemplateStringsArray, ...values: unknown[]) => Promise<T[]>,
+): Promise<MediaKitStats> {
+  let print_subscribers = 0;
+  let email_subscribers = 0;
+
+  try {
+    const rows = await sql<{ n: number }>`
+      SELECT count(*)::int AS n FROM print_subscribers WHERE status = 'active'
+    `;
+    print_subscribers = rows[0]?.n ?? 0;
+  } catch {
+    // Table may not exist in a fresh env — fall back to 0.
+  }
+
+  try {
+    const rows = await sql<{ n: number }>`
+      SELECT count(*)::int AS n FROM newsletter_subscribers
+      WHERE COALESCE(status, 'active') = 'active'
+    `;
+    email_subscribers = rows[0]?.n ?? 0;
+  } catch {
+    // ignore
+  }
+
+  return { print_subscribers, email_subscribers };
+}
+
+/** Thousands-separated string for use in rendered email tokens. */
+export function formatStat(n: number): string {
+  return n.toLocaleString('en-US');
+}
+
 // ── Policy notes ───────────────────────────────────────────────────────────
 
 export const POLICY_NOTES: PolicyNote[] = [

@@ -8,6 +8,8 @@
 import { redirect } from 'next/navigation';
 import { execFileSync } from 'node:child_process';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { getSql, ensureSchema } from '@/lib/db';
+import { getMediaKitStats } from '@/lib/media-kit';
 import MediaKitClient from './MediaKitClient';
 
 export const dynamic = 'force-dynamic';
@@ -41,5 +43,7 @@ export default async function MediaKitPage() {
   const admin = await getCurrentAdmin();
   if (!admin) redirect('/admin/login');
   const lastSyncedISO = readLastSyncedISO();
-  return <MediaKitClient lastSyncedISO={lastSyncedISO} />;
+  await ensureSchema();
+  const liveStats = await getMediaKitStats(getSql() as never);
+  return <MediaKitClient lastSyncedISO={lastSyncedISO} liveStats={liveStats} />;
 }

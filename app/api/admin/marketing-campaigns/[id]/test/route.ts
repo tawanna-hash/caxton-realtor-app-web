@@ -14,6 +14,7 @@ import { testSendSchema } from '@/lib/server/schemas/marketing-outreach';
 import { buildEmail } from '@/lib/marketing-email';
 import { sendEmail } from '@/lib/email';
 import { fetchBlobAttachments } from '@/lib/server/blob-fetch';
+import { getMediaKitStats, formatStat } from '@/lib/media-kit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,6 +47,7 @@ export const POST = withErrorHandling(async (
   // Build a one-off recipient using the test address + sample placeholders.
   // We use a fixed pseudo-id so the open/click tracking pixel renders, but
   // we never persist anything.
+  const stats = await getMediaKitStats(sql as never);
   const built = buildEmail({
     subject: `[TEST] ${input.subject}`,
     body: input.body,
@@ -60,6 +62,10 @@ export const POST = withErrorHandling(async (
     },
     repName: admin.email ?? null,
     brand,
+    extraTokens: {
+      print_subscribers: formatStat(stats.print_subscribers),
+      email_subscribers: formatStat(stats.email_subscribers),
+    },
   });
 
   const from = input.from_name
@@ -67,10 +73,12 @@ export const POST = withErrorHandling(async (
     : undefined;
 
   const { attachments: resendAttachments } = await fetchBlobAttachments(input.attachments);
+  const replyTo = (input.reply_to_addresses && input.reply_to_addresses.length > 0)
+    ? input.reply_to_addresses : input.reply_to;
   const res = await sendEmail({
     to: input.to,
     from,
-    replyTo: input.reply_to,
+    replyTo,
     subject: built.subject,
     html: built.html,
     attachments: resendAttachments.length > 0 ? resendAttachments : undefined,
