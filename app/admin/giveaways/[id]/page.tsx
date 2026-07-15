@@ -347,11 +347,11 @@ function RulesSection({
     setError(null);
     try {
       await adminApi.createRule(giveawayId, {
-        action_type: actionType,
-        label: label || undefined,
-        target_url: targetUrl || undefined,
+        actionType,
+        label,
+        targetUrl: targetUrl || null,
         tickets,
-        sort_order: rules.length,
+        sortOrder: rules.length,
         required,
       });
       reset();
