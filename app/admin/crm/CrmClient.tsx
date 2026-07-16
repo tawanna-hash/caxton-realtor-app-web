@@ -458,7 +458,7 @@ export default function CrmClient({ initialRows }: Props) {
       <button
         type="button"
         onClick={() => setComposerOpen(true)}
-        className="fixed bottom-6 right-6 z-40 rounded-full bg-purple-700 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:bg-purple-800"
+        className="fixed bottom-6 right-6 z-40 rounded-md bg-purple-700 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:bg-purple-800"
       >
         Compose email
       </button>
