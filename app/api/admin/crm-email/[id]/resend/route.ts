@@ -62,11 +62,12 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const newId = inserted[0].id;
 
   const seeds: RecipientSeed[] = rows.map((r) => ({
+    recipient_type: 'advertiser',
+    recipient_id: r.id,
     email: r.email,
-    firstName: r.first_name,
-    lastName: r.last_name,
+    first_name: r.first_name,
+    last_name: r.last_name,
     company: r.company,
-    advertiserId: r.id,
   }));
   await insertRecipientsLedger(newId, seeds);
 
