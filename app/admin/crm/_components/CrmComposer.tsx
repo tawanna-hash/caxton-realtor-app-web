@@ -152,6 +152,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
   const [testTo, setTestTo] = useState(adminEmail ?? '');
   const [testSending, setTestSending] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitErr, setSubmitErr] = useState<string | null>(null);
   const [showTokenMenu, setShowTokenMenu] = useState(false);
@@ -331,6 +332,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     }
     setTestSending(true);
     setTestResult(null);
+    setTestError(null);
     try {
       const r = await fetch('/api/admin/crm-email/test', {
         method: 'POST',
@@ -341,23 +343,32 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
           reply_to: replyTo || undefined,
           reply_to_list: parseReplyToList().length > 0 ? parseReplyToList() : undefined,
           preview_text: previewText || undefined,
+          attachments: attachments.length > 0
+            ? attachments.map(({ filename, url, content_type }) => ({ filename, url, content_type }))
+            : undefined,
           attachment_link_url: attachmentLinkUrl || undefined,
           attachment_link_label: attachmentLinkLabel || undefined,
           publication_scope: publicationScope,
         }),
       });
       if (!r.ok) {
-        const t = await r.text();
-        setTestResult(`failed: ${t}`);
+        // Attachment failures come back as 502 { error, detail } — surface
+        // the detail inline in red and do NOT show a success toast.
+        const parsed = await r.json().catch(() => null) as { error?: string; detail?: string } | null;
+        if (r.status === 502 && parsed?.error === 'attachment_failed') {
+          setTestError(`Attachment failed: ${parsed.detail ?? 'could not deliver attachment'}`);
+        } else {
+          setTestError(parsed?.detail ?? parsed?.error ?? `failed (${r.status})`);
+        }
       } else {
         setTestResult(`sent to ${testTo}`);
       }
     } catch (err) {
-      setTestResult(err instanceof Error ? err.message : 'error');
+      setTestError(err instanceof Error ? err.message : 'error');
     } finally {
       setTestSending(false);
     }
-  }, [testTo, subject, body, fromName, replyTo, previewText, attachmentLinkUrl, attachmentLinkLabel, publicationScope, parseReplyToList]);
+  }, [testTo, subject, body, fromName, replyTo, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel, publicationScope, parseReplyToList]);
 
   const onSubmit = useCallback(async () => {
     if (!subject || !body) {
@@ -403,8 +414,11 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
         body: JSON.stringify(payload),
       });
       if (!r.ok) {
-        const t = await r.text();
-        throw new Error(t);
+        const parsed = await r.json().catch(() => null) as { error?: string; detail?: string } | null;
+        if (r.status === 502 && parsed?.error === 'attachment_failed') {
+          throw new Error(`Attachment failed: ${parsed.detail ?? 'could not deliver attachment'}`);
+        }
+        throw new Error(parsed?.detail ?? parsed?.error ?? `send failed (${r.status})`);
       }
       clearDraft();
       onSent?.();
@@ -658,6 +672,11 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                   />
                   {uploading && <span className="text-xs text-gray-500">uploading…</span>}
                 </div>
+                {attachments.some((a) => (a.size ?? 0) > 25 * 1024 * 1024) && (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
+                    Files over 40 MB won&apos;t be attached but will still be linked inline.
+                  </div>
+                )}
               </div>
 
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -752,8 +771,13 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                 >
                   {testSending ? 'sending…' : 'Send test'}
                 </button>
-                {testResult && <span className="text-xs text-gray-600">{testResult}</span>}
+                {testResult && !testError && <span className="text-xs text-emerald-700">{testResult}</span>}
               </div>
+              {testError && (
+                <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+                  {testError}
+                </div>
+              )}
             </section>
 
             {submitErr && (

@@ -115,6 +115,24 @@ export async function resolveCrmAudience(f: CrmAudienceFilter): Promise<CrmAudie
   return out;
 }
 
+// Append the optional "download" call-to-action button to a body. Shared
+// by the test + send routes so both render the manual attachment link the
+// composer configured. No-op when no URL is set.
+export function appendLinkButton(
+  body: string,
+  url: string | null | undefined,
+  label: string | null | undefined,
+): string {
+  if (!url) return body;
+  const esc = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const text = label && label.trim() ? label : 'Download attachment';
+  return (
+    body +
+    `<p style="margin:24px 0"><a href="${esc(url)}" style="display:inline-block;background:#7c3aed;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">${esc(text)}</a></p>`
+  );
+}
+
 // Ensure a "CRM Outreach" campaign row exists so we can INSERT into
 // marketing_campaign_outreach (which has NOT NULL FK to marketing_campaigns).
 // Reused across all CRM sends — one row per publication scope.

@@ -5,8 +5,17 @@
 // and per-recipient send orchestration.
 
 import crypto from 'node:crypto';
-import { sendEmail } from './email';
+import { sendEmail, type EmailAttachment } from './email';
 import type { MarketingCampaignOutreachRecipient } from './marketing-campaigns';
+
+// ── Attachment inline-link descriptor ──────────────────────────────
+// A file uploaded to Vercel Blob that we surface as a clickable link in
+// the email body (separate from the real Resend attachment, which is an
+// EmailAttachment). `url` is the public Blob URL; `filename` the label.
+export interface AttachmentLink {
+  filename: string;
+  url: string;
+}
 
 // ── Public site base for tracking + unsubscribe links ──────────────
 // Falls back to the realtynewsnow.app domain (Cloudflare blocks the .com).
@@ -122,6 +131,27 @@ export interface RenderOptions {
   unsubscribeUrl: string;
   trackingPixelUrl?: string | null;
   brand?: 'realtyline' | 'newsline' | 'caxton';
+  attachments?: AttachmentLink[];
+}
+
+// ── Attachments section (inline Blob links) ────────────────────────
+// Renders a small "Attachments" heading + bulleted list of links near the
+// bottom of the email. Inline styles per template convention. Returns ''
+// when there are no attachments so the block collapses cleanly.
+export function renderAttachmentsSection(links: AttachmentLink[] | undefined): string {
+  if (!links || links.length === 0) return '';
+  const items = links
+    .map(
+      (l) =>
+        `<li style="margin:4px 0;line-height:1.5;"><a href="${escapeHtml(l.url)}" target="_blank" rel="noopener" style="color:#301D5D;text-decoration:underline;word-break:break-all;">${escapeHtml(l.filename)}</a></li>`,
+    )
+    .join('\n');
+  return `<div style="margin:24px 0 0;padding:16px 0 0;border-top:1px solid #e5e7eb;">
+  <div style="font-size:13px;font-weight:600;color:#374151;margin:0 0 8px;">Attachments</div>
+  <ul style="margin:0 0 0 20px;padding:0;list-style:disc;color:#1f2937;">
+${items}
+  </ul>
+</div>`;
 }
 
 export function renderEmail(opts: RenderOptions): string {
@@ -160,6 +190,7 @@ ${preheader}
       </td></tr>
       <tr><td style="padding:28px;">
         ${opts.bodyHtml}
+        ${renderAttachmentsSection(opts.attachments)}
       </td></tr>
       <tr><td style="padding:16px 28px 24px;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;line-height:1.6;">
         <div>You're receiving this email because you're connected with ${wordmark}.</div>
@@ -206,6 +237,7 @@ export interface BuildEmailInput {
   recipient: Pick<MarketingCampaignOutreachRecipient, 'id' | 'email' | 'first_name' | 'last_name' | 'company' | 'unsub_token'>;
   repName?: string | null;
   brand?: 'realtyline' | 'newsline' | 'caxton';
+  attachmentLinks?: AttachmentLink[];
 }
 
 export interface BuiltEmail {
@@ -239,6 +271,7 @@ export function buildEmail(input: BuildEmailInput): BuiltEmail {
     unsubscribeUrl,
     trackingPixelUrl,
     brand: input.brand,
+    attachments: input.attachmentLinks,
   });
   return { subject, html };
 }
@@ -247,7 +280,7 @@ export function buildEmail(input: BuildEmailInput): BuiltEmail {
 export async function sendOneRecipient(input: BuildEmailInput & {
   from?: string;
   replyTo?: string | string[];
-  attachments?: Array<{ filename: string; content: string; contentType?: string }>;
+  attachments?: EmailAttachment[];
 }) {
   const built = buildEmail(input);
   return sendEmail({
