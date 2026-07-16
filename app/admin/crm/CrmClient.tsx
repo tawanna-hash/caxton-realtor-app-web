@@ -1488,6 +1488,7 @@ function CreateAdvertiserModal({
   };
   const [contactEmail, setContactEmail] = useState('');
   const [requiresGate, setRequiresGate] = useState(false);
+  const [status, setStatus] = useState<AdvertiserStatus>('prospect');
   const [saving, setSaving] = useState(false);
 
   const save = useCallback(async () => {
@@ -1502,6 +1503,7 @@ function CreateAdvertiserModal({
           contact_email: contactEmail.trim() || null,
           requires_email_gate: requiresGate,
           publication: serializePublications(publications),
+          status,
         }),
       });
       if (!res.ok) {
@@ -1514,7 +1516,7 @@ function CreateAdvertiserModal({
     } finally {
       setSaving(false);
     }
-  }, [name, publications, contactEmail, requiresGate, onCreated, onError]);
+  }, [name, publications, contactEmail, requiresGate, status, onCreated, onError]);
 
   return (
     <div
@@ -1558,6 +1560,19 @@ function CreateAdvertiserModal({
             </div>
             <p className="text-[11px] text-gray-500">Check one or more publications this advertiser belongs to.</p>
           </div>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-gray-700">Status</span>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as AdvertiserStatus)}
+              disabled={saving}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="prospect">Prospect</option>
+              <option value="advertiser">Advertiser</option>
+            </select>
+            <p className="text-[11px] text-gray-500">Use Prospect for leads, Advertiser once they are active.</p>
+          </label>
           <label className="block space-y-1">
             <span className="text-sm font-medium text-gray-700">Contact email</span>
             <input

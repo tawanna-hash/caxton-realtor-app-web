@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
     contact_email?: string;
     requires_email_gate?: boolean;
     publication?: string | string[];
+    status?: string;
   };
   try {
     body = await req.json();
@@ -105,6 +106,8 @@ export async function POST(req: NextRequest) {
   const contactEmail = (body.contact_email || '').trim() || null;
   const requiresGate = !!body.requires_email_gate;
   const publication = normalizePublication(body.publication);
+  const status: 'prospect' | 'advertiser' | 'archived' =
+    body.status === 'advertiser' || body.status === 'archived' ? body.status : 'prospect';
 
   try {
     await ensureSchema();
@@ -130,10 +133,10 @@ export async function POST(req: NextRequest) {
     const inserted = (await sql`
       INSERT INTO advertisers (
         name, slug, share_token, contact_email,
-        requires_email_gate, publication, created_at, updated_at
+        requires_email_gate, publication, status, created_at, updated_at
       ) VALUES (
         ${name}, ${slug}, ${shareToken}, ${contactEmail},
-        ${requiresGate}, ${publication}, NOW(), NOW()
+        ${requiresGate}, ${publication}, ${status}, NOW(), NOW()
       )
       RETURNING *
     `) as unknown as Advertiser[];
