@@ -469,7 +469,6 @@ export default function CrmClient({ initialRows }: Props) {
         adminEmail={null}
         initialFilter={{
           statuses: statusFilter === 'all' ? [] : [statusFilter],
-          types: typeFilter === 'all' ? [] : [typeFilter],
           publications: pubFilter === 'all' ? [] : [pubFilter],
           query,
         }}

@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { upload } from '@vercel/blob/client';
 import RichTextEditor from './RichTextEditor';
-import type { AdvertiserCrmRow, AdvertiserStatus, AdvertiserType } from '@/lib/advertisers';
+import type { AdvertiserCrmRow, AdvertiserStatus } from '@/lib/advertisers';
 import {
   PUBLICATION_KEYS,
   parsePublications,
@@ -46,7 +46,6 @@ type Props = {
   // so the composer opens with the same audience the user is viewing.
   initialFilter?: {
     statuses?: AdvertiserStatus[];
-    types?: AdvertiserType[];
     publications?: PublicationKey[];
     query?: string;
   };
@@ -68,13 +67,6 @@ const STATUS_OPTIONS: Array<{ value: AdvertiserStatus; label: string }> = [
   { value: 'archived',   label: 'Archived' },
 ];
 
-const TYPE_OPTIONS: Array<{ value: AdvertiserType; label: string }> = [
-  { value: 'advertiser', label: 'Advertiser' },
-  { value: 'client',     label: 'Client' },
-  { value: 'prospect',   label: 'Prospect' },
-  { value: 'mailing',    label: 'Mailing only' },
-];
-
 const PUB_OPTIONS: PublicationKey[] = [...PUBLICATION_KEYS];
 
 const DRAFT_KEY = 'crm-composer-draft-v1';
@@ -94,7 +86,6 @@ type Draft = {
   scheduledFor: string;
   publicationScope: string;
   statuses: AdvertiserStatus[];
-  types: AdvertiserType[];
   publications: PublicationKey[];
   query: string;
   tag: string;
@@ -128,7 +119,6 @@ function clearDraft() {
 export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, initialFilter }: Props) {
   // Filter chip state (independent of CrmClient's chips — but seeded from them)
   const [statuses, setStatuses] = useState<AdvertiserStatus[]>(initialFilter?.statuses ?? []);
-  const [types, setTypes] = useState<AdvertiserType[]>(initialFilter?.types ?? []);
   const [publications, setPublications] = useState<PublicationKey[]>(initialFilter?.publications ?? []);
   const [query, setQuery] = useState(initialFilter?.query ?? '');
   const [tag, setTag] = useState('');
@@ -186,7 +176,6 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       setScheduledFor(d.scheduledFor ?? '');
       setPublicationScope(d.publicationScope ?? 'all');
       if (d.statuses) setStatuses(d.statuses);
-      if (d.types) setTypes(d.types);
       if (d.publications) setPublications(d.publications);
       if (typeof d.query === 'string') setQuery(d.query);
       if (typeof d.tag === 'string') setTag(d.tag);
@@ -203,7 +192,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
         subject, body, fromName, replyTo, replyToList, previewText,
         attachmentLinkUrl, attachmentLinkLabel,
         recurrenceIntervalDays, recurrenceUntil, scheduledFor,
-        publicationScope, statuses, types, publications, query, tag,
+        publicationScope, statuses, publications, query, tag,
       });
     }, 600);
     return () => clearTimeout(t);
@@ -211,7 +200,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     open, subject, body, fromName, replyTo, replyToList, previewText,
     attachmentLinkUrl, attachmentLinkLabel,
     recurrenceIntervalDays, recurrenceUntil, scheduledFor,
-    publicationScope, statuses, types, publications, query, tag,
+    publicationScope, statuses, publications, query, tag,
   ]);
 
   // ── Client-side audience preview (mirrors backend logic) ─────
@@ -224,7 +213,6 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       const email = (r.contact_email ?? r.portal_email ?? '').trim();
       if (!email) continue;
       if (statuses.length > 0 && (!r.status || !statuses.includes(r.status as AdvertiserStatus))) continue;
-      if (types.length > 0 && (!r.type || !types.includes(r.type as AdvertiserType))) continue;
       if (pubSet) {
         const advPubs = parsePublications(r.publication);
         if (!advPubs.some((p) => pubSet.has(p))) continue;
@@ -251,7 +239,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       });
     }
     return out;
-  }, [rows, statuses, types, publications, query, tag]);
+  }, [rows, statuses, publications, query, tag]);
 
   // ── Server preview (debounced) — authoritative count ─────────
   useEffect(() => {
@@ -269,7 +257,6 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
           filter: {
             query: query || undefined,
             status: statuses.length > 0 ? statuses : undefined,
-            type: types.length > 0 ? types : undefined,
             publication: publications.length > 0 ? publications : undefined,
             tag: tag || undefined,
           },
@@ -288,7 +275,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
         });
     }, 400);
     return () => { clearTimeout(t); controller.abort(); };
-  }, [open, query, statuses, types, publications, tag]);
+  }, [open, query, statuses, publications, tag]);
 
   // ── Handlers ─────────────────────────────────────────────────
   const toggleFrom = useCallback(
@@ -392,7 +379,6 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
         filter: {
           query: query || undefined,
           status: statuses.length > 0 ? statuses : undefined,
-          type: types.length > 0 ? types : undefined,
           publication: publications.length > 0 ? publications : undefined,
           tag: tag || undefined,
         },
@@ -429,7 +415,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       setSubmitting(false);
     }
   }, [
-    subject, body, mode, scheduledFor, preview, query, statuses, types, publications, tag,
+    subject, body, mode, scheduledFor, preview, query, statuses, publications, tag,
     fromName, replyTo, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel,
     publicationScope, recurrenceIntervalDays, recurrenceUntil, parseReplyToList, onSent, onClose,
   ]);
@@ -489,25 +475,6 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                           key={opt.value}
                           type="button"
                           onClick={() => toggleFrom<AdvertiserStatus>(setStatuses, opt.value)}
-                          className={`rounded-full border px-3 py-1 text-xs ${on ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'}`}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-xs font-medium uppercase tracking-wide text-gray-500">Type</div>
-                  <div className="mt-1.5 flex flex-wrap gap-2">
-                    {TYPE_OPTIONS.map((opt) => {
-                      const on = types.includes(opt.value);
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => toggleFrom<AdvertiserType>(setTypes, opt.value)}
                           className={`rounded-full border px-3 py-1 text-xs ${on ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'}`}
                         >
                           {opt.label}
