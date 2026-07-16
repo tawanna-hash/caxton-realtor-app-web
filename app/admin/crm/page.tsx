@@ -67,6 +67,8 @@ export default async function CrmPage() {
       a.payment_mode, a.stripe_customer_id, a.card_last4,
       a.current_agreement_id, a.current_ad_size, a.current_frequency,
       a.current_ad_rate_cents, a.current_amount_cents, a.current_exp_date,
+      COALESCE(a.open_count, 0)::int         AS open_count,
+      a.last_opened_at,
       COALESCE(stats.hotspot_count, 0)::int AS hotspot_count,
       COALESCE(stats.clicks_30d, 0)::int    AS clicks_30d,
       stats.last_click_at                   AS last_click_at
