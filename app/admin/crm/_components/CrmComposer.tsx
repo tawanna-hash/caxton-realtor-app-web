@@ -341,6 +341,9 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
           reply_to: replyTo || undefined,
           reply_to_list: parseReplyToList().length > 0 ? parseReplyToList() : undefined,
           preview_text: previewText || undefined,
+          attachments: attachments.length > 0
+            ? attachments.map(({ filename, url, content_type }) => ({ filename, url, content_type }))
+            : undefined,
           attachment_link_url: attachmentLinkUrl || undefined,
           attachment_link_label: attachmentLinkLabel || undefined,
           publication_scope: publicationScope,
@@ -357,7 +360,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     } finally {
       setTestSending(false);
     }
-  }, [testTo, subject, body, fromName, replyTo, previewText, attachmentLinkUrl, attachmentLinkLabel, publicationScope, parseReplyToList]);
+  }, [testTo, subject, body, fromName, replyTo, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel, publicationScope, parseReplyToList]);
 
   const onSubmit = useCallback(async () => {
     if (!subject || !body) {
