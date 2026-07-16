@@ -84,7 +84,9 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     replyTo: replyToList ?? ((orig.reply_to as string | null) ?? undefined),
     attachments: attachments.length > 0 ? attachments : undefined,
     attachmentLinks: origAttachments && origAttachments.length > 0
-      ? origAttachments.map((a) => ({ filename: a.filename, url: a.url }))
+      ? origAttachments
+          .filter((a): a is AttachmentRef & { url: string } => typeof a.url === 'string' && a.url.length > 0)
+          .map((a) => ({ filename: a.filename, url: a.url }))
       : undefined,
     sourceLabel: 'crm-resend',
   });
