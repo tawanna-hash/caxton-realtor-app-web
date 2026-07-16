@@ -14,6 +14,7 @@ import {
   type RecipientSeed,
 } from '@/lib/server/marketing-send';
 import { resolveCrmAudience, ensureCrmOutreachCampaign, type CrmAudienceFilter } from '../_shared';
+import { resolveAttachments, appendAttachmentLinkButton, type AttachmentRef } from '@/lib/server/email-attachments';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -148,14 +149,26 @@ export async function POST(req: NextRequest) {
     : input.publication_scope === 'caxton'   ? 'caxton'
     : undefined;
 
+  // Prepare attachments + link button for send-now (cron path handles
+  // scheduled sends separately via app/api/cron/marketing-sends).
+  const attachments = await resolveAttachments(
+    input.attachments as AttachmentRef[] | undefined,
+  );
+  const bodyWithLink = appendAttachmentLinkButton(
+    input.body,
+    input.attachment_link_url,
+    input.attachment_link_label,
+  );
+
   const result = await dispatchOutreach({
     outreachId,
     subject: input.subject,
-    body: input.body,
+    body: bodyWithLink,
     fromName: input.from_name,
     replyTo: replyToFinal,
     previewText: input.preview_text,
     brand,
+    attachments: attachments.length > 0 ? attachments : undefined,
     sourceLabel: 'crm_composer',
   });
 

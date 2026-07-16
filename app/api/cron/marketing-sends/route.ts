@@ -21,6 +21,7 @@ import {
   insertRecipientsLedger,
   buildMediaKitTokens,
 } from '@/lib/server/marketing-send';
+import { fetchAttachmentContent, type AttachmentRef } from '@/lib/server/email-attachments';
 
 export const runtime     = 'nodejs';
 export const dynamic     = 'force-dynamic';
@@ -62,32 +63,6 @@ interface AudienceSnapshot {
     verified?: string;
   };
   manualEmails?: string[];
-}
-
-interface AttachmentRef {
-  filename: string;
-  url?: string;
-  content?: string;
-  contentType?: string;
-}
-
-async function fetchAttachmentContent(a: AttachmentRef): Promise<{ filename: string; content: string; contentType?: string } | null> {
-  if (a.content) {
-    return { filename: a.filename, content: a.content, contentType: a.contentType };
-  }
-  if (!a.url) return null;
-  try {
-    const r = await fetch(a.url);
-    if (!r.ok) {
-      console.warn('[marketing-sends] attachment fetch failed', a.url, r.status);
-      return null;
-    }
-    const buf = Buffer.from(await r.arrayBuffer());
-    return { filename: a.filename, content: buf.toString('base64'), contentType: a.contentType };
-  } catch (err) {
-    console.warn('[marketing-sends] attachment fetch error', a.url, err);
-    return null;
-  }
 }
 
 export async function GET(req: Request) {

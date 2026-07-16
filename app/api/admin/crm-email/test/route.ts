@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { sendOneRecipient } from '@/lib/marketing-email';
+import { resolveAttachments, appendAttachmentLinkButton, type AttachmentRef } from '@/lib/server/email-attachments';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,13 +42,17 @@ export async function POST(req: NextRequest) {
   }
   const input = parsed.data;
 
-  // Append the attachment-link button if configured.
-  let body = input.body;
-  if (input.attachment_link_url) {
-    const label = input.attachment_link_label || 'Download attachment';
-    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    body += `<p style="margin:24px 0"><a href="${esc(input.attachment_link_url)}" style="display:inline-block;background:#7c3aed;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">${esc(label)}</a></p>`;
-  }
+  // Append the attachment-link button (shared helper — matches prod send).
+  const body = appendAttachmentLinkButton(
+    input.body,
+    input.attachment_link_url,
+    input.attachment_link_label,
+  );
+
+  // Fetch each attachment URL and base64-encode for Resend.
+  const attachments = await resolveAttachments(
+    input.attachments as AttachmentRef[] | undefined,
+  );
 
   const replyToFinal = input.reply_to_list && input.reply_to_list.length > 0
     ? input.reply_to_list
@@ -80,6 +85,7 @@ export async function POST(req: NextRequest) {
       brand,
       from,
       replyTo: replyToFinal,
+      attachments: attachments.length > 0 ? attachments : undefined,
     });
     if (!res.ok) {
       return NextResponse.json({
