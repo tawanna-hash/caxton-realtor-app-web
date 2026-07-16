@@ -71,19 +71,21 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   }));
   await insertRecipientsLedger(newId, seeds);
 
-  const attachments = await resolveAttachments(orig.attachments as AttachmentRef[] | undefined);
+  const origAttachments = (orig.attachments as AttachmentRef[] | undefined) ?? undefined;
+  const attachments = await resolveAttachments(origAttachments);
   const replyToList = Array.isArray(orig.reply_to_list) ? (orig.reply_to_list as string[]) : null;
 
   const result = await dispatchOutreach({
     outreachId: newId,
     subject: String(orig.subject ?? ''),
     body: String(orig.body ?? ''),
-    previewText: (orig.preview_text as string | null) ?? null,
-    fromName: (orig.from_name as string | null) ?? null,
-    replyTo: replyToList ?? ((orig.reply_to as string | null) ?? null),
-    repName: (admin as { name?: string; email?: string }).name ?? (admin as { email?: string }).email ?? null,
-    attachments: attachments.attachments,
-    attachmentLinks: attachments.attachmentLinks,
+    previewText: (orig.preview_text as string | null) ?? undefined,
+    fromName: (orig.from_name as string | null) ?? undefined,
+    replyTo: replyToList ?? ((orig.reply_to as string | null) ?? undefined),
+    attachments: attachments.length > 0 ? attachments : undefined,
+    attachmentLinks: origAttachments && origAttachments.length > 0
+      ? origAttachments.map((a) => ({ filename: a.filename, url: a.url }))
+      : undefined,
     sourceLabel: 'crm-resend',
   });
 
