@@ -132,7 +132,7 @@ export function renderEmail(opts: RenderOptions): string {
     ? 'San Antonio real estate news'
     : brand === 'caxton'
       ? 'Caxton Publications'
-      : 'Austin real estate news';
+      : 'Advertise Where REALTORS® Flip The Pages';
 
   const pixel = opts.trackingPixelUrl
     ? `<img src="${opts.trackingPixelUrl}" alt="" width="1" height="1" style="display:block;border:0;outline:none;text-decoration:none;" />`
