@@ -22,6 +22,10 @@ export type SentRow = {
   runs_total?: number | null;
   last_sent_at?: string | null;
   next_scheduled_for?: string | null;
+  open_count?: number | null;
+  click_count?: number | null;
+  first_opened_at?: string | null;
+  last_opened_at?: string | null;
 };
 
 type Props = {
@@ -168,15 +172,19 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
               <th className="px-3 py-2">{group === 'series' ? 'Last sent' : 'Sent at'}</th>
               {group === 'series' && <th className="px-3 py-2">Next</th>}
               {group === 'series' && <th className="px-3 py-2">Runs</th>}
+              <th className="px-3 py-2">Opens</th>
+              <th className="px-3 py-2">Clicks</th>
+              <th className="px-3 py-2">First opened</th>
+              <th className="px-3 py-2">Last opened</th>
               <th className="px-3 py-2 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {loading && (
-              <tr><td colSpan={group === 'series' ? 7 : 5} className="px-3 py-6 text-center text-gray-500">Loading…</td></tr>
+              <tr><td colSpan={group === 'series' ? 11 : 9} className="px-3 py-6 text-center text-gray-500">Loading…</td></tr>
             )}
             {!loading && rows.length === 0 && (
-              <tr><td colSpan={group === 'series' ? 7 : 5} className="px-3 py-6 text-center text-gray-500">No sent emails match your filters.</td></tr>
+              <tr><td colSpan={group === 'series' ? 11 : 9} className="px-3 py-6 text-center text-gray-500">No sent emails match your filters.</td></tr>
             )}
             {!loading && rows.map((row) => {
               const isSeries = row.recurrence_interval_days != null || row.recurrence_parent_id != null;
@@ -208,6 +216,10 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
                       {row.runs_sent ?? 0}/{row.runs_total ?? 0}
                     </td>
                   )}
+                  <td className="px-3 py-2 tabular-nums text-gray-700">{row.open_count ?? 0}</td>
+                  <td className="px-3 py-2 tabular-nums text-gray-700">{row.click_count ?? 0}</td>
+                  <td className="px-3 py-2 whitespace-nowrap text-gray-700">{fmt(row.first_opened_at ?? null)}</td>
+                  <td className="px-3 py-2 whitespace-nowrap text-gray-700">{fmt(row.last_opened_at ?? null)}</td>
                   <td className="px-3 py-2 text-right">
                     <div className="flex justify-end gap-2">
                       <button type="button" disabled={busyId === row.id}
