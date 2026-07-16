@@ -86,6 +86,9 @@ export async function POST(req: NextRequest) {
       from,
       replyTo: replyToFinal,
       attachments: attachments.length > 0 ? attachments : undefined,
+      attachmentLinks: input.attachments && input.attachments.length > 0
+        ? input.attachments.map((a) => ({ filename: a.filename, url: a.url }))
+        : undefined,
     });
     if (!res.ok) {
       return NextResponse.json({

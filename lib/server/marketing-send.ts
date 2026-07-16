@@ -171,6 +171,7 @@ export interface DispatchInput {
   repName?: string | null;
   brand?: 'realtyline' | 'newsline' | 'caxton';
   attachments?: Array<{ filename: string; content: string; contentType?: string }>;
+  attachmentLinks?: Array<{ filename: string; url: string }>;
   sourceLabel?: string;
 }
 
@@ -214,6 +215,7 @@ export async function dispatchOutreach(input: DispatchInput): Promise<DispatchRe
       from,
       replyTo: input.replyTo ?? undefined,
       attachments: input.attachments,
+      attachmentLinks: input.attachmentLinks,
     });
     if (res.ok) {
       sent++;

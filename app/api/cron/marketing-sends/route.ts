@@ -173,6 +173,9 @@ export async function GET(req: Request) {
         replyTo,
         brand,
         attachments: attachments.length > 0 ? attachments : undefined,
+        attachmentLinks: attachmentRefs.length > 0
+          ? attachmentRefs.filter((a) => a.url).map((a) => ({ filename: a.filename, url: a.url as string }))
+          : undefined,
       });
 
       // Chain-insert the next occurrence if within window.

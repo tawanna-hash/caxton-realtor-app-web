@@ -169,6 +169,9 @@ export async function POST(req: NextRequest) {
     previewText: input.preview_text,
     brand,
     attachments: attachments.length > 0 ? attachments : undefined,
+    attachmentLinks: input.attachments && input.attachments.length > 0
+      ? input.attachments.map((a) => ({ filename: a.filename, url: a.url }))
+      : undefined,
     sourceLabel: 'crm_composer',
   });
 
