@@ -1,12 +1,21 @@
 /**
- * Fetch a list of Vercel Blob URLs and materialize them as
- * Resend-shaped { filename, content, contentType } attachments.
+ * Vercel Blob → Resend attachment helpers.
+ *
+ * `buildBlobUrlAttachments` validates each Blob URL, HEAD-checks it, and
+ * returns { filename, path } so Resend fetches the file server-side — no
+ * base64 inflation, no crossing the Vercel 4.5 MB route body limit. It FAILS
+ * LOUD (throws AttachmentError) rather than silently dropping files.
  *
  * Guards:
- *   - Only accepts URLs on *.public.blob.vercel-storage.com (our tenant).
- *   - Skips anything larger than MAX_BYTES to avoid a rogue payload
- *     blowing past Resend's ~40 MB per-email cap.
+ *   - Only accepts https URLs on *.public.blob.vercel-storage.com (our
+ *     tenant). The `.public.` host segment is Vercel's marker for public
+ *     blobs, so a URL that passes this check is publicly readable and safe
+ *     to hand to Resend as a `path`.
+ *   - Rejects anything larger than MAX_BYTES to stay under Resend's ~40 MB
+ *     per-email cap.
  */
+
+import { logger } from './logger';
 
 export interface RemoteAttachment {
   url: string;
@@ -14,22 +23,37 @@ export interface RemoteAttachment {
   content_type?: string;
 }
 
-export interface ResendAttachment {
+export interface BlobUrlAttachment {
   filename: string;
-  content: string; // base64
+  path: string; // public URL handed to Resend verbatim
   contentType?: string;
 }
 
 const MAX_BYTES = 40 * 1024 * 1024; // Resend total-email ceiling
 const ALLOWED_HOST_SUFFIX = '.public.blob.vercel-storage.com';
 
-export async function fetchBlobAttachments(
-  items: RemoteAttachment[] | undefined,
-): Promise<{ attachments: ResendAttachment[]; skipped: string[] }> {
-  if (!items || items.length === 0) return { attachments: [], skipped: [] };
+/**
+ * Thrown when an attachment can't be validated/reached. Carries a
+ * caller-safe `detail` string for surfacing in API responses.
+ */
+export class AttachmentError extends Error {
+  constructor(public detail: string) {
+    super(detail);
+    this.name = 'AttachmentError';
+  }
+}
 
-  const attachments: ResendAttachment[] = [];
-  const skipped: string[] = [];
+/**
+ * Build Resend `path`-style attachments from Blob URLs. Pre-flights each URL
+ * with a HEAD request (verifying 200 + a sane content-length) and throws
+ * AttachmentError on the first problem so the send aborts loudly.
+ */
+export async function buildBlobUrlAttachments(
+  items: RemoteAttachment[] | undefined,
+): Promise<BlobUrlAttachment[]> {
+  if (!items || items.length === 0) return [];
+
+  const out: BlobUrlAttachment[] = [];
   let totalBytes = 0;
 
   for (const item of items) {
@@ -37,35 +61,44 @@ export async function fetchBlobAttachments(
     try {
       u = new URL(item.url);
     } catch {
-      skipped.push(`${item.filename}: invalid URL`);
-      continue;
+      logger.error({ filename: item.filename, url: item.url }, 'attachment: invalid URL');
+      throw new AttachmentError(`${item.filename}: invalid attachment URL`);
     }
     if (u.protocol !== 'https:' || !u.host.endsWith(ALLOWED_HOST_SUFFIX)) {
-      skipped.push(`${item.filename}: host not allowed`);
-      continue;
+      logger.error({ filename: item.filename, url: item.url, host: u.host }, 'attachment: host not allowed');
+      throw new AttachmentError(`${item.filename}: attachment host not allowed`);
     }
 
-    const res = await fetch(item.url);
-    if (!res.ok) {
-      skipped.push(`${item.filename}: fetch ${res.status}`);
-      continue;
+    let head: Response;
+    try {
+      head = await fetch(item.url, { method: 'HEAD' });
+    } catch (err) {
+      logger.error({ filename: item.filename, url: item.url, err }, 'attachment: HEAD request failed');
+      throw new AttachmentError(`${item.filename}: could not reach attachment (${err instanceof Error ? err.message : 'network error'})`);
     }
-    const arr = new Uint8Array(await res.arrayBuffer());
-    if (totalBytes + arr.byteLength > MAX_BYTES) {
-      skipped.push(`${item.filename}: would exceed 40MB cap`);
-      continue;
+    if (!head.ok) {
+      logger.error({ filename: item.filename, url: item.url, status: head.status }, 'attachment: HEAD non-200');
+      throw new AttachmentError(`${item.filename}: attachment not reachable (HTTP ${head.status})`);
     }
-    totalBytes += arr.byteLength;
 
-    // Buffer is only available in nodejs runtime — routes using this
-    // helper must export `runtime = "nodejs"`.
-    const b64 = Buffer.from(arr).toString('base64');
-    attachments.push({
+    const len = Number(head.headers.get('content-length') ?? '0');
+    if (!Number.isFinite(len) || len <= 0) {
+      logger.error({ filename: item.filename, url: item.url, contentLength: head.headers.get('content-length') }, 'attachment: missing/zero content-length');
+      throw new AttachmentError(`${item.filename}: attachment has no content-length (empty or inaccessible)`);
+    }
+    totalBytes += len;
+    if (totalBytes > MAX_BYTES) {
+      logger.error({ filename: item.filename, url: item.url, size: len, totalBytes }, 'attachment: exceeds 40MB cap');
+      throw new AttachmentError(`${item.filename}: attachments exceed the 40MB total cap`);
+    }
+
+    logger.info({ filename: item.filename, url: item.url, size: len }, 'attachment: passthrough OK');
+    out.push({
       filename: item.filename,
-      content: b64,
-      contentType: item.content_type || res.headers.get('content-type') || undefined,
+      path: item.url,
+      contentType: item.content_type || head.headers.get('content-type') || undefined,
     });
   }
 
-  return { attachments, skipped };
+  return out;
 }

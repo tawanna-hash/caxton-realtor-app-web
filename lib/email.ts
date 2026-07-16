@@ -4,14 +4,22 @@
 // Uses process.env.RESEND_API_KEY.
 
 /**
- * Resend supports per-message attachments. `content` is base64-encoded
- * file bytes; `filename` becomes the visible name in the recipient's
- * client. `contentType` is recommended but optional — Resend will sniff
- * if omitted. See https://resend.com/docs/api-reference/emails/send-email
+ * Resend supports per-message attachments two ways:
+ *   - `path`: a publicly-reachable URL. Resend fetches the file server-side.
+ *     Preferred for large files (e.g. the media kit PDF) because it avoids
+ *     base64 inflation (~33%) and never crosses the Vercel 4.5 MB route body
+ *     limit.
+ *   - `content`: base64-encoded file bytes. Legacy path, kept for outreach
+ *     rows that stored inline base64 before the URL-passthrough switch.
+ * Exactly one of `path` / `content` must be set. `filename` becomes the
+ * visible name in the recipient's client. `contentType` is recommended but
+ * optional — Resend will sniff if omitted.
+ * See https://resend.com/docs/api-reference/emails/send-email
  */
 export interface EmailAttachment {
   filename: string;
-  content: string; // base64
+  content?: string; // base64 (legacy)
+  path?: string;    // public URL — Resend fetches it (preferred)
   contentType?: string;
 }
 
@@ -54,11 +62,12 @@ export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult
   if (opts.replyTo) payload.reply_to = opts.replyTo;
   if (opts.cc) payload.cc = Array.isArray(opts.cc) ? opts.cc : [opts.cc];
   if (opts.attachments && opts.attachments.length > 0) {
-    // Resend expects { filename, content, content_type? } with content
-    // already base64-encoded by the caller.
+    // Resend accepts either { filename, path } (URL it fetches server-side)
+    // or { filename, content } (base64). Prefer path when present so large
+    // files skip base64 inflation and the Vercel route body limit.
     payload.attachments = opts.attachments.map((a) => ({
       filename: a.filename,
-      content: a.content,
+      ...(a.path ? { path: a.path } : { content: a.content }),
       ...(a.contentType ? { content_type: a.contentType } : {}),
     }));
   }

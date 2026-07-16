@@ -13,7 +13,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { testSendSchema } from '@/lib/server/schemas/marketing-outreach';
 import { buildEmail } from '@/lib/marketing-email';
 import { sendEmail } from '@/lib/email';
-import { fetchBlobAttachments } from '@/lib/server/blob-fetch';
+import { buildBlobUrlAttachments, AttachmentError } from '@/lib/server/blob-fetch';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -66,7 +66,22 @@ export const POST = withErrorHandling(async (
     ? `${input.from_name} <${(process.env.EMAIL_FROM ?? 'hello@myrealtyline.com').replace(/^.*<|>$/g, '')}>`
     : undefined;
 
-  const { attachments: resendAttachments } = await fetchBlobAttachments(input.attachments);
+  // Attachments are passed to Resend as public Blob URLs (path passthrough).
+  // Any problem (bad host, unreachable, oversized) fails loud here so the
+  // composer never shows a false "sent" for an email missing its attachment.
+  let resendAttachments;
+  try {
+    resendAttachments = await buildBlobUrlAttachments(input.attachments);
+  } catch (err) {
+    if (err instanceof AttachmentError) {
+      return NextResponse.json(
+        { error: 'attachment_failed', detail: err.detail },
+        { status: 502 },
+      );
+    }
+    throw err;
+  }
+
   const res = await sendEmail({
     to: input.to,
     from,
