@@ -38,10 +38,16 @@ export async function materializeAudience(input: MaterializeAudienceInput): Prom
     const ids = await resolveAudience(sql as never, input.advertiserFilter ?? {});
     if (ids.length > 0) {
       const rows = (await sql`
-        SELECT id, email, first_name, last_name, company
-        FROM advertisers
-        WHERE id = ANY(${ids}::int[])
-          AND email IS NOT NULL AND length(trim(email)) > 0
+        SELECT
+          a.id,
+          COALESCE(a.contact_email, a.portal_email) AS email,
+          a.first_name,
+          a.last_name,
+          a.company
+        FROM advertisers a
+        WHERE a.id = ANY(${ids}::int[])
+          AND COALESCE(a.contact_email, a.portal_email) IS NOT NULL
+          AND length(trim(COALESCE(a.contact_email, a.portal_email))) > 0
       `) as unknown as Array<{
         id: number; email: string; first_name: string | null; last_name: string | null; company: string | null;
       }>;

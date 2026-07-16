@@ -39,7 +39,10 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
     const sample = ids.length === 0
       ? []
       : await sql`
-          SELECT id, name, company, type, status, publication, email, phone, tags
+          SELECT
+            id, name, company, type, status, publication,
+            COALESCE(contact_email, portal_email) AS email,
+            phone, tags
           FROM advertisers
           WHERE id = ANY(${ids}::int[])
           ORDER BY name ASC
