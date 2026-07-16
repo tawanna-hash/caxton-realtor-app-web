@@ -71,21 +71,21 @@ export default function CrmClient({ initialRows }: Props) {
   const [composerOpen, setComposerOpen] = useState(false);
   const [view, setView] = useState<'audience' | 'sent'>('audience');
   const [prefillOutreachId, setPrefillOutreachId] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-  useEffect(() => {
-    const pf = searchParams?.get('prefill');
-    if (pf) {
-      setPrefillOutreachId(pf);
-      setComposerOpen(true);
-      const url = new URL(window.location.href);
-      url.searchParams.delete('prefill');
-      window.history.replaceState({}, '', url.toString());
-    }
-  }, [searchParams]);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  useEffect(() => {
+    const pf = searchParams?.get('prefill');
+    if (pf) {
+      /* eslint-disable react-hooks/set-state-in-effect */      setPrefillOutreachId(pf);      setComposerOpen(true);
+      /* eslint-enable react-hooks/set-state-in-effect */
+      const url = new URL(window.location.href);
+      url.searchParams.delete('prefill');
+      window.history.replaceState({}, '', url.toString());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Market tabs <-> ?market= URL param <-> pubFilter ─────────────
   // Dashboard cards deep-link here with ?market=austin etc.; the tab
