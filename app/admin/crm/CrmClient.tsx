@@ -332,6 +332,7 @@ export default function CrmClient({ initialRows }: Props) {
         >Sent</button>
       </div>
 
+      {view === 'audience' && <>
       {/* Filters ────────────────────────────────────────────────── */}
       <div className="rounded-md border border-gray-200 bg-white p-4 space-y-3">
         <div className="flex flex-wrap gap-2 items-center">
@@ -456,6 +457,8 @@ export default function CrmClient({ initialRows }: Props) {
           onError={(msg) => setError(msg)}
         />
       )}
+
+      </>}
 
       {view === 'sent' && (
         <SentTab onEditResend={(row: SentRow) => {
