@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { sendOneRecipient } from '@/lib/marketing-email';
 import { resolveAttachments, appendAttachmentLinkButton, type AttachmentRef } from '@/lib/server/email-attachments';
+import { appendSignature } from '@/lib/email/signature';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,6 +31,7 @@ const testSchema = z.object({
   attachment_link_url: z.string().url().max(2000).optional(),
   attachment_link_label: z.string().trim().max(120).optional(),
   publication_scope: z.string().max(60).default('all'),
+  include_signature: z.boolean().default(true),
 }).strict();
 
 export async function POST(req: NextRequest) {
@@ -48,6 +50,8 @@ export async function POST(req: NextRequest) {
     input.attachment_link_url,
     input.attachment_link_label,
   );
+  const bodyClean = body.replace(/<!--\s*signature-here\s*-->/g, '');
+  const bodyFinal = appendSignature(bodyClean, { skip: !input.include_signature });
 
   // Fetch each attachment URL and base64-encode for Resend.
   const attachments = await resolveAttachments(
@@ -71,7 +75,7 @@ export async function POST(req: NextRequest) {
   try {
     const res = await sendOneRecipient({
       subject: `[TEST] ${input.subject}`,
-      body,
+      body: bodyFinal,
       previewText: input.preview_text,
       recipient: {
         id: 'test-preview',

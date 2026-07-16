@@ -89,6 +89,7 @@ type Draft = {
   publications: PublicationKey[];
   query: string;
   tag: string;
+  includeSignature: boolean;
 };
 
 function loadDraft(): Partial<Draft> {
@@ -144,6 +145,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
   const [recurrenceIntervalDays, setRecurrenceIntervalDays] = useState('');
   const [recurrenceUntil, setRecurrenceUntil] = useState('');
   const [publicationScope, setPublicationScope] = useState('all');
+  const [includeSignature, setIncludeSignature] = useState<boolean>(true);
 
   // UI state
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
@@ -175,6 +177,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       setRecurrenceUntil(d.recurrenceUntil ?? '');
       setScheduledFor(d.scheduledFor ?? '');
       setPublicationScope(d.publicationScope ?? 'all');
+      if (typeof d.includeSignature === 'boolean') setIncludeSignature(d.includeSignature);
       if (d.statuses) setStatuses(d.statuses);
       if (d.publications) setPublications(d.publications);
       if (typeof d.query === 'string') setQuery(d.query);
@@ -193,6 +196,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
         attachmentLinkUrl, attachmentLinkLabel,
         recurrenceIntervalDays, recurrenceUntil, scheduledFor,
         publicationScope, statuses, publications, query, tag,
+        includeSignature,
       });
     }, 600);
     return () => clearTimeout(t);
@@ -201,6 +205,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     attachmentLinkUrl, attachmentLinkLabel,
     recurrenceIntervalDays, recurrenceUntil, scheduledFor,
     publicationScope, statuses, publications, query, tag,
+    includeSignature,
   ]);
 
   // ── Client-side audience preview (mirrors backend logic) ─────
@@ -294,6 +299,12 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     setShowTokenMenu(false);
   }, []);
 
+  const insertSignatureNow = useCallback(() => {
+    setBody((prev) => `${prev}
+
+<!-- signature-here -->`);
+  }, []);
+
   const onUpload = useCallback(async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
@@ -347,6 +358,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
           attachment_link_url: attachmentLinkUrl || undefined,
           attachment_link_label: attachmentLinkLabel || undefined,
           publication_scope: publicationScope,
+          include_signature: includeSignature,
         }),
       });
       if (!r.ok) {
@@ -360,7 +372,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     } finally {
       setTestSending(false);
     }
-  }, [testTo, subject, body, fromName, replyTo, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel, publicationScope, parseReplyToList]);
+  }, [testTo, subject, body, fromName, replyTo, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel, publicationScope, includeSignature, parseReplyToList]);
 
   const onSubmit = useCallback(async () => {
     if (!subject || !body) {
@@ -395,6 +407,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
         attachment_link_url: attachmentLinkUrl || undefined,
         attachment_link_label: attachmentLinkLabel || undefined,
         publication_scope: publicationScope,
+        include_signature: includeSignature,
         mode,
         scheduled_for: mode === 'schedule' && scheduledFor ? new Date(scheduledFor).toISOString() : undefined,
         recurrence_interval_days: recurrenceIntervalDays ? Number(recurrenceIntervalDays) : undefined,
@@ -420,7 +433,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
   }, [
     subject, body, mode, scheduledFor, preview, query, statuses, publications, tag,
     fromName, replyTo, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel,
-    publicationScope, recurrenceIntervalDays, recurrenceUntil, parseReplyToList, onSent, onClose,
+    publicationScope, includeSignature, recurrenceIntervalDays, recurrenceUntil, parseReplyToList, onSent, onClose,
   ]);
 
   if (!open) return null;
@@ -559,6 +572,15 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                 <div>
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-medium uppercase tracking-wide text-gray-500">Body</label>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={insertSignatureNow}
+                        className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-50"
+                        title="Insert a signature placeholder — server injects the full block on send"
+                      >
+                        Insert Signature
+                      </button>
                     <div className="relative">
                       <button
                         type="button"
@@ -582,6 +604,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                           ))}
                         </div>
                       )}
+                    </div>
                     </div>
                   </div>
                   <div className="mt-1">
@@ -698,6 +721,14 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input type="radio" checked={mode === 'schedule'} onChange={() => setMode('schedule')} />
                   Schedule
+                </label>
+                <label className="ml-6 flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={includeSignature}
+                    onChange={(e) => setIncludeSignature(e.target.checked)}
+                  />
+                  Include signature
                 </label>
               </div>
               {mode === 'schedule' && (

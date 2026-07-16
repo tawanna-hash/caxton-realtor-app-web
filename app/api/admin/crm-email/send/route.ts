@@ -15,6 +15,7 @@ import {
 } from '@/lib/server/marketing-send';
 import { resolveCrmAudience, ensureCrmOutreachCampaign, type CrmAudienceFilter } from '../_shared';
 import { resolveAttachments, appendAttachmentLinkButton, type AttachmentRef } from '@/lib/server/email-attachments';
+import { appendSignature } from '@/lib/email/signature';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,6 +49,7 @@ const sendSchema = z.object({
   attachment_link_url: z.string().url().max(2000).optional(),
   attachment_link_label: z.string().trim().max(120).optional(),
   publication_scope: z.string().max(60).default('all'),
+  include_signature: z.boolean().default(true),
   mode: z.enum(['send_now', 'schedule']).default('send_now'),
   scheduled_for: z.string().datetime({ offset: true }).optional(),
   recurrence_interval_days: z.number().int().positive().max(365).optional(),
@@ -66,6 +68,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid input', detail: parsed.error.flatten() }, { status: 400 });
   }
   const input = parsed.data;
+
+  // Signature + attachment-link applied BEFORE persistence so scheduled sends
+  // replay the exact same rendered body via the cron worker.
+  const bodyWithLinkEarly = appendAttachmentLinkButton(
+    input.body,
+    input.attachment_link_url,
+    input.attachment_link_label,
+  );
+  const bodyClean = bodyWithLinkEarly.replace(/<!--\s*signature-here\s*-->/g, '');
+  const bodyFinal = appendSignature(bodyClean, { skip: !input.include_signature });
 
   await ensureSchema();
   const sql = getSql();
@@ -100,7 +112,7 @@ export async function POST(req: NextRequest) {
       created_by
     ) VALUES (
       ${campaignId}, 'email',
-      ${input.subject}, ${input.body},
+      ${input.subject}, ${bodyFinal},
       ${initialStatus},
       ${input.scheduled_for ?? null},
       ${JSON.stringify(seeds.map((s) => s.recipient_id))}::jsonb,
@@ -149,21 +161,15 @@ export async function POST(req: NextRequest) {
     : input.publication_scope === 'caxton'   ? 'caxton'
     : undefined;
 
-  // Prepare attachments + link button for send-now (cron path handles
-  // scheduled sends separately via app/api/cron/marketing-sends).
+  // Prepare attachments (attachment link button + signature already applied above)
   const attachments = await resolveAttachments(
     input.attachments as AttachmentRef[] | undefined,
-  );
-  const bodyWithLink = appendAttachmentLinkButton(
-    input.body,
-    input.attachment_link_url,
-    input.attachment_link_label,
   );
 
   const result = await dispatchOutreach({
     outreachId,
     subject: input.subject,
-    body: bodyWithLink,
+    body: bodyFinal,
     fromName: input.from_name,
     replyTo: replyToFinal,
     previewText: input.preview_text,
