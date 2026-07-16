@@ -13,7 +13,7 @@
 // Existing transactional `/admin/advertisers` page is unchanged; this
 // page reads + writes the same row.
 
-import { useCallback, useMemo, useState } from 'react';
+import { useEffect, useCallback, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import type {
