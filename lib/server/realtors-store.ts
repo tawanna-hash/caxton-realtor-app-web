@@ -7,6 +7,7 @@
 import type { PoolClient } from '@neondatabase/serverless';
 import { query, withNeonTransaction } from './db/neon';
 import { logger } from './logger';
+import { captureServerEvent } from '@/lib/server/posthog';
 
 // Postgres SQLSTATE 42703 = undefined_column (column does not exist).
 // 42P01 = undefined_table. We swallow these in optional-update steps so a
@@ -360,7 +361,7 @@ export async function autoEnrollSignupGiveaways(
   client: PoolClient,
   realtorId: string,
 ): Promise<number> {
-  const r = await client.query(
+  const r = await client.query<{ giveaway_id: string }>(
     `INSERT INTO giveaway_entries (giveaway_id, realtor_id, rule_id)
      SELECT gr.giveaway_id, r.id, gr.id
      FROM giveaway_rules gr
@@ -375,6 +376,15 @@ export async function autoEnrollSignupGiveaways(
      RETURNING giveaway_id`,
     [realtorId],
   );
+  // Fire one PostHog event per new entry. Fire-and-forget; analytics
+  // never blocks the signup transaction.
+  for (const row of r.rows) {
+    captureServerEvent('giveaway_entered', realtorId, {
+      giveaway_id: row.giveaway_id,
+      action_type: 'signup',
+      source: 'auto_enroll',
+    });
+  }
   return r.rowCount ?? 0;
 }
 
