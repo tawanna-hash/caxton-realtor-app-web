@@ -93,7 +93,7 @@ export default function CrmClient({ initialRows }: Props) {
     if (marketFromUrl) return marketFromUrl;
     if (pubFilter === 'all') return 'all';
     for (const m of MARKETS) {
-      if ((MARKET_META[m].publication as string) === (pubFilter as string)) return m;
+      if ((m as string) === (pubFilter as string)) return m;
     }
     return 'all';
   })();
@@ -105,11 +105,11 @@ export default function CrmClient({ initialRows }: Props) {
         router.replace('/admin/crm');
         return;
       }
-      const pub = MARKET_META[market].publication;
-      // Cast is safe: MARKET_META publication brand slugs are a subset of
-      // PublicationKey; the type refinement isn't tracked through the
-      // record lookup so we assert it here.
-      setPubFilter(pub as unknown as PublicationKey);
+      // Store the market key directly. Market ids and PublicationKey
+      // values share strings ('austin', 'san_antonio', 'houston', 'dallas'),
+      // and parsePublications() returns PublicationKey — so comparing
+      // filter against advPubs works one-to-one.
+      setPubFilter(market as unknown as PublicationKey);
       router.replace(`/admin/crm?market=${market}`);
     },
     [router],
