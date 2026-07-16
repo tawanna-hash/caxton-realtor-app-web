@@ -37,7 +37,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Advertisers',  href: '/admin/crm',        description: 'Accounts, contacts, share links' },
       { label: 'Agreements',   href: '/admin/agreements', description: 'Contracts & renewals' },
       { label: 'Invoices',     href: '/admin/invoices',   description: 'Billable charges & payment status' },
-      { label: 'Marketing',    href: '/admin/marketing',  description: 'Outreach campaigns & tasks' },
       { label: 'Media Kit',    href: '/admin/media-kit',  description: '2026 packages, rates & deadlines' },
     ],
   },
