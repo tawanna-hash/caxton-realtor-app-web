@@ -5,7 +5,7 @@
 // and per-recipient send orchestration.
 
 import crypto from 'node:crypto';
-import { sendEmail } from './email';
+import { sendEmail, type EmailAttachment } from './email';
 import type { MarketingCampaignOutreachRecipient } from './marketing-campaigns';
 
 // ── Public site base for tracking + unsubscribe links ──────────────
@@ -247,7 +247,7 @@ export function buildEmail(input: BuildEmailInput): BuiltEmail {
 export async function sendOneRecipient(input: BuildEmailInput & {
   from?: string;
   replyTo?: string | string[];
-  attachments?: Array<{ filename: string; content: string; contentType?: string }>;
+  attachments?: EmailAttachment[];
 }) {
   const built = buildEmail(input);
   return sendEmail({

@@ -21,6 +21,8 @@ import {
   insertRecipientsLedger,
   buildMediaKitTokens,
 } from '@/lib/server/marketing-send';
+import { buildBlobUrlAttachments } from '@/lib/server/blob-fetch';
+import type { EmailAttachment } from '@/lib/email';
 
 export const runtime     = 'nodejs';
 export const dynamic     = 'force-dynamic';
@@ -69,25 +71,6 @@ interface AttachmentRef {
   url?: string;
   content?: string;
   contentType?: string;
-}
-
-async function fetchAttachmentContent(a: AttachmentRef): Promise<{ filename: string; content: string; contentType?: string } | null> {
-  if (a.content) {
-    return { filename: a.filename, content: a.content, contentType: a.contentType };
-  }
-  if (!a.url) return null;
-  try {
-    const r = await fetch(a.url);
-    if (!r.ok) {
-      console.warn('[marketing-sends] attachment fetch failed', a.url, r.status);
-      return null;
-    }
-    const buf = Buffer.from(await r.arrayBuffer());
-    return { filename: a.filename, content: buf.toString('base64'), contentType: a.contentType };
-  } catch (err) {
-    console.warn('[marketing-sends] attachment fetch error', a.url, err);
-    return null;
-  }
 }
 
 export async function GET(req: Request) {
@@ -152,13 +135,20 @@ export async function GET(req: Request) {
         replyToList && replyToList.length > 0 ? replyToList
         : (o.reply_to ?? null);
 
-      // Attachments: fetch each from Blob URL (or inline content) at send time.
+      // Attachments: new sends store a Blob URL → path passthrough (Resend
+      // fetches it), HEAD-preflighted so a broken/oversized file throws and
+      // marks this row failed (see catch below). Legacy rows may carry inline
+      // base64 `content` → pass through unchanged.
       const attachmentRefs = Array.isArray(o.attachments) ? (o.attachments as AttachmentRef[]) : [];
-      const attachments: Array<{ filename: string; content: string; contentType?: string }> = [];
-      for (const a of attachmentRefs) {
-        const resolved = await fetchAttachmentContent(a);
-        if (resolved) attachments.push(resolved);
-      }
+      const urlAttachments = await buildBlobUrlAttachments(
+        attachmentRefs
+          .filter((a) => a.url)
+          .map((a) => ({ url: a.url as string, filename: a.filename, content_type: a.contentType })),
+      );
+      const legacyAttachments: EmailAttachment[] = attachmentRefs
+        .filter((a) => !a.url && a.content)
+        .map((a) => ({ filename: a.filename, content: a.content as string, contentType: a.contentType }));
+      const attachments: EmailAttachment[] = [...urlAttachments, ...legacyAttachments];
 
       // Media-kit tokens — injected via body/subject substitution below.
       // substituteTokens runs per-recipient inside buildEmail; the tokens

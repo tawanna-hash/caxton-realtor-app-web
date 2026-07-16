@@ -36,8 +36,8 @@ const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // ── Email attachment payload (remote Vercel Blob URL) ─────────────
 // The client uploads each file directly to Vercel Blob (bypassing the
 // 4.5MB Vercel-route ingress cap), then posts only the resulting URLs
-// here. Server-side, fetchBlobAttachments() re-fetches each URL and
-// converts to Resend's base64 shape.
+// here. Server-side, buildBlobUrlAttachments() validates + HEAD-checks each
+// URL and hands it to Resend as a `path` (Resend fetches it server-side).
 export const emailAttachmentSchema = z.object({
   filename: z.string().trim().min(1).max(255),
   url: z.string().url().max(2000),

@@ -14,7 +14,7 @@ import { parseJson } from '@/lib/server/schemas/_common';
 import { getSql, ensureSchema } from '@/lib/db';
 import { sendOutreachSchema } from '@/lib/server/schemas/marketing-outreach';
 import { materializeAudience, insertRecipientsLedger, dispatchOutreach } from '@/lib/server/marketing-send';
-import { fetchBlobAttachments } from '@/lib/server/blob-fetch';
+import { buildBlobUrlAttachments, AttachmentError } from '@/lib/server/blob-fetch';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -39,6 +39,22 @@ export const POST = withErrorHandling(async (
   `) as unknown as Array<{ id: string; publication: string | null }>;
   if (campRows.length === 0) throw new ApiError(404, 'campaign not found');
   const camp = campRows[0];
+
+  // Validate attachments up-front (path passthrough + HEAD preflight) so we
+  // fail loud BEFORE persisting an outreach or sending anything. Applies to
+  // both send_now and schedule so a broken URL is caught at compose time.
+  let resendAttachments;
+  try {
+    resendAttachments = await buildBlobUrlAttachments(input.attachments);
+  } catch (err) {
+    if (err instanceof AttachmentError) {
+      return NextResponse.json(
+        { error: 'attachment_failed', detail: err.detail },
+        { status: 502 },
+      );
+    }
+    throw err;
+  }
 
   // Build the recipient list NOW so we can persist the snapshot.
   const seeds = await materializeAudience({
@@ -111,7 +127,6 @@ export const POST = withErrorHandling(async (
     : camp.publication === 'both' ? 'caxton'
     : 'realtyline';
 
-  const { attachments: resendAttachments } = await fetchBlobAttachments(input.attachments);
   const result = await dispatchOutreach({
     outreachId: outreach.id,
       sourceLabel: Array.isArray(input.sources) ? input.sources.join("+") : "outreach",
