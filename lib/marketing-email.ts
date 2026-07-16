@@ -122,6 +122,9 @@ export interface RenderOptions {
   unsubscribeUrl: string;
   trackingPixelUrl?: string | null;
   brand?: 'realtyline' | 'newsline' | 'caxton';
+  // Blob-hosted files surfaced as clickable links in the body (not
+  // Resend binary attachments — those are handled separately).
+  attachmentLinks?: Array<{ filename: string; url: string }>;
 }
 
 export function renderEmail(opts: RenderOptions): string {
@@ -142,6 +145,15 @@ export function renderEmail(opts: RenderOptions): string {
     ? `<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#fff;">${escapeHtml(opts.previewText)}</div>`
     : '';
 
+  const attachmentsHtml = opts.attachmentLinks && opts.attachmentLinks.length > 0
+    ? `<p style="margin: 24px 0 8px; font-size: 14px; font-weight: 600;">Attachments:</p>
+    <ul style="margin: 0 0 16px 20px; padding: 0; font-size: 14px;">
+${opts.attachmentLinks.map((a) => `      <li style="margin: 4px 0;">
+        <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener" style="color: ${accent}; text-decoration: underline;">${escapeHtml(a.filename)}</a>
+      </li>`).join('\n')}
+    </ul>`
+    : '';
+
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -160,6 +172,7 @@ ${preheader}
       </td></tr>
       <tr><td style="padding:28px;">
         ${opts.bodyHtml}
+        ${attachmentsHtml}
       </td></tr>
       <tr><td style="padding:16px 28px 24px;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;line-height:1.6;">
         <div>You're receiving this email because you're connected with ${wordmark}.</div>
@@ -206,6 +219,7 @@ export interface BuildEmailInput {
   recipient: Pick<MarketingCampaignOutreachRecipient, 'id' | 'email' | 'first_name' | 'last_name' | 'company' | 'unsub_token'>;
   repName?: string | null;
   brand?: 'realtyline' | 'newsline' | 'caxton';
+  attachmentLinks?: Array<{ filename: string; url: string }>;
 }
 
 export interface BuiltEmail {
@@ -239,6 +253,7 @@ export function buildEmail(input: BuildEmailInput): BuiltEmail {
     unsubscribeUrl,
     trackingPixelUrl,
     brand: input.brand,
+    attachmentLinks: input.attachmentLinks,
   });
   return { subject, html };
 }

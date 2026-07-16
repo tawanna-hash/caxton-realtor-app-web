@@ -60,6 +60,7 @@ export const POST = withErrorHandling(async (
     },
     repName: admin.email ?? null,
     brand,
+    attachmentLinks: input.attachments?.map((a) => ({ filename: a.filename, url: a.url })),
   });
 
   const from = input.from_name
