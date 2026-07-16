@@ -64,7 +64,6 @@ export default function CrmClient({ initialRows }: Props) {
   const [statusFilter, setStatusFilter] = useState<AdvertiserStatus | 'all'>('all');
   const [typeFilter, setTypeFilter] = useState<AdvertiserType | 'all'>('all');
   const [pubFilter, setPubFilter] = useState<PublicationKey | 'all'>('all');
-  const [tagFilter, setTagFilter] = useState<string | 'all'>('all');
   const [editing, setEditing] = useState<AdvertiserCrmRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -127,8 +126,9 @@ export default function CrmClient({ initialRows }: Props) {
     for (const r of rows) {
       const advPubs = parsePublications(r.publication);
       for (const m of MARKETS) {
-        const brand = MARKET_META[m].publication as unknown as PublicationKey;
-        if (advPubs.includes(brand)) {
+        // Market ids and PublicationKey values share the same strings
+        // ('austin', 'san_antonio', 'houston', 'dallas'). Compare directly.
+        if (advPubs.includes(m as unknown as PublicationKey)) {
           counts[m] += 1;
         }
       }
@@ -151,9 +151,6 @@ export default function CrmClient({ initialRows }: Props) {
         const advPubs = parsePublications(r.publication);
         if (!advPubs.includes(pubFilter)) return false;
       }
-      if (tagFilter !== 'all') {
-        if (!(r.tags ?? []).includes(tagFilter)) return false;
-      }
       if (!q) return true;
       const hay = [
         r.name, r.company, r.first_name, r.last_name,
@@ -163,7 +160,7 @@ export default function CrmClient({ initialRows }: Props) {
       ].filter(Boolean).join(' ').toLowerCase();
       return hay.includes(q);
     });
-  }, [rows, query, statusFilter, typeFilter, pubFilter, tagFilter]);
+  }, [rows, query, statusFilter, typeFilter, pubFilter]);
 
   // ── counts for filter chips ─────────────────────────────────────
   // Recent bounces — any advertiser with a bounce flag set. We keep this
@@ -343,13 +340,6 @@ export default function CrmClient({ initialRows }: Props) {
                 {recentBounces.length > 5 ? ` … (+${recentBounces.length - 5} more)` : ''}
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setTagFilter(tagFilter === '__bounced__' ? 'all' : '__bounced__')}
-              className="text-xs font-semibold px-3 py-1.5 rounded-md border border-red-400 bg-white hover:bg-red-100 text-red-800 whitespace-nowrap"
-            >
-              {tagFilter === '__bounced__' ? 'Clear filter' : 'View all bounces'}
-            </button>
           </div>
         )}
 
@@ -367,25 +357,6 @@ export default function CrmClient({ initialRows }: Props) {
           ))}
         </div>
 
-        {/* Tag chips — surface marketing-outreach prospects */}
-        <div className="flex flex-wrap gap-2 items-center">
-          <span className="text-xs uppercase tracking-wider text-gray-500">Tags</span>
-          <StatusChip label="All" active={tagFilter === 'all'} count={rows.length} onClick={() => setTagFilter('all')} />
-          <StatusChip
-            label="Marketing outreach"
-            tone="bg-amber-50 text-amber-800 border-amber-200"
-            active={tagFilter === 'marketing-outreach'}
-            count={rows.filter((r) => (r.tags ?? []).includes('marketing-outreach')).length}
-            onClick={() => setTagFilter('marketing-outreach')}
-          />
-          <StatusChip
-            label="Bounced"
-            tone="bg-red-50 text-red-800 border-red-300"
-            active={tagFilter === '__bounced__'}
-            count={rows.filter((r) => !!r.last_bounced_at).length}
-            onClick={() => setTagFilter(tagFilter === '__bounced__' ? 'all' : '__bounced__')}
-          />
-        </div>
       </div>
 
       {/* List */}
