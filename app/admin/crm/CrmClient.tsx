@@ -83,20 +83,24 @@ export default function CrmClient({ initialRows }: Props) {
   // we derive activeMarket directly from either the URL or pubFilter
   // per render and let handleMarketTab keep them in sync when the user
   // clicks a tab.
-  const marketFromUrl: Market | null = (() => {
+  // URL is source of truth for market. Both server and client derive
+  // activeMarket from searchParams identically -> no hydration mismatch.
+  // pubFilter mirrors the URL so downstream filtering keeps working.
+  const marketFromUrl: Market | 'all' = (() => {
     const raw = searchParams?.get('market');
-    if (!raw) return null;
-    return (MARKETS as readonly string[]).includes(raw) ? (raw as Market) : null;
+    if (!raw) return 'all';
+    return (MARKETS as readonly string[]).includes(raw) ? (raw as Market) : 'all';
   })();
 
-  const activeMarket: Market | 'all' = (() => {
-    if (marketFromUrl) return marketFromUrl;
-    if (pubFilter === 'all') return 'all';
-    for (const m of MARKETS) {
-      if ((m as string) === (pubFilter as string)) return m;
-    }
-    return 'all';
-  })();
+  const activeMarket: Market | 'all' = marketFromUrl !== 'all'
+    ? marketFromUrl
+    : (() => {
+        if (pubFilter === 'all') return 'all';
+        for (const m of MARKETS) {
+          if ((m as string) === (pubFilter as string)) return m;
+        }
+        return 'all';
+      })();
 
   const handleMarketTab = useCallback(
     (market: Market | 'all') => {
