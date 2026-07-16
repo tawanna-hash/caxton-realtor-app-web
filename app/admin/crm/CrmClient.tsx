@@ -23,6 +23,7 @@ import type {
   AdvertiserType,
 } from '@/lib/advertisers';
 import type { Publication, PublicationKey } from '@/lib/publication-theme';
+import CrmComposer from './_components/CrmComposer';
 import {
   PUBLICATION_OPTIONS,
   PUBLICATION_KEYS,
@@ -66,6 +67,7 @@ export default function CrmClient({ initialRows }: Props) {
   const [tagFilter, setTagFilter] = useState<string | 'all'>('all');
   const [editing, setEditing] = useState<AdvertiserCrmRow | null>(null);
   const [creating, setCreating] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const router = useRouter();
@@ -452,6 +454,26 @@ export default function CrmClient({ initialRows }: Props) {
           onError={(msg) => setError(msg)}
         />
       )}
+
+      <button
+        type="button"
+        onClick={() => setComposerOpen(true)}
+        className="fixed bottom-6 right-6 z-40 rounded-full bg-purple-700 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:bg-purple-800"
+      >
+        Compose email
+      </button>
+      <CrmComposer
+        open={composerOpen}
+        onClose={() => setComposerOpen(false)}
+        rows={rows}
+        adminEmail={null}
+        initialFilter={{
+          statuses: statusFilter === 'all' ? [] : [statusFilter],
+          types: typeFilter === 'all' ? [] : [typeFilter],
+          publications: pubFilter === 'all' ? [] : [pubFilter],
+          query,
+        }}
+      />
     </div>
   );
 }
