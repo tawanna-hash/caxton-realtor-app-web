@@ -59,8 +59,11 @@ export const composeSchema = z.object({
   body:         z.string().trim().min(1, 'body required').max(200_000),
   from_name:    z.string().trim().max(120).optional(),
   reply_to:     z.string().regex(emailRe, 'invalid reply-to email').optional(),
+  reply_to_list: z.array(z.string().regex(emailRe, 'invalid reply-to email')).max(10).optional(),
   preview_text: z.string().trim().max(150).optional(),
   attachments:  z.array(emailAttachmentSchema).max(20).optional(),
+  attachment_link_url:   z.string().url().max(2000).optional(),
+  attachment_link_label: z.string().trim().max(120).optional(),
 }).strict();
 
 export const sendOutreachSchema = composeSchema.extend({
@@ -70,6 +73,8 @@ export const sendOutreachSchema = composeSchema.extend({
   manual_emails: z.array(z.string().regex(emailRe)).max(2000).optional(),
   mode: z.enum(['send_now', 'schedule']).default('send_now'),
   scheduled_for: z.string().datetime({ offset: true }).optional(),
+  recurrence_interval_days: z.number().int().positive().max(365).optional(),
+  recurrence_until: z.string().datetime({ offset: true }).optional(),
 }).strict().refine(
   (v) => v.mode !== 'schedule' || !!v.scheduled_for,
   { message: 'scheduled_for required when mode=schedule', path: ['scheduled_for'] },

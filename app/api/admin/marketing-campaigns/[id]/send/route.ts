@@ -54,7 +54,11 @@ export const POST = withErrorHandling(async (
     INSERT INTO marketing_campaign_outreach (
       campaign_id, channel, subject, body, status, scheduled_for,
       recipient_ids, recipient_count, audience_sources, subscriber_ids, manual_emails,
-      from_name, reply_to, preview_text, created_by
+      from_name, reply_to, preview_text,
+      recurrence_interval_days, recurrence_until,
+      audience_snapshot, reply_to_list,
+      attachments, attachment_link_url, attachment_link_label,
+      created_by
     ) VALUES (
       ${id}, 'email',
       ${input.subject}, ${input.body},
@@ -68,6 +72,18 @@ export const POST = withErrorHandling(async (
       ${input.from_name ?? null},
       ${input.reply_to ?? null},
       ${input.preview_text ?? null},
+      ${input.recurrence_interval_days ?? null},
+      ${input.recurrence_until ?? null},
+      ${JSON.stringify({
+        sources: input.sources,
+        advertiserFilter: input.advertiser_filter,
+        subscriberFilter: input.subscriber_filter,
+        manualEmails: input.manual_emails,
+      })}::jsonb,
+      ${input.reply_to_list ? JSON.stringify(input.reply_to_list) : null}::jsonb,
+      ${input.attachments ? JSON.stringify(input.attachments) : null}::jsonb,
+      ${input.attachment_link_url ?? null},
+      ${input.attachment_link_label ?? null},
       ${admin.email ?? null}
     ) RETURNING *
   `) as unknown as Array<{ id: string }>;

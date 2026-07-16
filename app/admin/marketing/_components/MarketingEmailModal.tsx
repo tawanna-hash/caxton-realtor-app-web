@@ -108,6 +108,11 @@ interface ComposerDraft {
   mode: 'send_now' | 'schedule';
   scheduledFor: string;
   attachments: Array<{ filename: string; url: string; content_type: string; size: number }>;
+  recurrenceIntervalDays: string;
+  recurrenceUntil: string;
+  replyToListText: string;
+  attachmentLinkUrl: string;
+  attachmentLinkLabel: string;
   savedAt: number;
 }
 
@@ -219,6 +224,11 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
   // Scheduling
   const [mode, setMode] = useState<'send_now' | 'schedule'>('send_now');
   const [scheduledFor, setScheduledFor] = useState<string>('');
+  const [recurrenceIntervalDays, setRecurrenceIntervalDays] = useState<string>('');
+  const [recurrenceUntil, setRecurrenceUntil] = useState<string>('');
+  const [replyToListText, setReplyToListText] = useState<string>('');
+  const [attachmentLinkUrl, setAttachmentLinkUrl] = useState<string>('');
+  const [attachmentLinkLabel, setAttachmentLinkLabel] = useState<string>('');
 
   // Audience preview + sending state
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
@@ -248,6 +258,11 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     setMode(draft.mode);
     setScheduledFor(draft.scheduledFor);
     setAttachments(draft.attachments);
+    setRecurrenceIntervalDays(draft.recurrenceIntervalDays ?? '');
+    setRecurrenceUntil(draft.recurrenceUntil ?? '');
+    setReplyToListText(draft.replyToListText ?? '');
+    setAttachmentLinkUrl(draft.attachmentLinkUrl ?? '');
+    setAttachmentLinkLabel(draft.attachmentLinkLabel ?? '');
     setDraftRestored(true);
   }, []);
 
@@ -265,6 +280,8 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
         subject, body, previewText, fromName, replyTo, testTo,
         sources, advertiserFilter, subscriberFilter, manualText,
         mode, scheduledFor, attachments,
+        recurrenceIntervalDays, recurrenceUntil, replyToListText,
+        attachmentLinkUrl, attachmentLinkLabel,
       });
     }, 300);
     return () => window.clearTimeout(t);
@@ -272,6 +289,8 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     open, subject, body, previewText, fromName, replyTo, testTo,
     sources, advertiserFilter, subscriberFilter, manualText,
     mode, scheduledFor, attachments,
+    recurrenceIntervalDays, recurrenceUntil, replyToListText,
+    attachmentLinkUrl, attachmentLinkLabel,
   ]);
 
   function discardDraft() {
@@ -290,6 +309,11 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
     setMode('send_now');
     setScheduledFor('');
     setAttachments([]);
+    setRecurrenceIntervalDays('');
+    setRecurrenceUntil('');
+    setReplyToListText('');
+    setAttachmentLinkUrl('');
+    setAttachmentLinkLabel('');
     setDraftRestored(false);
   }
 
@@ -413,6 +437,11 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
           mode,
           scheduled_for: scheduledIso,
           attachments: attachmentsPayload.length > 0 ? attachmentsPayload : undefined,
+          recurrence_interval_days: recurrenceIntervalDays ? parseInt(recurrenceIntervalDays, 10) : undefined,
+          recurrence_until: recurrenceUntil ? new Date(recurrenceUntil).toISOString() : undefined,
+          reply_to_list: replyToListText.trim() ? replyToListText.split(',').map(s => s.trim()).filter(Boolean) : undefined,
+          attachment_link_url: attachmentLinkUrl.trim() || undefined,
+          attachment_link_label: attachmentLinkLabel.trim() || undefined,
         }),
       });
       if (res.ok) {
@@ -635,7 +664,7 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
                   />
                 </label>
                 <label className="block">
-                  <div className="text-xs font-medium text-gray-600 mb-1">Reply-to</div>
+                  <div className="text-xs font-medium text-gray-600 mb-1">Reply-to (primary)</div>
                   <input
                     value={replyTo}
                     onChange={(e) => setReplyTo(e.target.value)}
@@ -679,6 +708,76 @@ export default function MarketingEmailModal({ open, onClose, campaign, adminEmai
 
             {/* Schedule + test */}
             <section className="space-y-2">
+              <div className="rounded-lg border border-purple-200 bg-purple-50/40 p-3 mb-3">
+                <h3 className="text-sm font-semibold text-purple-900 mb-2">Advanced (optional)</h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                  <label className="block">
+                    <div className="text-xs font-medium text-gray-700 mb-1">Recurrence — every N days</div>
+                    <input
+                      type="number"
+                      min="1"
+                      max="365"
+                      value={recurrenceIntervalDays}
+                      onChange={(e) => setRecurrenceIntervalDays(e.target.value)}
+                      placeholder="e.g. 4"
+                      className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+                    />
+                  </label>
+                  <label className="block">
+                    <div className="text-xs font-medium text-gray-700 mb-1">Recurrence — stop after</div>
+                    <input
+                      type="datetime-local"
+                      value={recurrenceUntil}
+                      onChange={(e) => setRecurrenceUntil(e.target.value)}
+                      className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+                    />
+                  </label>
+                </div>
+
+                <label className="block mb-3">
+                  <div className="text-xs font-medium text-gray-700 mb-1">
+                    Additional reply-to emails <span className="text-gray-500">(comma-separated, overrides primary)</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={replyToListText}
+                    onChange={(e) => setReplyToListText(e.target.value)}
+                    placeholder="tawanna@myrealtyline.com, caroline@..., doren@..."
+                    className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+                  />
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="block">
+                    <div className="text-xs font-medium text-gray-700 mb-1">
+                      Attachment link URL <span className="text-gray-500">(large-file safe)</span>
+                    </div>
+                    <input
+                      type="url"
+                      value={attachmentLinkUrl}
+                      onChange={(e) => setAttachmentLinkUrl(e.target.value)}
+                      placeholder="https://... (Blob URL or PDF)"
+                      className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+                    />
+                  </label>
+                  <label className="block">
+                    <div className="text-xs font-medium text-gray-700 mb-1">Attachment button label</div>
+                    <input
+                      type="text"
+                      value={attachmentLinkLabel}
+                      onChange={(e) => setAttachmentLinkLabel(e.target.value)}
+                      placeholder="Download 2026 Media Kit"
+                      className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+                    />
+                  </label>
+                </div>
+
+                <p className="text-[11px] text-purple-800/80 mt-2">
+                  Recurrence: cron re-materializes the audience on each fire (new prospects included, unsubscribes excluded). Attachment link is safer than attachments for files &gt;3 MB.
+                </p>
+              </div>
+
               <h3 className="text-sm font-semibold text-gray-800">Send</h3>
               <div className="flex items-center gap-2 text-sm">
                 <label className="flex items-center gap-1.5">
