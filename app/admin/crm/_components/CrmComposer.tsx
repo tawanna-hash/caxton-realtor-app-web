@@ -42,6 +42,8 @@ type Props = {
   rows: AdvertiserCrmRow[];
   adminEmail: string | null;
   onSent?: () => void;
+  prefillOutreachId?: string | null;
+  onPrefilled?: () => void;
   // Optional filter pre-seed — CrmClient passes its current chip state
   // so the composer opens with the same audience the user is viewing.
   initialFilter?: {
@@ -117,7 +119,7 @@ function clearDraft() {
 }
 
 // ── Component ───────────────────────────────────────────────────
-export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, initialFilter }: Props) {
+export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, initialFilter, prefillOutreachId, onPrefilled }: Props) {
   // Filter chip state (independent of CrmClient's chips — but seeded from them)
   const [statuses, setStatuses] = useState<AdvertiserStatus[]>(initialFilter?.statuses ?? []);
   const [publications, setPublications] = useState<PublicationKey[]>(initialFilter?.publications ?? []);
@@ -186,6 +188,32 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       setTimeout(() => setRestoredDraft(false), 3500);
     });
   }, [open]);
+
+  // Prefill from a past outreach (Edit & Resend flow).
+  useEffect(() => {
+    if (!open || !prefillOutreachId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`/api/admin/crm-email/${prefillOutreachId}`, { cache: 'no-store' });
+        if (!r.ok) return;
+        const j = await r.json();
+        const row = j.row ?? {};
+        if (cancelled) return;
+        if (typeof row.subject === 'string') setSubject(row.subject);
+        if (typeof row.body === 'string') setBody(row.body);
+        if (typeof row.from_name === 'string') setFromName(row.from_name);
+        if (typeof row.reply_to === 'string') setReplyTo(row.reply_to);
+        if (typeof row.preview_text === 'string') setPreviewText(row.preview_text);
+        if (typeof row.attachment_link_url === 'string') setAttachmentLinkUrl(row.attachment_link_url);
+        if (typeof row.attachment_link_label === 'string') setAttachmentLinkLabel(row.attachment_link_label);
+        if (Array.isArray(row.attachments)) setAttachments(row.attachments);
+        if (Array.isArray(row.reply_to_list)) setReplyToList(row.reply_to_list.join(', '));
+        onPrefilled?.();
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [open, prefillOutreachId, onPrefilled]);
 
   // ── Autosave draft ───────────────────────────────────────────
   useEffect(() => {

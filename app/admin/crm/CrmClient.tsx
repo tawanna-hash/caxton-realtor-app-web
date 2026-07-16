@@ -24,6 +24,8 @@ import type {
 } from '@/lib/advertisers';
 import type { Publication, PublicationKey } from '@/lib/publication-theme';
 import CrmComposer from './_components/CrmComposer';
+import SentTab from './_components/SentTab';
+import type { SentRow } from './_components/SentPanel';
 import {
   PUBLICATION_OPTIONS,
   PUBLICATION_KEYS,
@@ -67,6 +69,19 @@ export default function CrmClient({ initialRows }: Props) {
   const [editing, setEditing] = useState<AdvertiserCrmRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [view, setView] = useState<'audience' | 'sent'>('audience');
+  const [prefillOutreachId, setPrefillOutreachId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const pf = searchParams?.get('prefill');
+    if (pf) {
+      setPrefillOutreachId(pf);
+      setComposerOpen(true);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('prefill');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [searchParams]);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const router = useRouter();
@@ -305,6 +320,18 @@ export default function CrmClient({ initialRows }: Props) {
         })}
       </div>
 
+      {/* View tabs: Audience | Sent */}
+      <div className="mt-4 flex gap-2 border-b border-gray-200" role="tablist" aria-label="CRM view">
+        <button type="button" role="tab" aria-selected={view === 'audience'}
+          onClick={() => setView('audience')}
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'audience' ? 'border-purple-700 text-purple-800' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+        >Audience</button>
+        <button type="button" role="tab" aria-selected={view === 'sent'}
+          onClick={() => setView('sent')}
+          className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${view === 'sent' ? 'border-purple-700 text-purple-800' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+        >Sent</button>
+      </div>
+
       {/* Filters ────────────────────────────────────────────────── */}
       <div className="rounded-md border border-gray-200 bg-white p-4 space-y-3">
         <div className="flex flex-wrap gap-2 items-center">
@@ -430,6 +457,14 @@ export default function CrmClient({ initialRows }: Props) {
         />
       )}
 
+      {view === 'sent' && (
+        <SentTab onEditResend={(row: SentRow) => {
+          setPrefillOutreachId(row.id);
+          setComposerOpen(true);
+        }} />
+      )}
+
+
       <button
         type="button"
         onClick={() => setComposerOpen(true)}
@@ -439,7 +474,9 @@ export default function CrmClient({ initialRows }: Props) {
       </button>
       <CrmComposer
         open={composerOpen}
-        onClose={() => setComposerOpen(false)}
+        onClose={() => { setComposerOpen(false); setPrefillOutreachId(null); }}
+        prefillOutreachId={prefillOutreachId}
+        onPrefilled={() => { /* keep id until close */ }}
         rows={rows}
         adminEmail={null}
         initialFilter={{
