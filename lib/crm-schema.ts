@@ -433,6 +433,10 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS preview_text             text`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mco_recurrence_parent ON marketing_campaign_outreach(recurrence_parent_id) WHERE recurrence_parent_id IS NOT NULL`);
 
+  // ── Attachment-as-link (413-safe path for large PDFs) ───────────
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS attachment_link_url   text`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS attachment_link_label text`);
+
   await step(() => sql`
     CREATE OR REPLACE FUNCTION trg_mco_set_updated_at()
     RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql

@@ -48,6 +48,8 @@ interface DueRow {
   audience_snapshot: unknown;
   reply_to_list: unknown;
   attachments: unknown;
+  attachment_link_url: string | null;
+  attachment_link_label: string | null;
   scheduled_for: string;
 }
 
@@ -109,7 +111,7 @@ export async function GET(req: Request) {
     RETURNING o.id, o.campaign_id, o.subject, o.body, o.from_name, o.reply_to,
               o.preview_text, o.recurrence_interval_days, o.recurrence_until,
               o.recurrence_parent_id, o.audience_snapshot, o.reply_to_list,
-              o.attachments, o.scheduled_for
+              o.attachments, o.attachment_link_url, o.attachment_link_label, o.scheduled_for
   `) as unknown as DueRow[];
 
   const results: Array<{ outreach_id: string; sent: number; failed: number; total: number; next?: string | null }> = [];
@@ -172,10 +174,25 @@ export async function GET(req: Request) {
         .replace(/\{\{\s*print_subscribers\s*\}\}/gi, mkt.print_subscribers)
         .replace(/\{\{\s*email_subscribers\s*\}\}/gi, mkt.email_subscribers);
 
+      // Attachment-as-link: render download button HTML appended to body.
+      // Bypasses the 413 attachment ceiling (Vercel 4.5 MB body limit ×
+      // base64 overhead). For >~3 MB PDFs, use this path instead of
+      // `attachments`.
+      let bodyWithLink = bodyExpanded;
+      if (o.attachment_link_url) {
+        const label = o.attachment_link_label || 'Download attachment';
+        const safeUrl = o.attachment_link_url.replace(/"/g, '&quot;');
+        const safeLabel = label.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        bodyWithLink += `
+<div style="margin:32px 0;text-align:center;">
+  <a href="${safeUrl}" style="display:inline-block;padding:14px 28px;background:#7c3aed;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${safeLabel}</a>
+</div>`;
+      }
+
       const r = await dispatchOutreach({
         outreachId: o.id,
         subject: subjectExpanded,
-        body: bodyExpanded,
+        body: bodyWithLink,
         previewText: o.preview_text,
         fromName: o.from_name,
         replyTo,
@@ -200,6 +217,7 @@ export async function GET(req: Request) {
               from_name, reply_to, preview_text,
               recurrence_interval_days, recurrence_until, recurrence_parent_id,
               audience_snapshot, reply_to_list, attachments,
+              attachment_link_url, attachment_link_label,
               created_by
             ) VALUES (
               ${o.campaign_id}, 'email', ${o.subject}, ${o.body}, 'scheduled', ${nextRun},
@@ -208,6 +226,7 @@ export async function GET(req: Request) {
               ${o.audience_snapshot ? JSON.stringify(o.audience_snapshot) : null}::jsonb,
               ${o.reply_to_list ? JSON.stringify(o.reply_to_list) : null}::jsonb,
               ${o.attachments ? JSON.stringify(o.attachments) : null}::jsonb,
+              ${o.attachment_link_url}, ${o.attachment_link_label},
               'cron:recurrence'
             )
           `;
