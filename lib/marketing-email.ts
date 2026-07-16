@@ -246,7 +246,7 @@ export function buildEmail(input: BuildEmailInput): BuiltEmail {
 // ── Convenience: send a single recipient and return result ─────────
 export async function sendOneRecipient(input: BuildEmailInput & {
   from?: string;
-  replyTo?: string;
+  replyTo?: string | string[];
   attachments?: Array<{ filename: string; content: string; contentType?: string }>;
 }) {
   const built = buildEmail(input);

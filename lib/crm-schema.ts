@@ -421,6 +421,18 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mco_status    ON marketing_campaign_outreach(status)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mco_scheduled ON marketing_campaign_outreach(scheduled_for) WHERE status = 'scheduled'`);
 
+  // ── Recurring-campaign columns (nullable, additive) ─────────────
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS recurrence_interval_days integer`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS recurrence_until         timestamptz`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS recurrence_parent_id     uuid REFERENCES marketing_campaign_outreach(id) ON DELETE SET NULL`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS audience_snapshot        jsonb`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS reply_to_list            jsonb`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS attachments              jsonb`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS from_name                text`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS reply_to                 text`);
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS preview_text             text`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mco_recurrence_parent ON marketing_campaign_outreach(recurrence_parent_id) WHERE recurrence_parent_id IS NOT NULL`);
+
   await step(() => sql`
     CREATE OR REPLACE FUNCTION trg_mco_set_updated_at()
     RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql

@@ -161,7 +161,7 @@ export interface DispatchInput {
   body: string;
   previewText?: string | null;
   fromName?: string | null;
-  replyTo?: string | null;
+  replyTo?: string | string[] | null;
   repName?: string | null;
   brand?: 'realtyline' | 'newsline' | 'caxton';
   attachments?: Array<{ filename: string; content: string; contentType?: string }>;
@@ -258,4 +258,33 @@ export async function dispatchOutreach(input: DispatchInput): Promise<DispatchRe
   `;
 
   return { sent, failed, total };
+}
+
+
+// ── Media-kit token helper ─────────────────────────────────────────
+// Reads static PUB_SUBSCRIBERS from lib/media-kit.ts so {{print_subscribers}}
+// and {{email_subscribers}} match the PDF/media-kit page exactly. If the
+// numbers change, update lib/media-kit.ts — every recurring send picks it up.
+import { PUB_SUBSCRIBERS, type MediaKitPub } from '@/lib/media-kit';
+
+function fmtInt(n: number): string {
+  return n.toLocaleString('en-US');
+}
+
+export function buildMediaKitTokens(publication: string | null | undefined): {
+  print_subscribers: string;
+  email_subscribers: string;
+} {
+  const pub = (publication ?? 'realtyline') as MediaKitPub;
+  const known: MediaKitPub[] = ['realtyline', 'newsline', 'realtyline-houston', 'realtyline-dallas', 'both'];
+  const resolved: MediaKitPub = known.includes(pub) ? pub : 'realtyline';
+  const total = PUB_SUBSCRIBERS[resolved];
+  // For 2026: print = roughly half of the total distribution (rounded);
+  // email = the full opt-in list. Since our PDF quotes the same headline
+  // number, both tokens resolve to the same source. Adjust here if the
+  // media-kit ever splits them into distinct counts.
+  return {
+    print_subscribers: fmtInt(total),
+    email_subscribers: fmtInt(total),
+  };
 }

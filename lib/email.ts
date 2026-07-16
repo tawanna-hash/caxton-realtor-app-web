@@ -20,7 +20,7 @@ export interface SendEmailOptions {
   from?: string;
   subject: string;
   html: string;
-  replyTo?: string;
+  replyTo?: string | string[];
   cc?: string | string[];
   attachments?: EmailAttachment[];
 }
