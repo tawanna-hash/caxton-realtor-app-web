@@ -437,6 +437,12 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS attachment_link_url   text`);
   await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS attachment_link_label text`);
 
+  // ── Attachment delivery failures (nullable, additive) ───────────
+  // Populated when a Blob attachment can't be delivered (dead URL, over the
+  // 40MB Resend cap, HEAD preflight failure). Independent of the recurrence
+  // work; safe additive ALTER.
+  await step(() => sql`ALTER TABLE marketing_campaign_outreach ADD COLUMN IF NOT EXISTS last_error text`);
+
   await step(() => sql`
     CREATE OR REPLACE FUNCTION trg_mco_set_updated_at()
     RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql

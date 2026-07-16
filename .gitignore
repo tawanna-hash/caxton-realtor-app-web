@@ -71,3 +71,7 @@ ios/DerivedData/
 *.xcuserstate
 xcuserdata/
 
+
+# Playwright test artifacts
+test-results/
+playwright-report/

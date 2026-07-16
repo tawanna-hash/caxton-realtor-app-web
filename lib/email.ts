@@ -4,14 +4,19 @@
 // Uses process.env.RESEND_API_KEY.
 
 /**
- * Resend supports per-message attachments. `content` is base64-encoded
- * file bytes; `filename` becomes the visible name in the recipient's
- * client. `contentType` is recommended but optional — Resend will sniff
- * if omitted. See https://resend.com/docs/api-reference/emails/send-email
+ * Resend supports per-message attachments via ONE of two mechanisms:
+ *   - `content`: base64-encoded file bytes (we encode server-side), or
+ *   - `path`:    a remote URL that Resend fetches itself (passthrough).
+ * Exactly one of the two should be set. `path` avoids pulling large files
+ * (e.g. a 10–40 MB media-kit PDF) through our function memory.
+ * `filename` becomes the visible name in the recipient's client.
+ * `contentType` is recommended but optional — Resend will sniff if omitted.
+ * See https://resend.com/docs/api-reference/emails/send-email
  */
 export interface EmailAttachment {
   filename: string;
-  content: string; // base64
+  content?: string; // base64 (mutually exclusive with path)
+  path?: string;    // remote URL passthrough (mutually exclusive with content)
   contentType?: string;
 }
 
@@ -54,13 +59,16 @@ export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult
   if (opts.replyTo) payload.reply_to = opts.replyTo;
   if (opts.cc) payload.cc = Array.isArray(opts.cc) ? opts.cc : [opts.cc];
   if (opts.attachments && opts.attachments.length > 0) {
-    // Resend expects { filename, content, content_type? } with content
-    // already base64-encoded by the caller.
-    payload.attachments = opts.attachments.map((a) => ({
-      filename: a.filename,
-      content: a.content,
-      ...(a.contentType ? { content_type: a.contentType } : {}),
-    }));
+    // Resend accepts either `content` (base64, caller-encoded) or `path`
+    // (a URL Resend fetches itself). Emit whichever the caller provided;
+    // prefer `path` for URL passthrough of large files.
+    payload.attachments = opts.attachments
+      .filter((a) => a.path || a.content)
+      .map((a) => ({
+        filename: a.filename,
+        ...(a.path ? { path: a.path } : { content: a.content }),
+        ...(a.contentType ? { content_type: a.contentType } : {}),
+      }));
   }
 
   try {

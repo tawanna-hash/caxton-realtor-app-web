@@ -5,7 +5,8 @@
 
 import { getSql } from '@/lib/db';
 import { resolveAudience, type AudienceFilter, type OutreachAudienceSource } from '@/lib/marketing-campaigns';
-import { sendOneRecipient, makeUnsubToken } from '@/lib/marketing-email';
+import { sendOneRecipient, makeUnsubToken, type AttachmentLink } from '@/lib/marketing-email';
+import type { EmailAttachment } from '@/lib/email';
 import { syncProspectFromOutreach } from '@/lib/server/marketing-prospect-sync';
 
 export interface MaterializeAudienceInput {
@@ -170,7 +171,10 @@ export interface DispatchInput {
   replyTo?: string | string[] | null;
   repName?: string | null;
   brand?: 'realtyline' | 'newsline' | 'caxton';
-  attachments?: Array<{ filename: string; content: string; contentType?: string }>;
+  // Real Resend attachments (URL passthrough or base64). Sent as files.
+  attachments?: EmailAttachment[];
+  // Inline links rendered in the email body's "Attachments" section.
+  attachmentLinks?: AttachmentLink[];
   sourceLabel?: string;
 }
 
@@ -214,6 +218,7 @@ export async function dispatchOutreach(input: DispatchInput): Promise<DispatchRe
       from,
       replyTo: input.replyTo ?? undefined,
       attachments: input.attachments,
+      attachmentLinks: input.attachmentLinks,
     });
     if (res.ok) {
       sent++;

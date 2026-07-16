@@ -13,7 +13,13 @@ import {
   insertRecipientsLedger,
   type RecipientSeed,
 } from '@/lib/server/marketing-send';
-import { resolveCrmAudience, ensureCrmOutreachCampaign, type CrmAudienceFilter } from '../_shared';
+import { resolveCrmAudience, ensureCrmOutreachCampaign, appendLinkButton, type CrmAudienceFilter } from '../_shared';
+import {
+  resolveAttachmentsForSend,
+  allAttachmentsFailed,
+  summarizeAttachmentFailures,
+} from '@/lib/server/marketing-attachments';
+import { logger } from '@/lib/server/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -148,14 +154,33 @@ export async function POST(req: NextRequest) {
     : input.publication_scope === 'caxton'   ? 'caxton'
     : undefined;
 
+  // Resolve Blob attachments into inline links + real Resend attachments
+  // (URL passthrough). Fail loud if the composer attached files but none
+  // could be delivered (e.g. dead Blob URLs).
+  const resolved = await resolveAttachmentsForSend(input.attachments ?? null);
+  if (allAttachmentsFailed(resolved)) {
+    const detail = summarizeAttachmentFailures(resolved);
+    logger.error(
+      { outreachId, attempted: resolved.attempted, failures: resolved.failures },
+      '[crm-email/send] all attachments failed — aborting send',
+    );
+    await sql`UPDATE marketing_campaign_outreach SET status = 'failed', last_error = ${detail} WHERE id = ${outreachId}`;
+    return NextResponse.json({ error: 'attachment_failed', detail }, { status: 502 });
+  }
+
+  // Append the manual attachment-link button, if the composer set one.
+  const body = appendLinkButton(input.body, input.attachment_link_url, input.attachment_link_label);
+
   const result = await dispatchOutreach({
     outreachId,
     subject: input.subject,
-    body: input.body,
+    body,
     fromName: input.from_name,
     replyTo: replyToFinal,
     previewText: input.preview_text,
     brand,
+    attachments: resolved.resendAttachments.length > 0 ? resolved.resendAttachments : undefined,
+    attachmentLinks: resolved.links.length > 0 ? resolved.links : undefined,
     sourceLabel: 'crm_composer',
   });
 

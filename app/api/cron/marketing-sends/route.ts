@@ -21,6 +21,11 @@ import {
   insertRecipientsLedger,
   buildMediaKitTokens,
 } from '@/lib/server/marketing-send';
+import {
+  resolveAttachmentsForSend,
+  summarizeAttachmentFailures,
+} from '@/lib/server/marketing-attachments';
+import { logger } from '@/lib/server/logger';
 
 export const runtime     = 'nodejs';
 export const dynamic     = 'force-dynamic';
@@ -62,32 +67,6 @@ interface AudienceSnapshot {
     verified?: string;
   };
   manualEmails?: string[];
-}
-
-interface AttachmentRef {
-  filename: string;
-  url?: string;
-  content?: string;
-  contentType?: string;
-}
-
-async function fetchAttachmentContent(a: AttachmentRef): Promise<{ filename: string; content: string; contentType?: string } | null> {
-  if (a.content) {
-    return { filename: a.filename, content: a.content, contentType: a.contentType };
-  }
-  if (!a.url) return null;
-  try {
-    const r = await fetch(a.url);
-    if (!r.ok) {
-      console.warn('[marketing-sends] attachment fetch failed', a.url, r.status);
-      return null;
-    }
-    const buf = Buffer.from(await r.arrayBuffer());
-    return { filename: a.filename, content: buf.toString('base64'), contentType: a.contentType };
-  } catch (err) {
-    console.warn('[marketing-sends] attachment fetch error', a.url, err);
-    return null;
-  }
 }
 
 export async function GET(req: Request) {
@@ -152,12 +131,18 @@ export async function GET(req: Request) {
         replyToList && replyToList.length > 0 ? replyToList
         : (o.reply_to ?? null);
 
-      // Attachments: fetch each from Blob URL (or inline content) at send time.
-      const attachmentRefs = Array.isArray(o.attachments) ? (o.attachments as AttachmentRef[]) : [];
-      const attachments: Array<{ filename: string; content: string; contentType?: string }> = [];
-      for (const a of attachmentRefs) {
-        const resolved = await fetchAttachmentContent(a);
-        if (resolved) attachments.push(resolved);
+      // Attachments: resolve Blob URLs into inline links + real Resend
+      // attachments via URL passthrough (Resend fetches server-side — no
+      // base64 through our function). Over-40MB files are linked only.
+      const resolvedAttachments = await resolveAttachmentsForSend(o.attachments ?? null);
+      if (resolvedAttachments.failures.length > 0) {
+        const detail = summarizeAttachmentFailures(resolvedAttachments);
+        logger.error(
+          { outreachId: o.id, attempted: resolvedAttachments.attempted, failures: resolvedAttachments.failures },
+          '[marketing-sends] attachment resolution had failures',
+        );
+        // Record on the row without aborting — the message body still ships.
+        await sql`UPDATE marketing_campaign_outreach SET last_error = ${detail} WHERE id = ${o.id}`;
       }
 
       // Media-kit tokens — injected via body/subject substitution below.
@@ -197,7 +182,8 @@ export async function GET(req: Request) {
         fromName: o.from_name,
         replyTo,
         brand,
-        attachments: attachments.length > 0 ? attachments : undefined,
+        attachments: resolvedAttachments.resendAttachments.length > 0 ? resolvedAttachments.resendAttachments : undefined,
+        attachmentLinks: resolvedAttachments.links.length > 0 ? resolvedAttachments.links : undefined,
       });
 
       // Chain-insert the next occurrence if within window.

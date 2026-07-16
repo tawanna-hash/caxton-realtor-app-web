@@ -7,6 +7,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { sendOneRecipient } from '@/lib/marketing-email';
+import {
+  resolveAttachmentsForSend,
+  allAttachmentsFailed,
+  summarizeAttachmentFailures,
+} from '@/lib/server/marketing-attachments';
+import { logger } from '@/lib/server/logger';
+import { appendLinkButton } from '../_shared';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,13 +48,20 @@ export async function POST(req: NextRequest) {
   }
   const input = parsed.data;
 
-  // Append the attachment-link button if configured.
-  let body = input.body;
-  if (input.attachment_link_url) {
-    const label = input.attachment_link_label || 'Download attachment';
-    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    body += `<p style="margin:24px 0"><a href="${esc(input.attachment_link_url)}" style="display:inline-block;background:#7c3aed;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600">${esc(label)}</a></p>`;
+  // Resolve Blob attachments into inline links + real Resend attachments
+  // (URL passthrough). Fail loud if files were attached but none deliver.
+  const resolved = await resolveAttachmentsForSend(input.attachments ?? null);
+  if (allAttachmentsFailed(resolved)) {
+    const detail = summarizeAttachmentFailures(resolved);
+    logger.error(
+      { to: input.to, attempted: resolved.attempted, failures: resolved.failures },
+      '[crm-email/test] all attachments failed — aborting test send',
+    );
+    return NextResponse.json({ error: 'attachment_failed', detail }, { status: 502 });
   }
+
+  // Append the manual attachment-link button if configured.
+  const body = appendLinkButton(input.body, input.attachment_link_url, input.attachment_link_label);
 
   const replyToFinal = input.reply_to_list && input.reply_to_list.length > 0
     ? input.reply_to_list
@@ -80,6 +94,8 @@ export async function POST(req: NextRequest) {
       brand,
       from,
       replyTo: replyToFinal,
+      attachments: resolved.resendAttachments.length > 0 ? resolved.resendAttachments : undefined,
+      attachmentLinks: resolved.links.length > 0 ? resolved.links : undefined,
     });
     if (!res.ok) {
       return NextResponse.json({
