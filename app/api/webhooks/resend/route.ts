@@ -173,9 +173,38 @@ export async function POST(req: NextRequest) {
         break;
       }
 
+      case 'email.opened': {
+        const result = await exec(
+          `UPDATE marketing_campaign_outreach_recipients
+              SET open_count = COALESCE(open_count, 0) + 1,
+                  opened_at  = NOW()
+            WHERE message_id = $1`,
+          [emailId],
+        );
+        logger.info(
+          { emailId, rows: result.rowCount, svixId, eventType: event.type },
+          '[resend-webhook] email.opened processed',
+        );
+        break;
+      }
+
+      case 'email.clicked': {
+        const result = await exec(
+          `UPDATE marketing_campaign_outreach_recipients
+              SET click_count = COALESCE(click_count, 0) + 1
+            WHERE message_id = $1`,
+          [emailId],
+        );
+        logger.info(
+          { emailId, rows: result.rowCount, svixId, eventType: event.type },
+          '[resend-webhook] email.clicked processed',
+        );
+        break;
+      }
+
       default: {
-        // Other event types (email.sent, email.opened, email.clicked, etc.)
-        // are accepted and logged but not persisted. Return 2xx so Resend
+        // email.sent and any future event types not handled above are
+        // accepted and logged but not persisted. Return 2xx so Resend
         // doesn't retry.
         logger.info(
           { eventType: event.type, emailId, svixId },
