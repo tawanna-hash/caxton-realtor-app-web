@@ -55,6 +55,72 @@ export default function RealtyLineMlsAdminPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<RealtyLineReport>(blankForm());
   const [saving, setSaving] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<string>('');
+
+  async function handleImportGraphic(file: File) {
+    setImporting(true);
+    setImportMsg('Reading graphic and calling extractor (10-30s)...');
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const res = await fetch('/api/admin/realtyline-mls/import-graphic', {
+        method: 'POST',
+        credentials: 'include',
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setImportMsg(`Extraction failed: ${data.error ?? 'unknown'}`);
+        return;
+      }
+      const extracted = (data.extracted ?? {}) as {
+        month_label?: string;
+        released_at?: string;
+        subtitle_en?: string;
+        headline_value?: string;
+        headline_delta?: string;
+        headline_delta_direction?: 'up' | 'down' | 'flat';
+        headline_label_en?: string;
+        indicator_stats?: Array<{ key?: string; value?: string; delta?: string; delta_direction?: 'up' | 'down' | 'flat' }>;
+        listing_counts?: Array<{ key?: string; label_en?: string; value?: string; delta?: string; delta_direction?: 'up' | 'down' | 'flat' }>;
+      };
+      setForm((prev) => {
+        const next = { ...prev };
+        if (extracted.month_label) {
+          next.month_label = extracted.month_label;
+          next.month_label_es = translateMonthLabel(extracted.month_label);
+        }
+        if (extracted.released_at) next.released_at = extracted.released_at;
+        if (extracted.subtitle_en) next.subtitle_en = extracted.subtitle_en;
+        if (extracted.headline_value) next.headline_value = extracted.headline_value;
+        if (extracted.headline_delta) next.headline_delta = extracted.headline_delta;
+        if (extracted.headline_delta_direction) next.headline_delta_direction = extracted.headline_delta_direction;
+        if (extracted.headline_label_en) next.headline_label_en = extracted.headline_label_en;
+        if (Array.isArray(extracted.indicator_stats)) {
+          const byKey = new Map(extracted.indicator_stats.map((s) => [s.key, s]));
+          next.indicator_stats = next.indicator_stats.map((row) => {
+            const m = byKey.get(row.key);
+            if (!m) return row;
+            return {
+              ...row,
+              value: m.value ?? row.value,
+              delta: m.delta ?? row.delta,
+              delta_direction: m.delta_direction ?? row.delta_direction,
+            };
+          });
+        }
+        if (Array.isArray(extracted.listing_counts)) next.listing_counts = extracted.listing_counts as typeof next.listing_counts;
+        return next;
+      });
+      setImportMsg('Fields populated from graphic. Review before Save.');
+    } catch (err) {
+      setImportMsg(`Import error: ${err instanceof Error ? err.message : 'unknown'}`);
+    } finally {
+      setImporting(false);
+    }
+  }
+
 
   async function load() {
     setLoading(true);
@@ -246,6 +312,32 @@ export default function RealtyLineMlsAdminPage() {
           <div className="bg-white border border-gray-200 rounded-md p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">{editingId ? `Edit report #${editingId}` : 'New report'}</h2>
+
+              <div className="mb-6 mt-4 rounded-md border border-purple-200 bg-purple-50 p-4">
+                <div className="mb-2 text-sm font-semibold text-purple-900">Upload UnlockMLS graphic to autopopulate</div>
+                <p className="mb-3 text-xs text-purple-800">
+                  Drop a PNG, JPEG, WEBP, or PDF screenshot of the UnlockMLS Sales
+                  block. The extractor reads the Sales block only; leases are ignored.
+                </p>
+                <label className="inline-block cursor-pointer rounded-md bg-purple-700 px-3 py-2 text-sm text-white hover:bg-purple-800">
+                  {importing ? 'Extracting\u2026' : 'Choose file'}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"
+                    className="hidden"
+                    disabled={importing}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void handleImportGraphic(f);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+                {importMsg && (
+                  <div className="mt-2 text-xs text-purple-900">{importMsg}</div>
+                )}
+              </div>
+
               <button
                 type="button"
                 onClick={prefillLabels}
