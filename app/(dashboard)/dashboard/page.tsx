@@ -1308,7 +1308,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
   // in the effect body). Hero-vs-inline is derived in render from that value
   // plus a useId-like stable epoch captured at mount, so render stays pure.
   const [saborReleasedAt, setSaborReleasedAt] = useState<string | null | undefined>(undefined);
-  const [mountEpoch] = useState<number>(() => Date.now());
   useEffect(() => {
     if (pub !== 'newsline' || cat !== 'All') return;
     let alive = true;
@@ -1325,14 +1324,10 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
     return () => { alive = false; };
   }, [pub, cat]);
   const saborEligible = pub === 'newsline' && cat === 'All';
-  const showSaborHero = (() => {
-    if (!saborEligible) return false;
-    if (saborReleasedAt === undefined) return false; // still loading
-    if (saborReleasedAt === null) return true;       // no data yet: behave as hero
-    const ageDays = (mountEpoch - new Date(saborReleasedAt).getTime()) / 86_400_000;
-    return ageDays >= 0 && ageDays <= 7;
-  })();
-  const showSaborInline = saborEligible && saborReleasedAt !== undefined && !showSaborHero;
+  // Always-pin: SABOR report stays at the top of the Newsline SA feed
+  // for the lifetime of the latest published report. Auto-swaps on new release.
+  const showSaborHero = saborEligible && saborReleasedAt !== undefined;
+  const showSaborInline = false;
 
   // RealtyLine MLS card — RealtyLine Austin only. Same hero-then-inline
   // cadence as SABOR: pinned at top for the first 7 days from released_at,
@@ -1355,14 +1350,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
     return () => { alive = false; };
   }, [pub, cat]);
   const realtylineEligible = pub === 'realtyline' && cat === 'All';
-  const showRealtylineHero = (() => {
-    if (!realtylineEligible) return false;
-    if (realtylineReleasedAt === undefined) return false; // still loading
-    if (realtylineReleasedAt === null) return true;       // no data yet: behave as hero
-    const ageDays = (mountEpoch - new Date(realtylineReleasedAt).getTime()) / 86_400_000;
-    return ageDays >= 0 && ageDays <= 7;
-  })();
-  const showRealtylineInline = realtylineEligible && realtylineReleasedAt !== undefined && !showRealtylineHero;
+  // Always-pin: RealtyLine MLS report stays at top of RealtyLine Austin feed.
+  const showRealtylineHero = realtylineEligible && realtylineReleasedAt !== undefined;
+  const showRealtylineInline = false;
 
   if (isLoadingFirstFetch) {
     for (let i = 0; i < 3; i++) feed.push({ t: 's', d: { id: i } });
