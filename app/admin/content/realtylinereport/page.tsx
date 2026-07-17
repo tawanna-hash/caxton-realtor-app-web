@@ -117,7 +117,25 @@ export default function RealtyLineMlsAdminPage() {
             };
           });
         }
-        if (Array.isArray(extracted.listing_counts)) next.listing_counts = extracted.listing_counts as typeof next.listing_counts;
+        if (Array.isArray(extracted.listing_counts)) {
+          const LISTING_ES: Record<string, string> = {
+            closed_sales: 'Ventas Cerradas',
+            new_listings: 'Nuevas Publicaciones',
+            active_listings: 'Publicaciones Activas',
+            pending_sales: 'Ventas Pendientes',
+          };
+          const LISTING_ES_BY_EN: Record<string, string> = {
+            'closed sales': 'Ventas Cerradas',
+            'new listings': 'Nuevas Publicaciones',
+            'active listings': 'Publicaciones Activas',
+            'pending sales': 'Ventas Pendientes',
+          };
+          next.listing_counts = extracted.listing_counts.map((row) => {
+            const enKey = (row.label_en ?? '').trim().toLowerCase();
+            const es = (row.key && LISTING_ES[row.key]) || LISTING_ES_BY_EN[enKey] || '';
+            return { ...row, label_es: es } as typeof next.listing_counts[number];
+          });
+        }
         return next;
       });
       setImportMsg('Fields populated from graphic. Review before Save.');
