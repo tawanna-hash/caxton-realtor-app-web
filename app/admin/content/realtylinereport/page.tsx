@@ -17,7 +17,7 @@
  * The most recent row by release date powers the RealtyLine feed card.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef} from 'react';
 import { useAdmin } from '@/hooks/use-admin';
 
 import PageTitle from '@/components/ui/PageTitle';
@@ -57,6 +57,13 @@ export default function RealtyLineMlsAdminPage() {
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const onPickFile = () => { if (!importing) fileInputRef.current?.click(); };
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) void handleImportGraphic(f);
+    e.target.value = '';
+  };
 
   async function handleImportGraphic(file: File) {
     setImporting(true);
@@ -312,32 +319,24 @@ export default function RealtyLineMlsAdminPage() {
           <div className="bg-white border border-gray-200 rounded-md p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">{editingId ? `Edit report #${editingId}` : 'New report'}</h2>
-
-              <div className="mb-6 mt-4 rounded-md border border-purple-200 bg-purple-50 p-4">
-                <div className="mb-2 text-sm font-semibold text-purple-900">Upload UnlockMLS graphic to autopopulate</div>
-                <p className="mb-3 text-xs text-purple-800">
-                  Drop a PNG, JPEG, WEBP, or PDF screenshot of the UnlockMLS Sales
-                  block. The extractor reads the Sales block only; leases are ignored.
-                </p>
-                <label className="inline-block cursor-pointer rounded-md bg-purple-700 px-3 py-2 text-sm text-white hover:bg-purple-800">
-                  {importing ? 'Extracting\u2026' : 'Choose file'}
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"
-                    className="hidden"
-                    disabled={importing}
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) void handleImportGraphic(f);
-                      e.target.value = '';
-                    }}
-                  />
-                </label>
-                {importMsg && (
-                  <div className="mt-2 text-xs text-purple-900">{importMsg}</div>
-                )}
-              </div>
-
+              <button
+                type="button"
+                onClick={onPickFile}
+                disabled={importing}
+                className="text-xs font-medium px-3 py-1.5 border border-purple-700 bg-purple-700 text-white rounded-md hover:bg-purple-800 transition disabled:opacity-60"
+              >
+                {importing ? 'Extracting\u2026' : 'Upload graphic to autopopulate'}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"
+                onChange={onFileChange}
+                className="hidden"
+              />
+              {importMsg && (
+                <p className="w-full basis-full text-xs text-gray-700 mt-2 px-3 py-2 border border-gray-200 rounded-md bg-gray-50">{importMsg}</p>
+              )}
               <button
                 type="button"
                 onClick={prefillLabels}
