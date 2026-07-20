@@ -435,7 +435,19 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
   }
   const expDate = computeExp(timingChecked, timingYears, frequency, signDate);
 
-  const ccSurchargeTotal = paymentType === 'Credit Card' ? applyCcSurcharge(totalMonthly) : null;
+  // Charge base:
+  //   • Print: recurring monthly = ad_rate + premium − discount (existing totalMonthly).
+  //   • Non-print (Digital/Email/App): one-time total from the quote (ag.amount_cents).
+  //     Quote drafter stamps this as the full contract value; ad_rate_cents holds
+  //     the per-unit rate which is NOT what Stripe should charge.
+  const quotedTotalDollars =
+    channel !== 'print' && ag.amount_cents != null && ag.amount_cents > 0
+      ? ag.amount_cents / 100
+      : totalMonthly;
+  const chargeBaseCents = Math.round(quotedTotalDollars * 100);
+  const ccSurchargeTotal =
+    paymentType === 'Credit Card' ? applyCcSurcharge(quotedTotalDollars) : null;
+  const surchargeLabel = channel === 'print' ? 'New monthly' : 'New total';
 
   // ── saveEdits ──────────────────────────────────────────────────────────────
 
@@ -1036,7 +1048,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
               {ccSurchargeTotal != null && (
                 <div className="text-sm text-amber-800 rounded-md border border-amber-300 bg-amber-100 p-3">
                   A 3% credit card surcharge is automatically added to your ad rate.{' '}
-                  <strong>New monthly: ${ccSurchargeTotal.toFixed(2)}</strong>
+                  <strong>{surchargeLabel}: ${ccSurchargeTotal.toFixed(2)}</strong>
                 </div>
               )}
 
@@ -1047,12 +1059,16 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                 <StripePaymentBlock
                   ref={stripeRef}
                   token={token}
-                  adRateCents={strToCents(effectiveAdRate) ?? 0}
-                  refreshKey={`${adSize}|${frequency}|${effectiveAdRate}`}
+                  adRateCents={chargeBaseCents}
+                  refreshKey={`${adSize}|${frequency}|${chargeBaseCents}`}
                   onReadyChange={setStripeReady}
                 />
                 <p className="text-[11px] text-gray-500 mt-2">
-                  When you click <strong>Authorize Card</strong> below, your card is authorized and charged for the first issue. Your card is securely saved for future monthly issue charges. You’ll review and sign the terms on the next step.
+                  {channel === 'print' ? (
+                    <>When you click <strong>Authorize Card</strong> below, your card is authorized and charged for the first issue. Your card is securely saved for future monthly issue charges. You’ll review and sign the terms on the next step.</>
+                  ) : (
+                    <>When you click <strong>Authorize Card</strong> below, your card is authorized and charged for the full quoted total. Your card is securely saved for any future renewals. You’ll review and sign the terms on the next step.</>
+                  )}
                 </p>
               </div>
             </div>

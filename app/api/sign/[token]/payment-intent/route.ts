@@ -50,15 +50,28 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const ag = rows[0];
 
-    if (!ag.ad_rate_cents || ag.ad_rate_cents <= 0) {
+    // Charge base:
+    //   • Print (type=print_ad): recurring monthly ad_rate_cents. Card is
+    //     saved off_session for future monthly renewals.
+    //   • Non-print (eblast / app_ad / digital / other): one-time quoted
+    //     total from ag.amount_cents. Drafter stamps this as the full
+    //     contract value; ad_rate_cents is the per-unit rate and MUST NOT
+    //     be used as the charge base for these.
+    const isPrint = ag.type === 'print_ad';
+    const baseSource = isPrint ? ag.ad_rate_cents : ag.amount_cents;
+    if (!baseSource || baseSource <= 0) {
       return NextResponse.json(
-        { error: 'Select an ad package first \u2014 ad rate is required before payment.' },
+        {
+          error: isPrint
+            ? 'Select an ad package first \u2014 ad rate is required before payment.'
+            : 'Quote total missing on this agreement \u2014 cannot authorize card.',
+        },
         { status: 400 },
       );
     }
 
     const stripe = getStripe();
-    const baseCents = ag.ad_rate_cents;
+    const baseCents = baseSource;
     const totalCents = withSurcharge(baseCents);
     const surchargeCents = totalCents - baseCents;
 
