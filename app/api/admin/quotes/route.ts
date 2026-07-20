@@ -52,11 +52,17 @@ const advertiserNewSchema = z.object({
 });
 const quotesSchema = z
   .object({
-    channel: z.enum(['print', 'email']),
+    channel: z.enum(['print', 'email', 'app']),
     package_id: z.string().trim().min(1).max(100),
     size: z.string().trim().max(40).optional(),
     months: z.number().int().min(1).max(24).optional(),
     sends: z.number().int().min(1).max(24).optional(),
+    // App-only fields
+    app_cadence: z.enum(['weekly', 'monthly']).optional(),
+    app_weeks: z.number().int().min(1).max(52).optional(),
+    app_markets: z
+      .union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)])
+      .optional(),
     publication: z.enum(['austin', 'san_antonio', 'both']).optional(),
     due_date: z.string().optional(),
     memo: z.string().max(2000).optional(),
@@ -152,6 +158,9 @@ export const POST = withErrorHandling(async (req: Request) => {
     size: body.size,
     months: body.months,
     sends: body.sends,
+    app_cadence: body.app_cadence,
+    app_weeks: body.app_weeks,
+    app_markets: body.app_markets,
     publication: body.publication,
     due_date: body.due_date,
     memo: body.memo,

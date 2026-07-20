@@ -9,7 +9,7 @@ export type AgreementStatus =
 export type PaymentMode = 'card' | 'link' | 'invoice' | 'check';
 
 export type AgreementType =
-  | 'print_ad' | 'eblast' | 'sponsored_content' | 'package' | 'other';
+  | 'print_ad' | 'eblast' | 'app_ad' | 'sponsored_content' | 'package' | 'other';
 
 export type AgreementAuditEntry = {
   event: string;
@@ -173,7 +173,7 @@ export const PAYMENT_MODE_VALUES = new Set<PaymentMode>([
   'card','link','invoice','check',
 ]);
 export const AGREEMENT_TYPE_VALUES = new Set<AgreementType>([
-  'print_ad','eblast','sponsored_content','package','other',
+  'print_ad','eblast','app_ad','sponsored_content','package','other',
 ]);
 
 /** Append an audit entry without losing existing log. */
@@ -184,3 +184,4 @@ export function appendAudit(
   const base = Array.isArray(log) ? log : [];
   return [...base, entry];
 }
+

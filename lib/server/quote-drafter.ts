@@ -17,7 +17,17 @@
 
 import { getSql } from '@/lib/db';
 import { ApiError } from '@/lib/server/error';
-import { PACKAGES, EBLASTS, type Package, eblastPriceForPub } from '@/lib/media-kit';
+import {
+  PACKAGES,
+  EBLASTS,
+  APP_AD_SLOTS,
+  type Package,
+  type AppAdSlot,
+  type MarketCount,
+  eblastPriceForPub,
+  weeklyRateForMarkets,
+  monthlyRateForMarkets,
+} from '@/lib/media-kit';
 import {
   formatInvoiceNumber,
   type InvoiceLineItem,
@@ -53,24 +63,42 @@ export function eblastCentsForDbPub(
  * Map inquiry channel + optional print package to an AgreementType.
  */
 function agreementTypeFor(
-  channel: 'print' | 'email',
+  channel: 'print' | 'email' | 'app',
   months: number,
 ): AgreementType {
   if (channel === 'email') return 'eblast';
+  if (channel === 'app') return 'app_ad';
   return months > 1 ? 'package' : 'print_ad';
 }
 
 /**
  * Compute the term dates for the agreement / invoice.
+ *   • email → single-day term (send day)
+ *   • print → N months, end-of-month
+ *   • app   → N weeks (weekly cadence) or N months (monthly cadence)
  */
 function computeTerm(
-  channel: 'print' | 'email',
+  channel: 'print' | 'email' | 'app',
   months: number,
+  appCadence?: 'weekly' | 'monthly',
+  appWeeks?: number,
 ): { start_date: string; end_date: string } {
   const now = new Date();
   const startIso = now.toISOString().slice(0, 10);
   if (channel === 'email') {
     return { start_date: startIso, end_date: startIso };
+  }
+  if (channel === 'app') {
+    if (appCadence === 'weekly') {
+      const weeks = Math.max(1, appWeeks ?? 1);
+      const end = new Date(now);
+      // exclusive-end: start + weeks*7 - 1 days
+      end.setDate(end.getDate() + weeks * 7 - 1);
+      return { start_date: startIso, end_date: end.toISOString().slice(0, 10) };
+    }
+    // Monthly cadence — same as print month math.
+    const end = new Date(now.getFullYear(), now.getMonth() + Math.max(1, months), 0);
+    return { start_date: startIso, end_date: end.toISOString().slice(0, 10) };
   }
   const end = new Date(now.getFullYear(), now.getMonth() + months, 0);
   const endIso = end.toISOString().slice(0, 10);
@@ -90,11 +118,22 @@ export interface DrafterAdvertiser {
 }
 
 export interface DrafterInput {
-  channel: 'print' | 'email';
+  channel: 'print' | 'email' | 'app';
+  /**
+   * Print: PACKAGES[].id (brand1 / brand3 / …)
+   * Email: eblastId(EBLASTS[].name)
+   * App:   APP_AD_SLOTS[].slug
+   */
   package_id: string;
   size?: string;
   months?: number;
   sends?: number;
+  /** App-only: 'weekly' or 'monthly'. Defaults to 'weekly' if omitted. */
+  app_cadence?: 'weekly' | 'monthly';
+  /** App-only: number of weeks when app_cadence='weekly'. Defaults to 1. */
+  app_weeks?: number;
+  /** App-only: number of markets 1|2|3|4. Defaults to 1. */
+  app_markets?: MarketCount;
   publication?: 'austin' | 'san_antonio' | 'both';
   due_date?: string;
   memo?: string;
@@ -148,7 +187,7 @@ export async function draftQuote(
     });
     agAdSize = size ?? null;
     agFrequency = months > 1 ? `${months}x` : '1x';
-  } else {
+  } else if (input.channel === 'email') {
     const eb = EBLASTS.find((e) => eblastId(e.name) === input.package_id);
     if (!eb) throw new ApiError(400, 'unknown_email_package');
     const sends = input.sends ?? 1;
@@ -160,16 +199,58 @@ export async function draftQuote(
       unit_cents: eblastCentsForDbPub(eb, billingPub),
     });
     agEblastPackages = [eb.name];
+  } else {
+    // App ad slot — priced by markets × (weekly × weeks) OR (monthly × months).
+    const slot: AppAdSlot | undefined = APP_AD_SLOTS.find(
+      (s) => s.slug === input.package_id,
+    );
+    if (!slot) throw new ApiError(400, 'unknown_app_slot');
+    const cadence = input.app_cadence ?? 'weekly';
+    const markets = (input.app_markets ?? 1) as MarketCount;
+    if (![1, 2, 3, 4].includes(markets)) {
+      throw new ApiError(400, 'invalid_app_markets');
+    }
+    if (cadence === 'weekly') {
+      const weeks = Math.max(1, input.app_weeks ?? 1);
+      const weeklyCents = Math.round(weeklyRateForMarkets(slot, markets) * 100);
+      if (weeklyCents <= 0) throw new ApiError(400, 'app_slot_weekly_unavailable');
+      descriptionLabel = `${slot.name} — ${markets} market${markets > 1 ? 's' : ''}`;
+      lineItems.push({
+        description: `${slot.name}, ${weeks} week${weeks > 1 ? 's' : ''} × ${markets} market${markets > 1 ? 's' : ''}`,
+        qty: weeks,
+        unit_cents: weeklyCents,
+      });
+      agAdSize = slot.sizes;
+      agFrequency = `${weeks}w`;
+    } else {
+      const months = Math.max(1, input.months ?? 1);
+      const monthlyRate = monthlyRateForMarkets(slot, markets);
+      if (monthlyRate == null) throw new ApiError(400, 'app_slot_monthly_unavailable');
+      const monthlyCents = Math.round(monthlyRate * 100);
+      descriptionLabel = `${slot.name} — ${markets} market${markets > 1 ? 's' : ''}`;
+      lineItems.push({
+        description: `${slot.name}, ${months} month${months > 1 ? 's' : ''} × ${markets} market${markets > 1 ? 's' : ''}`,
+        qty: months,
+        unit_cents: monthlyCents,
+      });
+      agAdSize = slot.sizes;
+      agFrequency = `${months}mo`;
+    }
   }
 
   const amountCents = lineItems.reduce((s, li) => s + li.qty * li.unit_cents, 0);
   if (amountCents <= 0) throw new ApiError(400, 'amount_cents_must_be_positive');
 
-  const monthsForTerm = input.channel === 'print' ? (input.months ?? 1) : 1;
+  const monthsForTerm =
+    input.channel === 'print' || (input.channel === 'app' && (input.app_cadence ?? 'weekly') === 'monthly')
+      ? (input.months ?? 1)
+      : 1;
   const agreementType = agreementTypeFor(input.channel, monthsForTerm);
   const { start_date: termStart, end_date: termEnd } = computeTerm(
     input.channel,
     monthsForTerm,
+    input.channel === 'app' ? (input.app_cadence ?? 'weekly') : undefined,
+    input.channel === 'app' ? input.app_weeks : undefined,
   );
 
   const billPublication =
@@ -246,6 +327,16 @@ export async function draftQuote(
     }
   }
 
+  // App-slot stamp — best-effort, column may not exist on older deploys.
+  if (input.channel === 'app') {
+    try {
+      await sql`UPDATE agreements SET ad_space_slug = ${input.package_id} WHERE id = ${agreement.id}`;
+      (agreement as { ad_space_slug?: string }).ad_space_slug = input.package_id;
+    } catch (e) {
+      console.error('[quote-drafter] ad_space_slug write failed', e instanceof Error ? e.message : e);
+    }
+  }
+
   // CRM mirror — idempotent, best-effort.
   try {
     await ensureAdvertiserForAgreement(agreement, { desiredStatus: 'prospect' });
@@ -255,10 +346,12 @@ export async function draftQuote(
 
   // ── Payment terms ────────────────────────────────────────────────────
   // Print: net-20 monthly (due_date left null so the invoice UI applies
-  // its default net-20 rule). E-Blast + digital: due immediately.
+  // its default net-20 rule). E-Blast + App (digital): due immediately.
   const dueDateForChannel =
     input.due_date ??
-    (input.channel === 'email' ? new Date().toISOString().slice(0, 10) : null);
+    (input.channel === 'email' || input.channel === 'app'
+      ? new Date().toISOString().slice(0, 10)
+      : null);
 
   // Generate invoice number per publication per year.
   const year = new Date().getFullYear();
