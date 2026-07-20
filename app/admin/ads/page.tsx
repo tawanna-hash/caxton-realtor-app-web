@@ -248,13 +248,6 @@ export default function AdsHubPage() {
           accent="navy"
         />
         <SectionCard
-          title="Media Kit PDF"
-          desc="Download the printable 2026 media kit. Same numbers as the live page and quote engine."
-          href="/admin/ads/media-kit/pdf"
-          cta="Download PDF"
-          newTab
-        />
-        <SectionCard
           title="Public advertise page"
           desc="What advertisers see at realtynewsnow.app/advertise. Useful sanity check before launching changes."
           href="/advertise"

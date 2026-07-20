@@ -1,7 +1,6 @@
 // /admin/ads/media-kit
 //
 // Live, on-screen Media Kit. Single source of truth: lib/media-kit.ts.
-// Mirrors what the downloadable PDF (/admin/ads/media-kit/pdf) prints
 // — print rate matrix, brand packages, digital ad slots, eblasts,
 // print deadlines, audience stats, and policy notes — so sales can
 // pitch from either format and never go out of sync.
@@ -562,14 +561,6 @@ export default function MediaKitPage() {
           >
             Back to hub
           </Link>
-          <a
-            href="/admin/ads/media-kit/pdf"
-            className="rounded-md bg-brand-700 px-4 py-2 text-white text-sm font-medium hover:bg-[#493676]"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Download PDF
-          </a>
         </div>
       </div>
 
