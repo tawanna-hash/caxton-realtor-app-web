@@ -651,10 +651,73 @@ export const BRAND_12_PLUS_RATE = 1680;
 
 // ── Audience stats (RealtyLine) ────────────────────────────────────────────
 
-export const AUDIENCE_STATS: { label: string; value: string }[] = [
-  { label: 'Subscribers',    value: '130K'  },
-  { label: 'Avg Open Rate',  value: '3.3%'  },
-  { label: 'Avg Click Rate', value: '0.66%' },
+export interface AudienceStat {
+  label: string;
+  value: string;
+}
+
+export interface PubAudienceStats {
+  pub: MediaKitPub;
+  name: string;
+  stats: AudienceStat[];
+}
+
+// Per-publication stats sourced from the 2026 Media Kit PDF.
+// Verified human engagement — Apple MPP and bot activity filtered from
+// open-rate reporting since June 2024.
+export const AUDIENCE_STATS_BY_PUB: PubAudienceStats[] = [
+  {
+    pub: 'realtyline',
+    name: 'RealtyLine Austin',
+    stats: [
+      { label: 'Print Copies',  value: '16.5K+'  },
+      { label: 'Subscribers',   value: '44K+'    },
+      { label: 'Annual Sends',  value: '6.64M+'  },
+      { label: 'Email Opens',   value: '204K+'   },
+      { label: 'Annual Clicks', value: '21K+'    },
+      { label: 'Open Rate',     value: '3.1%'    },
+      { label: 'Click Rate',    value: '0.32%'   },
+      { label: 'Clicks/Opens',  value: '10.4%'   },
+    ],
+  },
+  {
+    pub: 'newsline',
+    name: 'Newsline San Antonio',
+    stats: [
+      { label: 'Print Copies',  value: '10K+'    },
+      { label: 'Subscribers',   value: '20K+'    },
+      { label: 'Annual Sends',  value: '156.7K+' },
+      { label: 'Email Opens',   value: '6.78K+'  },
+      { label: 'Annual Clicks', value: '393+'    },
+      { label: 'Open Rate',     value: '4.4%'    },
+      { label: 'Click Rate',    value: '0.26%'   },
+      { label: 'Clicks/Opens',  value: '5.8%'    },
+    ],
+  },
+];
+
+// Backwards-compat aggregate — some pages import AUDIENCE_STATS directly.
+export const AUDIENCE_STATS: AudienceStat[] = [
+  { label: 'Subscribers',    value: '141K+' },
+  { label: 'Avg Open Rate',  value: '3.5%'  },
+  { label: 'Avg Click Rate', value: '0.30%' },
+];
+
+// ── Network expansion — publications by launch status ────────────────────
+
+export type ExpansionStatus = 'active' | 'launching-soon';
+
+export interface ExpansionPub {
+  name: string;
+  channels: string;
+  status: ExpansionStatus;
+}
+
+export const EXPANSION_PUBS: ExpansionPub[] = [
+  { name: 'RealtyLine Austin',       channels: 'Print, Digital, Email, Mobile', status: 'active'          },
+  { name: 'Newsline San Antonio',    channels: 'Print, Digital, Email, Mobile', status: 'active'          },
+  { name: 'RealtyLine Houston',      channels: 'Digital, Email, Mobile',        status: 'launching-soon' },
+  { name: 'RealtyLine Dallas / FTW', channels: 'Digital, Email, Mobile',        status: 'launching-soon' },
 ];
 
 // Per-publication subscriber counts. Used by the Media Kit page so each tab
@@ -662,11 +725,11 @@ export const AUDIENCE_STATS: { label: string; value: string }[] = [
 // markets (Austin 39K + Houston 50K + Dallas/Ft. Worth 27K + San Antonio 14K,
 // where San Antonio rolls under the RealtyLine Austin umbrella).
 export const PUB_SUBSCRIBERS: Record<MediaKitPub, number> = {
-  'realtyline':          39000, // RealtyLine Austin (39K Austin + 14K San Antonio rolls here)
-  'newsline':            14000, // Newsline San Antonio / San Antonio
+  'realtyline':          44000, // RealtyLine Austin (2026 media kit)
+  'newsline':            20000, // Newsline San Antonio (2026 media kit)
   'realtyline-houston':  50000,
   'realtyline-dallas':   27000,
-  'both':               130000, // legacy bundle = full network
+  'both':               141000, // Full network: 44K+20K+50K+27K
 };
 
 // ── Policy notes ───────────────────────────────────────────────────────────

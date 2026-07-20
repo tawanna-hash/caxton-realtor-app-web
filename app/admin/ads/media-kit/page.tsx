@@ -15,7 +15,8 @@ import {
   RATE_MATRIX,
   FREQ_LABELS,
   FREQ_TERMS,
-  AUDIENCE_STATS,
+  AUDIENCE_STATS_BY_PUB,
+  EXPANSION_PUBS,
   PUB_SUBSCRIBERS,
   POLICY_NOTES,
   MARKET_MULTIPLIERS,
@@ -51,26 +52,43 @@ function fmtUSD(n: number | null): string {
 function AudienceSection() {
   return (
     <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900">Audience snapshot</h2>
-      <p className="text-sm text-gray-700 mt-1">
-        Network reach across all four RealtyLine + Newsline markets.
-      </p>
+      <div className="mb-4">
+        <div className="text-xs font-semibold uppercase tracking-wider text-brand-700">
+          Print & Email Snapshot
+        </div>
+        <h2 className="text-lg font-semibold text-gray-900 mt-1">
+          Our Reach by the Numbers
+        </h2>
+        <p className="text-sm text-gray-700 mt-1">
+          Verified human engagement — Apple MPP and bot activity filtered from all
+          open-rate reporting since June 2024.
+        </p>
+      </div>
 
-      <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
-        {AUDIENCE_STATS.map((s) => (
+      <div className="space-y-4">
+        {AUDIENCE_STATS_BY_PUB.map((pub) => (
           <div
-            key={s.label}
-            className="rounded-md bg-gray-50 ring-1 ring-gray-200 px-4 py-3"
+            key={pub.pub}
+            className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-5"
           >
-            <div className="text-2xl font-semibold text-gray-900">{s.value}</div>
-            <div className="text-xs uppercase tracking-wide text-gray-700 mt-1">
-              {s.label}
+            <div className="text-base font-semibold text-gray-900 mb-3">
+              {pub.name}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
+              {pub.stats.map((s) => (
+                <div key={s.label}>
+                  <div className="text-2xl font-semibold text-brand-700 leading-tight">
+                    {s.value}
+                  </div>
+                  <div className="text-xs text-gray-700 mt-1">{s.label}</div>
+                </div>
+              ))}
             </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-5">
+      <div className="mt-6">
         <div className="text-sm font-medium text-gray-900 mb-2">
           Subscribers by market
         </div>
@@ -80,6 +98,47 @@ function AudienceSection() {
           <PubStat label="RealtyLine Houston" sub={PUB_SUBSCRIBERS['realtyline-houston']} />
           <PubStat label="RealtyLine Dallas / FTW" sub={PUB_SUBSCRIBERS['realtyline-dallas']} />
         </div>
+      </div>
+    </section>
+  );
+}
+
+function ExpansionSection() {
+  return (
+    <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
+      <div className="mb-4">
+        <div className="text-xs font-semibold uppercase tracking-wider text-brand-700">
+          Growing the Network
+        </div>
+        <h2 className="text-lg font-semibold text-gray-900 mt-1">
+          Expanding Across Texas
+        </h2>
+        <p className="text-sm text-gray-700 mt-1">
+          Reach real estate professionals wherever business happens.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {EXPANSION_PUBS.map((p) => (
+          <div
+            key={p.name}
+            className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-4 flex flex-col"
+          >
+            <div className="text-base font-semibold text-gray-900">{p.name}</div>
+            <div className="text-xs text-gray-700 mt-1">{p.channels}</div>
+            <div className="mt-auto pt-3">
+              <span
+                className={
+                  'inline-block rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ' +
+                  (p.status === 'active'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-amber-100 text-amber-800')
+                }
+              >
+                {p.status === 'active' ? 'Active' : 'Launching Soon'}
+              </span>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -566,6 +625,7 @@ export default function MediaKitPage() {
 
       <div className="space-y-6">
         <AudienceSection />
+        <ExpansionSection />
         <RateMatrixSection />
         <PackagesSection />
         <DigitalSlotsSection />
