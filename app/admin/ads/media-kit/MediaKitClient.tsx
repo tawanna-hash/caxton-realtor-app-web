@@ -440,8 +440,8 @@ function DeadlinesSection() {
             {PRINT_DEADLINES.map((d) => (
               <tr key={d.month}>
                 <td className="px-3 py-2 font-medium text-gray-900">{d.month}</td>
-                <td className="px-3 py-2 text-gray-900">{d.adDeadline}</td>
-                <td className="px-3 py-2 text-gray-900">{d.mailDate}</td>
+                <td className="px-3 py-2 text-gray-900">{d.deadline}</td>
+                <td className="px-3 py-2 text-gray-900">{d.mail}</td>
               </tr>
             ))}
           </tbody>
