@@ -36,7 +36,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, message: 'Unauthorized.' }, { status: 401 });
   }
 
-  await ensureSchema();
+  // removed: ensureSchema() — crons should not run DDL
 
   const url = new URL(req.url);
   const batchSize   = Math.max(1, Math.min(500, Number(url.searchParams.get('batch'))       || 200));

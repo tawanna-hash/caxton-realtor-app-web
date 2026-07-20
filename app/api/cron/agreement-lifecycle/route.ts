@@ -205,7 +205,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  await ensureSchema();
+  // removed: ensureSchema() — crons should not run DDL
   const sql = getSql();
   const today = new Date().toISOString().slice(0, 10);
 

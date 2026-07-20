@@ -39,7 +39,7 @@ export async function GET(req: Request) {
 
   const started = Date.now();
   try {
-    await ensureSchema();
+    // removed: ensureSchema() — crons should not run DDL
     const { records, pagesScraped, totalReportedByServer, truncated } = await scrapeAborRealtors({
       maxRecords: 2000,
     });

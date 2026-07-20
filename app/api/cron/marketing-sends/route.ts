@@ -73,7 +73,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, message: 'Unauthorized' }, { status: 401 });
   }
 
-  await ensureSchema();
+  // removed: ensureSchema() — crons should not run DDL
   const sql = getSql();
 
   // Claim due-now scheduled outreach by flipping its status to 'sending'.
