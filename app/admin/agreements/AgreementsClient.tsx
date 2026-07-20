@@ -19,6 +19,8 @@ import { AgreementList } from '@/app/admin/billing/_components/AgreementList';
 import { RenewalsPanel } from '@/app/admin/billing/_components/RenewalsPanel';
 import { AgreementDrawer } from '@/app/admin/billing/_components/AgreementDrawer';
 import PageTitle from '@/components/ui/PageTitle';
+import NewQuoteModal from '@/app/admin/_components/NewQuoteModal';
+
 import type {
   AdvertiserOption,
   AdCampaignOption,
@@ -56,6 +58,7 @@ export default function AgreementsClient({
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createAg, setCreateAg] = useState(false);
+  const [newQuoteOpen, setNewQuoteOpen] = useState(false);
   const [editAg, setEditAg] = useState<AgreementWithAdvertiser | null>(null);
   const [renewalSeed, setRenewalSeed] = useState<AgreementWithAdvertiser | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -273,6 +276,7 @@ export default function AgreementsClient({
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) { void handleUploadFile(f); } e.target.value = ''; }}
                 />
                 <button onClick={handleUploadClick} className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">&uarr; Upload</button>
+                <button onClick={() => setNewQuoteOpen(true)} className="px-4 py-2 rounded-md bg-purple-700 text-white text-sm hover:bg-purple-800">+ New quote</button>
                 <button onClick={() => setCreateAg(true)} className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">+ New agreement</button>
               </>
           }
@@ -448,6 +452,10 @@ export default function AgreementsClient({
       )}
 
       {/* Drawers */}
+      <NewQuoteModal
+        open={newQuoteOpen}
+        onClose={() => setNewQuoteOpen(false)}
+      />
       {createAg && (
         <AgreementDrawer
           advertisers={advertisers}

@@ -11,6 +11,8 @@ import {
 import type { AdInquiryRow, AdInquiryStatus } from '@/lib/server/ad-inquiries-store';
 import InquiryDetail from './InquiryDetail';
 
+import NewQuoteModal from '@/app/admin/_components/NewQuoteModal';
+
 type ChannelTab = 'all' | AdChannel;
 
 const CHANNEL_TABS: readonly ChannelTab[] = ['all', ...AD_CHANNELS] as const;
@@ -98,6 +100,7 @@ export default function InquiriesInbox() {
       : 'all';
 
   const [data, setData] = useState<InboxResponse | null>(null);
+  const [newQuoteOpen, setNewQuoteOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // Local q input — debounced into the URL so users can type freely.
@@ -264,7 +267,14 @@ export default function InquiriesInbox() {
             );
           })}
         </div>
-        <div className="ml-auto">
+        <button
+          type="button"
+          onClick={() => setNewQuoteOpen(true)}
+          className="ml-auto px-3 py-1.5 rounded-md bg-purple-700 text-white text-sm font-medium hover:bg-purple-800"
+        >
+          + New quote
+        </button>
+        <div className="">
           <input
             type="search"
             value={qInput}
@@ -373,6 +383,10 @@ export default function InquiriesInbox() {
           )}
         </div>
       </div>
-    </div>
+          <NewQuoteModal
+        open={newQuoteOpen}
+        onClose={() => setNewQuoteOpen(false)}
+      />
+      </div>
   );
 }
