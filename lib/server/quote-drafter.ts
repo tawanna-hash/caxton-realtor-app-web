@@ -77,32 +77,41 @@ function agreementTypeFor(
  *   • print → N months, end-of-month
  *   • app   → N weeks (weekly cadence) or N months (monthly cadence)
  */
-function computeTerm(
+/**
+ * Compute the term dates for the agreement / invoice, optionally anchored
+ * at an explicit start date. When anchorIso is null, falls back to today
+ * (matching legacy computeTerm behavior).
+ *   • email → single-day term (send day)
+ *   • print → N months, end-of-month
+ *   • app   → N weeks (weekly cadence) or N months (monthly cadence)
+ */
+function computeTermFrom(
+  anchorIso: string | null,
   channel: 'print' | 'email' | 'app',
   months: number,
   appCadence?: 'weekly' | 'monthly',
   appWeeks?: number,
 ): { start_date: string; end_date: string } {
-  const now = new Date();
-  const startIso = now.toISOString().slice(0, 10);
+  const startIso =
+    anchorIso ?? new Date().toISOString().slice(0, 10);
+  const [y, m, d] = startIso.split('-').map(Number);
   if (channel === 'email') {
     return { start_date: startIso, end_date: startIso };
   }
   if (channel === 'app') {
     if (appCadence === 'weekly') {
       const weeks = Math.max(1, appWeeks ?? 1);
-      const end = new Date(now);
+      const end = new Date(Date.UTC(y, m - 1, d));
       // exclusive-end: start + weeks*7 - 1 days
-      end.setDate(end.getDate() + weeks * 7 - 1);
+      end.setUTCDate(end.getUTCDate() + weeks * 7 - 1);
       return { start_date: startIso, end_date: end.toISOString().slice(0, 10) };
     }
-    // Monthly cadence — same as print month math.
-    const end = new Date(now.getFullYear(), now.getMonth() + Math.max(1, months), 0);
+    // Monthly cadence — same as print month math, EOM.
+    const end = new Date(Date.UTC(y, m - 1 + Math.max(1, months), 0));
     return { start_date: startIso, end_date: end.toISOString().slice(0, 10) };
   }
-  const end = new Date(now.getFullYear(), now.getMonth() + months, 0);
-  const endIso = end.toISOString().slice(0, 10);
-  return { start_date: startIso, end_date: endIso };
+  const end = new Date(Date.UTC(y, m - 1 + months, 0));
+  return { start_date: startIso, end_date: end.toISOString().slice(0, 10) };
 }
 
 export interface DrafterAdvertiser {
@@ -154,6 +163,14 @@ export interface DrafterInput {
   advertiser_phone?: string | null;
   /** Source inquiry id — stamps agreements.linked_inquiry_id. */
   linked_inquiry_id?: string | null;
+  /**
+   * Optional explicit run window. When both are supplied, the drafter uses
+   * them verbatim as agreements.start_date / end_date and skips computeTerm.
+   * Format: ISO date 'YYYY-MM-DD'. When only start_date is supplied, end
+   * is computed from cadence/qty starting at start_date.
+   */
+  start_date?: string;
+  end_date?: string;
   /** Admin identity for created_by columns + CRM mirror. */
   actor_email: string | null;
 }
@@ -310,12 +327,31 @@ export async function draftQuote(
       ? (input.months ?? 1)
       : 1;
   const agreementType = agreementTypeFor(input.channel, monthsForTerm);
-  const { start_date: termStart, end_date: termEnd } = computeTerm(
-    input.channel,
-    monthsForTerm,
-    input.channel === 'app' ? (input.app_cadence ?? 'weekly') : undefined,
-    input.channel === 'app' ? input.app_weeks : undefined,
-  );
+  // Explicit run-window support. When the caller supplied both dates, use
+  // them verbatim. When only start is supplied, anchor computeTerm at that
+  // start (still N units of cadence). Otherwise fall back to today.
+  const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const explicitStart = input.start_date && ISO_RE.test(input.start_date) ? input.start_date : null;
+  const explicitEnd = input.end_date && ISO_RE.test(input.end_date) ? input.end_date : null;
+  if (explicitStart && explicitEnd && explicitEnd < explicitStart) {
+    throw new ApiError(400, 'end_date_before_start_date');
+  }
+  let termStart: string;
+  let termEnd: string;
+  if (explicitStart && explicitEnd) {
+    termStart = explicitStart;
+    termEnd = explicitEnd;
+  } else {
+    const t = computeTermFrom(
+      explicitStart,
+      input.channel,
+      monthsForTerm,
+      input.channel === 'app' ? (input.app_cadence ?? 'weekly') : undefined,
+      input.channel === 'app' ? input.app_weeks : undefined,
+    );
+    termStart = t.start_date;
+    termEnd = t.end_date;
+  }
 
   const billPublication =
     input.publication ?? normalizeAdvertiserPub(advertiser.publication);

@@ -64,6 +64,10 @@ const quotesSchema = z
       .union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)])
       .optional(),
     publication: z.enum(['austin', 'san_antonio', 'both']).optional(),
+    // Optional explicit run window (ISO YYYY-MM-DD). When both supplied,
+    // drafter uses them verbatim instead of computing from today.
+    start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     // Custom pricing overrides — rep-facing. Server accepts either the
     // full total or a per-unit price (mutually exclusive).
     override_total_cents: z.number().int().min(0).max(100_000_000).optional(),
@@ -77,6 +81,10 @@ const quotesSchema = z
   .refine(
     (v) => !(v.override_total_cents != null && v.override_unit_cents != null),
     { message: 'override_total_cents and override_unit_cents are mutually exclusive' },
+  )
+  .refine(
+    (v) => !(v.start_date && v.end_date) || v.end_date >= v.start_date,
+    { message: 'end_date must be on or after start_date', path: ['end_date'] },
   );
 
 export const POST = withErrorHandling(async (req: Request) => {
@@ -171,6 +179,8 @@ export const POST = withErrorHandling(async (req: Request) => {
     app_markets: body.app_markets,
     override_total_cents: body.override_total_cents,
     override_unit_cents: body.override_unit_cents,
+    start_date: body.start_date,
+    end_date: body.end_date,
     publication: body.publication,
     due_date: body.due_date,
     memo: body.memo,
