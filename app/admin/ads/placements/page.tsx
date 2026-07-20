@@ -54,7 +54,7 @@ const HOST_PAGE_BY_SLUG: Record<string, string> = {
   calendar_event_sponsor: '/calendar (sponsored event card)',
   account_splash:         '/account + /profile',
   splash_welcome:         'First-launch app welcome',
-  newsletter_banner:      'Tuesday + Friday email',
+  newsletter_banner:      'Friday email',
   push_sponsorship:       'iOS / Android push notification',
 };
 
