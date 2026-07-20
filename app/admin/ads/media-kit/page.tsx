@@ -17,6 +17,7 @@ import {
   FREQ_TERMS,
   AUDIENCE_STATS_BY_PUB,
   EXPANSION_PUBS,
+  isLive,
   PUB_SUBSCRIBERS,
   POLICY_NOTES,
   MARKET_MULTIPLIERS,
@@ -92,11 +93,9 @@ function AudienceSection() {
         <div className="text-sm font-medium text-gray-900 mb-2">
           Subscribers by market
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <PubStat label="RealtyLine Austin" sub={PUB_SUBSCRIBERS.realtyline} />
           <PubStat label="Newsline San Antonio" sub={PUB_SUBSCRIBERS.newsline} />
-          <PubStat label="RealtyLine Houston" sub={PUB_SUBSCRIBERS['realtyline-houston']} />
-          <PubStat label="RealtyLine Dallas / FTW" sub={PUB_SUBSCRIBERS['realtyline-dallas']} />
         </div>
       </div>
     </section>
@@ -488,6 +487,7 @@ function EblastCard({ blast }: { blast: EBlast }) {
     ['realtyline-dallas', 'Dallas / FTW'],
   ];
   for (const [pub, label] of allPubs) {
+    if (!isLive(pub)) continue;
     if (blast.availablePubs && !blast.availablePubs.includes(pub)) continue;
     rows.push({
       label,

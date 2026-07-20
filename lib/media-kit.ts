@@ -703,6 +703,24 @@ export const AUDIENCE_STATS: AudienceStat[] = [
   { label: 'Avg Click Rate', value: '0.30%' },
 ];
 
+// ── Launching-soon gating ────────────────────────────────────────────────
+// Single source of truth for which markets are pre-launch. Any UI that iterates
+// MediaKitPub should filter through this so pricing, slot inventory, and public
+// checkout stay in sync with the Expansion section.
+
+export const LAUNCHING_SOON_PUBS: ReadonlySet<MediaKitPub> = new Set<MediaKitPub>([
+  'realtyline-houston',
+  'realtyline-dallas',
+]);
+
+export function isLaunchingSoon(pub: MediaKitPub): boolean {
+  return LAUNCHING_SOON_PUBS.has(pub);
+}
+
+export function isLive(pub: MediaKitPub): boolean {
+  return !LAUNCHING_SOON_PUBS.has(pub);
+}
+
 // ── Network expansion — publications by launch status ────────────────────
 
 export type ExpansionStatus = 'active' | 'launching-soon';
@@ -729,7 +747,7 @@ export const PUB_SUBSCRIBERS: Record<MediaKitPub, number> = {
   'newsline':            20000, // Newsline San Antonio (2026 media kit)
   'realtyline-houston':  50000,
   'realtyline-dallas':   27000,
-  'both':               141000, // Full network: 44K+20K+50K+27K
+  'both':                64000, // Active markets only: 44K Austin + 20K Newsline SA (Houston + Dallas launching soon)
 };
 
 // ── Policy notes ───────────────────────────────────────────────────────────
