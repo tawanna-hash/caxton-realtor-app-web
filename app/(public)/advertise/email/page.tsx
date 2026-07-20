@@ -49,7 +49,7 @@ export default function AdvertiseEmailPage() {
       <section className="mb-10 grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="border border-gray-200 px-4 py-4 rounded-md">
           <p className="text-2xl font-semibold text-brand-700 tracking-tight">
-            43K
+            44K+
           </p>
           <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
             RealtyLine email
@@ -57,7 +57,7 @@ export default function AdvertiseEmailPage() {
         </div>
         <div className="border border-gray-200 px-4 py-4 rounded-md">
           <p className="text-2xl font-semibold text-brand-700 tracking-tight">
-            21K
+            20K+
           </p>
           <p className="text-xs uppercase tracking-wider text-gray-500 mt-1 font-medium">
             Newsline San Antonio email
@@ -81,54 +81,73 @@ export default function AdvertiseEmailPage() {
         </div>
       </section>
 
-      {/* Packages grid */}
-      <section className="mb-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {EBLASTS.map((eb, idx) => {
-            const id = eblastId(eb.name);
-            const isPopular = idx === EBLASTS.length - 1; // last (richest) package
-            return (
-              <article
-                key={id}
-                className={`relative flex flex-col border rounded-md p-6 ${
-                  isPopular ? 'border-brand-700' : 'border-gray-200'
-                }`}
-              >
-                {isPopular && (
-                  <span className="absolute -top-3 left-5 px-2 py-0.5 rounded-full bg-brand-700 text-white text-[10px] font-semibold uppercase tracking-wider">
-                    Most popular
-                  </span>
-                )}
+      {/* Packages grid — PDF-match: grouped by pub, bundle strip */}
+      <section className="mb-14 space-y-6">
+        {(
+          [
+            { pub: 'realtyline' as const, label: 'RealtyLine Austin',    subs: '44K+ subscribers' },
+            { pub: 'newsline' as const,   label: 'Newsline San Antonio', subs: '20K+ subscribers' },
+          ]
+        ).map((row) => {
+          const available = EBLASTS.filter((b) => !b.availablePubs || b.availablePubs.includes(row.pub));
+          return (
+            <div key={row.pub} className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-5">
+              <div className="text-base font-semibold text-gray-900 mb-3">{row.label}</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {available.map((eb) => {
+                  const id = eblastId(eb.name);
+                  const price = eb.priceByPub?.[row.pub] ?? eb.price;
+                  const features = eb.featuresByPub?.[row.pub] ?? eb.features;
+                  return (
+                    <article key={id} className="flex flex-col rounded-md border border-gray-200 bg-white p-5">
+                      <p className="text-sm text-gray-700">{eb.name}</p>
+                      <p className="text-2xl font-bold text-brand-700 tabular-nums mt-1">
+                        {fmtUsd(price)}
+                        <span className="text-sm font-semibold ml-0.5">/send</span>
+                      </p>
+                      <p className="text-xs text-gray-600 mt-0.5">Based on {row.subs}</p>
+                      <ul className="text-sm text-gray-900 list-disc pl-5 mt-3 space-y-1 flex-1">
+                        {features.map((f) => (<li key={f}>{f}</li>))}
+                      </ul>
+                      <Link
+                        href={`/advertise/inquire?channel=email&package=${encodeURIComponent(id)}${row.pub === 'newsline' ? '&pub=newsline' : ''}`}
+                        className="mt-4 inline-flex items-center justify-center px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-[#493676] transition"
+                      >
+                        Request quote
+                      </Link>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
 
-                <h3 className="text-xl font-semibold text-brand-700 mb-1">
-                  {eb.name}
-                </h3>
-                <p className="text-3xl font-semibold text-gray-900 tabular-nums mb-1">
-                  {fmtUsd(eb.price)}
-                  <span className="text-sm font-normal text-gray-600 ml-1">
-                    per send
-                  </span>
-                </p>
-
-                <ul className="text-sm text-gray-700 space-y-1.5 my-4 flex-1">
-                  {eb.features.map((f) => (
-                    <li key={f} className="flex gap-2">
-                      <span aria-hidden className="text-brand-700 font-bold">·</span>
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
+        {/* Bundle strip — Austin + Newsline SA at 10% off */}
+        {(() => {
+          const pkg1 = EBLASTS.find((b) => b.name === 'e-Blast Package No. 1');
+          const pkg2 = EBLASTS.find((b) => b.name === 'e-Blast Package No. 2');
+          if (!pkg1 || !pkg2) return null;
+          return (
+            <div className="rounded-md bg-gray-900 text-white px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm font-semibold">Both Markets Bundle — 10% Off</div>
+              <div className="text-sm flex flex-wrap gap-6">
+                <span>Package No. 1: <span className="text-brand-300 font-semibold">{fmtUsd(pkg1.priceByPub?.both ?? 0)}/send</span></span>
+                <span>Package No. 2: <span className="text-brand-300 font-semibold">{fmtUsd(pkg2.priceByPub?.both ?? 0)}/send</span></span>
                 <Link
-                  href={`/advertise/inquire?channel=email&package=${encodeURIComponent(id)}`}
-                  className="inline-flex items-center justify-center px-4 py-2.5 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-[#493676] transition"
+                  href="/advertise/inquire?channel=email"
+                  className="underline hover:no-underline"
                 >
-                  Request quote
+                  Request bundle quote →
                 </Link>
-              </article>
-            );
-          })}
-        </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        <p className="text-xs text-gray-600">
+          * Subject to availability and advance scheduling. ** Follow-up e-Blast(s) sent within same billing cycle.
+        </p>
       </section>
 
       {/* What you provide */}
