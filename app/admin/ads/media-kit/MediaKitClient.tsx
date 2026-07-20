@@ -256,7 +256,7 @@ function PackageCard({ pkg }: { pkg: Package }) {
     <div className={'rounded-md ring-1 p-4 ' + (pkg.premium ? 'bg-brand-700 text-white ring-brand-700' : pkg.popular ? 'bg-orange-50 ring-orange-200' : 'bg-gray-50 ring-gray-200')}>
       <div className="flex items-start justify-between">
         <div>
-          <div className={'text-xs font-semibold uppercase tracking-wider ' + (pkg.premium ? 'text-white/80' : 'text-gray-700')}>{pkg.tag ?? pkg.name}</div>
+          <div className={'text-xs font-semibold uppercase tracking-wider ' + (pkg.premium ? 'text-white/80' : 'text-gray-700')}>{pkg.tagline}</div>
           <div className={'text-lg font-semibold mt-1 ' + (pkg.premium ? 'text-white' : 'text-gray-900')}>{pkg.name}</div>
         </div>
         {pkg.popular && !pkg.premium && (
@@ -264,7 +264,7 @@ function PackageCard({ pkg }: { pkg: Package }) {
         )}
       </div>
       <ul className={'mt-3 space-y-1 text-sm ' + (pkg.premium ? 'text-white/90' : 'text-gray-700')}>
-        {pkg.bullets.map((b) => (
+        {pkg.features.map((b) => (
           <li key={b} className="flex gap-2">
             <span aria-hidden>{'\u2713'}</span>
             <span>{b}</span>
