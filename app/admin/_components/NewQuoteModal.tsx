@@ -121,6 +121,14 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   const [size, setSize] = useState<string>('');
   const [months, setMonths] = useState<number>(1);
   const [sends, setSends] = useState<number>(1);
+  // Run-window mode toggle — 'quantity' keeps legacy qty+cadence input,
+  // 'dates' exposes explicit start/end pickers. When 'dates', qty is
+  // derived from the span so pricing math still works.
+  type RunMode = 'quantity' | 'dates';
+  const [runMode, setRunMode] = useState<RunMode>('quantity');
+  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const [runStart, setRunStart] = useState<string>(todayIso);
+  const [runEnd, setRunEnd] = useState<string>(todayIso);
   // App channel
   const [appCadence, setAppCadence] = useState<AppCadence>('weekly');
   const [appWeeks, setAppWeeks] = useState<number>(1);
@@ -205,6 +213,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     setSize(PACKAGES[0]?.sizes[0]?.size ?? '');
     setMonths(1);
     setSends(1);
+    setRunMode('quantity');
+    setRunStart(todayIso);
+    setRunEnd(todayIso);
     setAppCadence('weekly');
     setAppWeeks(1);
     setAppMarkets(1);
@@ -216,7 +227,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     setCreatedInvoice(null);
     setSent(false);
     setBookedWindows([]);
-  }, []);
+  }, [todayIso]);
 
   const handleClose = useCallback(() => {
     resetAll();
@@ -401,6 +412,43 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     selectedAppSlot != null &&
     monthlyRateForMarkets(selectedAppSlot, appMarkets) == null;
 
+  // When user is in date-mode, derive qty (weeks / months / sends) from the
+  // picked span so all downstream pricing keeps working. The effect only
+  // fires when runMode='dates' — quantity-mode is untouched.
+  useEffect(() => {
+    (async () => {
+      await Promise.resolve();
+      if (runMode !== 'dates') return;
+      if (!runStart || !runEnd) return;
+      if (runEnd < runStart) return;
+      const startMs = Date.UTC(
+        +runStart.slice(0, 4), +runStart.slice(5, 7) - 1, +runStart.slice(8, 10),
+      );
+      const endMs = Date.UTC(
+        +runEnd.slice(0, 4), +runEnd.slice(5, 7) - 1, +runEnd.slice(8, 10),
+      );
+      const days = Math.max(1, Math.floor((endMs - startMs) / 86400000) + 1);
+      if (channel === 'print') {
+        // Month count — every month "touched" by the window.
+        const [sy, sm] = [+runStart.slice(0, 4), +runStart.slice(5, 7)];
+        const [ey, em] = [+runEnd.slice(0, 4), +runEnd.slice(5, 7)];
+        const monthCount = Math.max(1, (ey - sy) * 12 + (em - sm) + 1);
+        setMonths(Math.min(24, monthCount));
+      } else if (channel === 'email') {
+        // Solo e-Blast is single-day; leave sends alone (rep still enters it).
+      } else if (channel === 'app') {
+        if (appCadence === 'weekly') {
+          setAppWeeks(Math.min(52, Math.max(1, Math.ceil(days / 7))));
+        } else {
+          const [sy, sm] = [+runStart.slice(0, 4), +runStart.slice(5, 7)];
+          const [ey, em] = [+runEnd.slice(0, 4), +runEnd.slice(5, 7)];
+          const monthCount = Math.max(1, (ey - sy) * 12 + (em - sm) + 1);
+          setMonths(Math.min(24, monthCount));
+        }
+      }
+    })();
+  }, [runMode, runStart, runEnd, channel, appCadence]);
+
   const canSubmit = useMemo(() => {
     if (submitting) return false;
     if (createNew) {
@@ -446,6 +494,10 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         } else {
           payload.months = Math.max(1, months);
         }
+      }
+      if (runMode === 'dates' && runStart && runEnd && runEnd >= runStart) {
+        payload.start_date = runStart;
+        payload.end_date = runEnd;
       }
       if (dueDate) payload.due_date = dueDate;
       if (memo.trim()) payload.memo = memo.trim();
@@ -740,6 +792,69 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               </select>
             </label>
 
+            {/* Run window: quantity ⇄ date-range toggle */}
+            <div className="rounded-md border border-gray-200 p-3 mb-3 bg-gray-50">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs font-semibold uppercase tracking-wider text-gray-700">
+                  Run window
+                </div>
+                <div className="inline-flex rounded-md border border-gray-300 overflow-hidden text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setRunMode('quantity')}
+                    className={
+                      runMode === 'quantity'
+                        ? 'px-3 py-1 bg-purple-600 text-white'
+                        : 'px-3 py-1 bg-white text-gray-700 hover:bg-gray-100'
+                    }
+                  >
+                    By quantity
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRunMode('dates')}
+                    className={
+                      runMode === 'dates'
+                        ? 'px-3 py-1 bg-purple-600 text-white'
+                        : 'px-3 py-1 bg-white text-gray-700 hover:bg-gray-100'
+                    }
+                  >
+                    By dates
+                  </button>
+                </div>
+              </div>
+              {runMode === 'dates' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="text-xs text-gray-600">
+                    Start date
+                    <input
+                      type="date"
+                      value={runStart}
+                      onChange={(e) => setRunStart(e.target.value)}
+                      className="mt-1 w-full px-2 py-1.5 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    />
+                  </label>
+                  <label className="text-xs text-gray-600">
+                    End date
+                    <input
+                      type="date"
+                      value={runEnd}
+                      min={runStart}
+                      onChange={(e) => setRunEnd(e.target.value)}
+                      className="mt-1 w-full px-2 py-1.5 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    />
+                  </label>
+                  {runEnd < runStart && (
+                    <div className="col-span-2 text-xs text-red-600">
+                      End date must be on or after start date.
+                    </div>
+                  )}
+                  <div className="col-span-2 text-[11px] text-gray-500">
+                    Quantity below auto-derives from this window.
+                  </div>
+                </div>
+              )}
+            </div>
             {channel === 'print' && selectedPrintPackage && (
               <>
                 <label className="text-xs text-gray-700">
