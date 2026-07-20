@@ -375,49 +375,64 @@ function ExampleBundle({ firstSlot }: { firstSlot: AppAdSlot }) {
 }
 
 function EblastsSection({ activePub }: { activePub: PubTab }) {
-  const blasts = useMemo(
-    () => EBLASTS.filter((b) => isEblastAvailableForPub(b, activePub.mediaKitPub)),
-    [activePub.mediaKitPub],
-  );
+  const isBundle = activePub.mediaKitPub === 'realtyline' || activePub.mediaKitPub === 'newsline';
+  const showBundleStrip = isBundle;
+  const pkg1 = EBLASTS.find((b) => b.name === 'e-Blast Package No. 1');
+  const pkg2 = EBLASTS.find((b) => b.name === 'e-Blast Package No. 2');
+  const availableForActive = EBLASTS.filter((b) => isEblastAvailableForPub(b, activePub.mediaKitPub));
+
   return (
     <section className="rounded-md bg-white ring-1 ring-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900">e-Blast packages</h2>
-      <p className="text-sm text-gray-700 mt-1">Pricing shown for {activePub.label}. Austin (Pkg 1 + 2) is flat-rate; Newsline / Houston / Dallas are CPM-priced.</p>
-      {blasts.length === 0 ? (
-        <div className="mt-4 rounded-md bg-amber-50 ring-1 ring-amber-200 p-4 text-sm text-amber-900">No e-blast packages are available on {activePub.label} yet.</div>
+      <div className="mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">e-Blast Packages</h2>
+        <p className="text-sm text-gray-700 mt-1">Pricing shown for {activePub.label}. Bundle 10% off available on Austin + Newsline SA combined buys.</p>
+      </div>
+
+      {availableForActive.length === 0 ? (
+        <div className="rounded-md bg-amber-50 ring-1 ring-amber-200 p-4 text-sm text-amber-900">No e-blast packages are available on {activePub.label} yet.</div>
       ) : (
-        <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {blasts.map((b) => (<EblastCard key={b.name} blast={b} activePub={activePub} />))}
+        <div className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-4">
+          <div className="text-base font-semibold text-gray-900 mb-3">{activePub.label}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {availableForActive.map((b) => (
+              <EblastCard key={b.name} blast={b} pub={activePub.mediaKitPub} />
+            ))}
+          </div>
         </div>
       )}
+
+      {showBundleStrip && pkg1 && pkg2 && (
+        <div className="mt-4 rounded-md bg-gray-900 text-white px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-sm font-semibold">Both Markets Bundle {'—'} 10% Off</div>
+          <div className="text-sm flex gap-6">
+            <span>Package No. 1: <span className="text-brand-300 font-semibold">{fmtUSD(pkg1.priceByPub?.both ?? 0)}/send</span></span>
+            <span>Package No. 2: <span className="text-brand-300 font-semibold">{fmtUSD(pkg2.priceByPub?.both ?? 0)}/send</span></span>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-3 text-xs text-gray-600">
+        * Subject to availability and advance scheduling. ** Follow-up e-Blast(s) sent within same billing cycle.
+      </div>
     </section>
   );
 }
 
-function EblastCard({ blast, activePub }: { blast: EBlast; activePub: PubTab }) {
-  const pub = activePub.mediaKitPub;
+function EblastCard({ blast, pub }: { blast: EBlast; pub: MediaKitPub }) {
   if (!isLive(pub)) return null;
   const price = blast.priceByPub?.[pub] ?? blast.price;
-  const sends = blast.sendsByPub?.[pub] ?? blast.sends;
   const features = blast.featuresByPub?.[pub] ?? blast.features;
+  const subs = pub === 'realtyline' ? '44K+ subscribers'
+             : pub === 'newsline'   ? '20K+ subscribers'
+             : '';
   return (
-    <div className="rounded-md bg-gray-50 ring-1 ring-gray-200 p-4">
-      <div className="text-base font-semibold text-gray-900">{blast.name}</div>
-      <ul className="mt-2 space-y-1 text-sm text-gray-700">
-        {features.map((f) => (
-          <li key={f} className="flex gap-2">
-            <span aria-hidden>{'\u2713'}</span>
-            <span>{f}</span>
-          </li>
-        ))}
+    <div className="rounded-md bg-white ring-1 ring-gray-200 p-4">
+      <div className="text-sm text-gray-700">{blast.name}</div>
+      <div className="mt-1 text-2xl font-bold text-brand-700">{fmtUSD(price)}<span className="text-base font-semibold">/send</span></div>
+      {subs && <div className="text-xs text-gray-600 mt-0.5">Based on {subs}</div>}
+      <ul className="mt-3 space-y-1 text-sm text-gray-900 list-disc pl-5">
+        {features.map((f) => (<li key={f}>{f}</li>))}
       </ul>
-      <div className="mt-3 flex items-baseline justify-between text-sm border-t border-gray-200 pt-3">
-        <span className="text-gray-900">
-          {activePub.label}
-          <span className="text-xs text-gray-700 ml-1">({sends} send{sends === 1 ? '' : 's'})</span>
-        </span>
-        <span className="font-semibold tabular-nums text-gray-900">{fmtUSD(price)}</span>
-      </div>
     </div>
   );
 }

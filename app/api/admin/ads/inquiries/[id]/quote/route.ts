@@ -29,7 +29,7 @@ import {
   updateAdInquiry,
   type AdInquiryRow,
 } from '@/lib/server/ad-inquiries-store';
-import { PACKAGES, EBLASTS, type Package } from '@/lib/media-kit';
+import { PACKAGES, EBLASTS, type Package, eblastPriceForPub } from '@/lib/media-kit';
 import {
   formatInvoiceNumber,
   type InvoiceLineItem,
@@ -43,6 +43,24 @@ export const runtime = 'nodejs';
 function eblastId(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '');
 }
+
+/**
+ * Resolve the eblast unit price in cents for a database-side publication
+ * scope. The database uses 'austin' | 'san_antonio' | 'both'; the media
+ * kit data uses 'realtyline' | 'newsline' | 'both'. Bundle price is a
+ * 10%-off pre-computed value on priceByPub.both — no runtime discount.
+ */
+function eblastCentsForDbPub(
+  eb: (typeof EBLASTS)[number],
+  dbPub: 'austin' | 'san_antonio' | 'both',
+): number {
+  const mkPub =
+    dbPub === 'austin'      ? 'realtyline' as const :
+    dbPub === 'san_antonio' ? 'newsline'   as const :
+                              'both'       as const;
+  return Math.round(eblastPriceForPub(eb, mkPub) * 100);
+}
+
 
 const quoteSchema = z
   .object({
@@ -163,7 +181,7 @@ export const POST = withErrorHandling(async (
     lineItems.push({
       description: `${eb.name}${sends > 1 ? `, ${sends} sends` : ''}`,
       qty: sends,
-      unit_cents: eb.price * 100,
+      unit_cents: eblastCentsForDbPub(eb, body.publication ?? inquiryPubToDb(inquiry.publication)),
     });
   }
 

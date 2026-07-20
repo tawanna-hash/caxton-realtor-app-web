@@ -561,16 +561,17 @@ export const PACKAGES: Package[] = [
 export const EBLASTS: EBlast[] = [
   {
     name: 'e-Blast Package No. 1',
-    // Default falls back to the Austin (RealtyLine) rate. Non-pub-aware
-    // surfaces (legacy quote builders, public marketing pages) will see
-    // the Austin number until they're upgraded to use eblastPriceForPub().
-    price: 1100,
+    // Default price falls back to the Austin (RealtyLine) rate. Non-pub-aware
+    // callers see the Austin number until they use eblastPriceForPub().
+    // 2026 rates from the printed media kit.
+    price: 1099,
     sends: 2,
     priceByPub: {
-      'realtyline':         1100,  // Austin   (flat)
-      'newsline':           1400,  // SA       (14K x $0.05 x 2)
-      'realtyline-houston': 2500,  // Houston  (50K x $0.05 x 1)
-      'realtyline-dallas':  1350,  // Dallas   (27K x $0.05 x 1)
+      'realtyline':         1099,  // Austin (44K+ subs)
+      'newsline':            492,  // SA     (20K+ subs)
+      'both':               1432,  // Austin + Newsline bundle (10% off)
+      'realtyline-houston': 2500,  // Houston (50K x $0.05 x 1) — launching soon
+      'realtyline-dallas':  1350,  // Dallas  (27K x $0.05 x 1) — launching soon
     },
     sendsByPub: {
       'realtyline-houston': 1,
@@ -578,39 +579,41 @@ export const EBLASTS: EBlast[] = [
     },
     features: [
       'Exclusive e-Blast',
-      'One follow-up e-Blast prior to event',
-      'Included in Weekly e-Blast (Friday)',
+      'One Complimentary Follow-up e-Blast**',
+      'Included in One Weekly e-Blast (Friday)',
     ],
     // Houston + Dallas/FTW bundle a single send with no event-coverage
     // follow-up, so the feature list drops the second-send bullet.
     featuresByPub: {
       'realtyline-houston': [
         'Exclusive e-Blast',
-        'Included in Weekly e-Blast (Friday)',
+        'Included in One Weekly e-Blast (Friday)',
       ],
       'realtyline-dallas': [
         'Exclusive e-Blast',
-        'Included in Weekly e-Blast (Friday)',
+        'Included in One Weekly e-Blast (Friday)',
       ],
     },
   },
   {
     name: 'e-Blast Package No. 2',
-    // Pkg 2 (event-coverage) is now Austin-only. Newsline San Antonio sells
-    // a single CPM-priced package (Pkg 1) with no event coverage; Houston +
-    // Dallas/FTW likewise sell Pkg 1 only.
-    price: 1425,
+    // Pkg 2 (event-coverage) is sold on Austin, Newsline SA, and the
+    // Austin + Newsline bundle. Houston + Dallas/FTW sell Pkg 1 only.
+    price: 1449,
     sends: 2,
     priceByPub: {
-      'realtyline': 1425,  // Austin flat
+      'realtyline': 1449,  // Austin
+      'newsline':    842,  // Newsline SA
+      'both':       2062,  // Bundle (10% off)
     },
-    availablePubs: ['realtyline'],
+    availablePubs: ['realtyline', 'newsline', 'both'],
     features: [
       'Exclusive e-Blast',
-      'Up to two follow-up e-Blasts prior to event',
-      'Included in Weekly e-Blast (Friday)',
-      'Day of Event Coverage',
+      'Up to Two Complimentary Follow-up e-Blasts**',
+      'Included in Two Weekly e-Blasts (Friday)',
+      'Day of Event Coverage*',
       'Up to four images published to Facebook, Instagram & website',
+      'Company name & event details included in post',
     ],
   },
 ];

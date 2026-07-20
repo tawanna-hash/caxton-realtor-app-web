@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { PACKAGES, EBLASTS } from '@/lib/media-kit';
+import { PACKAGES, EBLASTS, eblastPriceForPub } from '@/lib/media-kit';
 import type { AdInquiryRow } from '@/lib/server/ad-inquiries-store';
 
 // Stable id for an e-Blast package — same convention as the public form.
@@ -28,6 +28,8 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
   const [size, setSize] = useState<string>('');
   const [months, setMonths] = useState<number>(1);
   const [sends, setSends] = useState<number>(1);
+  // Publication scope for e-Blast pricing. 'austin' | 'san_antonio' | 'both'.
+  const [publication, setPublication] = useState<'austin' | 'san_antonio' | 'both'>('austin');
   const [dueDate, setDueDate] = useState<string>('');
   const [memo, setMemo] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -57,10 +59,11 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
       return sizeRow.price * 100 * Math.max(months, 1);
     }
     if (isEmail && selectedEmailPackage) {
-      return selectedEmailPackage.price * 100 * Math.max(sends, 1);
+      const mkPub = publication === 'austin' ? 'realtyline' as const : publication === 'san_antonio' ? 'newsline' as const : 'both' as const;
+      return Math.round(eblastPriceForPub(selectedEmailPackage, mkPub) * 100) * Math.max(sends, 1);
     }
     return 0;
-  }, [isPrint, isEmail, selectedPrintPackage, selectedEmailPackage, size, months, sends]);
+  }, [isPrint, isEmail, selectedPrintPackage, selectedEmailPackage, size, months, sends, publication]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -81,6 +84,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
       }
       if (isEmail) {
         payload.sends = sends;
+        payload.publication = publication;
       }
       if (dueDate) payload.due_date = dueDate;
       if (memo.trim()) payload.memo = memo.trim();
@@ -176,7 +180,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
           {isEmail &&
             EBLASTS.map((e) => (
               <option key={eblastId(e.name)} value={eblastId(e.name)}>
-                {e.name} — ${e.price.toLocaleString()}
+                {e.name} — ${eblastPriceForPub(e, publication === 'austin' ? 'realtyline' : publication === 'san_antonio' ? 'newsline' : 'both').toLocaleString()}/send
               </option>
             ))}
         </select>
@@ -226,6 +230,28 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
             />
           </div>
         </>
+      )}
+
+      {isEmail && selectedEmailPackage && (
+        <div className="mb-3">
+          <label
+            htmlFor="quote-publication"
+            className="block text-xs text-gray-700 font-medium mb-1"
+          >
+            Publication
+          </label>
+          <select
+            id="quote-publication"
+            value={publication}
+            onChange={(e) => setPublication(e.target.value as 'austin' | 'san_antonio' | 'both')}
+            disabled={submitting}
+            className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="austin">RealtyLine Austin</option>
+            <option value="san_antonio">Newsline San Antonio</option>
+            <option value="both">Both markets bundle — 10% off</option>
+          </select>
+        </div>
       )}
 
       {isEmail && selectedEmailPackage && (

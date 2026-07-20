@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { PACKAGES, EBLASTS } from '@/lib/media-kit';
+import { PACKAGES, EBLASTS, eblastPriceForPub } from '@/lib/media-kit';
 import type { AdInquiryRow } from '@/lib/server/ad-inquiries-store';
 
 // Stable id for an e-Blast package — same convention as the public form.
@@ -53,6 +53,8 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
   const [size, setSize] = useState<string>('');
   const [months, setMonths] = useState<number>(1);
   const [sends, setSends] = useState<number>(1);
+  // Publication scope for e-Blast pricing. 'austin' | 'san_antonio' | 'both'.
+  const [publication, setPublication] = useState<'austin' | 'san_antonio' | 'both'>('austin');
   const [startDate, setStartDate] = useState<string>(defaultStart());
   const [endDate, setEndDate] = useState<string>(defaultEnd());
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('link');
@@ -86,10 +88,11 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
       return sizeRow.price * 100 * Math.max(months, 1);
     }
     if (isEmail && selectedEmailPackage) {
-      return selectedEmailPackage.price * 100 * Math.max(sends, 1);
+      const mkPub = publication === 'austin' ? 'realtyline' as const : publication === 'san_antonio' ? 'newsline' as const : 'both' as const;
+      return Math.round(eblastPriceForPub(selectedEmailPackage, mkPub) * 100) * Math.max(sends, 1);
     }
     return 0;
-  }, [isPrint, isEmail, selectedPrintPackage, selectedEmailPackage, size, months, sends]);
+  }, [isPrint, isEmail, selectedPrintPackage, selectedEmailPackage, size, months, sends, publication]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -121,6 +124,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
       }
       if (isEmail) {
         payload.sends = sends;
+        payload.publication = publication;
       }
       if (paymentMode === 'link' && stripeLink.trim()) {
         payload.stripe_payment_link_url = stripeLink.trim();
@@ -226,7 +230,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
           {isEmail &&
             EBLASTS.map((e) => (
               <option key={e.name} value={eblastId(e.name)}>
-                {e.name} — ${e.price.toLocaleString()}
+                {e.name} — ${eblastPriceForPub(e, publication === 'austin' ? 'realtyline' : publication === 'san_antonio' ? 'newsline' : 'both').toLocaleString()}/send
               </option>
             ))}
         </select>
@@ -264,6 +268,24 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
               className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
             />
           </div>
+        </div>
+      )}
+
+      {/* Email: publication scope */}
+      {isEmail && selectedEmailPackage && (
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Publication
+          </label>
+          <select
+            value={publication}
+            onChange={(e) => setPublication(e.target.value as 'austin' | 'san_antonio' | 'both')}
+            className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
+          >
+            <option value="austin">RealtyLine Austin</option>
+            <option value="san_antonio">Newsline San Antonio</option>
+            <option value="both">Both markets bundle — 10% off</option>
+          </select>
         </div>
       )}
 
