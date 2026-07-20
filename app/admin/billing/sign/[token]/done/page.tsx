@@ -22,7 +22,7 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
           <div>
             <div
               className="inline-block px-3 py-0.5 rounded-md text-white text-xs font-bold tracking-[0.2em] uppercase mb-3"
-              style={{ background: '#dc2626' }}
+              style={{ background: '#7c3aed' }}
             >
               RealtyLine
             </div>
@@ -54,14 +54,14 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block w-full py-3 rounded-md text-white font-medium text-sm hover:opacity-90 transition-opacity"
-            style={{ background: '#dc2626' }}
+            style={{ background: '#7c3aed' }}
           >
             Download Signed Agreement PDF
           </a>
 
           <p className="text-xs text-gray-400">
             Questions? Contact{' '}
-            <a href="mailto:tawanna@myrealtyline.com" className="text-[#dc2626] hover:underline">
+            <a href="mailto:tawanna@myrealtyline.com" className="text-[#7c3aed] hover:underline">
               tawanna@myrealtyline.com
             </a>
           </p>
@@ -90,3 +90,4 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
     </div>
   );
 }
+

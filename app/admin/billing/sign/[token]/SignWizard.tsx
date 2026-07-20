@@ -14,7 +14,8 @@ import StripePaymentBlock, { type StripePaymentHandle } from './StripePaymentBlo
 import SignaturePad, { type SignatureValue } from './SignaturePad';
 import { useRouter } from 'next/navigation';
 import type { Agreement } from '@/lib/agreements';
-import { TERMS_RL } from '@/lib/agreement-terms';
+import { termsForChannel } from '@/lib/agreement-terms';
+import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
 import {
   AD_SIZES,
   FREQUENCIES,
@@ -31,7 +32,8 @@ import {
 } from '@/lib/agreement-pricing';
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 
-const ACCENT = '#dc2626';
+// Admin palette purple — matches /admin dashboards and CRM.
+const ACCENT = '#7c3aed';
 const CURRENT_YEAR = new Date().getFullYear().toString();
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -219,7 +221,7 @@ function EditableField({
         readOnly={readOnly}
         maxLength={maxLength}
         inputMode={inputMode}
-        className={`w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 ${
+        className={`w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 ${
           readOnly ? 'bg-gray-100 text-gray-600 cursor-default' : ''
         }`}
       />
@@ -246,11 +248,98 @@ function initTiming(ag: Agreement): TimingState {
 
 // ── Main SignWizard ───────────────────────────────────────────────────────────
 
+// ── QuoteSummaryCard ──────────────────────────────────────────────────────────
+// Read-only Insertion Order card for non-print channels. Everything below
+// comes pre-populated from an approved quote (agreement row stamped by the
+// server-side drafter), so we just render — no inputs.
+
+function QuoteSummaryCard({
+  ag,
+  channel,
+}: {
+  ag: Agreement;
+  channel: 'digital' | 'email' | 'app';
+}) {
+  const channelLabel =
+    channel === 'digital' ? 'Digital placement' :
+    channel === 'email' ? 'e-Blast' :
+    'App placement';
+
+  const startDate = shortDate(ag.start_date) ?? '—';
+  const endDate = shortDate(ag.end_date) ?? '—';
+  const amount = ag.amount_cents != null
+    ? `$${(ag.amount_cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : '—';
+  const rate = ag.ad_rate_cents != null
+    ? `$${(ag.ad_rate_cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : null;
+
+  // ad_size holds the slot label ("Feed banner — premium", "Solo e-Blast", etc.)
+  // frequency holds cadence ("3×", "4wk", "3mo", etc.)
+  const slot = ag.ad_size?.trim() || '—';
+  const cadence = ag.frequency?.trim() || null;
+
+  return (
+    <div className="rounded-md border border-purple-200 bg-purple-50/40">
+      <div className="px-4 py-2 border-b border-purple-200 bg-purple-50 rounded-t-md">
+        <span className="text-xs font-semibold uppercase tracking-wider text-purple-900">
+          {channelLabel}
+        </span>
+      </div>
+      <dl className="divide-y divide-purple-100 text-sm">
+        <SummaryRow label="Placement" value={slot} />
+        {cadence && <SummaryRow label="Cadence" value={cadence} />}
+        <SummaryRow label="Start date" value={startDate} />
+        <SummaryRow label="End date" value={endDate} />
+        {rate && <SummaryRow label="Rate" value={rate} />}
+        <SummaryRow
+          label="Total"
+          value={<span className="font-semibold text-gray-900">{amount}</span>}
+        />
+        {ag.notes && ag.notes.trim() && (
+          <SummaryRow
+            label="Notes from rep"
+            value={<span className="whitespace-pre-wrap">{ag.notes.trim()}</span>}
+          />
+        )}
+      </dl>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-3 px-4 py-2">
+      <dt className="text-xs uppercase tracking-wider text-gray-500 pt-0.5 flex-shrink-0 w-28">
+        {label}
+      </dt>
+      <dd className="text-sm text-gray-800 text-right flex-1">{value}</dd>
+    </div>
+  );
+}
+
+function shortDate(d: string | null | undefined): string | null {
+  if (!d) return null;
+  const iso = d.length >= 10 ? d.slice(0, 10) : d;
+  const dt = new Date(iso + 'T00:00:00Z');
+  if (Number.isNaN(dt.getTime())) return iso;
+  return dt.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
 export default function SignWizard({ ag, token }: { ag: Agreement; token: string }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Channel drives Step 3 layout + Step 5 terms language. Derived from
+  // the agreement's type column (print_ad / eblast / app_ad / other).
+  const channel = deriveChannelFromAgreementType(ag.type);
   const stripeRef = useRef<StripePaymentHandle>(null);
   // PaymentIntent id captured at end of Step 4 (while StripePaymentBlock is
   // still mounted). Step 5 just persists this — it no longer touches Stripe.
@@ -622,6 +711,36 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
   }
 
   // ─── Step 3: Insertion Order ───────────────────────────────────────────────
+  //
+  // Print agreements: fully editable Insertion Order (ad size, frequency,
+  // rate, page position, month-by-month timing). Digital / Email / App
+  // agreements come pre-populated from an approved quote, so the advertiser
+  // sees a read-only summary of what the rep quoted — no editable fields.
+
+  if (step === 3 && channel !== 'print') {
+    return (
+      <Shell
+        step={3}
+        onBack={() => setStep(2)}
+        onNext={handleNext}
+        nextLabel="Next →"
+        saving={saving}
+      >
+        <div className="space-y-5">
+          <Eyebrow>Insertion Order</Eyebrow>
+          <h2 className="text-lg text-gray-900">Your quoted placement</h2>
+          <p className="text-sm text-gray-600">
+            The details below were prepared by your sales rep from an approved quote.
+            If anything looks wrong, please contact us before signing.
+          </p>
+
+          {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
+
+          <QuoteSummaryCard ag={ag} channel={channel} />
+        </div>
+      </Shell>
+    );
+  }
 
   if (step === 3) {
     const hasAnyMonth = MONTHS_LIST.some((m) => timing[m.k]?.checked);
@@ -657,7 +776,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                       setAdSize(s);
                       setRateUserEdited(false);
                     }}
-                    className="accent-red-600"
+                    className="accent-purple-600"
                   />
                   <span className="text-sm text-gray-800">{s}</span>
                 </label>
@@ -680,7 +799,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                       setFrequency(f);
                       setRateUserEdited(false);
                     }}
-                    className="accent-red-600"
+                    className="accent-purple-600"
                   />
                   <span className="text-sm text-gray-800">{f}</span>
                 </label>
@@ -738,7 +857,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                 type="checkbox"
                 checked={applyPagePremium}
                 onChange={(e) => setApplyPagePremium(e.target.checked)}
-                className="w-4 h-4 accent-red-600"
+                className="w-4 h-4 accent-purple-600"
               />
               <span className="text-sm text-gray-700">Apply 20% Premium</span>
             </label>
@@ -766,7 +885,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                           },
                         }));
                       }}
-                      className="w-4 h-4 accent-red-600 flex-shrink-0"
+                      className="w-4 h-4 accent-purple-600 flex-shrink-0"
                     />
                     <label htmlFor={`month-${m.k}`} className="text-sm text-gray-700 w-20 flex-shrink-0 cursor-pointer">
                       {m.l}
@@ -784,7 +903,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                           [m.k]: { ...prev[m.k]!, checked: prev[m.k]?.checked ?? false, year: yr },
                         }));
                       }}
-                      className="w-16 px-2 py-1 rounded-md border border-gray-300 text-xs focus:outline-none focus:ring-1 focus:ring-red-400 disabled:bg-gray-100 disabled:text-gray-400"
+                      className="w-16 px-2 py-1 rounded-md border border-gray-300 text-xs focus:outline-none focus:ring-1 focus:ring-purple-400 disabled:bg-gray-100 disabled:text-gray-400"
                     />
                   </div>
                 );
@@ -838,7 +957,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                     value={b}
                     checked={billTo === b}
                     onChange={() => setBillTo(b)}
-                    className="accent-red-600"
+                    className="accent-purple-600"
                   />
                   <span className="text-sm text-gray-800">{b}</span>
                 </label>
@@ -883,7 +1002,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
                     value={p}
                     checked={paymentType === p}
                     onChange={() => setPaymentType(p)}
-                    className="accent-red-600"
+                    className="accent-purple-600"
                   />
                   <span className="text-sm text-gray-800">{p}</span>
                 </label>
@@ -967,7 +1086,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
 
         {/* Scrollable terms */}
         <div className="h-52 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
-          {TERMS_RL}
+          {termsForChannel(channel)}
         </div>
 
         <label className="flex items-start gap-3 cursor-pointer">
@@ -975,7 +1094,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
             type="checkbox"
             checked={termsAccepted}
             onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="mt-0.5 w-4 h-4 accent-red-600 flex-shrink-0"
+            className="mt-0.5 w-4 h-4 accent-purple-600 flex-shrink-0"
             required
           />
           <span className="text-sm text-gray-700">
@@ -997,7 +1116,7 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
             value={signDate}
             onChange={(e) => setSignDate(e.target.value)}
             disabled={!termsAccepted}
-            className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 disabled:bg-gray-100"
+            className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:bg-gray-100"
           />
         </div>
 
@@ -1011,3 +1130,4 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
     </Shell>
   );
 }
+
