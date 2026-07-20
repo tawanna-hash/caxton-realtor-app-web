@@ -318,17 +318,34 @@ function SummaryRow({ label, value }: { label: string; value: React.ReactNode })
   );
 }
 
-function shortDate(d: string | null | undefined): string | null {
-  if (!d) return null;
-  const iso = d.length >= 10 ? d.slice(0, 10) : d;
-  const dt = new Date(iso + 'T00:00:00Z');
-  if (Number.isNaN(dt.getTime())) return iso;
-  return dt.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
+function shortDate(d: string | Date | null | undefined): string | null {
+  if (d == null) return null;
+  // pg driver returns DATE columns as Date objects; coerce to ISO first so
+  // the rest of the code sees a plain string. Never let a Date leak past
+  // this point — a raw Date in JSX explodes with React error #31.
+  let iso: string;
+  if (d instanceof Date) {
+    if (Number.isNaN(d.getTime())) return null;
+    // Use UTC components to stay stable across SSR/CSR timezones.
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    iso = `${y}-${m}-${day}`;
+  } else if (typeof d === 'string') {
+    iso = d.length >= 10 ? d.slice(0, 10) : d;
+  } else {
+    return null;
+  }
+  // Parse the ISO parts by hand — Date.toLocaleDateString differs between
+  // Node ICU and browser ICU, causing hydration mismatches (React #418).
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return iso;
+  const year = m[1];
+  const mon = Number(m[2]);
+  const day = Number(m[3]);
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  if (mon < 1 || mon > 12) return iso;
+  return `${MONTHS[mon - 1]} ${day}, ${year}`;
 }
 
 export default function SignWizard({ ag, token }: { ag: Agreement; token: string }) {
