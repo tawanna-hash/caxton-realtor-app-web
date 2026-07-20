@@ -16,6 +16,15 @@ interface CreatedInvoice {
   status: string;
 }
 
+interface CreatedAgreement {
+  id: string;
+  status: string;
+  type: string | null;
+  amount_cents: number;
+  start_date: string | null;
+  end_date: string | null;
+}
+
 interface Props {
   inquiry: AdInquiryRow;
   onQuoted: (next: AdInquiryRow) => void;
@@ -34,7 +43,10 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
   const [memo, setMemo] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [created, setCreated] = useState<CreatedInvoice | null>(null);
+  const [createdAgreement, setCreatedAgreement] = useState<CreatedAgreement | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState<boolean>(false);
+  const [sent, setSent] = useState<boolean>(false);
 
   const isPrint = inquiry.channel === 'print';
   const isEmail = inquiry.channel === 'email';
@@ -100,10 +112,12 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
         throw new Error(j?.error || `Quote failed (${res.status})`);
       }
       const json = (await res.json()) as {
+        agreement?: CreatedAgreement;
         invoice: CreatedInvoice;
         inquiry: AdInquiryRow;
       };
       setCreated(json.invoice);
+      if (json.agreement) setCreatedAgreement(json.agreement);
       onQuoted(json.inquiry);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Quote failed');
@@ -112,20 +126,80 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
     }
   }
 
+  async function handleSend() {
+    if (!createdAgreement) return;
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/admin/agreements/${createdAgreement.id}/send`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        },
+      );
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(j?.error || `Send failed (${res.status})`);
+      }
+      setSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Send failed');
+    } finally {
+      setSending(false);
+    }
+  }
+
   if (created) {
+    // Payment terms line varies by channel — mirrors the API's due_date logic.
+    const paymentTerms =
+      inquiry.channel === 'email'
+        ? 'Payment due immediately on invoice.'
+        : 'Print: invoiced monthly, net-20 (card or check).';
+
     return (
       <div className="border border-green-200 bg-green-50 rounded-md p-4 mt-4">
         <p className="text-sm font-semibold text-green-900">
           Quote drafted: {created.number ?? created.id}
+          {createdAgreement && (
+            <span className="ml-2 text-xs font-normal text-green-800">
+              · agreement {createdAgreement.id.slice(0, 8)}
+            </span>
+          )}
         </p>
         <p className="text-xs text-green-900 mt-1">
           ${(created.amount_cents / 100).toFixed(2)} · status {created.status}.
-          Open in Invoices to send the Stripe link or mark invoiced.
         </p>
-        <div className="mt-3 flex gap-2">
+        <p className="text-xs text-green-800 mt-1 italic">{paymentTerms}</p>
+        {sent && (
+          <p className="text-xs text-green-900 mt-2 font-medium">
+            ✓ Quote email sent — client will receive a sign link.
+          </p>
+        )}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {createdAgreement && !sent && (
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={sending}
+              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {sending ? 'Sending…' : 'Send Quote to Client'}
+            </button>
+          )}
+          {createdAgreement && (
+            <a
+              href={`/admin/agreements?id=${encodeURIComponent(createdAgreement.id)}`}
+              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-green-300 bg-white text-green-900 hover:bg-green-100"
+            >
+              Open agreement
+            </a>
+          )}
           <a
             href={`/admin/invoices?focus=${encodeURIComponent(created.id)}`}
-            className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-green-700 text-white hover:bg-green-800"
+            className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-green-300 bg-white text-green-900 hover:bg-green-100"
           >
             Open in Invoices
           </a>
@@ -133,6 +207,8 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
             type="button"
             onClick={() => {
               setCreated(null);
+              setCreatedAgreement(null);
+              setSent(false);
               setError(null);
             }}
             className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-green-300 bg-white text-green-900 hover:bg-green-100"
@@ -140,6 +216,9 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
             Draft another
           </button>
         </div>
+        {error && (
+          <p className="text-xs text-red-700 mt-2">Error: {error}</p>
+        )}
       </div>
     );
   }
@@ -339,3 +418,4 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
     </form>
   );
 }
+

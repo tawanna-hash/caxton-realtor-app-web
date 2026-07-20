@@ -1,6 +1,6 @@
 /**
  * /api/admin/ads/inquiries/[id]/quote
- *   POST — draft a quote (invoice) from an ad inquiry.
+ *   POST — draft a quote (agreement + invoice) from an ad inquiry.
  *
  * Body shape varies by channel:
  *   { channel: 'print', package_id: 'brand6',  size: 'Full Page', months?: 1, publication?: 'austin'|'san_antonio'|'both' }
@@ -10,10 +10,17 @@
  * What it does:
  *   1. Resolves the inquiry + the advertiser created on PR A
  *   2. Builds a line-item from PACKAGES (print) or EBLASTS (email)
- *   3. Creates a draft invoice in the existing `invoices` table
- *   4. Stamps the inquiry to status='quoted' and appends the invoice
- *      number to internal notes so admins can find it from the inbox
- *   5. Returns { invoice, inquiry }
+ *   3. Creates a draft AGREEMENT (status='draft', linked_inquiry_id=inquiry.id)
+ *      — this is what the client signs. Reuses the existing Pressbook
+ *      agreement schema so /admin/agreements, the sign wizard, and
+ *      the signed-PDF renderer all light up for free.
+ *   4. Creates a draft INVOICE tied to that agreement (net-20 for print,
+ *      due-immediately for e-Blast / digital) so downstream billing has
+ *      the money side already staged.
+ *   5. Stamps the inquiry to status='quoted' and appends the agreement +
+ *      invoice numbers to internal notes.
+ *   6. Returns { agreement, invoice, inquiry } — rep can then hit
+ *      /api/admin/agreements/[id]/send to email the client the sign link.
  *
  * Auth: requireAdmin().
  */
@@ -35,6 +42,42 @@ import {
   type InvoiceLineItem,
   type Invoice,
 } from '@/lib/invoices';
+import type { Agreement, AgreementType } from '@/lib/agreements';
+import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
+import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
+
+/**
+ * Map inquiry channel + optional print package to an AgreementType. The
+ * existing agreements schema uses 'print_ad' | 'eblast' | 'package' etc.
+ * A print package with multiple months is a 'package' (bundle); a single
+ * print-ad line item is 'print_ad'; e-Blast is 'eblast'.
+ */
+function agreementTypeFor(
+  channel: 'print' | 'email',
+  months: number,
+): AgreementType {
+  if (channel === 'email') return 'eblast';
+  return months > 1 ? 'package' : 'print_ad';
+}
+
+/**
+ * Compute the end date for the agreement / invoice term.
+ * Print: start = today, end = today + months*30d rounded to month end.
+ * Email: start = end = today (invoice due immediately, sends scheduled).
+ */
+function computeTerm(
+  channel: 'print' | 'email',
+  months: number,
+): { start_date: string; end_date: string } {
+  const now = new Date();
+  const startIso = now.toISOString().slice(0, 10);
+  if (channel === 'email') {
+    return { start_date: startIso, end_date: startIso };
+  }
+  const end = new Date(now.getFullYear(), now.getMonth() + months, 0);
+  const endIso = end.toISOString().slice(0, 10);
+  return { start_date: startIso, end_date: endIso };
+}
 
 export const runtime = 'nodejs';
 
@@ -217,6 +260,115 @@ export const POST = withErrorHandling(async (
     body.memo?.trim() ||
     `Quote drafted from ad inquiry ${id} — ${descriptionLabel}.`;
 
+  // ── Create the draft AGREEMENT first ────────────────────────────────
+  // This is the client-facing document. Rep will hit
+  // /api/admin/agreements/[id]/send afterwards to email the sign link.
+  const monthsForTerm = body.channel === 'print' ? (body.months ?? 1) : 1;
+  const sendsForTerm = body.channel === 'email' ? (body.sends ?? 1) : 1;
+  const agreementType = agreementTypeFor(body.channel, monthsForTerm);
+  const { start_date: termStart, end_date: termEnd } = computeTerm(
+    body.channel,
+    monthsForTerm,
+  );
+
+  // For print: ad_size = the specific size (Full Page, Half Page…). For
+  // email: eblast_packages is a jsonb[] of package names. Both go on the
+  // agreement so the sign wizard and PDF renderer can format them.
+  let agAdSize: string | null = null;
+  let agFrequency: string | null = null;
+  let agEblastPackages: string[] = [];
+  if (body.channel === 'print') {
+    const pkg = PACKAGES.find((p) => p.id === body.package_id);
+    agAdSize = body.size ?? pkg?.sizes[0]?.size ?? null;
+    agFrequency = monthsForTerm > 1 ? `${monthsForTerm}x` : '1x';
+  } else {
+    const eb = EBLASTS.find((e) => eblastId(e.name) === body.package_id);
+    agEblastPackages = eb ? [eb.name] : [];
+  }
+
+  const agAddress = advertiser.address ?? null;
+  const agFullAddress = billToAddress;
+
+  const agRows = (await sql`
+    INSERT INTO agreements (
+      advertiser_id, company_name, rep_name, advertiser_email,
+      advertiser_phone, advertiser_address, type, status,
+      start_date, end_date, ad_size, frequency, ad_rate_cents,
+      amount_cents, notes, created_by,
+      address, city, state, zip,
+      billing_email, linked_inquiry_id
+    ) VALUES (
+      ${advertiser.id},
+      ${advertiser.name},
+      ${inquiry.name ?? null},
+      ${advertiser.contact_email},
+      ${inquiry.phone ?? null},
+      ${agFullAddress},
+      ${agreementType},
+      ${'draft'},
+      ${termStart},
+      ${termEnd},
+      ${agAdSize},
+      ${agFrequency},
+      ${lineItems[0]?.unit_cents ?? null},
+      ${amountCents},
+      ${memo},
+      ${admin.email ?? null},
+      ${agAddress},
+      ${advertiser.city ?? null},
+      ${advertiser.state ?? null},
+      ${advertiser.zip ?? null},
+      ${advertiser.contact_email},
+      ${id}
+    )
+    RETURNING *
+  `) as unknown as Agreement[];
+
+  if (!agRows[0]) throw new ApiError(500, 'agreement_create_failed');
+  const agreement = agRows[0];
+
+  // Best-effort: stamp publication + channel + eblast_packages on the
+  // agreement. Wrapped so an older Neon deploy missing any of these
+  // columns doesn't block the quote.
+  try {
+    await sql`UPDATE agreements SET publication = ${billPublication} WHERE id = ${agreement.id}`;
+    (agreement as { publication?: string }).publication = billPublication;
+  } catch (e) {
+    console.error('[quote] publication write failed', e instanceof Error ? e.message : e);
+  }
+  try {
+    const ch = deriveChannelFromAgreementType(agreementType);
+    await sql`UPDATE agreements SET channel = ${ch} WHERE id = ${agreement.id}`;
+    (agreement as { channel?: string }).channel = ch;
+  } catch (e) {
+    console.error('[quote] channel write failed', e instanceof Error ? e.message : e);
+  }
+  if (agEblastPackages.length > 0) {
+    try {
+      await sql`UPDATE agreements SET eblast_packages = ${JSON.stringify(agEblastPackages)}::jsonb WHERE id = ${agreement.id}`;
+      (agreement as { eblast_packages?: string[] }).eblast_packages = agEblastPackages;
+    } catch (e) {
+      console.error('[quote] eblast_packages write failed', e instanceof Error ? e.message : e);
+    }
+  }
+
+  // Idempotent CRM mirror — same call the /api/admin/agreements POST
+  // makes so contacts appear in /admin/advertisers as 'prospect' until
+  // signed.
+  try {
+    await ensureAdvertiserForAgreement(agreement, { desiredStatus: 'prospect' });
+  } catch (e) {
+    console.error('[quote] ensureAdvertiserForAgreement failed', e instanceof Error ? e.message : e);
+  }
+
+  // ── Payment terms per channel ───────────────────────────────────────
+  // Print: net-20 monthly (invoiced on the issue month). Explicit
+  // due_date left NULL so the existing invoice UI applies its default.
+  // Email + Digital: due immediately — set due_date to today.
+  const dueDateForChannel =
+    body.due_date ??
+    (body.channel === 'email' ? new Date().toISOString().slice(0, 10) : null);
+
   const created = (await sql`
     INSERT INTO invoices (
       advertiser_id, agreement_id, number,
@@ -226,13 +378,13 @@ export const POST = withErrorHandling(async (
       memo, line_items, created_by
     ) VALUES (
       ${advertiser.id},
-      ${null},
+      ${agreement.id},
       ${number},
       ${amountCents},
       ${0},
       ${'draft'},
       ${null},
-      ${body.due_date ?? null},
+      ${dueDateForChannel},
       ${advertiser.name},
       ${advertiser.contact_email},
       ${billToAddress},
@@ -247,9 +399,12 @@ export const POST = withErrorHandling(async (
   const invoice = created[0];
 
   // Stamp the inquiry — move to 'quoted' and append a note pointer so
-  // the inbox detail surface can show "Quoted as INV-XYZ".
-  const noteAppendix = `\n[Quoted ${invoice.number ?? invoice.id} · ${descriptionLabel} · $${(amountCents / 100).toFixed(2)} · ${new Date().toISOString().slice(0, 10)}]`;
+  // the inbox detail surface can show "Quoted as INV-XYZ" and jump to
+  // the agreement.
+  const noteAppendix = `\n[Quoted ${invoice.number ?? invoice.id} · agreement ${agreement.id.slice(0, 8)} · ${descriptionLabel} · $${(amountCents / 100).toFixed(2)} · ${new Date().toISOString().slice(0, 10)}]`;
   const newNotes = (inquiry.notes ?? '').trimEnd() + noteAppendix;
+  // Suppress unused warning for sendsForTerm on print-only paths.
+  void sendsForTerm;
 
   let updatedInquiry: AdInquiryRow | null = inquiry;
   try {
@@ -271,6 +426,7 @@ export const POST = withErrorHandling(async (
       beforeState: { status: inquiry.status, notes: inquiry.notes },
       afterState: {
         status: 'quoted',
+        agreement_id: agreement.id,
         invoice_id: invoice.id,
         invoice_number: invoice.number,
         amount_cents: amountCents,
@@ -281,5 +437,9 @@ export const POST = withErrorHandling(async (
     // Audit failures must not block the quote.
   }
 
-  return NextResponse.json({ invoice, inquiry: updatedInquiry ?? inquiry }, { status: 201 });
+  return NextResponse.json(
+    { agreement, invoice, inquiry: updatedInquiry ?? inquiry },
+    { status: 201 },
+  );
 });
+

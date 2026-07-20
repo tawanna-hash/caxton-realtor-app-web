@@ -783,6 +783,18 @@ async function _runEnsureSchema(): Promise<void> {
   // they don't crash when the migrate-* POST routes haven't been
   // hit yet on a given environment.
   // ============================================================
+  // ---- Agreements: link back to originating ad inquiry ----
+  // Populated when an admin drafts a quote from an inquiry via
+  // /api/admin/ads/inquiries/[id]/convert-to-agreement so the inquiry
+  // status can follow the agreement lifecycle. Nullable — existing
+  // Pressbook-imported agreements have no originating inquiry.
+  await sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS linked_inquiry_id uuid`;
+  await sql`
+    CREATE INDEX IF NOT EXISTS agreements_linked_inquiry_idx
+    ON agreements(linked_inquiry_id)
+    WHERE linked_inquiry_id IS NOT NULL
+  `;
+
   // ---- Magazine GIF preview columns ----
   // Each magazine can have up to three pre-rendered animated previews
   // (full flipbook, teaser, ping-pong) stored in Vercel Blob. The URL
