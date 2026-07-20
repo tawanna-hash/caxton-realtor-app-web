@@ -130,6 +130,13 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   const [dueDate, setDueDate] = useState<string>('');
   const [memo, setMemo] = useState<string>('');
 
+  // ── Custom pricing override ─────────────────────────────────────────
+  // Rep can toggle between overriding the full total or the per-unit
+  // (per-month, per-send, per-week) price. Empty string = no override.
+  const [overrideMode, setOverrideMode] = useState<'off' | 'total' | 'unit'>('off');
+  const [overrideTotalDollars, setOverrideTotalDollars] = useState<string>('');
+  const [overrideUnitDollars, setOverrideUnitDollars] = useState<string>('');
+
   // ── Submit state ──────────────────────────────────────────────────
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -325,6 +332,54 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     appMarkets,
   ]);
 
+  // ── Rack unit + qty (drives "Unit" override math + label) ───────────
+  const rackQty = useMemo(() => {
+    if (channel === 'print') return Math.max(1, months);
+    if (channel === 'email') return Math.max(1, sends);
+    if (channel === 'app') {
+      return appCadence === 'weekly' ? Math.max(1, appWeeks) : Math.max(1, months);
+    }
+    return 1;
+  }, [channel, months, sends, appCadence, appWeeks]);
+
+  const rackUnitCents = useMemo(
+    () => (rackQty > 0 ? Math.round(previewCents / rackQty) : 0),
+    [previewCents, rackQty],
+  );
+
+  const unitLabel = useMemo(() => {
+    if (channel === 'print') return 'month';
+    if (channel === 'email') return 'send';
+    if (channel === 'app') return appCadence === 'weekly' ? 'week' : 'month';
+    return 'unit';
+  }, [channel, appCadence]);
+
+  // ── Effective total after override (client preview only) ────────────
+  const overrideTotalCents = useMemo(() => {
+    if (overrideMode !== 'total') return null;
+    const n = Number(overrideTotalDollars);
+    if (!Number.isFinite(n) || n < 0) return null;
+    return Math.round(n * 100);
+  }, [overrideMode, overrideTotalDollars]);
+
+  const overrideUnitCents = useMemo(() => {
+    if (overrideMode !== 'unit') return null;
+    const n = Number(overrideUnitDollars);
+    if (!Number.isFinite(n) || n < 0) return null;
+    return Math.round(n * 100);
+  }, [overrideMode, overrideUnitDollars]);
+
+  const effectiveCents = useMemo(() => {
+    if (overrideTotalCents != null) return overrideTotalCents;
+    if (overrideUnitCents != null) return overrideUnitCents * rackQty;
+    return previewCents;
+  }, [overrideTotalCents, overrideUnitCents, rackQty, previewCents]);
+
+  const discountPct = useMemo(() => {
+    if (previewCents <= 0) return 0;
+    return Math.round(((previewCents - effectiveCents) / previewCents) * 1000) / 10;
+  }, [previewCents, effectiveCents]);
+
   // App-channel collision detection. Returns a list of overlapping
   // bookings so we can show a "warn but allow" banner.
   const appCollisions = useMemo(() => {
@@ -394,6 +449,11 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       }
       if (dueDate) payload.due_date = dueDate;
       if (memo.trim()) payload.memo = memo.trim();
+      if (overrideTotalCents != null) {
+        payload.override_total_cents = overrideTotalCents;
+      } else if (overrideUnitCents != null) {
+        payload.override_unit_cents = overrideUnitCents;
+      }
 
       const res = await fetch('/api/admin/quotes', {
         method: 'POST',
@@ -856,12 +916,97 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
           </div>
         </section>
 
+        {/* Pricing override */}
+        <section className="space-y-2 border border-gray-200 rounded-md p-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-gray-700">
+              Custom pricing (optional)
+            </span>
+            <div className="flex gap-1 text-[11px]">
+              {(['off', 'total', 'unit'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setOverrideMode(m)}
+                  className={
+                    'px-2 py-0.5 rounded-md border ' +
+                    (overrideMode === m
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50')
+                  }
+                >
+                  {m === 'off' ? 'Rack rate' : m === 'total' ? 'Total' : `Per ${unitLabel}`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {overrideMode === 'total' && (
+            <label className="block text-xs text-gray-700">
+              Custom total ($)
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                inputMode="decimal"
+                value={overrideTotalDollars}
+                onChange={(e) => setOverrideTotalDollars(e.target.value)}
+                placeholder={(previewCents / 100).toFixed(2)}
+                className="mt-1 w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+              />
+            </label>
+          )}
+
+          {overrideMode === 'unit' && (
+            <label className="block text-xs text-gray-700">
+              Custom per-{unitLabel} ($) × {rackQty}
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                inputMode="decimal"
+                value={overrideUnitDollars}
+                onChange={(e) => setOverrideUnitDollars(e.target.value)}
+                placeholder={(rackUnitCents / 100).toFixed(2)}
+                className="mt-1 w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
+              />
+            </label>
+          )}
+        </section>
+
         {/* Preview */}
-        <div className="flex items-center justify-between px-3 py-2 rounded-md bg-purple-50 border border-purple-100">
-          <span className="text-xs text-purple-900">Preview total</span>
-          <span className="text-sm font-semibold text-purple-900">
-            ${(previewCents / 100).toFixed(2)}
-          </span>
+        <div className="space-y-1 px-3 py-2 rounded-md bg-purple-50 border border-purple-100">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-purple-900">Rack total</span>
+            <span
+              className={
+                'text-xs text-purple-900 ' +
+                (overrideMode !== 'off' && discountPct !== 0 ? 'line-through opacity-70' : '')
+              }
+            >
+              ${(previewCents / 100).toFixed(2)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-purple-900">
+              Quoted total
+              {overrideMode !== 'off' && discountPct !== 0 && (
+                <span
+                  className={
+                    'ml-2 px-1.5 py-0.5 rounded text-[10px] font-semibold ' +
+                    (discountPct > 0
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-orange-100 text-orange-800')
+                  }
+                >
+                  {discountPct > 0 ? `${discountPct}% off` : `+${Math.abs(discountPct)}% over`}
+                </span>
+              )}
+            </span>
+            <span className="text-sm font-semibold text-purple-900">
+              ${(effectiveCents / 100).toFixed(2)}
+            </span>
+          </div>
         </div>
 
         {error && (

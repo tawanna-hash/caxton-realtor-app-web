@@ -64,12 +64,20 @@ const quotesSchema = z
       .union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)])
       .optional(),
     publication: z.enum(['austin', 'san_antonio', 'both']).optional(),
+    // Custom pricing overrides — rep-facing. Server accepts either the
+    // full total or a per-unit price (mutually exclusive).
+    override_total_cents: z.number().int().min(0).max(100_000_000).optional(),
+    override_unit_cents: z.number().int().min(0).max(100_000_000).optional(),
     due_date: z.string().optional(),
     memo: z.string().max(2000).optional(),
     advertiser: z.union([advertiserExistingSchema, advertiserNewSchema]),
     rep_name: z.string().trim().max(200).optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (v) => !(v.override_total_cents != null && v.override_unit_cents != null),
+    { message: 'override_total_cents and override_unit_cents are mutually exclusive' },
+  );
 
 export const POST = withErrorHandling(async (req: Request) => {
   const admin = await requireAdmin();
@@ -161,6 +169,8 @@ export const POST = withErrorHandling(async (req: Request) => {
     app_cadence: body.app_cadence,
     app_weeks: body.app_weeks,
     app_markets: body.app_markets,
+    override_total_cents: body.override_total_cents,
+    override_unit_cents: body.override_unit_cents,
     publication: body.publication,
     due_date: body.due_date,
     memo: body.memo,

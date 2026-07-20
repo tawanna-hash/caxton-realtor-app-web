@@ -134,6 +134,18 @@ export interface DrafterInput {
   app_weeks?: number;
   /** App-only: number of markets 1|2|3|4. Defaults to 1. */
   app_markets?: MarketCount;
+  /**
+   * Custom pricing override — mutually exclusive with override_unit_cents.
+   * When present, replaces the rack-derived total; rack + discount are
+   * stamped into memo + line-item description so the paper trail keeps
+   * both visible.
+   */
+  override_total_cents?: number;
+  /**
+   * Custom per-unit price override — multiplied by the rack qty (months,
+   * sends, weeks). Mutually exclusive with override_total_cents.
+   */
+  override_unit_cents?: number;
   publication?: 'austin' | 'san_antonio' | 'both';
   due_date?: string;
   memo?: string;
@@ -150,6 +162,8 @@ export interface DrafterResult {
   agreement: Agreement;
   invoice: Invoice;
   amount_cents: number;
+  rack_amount_cents: number;
+  discount_pct: number;
   description_label: string;
   line_items: InvoiceLineItem[];
 }
@@ -238,7 +252,57 @@ export async function draftQuote(
     }
   }
 
-  const amountCents = lineItems.reduce((s, li) => s + li.qty * li.unit_cents, 0);
+  // ── Rack total (pre-override) ─────────────────────────────────────────
+  const rackCents = lineItems.reduce((s, li) => s + li.qty * li.unit_cents, 0);
+  if (rackCents <= 0) throw new ApiError(400, 'amount_cents_must_be_positive');
+
+  // ── Apply override, if any ──────────────────────────────────────────
+  //   • total  → line_items rewritten to a single line at override_total
+  //   • unit   → line_items[0].unit_cents replaced, qty preserved
+  // In both cases we append "Rack $X → Quoted $Y (Z% off)" to the memo +
+  // to the primary line-item description so the invoice PDF shows both.
+  if (
+    input.override_total_cents != null &&
+    input.override_unit_cents != null
+  ) {
+    throw new ApiError(400, 'override_total_and_unit_mutually_exclusive');
+  }
+  let amountCents = rackCents;
+  let overrideNote: string | null = null;
+  if (input.override_total_cents != null) {
+    const ov = Math.max(0, Math.round(input.override_total_cents));
+    if (ov > rackCents * 4) {
+      // Guardrail: reject absurd "typoed" values (>4× rack).
+      throw new ApiError(400, 'override_total_out_of_range');
+    }
+    amountCents = ov;
+    const pct = rackCents > 0 ? Math.round(((rackCents - ov) / rackCents) * 1000) / 10 : 0;
+    overrideNote =
+      `Rack $${(rackCents / 100).toFixed(2)} → Quoted $${(ov / 100).toFixed(2)} ` +
+      `(${pct >= 0 ? pct : 0}% off)`;
+    // Collapse to a single custom line so the invoice reads cleanly.
+    lineItems.length = 0;
+    lineItems.push({
+      description: `${descriptionLabel} — custom pricing (${overrideNote})`,
+      qty: 1,
+      unit_cents: ov,
+    });
+  } else if (input.override_unit_cents != null) {
+    const first = lineItems[0];
+    if (!first) throw new ApiError(500, 'line_items_empty');
+    const ov = Math.max(0, Math.round(input.override_unit_cents));
+    if (ov > first.unit_cents * 4) {
+      throw new ApiError(400, 'override_unit_out_of_range');
+    }
+    const rackUnit = first.unit_cents;
+    first.unit_cents = ov;
+    amountCents = lineItems.reduce((s, li) => s + li.qty * li.unit_cents, 0);
+    const pct = rackUnit > 0 ? Math.round(((rackUnit - ov) / rackUnit) * 1000) / 10 : 0;
+    overrideNote =
+      `Unit rack $${(rackUnit / 100).toFixed(2)} → quoted $${(ov / 100).toFixed(2)} ` +
+      `(${pct >= 0 ? pct : 0}% off)`;
+    first.description = `${first.description} — custom unit (${overrideNote})`;
+  }
   if (amountCents <= 0) throw new ApiError(400, 'amount_cents_must_be_positive');
 
   const monthsForTerm =
@@ -261,9 +325,12 @@ export async function draftQuote(
     [advertiser.address, advertiser.address_2, advertiser.city, advertiser.state, advertiser.zip]
       .filter(Boolean)
       .join(', ') || null;
-  const memo =
+  const baseMemo =
     input.memo?.trim() ||
     `Quote drafted — ${descriptionLabel}.`;
+  const memo = overrideNote
+    ? `${baseMemo}\n${overrideNote}`
+    : baseMemo;
 
   // ── Insert agreement ─────────────────────────────────────────────────
   const agRows = (await sql`
@@ -394,10 +461,16 @@ export async function draftQuote(
   if (!invRows[0]) throw new ApiError(500, 'invoice_create_failed');
   const invoice = invRows[0];
 
+  const discountPct = rackCents > 0
+    ? Math.round(((rackCents - amountCents) / rackCents) * 1000) / 10
+    : 0;
+
   return {
     agreement,
     invoice,
     amount_cents: amountCents,
+    rack_amount_cents: rackCents,
+    discount_pct: discountPct,
     description_label: descriptionLabel,
     line_items: lineItems,
   };
