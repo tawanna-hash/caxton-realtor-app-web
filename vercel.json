@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/marketing-sends",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/15 * * * *"
     },
     {
       "path": "/api/cron/sync-advertisers",
@@ -106,11 +106,11 @@
     },
     {
       "path": "/api/cron/expire-promotions",
-      "schedule": "0 * * * *"
+      "schedule": "0 */3 * * *"
     },
     {
       "path": "/api/cron/send-scheduled-notifications",
-      "schedule": "*/5 * * * *"
+      "schedule": "*/10 * * * *"
     },
     {
       "path": "/api/cron/purge-expired-tokens",

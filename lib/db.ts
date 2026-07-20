@@ -8,6 +8,8 @@ import { ensureCrmSchema } from './crm-schema';
 
 let cached: NeonQueryFunction<false, false> | null = null;
 let schemaEnsured = false;
+let schemaEnsurePromise: Promise<void> | null = null;
+let schemaEnsureError: unknown = null;
 
 function getConnectionString(): string {
   const url =
@@ -39,6 +41,19 @@ export function getSql(): NeonQueryFunction<false, false> {
  */
 export async function ensureSchema(): Promise<void> {
   if (schemaEnsured) return;
+  if (schemaEnsureError) return;
+  if (schemaEnsurePromise) return schemaEnsurePromise;
+  schemaEnsurePromise = _runEnsureSchema()
+    .then(() => { schemaEnsured = true; })
+    .catch((err) => {
+      schemaEnsureError = err;
+      console.warn('[ensureSchema] one-time bootstrap failed, cached:', err instanceof Error ? err.message : err);
+    })
+    .finally(() => { schemaEnsurePromise = null; });
+  return schemaEnsurePromise;
+}
+
+async function _runEnsureSchema(): Promise<void> {
   const sql = getSql();
   await sql`
     CREATE TABLE IF NOT EXISTS events (
@@ -1047,6 +1062,4 @@ export async function ensureSchema(): Promise<void> {
   `;
   await sql`CREATE INDEX IF NOT EXISTS email_suppressions_suppressed_at_idx ON email_suppressions(suppressed_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS email_suppressions_reason_idx ON email_suppressions(reason)`;
-
-  schemaEnsured = true;
 }

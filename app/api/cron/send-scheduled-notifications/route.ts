@@ -11,7 +11,7 @@
 // which we accept in lieu of the bearer for convenience.
 
 import { NextResponse } from 'next/server';
-import { ensureSchema, getSql } from '@/lib/db';
+import { getSql } from '@/lib/db';
 import { broadcastPushAll } from '@/lib/server/push';
 
 export const runtime = 'nodejs';

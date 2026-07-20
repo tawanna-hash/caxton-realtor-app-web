@@ -10,7 +10,7 @@
 // which we accept in lieu of the bearer for convenience.
 
 import { NextResponse } from 'next/server';
-import { ensureSchema } from '@/lib/db';
+// removed: ensureSchema import
 import { syncAdvertisersFromAdvertisers } from '@/lib/mailing';
 
 export const runtime = 'nodejs';

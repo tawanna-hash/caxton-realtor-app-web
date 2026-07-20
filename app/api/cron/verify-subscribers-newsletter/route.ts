@@ -10,7 +10,7 @@
 // Auth: `Authorization: Bearer $CRON_SECRET` OR `x-vercel-cron: 1`.
 
 import { NextResponse } from 'next/server';
-import { ensureSchema } from '@/lib/db';
+// removed: ensureSchema import
 import { pickPendingEmails, verifyBatch } from '@/lib/server/email-verifications';
 
 export const runtime     = 'nodejs';

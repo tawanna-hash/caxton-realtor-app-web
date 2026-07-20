@@ -14,7 +14,7 @@
 // Auth: `Authorization: Bearer $CRON_SECRET` OR `x-vercel-cron: 1`.
 
 import { NextResponse } from 'next/server';
-import { ensureSchema, getSql } from '@/lib/db';
+import { getSql } from '@/lib/db';
 import {
   dispatchOutreach,
   materializeAudience,

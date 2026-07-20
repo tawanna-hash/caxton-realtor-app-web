@@ -10,7 +10,7 @@
 // which we accept in lieu of the bearer for convenience.
 
 import { NextResponse } from 'next/server';
-import { ensureSchema } from '@/lib/db';
+// removed: ensureSchema import
 import { scrapeAborRealtors } from '@/lib/abor-realtor-scraper';
 import { upsertHoldingContacts } from '@/lib/mailing';
 

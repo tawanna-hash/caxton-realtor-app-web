@@ -26,7 +26,7 @@
 // Auth: CRON_SECRET bearer token OR x-vercel-cron header.
 
 import { NextResponse } from 'next/server';
-import { getSql, ensureSchema } from '@/lib/db';
+import { getSql } from '@/lib/db';
 import { sendEmail } from '@/lib/email';
 import { type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
 
