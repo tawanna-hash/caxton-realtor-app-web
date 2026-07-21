@@ -833,6 +833,19 @@ async function _runEnsureSchema(): Promise<void> {
     ON agreement_line_items(agreement_id, line_no)
   `;
 
+  // Print-line Insertion Order columns (idempotent — driven by AgreementDrawer parity).
+  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS ad_rate_cents         integer`;
+  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS ad_rate_base_cents    integer`;
+  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS discount_cents        integer`;
+  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS ad_premium_cents      integer`;
+  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS page_position         text`;
+  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS pos_premium_active    boolean NOT NULL DEFAULT false`;
+  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS ad_timing_months      jsonb`;
+  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS ad_timing_years       jsonb`;
+  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS total_monthly_cents   integer`;
+  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS expiration_date       date`;
+  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS renewal_reminder_date date`;
+
   // ---- Magazine GIF preview columns ----
   // Each magazine can have up to three pre-rendered animated previews
   // (full flipbook, teaser, ping-pong) stored in Vercel Blob. The URL

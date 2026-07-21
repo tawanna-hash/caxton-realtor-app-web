@@ -193,6 +193,17 @@ export interface DrafterInput {
     end_date?: string;
     override_total_cents?: number;
     override_unit_cents?: number;
+    // Print-only Insertion Order fields
+    ad_size?: string;
+    frequency?: string;
+    ad_rate_cents?: number;
+    ad_rate_base_cents?: number;
+    discount_cents?: number;
+    ad_premium_cents?: number;
+    page_position?: string;
+    pos_premium_active?: boolean;
+    ad_timing_months?: Record<string, boolean>;
+    ad_timing_years?: Record<string, string>;
   }>;
 }
 
@@ -596,17 +607,34 @@ async function draftBundledQuote(
     let invoiceDesc = '';
 
     if (line.channel === 'print') {
-      const pkg: Package | undefined = PACKAGES.find((p) => p.id === line.package_id);
-      if (!pkg) throw new ApiError(400, `unknown_print_package_${line.package_id}`);
-      const size = line.size ?? pkg.sizes[0]?.size;
-      const sizeRow = pkg.sizes.find((s2) => s2.size === size);
-      if (!sizeRow) throw new ApiError(400, 'unknown_print_size');
-      qty = Math.max(1, line.months ?? 1);
-      unitCents = sizeRow.price * 100;
-      label = `${pkg.name} — ${sizeRow.size} (${sizeRow.dim})`;
-      adSize = size ?? null;
-      frequency = qty > 1 ? `${qty}x` : '1x';
-      invoiceDesc = `${label}, ${qty} month${qty > 1 ? 's' : ''}`;
+      // Insertion-Order path: caller supplied ad_size + frequency + rate directly.
+      if (line.ad_size && line.frequency && line.ad_rate_cents != null) {
+        const freqMonthsMap: Record<string, number> = { '1x': 1, '3x': 3, '6x': 6, '12x': 12 };
+        const issues = freqMonthsMap[line.frequency] ?? 1;
+        const rate = Math.max(0, line.ad_rate_cents);
+        const disc = Math.max(0, line.discount_cents ?? 0);
+        const prem = Math.max(0, line.ad_premium_cents ?? 0);
+        const monthlyTotal = rate - disc + prem;
+        if (monthlyTotal < 0) throw new ApiError(400, 'monthly_total_negative');
+        qty = issues;
+        unitCents = monthlyTotal;
+        label = `Print ad — ${line.ad_size} · ${line.frequency}`;
+        adSize = line.ad_size;
+        frequency = line.frequency;
+        invoiceDesc = `${label}, ${issues} issue${issues > 1 ? 's' : ''}`;
+      } else {
+        const pkg: Package | undefined = PACKAGES.find((p) => p.id === line.package_id);
+        if (!pkg) throw new ApiError(400, `unknown_print_package_${line.package_id}`);
+        const size = line.size ?? pkg.sizes[0]?.size;
+        const sizeRow = pkg.sizes.find((s2) => s2.size === size);
+        if (!sizeRow) throw new ApiError(400, 'unknown_print_size');
+        qty = Math.max(1, line.months ?? 1);
+        unitCents = sizeRow.price * 100;
+        label = `${pkg.name} — ${sizeRow.size} (${sizeRow.dim})`;
+        adSize = size ?? null;
+        frequency = qty > 1 ? `${qty}x` : '1x';
+        invoiceDesc = `${label}, ${qty} month${qty > 1 ? 's' : ''}`;
+      }
     } else if (line.channel === 'email') {
       const eb = EBLASTS.find((e) => eblastId(e.name) === line.package_id);
       if (!eb) throw new ApiError(400, `unknown_email_package_${line.package_id}`);
@@ -796,11 +824,55 @@ async function draftBundledQuote(
   // Child line items INSERT (one row per line).
   for (let i = 0; i < computed.length; i++) {
     const c = computed[i];
+    // Pull Insertion Order fields off the source line (print only; nulls elsewhere).
+    const src = lines[i];
+    const isPrint = c.channel === 'print';
+    const ioAdRate         = isPrint ? (src.ad_rate_cents ?? null) : null;
+    const ioAdRateBase     = isPrint ? (src.ad_rate_base_cents ?? src.ad_rate_cents ?? null) : null;
+    const ioDiscount       = isPrint ? (src.discount_cents ?? null) : null;
+    const ioPremium        = isPrint ? (src.ad_premium_cents ?? null) : null;
+    const ioPagePos        = isPrint ? (src.page_position ?? null) : null;
+    const ioPosPremActive  = isPrint ? (src.pos_premium_active ?? false) : false;
+    const ioTimingMonths   = isPrint && src.ad_timing_months ? JSON.stringify(src.ad_timing_months) : null;
+    const ioTimingYears    = isPrint && src.ad_timing_years  ? JSON.stringify(src.ad_timing_years)  : null;
+    const ioTotalMonthly   = isPrint && ioAdRate != null
+      ? Math.max(0, ioAdRate - (ioDiscount ?? 0) + (ioPremium ?? 0))
+      : null;
+
+    // Expiration = last-picked (year, month) → last day of that month; 30d before → renewal reminder.
+    let ioExpDate: string | null = null;
+    let ioRemindDate: string | null = null;
+    if (isPrint && src.ad_timing_months && src.ad_timing_years) {
+      const ORDER: Record<string, number> = {
+        january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+        july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+      };
+      let latestY = 0, latestM = 0;
+      for (const [k, checked] of Object.entries(src.ad_timing_months)) {
+        if (!checked) continue;
+        const yr = src.ad_timing_years?.[k] ?? '';
+        if (!/^\d{4}$/.test(yr)) continue;
+        const y = parseInt(yr, 10);
+        const mo = ORDER[k] ?? 0;
+        if (y > latestY || (y === latestY && mo > latestM)) { latestY = y; latestM = mo; }
+      }
+      if (latestY && latestM) {
+        const ld = new Date(latestY, latestM, 0);
+        ioExpDate = `${ld.getFullYear()}-${String(ld.getMonth() + 1).padStart(2, '0')}-${String(ld.getDate()).padStart(2, '0')}`;
+        const rd = new Date(ld); rd.setDate(rd.getDate() - 30);
+        ioRemindDate = `${rd.getFullYear()}-${String(rd.getMonth() + 1).padStart(2, '0')}-${String(rd.getDate()).padStart(2, '0')}`;
+      }
+    }
+
     await sql`
       INSERT INTO agreement_line_items (
         agreement_id, line_no, channel, package_id, package_label,
         ad_size, frequency, quantity, unit_cents, amount_cents,
-        publication, start_date, end_date, pay_now, meta
+        publication, start_date, end_date, pay_now, meta,
+        ad_rate_cents, ad_rate_base_cents, discount_cents, ad_premium_cents,
+        page_position, pos_premium_active,
+        ad_timing_months, ad_timing_years,
+        total_monthly_cents, expiration_date, renewal_reminder_date
       ) VALUES (
         ${agreement.id},
         ${i + 1},
@@ -816,7 +888,18 @@ async function draftBundledQuote(
         ${c.start_date},
         ${c.end_date},
         ${c.pay_now},
-        ${JSON.stringify(c.meta)}::jsonb
+        ${JSON.stringify(c.meta)}::jsonb,
+        ${ioAdRate},
+        ${ioAdRateBase},
+        ${ioDiscount},
+        ${ioPremium},
+        ${ioPagePos},
+        ${ioPosPremActive},
+        ${ioTimingMonths}::jsonb,
+        ${ioTimingYears}::jsonb,
+        ${ioTotalMonthly},
+        ${ioExpDate},
+        ${ioRemindDate}
       )
     `;
   }

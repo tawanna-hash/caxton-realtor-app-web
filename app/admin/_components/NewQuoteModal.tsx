@@ -39,6 +39,13 @@ function eblastId(name: string): string {
 }
 
 type Publication = 'austin' | 'san_antonio' | 'both';
+import {
+  AD_SIZES, FREQUENCIES, FREQ_PKG_AG, MONTHS_LIST,
+} from '@/lib/pressbook-constants';
+import {
+  lookupRate, pagePositionPremium, computeExp,
+} from '@/lib/agreement-pricing';
+
 type Channel = 'print' | 'email' | 'app';
 type AppCadence = 'weekly' | 'monthly';
 
@@ -120,6 +127,18 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   const [packageId, setPackageId] = useState<string>(PACKAGES[0]?.id ?? '');
   const [size, setSize] = useState<string>('');
   const [months, setMonths] = useState<number>(1);
+  // Insertion Order state (print channel only — mirrors AgreementDrawer)
+  const [ioAdSize, setIoAdSize] = useState<string>('');
+  const [ioFrequency, setIoFrequency] = useState<string>('');
+  const [ioAdRate, setIoAdRate] = useState<string>('');
+  const [ioAdRateBase, setIoAdRateBase] = useState<string>('');
+  const [ioRateUserEdited, setIoRateUserEdited] = useState<boolean>(false);
+  const [ioDiscount, setIoDiscount] = useState<string>('');
+  const [ioAdPremium, setIoAdPremium] = useState<string>('');
+  const [ioPosPremActive, setIoPosPremActive] = useState<boolean>(false);
+  const [ioPagePosition, setIoPagePosition] = useState<string>('');
+  const [ioTimingMonths, setIoTimingMonths] = useState<Record<string, boolean>>({});
+  const [ioTimingYears, setIoTimingYears] = useState<Record<string, string>>({});
   const [sends, setSends] = useState<number>(1);
   // Run-window mode toggle — 'quantity' keeps legacy qty+cadence input,
   // 'dates' exposes explicit start/end pickers. When 'dates', qty is
@@ -173,6 +192,16 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     overrideTotalCents: number | null;
     overrideUnitCents: number | null;
     subtotalCents: number;
+    ioAdSize?: string;
+    ioFrequency?: string;
+    ioAdRateCents?: number;
+    ioAdRateBaseCents?: number;
+    ioDiscountCents?: number;
+    ioAdPremiumCents?: number;
+    ioPagePosition?: string;
+    ioPosPremActive?: boolean;
+    ioTimingMonths?: Record<string, boolean>;
+    ioTimingYears?: Record<string, string>;
   };
   const [bundleLines, setBundleLines] = useState<BundleLine[]>([]);
   const [bundleProgress, setBundleProgress] = useState<{
@@ -530,6 +559,16 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       appCadence: channel === 'app' ? appCadence : undefined,
       appWeeks: channel === 'app' && appCadence === 'weekly' ? appWeeks : undefined,
       appMarkets: channel === 'app' ? appMarkets : undefined,
+      ioAdSize: channel === 'print' ? ioAdSize : undefined,
+      ioFrequency: channel === 'print' ? ioFrequency : undefined,
+      ioAdRateCents: channel === 'print' && ioAdRate ? Math.round(parseFloat(ioAdRate) * 100) : undefined,
+      ioAdRateBaseCents: channel === 'print' && ioAdRateBase ? Math.round(parseFloat(ioAdRateBase) * 100) : undefined,
+      ioDiscountCents: channel === 'print' && ioDiscount ? Math.round(parseFloat(ioDiscount) * 100) : undefined,
+      ioAdPremiumCents: channel === 'print' && ioAdPremium ? Math.round(parseFloat(ioAdPremium) * 100) : undefined,
+      ioPagePosition: channel === 'print' ? ioPagePosition : undefined,
+      ioPosPremActive: channel === 'print' ? ioPosPremActive : undefined,
+      ioTimingMonths: channel === 'print' ? ioTimingMonths : undefined,
+      ioTimingYears: channel === 'print' ? ioTimingYears : undefined,
       publication: channel === 'email' ? publication : undefined,
       runStart: runMode === 'dates' ? runStart : undefined,
       runEnd: runMode === 'dates' ? runEnd : undefined,
@@ -696,6 +735,16 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
             if (line.channel === 'print') {
               item.size = line.size;
               item.months = line.months ?? 1;
+              if (line.ioAdSize) item.ad_size = line.ioAdSize;
+              if (line.ioFrequency) item.frequency = line.ioFrequency;
+              if (line.ioAdRateCents != null) item.ad_rate_cents = line.ioAdRateCents;
+              if (line.ioAdRateBaseCents != null) item.ad_rate_base_cents = line.ioAdRateBaseCents;
+              if (line.ioDiscountCents != null) item.discount_cents = line.ioDiscountCents;
+              if (line.ioAdPremiumCents != null) item.ad_premium_cents = line.ioAdPremiumCents;
+              if (line.ioPagePosition) item.page_position = line.ioPagePosition;
+              if (line.ioPosPremActive) item.pos_premium_active = true;
+              if (line.ioTimingMonths) item.ad_timing_months = line.ioTimingMonths;
+              if (line.ioTimingYears) item.ad_timing_years = line.ioTimingYears;
             } else if (line.channel === 'email') {
               item.sends = line.sends ?? 1;
               if (line.publication) item.publication = line.publication;
@@ -981,12 +1030,8 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                 <option value="app">App ad</option>
               </select>
             </label>
-            <label className="text-xs text-gray-700">
-              {channel === 'print'
-                ? 'Print package'
-                : channel === 'email'
-                ? 'E-Blast package'
-                : 'App slot'}
+            <label className="text-xs text-gray-700" style={{ display: channel === 'print' ? 'none' : undefined }}>
+              {channel === 'email' ? 'E-Blast package' : 'App slot'}
               <select
                 value={packageId}
                 onChange={(e) => handlePackageChange(e.target.value)}
@@ -1077,34 +1122,163 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                 </div>
               )}
             </div>
-            {channel === 'print' && selectedPrintPackage && (
-              <>
-                <label className="text-xs text-gray-700">
-                  Size
-                  <select
-                    value={size}
-                    onChange={(e) => setSize(e.target.value)}
-                    className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
-                  >
-                    {selectedPrintPackage.sizes.map((s) => (
-                      <option key={s.size} value={s.size}>
-                        {s.size} — ${s.price} ({s.dim})
-                      </option>
+            {channel === 'print' && (
+              <div className="rounded-md border border-gray-200 p-3 mb-3 bg-white space-y-4">
+                <div className="text-xs font-semibold uppercase tracking-wider text-gray-700">Insertion Order</div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Ad Size</div>
+                    {AD_SIZES.map((s) => (
+                      <label key={s} className="flex items-center gap-2 text-sm cursor-pointer mb-2">
+                        <input type="radio" name="nq_ag_size" value={s} checked={ioAdSize === s}
+                          onChange={() => {
+                            setIoAdSize(s);
+                            const looked = lookupRate(ioFrequency, s);
+                            if (looked) {
+                              setIoAdRate(String(looked.rate));
+                              setIoAdRateBase(String(looked.rate));
+                              setIoRateUserEdited(false);
+                              if (ioPosPremActive) setIoAdPremium(String(pagePositionPremium(looked.rate)));
+                            }
+                          }}
+                          className="w-4 h-4 accent-blue-600" />
+                        {s}
+                      </label>
                     ))}
-                  </select>
-                </label>
-                <label className="text-xs text-gray-700">
-                  Months
-                  <input
-                    type="number"
-                    min={1}
-                    max={24}
-                    value={months}
-                    onChange={(e) => setMonths(Math.max(1, Number(e.target.value) || 1))}
-                    className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
-                  />
-                </label>
-              </>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Frequency</div>
+                    {FREQUENCIES.map((f) => (
+                      <label key={f} className="flex items-center gap-2 text-sm cursor-pointer mb-2">
+                        <input type="radio" name="nq_ag_freq" value={f} checked={ioFrequency === f}
+                          onChange={() => {
+                            setIoFrequency(f);
+                            const looked = lookupRate(f, ioAdSize);
+                            if (looked) {
+                              setIoAdRate(String(looked.rate));
+                              setIoAdRateBase(String(looked.rate));
+                              setIoRateUserEdited(false);
+                              if (ioPosPremActive) setIoAdPremium(String(pagePositionPremium(looked.rate)));
+                            }
+                          }}
+                          className="w-4 h-4 accent-blue-600" />
+                        {f} {FREQ_PKG_AG[f] ? `· ${FREQ_PKG_AG[f]}` : ''}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-xs text-gray-600 mb-1">Ad Rate ($)</div>
+                    <input
+                      type="number"
+                      value={ioAdRate}
+                      onChange={(e) => {
+                        setIoAdRate(e.target.value);
+                        setIoAdRateBase(e.target.value);
+                        setIoRateUserEdited(true);
+                      }}
+                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="0.00" min="0" step="0.01"
+                    />
+                    {!ioRateUserEdited && ioAdRate && (
+                      <div className="text-[10px] text-gray-400 mt-1">
+                        ✨ Auto-filled from {FREQ_PKG_AG[ioFrequency] ?? ioFrequency}
+                      </div>
+                    )}
+                  </div>
+                  <label className="block">
+                    <div className="text-xs text-gray-600 mb-1">Discount ($)</div>
+                    <input type="number" value={ioDiscount}
+                      onChange={(e) => setIoDiscount(e.target.value)}
+                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="0.00" min="0" step="0.01" />
+                  </label>
+                  <div>
+                    <div className="text-xs text-gray-600 mb-1">Ad Premium ($)</div>
+                    {ioPosPremActive ? (
+                      <>
+                        <input value={ioAdPremium} className="w-full px-3 py-2 rounded border border-gray-200 bg-gray-50 text-sm text-gray-600 cursor-not-allowed" readOnly />
+                        <div className="text-[10px] text-gray-400 mt-1">20% page position premium applied</div>
+                      </>
+                    ) : (
+                      <input type="number" value={ioAdPremium}
+                        onChange={(e) => setIoAdPremium(e.target.value)}
+                        className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="0.00" min="0" step="0.01" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600 mb-1">Total Monthly ($)</div>
+                    <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm font-bold text-gray-900">
+                      ${((parseFloat(ioAdRate) || 0) - (parseFloat(ioDiscount) || 0) + (parseFloat(ioAdPremium) || 0)).toFixed(2)}
+                    </div>
+                    <div className="text-[10px] text-gray-400 mt-1">Rate − Discount + Premium</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <div className="text-xs text-gray-600 mb-1">Page Position</div>
+                    <input value={ioPagePosition}
+                      onChange={(e) => setIoPagePosition(e.target.value)}
+                      className="w-full px-3 py-2 rounded border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g. Inside front cover" />
+                  </label>
+                  <div className="flex items-end pb-1">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input type="checkbox" checked={ioPosPremActive}
+                        onChange={(e) => {
+                          const active = e.target.checked;
+                          setIoPosPremActive(active);
+                          const base = parseFloat(ioAdRateBase) || 0;
+                          if (active && base > 0) setIoAdPremium(String(pagePositionPremium(base)));
+                          else if (!active) setIoAdPremium('');
+                        }}
+                        className="w-4 h-4 accent-blue-600" />
+                      Apply 20% premium
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Ad Timing Term</div>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                    {MONTHS_LIST.map((m) => (
+                      <div key={m.k} className="flex items-center gap-2">
+                        <input type="checkbox" id={`nq_agm_${m.k}`}
+                          checked={!!ioTimingMonths[m.k]}
+                          onChange={(e) => setIoTimingMonths({ ...ioTimingMonths, [m.k]: e.target.checked })}
+                          className="w-3.5 h-3.5 accent-blue-600 flex-shrink-0" />
+                        <label htmlFor={`nq_agm_${m.k}`} className="text-sm min-w-[80px] cursor-pointer">{m.l}</label>
+                        <input
+                          value={ioTimingYears[m.k] ?? ''}
+                          disabled={!ioTimingMonths[m.k]}
+                          maxLength={4}
+                          onChange={(e) => setIoTimingYears({ ...ioTimingYears, [m.k]: e.target.value })}
+                          className="w-14 px-2 py-1 text-xs rounded-md border border-gray-300 disabled:bg-gray-100 disabled:text-gray-400"
+                          placeholder="Year"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {(() => {
+                    const exp = computeExp(ioTimingMonths, ioTimingYears, ioFrequency, new Date().toISOString().slice(0,10));
+                    if (!exp) return null;
+                    const d = new Date(exp + 'T00:00:00');
+                    const rem = new Date(d); rem.setDate(rem.getDate() - 30);
+                    const fmt = (dt: Date) => dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                    return (
+                      <div className="mt-2 text-xs text-gray-600">
+                        Expiration: <span className="font-medium text-gray-900">{fmt(d)}</span>
+                        {' · '}Renewal reminder 30 days before: <span className="font-medium">{fmt(rem)}</span>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
             )}
 
             {channel === 'email' && (
