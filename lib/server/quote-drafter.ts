@@ -874,7 +874,6 @@ async function draftBundledQuote(
         page_position, pos_premium_active,
         ad_timing_months, ad_timing_years,
         total_monthly_cents, expiration_date, renewal_reminder_date,
-        preferred_send_dates,
         preferred_send_dates
       ) VALUES (
         ${agreement.id},
