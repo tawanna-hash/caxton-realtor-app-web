@@ -222,6 +222,8 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   >([]);
   const [createdInvoice, setCreatedInvoice] = useState<CreatedInvoice | null>(null);
   const [sending, setSending] = useState(false);
+  const [sendingTest, setSendingTest] = useState(false);
+  const [testSent, setTestSent] = useState(false);
   const [sent, setSent] = useState(false);
 
   // ── Availability (App channel) ────────────────────────────────────
@@ -928,6 +930,35 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     }
   }
 
+  // Test-mode send: server forces recipient to admin.email, does NOT
+  // update agreement.status / sent_to_email. Endpoint added in 4155b71.
+  async function handleSendTest() {
+    if (!createdAgreement) return;
+    setSendingTest(true);
+    setError(null);
+    setTestSent(false);
+    try {
+      const res = await fetch(
+        `/api/admin/agreements/${createdAgreement.id}/send?test=1`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ test: true }),
+        },
+      );
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(j?.error || `Test send failed (${res.status})`);
+      }
+      setTestSent(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Test send failed');
+    } finally {
+      setSendingTest(false);
+    }
+  }
+
   if (!open) return null;
 
   // ── Render success card ────────────────────────────────────────────
@@ -969,17 +1000,31 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               ✓ Quote email sent — client will receive a sign link.
             </p>
           )}
+          {testSent && (
+            <p className="text-xs text-purple-900 mt-2 font-medium">
+              ✓ Test email sent to you — check your inbox.
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap gap-2">
             {!sent && (
               <button
                 type="button"
                 onClick={handleSend}
-                disabled={sending}
+                disabled={sending || sendingTest}
                 className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-60"
               >
                 {sending ? 'Sending…' : 'Send Quote to Client'}
               </button>
             )}
+            <button
+              type="button"
+              onClick={handleSendTest}
+              disabled={sending || sendingTest}
+              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-purple-300 bg-white text-purple-700 hover:bg-purple-50 disabled:opacity-60"
+              title="Send the notification email to yourself. Does not touch advertiser record."
+            >
+              {sendingTest ? 'Sending…' : 'Email me a test'}
+            </button>
             <a
               href={`/admin/agreements?id=${encodeURIComponent(createdAgreement.id)}`}
               className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-green-300 bg-white text-green-900 hover:bg-green-100"
