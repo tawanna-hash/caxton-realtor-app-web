@@ -41,9 +41,50 @@ export default async function SignPage({ params }: PageProps) {
   const { agreementId } = parsed;
 
   let ag: Agreement | null = null;
+  let lineItemRows: Array<{
+    id: string;
+    agreement_id: string;
+    line_no: number;
+    channel: 'print' | 'email' | 'app';
+    package_id: string;
+    package_label: string;
+    ad_size: string | null;
+    frequency: string | null;
+    quantity: number;
+    unit_cents: number;
+    amount_cents: number;
+    publication: string | null;
+    start_date: string | null;
+    end_date: string | null;
+    pay_now: boolean;
+    meta: Record<string, unknown>;
+  }> = [];
   try {
     const sql = getSql();
     const rows = await sql`SELECT * FROM agreements WHERE id = ${agreementId}` as unknown as Agreement[];
+
+    lineItemRows = (await sql`
+      SELECT * FROM agreement_line_items
+      WHERE agreement_id = ${agreementId}
+      ORDER BY line_no ASC
+    `.catch(() => [] as unknown[])) as unknown as Array<{
+    id: string;
+    agreement_id: string;
+    line_no: number;
+    channel: 'print' | 'email' | 'app';
+    package_id: string;
+    package_label: string;
+    ad_size: string | null;
+    frequency: string | null;
+    quantity: number;
+    unit_cents: number;
+    amount_cents: number;
+    publication: string | null;
+    start_date: string | null;
+    end_date: string | null;
+    pay_now: boolean;
+    meta: Record<string, unknown>;
+  }>;
     ag = rows[0] ?? null;
   } catch {
     ag = null;
@@ -74,6 +115,6 @@ export default async function SignPage({ params }: PageProps) {
     );
   }
 
-  return <SignWizard ag={ag} token={token} />;
+  return <SignWizard ag={ag} token={token} lineItems={lineItemRows} />;
 }
 

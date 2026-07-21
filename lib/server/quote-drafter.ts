@@ -127,13 +127,13 @@ export interface DrafterAdvertiser {
 }
 
 export interface DrafterInput {
-  channel: 'print' | 'email' | 'app';
+  channel?: 'print' | 'email' | 'app';
   /**
    * Print: PACKAGES[].id (brand1 / brand3 / …)
    * Email: eblastId(EBLASTS[].name)
    * App:   APP_AD_SLOTS[].slug
    */
-  package_id: string;
+  package_id?: string;
   size?: string;
   months?: number;
   sends?: number;
@@ -173,6 +173,27 @@ export interface DrafterInput {
   end_date?: string;
   /** Admin identity for created_by columns + CRM mirror. */
   actor_email: string | null;
+  /**
+   * Bundled multi-line quote. When present, all top-level channel /
+   * package / qty / override fields are ignored and the drafter creates
+   * ONE parent agreement (type='package') + N children in
+   * agreement_line_items.
+   */
+  line_items?: Array<{
+    channel: 'print' | 'email' | 'app';
+    package_id: string;
+    size?: string;
+    months?: number;
+    sends?: number;
+    app_cadence?: 'weekly' | 'monthly';
+    app_weeks?: number;
+    app_markets?: number;
+    publication?: 'austin' | 'san_antonio' | 'both';
+    start_date?: string;
+    end_date?: string;
+    override_total_cents?: number;
+    override_unit_cents?: number;
+  }>;
 }
 
 export interface DrafterResult {
@@ -197,6 +218,16 @@ export async function draftQuote(
   const sql = getSql();
 
   // ── Build line items per channel ─────────────────────────────────────
+  // ── BUNDLED MULTI-LINE PATH ─────────────────────────────────────────
+  if (input.line_items && input.line_items.length > 0) {
+    return draftBundledQuote(advertiser, input, input.line_items);
+  }
+
+  // Single-line path: channel + package_id are required.
+  if (!input.channel) throw new ApiError(400, 'channel_required');
+  if (!input.package_id) throw new ApiError(400, 'package_id_required');
+  const singleLineChannel: 'print' | 'email' | 'app' = input.channel;
+
   const lineItems: InvoiceLineItem[] = [];
   let descriptionLabel = '';
   let agAdSize: string | null = null;
@@ -326,7 +357,7 @@ export async function draftQuote(
     input.channel === 'print' || (input.channel === 'app' && (input.app_cadence ?? 'weekly') === 'monthly')
       ? (input.months ?? 1)
       : 1;
-  const agreementType = agreementTypeFor(input.channel, monthsForTerm);
+  const agreementType = agreementTypeFor(singleLineChannel, monthsForTerm);
   // Explicit run-window support. When the caller supplied both dates, use
   // them verbatim. When only start is supplied, anchor computeTerm at that
   // start (still N units of cadence). Otherwise fall back to today.
@@ -344,7 +375,7 @@ export async function draftQuote(
   } else {
     const t = computeTermFrom(
       explicitStart,
-      input.channel,
+      singleLineChannel,
       monthsForTerm,
       input.channel === 'app' ? (input.app_cadence ?? 'weekly') : undefined,
       input.channel === 'app' ? input.app_weeks : undefined,
@@ -524,3 +555,329 @@ function normalizeAdvertiserPub(pub: string): 'austin' | 'san_antonio' | 'both' 
   return 'austin';
 }
 
+
+// ─────────────────────────────────────────────────────────────────────
+// draftBundledQuote — bundle drafter. Creates one parent agreement
+// (type='package') and N children in agreement_line_items. Returns a
+// DrafterResult where amount_cents = sum of children's amount_cents.
+// ─────────────────────────────────────────────────────────────────────
+async function draftBundledQuote(
+  advertiser: DrafterAdvertiser,
+  input: DrafterInput,
+  lines: NonNullable<DrafterInput['line_items']>,
+): Promise<DrafterResult> {
+  const sql = getSql();
+
+  type ComputedLine = {
+    channel: 'print' | 'email' | 'app';
+    package_id: string;
+    package_label: string;
+    ad_size: string | null;
+    frequency: string | null;
+    quantity: number;
+    unit_cents: number;
+    amount_cents: number;
+    publication: 'austin' | 'san_antonio' | 'both';
+    start_date: string;
+    end_date: string;
+    pay_now: boolean;
+    meta: Record<string, unknown>;
+    invoice_line: InvoiceLineItem;
+  };
+
+  const computed: ComputedLine[] = [];
+
+  for (const line of lines) {
+    let label = '';
+    let adSize: string | null = null;
+    let frequency: string | null = null;
+    let qty = 1;
+    let unitCents = 0;
+    let invoiceDesc = '';
+
+    if (line.channel === 'print') {
+      const pkg: Package | undefined = PACKAGES.find((p) => p.id === line.package_id);
+      if (!pkg) throw new ApiError(400, `unknown_print_package_${line.package_id}`);
+      const size = line.size ?? pkg.sizes[0]?.size;
+      const sizeRow = pkg.sizes.find((s2) => s2.size === size);
+      if (!sizeRow) throw new ApiError(400, 'unknown_print_size');
+      qty = Math.max(1, line.months ?? 1);
+      unitCents = sizeRow.price * 100;
+      label = `${pkg.name} — ${sizeRow.size} (${sizeRow.dim})`;
+      adSize = size ?? null;
+      frequency = qty > 1 ? `${qty}x` : '1x';
+      invoiceDesc = `${label}, ${qty} month${qty > 1 ? 's' : ''}`;
+    } else if (line.channel === 'email') {
+      const eb = EBLASTS.find((e) => eblastId(e.name) === line.package_id);
+      if (!eb) throw new ApiError(400, `unknown_email_package_${line.package_id}`);
+      qty = Math.max(1, line.sends ?? 1);
+      const billingPub = line.publication ?? normalizeAdvertiserPub(advertiser.publication);
+      unitCents = eblastCentsForDbPub(eb, billingPub);
+      label = eb.name;
+      invoiceDesc = `${eb.name}${qty > 1 ? `, ${qty} sends` : ''}`;
+    } else {
+      const slot: AppAdSlot | undefined = APP_AD_SLOTS.find((x) => x.slug === line.package_id);
+      if (!slot) throw new ApiError(400, `unknown_app_slot_${line.package_id}`);
+      const cadence = line.app_cadence ?? 'weekly';
+      const markets = (line.app_markets ?? 1) as MarketCount;
+      if (![1, 2, 3, 4].includes(markets)) throw new ApiError(400, 'invalid_app_markets');
+      if (cadence === 'weekly') {
+        qty = Math.max(1, line.app_weeks ?? 1);
+        const weekly = Math.round(weeklyRateForMarkets(slot, markets) * 100);
+        if (weekly <= 0) throw new ApiError(400, 'app_slot_weekly_unavailable');
+        unitCents = weekly;
+        label = `${slot.name} — ${markets} market${markets > 1 ? 's' : ''}`;
+        adSize = slot.sizes;
+        frequency = `${qty}w`;
+        invoiceDesc = `${slot.name}, ${qty} week${qty > 1 ? 's' : ''} × ${markets} market${markets > 1 ? 's' : ''}`;
+      } else {
+        qty = Math.max(1, line.months ?? 1);
+        const monthlyRate = monthlyRateForMarkets(slot, markets);
+        if (monthlyRate == null) throw new ApiError(400, 'app_slot_monthly_unavailable');
+        unitCents = Math.round(monthlyRate * 100);
+        label = `${slot.name} — ${markets} market${markets > 1 ? 's' : ''}`;
+        adSize = slot.sizes;
+        frequency = `${qty}mo`;
+        invoiceDesc = `${slot.name}, ${qty} month${qty > 1 ? 's' : ''} × ${markets} market${markets > 1 ? 's' : ''}`;
+      }
+    }
+
+    let amountCents = qty * unitCents;
+    let lineQty = qty;
+    let lineUnit = unitCents;
+    let lineDesc = invoiceDesc;
+    if (line.override_total_cents != null) {
+      const ov = Math.max(0, Math.round(line.override_total_cents));
+      if (ov > amountCents * 4) throw new ApiError(400, 'override_total_out_of_range');
+      amountCents = ov;
+      lineQty = 1;
+      lineUnit = ov;
+      lineDesc = `${invoiceDesc} — custom pricing`;
+    } else if (line.override_unit_cents != null) {
+      const ov = Math.max(0, Math.round(line.override_unit_cents));
+      if (ov > unitCents * 4) throw new ApiError(400, 'override_unit_out_of_range');
+      unitCents = ov;
+      amountCents = qty * ov;
+      lineUnit = ov;
+      lineDesc = `${invoiceDesc} — custom unit`;
+    }
+
+    // Per-line term dates
+    const ISO = /^\d{4}-\d{2}-\d{2}$/;
+    const startExplicit = line.start_date && ISO.test(line.start_date) ? line.start_date : null;
+    const endExplicit = line.end_date && ISO.test(line.end_date) ? line.end_date : null;
+    let startDate: string;
+    let endDate: string;
+    if (startExplicit && endExplicit) {
+      if (endExplicit < startExplicit) throw new ApiError(400, 'end_date_before_start_date');
+      startDate = startExplicit;
+      endDate = endExplicit;
+    } else {
+      const monthsForTerm =
+        line.channel === 'print' || (line.channel === 'app' && (line.app_cadence ?? 'weekly') === 'monthly')
+          ? qty
+          : 1;
+      const term = computeTermFrom(
+        startExplicit,
+        line.channel,
+        monthsForTerm,
+        line.app_cadence,
+        line.channel === 'app' && (line.app_cadence ?? 'weekly') === 'weekly' ? qty : undefined,
+      );
+      startDate = term.start_date;
+      endDate = term.end_date;
+    }
+
+    computed.push({
+      channel: line.channel,
+      package_id: line.package_id,
+      package_label: label,
+      ad_size: adSize,
+      frequency,
+      quantity: qty,
+      unit_cents: unitCents,
+      amount_cents: amountCents,
+      publication: line.publication ?? normalizeAdvertiserPub(advertiser.publication),
+      start_date: startDate,
+      end_date: endDate,
+      pay_now: true,
+      meta: {
+        app_cadence: line.app_cadence ?? null,
+        app_weeks: line.app_weeks ?? null,
+        app_markets: line.app_markets ?? null,
+        sends: line.sends ?? null,
+      },
+      invoice_line: { description: lineDesc, qty: lineQty, unit_cents: lineUnit },
+    });
+  }
+
+  const parentAmountCents = computed.reduce((acc, c) => acc + c.amount_cents, 0);
+  if (parentAmountCents <= 0) throw new ApiError(400, 'amount_cents_must_be_positive');
+
+  const parentStart = computed.reduce(
+    (acc, c) => (c.start_date < acc ? c.start_date : acc),
+    computed[0].start_date,
+  );
+  const parentEnd = computed.reduce(
+    (acc, c) => (c.end_date > acc ? c.end_date : acc),
+    computed[0].end_date,
+  );
+
+  const billToAddress = advertiser.address ?? null;
+  const memo = input.memo ?? (
+    computed.length > 1 ? `Bundled quote: ${computed.length} line items` : null
+  );
+
+  const parentType: AgreementType = computed.length > 1
+    ? 'package'
+    : computed[0].channel === 'print' ? 'print_ad'
+    : computed[0].channel === 'email' ? 'eblast'
+    : 'app_ad';
+
+  const billPublication = input.publication ?? normalizeAdvertiserPub(advertiser.publication);
+
+  // Parent agreement INSERT. Matches the single-line INSERT column list
+  // exactly (does NOT include publication — that's stamped best-effort
+  // after, same as the single-line path).
+  const agRows = (await sql`
+    INSERT INTO agreements (
+      advertiser_id, company_name, rep_name, advertiser_email,
+      advertiser_phone, advertiser_address, type, status,
+      start_date, end_date, ad_size, frequency, ad_rate_cents,
+      amount_cents, notes, created_by,
+      address, city, state, zip,
+      billing_email, linked_inquiry_id
+    ) VALUES (
+      ${advertiser.id},
+      ${advertiser.name},
+      ${input.rep_name ?? null},
+      ${advertiser.contact_email},
+      ${input.advertiser_phone ?? null},
+      ${billToAddress},
+      ${parentType},
+      ${'draft'},
+      ${parentStart},
+      ${parentEnd},
+      ${computed[0].ad_size},
+      ${computed[0].frequency},
+      ${computed[0].unit_cents},
+      ${parentAmountCents},
+      ${memo},
+      ${input.actor_email ?? null},
+      ${advertiser.address ?? null},
+      ${advertiser.city ?? null},
+      ${advertiser.state ?? null},
+      ${advertiser.zip ?? null},
+      ${advertiser.contact_email},
+      ${input.linked_inquiry_id ?? null}
+    )
+    RETURNING *
+  `) as unknown as Agreement[];
+
+  if (!agRows[0]) throw new ApiError(500, 'agreement_create_failed');
+  const agreement = agRows[0];
+
+  // Best-effort publication + channel stamps (older deploys may not have columns).
+  try {
+    await sql`UPDATE agreements SET publication = ${billPublication} WHERE id = ${agreement.id}`;
+    (agreement as { publication?: string }).publication = billPublication;
+  } catch (e) {
+    console.error('[quote-drafter/bundle] publication write failed', e instanceof Error ? e.message : e);
+  }
+  try {
+    // For bundles, no single 'channel' fits. Use the first line's channel.
+    const ch = deriveChannelFromAgreementType(parentType) ?? computed[0].channel;
+    await sql`UPDATE agreements SET channel = ${ch} WHERE id = ${agreement.id}`;
+    (agreement as { channel?: string }).channel = ch;
+  } catch (e) {
+    console.error('[quote-drafter/bundle] channel write failed', e instanceof Error ? e.message : e);
+  }
+
+  // Child line items INSERT (one row per line).
+  for (let i = 0; i < computed.length; i++) {
+    const c = computed[i];
+    await sql`
+      INSERT INTO agreement_line_items (
+        agreement_id, line_no, channel, package_id, package_label,
+        ad_size, frequency, quantity, unit_cents, amount_cents,
+        publication, start_date, end_date, pay_now, meta
+      ) VALUES (
+        ${agreement.id},
+        ${i + 1},
+        ${c.channel},
+        ${c.package_id},
+        ${c.package_label},
+        ${c.ad_size},
+        ${c.frequency},
+        ${c.quantity},
+        ${c.unit_cents},
+        ${c.amount_cents},
+        ${c.publication},
+        ${c.start_date},
+        ${c.end_date},
+        ${c.pay_now},
+        ${JSON.stringify(c.meta)}::jsonb
+      )
+    `;
+  }
+
+  // Advertiser CRM mirror
+  try {
+    await ensureAdvertiserForAgreement(agreement, { desiredStatus: 'prospect' });
+  } catch (e) {
+    console.error('[quote-drafter/bundle] ensureAdvertiserForAgreement failed', e instanceof Error ? e.message : e);
+  }
+
+  // Inline invoice INSERT (matches single-line path style).
+  const invoiceLines: InvoiceLineItem[] = computed.map((c) => c.invoice_line);
+  const year = new Date().getFullYear();
+  const seqRows = (await sql`
+    SELECT count(*)::int AS n
+      FROM invoices i
+      JOIN advertisers a ON a.id = i.advertiser_id
+     WHERE a.publication = ${billPublication}
+       AND EXTRACT(YEAR FROM i.created_at) = ${year}
+  `) as unknown as Array<{ n: number }>;
+  const number = formatInvoiceNumber(billPublication, year, (seqRows[0]?.n ?? 0) + 1);
+
+  const invRows = (await sql`
+    INSERT INTO invoices (
+      advertiser_id, agreement_id, number,
+      amount_cents, tax_cents, status,
+      issued_at, due_date,
+      bill_to_name, bill_to_email, bill_to_address,
+      memo, line_items, created_by
+    ) VALUES (
+      ${advertiser.id},
+      ${agreement.id},
+      ${number},
+      ${parentAmountCents},
+      ${0},
+      ${'draft'},
+      ${null},
+      ${input.due_date ?? null},
+      ${advertiser.name},
+      ${advertiser.contact_email},
+      ${billToAddress},
+      ${memo},
+      ${JSON.stringify(invoiceLines)}::jsonb,
+      ${input.actor_email ?? null}
+    )
+    RETURNING *
+  `) as unknown as Invoice[];
+
+  if (!invRows[0]) throw new ApiError(500, 'invoice_create_failed');
+  const invoice = invRows[0];
+
+  return {
+    agreement,
+    invoice,
+    amount_cents: parentAmountCents,
+    rack_amount_cents: parentAmountCents,
+    discount_pct: 0,
+    description_label: computed.length > 1
+      ? `Bundle: ${computed.length} line items`
+      : computed[0].package_label,
+    line_items: invoiceLines,
+  };
+}

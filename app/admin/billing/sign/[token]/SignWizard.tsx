@@ -348,7 +348,34 @@ function shortDate(d: string | Date | null | undefined): string | null {
   return `${MONTHS[mon - 1]} ${day}, ${year}`;
 }
 
-export default function SignWizard({ ag, token }: { ag: Agreement; token: string }) {
+
+type SignWizardLineItem = {
+  id: string;
+  line_no: number;
+  channel: 'print' | 'email' | 'app';
+  package_id: string;
+  package_label: string;
+  ad_size: string | null;
+  frequency: string | null;
+  quantity: number;
+  unit_cents: number;
+  amount_cents: number;
+  publication: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  pay_now: boolean;
+  meta: Record<string, unknown>;
+};
+
+export default function SignWizard({
+  ag,
+  token,
+  lineItems = [],
+}: {
+  ag: Agreement;
+  token: string;
+  lineItems?: SignWizardLineItem[];
+}) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -444,7 +471,9 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
     channel !== 'print' && ag.amount_cents != null && ag.amount_cents > 0
       ? ag.amount_cents / 100
       : totalMonthly;
-  const chargeBaseCents = Math.round(quotedTotalDollars * 100);
+  const chargeBaseCents = lineItems.length > 0
+    ? lineItems.filter((li) => li.pay_now).reduce((acc, li) => acc + li.amount_cents, 0)
+    : Math.round(quotedTotalDollars * 100);
   const ccSurchargeTotal =
     paymentType === 'Credit Card' ? applyCcSurcharge(quotedTotalDollars) : null;
   const surchargeLabel = channel === 'print' ? 'New monthly' : 'New total';
@@ -765,7 +794,42 @@ export default function SignWizard({ ag, token }: { ag: Agreement; token: string
 
           {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
 
-          <QuoteSummaryCard ag={ag} channel={channel} />
+          {lineItems.length > 0 ? (
+            <div className="rounded-md border border-purple-200 bg-purple-50/40 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wider text-purple-900 mb-3">
+                Bundled quote · {lineItems.length} line items
+              </div>
+              <ul className="space-y-2">
+                {lineItems.map((li) => (
+                  <li
+                    key={li.id}
+                    className="flex items-start justify-between border-b border-purple-100 pb-2 last:border-b-0 last:pb-0"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900">{li.package_label}</div>
+                      <div className="text-xs text-gray-600 mt-0.5">
+                        {li.channel === 'print' && `${li.quantity} month${li.quantity > 1 ? 's' : ''}`}
+                        {li.channel === 'email' && `${li.quantity} send${li.quantity > 1 ? 's' : ''}`}
+                        {li.channel === 'app' && (li.frequency ?? '')}
+                        {li.start_date && li.end_date && ` · ${li.start_date} – ${li.end_date}`}
+                      </div>
+                    </div>
+                    <div className="text-sm font-semibold text-gray-900 ml-3 whitespace-nowrap">
+                      ${(li.amount_cents / 100).toFixed(2)}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-purple-300">
+                <div className="text-sm font-semibold text-gray-800">Grand total</div>
+                <div className="text-base font-bold text-purple-900">
+                  ${(lineItems.reduce((s, l) => s + l.amount_cents, 0) / 100).toFixed(2)}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <QuoteSummaryCard ag={ag} channel={channel} />
+          )}
         </div>
       </Shell>
     );

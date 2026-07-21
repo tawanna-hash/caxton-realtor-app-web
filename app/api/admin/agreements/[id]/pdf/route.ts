@@ -66,6 +66,22 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
     await ensureSchema();
     const sql = getSql();
     const rows = (await sql`SELECT * FROM agreements WHERE id = ${id}`) as unknown as Agreement[];
+
+    // Bundle-aware: load line items for potential future itemization.
+    // The current PDF renderer does not itemize; single line-total remains.
+    const lineItemRows = (await sql`
+      SELECT * FROM agreement_line_items
+      WHERE agreement_id = ${id}
+      ORDER BY line_no ASC
+    `.catch(() => [] as unknown[])) as unknown as Array<{
+      line_no: number;
+      channel: string;
+      package_label: string;
+      quantity: number;
+      unit_cents: number;
+      amount_cents: number;
+    }>;
+    void lineItemRows;
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
 
     const ag = rows[0];

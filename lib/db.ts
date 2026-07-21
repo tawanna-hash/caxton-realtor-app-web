@@ -795,6 +795,44 @@ async function _runEnsureSchema(): Promise<void> {
     WHERE linked_inquiry_id IS NOT NULL
   `;
 
+  // ---- Agreement line items (bundled multi-channel quotes) ----
+  // A single agreement can have N line items across channels. When no
+  // rows exist, the agreement is a legacy single-line quote and the
+  // parent columns (type, ad_rate_cents, amount_cents, etc.) carry the
+  // full quote. When rows exist, the agreement is a bundle:
+  //   • parent.type       = 'package'
+  //   • parent.amount_cents = sum of children.amount_cents
+  // Each child row carries its own channel + qty + rate metadata.
+  await sql`
+    CREATE TABLE IF NOT EXISTS agreement_line_items (
+      id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      agreement_id     uuid NOT NULL REFERENCES agreements(id) ON DELETE CASCADE,
+      line_no          integer NOT NULL,
+      channel          text NOT NULL,
+      package_id       text NOT NULL,
+      package_label    text NOT NULL,
+      ad_size          text,
+      frequency        text,
+      quantity         integer NOT NULL DEFAULT 1,
+      unit_cents       integer NOT NULL,
+      amount_cents     integer NOT NULL,
+      publication      text,
+      start_date       date,
+      end_date         date,
+      pay_now          boolean NOT NULL DEFAULT true,
+      meta             jsonb NOT NULL DEFAULT '{}'::jsonb,
+      created_at       timestamptz NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS agreement_line_items_agreement_id_idx
+    ON agreement_line_items(agreement_id)
+  `;
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS agreement_line_items_agreement_line_uk
+    ON agreement_line_items(agreement_id, line_no)
+  `;
+
   // ---- Magazine GIF preview columns ----
   // Each magazine can have up to three pre-rendered animated previews
   // (full flipbook, teaser, ping-pong) stored in Vercel Blob. The URL

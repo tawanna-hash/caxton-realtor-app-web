@@ -8,6 +8,26 @@ export type AgreementStatus =
 
 export type PaymentMode = 'card' | 'link' | 'invoice' | 'check';
 
+export interface AgreementLineItem {
+  id: string;
+  agreement_id: string;
+  line_no: number;
+  channel: 'print' | 'email' | 'app';
+  package_id: string;
+  package_label: string;
+  ad_size: string | null;
+  frequency: string | null;
+  quantity: number;
+  unit_cents: number;
+  amount_cents: number;
+  publication: 'austin' | 'san_antonio' | 'both' | null;
+  start_date: string | null;
+  end_date: string | null;
+  pay_now: boolean;
+  meta: Record<string, unknown>;
+  created_at: string;
+}
+
 export type AgreementType =
   | 'print_ad' | 'eblast' | 'app_ad' | 'sponsored_content' | 'package' | 'other';
 

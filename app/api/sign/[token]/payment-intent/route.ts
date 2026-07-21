@@ -57,8 +57,18 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     //     total from ag.amount_cents. Drafter stamps this as the full
     //     contract value; ad_rate_cents is the per-unit rate and MUST NOT
     //     be used as the charge base for these.
+    // Bundle-aware amount: if agreement has line items, charge sum of
+    // pay_now children. Otherwise fall back to single-line source.
+    const bundleRows = (await sql`
+      SELECT amount_cents FROM agreement_line_items
+      WHERE agreement_id = ${ag.id} AND pay_now = true
+    `.catch(() => [] as Array<{ amount_cents: number }>)) as unknown as Array<{ amount_cents: number }>;
+    const bundleTotalCents = bundleRows.reduce((acc, r) => acc + Number(r.amount_cents || 0), 0);
+
     const isPrint = ag.type === 'print_ad';
-    const baseSource = isPrint ? ag.ad_rate_cents : ag.amount_cents;
+    const baseSource = bundleTotalCents > 0
+      ? bundleTotalCents
+      : (isPrint ? ag.ad_rate_cents : ag.amount_cents);
     if (!baseSource || baseSource <= 0) {
       return NextResponse.json(
         {

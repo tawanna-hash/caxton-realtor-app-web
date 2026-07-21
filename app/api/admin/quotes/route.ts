@@ -52,7 +52,7 @@ const advertiserNewSchema = z.object({
 });
 const quotesSchema = z
   .object({
-    channel: z.enum(['print', 'email', 'app']),
+    channel: z.enum(['print', 'email', 'app']).optional(),
     package_id: z.string().trim().min(1).max(100),
     size: z.string().trim().max(40).optional(),
     months: z.number().int().min(1).max(24).optional(),
@@ -73,7 +73,25 @@ const quotesSchema = z
     override_total_cents: z.number().int().min(0).max(100_000_000).optional(),
     override_unit_cents: z.number().int().min(0).max(100_000_000).optional(),
     due_date: z.string().optional(),
-    memo: z.string().max(2000).optional(),
+    // Bundled multi-line quote. When present, top-level channel/package/qty
+  // fields are ignored and the drafter creates one parent agreement +
+  // N child rows in agreement_line_items.
+  line_items: z.array(z.object({
+    channel: z.enum(['print', 'email', 'app']),
+    package_id: z.string().min(1),
+    size: z.string().optional(),
+    months: z.number().int().min(1).max(24).optional(),
+    sends: z.number().int().min(1).max(52).optional(),
+    app_cadence: z.enum(['weekly', 'monthly']).optional(),
+    app_weeks: z.number().int().min(1).max(52).optional(),
+    app_markets: z.number().int().min(1).max(4).optional(),
+    publication: z.enum(['austin', 'san_antonio', 'both']).optional(),
+    start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    override_total_cents: z.number().int().min(0).max(100_000_000).optional(),
+    override_unit_cents: z.number().int().min(0).max(100_000_000).optional(),
+  })).optional(),
+  memo: z.string().max(2000).optional(),
     advertiser: z.union([advertiserExistingSchema, advertiserNewSchema]),
     rep_name: z.string().trim().max(200).optional(),
   })
@@ -179,6 +197,7 @@ export const POST = withErrorHandling(async (req: Request) => {
     app_markets: body.app_markets,
     override_total_cents: body.override_total_cents,
     override_unit_cents: body.override_unit_cents,
+    line_items: body.line_items,
     start_date: body.start_date,
     end_date: body.end_date,
     publication: body.publication,

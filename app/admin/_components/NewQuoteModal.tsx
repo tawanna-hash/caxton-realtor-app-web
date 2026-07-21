@@ -181,7 +181,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     label: string;
   } | null>(null);
   const [createdAgreement, setCreatedAgreement] = useState<CreatedAgreement | null>(null);
-  const [createdBundle, setCreatedBundle] = useState<
+  const [, setCreatedBundle] = useState<
     Array<{ agreement: CreatedAgreement; invoice: CreatedInvoice }>
   >([]);
   const [createdInvoice, setCreatedInvoice] = useState<CreatedInvoice | null>(null);
@@ -671,54 +671,78 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         payload.override_unit_cents = overrideUnitCents;
       }
 
-      // Assemble sequence. Rules:
-      //   • No bundle lines → [null] (single-line path, current form only — unchanged)
-      //   • Bundle lines + valid current form → [...lines, null] (current becomes final line)
-      //   • Bundle lines + INVALID current form → [...lines] (just the bundle)
+      // Bundle path: one POST with line_items[]. Single-line path unchanged.
       const currentSnap = currentLineSnapshot();
-      const runList: Array<BundleLine | null> =
-        bundleLines.length === 0
-          ? [null]
-          : currentSnap
-            ? [...bundleLines, null]
-            : bundleLines.map<BundleLine | null>((bl) => bl);
+      const allLines = currentSnap ? [...bundleLines, currentSnap] : bundleLines;
+      const isBundle = allLines.length > 1;
 
-      const results: Array<{ agreement: CreatedAgreement; invoice: CreatedInvoice }> = [];
-      for (let i = 0; i < runList.length; i++) {
-        const line = runList[i];
-        const label =
-          line == null
-            ? currentSnap?.packageLabel ?? 'Current selection'
-            : line.packageLabel;
-        setBundleProgress({ total: runList.length, done: i, label });
-        const body = buildPayloadFor(line);
-        const res = await fetch('/api/admin/quotes', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) {
-          const j = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(
-            j?.error || `Quote line ${i + 1} of ${runList.length} failed (${res.status}): ${label}`,
-          );
-        }
-        const json = (await res.json()) as {
-          agreement: CreatedAgreement;
-          invoice: CreatedInvoice;
+      let body: Record<string, unknown>;
+      if (isBundle) {
+        const advertiserPayload = createNew
+          ? {
+              name: newName.trim(),
+              contact_email: newEmail.trim(),
+              publication: newPublication,
+              ...(newPhone.trim() ? { phone: newPhone.trim() } : {}),
+            }
+          : { id: selectedAdvertiserId! };
+        body = {
+          advertiser: advertiserPayload,
+          line_items: allLines.map((line) => {
+            const item: Record<string, unknown> = {
+              channel: line.channel,
+              package_id: line.packageId,
+            };
+            if (line.channel === 'print') {
+              item.size = line.size;
+              item.months = line.months ?? 1;
+            } else if (line.channel === 'email') {
+              item.sends = line.sends ?? 1;
+              if (line.publication) item.publication = line.publication;
+            } else {
+              item.app_cadence = line.appCadence;
+              item.app_markets = line.appMarkets;
+              if (line.appCadence === 'weekly') item.app_weeks = Math.max(1, line.appWeeks ?? 1);
+              else item.months = Math.max(1, line.months ?? 1);
+            }
+            if (line.runMode === 'dates' && line.runStart && line.runEnd && line.runEnd >= line.runStart) {
+              item.start_date = line.runStart;
+              item.end_date = line.runEnd;
+            }
+            if (line.overrideTotalCents != null) item.override_total_cents = line.overrideTotalCents;
+            else if (line.overrideUnitCents != null) item.override_unit_cents = line.overrideUnitCents;
+            return item;
+          }),
         };
-        results.push(json);
+        if (dueDate) body.due_date = dueDate;
+        if (memo.trim()) body.memo = memo.trim();
+      } else {
+        body = buildPayloadFor(null);
       }
-      setBundleProgress({ total: runList.length, done: runList.length, label: 'done' });
 
-      // Show the LAST created agreement as the "primary" for the send flow.
-      // The success card will list all N below.
-      const last = results[results.length - 1];
-      setCreatedAgreement(last.agreement);
-      setCreatedInvoice(last.invoice);
-      // Store the full list for the bundle receipt UI.
-      setCreatedBundle(results);
+      setBundleProgress({
+        total: 1,
+        done: 0,
+        label: isBundle ? `Bundle · ${allLines.length} lines` : (currentSnap?.packageLabel ?? 'Quote'),
+      });
+      const res = await fetch('/api/admin/quotes', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(j?.error || `Quote failed (${res.status})`);
+      }
+      const json = (await res.json()) as {
+        agreement: CreatedAgreement;
+        invoice: CreatedInvoice;
+      };
+      setBundleProgress({ total: 1, done: 1, label: 'done' });
+      setCreatedAgreement(json.agreement);
+      setCreatedInvoice(json.invoice);
+      setCreatedBundle([{ agreement: json.agreement, invoice: json.invoice }]);
       onDrafted?.();
 
     } catch (err) {
@@ -757,58 +781,6 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   if (!open) return null;
 
   // ── Render success card ────────────────────────────────────────────
-  if (createdAgreement && createdBundle.length > 1) {
-    // Multi-line bundle success screen — list all N agreements + sign links.
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-900">
-              Bundle created — {createdBundle.length} agreements
-            </h2>
-            <button
-              type="button"
-              onClick={() => { resetAll(); onClose(); }}
-              className="text-gray-500 hover:text-gray-700 text-sm"
-            >
-              Close
-            </button>
-          </div>
-          <p className="text-sm text-gray-600 mb-4">
-            Each line was saved as its own draft agreement. Send each sign link individually, or copy them all to send in a single email.
-          </p>
-          <ul className="space-y-2 mb-4">
-            {createdBundle.map((r, i) => (
-              <li key={r.agreement.id} className="border border-gray-200 rounded p-3 text-sm">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-900">
-                      #{i + 1} · Agreement {r.agreement.id.slice(0, 8)}…
-                    </div>
-                    <div className="text-xs text-gray-600 mt-0.5">
-                      Amount: ${((r.agreement.amount_cents ?? 0) / 100).toFixed(2)}
-                    </div>
-                  </div>
-                  <a
-                    href={`/admin/agreements/${r.agreement.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-2.5 py-1 text-xs rounded-md bg-purple-600 text-white hover:bg-purple-700 whitespace-nowrap"
-                  >
-                    Open
-                  </a>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <div className="text-xs text-gray-500">
-            Grand total: <strong className="text-gray-800">${(createdBundle.reduce((s, r) => s + (r.agreement.amount_cents ?? 0), 0) / 100).toFixed(2)}</strong>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   if (createdAgreement && createdInvoice) {
     const paymentTerms =
       channel === 'email' || channel === 'app'
