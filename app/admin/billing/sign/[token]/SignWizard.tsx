@@ -34,6 +34,26 @@ import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 
 // Admin palette purple — matches /admin dashboards and CRM.
 const ACCENT = '#7c3aed';
+
+// Format a line-item run window compactly. Accepts ISO YYYY-MM-DD strings.
+// For print → uses month-and-year granularity ("Aug 2026 – Oct 2026").
+// For email/app → uses day-level ("Jul 20 – Aug 3, 2026").
+function formatLineWindow(channel: 'print' | 'email' | 'app', start: string | null, end: string | null): string {
+  if (!start || !end) return '';
+  const [sy, sm, sd] = start.split('-').map(Number);
+  const [ey, em, ed] = end.split('-').map(Number);
+  if ([sy, sm, sd, ey, em, ed].some((n) => Number.isNaN(n))) return `${start} – ${end}`;
+  const monShort = (m: number) => ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1] ?? '';
+  if (channel === 'print') {
+    if (sy === ey && sm === em) return `${monShort(sm)} ${sy}`;
+    if (sy === ey) return `${monShort(sm)} – ${monShort(em)} ${sy}`;
+    return `${monShort(sm)} ${sy} – ${monShort(em)} ${ey}`;
+  }
+  if (sy === ey && sm === em && sd === ed) return `${monShort(sm)} ${sd}, ${sy}`;
+  if (sy === ey) return `${monShort(sm)} ${sd} – ${monShort(em)} ${ed}, ${sy}`;
+  return `${monShort(sm)} ${sd}, ${sy} – ${monShort(em)} ${ed}, ${ey}`;
+}
+
 const CURRENT_YEAR = new Date().getFullYear().toString();
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -811,7 +831,7 @@ export default function SignWizard({
                         {li.channel === 'print' && `${li.quantity} month${li.quantity > 1 ? 's' : ''}`}
                         {li.channel === 'email' && `${li.quantity} send${li.quantity > 1 ? 's' : ''}`}
                         {li.channel === 'app' && (li.frequency ?? '')}
-                        {li.start_date && li.end_date && ` · ${li.start_date} – ${li.end_date}`}
+                        {li.start_date && li.end_date && ` · ${formatLineWindow(li.channel, li.start_date, li.end_date)}`}
                       </div>
                     </div>
                     <div className="text-sm font-semibold text-gray-900 ml-3 whitespace-nowrap">

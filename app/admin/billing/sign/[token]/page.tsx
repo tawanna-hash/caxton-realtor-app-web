@@ -64,7 +64,16 @@ export default async function SignPage({ params }: PageProps) {
     const rows = await sql`SELECT * FROM agreements WHERE id = ${agreementId}` as unknown as Agreement[];
 
     lineItemRows = (await sql`
-      SELECT * FROM agreement_line_items
+      SELECT
+        id, agreement_id, line_no, channel, package_id, package_label,
+        ad_size, frequency, quantity, unit_cents, amount_cents, publication,
+        to_char(start_date, 'YYYY-MM-DD') AS start_date,
+        to_char(end_date,   'YYYY-MM-DD') AS end_date,
+        pay_now, meta,
+        to_char(expiration_date, 'YYYY-MM-DD') AS expiration_date,
+        to_char(renewal_reminder_date, 'YYYY-MM-DD') AS renewal_reminder_date,
+        ad_timing_months, ad_timing_years
+      FROM agreement_line_items
       WHERE agreement_id = ${agreementId}
       ORDER BY line_no ASC
     `.catch(() => [] as unknown[])) as unknown as Array<{
