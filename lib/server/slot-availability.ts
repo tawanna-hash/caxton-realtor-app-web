@@ -26,7 +26,12 @@
 //      booking inquiry.
 
 import { getSql } from '@/lib/db';
-import { APP_AD_SLOTS, getSlotAvailablePubs, type AppAdSlot } from '@/lib/media-kit';
+import {
+  APP_AD_SLOTS,
+  getSlotAvailablePubs,
+  ROTATION_CAPACITY,
+  type AppAdSlot,
+} from '@/lib/media-kit';
 
 /**
  * A single bookable market. The legacy 'both' value is intentionally NOT
@@ -115,16 +120,37 @@ function defaultWindow(startDate?: string, endDate?: string): { start: string; e
   return { start: startDate || today, end: endDate || farFuture };
 }
 
+// Per-slug booking capacity per publication. Rotating slots run several
+// concurrent advertisers, so they only sell out once ROTATION_CAPACITY
+// bookings overlap a pub; every other slot has capacity 1.
+const SLOT_CAPACITY = new Map<string, number>(
+  APP_AD_SLOTS.map((s) => [s.slug, s.rotates ? ROTATION_CAPACITY : 1]),
+);
+
+function capacityForSlug(slug: string): number {
+  return SLOT_CAPACITY.get(slug) ?? 1;
+}
+
 /**
  * Reduce active-campaign rows (already filtered to a single slot) into the
- * set of checkout scopes that are blocked. Pure / no I/O.
+ * set of checkout scopes that are blocked. A scope is blocked only once the
+ * number of overlapping active bookings on that pub reaches the slot's
+ * `capacity`, so rotating slots aren't marked sold out by a single booking.
+ * Pure / no I/O.
  */
-function rowsToBlockedSet(rows: ActiveCampaignRow[]): Set<CheckoutPub> {
-  const blocked = new Set<CheckoutPub>();
+function rowsToBlockedSet(
+  rows: ActiveCampaignRow[],
+  capacity: number,
+): Set<CheckoutPub> {
+  const counts = new Map<CheckoutPub, number>();
   for (const r of rows) {
     for (const p of pubsFromRow(r)) {
-      blocked.add(p);
+      counts.set(p, (counts.get(p) ?? 0) + 1);
     }
+  }
+  const blocked = new Set<CheckoutPub>();
+  for (const [p, n] of counts) {
+    if (n >= capacity) blocked.add(p);
   }
   return blocked;
 }
@@ -189,7 +215,7 @@ export async function getBookedPubsForAllSlots(
   for (const [slug, slugRows] of bySlug) {
     // If a campaign references an unknown slug, surface it anyway so
     // future callers can still query for it.
-    result.set(slug, rowsToBlockedSet(slugRows));
+    result.set(slug, rowsToBlockedSet(slugRows, capacityForSlug(slug)));
   }
 
   return result;
@@ -240,7 +266,7 @@ export async function getBookedPubsForSlot(
     return new Set<CheckoutPub>();
   }
 
-  return rowsToBlockedSet(rows);
+  return rowsToBlockedSet(rows, capacityForSlug(slotSlug));
 }
 
 /**

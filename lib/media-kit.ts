@@ -103,6 +103,14 @@ export interface PolicyNote {
 // Rates are weekly per single publication (RealtyLine OR Newsline San Antonio). Both-
 // pub rates run ~1.7× single-pub for full network reach. Monthly = 4 weeks.
 
+// A rotating slot (see `rotates` below / ROTATING_SLUGS in AdSlot.tsx) is
+// shared by multiple concurrent advertisers whose creatives cross-fade in the
+// UI. It is therefore only sold out once this many active bookings overlap the
+// same publication + window — a single booking does not exhaust it. Non-
+// rotating slots have an implicit capacity of 1. Kept here so availability
+// (lib/server/slot-availability.ts) and the rate card share one source.
+export const ROTATION_CAPACITY = 6;
+
 export type AppAdSlotTier = 'standard' | 'premium';
 export type AppAdSlotZone =
   | 'feed'
