@@ -123,6 +123,102 @@ async function applyPatches(
   }
 }
 
+
+// -----------------------------------------------------------------------------
+// Sign-time anchor recompute (Part B).
+// Rule: signed day-of-month ≤ 15 → first issue = signed month; else next month.
+// For print lines, recompute start_date / end_date / expiration_date /
+// renewal_reminder_date / ad_timing_months / ad_timing_years.
+// -----------------------------------------------------------------------------
+const MONTH_KEYS = ['january','february','march','april','may','june','july','august','september','october','november','december'] as const;
+
+function freqToMonths(frequency: string | null | undefined): number {
+  if (!frequency) return 1;
+  const m = /^(\d+)/.exec(String(frequency).trim());
+  if (!m) return 1;
+  const n = parseInt(m[1], 10);
+  return Number.isFinite(n) && n > 0 ? n : 1;
+}
+
+function pad2(n: number): string { return n < 10 ? `0${n}` : `${n}`; }
+
+function firstIssueMonth(signedIsoUtc: string): { year: number; monthIdx: number } {
+  // signedIsoUtc is UTC — but the deadline is in publisher-local time.
+  // Use the ISO date component directly; deadlines are calendar-day granular.
+  const d = signedIsoUtc.slice(0, 10);
+  const [y, m, day] = d.split('-').map(Number);
+  if (!y || !m || !day) {
+    const now = new Date();
+    return { year: now.getUTCFullYear(), monthIdx: now.getUTCMonth() };
+  }
+  // day-of-month rule: ≤15 same month, else next month.
+  if (day <= 15) return { year: y, monthIdx: m - 1 };
+  const next = new Date(Date.UTC(y, m - 1 + 1, 1));
+  return { year: next.getUTCFullYear(), monthIdx: next.getUTCMonth() };
+}
+
+function computePrintRun(signedIsoUtc: string, months: number):
+  { startIso: string; endIso: string; expIso: string; remindIso: string; timingMonths: Record<string, boolean>; timingYears: Record<string, string> } {
+  const { year, monthIdx } = firstIssueMonth(signedIsoUtc);
+  const startDate = new Date(Date.UTC(year, monthIdx, 1));
+  // end = last day of (monthIdx + months - 1)
+  const endMonthExclusive = monthIdx + months;
+  const endDate = new Date(Date.UTC(year, endMonthExclusive, 0)); // day 0 = last day of prior month
+  const remindDate = new Date(endDate.getTime());
+  remindDate.setUTCDate(remindDate.getUTCDate() - 30);
+  const iso = (d: Date) => `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+
+  const timingMonths: Record<string, boolean> = {};
+  const timingYears: Record<string, string> = {};
+  for (let i = 0; i < months; i++) {
+    const cur = new Date(Date.UTC(year, monthIdx + i, 1));
+    const key = MONTH_KEYS[cur.getUTCMonth()];
+    timingMonths[key] = true;
+    timingYears[key] = String(cur.getUTCFullYear());
+  }
+
+  return {
+    startIso: iso(startDate),
+    endIso: iso(endDate),
+    expIso: iso(endDate),
+    remindIso: iso(remindDate),
+    timingMonths,
+    timingYears,
+  };
+}
+
+// Recompute + persist run dates for all PRINT line items on this agreement.
+// Returns count of updated rows.
+async function recomputePrintAnchors(
+  sql: ReturnType<typeof getSql>,
+  agreementId: string,
+  signedIsoUtc: string,
+): Promise<number> {
+  type Row = { id: string; frequency: string | null };
+  const rows = await sql`
+    SELECT id, frequency
+    FROM agreement_line_items
+    WHERE agreement_id = ${agreementId} AND channel = 'print'
+  ` as unknown as Row[];
+  let updated = 0;
+  for (const r of rows) {
+    const months = freqToMonths(r.frequency);
+    const run = computePrintRun(signedIsoUtc, months);
+    await sql`
+      UPDATE agreement_line_items
+      SET start_date            = ${run.startIso}::date,
+          end_date              = ${run.endIso}::date,
+          expiration_date       = ${run.expIso}::date,
+          renewal_reminder_date = ${run.remindIso}::date,
+          ad_timing_months      = ${JSON.stringify(run.timingMonths)}::jsonb,
+          ad_timing_years       = ${JSON.stringify(run.timingYears)}::jsonb
+      WHERE id = ${r.id}
+    `;
+    updated++;
+  }
+  return updated;
+}
+
 export async function POST(req: NextRequest, ctx: RouteCtx) {
   const { token } = await ctx.params;
   const parsed = verifyToken(token);
@@ -224,12 +320,21 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       WHERE id = ${id}
     `;
 
+    // Sign-time anchor recompute — 15th-cutoff rule for print lines.
+    let printAnchorUpdated = 0;
+    try {
+      printAnchorUpdated = await recomputePrintAnchors(sql, id, signedAtTs);
+    } catch (err) {
+      console.error('[api/sign POST] recomputePrintAnchors failed', err instanceof Error ? err.message : String(err));
+    }
+
     // Append audit
     const methodLabel = signMethod === 'draw' ? 'drawn signature' : signMethod === 'upload' ? 'uploaded signed document' : 'typed signature';
+    const anchorNote = printAnchorUpdated > 0 ? ` · re-anchored ${printAnchorUpdated} print line${printAnchorUpdated === 1 ? '' : 's'}` : '';
     const newLog = appendAudit(ag.audit_log, {
       event: 'signed',
       timestamp: now,
-      details: `Digitally signed by "${signerName}" via sign wizard (${methodLabel})`,
+      details: `Digitally signed by "${signerName}" via sign wizard (${methodLabel})${anchorNote}`,
     });
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${id}`;
 
