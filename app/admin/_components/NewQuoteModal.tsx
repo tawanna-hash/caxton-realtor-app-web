@@ -1616,32 +1616,6 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   <br />
                   {selectedAppSlot.notes}
                 </div>
-                <div className="sm:col-span-2 border-t border-gray-200 pt-3 mt-1">
-                  <p className="text-[11px] uppercase tracking-wider text-gray-600 font-semibold mb-1">
-                    App run window
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <label className="text-xs text-gray-700">
-                      Start date (agreement will run from this date)
-                      <input
-                        type="date"
-                        value={runStart}
-                        onChange={(e) => { setRunMode('dates'); setRunStart(e.target.value); }}
-                        className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
-                      />
-                    </label>
-                    <label className="text-xs text-gray-700">
-                      End date
-                      <input
-                        type="date"
-                        value={runEnd}
-                        min={runStart}
-                        onChange={(e) => { setRunMode('dates'); setRunEnd(e.target.value); }}
-                        className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
-                      />
-                    </label>
-                  </div>
-                </div>
               </>
             )}
           </div>
