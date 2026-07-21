@@ -100,17 +100,26 @@ export default async function AdvertiseDigitalPage() {
         </p>
 
         <div className="mt-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Please allow up to 2 days for your ad space to go live after payment
-          while we review and approve your creative. Need it sooner? Text
-          Tawanna at{' '}
-          <a href={`sms:${TAWANNA_SMS}`} className="font-semibold underline underline-offset-2">
-            512-965-0057
-          </a>{' '}
-          (text only) or contact Doren at{' '}
-          <a href={`tel:${DOREN_TEL}`} className="font-semibold underline underline-offset-2">
-            512-514-3141
-          </a>
-          .
+          <p>
+            Please allow up to 2 days for your ad space to go live after payment
+            while we review and approve your creative.
+          </p>
+          <p className="mt-2">Need it sooner?</p>
+          <ul className="mt-1 list-disc list-inside">
+            <li>
+              Tawanna at{' '}
+              <a href={`sms:${TAWANNA_SMS}`} className="font-semibold underline underline-offset-2">
+                512-965-0057
+              </a>{' '}
+              (text only)
+            </li>
+            <li>
+              Doren at{' '}
+              <a href={`tel:${DOREN_TEL}`} className="font-semibold underline underline-offset-2">
+                512-514-3141
+              </a>
+            </li>
+          </ul>
         </div>
       </header>
 

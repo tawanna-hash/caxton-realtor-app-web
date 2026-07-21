@@ -113,17 +113,26 @@ export default async function CheckoutPage(ctx: RouteCtx) {
         </div>
 
         <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 mb-6 text-sm text-amber-900">
-          Please allow up to 2 days for your ad space to go live after payment
-          while we review and approve your creative. Need it sooner? Text
-          Tawanna at{' '}
-          <a href="sms:+15129650057" className="font-semibold underline underline-offset-2">
-            512-965-0057
-          </a>{' '}
-          (text only) or contact Doren at{' '}
-          <a href="tel:+15125143141" className="font-semibold underline underline-offset-2">
-            512-514-3141
-          </a>
-          .
+          <p>
+            Please allow up to 2 days for your ad space to go live after payment
+            while we review and approve your creative.
+          </p>
+          <p className="mt-2">Need it sooner?</p>
+          <ul className="mt-1 list-disc list-inside">
+            <li>
+              Tawanna at{' '}
+              <a href="sms:+15129650057" className="font-semibold underline underline-offset-2">
+                512-965-0057
+              </a>{' '}
+              (text only)
+            </li>
+            <li>
+              Doren at{' '}
+              <a href="tel:+15125143141" className="font-semibold underline underline-offset-2">
+                512-514-3141
+              </a>
+            </li>
+          </ul>
         </div>
 
         <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 mb-6 shadow-sm">
@@ -153,7 +162,9 @@ export default async function CheckoutPage(ctx: RouteCtx) {
         />
 
         <p className="text-center text-xs text-gray-500 mt-10">
-          Need help? Email <a href="mailto:hello@myrealtyline.com" className="underline">hello@myrealtyline.com</a> or call us — we&apos;ll book you manually.
+          Need help? Email{' '}
+          <a href="mailto:hello@myrealtyline.com" className="underline">hello@myrealtyline.com</a>{' '}
+          or call us — we&apos;ll book you manually.
         </p>
       </div>
     </div>
