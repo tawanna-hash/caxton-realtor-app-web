@@ -71,6 +71,44 @@ export async function listGiveaways(): Promise<GiveawayListRow[]> {
   }));
 }
 
+// -----------------------------------------------------------------------------
+// Public list — the giveaways surfaced on the public /giveaways page.
+// -----------------------------------------------------------------------------
+
+export interface PublicGiveawayRow {
+  id: string;
+  title: string;
+  prize: string;
+  publication: string;
+  starts_at: Date;
+  ends_at: Date;
+}
+
+/**
+ * Giveaways eligible for public display: explicitly published (`active`) and
+ * currently within their entry window. `draft` (never published), `closed`,
+ * and `announced` are excluded. `market` is the admin publication id the
+ * viewer's chosen publication maps to (or null for markets without a giveaway
+ * catalog); giveaways scoped to that market plus `both` are returned.
+ *
+ * `description` is deliberately not selected — the admin form labels it an
+ * "Optional internal note", so it must not surface to the public.
+ */
+export async function listPublicGiveaways(
+  market: 'austin' | 'san_antonio' | null,
+): Promise<PublicGiveawayRow[]> {
+  return query<PublicGiveawayRow>(
+    `SELECT id, title, prize, publication, starts_at, ends_at
+     FROM giveaways
+     WHERE status = 'active'
+       AND starts_at <= NOW()
+       AND ends_at >= NOW()
+       AND (publication = 'both' OR publication = $1::text)
+     ORDER BY ends_at ASC`,
+    [market],
+  );
+}
+
 export async function getGiveawayDetail(id: string): Promise<GiveawayDetail | null> {
   const giveawayRows = await query(
     `SELECT g.*, r.first_name AS winner_first_name, r.last_name AS winner_last_name, r.email AS winner_email

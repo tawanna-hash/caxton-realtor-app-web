@@ -11,6 +11,7 @@ const publicPages = [
   '/sign-up',
   '/advertise',
   '/privacy',
+  '/giveaways',
 ];
 
 for (const path of publicPages) {
