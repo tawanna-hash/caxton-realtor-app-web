@@ -87,6 +87,13 @@ export async function markSubscriptionGone(endpoint: string): Promise<void> {
   `;
 }
 
+// Canonical Realty News Now notification branding. This is the same icon
+// asset RealtyLine (Austin) notifications already render; reusing it here
+// guarantees every publication — Newsline San Antonio included — shows the
+// RNN logo as its notification icon/badge instead of a client/OS default
+// (which renders as a generic gray letter avatar). No new asset is added.
+const RNN_NOTIFICATION_ICON = '/icon-192.png';
+
 export type PushMarketFilter = 'austin' | 'san_antonio' | 'houston' | 'dallas';
 
 /**
@@ -229,11 +236,21 @@ export async function broadcastPushAll(
   web: { sent: number; failed: number; revoked: number };
   ios: { sent: number; failed: number; revoked: number; skipped: boolean };
 }> {
+  // Stamp RNN branding on every fan-out so the notification icon/badge is
+  // identical across publications. Web push falls back to this icon in the
+  // service worker, but the native (APNs) data path carries no icon unless we
+  // set it here — leaving Newsline notifications without the RNN logo. A
+  // caller-supplied icon still wins.
+  const branded: PushPayload = {
+    ...payload,
+    icon: payload.icon || RNN_NOTIFICATION_ICON,
+    badge: payload.badge || RNN_NOTIFICATION_ICON,
+  };
   const [web, ios] = await Promise.all([
-    broadcastPush(notificationId, payload, marketFilter),
+    broadcastPush(notificationId, branded, marketFilter),
     (async () => {
       const { broadcastNativePush } = await import('@/lib/server/native-push');
-      return broadcastNativePush(notificationId, payload, marketFilter);
+      return broadcastNativePush(notificationId, branded, marketFilter);
     })(),
   ]);
   return { web, ios };
