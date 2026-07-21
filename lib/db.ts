@@ -180,6 +180,22 @@ async function _runEnsureSchema(): Promise<void> {
     END
     WHERE COALESCE(array_length(pubs, 1), 0) = 0
   `;
+  // Self-serve approval gate (2026-07-21): a paid self-serve booking must NOT
+  // go live automatically — it waits for an admin to approve it from
+  // /admin/ads/orders. approval_status tracks that lifecycle:
+  //   'draft'    — submitted, payment not yet webhook-confirmed (does NOT reserve)
+  //   'pending'  — paid, awaiting admin approval (reserves capacity, not live)
+  //   'approved' — admin-approved OR legacy/admin-created campaign (gates on active)
+  // Default 'approved' so every pre-existing row and all admin-created
+  // campaigns behave exactly as before (serving still gates purely on `active`).
+  await sql`
+    ALTER TABLE ad_campaigns
+      ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'approved'
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_ad_campaigns_approval
+      ON ad_campaigns (ad_space_slug, approval_status, active, start_date, end_date)
+  `;
   await sql`
     CREATE INDEX IF NOT EXISTS idx_ad_creatives_advertiser
       ON ad_creatives (advertiser_name)

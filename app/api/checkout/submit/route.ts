@@ -171,18 +171,22 @@ export async function POST(req: NextRequest) {
               ${clickUrl}, ${altText}, ${'self_serve:' + (advertiserEmail || 'anon')})
     `;
 
-    // 2) ad_campaigns row — keep INACTIVE until webhook confirms payment
+    // 2) ad_campaigns row — INACTIVE + approval_status='draft'. It stays a
+    //    non-reserving draft until the Stripe webhook confirms payment (flips
+    //    it to 'pending', which reserves capacity + queues admin approval).
+    //    Admin approval is what finally sets active=true. This keeps abandoned
+    //    or failed checkouts from ever reserving inventory or going live.
     const campaignId = randomUUID();
     const dollars = (baseCents / 100).toFixed(2);
     await sql`
       INSERT INTO ad_campaigns
         (id, advertiser_name, ad_space_slug, creative_id, publication, pubs,
          start_date, end_date,
-         active, price_total, price_notes, notes, created_by, channel)
+         active, approval_status, price_total, price_notes, notes, created_by, channel)
       VALUES
         (${campaignId}, ${advertiserName}, ${slot.slug}, ${creativeId},
          ${dbPubDisplay}, ${dbPubs},
-         ${startDate}, ${endDate}, ${false}, ${dollars}, ${billingPeriod},
+         ${startDate}, ${endDate}, ${false}, ${'draft'}, ${dollars}, ${billingPeriod},
          ${'self-serve checkout, pi=' + paymentIntentId},
          ${'self_serve:' + (advertiserEmail || 'anon')},
          ${channel})

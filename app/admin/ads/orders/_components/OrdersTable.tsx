@@ -152,6 +152,7 @@ export default function OrdersTable() {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
 
   const setUrl = useCallback(
     (next: Record<string, string | null>) => {
@@ -202,6 +203,31 @@ export default function OrdersTable() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     refetch();
   }, [refetch]);
+
+  const approve = useCallback(
+    async (id: string) => {
+      setApprovingId(id);
+      setError(null);
+      try {
+        const res = await fetch(
+          `/api/admin/ads/campaigns/${encodeURIComponent(id)}/approve`,
+          { method: 'POST', credentials: 'include' },
+        );
+        if (!res.ok) {
+          const j = (await res.json().catch(() => null)) as
+            | { error?: string }
+            | null;
+          throw new Error(j?.error || `Approve failed (${res.status})`);
+        }
+        await refetch();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Approve failed');
+      } finally {
+        setApprovingId(null);
+      }
+    },
+    [refetch],
+  );
 
   return (
     <div>
@@ -394,7 +420,18 @@ export default function OrdersTable() {
                         <span className="text-gray-400">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      {row.needs_approval && (
+                        <button
+                          type="button"
+                          onClick={() => approve(row.id)}
+                          disabled={approvingId === row.id}
+                          className="mr-3 inline-flex items-center rounded-md bg-green-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                          title="Approve this paid booking and take the ad live"
+                        >
+                          {approvingId === row.id ? 'Approving…' : 'Approve & go live'}
+                        </button>
+                      )}
                       <Link
                         href={detailHref(row)}
                         className="text-blue-700 hover:underline text-xs"

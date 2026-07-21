@@ -132,27 +132,80 @@ function capacityForSlug(slug: string): number {
 }
 
 /**
- * Reduce active-campaign rows (already filtered to a single slot) into the
- * set of checkout scopes that are blocked. A scope is blocked only once the
- * number of overlapping active bookings on that pub reaches the slot's
- * `capacity`, so rotating slots aren't marked sold out by a single booking.
- * Pure / no I/O.
+ * Count overlapping bookings per checkout scope for a set of rows already
+ * filtered to a single slot. Pure / no I/O.
  */
-function rowsToBlockedSet(
-  rows: ActiveCampaignRow[],
-  capacity: number,
-): Set<CheckoutPub> {
+function rowsToCounts(rows: ActiveCampaignRow[]): Map<CheckoutPub, number> {
   const counts = new Map<CheckoutPub, number>();
   for (const r of rows) {
     for (const p of pubsFromRow(r)) {
       counts.set(p, (counts.get(p) ?? 0) + 1);
     }
   }
+  return counts;
+}
+
+/**
+ * Reduce campaign rows (already filtered to a single slot) into the set of
+ * checkout scopes that are blocked. A scope is blocked only once the number
+ * of overlapping bookings on that pub reaches the slot's `capacity`, so
+ * rotating slots aren't marked sold out by a single booking. Pure / no I/O.
+ */
+function rowsToBlockedSet(
+  rows: ActiveCampaignRow[],
+  capacity: number,
+): Set<CheckoutPub> {
   const blocked = new Set<CheckoutPub>();
-  for (const [p, n] of counts) {
+  for (const [p, n] of rowsToCounts(rows)) {
     if (n >= capacity) blocked.add(p);
   }
   return blocked;
+}
+
+// Single-pub scopes that count toward public sell-through. Only LAUNCHED
+// markets — Houston and Dallas/FTW are pre-launch and can't be booked, so a
+// slot's placement-level availability is judged solely on RealtyLine +
+// Newsline. Mirrors the BOOKABLE_PUBS list the public /advertise/digital page
+// used before this logic was centralized here.
+const BOOKABLE_PUBS: readonly CheckoutPub[] = ['realtyline', 'newsline'];
+
+/**
+ * Placement-level inventory for a rotating/standard slot, judged across the
+ * slot's bookable publications. `capacity` is the per-publication capacity
+ * (ROTATION_CAPACITY for rotating slots, 1 otherwise). `available` is the
+ * best-case open count across bookable pubs, so a placement is sold out only
+ * when every bookable pub is full — identical to the existing sold-out rule.
+ */
+export interface SlotInventory {
+  capacity: number;
+  sold: number;
+  available: number;
+  soldOut: boolean;
+}
+
+/**
+ * Collapse per-pub counts for one slot into placement-level inventory using
+ * the slot's bookable pubs and per-pub capacity. Pure / no I/O.
+ */
+function countsToInventory(
+  bookablePubs: readonly CheckoutPub[],
+  counts: Map<CheckoutPub, number>,
+  capacity: number,
+): SlotInventory {
+  if (bookablePubs.length === 0) {
+    return { capacity, sold: capacity, available: 0, soldOut: true };
+  }
+  let bestOpen = 0;
+  for (const p of bookablePubs) {
+    const open = Math.max(0, capacity - (counts.get(p) ?? 0));
+    if (open > bestOpen) bestOpen = open;
+  }
+  return {
+    capacity,
+    available: bestOpen,
+    sold: capacity - bestOpen,
+    soldOut: bestOpen === 0,
+  };
 }
 
 /**
@@ -171,14 +224,66 @@ export async function getBookedPubsForAllSlots(
   startDate?: string,
   endDate?: string,
 ): Promise<Map<string, Set<CheckoutPub>>> {
-  const { start, end } = defaultWindow(startDate, endDate);
-
   // Pre-seed every known slot with an empty Set so callers always get a
   // value back even when no campaign touches that slug.
   const result = new Map<string, Set<CheckoutPub>>();
   for (const s of APP_AD_SLOTS) {
     result.set(s.slug, new Set<CheckoutPub>());
   }
+
+  const bySlug = await fetchReservingRowsBySlug(startDate, endDate);
+  if (!bySlug) return result; // fail-open: all empty Sets
+
+  for (const [slug, slugRows] of bySlug) {
+    // If a campaign references an unknown slug, surface it anyway so
+    // future callers can still query for it.
+    result.set(slug, rowsToBlockedSet(slugRows, capacityForSlug(slug)));
+  }
+
+  return result;
+}
+
+/**
+ * Batch helper -- placement-level inventory (capacity / sold / available /
+ * soldOut) for EVERY known slot, using the SAME reserving query, capacity map,
+ * bookable-pub set, and date window as the sold-out logic. This is what the
+ * public /advertise/digital rate card renders as "N available · M sold".
+ *
+ * Fails open: on DB error, returns full-availability inventory for every slot.
+ */
+export async function getSlotInventoryForAllSlots(
+  startDate?: string,
+  endDate?: string,
+): Promise<Map<string, SlotInventory>> {
+  const bySlug = await fetchReservingRowsBySlug(startDate, endDate);
+
+  const result = new Map<string, SlotInventory>();
+  for (const s of APP_AD_SLOTS) {
+    const capacity = capacityForSlug(s.slug);
+    const bookable = (getSlotAvailablePubs(s) as readonly string[]).filter(
+      (p): p is CheckoutPub =>
+        (BOOKABLE_PUBS as readonly string[]).includes(p),
+    );
+    const counts = bySlug
+      ? rowsToCounts(bySlug.get(s.slug) ?? [])
+      : new Map<CheckoutPub, number>();
+    result.set(s.slug, countsToInventory(bookable, counts, capacity));
+  }
+  return result;
+}
+
+/**
+ * Shared fetch for the availability + inventory batch helpers. Runs a single
+ * query for every campaign that RESERVES inventory (live `active=TRUE` OR paid
+ * `approval_status='pending'`), excluding house ads, overlapping the window,
+ * and groups the rows by slot slug. Returns null on DB error so callers can
+ * fail open.
+ */
+async function fetchReservingRowsBySlug(
+  startDate?: string,
+  endDate?: string,
+): Promise<Map<string, ActiveCampaignRow[]> | null> {
+  const { start, end } = defaultWindow(startDate, endDate);
 
   let rows: ActiveCampaignRow[] = [];
   try {
@@ -190,7 +295,7 @@ export async function getBookedPubsForAllSlots(
              start_date::text AS start_date,
              end_date::text   AS end_date
         FROM ad_campaigns
-       WHERE active = TRUE
+       WHERE (active = TRUE OR approval_status = 'pending')
          AND advertiser_name <> ${HOUSE_AD_ADVERTISER}
          AND start_date <= ${end}::date
          AND end_date   >= ${start}::date
@@ -199,10 +304,9 @@ export async function getBookedPubsForAllSlots(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn(`[slot-availability] batch fail-open: ${msg}`);
-    return result;
+    return null;
   }
 
-  // Group rows by slug, then reduce each group with the shared helper.
   const bySlug = new Map<string, ActiveCampaignRow[]>();
   for (const r of rows) {
     const slug = r.ad_space_slug;
@@ -211,14 +315,7 @@ export async function getBookedPubsForAllSlots(
     if (list) list.push(r);
     else bySlug.set(slug, [r]);
   }
-
-  for (const [slug, slugRows] of bySlug) {
-    // If a campaign references an unknown slug, surface it anyway so
-    // future callers can still query for it.
-    result.set(slug, rowsToBlockedSet(slugRows, capacityForSlug(slug)));
-  }
-
-  return result;
+  return bySlug;
 }
 
 /**
@@ -253,7 +350,7 @@ export async function getBookedPubsForSlot(
              end_date::text   AS end_date
         FROM ad_campaigns
        WHERE ad_space_slug = ${slotSlug}
-         AND active = TRUE
+         AND (active = TRUE OR approval_status = 'pending')
          AND advertiser_name <> ${HOUSE_AD_ADVERTISER}
          AND start_date <= ${end}::date
          AND end_date   >= ${start}::date

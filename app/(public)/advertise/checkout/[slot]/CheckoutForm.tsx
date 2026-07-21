@@ -316,9 +316,19 @@ export default function CheckoutForm({
     return (
       <div className="rounded-md bg-emerald-50 border border-emerald-200 p-6 sm:p-8 text-center">
         <div className="text-emerald-700 text-4xl mb-3">✓</div>
-        <h2 className="text-2xl font-bold text-emerald-900 mb-2">You&apos;re booked.</h2>
+        <h2 className="text-2xl font-bold text-emerald-900 mb-2">Payment received — pending approval.</h2>
         <p className="text-emerald-800 mb-4">
-          Payment confirmed. We&apos;ll review your creative and activate the placement within one business day.
+          Payment confirmed. Your placement is reserved and awaiting admin
+          approval — please allow up to 2 days for it to go live while we review
+          your creative. Need it sooner? Text Tawanna at{' '}
+          <a href="sms:+15129650057" className="font-semibold underline underline-offset-2">
+            512-965-0057
+          </a>{' '}
+          (text only) or contact Doren at{' '}
+          <a href="tel:+15125143141" className="font-semibold underline underline-offset-2">
+            512-514-3141
+          </a>
+          .
         </p>
         <p className="text-xs text-emerald-700">Confirmation #{success.agreementId.slice(0, 8)}</p>
         <p className="text-sm text-emerald-700 mt-4">

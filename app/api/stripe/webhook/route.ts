@@ -256,10 +256,13 @@ async function handleSelfServePaymentSucceeded(
     }
   }
 
-  // 1) Flip agreement → signed + active + paid + capture stripe ids
+  // 1) Mark agreement paid + signed. NOTE: status is 'signed', NOT 'active' —
+  //    payment does not make the placement live. An admin must approve the
+  //    creative from /admin/ads/orders before it goes live. paid_at makes the
+  //    orders pipeline render this as "paid".
   await sql`
     UPDATE agreements SET
-      status = 'active',
+      status = 'signed',
       signed_at = COALESCE(signed_at, NOW()),
       sign_date = COALESCE(sign_date, NOW()::date::text),
       paid_at = NOW(),
@@ -281,20 +284,24 @@ async function handleSelfServePaymentSucceeded(
   const newLog = appendAudit(auditRows[0]?.audit_log, {
     event: 'self_serve_payment_succeeded',
     timestamp: new Date().toISOString(),
-    details: `Stripe charged ${(pi.amount_received / 100).toFixed(2)} ${pi.currency.toUpperCase()} \u2014 pi: ${pi.id}; agreement auto-activated.`,
+    details: `Stripe charged ${(pi.amount_received / 100).toFixed(2)} ${pi.currency.toUpperCase()} \u2014 pi: ${pi.id}; awaiting admin approval before go-live.`,
   });
   await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${ag.id}`;
 
-  // 3) Activate the campaign (matched by notes containing the pi.id, written
-  //    by /api/checkout/submit). active=false at creation, flipped to true here
-  //    so unverified payments don't go live.
+  // 3) Move the campaign (matched by notes containing the pi.id, written by
+  //    /api/checkout/submit) from 'draft' -> 'pending'. It stays active=false
+  //    (not live) but now RESERVES capacity so the slot can't be oversold
+  //    while it awaits admin approval at /admin/ads/orders. Guarded on the
+  //    draft->pending transition so it's idempotent under Stripe retries and
+  //    never overwrites an already-approved campaign.
   await sql`
     UPDATE ad_campaigns
-       SET active = true, updated_at = NOW()
+       SET approval_status = 'pending', updated_at = NOW()
      WHERE notes LIKE ${'%' + pi.id + '%'}
+       AND approval_status = 'draft'
   `;
 
-  console.log('[stripe-webhook] self-serve activated agreement', ag.id, 'pi:', pi.id);
+  console.log('[stripe-webhook] self-serve paid, pending approval \u2014 agreement', ag.id, 'pi:', pi.id);
 }
 
 async function handlePaymentFailed(
@@ -319,6 +326,21 @@ async function handlePaymentFailed(
 }
 
 async function handleRefund(sql: ReturnType<typeof getSql>, charge: Stripe.Charge): Promise<void> {
+  // Self-serve release: a refunded self-serve booking must stop reserving
+  // capacity and must not go live. Reset the linked campaign to a
+  // non-reserving 'draft' + inactive so the slot frees up immediately.
+  const piId =
+    typeof charge.payment_intent === 'string'
+      ? charge.payment_intent
+      : charge.payment_intent?.id ?? null;
+  if (piId) {
+    await sql`
+      UPDATE ad_campaigns
+         SET active = false, approval_status = 'draft', updated_at = NOW()
+       WHERE notes LIKE ${'%' + piId + '%'}
+    `;
+  }
+
   const agreementId =
     (typeof charge.payment_intent === 'string'
       ? null

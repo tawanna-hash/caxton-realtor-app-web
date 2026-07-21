@@ -46,6 +46,12 @@ export interface OrderRow {
   stripe_payment_intent_id: string | null;
   paid_at: string | null;
   created_at: string;
+  /**
+   * True only for self-serve campaign rows that are paid but awaiting an
+   * admin go-live decision (active=false, approval_status='pending'). Drives
+   * the "Approve & go live" action in the orders table.
+   */
+  needs_approval: boolean;
 }
 
 export interface ListOrdersParams {
@@ -65,6 +71,7 @@ interface CampaignRow {
   start_date: string | null;
   end_date: string | null;
   active: boolean;
+  approval_status: string;
   price_total: string | null;
   created_at: string;
 }
@@ -106,7 +113,7 @@ export async function listOrders(
   if (source !== 'agreement') {
     const campaigns = (await sql`
       SELECT id, channel, advertiser_name, ad_space_slug, publication,
-             start_date, end_date, active, price_total, created_at
+             start_date, end_date, active, approval_status, price_total, created_at
         FROM ad_campaigns
        WHERE (${channel}::text IS NULL OR channel = ${channel})
          AND (${q}::text       IS NULL OR
@@ -119,11 +126,22 @@ export async function listOrders(
     for (const c of campaigns) {
       const priceCents =
         c.price_total != null ? Math.round(Number(c.price_total) * 100) : null;
+      // Paid + awaiting go-live: active=false but reserved via 'pending'.
+      const needsApproval = !c.active && c.approval_status === 'pending';
+      // Project the boolean/approval lifecycle into the shared vocabulary:
+      //   active                       -> 'active' (live)
+      //   paid, pending approval       -> 'paid'
+      //   otherwise (draft/cancelled)  -> 'cancelled' (unchanged legacy)
+      const status: OrderStatus = c.active
+        ? 'active'
+        : needsApproval
+          ? 'paid'
+          : 'cancelled';
       rows.push({
         id: c.id,
         source: 'campaign',
         channel: asChannel(c.channel),
-        status: c.active ? 'active' : 'cancelled',
+        status,
         advertiser_id: null,
         advertiser_name: c.advertiser_name,
         advertiser_email: null,
@@ -136,6 +154,7 @@ export async function listOrders(
         stripe_payment_intent_id: null,
         paid_at: null,
         created_at: c.created_at,
+        needs_approval: needsApproval,
       });
     }
   }
@@ -175,6 +194,7 @@ export async function listOrders(
         stripe_payment_intent_id: a.stripe_payment_intent_id,
         paid_at: a.paid_at,
         created_at: a.created_at,
+        needs_approval: false,
       });
     }
   }

@@ -107,9 +107,23 @@ export default async function CheckoutPage(ctx: RouteCtx) {
           <PageTitle size="md">Book {slot.name}</PageTitle>
           <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
             Choose your dates, upload your creative, accept the terms, and pay
-            securely. Your ad goes live as soon as we verify the creative meets
-            spec — usually within one business day.
+            securely. After payment, our team reviews and approves your creative
+            before it goes live.
           </p>
+        </div>
+
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 mb-6 text-sm text-amber-900">
+          Please allow up to 2 days for your ad space to go live after payment
+          while we review and approve your creative. Need it sooner? Text
+          Tawanna at{' '}
+          <a href="sms:+15129650057" className="font-semibold underline underline-offset-2">
+            512-965-0057
+          </a>{' '}
+          (text only) or contact Doren at{' '}
+          <a href="tel:+15125143141" className="font-semibold underline underline-offset-2">
+            512-514-3141
+          </a>
+          .
         </div>
 
         <div className="rounded-md bg-white border border-gray-200 p-5 sm:p-6 mb-6 shadow-sm">

@@ -14,8 +14,11 @@
 
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
-import { APP_AD_SLOTS, getSlotAvailablePubs, type AppAdSlot, type MediaKitPub } from '@/lib/media-kit';
-import { getBookedPubsForAllSlots } from '@/lib/server/slot-availability';
+import { APP_AD_SLOTS, type AppAdSlot } from '@/lib/media-kit';
+import {
+  getSlotInventoryForAllSlots,
+  type SlotInventory,
+} from '@/lib/server/slot-availability';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -26,15 +29,11 @@ export const metadata = {
     'Live availability across all 16 digital placements on realtynewsnow.app. Book any open slot in under five minutes with self-serve checkout.',
 };
 
-// Single-pub scopes considered when deciding if a slot is sold out. Only
-// LAUNCHED markets count — Houston and Dallas/FTW are pre-launch and can't
-// be booked yet, so they must not 'rescue' a slot that's actually sold out
-// on every bookable publication. The legacy 'both' bundle is also
-// excluded — it's a packaging option, not a separate market.
-const BOOKABLE_PUBS: ReadonlyArray<MediaKitPub> = [
-  'realtyline',
-  'newsline',
-];
+// Availability disclaimer shown before booking: sets the up-to-2-days
+// review/approval expectation and offers the two fast-track contacts.
+// Tawanna is text-only (sms:); Doren can be called (tel:).
+const TAWANNA_SMS = '+15129650057';
+const DOREN_TEL = '+15125143141';
 
 function rateLine(s: AppAdSlot): string {
   const unit = s.pricingUnit ?? 'week';
@@ -46,22 +45,20 @@ function rateLine(s: AppAdSlot): string {
 const TIER_ORDER: Record<string, number> = { premium: 0, standard: 1, light: 2 };
 
 export default async function AdvertiseDigitalPage() {
-  // Single SQL query returns blocked-pub sets for every slot at once.
+  // Single SQL query returns placement-level inventory (capacity / sold /
+  // available / soldOut) for every slot, using the same reserving states,
+  // date window, and bookable-pub set as the checkout availability check.
   // Fails open inside the helper, so we never have to catch here.
-  const blockedBySlug = await getBookedPubsForAllSlots();
+  const inventoryBySlug = await getSlotInventoryForAllSlots();
 
   const availability = APP_AD_SLOTS.map((slot) => {
-    const allowedPubs = getSlotAvailablePubs(slot);
-    const blocked = blockedBySlug.get(slot.slug) ?? new Set<MediaKitPub>();
-    // A slot is "available" if at least one of its BOOKABLE single-pub
-    // scopes is not currently booked. Pre-launch markets (Houston,
-    // Dallas) are intentionally ignored so a slot booked on 'both' (which
-    // blocks RealtyLine + Newsline) correctly shows as sold out.
-    const openPubs = allowedPubs.filter(
-      (p) =>
-        (BOOKABLE_PUBS as readonly MediaKitPub[]).includes(p) && !blocked.has(p),
-    );
-    return { slot, soldOut: openPubs.length === 0 };
+    const inv: SlotInventory = inventoryBySlug.get(slot.slug) ?? {
+      capacity: 1,
+      sold: 0,
+      available: 1,
+      soldOut: false,
+    };
+    return { slot, inv, soldOut: inv.soldOut };
   });
 
   // Available first, sold-out last; within each group, premium tier first.
@@ -101,10 +98,24 @@ export default async function AdvertiseDigitalPage() {
             See where each ad appears in the app →
           </Link>
         </p>
+
+        <div className="mt-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Please allow up to 2 days for your ad space to go live after payment
+          while we review and approve your creative. Need it sooner? Text
+          Tawanna at{' '}
+          <a href={`sms:${TAWANNA_SMS}`} className="font-semibold underline underline-offset-2">
+            512-965-0057
+          </a>{' '}
+          (text only) or contact Doren at{' '}
+          <a href={`tel:${DOREN_TEL}`} className="font-semibold underline underline-offset-2">
+            512-514-3141
+          </a>
+          .
+        </div>
       </header>
 
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {availability.map(({ slot, soldOut }) => {
+        {availability.map(({ slot, inv, soldOut }) => {
           // No page-level pub filter anymore — the buyer picks the market on
           // the checkout page itself. Default the deep link to 'realtyline'
           // so the checkout's initial Publication pill is the most common
@@ -139,6 +150,12 @@ export default async function AdvertiseDigitalPage() {
 
               <p className={`text-sm mb-2 ${soldOut ? 'text-gray-400' : 'text-gray-700'}`}>
                 {rateLine(slot)}
+              </p>
+
+              <p className={`text-xs font-medium mb-2 ${soldOut ? 'text-amber-700' : 'text-emerald-700'}`}>
+                {soldOut
+                  ? `Sold out · ${inv.sold} sold`
+                  : `${inv.available} available · ${inv.sold} sold`}
               </p>
 
               <p className={`text-xs mb-1 ${soldOut ? 'text-gray-400' : 'text-gray-600'}`}>

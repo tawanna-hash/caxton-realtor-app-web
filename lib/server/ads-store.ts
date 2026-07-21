@@ -37,6 +37,8 @@ export interface AdCampaign {
   start_date: string;
   end_date: string;
   active: boolean;
+  /** 'draft' | 'pending' | 'approved' — self-serve approval lifecycle. */
+  approval_status: string;
   price_total: string | null;
   price_notes: string | null;
   notes: string | null;
@@ -255,6 +257,60 @@ export async function toggleCampaign(id: string): Promise<AdCampaign | null> {
     [id],
   );
   return r.rows[0] ?? null;
+}
+
+export type ApproveCampaignState =
+  | 'approved' // just transitioned pending -> live
+  | 'already_live' // no-op: was already approved + active (idempotent)
+  | 'not_pending' // refused: draft/unpaid or otherwise not awaiting approval
+  | 'not_found';
+
+/**
+ * Approve a paid, pending self-serve campaign and take it live. Only the
+ * pending -> approved transition activates the campaign, so this is safe to
+ * call repeatedly (idempotent). A draft (unpaid) campaign is refused —
+ * approval must never bypass the paid gate. The linked self-serve agreement
+ * (matched by the pi id embedded in campaign.notes) is flipped to 'active'
+ * as a best-effort side effect.
+ */
+export async function approveSelfServeCampaign(
+  id: string,
+): Promise<{ campaign: AdCampaign | null; state: ApproveCampaignState }> {
+  const pool = getPool();
+  const cur = await pool.query<AdCampaign>(
+    `SELECT * FROM ad_campaigns WHERE id = $1`,
+    [id],
+  );
+  const row = cur.rows[0];
+  if (!row) return { campaign: null, state: 'not_found' };
+  if (row.active && row.approval_status === 'approved') {
+    return { campaign: row, state: 'already_live' };
+  }
+  if (row.approval_status !== 'pending') {
+    return { campaign: row, state: 'not_pending' };
+  }
+
+  const upd = await pool.query<AdCampaign>(
+    `UPDATE ad_campaigns
+        SET active = true, approval_status = 'approved', updated_at = NOW()
+      WHERE id = $1 AND approval_status = 'pending'
+      RETURNING *`,
+    [id],
+  );
+  const campaign = upd.rows[0] ?? row;
+
+  // Best-effort: bring the linked self-serve agreement to 'active' too so the
+  // pipeline reflects the go-live. notes format: 'self-serve checkout, pi=<id>'.
+  const pi = /pi=(\S+)/.exec(row.notes ?? '')?.[1] ?? null;
+  if (pi) {
+    await pool.query(
+      `UPDATE agreements SET status = 'active', updated_at = NOW()
+        WHERE stripe_payment_intent_id = $1`,
+      [pi],
+    );
+  }
+
+  return { campaign, state: 'approved' };
 }
 
 // Public-facing: return ONE active campaign for a given (slot, publication).
