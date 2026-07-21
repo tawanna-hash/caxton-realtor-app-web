@@ -866,6 +866,32 @@ async function _runEnsureSchema(): Promise<void> {
   await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS renewal_reminder_date date`;
   await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS preferred_send_dates jsonb`;
 
+  // ── One-time label backfill: 'Newsletter Banner' → 'e-Blast Top Banner'
+  // on existing app placement line items (package_label + the nested
+  // invoice_line.description in meta). Scoped to channel='app' +
+  // package_id='newsletter_banner' so it never touches anything else.
+  // Idempotent — the LIKE clauses make this a no-op once every row is
+  // renamed. Runs on each cold start via the Vercel-managed DATABASE_URL
+  // (Neon isn't standalone-connected here).
+  await sql`
+    UPDATE agreement_line_items
+    SET package_label = REPLACE(package_label, 'Newsletter Banner', 'e-Blast Top Banner')
+    WHERE channel = 'app'
+      AND package_id = 'newsletter_banner'
+      AND package_label LIKE 'Newsletter Banner%'
+  `;
+  await sql`
+    UPDATE agreement_line_items
+    SET meta = jsonb_set(
+      meta,
+      '{invoice_line,description}',
+      to_jsonb(REPLACE(meta->'invoice_line'->>'description', 'Newsletter Banner', 'e-Blast Top Banner'))
+    )
+    WHERE channel = 'app'
+      AND package_id = 'newsletter_banner'
+      AND meta->'invoice_line'->>'description' LIKE 'Newsletter Banner%'
+  `;
+
   // ---- Magazine GIF preview columns ----
   // Each magazine can have up to three pre-rendered animated previews
   // (full flipbook, teaser, ping-pong) stored in Vercel Blob. The URL
