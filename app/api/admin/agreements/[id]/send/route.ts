@@ -35,9 +35,19 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const ag = rows[0];
 
-    const recipient = (body.to as string | undefined) || ag.advertiser_email || ag.billing_email;
+    // Test-mode: recipient is FORCED to the current admin's email.
+    // Never touches agreement.status / sent_to_email.
+    const urlObj = new URL(req.url);
+    const isTest =
+      urlObj.searchParams.get('test') === '1' ||
+      urlObj.searchParams.get('test') === 'true' ||
+      body.test === true;
+
+    const recipient = isTest
+      ? admin.email
+      : ((body.to as string | undefined) || ag.advertiser_email || ag.billing_email);
     if (!recipient) {
-      return NextResponse.json({ error: 'no email address on agreement' }, { status: 400 });
+      return NextResponse.json({ error: isTest ? 'admin has no email in session' : 'no email address on agreement' }, { status: 400 });
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
@@ -93,9 +103,12 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       totalCents,
     });
 
+    const subject = isTest
+      ? `[TEST] RealtyLine Agreement — ${ag.company_name ?? 'Agreement'}`
+      : `Action Required: Sign Your RealtyLine Advertising Agreement — ${ag.company_name ?? 'Agreement'}`;
     const result = await sendEmail({
       to: recipient,
-      subject: `Action Required: Sign Your RealtyLine Advertising Agreement — ${ag.company_name ?? 'Agreement'}`,
+      subject,
       html,
     });
 
@@ -103,20 +116,25 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json({ error: 'email send failed', detail: result.error }, { status: 502 });
     }
 
-    // Update agreement status → sent, record sent_to_email
-    await sql`UPDATE agreements SET status = 'sent', sent_to_email = ${recipient}, updated_at = NOW() WHERE id = ${id}`;
+    // Real send: update agreement status → sent, record sent_to_email.
+    // Test send: skip both; just audit the test.
+    if (!isTest) {
+      await sql`UPDATE agreements SET status = 'sent', sent_to_email = ${recipient}, updated_at = NOW() WHERE id = ${id}`;
+    }
 
-    // Append audit entry
+    // Append audit entry (different event label for tests).
     const existingRows = await sql`SELECT audit_log FROM agreements WHERE id = ${id}` as unknown as Array<{ audit_log: AgreementAuditEntry[] | null }>;
     const newLog = appendAudit(existingRows[0]?.audit_log, {
-      event: 'email_sent',
+      event: isTest ? 'email_test_sent' : 'email_sent',
       timestamp: new Date().toISOString(),
       user_email: admin.email,
-      details: `Agreement notification sent to ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`,
+      details: isTest
+        ? `Test email sent to admin ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`
+        : `Agreement notification sent to ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`,
     });
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${id}`;
 
-    return NextResponse.json({ ok: true, messageId: result.messageId, sentTo: recipient });
+    return NextResponse.json({ ok: true, messageId: result.messageId, sentTo: recipient, test: isTest });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'unknown error';
     return NextResponse.json({ error: 'send failed', detail: msg }, { status: 500 });

@@ -528,6 +528,41 @@ export function AgreementDrawer({
     }
   };
 
+  // Save-first, then send with { test: true } so the recipient is FORCED
+  // to the current admin's email (server-side, from session). Does NOT
+  // mutate the agreement's status / sent_to_email.
+  const sendTestEmail = async () => {
+    setSaving(true);
+    setSigningMsg(null);
+    try {
+      const payload = buildPayload(false);
+      const url = isCreate ? '/api/admin/agreements' : `/api/admin/agreements/${existing!.id}`;
+      const saveRes = await fetch(url, {
+        method: isCreate ? 'POST' : 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!saveRes.ok) throw new Error(`Save failed HTTP ${saveRes.status}`);
+      const saved = await saveRes.json();
+      const agreementId: string = saved.agreement?.id ?? existing?.id ?? '';
+      if (!agreementId) throw new Error('No agreement ID after save');
+
+      const sendRes = await fetch(`/api/admin/agreements/${agreementId}/send?test=1`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ...buildSendBody(), test: true }),
+      });
+      if (!sendRes.ok) throw new Error(`Test send failed HTTP ${sendRes.status}`);
+      const sendData = await sendRes.json();
+      setSigningMsg(`Test email sent to ${sendData.sentTo ?? 'admin'}`);
+      await onSaved();
+    } catch (e) {
+      onError(e instanceof Error ? e.message : 'test send failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Amend flow:
   //   1. PATCH the latest edits (no signing flag).
   //   2. POST /send-amended — backend regenerates the PDF from the
@@ -1171,6 +1206,14 @@ export function AgreementDrawer({
               className="px-4 py-2 rounded-md border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50"
             >
               Send Signing Link
+            </button>
+            <button
+              onClick={sendTestEmail}
+              disabled={saving}
+              className="px-4 py-2 rounded-md border border-purple-300 text-purple-700 text-sm hover:bg-purple-50 disabled:opacity-50"
+              title="Send the notification email to yourself (does not touch advertiser record)"
+            >
+              Email me a test
             </button>
             <button
               onClick={copySigningLink}
