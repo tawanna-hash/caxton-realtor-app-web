@@ -45,6 +45,11 @@ import {
 import {
   lookupRate, pagePositionPremium, computeExp,
 } from '@/lib/agreement-pricing';
+import {
+  resolveEffectiveCents,
+  bundleGrandTotalCents as computeBundleGrandTotalCents,
+  discountPct as computeDiscountPct,
+} from '@/lib/quote-bundle';
 
 type Channel = 'print' | 'email' | 'app';
 type AppCadence = 'weekly' | 'monthly';
@@ -484,16 +489,21 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     return Math.round(n * 100);
   }, [overrideMode, overrideUnitDollars]);
 
-  const effectiveCents = useMemo(() => {
-    if (overrideTotalCents != null) return overrideTotalCents;
-    if (overrideUnitCents != null) return overrideUnitCents * rackQty;
-    return previewCents;
-  }, [overrideTotalCents, overrideUnitCents, rackQty, previewCents]);
+  const effectiveCents = useMemo(
+    () =>
+      resolveEffectiveCents({
+        previewCents,
+        overrideTotalCents,
+        overrideUnitCents,
+        rackQty,
+      }),
+    [overrideTotalCents, overrideUnitCents, rackQty, previewCents],
+  );
 
-  const discountPct = useMemo(() => {
-    if (previewCents <= 0) return 0;
-    return Math.round(((previewCents - effectiveCents) / previewCents) * 1000) / 10;
-  }, [previewCents, effectiveCents]);
+  const discountPct = useMemo(
+    () => computeDiscountPct(previewCents, effectiveCents),
+    [previewCents, effectiveCents],
+  );
 
   // App-channel collision detection. Returns a list of overlapping
   // bookings so we can show a "warn but allow" banner.
@@ -618,7 +628,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       overrideMode,
       overrideTotalCents,
       overrideUnitCents,
-      subtotalCents: previewCents,
+      // Store the price the customer pays (post-override), not the rack price —
+      // this is what the bundle list, grand total, and review overlay display.
+      subtotalCents: effectiveCents,
     };
   }
 
@@ -681,10 +693,10 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   }
 
   // Grand total = sum of all bundle-line subtotals + current form preview.
-  const bundleGrandTotalCents = useMemo(() => {
-    const linesSum = bundleLines.reduce((acc, l) => acc + l.subtotalCents, 0);
-    return linesSum + previewCents;
-  }, [bundleLines, previewCents]);
+  const bundleGrandTotalCents = useMemo(
+    () => computeBundleGrandTotalCents(bundleLines.map((l) => l.subtotalCents), effectiveCents),
+    [bundleLines, effectiveCents],
+  );
 
   // Build the POST body from a BundleLine (or, when null, from the
   // current form state — for the final line in the bundle sequence).
@@ -1843,7 +1855,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         <span className="italic text-gray-600">Current selection (will be added on Save)</span>
                       </div>
                       <div className="text-gray-800 font-semibold">
-                        ${(previewCents / 100).toFixed(2)}
+                        ${(effectiveCents / 100).toFixed(2)}
                       </div>
                     </div>
                   )}
