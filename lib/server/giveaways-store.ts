@@ -103,7 +103,7 @@ export async function listPublicGiveaways(
      WHERE status = 'active'
        AND starts_at <= NOW()
        AND ends_at >= NOW()
-       AND (publication = 'both' OR publication = $1::text)
+       AND (publication = 'both' OR publication = $1::market_enum)
      ORDER BY ends_at ASC`,
     [market],
   );
