@@ -154,6 +154,12 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   const [appMarkets, setAppMarkets] = useState<MarketCount>(1);
 
   const [publication, setPublication] = useState<Publication>('austin');
+  // Email preferred send dates (up to 3, all optional; blank ⇒ advertiser picks)
+  const [ebDate1, setEbDate1] = useState<string>('');
+  const [ebDate2, setEbDate2] = useState<string>('');
+  const [ebDate3, setEbDate3] = useState<string>('');
+  // Review overlay
+  const [showReview, setShowReview] = useState<boolean>(false);
   const [dueDate, setDueDate] = useState<string>('');
   const [memo, setMemo] = useState<string>('');
 
@@ -202,6 +208,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     ioPosPremActive?: boolean;
     ioTimingMonths?: Record<string, boolean>;
     ioTimingYears?: Record<string, string>;
+    preferredSendDates?: string[];
   };
   const [bundleLines, setBundleLines] = useState<BundleLine[]>([]);
   const [bundleProgress, setBundleProgress] = useState<{
@@ -210,7 +217,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     label: string;
   } | null>(null);
   const [createdAgreement, setCreatedAgreement] = useState<CreatedAgreement | null>(null);
-  const [, setCreatedBundle] = useState<
+  const [createdBundle, setCreatedBundle] = useState<
     Array<{ agreement: CreatedAgreement; invoice: CreatedInvoice }>
   >([]);
   const [createdInvoice, setCreatedInvoice] = useState<CreatedInvoice | null>(null);
@@ -284,6 +291,10 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     setAppWeeks(1);
     setAppMarkets(1);
     setPublication('austin');
+    setEbDate1('');
+    setEbDate2('');
+    setEbDate3('');
+    setShowReview(false);
     setDueDate('');
     setMemo('');
     setError(null);
@@ -570,7 +581,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       label = slot ? slot.name : packageId;
     }
     return {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: '',
       channel,
       packageId,
       packageLabel: label,
@@ -593,6 +604,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       ioPosPremActive: channel === 'print' ? ioPosPremActive : undefined,
       ioTimingMonths: channel === 'print' ? ioTimingMonths : undefined,
       ioTimingYears: channel === 'print' ? ioTimingYears : undefined,
+      preferredSendDates: channel === 'email'
+        ? [ebDate1, ebDate2, ebDate3].filter(Boolean)
+        : undefined,
       publication: channel === 'email' ? publication : undefined,
       runStart: runMode === 'dates' ? runStart : undefined,
       runEnd: runMode === 'dates' ? runEnd : undefined,
@@ -611,6 +625,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       return;
     }
     setError(null);
+    snap.id = `bl-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
     setBundleLines((prev) => [...prev, snap]);
   }
 
@@ -639,6 +654,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     } else if (line.channel === 'email') {
       setSends(line.sends ?? 1);
       if (line.publication) setPublication(line.publication);
+      setEbDate1(line.preferredSendDates?.[0] ?? '');
+      setEbDate2(line.preferredSendDates?.[1] ?? '');
+      setEbDate3(line.preferredSendDates?.[2] ?? '');
     } else {
       setAppCadence(line.appCadence ?? 'weekly');
       setAppWeeks(line.appWeeks ?? 1);
@@ -728,6 +746,19 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     return payload;
   }
 
+  function handleFormSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    // Bundle mode or has pending line: show review overlay before hitting API
+    const currentSnap = currentLineSnapshot();
+    const linesForReview = [...bundleLines, ...(currentSnap ? [currentSnap] : [])];
+    if (linesForReview.length > 1 || bundleLines.length > 0) {
+      setShowReview(true);
+      return;
+    }
+    // Single-line path: submit directly
+    void handleSubmit(e);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -812,6 +843,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
             } else if (line.channel === 'email') {
               item.sends = line.sends ?? 1;
               if (line.publication) item.publication = line.publication;
+              if (line.preferredSendDates && line.preferredSendDates.length > 0) {
+                item.preferred_send_dates = line.preferredSendDates;
+              }
             } else {
               item.app_cadence = line.appCadence;
               item.app_markets = line.appMarkets;
@@ -912,6 +946,21 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
           <p className="text-xs text-green-900 mt-1">
             ${(createdInvoice.amount_cents / 100).toFixed(2)} · status {createdInvoice.status}.
           </p>
+          {createdBundle && createdBundle.length > 1 && (
+            <div className="mt-3 border-t border-green-200 pt-3">
+              <p className="text-[11px] uppercase tracking-wider text-green-800 font-semibold mb-1">
+                Bundle lines
+              </p>
+              <ul className="text-xs text-green-900 space-y-1">
+                {createdBundle.map((b, i) => (
+                  <li key={b.agreement.id} className="flex items-center justify-between">
+                    <span><span className="font-mono mr-2">#{i + 1}</span>{b.invoice.number ?? b.invoice.id}</span>
+                    <span>${(b.invoice.amount_cents / 100).toFixed(2)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <p className="text-xs text-green-800 mt-1 italic">{paymentTerms}</p>
           {sent && (
             <p className="text-xs text-green-900 mt-2 font-medium">
@@ -958,7 +1007,105 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   // ── Render form ────────────────────────────────────────────────────
   return (
     <ModalShell onClose={handleClose} title="New quote">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleFormSubmit} className="space-y-4">
+        {/* REVIEW_OVERLAY_MARKER */}
+        {showReview && (() => {
+          const currentSnap = currentLineSnapshot();
+          const reviewLines = [...bundleLines, ...(currentSnap ? [currentSnap] : [])];
+          const grand = reviewLines.reduce((a, b) => a + (b.subtotalCents || 0), 0);
+          return (
+            <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/60 overflow-y-auto py-8 px-4">
+              <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl">
+                <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+                  <h3 className="text-base font-semibold text-gray-900">Review quote before sending</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowReview(false)}
+                    className="text-gray-400 hover:text-gray-700 text-xl leading-none"
+                    aria-label="Close review"
+                  >×</button>
+                </div>
+                <div className="p-4 space-y-3">
+                  <p className="text-xs text-gray-600">Confirm all bundle lines below. Click <b>Back</b> to keep editing or <b>Draft &amp; Send</b> to draft the quote and prepare it for the client.</p>
+                  <div className="space-y-2">
+                    {reviewLines.map((line, i) => (
+                      <div key={line.id || `pending-${i}`} className="border border-gray-200 rounded-md p-3 bg-gray-50">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="text-xs">
+                            <span className="font-mono text-purple-700 mr-2">#{i + 1}</span>
+                            <span className="font-semibold text-gray-900">{line.packageLabel}</span>
+                            <span className="ml-2 uppercase text-[10px] tracking-wider text-gray-500">{line.channel}</span>
+                          </div>
+                          <div className="text-sm font-semibold text-gray-900">${(line.subtotalCents / 100).toFixed(2)}</div>
+                        </div>
+                        <div className="text-[11px] text-gray-700 space-y-0.5">
+                          {line.channel === 'print' && (
+                            <>
+                              {line.ioAdSize && <div>Ad size: <b>{line.ioAdSize}</b></div>}
+                              {line.ioFrequency && <div>Frequency: <b>{line.ioFrequency}</b></div>}
+                              {line.ioAdRateCents != null && <div>Ad rate: <b>${(line.ioAdRateCents / 100).toFixed(2)}</b></div>}
+                              {line.ioDiscountCents != null && line.ioDiscountCents > 0 && <div>Discount: <b>-${(line.ioDiscountCents / 100).toFixed(2)}</b></div>}
+                              {line.ioAdPremiumCents != null && line.ioAdPremiumCents > 0 && <div>Ad premium: <b>+${(line.ioAdPremiumCents / 100).toFixed(2)}</b></div>}
+                              {line.ioPagePosition && <div>Page position: <b>{line.ioPagePosition}</b>{line.ioPosPremActive ? ' (20% premium)' : ''}</div>}
+                              {line.ioTimingMonths && Object.keys(line.ioTimingMonths).filter((k) => line.ioTimingMonths?.[k]).length > 0 && (
+                                <div>Timing months: <b>{Object.keys(line.ioTimingMonths).filter((k) => line.ioTimingMonths?.[k]).map((k) => `${k}${line.ioTimingYears?.[k] ? ' ' + line.ioTimingYears[k] : ''}`).join(', ')}</b></div>
+                              )}
+                            </>
+                          )}
+                          {line.channel === 'email' && (
+                            <>
+                              <div>Sends: <b>{line.sends ?? 1}</b></div>
+                              {line.publication && <div>Publication: <b>{line.publication}</b></div>}
+                              {line.preferredSendDates && line.preferredSendDates.length > 0 && (
+                                <div>Preferred dates: <b>{line.preferredSendDates.join(', ')}</b></div>
+                              )}
+                              {(!line.preferredSendDates || line.preferredSendDates.length === 0) && (
+                                <div className="italic text-gray-500">Advertiser will pick dates</div>
+                              )}
+                            </>
+                          )}
+                          {line.channel === 'app' && (
+                            <>
+                              <div>Cadence: <b>{line.appCadence}</b></div>
+                              <div>Markets: <b>{line.appMarkets}</b></div>
+                              {line.appCadence === 'weekly' && <div>Weeks: <b>{line.appWeeks}</b></div>}
+                              {line.appCadence === 'monthly' && <div>Months: <b>{line.months}</b></div>}
+                              {line.runStart && line.runEnd && (
+                                <div>Run window: <b>{line.runStart} → {line.runEnd}</b></div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between border-t border-gray-200 pt-3 mt-2">
+                    <div className="text-sm font-semibold text-gray-900">Grand total</div>
+                    <div className="text-sm font-semibold text-gray-900">${(grand / 100).toFixed(2)}</div>
+                  </div>
+                </div>
+                <div className="border-t border-gray-200 px-4 py-3 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowReview(false)}
+                    disabled={submitting}
+                    className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-60"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowReview(false); void handleSubmit(new Event('submit') as unknown as React.FormEvent); }}
+                    disabled={submitting}
+                    className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-60"
+                  >
+                    {submitting ? 'Drafting…' : 'Draft & Send'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
         {/* Advertiser picker */}
         <section className="border border-gray-200 rounded-md p-3 bg-gray-50">
           <div className="flex items-center justify-between mb-2">
@@ -1370,6 +1517,40 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     <option value="both">Both</option>
                   </select>
                 </label>
+                <div className="sm:col-span-2 border-t border-gray-200 pt-3 mt-1">
+                  <p className="text-[11px] uppercase tracking-wider text-gray-600 font-semibold mb-1">
+                    Preferred send dates <span className="normal-case font-normal text-gray-500">(optional — leave blank if advertiser will choose)</span>
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <label className="text-xs text-gray-700">
+                      1st choice
+                      <input
+                        type="date"
+                        value={ebDate1}
+                        onChange={(e) => setEbDate1(e.target.value)}
+                        className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                      />
+                    </label>
+                    <label className="text-xs text-gray-700">
+                      2nd choice
+                      <input
+                        type="date"
+                        value={ebDate2}
+                        onChange={(e) => setEbDate2(e.target.value)}
+                        className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                      />
+                    </label>
+                    <label className="text-xs text-gray-700">
+                      3rd choice
+                      <input
+                        type="date"
+                        value={ebDate3}
+                        onChange={(e) => setEbDate3(e.target.value)}
+                        className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                      />
+                    </label>
+                  </div>
+                </div>
               </>
             )}
 
@@ -1434,6 +1615,32 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   {selectedAppSlot.zone} · {selectedAppSlot.tier} · {selectedAppSlot.sizes}
                   <br />
                   {selectedAppSlot.notes}
+                </div>
+                <div className="sm:col-span-2 border-t border-gray-200 pt-3 mt-1">
+                  <p className="text-[11px] uppercase tracking-wider text-gray-600 font-semibold mb-1">
+                    App run window
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <label className="text-xs text-gray-700">
+                      Start date (agreement will run from this date)
+                      <input
+                        type="date"
+                        value={runStart}
+                        onChange={(e) => { setRunMode('dates'); setRunStart(e.target.value); }}
+                        className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                      />
+                    </label>
+                    <label className="text-xs text-gray-700">
+                      End date
+                      <input
+                        type="date"
+                        value={runEnd}
+                        min={runStart}
+                        onChange={(e) => { setRunMode('dates'); setRunEnd(e.target.value); }}
+                        className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                      />
+                    </label>
+                  </div>
                 </div>
               </>
             )}
