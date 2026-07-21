@@ -374,10 +374,23 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
 
   // Price preview.
   const previewCents = useMemo(() => {
-    if (channel === 'print' && selectedPrintPackage) {
-      const s = selectedPrintPackage.sizes.find((sz) => sz.size === size);
-      if (!s) return 0;
-      return s.price * 100 * months;
+    if (channel === 'print') {
+      // Insertion Order path: (rate − discount + premium) × freq_months
+      if (ioAdSize && ioFrequency && ioAdRate) {
+        const FREQ_MONTHS: Record<string, number> = { '1x': 1, '3x': 3, '6x': 6, '12x': 12 };
+        const issues = FREQ_MONTHS[ioFrequency] ?? 1;
+        const rate = Math.round((parseFloat(ioAdRate) || 0) * 100);
+        const disc = Math.round((parseFloat(ioDiscount) || 0) * 100);
+        const prem = Math.round((parseFloat(ioAdPremium) || 0) * 100);
+        const monthly = Math.max(0, rate - disc + prem);
+        return monthly * issues;
+      }
+      if (selectedPrintPackage) {
+        const s = selectedPrintPackage.sizes.find((sz) => sz.size === size);
+        if (!s) return 0;
+        return s.price * 100 * months;
+      }
+      return 0;
     }
     if (channel === 'email' && selectedEmailPackage) {
       const mkPub =
@@ -408,17 +421,28 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     appCadence,
     appWeeks,
     appMarkets,
+    ioAdSize,
+    ioFrequency,
+    ioAdRate,
+    ioDiscount,
+    ioAdPremium,
   ]);
 
   // ── Rack unit + qty (drives "Unit" override math + label) ───────────
   const rackQty = useMemo(() => {
-    if (channel === 'print') return Math.max(1, months);
+    if (channel === 'print') {
+      if (ioFrequency) {
+        const FM: Record<string, number> = { '1x': 1, '3x': 3, '6x': 6, '12x': 12 };
+        return Math.max(1, FM[ioFrequency] ?? 1);
+      }
+      return Math.max(1, months);
+    }
     if (channel === 'email') return Math.max(1, sends);
     if (channel === 'app') {
       return appCadence === 'weekly' ? Math.max(1, appWeeks) : Math.max(1, months);
     }
     return 1;
-  }, [channel, months, sends, appCadence, appWeeks]);
+  }, [channel, months, sends, appCadence, appWeeks, ioFrequency]);
 
   const rackUnitCents = useMemo(
     () => (rackQty > 0 ? Math.round(previewCents / rackQty) : 0),
@@ -591,6 +615,46 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   }
 
   function removeBundleLine(id: string) {
+    setBundleLines((prev) => prev.filter((l) => l.id !== id));
+  }
+
+  function reviseBundleLine(id: string) {
+    const line = bundleLines.find((l) => l.id === id);
+    if (!line) return;
+    setChannel(line.channel);
+    setPackageId(line.packageId);
+    if (line.channel === 'print') {
+      setSize(line.size ?? '');
+      setMonths(line.months ?? 1);
+      setIoAdSize(line.ioAdSize ?? '');
+      setIoFrequency(line.ioFrequency ?? '');
+      setIoAdRate(line.ioAdRateCents != null ? String(line.ioAdRateCents / 100) : '');
+      setIoAdRateBase(line.ioAdRateBaseCents != null ? String(line.ioAdRateBaseCents / 100) : '');
+      setIoDiscount(line.ioDiscountCents != null ? String(line.ioDiscountCents / 100) : '');
+      setIoAdPremium(line.ioAdPremiumCents != null ? String(line.ioAdPremiumCents / 100) : '');
+      setIoPagePosition(line.ioPagePosition ?? '');
+      setIoPosPremActive(!!line.ioPosPremActive);
+      setIoTimingMonths(line.ioTimingMonths ?? {});
+      setIoTimingYears(line.ioTimingYears ?? {});
+    } else if (line.channel === 'email') {
+      setSends(line.sends ?? 1);
+      if (line.publication) setPublication(line.publication);
+    } else {
+      setAppCadence(line.appCadence ?? 'weekly');
+      setAppWeeks(line.appWeeks ?? 1);
+      setAppMarkets(line.appMarkets ?? 1);
+      if (line.appCadence === 'monthly') setMonths(line.months ?? 1);
+    }
+    if (line.runMode === 'dates' && line.runStart && line.runEnd) {
+      setRunMode('dates');
+      setRunStart(line.runStart);
+      setRunEnd(line.runEnd);
+    } else {
+      setRunMode('quantity');
+    }
+    setOverrideMode(line.overrideMode);
+    setOverrideTotalDollars(line.overrideTotalCents != null ? String(line.overrideTotalCents / 100) : '');
+    setOverrideUnitDollars(line.overrideUnitCents != null ? String(line.overrideUnitCents / 100) : '');
     setBundleLines((prev) => prev.filter((l) => l.id !== id));
   }
 
@@ -1526,6 +1590,15 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       </div>
                       <button
                         type="button"
+                        onClick={() => reviseBundleLine(line.id)}
+                        disabled={submitting}
+                        className="text-purple-700 hover:text-purple-900 text-xs mr-3"
+                        aria-label="Revise line"
+                      >
+                        Revise
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => removeBundleLine(line.id)}
                         disabled={submitting}
                         className="text-red-600 hover:text-red-700 text-xs"
@@ -1635,7 +1708,7 @@ function ModalShell({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 overflow-y-auto py-8 px-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl">
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
           <h2 className="text-base font-semibold text-gray-900">{title}</h2>
           <button
