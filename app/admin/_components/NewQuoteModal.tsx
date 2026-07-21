@@ -45,6 +45,7 @@ import {
 import {
   lookupRate, pagePositionPremium, computeExp,
 } from '@/lib/agreement-pricing';
+import { quoteLineSubtotalCents } from '@/lib/quote-pricing';
 
 type Channel = 'print' | 'email' | 'app';
 type AppCadence = 'weekly' | 'monthly';
@@ -484,11 +485,10 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     return Math.round(n * 100);
   }, [overrideMode, overrideUnitDollars]);
 
-  const effectiveCents = useMemo(() => {
-    if (overrideTotalCents != null) return overrideTotalCents;
-    if (overrideUnitCents != null) return overrideUnitCents * rackQty;
-    return previewCents;
-  }, [overrideTotalCents, overrideUnitCents, rackQty, previewCents]);
+  const effectiveCents = useMemo(
+    () => quoteLineSubtotalCents({ previewCents, overrideTotalCents, overrideUnitCents, rackQty }),
+    [previewCents, overrideTotalCents, overrideUnitCents, rackQty],
+  );
 
   const discountPct = useMemo(() => {
     if (previewCents <= 0) return 0;
@@ -618,7 +618,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       overrideMode,
       overrideTotalCents,
       overrideUnitCents,
-      subtotalCents: previewCents,
+      subtotalCents: effectiveCents,
     };
   }
 
@@ -680,11 +680,13 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     setBundleLines((prev) => prev.filter((l) => l.id !== id));
   }
 
-  // Grand total = sum of all bundle-line subtotals + current form preview.
+  // Grand total = sum of all bundle-line quoted subtotals + current form
+  // quoted total. Uses effectiveCents (post-override) so custom pricing on
+  // the current line — and on each snapshotted bundle line — rolls up.
   const bundleGrandTotalCents = useMemo(() => {
     const linesSum = bundleLines.reduce((acc, l) => acc + l.subtotalCents, 0);
-    return linesSum + previewCents;
-  }, [bundleLines, previewCents]);
+    return linesSum + effectiveCents;
+  }, [bundleLines, effectiveCents]);
 
   // Build the POST body from a BundleLine (or, when null, from the
   // current form state — for the final line in the bundle sequence).
@@ -1843,7 +1845,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                         <span className="italic text-gray-600">Current selection (will be added on Save)</span>
                       </div>
                       <div className="text-gray-800 font-semibold">
-                        ${(previewCents / 100).toFixed(2)}
+                        ${(effectiveCents / 100).toFixed(2)}
                       </div>
                     </div>
                   )}
