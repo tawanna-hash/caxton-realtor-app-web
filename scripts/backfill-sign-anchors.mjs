@@ -23,9 +23,14 @@ let filterAgreementId = null;
   if (i !== -1 && argv[i + 1]) filterAgreementId = argv[i + 1];
 }
 
-const DB = process.env.DATABASE_URL;
+const DB =
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.POSTGRES_URL_NON_POOLING;
 if (!DB) {
-  console.error('DATABASE_URL not set. Source .env.production.local first.');
+  console.error('No Neon/Postgres URL in env. Expected DATABASE_URL or POSTGRES_URL.');
+  console.error('Try: set -a; source .env.production.local; set +a');
   process.exit(1);
 }
 const sql = neon(DB);
