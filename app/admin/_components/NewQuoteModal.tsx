@@ -148,7 +148,42 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   // ── Submit state ──────────────────────────────────────────────────
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // ── Bundle state ──────────────────────────────────────────────────
+  // Multi-line quote support. Each line snapshots the current form
+  // values (channel + qty + pricing) so the rep can add another. On
+  // Save, we POST once per bundle line, then once for the current
+  // (final) form values — yielding N independent agreements.
+  type BundleLine = {
+    id: string;
+    channel: Channel;
+    packageId: string;
+    packageLabel: string;
+    size?: string;
+    months?: number;
+    sends?: number;
+    appCadence?: AppCadence;
+    appWeeks?: number;
+    appMarkets?: MarketCount;
+    publication?: Publication;
+    runStart?: string;
+    runEnd?: string;
+    runMode: RunMode;
+    overrideMode: 'off' | 'total' | 'unit';
+    overrideTotalCents: number | null;
+    overrideUnitCents: number | null;
+    subtotalCents: number;
+  };
+  const [bundleLines, setBundleLines] = useState<BundleLine[]>([]);
+  const [bundleProgress, setBundleProgress] = useState<{
+    total: number;
+    done: number;
+    label: string;
+  } | null>(null);
   const [createdAgreement, setCreatedAgreement] = useState<CreatedAgreement | null>(null);
+  const [createdBundle, setCreatedBundle] = useState<
+    Array<{ agreement: CreatedAgreement; invoice: CreatedInvoice }>
+  >([]);
   const [createdInvoice, setCreatedInvoice] = useState<CreatedInvoice | null>(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -224,9 +259,12 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     setMemo('');
     setError(null);
     setCreatedAgreement(null);
+    setCreatedBundle([]);
     setCreatedInvoice(null);
     setSent(false);
     setBookedWindows([]);
+    setBundleLines([]);
+    setBundleProgress(null);
   }, [todayIso]);
 
   const handleClose = useCallback(() => {
@@ -461,6 +499,132 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     return true;
   }, [submitting, createNew, newName, newEmail, selectedAdvertiserId, packageId, previewCents]);
 
+  // Build a BundleLine snapshot from current form state.
+  // Returns null if the current form isn't valid enough to add.
+  function currentLineSnapshot(): BundleLine | null {
+    if (!packageId) return null;
+    if (previewCents <= 0) return null;
+    let label = packageId;
+    if (channel === 'print') {
+      const pkg = PACKAGES.find((p) => p.id === packageId);
+      const sz = pkg?.sizes.find((x) => x.size === size);
+      label = pkg ? `${pkg.name}${sz ? ` — ${sz.size}` : ''}` : packageId;
+    } else if (channel === 'email') {
+      const eb = EBLASTS.find((e) => eblastId(e.name) === packageId);
+      label = eb ? eb.name : packageId;
+    } else {
+      const slot = APP_AD_SLOTS.find((x) => x.slug === packageId);
+      label = slot ? slot.name : packageId;
+    }
+    return {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      channel,
+      packageId,
+      packageLabel: label,
+      size: channel === 'print' ? size : undefined,
+      months:
+        channel === 'print' || (channel === 'app' && appCadence === 'monthly')
+          ? months
+          : undefined,
+      sends: channel === 'email' ? sends : undefined,
+      appCadence: channel === 'app' ? appCadence : undefined,
+      appWeeks: channel === 'app' && appCadence === 'weekly' ? appWeeks : undefined,
+      appMarkets: channel === 'app' ? appMarkets : undefined,
+      publication: channel === 'email' ? publication : undefined,
+      runStart: runMode === 'dates' ? runStart : undefined,
+      runEnd: runMode === 'dates' ? runEnd : undefined,
+      runMode,
+      overrideMode,
+      overrideTotalCents,
+      overrideUnitCents,
+      subtotalCents: previewCents,
+    };
+  }
+
+  function addCurrentLineToBundle() {
+    const snap = currentLineSnapshot();
+    if (!snap) {
+      setError('Current selection is incomplete — pick a package and quantity first.');
+      return;
+    }
+    setError(null);
+    setBundleLines((prev) => [...prev, snap]);
+  }
+
+  function removeBundleLine(id: string) {
+    setBundleLines((prev) => prev.filter((l) => l.id !== id));
+  }
+
+  // Grand total = sum of all bundle-line subtotals + current form preview.
+  const bundleGrandTotalCents = useMemo(() => {
+    const linesSum = bundleLines.reduce((acc, l) => acc + l.subtotalCents, 0);
+    return linesSum + previewCents;
+  }, [bundleLines, previewCents]);
+
+  // Build the POST body from a BundleLine (or, when null, from the
+  // current form state — for the final line in the bundle sequence).
+  function buildPayloadFor(line: BundleLine | null): Record<string, unknown> {
+    const advertiserPayload = createNew
+      ? {
+          name: newName.trim(),
+          contact_email: newEmail.trim(),
+          publication: newPublication,
+          ...(newPhone.trim() ? { phone: newPhone.trim() } : {}),
+        }
+      : { id: selectedAdvertiserId! };
+
+    const src = line ?? {
+      channel,
+      packageId,
+      size,
+      months,
+      sends,
+      appCadence,
+      appWeeks,
+      appMarkets,
+      publication,
+      runMode,
+      runStart,
+      runEnd,
+      overrideMode,
+      overrideTotalCents,
+      overrideUnitCents,
+    };
+
+    const payload: Record<string, unknown> = {
+      channel: src.channel,
+      package_id: src.packageId,
+      advertiser: advertiserPayload,
+    };
+    if (src.channel === 'print') {
+      payload.size = src.size;
+      payload.months = src.months ?? 1;
+    } else if (src.channel === 'email') {
+      payload.sends = src.sends ?? 1;
+      payload.publication = src.publication;
+    } else {
+      payload.app_cadence = src.appCadence;
+      payload.app_markets = src.appMarkets;
+      if (src.appCadence === 'weekly') {
+        payload.app_weeks = Math.max(1, src.appWeeks ?? 1);
+      } else {
+        payload.months = Math.max(1, src.months ?? 1);
+      }
+    }
+    if (src.runMode === 'dates' && src.runStart && src.runEnd && src.runEnd >= src.runStart) {
+      payload.start_date = src.runStart;
+      payload.end_date = src.runEnd;
+    }
+    if (dueDate) payload.due_date = dueDate;
+    if (memo.trim()) payload.memo = memo.trim();
+    if (src.overrideTotalCents != null) {
+      payload.override_total_cents = src.overrideTotalCents;
+    } else if (src.overrideUnitCents != null) {
+      payload.override_unit_cents = src.overrideUnitCents;
+    }
+    return payload;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -507,23 +671,56 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         payload.override_unit_cents = overrideUnitCents;
       }
 
-      const res = await fetch('/api/admin/quotes', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const j = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(j?.error || `Quote failed (${res.status})`);
+      // Assemble sequence. Rules:
+      //   • No bundle lines → [null] (single-line path, current form only — unchanged)
+      //   • Bundle lines + valid current form → [...lines, null] (current becomes final line)
+      //   • Bundle lines + INVALID current form → [...lines] (just the bundle)
+      const currentSnap = currentLineSnapshot();
+      const runList: Array<BundleLine | null> =
+        bundleLines.length === 0
+          ? [null]
+          : currentSnap
+            ? [...bundleLines, null]
+            : bundleLines.map<BundleLine | null>((bl) => bl);
+
+      const results: Array<{ agreement: CreatedAgreement; invoice: CreatedInvoice }> = [];
+      for (let i = 0; i < runList.length; i++) {
+        const line = runList[i];
+        const label =
+          line == null
+            ? currentSnap?.packageLabel ?? 'Current selection'
+            : line.packageLabel;
+        setBundleProgress({ total: runList.length, done: i, label });
+        const body = buildPayloadFor(line);
+        const res = await fetch('/api/admin/quotes', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const j = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(
+            j?.error || `Quote line ${i + 1} of ${runList.length} failed (${res.status}): ${label}`,
+          );
+        }
+        const json = (await res.json()) as {
+          agreement: CreatedAgreement;
+          invoice: CreatedInvoice;
+        };
+        results.push(json);
       }
-      const json = (await res.json()) as {
-        agreement: CreatedAgreement;
-        invoice: CreatedInvoice;
-      };
-      setCreatedAgreement(json.agreement);
-      setCreatedInvoice(json.invoice);
+      setBundleProgress({ total: runList.length, done: runList.length, label: 'done' });
+
+      // Show the LAST created agreement as the "primary" for the send flow.
+      // The success card will list all N below.
+      const last = results[results.length - 1];
+      setCreatedAgreement(last.agreement);
+      setCreatedInvoice(last.invoice);
+      // Store the full list for the bundle receipt UI.
+      setCreatedBundle(results);
       onDrafted?.();
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Quote failed');
     } finally {
@@ -560,6 +757,58 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   if (!open) return null;
 
   // ── Render success card ────────────────────────────────────────────
+  if (createdAgreement && createdBundle.length > 1) {
+    // Multi-line bundle success screen — list all N agreements + sign links.
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900">
+              Bundle created — {createdBundle.length} agreements
+            </h2>
+            <button
+              type="button"
+              onClick={() => { resetAll(); onClose(); }}
+              className="text-gray-500 hover:text-gray-700 text-sm"
+            >
+              Close
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
+            Each line was saved as its own draft agreement. Send each sign link individually, or copy them all to send in a single email.
+          </p>
+          <ul className="space-y-2 mb-4">
+            {createdBundle.map((r, i) => (
+              <li key={r.agreement.id} className="border border-gray-200 rounded p-3 text-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900">
+                      #{i + 1} · Agreement {r.agreement.id.slice(0, 8)}…
+                    </div>
+                    <div className="text-xs text-gray-600 mt-0.5">
+                      Amount: ${((r.agreement.amount_cents ?? 0) / 100).toFixed(2)}
+                    </div>
+                  </div>
+                  <a
+                    href={`/admin/agreements/${r.agreement.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-1 text-xs rounded-md bg-purple-600 text-white hover:bg-purple-700 whitespace-nowrap"
+                  >
+                    Open
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="text-xs text-gray-500">
+            Grand total: <strong className="text-gray-800">${(createdBundle.reduce((s, r) => s + (r.agreement.amount_cents ?? 0), 0) / 100).toFixed(2)}</strong>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (createdAgreement && createdInvoice) {
     const paymentTerms =
       channel === 'email' || channel === 'app'
@@ -1089,6 +1338,81 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
           )}
         </section>
 
+        {/* Bundle: multi-line quote builder */}
+        <div className="rounded-md border border-purple-200 bg-purple-50/40 p-3 mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs font-semibold uppercase tracking-wider text-purple-900">
+                  Bundle (multi-line quote)
+                </div>
+                <button
+                  type="button"
+                  onClick={addCurrentLineToBundle}
+                  disabled={submitting || previewCents <= 0}
+                  className="px-2.5 py-1 text-xs rounded-md bg-purple-600 text-white hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  + Add current as another line
+                </button>
+              </div>
+              {bundleLines.length === 0 ? (
+                <div className="text-[11px] text-gray-500">
+                  Add the current selection as a line, then change channel/package to build a multi-item quote. On save, each line becomes its own agreement + sign link.
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {bundleLines.map((line, i) => (
+                    <div
+                      key={line.id}
+                      className="flex items-center justify-between text-xs bg-white border border-purple-100 rounded px-2 py-1.5"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <span className="font-mono text-purple-700 mr-2">#{i + 1}</span>
+                        <span className="font-medium text-gray-800">{line.packageLabel}</span>
+                        <span className="text-gray-500 ml-2">
+                          {line.channel === 'print' && `${line.months ?? 1}mo`}
+                          {line.channel === 'email' && `${line.sends ?? 1} send${(line.sends ?? 1) > 1 ? 's' : ''}`}
+                          {line.channel === 'app' && line.appCadence === 'weekly' && `${line.appWeeks ?? 1}w × ${line.appMarkets ?? 1} mkt`}
+                          {line.channel === 'app' && line.appCadence === 'monthly' && `${line.months ?? 1}mo × ${line.appMarkets ?? 1} mkt`}
+                        </span>
+                      </div>
+                      <div className="text-gray-800 font-semibold mr-2">
+                        ${(line.subtotalCents / 100).toFixed(2)}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeBundleLine(line.id)}
+                        disabled={submitting}
+                        className="text-red-600 hover:text-red-700 text-xs"
+                        aria-label="Remove line"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  {previewCents > 0 && (
+                    <div className="flex items-center justify-between text-xs bg-purple-100/50 border border-purple-200 rounded px-2 py-1.5">
+                      <div className="flex-1 min-w-0">
+                        <span className="font-mono text-purple-700 mr-2">#{bundleLines.length + 1}</span>
+                        <span className="italic text-gray-600">Current selection (will be added on Save)</span>
+                      </div>
+                      <div className="text-gray-800 font-semibold">
+                        ${(previewCents / 100).toFixed(2)}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between border-t border-purple-200 pt-2 mt-2">
+                    <div className="text-xs font-semibold text-gray-700">Grand total</div>
+                    <div className="text-sm font-bold text-purple-900">
+                      ${(bundleGrandTotalCents / 100).toFixed(2)}
+                    </div>
+                  </div>
+                  {bundleProgress && (
+                    <div className="text-[11px] text-gray-600 mt-1">
+                      Creating {bundleProgress.done} / {bundleProgress.total}: {bundleProgress.label}…
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
         {/* Preview */}
         <div className="space-y-1 px-3 py-2 rounded-md bg-purple-50 border border-purple-100">
           <div className="flex items-center justify-between">
