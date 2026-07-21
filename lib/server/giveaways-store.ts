@@ -75,6 +75,17 @@ export async function listGiveaways(): Promise<GiveawayListRow[]> {
 // Public list — the giveaways surfaced on the public /giveaways page.
 // -----------------------------------------------------------------------------
 
+// A single public-facing entry action. `label` is the human-readable
+// instruction the admin authored; `tickets` is its entry value. `target_url`
+// and `required` are optional display hints. Admin-only fields (id,
+// action_type, internal notes) are deliberately omitted.
+export interface PublicGiveawayRule {
+  label: string;
+  target_url: string | null;
+  tickets: number;
+  required: boolean;
+}
+
 export interface PublicGiveawayRow {
   id: string;
   title: string;
@@ -82,6 +93,7 @@ export interface PublicGiveawayRow {
   publication: string;
   starts_at: Date;
   ends_at: Date;
+  rules: PublicGiveawayRule[];
 }
 
 /**
@@ -91,13 +103,17 @@ export interface PublicGiveawayRow {
  * viewer's chosen publication maps to (or null for markets without a giveaway
  * catalog); giveaways scoped to that market plus `both` are returned.
  *
+ * Each giveaway's entry rules are attached in `sort_order` for the public
+ * "how to enter" instructions. Rules are fetched in a single batched query
+ * (keyed by the returned giveaway ids) to avoid an N+1 per card.
+ *
  * `description` is deliberately not selected — the admin form labels it an
  * "Optional internal note", so it must not surface to the public.
  */
 export async function listPublicGiveaways(
   market: 'austin' | 'san_antonio' | null,
 ): Promise<PublicGiveawayRow[]> {
-  return query<PublicGiveawayRow>(
+  const giveaways = await query<Omit<PublicGiveawayRow, 'rules'>>(
     `SELECT id, title, prize, publication, starts_at, ends_at
      FROM giveaways
      WHERE status = 'active'
@@ -107,6 +123,37 @@ export async function listPublicGiveaways(
      ORDER BY ends_at ASC`,
     [market],
   );
+
+  if (giveaways.length === 0) return [];
+
+  const ruleRows = await query<
+    { giveaway_id: string } & Omit<PublicGiveawayRule, 'tickets'> & {
+        tickets: number;
+      }
+  >(
+    `SELECT giveaway_id, label, target_url, tickets, required
+     FROM giveaway_rules
+     WHERE giveaway_id = ANY($1)
+     ORDER BY sort_order, created_at`,
+    [giveaways.map((g) => g.id)],
+  );
+
+  const rulesByGiveaway = new Map<string, PublicGiveawayRule[]>();
+  for (const r of ruleRows) {
+    const list = rulesByGiveaway.get(r.giveaway_id) ?? [];
+    list.push({
+      label: r.label,
+      target_url: r.target_url,
+      tickets: Number(r.tickets),
+      required: r.required,
+    });
+    rulesByGiveaway.set(r.giveaway_id, list);
+  }
+
+  return giveaways.map((g) => ({
+    ...g,
+    rules: rulesByGiveaway.get(g.id) ?? [],
+  }));
 }
 
 export async function getGiveawayDetail(id: string): Promise<GiveawayDetail | null> {

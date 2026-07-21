@@ -4,6 +4,7 @@ import { getServerPub } from '@/lib/publication';
 import {
   listPublicGiveaways,
   type PublicGiveawayRow,
+  type PublicGiveawayRule,
 } from '@/lib/server/giveaways-store';
 import {
   PUBLICATION_LABELS_WITH_BOTH,
@@ -96,6 +97,69 @@ function GiveawayCard({ giveaway }: { giveaway: PublicGiveawayRow }) {
         <span>{formatRange(giveaway.starts_at, giveaway.ends_at)}</span>
         {publicationLabel && <span>{publicationLabel}</span>}
       </div>
+      <HowToEnter rules={giveaway.rules} />
     </li>
+  );
+}
+
+// Semantic <details>/<summary> accordion: keyboard-accessible and needs no
+// client JS. Populated from the giveaway's entry rules in display order.
+function HowToEnter({ rules }: { rules: PublicGiveawayRule[] }) {
+  return (
+    <details className="group mt-4 border-t border-gray-100 pt-3">
+      <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-brand-700 marker:hidden">
+        <span>How to enter and win</span>
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          className="h-4 w-4 shrink-0 transition-transform duration-200 group-open:rotate-180"
+        >
+          <path
+            fillRule="evenodd"
+            d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </summary>
+      {rules.length > 0 ? (
+        <ol className="mt-3 space-y-2">
+          {rules.map((rule, i) => (
+            <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+                {i + 1}
+              </span>
+              <span className="min-w-0">
+                {rule.target_url ? (
+                  <a
+                    href={rule.target_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-700 underline underline-offset-2"
+                  >
+                    {rule.label}
+                  </a>
+                ) : (
+                  rule.label
+                )}
+                <span className="ml-2 text-xs text-gray-500">
+                  +{rule.tickets} {rule.tickets === 1 ? 'entry' : 'entries'}
+                </span>
+                {rule.required && (
+                  <span className="ml-2 text-[10px] uppercase tracking-wider text-gray-400">
+                    Required
+                  </span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="mt-3 text-sm text-gray-600 leading-relaxed">
+          Entry instructions for this giveaway will be posted soon. Check back
+          shortly for the full list of ways to earn entries.
+        </p>
+      )}
+    </details>
   );
 }
