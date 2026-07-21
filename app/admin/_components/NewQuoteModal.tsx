@@ -571,8 +571,10 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     let label = packageId;
     if (channel === 'print') {
       const pkg = PACKAGES.find((p) => p.id === packageId);
-      const sz = pkg?.sizes.find((x) => x.size === size);
-      label = pkg ? `${pkg.name}${sz ? ` — ${sz.size}` : ''}` : packageId;
+      const effectiveSize = ioAdSize || size;
+      const sz = pkg?.sizes.find((x) => x.size === effectiveSize);
+      const shownSize = sz?.size ?? effectiveSize;
+      label = pkg ? `${pkg.name}${shownSize ? ` — ${shownSize}` : ''}` : packageId;
     } else if (channel === 'email') {
       const eb = EBLASTS.find((e) => eblastId(e.name) === packageId);
       label = eb ? eb.name : packageId;
