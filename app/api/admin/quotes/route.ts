@@ -53,7 +53,7 @@ const advertiserNewSchema = z.object({
 const quotesSchema = z
   .object({
     channel: z.enum(['print', 'email', 'app']).optional(),
-    package_id: z.string().trim().min(1).max(100),
+    package_id: z.string().trim().min(1).max(100).optional(),
     size: z.string().trim().max(40).optional(),
     months: z.number().int().min(1).max(24).optional(),
     sends: z.number().int().min(1).max(24).optional(),
@@ -96,6 +96,10 @@ const quotesSchema = z
     rep_name: z.string().trim().max(200).optional(),
   })
   .strict()
+  .refine(
+    (v) => (v.line_items && v.line_items.length > 0) || (v.channel != null && v.package_id != null),
+    { message: 'channel and package_id required when line_items is empty' },
+  )
   .refine(
     (v) => !(v.override_total_cents != null && v.override_unit_cents != null),
     { message: 'override_total_cents and override_unit_cents are mutually exclusive' },

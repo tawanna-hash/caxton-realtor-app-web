@@ -732,8 +732,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         body: JSON.stringify(body),
       });
       if (!res.ok) {
-        const j = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(j?.error || `Quote failed (${res.status})`);
+        const j = (await res.json().catch(() => null)) as { error?: string; details?: unknown } | null;
+        const detailStr = j?.details ? ` — ${JSON.stringify(j.details)}` : '';
+        throw new Error(`${j?.error || `Quote failed (${res.status})`}${detailStr}`);
       }
       const json = (await res.json()) as {
         agreement: CreatedAgreement;
