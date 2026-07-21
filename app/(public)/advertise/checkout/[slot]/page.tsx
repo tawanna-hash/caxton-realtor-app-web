@@ -104,7 +104,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             {slot.tier} placement · {slot.zone}
           </p>
-          <PageTitle size="md">Book {slot.name}</PageTitle>
+          <PageTitle size="md">App Ad Slot Booking Page</PageTitle>
           <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
             Choose your dates, upload your creative, accept the terms, and pay
             securely. After payment, our team reviews and approves your creative

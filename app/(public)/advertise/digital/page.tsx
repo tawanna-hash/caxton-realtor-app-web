@@ -24,7 +24,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export const metadata = {
-  title: 'Digital Placements — Realty News Now',
+  title: 'App Ad Slots',
   description:
     'Live availability across all 16 digital placements on realtynewsnow.app. Book any open slot in under five minutes with self-serve checkout.',
 };
@@ -78,10 +78,10 @@ export default async function AdvertiseDigitalPage() {
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       <header className="mb-8 sm:mb-10">
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-          Advertise · Digital
+          Advertise · App
         </p>
         <PageTitle size="md">
-          Every digital placement, live availability.
+          App Ad Slots
         </PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
           {availableCount} of {totalCount} placements are open right now across
