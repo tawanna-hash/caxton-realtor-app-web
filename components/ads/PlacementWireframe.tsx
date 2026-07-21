@@ -202,7 +202,7 @@ function NewsletterWireframe({ active }: { active: string }) {
       <div className="px-2 pt-2">
         <Highlight active={active === 'newsletter_banner'}>
           <div className="h-7 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
-            Newsletter banner 600×200
+            e-Blast Top Banner 600×200
           </div>
         </Highlight>
       </div>

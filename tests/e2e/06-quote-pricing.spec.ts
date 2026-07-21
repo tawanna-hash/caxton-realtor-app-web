@@ -17,7 +17,7 @@ import { quoteLineSubtotalCents } from '../../lib/quote-pricing';
 
 test.describe('quoteLineSubtotalCents — custom pricing on bundle lines', () => {
   test('rack mode returns the rack preview', () => {
-    // App ad, Newsletter Banner, weekly, 4 weeks @ $250/wk = $1000 rack.
+    // App ad, e-Blast Top Banner, weekly, 4 weeks @ $250/wk = $1000 rack.
     expect(
       quoteLineSubtotalCents({
         previewCents: 100_000,

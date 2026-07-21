@@ -390,7 +390,7 @@ export default function AdvertisePage() {
               </div>
               <div className="border border-gray-100 px-4 py-3 rounded-md">
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-900">
-                  Newsletter banner
+                  e-Blast Top Banner
                 </p>
                 <p className="text-xs text-gray-700 font-light mt-1">
                   600{'\u00d7'}200, top of every weekly e-Blast send.

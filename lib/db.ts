@@ -233,8 +233,11 @@ async function _runEnsureSchema(): Promise<void> {
       ON featured_social_posts (pub, is_active, is_open_house, display_order, posted_at DESC)
   `;
 
-  // Pre-populate the 15 ad spaces (catalog). Idempotent: ON CONFLICT DO NOTHING
-  // means re-running ensureSchema() doesn't disturb anything.
+  // Pre-populate the 15 ad spaces (catalog). ON CONFLICT DO UPDATE on
+  // display_name so the catalog stays the source of truth for the
+  // user-facing label (e.g. 'Newsletter Banner' → 'e-Blast Top Banner'
+  // renames propagate on the next cold start). Other columns are left as-is.
+  // Idempotent: re-running ensureSchema() won't disturb anything else.
   const adSpaceCatalog = [
     {
       slug: 'article_top_leaderboard',
@@ -318,7 +321,7 @@ async function _runEnsureSchema(): Promise<void> {
     },
     {
       slug: 'newsletter_banner',
-      display_name: 'Newsletter Banner',
+      display_name: 'e-Blast Top Banner',
       zone: 'newsletter',
       tier: 'premium',
       sizes: [{w:600,h:200,context:'email'},{w:600,h:100,context:'email-slim'}],
@@ -390,7 +393,7 @@ async function _runEnsureSchema(): Promise<void> {
         ${JSON.stringify(space.sizes)}::jsonb,
         ${space.notes}
       )
-      ON CONFLICT (slug) DO NOTHING
+      ON CONFLICT (slug) DO UPDATE SET display_name = EXCLUDED.display_name
     `;
   }
 

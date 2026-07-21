@@ -332,7 +332,7 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
   {
     rotates: true,
     slug: 'newsletter_banner',
-    name: 'Newsletter Banner',
+    name: 'e-Blast Top Banner',
     zone: 'newsletter',
     tier: 'premium',
     weeklySingle: 250,
