@@ -101,6 +101,7 @@ const quotesSchema = z
     pos_premium_active: z.boolean().optional(),
     ad_timing_months: z.record(z.string(), z.boolean()).optional(),
     ad_timing_years: z.record(z.string(), z.string()).optional(),
+    preferred_send_dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(3).optional(),
   })).optional(),
   memo: z.string().max(2000).optional(),
     advertiser: z.union([advertiserExistingSchema, advertiserNewSchema]),

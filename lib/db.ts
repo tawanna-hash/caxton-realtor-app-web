@@ -845,6 +845,7 @@ async function _runEnsureSchema(): Promise<void> {
   await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS total_monthly_cents   integer`;
   await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS expiration_date       date`;
   await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS renewal_reminder_date date`;
+  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS preferred_send_dates jsonb`;
 
   // ---- Magazine GIF preview columns ----
   // Each magazine can have up to three pre-rendered animated previews

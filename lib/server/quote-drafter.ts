@@ -204,6 +204,7 @@ export interface DrafterInput {
     pos_premium_active?: boolean;
     ad_timing_months?: Record<string, boolean>;
     ad_timing_years?: Record<string, string>;
+    preferred_send_dates?: string[];
   }>;
 }
 
@@ -872,7 +873,9 @@ async function draftBundledQuote(
         ad_rate_cents, ad_rate_base_cents, discount_cents, ad_premium_cents,
         page_position, pos_premium_active,
         ad_timing_months, ad_timing_years,
-        total_monthly_cents, expiration_date, renewal_reminder_date
+        total_monthly_cents, expiration_date, renewal_reminder_date,
+        preferred_send_dates,
+        preferred_send_dates
       ) VALUES (
         ${agreement.id},
         ${i + 1},
@@ -899,7 +902,8 @@ async function draftBundledQuote(
         ${ioTimingYears}::jsonb,
         ${ioTotalMonthly},
         ${ioExpDate},
-        ${ioRemindDate}
+        ${ioRemindDate},
+        ${src.preferred_send_dates && src.preferred_send_dates.length > 0 ? JSON.stringify(src.preferred_send_dates) : null}::jsonb
       )
     `;
   }
