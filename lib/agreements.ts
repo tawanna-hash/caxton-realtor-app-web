@@ -26,6 +26,27 @@ export interface AgreementLineItem {
   pay_now: boolean;
   meta: Record<string, unknown>;
   created_at: string;
+
+  // Insertion Order pricing fields (print lines, populated by quote-drafter).
+  ad_rate_cents: number | null;
+  ad_rate_base_cents: number | null;
+  discount_cents: number | null;
+  ad_premium_cents: number | null;
+  page_position: string | null;
+  pos_premium_active: boolean | null;
+  total_monthly_cents: number | null;
+
+  // Print run window (per-line — mirrors the agreement's ad_timing grid).
+  // ad_timing_months is a Record<monthKey, boolean> as saved from the modal;
+  // ad_timing_years is Record<monthKey, yearStr>. Together they describe
+  // exactly which issues this line covers.
+  ad_timing_months: Record<string, boolean> | null;
+  ad_timing_years: Record<string, string> | null;
+  expiration_date: string | null;
+  renewal_reminder_date: string | null;
+
+  // Email lines only: ISO dates the campaign should send on.
+  preferred_send_dates: string[] | null;
 }
 
 export type AgreementType =
