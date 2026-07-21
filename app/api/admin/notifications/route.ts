@@ -69,12 +69,7 @@ export const GET = withErrorHandling(async () => {
     SELECT n.id, n.category, n.title, n.body, n.deep_link_url,
            n.target_audience, n.scheduled_for, n.sent_at, n.status,
            n.created_by, n.created_at,
-           COALESCE((SELECT COUNT(*)::int FROM notification_deliveries d
-                      WHERE d.notification_id = n.id AND d.delivered_at IS NOT NULL), 0)
-             AS delivered_count,
-           COALESCE((SELECT COUNT(*)::int FROM notification_deliveries d
-                      WHERE d.notification_id = n.id AND d.clicked_at IS NOT NULL), 0)
-             AS clicked_count
+           n.delivered_count, n.clicked_count
       FROM notifications n
      ORDER BY n.created_at DESC
      LIMIT 100
@@ -158,7 +153,8 @@ export const POST = withErrorHandling(async (req: Request) => {
       await sql`
         UPDATE notifications
            SET status = 'sent'::notification_status_enum,
-               sent_at = NOW()
+               sent_at = NOW(),
+               delivered_count = ${sendResult?.sent ?? 0}
          WHERE id = ${row.id}::uuid
       `;
     } catch (err) {

@@ -119,7 +119,8 @@ export async function GET(req: Request) {
       await sql`
         UPDATE notifications
            SET status = 'sent'::notification_status_enum,
-               sent_at = NOW()
+               sent_at = NOW(),
+               delivered_count = ${sendResult.sent}
          WHERE id = ${row.id}::uuid
       `;
       results.push({ id: row.id, ...sendResult });

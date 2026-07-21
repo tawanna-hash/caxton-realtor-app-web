@@ -48,12 +48,7 @@ export default async function AdminNotificationsPage() {
     SELECT n.id, n.category, n.title, n.body, n.deep_link_url,
            n.target_audience, n.scheduled_for, n.sent_at, n.status,
            n.created_at,
-           COALESCE((SELECT COUNT(*)::int FROM notification_deliveries d
-                      WHERE d.notification_id = n.id AND d.delivered_at IS NOT NULL), 0)
-             AS delivered_count,
-           COALESCE((SELECT COUNT(*)::int FROM notification_deliveries d
-                      WHERE d.notification_id = n.id AND d.clicked_at IS NOT NULL), 0)
-             AS clicked_count
+           n.delivered_count, n.clicked_count
       FROM notifications n
      ORDER BY n.created_at DESC
      LIMIT 100

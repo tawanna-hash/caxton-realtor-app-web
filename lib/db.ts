@@ -1047,6 +1047,15 @@ async function _runEnsureSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS push_subscriptions_realtor_idx ON push_subscriptions(realtor_id)`;
   await sql`CREATE INDEX IF NOT EXISTS push_subscriptions_market_idx ON push_subscriptions(market)`;
 
+  // Record-level push-service acceptance and click tallies on the
+  // notification itself. We count push-service acceptance (not per-realtor
+  // delivery rows) because anonymous opt-ins have no realtor_id and never
+  // produced a notification_deliveries row, which left Delivered/Clicks at 0.
+  // notifications is created out-of-band, so guard with IF EXISTS (no-op on a
+  // fresh DB) and IF NOT EXISTS to stay idempotent on prod.
+  await sql`ALTER TABLE IF EXISTS notifications ADD COLUMN IF NOT EXISTS delivered_count INTEGER NOT NULL DEFAULT 0`;
+  await sql`ALTER TABLE IF EXISTS notifications ADD COLUMN IF NOT EXISTS clicked_count INTEGER NOT NULL DEFAULT 0`;
+
   // Native (iOS / Android) push tokens. Separate from push_subscriptions
   // because APNs/FCM tokens are opaque strings, not VAPID-encrypted
   // endpoints, and need a different sender library on the back end.

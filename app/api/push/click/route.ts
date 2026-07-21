@@ -1,8 +1,9 @@
 // app/api/push/click/route.ts
 //
 // Best-effort click tracking from the service worker's notificationclick
-// handler. Stamps clicked_at on the corresponding notification_deliveries
-// row(s). Idempotent — only updates the most recent unclicked delivery.
+// handler. Increments the record-level clicked_count on the notification so
+// the admin list reflects taps even from anonymous (no realtor_id) opt-ins,
+// which never produced a notification_deliveries row.
 
 import { NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
@@ -25,10 +26,9 @@ export async function POST(req: Request): Promise<Response> {
   }
   const sql = getSql();
   await sql`
-    UPDATE notification_deliveries
-       SET clicked_at = NOW()
-     WHERE notification_id = ${body.notificationId}::uuid
-       AND clicked_at IS NULL
+    UPDATE notifications
+       SET clicked_count = clicked_count + 1
+     WHERE id = ${body.notificationId}::uuid
   `;
   return NextResponse.json({ ok: true });
 }

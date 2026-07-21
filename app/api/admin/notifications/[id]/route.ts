@@ -159,7 +159,8 @@ export const PATCH = withErrorHandling(
         await sql`
           UPDATE notifications
              SET status = 'sent'::notification_status_enum,
-                 sent_at = NOW()
+                 sent_at = NOW(),
+                 delivered_count = ${sendResult?.sent ?? 0}
            WHERE id = ${id}::uuid
         `;
       } catch (err) {
