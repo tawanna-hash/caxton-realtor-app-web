@@ -685,8 +685,10 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   // the current line — and on each snapshotted bundle line — rolls up.
   const bundleGrandTotalCents = useMemo(() => {
     const linesSum = bundleLines.reduce((acc, l) => acc + l.subtotalCents, 0);
-    return linesSum + effectiveCents;
-  }, [bundleLines, effectiveCents]);
+    // Mirror the current-row render guard (previewCents > 0): don't roll a
+    // stale override into the grand total when the current line isn't billable.
+    return linesSum + (previewCents > 0 ? effectiveCents : 0);
+  }, [bundleLines, effectiveCents, previewCents]);
 
   // Build the POST body from a BundleLine (or, when null, from the
   // current form state — for the final line in the bundle sequence).
