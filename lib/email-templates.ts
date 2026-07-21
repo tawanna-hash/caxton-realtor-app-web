@@ -28,8 +28,8 @@ export interface AgreementNotificationLine {
   frequency?: string | null;
   quantity?: number | null;
   publication?: 'austin' | 'san_antonio' | 'both' | null;
-  startDate?: string | null;
-  endDate?: string | null;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
   amountCents: number;
 }
 
@@ -59,6 +59,16 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
   const lines = params.lines ?? [];
   const money = (c: number) => `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const channelLabel = (c: string) => c === 'print' ? 'Print' : c === 'email' ? 'e-Blast' : c === 'app' ? 'App' : c;
+  // Format a run-window date without the time/timezone. The DB driver returns
+  // `date` columns as JS Date objects, whose default toString() emits
+  // "00:00:00 GMT+0000 (Coordinated Universal Time)" — we only want "Jul 21, 2026".
+  // timeZone: UTC keeps the calendar day from shifting off-by-one.
+  const fmtDate = (d: string | Date | null | undefined): string => {
+    if (!d) return '';
+    const dt = d instanceof Date ? d : new Date(String(d));
+    if (isNaN(dt.getTime())) return String(d);
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+  };
 
   let detailsBox = '';
   if (lines.length > 0) {
@@ -72,8 +82,18 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
         if (ln.quantity != null) bits.push(`${ln.quantity} send${ln.quantity === 1 ? '' : 's'}`);
         if (ln.publication) bits.push(`Publication: ${escapeHtml(ln.publication).replace('_', ' ')}`);
       } else if (ln.channel === 'app') {
-        if (ln.quantity != null) bits.push(`Qty: ${ln.quantity}`);
-        if (ln.startDate && ln.endDate) bits.push(`${escapeHtml(ln.startDate)} → ${escapeHtml(ln.endDate)}`);
+        // App ads run by length (weeks or months), not a date window — show the
+        // duration, not a date range. The raw start/end also come back as JS
+        // Date objects (see fmtDate), so a date range would leak the time.
+        // Only fall back to a clean, time-less date range if there's no quantity.
+        const appQty = ln.quantity ?? 0;
+        const isMonthly = /mo$/i.test(ln.frequency ?? '');
+        if (appQty > 0) {
+          const unit = isMonthly ? 'month' : 'week';
+          bits.push(`${appQty} ${unit}${appQty === 1 ? '' : 's'}`);
+        } else if (ln.startDate && ln.endDate) {
+          bits.push(`${fmtDate(ln.startDate)} → ${fmtDate(ln.endDate)}`);
+        }
       }
       const meta = bits.length ? `<div style="font-family:Arial,sans-serif;font-size:12px;color:#666;margin-top:2px">${bits.join(' &middot; ')}</div>` : '';
       return `<tr><td style="padding:10px 0;border-bottom:1px solid #eee"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#333"><strong>#${ln.lineNo}</strong> &nbsp; ${escapeHtml(ln.label)} <span style="color:#888;font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-left:6px">${channelLabel(ln.channel)}</span>${meta}</td><td align="right" style="font-family:Arial,sans-serif;font-size:14px;color:#111;font-weight:bold;white-space:nowrap;vertical-align:top">${money(ln.amountCents)}</td></tr></table></td></tr>`;
