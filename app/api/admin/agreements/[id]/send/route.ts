@@ -52,6 +52,35 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         : null;
     const defaultMessage = `Your RealtyLine advertising agreement is ready for review. Click below to open your secure signing portal. If your package hasn't been pre-selected, you'll be able to choose your ad size and publication frequency before signing. Reach out if you have any questions — we're glad to help.`;
 
+    // Fetch line items so bundles show all lines in the email recap.
+    type LineItemRow = {
+      line_no: number;
+      channel: 'print' | 'email' | 'app';
+      package_label: string;
+      ad_size: string | null;
+      frequency: string | null;
+      quantity: number;
+      publication: 'austin' | 'san_antonio' | 'both' | null;
+      start_date: string | null;
+      end_date: string | null;
+      amount_cents: number;
+    };
+    const lineItemRows = await sql`SELECT line_no, channel, package_label, ad_size, frequency, quantity, publication, start_date, end_date, amount_cents FROM agreement_line_items WHERE agreement_id = ${id} ORDER BY line_no ASC` as unknown as LineItemRow[];
+
+    const notificationLines = lineItemRows.map((r) => ({
+      lineNo: r.line_no,
+      channel: r.channel,
+      label: r.package_label,
+      adSize: r.ad_size,
+      frequency: r.frequency,
+      quantity: r.quantity,
+      publication: r.publication,
+      startDate: r.start_date,
+      endDate: r.end_date,
+      amountCents: r.amount_cents,
+    }));
+    const totalCents = notificationLines.reduce((a, b) => a + b.amountCents, 0);
+
     const html = agreementNotificationEmail({
       companyName: ag.company_name ?? undefined,
       repName: ag.rep_name ?? undefined,
@@ -60,6 +89,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       status: ag.status,
       message: customMessage ?? defaultMessage,
       signingLink,
+      lines: notificationLines,
+      totalCents,
     });
 
     const result = await sendEmail({

@@ -15,10 +15,23 @@ export interface BrandConfig {
 
 export const REALTYLINE_BRAND: BrandConfig = {
   brandName: 'RealtyLine',
-  brandColor: '#dc2626',
+  brandColor: '#7c3aed',
   brandLogo: '',
   websiteUrl: 'https://realtynewsnow.app',
 };
+
+export interface AgreementNotificationLine {
+  lineNo: number;
+  channel: 'print' | 'email' | 'app';
+  label: string;
+  adSize?: string | null;
+  frequency?: string | null;
+  quantity?: number | null;
+  publication?: 'austin' | 'san_antonio' | 'both' | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  amountCents: number;
+}
 
 export interface AgreementNotificationParams {
   brand?: BrandConfig;
@@ -29,6 +42,8 @@ export interface AgreementNotificationParams {
   status?: string;
   message?: string;
   signingLink?: string;
+  lines?: AgreementNotificationLine[];
+  totalCents?: number | null;
 }
 
 export function agreementNotificationEmail(params: AgreementNotificationParams): string {
@@ -41,24 +56,51 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
     : `Thank you for your continued partnership with ${brand.brandName}.`);
   const formattedMessage = message.replace(/\n/g, '<br>');
 
-  const hasDetails = params.companyName || params.adSize || params.adRate != null || params.status;
+  const lines = params.lines ?? [];
+  const money = (c: number) => `$${(c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const channelLabel = (c: string) => c === 'print' ? 'Print' : c === 'email' ? 'e-Blast' : c === 'app' ? 'App' : c;
 
-  const companyRow = params.companyName
-    ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Company:</strong> ${params.companyName}</td></tr>`
-    : '';
-  const adSizeRow = params.adSize
-    ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Ad Size:</strong> ${params.adSize}</td></tr>`
-    : '';
-  const adRateRow = params.adRate != null
-    ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Ad Rate:</strong> $${Number(params.adRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/issue</td></tr>`
-    : '';
-  const statusRow = params.status
-    ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Status:</strong> ${params.status}</td></tr>`
-    : '';
-
-  const detailsBox = hasDetails
-    ? `<tr><td style="padding:0 40px 24px 40px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;border-left:4px solid ${brand.brandColor}"><tr><td style="padding:20px 24px"><p style="margin:0 0 10px 0;font-family:Arial,sans-serif;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.8px">Agreement Details</p><table role="presentation" cellpadding="0" cellspacing="0" width="100%">${companyRow}${adSizeRow}${adRateRow}${statusRow}</table></td></tr></table></td></tr>`
-    : '';
+  let detailsBox = '';
+  if (lines.length > 0) {
+    // Bundle recap
+    const lineRows = lines.map((ln) => {
+      const bits: string[] = [];
+      if (ln.channel === 'print') {
+        if (ln.adSize) bits.push(`Size: ${escapeHtml(ln.adSize)}`);
+        if (ln.frequency) bits.push(`Freq: ${escapeHtml(ln.frequency)}`);
+      } else if (ln.channel === 'email') {
+        if (ln.quantity != null) bits.push(`${ln.quantity} send${ln.quantity === 1 ? '' : 's'}`);
+        if (ln.publication) bits.push(`Publication: ${escapeHtml(ln.publication).replace('_', ' ')}`);
+      } else if (ln.channel === 'app') {
+        if (ln.quantity != null) bits.push(`Qty: ${ln.quantity}`);
+        if (ln.startDate && ln.endDate) bits.push(`${escapeHtml(ln.startDate)} → ${escapeHtml(ln.endDate)}`);
+      }
+      const meta = bits.length ? `<div style="font-family:Arial,sans-serif;font-size:12px;color:#666;margin-top:2px">${bits.join(' &middot; ')}</div>` : '';
+      return `<tr><td style="padding:10px 0;border-bottom:1px solid #eee"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#333"><strong>#${ln.lineNo}</strong> &nbsp; ${escapeHtml(ln.label)} <span style="color:#888;font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-left:6px">${channelLabel(ln.channel)}</span>${meta}</td><td align="right" style="font-family:Arial,sans-serif;font-size:14px;color:#111;font-weight:bold;white-space:nowrap;vertical-align:top">${money(ln.amountCents)}</td></tr></table></td></tr>`;
+    }).join('');
+    const totalCents = params.totalCents ?? lines.reduce((a, b) => a + b.amountCents, 0);
+    const totalRow = `<tr><td style="padding:12px 0 0 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#111;font-weight:bold">Grand total</td><td align="right" style="font-family:Arial,sans-serif;font-size:16px;color:#7c3aed;font-weight:bold">${money(totalCents)}</td></tr></table></td></tr>`;
+    const heading = lines.length > 1 ? `Bundle Summary (${lines.length} lines)` : 'Agreement Summary';
+    detailsBox = `<tr><td style="padding:0 40px 24px 40px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;border-left:4px solid ${brand.brandColor}"><tr><td style="padding:20px 24px"><p style="margin:0 0 10px 0;font-family:Arial,sans-serif;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.8px">${heading}</p><table role="presentation" cellpadding="0" cellspacing="0" width="100%">${lineRows}${totalRow}</table></td></tr></table></td></tr>`;
+  } else {
+    // Legacy single-line fallback
+    const hasDetails = params.companyName || params.adSize || params.adRate != null || params.status;
+    const companyRow = params.companyName
+      ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Company:</strong> ${escapeHtml(params.companyName)}</td></tr>`
+      : '';
+    const adSizeRow = params.adSize
+      ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Ad Size:</strong> ${escapeHtml(params.adSize)}</td></tr>`
+      : '';
+    const adRateRow = params.adRate != null
+      ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Ad Rate:</strong> $${Number(params.adRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/issue</td></tr>`
+      : '';
+    const statusRow = params.status
+      ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Status:</strong> ${escapeHtml(params.status)}</td></tr>`
+      : '';
+    detailsBox = hasDetails
+      ? `<tr><td style="padding:0 40px 24px 40px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;border-left:4px solid ${brand.brandColor}"><tr><td style="padding:20px 24px"><p style="margin:0 0 10px 0;font-family:Arial,sans-serif;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.8px">Agreement Details</p><table role="presentation" cellpadding="0" cellspacing="0" width="100%">${companyRow}${adSizeRow}${adRateRow}${statusRow}</table></td></tr></table></td></tr>`
+      : '';
+  }
 
   const ctaButton = params.signingLink
     ? `<tr><td align="center" style="padding:24px 40px"><a href="${params.signingLink}" style="display:inline-block;background:${brand.brandColor};color:#fff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 36px;border-radius:4px;letter-spacing:.5px">Review &amp; Sign Agreement</a></td></tr>`
