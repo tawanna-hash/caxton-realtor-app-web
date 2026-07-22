@@ -117,8 +117,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     });
 
     const subject = isTest
-      ? `[TEST] RealtyLine Agreement — ${ag.company_name ?? 'Agreement'}`
-      : `Action Required: Sign Your RealtyLine Advertising Agreement — ${ag.company_name ?? 'Agreement'}`;
+      ? `[TEST] RealtyLine Proposal — ${ag.company_name ?? 'Proposal'}`
+      : `Action Required: Review Your RealtyLine Advertising Proposal — ${ag.company_name ?? 'Proposal'}`;
     const result = await sendEmail({
       to: recipient,
       subject,

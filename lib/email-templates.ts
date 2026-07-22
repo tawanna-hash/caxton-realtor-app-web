@@ -124,7 +124,7 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
   }
 
   const ctaButton = params.signingLink
-    ? `<tr><td align="center" style="padding:24px 40px"><a href="${params.signingLink}" style="display:inline-block;background:${brand.brandColor};color:#fff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 36px;border-radius:4px;letter-spacing:.5px">Review &amp; Sign Agreement</a></td></tr>`
+    ? `<tr><td align="center" style="padding:24px 40px"><a href="${params.signingLink}" style="display:inline-block;background:${brand.brandColor};color:#fff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 36px;border-radius:4px;letter-spacing:.5px">Review &amp; Accept Proposal</a></td></tr>`
     : '';
 
   // Rep's typed note to the advertiser (auto-fallback + override-pricing
