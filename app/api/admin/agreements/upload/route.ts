@@ -3,10 +3,11 @@
 // POST  multipart/form-data  { file: File, agreementId?: string }
 //
 // Two modes:
-//   1. No agreementId  -> upload PDF and create a NEW stub agreement row
-//                         (is_uploaded=true, status='draft'). Used for the
-//                         "Upload signed agreement" entry point in
-//                         /admin/billing.
+//   1. No agreementId  -> upload PDF/JPEG and create a NEW SIGNED agreement
+//                         row (is_uploaded=true, status='signed', sign_date=today,
+//                         file stored on signed_document, audit 'signed'). Used
+//                         for the "Upload manually signed agreement" entry point
+//                         in /admin/agreements.
 //   2. With agreementId -> upload file and append it to the existing
 //                          agreement's attachments.files JSONB array.
 //                          Used by the agreement drawer's Attachments
@@ -109,18 +110,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ agreement: updated[0], attachment }, { status: 200 });
     }
 
-    // Mode 1: create a new stub row. The file becomes the seed of a new
-    // "uploaded paper agreement" the admin will then fill in.
+    // Mode 1: create a new SIGNED record from a manually-uploaded signed
+    // document (paper / PDF / scanned JPEG). The file is stored on
+    // signed_document, the row is born 'signed' with today's sign date,
+    // and an audit entry records the manual upload. The admin can then
+    // open the drawer to fill in advertiser + ad details.
     const companyName = sanitizeFilename(file.name);
+    const now = new Date().toISOString();
+    const seedAudit = [
+      {
+        event: 'signed',
+        timestamp: now,
+        user_email: admin.email ?? undefined,
+        details: `Manually uploaded signed document (${file.name})`,
+      },
+    ];
     const rows = (await sql`
       INSERT INTO agreements (
         company_name, status, is_uploaded,
-        attachments, created_by
+        signed_document, sign_date, signed_at,
+        attachments, audit_log, created_by
       ) VALUES (
         ${companyName},
-        'draft',
+        'signed',
         true,
+        ${blob.url},
+        CURRENT_DATE,
+        NOW(),
         ${JSON.stringify({ files: [attachment] })}::jsonb,
+        ${JSON.stringify(seedAudit)}::jsonb,
         ${admin.email ?? null}
       )
       RETURNING *
