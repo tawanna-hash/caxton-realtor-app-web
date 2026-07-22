@@ -44,8 +44,8 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
             <strong>What happens next:</strong>
             <ul className="list-disc list-inside mt-2 space-y-1 text-left">
               <li>You&apos;ll receive a confirmation email shortly</li>
-              <li>Your ad will run per the insertion order you reviewed</li>
-              <li>Invoices will be sent monthly to your billing email</li>
+              <li>Your digital ad placement will run as per dates selected</li>
+              <li>A receipt has been emailed to you</li>
             </ul>
           </div>
 

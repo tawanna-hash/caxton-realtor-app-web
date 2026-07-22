@@ -523,10 +523,15 @@ export default function SignWizard({
   const [billingEmail, setBillingEmail] = useState(ag.billing_email ?? '');
   const [billingContactName, setBillingContactName] = useState(ag.billing_contact_name ?? '');
   const [billingContactPhone, setBillingContactPhone] = useState(formatPhone(ag.billing_contact_phone ?? ''));
+  // Digital/e-Blast/App require prepayment by credit card before placement;
+  // Check is only offered for print agreements.
+  const checkDisabled = channel !== 'print';
   const [paymentType, setPaymentType] = useState<string>(
-    ag.card_type || ag.payment_mode === 'card'
+    checkDisabled
       ? 'Credit Card'
-      : (ag.payment_mode === 'check' ? 'Check' : ''),
+      : (ag.card_type || ag.payment_mode === 'card'
+          ? 'Credit Card'
+          : (ag.payment_mode === 'check' ? 'Check' : '')),
   );
 
   // ── Sign step ──────────────────────────────────────────────────────────────
@@ -1230,20 +1235,31 @@ export default function SignWizard({
           <div>
             <Eyebrow>Payment Type</Eyebrow>
             <div className="flex gap-4">
-              {PAYMENT_TYPES.map((p) => (
-                <label key={p} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="paymentType"
-                    value={p}
-                    checked={paymentType === p}
-                    onChange={() => setPaymentType(p)}
-                    className="accent-purple-600"
-                  />
-                  <span className="text-sm text-gray-800">{p}</span>
-                </label>
-              ))}
+              {PAYMENT_TYPES.map((p) => {
+                const disabled = p === 'Check' && checkDisabled;
+                return (
+                  <label key={p} className={`flex items-center gap-2 ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                    <input
+                      type="radio"
+                      name="paymentType"
+                      value={p}
+                      checked={paymentType === p}
+                      onChange={() => setPaymentType(p)}
+                      disabled={disabled}
+                      className="accent-purple-600"
+                    />
+                    <span className="text-sm text-gray-800">{p}</span>
+                  </label>
+                );
+              })}
             </div>
+            {checkDisabled && (
+              <p className="text-xs text-gray-500 mt-1">
+                Prepayment by credit card is required for digital, e-Blast, and App ad placements before they go live. If paying by check is preferred, please contact Tawanna at{' '}
+                <a href="mailto:tawanna@myrealtyline.com" className="text-[#5a0e5f] hover:underline">tawanna@myrealtyline.com</a>{' '}
+                for consideration.
+              </p>
+            )}
           </div>
 
           {/* Credit Card — Stripe Elements only (no legacy reference fields).
