@@ -476,13 +476,13 @@ export default function AdvertisePage() {
             <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs">
               <Link
                 href="/advertise/placements"
-                className="font-semibold text-brand-700 underline underline-offset-2 hover:text-[#493676]"
+                className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-600"
               >
                 See where every placement appears {'\u2192'}
               </Link>
               <Link
                 href="/advertise/digital"
-                className="font-semibold text-brand-700 underline underline-offset-2 hover:text-[#493676]"
+                className="font-semibold text-brand-700 underline underline-offset-2 hover:text-brand-600"
               >
                 Browse all {DIGITAL_SLOT_COUNT} placements with live pricing{' '}
                 {'\u2192'}
