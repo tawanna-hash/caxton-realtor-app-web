@@ -19,7 +19,7 @@ const GEORGIA_REGULAR = fs.readFileSync(path.join(FONT_DIR, 'Georgia.ttf'));
 const GEORGIA_BOLD = fs.readFileSync(path.join(FONT_DIR, 'Georgia-Bold.ttf'));
 const GEORGIA_ITALIC = fs.readFileSync(path.join(FONT_DIR, 'Georgia-Italic.ttf'));
 
-const RED = rgb(0.824, 0.145, 0.192);   // #dc2626
+const RED = rgb(0.353, 0.055, 0.373);   // #5a0e5f app plum
 const DARK = rgb(0.1, 0.1, 0.1);
 const GRAY = rgb(0.45, 0.45, 0.45);
 const LGRAY = rgb(0.85, 0.85, 0.85);
@@ -218,7 +218,7 @@ async function generateAgreementPdfBufferInner(ag: Agreement): Promise<Uint8Arra
   // ─── Page 1 Header ──────────────────────────────────────────────────────────
   const page = currentPg(ctx);
 
-  // Red accent bar
+  // Plum accent bar
   page.drawRectangle({ x: 0, y: PH - 72, width: PW, height: 72, color: RED });
   page.drawText('RealtyLine Austin', {
     x: MARGIN, y: PH - 44,
