@@ -1322,21 +1322,21 @@ export default function SignWizard({
         setStep(4);
       }}
       onNext={submitSignature}
-      nextLabel="Sign Agreement"
+      nextLabel="Accept Proposal & Sign"
       nextDisabled={!canSign}
       saving={saving}
     >
       <div className="space-y-5">
         <Eyebrow>Terms &amp; Digital Signature</Eyebrow>
         <h2 className="text-lg text-gray-900">
-          Review &amp; sign the agreement
+          Review &amp; accept the proposal
         </h2>
 
         {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
 
         {paymentType === 'Credit Card' && confirmedPaymentIntentId && (
           <div className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-md p-3">
-            ✓ Card authorized. Your card will be charged the moment you click <strong>Sign Agreement</strong> below.
+            ✓ Card authorized. Your card will be charged the moment you click <strong>Accept Proposal &amp; Sign</strong> below.
           </div>
         )}
 
@@ -1354,8 +1354,8 @@ export default function SignWizard({
             required
           />
           <span className="text-sm text-gray-700">
-            I have read and accept the Terms &amp; Conditions above. I understand this constitutes a
-            legally binding agreement.
+            I accept this proposal and agree to the Terms &amp; Conditions above. I understand that
+            accepting converts this proposal into a legally binding advertising agreement.
           </span>
         </label>
 
@@ -1378,7 +1378,7 @@ export default function SignWizard({
 
         {canSign && (
           <p className="text-xs text-gray-500 text-center">
-            Clicking &ldquo;Sign Agreement&rdquo; constitutes your legally binding digital
+            Clicking &ldquo;Accept Proposal &amp; Sign&rdquo; constitutes your legally binding digital
             signature.
           </p>
         )}
