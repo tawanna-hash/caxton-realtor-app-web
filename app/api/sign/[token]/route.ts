@@ -119,6 +119,36 @@ async function applyPatches(
       if (typeof val !== 'object' || Array.isArray(val)) continue;
       const j = JSON.stringify(val);
       await sql`UPDATE agreements SET ad_timing_months = ${j}::jsonb WHERE id = ${id}`;
+    } else if (field === 'line_item_dates') {
+      // Advertiser-chosen placement dates for app bundle lines (Step 3).
+      if (!Array.isArray(val)) continue;
+      let updatedAny = false;
+      for (const entry of val) {
+        if (!entry || typeof entry !== 'object') continue;
+        const e = entry as { line_no?: unknown; start_date?: unknown; end_date?: unknown };
+        if (typeof e.line_no !== 'number' || !Number.isInteger(e.line_no)) continue;
+        if (typeof e.start_date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.start_date)) continue;
+        if (typeof e.end_date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(e.end_date)) continue;
+        const res = await sql`
+          UPDATE agreement_line_items
+          SET start_date = ${e.start_date}::date, end_date = ${e.end_date}::date
+          WHERE agreement_id = ${id} AND line_no = ${e.line_no} AND channel = 'app'
+          RETURNING 1
+        `;
+        if (res.length > 0) updatedAny = true;
+      }
+      // Keep the agreement-level window in sync with the bundle (min start / max end),
+      // but only if at least one app line actually changed.
+      if (updatedAny) {
+        const windows = await sql`
+          SELECT MIN(start_date) AS min_start, MAX(end_date) AS max_end
+          FROM agreement_line_items WHERE agreement_id = ${id}
+        `;
+        const w = (windows[0] ?? {}) as { min_start?: string | null; max_end?: string | null };
+        if (w.min_start && w.max_end) {
+          await sql`UPDATE agreements SET start_date = ${w.min_start}::date, end_date = ${w.max_end}::date WHERE id = ${id}`;
+        }
+      }
     }
   }
 }

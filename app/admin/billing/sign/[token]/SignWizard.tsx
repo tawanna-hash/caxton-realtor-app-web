@@ -54,6 +54,25 @@ function formatLineWindow(channel: 'print' | 'email' | 'app', start: string | nu
   return `${monShort(sm)} ${sd}, ${sy} – ${monShort(em)} ${ed}, ${ey}`;
 }
 
+// Mirror of quote-drafter computeTermFrom app branch: end = start + run length.
+// weekly (default) → start + weeks*7 - 1 days; monthly → last day of (start month + months).
+// Keeps the run window consistent when the advertiser picks a new start date.
+function computeAppEnd(startIso: string, li: { frequency?: string | null; quantity?: number | null }): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(startIso);
+  if (!m) return startIso;
+  const y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+  const freq = (li.frequency ?? '').trim();
+  const qty = Math.max(1, li.quantity ?? 1);
+  if (/mo$/i.test(freq)) {
+    // day 0 of (start month + qty) = last day of the month before it
+    const end = new Date(Date.UTC(y, mo - 1 + qty, 0));
+    return end.toISOString().slice(0, 10);
+  }
+  const end = new Date(Date.UTC(y, mo - 1, d));
+  end.setUTCDate(end.getUTCDate() + qty * 7 - 1);
+  return end.toISOString().slice(0, 10);
+}
+
 const CURRENT_YEAR = new Date().getFullYear().toString();
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -434,6 +453,31 @@ export default function SignWizard({
   const [applyPagePremium, setApplyPagePremium] = useState(false);
   const [timing, setTiming] = useState<TimingState>(() => initTiming(ag));
 
+  // ── Placement date (Step 3 app bundle) ──────────────────────────────────────
+  // Advertiser picks a single shared start date; each app line's end date
+  // auto-computes from its own run length so the window stays consistent.
+  const appLineItems = lineItems.filter((li) => li.channel === 'app');
+  const appStartDates = Array.from(
+    new Set(appLineItems.map((li) => li.start_date).filter((d): d is string => !!d)),
+  ).sort();
+  const [placementStart, setPlacementStart] = useState<string>(
+    appStartDates.length === 1 ? appStartDates[0] : '',
+  );
+  const hasAppLines = appLineItems.length > 0;
+  // Resolved line items: app lines adopt placementStart + recomputed end;
+  // other channels keep their quoted dates.
+  const displayLines = lineItems.map((li) =>
+    li.channel === 'app' && placementStart
+      ? { ...li, start_date: placementStart, end_date: computeAppEnd(placementStart, li) }
+      : li,
+  );
+  // Patches sent to the server for app lines only (Step 3).
+  const lineItemDatePatches = placementStart
+    ? displayLines
+        .filter((li) => li.channel === 'app' && li.start_date && li.end_date)
+        .map((li) => ({ line_no: li.line_no, start_date: li.start_date, end_date: li.end_date }))
+    : [];
+
   // ── Billing ────────────────────────────────────────────────────────────────
   const [billTo, setBillTo] = useState<string>(ag.bill_to ?? 'Advertiser');
   const [billingEmail, setBillingEmail] = useState(ag.billing_email ?? '');
@@ -530,6 +574,8 @@ export default function SignWizard({
       billing_contact_name: billingContactName || null,
       billing_contact_phone: billingContactPhone || null,
       payment_mode: paymentType === 'Credit Card' ? 'card' : paymentType === 'Check' ? 'check' : null,
+      // Advertiser-chosen placement dates for app bundle lines (Step 3).
+      ...(lineItemDatePatches.length > 0 ? { line_item_dates: lineItemDatePatches } : {}),
       // Card details (type, cardholder, last4, exp, address) are captured by
       // Stripe Elements + populated server-side from the PaymentIntent's
       // PaymentMethod when the webhook fires. Do not send placeholder values
@@ -809,7 +855,7 @@ export default function SignWizard({
           <h2 className="text-lg text-gray-900">Your quoted placement</h2>
           <p className="text-sm text-gray-600">
             The details below were prepared by your sales rep from an approved quote.
-            If anything looks wrong, please contact us before signing.
+            You can update placement dates below.
           </p>
 
           {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
@@ -819,8 +865,25 @@ export default function SignWizard({
               <div className="text-xs font-semibold uppercase tracking-wider text-purple-900 mb-3">
                 Bundled quote · {lineItems.length} line items
               </div>
+
+              {/* Placement start date — advertiser-chosen; each app line's end auto-computes. */}
+              {hasAppLines && (
+                <div className="mb-3 pb-3 border-b border-purple-100">
+                  <label htmlFor="placementStart" className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">
+                    Placement start date
+                  </label>
+                  <input
+                    id="placementStart"
+                    type="date"
+                    value={placementStart}
+                    onChange={(e) => setPlacementStart(e.target.value)}
+                    className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  />
+                </div>
+              )}
+
               <ul className="space-y-2">
-                {lineItems.map((li) => (
+                {displayLines.map((li) => (
                   <li
                     key={li.id}
                     className="flex items-start justify-between border-b border-purple-100 pb-2 last:border-b-0 last:pb-0"
