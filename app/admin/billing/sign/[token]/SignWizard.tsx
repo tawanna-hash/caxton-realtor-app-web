@@ -15,6 +15,7 @@ import SignaturePad, { type SignatureValue } from './SignaturePad';
 import { useRouter } from 'next/navigation';
 import type { Agreement } from '@/lib/agreements';
 import { termsForChannel } from '@/lib/agreement-terms';
+import { cleanRepNote } from '@/lib/agreement-notes';
 import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
 import {
   AD_SIZES,
@@ -339,12 +340,15 @@ function QuoteSummaryCard({
           label="Total"
           value={<span className="font-semibold text-gray-900">{amount}</span>}
         />
-        {ag.notes && ag.notes.trim() && (
-          <SummaryRow
-            label="Notes from rep"
-            value={<span className="whitespace-pre-wrap">{ag.notes.trim()}</span>}
-          />
-        )}
+        {(() => {
+          const note = cleanRepNote(ag.notes);
+          return note ? (
+            <SummaryRow
+              label="Notes from rep"
+              value={<span className="whitespace-pre-wrap">{note}</span>}
+            />
+          ) : null;
+        })()}
       </dl>
     </div>
   );

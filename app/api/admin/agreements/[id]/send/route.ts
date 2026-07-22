@@ -10,6 +10,7 @@ import { signToken } from '@/lib/sign-token';
 import { sendEmail } from '@/lib/email';
 import { agreementNotificationEmail, brandForPublication } from '@/lib/email-templates';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
+import { cleanRepNote } from '@/lib/agreement-notes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -96,13 +97,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     // an auto-fallback ("Quote drafted — …") when the rep left it blank and an
     // appended override-pricing line for custom pricing — strip both so the
     // email only surfaces what the rep actually wrote.
-    const repNote = (() => {
-      const raw = (ag.notes ?? '').trim();
-      if (!raw || raw.startsWith('Quote drafted —')) return null;
-      const overrideLine = /^(Rack|Unit rack) \$[\d,]+(?:\.\d+)? → [Qq]uoted \$[\d,]+(?:\.\d+)? \(\d+(?:\.\d+)?% off\)$/;
-      const kept = raw.split('\n').map((l) => l.trim()).filter((l) => l && !overrideLine.test(l));
-      return kept.length ? kept.join('\n') : null;
-    })();
+    const repNote = cleanRepNote(ag.notes);
 
     const html = agreementNotificationEmail({
       brand,
