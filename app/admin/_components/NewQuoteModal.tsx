@@ -1695,32 +1695,37 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
           )}
         </section>
 
-        {/* Memo + due date */}
+        {/* Due date */}
         <section className="border border-gray-200 rounded-md p-3">
           <p className="text-xs uppercase tracking-wider text-gray-600 font-semibold mb-2">
             Options
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <label className="text-xs text-gray-700">
-              Due date (optional)
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
-              />
-            </label>
-            <label className="text-xs text-gray-700 sm:col-span-1">
-              Memo (optional)
-              <input
-                type="text"
-                value={memo}
-                onChange={(e) => setMemo(e.target.value)}
-                placeholder="Appears on invoice"
-                className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
-              />
-            </label>
-          </div>
+          <label className="block text-xs text-gray-700 sm:max-w-xs">
+            Due date (optional)
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+            />
+          </label>
+        </section>
+
+        {/* Notes to advertiser */}
+        <section className="border border-gray-200 rounded-md p-3">
+          <p className="text-xs uppercase tracking-wider text-gray-600 font-semibold mb-1">
+            Notes to advertiser
+          </p>
+          <p className="text-[11px] text-gray-500 mb-2">
+            Shown on the agreement when the advertiser reviews and signs.
+          </p>
+          <textarea
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+            placeholder="Add a note for the advertiser (e.g. proof due date, placement details, special terms)…"
+            rows={4}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-y"
+          />
         </section>
 
         {/* Pricing override */}
