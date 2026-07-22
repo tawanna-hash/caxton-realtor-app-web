@@ -24,7 +24,7 @@ const INTER_SEMIBOLD = fs.readFileSync(path.join(FONT_DIR, 'Inter-SemiBold.ttf')
 const INTER_BOLD = fs.readFileSync(path.join(FONT_DIR, 'Inter-Bold.ttf'));
 
 // RNN palette
-const PURPLE_700 = rgb(0x30 / 255, 0x1d / 255, 0x5d / 255); // #301D5D
+const PURPLE_700 = rgb(0x5a / 255, 0x0e / 255, 0x5f / 255); // #5a0e5f app plum (brand)
 const PURPLE_100 = rgb(0xf1 / 255, 0xe1 / 255, 0xf2 / 255); // #f1e1f2
 const TEXT_DARK  = rgb(0x11 / 255, 0x18 / 255, 0x27 / 255); // #111827
 const TEXT_MUTED = rgb(0x6b / 255, 0x72 / 255, 0x80 / 255); // #6b7280
