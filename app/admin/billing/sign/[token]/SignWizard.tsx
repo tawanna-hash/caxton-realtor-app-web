@@ -807,7 +807,8 @@ export default function SignWizard({
         patches.publication =
           numMarkets === 2 ? 'both' : (markets.has('austin') ? 'austin' : 'san_antonio');
         // Multi-market pricing: base monthly x number of selected markets.
-        patches.total_monthly_rate_cents = Math.round(strToCents(totalMonthly.toFixed(2)) * numMarkets);
+        const baseCents = strToCents(totalMonthly.toFixed(2)) ?? 0;
+        patches.total_monthly_rate_cents = Math.round(baseCents * numMarkets);
       }
       const patchRes = await fetch(`/api/sign/${token}`, {
         method: 'PATCH',
