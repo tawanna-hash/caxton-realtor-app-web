@@ -272,12 +272,12 @@ export default function AgreementsClient({
           {tab === 'renewals'
             ? <button onClick={() => setTab('agreements')} className="whitespace-nowrap px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">All agreements &rarr;</button>
             : <>
-                <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.jpg,.jpeg"
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) { void handleUploadFile(f); } e.target.value = ''; }}
                 />
-                <button onClick={handleUploadClick} className="whitespace-nowrap px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">&uarr; Upload</button>
-                <button onClick={() => setNewQuoteOpen(true)} className="whitespace-nowrap px-4 py-2 rounded-md bg-purple-700 text-white text-sm hover:bg-purple-800">+ New quote</button>
-                <button onClick={() => setCreateAg(true)} className="whitespace-nowrap px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">+ New agreement</button>
+                <button onClick={handleUploadClick} className="whitespace-nowrap px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">Upload manually signed agreement (pdf, jpeg)</button>
+                <button onClick={() => setNewQuoteOpen(true)} className="whitespace-nowrap px-4 py-2 rounded-md bg-purple-700 text-white text-sm hover:bg-purple-800">Create New Proposal</button>
+                <button onClick={() => setCreateAg(true)} className="whitespace-nowrap px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">Create New Agreement</button>
               </>
           }
         </div>
