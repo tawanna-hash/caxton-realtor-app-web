@@ -64,6 +64,7 @@ export function deriveChannelFromAgreementType(
   type: string | null | undefined,
 ): AdChannel {
   if (type === 'print_ad') return 'print';
+  if (type === 'package') return 'print';
   if (type === 'eblast') return 'email';
   if (type === 'app_ad') return 'app';
   return 'digital';
