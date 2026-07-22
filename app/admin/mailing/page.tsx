@@ -81,7 +81,7 @@ export default async function MailingHubPage() {
       label: 'SABOR Members',
       href: '/admin/mailing/sabor-members',
       caption: 'San Antonio Board of REALTORS mirror.',
-      accent: '#2563eb',
+      accent: '#ea580c',
       initial: 'S',
     },
     {
@@ -132,11 +132,11 @@ export default async function MailingHubPage() {
           </Link>
           <Link
             href="/admin/mailing/publication/newsline"
-            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#1d4ed8] text-[#1d4ed8] text-xs font-semibold hover:bg-[#1d4ed8] hover:text-white transition"
+            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-[#c2410c] text-[#c2410c] text-xs font-semibold hover:bg-[#c2410c] hover:text-white transition"
           >
             <span>Newsline (San Antonio)</span>
             <span
-              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#1d4ed8]/10 text-[#1d4ed8] group-hover/dl:bg-white/20 group-hover/dl:text-white"
+              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#c2410c]/10 text-[#c2410c] group-hover/dl:bg-white/20 group-hover/dl:text-white"
               title={`${newslineCount.total.toLocaleString()} unique deliverable emails`}
             >
               {newslineCount.total.toLocaleString()}
@@ -162,10 +162,10 @@ export default async function MailingHubPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
         <KpiCard label="Segments total"      value={counts.total}                       sub="all mailing segments" />
         <KpiCard label="RealtyLine ATX Print" value={counts['realtyline-atx-print']}    sub="advertisers + REALTORS" accent="#301D5D" />
-        <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="advertisers + non-advertisers + manual" accent="#1d4ed8" />
+        <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="advertisers + non-advertisers + manual" accent="#c2410c" />
         <KpiCard label="ABOR Members"        value={sources.aborMembers}                sub="UnlockMLS holding"   accent="#6b7280" />
-        <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#2563eb" />
-        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="newsletter signups"  accent="#2563eb" />
+        <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#ea580c" />
+        <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="newsletter signups"  accent="#ea580c" />
       </div>
 
       {/* Segment tiles — split by publication */}

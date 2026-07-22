@@ -751,13 +751,13 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <KpiCard label="In segment"    value={stats?.total    ?? 0} sub="all contacts"             accent={accent} />
-        <KpiCard label="Verified"      value={stats?.verified ?? 0} sub="address or email valid"   accent="#3b82f6" />
+        <KpiCard label="Verified"      value={stats?.verified ?? 0} sub="address or email valid"   accent="#f97316" />
         <KpiCard label="Pending"       value={stats?.pending  ?? 0} sub="needs verification"       accent="#f97316" />
         <KpiCard
           label="Within 60 mi"
           value={stats?.near ?? 0}
           sub={isSaborSegment(segment) ? 'near SABOR' : 'near ABoR or Five Points'}
-          accent="#2563eb"
+          accent="#ea580c"
           action={(stats?.near ?? 0) > 0 ? {
             label: 'Export CSV',
             onClick: () => {
@@ -781,7 +781,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
       {/* Filter chips + search */}
       <div className="flex items-center gap-2 flex-wrap">
         <FilterChip active={filter === 'all'}      onClick={() => setFilter('all')}      label="All"      count={stats?.total ?? 0} />
-        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={stats?.verified ?? 0} accent="#3b82f6" />
+        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={stats?.verified ?? 0} accent="#f97316" />
         <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={stats?.pending ?? 0}  accent="#f97316" />
 
         {(segment === 'realtyline-atx-print' || segment === 'newsline-sa-print') && (
@@ -798,7 +798,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               onClick={() => { setTagFilter('active-advertiser'); setOffset(0); }}
               label="Active Advertiser"
               count={tagFilter === 'active-advertiser' ? total : 0}
-              accent="#1d4ed8"
+              accent="#c2410c"
             />
             <FilterChip
               active={tagFilter === 'non-advertiser'}
@@ -1267,8 +1267,8 @@ function TagChips({ tags }: { tags: string[] | null | undefined }) {
         let fg = '#374151';
         if (t === 'active-advertiser') {
           label = 'Active Advertiser';
-          bg = '#dbeafe';
-          fg = '#1d4ed8';
+          bg = '#ffedd5';
+          fg = '#c2410c';
         } else if (t === 'non-advertiser') {
           label = 'Non-Advertiser';
           bg = '#fed7aa';
@@ -1845,7 +1845,7 @@ function EditDrawer({
 // it just becomes a new tag in the library on save.
 
 const TAG_STYLES: Record<string, { bg: string; fg: string; label?: string }> = {
-  'active-advertiser':    { bg: '#dbeafe', fg: '#1d4ed8', label: 'Active Advertiser' },
+  'active-advertiser':    { bg: '#ffedd5', fg: '#c2410c', label: 'Active Advertiser' },
   'non-advertiser':       { bg: '#fed7aa', fg: '#9a3412', label: 'Non-Advertiser' },
   'manual':               { bg: '#ede9fe', fg: '#301D5D', label: 'Manual' },
   'REALTOR':              { bg: '#dcfce7', fg: '#16a34a' },

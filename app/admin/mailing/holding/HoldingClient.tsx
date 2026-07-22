@@ -603,13 +603,13 @@ export default function HoldingClient() {
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <KpiCard label="Total members"  value={counts?.total    ?? 0} sub="awaiting review" />
-        <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#3b82f6" />
+        <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#f97316" />
         <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#f97316" />
         <KpiCard
           label="Within 60 mi"
           value={counts?.near ?? 0}
           sub="near ABoR or Five Points"
-          accent="#2563eb"
+          accent="#ea580c"
           action={(counts?.near ?? 0) > 0 ? {
             label: 'Export CSV',
             onClick: () => {
@@ -625,7 +625,7 @@ export default function HoldingClient() {
       {/* Filter chips + search */}
       <div className="flex items-center gap-2 flex-wrap">
         <FilterChip active={filter === 'all'}      onClick={() => setFilter('all')}      label="All"      count={counts?.total ?? 0} />
-        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={counts?.verified ?? 0} accent="#3b82f6" />
+        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={counts?.verified ?? 0} accent="#f97316" />
         <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={counts?.pending ?? 0}  accent="#f97316" />
 
         <div className="flex-1" />

@@ -313,7 +313,7 @@ function notificationEmailHtml(p: SubscribePayload, usps: UspsVerifyResult): str
     </td></tr>
     <tr><td style="padding: 6px 12px 6px 0; color: #6b7280; vertical-align: top;">USPS check</td><td style="padding: 6px 0;">
       ${usps.ok
-        ? `<span style="color: #1d4ed8;">✓ Verified</span>${norm ? `<br/><small style="color: #6b7280;">Normalized: ${escapeHtml(norm.streetAddress)}, ${escapeHtml(norm.city)}, ${escapeHtml(norm.state)} ${escapeHtml(norm.ZIPCode)}${norm.ZIPPlus4 ? '-' + escapeHtml(norm.ZIPPlus4) : ''}</small>` : ''}`
+        ? `<span style="color: #c2410c;">✓ Verified</span>${norm ? `<br/><small style="color: #6b7280;">Normalized: ${escapeHtml(norm.streetAddress)}, ${escapeHtml(norm.city)}, ${escapeHtml(norm.state)} ${escapeHtml(norm.ZIPCode)}${norm.ZIPPlus4 ? '-' + escapeHtml(norm.ZIPPlus4) : ''}</small>` : ''}`
         : `<span style="color: #b91c1c;">⚠ ${escapeHtml(usps.error || 'Could not verify')}</span><br/><small style="color: #6b7280;">Review address before mailing.</small>`
       }
     </td></tr>

@@ -29,7 +29,7 @@ export const SEGMENTS: { segment: MailingSegment; slug: string; label: string; c
     slug:    'newsline-san-antonio-print-mailing',
     label:   'Newsline San Antonio Print Mailing',
     caption: 'Combined San Antonio print audience — Active Advertisers + Non-Advertisers + Manual contacts, tagged by source.',
-    accent:  '#1d4ed8',
+    accent:  '#c2410c',
   },
   {
     segment: 'email-only-atx',

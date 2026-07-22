@@ -27,7 +27,7 @@ type TagStyle = { bg: string; fg: string; label?: string };
 // so this page is the visual source-of-truth for tag colors.
 function styleFor(t: string): TagStyle {
   switch (t) {
-    case 'active-advertiser': return { bg: '#dbeafe', fg: '#1d4ed8', label: 'Active Advertiser' };
+    case 'active-advertiser': return { bg: '#ffedd5', fg: '#c2410c', label: 'Active Advertiser' };
     case 'non-advertiser':    return { bg: '#fed7aa', fg: '#9a3412', label: 'Non-Advertiser' };
     case 'manual':            return { bg: '#ede9fe', fg: '#301D5D', label: 'Manual' };
     case 'REALTOR':           return { bg: '#dcfce7', fg: '#16a34a' };

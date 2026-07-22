@@ -285,8 +285,8 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
 <p style="margin: 0 0 8px; font-size: 14px;"><strong>Submitter:</strong> ${escape(row.submittedByName)} &lt;${escape(row.submittedByEmail)}&gt;</p>
 ${row.submittedByPhone ? `<p style="margin: 0 0 8px; font-size: 14px;"><strong>Phone:</strong> ${escape(row.submittedByPhone)}</p>` : ''}
 ${row.description ? `<p style="margin: 16px 0 8px; font-size: 14px;"><strong>Description:</strong></p><p style="margin: 0 0 8px; font-size: 14px; line-height: 1.5;">${escape(row.description)}</p>` : ''}
-<p style="margin: 20px 0 8px;"><a href="${escape(pdfUrl ?? '')}" style="color: #1d4ed8; font-weight: 500;">View flyer PDF →</a></p>
-<p style="margin: 24px 0 0; font-size: 13px; color: #6b7280;">Review at <a href="https://app.myrealtyline.com/admin/inventory" style="color: #1d4ed8;">/admin/inventory</a></p>
+<p style="margin: 20px 0 8px;"><a href="${escape(pdfUrl ?? '')}" style="color: #c2410c; font-weight: 500;">View flyer PDF →</a></p>
+<p style="margin: 24px 0 0; font-size: 13px; color: #6b7280;">Review at <a href="https://app.myrealtyline.com/admin/inventory" style="color: #c2410c;">/admin/inventory</a></p>
 </body></html>`;
 
       const emailResult = await getEmailProvider().send({

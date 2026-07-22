@@ -71,14 +71,14 @@ Newsline San Antonio
               <p style="margin:0 0 24px;">${escapeHtml(intro)}</p>
               <p style="margin:0 0 32px;text-align:center;">
                 <a href="${escapeHtml(opts.loginUrl)}"
-                   style="display:inline-block;background:#1d4ed8;color:#ffffff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
+                   style="display:inline-block;background:#c2410c;color:#ffffff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
                   ${isSignup ? 'Verify my email' : 'Sign in'}
                 </a>
               </p>
               <p style="margin:0 0 8px;color:#666;font-size:14px;">
                 Or copy and paste this URL into your browser:
               </p>
-              <p style="margin:0 0 24px;word-break:break-all;font-size:13px;color:#1d4ed8;">
+              <p style="margin:0 0 24px;word-break:break-all;font-size:13px;color:#c2410c;">
                 ${escapeHtml(opts.loginUrl)}
               </p>
               <p style="margin:0;color:#888;font-size:13px;line-height:1.5;">

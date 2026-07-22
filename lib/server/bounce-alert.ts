@@ -62,7 +62,7 @@ export async function handleBounceAlert(params: {
           <tr><td style="padding:4px 12px 4px 0; color:#6b7280;">Bounce type</td><td>${escapeHtml(bounceType ?? 'unknown')}</td></tr>
           <tr><td style="padding:4px 12px 4px 0; color:#6b7280;">Resend ID</td><td style="font-family:monospace; font-size:12px;">${escapeHtml(emailId)}</td></tr>
         </table>
-        <p style="margin:16px 0 0;"><a href="https://realtynewsnow.app/admin/crm" style="color:#0284c7;">Open CRM</a> — the advertiser row will show a red Bounced badge.</p>
+        <p style="margin:16px 0 0;"><a href="https://realtynewsnow.app/admin/crm" style="color:#ea580c;">Open CRM</a> — the advertiser row will show a red Bounced badge.</p>
       </div>
     `;
     await sendEmail({

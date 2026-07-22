@@ -682,7 +682,7 @@ export default function SaborMembersClient() {
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Source</p>
-            <p className="font-serif text-lg mt-1" style={{ color: '#2563eb' }}>
+            <p className="font-serif text-lg mt-1" style={{ color: '#ea580c' }}>
               Public
             </p>
             <p className="text-xs text-gray-500 mt-0.5">realtytexas.com · no auth</p>
@@ -691,7 +691,7 @@ export default function SaborMembersClient() {
             <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Dispatch</p>
             <p
               className="font-serif text-lg mt-1"
-              style={{ color: syncStatus.gh_dispatch_configured ? '#2563eb' : '#b91c1c' }}
+              style={{ color: syncStatus.gh_dispatch_configured ? '#ea580c' : '#b91c1c' }}
             >
               {syncStatus.gh_dispatch_configured ? 'Configured' : 'Not configured'}
             </p>
@@ -703,13 +703,13 @@ export default function SaborMembersClient() {
       {/* KPI strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <KpiCard label="Total members"  value={counts?.total    ?? 0} sub="awaiting review" />
-        <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#3b82f6" />
+        <KpiCard label="Verified"       value={counts?.verified ?? 0} sub="ready to promote" accent="#f97316" />
         <KpiCard label="Pending"        value={counts?.pending  ?? 0} sub="needs verification" accent="#f97316" />
         <KpiCard
           label="Within 60 mi"
           value={counts?.near ?? 0}
           sub="near SABOR HQ"
-          accent="#2563eb"
+          accent="#ea580c"
           action={(counts?.near ?? 0) > 0 ? {
             label: 'Export CSV',
             onClick: () => {
@@ -725,7 +725,7 @@ export default function SaborMembersClient() {
       {/* Filter chips + search */}
       <div className="flex items-center gap-2 flex-wrap">
         <FilterChip active={filter === 'all'}      onClick={() => setFilter('all')}      label="All"      count={counts?.total ?? 0} />
-        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={counts?.verified ?? 0} accent="#3b82f6" />
+        <FilterChip active={filter === 'verified'} onClick={() => setFilter('verified')} label="Verified" count={counts?.verified ?? 0} accent="#f97316" />
         <FilterChip active={filter === 'pending'}  onClick={() => setFilter('pending')}  label="Pending"  count={counts?.pending ?? 0}  accent="#f97316" />
 
         <div className="flex-1" />
