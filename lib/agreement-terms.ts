@@ -128,7 +128,7 @@ export const TERMS_APP = `TERMS OF AGREEMENT — IN-APP PLACEMENT
 ${PAYMENT_BLOCK}
 
 CREATIVE ASSETS
-Advertiser shall deliver all creative assets (in-app image, tap-through URL, and any headline copy) no later than seventy-two (72) hours before the campaign start date specified in the insertion order. Accepted formats: PNG or JPG at the pixel dimensions provided by the Publisher for the reserved slot.
+Advertiser shall upload all creative assets (in-app image, tap-through URL, and any headline copy) no later than seventy-two (72) hours before the campaign start date specified in the insertion order. All creatives must be uploaded according to the stated specifications: PNG or JPG at the pixel dimensions provided by the Publisher for the reserved slot.
 
 If the Publisher does not receive acceptable creative materials by the stated deadline, the Publisher may, at its sole discretion: (a) rerun the Advertiser's most recent approved in-app creative; or (b) leave the reserved slot unfilled. In either case, the Advertiser shall be charged in full for the reserved flight.
 
