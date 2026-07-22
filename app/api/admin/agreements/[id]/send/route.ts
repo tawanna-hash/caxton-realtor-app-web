@@ -58,11 +58,19 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     // Allow the admin to override the standard pitch with a custom
     // message typed into the drawer. Falls back to the boilerplate.
     const brand = brandForPublication(ag.publication);
+
+    // Two-stage proposal->agreement flow:
+    //   stage='proposal'  -> status proposal_sent  (client reviews/edits IO, no signature)
+    //   stage='agreement' -> status sent          (final agreement, legal terms + sign)
+    const stage = body.stage === 'proposal' ? 'proposal' : 'agreement';
+    const isProposalStage = stage === 'proposal';
     const customMessage =
       typeof body.customMessage === 'string' && body.customMessage.trim().length > 0
         ? body.customMessage.trim()
         : null;
-    const defaultMessage = `Your ${brand.brandName} advertising proposal is ready for review. Click below to open your secure portal. Once you accept proposal it will convert to your advertising agreement. You will be able to select your placement start date before signing. If you need to change your preferred date after signing, just let me know and I will update it for you. As always, I'm happy to help should you have any questions or concerns.`;
+    const defaultMessage = isProposalStage
+      ? `Your ${brand.brandName} advertising proposal is ready for review. You can adjust your ad package, placement dates, and markets, then approve to convert it into your advertising agreement. Nothing is binding until you sign the final agreement I'll send after you approve. As always, I'm happy to help should you have any questions or concerns.`
+      : `Your ${brand.brandName} advertising agreement is ready for your review and signature. Click below to open your secure portal, confirm your placement start date, and sign. If you need to change your preferred date after signing, just let me know and I will update it for you. As always, I'm happy to help should you have any questions or concerns.`;
 
     // Fetch line items so bundles show all lines in the email recap.
     type LineItemRow = {
@@ -105,7 +113,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       repName: ag.rep_name ?? undefined,
       adSize: ag.ad_size ?? undefined,
       adRate: ag.ad_rate_cents != null ? ag.ad_rate_cents / 100 : null,
-      status: ag.status,
+      status: isProposalStage ? 'proposal_sent' : 'sent',
       message: customMessage ?? defaultMessage,
       notes: repNote ?? undefined,
       signingLink,
@@ -114,8 +122,10 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     });
 
     const subject = isTest
-      ? `[TEST] ${brand.brandName} Proposal — ${ag.company_name ?? 'Proposal'}`
-      : `Action Required: Review Your ${brand.brandName} Advertising Proposal — ${ag.company_name ?? 'Proposal'}`;
+      ? `[TEST] ${brand.brandName} ${isProposalStage ? 'Proposal' : 'Agreement'} — ${ag.company_name ?? (isProposalStage ? 'Proposal' : 'Agreement')}`
+      : isProposalStage
+        ? `Action Required: Review Your ${brand.brandName} Advertising Proposal — ${ag.company_name ?? 'Proposal'}`
+        : `Action Required: Sign Your ${brand.brandName} Advertising Agreement — ${ag.company_name ?? 'Agreement'}`;
     const result = await sendEmail({
       to: recipient,
       subject,
@@ -129,22 +139,25 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     // Real send: update agreement status → sent, record sent_to_email.
     // Test send: skip both; just audit the test.
     if (!isTest) {
-      await sql`UPDATE agreements SET status = 'sent', sent_to_email = ${recipient}, updated_at = NOW() WHERE id = ${id}`;
+      const newStatus = isProposalStage ? 'proposal_sent' : 'sent';
+      await sql`UPDATE agreements SET status = ${newStatus}, sent_to_email = ${recipient}, updated_at = NOW() WHERE id = ${id}`;
     }
 
     // Append audit entry (different event label for tests).
     const existingRows = await sql`SELECT audit_log FROM agreements WHERE id = ${id}` as unknown as Array<{ audit_log: AgreementAuditEntry[] | null }>;
     const newLog = appendAudit(existingRows[0]?.audit_log, {
-      event: isTest ? 'email_test_sent' : 'email_sent',
+      event: isTest
+        ? (isProposalStage ? 'proposal_email_test' : 'email_test_sent')
+        : (isProposalStage ? 'proposal_sent' : 'agreement_sent'),
       timestamp: new Date().toISOString(),
       user_email: admin.email,
       details: isTest
-        ? `Test email sent to admin ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`
-        : `Agreement notification sent to ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`,
+        ? `Test ${isProposalStage ? 'proposal' : 'agreement'} email sent to admin ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`
+        : `${isProposalStage ? 'Proposal' : 'Agreement'} notification sent to ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`,
     });
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${id}`;
 
-    return NextResponse.json({ ok: true, messageId: result.messageId, sentTo: recipient, test: isTest });
+    return NextResponse.json({ ok: true, messageId: result.messageId, sentTo: recipient, test: isTest, stage });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'unknown error';
     return NextResponse.json({ error: 'send failed', detail: msg }, { status: 500 });
