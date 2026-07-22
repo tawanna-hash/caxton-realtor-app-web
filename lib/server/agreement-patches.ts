@@ -16,6 +16,7 @@ export const SIGN_PATCHABLE_STR = new Set([
   'company_name', 'rep_name', 'advertiser_email', 'advertiser_phone',
   'address', 'city', 'state', 'zip',
   'ad_size', 'frequency', 'page_position',
+  'publication',
   'bill_to', 'billing_email', 'billing_contact_name', 'billing_contact_phone',
   'payment_mode', 'card_type', 'cardholder_name', 'card_number_last4',
   'card_expiration', 'cardholder_address',
@@ -57,6 +58,7 @@ export async function applyPatches(
         case 'ad_size':               await sql`UPDATE agreements SET ad_size               = ${v} WHERE id = ${id}`; break;
         case 'frequency':             await sql`UPDATE agreements SET frequency             = ${v} WHERE id = ${id}`; break;
         case 'page_position':         await sql`UPDATE agreements SET page_position         = ${v} WHERE id = ${id}`; break;
+        case 'publication':           await sql`UPDATE agreements SET publication           = ${v} WHERE id = ${id}`; break;
         case 'bill_to':               await sql`UPDATE agreements SET bill_to               = ${v} WHERE id = ${id}`; break;
         case 'billing_email':         await sql`UPDATE agreements SET billing_email         = ${v} WHERE id = ${id}`; break;
         case 'billing_contact_name':  await sql`UPDATE agreements SET billing_contact_name  = ${v} WHERE id = ${id}`; break;

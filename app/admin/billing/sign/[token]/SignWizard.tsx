@@ -480,6 +480,14 @@ export default function SignWizard({
   const [pagePosition, setPagePosition] = useState(ag.page_position ?? '');
   const [applyPagePremium, setApplyPagePremium] = useState(false);
   const [timing, setTiming] = useState<TimingState>(() => initTiming(ag));
+  // ── Markets (proposal stage) ──────────────────────────────────────────────
+  // Austin + San Antonio are launched; Houston / Dallas are not (gated).
+  const [markets, setMarkets] = useState<Set<'austin' | 'san_antonio'>>(() => {
+    const s = new Set<'austin' | 'san_antonio'>();
+    if (ag.publication === 'austin' || ag.publication === 'both') s.add('austin');
+    if (ag.publication === 'san_antonio' || ag.publication === 'both') s.add('san_antonio');
+    return s;
+  });
 
   // ── Placement date (Step 3 non-print) ───────────────────────────────────────
   // Advertiser can change the placement start date. App lines → end recomputed
@@ -791,6 +799,22 @@ export default function SignWizard({
     setApproving(true);
     setError(null);
     try {
+      // Persist the client's IO edits (ad size, frequency, position, timing,
+      // markets) before flipping to proposal_approved.
+      const patches = buildPatchPayload();
+      const numMarkets = markets.size;
+      if (channel === 'print' && numMarkets > 0) {
+        patches.publication =
+          numMarkets === 2 ? 'both' : (markets.has('austin') ? 'austin' : 'san_antonio');
+        // Multi-market pricing: base monthly x number of selected markets.
+        patches.total_monthly_rate_cents = Math.round(strToCents(totalMonthly.toFixed(2)) * numMarkets);
+      }
+      const patchRes = await fetch(`/api/sign/${token}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(patches),
+      });
+      if (!patchRes.ok) throw new Error(`Save failed (HTTP ${patchRes.status})`);
       const res = await fetch(`/api/sign/${token}/approve`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -832,49 +856,153 @@ export default function SignWizard({
   }
 
   if (ag.status === 'proposal_sent') {
-    const summary: Array<[string, string | null]> = [
-      ['Company', ag.company_name],
-      ['Ad size', ag.ad_size],
-      ['Frequency', ag.frequency],
-      ['Placement', ag.page_position],
-      ['Start date', ag.start_date ? humanDate(ag.start_date) : null],
+    const isPrint = channel === 'print';
+    const numMarkets = markets.size;
+    const baseMonthly = totalMonthly; // single-market: rate - discount + premium
+    const indicativeTotal = isPrint
+      ? baseMonthly * (numMarkets || 1)
+      : (ag.amount_cents ? ag.amount_cents / 100 : baseMonthly);
+
+    const marketList: Array<{ id: 'austin' | 'san_antonio' | 'hou' | 'dal'; label: string; live: boolean }> = [
+      { id: 'austin', label: 'RealtyLine Austin', live: true },
+      { id: 'san_antonio', label: 'Newsline San Antonio', live: true },
+      { id: 'hou', label: 'RealtyLine Houston', live: false },
+      { id: 'dal', label: 'RealtyLine Dallas/FTW', live: false },
     ];
-    const monthly = ag.total_monthly_rate_cents != null
-      ? `$${(ag.total_monthly_rate_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-      : null;
+    const toggleMarket = (id: 'austin' | 'san_antonio') => {
+      setMarkets((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+    };
+
     return (
       <div className="min-h-screen bg-white flex flex-col items-center py-8 px-4">
         <div className="w-full max-w-2xl">
           <div className="text-center mb-6">
             <div className="inline-block px-4 py-1 rounded-md text-white text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ background: ACCENT }}>RealtyLine</div>
             <h1 className="text-2xl text-gray-900">Advertising Proposal</h1>
-            <p className="text-sm text-gray-500 mt-1">Proposal — not yet an agreement. Review and approve to continue.</p>
+            <p className="text-sm text-gray-500 mt-1">Proposal — not yet an agreement. Adjust your insertion order and approve to continue.</p>
           </div>
-          <div className="bg-white rounded-md border border-gray-200 shadow-sm p-8">
-            {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-4">{error}</div>}
-            <h2 className="text-lg text-gray-900 mb-4">Insertion order</h2>
-            <dl className="space-y-2 text-sm">
-              {summary.filter(([, v]) => v).map(([k, v]) => (
-                <div key={k} className="flex justify-between gap-4">
-                  <dt className="text-gray-500">{k}</dt>
-                  <dd className="text-gray-900 font-medium text-right">{v}</dd>
+          <div className="bg-white rounded-md border border-gray-200 shadow-sm p-8 space-y-5">
+            {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
+
+            {isPrint ? (
+              <>
+                <h2 className="text-lg text-gray-900">Insertion order</h2>
+
+                <div>
+                  <Eyebrow>Ad Size</Eyebrow>
+                  <div className="flex flex-wrap gap-3">
+                    {AD_SIZES.map((sz) => (
+                      <label key={sz} className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="pAdSize" value={sz} checked={adSize === sz} onChange={() => { setAdSize(sz); setRateUserEdited(false); }} className="accent-purple-600" />
+                        <span className="text-sm text-gray-800">{sz}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              ))}
-              {monthly && (
-                <div className="flex justify-between gap-4 pt-2 border-t border-gray-100">
-                  <dt className="text-gray-500">Indicative total</dt>
-                  <dd className="text-gray-900 font-bold">{monthly}</dd>
+
+                <div>
+                  <Eyebrow>Frequency</Eyebrow>
+                  <div className="flex flex-wrap gap-3">
+                    {FREQUENCIES.map((f) => (
+                      <label key={f} className="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="pFreq" value={f} checked={frequency === f} onChange={() => { setFrequency(f); setRateUserEdited(false); }} className="accent-purple-600" />
+                        <span className="text-sm text-gray-800">{f}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
-              )}
-            </dl>
-            <div className="mt-6 rounded-md bg-gray-50 border border-gray-200 p-4 text-xs text-gray-600 leading-relaxed">
-              Billing terms are fixed: Net monthly invoice · Credit card / ACH / check to Caxton Publications, Inc.
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <Eyebrow>Page Position</Eyebrow>
+                    <input type="text" value={pagePosition} onChange={(e) => setPagePosition(e.target.value)} placeholder="e.g. Inside front cover" className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer pb-2">
+                    <input type="checkbox" checked={applyPagePremium} onChange={(e) => setApplyPagePremium(e.target.checked)} className="w-4 h-4 accent-purple-600" />
+                    <span className="text-sm text-gray-700">Apply 20% Premium</span>
+                  </label>
+                </div>
+
+                <div>
+                  <Eyebrow>Markets</Eyebrow>
+                  <div className="grid grid-cols-2 gap-2">
+                    {marketList.map((m) => {
+                      const checked =
+                        m.id === 'austin' ? markets.has('austin')
+                        : m.id === 'san_antonio' ? markets.has('san_antonio')
+                        : false;
+                      return (
+                        <label
+                          key={m.id}
+                          className={`flex items-center gap-2 border rounded-md px-3 py-2 text-sm ${m.live ? 'cursor-pointer border-gray-300' : 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-200'} ${checked ? 'bg-[#faf5fb] border-[#5a0e5f]' : ''}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            disabled={!m.live}
+                            onChange={() => { if (m.live) toggleMarket(m.id as 'austin' | 'san_antonio'); }}
+                            className="accent-purple-600"
+                          />
+                          <span>{m.label}</span>
+                          {!m.live && <span className="ml-auto text-[9px] uppercase tracking-wider text-gray-400 font-semibold">Coming soon</span>}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {numMarkets === 0 && <p className="text-xs text-amber-700 mt-1">Pick at least one market.</p>}
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-lg text-gray-900">Your quoted placement</h2>
+                <p className="text-sm text-gray-600">The details below were prepared by your sales rep. Approve to convert this proposal into your advertising agreement.</p>
+                {lineItems.length > 0 ? (
+                  <ul className="space-y-2">
+                    {displayLines.map((li) => (
+                      <li key={li.id} className="flex items-start justify-between border-b border-gray-100 pb-2 last:border-b-0">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900">{li.package_label}</div>
+                          <div className="text-xs text-gray-600 mt-0.5">{li.start_date && li.end_date ? `${humanDate(li.start_date)} – ${humanDate(li.end_date)}` : ''}</div>
+                        </div>
+                        <div className="text-sm font-semibold text-gray-900 ml-3 whitespace-nowrap">${(li.amount_cents / 100).toFixed(2)}</div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <dl className="space-y-2 text-sm">
+                    <div className="flex justify-between gap-4"><dt className="text-gray-500">Ad size</dt><dd className="text-gray-900 font-medium">{ag.ad_size || '—'}</dd></div>
+                    <div className="flex justify-between gap-4"><dt className="text-gray-500">Frequency</dt><dd className="text-gray-900 font-medium">{ag.frequency || '—'}</dd></div>
+                  </dl>
+                )}
+              </>
+            )}
+
+            <div className="rounded-md border border-purple-200 bg-purple-50/40 p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-purple-900">Indicative total</div>
+                <div className="text-xl font-bold text-purple-900">${indicativeTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              </div>
+              <div className="text-xs text-purple-800/70 mt-1">
+                {isPrint
+                  ? `${adSize || '—'} · ${frequency || '—'}${numMarkets > 1 ? ` · ${numMarkets} markets` : ''} · expires ${expDate || '—'}`
+                  : 'Final price is confirmed in the agreement.'}
+              </div>
+            </div>
+
+            <div className="rounded-md bg-gray-50 border border-gray-200 p-4 text-xs text-gray-600 leading-relaxed">
+              <span className="font-semibold text-gray-700">Billing terms (fixed):</span> Net monthly invoice · Credit card / ACH / check to Caxton Publications, Inc.
               Approving sends this proposal to your representative, who will email the final agreement for your signature.
             </div>
-            <div className="mt-6 flex justify-end">
+
+            <div className="flex justify-end">
               <button
                 onClick={approveProposal}
-                disabled={approving}
+                disabled={approving || (isPrint && numMarkets === 0)}
                 style={{ background: ACCENT }}
                 className="px-6 py-2 rounded-md text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
               >
