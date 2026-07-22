@@ -15,7 +15,7 @@ export interface BrandConfig {
 
 export const REALTYLINE_BRAND: BrandConfig = {
   brandName: 'RealtyLine',
-  brandColor: '#7c3aed',
+  brandColor: '#5a0e5f',
   brandLogo: '',
   websiteUrl: 'https://realtynewsnow.app',
 };
@@ -99,7 +99,7 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
       return `<tr><td style="padding:10px 0;border-bottom:1px solid #eee"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#333"><strong>#${ln.lineNo}</strong> &nbsp; ${escapeHtml(ln.label)} <span style="color:#888;font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-left:6px">${channelLabel(ln.channel)}</span>${meta}</td><td align="right" style="font-family:Arial,sans-serif;font-size:14px;color:#111;font-weight:bold;white-space:nowrap;vertical-align:top">${money(ln.amountCents)}</td></tr></table></td></tr>`;
     }).join('');
     const totalCents = params.totalCents ?? lines.reduce((a, b) => a + b.amountCents, 0);
-    const totalRow = `<tr><td style="padding:12px 0 0 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#111;font-weight:bold">Grand total</td><td align="right" style="font-family:Arial,sans-serif;font-size:16px;color:#7c3aed;font-weight:bold">${money(totalCents)}</td></tr></table></td></tr>`;
+    const totalRow = `<tr><td style="padding:12px 0 0 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#111;font-weight:bold">Grand total</td><td align="right" style="font-family:Arial,sans-serif;font-size:16px;color:#5a0e5f;font-weight:bold">${money(totalCents)}</td></tr></table></td></tr>`;
     const heading = lines.length > 1 ? `Bundle Summary (${lines.length} lines)` : 'Agreement Summary';
     detailsBox = `<tr><td style="padding:0 40px 24px 40px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;border-left:4px solid ${brand.brandColor}"><tr><td style="padding:20px 24px"><p style="margin:0 0 10px 0;font-family:Arial,sans-serif;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:.8px">${heading}</p><table role="presentation" cellpadding="0" cellspacing="0" width="100%">${lineRows}${totalRow}</table></td></tr></table></td></tr>`;
   } else {

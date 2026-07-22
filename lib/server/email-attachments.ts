@@ -58,6 +58,6 @@ export function appendAttachmentLinkButton(
   const safeUrl = url.replace(/"/g, '&quot;');
   return body + `
 <div style="margin:32px 0;text-align:center;">
-  <a href="${safeUrl}" style="display:inline-block;padding:14px 28px;background:#7c3aed;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${safeLabel}</a>
+  <a href="${safeUrl}" style="display:inline-block;padding:14px 28px;background:#5a0e5f;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">${safeLabel}</a>
 </div>`;
 }
