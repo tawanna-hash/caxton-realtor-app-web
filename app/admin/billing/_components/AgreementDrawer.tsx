@@ -471,8 +471,16 @@ export function AgreementDrawer({
 
   // Build the body for /api/admin/agreements/:id/send. Includes the
   // admin’s optional custom pitch when one is filled in.
+  // Two-stage flow: drafts / proposal_sent send as a PROPOSAL (no signature);
+  // proposal_approved / sent / signed send as the final AGREEMENT (signature).
+  const sendStage: 'proposal' | 'agreement' =
+    form.status === 'proposal_approved' || form.status === 'sent' || form.status === 'signed'
+      ? 'agreement'
+      : 'proposal';
+  const sendStageLabel = sendStage === 'proposal' ? 'Send Proposal' : 'Send Final Agreement';
+
   const buildSendBody = (): Record<string, unknown> => {
-    const out: Record<string, unknown> = {};
+    const out: Record<string, unknown> = { stage: sendStage };
     if (customMessage.trim().length > 0) {
       out.customMessage = customMessage.trim();
     }
@@ -889,7 +897,7 @@ export function AgreementDrawer({
             <div className="text-xs text-amber-900 bg-amber-100 border border-amber-300 rounded-md p-2 leading-relaxed">
               <strong>The actual card charge happens on the signing link.</strong>{' '}
               These fields below are reference metadata only — the advertiser will enter their
-              card securely via Stripe on the Sign Wizard. Click <em>Send Signing Link</em>{' '}
+              card securely via Stripe on the Sign Wizard. Click <em>{sendStageLabel}</em>{' '}
               (or <em>Copy Link</em>) instead of <em>Sign &amp; Save</em>.
             </div>
             <div>
@@ -1206,7 +1214,7 @@ export function AgreementDrawer({
               disabled={saving}
               className="px-4 py-2 rounded-md border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50 whitespace-nowrap"
             >
-              Send Signing Link
+              {sendStageLabel}
             </button>
             <button
               onClick={sendTestEmail}
@@ -1247,7 +1255,7 @@ export function AgreementDrawer({
           className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           title={
             cardRequiresSigningLink
-              ? 'Credit Card payments must be signed via the public Sign Wizard so Stripe can charge the card. Use Send Signing Link instead.'
+              ? `Credit Card payments must be signed via the public Sign Wizard so Stripe can charge the card. Use ${sendStageLabel} instead.`
               : !canSign
               ? 'Accept terms, enter signer name and sign date first'
               : ''
