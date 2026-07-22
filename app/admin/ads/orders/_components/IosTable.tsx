@@ -22,7 +22,7 @@ const CHANNEL_TABS: readonly ChannelTab[] = ['all', ...AD_CHANNELS] as const;
 
 const STATUS_BADGE: Record<IoStatus, string> = {
   draft:        'bg-gray-100 text-gray-700 border-gray-200',
-  sent:         'bg-blue-50 text-blue-700 border-blue-200',
+  sent:         'bg-emerald-50 text-emerald-700 border-emerald-200',
   acknowledged: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   active:       'bg-emerald-50 text-emerald-700 border-emerald-200',
   fulfilled:    'bg-emerald-50 text-emerald-700 border-emerald-200',

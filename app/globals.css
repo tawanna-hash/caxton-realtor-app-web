@@ -66,6 +66,16 @@
   --rnn-orange-700: #c2410c;
   --rnn-orange-800: #9a3412;
   --rnn-orange-900: #7c2d12;
+  --rnn-green-50:  #f0fdf4;
+  --rnn-green-100: #dcfce7;
+  --rnn-green-200: #bbf7d0;
+  --rnn-green-300: #86efac;
+  --rnn-green-400: #4ade80;
+  --rnn-green-500: #22c55e;
+  --rnn-green-600: #16a34a;
+  --rnn-green-700: #15803d;
+  --rnn-green-800: #166534;
+  --rnn-green-900: #14532d;
 
   /* Red */
   --rnn-red-50:  #fef2f2;
@@ -220,49 +230,49 @@
   --color-cyan-800: var(--rnn-orange-800);
   --color-cyan-900: var(--rnn-orange-900);
 
-  --color-emerald-50:  var(--rnn-orange-50);
-  --color-emerald-100: var(--rnn-orange-100);
-  --color-emerald-200: var(--rnn-orange-200);
-  --color-emerald-300: var(--rnn-orange-300);
-  --color-emerald-400: var(--rnn-orange-400);
-  --color-emerald-500: var(--rnn-orange-500);
-  --color-emerald-600: var(--rnn-orange-600);
-  --color-emerald-700: var(--rnn-orange-700);
-  --color-emerald-800: var(--rnn-orange-800);
-  --color-emerald-900: var(--rnn-orange-900);
+  --color-emerald-50:  var(--rnn-green-50);
+  --color-emerald-100: var(--rnn-green-100);
+  --color-emerald-200: var(--rnn-green-200);
+  --color-emerald-300: var(--rnn-green-300);
+  --color-emerald-400: var(--rnn-green-400);
+  --color-emerald-500: var(--rnn-green-500);
+  --color-emerald-600: var(--rnn-green-600);
+  --color-emerald-700: var(--rnn-green-700);
+  --color-emerald-800: var(--rnn-green-800);
+  --color-emerald-900: var(--rnn-green-900);
 
-  --color-green-50:  var(--rnn-orange-50);
-  --color-green-100: var(--rnn-orange-100);
-  --color-green-200: var(--rnn-orange-200);
-  --color-green-300: var(--rnn-orange-300);
-  --color-green-400: var(--rnn-orange-400);
-  --color-green-500: var(--rnn-orange-500);
-  --color-green-600: var(--rnn-orange-600);
-  --color-green-700: var(--rnn-orange-700);
-  --color-green-800: var(--rnn-orange-800);
-  --color-green-900: var(--rnn-orange-900);
+  --color-green-50:  var(--rnn-green-50);
+  --color-green-100: var(--rnn-green-100);
+  --color-green-200: var(--rnn-green-200);
+  --color-green-300: var(--rnn-green-300);
+  --color-green-400: var(--rnn-green-400);
+  --color-green-500: var(--rnn-green-500);
+  --color-green-600: var(--rnn-green-600);
+  --color-green-700: var(--rnn-green-700);
+  --color-green-800: var(--rnn-green-800);
+  --color-green-900: var(--rnn-green-900);
 
-  --color-teal-50:  var(--rnn-orange-50);
-  --color-teal-100: var(--rnn-orange-100);
-  --color-teal-200: var(--rnn-orange-200);
-  --color-teal-300: var(--rnn-orange-300);
-  --color-teal-400: var(--rnn-orange-400);
-  --color-teal-500: var(--rnn-orange-500);
-  --color-teal-600: var(--rnn-orange-600);
-  --color-teal-700: var(--rnn-orange-700);
-  --color-teal-800: var(--rnn-orange-800);
-  --color-teal-900: var(--rnn-orange-900);
+  --color-teal-50:  var(--rnn-green-50);
+  --color-teal-100: var(--rnn-green-100);
+  --color-teal-200: var(--rnn-green-200);
+  --color-teal-300: var(--rnn-green-300);
+  --color-teal-400: var(--rnn-green-400);
+  --color-teal-500: var(--rnn-green-500);
+  --color-teal-600: var(--rnn-green-600);
+  --color-teal-700: var(--rnn-green-700);
+  --color-teal-800: var(--rnn-green-800);
+  --color-teal-900: var(--rnn-green-900);
 
-  --color-lime-50:  var(--rnn-orange-50);
-  --color-lime-100: var(--rnn-orange-100);
-  --color-lime-200: var(--rnn-orange-200);
-  --color-lime-300: var(--rnn-orange-300);
-  --color-lime-400: var(--rnn-orange-400);
-  --color-lime-500: var(--rnn-orange-500);
-  --color-lime-600: var(--rnn-orange-600);
-  --color-lime-700: var(--rnn-orange-700);
-  --color-lime-800: var(--rnn-orange-800);
-  --color-lime-900: var(--rnn-orange-900);
+  --color-lime-50:  var(--rnn-green-50);
+  --color-lime-100: var(--rnn-green-100);
+  --color-lime-200: var(--rnn-green-200);
+  --color-lime-300: var(--rnn-green-300);
+  --color-lime-400: var(--rnn-green-400);
+  --color-lime-500: var(--rnn-green-500);
+  --color-lime-600: var(--rnn-green-600);
+  --color-lime-700: var(--rnn-green-700);
+  --color-lime-800: var(--rnn-green-800);
+  --color-lime-900: var(--rnn-green-900);
 
   /* Orange — base. Absorbs amber/yellow (warning). */
   --color-orange-50:  var(--rnn-orange-50);
