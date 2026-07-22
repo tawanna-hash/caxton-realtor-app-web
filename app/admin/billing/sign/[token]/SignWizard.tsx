@@ -33,7 +33,7 @@ import {
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 
 // Admin palette purple — matches /admin dashboards and CRM.
-const ACCENT = '#7c3aed';
+const ACCENT = '#5a0e5f';
 
 // Format a line-item run window compactly. Accepts ISO YYYY-MM-DD strings.
 // For print → uses month-and-year granularity ("Aug 2026 – Oct 2026").
@@ -295,17 +295,21 @@ function initTiming(ag: Agreement): TimingState {
 function QuoteSummaryCard({
   ag,
   channel,
+  overrideStart,
+  overrideEnd,
 }: {
   ag: Agreement;
   channel: 'digital' | 'email' | 'app';
+  overrideStart?: string | null;
+  overrideEnd?: string | null;
 }) {
   const channelLabel =
     channel === 'digital' ? 'Digital placement' :
     channel === 'email' ? 'e-Blast' :
     'App placement';
 
-  const startDate = shortDate(ag.start_date) ?? '—';
-  const endDate = shortDate(ag.end_date) ?? '—';
+  const startDate = shortDate(overrideStart ?? ag.start_date) ?? '—';
+  const endDate = shortDate(overrideEnd ?? ag.end_date) ?? '—';
   const amount = ag.amount_cents != null
     ? `$${(ag.amount_cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     : '—';
@@ -387,6 +391,26 @@ function shortDate(d: string | Date | null | undefined): string | null {
   return `${MONTHS[mon - 1]} ${day}, ${year}`;
 }
 
+// Coerce a pg DATE (Date object) or ISO string into 'YYYY-MM-DD', or '' if empty.
+function isoDate(d: string | Date | null | undefined): string {
+  if (d == null) return '';
+  if (d instanceof Date) {
+    if (Number.isNaN(d.getTime())) return '';
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  return d.length >= 10 ? d.slice(0, 10) : d;
+}
+
+// Leading-digit count from a cadence string ("4wk"→4, "3mo"→3, "1x"→1).
+function parseAppQty(freq: string | null | undefined): number {
+  if (!freq) return 1;
+  const m = /^\s*(\d+)/.exec(freq);
+  return m ? Number(m[1]) : 1;
+}
+
 
 type SignWizardLineItem = {
   id: string;
@@ -453,30 +477,46 @@ export default function SignWizard({
   const [applyPagePremium, setApplyPagePremium] = useState(false);
   const [timing, setTiming] = useState<TimingState>(() => initTiming(ag));
 
-  // ── Placement date (Step 3 app bundle) ──────────────────────────────────────
-  // Advertiser picks a single shared start date; each app line's end date
-  // auto-computes from its own run length so the window stays consistent.
-  const appLineItems = lineItems.filter((li) => li.channel === 'app');
-  const appStartDates = Array.from(
-    new Set(appLineItems.map((li) => li.start_date).filter((d): d is string => !!d)),
+  // ── Placement date (Step 3 non-print) ───────────────────────────────────────
+  // Advertiser can change the placement start date. App lines → end recomputed
+  // from run length; email lines → start=end (single send). Print is untouched.
+  const isSingleLine = lineItems.length === 0;
+  const isNonPrint = channel !== 'print';
+  const editableLineItems = lineItems.filter((li) => li.channel === 'app' || li.channel === 'email');
+  const hasDateEditableLines = editableLineItems.length > 0;
+  const editableStarts = Array.from(
+    new Set(editableLineItems.map((li) => li.start_date).filter((d): d is string => !!d)),
   ).sort();
   const [placementStart, setPlacementStart] = useState<string>(
-    appStartDates.length === 1 ? appStartDates[0] : '',
+    editableStarts.length === 1
+      ? editableStarts[0]
+      : (isSingleLine && isNonPrint ? isoDate(ag.start_date) : ''),
   );
-  const hasAppLines = appLineItems.length > 0;
-  // Resolved line items: app lines adopt placementStart + recomputed end;
-  // other channels keep their quoted dates.
-  const displayLines = lineItems.map((li) =>
-    li.channel === 'app' && placementStart
-      ? { ...li, start_date: placementStart, end_date: computeAppEnd(placementStart, li) }
-      : li,
-  );
-  // Patches sent to the server for app lines only (Step 3).
+  // Resolved line items: app/email lines adopt placementStart; print unchanged.
+  const displayLines = lineItems.map((li) => {
+    if (!placementStart) return li;
+    if (li.channel === 'email') return { ...li, start_date: placementStart, end_date: placementStart };
+    if (li.channel === 'app') return { ...li, start_date: placementStart, end_date: computeAppEnd(placementStart, li) };
+    return li;
+  });
+  // Patches sent to the server for app/email bundle lines (Step 3).
   const lineItemDatePatches = placementStart
     ? displayLines
-        .filter((li) => li.channel === 'app' && li.start_date && li.end_date)
+        .filter((li) => (li.channel === 'app' || li.channel === 'email') && li.start_date && li.end_date)
         .map((li) => ({ line_no: li.line_no, start_date: li.start_date, end_date: li.end_date }))
     : [];
+  // Single-line agreement resolved window. Restricted to email + app (digital
+  // cadence isn't guaranteed to be 4wk/3mo-style, so skip it for now).
+  const singleLineEditable = isSingleLine && isNonPrint && (channel === 'email' || channel === 'app');
+  const singleLineStart = singleLineEditable && placementStart ? placementStart : null;
+  const singleLineEnd =
+    singleLineEditable && placementStart
+      ? channel === 'email'
+        ? placementStart
+        : computeAppEnd(placementStart, { frequency: ag.frequency, quantity: parseAppQty(ag.frequency) })
+      : null;
+  // Whether the advertiser can change placement dates on this Step 3 view.
+  const canEditPlacementDate = hasDateEditableLines || singleLineEditable;
 
   // ── Billing ────────────────────────────────────────────────────────────────
   const [billTo, setBillTo] = useState<string>(ag.bill_to ?? 'Advertiser');
@@ -576,6 +616,8 @@ export default function SignWizard({
       payment_mode: paymentType === 'Credit Card' ? 'card' : paymentType === 'Check' ? 'check' : null,
       // Advertiser-chosen placement dates for app bundle lines (Step 3).
       ...(lineItemDatePatches.length > 0 ? { line_item_dates: lineItemDatePatches } : {}),
+      // Advertiser-chosen placement date for single-line (non-bundle) agreements.
+      ...(singleLineStart && singleLineEnd ? { start_date: singleLineStart, end_date: singleLineEnd } : {}),
       // Card details (type, cardholder, last4, exp, address) are captured by
       // Stripe Elements + populated server-side from the PaymentIntent's
       // PaymentMethod when the webhook fires. Do not send placeholder values
@@ -855,7 +897,9 @@ export default function SignWizard({
           <h2 className="text-lg text-gray-900">Your quoted placement</h2>
           <p className="text-sm text-gray-600">
             The details below were prepared by your sales rep from an approved quote.
-            You can update placement dates below.
+            {canEditPlacementDate
+              ? ' You can update placement dates below.'
+              : ' If anything looks wrong, please contact us before signing.'}
           </p>
 
           {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
@@ -867,7 +911,7 @@ export default function SignWizard({
               </div>
 
               {/* Placement start date — advertiser-chosen; each app line's end auto-computes. */}
-              {hasAppLines && (
+              {hasDateEditableLines && (
                 <div className="mb-3 pb-3 border-b border-purple-100">
                   <label htmlFor="placementStart" className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">
                     Placement start date
@@ -911,7 +955,23 @@ export default function SignWizard({
               </div>
             </div>
           ) : (
-            <QuoteSummaryCard ag={ag} channel={channel} />
+            <div className="space-y-4">
+              {singleLineEditable && (
+                <div className="rounded-md border border-purple-200 bg-purple-50/40 p-4">
+                  <label htmlFor="placementStartSingle" className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">
+                    Placement start date
+                  </label>
+                  <input
+                    id="placementStartSingle"
+                    type="date"
+                    value={placementStart}
+                    onChange={(e) => setPlacementStart(e.target.value)}
+                    className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  />
+                </div>
+              )}
+              <QuoteSummaryCard ag={ag} channel={channel} overrideStart={singleLineStart} overrideEnd={singleLineEnd} />
+            </div>
           )}
         </div>
       </Shell>

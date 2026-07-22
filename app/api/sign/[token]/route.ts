@@ -41,7 +41,7 @@ const SIGN_PATCHABLE_INT = new Set([
 ]);
 
 // Date fields (YYYY-MM-DD)
-const SIGN_PATCHABLE_DATE = new Set(['exp_date']);
+const SIGN_PATCHABLE_DATE = new Set(['exp_date', 'start_date', 'end_date']);
 
 // JSON object fields
 const SIGN_PATCHABLE_JSON = new Set(['ad_timing_months']);
@@ -103,13 +103,17 @@ async function applyPatches(
       }
 
     } else if (SIGN_PATCHABLE_DATE.has(field)) {
-      if (val === null) {
-        await sql`UPDATE agreements SET exp_date = NULL WHERE id = ${id}`;
-        continue;
+      if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+        if (field === 'exp_date') await sql`UPDATE agreements SET exp_date = ${val} WHERE id = ${id}`;
+        // start_date/end_date are advertiser-chosen placement dates (Step 3);
+        // guard against print agreements, which use their own anchor math.
+        else if (field === 'start_date') await sql`UPDATE agreements SET start_date = ${val} WHERE id = ${id} AND type <> 'print_ad'`;
+        else if (field === 'end_date') await sql`UPDATE agreements SET end_date = ${val} WHERE id = ${id} AND type <> 'print_ad'`;
+      } else if (val === null) {
+        if (field === 'exp_date') await sql`UPDATE agreements SET exp_date = NULL WHERE id = ${id}`;
+        else if (field === 'start_date') await sql`UPDATE agreements SET start_date = NULL WHERE id = ${id} AND type <> 'print_ad'`;
+        else if (field === 'end_date') await sql`UPDATE agreements SET end_date = NULL WHERE id = ${id} AND type <> 'print_ad'`;
       }
-      if (typeof val !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(val)) continue;
-      const d = val;
-      await sql`UPDATE agreements SET exp_date = ${d} WHERE id = ${id}`;
 
     } else if (SIGN_PATCHABLE_JSON.has(field)) {
       if (val === null) {
@@ -132,7 +136,7 @@ async function applyPatches(
         const res = await sql`
           UPDATE agreement_line_items
           SET start_date = ${e.start_date}::date, end_date = ${e.end_date}::date
-          WHERE agreement_id = ${id} AND line_no = ${e.line_no} AND channel = 'app'
+          WHERE agreement_id = ${id} AND line_no = ${e.line_no} AND channel IN ('app', 'email')
           RETURNING 1
         `;
         if (res.length > 0) updatedAny = true;
