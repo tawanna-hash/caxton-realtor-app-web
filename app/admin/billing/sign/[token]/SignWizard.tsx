@@ -546,6 +546,7 @@ export default function SignWizard({
   });
   const signerName = signature.signerName;
   const [signDate, setSignDate] = useState(new Date().toISOString().slice(0, 10));
+  const [approving, setApproving] = useState(false);
 
   // ── Computed values ────────────────────────────────────────────────────────
 
@@ -780,6 +781,110 @@ export default function SignWizard({
     } finally {
       setSaving(false);
     }
+  }
+
+  // ── Proposal stage (two-stage proposal->agreement flow) ───────────────────
+  // proposal_approved: client already approved — show confirmation, await rep.
+  // proposal_sent:     client reviews the proposal and approves (no signature).
+
+  async function approveProposal() {
+    setApproving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/sign/${token}/approve`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ approverName: ag.rep_name || ag.advertiser_email || '' }),
+      });
+      if (!res.ok) {
+        let detail = '';
+        try { detail = ((await res.json()) as { error?: string; detail?: string }).error || ''; } catch { /* noop */ }
+        throw new Error(detail || `Approve failed (HTTP ${res.status})`);
+      }
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'approve failed');
+    } finally {
+      setApproving(false);
+    }
+  }
+
+  if (ag.status === 'proposal_approved') {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center py-8 px-4">
+        <div className="w-full max-w-2xl text-center">
+          <div className="inline-block px-4 py-1 rounded-md text-white text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ background: ACCENT }}>RealtyLine</div>
+          <h1 className="text-2xl text-gray-900">Proposal received</h1>
+          <p className="text-sm text-gray-500 mt-1">Thank you — your advertising proposal has been approved.</p>
+          <div className="bg-white rounded-md border border-gray-200 shadow-sm p-8 mt-6 text-left">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              We&apos;ve received your approval for <strong>{ag.company_name || 'your advertising proposal'}</strong>.
+              Your representative will prepare the final advertising agreement and email it to you for signature.
+              Nothing is binding until you sign the final agreement.
+            </p>
+            <p className="text-sm text-gray-500 mt-4">
+              Questions? Reply to your proposal email or contact your representative.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (ag.status === 'proposal_sent') {
+    const summary: Array<[string, string | null]> = [
+      ['Company', ag.company_name],
+      ['Ad size', ag.ad_size],
+      ['Frequency', ag.frequency],
+      ['Placement', ag.page_position],
+      ['Start date', ag.start_date ? humanDate(ag.start_date) : null],
+    ];
+    const monthly = ag.total_monthly_rate_cents != null
+      ? `$${(ag.total_monthly_rate_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : null;
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center py-8 px-4">
+        <div className="w-full max-w-2xl">
+          <div className="text-center mb-6">
+            <div className="inline-block px-4 py-1 rounded-md text-white text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ background: ACCENT }}>RealtyLine</div>
+            <h1 className="text-2xl text-gray-900">Advertising Proposal</h1>
+            <p className="text-sm text-gray-500 mt-1">Proposal — not yet an agreement. Review and approve to continue.</p>
+          </div>
+          <div className="bg-white rounded-md border border-gray-200 shadow-sm p-8">
+            {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3 mb-4">{error}</div>}
+            <h2 className="text-lg text-gray-900 mb-4">Insertion order</h2>
+            <dl className="space-y-2 text-sm">
+              {summary.filter(([, v]) => v).map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-4">
+                  <dt className="text-gray-500">{k}</dt>
+                  <dd className="text-gray-900 font-medium text-right">{v}</dd>
+                </div>
+              ))}
+              {monthly && (
+                <div className="flex justify-between gap-4 pt-2 border-t border-gray-100">
+                  <dt className="text-gray-500">Indicative total</dt>
+                  <dd className="text-gray-900 font-bold">{monthly}</dd>
+                </div>
+              )}
+            </dl>
+            <div className="mt-6 rounded-md bg-gray-50 border border-gray-200 p-4 text-xs text-gray-600 leading-relaxed">
+              Billing terms are fixed: Net monthly invoice · Credit card / ACH / check to Caxton Publications, Inc.
+              Approving sends this proposal to your representative, who will email the final agreement for your signature.
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={approveProposal}
+                disabled={approving}
+                style={{ background: ACCENT }}
+                className="px-6 py-2 rounded-md text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
+              >
+                {approving ? 'Submitting…' : 'Approve Proposal'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // ─── Step 1: Welcome ─────────────────────────────────────────────────────
