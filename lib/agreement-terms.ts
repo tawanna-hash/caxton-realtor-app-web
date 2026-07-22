@@ -95,31 +95,34 @@ export const TERMS_DIGITAL = TERMS_RL;
 
 export const TERMS_EMAIL = `TERMS OF AGREEMENT — E-BLAST
 
-${PAYMENT_BLOCK}
+{{BRAND}} does not release subscriber email addresses to external parties, but external parties may purchase the opportunity for {{BRAND}} to send an e-Blast campaign on their behalf. Each e-Blast campaign sent by {{BRAND}} on behalf of an external group will include the following disclaimer: This email is brought to you on behalf of our advertising partner [Advertiser's Name]. {{BRAND}} does not endorse any information contained within this communication.
 
-E-BLAST CREATIVE DEADLINES
-Advertiser shall deliver all creative assets (subject line, HTML body or approved template fields, hero image, and destination URL) no later than forty-eight (48) hours before each scheduled send. Copy is subject to Publisher's editorial review; the Publisher reserves the right to reject or request revisions to any creative that violates applicable law, CAN-SPAM, or Publisher's advertising standards.
+PAYMENT
+Credit card payment must be received in full at the time of signing the agreement. No e-Blast campaigns will be scheduled or sent until payment is received in full unless approval is received by Publisher.
 
-If the Publisher does not receive acceptable e-Blast materials by the stated deadline, the Publisher may, at its sole discretion: (a) postpone the send to the next available slot at no reduction in fee; (b) resend the Advertiser's most recent approved e-Blast creative; or (c) drop the scheduled send. In each case, the Advertiser shall be charged in full for the reserved send.
+CREATIVE ASSETS
+Advertiser shall deliver all creative assets (images, tap-through URLs, and any headline copy) no later than seventy-two (72) hours before the e-Blast campaign send date/time specified in the insertion order. All assets must be emailed to Caroline Carver at {{CAROLINE_EMAIL}}.
 
-SEND SCHEDULE
-The number of sends reserved is set forth in the Insertion Order. The Publisher schedules sends across the RealtyLine and/or Newsline San Antonio subscriber lists as specified. The Publisher makes commercially reasonable efforts to hit the reserved send dates but reserves the right to shift any individual send by up to five (5) business days to accommodate list health and deliverability.
+Content is preferred in HTML code form, with subject line included.
 
-TERM AND AUTOMATIC RENEWAL
+If HTML code is not available, please submit according to the following specifications: PNG or JPEG (less than 10MB), high resolution at the pixel dimensions provided by Publisher for the reserved spot. Copy should be submitted via Word document, with formatting directions and hyperlinks included. Images should be indicated in text via [insert "image name" image here], submitted as an email attachment. Publisher will provide a "test" version of the email for approval prior to sending.
 
-1. INITIAL TERM
-This Agreement shall commence on the Sign Date and shall continue until all reserved sends have been delivered or the End Date set forth in the Insertion Order, whichever is later.
+CAN-SPAM COMPLIANCE
+Publisher provides CAN-SPAM compliance in all e-Blast campaigns.
 
-2. AUTOMATIC RENEWAL
-Upon delivery of the final reserved send, this Agreement shall automatically renew for a further block of the same size (same number of sends, same publication, same rate) unless either Party provides written notice of cancellation in accordance with Section 3.
+PLACEMENT AND MARKETS
+The e-Blast campaign (publication scope and market(s)) is set forth in the Insertion Order. The Advertiser acknowledges the Publisher operates separate markets (RealtyLine Austin and Newsline San Antonio) and that "markets" refers to the number of market instances in which the campaign will run.
 
-3. REQUIRED NOTICE OF CANCELLATION
-Either Party may cancel by providing written notice no later than fourteen (14) calendar days before the scheduled date of the next send. Notice received after that date applies to the subsequent send block.
+LIMITATION OF LIABILITY
+Publisher does not guarantee specific results, sales, or click-through rates.
 
-4. MANNER OF NOTICE
-Written notice may be delivered by (a) personal delivery; (b) mail to P.O. Box 81366, Austin, Texas 78708-1366; or (c) email to tawanna@myrealtyline.com with receipt confirmation.
+1. Publisher will make every effort to send the e-Blast campaign on requested dates but will schedule according to availability.
 
-${GOVERNING_LAW}`;
+2. Publisher has final approval of all e-Blast campaign content. Publisher reserves the right to refuse e-Blast campaign for any reason.
+
+3. No cancellations will be accepted or refunded within 48 hours of the scheduled send date/time.
+
+Your signature below signifies that you understand and agree to the terms of agreement above.`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // APP — In-app placements (RealtyLine + Newsline iOS/Android apps)
@@ -166,8 +169,16 @@ export function termsForChannel(channel: AdChannel, publication?: string | null)
     case 'digital':
       text = TERMS_DIGITAL;
       break;
-    case 'email':
-      return TERMS_EMAIL;
+    case 'email': {
+      // Each market has its own tailored e-Blast terms. {{BRAND}} and
+      // {{CAROLINE_EMAIL}} resolve per publication; the "RealtyLine Austin and
+      // Newsline San Antonio" line in PLACEMENT AND MARKETS stays literal.
+      const brand = publication === 'san_antonio' ? 'Newsline San Antonio' : 'RealtyLine Austin';
+      const carolineEmail = publication === 'san_antonio' ? 'caroline@newslinesa.com' : 'caroline@myrealtyline.com';
+      return TERMS_EMAIL
+        .replace(/\{\{BRAND\}\}/g, brand)
+        .replace(/\{\{CAROLINE_EMAIL\}\}/g, carolineEmail);
+    }
     case 'app':
       return TERMS_APP;
     default:
