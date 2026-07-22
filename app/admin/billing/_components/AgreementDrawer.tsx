@@ -16,7 +16,7 @@ import {
   MONTHS_LIST, FREQ_PKG_AG, FREQ_MONTHS,
   AD_SIZES, FREQUENCIES, PAYMENT_TYPES, CARD_TYPES, BILL_TO,
 } from '@/lib/pressbook-constants';
-import { TERMS_RL } from '@/lib/agreement-terms';
+import { termsForChannel } from '@/lib/agreement-terms';
 import {
   lookupRate, applyCcSurcharge, pagePositionPremium, computeExp,
 } from '@/lib/agreement-pricing';
@@ -939,7 +939,7 @@ export function AgreementDrawer({
       {!isUploaded && (
         <Section title="Terms &amp; Digital Signature">
           <div className="max-h-40 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
-            {TERMS_RL}
+            {termsForChannel('print', form.publication)}
           </div>
           <label className="flex items-center gap-2 text-sm cursor-pointer mt-2">
             <input type="checkbox" checked={form.terms_accepted}

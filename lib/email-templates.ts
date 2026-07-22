@@ -20,6 +20,18 @@ export const REALTYLINE_BRAND: BrandConfig = {
   websiteUrl: 'https://realtynewsnow.app',
 };
 
+export const NEWSLINE_SA_BRAND: BrandConfig = {
+  brandName: 'Newsline San Antonio',
+  brandColor: '#5a0e5f',
+  brandLogo: '',
+  websiteUrl: 'https://newslinesa.com',
+};
+
+/** Pick the email brand from an agreement's publication. */
+export function brandForPublication(pub: string | null | undefined): BrandConfig {
+  return pub === 'san_antonio' ? NEWSLINE_SA_BRAND : REALTYLINE_BRAND;
+}
+
 export interface AgreementNotificationLine {
   lineNo: number;
   channel: 'print' | 'email' | 'app';

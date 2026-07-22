@@ -8,7 +8,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { signToken } from '@/lib/sign-token';
 import { sendEmail } from '@/lib/email';
-import { agreementNotificationEmail } from '@/lib/email-templates';
+import { agreementNotificationEmail, brandForPublication } from '@/lib/email-templates';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
 
 export const runtime = 'nodejs';
@@ -56,11 +56,12 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
 
     // Allow the admin to override the standard pitch with a custom
     // message typed into the drawer. Falls back to the boilerplate.
+    const brand = brandForPublication(ag.publication);
     const customMessage =
       typeof body.customMessage === 'string' && body.customMessage.trim().length > 0
         ? body.customMessage.trim()
         : null;
-    const defaultMessage = `Your RealtyLine advertising proposal is ready for review. Click below to open your secure portal. Once you accept proposal it will convert to your advertising agreement. You will be able to select your placement start date before signing. If you need to change your preferred date after signing, just let me know and I will update it for you. As always, I'm happy to help should you have any questions or concerns.`;
+    const defaultMessage = `Your ${brand.brandName} advertising proposal is ready for review. Click below to open your secure portal. Once you accept proposal it will convert to your advertising agreement. You will be able to select your placement start date before signing. If you need to change your preferred date after signing, just let me know and I will update it for you. As always, I'm happy to help should you have any questions or concerns.`;
 
     // Fetch line items so bundles show all lines in the email recap.
     type LineItemRow = {
@@ -104,6 +105,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     })();
 
     const html = agreementNotificationEmail({
+      brand,
       companyName: ag.company_name ?? undefined,
       repName: ag.rep_name ?? undefined,
       adSize: ag.ad_size ?? undefined,
@@ -117,8 +119,8 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     });
 
     const subject = isTest
-      ? `[TEST] RealtyLine Proposal — ${ag.company_name ?? 'Proposal'}`
-      : `Action Required: Review Your RealtyLine Advertising Proposal — ${ag.company_name ?? 'Proposal'}`;
+      ? `[TEST] ${brand.brandName} Proposal — ${ag.company_name ?? 'Proposal'}`
+      : `Action Required: Review Your ${brand.brandName} Advertising Proposal — ${ag.company_name ?? 'Proposal'}`;
     const result = await sendEmail({
       to: recipient,
       subject,

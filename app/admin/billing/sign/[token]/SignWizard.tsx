@@ -1342,7 +1342,7 @@ export default function SignWizard({
 
         {/* Scrollable terms */}
         <div className="h-52 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 p-4 text-xs text-gray-600 whitespace-pre-wrap leading-relaxed">
-          {termsForChannel(channel)}
+          {termsForChannel(channel, ag.publication)}
         </div>
 
         <label className="flex items-start gap-3 cursor-pointer">

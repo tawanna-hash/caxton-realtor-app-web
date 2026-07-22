@@ -1287,7 +1287,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                 onChange={(e) => handleChannelChange(e.target.value as Channel)}
                 className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
               >
-                <option value="print">Print</option>
+                <option value="print">Print &amp; Digital e-Replica Issue</option>
                 <option value="email">E-Blast</option>
                 <option value="app">App ad</option>
               </select>

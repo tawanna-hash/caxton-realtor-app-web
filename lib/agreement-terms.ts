@@ -2,14 +2,14 @@
 //
 // Channel-specific terms text for the /admin/billing/sign wizard.
 //
-//   TERMS_RL      — Print (monthly RealtyLine magazine)
-//   TERMS_DIGITAL — On-site web placements (banners, article, calendar)
+//   TERMS_RL      — Print / Digital (RealtyLine magazine, print + digital editions)
+//   TERMS_DIGITAL — Shares TERMS_RL (print/digital is one terms category)
 //   TERMS_EMAIL   — e-Blasts (solo, weekly inclusion)
 //   TERMS_APP     — In-app placements (splash, feed, article, calendar)
 //
 // Use `termsForChannel(channel)` to pick the right block from an AdChannel.
-// All four share the same PAYMENT block and Governing Law footer; only the
-// creative-deadline / cadence / term sections change.
+// Print/digital, e-Blast, and App each share a PAYMENT block; e-Blast and App
+// append a Governing Law / Entire Agreement footer.
 
 import type { AdChannel } from '@/lib/ad-channels';
 
@@ -24,7 +24,7 @@ ENTIRE AGREEMENT
 This Agreement, together with the Insertion Order and any addenda, constitutes the entire agreement between the Parties with respect to the subject matter hereof and supersedes all prior negotiations, understandings, and agreements, whether written or oral.`;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PRINT — RealtyLine monthly magazine (unchanged from original)
+// PRINT / DIGITAL — RealtyLine magazine (print + digital editions)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const TERMS_RL = `TERMS OF AGREEMENT
@@ -32,60 +32,62 @@ export const TERMS_RL = `TERMS OF AGREEMENT
 ${PAYMENT_BLOCK}
 
 PRINT MATERIAL DEADLINES
-Issue dates and deadlines can be found at newslinesa.com.
-
-If the Publisher does not receive acceptable advertising materials by the stated deadline, the Publisher may, at its sole discretion: (a) republish the Advertiser's most recent advertisement; or (b) leave the reserved space unpublished. In either case, the Advertiser and/or advertising agency shall be charged in full for all reserved space.
+Issue dates and deadlines can be found at realtyline.us.
 
 FREQUENCY
-Published monthly. Advertising materials are due by the stated deadline within the month of issue. The publication is direct-mailed to subscribers and arrives approximately the third week of that month.
+Published monthly. Advertising closing is the stated deadline of the month preceding the date of issue. The publication is direct-mailed to subscribers and arrives about the third week of the month for the same issue month.
 
-TERM AND AUTOMATIC RENEWAL
+CANCELLATIONS
+Neither the advertiser, the advertising agency, nor their agents may cancel after the stated issue deadline. Orders for inserts may not be canceled less than 30 days preceding the stated issue deadline.
+If by the materials date the Publisher has not received advertising material that it, in its sole discretion, deems acceptable for publication, it may either repeat the advertiser's most recent advertisement that it has published or publish nothing, charging the advertiser and/or advertising agency for any space reserved for them.
 
-1. INITIAL TERM
-This Agreement shall commence on the Sign Date set forth in the Agreement Acceptance section and shall continue for the duration of the advertising schedule specified in the Insertion Order (the "Ad Timing Term"). The final month of the Ad Timing Term shall be determined by the last month selected in the Insertion Order section.
+SUPPLEMENTAL INFORMATION
 
-2. AUTOMATIC RENEWAL
-Upon expiration of the Ad Timing Term, this Agreement shall automatically renew on a month-to-month basis, under the same terms and conditions then in effect, including the applicable advertising rate and ad size, unless either Party provides written notice of cancellation in accordance with Section 3 below. Each subsequent Renewal Term shall also automatically renew on a month-to-month basis under the same conditions.
+PREMIUM POSITIONS
+A 20% fee will be added to the following premium positions: inside front cover, page 3, inside back cover, center-spread and back page.
 
-3. REQUIRED NOTICE OF CANCELLATION
-Either the Publisher or the Advertiser may cancel this Agreement by providing written notice of cancellation to the other Party no later than thirty (30) calendar days before the stated advertising deadline of the Final Term Month (or, during any Renewal Term, thirty (30) calendar days before the stated advertising deadline of the then-current monthly term). Advertising deadlines for each issue are published at newslinesa.com. Notice received after this date shall not be effective for the current term and shall instead apply to the following month's Renewal Term.
+INSERTS
+Pricing and availability on request.
 
-4. MANNER OF NOTICE
-All notices of cancellation shall be in writing and must be received by the Publisher via: (a) personal delivery; (b) mail to P.O. Box 81366, Austin, Texas 78708-1366; or (c) email to tawanna@myrealtyline.com with receipt confirmation from Publisher.
+CONTRACT REGULATIONS
 
-${GOVERNING_LAW}`;
+FREQUENCY DISCOUNT
+An advertiser who does not complete a committed consecutive-month insertion schedule will be subject to the one-time insertion rate.
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DIGITAL — On-site placements at realtynewsnow.app
-// ─────────────────────────────────────────────────────────────────────────────
+AGENCY
+All advertisements are published for the benefit of the advertiser and advertising agency, and each of them is jointly and severally liable for all charges.
 
-export const TERMS_DIGITAL = `TERMS OF AGREEMENT — DIGITAL PLACEMENT
+BILLING
+Payment in U.S. dollars, including any applicable tax, is due at the Publisher's Postal Box in Austin, Texas, within 20 days of the date of invoice. Any error in billing is binding upon advertiser and/or advertising agency unless Publisher receives written notice of the error within such 20-day period.
 
-${PAYMENT_BLOCK}
+PAST DUE
+All accounts not paid in full within 20 days of the date of the invoice shall incur a late charge of 1.5% per month from the due date until paid in full.
 
-CREATIVE ASSETS
-Advertiser shall deliver all creative assets (image, tap-through URL, and any headline/subtitle copy) no later than seventy-two (72) hours before the campaign start date specified in the Insertion Order. Accepted formats: PNG, JPG, or animated GIF (≤ 500 KB); dimensions must match the reserved placement size.
+COLLECTION
+In the event advertiser and/or advertising agency defaults in payment of invoices, such invoices are turned over for collection. In this event, the advertiser and/or advertising agency shall be totally liable for all fees and sums charged by the collection agency or attorney. If any suit or other judicial proceeding is instituted or had thereon or if such fees and sums are collected through probate or bankruptcy proceeding, advertiser and/or advertising agency shall be totally liable for all attorneys' fees and court costs incurred by Publisher in the collection of said invoices.
 
-If the Publisher does not receive acceptable creative materials by the stated deadline, the Publisher may, at its sole discretion: (a) rerun the Advertiser's most recent approved creative from the same or an equivalent campaign; or (b) leave the reserved placement unfilled. In either case, the Advertiser shall be charged in full for the reserved flight.
+LIMITS OF LIABILITY
 
-CAMPAIGN FLIGHT
-The advertising placement will run continuously from the Start Date through the End Date set forth in the Insertion Order. The Publisher makes commercially reasonable efforts to deliver the placement across the specified pages, sections, or zones, but does not guarantee any specific impression, click, or conversion volume.
+Publisher's liability for failure to publish the advertisement or any error in the advertisement shall be limited to a "make good" in the next available issue.
 
-TERM AND AUTOMATIC RENEWAL
+1. The Publisher or President will accept requests to make changes at its discretion but is not responsible for any errors in any revisions made by the Publisher, nor is the Publisher responsible for errors in advertising materials supplied by the advertiser or its agent. The Publisher reserves the right to make such modifications to the advertiser's submitted files as are necessary to bring them into compliance with the publication's current specifications and is not responsible for any errors resulting from this modification.
 
-1. INITIAL TERM
-This Agreement shall commence on the Start Date set forth in the Insertion Order and shall continue through the End Date.
+2. All advertisements are accepted and published by the Publisher upon the representation that advertiser and/or advertising agency is authorized to publish the entire contents and subject matter thereof. This includes but is not limited to the rights to (a) convert advertisements between digital formats and incorporate the advertisements into Publisher's digital products, which may be published on an online network and in so doing, to modify, alter, and edit the advertisements as Publisher deems appropriate; (b) reproduce the advertisements for publication and distribution in the forms, manners, and media listed in subparagraph (a) above; and (c) display publicly and distribute the advertisements as incorporated into the media listed in subparagraph (a). Advertiser and/or advertising agency warrants that advertiser owns all rights in and to the advertisements submitted for publication, including copyrights, and the advertisements do not violate any applicable state or federal trade regulation and do not invade the privacy rights of any person or libel any person. When advertisements containing the names, pictures, and/or testimonials of persons are submitted for publication, the order or request for the publication thereof shall be deemed a representation by the advertiser and/or advertising agency that they have obtained the written consent for the use in the advertisement of the name, picture, and/or testimonial of any such person or the consent of his administrator, executor, heirs, or assigns. In consideration of the Publisher's acceptance of any advertisements for publication, advertiser and advertising agency shall, jointly and severally, indemnify and hold the Publisher or President harmless from and against any loss or expense, including without limitation reasonable attorneys' fees, resulting from claims or suits based upon the contents or subject matter of such advertisements, including without limitation claims or suits alleging negligence, gross negligence, deceptive trade practices, libel, violation of right of privacy, plagiarism, and copyright infringement.
 
-2. AUTOMATIC RENEWAL
-Upon expiration of the initial flight, this Agreement shall automatically renew for successive flights of equal duration under the same terms, rate, and placement, unless either Party provides written notice of cancellation in accordance with Section 3.
+3. The term "advertising agency" as used in this contract refers to a recognized individual or group of individuals who make the media selection, handle the order, and coordinate and process the space placed with the Publisher under the terms of this contract.
 
-3. REQUIRED NOTICE OF CANCELLATION
-Either Party may cancel by providing written notice no later than fourteen (14) calendar days before the End Date of the then-current flight. Notice received after that date applies to the subsequent renewal flight.
+4. The Publisher shall not be liable for failure to publish or distribute all or any part of any issue because of labor disputes, accidents, fires, acts of God, or any other circumstances beyond the Publisher's control.
 
-4. MANNER OF NOTICE
-Written notice may be delivered by (a) personal delivery; (b) mail to P.O. Box 81366, Austin, Texas 78708-1366; or (c) email to tawanna@myrealtyline.com with receipt confirmation.
+5. All orders are subject to Publisher's acceptance. Publisher reserves the right to reject or cancel any advertising for any reason at any time, including, but not limited to, any advertisement that, in the opinion of the Publisher, does not conform to the editorial or graphic standards of the publication.
 
-${GOVERNING_LAW}`;
+6. The advertising agency and the advertiser assume and agree to pay the charges, including any applicable tax, for advertising published at their direction. Invoices shall be sent, at Publisher's option, to the agency or the advertiser, unless other arrangements have been made at execution of the contract.
+
+7. Publisher reserves the right to cancel the contract at any time upon default by agency or advertiser in the payment of invoices. In the event of such cancellation, charges for all advertising shall become immediately due and payable by the agency. Furthermore, if there has been any default in the payment of a prior invoice or if, in the sole judgment of Publisher, the agency's credit becomes impaired, Publisher shall have the right to require payment for further advertising under this contract upon such terms as it may see fit.
+
+8. No waiver or modification of any of the terms set forth in this contract shall be binding on the Publisher unless in writing signed by an officer of the publication.`;
+
+// Print and digital share the same terms (one "Print / Digital" category).
+export const TERMS_DIGITAL = TERMS_RL;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EMAIL — e-Blast sends (solo, weekly inclusion)
@@ -155,18 +157,29 @@ ${GOVERNING_LAW}`;
 // Helper — pick terms text by channel.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function termsForChannel(channel: AdChannel): string {
+export function termsForChannel(channel: AdChannel, publication?: string | null): string {
+  let text: string;
   switch (channel) {
     case 'print':
-      return TERMS_RL;
+      text = TERMS_RL;
+      break;
     case 'digital':
-      return TERMS_DIGITAL;
+      text = TERMS_DIGITAL;
+      break;
     case 'email':
       return TERMS_EMAIL;
     case 'app':
       return TERMS_APP;
     default:
-      return TERMS_RL;
+      text = TERMS_RL;
   }
+  // Print/digital terms carry the brand URL (realtyline.us). For Newsline San
+  // Antonio, swap the brand name and deadline URL. (Email/App terms list both
+  // brands intentionally, so they are not substituted.)
+  if (publication === 'san_antonio') {
+    return text
+      .replace(/RealtyLine/g, 'Newsline San Antonio')
+      .replace(/realtyline\.us/g, 'newslinesa.com');
+  }
+  return text;
 }
-
