@@ -313,7 +313,7 @@ export default function MagazineEditForm({ initial }: { initial: Magazine }) {
           <button
             type="submit"
             disabled={busy === 'meta'}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 whitespace-nowrap"
           >
             {busy === 'meta' ? 'Saving…' : 'Save metadata'}
           </button>

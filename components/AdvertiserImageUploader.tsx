@@ -203,7 +203,7 @@ export default function AdvertiserImageUploader({
               href={value}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full h-full flex flex-col items-center justify-center gap-0.5 text-[10px] text-blue-700 hover:text-blue-900 px-1 text-center break-all leading-tight"
+              className="w-full h-full flex flex-col items-center justify-center gap-0.5 text-[10px] text-blue-700 hover:text-blue-900 px-1 text-center break-all leading-tight rounded-md"
               title={`Open ${fileExtFromUrl(value).toUpperCase() || 'file'}`}
             >
               <span className="text-base" aria-hidden>📄</span>

@@ -356,7 +356,7 @@ export default function InquiryDetail({ inquiry, onUpdated, onDeleted, onClose }
           type="button"
           disabled={deleting || saving}
           onClick={handleDelete}
-          className="ml-auto inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium border border-red-300 bg-white text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="ml-auto inline-flex items-center px-4 py-2 rounded-md text-sm font-medium border border-red-300 bg-white text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           title="Permanently delete this inquiry"
         >
           {deleting ? 'Deleting…' : 'Delete'}

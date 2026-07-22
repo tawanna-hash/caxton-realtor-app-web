@@ -280,7 +280,7 @@ function CategoryChip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className="px-3 py-1.5 text-xs font-medium rounded-full border transition-colors whitespace-nowrap"
+      className="px-3 py-1.5 text-xs font-medium rounded-md border transition-colors whitespace-nowrap"
       style={
         active
           ? { backgroundColor: accent, borderColor: accent, color: '#fff' }

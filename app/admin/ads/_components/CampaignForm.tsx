@@ -366,7 +366,7 @@ export function CampaignForm({ initial }: Props) {
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:opacity-50 text-sm whitespace-nowrap"
         >
           {submitting ? 'Saving...' : isEdit ? 'Save changes' : 'Create campaign'}
         </button>

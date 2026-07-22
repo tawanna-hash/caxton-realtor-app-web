@@ -1262,7 +1262,7 @@ export default function InteractiveMagazineReader({
                 <path d="m21 21-4.3-4.3M8 11h6" />
               </svg>
             </button>
-            <button onClick={zoomReset} aria-label={`Zoom ${zoom}x — click to reset`} className="text-white/80 hover:text-white px-2 text-[10px] uppercase tracking-wider min-w-[44px] min-h-[44px] flex items-center justify-center">
+            <button onClick={zoomReset} aria-label={`Zoom ${zoom}x — click to reset`} className="text-white/80 hover:text-white px-2 text-[10px] uppercase tracking-wider min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md">
               {zoom}x
             </button>
             {/* Grab tool toggle. Hand icon. When ON drag pans; when OFF drag
@@ -1487,7 +1487,7 @@ const ICONS = {
 
 function ActionButton({ label, onClick, icon }: { label: string; onClick: () => void; icon: string }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center justify-center gap-1 px-2 py-1 min-w-[44px] min-h-[44px] text-white/90 hover:text-white" aria-label={label}>
+    <button onClick={onClick} className="flex flex-col items-center justify-center gap-1 px-2 py-1 min-w-[44px] min-h-[44px] text-white/90 hover:text-white rounded-md" aria-label={label}>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d={icon} />
       </svg>

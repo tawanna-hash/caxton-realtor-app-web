@@ -251,7 +251,7 @@ export default function ActivityClient() {
           </button>
           <button
             onClick={downloadCsv}
-            className="px-3 py-1.5 rounded-md text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2 rounded-md text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 whitespace-nowrap"
           >
             Export CSV
           </button>

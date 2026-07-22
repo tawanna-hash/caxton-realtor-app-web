@@ -66,7 +66,7 @@ export default function ProfilePanel({ user, accentColor = '#301D5D', onClose }:
           <button
             onClick={onClose}
             aria-label="Close profile"
-            className="text-white text-2xl leading-none px-2 -mr-2 shrink-0"
+            className="text-white text-2xl leading-none px-2 -mr-2 shrink-0 rounded-md"
           >
             &times;
           </button>

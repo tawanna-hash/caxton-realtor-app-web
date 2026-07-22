@@ -492,7 +492,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap"
             >
               Close
             </button>
@@ -810,7 +810,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                   type="button"
                   onClick={onTestSend}
                   disabled={testSending}
-                  className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
                 >
                   {testSending ? 'sending…' : 'Send test'}
                 </button>
@@ -873,7 +873,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                 type="button"
                 onClick={onSubmit}
                 disabled={submitting || (serverCount ?? localAudience.length) === 0}
-                className="w-full rounded-md bg-purple-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-md bg-purple-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap"
               >
                 {submitting
                   ? (mode === 'schedule' ? 'Scheduling…' : 'Sending…')

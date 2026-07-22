@@ -560,7 +560,7 @@ function EditorPage({
       <button
         type="button"
         onClick={onCreate}
-        className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 text-xs font-medium bg-gray-900 text-white rounded-full shadow-lg hover:bg-gray-800 whitespace-nowrap"
+        className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 text-xs font-medium bg-gray-900 text-white rounded-md shadow-lg hover:bg-gray-800 whitespace-nowrap"
       >
         + Add hotspot to page {pageIdx + 1}
       </button>
@@ -681,14 +681,14 @@ function DeleteConfirmDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 whitespace-nowrap"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 whitespace-nowrap"
           >
             Delete
           </button>
@@ -730,14 +730,14 @@ function ImportPdfLinksDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 whitespace-nowrap"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-700 rounded-md hover:bg-blue-800"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-700 rounded-md hover:bg-blue-800 whitespace-nowrap"
           >
             Start import
           </button>
@@ -793,7 +793,7 @@ function CopyFromPreviousDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 whitespace-nowrap"
           >
             Cancel
           </button>

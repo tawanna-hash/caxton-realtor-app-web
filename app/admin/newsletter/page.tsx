@@ -180,7 +180,7 @@ export default function NewsletterSubscribersPage() {
         <button
           onClick={handleExport}
           disabled={exporting}
-          className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors disabled:opacity-50"
+          className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors disabled:opacity-50 whitespace-nowrap"
         >
           {exporting ? 'Exporting...' : 'Export CSV'}
         </button>

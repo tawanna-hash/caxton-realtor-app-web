@@ -1290,7 +1290,7 @@ function EditDrawer({
                   type="button"
                   onClick={regenerateSubmissionToken}
                   disabled={tokenBusy}
-                  className="shrink-0 rounded-md bg-gray-900 text-white px-3 py-1.5 text-sm hover:bg-gray-800 disabled:opacity-50"
+                  className="shrink-0 rounded-md bg-gray-900 text-white px-4 py-2 text-sm hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap"
                 >
                   {tokenBusy
                     ? 'Working…'
@@ -1378,13 +1378,13 @@ function EditDrawer({
               </button>
             </div>
             <div className="flex gap-2">
-              <button onClick={onClose} className="px-4 py-2 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">
+              <button onClick={onClose} className="px-4 py-2 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap">
                 Cancel
               </button>
               <button
                 onClick={submit}
                 disabled={saving}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
               >
                 {saving ? 'Saving...' : 'Save changes'}
               </button>
@@ -1633,14 +1633,14 @@ function CreateAdvertiserModal({
         <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm whitespace-nowrap"
             disabled={saving}
           >
             Cancel
           </button>
           <button
             onClick={save}
-            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 text-sm whitespace-nowrap"
             disabled={saving || !name.trim()}
           >
             {saving ? 'Creating...' : 'Create'}

@@ -648,7 +648,7 @@ export default function MagazineUploadForm() {
             <button
               type="submit"
               disabled={running}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md font-medium text-sm disabled:opacity-50"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium text-sm disabled:opacity-50 whitespace-nowrap"
             >
               {running ? 'Uploading…' : 'Create Issue'}
             </button>

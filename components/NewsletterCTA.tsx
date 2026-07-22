@@ -141,7 +141,7 @@ export default function NewsletterCTA({
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="px-6 py-3.5 text-base font-medium uppercase tracking-wider text-white whitespace-nowrap disabled:opacity-60"
+              className="px-6 py-3.5 text-base font-medium uppercase tracking-wider text-white whitespace-nowrap disabled:opacity-60 rounded-md"
               style={{ backgroundColor: color }}
             >
               {submitting ? 'Signing\u2026' : 'Sign Up'}

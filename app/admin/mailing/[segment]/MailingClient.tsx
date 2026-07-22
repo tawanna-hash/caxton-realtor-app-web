@@ -656,7 +656,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               type="button"
               disabled
               title="Coming soon for this segment"
-              className="px-4 py-2 rounded-md border border-brand-700 text-brand-700 text-sm font-medium opacity-50 cursor-not-allowed"
+              className="px-4 py-2 rounded-md border border-brand-700 text-brand-700 text-sm font-medium opacity-50 cursor-not-allowed whitespace-nowrap"
             >
               Verify all Pending
             </button>
@@ -683,7 +683,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
           Import
         </button>
         <ExportMenu disabled={busy !== null} onSelect={handleExport} />
-        <button onClick={handleDedupe} className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50">
+        <button onClick={handleDedupe} className="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50 whitespace-nowrap">
           Dedupe
         </button>
         {(segment === 'active-advertiser-atx' || segment === 'active-advertiser-sa' || segment === 'realtyline-atx-print' || segment === 'newsline-sa-print') && (
@@ -716,7 +716,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
         )}
         <button
           onClick={handleDeleteAllInSegment}
-          className="px-3 py-1.5 text-sm rounded-md border border-red-300 text-red-700 hover:bg-red-50"
+          className="px-4 py-2 text-sm rounded-md border border-red-300 text-red-700 hover:bg-red-50 whitespace-nowrap"
         >
           Delete all
         </button>
@@ -1313,7 +1313,7 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className="px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2"
+      className="px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-2"
       style={{ backgroundColor: bg, color: fg }}
     >
       <span>{label}</span>
@@ -1827,7 +1827,7 @@ function EditDrawer({
             type="button"
             disabled={saving}
             onClick={save}
-            className="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#5a0e5f] disabled:opacity-50"
+            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#5a0e5f] disabled:opacity-50 whitespace-nowrap"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>
@@ -2089,8 +2089,8 @@ function AddDialog({
         />
         {err && <div className="mt-3 text-sm text-red-700">{err}</div>}
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onClose} className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50">Cancel</button>
-          <button onClick={save} disabled={saving} className="px-3 py-1.5 text-sm rounded-md bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50">
+          <button onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50 whitespace-nowrap">Cancel</button>
+          <button onClick={save} disabled={saving} className="px-4 py-2 text-sm rounded-md bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap">
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -2341,16 +2341,16 @@ function ImportDialog({
         {err && <div className="mt-3 text-sm text-red-700">{err}</div>}
 
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onClose} className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50 whitespace-nowrap">
             {step === 'go' ? 'Close' : 'Cancel'}
           </button>
           {step === 'map' && (
-            <button onClick={runImport} disabled={running} className="px-3 py-1.5 text-sm rounded-md bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50">
+            <button onClick={runImport} disabled={running} className="px-4 py-2 text-sm rounded-md bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap">
               {running ? 'Importing…' : `Import ${rows.length} rows`}
             </button>
           )}
           {step === 'go' && (
-            <button onClick={onDone} className="px-3 py-1.5 text-sm rounded-md bg-gray-900 text-white hover:bg-gray-800">
+            <button onClick={onDone} className="px-4 py-2 text-sm rounded-md bg-gray-900 text-white hover:bg-gray-800 whitespace-nowrap">
               Done
             </button>
           )}
@@ -2688,7 +2688,7 @@ function BulkEditDialog({
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50"
+            className="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50 whitespace-nowrap"
           >
             Cancel
           </button>
@@ -2696,7 +2696,7 @@ function BulkEditDialog({
             type="button"
             onClick={save}
             disabled={saving || !anyEnabled}
-            className="px-3 py-1.5 text-sm rounded-md bg-brand-700 text-white hover:bg-[#5a0e5f] disabled:opacity-50"
+            className="px-4 py-2 text-sm rounded-md bg-brand-700 text-white hover:bg-[#5a0e5f] disabled:opacity-50 whitespace-nowrap"
           >
             {saving ? 'Applying…' : `Apply to ${ids.length}`}
           </button>

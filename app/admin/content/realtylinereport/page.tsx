@@ -613,7 +613,7 @@ export default function RealtyLineMlsAdminPage() {
                 type="button"
                 onClick={save}
                 disabled={saving}
-                className="px-5 py-2.5 bg-brand-700 text-white rounded-md font-medium disabled:opacity-60"
+                className="px-4 py-2 bg-brand-700 text-white rounded-md font-medium disabled:opacity-60 text-sm whitespace-nowrap"
               >
                 {saving ? 'Saving\u2026' : editingId ? 'Update report' : 'Create report'}
               </button>
@@ -621,7 +621,7 @@ export default function RealtyLineMlsAdminPage() {
                 <button
                   type="button"
                   onClick={startNew}
-                  className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-md font-medium"
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md font-medium text-sm whitespace-nowrap"
                 >
                   Cancel
                 </button>

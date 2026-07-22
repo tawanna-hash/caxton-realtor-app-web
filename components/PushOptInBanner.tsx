@@ -140,7 +140,7 @@ export default function PushOptInBanner({ realtorId, market }: Props) {
           type="button"
           onClick={handleDismiss}
           aria-label="Dismiss"
-          className="text-amber-700 hover:text-amber-900 text-lg leading-none px-1 flex-shrink-0"
+          className="text-amber-700 hover:text-amber-900 text-lg leading-none px-1 flex-shrink-0 rounded-md"
         >
           ×
         </button>
@@ -168,7 +168,7 @@ export default function PushOptInBanner({ realtorId, market }: Props) {
           type="button"
           onClick={handleDismiss}
           aria-label="Dismiss"
-          className="text-amber-700 hover:text-amber-900 text-lg leading-none px-1"
+          className="text-amber-700 hover:text-amber-900 text-lg leading-none px-1 rounded-md"
         >
           ×
         </button>

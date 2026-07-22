@@ -315,7 +315,7 @@ export default function AdvertiserReportDrawer({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50"
+                  className="px-4 py-2 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 whitespace-nowrap"
                 >
                   Cancel
                 </button>
@@ -323,7 +323,7 @@ export default function AdvertiserReportDrawer({
                   type="button"
                   onClick={handleSend}
                   disabled={sending || !canSend || loadingPreview}
-                  className="bg-brand-700 hover:bg-brand-800 text-white px-5 py-2 rounded-md text-sm font-medium disabled:opacity-40"
+                  className="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-40 whitespace-nowrap"
                 >
                   {sending ? 'Sending…' : 'Send to this advertiser'}
                 </button>
@@ -334,7 +334,7 @@ export default function AdvertiserReportDrawer({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50"
+                className="px-4 py-2 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 whitespace-nowrap"
               >
                 Close
               </button>

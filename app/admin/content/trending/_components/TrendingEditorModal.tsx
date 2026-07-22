@@ -360,7 +360,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="text-sm px-3 py-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50"
+            className="text-sm px-4 py-2 rounded-md border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
           >
             Cancel
           </button>

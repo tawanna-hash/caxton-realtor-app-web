@@ -1172,7 +1172,7 @@ export function AgreementDrawer({
             type="button"
             onClick={handleDelete}
             disabled={saving}
-            className="px-3 py-2 rounded-md border border-rose-300 text-rose-700 text-sm hover:bg-rose-50 disabled:opacity-50"
+            className="px-4 py-2 rounded-md border border-rose-300 text-rose-700 text-sm hover:bg-rose-50 disabled:opacity-50 whitespace-nowrap"
           >
             Delete
           </button>
@@ -1189,7 +1189,7 @@ export function AgreementDrawer({
           </a>
         )}
         <div className="flex-1" />
-        <button onClick={onClose} className="px-4 py-2 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+        <button onClick={onClose} className="px-4 py-2 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap">Cancel</button>
         <button
           onClick={() => save(false)}
           disabled={saving}
@@ -1203,14 +1203,14 @@ export function AgreementDrawer({
             <button
               onClick={sendSigningLink}
               disabled={saving}
-              className="px-4 py-2 rounded-md border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50"
+              className="px-4 py-2 rounded-md border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50 whitespace-nowrap"
             >
               Send Signing Link
             </button>
             <button
               onClick={sendTestEmail}
               disabled={saving}
-              className="px-4 py-2 rounded-md border border-purple-300 text-purple-700 text-sm hover:bg-purple-50 disabled:opacity-50"
+              className="px-4 py-2 rounded-md border border-purple-300 text-purple-700 text-sm hover:bg-purple-50 disabled:opacity-50 whitespace-nowrap"
               title="Send the notification email to yourself (does not touch advertiser record)"
             >
               Email me a test
@@ -1218,7 +1218,7 @@ export function AgreementDrawer({
             <button
               onClick={copySigningLink}
               disabled={saving}
-              className="px-4 py-2 rounded-md border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50"
+              className="px-4 py-2 rounded-md border border-indigo-300 text-indigo-700 text-sm hover:bg-indigo-50 disabled:opacity-50 whitespace-nowrap"
               title="Copy signing link to clipboard"
             >
               Copy Link
@@ -1234,7 +1234,7 @@ export function AgreementDrawer({
             type="button"
             onClick={saveAndSendAmended}
             disabled={saving || sendingAmended}
-            className="px-4 py-2 rounded-md border border-amber-400 bg-amber-50 text-amber-800 text-sm hover:bg-amber-100 disabled:opacity-50"
+            className="px-4 py-2 rounded-md border border-amber-400 bg-amber-50 text-amber-800 text-sm hover:bg-amber-100 disabled:opacity-50 whitespace-nowrap"
             title="Save current edits, regenerate the PDF, and email it to the advertiser as an FYI"
           >
             {sendingAmended ? 'Sending…' : 'Save & send amended PDF'}

@@ -140,7 +140,7 @@ export default function NewGiveawayPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="bg-brand-700 text-white px-5 py-2.5 text-sm font-medium hover:bg-brand-800 disabled:opacity-60 transition-colors"
+            className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 disabled:opacity-60 transition-colors rounded-md whitespace-nowrap"
           >
             {submitting ? 'Creating...' : 'Create Giveaway'}
           </button>

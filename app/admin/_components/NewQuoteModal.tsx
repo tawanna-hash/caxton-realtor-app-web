@@ -1910,14 +1910,14 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
           <button
             type="button"
             onClick={handleClose}
-            className="px-3 py-1.5 rounded-md text-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2 rounded-md text-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 whitespace-nowrap"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={!canSubmit}
-            className="px-3 py-1.5 rounded-md text-sm font-medium bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="px-4 py-2 rounded-md text-sm font-medium bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {submitting ? 'Drafting…' : 'Draft quote'}
           </button>

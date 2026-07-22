@@ -109,7 +109,7 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
             type="button"
             onClick={handleSync}
             disabled={busy}
-            className="inline-flex items-center gap-2 rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700/90 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
+            className="inline-flex items-center gap-2 rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700/90 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] whitespace-nowrap"
           >
             {busy ? (
               <>
@@ -537,7 +537,7 @@ function EditModal({
               type="button"
               onClick={save}
               disabled={busy}
-              className="px-4 py-2 text-sm font-medium text-white bg-brand-700 hover:bg-brand-700/90 rounded-md disabled:opacity-50 min-h-[44px]"
+              className="px-4 py-2 text-sm font-medium text-white bg-brand-700 hover:bg-brand-700/90 rounded-md disabled:opacity-50 min-h-[44px] whitespace-nowrap"
             >
               {saving ? 'Saving…' : 'Save changes'}
             </button>

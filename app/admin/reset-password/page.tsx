@@ -116,7 +116,7 @@ function ResetPasswordForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full bg-brand-700 text-white py-2.5 text-sm font-medium tracking-wide hover:bg-brand-800 disabled:opacity-60 transition-colors"
+        className="w-full bg-brand-700 text-white py-2.5 text-sm font-medium tracking-wide hover:bg-brand-800 disabled:opacity-60 transition-colors rounded-md"
       >
         {submitting ? 'Updating...' : 'Update Password'}
       </button>

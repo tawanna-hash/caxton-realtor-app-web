@@ -374,7 +374,7 @@ export default function AdminInventoryDetail({
                 href={row.flyerPdfUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-center px-4 py-2.5 border-t border-gray-200 text-sm font-medium text-gray-900 hover:bg-gray-50 transition-colors"
+                className="block text-center px-4 py-2.5 border-t border-gray-200 text-sm font-medium text-gray-900 hover:bg-gray-50 transition-colors rounded-md"
               >
                 Open flyer PDF →
               </a>

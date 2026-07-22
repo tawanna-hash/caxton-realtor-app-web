@@ -407,7 +407,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
         <button
           type="submit"
           disabled={submitting || !packageId || previewCents <= 0}
-          className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
         >
           {submitting ? 'Drafting…' : 'Draft quote'}
         </button>

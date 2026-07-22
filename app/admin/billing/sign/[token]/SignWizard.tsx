@@ -190,7 +190,7 @@ function Shell({
           {onBack ? (
             <button
               onClick={onBack}
-              className="px-4 py-2 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50"
+              className="px-4 py-2 rounded-md border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 whitespace-nowrap"
             >
               ← Back
             </button>

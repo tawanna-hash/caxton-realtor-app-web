@@ -261,7 +261,7 @@ export default function IosTable() {
                           href={`/api/admin/insertion-orders/${io.id}/pdf`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
+                          className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50 rounded-md"
                         >
                           PDF
                         </a>

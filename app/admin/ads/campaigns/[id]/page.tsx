@@ -64,7 +64,7 @@ export default function EditCampaignPage() {
           type="button"
           onClick={handleDelete}
           disabled={deleting}
-          className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+          className="rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 whitespace-nowrap"
         >
           {deleting ? 'Deleting…' : 'Delete campaign'}
         </button>

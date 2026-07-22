@@ -270,7 +270,7 @@ export default function AvailabilityCalendar() {
           <button
             type="button"
             onClick={goPrev}
-            className="px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50"
+            className="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50 whitespace-nowrap"
             aria-label="Previous month"
           >
             ←
@@ -281,7 +281,7 @@ export default function AvailabilityCalendar() {
           <button
             type="button"
             onClick={goNext}
-            className="px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50"
+            className="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50 whitespace-nowrap"
             aria-label="Next month"
           >
             →
@@ -289,7 +289,7 @@ export default function AvailabilityCalendar() {
           <button
             type="button"
             onClick={goToday}
-            className="ml-2 px-3 py-1.5 rounded-md border border-gray-300 text-sm hover:bg-gray-50"
+            className="ml-2 px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50 whitespace-nowrap"
           >
             Today
           </button>

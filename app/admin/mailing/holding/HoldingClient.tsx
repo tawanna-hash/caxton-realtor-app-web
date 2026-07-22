@@ -504,7 +504,7 @@ export default function HoldingClient() {
             type="button"
             disabled={busy !== null}
             onClick={runVerifyDrain}
-            className="px-4 py-2 rounded-md border border-brand-700 text-brand-700 text-sm font-medium hover:bg-brand-700 hover:text-white disabled:opacity-50"
+            className="px-4 py-2 rounded-md border border-brand-700 text-brand-700 text-sm font-medium hover:bg-brand-700 hover:text-white disabled:opacity-50 whitespace-nowrap"
             title="Verify every Pending contact in the background (batches of 150)."
           >
             {busy === 'drain' ? 'Verifying…' : 'Verify all Pending'}
@@ -513,7 +513,7 @@ export default function HoldingClient() {
             type="button"
             disabled={busy !== null}
             onClick={syncFromUnlockMLS}
-            className="px-4 py-2 rounded-md bg-brand-700 text-white text-sm font-medium hover:bg-[#5a0e5f] disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-brand-700 text-white text-sm font-medium hover:bg-[#5a0e5f] disabled:opacity-50 whitespace-nowrap"
           >
             {busy === 'sync' ? 'Syncing…' : 'Sync from UnlockMLS'}
           </button>
@@ -528,7 +528,7 @@ export default function HoldingClient() {
           type="button"
           onClick={handleDedupe}
           disabled={busy !== null}
-          className="px-3 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+          className="px-4 py-2 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
         >
           {busy === 'dedupe' ? 'Deduping…' : 'Dedupe'}
         </button>
@@ -536,7 +536,7 @@ export default function HoldingClient() {
           type="button"
           onClick={handleRefreshAddresses}
           disabled={busy !== null}
-          className="px-3 py-1.5 text-sm rounded-md border border-brand-700 text-brand-700 hover:bg-brand-700/5 disabled:opacity-50"
+          className="px-4 py-2 text-sm rounded-md border border-brand-700 text-brand-700 hover:bg-brand-700/5 disabled:opacity-50 whitespace-nowrap"
           title="Fill in blank address fields from each matched advertiser. Matches by email or license number. Admin edits are preserved."
         >
           {busy === 'refresh-addr' ? 'Refreshing…' : 'Refresh addresses from advertisers'}
@@ -545,7 +545,7 @@ export default function HoldingClient() {
           type="button"
           onClick={handleDeleteAll}
           disabled={busy !== null}
-          className="px-3 py-1.5 text-sm rounded-md border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-50"
+          className="px-4 py-2 text-sm rounded-md border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-50 whitespace-nowrap"
         >
           {busy === 'delete-all' ? 'Deleting…' : 'Delete all'}
         </button>
@@ -870,7 +870,7 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className="px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-2"
+      className="px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-2"
       style={{ backgroundColor: bg, color: fg }}
     >
       <span>{label}</span>
@@ -1324,7 +1324,7 @@ function EditDrawer({
             type="button"
             disabled={saving}
             onClick={save}
-            className="px-4 py-1.5 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#5a0e5f] disabled:opacity-50"
+            className="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-[#5a0e5f] disabled:opacity-50 whitespace-nowrap"
           >
             {saving ? 'Saving…' : 'Save changes'}
           </button>

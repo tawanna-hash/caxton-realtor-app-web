@@ -347,7 +347,7 @@ return (
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={enterEdit}
-              className="text-sm font-medium px-4 py-1.5 rounded-md bg-brand-700 text-white hover:bg-brand-700"
+              className="text-sm font-medium px-4 py-2 rounded-md bg-brand-700 text-white hover:bg-brand-700 whitespace-nowrap"
             >
               Edit
             </button>
@@ -358,14 +358,14 @@ return (
             <button
               onClick={cancelEdit}
               disabled={saving}
-              className="text-sm font-medium px-4 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="text-sm font-medium px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
             >
               Cancel
             </button>
             <button
               onClick={save}
               disabled={saving}
-              className="text-sm font-medium px-4 py-1.5 rounded-md bg-brand-700 text-white hover:bg-brand-700 disabled:opacity-50"
+              className="text-sm font-medium px-4 py-2 rounded-md bg-brand-700 text-white hover:bg-brand-700 disabled:opacity-50 whitespace-nowrap"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -570,7 +570,7 @@ return (
                       <button
                         onClick={doSendMagicLink}
                         disabled={sendingLink}
-                        className="text-sm font-medium px-3 py-1.5 rounded-md bg-brand-700 text-white hover:bg-brand-700 disabled:opacity-50"
+                        className="text-sm font-medium px-4 py-2 rounded-md bg-brand-700 text-white hover:bg-brand-700 disabled:opacity-50 whitespace-nowrap"
                       >
                         {sendingLink ? 'Sending…' : 'Confirm send'}
                       </button>
@@ -674,7 +674,7 @@ return (
               <button
                 onClick={doDelete}
                 disabled={!deleteEnabled || deleting}
-                className="text-sm font-medium px-4 py-1.5 rounded-md bg-[#dc2626] text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="text-sm font-medium px-4 py-2 rounded-md bg-[#dc2626] text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
               >
                 {deleting ? 'Deleting…' : 'Delete subscriber'}
               </button>

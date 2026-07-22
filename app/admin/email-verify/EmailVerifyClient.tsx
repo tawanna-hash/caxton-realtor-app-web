@@ -332,7 +332,7 @@ function SinglePanel() {
         <button
           type="submit"
           disabled={loading || !email.trim()}
-          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 disabled:opacity-50"
+          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap"
         >
           {loading ? 'Checking…' : 'Check email'}
         </button>
@@ -529,7 +529,7 @@ function BulkPanel() {
             type="button"
             onClick={onVerify}
             disabled={loading || parsedEmails.length === 0 || overLimit}
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 disabled:opacity-50"
+            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap"
           >
             {loading ? 'Verifying…' : `Verify ${parsedEmails.length || ''}`.trim()}
           </button>

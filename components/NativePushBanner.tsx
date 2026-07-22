@@ -119,7 +119,7 @@ export default function NativePushBanner({ realtorId, market }: Props) {
             type="button"
             onClick={dismiss}
             aria-label="Dismiss"
-            className="text-amber-700 hover:text-amber-900 text-lg leading-none px-1"
+            className="text-amber-700 hover:text-amber-900 text-lg leading-none px-1 rounded-md"
           >
             ×
           </button>

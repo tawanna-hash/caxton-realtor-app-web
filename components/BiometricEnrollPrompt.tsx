@@ -129,7 +129,7 @@ export default function BiometricEnrollPrompt() {
           <button
             type="button"
             onClick={onSkip}
-            className="w-full py-2 text-sm text-gray-500 font-light"
+            className="w-full py-2 text-sm text-gray-500 font-light rounded-md"
           >
             Not now
           </button>

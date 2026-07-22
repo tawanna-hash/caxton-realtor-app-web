@@ -48,7 +48,7 @@ export default function ResourcesClient() {
           <a
             key={j.href}
             href={j.href}
-            className="px-3 py-1.5 rounded-full border border-gray-300 text-gray-700 hover:border-brand-700 hover:text-brand-700 transition"
+            className="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:border-brand-700 hover:text-brand-700 transition"
           >
             {j.label}
           </a>
@@ -236,7 +236,7 @@ function LinkRow({ link }: { link: ResourceLink }) {
         href={link.href}
         target="_blank"
         rel="noopener noreferrer"
-        className="block px-5 py-4 hover:bg-gray-50 transition"
+        className="block px-5 py-4 hover:bg-gray-50 transition rounded-md"
       >
         <div className="flex items-start justify-between gap-3">
           <div>

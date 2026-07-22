@@ -213,7 +213,7 @@ export default function EventsPage() {
                 ? 'No expired events to hide'
                 : `Hide ${expiredVisibleCount} event${expiredVisibleCount === 1 ? '' : 's'} whose start date is in the past`
             }
-            className="px-4 py-2 bg-white text-brand-700 text-sm font-medium rounded-md border border-brand-700 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-white text-brand-700 text-sm font-medium rounded-md border border-brand-700 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {bulkBusy
               ? 'Hiding\u2026'

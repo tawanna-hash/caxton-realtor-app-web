@@ -658,7 +658,7 @@ function SubscribeForm({
             <button
               type="submit"
               disabled={!active || submitting}
-              className="w-full sm:w-auto px-8 py-3 text-base font-semibold text-white tracking-wide transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-8 py-3 text-base font-semibold text-white tracking-wide transition-opacity disabled:opacity-50 disabled:cursor-not-allowed rounded-md"
               style={{ backgroundColor: accentColor }}
             >
               {submitting

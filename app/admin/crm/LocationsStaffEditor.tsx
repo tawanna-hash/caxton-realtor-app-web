@@ -647,7 +647,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
                     <a
                       href={`mailto:${loc.email}`}
                       title={`Email ${loc.email}`}
-                      className="text-blue-600 hover:text-blue-800 text-base px-1"
+                      className="text-blue-600 hover:text-blue-800 text-base px-1 rounded-md"
                       tabIndex={-1}
                     >
                       ✉
@@ -733,7 +733,7 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
                     <a
                       href={`mailto:${s.email}`}
                       title={`Email ${s.email}`}
-                      className="text-blue-600 hover:text-blue-800 text-base px-1"
+                      className="text-blue-600 hover:text-blue-800 text-base px-1 rounded-md"
                       tabIndex={-1}
                     >
                       ✉
