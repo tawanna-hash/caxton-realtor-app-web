@@ -283,6 +283,19 @@ async function generateAgreementPdfBufferInner(ag: Agreement): Promise<Uint8Arra
   // ─── Insertion Order ────────────────────────────────────────────────────────
   drawSectionHeader(ctx, 'Insertion Order');
 
+  // Package / product selected (e-Blast package name; App slot shown as Ad Size below).
+  if (ag.eblast_packages && ag.eblast_packages.length > 0) {
+    drawLabelValue(ctx, 'Package', ag.eblast_packages.join(', '));
+  }
+
+  // Placement dates selected by the advertiser (e-Blast send date / App run window).
+  if (ag.start_date) {
+    const sd = humanDate(ag.start_date);
+    const ed = ag.end_date ? humanDate(ag.end_date) : '';
+    const placement = ed && ed !== sd && ed !== '—' ? `${sd} – ${ed}` : sd;
+    drawLabelValue(ctx, 'Placement Date', placement);
+  }
+
   drawLabelValue(ctx, 'Ad Size', ag.ad_size);
   drawLabelValue(ctx, 'Frequency', ag.frequency);
 
