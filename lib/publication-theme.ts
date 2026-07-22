@@ -99,7 +99,7 @@ const THEMES: Record<Publication, PublicationTheme> = {
     name: 'RealtyLine Austin',
     shortName: 'RealtyLine',
     primaryColor: '#301D5D',
-    primaryColorHover: '#493676',
+    primaryColorHover: '#5a0e5f',
     fromEmailDisplayName: 'RealtyLine Austin',
   },
   san_antonio: {
@@ -107,7 +107,7 @@ const THEMES: Record<Publication, PublicationTheme> = {
     name: 'Newsline San Antonio',
     shortName: 'Newsline San Antonio',
     primaryColor: '#301D5D',
-    primaryColorHover: '#52095a',
+    primaryColorHover: '#5a0e5f',
     fromEmailDisplayName: 'Newsline San Antonio',
   },
   houston: {
@@ -115,7 +115,7 @@ const THEMES: Record<Publication, PublicationTheme> = {
     name: 'RealtyLine Houston',
     shortName: 'RealtyLine Houston',
     primaryColor: '#301D5D',
-    primaryColorHover: '#493676',
+    primaryColorHover: '#5a0e5f',
     fromEmailDisplayName: 'RealtyLine Houston',
   },
   dallas: {
@@ -123,7 +123,7 @@ const THEMES: Record<Publication, PublicationTheme> = {
     name: 'RealtyLine Dallas/FTW',
     shortName: 'RealtyLine Dallas/FTW',
     primaryColor: '#301D5D',
-    primaryColorHover: '#493676',
+    primaryColorHover: '#5a0e5f',
     fromEmailDisplayName: 'RealtyLine Dallas/FTW',
   },
   both: {
@@ -131,7 +131,7 @@ const THEMES: Record<Publication, PublicationTheme> = {
     name: 'Realty News Now',
     shortName: 'Both',
     primaryColor: '#301D5D',
-    primaryColorHover: '#493676',
+    primaryColorHover: '#5a0e5f',
     fromEmailDisplayName: 'Realty News Now',
   },
 };
