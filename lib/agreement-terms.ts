@@ -17,11 +17,6 @@ const PAYMENT_BLOCK = `PAYMENT
 INVOICES ARE PROCESSED MONTHLY and sent to a preferred billing email.
 We accept all major credit cards and ACH bank processing. Payments can be submitted by check and mailed to P. O. Box 81366, Austin, Texas 78708-1366. Make checks payable to Caxton Publications, Inc.`;
 
-const GOVERNING_LAW = `GOVERNING LAW
-This Agreement shall be governed by and construed in accordance with the laws of the State of Texas, without regard to its conflict-of-law principles. Any dispute arising out of or in connection with this Agreement shall be resolved exclusively in the state or federal courts located in Travis County, Texas.
-
-ENTIRE AGREEMENT
-This Agreement, together with the insertion order and any addenda, constitutes the entire agreement between the Parties with respect to the subject matter hereof and supersedes all prior negotiations, understandings, and agreements, whether written or oral.`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PRINT / DIGITAL — RealtyLine magazine (print + digital editions)
