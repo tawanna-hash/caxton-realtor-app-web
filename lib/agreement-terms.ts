@@ -147,7 +147,7 @@ Upon expiration of the initial flight, this Agreement shall automatically renew 
 Either Party may cancel by providing written notice no later than fourteen (14) calendar days before the End Date of the then-current flight. Notice received after that date applies to the subsequent renewal flight.
 
 4. MANNER OF NOTICE
-Written notice may be delivered by (a) personal delivery; (b) mail to P.O. Box 81366, Austin, Texas 78708-1366; or (c) email to tawanna@myrealtyline.com with receipt confirmation.`;
+Written notice may be delivered by (a) personal delivery; (b) mail to P.O. Box 81366, Austin, Texas 78708-1366; or (c) email to {{NOTICE_EMAIL}} with receipt confirmation.`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper — pick terms text by channel.
@@ -172,8 +172,13 @@ export function termsForChannel(channel: AdChannel, publication?: string | null)
         .replace(/\{\{BRAND\}\}/g, brand)
         .replace(/\{\{CAROLINE_EMAIL\}\}/g, carolineEmail);
     }
-    case 'app':
-      return TERMS_APP;
+    case 'app': {
+      // App terms are generic ("Publisher" throughout); the only market-specific
+      // value is the cancellation-notice email, resolved per publication. The
+      // "Austin RealtyLine and San Antonio Newsline" line stays literal (both).
+      const noticeEmail = publication === 'san_antonio' ? 'tawanna@newslinesa.com' : 'tawanna@myrealtyline.com';
+      return TERMS_APP.replace(/\{\{NOTICE_EMAIL\}\}/g, noticeEmail);
+    }
     default:
       text = TERMS_RL;
   }
