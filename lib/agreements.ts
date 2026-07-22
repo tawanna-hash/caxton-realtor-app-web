@@ -4,7 +4,7 @@
 // `lib/advertisers.ts`.
 
 export type AgreementStatus =
-  | 'draft' | 'sent' | 'signed' | 'active' | 'expired' | 'cancelled';
+  | 'draft' | 'proposal_sent' | 'proposal_approved' | 'sent' | 'signed' | 'active' | 'expired' | 'cancelled';
 
 export type PaymentMode = 'card' | 'link' | 'invoice' | 'check';
 
@@ -208,7 +208,7 @@ export const AGREEMENT_PUBLICATION_VALUES = new Set<NonNullable<Agreement['publi
 export type AgreementPatchableField = (typeof AGREEMENT_PATCHABLE_FIELDS)[number];
 
 export const AGREEMENT_STATUS_VALUES = new Set<AgreementStatus>([
-  'draft','sent','signed','active','expired','cancelled',
+  'draft','proposal_sent','proposal_approved','sent','signed','active','expired','cancelled',
 ]);
 export const PAYMENT_MODE_VALUES = new Set<PaymentMode>([
   'card','link','invoice','check',

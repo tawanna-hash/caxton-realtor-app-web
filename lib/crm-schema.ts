@@ -177,7 +177,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       advertiser_address       text,
       type                     text,
       status                   text NOT NULL DEFAULT 'draft'
-                                 CHECK (status IN ('draft','sent','signed','active','expired','cancelled')),
+                                 CHECK (status IN ('draft','proposal_sent','proposal_approved','sent','signed','active','expired','cancelled')),
       start_date               date,
       end_date                 date,
       ad_size                  text,
@@ -213,6 +213,27 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_end_date      ON agreements(end_date)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_cust   ON agreements(stripe_customer_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_inv    ON agreements(stripe_invoice_id)`);
+
+  // Expand agreements.status CHECK to include the proposal stage
+  // (proposal_sent / proposal_approved) for the two-stage proposal->agreement flow.
+  // Drop every existing status check on agreements first, then add a single
+  // named one with the full list — robust against any auto-generated name.
+  await step(async () => {
+    const checks = (await sql`
+      SELECT conname FROM pg_constraint
+      WHERE conrelid = 'agreements'::regclass
+        AND conname LIKE '%status%check%'
+    `) as { conname: string }[];
+    for (const r of checks) {
+      await sql.query(`ALTER TABLE agreements DROP CONSTRAINT IF EXISTS "${r.conname}"`);
+    }
+    await sql`
+      ALTER TABLE agreements
+      ADD CONSTRAINT agreements_status_check
+      CHECK (status IN ('draft','proposal_sent','proposal_approved','sent','signed','active','expired','cancelled'))
+    `;
+  });
+
 
   // Now that agreements exists, hang the back-pointer off advertisers.
   // (Listed up top in the Billing↔CRM sync section but deferred to here
