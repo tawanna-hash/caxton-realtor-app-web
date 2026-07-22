@@ -91,6 +91,18 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     }));
     const totalCents = notificationLines.reduce((a, b) => a + b.amountCents, 0);
 
+    // Extract the rep's typed note for the email. agreement.notes also carries
+    // an auto-fallback ("Quote drafted — …") when the rep left it blank and an
+    // appended override-pricing line for custom pricing — strip both so the
+    // email only surfaces what the rep actually wrote.
+    const repNote = (() => {
+      const raw = (ag.notes ?? '').trim();
+      if (!raw || raw.startsWith('Quote drafted —')) return null;
+      const overrideLine = /^(Rack|Unit rack) \$[\d,]+(?:\.\d+)? → [Qq]uoted \$[\d,]+(?:\.\d+)? \(\d+(?:\.\d+)?% off\)$/;
+      const kept = raw.split('\n').map((l) => l.trim()).filter((l) => l && !overrideLine.test(l));
+      return kept.length ? kept.join('\n') : null;
+    })();
+
     const html = agreementNotificationEmail({
       companyName: ag.company_name ?? undefined,
       repName: ag.rep_name ?? undefined,
@@ -98,6 +110,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       adRate: ag.ad_rate_cents != null ? ag.ad_rate_cents / 100 : null,
       status: ag.status,
       message: customMessage ?? defaultMessage,
+      notes: repNote ?? undefined,
       signingLink,
       lines: notificationLines,
       totalCents,

@@ -41,6 +41,7 @@ export interface AgreementNotificationParams {
   adRate?: number | null;
   status?: string;
   message?: string;
+  notes?: string | null;
   signingLink?: string;
   lines?: AgreementNotificationLine[];
   totalCents?: number | null;
@@ -126,6 +127,13 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
     ? `<tr><td align="center" style="padding:24px 40px"><a href="${params.signingLink}" style="display:inline-block;background:${brand.brandColor};color:#fff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 36px;border-radius:4px;letter-spacing:.5px">Review &amp; Sign Agreement</a></td></tr>`
     : '';
 
+  // Rep's typed note to the advertiser (auto-fallback + override-pricing
+  // line are stripped before this is passed in, so this is purely the
+  // rep's own words).
+  const noteBox = params.notes && params.notes.trim()
+    ? `<tr><td style="padding:0 40px 24px 40px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:6px"><tr><td style="padding:16px 20px"><p style="margin:0 0 6px 0;font-family:Arial,sans-serif;font-size:11px;font-weight:800;color:#9a3412;text-transform:uppercase;letter-spacing:.8px">Note from your rep</p><p style="margin:0;font-family:Arial,sans-serif;font-size:14px;color:#7c2d12;line-height:1.6;white-space:pre-wrap">${escapeHtml(params.notes.trim())}</p></td></tr></table></td></tr>`
+    : '';
+
   return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>Agreement Notification</title></head>
 <body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif">
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f3f4f6;padding:32px 0"><tr><td align="center">
@@ -134,6 +142,7 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
 <tr><td style="padding:36px 40px 16px 40px"><p style="margin:0;font-family:Arial,sans-serif;font-size:16px;color:#222">${greeting}</p></td></tr>
 ${detailsBox}
 <tr><td style="padding:0 40px 32px 40px"><p style="margin:0;font-family:Arial,sans-serif;font-size:15px;color:#444;line-height:1.7">${formattedMessage}</p></td></tr>
+${noteBox}
 ${ctaButton}
 <tr><td style="background:#f3f4f6;border-top:1px solid #e5e7eb;padding:20px 40px;text-align:center">
 <p style="margin:0;font-family:Arial,sans-serif;font-size:12px;color:#888">Sent by ${brand.brandName} | <a href="${websiteUrl}" style="color:#888;text-decoration:none">${websiteUrl}</a></p>
