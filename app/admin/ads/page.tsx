@@ -135,7 +135,7 @@ export default function AdsHubPage() {
         <div className="flex items-center gap-2">
           <Link
             href="/admin/ads/campaigns/new"
-            className="rounded-md bg-brand-700 px-4 py-2 text-white text-sm font-medium hover:bg-[#493676]"
+            className="rounded-md bg-brand-700 px-4 py-2 text-white text-sm font-medium hover:bg-brand-600"
           >
             + New campaign
           </Link>
@@ -323,7 +323,7 @@ function SectionCard({
       className={
         'h-full rounded-md ring-1 p-5 transition hover:shadow-sm flex flex-col ' +
         (isNavy
-          ? 'bg-brand-700 text-white ring-brand-700 hover:bg-[#493676]'
+          ? 'bg-brand-700 text-white ring-brand-700 hover:bg-brand-600'
           : 'bg-white ring-gray-200 hover:ring-gray-300')
       }
     >

@@ -111,7 +111,7 @@ export default function NativePushBanner({ realtorId, market }: Props) {
             type="button"
             onClick={() => void enable()}
             disabled={state === 'pending'}
-            className="inline-flex items-center px-3 py-1 rounded text-xs font-semibold text-white bg-brand-700 hover:bg-[#493676] disabled:opacity-60 whitespace-nowrap"
+            className="inline-flex items-center px-3 py-1 rounded text-xs font-semibold text-white bg-brand-700 hover:bg-brand-600 disabled:opacity-60 whitespace-nowrap"
           >
             {state === 'pending' ? 'Enabling…' : 'Enable'}
           </button>

@@ -162,7 +162,7 @@ export default function PushOptInBanner({ realtorId, market }: Props) {
           realtorId={realtorId ?? null}
           market={market ?? null}
           label="Enable"
-          className="inline-flex items-center px-3 py-1 rounded text-xs font-semibold text-white bg-brand-700 hover:bg-[#493676] whitespace-nowrap"
+          className="inline-flex items-center px-3 py-1 rounded text-xs font-semibold text-white bg-brand-700 hover:bg-brand-600 whitespace-nowrap"
         />
         <button
           type="button"

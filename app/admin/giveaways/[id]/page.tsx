@@ -183,7 +183,7 @@ export default function GiveawayDetailPage() {
               onClick={handleDraw}
               disabled={!canDraw || drawing}
               title={!endsAtPassed ? 'Cannot draw until ends-at has passed' : ''}
-              className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-[#493676] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {drawing ? 'Drawing...' : 'Draw Winner'}
             </button>
@@ -279,7 +279,7 @@ export default function GiveawayDetailPage() {
             <button
               type="submit"
               disabled={saving}
-              className="bg-brand-700 text-white px-5 py-2 text-sm font-medium hover:bg-[#493676] disabled:opacity-60 transition-colors"
+              className="bg-brand-700 text-white px-5 py-2 text-sm font-medium hover:bg-brand-600 disabled:opacity-60 transition-colors"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
@@ -488,7 +488,7 @@ function RulesSection({
             <button
               type="submit"
               disabled={submitting}
-              className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-[#493676] disabled:opacity-60 transition-colors"
+              className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-600 disabled:opacity-60 transition-colors"
             >
               {submitting ? 'Adding...' : 'Add Rule'}
             </button>

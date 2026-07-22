@@ -459,7 +459,7 @@ export default function InquireForm({
       <button
         type="submit"
         disabled={disabled}
-        className="inline-flex items-center justify-center px-6 py-3 bg-brand-700 text-white font-medium rounded-md hover:bg-[#493676] disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+        className="inline-flex items-center justify-center px-6 py-3 bg-brand-700 text-white font-medium rounded-md hover:bg-brand-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
       >
         {disabled ? 'Sending…' : 'Send inquiry'}
       </button>

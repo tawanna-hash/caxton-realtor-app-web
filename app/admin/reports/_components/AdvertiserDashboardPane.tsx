@@ -191,7 +191,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
             title={advertiser.contact_email
               ? 'Preview and send the performance report email'
               : 'Add a contact email on the Advertisers page to send a report'}
-            className="px-3 py-1.5 text-xs font-medium rounded-md bg-brand-700 text-white hover:bg-[#493676] disabled:opacity-40"
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-brand-700 text-white hover:bg-brand-600 disabled:opacity-40"
           >
             Send report email
           </button>

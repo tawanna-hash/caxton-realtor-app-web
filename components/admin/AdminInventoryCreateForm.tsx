@@ -459,7 +459,7 @@ export default function AdminInventoryCreateForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-[#493676] disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
+          className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
         >
           {submitting ? 'Publishing…' : kind === 'promotion' ? 'Publish Promotion' : 'Publish Listing'}
         </button>

@@ -146,7 +146,7 @@ export default function NotificationsClient({ initialNotifications, initialStats
         <button
           type="button"
           onClick={() => { setEditing(null); setOpen(true); }}
-          className="inline-flex items-center justify-center px-4 py-2 rounded-md text-white font-medium text-sm bg-brand-700 hover:bg-[#493676] transition-colors"
+          className="inline-flex items-center justify-center px-4 py-2 rounded-md text-white font-medium text-sm bg-brand-700 hover:bg-brand-600 transition-colors"
         >
           New notification
         </button>

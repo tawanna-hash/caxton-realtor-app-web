@@ -131,7 +131,7 @@ function AdminLoginForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-brand-700 text-white py-2.5 text-sm font-medium tracking-wide hover:bg-[#493676] disabled:opacity-60 transition-colors"
+            className="w-full bg-brand-700 text-white py-2.5 text-sm font-medium tracking-wide hover:bg-brand-600 disabled:opacity-60 transition-colors"
           >
             {submitting ? 'Signing in...' : 'Sign In'}
           </button>
