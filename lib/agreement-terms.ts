@@ -21,7 +21,7 @@ const GOVERNING_LAW = `GOVERNING LAW
 This Agreement shall be governed by and construed in accordance with the laws of the State of Texas, without regard to its conflict-of-law principles. Any dispute arising out of or in connection with this Agreement shall be resolved exclusively in the state or federal courts located in Travis County, Texas.
 
 ENTIRE AGREEMENT
-This Agreement, together with the Insertion Order and any addenda, constitutes the entire agreement between the Parties with respect to the subject matter hereof and supersedes all prior negotiations, understandings, and agreements, whether written or oral.`;
+This Agreement, together with the insertion order and any addenda, constitutes the entire agreement between the Parties with respect to the subject matter hereof and supersedes all prior negotiations, understandings, and agreements, whether written or oral.`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PRINT / DIGITAL — RealtyLine magazine (print + digital editions)
@@ -98,7 +98,7 @@ export const TERMS_EMAIL = `TERMS OF AGREEMENT — E-BLAST
 {{BRAND}} does not release subscriber email addresses to external parties, but external parties may purchase the opportunity for {{BRAND}} to send an e-Blast campaign on their behalf. Each e-Blast campaign sent by {{BRAND}} on behalf of an external group will include the following disclaimer: This email is brought to you on behalf of our advertising partner [Advertiser's Name]. {{BRAND}} does not endorse any information contained within this communication.
 
 PAYMENT
-Credit card payment must be received in full at the time of signing the agreement. No e-Blast campaigns will be scheduled or sent until payment is received in full unless approval is received by Publisher.
+Credit card payment must be received in full at time of signing the agreement. No e-Blast campaigns will be scheduled until payment has been received.
 
 CREATIVE ASSETS
 Advertiser shall deliver all creative assets (images, tap-through URLs, and any headline copy) no later than seventy-two (72) hours before the e-Blast campaign send date/time specified in the insertion order. All assets must be emailed to Caroline Carver at {{CAROLINE_EMAIL}}.
@@ -111,7 +111,7 @@ CAN-SPAM COMPLIANCE
 Publisher provides CAN-SPAM compliance in all e-Blast campaigns.
 
 PLACEMENT AND MARKETS
-The e-Blast campaign (publication scope and market(s)) is set forth in the Insertion Order. The Advertiser acknowledges the Publisher operates separate markets (RealtyLine Austin and Newsline San Antonio) and that "markets" refers to the number of market instances in which the campaign will run.
+The e-Blast campaign (publication scope and market(s)) is set forth in the insertion order. The Advertiser acknowledges the Publisher operates separate markets (RealtyLine Austin and Newsline San Antonio) and that "markets" refers to the number of market instances in which the campaign will run.
 
 LIMITATION OF LIABILITY
 Publisher does not guarantee specific results, sales, or click-through rates.
@@ -120,7 +120,7 @@ Publisher does not guarantee specific results, sales, or click-through rates.
 
 2. Publisher has final approval of all e-Blast campaign content. Publisher reserves the right to refuse e-Blast campaign for any reason.
 
-3. No cancellations will be accepted or refunded within 48 hours of the scheduled send date/time.
+3. No cancellations will be accepted or refunded.
 
 Your signature below signifies that you understand and agree to the terms of agreement above.`;
 
@@ -133,17 +133,17 @@ export const TERMS_APP = `TERMS OF AGREEMENT — IN-APP PLACEMENT
 ${PAYMENT_BLOCK}
 
 CREATIVE ASSETS
-Advertiser shall deliver all creative assets (in-app image, tap-through URL, and any headline copy) no later than seventy-two (72) hours before the campaign start date specified in the Insertion Order. Accepted formats: PNG or JPG at the pixel dimensions provided by the Publisher for the reserved slot.
+Advertiser shall deliver all creative assets (in-app image, tap-through URL, and any headline copy) no later than seventy-two (72) hours before the campaign start date specified in the insertion order. Accepted formats: PNG or JPG at the pixel dimensions provided by the Publisher for the reserved slot.
 
 If the Publisher does not receive acceptable creative materials by the stated deadline, the Publisher may, at its sole discretion: (a) rerun the Advertiser's most recent approved in-app creative; or (b) leave the reserved slot unfilled. In either case, the Advertiser shall be charged in full for the reserved flight.
 
 PLACEMENT AND MARKETS
-The in-app placement (slot, zone, and market count) is set forth in the Insertion Order. The Advertiser acknowledges that the Publisher operates separate market instances (Austin RealtyLine and San Antonio Newsline) and that "markets" refers to the number of market instances in which the placement will run. The Publisher makes commercially reasonable efforts to deliver the placement to all users of the reserved markets but does not guarantee any specific impression, install, or tap-through volume.
+The in-app placement (slot, zone, and market count) is set forth in the insertion order. The Advertiser acknowledges that the Publisher operates separate market instances (Austin RealtyLine and San Antonio Newsline) and that "markets" refers to the number of market instances in which the placement will run. The Publisher makes commercially reasonable efforts to deliver the placement to all users of the reserved markets but does not guarantee any specific impression, install, or tap-through volume.
 
 TERM AND AUTOMATIC RENEWAL
 
 1. INITIAL TERM
-This Agreement shall commence on the Start Date set forth in the Insertion Order and shall continue through the End Date (weeks × 7 days for weekly cadence; last calendar day of the final month for monthly cadence).
+This Agreement shall commence on the Start Date set forth in the insertion order and shall continue through the End Date (weeks × 7 days for weekly cadence; last calendar day of the final month for monthly cadence).
 
 2. AUTOMATIC RENEWAL
 Upon expiration of the initial flight, this Agreement shall automatically renew for successive flights of equal duration under the same terms, rate, slot, and market count, unless either Party provides written notice of cancellation in accordance with Section 3.
