@@ -53,7 +53,7 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
   const advertiserName = params.repName ?? 'Advertiser';
   const greeting = advertiserName ? `Dear ${advertiserName},` : 'Dear Advertiser,';
   const message = params.message ?? (params.signingLink
-    ? `Your ${brand.brandName} advertising agreement is ready for review. Click below to open your secure signing portal. If your package hasn't been pre-selected, you'll be able to choose your ad size and publication frequency before signing. Reach out if you have any questions — we're glad to help.`
+    ? `Your ${brand.brandName} advertising agreement is ready for review. Click below to open your secure signing portal. You will be able to select your placement start date before signing. If you need to change your preferred date after signing, just let me know and I will update it for you. As always, I'm happy to help should you have any questions or concerns.`
     : `Thank you for your continued partnership with ${brand.brandName}.`);
   const formattedMessage = message.replace(/\n/g, '<br>');
 
