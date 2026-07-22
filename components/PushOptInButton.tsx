@@ -250,7 +250,7 @@ export default function PushOptInButton({ realtorId, market, className, hideWhen
       disabled={status === 'pending'}
       className={
         className ||
-        'inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-brand-600 disabled:opacity-60'
+        'inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-brand-800 disabled:opacity-60'
       }
     >
       {status === 'pending' ? 'Enabling...' : label || 'Enable notifications'}

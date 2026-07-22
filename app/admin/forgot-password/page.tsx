@@ -51,7 +51,7 @@ export default function AdminForgotPasswordPage() {
             </p>
             <Link
               href="/admin/login"
-              className="block w-full text-center bg-brand-700 text-white py-2.5 text-sm font-medium tracking-wide hover:bg-brand-600 transition-colors"
+              className="block w-full text-center bg-brand-700 text-white py-2.5 text-sm font-medium tracking-wide hover:bg-brand-800 transition-colors"
             >
               Back to Sign In
             </Link>
@@ -75,7 +75,7 @@ export default function AdminForgotPasswordPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-brand-700 text-white py-2.5 text-sm font-medium tracking-wide hover:bg-brand-600 disabled:opacity-60 transition-colors"
+              className="w-full bg-brand-700 text-white py-2.5 text-sm font-medium tracking-wide hover:bg-brand-800 disabled:opacity-60 transition-colors"
             >
               {submitting ? 'Sending...' : 'Send Reset Link'}
             </button>

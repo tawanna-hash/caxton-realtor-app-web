@@ -111,7 +111,7 @@ export default function AdvertiseEmailPage() {
                       </ul>
                       <Link
                         href={`/advertise/inquire?channel=email&package=${encodeURIComponent(id)}${row.pub === 'newsline' ? '&pub=newsline' : ''}`}
-                        className="mt-4 inline-flex items-center justify-center px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-brand-600 transition"
+                        className="mt-4 inline-flex items-center justify-center px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-brand-800 transition"
                       >
                         Request quote
                       </Link>

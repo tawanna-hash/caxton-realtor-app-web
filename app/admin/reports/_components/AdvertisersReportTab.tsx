@@ -312,7 +312,7 @@ export default function AdvertisersReportTab() {
               type="button"
               onClick={handleSend}
               disabled={sending || selectedCount === 0}
-              className="bg-brand-700 hover:bg-brand-600 text-white px-5 py-2.5 rounded-md text-sm font-medium disabled:opacity-40"
+              className="bg-brand-700 hover:bg-brand-800 text-white px-5 py-2.5 rounded-md text-sm font-medium disabled:opacity-40"
             >
               {sending ? 'Sending…' : `Send ${selectedCount || ''} report${selectedCount === 1 ? '' : 's'}`}
             </button>

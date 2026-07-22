@@ -416,7 +416,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
               <button
                 type="submit"
                 disabled={!canSubmit || titleTooLong || bodyTooLong}
-                className="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 rounded-md text-sm font-medium text-white bg-brand-700 hover:bg-brand-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 {sending ? 'Sending...' : sendLabel}
               </button>

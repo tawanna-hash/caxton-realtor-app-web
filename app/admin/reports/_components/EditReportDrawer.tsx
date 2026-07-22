@@ -170,7 +170,7 @@ export default function EditReportDrawer({
           <button
             type="button"
             onClick={onCopyHtml}
-            className="bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 rounded-md text-sm font-medium"
+            className="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-md text-sm font-medium"
           >
             Copy HTML
           </button>

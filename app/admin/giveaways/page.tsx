@@ -66,7 +66,7 @@ export default function GiveawaysPage() {
         </div>
         <Link
           href="/admin/giveaways/new"
-          className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-600 rounded-md transition-colors"
+          className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors"
         >
           + Create Giveaway
         </Link>

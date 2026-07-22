@@ -352,7 +352,7 @@ function AdminReportsPageInner() {
             type="button"
             onClick={generateReport}
             disabled={!selectedArticleId || reportLoading}
-            className="bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {reportLoading ? 'Generating…' : 'Generate report'}
           </button>
@@ -418,7 +418,7 @@ function AdminReportsPageInner() {
                   <button
                     type="button"
                     onClick={copyHtml}
-                    className="bg-brand-700 hover:bg-brand-600 text-white px-3 py-1.5 rounded-md text-sm font-medium"
+                    className="bg-brand-700 hover:bg-brand-800 text-white px-3 py-1.5 rounded-md text-sm font-medium"
                   >
                     Copy HTML
                   </button>
@@ -540,7 +540,7 @@ function AdminReportsPageInner() {
             type="button"
             onClick={generateEventReport}
             disabled={!selectedEventId || eventReportLoading}
-            className="bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {eventReportLoading ? 'Generating…' : 'Generate report'}
           </button>
@@ -605,7 +605,7 @@ function AdminReportsPageInner() {
                   <button
                     type="button"
                     onClick={copyHtml}
-                    className="bg-brand-700 hover:bg-brand-600 text-white px-3 py-1.5 rounded-md text-sm font-medium"
+                    className="bg-brand-700 hover:bg-brand-800 text-white px-3 py-1.5 rounded-md text-sm font-medium"
                   >
                     Copy HTML
                   </button>
