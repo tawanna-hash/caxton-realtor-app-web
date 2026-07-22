@@ -60,7 +60,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       typeof body.customMessage === 'string' && body.customMessage.trim().length > 0
         ? body.customMessage.trim()
         : null;
-    const defaultMessage = `Your RealtyLine advertising agreement is ready for review. Click below to open your secure signing portal. You will be able to select your placement start date before signing. If you need to change your preferred date after signing, just let me know and I will update it for you. As always, I'm happy to help should you have any questions or concerns.`;
+    const defaultMessage = `Your RealtyLine advertising proposal is ready for review. Click below to open your secure portal. Once you accept proposal it will convert to your advertising agreement. You will be able to select your placement start date before signing. If you need to change your preferred date after signing, just let me know and I will update it for you. As always, I'm happy to help should you have any questions or concerns.`;
 
     // Fetch line items so bundles show all lines in the email recap.
     type LineItemRow = {

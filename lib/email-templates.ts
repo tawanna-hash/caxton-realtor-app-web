@@ -53,7 +53,7 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
   const advertiserName = params.repName ?? 'Advertiser';
   const greeting = advertiserName ? `Dear ${advertiserName},` : 'Dear Advertiser,';
   const message = params.message ?? (params.signingLink
-    ? `Your ${brand.brandName} advertising agreement is ready for review. Click below to open your secure signing portal. You will be able to select your placement start date before signing. If you need to change your preferred date after signing, just let me know and I will update it for you. As always, I'm happy to help should you have any questions or concerns.`
+    ? `Your ${brand.brandName} advertising proposal is ready for review. Click below to open your secure portal. Once you accept proposal it will convert to your advertising agreement. You will be able to select your placement start date before signing. If you need to change your preferred date after signing, just let me know and I will update it for you. As always, I'm happy to help should you have any questions or concerns.`
     : `Thank you for your continued partnership with ${brand.brandName}.`);
   const formattedMessage = message.replace(/\n/g, '<br>');
 
@@ -138,7 +138,7 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
 <body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif">
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f3f4f6;padding:32px 0"><tr><td align="center">
 <table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
-<tr><td style="background:${brand.brandColor};padding:28px 40px;text-align:center"><h1 style="margin:0;color:#fff;font-family:Arial,sans-serif;font-size:26px;font-weight:bold;letter-spacing:1px">${brand.brandName}</h1></td></tr>
+<tr><td style="background:${brand.brandColor};padding:28px 40px;text-align:center"><h1 style="margin:0;color:#fff;font-family:Arial,sans-serif;font-size:26px;font-weight:bold;letter-spacing:1px">${brand.brandName} Proposal</h1></td></tr>
 <tr><td style="padding:36px 40px 16px 40px"><p style="margin:0;font-family:Arial,sans-serif;font-size:16px;color:#222">${greeting}</p></td></tr>
 ${detailsBox}
 <tr><td style="padding:0 40px 32px 40px"><p style="margin:0;font-family:Arial,sans-serif;font-size:15px;color:#444;line-height:1.7">${formattedMessage}</p></td></tr>
