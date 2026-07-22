@@ -152,9 +152,7 @@ Upon expiration of the initial flight, this Agreement shall automatically renew 
 Either Party may cancel by providing written notice no later than fourteen (14) calendar days before the End Date of the then-current flight. Notice received after that date applies to the subsequent renewal flight.
 
 4. MANNER OF NOTICE
-Written notice may be delivered by (a) personal delivery; (b) mail to P.O. Box 81366, Austin, Texas 78708-1366; or (c) email to tawanna@myrealtyline.com with receipt confirmation.
-
-${GOVERNING_LAW}`;
+Written notice may be delivered by (a) personal delivery; (b) mail to P.O. Box 81366, Austin, Texas 78708-1366; or (c) email to tawanna@myrealtyline.com with receipt confirmation.`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper — pick terms text by channel.
