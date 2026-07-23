@@ -1420,6 +1420,19 @@ function Field({ label, children, className = '' }: { label: string; children: R
 // are sourced from the `advertisers` row (mirror columns kept in lockstep
 // with `agreements` by lib/server/billing-crm-sync.ts). To edit any of
 // these, open the Billing agreement — changes flow back here on save.
+type CrmLineItem = {
+  line_no: number;
+  channel: string | null;
+  package_label: string | null;
+  ad_size: string | null;
+  frequency: string | null;
+  quantity: number | null;
+  publication: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  amount_cents: number | null;
+};
+
 function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
   const fmtCents = (c: number | null | undefined): string => {
     if (c == null) return '—';
@@ -1432,10 +1445,31 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
   };
   const txt = (v: string | null | undefined): string => (v && v.trim()) ? v : '—';
 
+  // A bundle has multiple line items (e.g. app Top Banner + e-Blast). The
+  // single-line mirror columns (current_ad_size / frequency / ad_rate_cents)
+  // only capture one line, so load every line and render them explicitly,
+  // computing the contract total from the lines themselves.
+  const [lineItems, setLineItems] = useState<CrmLineItem[]>([]);
+  useEffect(() => {
+    let alive = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clear stale lines when the selected advertiser has no current agreement
+    if (!row.current_agreement_id) { setLineItems([]); return; }
+    fetch(`/api/admin/agreements/${row.current_agreement_id}/line-items`)
+      .then((r) => (r.ok ? r.json() : { lineItems: [] }))
+      .then((d: { lineItems?: CrmLineItem[] }) => { if (alive) setLineItems(d.lineItems ?? []); })
+      .catch(() => { if (alive) setLineItems([]); });
+    return () => { alive = false; };
+  }, [row.current_agreement_id]);
+
   const hasAgreement = !!row.current_agreement_id;
   const hasAnyBilling =
     !!(row.billing_contact_name || row.billing_contact_phone || row.billing_email
        || row.payment_mode || row.card_last4 || row.stripe_customer_id);
+
+  const lineTotal = lineItems.reduce((acc, li) => acc + (li.amount_cents ?? 0), 0);
+  const showLines = lineItems.length > 0;
+  const channelLabel = (ch: string | null | undefined): string =>
+    ch ? ch.charAt(0).toUpperCase() + ch.slice(1) : '';
 
   return (
     <Section title="Current contract (Billing)">
@@ -1455,20 +1489,46 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
             ) : (
               <a href="/admin/agreements" className="text-blue-600 hover:underline">/admin/agreements</a>
             )}
-            {' '}— saves there flow back here.
+            {' '}&mdash; saves there flow back here.
           </p>
+
+          {showLines ? (
+            <div className="mb-3 rounded-md border border-gray-200 overflow-hidden">
+              {lineItems.map((li, idx) => (
+                <div key={li.line_no} className={`px-3 py-2 text-sm ${idx > 0 ? 'border-t border-gray-200' : ''}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-gray-900">
+                      {li.package_label && li.package_label.trim() ? li.package_label : (channelLabel(li.channel) || 'Line ' + li.line_no)}
+                    </span>
+                    {li.channel ? (
+                      <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{channelLabel(li.channel)}</span>
+                    ) : null}
+                  </div>
+                  <div className="mt-0.5 text-xs text-gray-600">
+                    {txt(li.ad_size)}{li.frequency ? ` · ${li.frequency}` : ''}{li.quantity ? ` · ×${li.quantity}` : ''}{li.publication ? ` · ${li.publication}` : ''}
+                  </div>
+                  <div className="mt-0.5 text-xs text-gray-700">{fmtCents(li.amount_cents)}</div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Ad size">
-              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{txt(row.current_ad_size)}</div>
-            </Field>
-            <Field label="Frequency">
-              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{txt(row.current_frequency)}</div>
-            </Field>
-            <Field label="Ad rate">
-              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{fmtCents(row.current_ad_rate_cents)}</div>
-            </Field>
+            {!showLines ? (
+              <>
+                <Field label="Ad size">
+                  <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{txt(row.current_ad_size)}</div>
+                </Field>
+                <Field label="Frequency">
+                  <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{txt(row.current_frequency)}</div>
+                </Field>
+                <Field label="Ad rate">
+                  <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{fmtCents(row.current_ad_rate_cents)}</div>
+                </Field>
+              </>
+            ) : null}
             <Field label="Contract total">
-              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{fmtCents(row.current_amount_cents)}</div>
+              <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm font-semibold">{fmtCents(showLines ? lineTotal : row.current_amount_cents)}</div>
             </Field>
             <Field label="Expires">
               <div className="px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-sm">{fmtDate(row.current_exp_date)}</div>
@@ -1501,7 +1561,6 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
     </Section>
   );
 }
-
 // Create-advertiser modal: minimal form (name + publication + optional
 // contact email + gate). Replaces the legacy /admin/advertisers modal.
 function CreateAdvertiserModal({
