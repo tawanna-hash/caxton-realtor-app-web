@@ -448,9 +448,17 @@ export default function SignWizard({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Channel drives Step 3 layout + Step 5 terms language. Derived from
-  // the agreement's type column (print_ad / eblast / app_ad / other).
-  const channel = deriveChannelFromAgreementType(ag.type);
+  // Channel drives Step 3 layout + Step 5 terms language. For bundled
+  // quotes (multiple line items) derive from the lines so a mixed / non-print
+  // bundle (e.g. app Top Banner + e-Blast) isn't misread as print just because
+  // the parent agreement type is 'package' (which deriveChannelFromAgreementType
+  // maps to print). Single-line / legacy agreements fall back to the type column.
+  const channel =
+    lineItems.length > 0
+      ? lineItems.every((li) => li.channel === 'print')
+        ? 'print'
+        : (lineItems.find((li) => li.channel !== 'print')?.channel ?? 'digital')
+      : deriveChannelFromAgreementType(ag.type);
   const stripeRef = useRef<StripePaymentHandle>(null);
   // PaymentIntent id captured at end of Step 4 (while StripePaymentBlock is
   // still mounted). Step 5 just persists this — it no longer touches Stripe.
