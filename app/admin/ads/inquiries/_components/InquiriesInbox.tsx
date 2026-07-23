@@ -270,9 +270,9 @@ export default function InquiriesInbox() {
         <button
           type="button"
           onClick={() => setNewQuoteOpen(true)}
-          className="ml-auto px-3 py-1.5 rounded-md bg-purple-700 text-white text-sm font-medium hover:bg-purple-800"
+          className="ml-auto whitespace-nowrap px-4 py-2 rounded-md bg-purple-700 text-white text-sm hover:bg-purple-800"
         >
-          + New quote
+          Create New Proposal
         </button>
         <div className="">
           <input
