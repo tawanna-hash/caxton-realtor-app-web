@@ -86,6 +86,7 @@ export default function AdminInventoryPage() {
   // Default to 'promotion' so newly-created promos are visible immediately
   // after admin creates them (the most common reason to land on this page).
   const [kindFilter, setKindFilter] = useState<KindFilter>('all');
+  const [bulkApproving, setBulkApproving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -131,6 +132,32 @@ export default function AdminInventoryPage() {
     setReloadKey((k) => k + 1);
   }, []);
 
+  // Bulk-approve every pending submission (status -> active) so all
+  // builder/developer content goes live at once.
+  const handleBulkApprove = useCallback(async () => {
+    if (!window.confirm(
+      'Approve all pending submissions? They will appear on the public /inventory immediately.',
+    )) return;
+    setBulkApproving(true);
+    try {
+      const res = await fetch('/api/admin/inventory/bulk-approve', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const body = (await res.json().catch(() => null)) as
+        | { ok?: boolean; activated?: number; error?: string }
+        | null;
+      if (!res.ok || !body?.ok) {
+        throw new Error(body?.error || `HTTP ${res.status}`);
+      }
+      setReloadKey((k) => k + 1);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Bulk approve failed');
+    } finally {
+      setBulkApproving(false);
+    }
+  }, []);
+
   // Toggle sort direction when clicking the same column header; otherwise
   // switch to the new column with a sensible default direction (desc for
   // dates, asc for text fields).
@@ -174,12 +201,26 @@ export default function AdminInventoryPage() {
               page in the publication they were tagged for.
             </p>
           </div>
-          <Link
-            href="/admin/inventory/new"
-            className="shrink-0 bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors whitespace-nowrap"
-          >
-            + Create Promotion
-          </Link>
+          <div className="flex items-center gap-2">
+            {tab === 'pending' && (counts?.pending ?? 0) > 0 && (
+              <button
+                type="button"
+                onClick={handleBulkApprove}
+                disabled={bulkApproving}
+                className="shrink-0 bg-green-600 text-white px-4 py-2 text-sm font-medium hover:bg-green-700 rounded-md transition-colors whitespace-nowrap disabled:opacity-60"
+              >
+                {bulkApproving
+                  ? 'Approving…'
+                  : `Approve all pending (${counts?.pending})`}
+              </button>
+            )}
+            <Link
+              href="/admin/inventory/new"
+              className="shrink-0 bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors whitespace-nowrap"
+            >
+              + Create Promotion
+            </Link>
+          </div>
         </div>
 
         <div className="flex gap-1 border-b border-gray-200 mb-6">

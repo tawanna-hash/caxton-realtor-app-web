@@ -590,6 +590,27 @@ export async function getBuilderInventoryById(
   return rows[0] ? rowToBuilderInventoryRow(rows[0]) : null;
 }
 
+/**
+ * Bulk-approve every pending builder_inventory row in a single UPDATE.
+ * Sets status='active', stamps reviewed_at=NOW() and reviewed_by=<admin>.
+ * Returns the count of rows activated. Powers the "Approve all pending"
+ * action on /admin/inventory (open all builder/developer content at once).
+ */
+export async function bulkApprovePendingBuilderInventory(
+  reviewedBy: string,
+): Promise<number> {
+  await ensureBuilderInventorySchema();
+  const rows = (await sql`
+    UPDATE builder_inventory
+    SET status       = 'active',
+        reviewed_at  = NOW(),
+        reviewed_by  = ${reviewedBy}
+    WHERE status = 'pending'
+    RETURNING id
+  `) as Record<string, unknown>[];
+  return rows.length;
+}
+
 export type UpdateBuilderInventoryInput = {
   // Status + workflow
   status?: Status;
