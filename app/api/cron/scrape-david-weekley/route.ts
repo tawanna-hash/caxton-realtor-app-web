@@ -217,6 +217,8 @@ async function runScrape() {
   // already tracked (by external_id or flyer_pdf_url) are skipped.
   let communitiesIngested = 0;
   let ingestionErrors = 0;
+  const communityListUrls: string[] = [];
+  const ingestionDetails: { url: string; action: string }[] = [];
   const listUrls = [COMING_SOON_LIST, CLOSE_OUT_LIST];
   for (const listUrl of listUrls) {
     let urls: string[] = [];
@@ -225,12 +227,19 @@ async function runScrape() {
     } catch {
       urls = [];
     }
+    communityListUrls.push(...urls);
     for (const url of urls) {
       try {
         const exists = await builderInventoryExistsByUrl(BUILDER_NAME, url);
-        if (exists) continue;
+        if (exists) {
+          ingestionDetails.push({ url, action: 'exists' });
+          continue;
+        }
         const data = await fetchDavidWeekleyCommunityData(url);
-        if (!data) continue;
+        if (!data) {
+          ingestionDetails.push({ url, action: 'no-data' });
+          continue;
+        }
         const { description, communityData: cd } = data;
         const name = cd.communityName || url.split('/').filter(Boolean).pop() || 'Community';
         if (/kissing tree/i.test(name)) cd.adultOnly = true;
@@ -256,8 +265,10 @@ async function runScrape() {
         // upsertBuilderInventoryByExternalId).
         await updateBuilderInventory(created.id, { status: 'active' });
         communitiesIngested++;
+        ingestionDetails.push({ url, action: 'created' });
       } catch (err) {
         ingestionErrors++;
+        ingestionDetails.push({ url, action: 'error' });
         console.error(
           `[scrape-david-weekley] ingestion failed for ${url}:`,
           err instanceof Error ? err.message : String(err),
@@ -281,6 +292,8 @@ async function runScrape() {
       communityDataErrors,
       communitiesIngested,
       ingestionErrors,
+      communityListUrls,
+      ingestionDetails,
       elapsedMs,
     },
     errorDetails: errors > 0 ? errorDetails : undefined,
