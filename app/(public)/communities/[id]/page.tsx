@@ -76,15 +76,31 @@ export default async function CommunityDetailPage(
   const ready = row.readyDate ? formatDate(row.readyDate) : null;
   const builderSlug = builderNameToSlug(row.builderName);
   const cleanedDesc = cleanDescription(row.description);
-  const flyerPdfUrl =
-    row.flyerPdfUrl ||
-    (row.sourceUrl && row.sourceUrl.toLowerCase().endsWith('.pdf')
-      ? row.sourceUrl
-      : null);
+  // Prefer a non-PDF page for the "Website" pill (a real destination);
+  // only treat actual PDFs as the Download flyer. Mirrors inventory/[id].
+  // David Weekley communities store their per-community page URL in
+  // flyerPdfUrl, so this surfaces it as the Website link instead of a
+  // misleading "Download".
+  const isPdfUrl = (u: string | null | undefined) =>
+    !!u && u.toLowerCase().endsWith('.pdf');
   const websiteUrl =
-    row.sourceUrl && !row.sourceUrl.toLowerCase().endsWith('.pdf')
+    row.sourceUrl && !isPdfUrl(row.sourceUrl)
       ? row.sourceUrl
-      : null;
+      : row.flyerPdfUrl && !isPdfUrl(row.flyerPdfUrl)
+        ? row.flyerPdfUrl
+        : null;
+  const flyerPdfUrl =
+    row.flyerPdfUrl && isPdfUrl(row.flyerPdfUrl)
+      ? row.flyerPdfUrl
+      : row.sourceUrl && isPdfUrl(row.sourceUrl)
+        ? row.sourceUrl
+        : null;
+  // When the scraper left no description (e.g. David Weekley communities,
+  // whose per-community rows are pre-S13 orphans with description=null),
+  // show a brief honest blurb so the page isn't an empty shell.
+  const aboutDesc =
+    cleanedDesc ??
+    `New construction homes from ${row.builderName} in ${name}, ${cityLine}. View floor plans, pricing, and move-in ready inventory from the builder.`;
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-32 pt-6 sm:px-6 lg:px-8">
@@ -96,16 +112,14 @@ export default async function CommunityDetailPage(
             thumbnailUrl={row.thumbnailUrl}
             alt={name}
           />
-          {cleanedDesc && (
-            <section className="mt-6">
-              <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
-                About this community
-              </h2>
-              <p className="mt-3 whitespace-pre-line text-sm leading-6 text-neutral-700 dark:text-neutral-300">
-                {cleanedDesc}
-              </p>
-            </section>
-          )}
+          <section className="mt-6">
+            <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+              About this community
+            </h2>
+            <p className="mt-3 whitespace-pre-line text-sm leading-6 text-neutral-700 dark:text-neutral-300">
+              {aboutDesc}
+            </p>
+          </section>
         </div>
 
         {/* Right: builder pill + stats */}
