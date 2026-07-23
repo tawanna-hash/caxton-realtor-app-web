@@ -4,11 +4,14 @@
 // PDF so the admin drawer opens pre-filled with advertiser + ad details
 // instead of just a filename-derived company name.
 //
+// Uses `unpdf` (serverless/edge-friendly pdfjs wrapper) to read the PDF
+// text layer and reconstructs visual lines from text-item EOL flags so
+// labels ("Ad Size: 1/2 page") land on their own line.
+//
 // FAIL-OPEN by design: any parse/extract error returns an empty `fields`
 // object so the upload route still creates the signed record. Only PDFs
-// with a real text layer are parsed (the app's own generated agreement
-// PDFs). Scanned images / image-only PDFs return status
-// 'not_attempted_image_ocr'.
+// with a real text layer are parsed. Scanned images / image-only PDFs
+// return status 'no_text' (OCR is deferred).
 //
 // Regexes target the labels emitted by lib/agreement-pdf.ts, where
 // drawLabelValue() draws "Label: value" on a single line, e.g.
@@ -46,12 +49,13 @@ export type ExtractResult = {
   textPreview?: string;
 };
 
-type PdfParseCtor = new (opts: { data: Buffer }) => {
-  getText: () => Promise<{ text: string }>;
+type PdfDoc = {
+  numPages: number;
+  getPage: (n: number) => Promise<{
+    getTextContent: () => Promise<{ items: Array<{ str?: string; hasEOL?: boolean }> }>;
+  }>;
   destroy?: () => Promise<void>;
 };
-
-type PdfParseModule = { PDFParse?: PdfParseCtor; default?: PdfParseCtor };
 
 const MAX_BYTES = 8 * 1024 * 1024; // skip parsing huge PDFs (avoid long parses / OOM)
 
@@ -147,8 +151,9 @@ function extractAdvertiserBlock(text: string): {
   const blockText = lines.join('\n');
   out.advertiser_email = firstEmail(blockText);
   out.advertiser_phone = firstPhone(blockText);
+  // "1200 Congress Ave, Austin, TX, 78701" (note: comma may follow the state)
   for (const ln of lines) {
-    const m = ln.match(/^(.+),\s*([A-Za-z .]+),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/);
+    const m = ln.match(/^(.+),\s*([A-Za-z .]+),\s*([A-Z]{2}),?\s+(\d{5}(?:-\d{4})?)$/);
     if (m) {
       out.address = m[1].trim();
       out.city = m[2].trim();
@@ -171,22 +176,26 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 }
 
 /**
- * Import pdf-parse, construct the parser, and extract text. The WHOLE
- * sequence (including the dynamic import and constructor, which are the
- * steps most likely to hang in a constrained runtime) is wrapped by the
- * caller's withTimeout so a hang can never block the upload route beyond
- * the budget. destroy() is fire-and-forget so it can't extend a timeout.
+ * Read the PDF text layer via unpdf and reconstruct visual lines from
+ * text-item EOL flags. The whole sequence (import + parse + read) is
+ * wrapped by the caller's withTimeout so a hang can never block the
+ * upload route beyond the budget. destroy() is fire-and-forget.
  */
 async function parsePdfText(buffer: Buffer): Promise<{ text: string }> {
-  const mod = (await import('pdf-parse')) as PdfParseModule;
-  const PDFParse = mod.PDFParse ?? mod.default;
-  if (!PDFParse) throw new Error('pdf-parse PDFParse export not found');
-  const parser = new PDFParse({ data: buffer });
-  try {
-    return await parser.getText();
-  } finally {
-    void parser.destroy?.().catch(() => undefined);
+  const { getDocumentProxy } = await import('unpdf');
+  const pdf = (await getDocumentProxy(new Uint8Array(buffer))) as PdfDoc;
+  let text = '';
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    for (const it of content.items) {
+      if (typeof it.str === 'string') text += it.str;
+      if (it.hasEOL) text += '\n';
+    }
+    text += '\n';
   }
+  await pdf.destroy?.().catch(() => undefined);
+  return { text };
 }
 
 export async function extractUploadedAgreementFields(opts: {

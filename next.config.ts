@@ -97,10 +97,11 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // Keep `sharp` (libvips native bindings) out of the serverless bundle.
-  // When bundled, the native .node binaries are not resolved at runtime
-  // and the function 500s before the route handler even runs.
-  serverExternalPackages: ['sharp', 'pdf-parse'],
+  // Keep `sharp` (libvips native bindings) and `unpdf` (bundles pdfjs-dist,
+  // which references browser-only globals) out of the serverless bundle.
+  // When bundled, the native .node binaries / browser globals are not
+  // resolved at runtime and the function 500s before the route runs.
+  serverExternalPackages: ['sharp', 'unpdf'],
 
   // Ensure bundled Georgia .ttf fonts ship with the agreement-pdf serverless function.
   outputFileTracingIncludes: {
