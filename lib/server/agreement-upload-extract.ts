@@ -32,6 +32,7 @@ export type ExtractedAgreementFields = {
   discount_cents?: number;
   ad_premium_cents?: number;
   total_monthly_rate_cents?: number;
+  ad_timing_months?: Record<string, string>; // { january: '2026', ... }
   bill_to?: string;
   billing_email?: string;
   billing_contact_name?: string;
@@ -165,6 +166,35 @@ function extractAdvertiserBlock(text: string): {
   return out;
 }
 
+const AD_TIMING_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+/**
+ * "Ad Timing: January 2026 · April 2026 · July 2026" -> { january:'2026', april:'2026', july:'2026' }.
+ * The value wraps across multiple lines when many months are selected, so we
+ * collect lines from "Ad Timing:" until the next label line and regex all
+ * "MonthName YYYY" pairs in the joined text. Value is the year string — the
+ * drawer reads ad_timing_months[k] as the year and !!ad_timing_months[k] as checked.
+ */
+function extractAdTiming(text: string): Record<string, string> | undefined {
+  const startRe = /^Ad Timing:[ \t]*(.*)$/m;
+  const sm = text.match(startRe);
+  if (!sm) return undefined;
+  const tail = text.slice(sm.index ?? 0).split('\n');
+  let collected = tail[0] ?? '';
+  for (let i = 1; i < tail.length; i++) {
+    const t = (tail[i] ?? '').trim();
+    if (!t) break;
+    if (/^[A-Z][A-Za-z &]+:/.test(t)) break;                 // next label ("Ad Rate:")
+    if (/^(PUBLISHER|ADVERTISER|INSERTION ORDER|BILLING|TERMS)/i.test(t)) break;
+    collected += ' ' + tail[i];
+  }
+  const re = new RegExp(`\\b(${AD_TIMING_MONTHS.join('|')})\\s+(\\d{4})\\b`, 'g');
+  const out: Record<string, string> = {};
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(collected))) out[m[1].toLowerCase()] = m[2];
+  return Object.keys(out).length ? out : undefined;
+}
+
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   let h: ReturnType<typeof setTimeout> | undefined;
   const to = new Promise<never>((_, reject) => {
@@ -250,6 +280,7 @@ export async function extractUploadedAgreementFields(opts: {
     set('discount_cents', parseMoney(lineValue(text, 'Discount') ?? ''));
     set('ad_premium_cents', parseMoney(lineValue(text, 'Page Position Premium') ?? ''));
     set('total_monthly_rate_cents', parseMoney(lineValue(text, 'Total Monthly Rate') ?? ''));
+    set('ad_timing_months', extractAdTiming(text));
     set('bill_to', lineValue(text, 'Bill To'));
     set('billing_email', lineValue(text, 'Billing Email'));
     set('billing_contact_name', lineValue(text, 'Billing Contact'));
