@@ -608,8 +608,11 @@ export default function SignWizard({
   const chargeBaseCents = lineItems.length > 0
     ? lineItems.filter((li) => li.pay_now).reduce((acc, li) => acc + li.amount_cents, 0)
     : Math.round(quotedTotalDollars * 100);
+  // Displayed total must match what Stripe actually charges (chargeBaseCents).
+  // For a bundle that's the sum of pay_now line items — NOT ag.amount_cents,
+  // which can be stale on a bundled agreement and would show the wrong total.
   const ccSurchargeTotal =
-    paymentType === 'Credit Card' ? applyCcSurcharge(quotedTotalDollars) : null;
+    paymentType === 'Credit Card' ? applyCcSurcharge(chargeBaseCents / 100) : null;
   const surchargeLabel = channel === 'print' ? 'New monthly' : 'New total';
 
   // ── saveEdits ──────────────────────────────────────────────────────────────
