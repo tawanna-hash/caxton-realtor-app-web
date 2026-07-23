@@ -444,11 +444,10 @@ export default function CrmClient({ initialRows }: Props) {
       {/* List */}
       <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
         <div className="grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
-          <div className="col-span-3">Contact</div>
+          <div className="col-span-4">Contact</div>
           <div className="col-span-1">Status</div>
           <div className="col-span-2">Publication</div>
           <div className="col-span-2">Hotspots / 30d</div>
-          <div className="col-span-1">Gate</div>
           <div className="col-span-1">Opens</div>
           <div className="col-span-2 text-right">Actions</div>
         </div>
@@ -550,7 +549,7 @@ function CrmRow({
       <button
         type="button"
         onClick={onOpen}
-        className="col-span-3 min-w-0 text-left"
+        className="col-span-4 min-w-0 text-left"
       >
         <div className="font-medium text-gray-900 truncate hover:underline">{row.name}</div>
         <div className="text-xs text-gray-500 truncate">
@@ -570,17 +569,6 @@ function CrmRow({
           <div className="text-xs text-gray-400">
             last touch {relativeTime(row.last_click_at)}
           </div>
-        )}
-      </div>
-      <div className="col-span-1 text-xs">
-        {row.requires_email_gate ? (
-          <span className="inline-block px-2 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700">
-            email
-          </span>
-        ) : (
-          <span className="inline-block px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-500">
-            open
-          </span>
         )}
       </div>
       <div className="col-span-1 text-xs">
@@ -740,7 +728,6 @@ function EditDrawer({
     });
   };
   const [contactEmail, setContactEmail] = useState(row.contact_email ?? '');
-  const [requiresGate, setRequiresGate] = useState<boolean>(row.requires_email_gate ?? false);
   const [shareToken, setShareToken] = useState<string>(row.share_token);
   const [shareBusy, setShareBusy] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -1012,7 +999,6 @@ function EditDrawer({
         // Multi-pub: send as canonical CSV. API accepts either array or CSV.
         publication: serializePublications(publications),
         contact_email: contactEmail.trim() || null,
-        requires_email_gate: requiresGate,
       };
       const res = await fetch(`/api/admin/advertisers/${row.id}`, {
         method: 'PATCH',
@@ -1242,16 +1228,6 @@ function EditDrawer({
                   className={INPUT}
                   placeholder="contact@example.com"
                 />
-              </Field>
-              <Field label="Email gate" className="col-span-2">
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    checked={requiresGate}
-                    onChange={(e) => setRequiresGate(e.target.checked)}
-                  />
-                  Require email verification before viewing the share link
-                </label>
               </Field>
             </div>
 
@@ -1711,7 +1687,6 @@ function CreateAdvertiserModal({
     });
   };
   const [contactEmail, setContactEmail] = useState('');
-  const [requiresGate, setRequiresGate] = useState(false);
   const [status, setStatus] = useState<AdvertiserStatus>('prospect');
   const [saving, setSaving] = useState(false);
 
@@ -1725,7 +1700,6 @@ function CreateAdvertiserModal({
         body: JSON.stringify({
           name: name.trim(),
           contact_email: contactEmail.trim() || null,
-          requires_email_gate: requiresGate,
           publication: serializePublications(publications),
           status,
         }),
@@ -1740,7 +1714,7 @@ function CreateAdvertiserModal({
     } finally {
       setSaving(false);
     }
-  }, [name, publications, contactEmail, requiresGate, status, onCreated, onError]);
+  }, [name, publications, contactEmail, status, onCreated, onError]);
 
   return (
     <div
@@ -1807,15 +1781,6 @@ function CreateAdvertiserModal({
               placeholder="contact@example.com"
               disabled={saving}
             />
-          </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={requiresGate}
-              onChange={(e) => setRequiresGate(e.target.checked)}
-              disabled={saving}
-            />
-            Require email gate before viewing share link
           </label>
         </div>
         <div className="px-5 py-4 border-t border-gray-200 flex justify-end gap-2">
