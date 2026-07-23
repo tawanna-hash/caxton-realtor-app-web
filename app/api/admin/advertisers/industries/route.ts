@@ -29,3 +29,25 @@ export async function GET() {
 
   return NextResponse.json({ industries: rows.map((r) => r.label) });
 }
+
+// Add a new industry label to the picklist so it appears in the dropdown for
+// every advertiser. Idempotent on label (ON CONFLICT DO NOTHING).
+export async function POST(req: Request) {
+  const admin = await getCurrentAdmin();
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const body = await req.json().catch(() => ({}));
+  const label = typeof (body as { label?: unknown })?.label === 'string'
+    ? (body as { label: string }).label.trim().slice(0, 80)
+    : '';
+  if (!label) return NextResponse.json({ error: 'label required' }, { status: 400 });
+
+  await ensureSchema();
+  const sql = getSql();
+  await sql`
+    INSERT INTO advertiser_industries (label, sort_order)
+    VALUES (${label}, 999)
+    ON CONFLICT (label) DO NOTHING
+  `;
+  return NextResponse.json({ label });
+}

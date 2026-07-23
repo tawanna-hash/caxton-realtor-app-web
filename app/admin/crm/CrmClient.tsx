@@ -719,6 +719,37 @@ function EditDrawer({
     return () => { alive = false; };
   }, []);
 
+  // Inline "add a new industry" flow: picking the "+ Add new…" option reveals
+  // a small input + Add/Cancel buttons. POSTs the label to the picklist API,
+  // appends it to the local list, and selects it on the form.
+  const [addingIndustry, setAddingIndustry] = useState(false);
+  const [newIndustryLabel, setNewIndustryLabel] = useState('');
+  const [industryBusy, setIndustryBusy] = useState(false);
+  const addIndustry = async () => {
+    const label = newIndustryLabel.trim();
+    if (!label) return;
+    setIndustryBusy(true);
+    try {
+      const res = await fetch('/api/admin/advertisers/industries', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label }),
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        throw new Error(b?.error || `HTTP ${res.status}`);
+      }
+      setIndustries((prev) => (prev.includes(label) ? prev : [...prev, label]));
+      update('industry', label);
+      setNewIndustryLabel('');
+      setAddingIndustry(false);
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'add industry failed');
+    } finally {
+      setIndustryBusy(false);
+    }
+  };
+
   const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/r/advertiser/${row.slug}?t=${shareToken}`;
 
   const copyShareUrl = async () => {
@@ -1077,15 +1108,57 @@ function EditDrawer({
                 <input value={form.rep_zip} onChange={(e) => update('rep_zip', e.target.value)} className={INPUT} />
               </Field>
               <Field label="Industry">
-                <select value={form.industry} onChange={(e) => update('industry', e.target.value)} className={INPUT}>
-                  <option value="">— Select —</option>
-                  {form.industry && !industries.includes(form.industry) ? (
-                    <option value={form.industry}>{form.industry}</option>
+                <div className="flex flex-col gap-2">
+                  <select
+                    value={addingIndustry ? '__add__' : form.industry}
+                    onChange={(e) => {
+                      if (e.target.value === '__add__') {
+                        setAddingIndustry(true);
+                        setNewIndustryLabel('');
+                      } else {
+                        update('industry', e.target.value);
+                      }
+                    }}
+                    className={INPUT}
+                  >
+                    <option value="">— Select —</option>
+                    {form.industry && !industries.includes(form.industry) ? (
+                      <option value={form.industry}>{form.industry}</option>
+                    ) : null}
+                    {industries.map((label) => (
+                      <option key={label} value={label}>{label}</option>
+                    ))}
+                    <option value="__add__">+ Add new industry…</option>
+                  </select>
+                  {addingIndustry ? (
+                    <div className="flex gap-2">
+                      <input
+                        value={newIndustryLabel}
+                        onChange={(e) => setNewIndustryLabel(e.target.value)}
+                        className={INPUT}
+                        placeholder="New industry name"
+                        autoFocus
+                        disabled={industryBusy}
+                      />
+                      <button
+                        type="button"
+                        onClick={addIndustry}
+                        disabled={industryBusy || !newIndustryLabel.trim()}
+                        className="shrink-0 rounded-md bg-purple-700 px-3 py-2 text-sm font-medium text-white hover:bg-purple-800 disabled:opacity-40"
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setAddingIndustry(false); setNewIndustryLabel(''); }}
+                        disabled={industryBusy}
+                        className="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   ) : null}
-                  {industries.map((label) => (
-                    <option key={label} value={label}>{label}</option>
-                  ))}
-                </select>
+                </div>
               </Field>
               <Field label="License #">
                 <input value={form.license_number} onChange={(e) => update('license_number', e.target.value)} className={INPUT} />
