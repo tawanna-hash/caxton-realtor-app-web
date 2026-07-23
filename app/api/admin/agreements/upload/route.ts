@@ -21,7 +21,8 @@ import { put } from '@vercel/blob';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { extractUploadedAgreementFields } from '@/lib/server/agreement-upload-extract';
-import type { AgreementAuditEntry } from '@/lib/agreements';
+import { type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
+import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -193,6 +194,21 @@ export async function POST(req: NextRequest) {
       )
       RETURNING *
     `) as unknown as AgreementRow[];
+
+    // Promote prospect → advertiser (idempotent). The sign-wizard route does
+    // this via ensureAdvertiserForAgreement; mirror it here so an
+    // admin-uploaded signed agreement flips its contact from prospect to
+    // advertiser too (the upload path otherwise leaves status='prospect').
+    try {
+      await ensureAdvertiserForAgreement(rows[0] as unknown as Agreement, {
+        desiredStatus: 'advertiser',
+      });
+    } catch (err) {
+      console.warn(
+        '[admin/agreements/upload POST] advertiser promote failed:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
 
     return NextResponse.json({ agreement: rows[0], attachment, extraction: ext }, { status: 201 });
   } catch (err) {

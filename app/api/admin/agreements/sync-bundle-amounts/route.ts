@@ -54,7 +54,15 @@ async function runSync() {
     UPDATE agreement_line_items
        SET channel = 'email'
      WHERE channel IS DISTINCT FROM 'email'
-       AND (package_id ILIKE 'eblast%' OR package_label ILIKE '%e-blast%' OR package_label ILIKE '%eblast%')
+       AND (
+         package_id ILIKE 'eblast%'
+         OR package_label ILIKE '%e-blast%'
+         OR package_label ILIKE '%eblast%'
+         OR package_label ILIKE '%e blast%'
+         OR package_label ILIKE '%email blast%'
+         OR package_label ILIKE '%newsletter%'
+         OR ad_size ILIKE '%eblast%'
+       )
     RETURNING id, package_label
   `;
   return {

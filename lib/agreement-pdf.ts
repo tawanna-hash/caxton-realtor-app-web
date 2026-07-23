@@ -310,10 +310,22 @@ async function generateAgreementPdfBufferInner(ag: Agreement): Promise<Uint8Arra
     }
   }
 
-  drawLabelValue(ctx, 'Ad Rate', fmt$(ag.ad_rate_cents));
-  if (ag.discount_cents) drawLabelValue(ctx, 'Discount', fmt$(ag.discount_cents));
-  if (ag.ad_premium_cents) drawLabelValue(ctx, 'Page Position Premium', fmt$(ag.ad_premium_cents));
-  if (ag.total_monthly_rate_cents) drawLabelValue(ctx, 'Total Monthly Rate', fmt$(ag.total_monthly_rate_cents));
+  // Bundle (multi-line) agreements store the full contract value in
+  // amount_cents (sum of agreement_line_items), while ad_rate_cents holds a
+  // stale single-line rate. Lead with the bundle total so a $980 app+e-Blast
+  // package reads $980, not the leftover $95 ad rate.
+  const bundleTotal =
+    ag.amount_cents != null && ag.amount_cents > 0 && ag.amount_cents !== ag.ad_rate_cents
+      ? ag.amount_cents
+      : null;
+  if (bundleTotal != null) {
+    drawLabelValue(ctx, 'Total', fmt$(bundleTotal));
+  } else {
+    drawLabelValue(ctx, 'Ad Rate', fmt$(ag.ad_rate_cents));
+    if (ag.discount_cents) drawLabelValue(ctx, 'Discount', fmt$(ag.discount_cents));
+    if (ag.ad_premium_cents) drawLabelValue(ctx, 'Page Position Premium', fmt$(ag.ad_premium_cents));
+    if (ag.total_monthly_rate_cents) drawLabelValue(ctx, 'Total Monthly Rate', fmt$(ag.total_monthly_rate_cents));
+  }
   if (ag.page_position) drawLabelValue(ctx, 'Page Position', ag.page_position);
   if (ag.exp_date) drawLabelValue(ctx, 'Agreement Expiration', humanDate(ag.exp_date));
 
