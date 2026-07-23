@@ -50,18 +50,9 @@ export default async function PublicAdvertiserPage({ params, searchParams }: Pag
   const cookieValue = cookieStore.get(grantCookieName(advertiser.id))?.value;
   const cookieValid = await isCookieGrantValid(advertiser.id, cookieValue);
 
-  let mode: 'dashboard' | 'email_gate';
-  const isGated = advertiser.requires_email_gate;
-
-  if (isGated && cookieValid) {
-    mode = 'dashboard';
-  } else if (isGated && shareTokenMatches) {
-    mode = 'email_gate';
-  } else if (!isGated && (shareTokenMatches || cookieValid)) {
-    mode = 'dashboard';
-  } else {
-    notFound();
-  }
+  // Content gate walls removed: anyone with the share token (or a valid
+  // grant cookie) sees the dashboard directly — no email-capture wall.
+  if (!shareTokenMatches && !cookieValid) notFound();
 
   const theme = getPublicationTheme(advertiser.publication);
 
@@ -71,10 +62,8 @@ export default async function PublicAdvertiserPage({ params, searchParams }: Pag
         id: advertiser.id,
         name: advertiser.name,
         slug: advertiser.slug,
-        requires_email_gate: advertiser.requires_email_gate,
       }}
       theme={theme}
-      mode={mode}
       shareToken={shareTokenMatches ? t : undefined}
     />
   );

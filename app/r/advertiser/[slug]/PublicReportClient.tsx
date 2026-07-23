@@ -26,7 +26,6 @@ interface PublicAdvertiser {
   id: number;
   name: string;
   slug: string;
-  requires_email_gate: boolean;
 }
 
 interface PublicAnalyticsResponse {
@@ -53,7 +52,6 @@ interface PublicAnalyticsResponse {
 type Props = {
   advertiser: PublicAdvertiser;
   theme: PublicationTheme;
-  mode: 'dashboard' | 'email_gate';
   shareToken?: string;
 };
 
@@ -83,109 +81,8 @@ function rangeLabel(p: RangePreset): string {
   return 'Last 90 days';
 }
 
-export default function PublicReportClient({ advertiser, theme, mode, shareToken }: Props) {
-  if (mode === 'email_gate') {
-    if (!shareToken) {
-      return (
-        <div className="min-h-screen bg-white flex items-center justify-center">
-          <p className="text-sm text-gray-500">Invalid access link.</p>
-        </div>
-      );
-    }
-    return <EmailGate advertiser={advertiser} theme={theme} shareToken={shareToken} />;
-  }
+export default function PublicReportClient({ advertiser, theme, shareToken }: Props) {
   return <Dashboard advertiser={advertiser} theme={theme} shareToken={shareToken} />;
-}
-
-function EmailGate({
-  advertiser, theme, shareToken,
-}: { advertiser: PublicAdvertiser; theme: PublicationTheme; shareToken: string }) {
-  const [email, setEmail] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const onSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) return;
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await fetch(
-        `/api/r/advertiser/${advertiser.slug}/request-access?t=${encodeURIComponent(shareToken)}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim() }),
-        },
-      );
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
-      setSuccess(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'unknown error');
-    } finally {
-      setSubmitting(false);
-    }
-  }, [email, advertiser.slug, shareToken]);
-
-  return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white border border-gray-200 rounded-md p-8 shadow-sm">
-          <PageTitle size="md">{advertiser.name}</PageTitle>
-          <p className="text-sm text-gray-600 mb-6">
-            Performance report &mdash; sign in with your email to view.
-          </p>
-
-          {success ? (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-md text-sm text-green-800">
-              <p className="font-medium">Check your inbox.</p>
-              <p className="mt-1">
-                If your email is on file, you&apos;ll receive a sign-in link.
-                It expires in 24 hours.
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={onSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-xs uppercase tracking-wider text-gray-600 mb-1">
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  disabled={submitting}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="you@example.com"
-                />
-              </div>
-              {error && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded-md">
-                  {error}
-                </div>
-              )}
-              <button
-                type="submit"
-                disabled={submitting || !email.trim()}
-                style={{ backgroundColor: theme.primaryColor }}
-                className="w-full text-white py-2 rounded-md font-medium disabled:opacity-50 transition hover:brightness-110"
-              >
-                {submitting ? 'Sending…' : 'Email me a link'}
-              </button>
-            </form>
-          )}
-        </div>
-        <p className="text-xs text-gray-500 text-center mt-4">
-          Powered by {theme.name}
-        </p>
-      </div>
-    </div>
-  );
 }
 
 function Dashboard({
