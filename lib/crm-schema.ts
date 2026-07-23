@@ -1140,4 +1140,37 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
 
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_ad_campaigns_channel ON ad_campaigns(channel)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_channel    ON agreements(channel)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_channel    ON agreements(channel)`);
+
+  // ── Advertiser industry picklist (managed list) ────────────────────
+  // Powers the Industry dropdown on the CRM contact panel. Seeded with the
+  // common real-estate-adjacent verticals; add / reorder / archive via the
+  // table directly (GET /api/admin/advertisers/industries reads it).
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS advertiser_industries (
+      id          serial PRIMARY KEY,
+      label       text NOT NULL UNIQUE,
+      sort_order  int  NOT NULL DEFAULT 0,
+      archived    boolean NOT NULL DEFAULT false,
+      created_at  timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`
+    INSERT INTO advertiser_industries (label, sort_order)
+    VALUES
+      ('Mortgage', 10),
+      ('Banking', 20),
+      ('Title', 30),
+      ('Builder', 40),
+      ('Developer', 50),
+      ('Real Estate Brokerage', 60),
+      ('Property Management', 70),
+      ('Insurance', 80),
+      ('Attorney / Legal', 90),
+      ('HOA / Community', 100),
+      ('Inspection', 110),
+      ('Appraisal', 120),
+      ('Other', 999)
+    ON CONFLICT (label) DO NOTHING
+  `);
 }

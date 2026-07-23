@@ -707,6 +707,18 @@ function EditDrawer({
   // Person/Contact fields when they would duplicate an existing staff row.
   const [editorStaff, setEditorStaff] = useState<AdvertiserStaff[]>([]);
 
+  // Managed Industry picklist (advertiser_industries table). Fetched once per
+  // drawer open; the field renders as a <select> over these labels.
+  const [industries, setIndustries] = useState<string[]>([]);
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/admin/advertisers/industries')
+      .then((r) => (r.ok ? r.json() : { industries: [] }))
+      .then((d: { industries?: string[] }) => { if (alive) setIndustries(d.industries ?? []); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
   const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/r/advertiser/${row.slug}?t=${shareToken}`;
 
   const copyShareUrl = async () => {
@@ -1072,7 +1084,15 @@ function EditDrawer({
                 <input value={form.rep_zip} onChange={(e) => update('rep_zip', e.target.value)} className={INPUT} />
               </Field>
               <Field label="Industry">
-                <input value={form.industry} onChange={(e) => update('industry', e.target.value)} className={INPUT} />
+                <select value={form.industry} onChange={(e) => update('industry', e.target.value)} className={INPUT}>
+                  <option value="">— Select —</option>
+                  {form.industry && !industries.includes(form.industry) ? (
+                    <option value={form.industry}>{form.industry}</option>
+                  ) : null}
+                  {industries.map((label) => (
+                    <option key={label} value={label}>{label}</option>
+                  ))}
+                </select>
               </Field>
               <Field label="License #">
                 <input value={form.license_number} onChange={(e) => update('license_number', e.target.value)} className={INPUT} />
