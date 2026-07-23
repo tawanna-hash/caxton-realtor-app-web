@@ -380,13 +380,11 @@ export async function fetchDavidWeekleyAustin(): Promise<{
 
 
 // ─────────────────────────────────────────────────────────────────────────
-// Community-page description extraction (backfill for pre-S13 community rows)
+// Community-page data extraction (backfill for pre-S13 community rows +
+// structured community_data JSONB: home plans, amenities, schools, tax info,
+// sales office + driving directions, gallery, price/sqft, lifecycle status).
 // ─────────────────────────────────────────────────────────────────────────
 
-// David Weekley community pages render the overview inside a KnockoutJS
-// "hidden-details" block: an intro <p>, an amenities <ul class="show-bullets">,
-// and a contact <p>. We extract that block to plain text so pre-S13
-// community rows (created with description=null) can be backfilled.
 const DESCRIPTION_MARKER = "data-bind=\"css: { 'hidden-details': DetailsHidden }\"";
 
 function decodeEntities(s: string): string {
@@ -404,6 +402,21 @@ function decodeEntities(s: string): string {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&');
+}
+
+// Strip tags but preserve line breaks from <br>/<p>/<li> before removing markup.
+function stripTags(html: string): string {
+  return decodeEntities(
+    html
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<\/li>/gi, '\n')
+      .replace(/<[^>]+>/g, ''),
+  )
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function extractCommunityDescription(html: string): string | null {
@@ -429,12 +442,251 @@ function extractCommunityDescription(html: string): string | null {
   return cleaned || null;
 }
 
-// Fetch a single David Weekley community page and return its cleaned
-// description text, or null if the page can't be fetched or parsed.
-// Used by the scrape-david-weekley cron to backfill community descriptions.
-export async function fetchDavidWeekleyCommunityDescription(
+export type CommunityHomePlan = {
+  name: string;
+  url?: string | null;
+  priceDisplay?: string | null;
+  basePrice?: number | null;
+  sqftDisplay?: string | null;
+  beds?: string | null;
+  baths?: string | null;
+  garages?: string | null;
+  imageUrl?: string | null;
+  status?: string | null;
+};
+
+export type CommunitySchool = {
+  name: string;
+  grades?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  website?: string | null;
+};
+
+export type CommunityData = {
+  communityName?: string | null;
+  availability?: string | null;
+  status?: 'coming-soon' | 'close-out' | null;
+  adultOnly?: boolean;
+  priceFrom?: string | null;
+  basePrice?: number | null;
+  sqftRange?: string | null;
+  city?: string | null;
+  imageUrls?: string[];
+  amenities?: string[];
+  salesOffice?: {
+    address?: string | null;
+    hours?: string | null;
+    directions?: string[];
+    lat?: number | null;
+    lng?: number | null;
+  } | null;
+  homePlans?: CommunityHomePlan[];
+  schools?: { district?: string | null; list: CommunitySchool[] } | null;
+  taxInfo?: { entities: { name: string; rate: string }[]; total?: string | null } | null;
+};
+
+// The community view model is embedded inline as `window.pageData = { ... };`.
+// We brace-balance forward from that opening brace (string-aware) to capture
+// the full JSON object, then JSON.parse it.
+function extractCommunityViewModel(html: string): Record<string, unknown> | null {
+  const anchor = html.indexOf('window.pageData');
+  if (anchor === -1) return null;
+  const open = html.indexOf('{', anchor);
+  if (open === -1) return null;
+  let depth = 0;
+  let i = open;
+  let inStr = false;
+  let esc = false;
+  while (i < html.length) {
+    const c = html[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+    } else if (c === '"') {
+      inStr = true;
+    } else if (c === '{') {
+      depth++;
+    } else if (c === '}') {
+      depth--;
+      if (depth === 0) {
+        try {
+          return JSON.parse(html.slice(open, i + 1)) as Record<string, unknown>;
+        } catch {
+          return null;
+        }
+      }
+    }
+    i++;
+  }
+  return null;
+}
+
+// Render a { Minimum, Maximum } range object as "min-max" or "min".
+function rangeText(v: unknown): string | null {
+  if (!v || typeof v !== 'object') return null;
+  const o = v as { Minimum?: unknown; Maximum?: unknown };
+  const min = o.Minimum;
+  const max = o.Maximum;
+  if (min == null && max == null) return null;
+  if (min != null && max != null && String(min) !== String(max)) {
+    return `${min}-${max}`;
+  }
+  return min != null ? String(min) : max != null ? String(max) : null;
+}
+
+function deriveStatus(
+  availability?: string | null,
+  title?: string | null,
+): 'coming-soon' | 'close-out' | null {
+  const t = `${availability ?? ''} ${title ?? ''}`.toLowerCase();
+  if (t.includes('coming soon')) return 'coming-soon';
+  if (
+    t.includes('final opportunit') ||
+    t.includes('close out') ||
+    t.includes('close-out') ||
+    t.includes('closing soon')
+  ) {
+    return 'close-out';
+  }
+  return null;
+}
+
+function extractSchools(html: string): { district?: string | null; list: CommunitySchool[] } | null {
+  const districtMatch = html.match(/School District:<\/span>\s*([^<]+)/);
+  const district = districtMatch ? decodeEntities(districtMatch[1]).trim() : null;
+  const list: CommunitySchool[] = [];
+  const chunks = html.split('<article class="school-details"').slice(1);
+  for (const c of chunks) {
+    const end = c.indexOf('</article>');
+    const article = end === -1 ? c : c.slice(0, end);
+    const nameM = article.match(/school-name">([^<]+)</);
+    if (!nameM) continue;
+    const rawName = decodeEntities(nameM[1]).trim();
+    const gradesM = rawName.match(/\(([^)]+)\)\s*$/);
+    const grades = gradesM ? gradesM[1].trim() : null;
+    const name = gradesM ? rawName.replace(/\s*\([^)]+\)\s*$/, '').trim() : rawName;
+    const addrChunks = article.match(/<address>([\s\S]*?)<\/address>/g) ?? [];
+    let address: string | null = null;
+    let phone: string | null = null;
+    for (const ac of addrChunks) {
+      const t = stripTags(ac);
+      if (/^[\d().\-\s]+$/.test(t)) phone = t;
+      else address = address ?? t.replace(/\n+/g, ', ');
+    }
+    const webM = article.match(/href="([^"]+)"[^>]*>\s*School Web/);
+    list.push({
+      name,
+      grades,
+      address,
+      phone,
+      website: webM ? webM[1] : null,
+    });
+  }
+  if (!district && list.length === 0) return null;
+  return { district, list };
+}
+
+function extractTaxInfo(html: string): { entities: { name: string; rate: string }[]; total?: string | null } | null {
+  const start = html.indexOf('taxes-name');
+  if (start === -1) return null;
+  const block = html.slice(start, start + 3000);
+  const entities: { name: string; rate: string }[] = [];
+  for (const m of block.matchAll(/<div>([^<]+?)<\/div>/g)) {
+    const raw = decodeEntities(m[1]).trim();
+    const em = raw.match(/^(.+?)\s*[-\u2013]\s*([\d.]+%?)$/);
+    if (em) entities.push({ name: em[1].trim(), rate: em[2].trim() });
+  }
+  const totalM = block.match(/TOTAL[^<]*?([\d.]+%?)/i);
+  const total = totalM ? totalM[1] : null;
+  if (entities.length === 0 && !total) return null;
+  return { entities, total };
+}
+
+// Parse a David Weekley community page into the description text + a structured
+// community_data blob. Tolerates a missing/failed view model (falls back to
+// whatever HTML sections are present).
+export function extractCommunityData(html: string): {
+  description: string | null;
+  communityData: CommunityData;
+} {
+  const description = extractCommunityDescription(html);
+  const titleM = html.match(/<title>([^<]*)<\/title>/i);
+  const title = titleM ? decodeEntities(titleM[1]) : null;
+  const vm = extractCommunityViewModel(html);
+  const cd: CommunityData = {};
+  if (vm) {
+    const str = (k: string) => (typeof vm[k] === 'string' ? (vm[k] as string) : null);
+    const num = (k: string) => (typeof vm[k] === 'number' ? (vm[k] as number) : null);
+    cd.availability = str('communityAvailability');
+    cd.communityName = str('communityName');
+    cd.priceFrom = str('communityFromPrice');
+    cd.basePrice = num('basePrice');
+    cd.sqftRange = str('communitySqFt');
+    cd.city = str('city');
+    const imgs = str('imageUrls');
+    cd.imageUrls = imgs ? imgs.split(',').map((s) => s.trim()).filter(Boolean) : [];
+    const am = str('amenities');
+    cd.amenities = am ? am.split(',').map((s) => s.trim()).filter(Boolean) : [];
+    const so = vm['salesOffices'];
+    if (Array.isArray(so) && so.length > 0) {
+      const o = so[0] as Record<string, unknown>;
+      const addr = typeof o['Address'] === 'string'
+        ? stripTags(o['Address'] as string).replace(/\n+/g, ', ')
+        : null;
+      const hours = typeof o['Hours'] === 'string' ? stripTags(o['Hours'] as string) : null;
+      const dirs = typeof o['DrivingDirections'] === 'string'
+        ? stripTags(o['DrivingDirections'] as string)
+            .split('\n')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [];
+      let lat: number | null = null;
+      let lng: number | null = null;
+      const sa = typeof o['SearchableAddress'] === 'string' ? (o['SearchableAddress'] as string) : null;
+      if (sa) {
+        const [la, lo] = sa.split(',').map((x) => Number(x.trim()));
+        if (Number.isFinite(la) && Number.isFinite(lo)) {
+          lat = la;
+          lng = lo;
+        }
+      }
+      cd.salesOffice = { address: addr, hours, directions: dirs, lat, lng };
+    }
+    const fps = vm['floorplans'];
+    if (Array.isArray(fps)) {
+      cd.homePlans = (fps as Record<string, unknown>[])
+        .map((p) => {
+          const name = typeof p['Name'] === 'string' ? (p['Name'] as string) : '';
+          const token = typeof p['Token'] === 'string' ? (p['Token'] as string) : null;
+          return {
+            name,
+            url: token ? `https://www.davidweekleyhomes.com${token}` : null,
+            priceDisplay: typeof p['PriceDisplay'] === 'string' ? (p['PriceDisplay'] as string) : null,
+            basePrice: typeof p['BasePrice'] === 'number' ? (p['BasePrice'] as number) : null,
+            sqftDisplay: typeof p['SquareFootageDisplay'] === 'string' ? (p['SquareFootageDisplay'] as string) : null,
+            beds: rangeText(p['Bedrooms']),
+            baths: rangeText(p['FullBaths']),
+            garages: rangeText(p['Garages']),
+            imageUrl: typeof p['MainImageUrl'] === 'string' ? (p['MainImageUrl'] as string) : null,
+            status: typeof p['Status'] === 'string' ? (p['Status'] as string) : null,
+          };
+        })
+        .filter((p) => p.name);
+    }
+  }
+  cd.schools = extractSchools(html);
+  cd.taxInfo = extractTaxInfo(html);
+  cd.status = deriveStatus(cd.availability, title);
+  return { description, communityData: cd };
+}
+
+// Fetch a single David Weekley community page and return its description text
+// + structured community_data blob, or null if the page can't be fetched.
+export async function fetchDavidWeekleyCommunityData(
   pageUrl: string,
-): Promise<string | null> {
+): Promise<{ description: string | null; communityData: CommunityData } | null> {
   let res: Response;
   try {
     res = await fetch(pageUrl, {
@@ -453,5 +705,47 @@ export async function fetchDavidWeekleyCommunityDescription(
   }
   if (!res.ok) return null;
   const html = await res.text();
-  return extractCommunityDescription(html);
+  return extractCommunityData(html);
+}
+
+// Collect absolute community detail-page URLs linked from a David Weekley
+// category/listing page (e.g. /new-homes/tx/austin/coming-soon). The close-out
+// and market pages are JS-rendered and yield no server-side community links, so
+// this is best-effort — coming-soon is server-rendered and works reliably.
+export async function fetchDavidWeekleyCommunityList(
+  listUrl: string,
+): Promise<string[]> {
+  let res: Response;
+  try {
+    res = await fetch(listUrl, {
+      method: 'GET',
+      headers: {
+        'User-Agent': USER_AGENT,
+        Accept: 'text/html,application/xhtml+xml,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(15_000),
+      cache: 'no-store',
+    });
+  } catch {
+    return [];
+  }
+  if (!res.ok) return [];
+  const html = await res.text();
+  const matches = new Set<string>();
+  for (const m of html.matchAll(/href="(\/new-homes\/tx\/[^"]+)"/g)) {
+    const path = m[1].replace(/\/$/, '');
+    const segs = path.split('/').filter(Boolean);
+    // /new-homes/tx/austin/<city>/<community> => 6 segments
+    if (
+      segs.length === 6 &&
+      !/(financing|close-out|coming-soon|design-center|model-home-gallery|homes-ready-soon)/.test(
+        path,
+      )
+    ) {
+      matches.add(`https://www.davidweekleyhomes.com${path}`);
+    }
+  }
+  return [...matches];
 }

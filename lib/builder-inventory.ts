@@ -15,6 +15,7 @@
 // to title-only when null.
 
 import { neon } from '@neondatabase/serverless';
+import type { CommunityData } from './scrapers/david-weekley';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -97,6 +98,9 @@ export type BuilderInventoryRow = {
   homeType: HomeType | null;
   // S13 gallery (KB Home multi-image rotation):
   galleryUrls: string[] | null;
+  // Structured community page data (David Weekley backfill): plans,
+  // amenities, schools, tax, sales office, gallery, lifecycle status.
+  communityData: CommunityData | null;
 };
 
 export type CreateBuilderInventoryInput = {
@@ -136,6 +140,7 @@ export type CreateBuilderInventoryInput = {
   homeType?: HomeType | null;
   // S13 gallery:
   galleryUrls?: string[] | null;
+  communityData?: CommunityData | null;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -373,6 +378,17 @@ const MIGRATIONS: Migration[] = [
                   AND expires_at IS NOT NULL`;
     },
   },
+  {
+    name: '2026_07_23__add_community_data',
+    up: async () => {
+      // Structured David Weekley community page data: home plans, amenities,
+      // schools, tax info, sales office + driving directions, gallery, and
+      // lifecycle status (coming-soon / close-out / adult-only). Backfilled by
+      // the scrape-david-weekley cron.
+      await sql`ALTER TABLE builder_inventory
+                ADD COLUMN IF NOT EXISTS community_data JSONB`;
+    },
+  },
 ];
 
 // Per-process cache: "the current MIGRATIONS array is fully applied in the DB."
@@ -413,6 +429,21 @@ export async function ensureBuilderInventorySchema(): Promise<void> {
 // ─────────────────────────────────────────────────────────────────────────
 // CRUD
 // ─────────────────────────────────────────────────────────────────────────
+
+// Neon returns JSONB as a parsed object over the HTTP driver, but some
+// drivers/contexts return a string — handle both.
+function parseCommunityData(v: unknown): CommunityData | null {
+  if (v == null) return null;
+  if (typeof v === 'string') {
+    try {
+      return JSON.parse(v) as CommunityData;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof v === 'object') return v as CommunityData;
+  return null;
+}
 
 function rowToBuilderInventoryRow(r: Record<string, unknown>): BuilderInventoryRow {
   return {
@@ -457,6 +488,7 @@ function rowToBuilderInventoryRow(r: Record<string, unknown>): BuilderInventoryR
     communityName: (r.community_name as string) ?? null,
     homeType: (r.home_type as HomeType) ?? null,
     galleryUrls: (r.gallery_urls as string[]) ?? null,
+    communityData: parseCommunityData(r.community_data),
   };
 }
 
@@ -477,7 +509,7 @@ export async function createBuilderInventory(
       source_ip, user_agent,
       external_id,
       address, ready_date, plan_name, community_name, home_type,
-      gallery_urls
+      gallery_urls, community_data
     ) VALUES (
       ${input.kind}, ${input.publication},
       ${input.submittedByName}, ${input.submittedByEmail}, ${input.submittedByPhone ?? null},
@@ -491,7 +523,8 @@ export async function createBuilderInventory(
       ${input.address ?? null}, ${input.readyDate ?? null},
       ${input.planName ?? null}, ${input.communityName ?? null},
 ${input.homeType ?? null},
-      ${(input.galleryUrls ?? null) as string[] | null}
+      ${(input.galleryUrls ?? null) as string[] | null},
+      ${input.communityData != null ? JSON.stringify(input.communityData) : null}::jsonb
     )
     RETURNING *
   `) as Record<string, unknown>[];
@@ -645,13 +678,16 @@ export type UpdateBuilderInventoryInput = {
   homeType?: HomeType | null;
   // S13 gallery:
   galleryUrls?: string[] | null;
+  communityData?: CommunityData | null;
 };
 
 
-// Rows that still need a description backfill (e.g. pre-S13 David Weekley
-// community rows created with description=null). Returns the id plus the
-// builder page URL stored in flyer_pdf_url so the caller can fetch it.
-export async function listBuilderInventoryDescriptionBackfill(
+// David Weekley community rows that still need a structured community_data
+// backfill (and/or a description). Pre-S13 community rows were created with
+// description=null; community_data is new (2026_07_23). Returns the id plus
+// the builder page URL stored in flyer_pdf_url so the caller can fetch each
+// community page and extract the full structured blob.
+export async function listBuilderInventoryCommunityBackfill(
   builderName: string,
 ): Promise<{ id: number; flyerPdfUrl: string | null; title: string }[]> {
   await ensureBuilderInventorySchema();
@@ -661,7 +697,7 @@ export async function listBuilderInventoryDescriptionBackfill(
     WHERE builder_name = ${builderName}
       AND home_type = 'community'
       AND status = 'active'
-      AND description IS NULL
+      AND (description IS NULL OR community_data IS NULL)
       AND flyer_pdf_url IS NOT NULL
   `) as Record<string, unknown>[];
   return rows.map((r) => ({
@@ -669,6 +705,23 @@ export async function listBuilderInventoryDescriptionBackfill(
     flyerPdfUrl: (r.flyer_pdf_url as string) ?? null,
     title: (r.title as string) ?? '',
   }));
+}
+
+// Used by the David Weekley ingestion step to avoid creating duplicate
+// community rows for communities already tracked (by external_id or the
+// community page URL stored in flyer_pdf_url).
+export async function builderInventoryExistsByUrl(
+  builderName: string,
+  url: string,
+): Promise<boolean> {
+  await ensureBuilderInventorySchema();
+  const rows = (await sql`
+    SELECT 1 FROM builder_inventory
+    WHERE builder_name = ${builderName}
+      AND (external_id = ${url} OR flyer_pdf_url = ${url})
+    LIMIT 1
+  `) as Record<string, unknown>[];
+  return rows.length > 0;
 }
 
 export async function updateBuilderInventory(
@@ -724,7 +777,8 @@ export async function updateBuilderInventory(
       plan_name      = ${m.planName},
       community_name = ${m.communityName},
       home_type      = ${m.homeType},
-      gallery_urls   = ${(m.galleryUrls ?? null) as string[] | null}
+      gallery_urls   = ${(m.galleryUrls ?? null) as string[] | null},
+      community_data = ${m.communityData != null ? JSON.stringify(m.communityData) : null}::jsonb
     WHERE id = ${id}
     RETURNING *
   `) as Record<string, unknown>[];
@@ -778,6 +832,7 @@ export type UpsertScrapedInput = {
   homeType?: HomeType | null;
   // S13 gallery:
   galleryUrls?: string[] | null;
+  communityData?: CommunityData | null;
 };
 
 /**
@@ -828,6 +883,7 @@ export async function upsertBuilderInventoryByExternalId(
       communityName: input.communityName ?? null,
       homeType: input.homeType ?? null,
       galleryUrls: input.galleryUrls ?? null,
+      communityData: input.communityData ?? null,
     });
     if (!updated) {
       throw new Error(`Upsert: row ${existingRow.id} vanished mid-update`);
@@ -867,6 +923,7 @@ export async function upsertBuilderInventoryByExternalId(
     communityName: input.communityName ?? null,
     homeType: input.homeType ?? null,
     galleryUrls: input.galleryUrls ?? null,
+    communityData: input.communityData ?? null,
   });
 
   // S13: Scraper-produced LISTING rows auto-publish to 'active'.
