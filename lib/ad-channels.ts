@@ -69,3 +69,25 @@ export function deriveChannelFromAgreementType(
   if (type === 'app_ad') return 'app';
   return 'digital';
 }
+
+/**
+ * Derive the funnel channel for an agreement from its line items' channels.
+ * Mirrors the Sign Wizard: a bundle is 'print' only when EVERY line is
+ * print; otherwise the first non-print line's channel wins (fallback
+ * 'digital'). Agreements with no line items fall back to the type column —
+ * so a single-line print_ad still resolves to print. This keeps a mixed /
+ * non-print bundle (e.g. app Top Banner + e-Blast, parent type 'package')
+ * from being misread as print just because deriveChannelFromAgreementType
+ * maps 'package' -> print.
+ */
+export function deriveChannelFromLineItems(
+  lineChannels: readonly (string | null | undefined)[] | null | undefined,
+  type: string | null | undefined,
+): AdChannel {
+  if (!lineChannels || lineChannels.length === 0) {
+    return deriveChannelFromAgreementType(type);
+  }
+  if (lineChannels.every((c) => c === 'print')) return 'print';
+  const firstNonPrint = lineChannels.find((c) => isAdChannel(c) && c !== 'print');
+  return (firstNonPrint as AdChannel | undefined) ?? 'digital';
+}

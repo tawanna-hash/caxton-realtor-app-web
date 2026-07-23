@@ -9,15 +9,17 @@
 //   • inquiries   — rows from ad_inquiries   (slot_slug + status + created_at)
 //
 // Campaigns are attributed via ad_campaigns.channel (added 2026-07).
-// Agreements have no channel column; we derive it from the `type` via
-// deriveChannelFromAgreementType. Inquiries carry their own channel column.
+// Agreements are attributed by their line items' channels (a bundle is print
+// only when every line is print; otherwise the first non-print line wins),
+// falling back to deriveChannelFromAgreementType(type) when there are no
+// line items. Inquiries carry their own channel column.
 
 import { NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { query } from '@/lib/server/db/neon';
 import {
   AD_CHANNELS,
-  deriveChannelFromAgreementType,
+  deriveChannelFromLineItems,
   isAdChannel,
   type AdChannel,
 } from '@/lib/ad-channels';
@@ -131,12 +133,29 @@ export async function GET(
 
   const buckets = emptyBuckets();
 
+  // Per-agreement line-item channels, so a multi-line bundle is attributed
+  // to the right channel instead of defaulting to print (parent type
+  // 'package'). Falls back to the type column for agreements with no lines.
+  const agreementIds = agreements.map((a) => a.id);
+  const lineItemChannels = agreementIds.length > 0
+    ? await query<{ agreement_id: string; channel: string | null }>(
+        `SELECT agreement_id, channel FROM agreement_line_items WHERE agreement_id = ANY($1::uuid[])`,
+        [agreementIds],
+      )
+    : [];
+  const lineChannelsByAgreement = new Map<string, (string | null)[]>();
+  for (const li of lineItemChannels) {
+    const arr = lineChannelsByAgreement.get(li.agreement_id) ?? [];
+    arr.push(li.channel);
+    lineChannelsByAgreement.set(li.agreement_id, arr);
+  }
+
   for (const c of campaigns) {
     const ch = isAdChannel(c.channel) ? c.channel : 'digital';
     buckets[ch].campaigns.push(c);
   }
   for (const a of agreements) {
-    const ch = deriveChannelFromAgreementType(a.type);
+    const ch = deriveChannelFromLineItems(lineChannelsByAgreement.get(a.id) ?? null, a.type);
     buckets[ch].agreements.push(a);
   }
   for (const q of inquiries) {
