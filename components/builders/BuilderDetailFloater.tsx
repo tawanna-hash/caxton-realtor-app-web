@@ -109,8 +109,8 @@ export default function BuilderDetailFloater({
       : []),
     {
       key: 'download',
-      label: 'Listings',
-      ariaLabel: 'Download listings PDF',
+      label: 'Download',
+      ariaLabel: 'Download move-in inventory PDF',
       onClick: handleDownload,
       icon: (
         <>

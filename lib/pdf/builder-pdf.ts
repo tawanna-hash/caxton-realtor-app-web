@@ -10,7 +10,7 @@
 // and the public-facing site already hosts the visual catalog. The PDF
 // is meant as a take-home / share-with-client reference.
 
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb, PDFString, type PDFFont, type PDFPage } from 'pdf-lib';
 import type { BuilderInventoryRow } from '@/lib/builder-inventory';
 
 // ─── Layout constants (US Letter, 1/2" margins) ──────────────────────────
@@ -25,6 +25,7 @@ const C_BODY  = rgb(0.25, 0.27, 0.30);
 const C_MUTED = rgb(0.50, 0.52, 0.55);
 const C_RULE  = rgb(0.85, 0.86, 0.88);
 const C_EYEBROW = rgb(0.40, 0.42, 0.45);
+const C_LINK  = rgb(0.12, 0.36, 0.86); // clickable listing URL
 
 // ─── Format helpers ──────────────────────────────────────────────────────
 function fmtPrice(min: number | null, max: number | null): string | null {
@@ -139,6 +140,51 @@ function gap(ctx: Ctx, h: number): void {
   ctx.y -= h;
 }
 
+// ─── Listing URL helpers ─────────────────────────────────────────────────
+// Mirrors BuilderInventoryRowCard's link resolution: prefer a non-PDF
+// sourceUrl, else fall back to a non-PDF flyerPdfUrl (David Weekley stores
+// the per-home listing URL there; Giddens stores the /homes/ page). PDFs are
+// excluded so a flyer PDF never becomes a web link.
+function isWebUrl(u: string | null | undefined): u is string {
+  return !!u && !u.toLowerCase().endsWith('.pdf');
+}
+function resolveListingUrl(row: BuilderInventoryRow): string | null {
+  return isWebUrl(row.sourceUrl) ? row.sourceUrl : isWebUrl(row.flyerPdfUrl) ? row.flyerPdfUrl : null;
+}
+
+// Draw a clickable hyperlink: blue text + an invisible Link annotation
+// rectangle over it (pdf-lib origin is bottom-left). The display text is
+// truncated to fit the content width; the annotation always points at the
+// full URL.
+function drawLink(ctx: Ctx, url: string): void {
+  const size = 8;
+  const lineGap = 2;
+  ensureSpace(ctx, size + lineGap);
+  const maxWidth = CONTENT_W;
+  let display = url;
+  if (ctx.font.widthOfTextAtSize(display, size) > maxWidth) {
+    while (display.length > 1 && ctx.font.widthOfTextAtSize(`${display}…`, size) > maxWidth) {
+      display = display.slice(0, -1);
+    }
+    display = `${display}…`;
+  }
+  const w = ctx.font.widthOfTextAtSize(display, size);
+  const x = MARGIN;
+  const baseline = ctx.y - size;
+  ctx.page.drawText(display, { x, y: baseline, font: ctx.font, size, color: C_LINK });
+  const annotRef = ctx.doc.context.register(
+    ctx.doc.context.obj({
+      Type: 'Annot',
+      Subtype: 'Link',
+      Rect: [x, baseline - 1, x + w, baseline + size + 1],
+      Border: { W: 0 },
+      A: { Type: 'Action', S: 'URI', URI: PDFString.of(url) },
+    }),
+  );
+  ctx.page.node.addAnnot(annotRef);
+  ctx.y -= size + lineGap;
+}
+
 // ─── Row block — one inventory/community row ─────────────────────────────
 function drawRow(ctx: Ctx, row: BuilderInventoryRow, opts: { showBuilder: boolean }): void {
   // Pre-compute line count to keep a row together on one page when possible.
@@ -194,9 +240,10 @@ function drawRow(ctx: Ctx, row: BuilderInventoryRow, opts: { showBuilder: boolea
     drawText(ctx, snippet, { size: 9, color: C_BODY, lineGap: 3 });
   }
 
-  // Source URL
-  if (row.sourceUrl) {
-    drawText(ctx, row.sourceUrl, { size: 8, color: C_MUTED });
+  // Live link to the listing on the builder's site (clickable annotation).
+  const listingUrl = resolveListingUrl(row);
+  if (listingUrl) {
+    drawLink(ctx, listingUrl);
   }
 
   gap(ctx, 6);
