@@ -21,10 +21,13 @@ export type AdminNavGroup = {
  * top-to-bottom on mobile. Order matters.
  *
  * Conventions:
- *  - "CRM" holds people, billing, and brand assets (advertisers, agreements,
- *    invoices, marketing, media kit). Agreements and Invoices are sibling
- *    pages — the legacy /admin/billing route now redirects to Agreements.
- *  - "Revenue" holds ad inventory and placements (ads, orders, availability).
+ *  - "Sales" owns the ad-sales funnel end to end: Advertisers -> Inquiries
+ *    (leads) -> Agreements (contracts, renewals & the orders pipeline) ->
+ *    Invoices, plus the Media Kit. The legacy /admin/billing route redirects
+ *    to Agreements; the duplicate /admin/ads/media-kit redirects to Media Kit.
+ *  - "Ad Ops" holds ad inventory and placements (inventory, placements,
+ *    availability). The old /admin/ads hub is reachable by URL but no longer
+ *    in the nav — its children are surfaced directly here and under Sales.
  *  - "Mailing List HUB" holds audience lists and subscriber tools.
  *  - "Content" holds editorial surfaces (articles, magazines, events,
  *    giveaways, inventory, social, MLS report cards).
@@ -32,12 +35,13 @@ export type AdminNavGroup = {
  */
 export const ADMIN_NAV: AdminNavGroup[] = [
   {
-    label: 'CRM',
+    label: 'Sales',
     links: [
-      { label: 'Advertisers',  href: '/admin/crm',        description: 'Accounts, contacts, share links' },
-      { label: 'Agreements',   href: '/admin/agreements', description: 'Contracts & renewals' },
-      { label: 'Invoices',     href: '/admin/invoices',   description: 'Billable charges & payment status' },
-      { label: 'Media Kit',    href: '/admin/media-kit',  description: '2026 packages, rates & deadlines' },
+      { label: 'Advertisers',  href: '/admin/crm',           description: 'Accounts, contacts, share links' },
+      { label: 'Inquiries',    href: '/admin/ads/inquiries', description: 'Print / Digital / Email leads' },
+      { label: 'Agreements',   href: '/admin/agreements',    description: 'Contracts, renewals & pipeline' },
+      { label: 'Invoices',     href: '/admin/invoices',      description: 'Billable charges & payment status' },
+      { label: 'Media Kit',    href: '/admin/media-kit',     description: '2026 packages, rates & deadlines' },
     ],
   },
   {
@@ -54,12 +58,11 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     ],
   },
   {
-    label: 'Revenue',
+    label: 'Ad Ops',
     links: [
-      { label: 'Ads',             href: '/admin/ads',              description: 'Inventory & placements' },
-      { label: 'Ad Inquiries',    href: '/admin/ads/inquiries',    description: 'Print / Digital / Email leads' },
-      { label: 'Ad Orders',       href: '/admin/ads/orders',       description: 'Campaigns + agreements pipeline' },
-      { label: 'Ad Availability', href: '/admin/ads/availability', description: 'Booked windows across all channels' },
+      { label: 'Ad Inventory', href: '/admin/ads/inventory',    description: 'Slots & creatives' },
+      { label: 'Placements',   href: '/admin/ads/placements',   description: 'Live placements' },
+      { label: 'Availability', href: '/admin/ads/availability', description: 'Booked windows across channels' },
     ],
   },
   {

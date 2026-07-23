@@ -1,9 +1,10 @@
 // /admin/ads/media-kit
 //
-// Server shell — auth + metadata only. All rendering lives in the client
-// component so we can hold pub-tab state.
+// Legacy route. The canonical Media Kit lives at /admin/media-kit (linked
+// from the "Sales" nav group). Redirect there so the old Ads-hub links and
+// any bookmarks keep working.
 
-import MediaKitClient from './MediaKitClient';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,5 +13,5 @@ export const metadata = {
 };
 
 export default function MediaKitPage() {
-  return <MediaKitClient />;
+  redirect('/admin/media-kit');
 }

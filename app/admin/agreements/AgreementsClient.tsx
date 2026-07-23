@@ -269,6 +269,7 @@ export default function AgreementsClient({
           <p className="text-sm text-gray-600 mt-1">Contracts and renewals for every advertiser. Stripe charges land via the public Sign Wizard &mdash; see each agreement for payment status.</p>
         </div>
         <div className="flex gap-2">
+          <a href="/admin/ads/orders" className="whitespace-nowrap px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">Ad pipeline &rarr;</a>
           {tab === 'renewals'
             ? <button onClick={() => setTab('agreements')} className="whitespace-nowrap px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">All agreements &rarr;</button>
             : <>
