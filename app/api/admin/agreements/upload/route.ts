@@ -21,6 +21,7 @@ import { put } from '@vercel/blob';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { extractUploadedAgreementFields } from '@/lib/server/agreement-upload-extract';
+import type { AgreementAuditEntry } from '@/lib/agreements';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -131,7 +132,7 @@ export async function POST(req: NextRequest) {
     const todayUtc = new Date().toISOString().slice(0, 10);
     const signDate = f.sign_date ?? todayUtc;
     const now = new Date().toISOString();
-    const seedAudit = [
+    const seedAudit: AgreementAuditEntry[] = [
       {
         event: 'signed',
         timestamp: now,
