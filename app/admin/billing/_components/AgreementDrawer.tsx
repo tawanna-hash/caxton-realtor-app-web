@@ -7,7 +7,7 @@
 // month/year timing grid, attachments, signing-link flow, amend flow,
 // and the legacy system-fields panel.
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   AgreementWithAdvertiser, AgreementStatus, AgreementType, PaymentMode,
 } from '@/lib/agreements';
@@ -204,6 +204,33 @@ export function AgreementDrawer({
   // refreshing the `existing` prop. Merged with existing.attachments.files
   // in render — dedup by URL.
   const [localUploadedFiles, setLocalUploadedFiles] = useState<Array<{ name: string; size: number; url: string; uploadedAt: string }>>([]);
+
+  // Bundle line items (e.g. app Top Banner + e-Blast). When present, the
+  // single-line Insertion Order editor is hidden in favor of a read-only
+  // line-items summary + bundle total. For bundles the per-line rates live
+  // in agreement_line_items, so ad_rate_cents on the parent row is stale and
+  // must not be shown.
+  type DrawerLineItem = {
+    line_no: number;
+    channel: string | null;
+    package_label: string | null;
+    ad_size: string | null;
+    frequency: string | null;
+    quantity: number | null;
+    amount_cents: number | null;
+  };
+  const [lineItems, setLineItems] = useState<DrawerLineItem[]>([]);
+  useEffect(() => {
+    let alive = true;
+    const id = existing?.id;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clear stale lines when this drawer has no saved agreement
+    if (!id) { setLineItems([]); return; }
+    fetch(`/api/admin/agreements/${id}/line-items`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : { lineItems: [] }))
+      .then((d: { lineItems?: DrawerLineItem[] }) => { if (alive) setLineItems(d.lineItems ?? []); })
+      .catch(() => { if (alive) setLineItems([]); });
+    return () => { alive = false; };
+  }, [existing?.id]);
 
   const upd = <K extends keyof AgForm>(k: K, v: AgForm[K]) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -717,6 +744,42 @@ export function AgreementDrawer({
 
       {/* ── Insertion Order ── */}
       <Section title="Insertion Order">
+        {lineItems.length > 0 ? (
+        <div className="space-y-3">
+          <div className="rounded-md border border-gray-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
+                <tr>
+                  <th className="text-left px-3 py-2 font-medium">Channel</th>
+                  <th className="text-left px-3 py-2 font-medium">Package / Size</th>
+                  <th className="text-left px-3 py-2 font-medium">Freq</th>
+                  <th className="text-right px-3 py-2 font-medium">Qty</th>
+                  <th className="text-right px-3 py-2 font-medium">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {lineItems.map((li) => (
+                  <tr key={li.line_no}>
+                    <td className="px-3 py-2">
+                      <span className="inline-block rounded border border-purple-200 bg-purple-50 px-2 py-0.5 text-xs font-medium capitalize text-purple-700">{li.channel ?? '—'}</span>
+                    </td>
+                    <td className="px-3 py-2 text-gray-700">{li.package_label ?? li.ad_size ?? '—'}</td>
+                    <td className="px-3 py-2 text-gray-700">{li.frequency ?? '—'}</td>
+                    <td className="px-3 py-2 text-right text-gray-700">{li.quantity ?? '—'}</td>
+                    <td className="px-3 py-2 text-right font-medium text-gray-900">{formatCents(li.amount_cents)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2">
+            <span className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">Bundle total</span>
+            <span className="text-sm font-bold text-gray-900">{formatCents(existing?.amount_cents ?? null)}</span>
+          </div>
+          <p className="text-[11px] text-gray-400">Bundle pricing is set per line item; single-line rate fields are hidden for bundles.</p>
+        </div>
+        ) : (
+          <>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Ad Size</div>
@@ -800,6 +863,8 @@ export function AgreementDrawer({
           </div>
         </div>
 
+          </>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <Field label="Page Position">
             <input value={form.page_position}
