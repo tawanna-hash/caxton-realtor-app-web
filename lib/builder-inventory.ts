@@ -647,6 +647,30 @@ export type UpdateBuilderInventoryInput = {
   galleryUrls?: string[] | null;
 };
 
+
+// Rows that still need a description backfill (e.g. pre-S13 David Weekley
+// community rows created with description=null). Returns the id plus the
+// builder page URL stored in flyer_pdf_url so the caller can fetch it.
+export async function listBuilderInventoryDescriptionBackfill(
+  builderName: string,
+): Promise<{ id: number; flyerPdfUrl: string | null; title: string }[]> {
+  await ensureBuilderInventorySchema();
+  const rows = (await sql`
+    SELECT id, flyer_pdf_url, title
+    FROM builder_inventory
+    WHERE builder_name = ${builderName}
+      AND home_type = 'community'
+      AND status = 'active'
+      AND description IS NULL
+      AND flyer_pdf_url IS NOT NULL
+  `) as Record<string, unknown>[];
+  return rows.map((r) => ({
+    id: Number(r.id),
+    flyerPdfUrl: (r.flyer_pdf_url as string) ?? null,
+    title: (r.title as string) ?? '',
+  }));
+}
+
 export async function updateBuilderInventory(
   id: number,
   input: UpdateBuilderInventoryInput,

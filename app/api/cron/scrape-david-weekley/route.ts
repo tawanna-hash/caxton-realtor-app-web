@@ -11,15 +11,22 @@
 // its own row with address, ready_date, plan_name, community_name.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchDavidWeekleyAustin } from '@/lib/scrapers/david-weekley';
-import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
+import {
+  fetchDavidWeekleyAustin,
+  fetchDavidWeekleyCommunityDescription,
+} from '@/lib/scrapers/david-weekley';
+import {
+  listBuilderInventoryDescriptionBackfill,
+  updateBuilderInventory,
+  upsertBuilderInventoryByExternalId,
+} from '@/lib/builder-inventory';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 // Two parallel HTTP calls (CommunityData + ShowcaseData) ~1s each.
 // Plus 77 upserts at ~50ms each = ~4s. 60s gives headroom for Neon cold
 // starts and any individual upsert retry.
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const SCRAPER_SUBMITTER_NAME = 'David Weekley Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-david-weekley@harmonyone.system';
@@ -94,6 +101,47 @@ async function runScrape() {
     }
   }
 
+  // Backfill real descriptions for David Weekley community rows (pre-S13
+  // orphans created with description=null). Each community's
+  // davidweekleyhomes.com page URL lives in flyer_pdf_url; fetch it and
+  // extract the overview block. Idempotent — only rows with
+  // description IS NULL are touched, so this is a no-op once filled.
+  let descriptionsBackfilled = 0;
+  let descriptionBackfillErrors = 0;
+  try {
+    const pending = await listBuilderInventoryDescriptionBackfill(
+      'David Weekley Homes',
+    );
+    const CONCURRENCY = 5;
+    for (let i = 0; i < pending.length; i += CONCURRENCY) {
+      const batch = pending.slice(i, i + CONCURRENCY);
+      await Promise.all(
+        batch.map(async (row) => {
+          if (!row.flyerPdfUrl) return;
+          const description = await fetchDavidWeekleyCommunityDescription(
+            row.flyerPdfUrl,
+          );
+          if (!description) return;
+          try {
+            await updateBuilderInventory(row.id, { description });
+            descriptionsBackfilled++;
+          } catch (err) {
+            descriptionBackfillErrors++;
+            console.error(
+              `[scrape-david-weekley] description backfill failed for "${row.title}" (${row.id}):`,
+              err instanceof Error ? err.message : String(err),
+            );
+          }
+        }),
+      );
+    }
+  } catch (err) {
+    console.error(
+      '[scrape-david-weekley] description backfill error:',
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+
   const elapsedMs = Date.now() - startedAt;
 
   return {
@@ -105,6 +153,8 @@ async function runScrape() {
       inserted,
       updated,
       errors,
+      descriptionsBackfilled,
+      descriptionBackfillErrors,
       elapsedMs,
     },
     errorDetails: errors > 0 ? errorDetails : undefined,

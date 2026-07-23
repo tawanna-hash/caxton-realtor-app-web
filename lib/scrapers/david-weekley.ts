@@ -377,3 +377,81 @@ export async function fetchDavidWeekleyAustin(): Promise<{
 
   return { rows, rawCount, skipped };
 }
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// Community-page description extraction (backfill for pre-S13 community rows)
+// ─────────────────────────────────────────────────────────────────────────
+
+// David Weekley community pages render the overview inside a KnockoutJS
+// "hidden-details" block: an intro <p>, an amenities <ul class="show-bullets">,
+// and a contact <p>. We extract that block to plain text so pre-S13
+// community rows (created with description=null) can be backfilled.
+const DESCRIPTION_MARKER = "data-bind=\"css: { 'hidden-details': DetailsHidden }\"";
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+    .replace(/&rsquo;|&#39;|&apos;/g, '\u2019')
+    .replace(/&lsquo;/g, '\u2018')
+    .replace(/&ldquo;/g, '\u201C')
+    .replace(/&rdquo;/g, '\u201D')
+    .replace(/&ndash;/g, '\u2013')
+    .replace(/&mdash;/g, '\u2014')
+    .replace(/&hellip;/g, '\u2026')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
+function extractCommunityDescription(html: string): string | null {
+  const start = html.indexOf(DESCRIPTION_MARKER);
+  if (start === -1) return null;
+  const innerStart = html.indexOf('>', start) + 1;
+  if (innerStart <= start) return null;
+  const end = html.indexOf('</div>', innerStart);
+  const inner = end === -1 ? html.slice(innerStart) : html.slice(innerStart, end);
+  const text = inner
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<li[^>]*>/gi, '\u2022 ')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<[^>]+>/g, '');
+  const decoded = decodeEntities(text);
+  const cleaned = decoded
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{2,}\u2022 /g, '\n\u2022 ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+  return cleaned || null;
+}
+
+// Fetch a single David Weekley community page and return its cleaned
+// description text, or null if the page can't be fetched or parsed.
+// Used by the scrape-david-weekley cron to backfill community descriptions.
+export async function fetchDavidWeekleyCommunityDescription(
+  pageUrl: string,
+): Promise<string | null> {
+  let res: Response;
+  try {
+    res = await fetch(pageUrl, {
+      method: 'GET',
+      headers: {
+        'User-Agent': USER_AGENT,
+        Accept: 'text/html,application/xhtml+xml,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(15_000),
+      cache: 'no-store',
+    });
+  } catch {
+    return null;
+  }
+  if (!res.ok) return null;
+  const html = await res.text();
+  return extractCommunityDescription(html);
+}
