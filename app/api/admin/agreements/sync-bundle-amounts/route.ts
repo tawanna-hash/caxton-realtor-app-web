@@ -46,22 +46,34 @@ async function runSync() {
        AND adv.current_amount_cents IS DISTINCT FROM g.amount_cents
     RETURNING adv.id, adv.name
   `;
+  // Correct e-Blast line items that were stored with the wrong channel
+  // (e.g. an app+e-Blast bundle whose e-Blast line was tagged 'app' instead
+  // of 'email'). e-Blast packages are unambiguously email, so this is safe and
+  // fixes both the CRM line-item badge and the channel-tab bucketing.
+  const channels = await sql`
+    UPDATE agreement_line_items
+       SET channel = 'email'
+     WHERE channel IS DISTINCT FROM 'email'
+       AND (package_id ILIKE 'eblast%' OR package_label ILIKE '%e-blast%' OR package_label ILIKE '%eblast%')
+    RETURNING id, package_label
+  `;
   return {
     updated: updated as unknown as Array<{ id: string; company_name: string | null; amount_cents: number | null }>,
     mirrors: mirrors as unknown as Array<{ id: number; name: string | null }>,
+    channelsFixed: channels as unknown as Array<{ id: string; package_label: string | null }>,
   };
 }
 
 export const GET = withErrorHandling(async () => {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { updated, mirrors } = await runSync();
-  return NextResponse.json({ updated: updated.length, rows: updated, mirrorsRefreshed: mirrors.length });
+  const { updated, mirrors, channelsFixed } = await runSync();
+  return NextResponse.json({ updated: updated.length, rows: updated, mirrorsRefreshed: mirrors.length, channelsFixed: channelsFixed.length });
 });
 
 export const POST = withErrorHandling(async () => {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const { updated, mirrors } = await runSync();
-  return NextResponse.json({ updated: updated.length, rows: updated, mirrorsRefreshed: mirrors.length });
+  const { updated, mirrors, channelsFixed } = await runSync();
+  return NextResponse.json({ updated: updated.length, rows: updated, mirrorsRefreshed: mirrors.length, channelsFixed: channelsFixed.length });
 });
