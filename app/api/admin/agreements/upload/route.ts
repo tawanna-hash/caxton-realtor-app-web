@@ -20,6 +20,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { extractUploadedAgreementFields } from '@/lib/server/agreement-upload-extract';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -72,9 +73,12 @@ export async function POST(req: NextRequest) {
   const agreementId = typeof agreementIdRaw === 'string' && agreementIdRaw.trim() ? agreementIdRaw.trim() : null;
 
   try {
-    // Upload to Vercel Blob first — same for both modes.
-    const blob = await put(`agreements/${Date.now()}-${file.name}`, file, {
+    // Read the file once into a Buffer — used both for the Vercel Blob
+    // upload and for best-effort PDF field extraction (same for both modes).
+    const buf = Buffer.from(await file.arrayBuffer());
+    const blob = await put(`agreements/${Date.now()}-${file.name}`, buf, {
       access: 'public',
+      contentType: file.type || 'application/octet-stream',
     });
 
     const attachment = {
@@ -112,10 +116,20 @@ export async function POST(req: NextRequest) {
 
     // Mode 1: create a new SIGNED record from a manually-uploaded signed
     // document (paper / PDF / scanned JPEG). The file is stored on
-    // signed_document, the row is born 'signed' with today's sign date,
-    // and an audit entry records the manual upload. The admin can then
-    // open the drawer to fill in advertiser + ad details.
-    const companyName = sanitizeFilename(file.name);
+    // signed_document and the row is born 'signed'. When the file is a PDF
+    // with a text layer (typically the app's own generated agreement),
+    // advertiser + ad details are pre-filled from the extracted text so the
+    // admin drawer opens populated instead of empty. Extraction is
+    // best-effort and fail-open: any parse failure yields a sparse record.
+    const ext = await extractUploadedAgreementFields({
+      fileName: file.name,
+      mimeType: file.type,
+      buffer: buf,
+    });
+    const f = ext.fields;
+    const companyName = f.company_name ?? sanitizeFilename(file.name);
+    const todayUtc = new Date().toISOString().slice(0, 10);
+    const signDate = f.sign_date ?? todayUtc;
     const now = new Date().toISOString();
     const seedAudit = [
       {
@@ -125,17 +139,50 @@ export async function POST(req: NextRequest) {
         details: `Manually uploaded signed document (${file.name})`,
       },
     ];
+    const filledCount = Object.keys(f).length;
+    if (filledCount > 0) {
+      seedAudit.push({
+        event: 'note',
+        timestamp: now,
+        details: `Pre-filled ${filledCount} field(s) from uploaded PDF (${ext.status})`,
+      });
+    }
     const rows = (await sql`
       INSERT INTO agreements (
-        company_name, status, is_uploaded,
-        signed_document, sign_date, signed_at,
+        company_name, advertiser_email, advertiser_phone,
+        address, city, state, zip,
+        ad_size, frequency, page_position,
+        ad_rate_cents, discount_cents, ad_premium_cents, total_monthly_rate_cents,
+        bill_to, billing_email, billing_contact_name, billing_contact_phone,
+        exp_date, start_date, end_date, sign_date,
+        status, is_uploaded, signed_document, signed_at,
         attachments, audit_log, created_by
       ) VALUES (
         ${companyName},
+        ${f.advertiser_email ?? null},
+        ${f.advertiser_phone ?? null},
+        ${f.address ?? null},
+        ${f.city ?? null},
+        ${f.state ?? null},
+        ${f.zip ?? null},
+        ${f.ad_size ?? null},
+        ${f.frequency ?? null},
+        ${f.page_position ?? null},
+        ${f.ad_rate_cents ?? null},
+        ${f.discount_cents ?? null},
+        ${f.ad_premium_cents ?? null},
+        ${f.total_monthly_rate_cents ?? null},
+        ${f.bill_to ?? null},
+        ${f.billing_email ?? null},
+        ${f.billing_contact_name ?? null},
+        ${f.billing_contact_phone ?? null},
+        ${f.exp_date ?? null},
+        ${f.start_date ?? null},
+        ${f.end_date ?? null},
+        ${signDate},
         'signed',
         true,
         ${blob.url},
-        CURRENT_DATE,
         NOW(),
         ${JSON.stringify({ files: [attachment] })}::jsonb,
         ${JSON.stringify(seedAudit)}::jsonb,
@@ -144,7 +191,7 @@ export async function POST(req: NextRequest) {
       RETURNING *
     `) as unknown as AgreementRow[];
 
-    return NextResponse.json({ agreement: rows[0], attachment }, { status: 201 });
+    return NextResponse.json({ agreement: rows[0], attachment, extraction: ext }, { status: 201 });
   } catch (err) {
     console.error('[admin/agreements/upload POST]', errMessage(err));
     return NextResponse.json({ error: 'upload failed', detail: errMessage(err) }, { status: 500 });

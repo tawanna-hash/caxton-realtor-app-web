@@ -100,7 +100,7 @@ const nextConfig: NextConfig = {
   // Keep `sharp` (libvips native bindings) out of the serverless bundle.
   // When bundled, the native .node binaries are not resolved at runtime
   // and the function 500s before the route handler even runs.
-  serverExternalPackages: ['sharp'],
+  serverExternalPackages: ['sharp', 'pdf-parse'],
 
   // Ensure bundled Georgia .ttf fonts ship with the agreement-pdf serverless function.
   outputFileTracingIncludes: {
