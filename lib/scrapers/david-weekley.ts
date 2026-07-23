@@ -451,8 +451,10 @@ export type CommunityHomePlan = {
   beds?: string | null;
   baths?: string | null;
   garages?: string | null;
+  stories?: string | null;
   imageUrl?: string | null;
   status?: string | null;
+  isModel?: boolean;
 };
 
 export type CommunitySchool = {
@@ -656,6 +658,15 @@ export function extractCommunityData(html: string): {
     }
     const fps = vm['floorplans'];
     if (Array.isArray(fps)) {
+      // First .Url from a photo array (ExteriorPhotos / InteriorPhotos),
+      // else null. ExteriorPhotos[0] is the elevation rendering shown on the
+      // plan card on davidweekleyhomes.com (MainImageUrl is usually null).
+      const firstImg = (arr: unknown): string | null => {
+        if (!Array.isArray(arr) || arr.length === 0) return null;
+        const first = arr[0] as Record<string, unknown>;
+        const u = first['Url'];
+        return typeof u === 'string' ? u : null;
+      };
       cd.homePlans = (fps as Record<string, unknown>[])
         .map((p) => {
           const name = typeof p['Name'] === 'string' ? (p['Name'] as string) : '';
@@ -669,8 +680,13 @@ export function extractCommunityData(html: string): {
             beds: rangeText(p['Bedrooms']),
             baths: rangeText(p['FullBaths']),
             garages: rangeText(p['Garages']),
-            imageUrl: typeof p['MainImageUrl'] === 'string' ? (p['MainImageUrl'] as string) : null,
+            stories: rangeText(p['Stories']),
+            imageUrl:
+              firstImg(p['ExteriorPhotos']) ??
+              firstImg(p['InteriorPhotos']) ??
+              (typeof p['MainImageUrl'] === 'string' ? (p['MainImageUrl'] as string) : null),
             status: typeof p['Status'] === 'string' ? (p['Status'] as string) : null,
+            isModel: p['DisplayAsModel'] === true || p['IsModel'] === true,
           };
         })
         .filter((p) => p.name);

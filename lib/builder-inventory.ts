@@ -689,17 +689,29 @@ export type UpdateBuilderInventoryInput = {
 // community page and extract the full structured blob.
 export async function listBuilderInventoryCommunityBackfill(
   builderName: string,
+  opts: { refresh?: boolean } = {},
 ): Promise<{ id: number; flyerPdfUrl: string | null; title: string }[]> {
   await ensureBuilderInventorySchema();
-  const rows = (await sql`
-    SELECT id, flyer_pdf_url, title
-    FROM builder_inventory
-    WHERE builder_name = ${builderName}
-      AND home_type = 'community'
-      AND status = 'active'
-      AND (description IS NULL OR community_data IS NULL)
-      AND flyer_pdf_url IS NOT NULL
-  `) as Record<string, unknown>[];
+  // By default only rows still missing description/community_data are touched
+  // (idempotent). With refresh=true every active community row for this builder
+  // is re-fetched so scraper improvements (e.g. new image fields) propagate.
+  const refresh = opts.refresh === true;
+  const rows = (refresh
+    ? (await sql`
+        SELECT id, flyer_pdf_url, title FROM builder_inventory
+        WHERE builder_name = ${builderName}
+          AND home_type = 'community'
+          AND status = 'active'
+          AND flyer_pdf_url IS NOT NULL
+      `)
+    : (await sql`
+        SELECT id, flyer_pdf_url, title FROM builder_inventory
+        WHERE builder_name = ${builderName}
+          AND home_type = 'community'
+          AND status = 'active'
+          AND (description IS NULL OR community_data IS NULL)
+          AND flyer_pdf_url IS NOT NULL
+      `)) as Record<string, unknown>[];
   return rows.map((r) => ({
     id: Number(r.id),
     flyerPdfUrl: (r.flyer_pdf_url as string) ?? null,

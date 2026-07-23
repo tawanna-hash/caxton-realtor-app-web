@@ -21,9 +21,28 @@ import {
   formatDate,
 } from '@/lib/builder-format';
 
+// Decode common HTML entities (numeric + a small named set) and strip any
+// residual tags so scraped descriptions render as plain text. The scraper
+// also decodes, but this covers rows stored before that change.
+function decodeHtmlEntities(input: string): string {
+  const named: Record<string, string> = {
+    amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
+    copy: '©', reg: '®', trade: '™', hellip: '…', mdash: '—', ndash: '–',
+    lsquo: '\u2018', rsquo: '\u2019', ldquo: '\u201C', rdquo: '\u201D',
+    eacute: 'é', egrave: 'è', aacute: 'á', agrave: 'à', iacute: 'í',
+    oacute: 'ó', uacute: 'ú', ntilde: 'ñ', uuml: 'ü', ouml: 'ö', auml: 'ä',
+    ccedil: 'ç', szlig: 'ß', bull: '•', middot: '·', deg: '°',
+  };
+  return input
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))
+    .replace(/&([a-zA-Z]+);/g, (_, n) => (n in named ? named[n] : `&${n};`));
+}
+
 function cleanDescription(description: string | null): string | null {
   if (!description) return null;
-  const trimmed = description
+  const trimmed = decodeHtmlEntities(description)
     .replace(/\r\n/g, '\n')
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
@@ -155,59 +174,66 @@ export default async function CommunityDetailPage(
               <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                 Home Plans
               </h2>
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {plans.map((p) => (
-                  <div
-                    key={p.name}
-                    className="overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700"
-                  >
-                    {p.imageUrl && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={p.imageUrl}
-                        alt={p.name}
-                        className="h-32 w-full object-cover"
-                      />
-                    )}
-                    <div className="p-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                          {p.name}
-                        </h3>
-                        {p.status && p.status !== 'Active' && (
-                          <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
-                            {p.status}
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {plans.map((p) => {
+                  const planSpecs = [
+                    p.stories ? `${p.stories} ${p.stories === '1' ? 'story' : 'stories'}` : null,
+                    p.beds ? `${p.beds} bed` : null,
+                    p.baths ? `${p.baths} bath` : null,
+                    p.garages ? `${p.garages} car garage` : null,
+                    p.sqftDisplay ? `${p.sqftDisplay} sq.ft.` : null,
+                  ].filter(Boolean);
+                  const Tag = p.url ? 'a' : 'div';
+                  return (
+                    <Tag
+                      key={p.name}
+                      {...(p.url
+                        ? { href: p.url, target: '_blank', rel: 'noopener noreferrer' }
+                        : {})}
+                      className="group overflow-hidden rounded-md border border-neutral-200 bg-white no-underline transition hover:border-orange-400 hover:shadow-sm dark:border-neutral-700 dark:bg-neutral-900"
+                    >
+                      <div className="relative aspect-[4/3] bg-neutral-100 dark:bg-neutral-800">
+                        {p.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={p.imageUrl}
+                            alt={p.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-xs text-neutral-400">
+                            No image available
+                          </div>
+                        )}
+                        {p.isModel && (
+                          <span className="absolute left-2 top-2 rounded-full bg-orange-600 px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+                            Model Home
                           </span>
                         )}
                       </div>
-                      {p.priceDisplay && (
-                        <p className="mt-1 text-sm font-medium text-orange-600">
-                          {p.priceDisplay}
-                        </p>
-                      )}
-                      <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-                        {[
-                          p.sqftDisplay ? `${p.sqftDisplay} sq.ft.` : null,
-                          p.beds ? `${p.beds} bed` : null,
-                          p.baths ? `${p.baths} bath` : null,
-                          p.garages ? `${p.garages} car garage` : null,
-                        ]
-                          .filter(Boolean)
-                          .join(' \u00b7 ')}
-                      </p>
-                      {p.url && (
-                        <a
-                          href={p.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-block text-xs font-medium text-orange-600 hover:underline"
-                        >
-                          View floor plan
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                      <div className="p-3">
+                        <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                          {p.name}
+                        </h3>
+                        {p.priceDisplay && (
+                          <p className="mt-0.5 text-sm font-medium text-orange-600">
+                            {p.priceDisplay}
+                          </p>
+                        )}
+                        {planSpecs.length > 0 && (
+                          <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
+                            {planSpecs.join(' · ')}
+                          </p>
+                        )}
+                        {p.url && (
+                          <span className="mt-2 inline-block text-xs font-medium text-orange-600 group-hover:underline">
+                            View floor plan
+                          </span>
+                        )}
+                      </div>
+                    </Tag>
+                  );
+                })}
               </div>
             </section>
           )}
@@ -220,7 +246,7 @@ export default async function CommunityDetailPage(
               <ul className="mt-4 grid grid-cols-2 gap-2 text-sm text-neutral-700 dark:text-neutral-300 sm:grid-cols-3">
                 {amenities.map((a) => (
                   <li key={a} className="flex items-center gap-2">
-                    <span className="text-orange-600">\u2022</span>
+                    <span className="text-orange-600">•</span>
                     {a}
                   </li>
                 ))}
@@ -259,7 +285,7 @@ export default async function CommunityDetailPage(
                     )}
                     <p className="mt-0.5 text-neutral-600 dark:text-neutral-400">
                       {s.phone && <span>{s.phone}</span>}
-                      {s.phone && s.website && <span> \u00b7 </span>}
+                      {s.phone && s.website && <span> · </span>}
                       {s.website && (
                         <a
                           href={s.website}

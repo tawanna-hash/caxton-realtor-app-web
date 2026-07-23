@@ -119,7 +119,7 @@ function computeCommunityRanges(cd: CommunityData) {
   };
 }
 
-async function runScrape() {
+async function runScrape(opts: { refresh: boolean }) {
   const startedAt = Date.now();
   const { rows, rawCount, skipped } = await fetchDavidWeekleyAustin();
 
@@ -179,7 +179,9 @@ async function runScrape() {
   let communityDataBackfilled = 0;
   let communityDataErrors = 0;
   try {
-    const pending = await listBuilderInventoryCommunityBackfill(BUILDER_NAME);
+    const pending = await listBuilderInventoryCommunityBackfill(BUILDER_NAME, {
+      refresh: opts.refresh,
+    });
     const CONCURRENCY = 5;
     for (let i = 0; i < pending.length; i += CONCURRENCY) {
       const batch = pending.slice(i, i + CONCURRENCY);
@@ -282,6 +284,7 @@ async function runScrape() {
   return {
     ok: true,
     summary: {
+      refresh: opts.refresh,
       rawCount,
       normalized: rows.length,
       skipped,
@@ -310,7 +313,8 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await runScrape();
+    const refresh = new URL(req.url).searchParams.get('refresh') === '1';
+    const result = await runScrape({ refresh });
     return NextResponse.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
