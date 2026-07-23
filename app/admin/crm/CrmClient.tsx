@@ -60,12 +60,26 @@ const TYPE_OPTIONS: { value: AdvertiserType; label: string }[] = [
   { value: 'mailing',    label: 'Mailing only' },
 ];
 
+// Sort options for the advertisers table. Value encodes field + direction.
+const SORT_OPTIONS: { value: string; label: string }[] = [
+  { value: 'updated_desc', label: 'Recently updated' },
+  { value: 'name_asc',     label: 'Name (A–Z)' },
+  { value: 'name_desc',    label: 'Name (Z–A)' },
+  { value: 'company_asc',  label: 'Company (A–Z)' },
+  { value: 'status_asc',   label: 'Status' },
+  { value: 'opens_desc',   label: 'Most opens' },
+  { value: 'opens_asc',    label: 'Fewest opens' },
+  { value: 'clicks_desc',  label: 'Most clicks (30d)' },
+  { value: 'clicks_asc',   label: 'Fewest clicks (30d)' },
+];
+
 export default function CrmClient({ initialRows }: Props) {
   const [rows, setRows] = useState(initialRows);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<AdvertiserStatus | 'all'>('all');
   const [typeFilter, setTypeFilter] = useState<AdvertiserType | 'all'>('all');
   const [pubFilter, setPubFilter] = useState<PublicationKey | 'all'>('all');
+  const [sortBy, setSortBy] = useState('updated_desc');
   const [editing, setEditing] = useState<AdvertiserCrmRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -163,7 +177,7 @@ export default function CrmClient({ initialRows }: Props) {
   // ── filtering ───────────────────────────────────────────────────
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return rows.filter((r) => {
+    const out = rows.filter((r) => {
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
       if (typeFilter !== 'all' && r.type !== typeFilter) return false;
       if (pubFilter !== 'all') {
@@ -179,7 +193,28 @@ export default function CrmClient({ initialRows }: Props) {
       ].filter(Boolean).join(' ').toLowerCase();
       return hay.includes(q);
     });
-  }, [rows, query, statusFilter, typeFilter, pubFilter]);
+    const [field, dir] = sortBy.split('_');
+    const mul = dir === 'asc' ? 1 : -1;
+    const sortVal = (r: AdvertiserCrmRow): string | number => {
+      switch (field) {
+        case 'name':    return r.name ?? '';
+        case 'company': return r.company ?? '';
+        case 'status':  return r.status ?? '';
+        case 'opens':   return r.open_count ?? 0;
+        case 'clicks':  return r.clicks_30d ?? 0;
+        case 'updated':
+        default:        return r.updated_at ?? '';
+      }
+    };
+    return [...out].sort((a, b) => {
+      const av = sortVal(a);
+      const bv = sortVal(b);
+      const cmp = typeof av === 'number' && typeof bv === 'number'
+        ? av - bv
+        : String(av).localeCompare(String(bv));
+      return cmp * mul;
+    });
+  }, [rows, query, statusFilter, typeFilter, pubFilter, sortBy]);
 
   // ── counts for filter chips ─────────────────────────────────────
   // Recent bounces — any advertiser with a bounce flag set. We keep this
@@ -364,6 +399,14 @@ export default function CrmClient({ initialRows }: Props) {
           >
             <option value="all">All publications</option>
             {PUBLICATION_OPTIONS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+          </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-2 rounded-md border border-gray-300 text-sm"
+            aria-label="Sort advertisers"
+          >
+            {SORT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </div>
 
