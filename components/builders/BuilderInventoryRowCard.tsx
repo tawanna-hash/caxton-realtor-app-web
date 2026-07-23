@@ -62,12 +62,27 @@ export default function BuilderInventoryRowCard({
   // Destination logic:
   //   - community variant: go to /communities/[id] (internal detail page
   //     with floater pill for back/website/download/share/inventory).
-  //   - listing/promotion: external sourceUrl wins; otherwise route to
-  //     the builder's detail page. Mirrors iOS Linking.openURL behavior.
+  //   - listing/promotion: link to the actual listing on the builder's
+  //     site. Prefer a non-PDF sourceUrl; otherwise fall back to a non-PDF
+  //     flyerPdfUrl (David Weekley stores the per-home listing URL there;
+  //     Giddens stores the /homes/ page). If only a PDF or nothing is
+  //     available, route to the builder's internal profile page.
+  const isPdf = (u: string | null | undefined) =>
+    !!u && u.toLowerCase().endsWith('.pdf');
   const communityHref = `/communities/${row.id}`;
-  const fallbackHref = row.sourceUrl || `/builders/${builderNameToSlug(row.builderName)}`;
-  const href = variant === 'community' ? communityHref : fallbackHref;
-  const external = variant === 'community' ? false : !!row.sourceUrl;
+  const externalUrl =
+    variant === 'community'
+      ? null
+      : (row.sourceUrl && !isPdf(row.sourceUrl)
+            ? row.sourceUrl
+            : row.flyerPdfUrl && !isPdf(row.flyerPdfUrl)
+              ? row.flyerPdfUrl
+              : null) ?? null;
+  const href =
+    variant === 'community'
+      ? communityHref
+      : externalUrl || `/builders/${builderNameToSlug(row.builderName)}`;
+  const external = !!externalUrl;
 
   const onClick = () => {
     trackEvent('builder_row_card_clicked', {
