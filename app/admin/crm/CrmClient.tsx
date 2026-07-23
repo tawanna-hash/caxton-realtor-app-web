@@ -975,18 +975,11 @@ function EditDrawer({
 
           {/* ── Status (top-level select, per spec) ─────────────────── */}
           <Section title="Status">
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Status">
-                <select value={form.status} onChange={(e) => update('status', e.target.value as AdvertiserStatus)} className={INPUT}>
-                  {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-                </select>
-              </Field>
-              <Field label="Type">
-                <select value={form.type} onChange={(e) => update('type', e.target.value as AdvertiserType)} className={INPUT}>
-                  {TYPE_OPTIONS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
-              </Field>
-            </div>
+            <Field label="Status">
+              <select value={form.status} onChange={(e) => update('status', e.target.value as AdvertiserStatus)} className={INPUT}>
+                {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+              </select>
+            </Field>
           </Section>
 
           {/* ── Section One: Company Details ─────────────────────────── */}
