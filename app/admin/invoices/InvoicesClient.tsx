@@ -67,6 +67,21 @@ export default function InvoicesClient({
     if (res.ok) setInvoices((await res.json()).invoices ?? []);
   }, [router]);
 
+  // Hard-delete a draft invoice. The API rejects anything that isn't a draft,
+  // so non-draft rows never show the Delete action. Confirm before deleting
+  // since it's irreversible.
+  const handleDeleteInvoice = useCallback(async (inv: InvoiceWithAdvertiser) => {
+    if (!confirm(`Delete draft invoice ${inv.number ?? inv.id}? This can't be undone.`)) return;
+    setError(null);
+    const res = await fetch(`/api/admin/invoices/${inv.id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      setError(j.error ?? 'Delete failed');
+      return;
+    }
+    await reloadInvoices();
+  }, [reloadInvoices]);
+
   // After picking up the inbound seed, strip the query string so a browser
   // refresh doesn't re-open the drawer. Runs once per mount.
   const cleanedRef = useRef(false);
@@ -153,7 +168,7 @@ export default function InvoicesClient({
         </select>
       </div>
 
-      <InvoiceList rows={filteredInv} onOpen={(r) => setEditInv(r)} />
+      <InvoiceList rows={filteredInv} onOpen={(r) => setEditInv(r)} onDelete={handleDeleteInvoice} />
 
       {/* Drawers */}
       {createInv && (

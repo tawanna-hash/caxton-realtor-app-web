@@ -2,7 +2,8 @@
 
 // app/admin/billing/_components/InvoiceList.tsx
 //
-// Read-only table of invoices with paid/overdue badges.
+// Read-only table of invoices with paid/overdue badges. Draft rows expose a
+// hover "Delete" action (the DELETE API only allows draft invoices).
 
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import { formatCents } from '@/lib/invoices';
@@ -10,10 +11,11 @@ import { StatusPill, PaidStamp, UnpaidBadge } from './Badges';
 import { INV_STATUS } from './constants';
 
 export function InvoiceList({
-  rows, onOpen,
+  rows, onOpen, onDelete,
 }: {
   rows: InvoiceWithAdvertiser[];
   onOpen: (r: InvoiceWithAdvertiser) => void;
+  onDelete?: (r: InvoiceWithAdvertiser) => void;
 }) {
   if (rows.length === 0) {
     return <div className="rounded-md border border-gray-200 bg-white p-10 text-center text-sm text-gray-500">No invoices yet.</div>;
@@ -32,8 +34,16 @@ export function InvoiceList({
         {rows.map((r) => {
           const isPaid = r.status === 'paid';
           const isVoid = r.status === 'void';
+          const isDraft = r.status === 'draft';
           return (
-            <button key={r.id} onClick={() => onOpen(r)} className={`w-full grid grid-cols-12 gap-3 px-4 py-3 text-left hover:bg-blue-50/40 ${isPaid ? 'bg-emerald-50/30' : ''}`}>
+            <div
+              key={r.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => onOpen(r)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(r); } }}
+              className={`group relative w-full grid grid-cols-12 gap-3 px-4 py-3 text-left hover:bg-blue-50/40 cursor-pointer ${isPaid ? 'bg-emerald-50/30' : ''}`}
+            >
               <div className="col-span-2 font-mono text-sm text-gray-700">{r.number ?? '—'}</div>
               <div className="col-span-3 min-w-0">
                 <div className="font-medium text-gray-900 truncate">{r.advertiser_name ?? '—'}</div>
@@ -51,7 +61,17 @@ export function InvoiceList({
                     : <UnpaidBadge overdue={!!r.is_overdue} />}
               </div>
               <div className="col-span-1"><StatusPill value={r.status} options={INV_STATUS} /></div>
-            </button>
+              {onDelete && isDraft && (
+                <button
+                  type="button"
+                  title="Delete draft invoice"
+                  onClick={(e) => { e.stopPropagation(); onDelete(r); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md border border-red-200 bg-white px-2 py-1 text-xs text-red-600 opacity-0 shadow-sm hover:bg-red-50 group-hover:opacity-100 focus:opacity-100"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
           );
         })}
       </div>

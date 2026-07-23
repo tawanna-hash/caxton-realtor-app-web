@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     if (advertiserId !== null) {
       rows = await sql`
         SELECT i.*, adv.name AS advertiser_name,
-          (i.status NOT IN ('paid','void') AND i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE) AS is_overdue
+          (i.status NOT IN ('paid','void','draft') AND i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE) AS is_overdue
         FROM invoices i
         LEFT JOIN advertisers adv ON adv.id = i.advertiser_id
         WHERE i.advertiser_id = ${advertiserId}
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     } else if (agreementId) {
       rows = await sql`
         SELECT i.*, adv.name AS advertiser_name,
-          (i.status NOT IN ('paid','void') AND i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE) AS is_overdue
+          (i.status NOT IN ('paid','void','draft') AND i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE) AS is_overdue
         FROM invoices i
         LEFT JOIN advertisers adv ON adv.id = i.advertiser_id
         WHERE i.agreement_id = ${agreementId}
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
     } else {
       rows = await sql`
         SELECT i.*, adv.name AS advertiser_name,
-          (i.status NOT IN ('paid','void') AND i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE) AS is_overdue
+          (i.status NOT IN ('paid','void','draft') AND i.due_date IS NOT NULL AND i.due_date < CURRENT_DATE) AS is_overdue
         FROM invoices i
         LEFT JOIN advertisers adv ON adv.id = i.advertiser_id
         ORDER BY i.created_at DESC

@@ -23,8 +23,8 @@ export type AdminNavGroup = {
  * Conventions:
  *  - "Sales" owns the ad-sales funnel end to end: Advertisers -> Inquiries
  *    (leads) -> Agreements (contracts, renewals & the orders pipeline) ->
- *    Invoices, plus the Media Kit. The legacy /admin/billing route redirects
- *    to Agreements; the duplicate /admin/ads/media-kit redirects to Media Kit.
+ *    Invoices, plus the Media Kit (canonical route /admin/ads/media-kit;
+ *    /admin/media-kit redirects to it).
  *  - "Ad Ops" holds ad inventory and placements (inventory, placements,
  *    availability). The old /admin/ads hub is reachable by URL but no longer
  *    in the nav — its children are surfaced directly here and under Sales.
@@ -41,7 +41,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Inquiries',    href: '/admin/ads/inquiries', description: 'Print / Digital / Email leads' },
       { label: 'Agreements',   href: '/admin/agreements',    description: 'Contracts, renewals & pipeline' },
       { label: 'Invoices',     href: '/admin/invoices',      description: 'Billable charges & payment status' },
-      { label: 'Media Kit',    href: '/admin/media-kit',     description: '2026 packages, rates & deadlines' },
+      { label: 'Media Kit',    href: '/admin/ads/media-kit',   description: '2026 packages, rates & deadlines' },
     ],
   },
   {

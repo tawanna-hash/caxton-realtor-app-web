@@ -52,12 +52,14 @@ export const GET = withErrorHandling(async () => {
     console.warn(`[billing-notifications] expiring fail-open: ${msg}`);
   }
 
-  // Overdue invoices: status='sent' (or any non-paid/void) past due_date.
+  // Overdue invoices: issued (status='sent' — drafts aren't overdue yet)
+  // past due_date. Drafts are excluded: they aren't issued, so a stale draft
+  // with an old due_date shouldn't inflate the billing badge.
   try {
     const rows = (await sql`
       SELECT count(*)::int AS n
         FROM invoices
-       WHERE status NOT IN ('paid', 'void')
+       WHERE status NOT IN ('paid', 'void', 'draft')
          AND due_date IS NOT NULL
          AND due_date < CURRENT_DATE
     `) as unknown as CountRow[];

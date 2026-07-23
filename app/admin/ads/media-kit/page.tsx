@@ -1,10 +1,9 @@
 // /admin/ads/media-kit
 //
-// Legacy route. The canonical Media Kit lives at /admin/media-kit (linked
-// from the "Sales" nav group). Redirect there so the old Ads-hub links and
-// any bookmarks keep working.
+// Canonical Media Kit route (rendered by MediaKitClient). The legacy
+// /admin/media-kit route redirects here. Linked from the "Sales" nav group.
 
-import { redirect } from 'next/navigation';
+import MediaKitClient from './MediaKitClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,5 +12,5 @@ export const metadata = {
 };
 
 export default function MediaKitPage() {
-  redirect('/admin/media-kit');
+  return <MediaKitClient />;
 }

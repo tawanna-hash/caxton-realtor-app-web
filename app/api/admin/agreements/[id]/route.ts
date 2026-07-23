@@ -199,6 +199,26 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     const rows = await sql`SELECT * FROM agreements WHERE id = ${id}`;
     const savedAg = rows[0] as unknown as Agreement;
 
+    // Bundle invariant: when an agreement has line items, amount_cents must
+    // equal their sum. The single-line AgreementDrawer always sends
+    // amount_cents derived from ad_rate, which clobbers a bundle's true total
+    // (e.g. an app+e-Blast bundle saved as the single e-Blast rate). Recompute
+    // from agreement_line_items so the stored total always matches the actual
+    // charges — this is what the Sign Wizard and invoices already use.
+    try {
+      const li = await sql`
+        SELECT COALESCE(SUM(amount_cents), 0)::int AS sum_cents, count(*)::int AS n
+          FROM agreement_line_items WHERE agreement_id = ${id}
+      ` as unknown as Array<{ sum_cents: number; n: number }>;
+      if (li[0] && li[0].n > 0 && li[0].sum_cents > 0 && savedAg.amount_cents !== li[0].sum_cents) {
+        await sql`UPDATE agreements SET amount_cents = ${li[0].sum_cents}, updated_at = NOW() WHERE id = ${id}`;
+        savedAg.amount_cents = li[0].sum_cents;
+        if (!updated.includes('amount_cents')) updated.push('amount_cents');
+      }
+    } catch (e) {
+      console.error('[admin/agreements PATCH] amount_cents recompute failed', errMessage(e));
+    }
+
     // Side effects on status transitions into 'signed'
     const newStatus = body.status as string | undefined;
     const isSignedTransition = newStatus === 'signed' && prevStatus !== 'signed';

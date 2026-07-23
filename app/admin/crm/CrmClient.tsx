@@ -241,6 +241,13 @@ export default function CrmClient({ initialRows }: Props) {
         <div className="flex gap-2">
           <button
             type="button"
+            onClick={() => setComposerOpen(true)}
+            className="px-4 py-2 rounded-md bg-purple-700 text-white text-sm hover:bg-purple-800"
+          >
+            Compose email
+          </button>
+          <button
+            type="button"
             onClick={() => setCreating(true)}
             className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
           >
@@ -468,13 +475,6 @@ export default function CrmClient({ initialRows }: Props) {
       )}
 
 
-      <button
-        type="button"
-        onClick={() => setComposerOpen(true)}
-        className="fixed bottom-6 right-6 z-40 rounded-md bg-purple-700 px-5 py-3 text-sm font-semibold text-white shadow-lg hover:bg-purple-800"
-      >
-        Compose email
-      </button>
       <CrmComposer
         open={composerOpen}
         onClose={() => { setComposerOpen(false); setPrefillOutreachId(null); }}
