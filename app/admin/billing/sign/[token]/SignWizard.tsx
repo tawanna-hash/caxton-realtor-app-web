@@ -9,7 +9,7 @@
 // Step 4: Billing & Payment (fully editable)
 // Step 5: Terms & Sign
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import StripePaymentBlock, { type StripePaymentHandle } from './StripePaymentBlock';
 import SignaturePad, { type SignatureValue } from './SignaturePad';
 import { useRouter } from 'next/navigation';
@@ -568,6 +568,109 @@ export default function SignWizard({
   const [signDate, setSignDate] = useState(new Date().toISOString().slice(0, 10));
   const [approving, setApproving] = useState(false);
 
+  // ── Draft persistence (survive refresh) ───────────────────────────────────
+  // Form state is plain useState, so a refresh resets everything to the `ag`
+  // defaults. Persist a client-side draft keyed by agreement id so a signer
+  // reopening/refreshing the link keeps their in-progress entries. Card data
+  // lives in Stripe's iframe and is never persisted. Cleared on successful sign
+  // and when the agreement is already approved/signed/active.
+  const DRAFT_KEY = `sign-wizard:draft:v1:${ag.id}`;
+  const [draftReady, setDraftReady] = useState(false);
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- hydrating persisted draft requires restoring state */
+    if (typeof window !== 'undefined') {
+      if (ag.status === 'signed' || ag.status === 'active' || ag.status === 'proposal_approved') {
+        try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* noop */ }
+      } else {
+        try {
+          const raw = window.localStorage.getItem(DRAFT_KEY);
+          if (raw) {
+            const d = JSON.parse(raw) as Record<string, unknown>;
+            const savedAt = typeof d.savedAt === 'number' ? d.savedAt : 0;
+            // Ignore stale drafts older than 7 days.
+            if (savedAt && Date.now() - savedAt <= 7 * 24 * 60 * 60 * 1000) {
+              const applyStr = (k: string, setter: (v: string) => void) => {
+                if (typeof d[k] === 'string') setter(d[k] as string);
+              };
+              const applyBool = (k: string, setter: (v: boolean) => void) => {
+                if (typeof d[k] === 'boolean') setter(d[k] as boolean);
+              };
+              if (typeof d.step === 'number') {
+                let s = d.step as number;
+                // Never imply payment is complete: if CC was chosen but the
+                // payment intent wasn't captured, don't restore past Step 4.
+                if (s > 4 && d.paymentType === 'Credit Card' && !d.confirmedPaymentIntentId) s = 4;
+                setStep(s);
+              }
+              applyStr('companyName', setCompanyName);
+              applyStr('repName', setRepName);
+              applyStr('advertiserEmail', setAdvertiserEmail);
+              applyStr('advertiserPhone', setAdvertiserPhone);
+              applyStr('address', setAddress);
+              applyStr('city', setCity);
+              applyStr('stateVal', setStateVal);
+              applyStr('zip', setZip);
+              applyStr('adSize', setAdSize);
+              applyStr('frequency', setFrequency);
+              applyStr('adRate', setAdRate);
+              applyStr('discount', setDiscount);
+              applyStr('adPremium', setAdPremium);
+              applyStr('pagePosition', setPagePosition);
+              applyBool('applyPagePremium', setApplyPagePremium);
+              if (d.timing && typeof d.timing === 'object') setTiming(d.timing as TimingState);
+              if (Array.isArray(d.markets)) {
+                const valid = (d.markets as unknown[]).filter(
+                  (m): m is 'austin' | 'san_antonio' => m === 'austin' || m === 'san_antonio',
+                );
+                setMarkets(new Set(valid));
+              }
+              if (d.lineStarts && typeof d.lineStarts === 'object') {
+                setLineStarts(d.lineStarts as Record<number, string>);
+              }
+              applyStr('placementStart', setPlacementStart);
+              applyStr('billTo', setBillTo);
+              applyStr('billingEmail', setBillingEmail);
+              applyStr('billingContactName', setBillingContactName);
+              applyStr('billingContactPhone', setBillingContactPhone);
+              applyStr('paymentType', setPaymentType);
+              if (typeof d.confirmedPaymentIntentId === 'string') {
+                setConfirmedPaymentIntentId(d.confirmedPaymentIntentId);
+              }
+            }
+          }
+        } catch { /* noop */ }
+      }
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+    setDraftReady(true);
+  }, [DRAFT_KEY, ag.status]);
+
+  useEffect(() => {
+    if (!draftReady || typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({
+          savedAt: Date.now(),
+          step,
+          companyName, repName, advertiserEmail, advertiserPhone, address, city, stateVal, zip,
+          adSize, frequency, adRate, discount, adPremium, pagePosition, applyPagePremium,
+          timing, markets: [...markets],
+          lineStarts, placementStart,
+          billTo, billingEmail, billingContactName, billingContactPhone, paymentType,
+          confirmedPaymentIntentId,
+        }),
+      );
+    } catch { /* noop */ }
+  }, [
+    draftReady, DRAFT_KEY,
+    step, companyName, repName, advertiserEmail, advertiserPhone, address, city, stateVal, zip,
+    adSize, frequency, adRate, discount, adPremium, pagePosition, applyPagePremium,
+    timing, markets, lineStarts, placementStart,
+    billTo, billingEmail, billingContactName, billingContactPhone, paymentType,
+    confirmedPaymentIntentId,
+  ]);
+
   // ── Computed values ────────────────────────────────────────────────────────
 
   // Auto-fill rate lookup (derive inline, no useEffect)
@@ -798,6 +901,7 @@ export default function SignWizard({
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* noop */ }
       router.push(`/admin/billing/sign/${token}/done?id=${ag.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'signing failed');
@@ -841,6 +945,7 @@ export default function SignWizard({
         try { detail = ((await res.json()) as { error?: string; detail?: string }).error || ''; } catch { /* noop */ }
         throw new Error(detail || `Approve failed (HTTP ${res.status})`);
       }
+      try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* noop */ }
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'approve failed');
