@@ -5,7 +5,7 @@
 // Create/edit drawer for a single invoice. Supports line items and a
 // manual override amount.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { InvoiceWithAdvertiser, InvoiceStatus, InvoiceLineItem } from '@/lib/invoices';
 import { formatCents, lineItemsTotal } from '@/lib/invoices';
@@ -13,6 +13,45 @@ import { DrawerShell, DrawerFooter, Section, Field } from './DrawerShell';
 import { INPUT, INV_STATUS } from './constants';
 import { formatDateISO } from './helpers';
 import type { AdvertiserOption } from './types';
+
+// Minimal shape of an agreement_line_items row, as returned by
+// GET /api/admin/agreements/[id]/line-items.
+type AgreementLineItemSeed = {
+  line_no: number;
+  channel: string | null;
+  package_label: string | null;
+  frequency: string | null;
+  quantity: number | null;
+  amount_cents: number | null;
+};
+
+function parseWeeks(freq: string | null | undefined): number {
+  if (!freq) return 1;
+  const m = String(freq).match(/(\d+)/);
+  return m ? Math.max(1, parseInt(m[1], 10)) : 1;
+}
+
+function channelLabel(ch: string | null | undefined): string {
+  return ch ? ch.charAt(0).toUpperCase() + ch.slice(1) : '';
+}
+
+// Map an agreement bundle line to an invoice line item: description mirrors
+// the CRM contract panel (e.g. "Feed Top Banner, 4 weeks x 1 market"), qty is
+// the frequency in weeks, and the unit price is the line total / weeks
+// (app Top Banner $380 / 4w = $95; e-Blast $600 / 4w = $150).
+function agreementLineToInvoiceItem(li: AgreementLineItemSeed): InvoiceLineItem {
+  const weeks = parseWeeks(li.frequency);
+  const markets = li.quantity && li.quantity > 0 ? li.quantity : 1;
+  const label = (li.package_label && li.package_label.trim())
+    ? li.package_label
+    : (channelLabel(li.channel) || `Line ${li.line_no}`);
+  const total = li.amount_cents ?? 0;
+  return {
+    description: `${label}, ${weeks} weeks \u00d7 ${markets} market${markets > 1 ? 's' : ''}`,
+    qty: weeks,
+    unit_cents: Math.round(total / weeks),
+  };
+}
 
 export function InvoiceDrawer({
   existing, advertisers, agreements, seed, onClose, onSaved, onError,
@@ -32,18 +71,48 @@ export function InvoiceDrawer({
     : seed?.amount_cents != null ? (seed.amount_cents / 100).toString()
     : '';
 
+  // Net 20: default a new invoice's due date to creation date + 20 days.
+  // new Date() in render is permitted (cf. AgreementDrawer); Date.now() is not.
+  const dueIn20 = new Date();
+  dueIn20.setDate(dueIn20.getDate() + 20);
+  const defaultDueDate = formatDateISO(dueIn20);
+
   const [form, setForm] = useState({
     advertiser_id: initialAdvertiserId as number | null,
     agreement_id: initialAgreementId,
     status: (existing?.status ?? 'draft') as InvoiceStatus,
     amount_dollars: initialAmountDollars,
     tax_dollars: existing?.tax_cents != null ? (existing.tax_cents / 100).toString() : '0',
-    due_date: existing?.due_date ? formatDateISO(existing.due_date as string | Date) : '',
+    due_date: existing?.due_date
+      ? formatDateISO(existing.due_date as string | Date)
+      : defaultDueDate,
     memo: existing?.memo ?? (seed ? 'Generated from agreement' : ''),
     line_items: existing?.line_items ?? [] as InvoiceLineItem[],
   });
   const [saving, setSaving] = useState(false);
   const isCreate = !existing;
+
+  // Pre-populate line items from the linked agreement so a bundle (e.g. app
+  // Top Banner + e-Blast) itemizes into the invoice instead of a flat amount.
+  // Only fills when empty (never clobbers user edits) and lets the lines
+  // drive the total by clearing the manual override.
+  useEffect(() => {
+    if (!isCreate) return;
+    const aid = form.agreement_id;
+    if (!aid) return;
+    let alive = true;
+    fetch(`/api/admin/agreements/${aid}/line-items`)
+      .then((r) => (r.ok ? r.json() : { lineItems: [] }))
+      .then((d: { lineItems?: AgreementLineItemSeed[] }) => {
+        if (!alive) return;
+        const items = (d.lineItems ?? []).map(agreementLineToInvoiceItem);
+        if (items.length === 0) return;
+        setForm((f) => (f.line_items.length > 0 ? f : { ...f, line_items: items, amount_dollars: '' }));
+      })
+      .catch(() => { /* best-effort; manual amount remains */ });
+    return () => { alive = false; };
+  }, [isCreate, form.agreement_id]);
+
 
   const update = <K extends keyof typeof form>(k: K, v: typeof form[K]) => setForm((f) => ({ ...f, [k]: v }));
 
