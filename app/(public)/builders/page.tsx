@@ -19,6 +19,7 @@ import { AdSlot } from '@/components/ads/AdSlot';
 import { listBuilderInventory } from '@/lib/builder-inventory';
 import { summarizeBuilders } from '@/lib/builder-summary';
 import { getServerPub } from '@/lib/publication';
+import BuilderDeveloperFloater from '@/components/builders/BuilderDeveloperFloater';
 
 export const dynamic = 'force-dynamic';
 
@@ -130,6 +131,12 @@ export default async function BuildersHubPage() {
           </section>
         )}
       </div>
+      <BuilderDeveloperFloater
+        downloadHref="/api/inventory/pdf"
+        backHref="/builders"
+        page="builders"
+        shareTitle="Builders & Developers — Realty News Now"
+      />
     </main>
   );
 }

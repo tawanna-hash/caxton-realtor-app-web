@@ -19,6 +19,7 @@ import BuilderInventoryRowCard from '@/components/builders/BuilderInventoryRowCa
 import BuildersBreadcrumb from '@/components/BuildersBreadcrumb';
 import PageTitle from '@/components/ui/PageTitle';
 import { AdSlot } from '@/components/ads/AdSlot';
+import BuilderDeveloperFloater from '@/components/builders/BuilderDeveloperFloater';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,6 +99,12 @@ export default async function Page({ searchParams }: PageProps) {
             </ul>
           )}
         </div>
+        <BuilderDeveloperFloater
+          downloadHref="/api/inventory/pdf"
+          backHref="/inventory"
+          page="inventory"
+          shareTitle="Move-in Ready & Promotions — Realty News Now"
+        />
       </main>
     </>
   );
