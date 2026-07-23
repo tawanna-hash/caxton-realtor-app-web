@@ -504,27 +504,31 @@ export default function SignWizard({
   const isNonPrint = channel !== 'print';
   const editableLineItems = lineItems.filter((li) => li.channel === 'app' || li.channel === 'email');
   const hasDateEditableLines = editableLineItems.length > 0;
-  const editableStarts = Array.from(
-    new Set(editableLineItems.map((li) => li.start_date).filter((d): d is string => !!d)),
-  ).sort();
+  // Per-line placement start dates (bundle case). Each app / e-Blast line gets
+  // its own picker — an app run and an e-Blast send may start on different days.
+  const [lineStarts, setLineStarts] = useState<Record<number, string>>(() => {
+    const m: Record<number, string> = {};
+    for (const li of editableLineItems) m[li.line_no] = li.start_date ?? '';
+    return m;
+  });
+  const setLineStart = (lineNo: number, v: string) =>
+    setLineStarts((prev) => ({ ...prev, [lineNo]: v }));
+  // Single-line (non-bundle) agreement: one placement start on the agreement row.
   const [placementStart, setPlacementStart] = useState<string>(
-    editableStarts.length === 1
-      ? editableStarts[0]
-      : (isSingleLine && isNonPrint ? isoDate(ag.start_date) : ''),
+    isSingleLine && isNonPrint ? isoDate(ag.start_date) : '',
   );
-  // Resolved line items: app/email lines adopt placementStart; print unchanged.
+  // Resolved line items: app/email lines adopt their per-line start; print unchanged.
   const displayLines = lineItems.map((li) => {
-    if (!placementStart) return li;
-    if (li.channel === 'email') return { ...li, start_date: placementStart, end_date: placementStart };
-    if (li.channel === 'app') return { ...li, start_date: placementStart, end_date: computeAppEnd(placementStart, li) };
+    const start = lineStarts[li.line_no];
+    if (!start) return li;
+    if (li.channel === 'email') return { ...li, start_date: start, end_date: start };
+    if (li.channel === 'app') return { ...li, start_date: start, end_date: computeAppEnd(start, li) };
     return li;
   });
   // Patches sent to the server for app/email bundle lines (Step 3).
-  const lineItemDatePatches = placementStart
-    ? displayLines
-        .filter((li) => (li.channel === 'app' || li.channel === 'email') && li.start_date && li.end_date)
-        .map((li) => ({ line_no: li.line_no, start_date: li.start_date, end_date: li.end_date }))
-    : [];
+  const lineItemDatePatches = displayLines
+    .filter((li) => (li.channel === 'app' || li.channel === 'email') && li.start_date && li.end_date)
+    .map((li) => ({ line_no: li.line_no, start_date: li.start_date, end_date: li.end_date }));
   // Single-line agreement resolved window. Restricted to email + app (digital
   // cadence isn't guaranteed to be 4wk/3mo-style, so skip it for now).
   const singleLineEditable = isSingleLine && isNonPrint && (channel === 'email' || channel === 'app');
@@ -1161,19 +1165,26 @@ export default function SignWizard({
                 Bundled quote · {lineItems.length} line items
               </div>
 
-              {/* Placement start date — advertiser-chosen; each app line's end auto-computes. */}
+              {/* Placement start dates — one per app/e-Blast line (ends auto-compute). */}
               {hasDateEditableLines && (
-                <div className="mb-3 pb-3 border-b border-purple-100">
-                  <label htmlFor="placementStart" className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">
-                    Placement start date
-                  </label>
-                  <input
-                    id="placementStart"
-                    type="date"
-                    value={placementStart}
-                    onChange={(e) => setPlacementStart(e.target.value)}
-                    className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  />
+                <div className="mb-3 pb-3 border-b border-purple-100 space-y-2">
+                  {editableLineItems.map((li) => (
+                    <div key={li.line_no}>
+                      <label
+                        htmlFor={`placementStart-${li.line_no}`}
+                        className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1"
+                      >
+                        {li.package_label} — start date
+                      </label>
+                      <input
+                        id={`placementStart-${li.line_no}`}
+                        type="date"
+                        value={lineStarts[li.line_no] ?? ''}
+                        onChange={(e) => setLineStart(li.line_no, e.target.value)}
+                        className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      />
+                    </div>
+                  ))}
                 </div>
               )}
 
