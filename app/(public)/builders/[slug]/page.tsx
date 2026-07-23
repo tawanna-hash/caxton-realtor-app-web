@@ -46,6 +46,15 @@ type Bucketed = {
   promotions: BuilderInventoryRow[];
 };
 
+function pickBuilderWebsiteUrl(rows: BuilderInventoryRow[]): string | null {
+  const isPdf = (u: string | null | undefined) =>
+    !!u && u.toLowerCase().endsWith('.pdf');
+  for (const r of rows) {
+    if (r.sourceUrl && !isPdf(r.sourceUrl)) return r.sourceUrl;
+  }
+  return null;
+}
+
 function bucketRows(rows: BuilderInventoryRow[]): Bucketed {
   const out: Bucketed = { communities: [], listings: [], promotions: [] };
   for (const r of rows) {
@@ -94,6 +103,11 @@ export default async function Page({ params }: PageProps) {
     bucketed.communities.length +
     bucketed.listings.length +
     bucketed.promotions.length;
+
+  // Pick the builder's website URL from the first inventory row that has a
+  // non-PDF source_url (the actual community/listing page on the builder's
+  // site). Powers the "Website" pill in the floater.
+  const websiteUrl = pickBuilderWebsiteUrl(rows);
 
   return (
     <main className="min-h-screen bg-white">
@@ -153,7 +167,7 @@ export default async function Page({ params }: PageProps) {
         />
       </div>
 
-      <BuilderDetailFloater builderName={builderName} slug={slug} />
+      <BuilderDetailFloater builderName={builderName} slug={slug} websiteUrl={websiteUrl} />
     </main>
   );
 }

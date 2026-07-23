@@ -24,9 +24,16 @@ import { openExternal } from '@/lib/native/external-link';
 type Props = {
   builderName: string;
   slug: string;
+  // Builder's website URL (derived from the first non-PDF source_url across
+  // their inventory rows). When present, a "Website" pill opens it externally.
+  websiteUrl?: string | null;
 };
 
-export default function BuilderDetailFloater({ builderName, slug }: Props) {
+export default function BuilderDetailFloater({
+  builderName,
+  slug,
+  websiteUrl,
+}: Props) {
   const router = useRouter();
 
   const handleBack = () => {
@@ -36,6 +43,12 @@ export default function BuilderDetailFloater({ builderName, slug }: Props) {
     } else {
       router.push('/builders');
     }
+  };
+
+  const handleWebsite = () => {
+    if (!websiteUrl) return;
+    trackEvent('builder_website_pill_clicked', { builder_name: builderName, slug });
+    void openExternal(websiteUrl);
   };
 
   const handleDownload = () => {
@@ -77,6 +90,23 @@ export default function BuilderDetailFloater({ builderName, slug }: Props) {
       onClick: handleBack,
       icon: <path d="m15 18-6-6 6-6" />,
     },
+    ...(websiteUrl
+      ? [
+          {
+            key: 'website',
+            label: 'Website',
+            ariaLabel: 'Visit builder website',
+            onClick: handleWebsite,
+            icon: (
+              <>
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </>
+            ),
+          },
+        ]
+      : []),
     {
       key: 'download',
       label: 'Listings',
