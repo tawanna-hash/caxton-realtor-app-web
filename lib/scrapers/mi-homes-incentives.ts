@@ -78,7 +78,11 @@ function decodeEntities(s: string): string {
 function stripTitleTail(raw: string): string {
   // "2026 FHA Bouquet of Homes - Greater Austin - M/I Homes" → "2026 FHA Bouquet of Homes"
   // Also handles "Higher Standards - Greater San Antonio - M/I Homes"
-  return raw.replace(/\s*-\s*Greater\s+\w[\w\s]*\s*-\s*M\/I Homes\s*$/i, '').trim();
+  // and the generic "New Home Incentives in Austin - M/I Homes" tail.
+  return raw
+    .replace(/\s*-\s*Greater\s+\w[\w\s]*\s*-\s*M\/I Homes\s*$/i, '')
+    .replace(/\s*-\s*M\/I Homes\s*$/i, '')
+    .trim();
 }
 
 function classifyPromoType(title: string, description: string): PromoType {
@@ -161,15 +165,36 @@ async function parseDetail(url: string, market: Market): Promise<UpsertScrapedIn
   const rawTitle = metaContent($, 'og:title');
   const description = metaContent($, 'og:description');
   const thumb = metaContent($, 'og:image');
-  if (!rawTitle) return null;
 
-  const title = stripTitleTail(rawTitle);
+  // Prefer the detail page's real promo headline over the generic og:title
+  // (og:title is "New Home Incentives in Austin - M/I Homes").
+  const headline = $('h1.single-incentive__headline').first().text().trim();
+  const title = headline || stripTitleTail(rawTitle ?? '');
+  if (!title) return null;
+
   const slug = slugFromUrl(url, market);
-  // First <h3> typically holds the date range
-  const h3Text = $('h3').first().text().trim();
-  const [startsAt, expiresAt] = parseDateRange(h3Text);
 
-  const promoType = classifyPromoType(title, description ?? '');
+  // Date range: first <h3> whose text looks like a date range. Robust against
+  // nav/footer <h3>s that may appear before the content one.
+  let dateText = '';
+  $('h3').each((_, el) => {
+    if (dateText) return;
+    const t = $(el).text().trim();
+    if (/\d{4}/.test(t) && /[A-Za-z]+\s+\d/.test(t)) dateText = t;
+  });
+  const [startsAt, expiresAt] = parseDateRange(dateText);
+
+  // Participating communities — server-rendered .featured-grid-title list.
+  const communities: string[] = [];
+  $('.featured-grid-title').each((_, el) => {
+    const n = decodeEntities($(el).text());
+    if (n && !communities.includes(n)) communities.push(n);
+  });
+  const enrichedDescription = communities.length
+    ? `${description ?? ''}\n\nParticipating communities: ${communities.join(', ')}`.trim()
+    : description;
+
+  const promoType = classifyPromoType(title, enrichedDescription ?? '');
 
   return {
     externalId: `mi-homes-incentive/${market.segment}/${slug}`,
@@ -181,7 +206,7 @@ async function parseDetail(url: string, market: Market): Promise<UpsertScrapedIn
     title,
     city: market.cityLabel,
     state: 'TX',
-    description,
+    description: enrichedDescription,
     bedsMin: null, bedsMax: null,
     bathsMin: null, bathsMax: null,
     sqftMin: null, sqftMax: null,
