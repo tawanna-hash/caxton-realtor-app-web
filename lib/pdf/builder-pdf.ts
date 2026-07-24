@@ -48,6 +48,24 @@ function fmtSqft(min: number | null, max: number | null): string | null {
   return `${f((min ?? max) as number)} sqft`;
 }
 
+// pdf-lib's StandardFonts use WinAnsi encoding, which can't represent
+// many Unicode code points — e.g. the non-breaking hyphen U+2011 that shows
+// up in builder/row data. Any such char throws "WinAnsi cannot encode" at
+// draw time and 500s the whole PDF route. Normalize to WinAnsi-safe
+// (ASCII + Latin-1) before every drawText / widthOfTextAtSize call.
+function sanitizePdfText(input: unknown): string {
+  if (input == null) return '';
+  return String(input)
+    .replace(/\u00AD/g, '') // soft hyphen
+    .replace(/[\u2010\u2011]/g, '-') // hyphen / non-breaking hyphen
+    .replace(/[\u2013\u2014]/g, '-') // en dash / em dash
+    .replace(/[\u2018\u2019\u201A]/g, "'")
+    .replace(/[\u201C\u201D\u201E]/g, '"')
+    .replace(/\u2026/g, '...')
+    .replace(/[\u00A0\u202F\u2007\u2009\u200A]/g, ' ')
+    .replace(/[^\x20-\x7E\xA1-\xFF]/g, '?');
+}
+
 // ─── Word-wrap a string into lines that fit `maxWidth` ───────────────────
 function wrapText(
   text: string,
@@ -55,7 +73,8 @@ function wrapText(
   size: number,
   maxWidth: number,
 ): string[] {
-  const words = text.split(/\s+/);
+  const src = sanitizePdfText(text);
+  const words = src.split(/\s+/);
   const lines: string[] = [];
   let current = '';
   for (const w of words) {
@@ -161,7 +180,7 @@ function drawLink(ctx: Ctx, url: string): void {
   const lineGap = 2;
   ensureSpace(ctx, size + lineGap);
   const maxWidth = CONTENT_W;
-  let display = url;
+  let display = sanitizePdfText(url);
   if (ctx.font.widthOfTextAtSize(display, size) > maxWidth) {
     while (display.length > 1 && ctx.font.widthOfTextAtSize(`${display}…`, size) > maxWidth) {
       display = display.slice(0, -1);
@@ -277,7 +296,7 @@ function drawHeader(
 
 function drawFooter(ctx: Ctx, label: string): void {
   // Footer drawn directly — no auto-paginate.
-  const text = `${label}  ·  Page ${ctx.pageNum}`;
+  const text = sanitizePdfText(`${label}  ·  Page ${ctx.pageNum}`);
   const width = ctx.font.widthOfTextAtSize(text, 8);
   ctx.page.drawText(text, {
     x: PAGE_W - MARGIN - width,
@@ -348,8 +367,8 @@ export async function generateBuilderPdf(input: BuilderPdfInput): Promise<Uint8A
   const pages = doc.getPages();
   pages.forEach((p, i) => {
     const text = `Realty News Now  ·  ${input.builderName}  ·  Page ${i + 1} of ${pages.length}`;
-    const width = font.widthOfTextAtSize(text, 8);
-    p.drawText(text, {
+    const width = font.widthOfTextAtSize(sanitizePdfText(text), 8);
+    p.drawText(sanitizePdfText(text), {
       x: PAGE_W - MARGIN - width,
       y: MARGIN / 2,
       font,
@@ -417,8 +436,8 @@ export async function generateCommunitiesPdf(
   const pages = doc.getPages();
   pages.forEach((p, i) => {
     const text = `Realty News Now  ·  New Home Communities  ·  Page ${i + 1} of ${pages.length}`;
-    const width = font.widthOfTextAtSize(text, 8);
-    p.drawText(text, {
+    const width = font.widthOfTextAtSize(sanitizePdfText(text), 8);
+    p.drawText(sanitizePdfText(text), {
       x: PAGE_W - MARGIN - width,
       y: MARGIN / 2,
       font,
@@ -515,8 +534,8 @@ export async function generateInventoryPdf(
   const pages = doc.getPages();
   pages.forEach((p, i) => {
     const text = `Realty News Now  ·  Inventory & Promotions  ·  Page ${i + 1} of ${pages.length}`;
-    const width = font.widthOfTextAtSize(text, 8);
-    p.drawText(text, {
+    const width = font.widthOfTextAtSize(sanitizePdfText(text), 8);
+    p.drawText(sanitizePdfText(text), {
       x: PAGE_W - MARGIN - width,
       y: MARGIN / 2,
       font,
