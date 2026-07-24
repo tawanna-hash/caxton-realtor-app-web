@@ -75,6 +75,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries' },
       { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
       { label: 'Promotions', href: '/admin/inventory/promotions', description: 'Builder offers & rate buydowns' },
+      { label: 'Advertiser Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility' },
       { label: 'SABOR Report', href: '/admin/content/saborreport', description: 'San Antonio MLS monthly report card' },
       { label: 'ABOR Report', href: '/admin/content/realtylinereport', description: 'Austin (ABOR) MLS monthly report card' },
       { label: 'Notifications', href: '/admin/notifications', description: 'Web push to subscribers' },
