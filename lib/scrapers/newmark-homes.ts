@@ -159,10 +159,9 @@ export async function fetchNewmarkCommunities(): Promise<
     const name = $i.find('h4').first().text().trim() || slug;
     const priceRangeText = $i.find('.pricepoint').text().trim() || null;
 
-    // Visit link is /new-homes/austin/{city}/{slug} -> city segment.
+    // Visit link is /new-homes/austin/{city}/{slug} -> city is segment [2].
     const visitHref = $i.find('.visit a').attr('href') || '';
     const visitParts = visitHref.split('/').filter(Boolean);
-    const city = formatCity(visitParts[3]) || null;
 
     // Location cell: street on line 1, "City, ST zip" on line 2, phone in a div.
     const $loc = $i.find('.location').clone();
@@ -174,10 +173,14 @@ export async function fetchNewmarkCommunities(): Promise<
       .trim() ?? '';
     const locLines = locText.split(/\n+/).map((s) => s.trim()).filter(Boolean);
     const cszRe = /,\s*([A-Z]{2})\s*(\d{5})?\b/;
+    // City/state/zip live on the line that matches "..., ST #####".
+    const cszLine = locLines.find((l) => cszRe.test(l)) || '';
+    const cityFromLoc = cszLine.split(',')[0]?.trim() || null;
+    const city = cityFromLoc || formatCity(visitParts[2]) || 'Austin';
     // Street = first line that isn't a city/state/zip line.
     const address =
       locLines.find((l) => !cszRe.test(l) && l.length > 0) || null;
-    const state = (locText.match(cszRe)?.[1] || 'TX').toUpperCase();
+    const state = (cszLine.match(cszRe)?.[1] || 'TX').toUpperCase();
     const phoneMatch = $i
       .find('.location div')
       .first()
