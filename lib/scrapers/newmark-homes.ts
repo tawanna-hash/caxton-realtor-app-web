@@ -526,7 +526,8 @@ async function fetchHomeDetail(sourceUrl: string): Promise<HomeDetail | null> {
   // (lazy-loaded via data-src). Absolutize for our <img> embed.
   const $fp = $('table.floorplanFiles img[alt="Floor Plan"]').first();
   const fpSrc = $fp.attr('data-src') || $fp.attr('src') || '';
-  if (fpSrc) extraDetails._floorplanUrl = absUrl(fpSrc);
+  const fpAbs = absUrl(fpSrc);
+  if (fpAbs) extraDetails._floorplanUrl = fpAbs;
 
   if (gallery.length === 0 && !description && Object.keys(extraDetails).length === 0)
     return null;
