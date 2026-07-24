@@ -1,32 +1,45 @@
 'use client';
 
 // InventoryBrowser — NewHomeSource-style search filters for the
-// /inventory directory. Owns ALL filtering client-side so toggling
-// Beds / Baths / Price / Builder / City / Promo-type / sort is instant
-// (no full page reload). Mirrors the filter dimensions from the
-// NewHomeSource community-search UI, restricted to fields the app's
-// builder_inventory table actually stores:
+// /inventory and /builders directories. Owns ALL filtering client-side so
+// toggling Beds / Baths / Price / Builder / City / Promo-type / sort is
+// instant (no full page reload).
+//
+// Filter state is seeded from the URL (parsed server-side by the host page
+// and passed in as initialFilters/initialSort — keeps SSR + hydration in
+// sync) and synced back to the URL via history.replaceState on every
+// change. That makes a filtered view shareable and lets the floater's
+// Download-results button append the same params to the PDF endpoint.
+//
+// Filter dimensions (restricted to fields builder_inventory stores):
+//   - Builder               (builder_name)          → dropdown in the sticky bar
 //   - Bedrooms / Bathrooms  (beds_max / baths_max)  → segmented "n+"
 //   - Price range           (price_min / price_max) → presets + custom min/max
-//   - Builder               (builder_name)          → select (hidden when ?builder= scopes the page)
 //   - City                  (city)                  → select
-//   - Promo type            (promo_type)            → select (promotions only)
-//   - Kind                  (listing | promotion)  → top tabs
+//   - Promo type            (promo_type)            → select
 //   - Sort                  featured / price / newest
-// Amenities, 55+, garages, stories, etc. have no backing data column and
-// are intentionally omitted (would surface empty filters).
+// Listings and promotions are shown together; each card renders by its own
+// row.kind. The matching/filtering/sorting logic lives in
+// @/lib/inventory-filters and is shared with /api/inventory/pdf.
 //
-// Every filter change fires `inventory_filter_clicked` with
-// { filter, value } so the existing admin metrics dashboard
-// (filter_usage breakdown by properties.filter) picks it up.
+// Every filter change fires `inventory_filter_clicked` with { filter, value }
+// so the existing admin metrics dashboard (filter_usage breakdown by
+// properties.filter) picks it up.
 
 import { useId, useMemo, useState } from 'react';
-import type { BuilderInventoryRow, Kind, PromoType } from '@/lib/builder-inventory';
+import type { BuilderInventoryRow, PromoType } from '@/lib/builder-inventory';
+import {
+  activeFilterCount,
+  DEFAULT_FILTERS,
+  matchesFilter,
+  serializeFilters,
+  sortRows,
+  type InventoryFilterState,
+  type SortKey,
+} from '@/lib/inventory-filters';
 import { trackEvent } from '@/app/posthog-provider';
 import BuilderInventoryRowCard from '@/components/builders/BuilderInventoryRowCard';
 import PageTitle from '@/components/ui/PageTitle';
-
-type SortKey = 'featured' | 'price-asc' | 'price-desc' | 'newest';
 
 const BED_BATH_OPTS = [0, 1, 2, 3, 4, 5];
 
@@ -72,88 +85,10 @@ function parseNum(raw: string): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-interface FilterState {
-  beds: number; // 0 = Any
-  baths: number; // 0 = Any
-  priceMin: number | null;
-  priceMax: number | null;
-  builder: string | null;
-  city: string | null;
-  promo: PromoType | null;
-}
-
-const DEFAULT_FILTERS: FilterState = {
-  beds: 0,
-  baths: 0,
-  priceMin: null,
-  priceMax: null,
-  builder: null,
-  city: null,
-  promo: null,
-};
-
-function matchesFilter(row: BuilderInventoryRow, f: FilterState, kind: Kind): boolean {
-  if (row.kind !== kind) return false;
-  if (f.beds > 0 && (row.bedsMax == null || row.bedsMax < f.beds)) return false;
-  if (f.baths > 0 && (row.bathsMax == null || row.bathsMax < f.baths)) return false;
-  if (f.builder && row.builderName !== f.builder) return false;
-  if (f.city && row.city !== f.city) return false;
-  if (f.promo && row.promoType !== f.promo) return false;
-  if (f.priceMin != null || f.priceMax != null) {
-    const rpMin = row.priceMin ?? row.priceMax;
-    const rpMax = row.priceMax ?? row.priceMin;
-    // Drop rows with no price at all once a price filter is active.
-    if (rpMin == null || rpMax == null) return false;
-    if (f.priceMin != null && rpMax < f.priceMin) return false;
-    if (f.priceMax != null && rpMin > f.priceMax) return false;
-  }
-  return true;
-}
-
-function rowTime(r: BuilderInventoryRow): number {
-  // created_at arrives from Neon (@neondatabase/serverless) as a Date for
-  // TIMESTAMPTZ columns — NOT a string. Date has no localeCompare, so we
-  // normalize to a numeric timestamp (works for Date | string | number).
-  const t = new Date(r.createdAt as unknown as string).getTime();
-  return Number.isFinite(t) ? t : 0;
-}
-
-function sortRows(rows: BuilderInventoryRow[], sort: SortKey): BuilderInventoryRow[] {
-  const arr = [...rows];
-  switch (sort) {
-    case 'price-asc':
-      arr.sort((a, b) => (a.priceMin ?? Infinity) - (b.priceMin ?? Infinity));
-      break;
-    case 'price-desc':
-      arr.sort((a, b) => (b.priceMin ?? -Infinity) - (a.priceMin ?? -Infinity));
-      break;
-    case 'newest':
-      arr.sort((a, b) => rowTime(b) - rowTime(a));
-      break;
-    default:
-      arr.sort(
-        (a, b) =>
-          Number(b.featured) - Number(a.featured) || rowTime(b) - rowTime(a),
-      );
-  }
-  return arr;
-}
-
-function activeCount(f: FilterState): number {
-  return (
-    (f.beds > 0 ? 1 : 0) +
-    (f.baths > 0 ? 1 : 0) +
-    (f.priceMin != null || f.priceMax != null ? 1 : 0) +
-    (f.builder ? 1 : 0) +
-    (f.city ? 1 : 0) +
-    (f.promo ? 1 : 0)
-  );
-}
-
 interface Props {
   rows: BuilderInventoryRow[];
-  initialKind: Kind;
-  builder: string | null;
+  initialFilters?: InventoryFilterState;
+  initialSort?: SortKey;
   // When true, the component omits its own <header> (title + lede) — use on
   // pages that already render a page title above it (e.g. /builders hub).
   hideHeader?: boolean;
@@ -161,18 +96,17 @@ interface Props {
 
 export default function InventoryBrowser({
   rows,
-  initialKind,
-  builder,
+  initialFilters = DEFAULT_FILTERS,
+  initialSort = 'featured',
   hideHeader = false,
 }: Props) {
-  const [kind, setKind] = useState<Kind>(initialKind);
-  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
-  const [sort, setSort] = useState<SortKey>('featured');
+  const [filters, setFilters] = useState<InventoryFilterState>(initialFilters);
+  const [sort, setSort] = useState<SortKey>(initialSort);
   const [panelOpen, setPanelOpen] = useState(true);
   const priceId = useId();
 
   // Distinct filter option sources (derived from the full row set so the
-  // menus reflect what's actually available across both kinds).
+  // menus reflect what's actually available).
   const builderOptions = useMemo(
     () => Array.from(new Set(rows.map((r) => r.builderName).filter(Boolean))).sort(),
     [rows],
@@ -190,115 +124,82 @@ export default function InventoryBrowser({
   );
 
   const filtered = useMemo(
-    () => sortRows(rows.filter((r) => matchesFilter(r, filters, kind)), sort),
-    [rows, filters, kind, sort],
+    () => sortRows(rows.filter((r) => matchesFilter(r, filters)), sort),
+    [rows, filters, sort],
   );
 
-  const count = activeCount(filters);
+  const count = activeFilterCount(filters);
 
   const track = (filter: string, value: string) =>
-    trackEvent('inventory_filter_clicked', {
-      filter,
-      value,
-      builder_name: builder ?? null,
-      kind,
+    trackEvent('inventory_filter_clicked', { filter, value });
+
+  // Keep the URL in sync (replaceState — no refetch) so the view is
+  // shareable and Download-results picks up the current params.
+  const syncUrl = (next: InventoryFilterState, nextSort: SortKey) => {
+    if (typeof window === 'undefined') return;
+    const qs = serializeFilters(next, nextSort);
+    const path = window.location.pathname;
+    window.history.replaceState({}, '', qs ? `${path}${qs}` : path);
+  };
+
+  const update = (patch: Partial<InventoryFilterState>, filter: string, value: string) => {
+    setFilters((prev) => {
+      const next = { ...prev, ...patch };
+      syncUrl(next, sort);
+      return next;
     });
-
-  const onKind = (k: Kind) => {
-    if (k === kind) return;
-    setKind(k);
-    // Reset promo filter when leaving promotions (it only applies there).
-    if (k === 'listing' && filters.promo) {
-      setFilters((f) => ({ ...f, promo: null }));
-    }
-    track('kind', k);
-    // Keep the URL shareable without triggering a refetch.
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      if (k === 'listing') url.searchParams.delete('kind');
-      else url.searchParams.set('kind', 'promotion');
-      window.history.replaceState({}, '', url.toString());
-    }
+    track(filter, value);
   };
 
-  const onBeds = (n: number) => {
-    setFilters((f) => ({ ...f, beds: n }));
-    track('beds', n === 0 ? 'any' : `${n}+`);
-  };
-  const onBaths = (n: number) => {
-    setFilters((f) => ({ ...f, baths: n }));
-    track('baths', n === 0 ? 'any' : `${n}+`);
-  };
-  const onBuilder = (v: string) => {
-    const val = v || null;
-    setFilters((f) => ({ ...f, builder: val }));
-    track('builder', v || 'any');
-  };
-  const onCity = (v: string) => {
-    const val = v || null;
-    setFilters((f) => ({ ...f, city: val }));
-    track('city', v || 'any');
-  };
-  const onPromo = (v: string) => {
-    const val = (v || null) as PromoType | null;
-    setFilters((f) => ({ ...f, promo: val }));
-    track('promo_type', v || 'any');
-  };
+  const onBuilder = (v: string) => update({ builder: v || null }, 'builder', v || 'any');
+  const onBeds = (n: number) => update({ beds: n }, 'beds', n === 0 ? 'any' : `${n}+`);
+  const onBaths = (n: number) => update({ baths: n }, 'baths', n === 0 ? 'any' : `${n}+`);
+  const onCity = (v: string) => update({ city: v || null }, 'city', v || 'any');
+  const onPromo = (v: string) =>
+    update({ promo: (v || null) as PromoType | null }, 'promo_type', v || 'any');
+
   const onPreset = (p: { min: number | null; max: number | null }) => {
-    setFilters((f) => ({ ...f, priceMin: p.min, priceMax: p.max }));
-    const label =
-      p.min == null && p.max == null
-        ? 'any'
-        : p.max == null
-          ? `${fmtMoney(p.min!)}+`
-          : p.min == null
-            ? `under ${fmtMoney(p.max)}`
-            : `${fmtMoney(p.min)}-${fmtMoney(p.max)}`;
-    track('price', label);
+    update({ priceMin: p.min, priceMax: p.max }, 'price', presetLabel(p));
   };
   const onPriceMin = (raw: string) => {
     const n = parseNum(raw);
-    setFilters((f) => ({ ...f, priceMin: n }));
-    if (n != null || raw === '') track('price_min', n == null ? 'any' : fmtMoney(n));
+    if (n != null || raw === '') {
+      update({ priceMin: n }, 'price_min', n == null ? 'any' : fmtMoney(n));
+    } else {
+      setFilters((prev) => ({ ...prev, priceMin: n }));
+    }
   };
   const onPriceMax = (raw: string) => {
     const n = parseNum(raw);
-    setFilters((f) => ({ ...f, priceMax: n }));
-    if (n != null || raw === '') track('price_max', n == null ? 'any' : fmtMoney(n));
+    if (n != null || raw === '') {
+      update({ priceMax: n }, 'price_max', n == null ? 'any' : fmtMoney(n));
+    } else {
+      setFilters((prev) => ({ ...prev, priceMax: n }));
+    }
   };
   const onSort = (v: string) => {
-    setSort(v as SortKey);
+    const nextSort = v as SortKey;
+    setSort(nextSort);
+    syncUrl(filters, nextSort);
     track('sort', v);
   };
 
   const clearAll = () => {
     setFilters(DEFAULT_FILTERS);
+    syncUrl(DEFAULT_FILTERS, sort);
     track('clear', 'all');
   };
 
-  const heading = kind === 'promotion' ? 'Promotions' : 'Move-in Ready Homes';
-  const noun = kind === 'promotion' ? 'promotion' : 'home';
+  const heading = 'Move-in Ready & Promotions';
+  const noun = 'listing';
 
   return (
     <div>
       {!hideHeader && (
         <header className="mb-5">
-          {builder && (
-            <div className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">
-              {builder}
-            </div>
-          )}
-          <PageTitle size="md" className={builder ? 'mt-2' : ''}>
-            {builder ? `${builder} ${heading}` : heading}
-          </PageTitle>
+          <PageTitle size="md">{heading}</PageTitle>
           <p className="text-base text-gray-700 font-light leading-relaxed mt-3">
-            {kind === 'promotion'
-              ? builder
-                ? `Current promotions from ${builder}.`
-                : 'Current incentives, rate buy-downs, and limited-time offers from our builder partners.'
-              : builder
-                ? `Move-in ready homes available now from ${builder}.`
-                : 'Specific homes available now from builder partners.'}
+            Move-in ready homes and current promotions from our builder partners.
           </p>
         </header>
       )}
@@ -310,35 +211,22 @@ export default function InventoryBrowser({
         </h2>
       )}
 
-      {/* Kind tabs + Filters button + Sort + count */}
+      {/* Builder dropdown + Filters button + Sort + count */}
       <div className="sticky top-0 z-20 -mx-4 px-4 py-2.5 bg-white/95 backdrop-blur border-b border-gray-200 mb-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex bg-gray-100 rounded-md p-1">
-            <button
-              onClick={() => onKind('listing')}
-              aria-pressed={kind === 'listing'}
-              className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold rounded-md transition-colors"
-              style={
-                kind === 'listing'
-                  ? { backgroundColor: '#5a0e5f', color: 'white' }
-                  : { color: '#6b7280' }
-              }
-            >
-              Move-in Ready
-            </button>
-            <button
-              onClick={() => onKind('promotion')}
-              aria-pressed={kind === 'promotion'}
-              className="px-3 py-1.5 text-xs uppercase tracking-wider font-semibold rounded-md transition-colors"
-              style={
-                kind === 'promotion'
-                  ? { backgroundColor: '#5a0e5f', color: 'white' }
-                  : { color: '#6b7280' }
-              }
-            >
-              Promotions
-            </button>
-          </div>
+          <select
+            value={filters.builder ?? ''}
+            onChange={(e) => onBuilder(e.target.value)}
+            aria-label="Builder"
+            className="text-xs font-medium rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 max-w-[45vw] truncate focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+            <option value="">All builders</option>
+            {builderOptions.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </select>
 
           <button
             onClick={() => setPanelOpen((o) => !o)}
@@ -435,16 +323,8 @@ export default function InventoryBrowser({
               </div>
             </FilterGroup>
 
-            {/* Builder / City / Promo selects */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {!builder && builderOptions.length > 0 && (
-                <SelectGroup
-                  label="Builder"
-                  value={filters.builder ?? ''}
-                  onChange={onBuilder}
-                  options={builderOptions}
-                />
-              )}
+            {/* City / Promo selects */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {cityOptions.length > 0 && (
                 <SelectGroup
                   label="City"
@@ -453,7 +333,7 @@ export default function InventoryBrowser({
                   options={cityOptions}
                 />
               )}
-              {kind === 'promotion' && promoOptions.length > 0 && (
+              {promoOptions.length > 0 && (
                 <SelectGroup
                   label="Promo type"
                   value={filters.promo ?? ''}
@@ -476,15 +356,14 @@ export default function InventoryBrowser({
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState kind={kind} builder={builder} hasFilters={count > 0} onClear={clearAll} />
+        <EmptyState hasFilters={count > 0} onClear={clearAll} />
       ) : (
         <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">
           {filtered.map((r) => (
             <li key={r.id}>
               <BuilderInventoryRowCard
                 row={r}
-                variant={kind === 'promotion' ? 'promotion' : 'listing'}
-                hideBuilderName={!!builder}
+                variant={r.kind === 'promotion' ? 'promotion' : 'listing'}
               />
             </li>
           ))}
@@ -492,6 +371,13 @@ export default function InventoryBrowser({
       )}
     </div>
   );
+}
+
+function presetLabel(p: { min: number | null; max: number | null }): string {
+  if (p.min == null && p.max == null) return 'any';
+  if (p.max == null) return `${fmtMoney(p.min!)}+`;
+  if (p.min == null) return `under ${fmtMoney(p.max)}`;
+  return `${fmtMoney(p.min)}-${fmtMoney(p.max)}`;
 }
 
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
@@ -610,23 +496,16 @@ function SelectGroup({
 }
 
 function EmptyState({
-  kind,
-  builder,
   hasFilters,
   onClear,
 }: {
-  kind: Kind;
-  builder: string | null;
   hasFilters: boolean;
   onClear: () => void;
 }) {
-  const title =
-    kind === 'promotion' ? 'No promotions match' : 'No homes match';
+  const title = 'No listings match';
   const body = hasFilters
     ? 'Try widening your filters or clearing them to see more results.'
-    : builder
-      ? `${builder} doesn't have any ${kind === 'promotion' ? 'active promotions' : 'move-in ready homes'} listed right now.`
-      : `There aren't any ${kind === 'promotion' ? 'active builder promotions' : 'move-in ready builder homes'} to show right now.`;
+    : "There aren't any move-in ready homes or promotions to show right now.";
   return (
     <div className="text-center py-16 px-6">
       <h3 className="text-lg font-semibold text-gray-900">{title}</h3>

@@ -78,6 +78,10 @@ export type FloaterConfig = {
   promosRoute?: string | null;
   /** Override which actions are primary (the rest overflow). */
   primary?: ActionKey[];
+  /** Extra actions appended to the overflow (More) sheet, after the
+      standard set. Used by surfaces that need surface-specific actions
+      the standard keys don't cover (e.g. Download/Share filtered results). */
+  extraOverflow?: FloaterAction[];
 };
 
 const DEFAULT_PRIMARY: Record<FloaterSurface, ActionKey[]> = {
@@ -247,7 +251,8 @@ export function useDetailFloaterActions(config: FloaterConfig) {
 
   const overflow = OVERFLOW_ORDER.filter((k) => !primaryKeys.includes(k))
     .map((k) => all[k])
-    .filter((a): a is FloaterAction => !!a);
+    .filter((a): a is FloaterAction => !!a)
+    .concat(config.extraOverflow ?? []);
 
   const pillActions: FloaterAction[] =
     overflow.length > 0

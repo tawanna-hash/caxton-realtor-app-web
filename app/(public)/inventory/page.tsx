@@ -2,22 +2,26 @@
 //
 // Builder move-in ready & promotions directory — Phase 2 redesign.
 //
-// Layout mirrors the iOS InventoryScreen.tsx, now with a NewHomeSource-style
-// search filter UI (InventoryBrowser): Beds / Baths / Price range / Builder /
-// City / Promo-type / Sort, all client-side so toggling is instant.
+// NewHomeSource-style search filter UI lives in <InventoryBrowser>. The page
+// is a thin server shell: it reads the URL search params (builder, beds,
+// baths, price, city, promo, sort), parses them into an initial filter state
+// via @/lib/inventory-filters, and hands that + the full active row set to
+// the client browser. Filtering/sorting is 100% client-side so toggling is
+// instant; the browser syncs changes back to the URL (replaceState) so a
+// filtered view is shareable and the floater's Download-results button can
+// append the same params to /api/inventory/pdf.
 //
-// The page fetches BOTH kinds (listings + promotions) server-side and hands
-// them to the client browser, which owns the kind tabs + every filter.
-// ?kind= and ?builder= still work as deep links (initial state seeds the
-// browser). Each market is standalone — scoped to the active publication
-// (cookie `caxton_pub`, set by the market picker). Austin and San Antonio
-// are separate products; there is no aggregate view.
+// Listings and promotions are fetched together and shown together (each card
+// renders by its own row.kind). Each market is standalone — scoped to the
+// active publication (cookie `caxton_pub`). Austin and San Antonio are
+// separate products; there is no aggregate view.
 //
 // Server component. Inventory submission/detail flows remain at
 // /inventory/submit and /inventory/[id]; those routes are untouched.
 
-import { listBuilderInventory, type Kind } from '@/lib/builder-inventory';
+import { listBuilderInventory } from '@/lib/builder-inventory';
 import { getServerPub } from '@/lib/publication';
+import { parseFilters } from '@/lib/inventory-filters';
 import InventoryBrowser from '@/components/inventory/InventoryBrowser';
 import BuildersBreadcrumb from '@/components/BuildersBreadcrumb';
 import { AdSlot } from '@/components/ads/AdSlot';
@@ -31,26 +35,21 @@ export const metadata = {
     'Move-in ready homes and current promotions from local builders and developers.',
 };
 
-function normalizeKind(raw: string | undefined): Kind {
-  return raw === 'promotion' ? 'promotion' : 'listing';
-}
-
 type PageProps = {
-  searchParams: Promise<{ kind?: string; builder?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function Page({ searchParams }: PageProps) {
   const params = await searchParams;
-  const initialKind = normalizeKind(params.kind);
-  const builder = params.builder;
+  const { filters: initialFilters, sort: initialSort } = parseFilters(params);
   const pub = await getServerPub();
 
-  // Fetch BOTH kinds so the client browser can toggle Move-in Ready ↔
-  // Promotions without a full reload. limit 1000 covers the combined set.
+  // Fetch BOTH kinds (listings + promotions) for the active market. The
+  // client browser filters everything — including builder — so we don't
+  // server-scope by ?builder= here; ?builder= just seeds the dropdown.
   const rows = await listBuilderInventory({
     status: 'active',
     publication: pub,
-    builderName: builder,
     limit: 1000,
   });
 
@@ -62,8 +61,8 @@ export default async function Page({ searchParams }: PageProps) {
           <AdSlot slug="featured_builder_strip" className="mb-4" />
           <InventoryBrowser
             rows={rows}
-            initialKind={initialKind}
-            builder={builder ?? null}
+            initialFilters={initialFilters}
+            initialSort={initialSort}
           />
         </div>
         <BuilderDeveloperFloater

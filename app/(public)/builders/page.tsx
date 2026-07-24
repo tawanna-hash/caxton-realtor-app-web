@@ -19,6 +19,8 @@ import { AdSlot } from '@/components/ads/AdSlot';
 import { listBuilderInventory } from '@/lib/builder-inventory';
 import { summarizeBuilders } from '@/lib/builder-summary';
 import { getServerPub } from '@/lib/publication';
+import { parseFilters } from '@/lib/inventory-filters';
+import InventoryBrowser from '@/components/inventory/InventoryBrowser';
 import BuilderDeveloperFloater from '@/components/builders/BuilderDeveloperFloater';
 
 export const dynamic = 'force-dynamic';
@@ -29,7 +31,13 @@ export const metadata = {
     'New home communities, move-in ready homes, and promotions from local builders and developers.',
 };
 
-export default async function BuildersHubPage() {
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function BuildersHubPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const { filters: initialFilters, sort: initialSort } = parseFilters(params);
   // Each market is standalone — scope to the active publication only.
   const pub = await getServerPub();
   const rows = await listBuilderInventory({
@@ -57,6 +65,17 @@ export default async function BuildersHubPage() {
         </header>
 
         <AdSlot slug="featured_builder_strip" className="mb-6" />
+
+        {/* Move-in ready + promotions browser with the same filter UI as
+            /inventory. hideHeader — the hub already shows its own title. */}
+        <div className="mb-10">
+          <InventoryBrowser
+            rows={rows}
+            initialFilters={initialFilters}
+            initialSort={initialSort}
+            hideHeader
+          />
+        </div>
 
         {builders.length > 0 && (
           <section>
