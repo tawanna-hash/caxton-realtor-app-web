@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchMIHomesAustin } from '@/lib/scrapers/mi-homes';
 import { fetchMIHomesCommunityRows } from '@/lib/scrapers/mi-homes-communities';
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
+import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -94,7 +95,24 @@ async function runScrape(refresh: boolean) {
     }
   }
 
-  // ── Pass 2: communities ──────────────────────────────────────────────
+  // ── Prune: deactivate inventory homes no longer in M/I's source (sold /
+  //    off-market). Guarded — never runs on an empty scrape so a transient
+  //    empty response can't wipe the set.
+  let deactivated = 0;
+  if (rows.length > 0) {
+    try {
+      deactivated = await deactivateStaleBuilderInventory({
+        builderName: 'M/I Homes',
+        homeType: 'showcase',
+        activeExternalIds: rows.map((r) => r.externalId),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[scrape-mi-homes] deactivate stale inventory failed:', msg);
+    }
+  }
+
+    // ── Pass 2: communities ──────────────────────────────────────────────
   let communityCount = 0;
   let communityInserted = 0;
   let communityUpdated = 0;
@@ -167,6 +185,7 @@ async function runScrape(refresh: boolean) {
       skipped,
       inserted,
       updated,
+      deactivated,
       errors,
       // communities
       communityCount,

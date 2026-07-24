@@ -8,8 +8,11 @@
 // API: GET /sitecore/api/ssc/MIHomes-Project-Website-Api/Search
 //       ?search=Greater%20Austin
 //       &searchtype=inventory          ← KEY: filters to specific homes
-//       &latCenter=30.47452&lngCenter=-97.896
-//       &x1=30.60861&x2=29.919&y1=-97.570&y2=-97.915&zoom=10
+//       &latCenter=30.1&lngCenter=-97.9
+//       &x1=30.75&x2=29.75&y1=-97.35&y2=-98.30&zoom=9
+// Widened bbox (matches the community-card API) so inventory in outlying
+// communities — Manor (Carillon), Dripping Springs (Heritage), San Marcos
+// (High Branch) — is captured, not just the central-Austin box.
 //
 // Without `searchtype=inventory`, the same endpoint returns 8 community
 // cards (CardType='community'). With it, returns 93+ inventory cards
@@ -41,10 +44,10 @@ const SEARCH_URL =
   'https://www.mihomes.com/sitecore/api/ssc/MIHomes-Project-Website-Api/Search' +
   '?search=Greater%20Austin' +
   '&searchtype=inventory' +
-  '&latCenter=30.47452&lngCenter=-97.896' +
-  '&x1=30.60861280653204&x2=29.919479479343455' +
-  '&y1=-97.57071277753901&y2=-97.91540882246089' +
-  '&zoom=10';
+  '&latCenter=30.1&lngCenter=-97.9' +
+  '&x1=30.75&x2=29.75' +
+  '&y1=-97.35&y2=-98.30' +
+  '&zoom=9';
 
 const MI_BASE_URL = 'https://www.mihomes.com';
 
