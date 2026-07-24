@@ -78,6 +78,7 @@ export async function GET(req: NextRequest) {
           sqftMax: row.sqftMax,
           priceMin: row.priceMin,
           priceMax: row.priceMax,
+          flyerPdfUrl: null,
           thumbnailUrl: row.thumbnailUrl,
           sourceUrl: row.sourceUrl,
           address: row.address,
