@@ -73,6 +73,7 @@ async function runScrape(refresh: boolean) {
         sqftMax: row.sqftMax,
         priceMin: row.priceMin,
         priceMax: row.priceMax,
+        flyerPdfUrl: null,
         sourceUrl: row.sourceUrl,
         galleryUrls: row.galleryUrls,
         thumbnailUrl: row.thumbnailUrl,
