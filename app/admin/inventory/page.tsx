@@ -124,12 +124,6 @@ export default function AdminInventoryPage() {
     };
   }, [tab, reloadKey]);
 
-  // Reset to page 1 whenever the view changes (tab, kind filter, sort, or a
-  // reload after an edit/approve) so the user never lands on an empty page.
-  useEffect(() => {
-    setPage(1);
-  }, [tab, kindFilter, sortKey, sortDir, reloadKey]);
-
   const handleEditClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>, id: number) => {
       // Allow cmd/ctrl/middle-click to open the dedicated page in a new tab.
@@ -182,6 +176,18 @@ export default function AdminInventoryPage() {
       setSortDir(key === 'createdAt' ? 'desc' : 'asc');
       return key;
     });
+    setPage(1);
+  }, []);
+
+  // Page resets live in the interactive handlers (not an effect) so the
+  // react-hooks/set-state-in-effect rule stays happy.
+  const switchTab = useCallback((t: Tab) => {
+    setTab(t);
+    setPage(1);
+  }, []);
+  const switchKind = useCallback((k: KindFilter) => {
+    setKindFilter(k);
+    setPage(1);
   }, []);
 
   // Apply kind filter before sorting so the count + sort reflect the filter.
@@ -252,7 +258,7 @@ export default function AdminInventoryPage() {
             return (
               <button
                 key={t}
-                onClick={() => setTab(t)}
+                onClick={() => switchTab(t)}
                 className={
                   'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ' +
                   (active
@@ -307,7 +313,7 @@ export default function AdminInventoryPage() {
                       type="button"
                       role="tab"
                       aria-selected={active}
-                      onClick={() => setKindFilter(opt.value)}
+                      onClick={() => switchKind(opt.value)}
                       className={
                         'text-xs px-2.5 py-1 rounded-md border transition-colors ' +
                         (active
@@ -329,6 +335,7 @@ export default function AdminInventoryPage() {
                   const [k, d] = e.target.value.split(':') as [SortKey, SortDir];
                   setSortKey(k);
                   setSortDir(d);
+                  setPage(1);
                 }}
                 className="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-700/30"
                 aria-label="Sort builder inventory"
@@ -344,7 +351,7 @@ export default function AdminInventoryPage() {
         )}
 
         {rows != null && rows.length === 0 && !error && (
-          <EmptyState tab={tab} onSwitchTab={setTab} />
+          <EmptyState tab={tab} onSwitchTab={switchTab} />
         )}
 
         <EditInventoryModal
