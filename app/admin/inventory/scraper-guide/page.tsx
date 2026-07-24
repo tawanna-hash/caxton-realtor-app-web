@@ -217,13 +217,13 @@ export default function AdminScraperGuidePage() {
 
                 <div className="border-t border-gray-200 pt-4">
                   <dl className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
-                    {[
-                      ['Bedrooms', EXAMPLE.beds, 'bedsMin/bedsMax'],
-                      ['Bathrooms', EXAMPLE.baths, 'bathsMin/bathsMax'],
+                    {([
+                      ['Bedrooms', String(EXAMPLE.beds), 'bedsMin/bedsMax'],
+                      ['Bathrooms', String(EXAMPLE.baths), 'bathsMin/bathsMax'],
                       ['Sq ft', EXAMPLE.sqft.toLocaleString('en-US'), 'sqftMin/sqftMax'],
                       ['Move-in', fmtReady(EXAMPLE.readyDate), 'readyDate'],
                       ['Plan', EXAMPLE.planName, 'planName'],
-                    ].map(([label, value, field]) => (
+                    ] as [string, string, string][]).map(([label, value, field]) => (
                       <div key={label}>
                         <dt className="text-xs uppercase tracking-[0.1em] text-gray-500">
                           {label}
