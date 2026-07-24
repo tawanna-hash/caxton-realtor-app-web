@@ -158,6 +158,7 @@ async function runScrape(opts: { refresh: boolean }) {
         planName: row.planName,
         communityName: row.communityName,
         homeType: row.homeType,
+        extraDetails: row.extraDetails,
       });
       if (result.created) inserted++;
       else updated++;

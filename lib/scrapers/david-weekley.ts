@@ -103,6 +103,8 @@ type DWShowcase = {
   Thumbnail?: string | null;
   Token?: string | null;
   VirtualTour?: string | null;
+  Latitude?: number | null;
+  Longitude?: number | null;
   CallForPricing?: boolean | null;
 };
 
@@ -137,6 +139,7 @@ export type ScrapedDavidWeekleyRow = {
   planName: string | null;
   communityName: string | null;
   homeType: 'showcase';
+  extraDetails: Record<string, string> | null;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -310,6 +313,17 @@ function normalize(
       : null;
   const price = s.CallForPricing ? null : nonZeroOrNull(s.BasePrice);
 
+  // Property details + geo + virtual tour (ShowcaseData JSON exposes all per
+  // home). _-prefixed keys are meta (map / tour); the rest render in the
+  // property-details panel.
+  const extraDetails: Record<string, string> = {};
+  if (planName) extraDetails['Plan'] = planName;
+  if (s.Stories) extraDetails['Stories'] = String(s.Stories);
+  if (s.Garages != null) extraDetails['Garage'] = `${s.Garages}-car`;
+  if (typeof s.Latitude === 'number') extraDetails._latitude = String(s.Latitude);
+  if (typeof s.Longitude === 'number') extraDetails._longitude = String(s.Longitude);
+  if (s.VirtualTour) extraDetails._virtualTourUrl = s.VirtualTour;
+
   return {
     externalId: s.Id,
     builderName: 'David Weekley Homes',
@@ -332,6 +346,7 @@ function normalize(
     planName,
     communityName,
     homeType: 'showcase',
+    extraDetails: Object.keys(extraDetails).length > 0 ? extraDetails : null,
   };
 }
 
