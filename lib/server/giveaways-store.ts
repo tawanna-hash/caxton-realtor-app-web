@@ -84,6 +84,7 @@ export interface PublicGiveawayRule {
   target_url: string | null;
   tickets: number;
   required: boolean;
+  deadline_at: string | null;
 }
 
 export interface PublicGiveawayRow {
@@ -129,9 +130,10 @@ export async function listPublicGiveaways(
   const ruleRows = await query<
     { giveaway_id: string } & Omit<PublicGiveawayRule, 'tickets'> & {
         tickets: number;
+        deadline_at: Date | null;
       }
   >(
-    `SELECT giveaway_id, label, target_url, tickets, required
+    `SELECT giveaway_id, label, target_url, tickets, required, deadline_at
      FROM giveaway_rules
      WHERE giveaway_id = ANY($1)
      ORDER BY sort_order, created_at`,
@@ -146,6 +148,7 @@ export async function listPublicGiveaways(
       target_url: r.target_url,
       tickets: Number(r.tickets),
       required: r.required,
+      deadline_at: r.deadline_at ? new Date(r.deadline_at).toISOString() : null,
     });
     rulesByGiveaway.set(r.giveaway_id, list);
   }

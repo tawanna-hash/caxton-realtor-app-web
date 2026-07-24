@@ -15,6 +15,7 @@ import { rateLimit } from '@/lib/server/rate-limit';
 import { signupSchema } from '@/lib/server/schemas/auth';
 import { createAndSendMagicLink } from '@/lib/server/magic-link';
 import {
+  autoEnrollSignupGiveaways,
   findRealtorByEmailTx,
   insertRealtor,
   withNeonTransaction,
@@ -134,6 +135,16 @@ export const POST = withErrorHandling(async (req: Request) => {
     const inserted = await insertRealtor(client, row, { autoVerifyEmail: autoSignIn });
     newRealtorId = inserted.id;
     newRealtorEmail = input.email;
+
+    // Auto-enroll password signups (auto-verified) in active signup
+    // giveaways. Non-password signups are enrolled later when they verify
+    // their magic link (see /api/auth/verify). Re-enabled 2026-07-24.
+    if (autoSignIn) {
+      const enrolled = await autoEnrollSignupGiveaways(client, inserted.id);
+      if (enrolled > 0) {
+        logger.info({ realtorId: inserted.id, enrolled }, 'Giveaway auto-enroll on signup');
+      }
+    }
   });
 
   // -- Auto-sign-in path via Auth.js -----------------------------------------

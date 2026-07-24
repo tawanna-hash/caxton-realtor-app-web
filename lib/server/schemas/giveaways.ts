@@ -33,6 +33,9 @@ export const ruleSchema = z.object({
   tickets: z.number().int().min(1).max(100).default(1),
   sortOrder: z.number().int().min(0).default(0),
   required: z.boolean().default(false),
+  // Optional ISO datetime cutoff. When set, the auto-enroll only fires
+  // for signups that happen before this moment (early-bird bonus entries).
+  deadlineAt: z.string().datetime().optional().nullable(),
 });
 
 export const giveawayIdParamSchema = z.object({ id: z.string().uuid() });

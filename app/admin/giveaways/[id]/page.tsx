@@ -329,6 +329,7 @@ function RulesSection({
   const [targetUrl, setTargetUrl] = useState('');
   const [tickets, setTickets] = useState(1);
   const [required, setRequired] = useState(false);
+  const [deadlineAt, setDeadlineAt] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -338,6 +339,7 @@ function RulesSection({
     setTargetUrl('');
     setTickets(1);
     setRequired(false);
+    setDeadlineAt('');
     setAdding(false);
   };
 
@@ -353,6 +355,7 @@ function RulesSection({
         tickets,
         sortOrder: rules.length,
         required,
+        deadlineAt: deadlineAt ? new Date(deadlineAt).toISOString() : null,
       });
       reset();
       await onChange();
@@ -400,6 +403,7 @@ function RulesSection({
           const url = r.target_url as string;
           const tix = (r.tickets as number) ?? 0;
           const isRequired = r.required as boolean;
+          const deadline = r.deadline_at as string | null;
           return (
             <div key={ruleId} className="flex items-center justify-between gap-3 border border-gray-100 px-4 py-3 text-sm rounded-md">
               <div className="flex items-center gap-3 min-w-0">
@@ -413,6 +417,11 @@ function RulesSection({
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
                 <span className="text-xs text-gray-500">{tix} ticket{tix === 1 ? '' : 's'}</span>
+                {deadline && (
+                  <span className="text-[10px] uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-100 px-2 py-0.5 rounded-md">
+                    Until {new Date(deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                )}
                 {isRequired && (
                   <span className="text-[10px] uppercase tracking-wider bg-red-50 text-red-700 border border-red-100 px-2 py-0.5 rounded-md">
                     Required
@@ -484,6 +493,16 @@ function RulesSection({
             />
             Required to enter
           </label>
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Entry Deadline (optional)</label>
+            <input
+              type="datetime-local"
+              value={deadlineAt}
+              onChange={(e) => setDeadlineAt(e.target.value)}
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-brand-700 rounded-md"
+            />
+            <p className="text-xs text-gray-400 mt-1">When set, this rule only grants entries to signups before this moment (early-bird bonus).</p>
+          </div>
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"

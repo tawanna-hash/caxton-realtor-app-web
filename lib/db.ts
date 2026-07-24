@@ -1180,4 +1180,53 @@ async function _runEnsureSchema(): Promise<void> {
   `;
   await sql`CREATE INDEX IF NOT EXISTS email_suppressions_suppressed_at_idx ON email_suppressions(suppressed_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS email_suppressions_reason_idx ON email_suppressions(reason)`;
+
+  // ---- giveaway_rules.deadline_at ----------------------------------------
+  // Optional per-rule cutoff. When set, autoEnrollSignupGiveaways() only
+  // creates the entry if NOW() <= deadline_at. Used for "early bird" bonus
+  // entries (e.g. "sign up before July 27 for a second ticket").
+  await sql`ALTER TABLE giveaway_rules ADD COLUMN IF NOT EXISTS deadline_at TIMESTAMPTZ`;
+
+  // ---- Seed signup rules for the active giveaway --------------------------
+  // One-time idempotent seed: two signup rules on the giveaway
+  // 2c3b73cf-4889-4a63-b14c-093d1aa0b966 so newly-verified accounts are
+  // auto-enrolled. Rule 1 = base entry (1 ticket). Rule 2 = early-bird bonus
+  // (1 extra ticket, deadline July 27 11:59 PM CDT = 2026-07-28T04:59:00Z).
+  // Re-running is a no-op: each INSERT is guarded by NOT EXISTS on label.
+  await sql`
+    INSERT INTO giveaway_rules (giveaway_id, action_type, label, target_url, tickets, sort_order, required, deadline_at)
+    SELECT
+      '2c3b73cf-4889-4a63-b14c-093d1aa0b966',
+      'signup',
+      'Sign up for a free Realty News Now account',
+      NULL,
+      1,
+      0,
+      true,
+      NULL
+    WHERE NOT EXISTS (
+      SELECT 1 FROM giveaway_rules
+      WHERE giveaway_id = '2c3b73cf-4889-4a63-b14c-093d1aa0b966'
+        AND action_type = 'signup'
+        AND label = 'Sign up for a free Realty News Now account'
+    )
+  `;
+  await sql`
+    INSERT INTO giveaway_rules (giveaway_id, action_type, label, target_url, tickets, sort_order, required, deadline_at)
+    SELECT
+      '2c3b73cf-4889-4a63-b14c-093d1aa0b966',
+      'signup',
+      'Early bird bonus — sign up before July 27 for a second entry',
+      NULL,
+      1,
+      1,
+      false,
+      '2026-07-28T04:59:00Z'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM giveaway_rules
+      WHERE giveaway_id = '2c3b73cf-4889-4a63-b14c-093d1aa0b966'
+        AND action_type = 'signup'
+        AND label = 'Early bird bonus — sign up before July 27 for a second entry'
+    )
+  `;
 }

@@ -3,13 +3,9 @@
  *
  * First-time verification additionally:
  *   - sets default notification preferences (all enabled)
+ *   - auto-enrolls in active 'signup' giveaways (re-enabled 2026-07-24)
  *
  * Returning users just get last_login_at bumped.
- *
- * Note: Auto-enrollment in active 'signup' giveaways was disabled
- * 2026-06-16 per Tawanna's direction. The `autoEnrollSignupGiveaways`
- * helper in realtors-store.ts is intentionally kept (no callers) so it
- * can be re-wired here cheaply if we ever turn the perk back on.
  */
 
 import { NextResponse } from 'next/server';
@@ -18,6 +14,7 @@ import { rateLimit } from '@/lib/server/rate-limit';
 import { verifySchema } from '@/lib/server/schemas/auth';
 import { verifyMagicLink } from '@/lib/server/magic-link';
 import {
+  autoEnrollSignupGiveaways,
   bumpLastLogin,
   ensureDefaultNotificationPrefs,
   findRealtorByEmailTx,
@@ -55,7 +52,13 @@ export const POST = withErrorHandling(async (req: Request) => {
     if (isNewUser) {
       await markVerifiedAndLogin(client, realtor.id);
       await ensureDefaultNotificationPrefs(client, realtor.id);
-      // Giveaway auto-enrollment disabled 2026-06-16. See header comment.
+      // Auto-enroll in active signup giveaways. Re-enabled 2026-07-24 —
+      // new subscribers get a ticket for each signup rule on active giveaways
+      // (including the early-bird bonus if before the rule's deadline_at).
+      const enrolled = await autoEnrollSignupGiveaways(client, realtor.id);
+      if (enrolled > 0) {
+        logger.info({ realtorId: realtor.id, enrolled }, 'Giveaway auto-enroll on verify');
+      }
     } else {
       await bumpLastLogin(client, realtor.id);
     }

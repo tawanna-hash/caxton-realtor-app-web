@@ -371,6 +371,7 @@ export async function autoEnrollSignupGiveaways(
        AND g.status = 'active'
        AND g.starts_at <= NOW()
        AND g.ends_at >= NOW()
+       AND (gr.deadline_at IS NULL OR gr.deadline_at >= NOW())
        AND (g.publication = r.market OR g.publication = 'both' OR r.market = 'both')
      ON CONFLICT (giveaway_id, realtor_id, rule_id) DO NOTHING
      RETURNING giveaway_id`,
