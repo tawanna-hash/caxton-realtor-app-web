@@ -23,8 +23,9 @@ import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// One page fetch (~1s) + up to ~30 home upserts at ~50ms each.
-export const maxDuration = 90;
+// MIR list fetch + up to ~24 per-home detail-page fetches (gallery +
+// description) at concurrency 4 with a 15s timeout each, + upserts.
+export const maxDuration = 150;
 
 const SCRAPER_SUBMITTER_NAME = 'Newmark Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-newmark@harmonyone.system';
@@ -85,6 +86,7 @@ export async function GET(req: NextRequest) {
           communityName: row.communityName,
           planName: row.planName,
           homeType: 'showcase',
+          galleryUrls: row.galleryUrls,
         });
         if (result.created) inserted++;
         else updated++;

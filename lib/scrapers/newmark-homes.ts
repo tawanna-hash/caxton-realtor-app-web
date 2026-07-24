@@ -4,12 +4,17 @@
 //
 // newmarkhomes.com is a jQuery site whose community + home cards are
 // server-rendered in the listing-page HTML (no JS shell, no JSON API), so we
-// fetch the two pages and parse with cheerio.
+// fetch the pages and parse with cheerio.
 //
 // Communities: https://newmarkhomes.com/new-homes/austin/communities
 //   -> one row per community (kind='listing', homeType='community').
+//   -> then fetches each community's detail page (/new-homes/austin/{city}/{slug})
+//      to pull home plans (beds/baths/sqft/price/image/url), amenities, and a
+//      photo gallery, mirroring the David Weekley / M/I community pages.
 // Move-in ready: https://newmarkhomes.com/new-homes/austin
 //   -> one row per available home (kind='listing', homeType='showcase').
+//   -> then fetches each home's detail page for a photo gallery + description
+//      so the in-app detail page isn't just a single thumbnail + ribbon.
 //
 // Market: Austin -> publication 'realtyline'. (Newmark also builds in Houston,
 // but Houston isn't launched yet, so we scope to the Austin market pages only.)
@@ -19,6 +24,7 @@
 // Community rows are keyed on the /communities/{slug} href.
 
 import * as cheerio from 'cheerio';
+import type { CommunityData } from './david-weekley';
 
 const BASE_URL = 'https://newmarkhomes.com';
 export const NEWMARK_COMMUNITIES_URL = `${BASE_URL}/new-homes/austin/communities`;
@@ -46,11 +52,16 @@ export type NewmarkCommunityRow = {
   description: string | null;
   thumbnailUrl: string | null;
   sourceUrl: string | null;
-  priceRangeText: string | null;
-  tagline: string | null;
-  phone: string | null;
-  availableHomes: number | null;
-  availablePlans: number | null;
+  bedsMin: number | null;
+  bedsMax: number | null;
+  bathsMin: number | null;
+  bathsMax: number | null;
+  sqftMin: number | null;
+  sqftMax: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
+  galleryUrls: string[] | null;
+  communityData: CommunityData | null;
 };
 
 export type NewmarkHomeRow = {
@@ -73,6 +84,7 @@ export type NewmarkHomeRow = {
   sourceUrl: string | null;
   communityName: string | null;
   planName: string | null;
+  galleryUrls: string[] | null;
 };
 
 export type NewmarkScrapeResult<T> = { rows: T[]; rawCount: number };
@@ -85,6 +97,17 @@ function num(s: string | null | undefined): number | null {
   if (!s) return null;
   const n = Number(String(s).replace(/[^0-9.]/g, ''));
   return Number.isFinite(n) && n !== 0 ? n : null;
+}
+
+function stripTags(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 // "san-marcos" -> "San Marcos", "georgetown" -> "Georgetown".
@@ -114,7 +137,7 @@ function imageFromDataImage(dataImage: string | null | undefined): string | null
   return absUrl(decodeURIComponent(m[1]));
 }
 
-async function fetchHtml(url: string, label: string): Promise<string> {
+async function fetchHtml(url: string, label: string, timeoutMs = 20_000): Promise<string> {
   let res: Response;
   try {
     res = await fetch(url, {
@@ -124,7 +147,7 @@ async function fetchHtml(url: string, label: string): Promise<string> {
         'Accept-Language': 'en-US,en;q=0.9',
       },
       redirect: 'follow',
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(timeoutMs),
       cache: 'no-store',
     });
   } catch (err) {
@@ -137,6 +160,165 @@ async function fetchHtml(url: string, label: string): Promise<string> {
   return res.text();
 }
 
+// Run an async mapper over items with a small concurrency cap so we don't open
+// 24 simultaneous connections to newmarkhomes.com. Errors per item are caught
+// and returned as null so one bad page doesn't abort the whole scrape.
+async function pMap<T, R>(
+  items: T[],
+  fn: (item: T, index: number) => Promise<R>,
+  concurrency = 4,
+): Promise<(R | null)[]> {
+  const results: (R | null)[] = new Array(items.length).fill(null);
+  let cursor = 0;
+  async function worker() {
+    while (cursor < items.length) {
+      const i = cursor++;
+      try {
+        results[i] = await fn(items[i], i);
+      } catch {
+        results[i] = null;
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
+  return results;
+}
+
+function minMax(values: (number | null)[]): { min: number | null; max: number | null } {
+  const nums = values.filter((v): v is number => v != null);
+  if (nums.length === 0) return { min: null, max: null };
+  return { min: Math.min(...nums), max: Math.max(...nums) };
+}
+
+// Collect gallery image URLs from .fancybox.thumb-gallery elements. Prefers
+// data-fancybox-href (the large version), falls back to data-image.
+function collectGallery($: cheerio.CheerioAPI): string[] {
+  const out = new Set<string>();
+  $('a.fancybox, .fancybox.thumb-gallery').each((_, el) => {
+    const $e = $(el);
+    const raw = $e.attr('data-fancybox-href') || $e.attr('data-image') || $e.attr('href');
+    const url = imageFromDataImage(raw);
+    if (url) out.add(url);
+  });
+  return [...out];
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Community detail page -> plans / amenities / gallery / description
+// ─────────────────────────────────────────────────────────────────────────
+
+type CommunityDetail = {
+  plans: NonNullable<CommunityData['homePlans']>;
+  amenities: string[];
+  imageUrls: string[];
+  description: string | null;
+  bedsMin: number | null;
+  bedsMax: number | null;
+  bathsMin: number | null;
+  bathsMax: number | null;
+  sqftMin: number | null;
+  sqftMax: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
+};
+
+async function fetchCommunityDetail(
+  visitUrl: string,
+): Promise<CommunityDetail | null> {
+  let html: string;
+  try {
+    html = await fetchHtml(visitUrl, `community detail ${visitUrl}`, 20_000);
+  } catch {
+    return null;
+  }
+  const $ = cheerio.load(html);
+
+  const plans: NonNullable<CommunityData['homePlans']> = [];
+  const beds: number[] = [];
+  const baths: number[] = [];
+  const sqft: number[] = [];
+  const price: number[] = [];
+
+  $('.itemContainer[data-home]').each((_, el) => {
+    const $i = $(el);
+    const dataHome = ($i.attr('data-home') || '').trim();
+    if (!dataHome) return;
+
+    // Visible (non-hidden) community span often appends a plan/series name,
+    // e.g. sort-community="Anthem", visible="Anthem 50" -> plan name "Anthem 50".
+    const visibleSpan = $i
+      .find('.community span')
+      .filter((__, s) => !($(s).attr('style') || '').includes('display:none'))
+      .first()
+      .text()
+      .trim();
+    const planName = visibleSpan || null;
+
+    const b = num($i.find('.sort-beds').text());
+    const ba = num($i.find('.sort-baths').text());
+    const sq = num($i.find('.sort-square_feet').text());
+    const pr = num($i.find('.sort-price').text());
+    if (b != null) beds.push(b);
+    if (ba != null) baths.push(ba);
+    if (sq != null) sqft.push(sq);
+    if (pr != null) price.push(pr);
+
+    const priceDisplay = $i.find('.price').first().text().trim() || null;
+    const imageUrl = imageFromDataImage($i.find('.photoContainer').attr('data-image'));
+    const href = $i.find('.ratio a').attr('href') || $i.find('.button a').attr('href') || '';
+    const url = href ? absUrl(href) : null;
+
+    plans.push({
+      name: planName || `Plan ${dataHome}`,
+      beds: b != null ? String(b) : null,
+      baths: ba != null ? String(ba) : null,
+      sqftDisplay: sq != null ? sq.toLocaleString('en-US') : null,
+      priceDisplay,
+      imageUrl,
+      url,
+    });
+  });
+
+  const amenities: string[] = [];
+  $('.amenities-wrapper li').each((_, el) => {
+    const t = stripTags($(el).html() || '');
+    if (t) amenities.push(t);
+  });
+
+  const imageUrls = collectGallery($);
+
+  // Community intro paragraph (the "Discover {Name}" / area-detail copy).
+  let description: string | null = null;
+  const areaDetail = $('.area-detail, .communitydetail, .field-name-body')
+    .first()
+    .find('p')
+    .map((_, p) => stripTags($(p).html() || ''))
+    .get()
+    .filter(Boolean)
+    .join(' ');
+  if (areaDetail) description = areaDetail.slice(0, 600);
+
+  const bb = minMax(beds);
+  const bab = minMax(baths);
+  const sqb = minMax(sqft);
+  const prb = minMax(price);
+
+  return {
+    plans,
+    amenities,
+    imageUrls,
+    description,
+    bedsMin: bb.min,
+    bedsMax: bb.max,
+    bathsMin: bab.min,
+    bathsMax: bab.max,
+    sqftMin: sqb.min,
+    sqftMax: sqb.max,
+    priceMin: prb.min,
+    priceMax: prb.max,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // Communities
 // ─────────────────────────────────────────────────────────────────────────
@@ -147,25 +329,39 @@ export async function fetchNewmarkCommunities(): Promise<
   const html = await fetchHtml(NEWMARK_COMMUNITIES_URL, 'communities');
   const $ = cheerio.load(html);
 
-  const rows: NewmarkCommunityRow[] = [];
+  type Card = {
+    slug: string;
+    slugHref: string;
+    name: string;
+    priceRangeText: string | null;
+    visitHref: string;
+    city: string;
+    state: string;
+    address: string | null;
+    phone: string | null;
+    tagline: string | null;
+    availableHomes: number | null;
+    availablePlans: number | null;
+    thumbnailUrl: string | null;
+  };
+
+  const cards: Card[] = [];
 
   $('.communitiesPage .items .item').each((_, el) => {
     const $i = $(el);
 
     const slugHref = $i.find('.photo a[href^="/communities/"]').attr('href') || '';
-    const slug = slugHref.replace('/communities/', '').trim();
+    const slug = slugHref.replace('/communities/', '').split('#')[0].trim();
     if (!slug) return;
 
     const name = $i.find('h4').first().text().trim() || slug;
     const priceRangeText = $i.find('.pricepoint').text().trim() || null;
 
-    // Visit link is /new-homes/austin/{city}/{slug} -> city is segment [2].
     const visitHref = $i.find('.visit a').attr('href') || '';
     const visitParts = visitHref.split('/').filter(Boolean);
 
-    // Location cell: street on line 1, "City, ST zip" on line 2, phone in a div.
     const $loc = $i.find('.location').clone();
-    $loc.find('div').remove(); // drop the phone <div>
+    $loc.find('div').remove();
     const locText = $loc
       .html()
       ?.replace(/<br\s*\/?>/gi, '\n')
@@ -173,13 +369,10 @@ export async function fetchNewmarkCommunities(): Promise<
       .trim() ?? '';
     const locLines = locText.split(/\n+/).map((s) => s.trim()).filter(Boolean);
     const cszRe = /,\s*([A-Z]{2})\s*(\d{5})?\b/;
-    // City/state/zip live on the line that matches "..., ST #####".
     const cszLine = locLines.find((l) => cszRe.test(l)) || '';
     const cityFromLoc = cszLine.split(',')[0]?.trim() || null;
     const city = cityFromLoc || formatCity(visitParts[2]) || 'Austin';
-    // Street = first line that isn't a city/state/zip line.
-    const address =
-      locLines.find((l) => !cszRe.test(l) && l.length > 0) || null;
+    const address = locLines.find((l) => !cszRe.test(l) && l.length > 0) || null;
     const state = (cszLine.match(cszRe)?.[1] || 'TX').toUpperCase();
     const phoneMatch = $i
       .find('.location div')
@@ -200,32 +393,84 @@ export async function fetchNewmarkCommunities(): Promise<
     );
     const thumbnailUrl = bg ? absUrl(bg[1]) : null;
 
-    const description = [
-      tagline,
+    cards.push({
+      slug,
+      slugHref,
+      name,
       priceRangeText,
-      availableHomes != null ? `${availableHomes} available homes` : null,
-      availablePlans != null ? `${availablePlans} floor plans` : null,
-      phone ? `Sales office: ${phone}` : null,
+      visitHref,
+      city,
+      state,
+      address,
+      phone,
+      tagline,
+      availableHomes,
+      availablePlans,
+      thumbnailUrl,
+    });
+  });
+
+  // Fetch each community's detail page in parallel (small concurrency).
+  const details = await pMap(
+    cards,
+    (c) => fetchCommunityDetail(absUrl(c.visitHref) || ''),
+    3,
+  );
+
+  const rows: NewmarkCommunityRow[] = cards.map((c, i) => {
+    const d = details[i];
+    const galleryUrls = d && d.imageUrls.length > 0 ? d.imageUrls : null;
+
+    const baseDesc = [
+      d?.description,
+      c.tagline,
+      c.priceRangeText,
+      c.availableHomes != null ? `${c.availableHomes} available homes` : null,
+      c.availablePlans != null ? `${c.availablePlans} floor plans` : null,
+      c.phone ? `Sales office: ${c.phone}` : null,
     ]
       .filter(Boolean)
       .join(' · ');
 
-    rows.push({
-      externalId: `newmark-community/${slug}`,
+    const communityData: CommunityData | null = d
+      ? {
+          priceFrom: c.priceRangeText,
+          sqftRange:
+            d.sqftMin != null || d.sqftMax != null
+              ? [d.sqftMin, d.sqftMax]
+                  .filter((v) => v != null)
+                  .map((v) => v!.toLocaleString('en-US'))
+                  .join('-')
+              : null,
+          amenities: d.amenities.length > 0 ? d.amenities : [],
+          homePlans: d.plans,
+          imageUrls: d.imageUrls,
+          salesOffice: c.address ? { address: c.address } : null,
+          city: c.city,
+        }
+      : null;
+
+    return {
+      externalId: `newmark-community/${c.slug}`,
       builderName: NEWMARK_BUILDER_NAME,
-      title: name,
-      city: city ?? 'Austin',
-      state,
-      address,
-      description: description || null,
-      thumbnailUrl,
-      sourceUrl: absUrl(slugHref),
-      priceRangeText,
-      tagline,
-      phone,
-      availableHomes,
-      availablePlans,
-    });
+      title: c.name,
+      city: c.city,
+      state: c.state,
+      address: c.address,
+      description: baseDesc || null,
+      thumbnailUrl: c.thumbnailUrl,
+      sourceUrl: absUrl(c.slugHref),
+      bedsMin: d?.bedsMin ?? null,
+      bedsMax: d?.bedsMax ?? null,
+      bathsMin: d?.bathsMin ?? null,
+      bathsMax: d?.bathsMax ?? null,
+      sqftMin: d?.sqftMin ?? null,
+      sqftMax: d?.sqftMax ?? null,
+      priceMin: d?.priceMin ?? null,
+      priceMax: d?.priceMax ?? null,
+      galleryUrls,
+      communityData,
+    };
   });
 
   return { rows, rawCount: rows.length };
@@ -235,24 +480,56 @@ export async function fetchNewmarkCommunities(): Promise<
 // Move-in ready homes
 // ─────────────────────────────────────────────────────────────────────────
 
+type HomeDetail = { galleryUrls: string[] | null; description: string | null };
+
+async function fetchHomeDetail(sourceUrl: string): Promise<HomeDetail | null> {
+  let html: string;
+  try {
+    html = await fetchHtml(sourceUrl, `home detail ${sourceUrl}`, 15_000);
+  } catch {
+    return null;
+  }
+  const $ = cheerio.load(html);
+  const gallery = collectGallery($);
+  const description =
+    stripTags($('.description').first().html() || '') || null;
+  if (gallery.length === 0 && !description) return null;
+  return {
+    galleryUrls: gallery.length > 0 ? gallery : null,
+    description,
+  };
+}
+
 export async function fetchNewmarkMoveInReady(): Promise<
   NewmarkScrapeResult<NewmarkHomeRow>
 > {
   const html = await fetchHtml(NEWMARK_MOVE_IN_READY_URL, 'move-in-ready');
   const $ = cheerio.load(html);
 
-  const rows: NewmarkHomeRow[] = [];
+  type Card = {
+    dataHome: string;
+    communityName: string | null;
+    planName: string | null;
+    address: string | null;
+    city: string | null;
+    state: string;
+    price: number | null;
+    sqft: number | null;
+    beds: number | null;
+    baths: number | null;
+    ribbon: string | null;
+    thumbnailUrl: string | null;
+    sourceUrl: string | null;
+  };
+
+  const cards: Card[] = [];
 
   $('.itemContainer[data-home]').each((_, el) => {
     const $i = $(el);
     const dataHome = ($i.attr('data-home') || '').trim();
     if (!dataHome) return;
 
-    const communityName =
-      $i.find('.sort-community').first().text().trim() || null;
-
-    // Visible (non-hidden) community span often appends a plan/series name,
-    // e.g. sort-community="Easton Park", visible="Easton Park Quad 45".
+    const communityName = $i.find('.sort-community').first().text().trim() || null;
     const visibleCommunitySpan = $i
       .find('.community span')
       .filter((__, s) => !($(s).attr('style') || '').includes('display:none'))
@@ -289,29 +566,56 @@ export async function fetchNewmarkMoveInReady(): Promise<
       '';
     const sourceUrl = href ? absUrl(href) : null;
 
-    const title = [address, city].filter(Boolean).join(', ');
-
-    rows.push({
-      externalId: `newmark-home/${dataHome}`,
-      builderName: NEWMARK_BUILDER_NAME,
-      title: title || `Newmark home ${dataHome}`,
-      city: city || 'Austin',
-      state,
-      address,
-      description: ribbon,
-      bedsMin: beds,
-      bedsMax: beds,
-      bathsMin: baths,
-      bathsMax: baths,
-      sqftMin: sqft,
-      sqftMax: sqft,
-      priceMin: price,
-      priceMax: price,
-      thumbnailUrl,
-      sourceUrl,
+    cards.push({
+      dataHome,
       communityName,
       planName,
+      address,
+      city,
+      state,
+      price,
+      sqft,
+      beds,
+      baths,
+      ribbon,
+      thumbnailUrl,
+      sourceUrl,
     });
+  });
+
+  // Fetch each home's detail page for gallery + description (small concurrency).
+  const details = await pMap(
+    cards,
+    (c) => (c.sourceUrl ? fetchHomeDetail(c.sourceUrl) : Promise.resolve(null)),
+    4,
+  );
+
+  const rows: NewmarkHomeRow[] = cards.map((c, i) => {
+    const d = details[i];
+    const title = [c.address, c.city].filter(Boolean).join(', ');
+    const description = [c.ribbon, d?.description].filter(Boolean).join('. ') || null;
+    return {
+      externalId: `newmark-home/${c.dataHome}`,
+      builderName: NEWMARK_BUILDER_NAME,
+      title: title || `Newmark home ${c.dataHome}`,
+      city: c.city || 'Austin',
+      state: c.state,
+      address: c.address,
+      description,
+      bedsMin: c.beds,
+      bedsMax: c.beds,
+      bathsMin: c.baths,
+      bathsMax: c.baths,
+      sqftMin: c.sqft,
+      sqftMax: c.sqft,
+      priceMin: c.price,
+      priceMax: c.price,
+      thumbnailUrl: c.thumbnailUrl,
+      sourceUrl: c.sourceUrl,
+      communityName: c.communityName,
+      planName: c.planName,
+      galleryUrls: d?.galleryUrls ?? null,
+    };
   });
 
   return { rows, rawCount: rows.length };

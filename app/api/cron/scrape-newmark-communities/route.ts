@@ -20,8 +20,10 @@ import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// One page fetch (~1s) + up to ~10 community upserts at ~50ms each.
-export const maxDuration = 60;
+// Communities list fetch + up to 6 community detail-page fetches (plans,
+// amenities, gallery) + upserts. Detail fetches run at concurrency 3 with a
+// 20s timeout each; worst case ~40s for all detail pages.
+export const maxDuration = 90;
 
 const SCRAPER_SUBMITTER_NAME = 'Newmark Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-newmark@harmonyone.system';
@@ -67,19 +69,22 @@ export async function GET(req: NextRequest) {
           city: row.city,
           state: row.state,
           description: row.description,
-          bedsMin: null,
-          bedsMax: null,
-          bathsMin: null,
-          bathsMax: null,
-          sqftMin: null,
-          sqftMax: null,
-          priceMin: null,
-          priceMax: null,
+          bedsMin: row.bedsMin,
+          bedsMax: row.bedsMax,
+          bathsMin: row.bathsMin,
+          bathsMax: row.bathsMax,
+          sqftMin: row.sqftMin,
+          sqftMax: row.sqftMax,
+          priceMin: row.priceMin,
+          priceMax: row.priceMax,
           flyerPdfUrl: null,
           thumbnailUrl: row.thumbnailUrl,
           sourceUrl: row.sourceUrl,
           address: row.address,
+          communityName: row.title,
           homeType: 'community',
+          galleryUrls: row.galleryUrls,
+          communityData: row.communityData,
         });
         if (result.created) inserted++;
         else updated++;
