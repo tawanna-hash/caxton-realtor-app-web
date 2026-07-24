@@ -432,7 +432,6 @@ export default async function CommunityDetailPage(
         websiteUrl={websiteUrl}
         flyerPdfUrl={flyerPdfUrl}
         shareTitle={`${name} — ${row.builderName}`}
-        phone={sales?.phone ?? null}
         latitude={sales?.lat ?? null}
         longitude={sales?.lng ?? null}
       />

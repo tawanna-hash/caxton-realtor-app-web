@@ -16,6 +16,7 @@
 import FloaterPill from '@/components/ui/FloaterPill';
 import FloaterOverflowSheet from '@/components/ui/floater/FloaterOverflowSheet';
 import { useDetailFloaterActions } from '@/components/ui/floater/useDetailFloaterActions';
+import { CONTACT_TEL } from '@/lib/contacts';
 
 type Props = {
   builderName: string;
@@ -46,6 +47,7 @@ export default function BuilderDetailFloater({
         website: 'builder_website_pill_clicked',
         inventory: 'builder_inventory_pill_clicked',
         saved: 'builder_saved',
+        contact: 'builder_contact_clicked',
       },
       base: { builder_name: builderName, slug },
       backRoute: '/builders',
@@ -61,6 +63,7 @@ export default function BuilderDetailFloater({
       flyerPdfUrl: `https://realtynewsnow.app/api/builders/${slug}/pdf`,
       downloadLabel: 'Download',
       inventoryRoute: `/inventory?builder=${encodeURIComponent(builderName)}`,
+      phone: CONTACT_TEL,
     });
 
   return (

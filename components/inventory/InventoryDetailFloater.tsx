@@ -6,7 +6,11 @@
 // useDetailFloaterActions factory — see components/ui/floater/.
 //
 // Primary: Back · Share · Builder Site (when a site URL exists).
-// Overflow (More): Flyer · Promos · Save · Directions (when geo exists).
+// Overflow (More): Flyer · Promos · Save · Contact · Directions (when geo).
+//
+// Contact routes to the RNN office line (lib/contacts) — listings carry no
+// per-home sales phone. Swap CONTACT_TEL or wire a per-listing phone if one
+// becomes available.
 //
 // Analytics: preserves the canonical events the /admin/metrics dashboard reads
 // (inventory_back_pill_clicked, inventory_shared, inventory_download_pill_clicked)
@@ -15,6 +19,7 @@
 import FloaterPill from '@/components/ui/FloaterPill';
 import FloaterOverflowSheet from '@/components/ui/floater/FloaterOverflowSheet';
 import { useDetailFloaterActions } from '@/components/ui/floater/useDetailFloaterActions';
+import { CONTACT_TEL } from '@/lib/contacts';
 
 type Props = {
   rowId: number;
@@ -50,6 +55,7 @@ export default function InventoryDetailFloater({
         shared: 'inventory_shared',
         download: 'inventory_download_pill_clicked',
         saved: 'inventory_saved',
+        contact: 'inventory_contact_clicked',
         directions: 'inventory_directions_clicked',
       },
       base: { row_id: rowId, builder_name: builderName },
@@ -65,6 +71,7 @@ export default function InventoryDetailFloater({
         : null,
       flyerPdfUrl: isPdf ? flyerPdfUrl : null,
       promosRoute: '/inventory?kind=promotion',
+      phone: CONTACT_TEL,
       latitude,
       longitude,
     });

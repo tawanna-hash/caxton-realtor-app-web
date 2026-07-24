@@ -8,6 +8,10 @@
 // Primary: Back · Share · Inventory.
 // Overflow (More): Website · Flyer · Save · Contact · Directions.
 //
+// Contact routes to the RNN office line (lib/contacts) — the community sales
+// office object carries address/geo/hours but no phone. Directions uses the
+// sales office geo.
+//
 // Analytics: preserves communities_back_pill_clicked, communities_shared,
 // communities_download_pill_clicked plus the generic
 // communities_floater_clicked (with action).
@@ -15,6 +19,7 @@
 import FloaterPill from '@/components/ui/FloaterPill';
 import FloaterOverflowSheet from '@/components/ui/floater/FloaterOverflowSheet';
 import { useDetailFloaterActions } from '@/components/ui/floater/useDetailFloaterActions';
+import { CONTACT_TEL } from '@/lib/contacts';
 
 type Props = {
   rowId: number;
@@ -23,7 +28,6 @@ type Props = {
   websiteUrl: string | null;
   flyerPdfUrl: string | null;
   shareTitle: string;
-  phone?: string | null;
   latitude?: number | string | null;
   longitude?: number | string | null;
 };
@@ -35,7 +39,6 @@ export default function CommunityDetailFloater({
   websiteUrl,
   flyerPdfUrl,
   shareTitle,
-  phone,
   latitude,
   longitude,
 }: Props) {
@@ -70,7 +73,7 @@ export default function CommunityDetailFloater({
       flyerPdfUrl,
       downloadLabel: 'Flyer',
       inventoryRoute: `/inventory?builder=${encodeURIComponent(builderName)}`,
-      phone,
+      phone: CONTACT_TEL,
       latitude,
       longitude,
     });
