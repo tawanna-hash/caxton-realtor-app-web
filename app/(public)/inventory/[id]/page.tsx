@@ -20,6 +20,7 @@ import { getBuilderInventoryById, type BuilderInventoryRow } from '@/lib/builder
 import { builderNameToSlug } from '@/lib/builder-slug';
 import InventoryGallery from '@/components/inventory/InventoryGallery';
 import InventoryDetailFloater from '@/components/inventory/InventoryDetailFloater';
+import FloorplanViewer from './FloorplanViewer';
 
 export const dynamic = 'force-dynamic';
 
@@ -319,13 +320,7 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
           </div>
           <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
             {isFloorplanImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={floorplanUrl}
-                alt="Floorplan"
-                loading="lazy"
-                className="w-full h-auto"
-              />
+              <FloorplanViewer src={floorplanUrl} alt="Floorplan" />
             ) : (
               <iframe
                 src={floorplanUrl}
