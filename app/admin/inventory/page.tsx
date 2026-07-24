@@ -39,6 +39,11 @@ const KIND_FILTER_OPTIONS: Array<{ value: KindFilter; label: string }> = [
   { value: 'listing',   label: 'Listings' },
 ];
 
+// Client-side pagination — the table loads every row for the active tab
+// (so sort + kind-filter still operate over the full set), then slices a
+// page of PAGE_SIZE rows for display.
+const PAGE_SIZE = 25;
+
 const SORT_OPTIONS: Array<{ key: SortKey; dir: SortDir; label: string }> = [
   { key: 'createdAt',    dir: 'desc', label: 'Newest first' },
   { key: 'createdAt',    dir: 'asc',  label: 'Oldest first' },
@@ -86,6 +91,7 @@ export default function AdminInventoryPage() {
   // Default to 'promotion' so newly-created promos are visible immediately
   // after admin creates them (the most common reason to land on this page).
   const [kindFilter, setKindFilter] = useState<KindFilter>('all');
+  const [page, setPage] = useState(1);
   const [bulkApproving, setBulkApproving] = useState(false);
 
   useEffect(() => {
@@ -117,6 +123,12 @@ export default function AdminInventoryPage() {
       cancelled = true;
     };
   }, [tab, reloadKey]);
+
+  // Reset to page 1 whenever the view changes (tab, kind filter, sort, or a
+  // reload after an edit/approve) so the user never lands on an empty page.
+  useEffect(() => {
+    setPage(1);
+  }, [tab, kindFilter, sortKey, sortDir, reloadKey]);
 
   const handleEditClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>, id: number) => {
@@ -183,6 +195,16 @@ export default function AdminInventoryPage() {
     () => (filteredRows ? sortRows(filteredRows, sortKey, sortDir) : null),
     [filteredRows, sortKey, sortDir],
   );
+
+  const totalPages = sortedRows
+    ? Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE))
+    : 1;
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const pagedRows = useMemo<BuilderInventoryRow[]>(() => {
+    if (!sortedRows) return [];
+    const start = (safePage - 1) * PAGE_SIZE;
+    return sortedRows.slice(start, start + PAGE_SIZE);
+  }, [sortedRows, safePage]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -332,6 +354,7 @@ export default function AdminInventoryPage() {
         />
 
         {sortedRows != null && sortedRows.length > 0 && (
+          <>
           <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -346,7 +369,7 @@ export default function AdminInventoryPage() {
                 </tr>
               </thead>
               <tbody>
-                {sortedRows.map((r) => (
+                {pagedRows.map((r) => (
                   <tr key={r.id} className="border-b border-gray-200 last:border-b-0">
                     <td className="px-4 py-3">
                       <div className="w-16 h-16 bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center rounded-md">
@@ -399,6 +422,14 @@ export default function AdminInventoryPage() {
               </tbody>
             </table>
           </div>
+          <Pager
+            page={safePage}
+            totalPages={totalPages}
+            total={sortedRows.length}
+            pageSize={PAGE_SIZE}
+            onChange={setPage}
+          />
+          </>
         )}
       </div>
     </div>
@@ -480,5 +511,86 @@ function SortableHeader({
         {arrow ? <span className="text-[10px]">{arrow}</span> : null}
       </button>
     </th>
+  );
+}
+
+function Pager({
+  page,
+  totalPages,
+  total,
+  pageSize,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  total: number;
+  pageSize: number;
+  onChange: (p: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+  const start = (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, total);
+  // Windowed page list: first, last, and a couple of pages around the
+  // current one, with ellipses where there are gaps.
+  const pages: Array<number | 'ellipsis'> = [];
+  const adj = 1;
+  pages.push(1);
+  const lo = Math.max(2, page - adj);
+  const hi = Math.min(totalPages - 1, page + adj);
+  if (lo > 2) pages.push('ellipsis');
+  for (let pn = lo; pn <= hi; pn++) pages.push(pn);
+  if (hi < totalPages - 1) pages.push('ellipsis');
+  if (totalPages > 1) pages.push(totalPages);
+  const btnBase =
+    'min-w-[32px] px-2 py-1.5 text-sm rounded-md border transition-colors ';
+  const navBtn =
+    'px-3 py-1.5 text-sm rounded-md border border-gray-300 bg-white text-gray-700 ' +
+    'hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
+      <p className="text-xs text-gray-500">
+        Showing {start}–{end} of {total}
+      </p>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => onChange(page - 1)}
+          disabled={page <= 1}
+          className={navBtn}
+        >
+          Prev
+        </button>
+        {pages.map((pn, i) =>
+          pn === 'ellipsis' ? (
+            <span key={`e${i}`} className="px-2 text-gray-400" aria-hidden="true">
+              …
+            </span>
+          ) : (
+            <button
+              key={pn}
+              type="button"
+              onClick={() => onChange(pn)}
+              disabled={pn === page}
+              className={
+                btnBase +
+                (pn === page
+                  ? 'border-brand-700 bg-brand-700 text-white'
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500')
+              }
+            >
+              {pn}
+            </button>
+          ),
+        )}
+        <button
+          type="button"
+          onClick={() => onChange(page + 1)}
+          disabled={page >= totalPages}
+          className={navBtn}
+        >
+          Next
+        </button>
+      </div>
+    </div>
   );
 }
