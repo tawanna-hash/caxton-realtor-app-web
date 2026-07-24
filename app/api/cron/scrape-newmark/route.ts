@@ -87,6 +87,7 @@ export async function GET(req: NextRequest) {
           planName: row.planName,
           homeType: 'showcase',
           galleryUrls: row.galleryUrls,
+          extraDetails: row.extraDetails,
         });
         if (result.created) inserted++;
         else updated++;

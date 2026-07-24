@@ -85,6 +85,7 @@ export type NewmarkHomeRow = {
   communityName: string | null;
   planName: string | null;
   galleryUrls: string[] | null;
+  extraDetails: Record<string, string> | null;
 };
 
 export type NewmarkScrapeResult<T> = { rows: T[]; rawCount: number };
@@ -480,7 +481,11 @@ export async function fetchNewmarkCommunities(): Promise<
 // Move-in ready homes
 // ─────────────────────────────────────────────────────────────────────────
 
-type HomeDetail = { galleryUrls: string[] | null; description: string | null };
+type HomeDetail = {
+  galleryUrls: string[] | null;
+  description: string | null;
+  extraDetails: Record<string, string> | null;
+};
 
 async function fetchHomeDetail(sourceUrl: string): Promise<HomeDetail | null> {
   let html: string;
@@ -493,10 +498,36 @@ async function fetchHomeDetail(sourceUrl: string): Promise<HomeDetail | null> {
   const gallery = collectGallery($);
   const description =
     stripTags($('.description').first().html() || '') || null;
-  if (gallery.length === 0 && !description) return null;
+
+  // Property details: the .specs table (Sq Ft / Beds / Baths / Stories /
+  // Garage). Sq Ft/Beds/Baths duplicate the row fields, so keep only the
+  // extras (Stories, Garage, ...).
+  const SKIP_SPEC = new Set(['sq ft', 'beds', 'baths']);
+  const extraDetails: Record<string, string> = {};
+  $('table.specs td').each((_, el) => {
+    const $td = $(el);
+    const label = $td.contents().first().text().trim().replace(/\s+/g, ' ');
+    const value = $td.find('b').text().trim();
+    if (label && value && !SKIP_SPEC.has(label.toLowerCase())) {
+      extraDetails[label] = value;
+    }
+  });
+
+  // Geo: Newmark exposes coords only inside the Google Maps directions URL
+  // (`@lat,lng`), not as JSON-LD. Extract for the Location map embed.
+  const mapsHref = $('a[href*="google.com/maps"]').first().attr('href') || '';
+  const geo = mapsHref.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (geo) {
+    extraDetails._latitude = geo[1];
+    extraDetails._longitude = geo[2];
+  }
+
+  if (gallery.length === 0 && !description && Object.keys(extraDetails).length === 0)
+    return null;
   return {
     galleryUrls: gallery.length > 0 ? gallery : null,
     description,
+    extraDetails: Object.keys(extraDetails).length > 0 ? extraDetails : null,
   };
 }
 
@@ -615,6 +646,7 @@ export async function fetchNewmarkMoveInReady(): Promise<
       communityName: c.communityName,
       planName: c.planName,
       galleryUrls: d?.galleryUrls ?? null,
+      extraDetails: d?.extraDetails ?? null,
     };
   });
 
