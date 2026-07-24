@@ -3,25 +3,24 @@
 // components/builders/BuilderDeveloperFloater.tsx
 //
 // Floating pill for the builder/developer LIST pages (/builders, /communities,
-// /inventory). Thin call site over the shared useDetailFloaterActions factory
-// — see components/ui/floater/.
+// /inventory, /promotions). Thin call site over the shared
+// useDetailFloaterActions factory — see components/ui/floater/.
 //
-// Primary: Back · Inventory · Promos.
-// Overflow (More): Download Search Results · Share Search Results.
+// Pill (no More menu): Back · Inventory · Promos · Download · Share.
 //
-// "Results" actions reflect the InventoryBrowser's current filters: the
-// browser syncs filter state to the URL (replaceState), so Download results
+// Download + Share live in the pill directly (flattened out of the former
+// More overflow sheet). Both reflect the InventoryBrowser's current filters:
+// the browser syncs filter state to the URL (replaceState), so Download
 // appends window.location.search to the PDF endpoint (the PDF route parses
-// the same params) and Share results shares the current (filtered) URL.
+// the same params) and Share shares the current (filtered) URL.
 //
 // No Save/Contact/Directions here — a list page has no single entity to save
-// or route to. Analytics: fires the generic builders_floater_clicked (with
-// action) on every action, matching the prior behaviour.
+// or route to. Analytics: fires builders_floater_clicked (with action) on
+// every action.
 
 import { useCallback } from 'react';
 import FloaterPill from '@/components/ui/FloaterPill';
 import type { FloaterAction } from '@/components/ui/FloaterPill';
-import FloaterOverflowSheet from '@/components/ui/floater/FloaterOverflowSheet';
 import { useDetailFloaterActions } from '@/components/ui/floater/useDetailFloaterActions';
 import { IconDownload, IconShare } from '@/components/ui/floater/icons';
 import { trackEvent } from '@/app/posthog-provider';
@@ -65,8 +64,7 @@ export default function BuilderDeveloperFloater({
     void openExternal(`${originForLink()}${downloadHref}${search}`);
   }, [fire, downloadHref]);
 
-  // Share the current (filtered) URL. Same payload the primary Share pill
-  // uses, surfaced explicitly in the More sheet as "Share results".
+  // Share the current (filtered) inventory URL.
   const onShareResults = useCallback(async () => {
     void haptics.light();
     const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -74,44 +72,37 @@ export default function BuilderDeveloperFloater({
     fire('share_results', { channel: res.ok ? res.method : 'cancelled' });
   }, [fire, shareTitle]);
 
-  const resultsActions: FloaterAction[] = [
-    {
-      key: 'download-results',
-      label: 'Download Search Results',
-      ariaLabel: 'Download filtered results as PDF',
-      onClick: onDownloadResults,
-      icon: IconDownload,
-    },
-    {
-      key: 'share-results',
-      label: 'Share Search Results',
-      ariaLabel: 'Share filtered results',
-      onClick: onShareResults,
-      icon: IconShare,
-    },
-  ];
+  // Navigation actions (Back · Inventory · Promos) come from the shared
+  // factory; the two results actions are local. Flatten all five into the
+  // pill — no More / overflow sheet.
+  const { pillActions } = useDetailFloaterActions({
+    surface: 'builderList',
+    events: { floater: 'builders_floater_clicked' },
+    base: { page },
+    backRoute: backHref,
+    share: { title: shareTitle },
+    primary: ['back', 'inventory', 'promos'],
+    promosRoute: '/promotions',
+    inventoryRoute: '/inventory',
+  });
 
-  const { pillActions, overflow, overflowOpen, closeOverflow } =
-    useDetailFloaterActions({
-      surface: 'builderList',
-      events: { floater: 'builders_floater_clicked' },
-      base: { page },
-      backRoute: backHref,
-      share: { title: shareTitle },
-      primary: ['back', 'inventory', 'promos'],
-      promosRoute: '/promotions',
-      inventoryRoute: '/inventory',
-      extraOverflow: resultsActions,
-    });
+  const downloadAction: FloaterAction = {
+    key: 'download',
+    label: 'Download',
+    ariaLabel: 'Download filtered results as PDF',
+    onClick: onDownloadResults,
+    icon: IconDownload,
+  };
 
-  return (
-    <>
-      <FloaterPill actions={pillActions} />
-      <FloaterOverflowSheet
-        open={overflowOpen}
-        actions={overflow}
-        onClose={closeOverflow}
-      />
-    </>
-  );
+  const shareAction: FloaterAction = {
+    key: 'share',
+    label: 'Share',
+    ariaLabel: 'Share inventory results',
+    onClick: onShareResults,
+    icon: IconShare,
+  };
+
+  const actions = [...pillActions, downloadAction, shareAction];
+
+  return <FloaterPill actions={actions} />;
 }
