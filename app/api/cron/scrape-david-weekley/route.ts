@@ -29,6 +29,7 @@ import {
   updateBuilderInventory,
   upsertBuilderInventoryByExternalId,
 } from '@/lib/builder-inventory';
+import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -171,7 +172,24 @@ async function runScrape(opts: { refresh: boolean }) {
     }
   }
 
-  // Backfill structured community_data + descriptions for David Weekley
+  // ── Prune: deactivate inventory homes no longer in David Weekley's source
+  //    (sold / off-market). Guarded — never runs on an empty scrape so a
+  //    transient empty response can't wipe the set.
+  let deactivated = 0;
+  if (rows.length > 0) {
+    try {
+      deactivated = await deactivateStaleBuilderInventory({
+        builderName: BUILDER_NAME,
+        homeType: 'showcase',
+        activeExternalIds: rows.map((r) => r.externalId),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[scrape-david-weekley] deactivate stale inventory failed:', msg);
+    }
+  }
+
+    // Backfill structured community_data + descriptions for David Weekley
   // community rows (pre-S13 orphans). Each community's davidweekleyhomes.com
   // page URL lives in flyer_pdf_url; fetch it and extract the full structured
   // blob (plans, amenities, schools, tax, sales office, status). Idempotent —
@@ -307,6 +325,7 @@ async function runScrape(opts: { refresh: boolean }) {
       skipped,
       inserted,
       updated,
+      deactivated,
       errors,
       communityDataBackfilled,
       communityDataErrors,
