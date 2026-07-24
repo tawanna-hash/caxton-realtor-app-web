@@ -249,6 +249,12 @@ export default function AdminInventoryPage() {
               Scraper Guide
             </Link>
             <Link
+              href="/admin/inventory/community-scraper-guide"
+              className="shrink-0 border border-brand-700 text-brand-700 px-4 py-2 text-sm font-medium hover:bg-brand-50 rounded-md transition-colors whitespace-nowrap"
+            >
+              Community Guide
+            </Link>
+            <Link
               href="/admin/inventory/builders"
               className="shrink-0 border border-brand-700 text-brand-700 px-4 py-2 text-sm font-medium hover:bg-brand-50 rounded-md transition-colors whitespace-nowrap"
             >
