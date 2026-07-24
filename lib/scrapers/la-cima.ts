@@ -319,6 +319,7 @@ function buildRow(home: PipsyHome): UpsertScrapedInput | null {
     priceMin: price,
     priceMax: price,
     flyerPdfUrl: detailUrl,
+    sourceUrl: detailUrl,
     thumbnailUrl: thumbnail,
     galleryUrls: gallery.length > 0 ? gallery : null,
     address: `${address}, ${LA_CIMA_CITY}, ${LA_CIMA_STATE}`,

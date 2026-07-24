@@ -76,6 +76,8 @@ export type ScrapedGiddensRow = {
   priceMax: number | null;
   thumbnailUrl: string | null;
   flyerPdfUrl: string | null;
+  sourceUrl: string | null;
+  galleryUrls: string[] | null;
   address: string | null;
   readyDate: string | null;
   planName: string | null;
@@ -195,13 +197,32 @@ function parseCard(card: string): ScrapedGiddensRow | null {
   // them find the home there.
   const flyerPdfUrl = HOMES_URL;
 
+  // Deterministic fallback description: Giddens' card HTML has no prose,
+  // so synthesize from the structured data-* fields so the inventory detail
+  // page has copy where a description would render.
+  const descParts: string[] = [];
+  if (titleText && communityName) descParts.push(`${titleText} at ${communityName}`);
+  else if (titleText) descParts.push(titleText);
+  else if (communityName) descParts.push(`Inventory home at ${communityName}`);
+  const specParts: string[] = [];
+  if (beds != null) specParts.push(`${beds} bedrooms`);
+  if (baths != null) specParts.push(`${baths} bathrooms`);
+  if (sqft != null) specParts.push(`${sqft.toLocaleString()} sq ft`);
+  if (price != null) specParts.push(`from $${price.toLocaleString()}`);
+  if (specParts.length) descParts.push(specParts.join(', ') + '.');
+  if (communityName) descParts.push(`Located in the ${communityName} community.`);
+  else if (address) descParts.push(`Located at ${address}.`);
+  const description = descParts.join(' ').trim() || null;
+  const galleryUrls = thumbnailUrl ? [thumbnailUrl] : null;
+  const sourceUrl = flyerPdfUrl;
+
   return {
     externalId,
     builderName: 'Giddens Homes',
     title,
     city,
     state: stateText.toUpperCase(),
-    description: null,
+    description,
     bedsMin: beds,
     bedsMax: beds,
     bathsMin: baths,
@@ -212,6 +233,8 @@ function parseCard(card: string): ScrapedGiddensRow | null {
     priceMax: price,
     thumbnailUrl,
     flyerPdfUrl,
+    sourceUrl,
+    galleryUrls,
     address,
     readyDate: null, // data-available is always empty on Giddens
     planName: null,  // no floor plan field in their data structure

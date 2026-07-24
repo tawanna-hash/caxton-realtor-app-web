@@ -151,7 +151,9 @@ async function runScrape(opts: { refresh: boolean }) {
         priceMin: row.priceMin,
         priceMax: row.priceMax,
         flyerPdfUrl: row.flyerPdfUrl,
+        sourceUrl: row.sourceUrl,
         thumbnailUrl: row.thumbnailUrl,
+        galleryUrls: row.galleryUrls,
         // S13 per-home additions:
         address: row.address,
         readyDate: row.readyDate,

@@ -133,6 +133,8 @@ export type ScrapedDavidWeekleyRow = {
   priceMax: number | null;
   thumbnailUrl: string | null;
   flyerPdfUrl: string | null;
+  sourceUrl: string | null;
+  galleryUrls: string[] | null;
   // S13 per-home additions:
   address: string | null;
   readyDate: string | null; // YYYY-MM-DD
@@ -325,13 +327,33 @@ function normalize(
   if (typeof s.Longitude === 'number') extraDetails._longitude = String(s.Longitude);
   if (s.VirtualTour) extraDetails._virtualTourUrl = s.VirtualTour;
 
+  // Deterministic fallback description: ShowcaseData carries no prose per
+  // home, so synthesize one from the structured fields so the inventory
+  // detail page has copy where a description would render (Drees/La Cima
+  // pull real marketing copy from their feeds; David Weekley's has none).
+  const descParts: string[] = [];
+  if (planName && communityName) descParts.push(`The ${planName} at ${communityName}`);
+  else if (planName) descParts.push(`The ${planName}`);
+  else if (communityName) descParts.push(`Inventory home at ${communityName}`);
+  const specParts: string[] = [];
+  if (beds != null) specParts.push(`${beds} bedrooms`);
+  if (baths != null) specParts.push(`${baths} bathrooms`);
+  if (sqft != null) specParts.push(`${sqft.toLocaleString()} sq ft`);
+  if (price != null) specParts.push(`from $${price.toLocaleString()}`);
+  if (specParts.length) descParts.push(specParts.join(', ') + '.');
+  if (readyDate) descParts.push(`Ready ${readyDate}.`);
+  if (address) descParts.push(`Located at ${address}, ${city}, ${state}.`);
+  const description = descParts.join(' ').trim() || null;
+  const galleryUrls = s.Thumbnail?.trim() ? [s.Thumbnail.trim()] : null;
+  const sourceUrl = normalizeUrl(s.Token);
+
   return {
     externalId: s.Id,
     builderName: 'David Weekley Homes',
     title,
     city,
     state,
-    description: null,
+    description,
     bedsMin: beds,
     bedsMax: beds,
     bathsMin: baths,
@@ -342,6 +364,8 @@ function normalize(
     priceMax: price,
     thumbnailUrl: s.Thumbnail?.trim() || null,
     flyerPdfUrl: normalizeUrl(s.Token),
+    sourceUrl,
+    galleryUrls,
     address: s.FullAddress?.trim() || null,
     readyDate: dateOnly(s.ReadyDate),
     planName,

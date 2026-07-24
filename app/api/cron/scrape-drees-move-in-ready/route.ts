@@ -67,6 +67,7 @@ async function runScrape() {
         priceMin: row.priceMin,
         priceMax: row.priceMax,
         flyerPdfUrl: row.flyerPdfUrl,
+        sourceUrl: row.flyerPdfUrl,
         thumbnailUrl: row.thumbnailUrl,
         galleryUrls: row.galleryUrls,
         extraDetails: row.extraDetails,
