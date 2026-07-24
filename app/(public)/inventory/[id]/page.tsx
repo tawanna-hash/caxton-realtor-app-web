@@ -404,6 +404,8 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
         externalUrl={pickBuilderSiteUrl(row)}
         flyerPdfUrl={row.flyerPdfUrl}
         shareTitle={`${row.builderName} — ${row.title}`}
+        latitude={latitude}
+        longitude={longitude}
       />
     </main>
   );

@@ -99,6 +99,8 @@ export const ACTION_LABELS: Record<string, string> = {
   directions: 'Directions',
   promotions: 'Promotions',
   register: 'Register',
+  save: 'Save',
+  contact: 'Contact',
 };
 
 // Color palette consistent with the rest of the app:

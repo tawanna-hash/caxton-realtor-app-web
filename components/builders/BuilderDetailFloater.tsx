@@ -2,30 +2,26 @@
 
 // components/builders/BuilderDetailFloater.tsx
 //
-// Floater pill for the /builders/[slug] detail page. Uses the shared
-// <FloaterPill> so size + look stay consistent with the inventory and
-// events floaters.
+// Floating pill for /builders/[slug]. Thin call site over the shared
+// useDetailFloaterActions factory — see components/ui/floater/.
 //
-// Actions, left to right:
-//   1. Back      — router.back() with /builders fallback
-//   2. Download  — opens /api/builders/[slug]/pdf in the in-app browser
-//   3. Share     — native share sheet with the canonical detail URL
+// Primary: Back · Share · Inventory.
+// Overflow (More): Website · Download · Save.
 //
-// Analytics: fires the canonical admin-metrics event names
-// (builder_back_pill_clicked, builder_download_pill_clicked,
-// builder_shared) that the /admin/metrics surface × action pivot expects.
+// Analytics: the builder detail page fires canonical per-action events (no
+// generic floater event) — builder_back_pill_clicked, builder_shared,
+// builder_download_pill_clicked, builder_website_pill_clicked,
+// builder_inventory_pill_clicked — preserved exactly here.
 
-import { useRouter } from 'next/navigation';
-import { trackEvent } from '@/app/posthog-provider';
-import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
-import { share as nativeShare } from '@/lib/native/share';
-import { openExternal } from '@/lib/native/external-link';
+import FloaterPill from '@/components/ui/FloaterPill';
+import FloaterOverflowSheet from '@/components/ui/floater/FloaterOverflowSheet';
+import { useDetailFloaterActions } from '@/components/ui/floater/useDetailFloaterActions';
 
 type Props = {
   builderName: string;
   slug: string;
   // Builder's website URL (derived from the first non-PDF source_url across
-  // their inventory rows). When present, a "Website" pill opens it externally.
+  // their inventory rows). When present, a "Website" overflow row opens it.
   websiteUrl?: string | null;
 };
 
@@ -34,122 +30,47 @@ export default function BuilderDetailFloater({
   slug,
   websiteUrl,
 }: Props) {
-  const router = useRouter();
+  const shareTitle = `${builderName} — Realty News Now`;
+  const shareUrl =
+    typeof window !== 'undefined'
+      ? window.location.href
+      : `https://realtynewsnow.app/builders/${slug}`;
 
-  const handleBack = () => {
-    trackEvent('builder_back_pill_clicked', { builder_name: builderName, slug });
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push('/builders');
-    }
-  };
-
-  const handleWebsite = () => {
-    if (!websiteUrl) return;
-    trackEvent('builder_website_pill_clicked', { builder_name: builderName, slug });
-    void openExternal(websiteUrl);
-  };
-
-  const handleDownload = () => {
-    trackEvent('builder_download_pill_clicked', {
-      builder_name: builderName,
-      slug,
-    });
-    // In-app browser (SFSafariViewController on iOS) keeps users inside
-    // Realty News Now while the PDF renders.
-    void openExternal(`https://realtynewsnow.app/api/builders/${slug}/pdf`);
-  };
-
-  const handleShare = async () => {
-    const url =
-      typeof window !== 'undefined'
-        ? window.location.href
-        : `https://realtynewsnow.app/builders/${slug}`;
-    const title = `${builderName} — Realty News Now`;
-    const res = await nativeShare({
-      title,
-      text: title,
-      url,
-      dialogTitle: 'Share builder',
-    });
-    if (res.ok) {
-      trackEvent('builder_shared', {
-        builder_name: builderName,
-        slug,
-        channel: res.method,
-      });
-    }
-  };
-
-  const handleInventory = () => {
-    trackEvent('builder_inventory_pill_clicked', { builder_name: builderName, slug });
-    router.push(`/inventory?builder=${encodeURIComponent(builderName)}`);
-  };
-
-  const actions: FloaterAction[] = [
-    {
-      key: 'back',
-      label: 'Back',
-      ariaLabel: 'Back',
-      onClick: handleBack,
-      icon: <path d="m15 18-6-6 6-6" />,
-    },
-    ...(websiteUrl
-      ? [
-          {
-            key: 'website',
+  const { pillActions, overflow, overflowOpen, closeOverflow } =
+    useDetailFloaterActions({
+      surface: 'builder',
+      events: {
+        back: 'builder_back_pill_clicked',
+        shared: 'builder_shared',
+        download: 'builder_download_pill_clicked',
+        website: 'builder_website_pill_clicked',
+        inventory: 'builder_inventory_pill_clicked',
+        saved: 'builder_saved',
+      },
+      base: { builder_name: builderName, slug },
+      backRoute: '/builders',
+      share: { title: shareTitle, text: shareTitle },
+      save: { id: `builder:${slug}`, title: shareTitle, url: shareUrl },
+      external: websiteUrl
+        ? {
+            url: websiteUrl,
             label: 'Website',
             ariaLabel: 'Visit builder website',
-            onClick: handleWebsite,
-            icon: (
-              <>
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </>
-            ),
-          },
-        ]
-      : []),
-    {
-      key: 'download',
-      label: 'Download',
-      ariaLabel: 'Download move-in inventory PDF',
-      onClick: handleDownload,
-      icon: (
-        <>
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" />
-          <line x1="12" y1="15" x2="12" y2="3" />
-        </>
-      ),
-    },
-    {
-      key: 'share',
-      label: 'Share',
-      ariaLabel: 'Share',
-      onClick: handleShare,
-      icon: (
-        <>
-          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-          <polyline points="16 6 12 2 8 6" />
-          <line x1="12" y1="2" x2="12" y2="15" />
-        </>
-      ),
-    },
-    {
-      key: 'inventory',
-      label: 'Inventory',
-      ariaLabel: 'View move-in inventory',
-      onClick: handleInventory,
-      icon: (
-        <>
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-6H10v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9z" />
-        </>
-      ),
-    },
-  ];
+          }
+        : null,
+      flyerPdfUrl: `https://realtynewsnow.app/api/builders/${slug}/pdf`,
+      downloadLabel: 'Download',
+      inventoryRoute: `/inventory?builder=${encodeURIComponent(builderName)}`,
+    });
 
-  return <FloaterPill actions={actions} bottomOffsetClass="bottom-[80px]" />;
+  return (
+    <>
+      <FloaterPill actions={pillActions} bottomOffsetClass="bottom-[80px]" />
+      <FloaterOverflowSheet
+        open={overflowOpen}
+        actions={overflow}
+        onClose={closeOverflow}
+      />
+    </>
+  );
 }

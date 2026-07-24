@@ -207,17 +207,29 @@ export const GET = withErrorHandling(async (req: Request) => {
         UNION ALL
         SELECT 'inventory'         AS surface, 'download'     AS action FROM events WHERE event = 'inventory_download_pill_clicked'    AND timestamp >= now() - INTERVAL ${days} DAY
         UNION ALL
+        SELECT 'inventory'         AS surface, 'save'        AS action FROM events WHERE event = 'inventory_saved'                   AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'inventory'         AS surface, 'directions'  AS action FROM events WHERE event = 'inventory_directions_clicked'      AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
         SELECT 'communities'       AS surface, 'back'         AS action FROM events WHERE event = 'communities_back_pill_clicked'      AND timestamp >= now() - INTERVAL ${days} DAY
         UNION ALL
         SELECT 'communities'       AS surface, 'share'        AS action FROM events WHERE event = 'communities_shared'                 AND timestamp >= now() - INTERVAL ${days} DAY
         UNION ALL
         SELECT 'communities'       AS surface, 'download'     AS action FROM events WHERE event = 'communities_download_pill_clicked'  AND timestamp >= now() - INTERVAL ${days} DAY
         UNION ALL
+        SELECT 'communities'       AS surface, 'save'        AS action FROM events WHERE event = 'communities_saved'                 AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'communities'       AS surface, 'contact'     AS action FROM events WHERE event = 'communities_contact_clicked'       AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'communities'       AS surface, 'directions'  AS action FROM events WHERE event = 'communities_directions_clicked'     AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
         SELECT 'builders'          AS surface, 'back'         AS action FROM events WHERE event = 'builder_back_pill_clicked'          AND timestamp >= now() - INTERVAL ${days} DAY
         UNION ALL
         SELECT 'builders'          AS surface, 'share'        AS action FROM events WHERE event = 'builder_shared'                     AND timestamp >= now() - INTERVAL ${days} DAY
         UNION ALL
         SELECT 'builders'          AS surface, 'download'     AS action FROM events WHERE event = 'builder_download_pill_clicked'      AND timestamp >= now() - INTERVAL ${days} DAY
+        UNION ALL
+        SELECT 'builders'          AS surface, 'save'        AS action FROM events WHERE event = 'builder_saved'                     AND timestamp >= now() - INTERVAL ${days} DAY
         UNION ALL
         SELECT 'event'             AS surface, 'back'         AS action FROM events WHERE event = 'event_back_pill_clicked'            AND timestamp >= now() - INTERVAL ${days} DAY
         UNION ALL
