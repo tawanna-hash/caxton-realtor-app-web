@@ -209,6 +209,22 @@ M/I Homes listing 199 example:
 Convention: prefix internal/derived keys with `_` (e.g. `_latitude`,
 `_floorplanUrl`) so the UI can style or hide them.
 
+### Special `_-prefixed` keys that render public sections
+
+Three `_-prefixed` `extraDetails` keys drive dedicated sections on the public
+`/inventory/[id]` page (below the main gallery + sidebar). Populate them from
+the builder's detail page / listing API when available — they're what make a
+listing feel "complete" (e.g. listing [909](https://realtynewsnow.app/inventory/909)).
+
+| Key | Renders | Notes |
+|-----|---------|-------|
+| `_latitude` + `_longitude` | **Location** — Google Maps embed + "Get directions" link | Renders only when BOTH are set. Store as strings. |
+| `_floorplanUrl` | **Floorplan** section | Image URL → zoomable `FloorplanViewer`; `ml3ds-icon.com` URLs → interactive `<iframe>`. |
+| `_virtualTourUrl` | **3D Tour** iframe | Optional; renders only when set. |
+
+Also: non-`_` `extraDetails` keys render in the **Property details** grid
+(county, school district, MLS#, foundation, owner's suite, …).
+
 ---
 
 ## 9. Cron route — `app/api/cron/scrape-<builder>/route.ts`

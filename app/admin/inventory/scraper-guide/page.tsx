@@ -263,6 +263,45 @@ export default function AdminScraperGuidePage() {
                 </div>
               </aside>
             </div>
+
+            {/* Full-width sections below the grid — match the real /inventory/[id] page.
+                All three are driven by _-prefixed extraDetails keys. */}
+            <div className="mt-10 border-t border-gray-200 pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
+                  Floorplan <FieldBadge name="extraDetails._floorplanUrl" />
+                </h3>
+                <span className="text-xs text-[#5a0e5f]">Open full screen →</span>
+              </div>
+              <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] flex items-center justify-center text-xs text-gray-400">
+                floorplan viewer — image URL → zoomable; ml3ds-icon.com → iframe
+              </div>
+            </div>
+
+            <div className="mt-10 border-t border-gray-200 pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
+                  Location <FieldBadge name="extraDetails._latitude + _longitude" />
+                </h3>
+                <span className="text-xs text-[#5a0e5f]">Get directions →</span>
+              </div>
+              <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] flex items-center justify-center text-xs text-gray-400">
+                Google Maps embed (q=lat,lng) — renders when both _latitude &amp; _longitude are set
+              </div>
+            </div>
+
+            <div className="mt-10 border-t border-gray-200 pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
+                  3D Tour <FieldBadge name="extraDetails._virtualTourUrl" />{' '}
+                  <span className="text-gray-400 normal-case tracking-normal font-normal">(optional)</span>
+                </h3>
+                <span className="text-xs text-[#5a0e5f]">Open in new tab →</span>
+              </div>
+              <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] flex items-center justify-center text-xs text-gray-400">
+                3D tour iframe — renders only when _virtualTourUrl is set
+              </div>
+            </div>
           </div>
         </div>
       </Section>
@@ -293,7 +332,10 @@ export default function AdminScraperGuidePage() {
                 ['readyDate', '2026-09-11', 'YYYY-MM-DD only (dateOnly); reject malformed.'],
                 ['planName', 'San Gabriel - C', 'May include elevation letter.'],
                 ['communityName', 'Barksdale', 'Friendly name for UI grouping (not the slug).'],
-                ['extraDetails', 'County, School District, MLS#…', 'JSONB key/value; prefix internal keys with _.'],
+                ['extraDetails', 'County, School District, MLS#…', 'JSONB key/value; non-_ keys render in the Property details grid.'],
+                ['extraDetails._latitude + _longitude', '30.566917 / -97.783389', 'Drives the public Location map (Google Maps embed + directions).'],
+                ['extraDetails._floorplanUrl', 'rifp.ml3ds-icon.com/#/floorplan/…', 'Drives the Floorplan section (image → zoomable viewer; ml3ds-icon.com → iframe).'],
+                ['extraDetails._virtualTourUrl', '(optional) 3D tour URL', 'Drives the 3D Tour iframe section when present.'],
                 ['homeType', 'showcase', "Always 'showcase' for move-in inventory."],
               ].map(([f, ex, note]) => (
                 <tr key={f}>
