@@ -327,6 +327,9 @@ function normalize(
   if (typeof s.Longitude === 'number') extraDetails._longitude = String(s.Longitude);
   if (s.VirtualTour) extraDetails._virtualTourUrl = s.VirtualTour;
 
+  const readyDate = dateOnly(s.ReadyDate);
+  const address = s.FullAddress?.trim() || null;
+
   // Deterministic fallback description: ShowcaseData carries no prose per
   // home, so synthesize one from the structured fields so the inventory
   // detail page has copy where a description would render (Drees/La Cima
@@ -366,8 +369,8 @@ function normalize(
     flyerPdfUrl: normalizeUrl(s.Token),
     sourceUrl,
     galleryUrls,
-    address: s.FullAddress?.trim() || null,
-    readyDate: dateOnly(s.ReadyDate),
+    address,
+    readyDate,
     planName,
     communityName,
     homeType: 'showcase',
