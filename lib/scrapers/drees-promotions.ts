@@ -289,6 +289,16 @@ async function parsePromotion(url: string, market: Market): Promise<UpsertScrape
 
 // ── Public entry ───────────────────────────────────────────────────────────
 
+// A promo is expired if its parsed expiresAt is a past ISO date. We skip
+// these so we never (re)publish an offer that has already ended — Drees often
+// leaves expired promo pages in the sitemap after the offer's end date. A null
+// expiresAt (no date found) is treated as not-expired (can't tell).
+function isExpired(isoDate: string | null): boolean {
+  if (!isoDate) return false;
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  return isoDate < today;
+}
+
 export async function fetchDreesPromotions(): Promise<DreesPromotionScrapeResult> {
   const rows: UpsertScrapedInput[] = [];
   const skipped: { url: string; reason: string }[] = [];
@@ -310,8 +320,17 @@ export async function fetchDreesPromotions(): Promise<DreesPromotionScrapeResult
   for (const { url, market } of targets) {
     try {
       const row = await parsePromotion(url, market);
-      if (row) rows.push(row);
-      else skipped.push({ url, reason: 'title missing on promotion page' });
+      if (!row) {
+        skipped.push({ url, reason: 'title missing on promotion page' });
+        continue;
+      }
+      // Skip offers whose end date has already passed. Drees leaves expired
+      // promo pages in the sitemap; we never (re)publish a past-date offer.
+      if (isExpired(row.expiresAt)) {
+        skipped.push({ url, reason: `expired (expiresAt ${row.expiresAt})` });
+        continue;
+      }
+      rows.push(row);
     } catch (err) {
       skipped.push({ url, reason: `parse failed: ${(err as Error).message}` });
     }
