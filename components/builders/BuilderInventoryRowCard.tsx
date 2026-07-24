@@ -17,7 +17,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Building2, Home, Tag } from 'lucide-react';
 import type { BuilderInventoryRow } from '@/lib/builder-inventory';
-import { builderNameToSlug } from '@/lib/builder-slug';
 import { trackEvent } from '@/app/posthog-provider';
 import {
   formatPriceRange,
@@ -66,9 +65,12 @@ export default function BuilderInventoryRowCard({
   //     (internal detail page with photo gallery, specs, marketing
   //     description, and a Builder Site pill that opens the builder's site).
   //     Do NOT bounce the user straight to the builder's website.
-  //   - promotion: link to the actual listing on the builder's site. Prefer
-  //     a non-PDF sourceUrl; otherwise fall back to a non-PDF flyerPdfUrl.
-  //     If only a PDF or nothing is available, route to the builder profile.
+  //   - promotion: if it has a non-PDF source URL, open the builder's offer
+  //     page directly in a new tab. Otherwise route to /inventory/[id],
+  //     whose detail view renders a Download-flyer button (for PDF-only
+  //     promos) plus the builder-site / back / share floater. Routing to
+  //     the builder profile is intentionally avoided — on a builder page
+  //     that fallback is a no-op (same URL), which made promos feel dead.
   const isPdf = (u: string | null | undefined) =>
     !!u && u.toLowerCase().endsWith('.pdf');
   const communityHref = `/communities/${row.id}`;
@@ -86,7 +88,7 @@ export default function BuilderInventoryRowCard({
       ? communityHref
       : variant === 'listing'
         ? listingHref
-        : externalUrl || `/builders/${builderNameToSlug(row.builderName)}`;
+        : externalUrl || listingHref;
   const external = !!externalUrl;
 
   const onClick = () => {
