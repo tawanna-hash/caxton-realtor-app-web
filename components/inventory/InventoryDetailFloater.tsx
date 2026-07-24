@@ -5,22 +5,26 @@
 // Floating pill for /inventory/[id]. Thin call site over the shared
 // useDetailFloaterActions factory — see components/ui/floater/.
 //
-// Pill (no More menu): Back · Builder Site · Download · Share.
+// Pill (no Back, no More menu): Share · Builder Site · Inventory · Promos · Print.
 //
-// Download (the listing's flyer PDF, when one exists) and Share live in the
-// pill directly — flattened out of the former More overflow sheet. The More
-// menu and its other contents (Promos) were removed per the list-page floater
-// treatment.
+// Per the re-spec: Back and the More overflow sheet (+ its Flyer/Promos
+// contents) were removed; Inventory + Promos nav and a Print action were
+// added. Print fires window.print() on the current listing page.
 //
 // "Request more information" lives as an inline box on the page itself
 // (components/inventory/RequestInfoBox), not in the floater.
 //
 // Analytics: preserves the canonical events the /admin/metrics dashboard reads
-// (inventory_back_pill_clicked, inventory_shared, inventory_download_pill_clicked)
-// plus the generic inventory_floater_clicked (with action) for every pill.
+// (inventory_shared) plus the generic inventory_floater_clicked (with action)
+// for every pill.
 
+import { useCallback } from 'react';
 import FloaterPill from '@/components/ui/FloaterPill';
+import type { FloaterAction } from '@/components/ui/FloaterPill';
 import { useDetailFloaterActions } from '@/components/ui/floater/useDetailFloaterActions';
+import { IconPrint } from '@/components/ui/floater/icons';
+import { trackEvent } from '@/app/posthog-provider';
+import { haptics } from '@/lib/native/haptics';
 
 type Props = {
   rowId: number;
@@ -34,17 +38,13 @@ export default function InventoryDetailFloater({
   rowId,
   builderName,
   externalUrl,
-  flyerPdfUrl,
   shareTitle,
 }: Props) {
-  const isPdf = !!flyerPdfUrl && flyerPdfUrl.toLowerCase().endsWith('.pdf');
   const { pillActions } = useDetailFloaterActions({
     surface: 'inventory',
     events: {
       floater: 'inventory_floater_clicked',
-      back: 'inventory_back_pill_clicked',
       shared: 'inventory_shared',
-      download: 'inventory_download_pill_clicked',
     },
     base: { row_id: rowId, builder_name: builderName },
     backRoute: '/inventory',
@@ -56,12 +56,32 @@ export default function InventoryDetailFloater({
           ariaLabel: 'Visit builder site',
         }
       : null,
-    flyerPdfUrl: isPdf ? flyerPdfUrl : null,
-    downloadLabel: 'Download',
-    // Flatten Download + Share into the pill; no More overflow. Promos/Inventory
-    // nav intentionally omitted so the overflow set is empty (no More button).
-    primary: ['back', 'external', 'download', 'share'],
+    // No flyer/download action — it was part of the removed More contents.
+    // Inventory + Promos nav live in the pill directly (no More overflow).
+    inventoryRoute: '/inventory',
+    promosRoute: '/promotions',
+    primary: ['share', 'external', 'inventory', 'promos'],
   });
 
-  return <FloaterPill actions={pillActions} bottomOffsetClass="bottom-[80px]" />;
+  const onPrint = useCallback(() => {
+    void haptics.light();
+    trackEvent('inventory_floater_clicked', {
+      row_id: rowId,
+      builder_name: builderName,
+      action: 'print',
+    });
+    if (typeof window !== 'undefined') window.print();
+  }, [rowId, builderName]);
+
+  const printAction: FloaterAction = {
+    key: 'print',
+    label: 'Print',
+    ariaLabel: 'Print this listing',
+    onClick: onPrint,
+    icon: IconPrint,
+  };
+
+  const actions = [...pillActions, printAction];
+
+  return <FloaterPill actions={actions} bottomOffsetClass="bottom-[80px]" />;
 }
