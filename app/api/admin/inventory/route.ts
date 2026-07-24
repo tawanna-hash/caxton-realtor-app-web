@@ -33,7 +33,9 @@ export const GET = withErrorHandling(async (req: Request) => {
 
   const { status, limit } = parseQuery(req, listInventoryQuerySchema);
 
-  const rows = await listBuilderInventory({ status, limit });
+  // includeDisabledBuilders:true so disabled advertiser pages (e.g. Newmark)
+  // remain visible/manageable in admin even though they're hidden publicly.
+  const rows = await listBuilderInventory({ status, limit, includeDisabledBuilders: true });
 
   // Counts for the tab badges — single query across all statuses.
   const countRows = (await sql`

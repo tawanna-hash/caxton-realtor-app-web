@@ -7,8 +7,10 @@ const sql = neon(process.env.DATABASE_URL!);
 
 export async function slugToBuilderName(slug: string): Promise<string | null> {
   const rows = (await sql`
-    SELECT DISTINCT builder_name FROM builder_inventory
-    WHERE status = 'active'
+    SELECT DISTINCT b.builder_name FROM builder_inventory b
+    LEFT JOIN builder_page_visibility v ON v.builder_name = b.builder_name
+    WHERE b.status = 'active'
+      AND COALESCE(v.public_enabled, true) = true
   `) as { builder_name: string }[];
 
   const target = slug.toLowerCase();
@@ -22,9 +24,11 @@ export async function slugToBuilderName(slug: string): Promise<string | null> {
 
 export async function listActiveBuilders(): Promise<string[]> {
   const rows = (await sql`
-    SELECT DISTINCT builder_name FROM builder_inventory
-    WHERE status = 'active'
-    ORDER BY builder_name ASC
+    SELECT DISTINCT b.builder_name FROM builder_inventory b
+    LEFT JOIN builder_page_visibility v ON v.builder_name = b.builder_name
+    WHERE b.status = 'active'
+      AND COALESCE(v.public_enabled, true) = true
+    ORDER BY b.builder_name ASC
   `) as { builder_name: string }[];
   return rows.map((r) => r.builder_name);
 }

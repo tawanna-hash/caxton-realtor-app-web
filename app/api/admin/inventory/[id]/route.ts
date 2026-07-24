@@ -86,7 +86,8 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   }
 
   try {
-    const row = await getBuilderInventoryById(id);
+    // includeDisabledBuilders:true so admin can manage hidden advertiser listings.
+    const row = await getBuilderInventoryById(id, true);
     if (!row) {
       return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 });
     }

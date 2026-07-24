@@ -405,6 +405,32 @@ const MIGRATIONS: Migration[] = [
                 ADD COLUMN IF NOT EXISTS extra_details JSONB`;
     },
   },
+  {
+    name: '2026_07_24__create_builder_page_visibility',
+    up: async () => {
+      // Per-builder public visibility toggle. When public_enabled=false,
+      // the builder's pages are hidden from the public site (builders hub,
+      // builder detail, inventory, communities, individual listing pages)
+      // while its rows remain in builder_inventory. Controlled from
+      // /admin/inventory/builders. Scraper/prune behavior is unchanged —
+      // visibility is public-display state only.
+      await sql`
+        CREATE TABLE IF NOT EXISTS builder_page_visibility (
+          builder_name    TEXT PRIMARY KEY,
+          public_enabled  BOOLEAN NOT NULL DEFAULT TRUE,
+          created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+      `;
+      // Seed Newmark Homes hidden. ON CONFLICT DO NOTHING (not DO UPDATE)
+      // so a later admin re-enable is never clobbered by a redeploy.
+      await sql`
+        INSERT INTO builder_page_visibility (builder_name, public_enabled)
+        VALUES ('Newmark Homes', FALSE)
+        ON CONFLICT (builder_name) DO NOTHING
+      `;
+    },
+  },
 ];
 
 // Per-process cache: "the current MIGRATIONS array is fully applied in the DB."
@@ -576,6 +602,11 @@ export type ListBuilderInventoryFilters = {
   // 'isNullOrCommunity' which matches legacy NULL rows + community summaries
   // (use this for the /communities public page).
   homeType?: HomeType | 'isNullOrCommunity';
+  // When true, include builders whose public pages are disabled
+  // (builder_page_visibility.public_enabled=false). Default false =
+  // public-safe: disabled builders are hidden from every public surface.
+  // Admin inventory routes pass true so retained data stays visible in admin.
+  includeDisabledBuilders?: boolean;
 };
 
 export async function listBuilderInventory(
@@ -598,25 +629,29 @@ export async function listBuilderInventory(
   const homeTypeIsNullOrCommunity = homeType === 'isNullOrCommunity';
   const homeTypeExact =
     homeType && homeType !== 'isNullOrCommunity' ? homeType : null;
+  const includeDisabled = filters.includeDisabledBuilders ?? false;
 
   const rows = (await sql`
-    SELECT * FROM builder_inventory
+    SELECT b.* FROM builder_inventory b
+    LEFT JOIN builder_page_visibility v ON v.builder_name = b.builder_name
     WHERE
       (${pub} = 'all'
-        OR publication = ${pub}::text
-        OR publication = 'both')
-      AND (${kind}::text IS NULL OR kind = ${kind}::text)
-      AND (${status}::text IS NULL OR status = ${status}::text)
-      AND (${builder}::text IS NULL OR builder_name = ${builder}::text)
-      AND (${featured}::boolean IS NULL OR featured = ${featured}::boolean)
+        OR b.publication = ${pub}::text
+        OR b.publication = 'both')
+      AND (${kind}::text IS NULL OR b.kind = ${kind}::text)
+      AND (${status}::text IS NULL OR b.status = ${status}::text)
+      AND (${builder}::text IS NULL OR b.builder_name = ${builder}::text)
+      AND (${featured}::boolean IS NULL OR b.featured = ${featured}::boolean)
       AND (${homeTypeIsNullOrCommunity}::boolean = false
-           OR home_type IS NULL OR home_type = 'community')
-      AND (${homeTypeExact}::text IS NULL OR home_type = ${homeTypeExact}::text)
+           OR b.home_type IS NULL OR b.home_type = 'community')
+      AND (${homeTypeExact}::text IS NULL OR b.home_type = ${homeTypeExact}::text)
+      AND (${includeDisabled}::boolean = true
+           OR COALESCE(v.public_enabled, true) = true)
     ORDER BY
-      featured DESC NULLS LAST,
-      builder_name ASC,
-      community_name ASC NULLS LAST,
-      created_at DESC
+      b.featured DESC NULLS LAST,
+      b.builder_name ASC,
+      b.community_name ASC NULLS LAST,
+      b.created_at DESC
     LIMIT ${limit}
   `) as Record<string, unknown>[];
 
@@ -630,16 +665,20 @@ export async function listBuilderInventory(
  */
 export async function listActiveBuilderNames(
   publication: 'all' | Publication = 'all',
+  includeDisabledBuilders = false,
 ): Promise<string[]> {
   await ensureBuilderInventorySchema();
   const rows = (await sql`
-    SELECT DISTINCT builder_name
-    FROM builder_inventory
-    WHERE status = 'active'
+    SELECT DISTINCT b.builder_name
+    FROM builder_inventory b
+    LEFT JOIN builder_page_visibility v ON v.builder_name = b.builder_name
+    WHERE b.status = 'active'
       AND (${publication} = 'all'
-        OR publication = ${publication}::text
-        OR publication = 'both')
-    ORDER BY builder_name ASC
+        OR b.publication = ${publication}::text
+        OR b.publication = 'both')
+      AND (${includeDisabledBuilders}::boolean = true
+           OR COALESCE(v.public_enabled, true) = true)
+    ORDER BY b.builder_name ASC
   `) as Record<string, unknown>[];
   return rows
     .map((r) => String(r.builder_name ?? ''))
@@ -648,10 +687,16 @@ export async function listActiveBuilderNames(
 
 export async function getBuilderInventoryById(
   id: number,
+  includeDisabledBuilders = false,
 ): Promise<BuilderInventoryRow | null> {
   await ensureBuilderInventorySchema();
   const rows = (await sql`
-    SELECT * FROM builder_inventory WHERE id = ${id} LIMIT 1
+    SELECT b.* FROM builder_inventory b
+    LEFT JOIN builder_page_visibility v ON v.builder_name = b.builder_name
+    WHERE b.id = ${id}
+      AND (${includeDisabledBuilders}::boolean = true
+           OR COALESCE(v.public_enabled, true) = true)
+    LIMIT 1
   `) as Record<string, unknown>[];
   return rows[0] ? rowToBuilderInventoryRow(rows[0]) : null;
 }
