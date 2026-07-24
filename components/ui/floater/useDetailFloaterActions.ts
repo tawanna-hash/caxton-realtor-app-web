@@ -90,6 +90,10 @@ export type FloaterConfig = {
   promosRoute?: string | null;
   /** Sales phone for the Contact (tel:) action. */
   phone?: string | null;
+  /** In-page element id to scroll the Contact pill to (e.g. a request-info
+   *  box). Takes precedence over phone — use for surfaces that show an
+   *  inline request form instead of dialing. */
+  contactTarget?: string | null;
   /** Geo for the Directions action. */
   latitude?: number | string | null;
   longitude?: number | string | null;
@@ -207,7 +211,12 @@ export function useDetailFloaterActions(config: FloaterConfig) {
   const onContact = useCallback(() => {
     fire('contact');
     if (config.events.contact) trackEvent(config.events.contact, config.base);
-  }, [fire, config.events.contact, config.base]);
+    if (config.contactTarget && typeof document !== 'undefined') {
+      document
+        .getElementById(config.contactTarget)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [fire, config.events.contact, config.base, config.contactTarget]);
 
   const onDirections = useCallback(() => {
     if (config.latitude == null || config.longitude == null) return;
@@ -290,12 +299,13 @@ export function useDetailFloaterActions(config: FloaterConfig) {
         icon: IconSave,
       };
     }
-    if (config.phone) {
+    if (config.contactTarget || config.phone) {
+      const viaTarget = !!config.contactTarget;
       map.contact = {
         key: 'contact',
         label: 'Contact',
-        ariaLabel: 'Call',
-        href: `tel:${config.phone}`,
+        ariaLabel: viaTarget ? 'Request information' : 'Call',
+        ...(viaTarget ? {} : { href: `tel:${config.phone}` }),
         onClick: onContact,
         icon: IconPhone,
       };

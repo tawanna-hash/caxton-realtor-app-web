@@ -20,6 +20,7 @@ import { getBuilderInventoryById, type BuilderInventoryRow } from '@/lib/builder
 import { builderNameToSlug } from '@/lib/builder-slug';
 import InventoryGallery from '@/components/inventory/InventoryGallery';
 import InventoryDetailFloater from '@/components/inventory/InventoryDetailFloater';
+import RequestInfoBox from '@/components/inventory/RequestInfoBox';
 import FloorplanViewer from './FloorplanViewer';
 
 export const dynamic = 'force-dynamic';
@@ -263,6 +264,12 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
               </dl>
             </div>
           )}
+
+          <RequestInfoBox
+            listingId={row.id}
+            title={row.title}
+            builderName={row.builderName}
+          />
 
           {row.kind === 'promotion' && expiresLabel && (
             <div className="border-t border-gray-200 pt-4">

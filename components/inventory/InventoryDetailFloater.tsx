@@ -19,7 +19,6 @@
 import FloaterPill from '@/components/ui/FloaterPill';
 import FloaterOverflowSheet from '@/components/ui/floater/FloaterOverflowSheet';
 import { useDetailFloaterActions } from '@/components/ui/floater/useDetailFloaterActions';
-import { CONTACT_TEL } from '@/lib/contacts';
 
 type Props = {
   rowId: number;
@@ -71,7 +70,7 @@ export default function InventoryDetailFloater({
         : null,
       flyerPdfUrl: isPdf ? flyerPdfUrl : null,
       promosRoute: '/inventory?kind=promotion',
-      phone: CONTACT_TEL,
+      contactTarget: 'request-info',
       latitude,
       longitude,
     });
