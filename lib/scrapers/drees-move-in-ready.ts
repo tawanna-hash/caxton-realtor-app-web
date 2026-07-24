@@ -89,6 +89,10 @@ type DreesQmiHome = {
   latitude?: number | null;
   longitude?: number | null;
   url?: string | null;
+  mlsNumber?: string | null;
+  schoolDistricts?: string[] | null;
+  uTourUrl?: string | null;
+  tour?: { tourId?: string | null } | null;
   homeType?: string | null;
   features?: string[] | null;
   isModelHome?: boolean | null;
@@ -131,6 +135,7 @@ export type ScrapedDreesQmiRow = {
   planName: string | null;
   communityName: string | null;
   homeType: 'showcase';
+  extraDetails: Record<string, string> | null;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -290,6 +295,19 @@ function normalize(h: DreesQmiHome): ScrapedDreesQmiRow | null {
   const features = (h.features ?? []).map((f) => f.trim()).filter(Boolean);
   const description = features.length > 0 ? features.slice(0, 3).join(' • ') : null;
 
+  // Property details + geo + 360 tour (Drees' QMI API exposes all per home).
+  const extraDetails: Record<string, string> = {};
+  if (h.homeType) extraDetails['Home Type'] = h.homeType;
+  if (elevation) extraDetails['Elevation'] = elevation;
+  if (planName) extraDetails['Plan'] = planName;
+  if (h.storiesLow) extraDetails['Stories'] = String(h.storiesLow);
+  if (h.garagesLow != null) extraDetails['Garage'] = `${h.garagesLow}-car`;
+  const schools = Array.isArray(h.schoolDistricts) ? h.schoolDistricts.filter(Boolean) : [];
+  if (schools.length > 0) extraDetails['School District'] = schools.join(', ');
+  if (typeof h.latitude === 'number') extraDetails._latitude = String(h.latitude);
+  if (typeof h.longitude === 'number') extraDetails._longitude = String(h.longitude);
+  if (h.uTourUrl) extraDetails._virtualTourUrl = h.uTourUrl;
+
   return {
     externalId: `drees-qmi/${id}`,
     builderName: 'Drees Homes',
@@ -313,6 +331,7 @@ function normalize(h: DreesQmiHome): ScrapedDreesQmiRow | null {
     planName: planFull,
     communityName,
     homeType: 'showcase',
+    extraDetails: Object.keys(extraDetails).length > 0 ? extraDetails : null,
   };
 }
 

@@ -69,6 +69,7 @@ async function runScrape() {
         flyerPdfUrl: row.flyerPdfUrl,
         thumbnailUrl: row.thumbnailUrl,
         galleryUrls: row.galleryUrls,
+        extraDetails: row.extraDetails,
         address: row.address,
         readyDate: row.readyDate,
         planName: row.planName,
