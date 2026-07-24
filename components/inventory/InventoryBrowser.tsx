@@ -153,7 +153,7 @@ export default function InventoryBrowser({ rows, initialKind, builder }: Props) 
   const [kind, setKind] = useState<Kind>(initialKind);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [sort, setSort] = useState<SortKey>('featured');
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(true);
   const priceId = useId();
 
   // Distinct filter option sources (derived from the full row set so the
