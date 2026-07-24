@@ -1216,7 +1216,7 @@ async function _runEnsureSchema(): Promise<void> {
     SELECT
       '2c3b73cf-4889-4a63-b14c-093d1aa0b966',
       'signup',
-      'Early bird bonus — sign up before July 27 for a second entry',
+      'Early bird bonus — sign up by 11:59 PM on July 27 for a second entry',
       NULL,
       1,
       1,
@@ -1226,7 +1226,20 @@ async function _runEnsureSchema(): Promise<void> {
       SELECT 1 FROM giveaway_rules
       WHERE giveaway_id = '2c3b73cf-4889-4a63-b14c-093d1aa0b966'
         AND action_type = 'signup'
-        AND label = 'Early bird bonus — sign up before July 27 for a second entry'
+        AND deadline_at IS NOT NULL
     )
+  `;
+  // Idempotent label sync — keeps the early-bird rule text precise even
+  // if the row was seeded with an older label in a prior deploy.
+  await sql`
+    UPDATE giveaway_rules
+    SET label = 'Early bird bonus — sign up by 11:59 PM on July 27 for a second entry',
+        deadline_at = '2026-07-28T04:59:00Z',
+        tickets = 1,
+        sort_order = 1,
+        required = false
+    WHERE giveaway_id = '2c3b73cf-4889-4a63-b14c-093d1aa0b966'
+      AND action_type = 'signup'
+      AND deadline_at IS NOT NULL
   `;
 }
