@@ -17,8 +17,9 @@ import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Inventory (~93 upserts) + 11 community detail fetches + 11 upserts.
-export const maxDuration = 120;
+// Inventory (~93 upserts) + ~93 home detail-page enrichments (gallery +
+// description) + 11 community detail fetches + 11 community upserts.
+export const maxDuration = 150;
 
 const SCRAPER_SUBMITTER_NAME = 'M/I Homes Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-mi-homes@harmonyone.system';
@@ -74,6 +75,8 @@ async function runScrape(refresh: boolean) {
         priceMin: row.priceMin,
         priceMax: row.priceMax,
         flyerPdfUrl: row.flyerPdfUrl,
+        sourceUrl: row.sourceUrl,
+        galleryUrls: row.galleryUrls,
         thumbnailUrl: row.thumbnailUrl,
         // S13 per-home additions:
         address: row.address,

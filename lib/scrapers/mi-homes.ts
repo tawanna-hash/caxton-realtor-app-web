@@ -1,3 +1,5 @@
+import * as cheerio from 'cheerio';
+
 // lib/scrapers/mi-homes.ts
 //
 // M/I Homes Austin — per-home scraper (S13).
@@ -134,6 +136,8 @@ export type ScrapedMIHomesRow = {
   priceMax: number | null;
   thumbnailUrl: string | null;
   flyerPdfUrl: string | null;
+  sourceUrl: string | null;
+  galleryUrls: string[] | null;
   // S13 per-home additions:
   address: string | null;
   readyDate: string | null; // YYYY-MM-DD
@@ -262,13 +266,111 @@ function normalize(item: MIInventoryItem): ScrapedMIHomesRow | null {
     priceMin: price,
     priceMax: price,
     thumbnailUrl: item.image?.trim() || null,
-    flyerPdfUrl: normalizeUrl(item.url),
+    flyerPdfUrl: null,
+    sourceUrl: normalizeUrl(item.url),
+    galleryUrls: null,
     address: fullAddress(item),
     readyDate: dateOnly(item.readyDate),
     planName,
     communityName,
     homeType: 'showcase',
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Per-home detail-page enrichment (gallery + marketing description)
+// ─────────────────────────────────────────────────────────────────────────
+//
+// The Sitecore inventory API gives core specs (beds/baths/sqft/price/ready/
+// plan/address) + a single thumbnail, but NOT the photo gallery or the
+// marketing description. Those live on each home's detail page, embedded in
+// the server-rendered HTML:
+//   - Gallery: each photo is a `data-image` attribute holding a comma-separated
+//     srcset (`URL 300w,URL 600w,...,URL 1800w`). We pick the 1800w variant.
+//   - Description: the <p> block starting at "Step inside ..." and ending at the
+//     `<!-- and done -->` marker (immediately before "About the Community").
+
+const MI_DETAIL_GALLERY_LIMIT = 30;
+
+async function fetchMIHomeDetail(detailUrl: string): Promise<{
+  galleryUrls: string[] | null;
+  description: string | null;
+}> {
+  let res: Response;
+  try {
+    res = await fetch(detailUrl, {
+      method: 'GET',
+      headers: COMMON_HEADERS,
+      redirect: 'follow',
+      signal: AbortSignal.timeout(30_000),
+      cache: 'no-store',
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`M/I home detail fetch failed: ${msg}`);
+  }
+  if (!res.ok) {
+    throw new Error(`M/I home detail HTTP ${res.status} for ${detailUrl}`);
+  }
+  const html = await res.text();
+  const $ = cheerio.load(html);
+
+  // Gallery: pick the 1800w variant from each data-image srcset.
+  const gallery = new Set<string>();
+  $('[data-image]').each((_, el) => {
+    const srcset = $(el).attr('data-image') || '';
+    if (!srcset) return;
+    let chosen: string | null = null;
+    for (const entry of srcset.split(',')) {
+      const m = entry.trim().match(/^(.+?)\s+(\d+)w$/);
+      if (!m) continue;
+      if (m[2] === '1800') {
+        chosen = m[1];
+        break;
+      }
+      if (chosen === null) chosen = m[1];
+    }
+    if (chosen) gallery.add(chosen);
+  });
+  const galleryUrls =
+    gallery.size > 0 ? Array.from(gallery).slice(0, MI_DETAIL_GALLERY_LIMIT) : null;
+
+  // Description: the <p> block from "Step inside ..." to `<!-- and done -->`.
+  let description: string | null = null;
+  const doneIdx = html.indexOf('<!-- and done -->');
+  if (doneIdx !== -1) {
+    const startIdx = html.lastIndexOf('Step inside', doneIdx);
+    if (startIdx !== -1) {
+      const frag = html.slice(startIdx, doneIdx);
+      const text = cheerio.load(frag).text().replace(/\s+/g, ' ').trim();
+      if (text.length > 0) description = text;
+    }
+  }
+  if (!description) {
+    const meta = $('meta[name="description"]').attr('content') || '';
+    if (meta.trim().length > 0) description = meta.trim();
+  }
+
+  return { galleryUrls, description };
+}
+
+// Bounded-concurrency mapper so we don't fire ~93 detail requests at once.
+async function mapWithConcurrency<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<void>,
+): Promise<void> {
+  let i = 0;
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    async () => {
+      while (i < items.length) {
+        const idx = i++;
+        await fn(items[idx], idx);
+      }
+    },
+  );
+  await Promise.all(workers);
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -279,6 +381,8 @@ export async function fetchMIHomesAustin(): Promise<{
   rows: ScrapedMIHomesRow[];
   rawCount: number;
   skipped: number;
+  detailFetched: number;
+  detailErrors: number;
 }> {
   let res: Response;
   try {
@@ -330,5 +434,23 @@ export async function fetchMIHomesAustin(): Promise<{
     }
   }
 
-  return { rows, rawCount, skipped };
+  // Enrich each home with gallery + description from its detail page.
+  // Best-effort: a detail fetch failure leaves the API-only row intact.
+  let detailFetched = 0;
+  let detailErrors = 0;
+  await mapWithConcurrency(rows, 6, async (row) => {
+    if (!row.sourceUrl) return;
+    try {
+      const detail = await fetchMIHomeDetail(row.sourceUrl);
+      if (detail.galleryUrls) row.galleryUrls = detail.galleryUrls;
+      if (detail.description) row.description = detail.description;
+      detailFetched++;
+    } catch (err) {
+      detailErrors++;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[mi-homes] detail enrich failed for', row.sourceUrl, msg);
+    }
+  });
+
+  return { rows, rawCount, skipped, detailFetched, detailErrors };
 }
