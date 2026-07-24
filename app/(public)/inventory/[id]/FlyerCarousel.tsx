@@ -2,17 +2,17 @@
 
 // app/(public)/inventory/[id]/FlyerCarousel.tsx
 //
-// Renders a promotion/listing flyer PDF as a swipeable carousel of page
-// thumbnails (reusing InventoryGallery) instead of an inline PDF viewer.
-// pdfjs-dist rasterizes each page to a JPEG on the client, so this works
-// on mobile browsers (including iOS Safari, which can't embed PDFs).
+// Renders a promotion/listing flyer PDF as a compact CAROUSEL OF THUMBNAILS
+// (a horizontally-scrollable filmstrip of its pages), NOT an inline PDF
+// viewer or a large hero image. Clicking a thumbnail opens a full-size
+// lightbox so the flyer is still readable. pdfjs-dist rasterizes each page
+// to a JPEG on the client, so this works on mobile (incl. iOS Safari).
 //
 // Worker + module loading mirror InteractiveMagazineReader.tsx. The PDF is
 // fetched as an ArrayBuffer and handed to pdfjs as `data` so the worker
 // doesn't need to re-fetch the blob cross-origin.
 
-import { useEffect, useState } from 'react';
-import InventoryGallery from '@/components/inventory/InventoryGallery';
+import { useCallback, useEffect, useState } from 'react';
 
 interface PdfJsViewport {
   width: number;
@@ -48,9 +48,8 @@ async function loadPdfJs(): Promise<PdfJsLib> {
   return mod;
 }
 
-// Render each page ~1240px wide — crisp on retina thumbnails, but bounded so
-// a 30-page flyer can't blow up memory.
-const TARGET_PAGE_WIDTH = 1240;
+// Thumbnail render width (compact filmstrip).
+const THUMB_WIDTH = 480;
 const MAX_PAGES = 30;
 
 type Props = {
@@ -61,6 +60,7 @@ type Props = {
 export default function FlyerCarousel({ flyerPdfUrl, title }: Props) {
   const [pageImages, setPageImages] = useState<string[] | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,10 +87,7 @@ export default function FlyerCarousel({ flyerPdfUrl, title }: Props) {
           if (cancelled) return;
           const page = await doc.getPage(i);
           const natural = page.getViewport({ scale: 1 });
-          const scale = Math.min(
-            Math.max(TARGET_PAGE_WIDTH / natural.width, 0.5),
-            3,
-          );
+          const scale = Math.min(Math.max(THUMB_WIDTH / natural.width, 0.5), 2);
           const viewport = page.getViewport({ scale });
           const canvas = document.createElement('canvas');
           canvas.width = Math.round(viewport.width);
@@ -101,15 +98,14 @@ export default function FlyerCarousel({ flyerPdfUrl, title }: Props) {
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           await page.render({ canvasContext: ctx, viewport }).promise;
-          images.push(canvas.toDataURL('image/jpeg', 0.85));
+          images.push(canvas.toDataURL('image/jpeg', 0.8));
         }
         if (cancelled) return;
         setPageImages(images);
         setStatus('ready');
       } catch (err) {
         if (cancelled) return;
-        const msg = err instanceof Error ? err.message : 'unknown error';
-        console.error('[FlyerCarousel] render failed:', msg);
+        console.error('[FlyerCarousel] render failed:', err);
         setStatus('error');
       }
     }
@@ -119,21 +115,58 @@ export default function FlyerCarousel({ flyerPdfUrl, title }: Props) {
     };
   }, [flyerPdfUrl]);
 
+  // Lightbox keyboard nav.
+  const closeLightbox = useCallback(() => setLightboxIndex(null), []);
+  const showPrev = useCallback(
+    () =>
+      setLightboxIndex((i) =>
+        i === null ? i : (i - 1 + (pageImages?.length ?? 0)) % (pageImages?.length ?? 1),
+      ),
+    [pageImages],
+  );
+  const showNext = useCallback(
+    () =>
+      setLightboxIndex((i) =>
+        i === null ? i : (i + 1) % (pageImages?.length ?? 1),
+      ),
+    [pageImages],
+  );
+
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox();
+      else if (e.key === 'ArrowLeft') showPrev();
+      else if (e.key === 'ArrowRight') showNext();
+    };
+    window.addEventListener('keydown', onKey);
+    // Lock background scroll while the lightbox is open.
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [lightboxIndex, closeLightbox, showPrev, showNext]);
+
   if (status === 'loading') {
     return (
       <section className="mt-6">
         <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-3">
           Flyer
         </h2>
-        <div className="flex items-center justify-center rounded-md border border-gray-200 bg-gray-50 h-64">
-          <span className="text-sm text-gray-500">Loading flyer…</span>
+        <div className="flex gap-3 overflow-hidden">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="aspect-[3/4] w-28 sm:w-32 rounded-md bg-gray-100 animate-pulse"
+            />
+          ))}
         </div>
       </section>
     );
   }
 
   if (status === 'error' || !pageImages || pageImages.length === 0) {
-    // Fall back to a plain download link if rasterization fails.
     return (
       <section className="mt-6">
         <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-3">
@@ -156,19 +189,88 @@ export default function FlyerCarousel({ flyerPdfUrl, title }: Props) {
       <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-3">
         Flyer{pageImages.length > 1 ? ` · ${pageImages.length} pages` : ''}
       </h2>
-      <InventoryGallery
-        galleryUrls={pageImages}
-        thumbnailUrl={null}
-        alt={`${title} flyer`}
-      />
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-2 px-2 snap-x">
+        {pageImages.map((src, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setLightboxIndex(i)}
+            className="group flex-shrink-0 w-28 sm:w-32 snap-start focus:outline-none"
+            aria-label={`View flyer page ${i + 1}`}
+          >
+            {/* Data URL — plain <img> avoids next/image loader config. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt={`${title} flyer page ${i + 1}`}
+              className="aspect-[3/4] w-full rounded-md object-contain bg-white border border-gray-200 group-hover:border-gray-400 transition-colors"
+            />
+            <span className="block mt-1 text-center text-[10px] text-gray-400">
+              {i + 1} / {pageImages.length}
+            </span>
+          </button>
+        ))}
+      </div>
       <a
         href={flyerPdfUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-3 flex w-full items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
+        className="mt-3 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
       >
         Download flyer
       </a>
+
+      {lightboxIndex !== null && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={closeLightbox}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${title} flyer`}
+        >
+          <button
+            type="button"
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 text-white/80 hover:text-white text-sm font-medium"
+            aria-label="Close"
+          >
+            Close ✕
+          </button>
+          {pageImages.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  showPrev();
+                }}
+                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white text-2xl px-2"
+                aria-label="Previous page"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  showNext();
+                }}
+                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white text-2xl px-2"
+                aria-label="Next page"
+              >
+                ›
+              </button>
+            </>
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={pageImages[lightboxIndex]}
+            alt={`${title} flyer page ${lightboxIndex + 1}`}
+            className="max-h-[90vh] max-w-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </section>
   );
 }

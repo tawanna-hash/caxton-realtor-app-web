@@ -16,14 +16,16 @@
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
 import { notFound } from 'next/navigation';
-import { getBuilderInventoryById, type BuilderInventoryRow } from '@/lib/builder-inventory';
+import { getBuilderInventoryById, listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
 import { builderNameToSlug } from '@/lib/builder-slug';
+import { getServerPub } from '@/lib/publication';
 import InventoryGallery from '@/components/inventory/InventoryGallery';
 import InventoryDetailFloater from '@/components/inventory/InventoryDetailFloater';
 import RequestInfoBox from '@/components/inventory/RequestInfoBox';
 import { getCommunityContactLink } from '@/lib/community-contacts';
 import FloorplanViewer from './FloorplanViewer';
 import FlyerCarousel from './FlyerCarousel';
+import OtherPromotionsCarousel, { type SiblingPromo } from './OtherPromotionsCarousel';
 
 export const dynamic = 'force-dynamic';
 
@@ -125,10 +127,38 @@ export default async function Page({ params }: PageProps) {
   const row = await getBuilderInventoryById(numericId);
   if (!row || row.status !== 'active') notFound();
 
-  return <DetailView row={row} />;
+  // Sibling promotions for the same builder — when there's more than one,
+  // we surface an "Other promotions" carousel of their flyers below.
+  let otherPromotions: SiblingPromo[] = [];
+  if (row.kind === 'promotion') {
+    const pub = await getServerPub();
+    const all = await listBuilderInventory({
+      status: 'active',
+      builderName: row.builderName,
+      publication: pub,
+      kind: 'promotion',
+      limit: 50,
+    });
+    otherPromotions = all
+      .filter(
+        (r) =>
+          r.id !== row.id &&
+          !!r.flyerPdfUrl &&
+          r.flyerPdfUrl.toLowerCase().endsWith('.pdf'),
+      )
+      .map((r) => ({ id: r.id, title: r.title, flyerPdfUrl: r.flyerPdfUrl as string }));
+  }
+
+  return <DetailView row={row} otherPromotions={otherPromotions} />;
 }
 
-function DetailView({ row }: { row: BuilderInventoryRow }) {
+function DetailView({
+  row,
+  otherPromotions,
+}: {
+  row: BuilderInventoryRow;
+  otherPromotions: SiblingPromo[];
+}) {
   const priceRange = formatPriceRange(row.priceMin, row.priceMax);
   const bedsRange = formatNumRange(row.bedsMin, row.bedsMax, 'bd');
   const bathsRange = formatNumRange(row.bathsMin, row.bathsMax, 'ba');
@@ -294,6 +324,10 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
               button lives under the featured image above (left column). */}
         </aside>
       </div>
+
+      {otherPromotions.length > 0 && (
+        <OtherPromotionsCarousel promotions={otherPromotions} />
+      )}
 
       {row.extraDetails && Object.keys(row.extraDetails).some((k) => !k.startsWith('_')) && (
         <section className="mt-10 border-t border-gray-200 pt-6">
