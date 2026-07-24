@@ -6,7 +6,7 @@
 // useDetailFloaterActions factory — see components/ui/floater/.
 //
 // Primary: Back · Share · Inventory.
-// Overflow (More): Website · Download · Save.
+// Overflow (More): Website · Download.
 //
 // Analytics: the builder detail page fires canonical per-action events (no
 // generic floater event) — builder_back_pill_clicked, builder_shared,
@@ -16,7 +16,6 @@
 import FloaterPill from '@/components/ui/FloaterPill';
 import FloaterOverflowSheet from '@/components/ui/floater/FloaterOverflowSheet';
 import { useDetailFloaterActions } from '@/components/ui/floater/useDetailFloaterActions';
-import { CONTACT_TEL } from '@/lib/contacts';
 
 type Props = {
   builderName: string;
@@ -32,10 +31,6 @@ export default function BuilderDetailFloater({
   websiteUrl,
 }: Props) {
   const shareTitle = `${builderName} — Realty News Now`;
-  const shareUrl =
-    typeof window !== 'undefined'
-      ? window.location.href
-      : `https://realtynewsnow.app/builders/${slug}`;
 
   const { pillActions, overflow, overflowOpen, closeOverflow } =
     useDetailFloaterActions({
@@ -46,13 +41,10 @@ export default function BuilderDetailFloater({
         download: 'builder_download_pill_clicked',
         website: 'builder_website_pill_clicked',
         inventory: 'builder_inventory_pill_clicked',
-        saved: 'builder_saved',
-        contact: 'builder_contact_clicked',
       },
       base: { builder_name: builderName, slug },
       backRoute: '/builders',
       share: { title: shareTitle, text: shareTitle },
-      save: { id: `builder:${slug}`, title: shareTitle, url: shareUrl },
       external: websiteUrl
         ? {
             url: websiteUrl,
@@ -63,7 +55,6 @@ export default function BuilderDetailFloater({
       flyerPdfUrl: `https://realtynewsnow.app/api/builders/${slug}/pdf`,
       downloadLabel: 'Download',
       inventoryRoute: `/inventory?builder=${encodeURIComponent(builderName)}`,
-      phone: CONTACT_TEL,
     });
 
   return (

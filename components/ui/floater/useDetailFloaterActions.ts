@@ -10,9 +10,9 @@
 // now config.
 //
 // Layout: a small set of PRIMARY pills is always visible (Back, Share, and
-// the surface's main CTA); everything else (Flyer, Website, Promos, Save,
-// Contact, Directions) goes into an overflow sheet opened by a trailing
-// "More" pill. Actions whose data is missing are simply omitted.
+// the surface's main CTA); everything else (Flyer, Website, Promos,
+// Inventory) goes into an overflow sheet opened by a trailing "More" pill.
+// Actions whose data is missing are simply omitted.
 //
 // Analytics: preserves the canonical event names the /admin/metrics dashboard
 // reads via SQL (e.g. inventory_back_pill_clicked, communities_shared,
@@ -28,17 +28,13 @@ import { trackEvent } from '@/app/posthog-provider';
 import { share as nativeShare } from '@/lib/native/share';
 import { openExternal } from '@/lib/native/external-link';
 import { haptics } from '@/lib/native/haptics';
-import { useSavedItem } from './useSavedItem';
 import {
   IconBack,
-  IconDirections,
   IconDownload,
   IconExternal,
   IconHome,
   IconMore,
-  IconPhone,
   IconPromo,
-  IconSave,
   IconShare,
 } from './icons';
 
@@ -53,9 +49,6 @@ export type FloaterEvents = {
   website?: string;
   inventory?: string;
   promos?: string;
-  saved?: string;
-  contact?: string;
-  directions?: string;
 };
 
 export type ActionKey =
@@ -64,10 +57,7 @@ export type ActionKey =
   | 'external'
   | 'download'
   | 'inventory'
-  | 'promos'
-  | 'save'
-  | 'contact'
-  | 'directions';
+  | 'promos';
 
 export type FloaterConfig = {
   surface: FloaterSurface;
@@ -76,8 +66,6 @@ export type FloaterConfig = {
   base: Record<string, unknown>;
   backRoute: string;
   share: { title: string; text?: string };
-  /** Stable id + meta for Save. Omit/null to disable Save. */
-  save?: { id: string; title: string; url: string } | null;
   /** External site link (builder site / community website). */
   external?: { url: string; label: string; ariaLabel?: string } | null;
   /** PDF/openable URL for the Flyer/Download action. */
@@ -88,15 +76,6 @@ export type FloaterConfig = {
   inventoryRoute?: string | null;
   /** Internal route for the Promos action. */
   promosRoute?: string | null;
-  /** Sales phone for the Contact (tel:) action. */
-  phone?: string | null;
-  /** In-page element id to scroll the Contact pill to (e.g. a request-info
-   *  box). Takes precedence over phone — use for surfaces that show an
-   *  inline request form instead of dialing. */
-  contactTarget?: string | null;
-  /** Geo for the Directions action. */
-  latitude?: number | string | null;
-  longitude?: number | string | null;
   /** Override which actions are primary (the rest overflow). */
   primary?: ActionKey[];
 };
@@ -113,9 +92,6 @@ const OVERFLOW_ORDER: ActionKey[] = [
   'external',
   'download',
   'promos',
-  'save',
-  'contact',
-  'directions',
   'inventory',
 ];
 
@@ -123,19 +99,9 @@ function shareUrlFor(): string {
   return typeof window !== 'undefined' ? window.location.href : '';
 }
 
-function directionsUrl(lat: number | string, lng: number | string): string {
-  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-}
-
 export function useDetailFloaterActions(config: FloaterConfig) {
   const router = useRouter();
   const [overflowOpen, setOverflowOpen] = useState(false);
-
-  const saveState = useSavedItem(config.save?.id ?? null, {
-    title: config.save?.title ?? '',
-    url: config.save?.url ?? shareUrlFor(),
-    surface: config.surface,
-  });
 
   const fire = useCallback(
     (action: string, extra: Record<string, unknown> = {}) => {
@@ -197,35 +163,6 @@ export function useDetailFloaterActions(config: FloaterConfig) {
     fire('promotions');
     if (config.events.promos) trackEvent(config.events.promos, config.base);
   }, [fire, config.events.promos, config.base]);
-
-  const onSave = useCallback(() => {
-    const nowSaved = saveState.toggle();
-    if (nowSaved) void haptics.medium();
-    else void haptics.light();
-    fire('save', { saved: nowSaved });
-    if (config.events.saved) {
-      trackEvent(config.events.saved, { ...config.base, saved: nowSaved });
-    }
-  }, [saveState, fire, config.events.saved, config.base]);
-
-  const onContact = useCallback(() => {
-    fire('contact');
-    if (config.events.contact) trackEvent(config.events.contact, config.base);
-    if (config.contactTarget && typeof document !== 'undefined') {
-      document
-        .getElementById(config.contactTarget)
-        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [fire, config.events.contact, config.base, config.contactTarget]);
-
-  const onDirections = useCallback(() => {
-    if (config.latitude == null || config.longitude == null) return;
-    fire('directions');
-    if (config.events.directions) {
-      trackEvent(config.events.directions, config.base);
-    }
-    void openExternal(directionsUrl(config.latitude, config.longitude));
-  }, [fire, config.events.directions, config.base, config.latitude, config.longitude]);
 
   const openOverflow = useCallback(() => {
     void haptics.light();
@@ -290,35 +227,6 @@ export function useDetailFloaterActions(config: FloaterConfig) {
         icon: IconPromo,
       };
     }
-    if (config.save) {
-      map.save = {
-        key: 'save',
-        label: saveState.saved ? 'Saved' : 'Save',
-        ariaLabel: saveState.saved ? 'Saved' : 'Save',
-        onClick: onSave,
-        icon: IconSave,
-      };
-    }
-    if (config.contactTarget || config.phone) {
-      const viaTarget = !!config.contactTarget;
-      map.contact = {
-        key: 'contact',
-        label: 'Contact',
-        ariaLabel: viaTarget ? 'Request information' : 'Call',
-        ...(viaTarget ? {} : { href: `tel:${config.phone}` }),
-        onClick: onContact,
-        icon: IconPhone,
-      };
-    }
-    if (config.latitude != null && config.longitude != null) {
-      map.directions = {
-        key: 'directions',
-        label: 'Directions',
-        ariaLabel: 'Get directions',
-        onClick: onDirections,
-        icon: IconDirections,
-      };
-    }
     return map;
   }, [
     config,
@@ -328,10 +236,6 @@ export function useDetailFloaterActions(config: FloaterConfig) {
     onDownload,
     onInventory,
     onPromos,
-    onSave,
-    onContact,
-    onDirections,
-    saveState.saved,
   ]);
 
   const all = useMemo(() => build(), [build]);

@@ -6,11 +6,10 @@
 // useDetailFloaterActions factory — see components/ui/floater/.
 //
 // Primary: Back · Share · Builder Site (when a site URL exists).
-// Overflow (More): Flyer · Promos · Save · Contact · Directions (when geo).
+// Overflow (More): Flyer · Promos · Inventory.
 //
-// Contact routes to the RNN office line (lib/contacts) — listings carry no
-// per-home sales phone. Swap CONTACT_TEL or wire a per-listing phone if one
-// becomes available.
+// "Request more information" lives as an inline box on the page itself
+// (components/inventory/RequestInfoBox), not in the floater.
 //
 // Analytics: preserves the canonical events the /admin/metrics dashboard reads
 // (inventory_back_pill_clicked, inventory_shared, inventory_download_pill_clicked)
@@ -26,8 +25,6 @@ type Props = {
   externalUrl: string | null;
   flyerPdfUrl: string | null;
   shareTitle: string;
-  latitude?: number | string | null;
-  longitude?: number | string | null;
 };
 
 export default function InventoryDetailFloater({
@@ -36,15 +33,8 @@ export default function InventoryDetailFloater({
   externalUrl,
   flyerPdfUrl,
   shareTitle,
-  latitude,
-  longitude,
 }: Props) {
   const isPdf = !!flyerPdfUrl && flyerPdfUrl.toLowerCase().endsWith('.pdf');
-  const shareUrl =
-    typeof window !== 'undefined'
-      ? window.location.href
-      : `https://realtynewsnow.app/inventory/${rowId}`;
-
   const { pillActions, overflow, overflowOpen, closeOverflow } =
     useDetailFloaterActions({
       surface: 'inventory',
@@ -53,14 +43,10 @@ export default function InventoryDetailFloater({
         back: 'inventory_back_pill_clicked',
         shared: 'inventory_shared',
         download: 'inventory_download_pill_clicked',
-        saved: 'inventory_saved',
-        contact: 'inventory_contact_clicked',
-        directions: 'inventory_directions_clicked',
       },
       base: { row_id: rowId, builder_name: builderName },
       backRoute: '/inventory',
       share: { title: shareTitle, text: shareTitle },
-      save: { id: `inventory:${rowId}`, title: shareTitle, url: shareUrl },
       external: externalUrl
         ? {
             url: externalUrl,
@@ -70,9 +56,6 @@ export default function InventoryDetailFloater({
         : null,
       flyerPdfUrl: isPdf ? flyerPdfUrl : null,
       promosRoute: '/inventory?kind=promotion',
-      contactTarget: 'request-info',
-      latitude,
-      longitude,
     });
 
   return (
