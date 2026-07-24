@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* The app is built for a light surface only (bg-white, text-gray-900).
+   `color-scheme: light` above pins UA defaults, but it does NOT stop
+   Tailwind's `dark:` variants from matching the OS `prefers-color-scheme`,
+   which washes out text (light `dark:text-*` on a white bg) whenever the
+   device is in dark mode. Override the `dark` variant to be class-based
+   instead. Nothing in the app sets a `.dark` class, so every `dark:`
+   utility becomes inert and the whole app renders light everywhere. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
