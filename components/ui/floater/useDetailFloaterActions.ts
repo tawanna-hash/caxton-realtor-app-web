@@ -128,7 +128,6 @@ export function useDetailFloaterActions(config: FloaterConfig) {
   const [overflowOpen, setOverflowOpen] = useState(false);
 
   const saveState = useSavedItem(config.save?.id ?? null, {
-    id: config.save?.id ?? '',
     title: config.save?.title ?? '',
     url: config.save?.url ?? shareUrlFor(),
     surface: config.surface,
