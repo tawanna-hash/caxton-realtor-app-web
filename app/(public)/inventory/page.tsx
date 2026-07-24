@@ -30,9 +30,9 @@ import BuilderDeveloperFloater from '@/components/builders/BuilderDeveloperFloat
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Move-in Ready & Promotions — Realty News Now',
+  title: 'Move-in Ready Homes — Realty News Now',
   description:
-    'Move-in ready homes and current promotions from local builders and developers.',
+    'Move-in ready homes from local builders and developers.',
 };
 
 type PageProps = {
@@ -41,7 +41,11 @@ type PageProps = {
 
 export default async function Page({ searchParams }: PageProps) {
   const params = await searchParams;
-  const { filters: initialFilters, sort: initialSort } = parseFilters(params);
+  const { filters: parsed, sort: initialSort } = parseFilters(params);
+  // /inventory is the dedicated Move-in Ready Homes page — force kind=listing
+  // server-side so the page is always scoped to listings (the ?kind= deep
+  // link is normalized away on mount by InventoryBrowser).
+  const initialFilters = { ...parsed, kind: 'listing' as const };
   const pub = await getServerPub();
 
   // Fetch BOTH kinds (listings + promotions) for the active market. The
@@ -63,13 +67,14 @@ export default async function Page({ searchParams }: PageProps) {
             rows={rows}
             initialFilters={initialFilters}
             initialSort={initialSort}
+            surface="inventory"
           />
         </div>
         <BuilderDeveloperFloater
           downloadHref="/api/inventory/pdf"
-          backHref="/inventory"
+          backHref="/builders"
           page="inventory"
-          shareTitle="Move-in Ready & Promotions — Realty News Now"
+          shareTitle="Move-in Ready Homes — Realty News Now"
         />
       </main>
     </>

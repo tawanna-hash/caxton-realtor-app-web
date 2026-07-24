@@ -98,7 +98,8 @@ export default function BuilderDeveloperFloater({
       base: { page },
       backRoute: backHref,
       share: { title: shareTitle },
-      primary: ['back', 'inventory'],
+      primary: ['back', 'inventory', 'promos'],
+      promosRoute: '/promotions',
       inventoryRoute: '/inventory',
       extraOverflow: resultsActions,
     });

@@ -37,7 +37,11 @@ type PageProps = {
 
 export default async function BuildersHubPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const { filters: initialFilters, sort: initialSort } = parseFilters(params);
+  const { filters: parsed, sort: initialSort } = parseFilters(params);
+  // The hub shows BOTH listings + promotions — force kind=null so a stray
+  // ?kind= deep link can't scope the hub (the dedicated /inventory and
+  // /promotions pages own the kind split).
+  const initialFilters = { ...parsed, kind: null };
   // Each market is standalone — scope to the active publication only.
   const pub = await getServerPub();
   const rows = await listBuilderInventory({
@@ -73,6 +77,7 @@ export default async function BuildersHubPage({ searchParams }: PageProps) {
             rows={rows}
             initialFilters={initialFilters}
             initialSort={initialSort}
+            surface="builders"
             hideHeader
           />
         </div>

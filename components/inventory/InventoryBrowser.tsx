@@ -17,9 +17,10 @@
 //
 // Every filter change fires `inventory_filter_clicked` with { filter, value }
 // so the existing admin metrics dashboard (filter_usage breakdown by
-// properties.filter) picks it up.
+// properties.filter) picks it up. A mount-time `inventory_page_viewed`
+// event with { surface, kind } tracks dedicated-page traffic.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { BuilderInventoryRow, PromoType } from '@/lib/builder-inventory';
 import {
   activeFilterCount,
@@ -33,6 +34,8 @@ import {
 import { trackEvent } from '@/app/posthog-provider';
 import BuilderInventoryRowCard from '@/components/builders/BuilderInventoryRowCard';
 import PageTitle from '@/components/ui/PageTitle';
+
+export type InventorySurface = 'inventory' | 'promotions' | 'builders';
 
 const BED_BATH_OPTS = [0, 1, 2, 3, 4, 5];
 
@@ -71,6 +74,8 @@ interface Props {
   rows: BuilderInventoryRow[];
   initialFilters?: InventoryFilterState;
   initialSort?: SortKey;
+  /** Which host page rendered this — surfaces in PostHog + analytics. */
+  surface?: InventorySurface;
   // When true, the component omits its own <header> (title + lede) — use on
   // pages that already render a page title above it (e.g. /builders hub).
   hideHeader?: boolean;
@@ -80,6 +85,7 @@ export default function InventoryBrowser({
   rows,
   initialFilters = DEFAULT_FILTERS,
   initialSort = 'featured',
+  surface = 'inventory',
   hideHeader = false,
 }: Props) {
   const [filters, setFilters] = useState<InventoryFilterState>(initialFilters);
@@ -162,7 +168,29 @@ export default function InventoryBrowser({
     track('clear', 'all');
   };
 
-  const heading = 'Move-in Ready & Promotions';
+  // On mount: normalize the URL to the (server-forced) kind + fire a page-view
+  // event so dedicated-page traffic is tracked in PostHog. Runs once.
+  useEffect(() => {
+    syncUrl(filters, sort);
+    trackEvent('inventory_page_viewed', {
+      surface,
+      kind: filters.kind ?? 'all',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const heading =
+    filters.kind === 'listing'
+      ? 'Move-in Ready Homes'
+      : filters.kind === 'promotion'
+        ? 'Promotions'
+        : 'Move-in Ready & Promotions';
+  const lede =
+    filters.kind === 'listing'
+      ? 'Move-in ready homes from our builder partners.'
+      : filters.kind === 'promotion'
+        ? 'Current promotions and incentives from our builder partners.'
+        : 'Move-in ready homes and current promotions from our builder partners.';
 
   return (
     <div>
@@ -170,7 +198,7 @@ export default function InventoryBrowser({
         <header className="mb-4">
           <PageTitle size="md">{heading}</PageTitle>
           <p className="text-sm text-gray-700 font-light leading-relaxed mt-2">
-            Move-in ready homes and current promotions from our builder partners.
+            {lede}
           </p>
         </header>
       )}
@@ -319,7 +347,7 @@ function EmptyState({
   hasFilters: boolean;
   onClear: () => void;
 }) {
-  const title = 'No listings match';
+  const title = 'No results found';
   const body = hasFilters
     ? 'Try widening your filters or clearing them to see more results.'
     : "There aren't any move-in ready homes or promotions to show right now.";
