@@ -9,7 +9,7 @@ type Props = {
 };
 
 const KIND_BADGE_STYLE: Record<Kind, string> = {
-  listing: 'border-emerald-200 bg-emerald-50 text-emerald-800 rounded-md',
+  listing: 'border-[#5a0e5f] bg-[#5a0e5f] text-white rounded-md',
   promotion: 'border-amber-200 bg-amber-50 text-amber-800 rounded-md',
 };
 
@@ -154,7 +154,7 @@ export default function InventoryCard({ row }: Props) {
             happens to be empty (defensive — every scraped row has a city). */}
         <div className="absolute top-2 right-2">
           <span
-            className={`inline-block text-[10px] uppercase tracking-[0.1em] font-medium px-2 py-1 border ${KIND_BADGE_STYLE[row.kind]}`}
+            className={`inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border ${KIND_BADGE_STYLE[row.kind]}`}
           >
             {row.kind === 'listing'
               ? pillLabelForListing(row)
