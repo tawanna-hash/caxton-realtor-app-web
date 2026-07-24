@@ -371,29 +371,28 @@ async function fetchBrookfieldDetail(
     throw new Error(`__NEXT_DATA__ JSON parse failed: ${msg}`);
   }
 
-  const galleries = findGalleryObjects(data);
+  // Shape of a fullGalleryImages object: each section (images/virtualTours/
+  // floorPlan) holds `items[]`, and each item holds an `images[]` array of
+  // photo/tour/floor-plan objects.
+  type GalleryImg = Record<string, unknown>;
+  type GalleryItem = { images?: GalleryImg[] };
+  type GallerySection = { items?: GalleryItem[] };
+  type GalleryObject = {
+    images?: GallerySection;
+    virtualTours?: GallerySection;
+    floorPlan?: GallerySection;
+  };
+
+  const galleries = findGalleryObjects(data) as GalleryObject[];
   // Prefer the gallery object with the most populated image items.
   const gallery = galleries
-    .map((g) => {
-      const images = (g as Record<string, unknown>).images as
-        | { items?: unknown[] }
-        | undefined;
-      return { g, count: images?.items?.length ?? 0 };
-    })
-    .sort((a, b) => b.count - a.count)[0]?.g as
-    | {
-        images?: { items?: Array<Record<string, unknown>>[] };
-        virtualTours?: { items?: Array<Record<string, unknown>>[] };
-        floorPlan?: { items?: Array<Record<string, unknown>>[] };
-      }
-    | undefined;
+    .map((g) => ({ g, count: g.images?.items?.length ?? 0 }))
+    .sort((a, b) => b.count - a.count)[0]?.g;
 
   const galleryUrls: string[] = [];
   if (gallery?.images?.items) {
     for (const item of gallery.images.items) {
-      const imgs = (item as Record<string, unknown>).images as
-        | Array<Record<string, unknown>>
-        | undefined;
+      const imgs = item.images;
       if (!Array.isArray(imgs)) continue;
       for (const img of imgs) {
         const src = readSrc(img.galleryImage);
@@ -407,9 +406,7 @@ async function fetchBrookfieldDetail(
   let virtualTourUrl: string | null = null;
   if (gallery?.virtualTours?.items) {
     for (const item of gallery.virtualTours.items) {
-      const imgs = (item as Record<string, unknown>).images as
-        | Array<Record<string, unknown>>
-        | undefined;
+      const imgs = item.images;
       if (!Array.isArray(imgs)) continue;
       for (const img of imgs) {
         const iframe = readJsonValue(img.iFrameURL);
@@ -428,9 +425,7 @@ async function fetchBrookfieldDetail(
   let floorplanUrl: string | null = null;
   if (gallery?.floorPlan?.items) {
     for (const item of gallery.floorPlan.items) {
-      const imgs = (item as Record<string, unknown>).images as
-        | Array<Record<string, unknown>>
-        | undefined;
+      const imgs = item.images;
       if (!Array.isArray(imgs)) continue;
       for (const img of imgs) {
         const cover = readSrc(img.coverImageofFloorPlan);
