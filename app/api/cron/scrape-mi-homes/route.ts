@@ -77,6 +77,7 @@ async function runScrape(refresh: boolean) {
         flyerPdfUrl: row.flyerPdfUrl,
         sourceUrl: row.sourceUrl,
         galleryUrls: row.galleryUrls,
+        extraDetails: row.extraDetails,
         thumbnailUrl: row.thumbnailUrl,
         // S13 per-home additions:
         address: row.address,

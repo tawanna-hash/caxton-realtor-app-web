@@ -277,6 +277,22 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
         </aside>
       </div>
 
+      {row.extraDetails && Object.keys(row.extraDetails).length > 0 && (
+        <section className="mt-10 border-t border-gray-200 pt-6">
+          <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-4">
+            Property details
+          </h2>
+          <dl className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6 text-sm">
+            {Object.entries(row.extraDetails).map(([label, value]) => (
+              <div key={label}>
+                <dt className="text-xs uppercase tracking-[0.1em] text-gray-500">{label}</dt>
+                <dd className="mt-0.5 text-gray-900 font-medium">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+
       {/* Floater pill: Back · Visit builder site · Promotions. The
           builder URL prefers a non-PDF source URL (the actual listing
           page on the builder's site) over the flyerPdfUrl; PDFs stay

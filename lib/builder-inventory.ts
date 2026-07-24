@@ -101,6 +101,9 @@ export type BuilderInventoryRow = {
   // Structured community page data (David Weekley backfill): plans,
   // amenities, schools, tax, sales office, gallery, lifecycle status.
   communityData: CommunityData | null;
+  // Structured key/value details scraped from the builder's listing page
+  // (county, school district, MLS, foundation, owner's suite, etc.).
+  extraDetails: Record<string, string> | null;
 };
 
 export type CreateBuilderInventoryInput = {
@@ -141,6 +144,7 @@ export type CreateBuilderInventoryInput = {
   // S13 gallery:
   galleryUrls?: string[] | null;
   communityData?: CommunityData | null;
+  extraDetails?: Record<string, string> | null;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -389,6 +393,18 @@ const MIGRATIONS: Migration[] = [
                 ADD COLUMN IF NOT EXISTS community_data JSONB`;
     },
   },
+  {
+    name: '2026_07_23__add_extra_details',
+    up: async () => {
+      // Structured key/value details scraped from builder listing pages
+      // (e.g. M/I Homes "Additional Details": county, school district, MLS
+      // number, foundation, owner's suite, homesite, plan dimensions).
+      // JSONB so each builder can surface different keys without a schema
+      // change per field.
+      await sql`ALTER TABLE builder_inventory
+                ADD COLUMN IF NOT EXISTS extra_details JSONB`;
+    },
+  },
 ];
 
 // Per-process cache: "the current MIGRATIONS array is fully applied in the DB."
@@ -445,6 +461,21 @@ function parseCommunityData(v: unknown): CommunityData | null {
   return null;
 }
 
+// JSONB extra_details: label -> value map (county, school district, MLS, ...).
+function parseExtraDetails(v: unknown): Record<string, string> | null {
+  if (v == null) return null;
+  if (typeof v === 'string') {
+    try {
+      const p = JSON.parse(v);
+      return p && typeof p === 'object' ? (p as Record<string, string>) : null;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof v === 'object') return v as Record<string, string>;
+  return null;
+}
+
 function rowToBuilderInventoryRow(r: Record<string, unknown>): BuilderInventoryRow {
   return {
     id: r.id as number,
@@ -489,6 +520,7 @@ function rowToBuilderInventoryRow(r: Record<string, unknown>): BuilderInventoryR
     homeType: (r.home_type as HomeType) ?? null,
     galleryUrls: (r.gallery_urls as string[]) ?? null,
     communityData: parseCommunityData(r.community_data),
+    extraDetails: parseExtraDetails(r.extra_details),
   };
 }
 
@@ -509,7 +541,7 @@ export async function createBuilderInventory(
       source_ip, user_agent,
       external_id,
       address, ready_date, plan_name, community_name, home_type,
-      gallery_urls, community_data
+      gallery_urls, community_data, extra_details
     ) VALUES (
       ${input.kind}, ${input.publication},
       ${input.submittedByName}, ${input.submittedByEmail}, ${input.submittedByPhone ?? null},
@@ -524,7 +556,8 @@ export async function createBuilderInventory(
       ${input.planName ?? null}, ${input.communityName ?? null},
 ${input.homeType ?? null},
       ${(input.galleryUrls ?? null) as string[] | null},
-      ${input.communityData != null ? JSON.stringify(input.communityData) : null}::jsonb
+      ${input.communityData != null ? JSON.stringify(input.communityData) : null}::jsonb,
+      ${input.extraDetails != null ? JSON.stringify(input.extraDetails) : null}::jsonb
     )
     RETURNING *
   `) as Record<string, unknown>[];
@@ -679,6 +712,7 @@ export type UpdateBuilderInventoryInput = {
   // S13 gallery:
   galleryUrls?: string[] | null;
   communityData?: CommunityData | null;
+  extraDetails?: Record<string, string> | null;
 };
 
 
@@ -791,7 +825,8 @@ export async function updateBuilderInventory(
       community_name = ${m.communityName},
       home_type      = ${m.homeType},
       gallery_urls   = ${(m.galleryUrls ?? null) as string[] | null},
-      community_data = ${m.communityData != null ? JSON.stringify(m.communityData) : null}::jsonb
+      community_data = ${m.communityData != null ? JSON.stringify(m.communityData) : null}::jsonb,
+      extra_details  = ${m.extraDetails != null ? JSON.stringify(m.extraDetails) : null}::jsonb
     WHERE id = ${id}
     RETURNING *
   `) as Record<string, unknown>[];
@@ -846,6 +881,7 @@ export type UpsertScrapedInput = {
   // S13 gallery:
   galleryUrls?: string[] | null;
   communityData?: CommunityData | null;
+  extraDetails?: Record<string, string> | null;
 };
 
 /**
@@ -897,6 +933,7 @@ export async function upsertBuilderInventoryByExternalId(
       homeType: input.homeType ?? null,
       galleryUrls: input.galleryUrls ?? null,
       communityData: input.communityData ?? null,
+      extraDetails: input.extraDetails ?? null,
     });
     if (!updated) {
       throw new Error(`Upsert: row ${existingRow.id} vanished mid-update`);
@@ -937,6 +974,7 @@ export async function upsertBuilderInventoryByExternalId(
     homeType: input.homeType ?? null,
     galleryUrls: input.galleryUrls ?? null,
     communityData: input.communityData ?? null,
+    extraDetails: input.extraDetails ?? null,
   });
 
   // S13: Scraper-produced LISTING rows auto-publish to 'active'.

@@ -97,6 +97,7 @@ export async function GET(req: NextRequest) {
       communityName: r.communityName,
       homeType: r.homeType,
       galleryUrls: r.galleryUrls,
+      extraDetails: r.extraDetails,
     }));
 
     return NextResponse.json({ items, kind });

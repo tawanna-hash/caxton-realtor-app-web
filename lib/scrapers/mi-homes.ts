@@ -138,6 +138,9 @@ export type ScrapedMIHomesRow = {
   flyerPdfUrl: string | null;
   sourceUrl: string | null;
   galleryUrls: string[] | null;
+  // Structured key/value details from the detail page's "Additional Details"
+  // <dl> (county, school district, MLS, foundation, owner's suite, ...).
+  extraDetails: Record<string, string> | null;
   // S13 per-home additions:
   address: string | null;
   readyDate: string | null; // YYYY-MM-DD
@@ -269,6 +272,7 @@ function normalize(item: MIInventoryItem): ScrapedMIHomesRow | null {
     flyerPdfUrl: null,
     sourceUrl: normalizeUrl(item.url),
     galleryUrls: null,
+    extraDetails: null,
     address: fullAddress(item),
     readyDate: dateOnly(item.readyDate),
     planName,
@@ -312,6 +316,7 @@ async function fetchMIHomeDetail(detailUrl: string): Promise<{
   galleryUrls: string[] | null;
   description: string | null;
   specs: MIHomeDetailSpecs;
+  extraDetails: Record<string, string> | null;
 }> {
   let res: Response;
   try {
@@ -376,6 +381,24 @@ async function fetchMIHomeDetail(detailUrl: string): Promise<{
     else if (label === 'square feet') specs.sqft = num;
   });
 
+  // Additional Details: the <dl> of label/value pairs (County, School
+  // District, MLS Number, Foundation Type, Owner's Suite, Home Type,
+  // Homesite, Base Plan Width & Depth). Stored verbatim as a map.
+  let extraDetails: Record<string, string> | null = null;
+  $('dl').each((_, dl) => {
+    if (extraDetails) return;
+    const $dl = $(dl);
+    const txt = $dl.text();
+    if (!/School District|MLS Number|Foundation Type/i.test(txt)) return;
+    const map: Record<string, string> = {};
+    $dl.find('dt').each((__, dt) => {
+      const label = $(dt).text().trim();
+      const value = $(dt).next('dd').text().trim();
+      if (label && value) map[label] = value;
+    });
+    if (Object.keys(map).length > 0) extraDetails = map;
+  });
+
   // Description: the full block from the body's opening paragraph to the
   // `<!-- and done -->` marker. The opener wording varies per home ("Step
   // inside ...", "Discover this ..."), so use the meta description's opening
@@ -424,7 +447,7 @@ async function fetchMIHomeDetail(detailUrl: string): Promise<{
     description = metaDesc;
   }
 
-  return { galleryUrls, description, specs };
+  return { galleryUrls, description, specs, extraDetails };
 }
 
 // Bounded-concurrency mapper so we don't fire ~93 detail requests at once.
@@ -516,6 +539,7 @@ export async function fetchMIHomesAustin(): Promise<{
     try {
       const detail = await fetchMIHomeDetail(row.sourceUrl);
       if (detail.galleryUrls) row.galleryUrls = detail.galleryUrls;
+      if (detail.extraDetails) row.extraDetails = detail.extraDetails;
       // Backfill specs the Sitecore API omitted (bedrooms is frequently null).
       if (row.bedsMin == null && detail.specs.beds != null) {
         row.bedsMin = detail.specs.beds;
