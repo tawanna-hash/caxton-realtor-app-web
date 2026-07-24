@@ -35,7 +35,7 @@ type Props = {
   /** Fallback destination for Back when there's no history. */
   backHref?: string;
   /** Label surfaced in analytics for which list page rendered the floater. */
-  page: 'builders' | 'communities' | 'inventory';
+  page: 'builders' | 'communities' | 'inventory' | 'promotions';
   shareTitle?: string;
 };
 
