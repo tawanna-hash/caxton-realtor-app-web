@@ -77,14 +77,14 @@ export default function BuilderDeveloperFloater({
   const resultsActions: FloaterAction[] = [
     {
       key: 'download-results',
-      label: 'Download results',
+      label: 'Download Search Results',
       ariaLabel: 'Download filtered results as PDF',
       onClick: onDownloadResults,
       icon: IconDownload,
     },
     {
       key: 'share-results',
-      label: 'Share results',
+      label: 'Share Search Results',
       ariaLabel: 'Share filtered results',
       onClick: onShareResults,
       icon: IconShare,
@@ -98,6 +98,7 @@ export default function BuilderDeveloperFloater({
       base: { page },
       backRoute: backHref,
       share: { title: shareTitle },
+      primary: ['back', 'inventory'],
       inventoryRoute: '/inventory',
       extraOverflow: resultsActions,
     });
