@@ -292,9 +292,26 @@ function normalize(item: MIInventoryItem): ScrapedMIHomesRow | null {
 
 const MI_DETAIL_GALLERY_LIMIT = 30;
 
+type MIHomeDetailSpecs = {
+  beds: number | null;
+  fullBaths: number | null;
+  halfBaths: number | null;
+  garage: number | null;
+  stories: number | null;
+  sqft: number | null;
+};
+
+function parseSpecNumber(raw: string): number | null {
+  const m = raw.replace(/,/g, '').match(/-?\d+(\.\d+)?/);
+  if (!m) return null;
+  const n = Number(m[0]);
+  return Number.isFinite(n) ? n : null;
+}
+
 async function fetchMIHomeDetail(detailUrl: string): Promise<{
   galleryUrls: string[] | null;
   description: string | null;
+  specs: MIHomeDetailSpecs;
 }> {
   let res: Response;
   try {
@@ -335,23 +352,79 @@ async function fetchMIHomeDetail(detailUrl: string): Promise<{
   const galleryUrls =
     gallery.size > 0 ? Array.from(gallery).slice(0, MI_DETAIL_GALLERY_LIMIT) : null;
 
-  // Description: the <p> block from "Step inside ..." to `<!-- and done -->`.
+  // Specs: the plan-specification-item label/value grid (bedrooms, full/half
+  // bathrooms, garages, stories, square feet). The Sitecore inventory API
+  // sometimes omits bedrooms, so we backfill from here.
+  const specs: MIHomeDetailSpecs = {
+    beds: null,
+    fullBaths: null,
+    halfBaths: null,
+    garage: null,
+    stories: null,
+    sqft: null,
+  };
+  $('.plan-specification-item__label').each((_, el) => {
+    const label = $(el).text().trim().toLowerCase();
+    const raw = $(el).siblings('.plan-specification-item__value').first().text().trim();
+    const num = parseSpecNumber(raw);
+    if (num === null) return;
+    if (label === 'bedrooms') specs.beds = num;
+    else if (label === 'full bathrooms') specs.fullBaths = num;
+    else if (label === 'half bathrooms') specs.halfBaths = num;
+    else if (label === 'garages' || label === 'garage') specs.garage = num;
+    else if (label === 'stories') specs.stories = num;
+    else if (label === 'square feet') specs.sqft = num;
+  });
+
+  // Description: the full block from the body's opening paragraph to the
+  // `<!-- and done -->` marker. The opener wording varies per home ("Step
+  // inside ...", "Discover this ..."), so use the meta description's opening
+  // words as a signature to locate the body opener (its last occurrence before
+  // the done marker), then slice to the marker and strip tags. This captures
+  // <p>s, <ul> bullet lists (e.g. Key Features), and any other blocks in the
+  // run. Falls back to the contiguous <p> run, then to the meta description.
   let description: string | null = null;
+  const metaDesc = ($('meta[name="description"]').attr('content') || '').trim();
   const doneIdx = html.indexOf('<!-- and done -->');
   if (doneIdx !== -1) {
-    const startIdx = html.lastIndexOf('Step inside', doneIdx);
+    const sig = metaDesc.replace(/\s+/g, ' ').slice(0, 25).trim();
+    const startIdx = sig ? html.lastIndexOf(sig, doneIdx) : -1;
     if (startIdx !== -1) {
       const frag = html.slice(startIdx, doneIdx);
       const text = cheerio.load(frag).text().replace(/\s+/g, ' ').trim();
       if (text.length > 0) description = text;
     }
+    if (!description) {
+      const before = html.slice(0, doneIdx);
+      const paras: { start: number; end: number; inner: string }[] = [];
+      const re = /<p[^>]*>([\s\S]*?)<\/p>/g;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(before)) !== null) {
+        paras.push({ start: m.index, end: m.index + m[0].length, inner: m[1] });
+      }
+      if (paras.length > 0) {
+        let runStart = paras.length - 1;
+        for (let i = paras.length - 2; i >= 0; i--) {
+          const between = before.slice(paras[i].end, paras[i + 1].start);
+          if (/^\s*$/.test(between)) runStart = i;
+          else break;
+        }
+        const text = paras
+          .slice(runStart)
+          .map((pp) => cheerio.load(pp.inner).text())
+          .join('\n\n')
+          .replace(/[ \t]+/g, ' ')
+          .replace(/ *\n */g, '\n')
+          .trim();
+        if (text.length > 0) description = text;
+      }
+    }
   }
-  if (!description) {
-    const meta = $('meta[name="description"]').attr('content') || '';
-    if (meta.trim().length > 0) description = meta.trim();
+  if (!description && metaDesc.length > 0) {
+    description = metaDesc;
   }
 
-  return { galleryUrls, description };
+  return { galleryUrls, description, specs };
 }
 
 // Bounded-concurrency mapper so we don't fire ~93 detail requests at once.
@@ -434,7 +507,7 @@ export async function fetchMIHomesAustin(): Promise<{
     }
   }
 
-  // Enrich each home with gallery + description from its detail page.
+  // Enrich each home with gallery + description + specs from its detail page.
   // Best-effort: a detail fetch failure leaves the API-only row intact.
   let detailFetched = 0;
   let detailErrors = 0;
@@ -443,7 +516,37 @@ export async function fetchMIHomesAustin(): Promise<{
     try {
       const detail = await fetchMIHomeDetail(row.sourceUrl);
       if (detail.galleryUrls) row.galleryUrls = detail.galleryUrls;
-      if (detail.description) row.description = detail.description;
+      // Backfill specs the Sitecore API omitted (bedrooms is frequently null).
+      if (row.bedsMin == null && detail.specs.beds != null) {
+        row.bedsMin = detail.specs.beds;
+        row.bedsMax = detail.specs.beds;
+      }
+      if (row.bathsMin == null && detail.specs.fullBaths != null) {
+        const b = detail.specs.fullBaths + (detail.specs.halfBaths ?? 0) * 0.5;
+        row.bathsMin = b;
+        row.bathsMax = b;
+      }
+      if (row.sqftMin == null && detail.specs.sqft != null) {
+        row.sqftMin = detail.specs.sqft;
+        row.sqftMax = detail.specs.sqft;
+      }
+      // The inventory page surfaces garage only via /(\d+)-car garage/ parsed
+      // from the description. If M/I's description doesn't phrase it that way,
+      // append a compact specs line so garage still shows.
+      let desc = detail.description;
+      // M/I's body description sometimes opens with a templated wrong street
+      // address; if the row's real street address isn't present, swap it into
+      // the opener ("at <wrong> in <city>, <st>" -> "at <real> in ...").
+      if (desc && row.address) {
+        const street = row.address.split(',')[0].trim();
+        if (street && !desc.toLowerCase().includes(street.toLowerCase())) {
+          desc = desc.replace(/(at\s+)([^,\n]+?)(\s+in\s+)/, `$1${street}$3`);
+        }
+      }
+      if (desc && detail.specs.garage != null && !/(\d+)-car garage/i.test(desc)) {
+        desc = `${desc}\n\nKey Features: ${detail.specs.garage}-car garage`;
+      }
+      if (desc) row.description = desc;
       detailFetched++;
     } catch (err) {
       detailErrors++;
