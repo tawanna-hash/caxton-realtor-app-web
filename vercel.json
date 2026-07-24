@@ -89,6 +89,14 @@
       "schedule": "0 20 * * *"
     },
     {
+      "path": "/api/cron/scrape-newmark-communities",
+      "schedule": "15 20 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-newmark",
+      "schedule": "30 20 * * *"
+    },
+    {
       "path": "/api/cron/scrape-abor-realtors",
       "schedule": "0 3 * * *"
     },
