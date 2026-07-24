@@ -2,12 +2,16 @@
 
 // components/inventory/RequestInfoBox.tsx
 //
-// Inline "Request more information" card shown in the right column of
-// /inventory/[id]. Submissions POST to /api/listing-inquiry, which emails
-// the RNN team a lead (Resend) and fires inventory_inquiry_submitted.
+// "Request more information" card shown in the right column of /inventory/[id].
 //
-// The floater Contact pill scrolls to this box (id="request-info") instead
-// of dialing — listings carry no per-home sales phone.
+// When a community has a builder contact link on file (see
+// lib/community-contacts.ts), the CTA links out to that form — e.g.
+// Newmark's per-community #contactarea — which forwards the lead straight to
+// the builder's sales team. Communities without a mapped link fall back to
+// the inline email form (POST /api/listing-inquiry → RNN team + builder).
+//
+// Both paths fire `inventory_request_info_clicked` so the admin metrics
+// dashboard can count requests per builder regardless of destination.
 //
 // Plum-themed (#5a0e5f) header so it reads as a primary call-to-action.
 
@@ -18,6 +22,10 @@ type Props = {
   listingId: number;
   title: string;
   builderName: string;
+  communityName?: string | null;
+  // Builder-side contact form URL for this community. When present, the box
+  // becomes a link-out instead of the inline form.
+  contactUrl?: string | null;
 };
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
@@ -26,10 +34,65 @@ const INPUT_CLS =
   'w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#5a0e5f] focus:outline-none focus:ring-1 focus:ring-[#5a0e5f]';
 const LABEL_CLS = 'block text-xs font-medium uppercase tracking-[0.08em] text-gray-600 mb-1';
 
-export default function RequestInfoBox({ listingId, title, builderName }: Props) {
+export default function RequestInfoBox({
+  listingId,
+  title,
+  builderName,
+  communityName,
+  contactUrl,
+}: Props) {
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState<string>('');
 
+  function trackRequestInfo(destination: 'builder_contact_form' | 'rnn_email') {
+    trackEvent('inventory_request_info_clicked', {
+      listing_id: listingId,
+      builder_name: builderName,
+      community_name: communityName ?? null,
+      destination,
+    });
+  }
+
+  // --- Link-out mode: route to the builder's community contact form ---
+  if (contactUrl) {
+    const communityLabel = communityName ? `${communityName} by ${builderName}` : builderName;
+    return (
+      <div
+        id="request-info"
+        className="scroll-mt-24 border border-[#5a0e5f]/20 rounded-lg overflow-hidden"
+      >
+        <div className="bg-[#5a0e5f] px-4 py-3">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">
+            Request more information
+          </h2>
+          <p className="mt-0.5 text-xs text-white/80">
+            Get details and availability straight from the builder&apos;s sales team.
+          </p>
+        </div>
+        <div className="px-4 py-5">
+          <p className="text-sm text-gray-700">
+            Interested in {communityLabel}? Use {builderName}&apos;s contact form and their
+            sales team will follow up directly.
+          </p>
+          <a
+            href={contactUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackRequestInfo('builder_contact_form')}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#5a0e5f] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#301D5D] transition-colors"
+          >
+            Request more information
+            <span aria-hidden="true" className="text-base leading-none">↗</span>
+          </a>
+          <p className="mt-2 text-center text-[11px] text-gray-400">
+            Opens {builderName}&apos;s contact form in a new tab.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Fallback mode: inline email form (no builder contact link on file) ---
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus('submitting');
@@ -65,6 +128,7 @@ export default function RequestInfoBox({ listingId, title, builderName }: Props)
         listing_id: listingId,
         builder_name: builderName,
       });
+      trackRequestInfo('rnn_email');
     } catch (err) {
       setStatus('error');
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong.');

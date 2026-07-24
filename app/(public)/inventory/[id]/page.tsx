@@ -21,6 +21,7 @@ import { builderNameToSlug } from '@/lib/builder-slug';
 import InventoryGallery from '@/components/inventory/InventoryGallery';
 import InventoryDetailFloater from '@/components/inventory/InventoryDetailFloater';
 import RequestInfoBox from '@/components/inventory/RequestInfoBox';
+import { getCommunityContactLink } from '@/lib/community-contacts';
 import FloorplanViewer from './FloorplanViewer';
 
 export const dynamic = 'force-dynamic';
@@ -269,6 +270,8 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
             listingId={row.id}
             title={row.title}
             builderName={row.builderName}
+            communityName={row.communityName}
+            contactUrl={getCommunityContactLink(row.builderName, row.communityName)}
           />
 
           {row.kind === 'promotion' && expiresLabel && (

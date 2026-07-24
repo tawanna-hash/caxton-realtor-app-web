@@ -29,11 +29,11 @@ export type ShareBreakdown = {
   total: number;
 };
 
-// 'Request more information' submissions from /inventory/[id], grouped by
-// builder. `forwarded` counts leads routed to a builder sales team.
+// 'Request more information' actions from /inventory/[id], grouped by
+// builder. Covers link-outs to a builder's community contact form and
+// inline-form submissions.
 export type ListingInquiry = {
   builder_name: string;
-  forwarded: number;
   total: number;
 };
 
@@ -70,7 +70,8 @@ export const EVENT_LABELS: Record<string, string> = {
   inventory_floater_clicked: 'Inventory detail — Floater',
   flipbook_shared: 'Magazine — Share',
   flipbook_download_clicked: 'Magazine — Download',
-  inventory_inquiry_submitted: 'Listing inquiries submitted',
+  inventory_inquiry_submitted: 'Listing inquiries (form submits)',
+  inventory_request_info_clicked: 'Request-info clicks',
   // Ad slot tracking (paid placements rendered via <AdSlot>)
   ad_impression: 'Ad impressions',
   ad_click: 'Ad clicks',

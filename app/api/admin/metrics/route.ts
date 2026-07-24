@@ -280,27 +280,25 @@ export const GET = withErrorHandling(async (req: Request) => {
       return { surface: r[0] ?? '?', channel: r[1] ?? 'unknown', total: Number(r[2]) };
     });
 
-    // 9. Listing inquiries — 'Request more information' submissions from
-    // /inventory/[id], grouped by builder. forwarded_to_builder (set by
-    // /api/listing-inquiry) shows how many leads routed to a builder sales
-    // team vs. the fallback inbox.
+    // 9. Listing inquiries — 'Request more information' actions from
+    // /inventory/[id], grouped by builder. Covers both link-outs to a
+    // builder's community contact form (the builder's sales team handles
+    // the lead) and inline-form submissions (routed by /api/listing-inquiry).
     const listingInquiriesRaw = await runHogQL(`
       SELECT
         if(empty(properties.builder_name), '(unknown)', properties.builder_name) AS builder_name,
-        countIf(properties.forwarded_to_builder = true) AS forwarded,
         count() AS total
       FROM events
-      WHERE event = 'inventory_inquiry_submitted'
+      WHERE event = 'inventory_request_info_clicked'
         AND timestamp >= now() - INTERVAL ${days} DAY
       GROUP BY builder_name
       ORDER BY total DESC
     `);
     const listing_inquiries = listingInquiriesRaw.map((row) => {
-      const r = row as [string, number, number];
+      const r = row as [string, number];
       return {
         builder_name: r[0] ?? '(unknown)',
-        forwarded: Number(r[1]),
-        total: Number(r[2]),
+        total: Number(r[1]),
       };
     });
 

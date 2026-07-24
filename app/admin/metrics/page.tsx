@@ -341,7 +341,6 @@ export default function AdminMetricsPage() {
                   <thead>
                     <tr className="text-xs uppercase tracking-wide text-gray-500">
                       <th className="text-left pb-2 font-medium">Builder</th>
-                      <th className="text-right pb-2 font-medium">Forwarded</th>
                       <th className="text-right pb-2 font-medium">Inquiries</th>
                     </tr>
                   </thead>
@@ -349,10 +348,6 @@ export default function AdminMetricsPage() {
                     {metrics.listing_inquiries.map((row, i) => (
                       <tr key={`${row.builder_name}-${i}`} className="border-t border-gray-100">
                         <td className="py-2 text-gray-900">{row.builder_name}</td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.forwarded.toLocaleString()}
-                          <span className="text-gray-400"> / {row.total.toLocaleString()}</span>
-                        </td>
                         <td className="py-2 text-right tabular-nums text-gray-900 font-medium">
                           {row.total.toLocaleString()}
                         </td>
