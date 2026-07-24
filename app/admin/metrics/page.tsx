@@ -329,6 +329,41 @@ export default function AdminMetricsPage() {
             </div>
           </section>
 
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">
+              Listing inquiries · last {days} days
+            </h2>
+            <div className="bg-white border border-gray-200 rounded-md p-4">
+              {!metrics.listing_inquiries || metrics.listing_inquiries.length === 0 ? (
+                <p className="text-sm text-gray-500">No &ldquo;Request more information&rdquo; submissions yet.</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-xs uppercase tracking-wide text-gray-500">
+                      <th className="text-left pb-2 font-medium">Builder</th>
+                      <th className="text-right pb-2 font-medium">Forwarded</th>
+                      <th className="text-right pb-2 font-medium">Inquiries</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metrics.listing_inquiries.map((row, i) => (
+                      <tr key={`${row.builder_name}-${i}`} className="border-t border-gray-100">
+                        <td className="py-2 text-gray-900">{row.builder_name}</td>
+                        <td className="py-2 text-right tabular-nums text-gray-700">
+                          {row.forwarded.toLocaleString()}
+                          <span className="text-gray-400"> / {row.total.toLocaleString()}</span>
+                        </td>
+                        <td className="py-2 text-right tabular-nums text-gray-900 font-medium">
+                          {row.total.toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </section>
+
           <TrendingMetrics days={days} />
 
           <NewsletterMetrics days={days} />

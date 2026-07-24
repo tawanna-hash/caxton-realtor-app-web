@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { sendEmail } from '@/lib/email';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 import { escapeHtml, BRAND } from '@/lib/server/email/html';
+import { getBuilderSalesEmail, DEFAULT_INQUIRY_TO } from '@/lib/builder-contacts';
 
 export const runtime = 'nodejs';
 
@@ -83,7 +84,12 @@ export async function POST(req: NextRequest) {
   </td></tr>
 </table>`;
 
-  const to = process.env.LISTING_INQUIRY_TO ?? 'tawanna@myrealtyline.com';
+  // Forward to the builder's sales team when we have one on file;
+  // CC the default RNN inbox so the team stays in the loop and no
+  // lead is ever lost to an unmonitored address.
+  const builderEmail = getBuilderSalesEmail(d.builder_name);
+  const to = builderEmail ?? DEFAULT_INQUIRY_TO;
+  const cc = builderEmail ? [DEFAULT_INQUIRY_TO] : undefined;
 
   // Fire analytics first so a Resend outage doesn't lose the signal.
   captureServerEvent('inventory_inquiry_submitted', d.email || 'server', {
@@ -92,10 +98,13 @@ export async function POST(req: NextRequest) {
     builder_name: d.builder_name,
     is_realtor: d.is_realtor,
     source_url: listingUrl,
+    forwarded_to_builder: !!builderEmail,
+    recipient: builderEmail ? 'builder' : 'fallback',
   });
 
   const result = await sendEmail({
     to,
+    cc,
     subject,
     html,
     replyTo: d.email,
