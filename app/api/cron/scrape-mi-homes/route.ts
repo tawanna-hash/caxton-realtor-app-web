@@ -1,19 +1,23 @@
 // app/api/cron/scrape-mi-homes/route.ts
 //
-// Vercel Cron endpoint. Daily M/I Homes Austin inventory scrape.
+// Vercel Cron endpoint. Daily M/I Homes Austin scrape.
 //
-// S13: switched from per-community to per-home rows.
-// Each inventory home becomes its own row with address, ready_date,
-// plan_name, community_name. Same pattern as scrape-david-weekley.
+// Two passes:
+//   1. Inventory (move-in-ready homes) — one row per home (home_type='showcase').
+//   2. Communities — one row per community (home_type='community') with rich
+//      community_data (plans w/ elevation images, amenities, sales office,
+//      gallery, schools). Source: Sitecore community-card API (widened bbox)
+//      + per-community detail-page ld+json enrichment (best-effort).
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchMIHomesAustin } from '@/lib/scrapers/mi-homes';
+import { fetchMIHomesCommunityRows } from '@/lib/scrapers/mi-homes-communities';
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Single HTTP call ~1s + ~93 upserts at ~50ms each = ~5s. 60s for headroom.
-export const maxDuration = 60;
+// Inventory (~93 upserts) + 11 community detail fetches + 11 upserts.
+export const maxDuration = 120;
 
 const SCRAPER_SUBMITTER_NAME = 'M/I Homes Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-mi-homes@harmonyone.system';
@@ -36,8 +40,10 @@ function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
   return { ok: true };
 }
 
-async function runScrape() {
+async function runScrape(refresh: boolean) {
   const startedAt = Date.now();
+
+  // ── Pass 1: inventory homes ──────────────────────────────────────────
   const { rows, rawCount, skipped } = await fetchMIHomesAustin();
 
   let inserted = 0;
@@ -88,20 +94,91 @@ async function runScrape() {
     }
   }
 
+  // ── Pass 2: communities ──────────────────────────────────────────────
+  let communityCount = 0;
+  let communityInserted = 0;
+  let communityUpdated = 0;
+  let communityErrors = 0;
+  let communityDetailFetched = 0;
+  const communityDetailErrors: { community: string; error: string }[] = [];
+  const communityErrorDetails: { title: string; error: string }[] = [];
+
+  try {
+    const communityResult = await fetchMIHomesCommunityRows();
+    communityCount = communityResult.rows.length;
+    communityDetailFetched = communityResult.detailFetched;
+    communityDetailErrors.push(...communityResult.detailErrors);
+
+    for (const row of communityResult.rows) {
+      try {
+        const result = await upsertBuilderInventoryByExternalId({
+          externalId: row.externalId,
+          kind: 'listing',
+          publication: 'realtyline',
+          submittedByName: SCRAPER_SUBMITTER_NAME,
+          submittedByEmail: SCRAPER_SUBMITTER_EMAIL,
+          builderName: row.builderName,
+          title: row.title,
+          city: row.city,
+          state: row.state,
+          description: row.description,
+          bedsMin: row.bedsMin,
+          bedsMax: row.bedsMax,
+          bathsMin: row.bathsMin,
+          bathsMax: row.bathsMax,
+          sqftMin: row.sqftMin,
+          sqftMax: row.sqftMax,
+          priceMin: row.priceMin,
+          priceMax: row.priceMax,
+          thumbnailUrl: row.thumbnailUrl,
+          flyerPdfUrl: row.flyerPdfUrl,
+          communityName: row.communityName,
+          homeType: row.homeType,
+          communityData: row.communityData,
+        });
+        if (result.created) communityInserted++;
+        else communityUpdated++;
+      } catch (err) {
+        communityErrors++;
+        const msg = err instanceof Error ? err.message : String(err);
+        communityErrorDetails.push({ title: row.title, error: msg });
+        console.error(
+          `[scrape-mi-homes] community upsert failed for "${row.title}" (${row.externalId}):`,
+          msg,
+        );
+      }
+    }
+  } catch (err) {
+    communityErrors++;
+    const msg = err instanceof Error ? err.message : String(err);
+    communityErrorDetails.push({ title: 'community-scrape', error: msg });
+    console.error('[scrape-mi-homes] community scrape failed:', msg);
+  }
+
   const elapsedMs = Date.now() - startedAt;
 
   return {
     ok: true,
     summary: {
+      refresh,
+      // inventory
       rawCount,
       normalized: rows.length,
       skipped,
       inserted,
       updated,
       errors,
+      // communities
+      communityCount,
+      communityInserted,
+      communityUpdated,
+      communityErrors,
+      communityDetailFetched,
+      communityDetailErrors,
       elapsedMs,
     },
     errorDetails: errors > 0 ? errorDetails : undefined,
+    communityErrorDetails: communityErrors > 0 ? communityErrorDetails : undefined,
   };
 }
 
@@ -114,8 +191,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const refresh = req.nextUrl.searchParams.get('refresh') === '1';
+
   try {
-    const result = await runScrape();
+    const result = await runScrape(refresh);
     return NextResponse.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
