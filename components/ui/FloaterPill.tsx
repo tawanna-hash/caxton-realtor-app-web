@@ -72,7 +72,7 @@ function parseBottomOffsetPx(cls: string): number {
 //   - WebkitTapHighlightColor:transparent (set via inline style) kills the
 //     iOS grey flash so only our own pressed state is visible.
 const BTN_CLS =
-  'flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-1.5 py-1.5 rounded-md ' +
+  'flex flex-col items-center justify-center min-w-[52px] min-h-[44px] px-1.5 py-1.5 rounded-md drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] ' +
   'transition-transform duration-75 text-white/85 hover:text-white active:scale-95 active:bg-white/20 ' +
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60';
 
@@ -123,7 +123,7 @@ export default function FloaterPill({
         bottom: `calc(${offsetPx}px + env(safe-area-inset-bottom, 0px))`,
       }}
     >
-      <div className="pointer-events-auto flex items-stretch gap-1 bg-black/85 backdrop-blur-md rounded-md px-1.5 py-1 shadow-lg">
+      <div className="pointer-events-auto flex items-stretch gap-1 rounded-md px-1.5 py-1">
         {actions.map((action) => {
           const aria = action.ariaLabel ?? action.label;
           if (action.href) {

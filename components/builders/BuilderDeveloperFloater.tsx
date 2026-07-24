@@ -102,12 +102,9 @@ export default function BuilderDeveloperFloater({
     router.push('/inventory');
   }, [router, base]);
 
-  // Inventory page downloads the inventory PDF — label it explicitly so it
-  // isn't confused with the adjacent 'Inventory' nav button.
-  const downloadLabel = page === 'inventory' ? 'Inventory Download' : 'Download';
   const actions: FloaterAction[] = [
     { key: 'back', label: 'Back', icon: IconBack, onClick: onBack },
-    { key: 'download', label: downloadLabel, icon: IconDownload, onClick: onDownload },
+    { key: 'download', label: 'Inventory Download', icon: IconDownload, onClick: onDownload },
     { key: 'share', label: 'Share', icon: IconShare, onClick: onShare },
     { key: 'inventory', label: 'Inventory', icon: IconHome, onClick: onInventory },
   ];

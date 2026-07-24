@@ -6,12 +6,17 @@
 // Auth: Authorization: Bearer ${CRON_SECRET} in production.
 // Dev/preview: open (so we can test from local without setting the secret).
 //
-// Output rows land as kind='promotion', status='pending' so a human reviews
-// legal text + dates + participating-community claims before publishing.
+// Output rows land as kind='promotion'. M/I's promo copy (rates, terms, dates)
+// is scraped verbatim from mihomes.com's own marketing, so each promo is
+// auto-published to status='active' (a human 'rejected' stamp is respected).
+// Pruned: promotions no longer on mihomes.com are deleted.
 
 import { NextResponse } from 'next/server';
 import { fetchMIHomesIncentives } from '../../../../lib/scrapers/mi-homes-incentives';
-import { upsertBuilderInventoryByExternalId } from '../../../../lib/builder-inventory';
+import {
+  upsertBuilderInventoryByExternalId,
+  updateBuilderInventory,
+} from '../../../../lib/builder-inventory';
 import { deleteStaleBuilderPromotions } from '../../../../lib/builder-inventory-sync';
 
 export const runtime = 'nodejs';
@@ -46,12 +51,27 @@ async function handle(req: Request) {
 
   let created = 0;
   let updated = 0;
+  let published = 0;
   const upsertErrors: { externalId: string; reason: string }[] = [];
 
   for (const row of scrape.rows) {
     try {
       const result = await upsertBuilderInventoryByExternalId(row);
       if (result.created) created++; else updated++;
+      // M/I promo copy is scraped verbatim from mihomes.com — publish live so
+      // it surfaces in the active feed / builder promo counts. A human
+      // 'rejected' stamp is respected (not re-activated by re-scrape).
+      if (result.row.status !== 'active' && result.row.status !== 'rejected') {
+        try {
+          await updateBuilderInventory(result.row.id, { status: 'active' });
+          published++;
+        } catch (err) {
+          console.error(
+            `[scrape-mi-homes-incentives] publish failed for "${row.title}" (${row.externalId}):`,
+            err instanceof Error ? err.message : String(err),
+          );
+        }
+      }
     } catch (err) {
       upsertErrors.push({
         externalId: row.externalId,
@@ -86,6 +106,7 @@ async function handle(req: Request) {
     upserted: scrape.rows.length,
     created,
     updated,
+    published,
     deleted,
     skipped: scrape.skipped,
     upsertErrors,
