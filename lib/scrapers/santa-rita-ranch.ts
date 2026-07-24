@@ -404,25 +404,43 @@ const DETAIL_UA =
 // Fetch a home's detail page and pull the floorplan image (Pipsy Santa Rita
 // S3 bucket). Returns null on any failure — enrichment is best-effort.
 async function fetchSrrFloorplan(detailUrl: string): Promise<string | null> {
-  try {
-    const res = await fetch(detailUrl, {
-      headers: {
-        'User-Agent': DETAIL_UA,
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      },
-      redirect: 'follow',
-      signal: AbortSignal.timeout(15_000),
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    const html = await res.text();
-    const m = html.match(
-      /["'(](https:\/\/cdn\.pipsy\.io\/[^"'\s)]*pipsy-santarita[^"'\s)]*floorplans[^"'\s)]*)/i,
-    );
-    return m ? m[1] : null;
-  } catch {
-    return null;
+  // Fuller browser-fingerprint headers help past Cloudflare bot-fight mode
+  // (the site fronts detail pages with Cloudflare, which challenged many
+  // bare-UA requests from the Vercel function IP). Retry once with a short
+  // backoff for intermittent challenges.
+  const headers = {
+    'User-Agent': DETAIL_UA,
+    Accept:
+      'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1',
+    'Upgrade-Insecure-Requests': '1',
+    Referer: REFERER,
+  };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(detailUrl, {
+        headers,
+        redirect: 'follow',
+        signal: AbortSignal.timeout(15_000),
+        cache: 'no-store',
+      });
+      if (res.ok) {
+        const html = await res.text();
+        const m = html.match(
+          /["'(](https:\/\/cdn\.pipsy\.io\/[^"'\s)]*pipsy-santarita[^"'\s)]*floorplans[^"'\s)]*)/i,
+        );
+        if (m) return m[1];
+      }
+    } catch {
+      // network/timeout — fall through to retry
+    }
+    if (attempt === 0) await new Promise((r) => setTimeout(r, 600));
   }
+  return null;
 }
 
 // Run async tasks with bounded concurrency so we don't fan out 160+ detail
