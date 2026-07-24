@@ -131,6 +131,10 @@
     {
       "path": "/api/cron/scrape-brookfield-residential",
       "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-brookfield-residential-communities",
+      "schedule": "15 20 * * *"
     }
   ]
 }
