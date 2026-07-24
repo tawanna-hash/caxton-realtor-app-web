@@ -393,6 +393,61 @@ function parseCard(html: string): { row: UpsertScrapedInput | null; reason?: str
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Detail-page enrichment (floorplan image)
+// ─────────────────────────────────────────────────────────────────────────
+
+const DETAIL_UA =
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) ' +
+  'AppleWebKit/537.36 (KHTML, like Gecko) ' +
+  'Chrome/124.0.0.0 Safari/537.36';
+
+// Fetch a home's detail page and pull the floorplan image (Pipsy Santa Rita
+// S3 bucket). Returns null on any failure — enrichment is best-effort.
+async function fetchSrrFloorplan(detailUrl: string): Promise<string | null> {
+  try {
+    const res = await fetch(detailUrl, {
+      headers: {
+        'User-Agent': DETAIL_UA,
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(20_000),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const m = html.match(
+      /["'(](https:\/\/cdn\.pipsy\.io\/[^"'\s)]*pipsy-santarita[^"'\s)]*floorplans[^"'\s)]*)/i,
+    );
+    return m ? m[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+// Run async tasks with bounded concurrency so we don't fan out 160+ detail
+// fetches at once (Cloudflare / function-timeout risk).
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (true) {
+      const i = next++;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i], i);
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, worker),
+  );
+  return results;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Public entry
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -436,6 +491,19 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
     if (res.count < PAGE_SIZE) break;
     offset = res.nextPage;
   }
+
+  // Enrich showcase homes with a floorplan image from each home's detail page
+  // (best-effort; ~80% of SRR homes expose a Pipsy floorplan). Skips the
+  // synthetic community-summary row (no detail URL).
+  const detailRows = rows.filter(
+    (r) => r.flyerPdfUrl && r.flyerPdfUrl.includes('/new-homes-austin-texas/'),
+  );
+  await mapWithConcurrency(detailRows, 6, async (r) => {
+    const fp = await fetchSrrFloorplan(r.flyerPdfUrl!);
+    if (fp) {
+      r.extraDetails = { ...(r.extraDetails ?? {}), _floorplanUrl: fp };
+    }
+  });
 
   // Prepend a synthetic community-summary row so Santa Rita Ranch surfaces
   // on the public /communities page (which filters home_type='community').
