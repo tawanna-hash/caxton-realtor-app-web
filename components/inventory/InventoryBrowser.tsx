@@ -110,6 +110,14 @@ function matchesFilter(row: BuilderInventoryRow, f: FilterState, kind: Kind): bo
   return true;
 }
 
+function rowTime(r: BuilderInventoryRow): number {
+  // created_at arrives from Neon (@neondatabase/serverless) as a Date for
+  // TIMESTAMPTZ columns — NOT a string. Date has no localeCompare, so we
+  // normalize to a numeric timestamp (works for Date | string | number).
+  const t = new Date(r.createdAt as unknown as string).getTime();
+  return Number.isFinite(t) ? t : 0;
+}
+
 function sortRows(rows: BuilderInventoryRow[], sort: SortKey): BuilderInventoryRow[] {
   const arr = [...rows];
   switch (sort) {
@@ -120,13 +128,12 @@ function sortRows(rows: BuilderInventoryRow[], sort: SortKey): BuilderInventoryR
       arr.sort((a, b) => (b.priceMin ?? -Infinity) - (a.priceMin ?? -Infinity));
       break;
     case 'newest':
-      arr.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      arr.sort((a, b) => rowTime(b) - rowTime(a));
       break;
     default:
       arr.sort(
         (a, b) =>
-          Number(b.featured) - Number(a.featured) ||
-          b.createdAt.localeCompare(a.createdAt),
+          Number(b.featured) - Number(a.featured) || rowTime(b) - rowTime(a),
       );
   }
   return arr;
@@ -147,9 +154,17 @@ interface Props {
   rows: BuilderInventoryRow[];
   initialKind: Kind;
   builder: string | null;
+  // When true, the component omits its own <header> (title + lede) — use on
+  // pages that already render a page title above it (e.g. /builders hub).
+  hideHeader?: boolean;
 }
 
-export default function InventoryBrowser({ rows, initialKind, builder }: Props) {
+export default function InventoryBrowser({
+  rows,
+  initialKind,
+  builder,
+  hideHeader = false,
+}: Props) {
   const [kind, setKind] = useState<Kind>(initialKind);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [sort, setSort] = useState<SortKey>('featured');
@@ -266,25 +281,34 @@ export default function InventoryBrowser({ rows, initialKind, builder }: Props) 
 
   return (
     <div>
-      <header className="mb-5">
-        {builder && (
-          <div className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">
-            {builder}
-          </div>
-        )}
-        <PageTitle size="md" className={builder ? 'mt-2' : ''}>
-          {builder ? `${builder} ${heading}` : heading}
-        </PageTitle>
-        <p className="text-base text-gray-700 font-light leading-relaxed mt-3">
-          {kind === 'promotion'
-            ? builder
-              ? `Current promotions from ${builder}.`
-              : 'Current incentives, rate buy-downs, and limited-time offers from our builder partners.'
-            : builder
-              ? `Move-in ready homes available now from ${builder}.`
-              : 'Specific homes available now from builder partners.'}
-        </p>
-      </header>
+      {!hideHeader && (
+        <header className="mb-5">
+          {builder && (
+            <div className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">
+              {builder}
+            </div>
+          )}
+          <PageTitle size="md" className={builder ? 'mt-2' : ''}>
+            {builder ? `${builder} ${heading}` : heading}
+          </PageTitle>
+          <p className="text-base text-gray-700 font-light leading-relaxed mt-3">
+            {kind === 'promotion'
+              ? builder
+                ? `Current promotions from ${builder}.`
+                : 'Current incentives, rate buy-downs, and limited-time offers from our builder partners.'
+              : builder
+                ? `Move-in ready homes available now from ${builder}.`
+                : 'Specific homes available now from builder partners.'}
+          </p>
+        </header>
+      )}
+
+      {/* Section label when embedded under a host page's own title. */}
+      {hideHeader && (
+        <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-3">
+          {heading}
+        </h2>
+      )}
 
       {/* Kind tabs + Filters button + Sort + count */}
       <div className="sticky top-0 z-20 -mx-4 px-4 py-2.5 bg-white/95 backdrop-blur border-b border-gray-200 mb-3">
