@@ -317,6 +317,9 @@ async function fetchMIHomeDetail(detailUrl: string): Promise<{
   description: string | null;
   specs: MIHomeDetailSpecs;
   extraDetails: Record<string, string> | null;
+  floorplanUrl: string | null;
+  latitude: string | null;
+  longitude: string | null;
 }> {
   let res: Response;
   try {
@@ -399,6 +402,18 @@ async function fetchMIHomeDetail(detailUrl: string): Promise<{
     if (Object.keys(map).length > 0) extraDetails = map;
   });
 
+  // Floorplan: the interactive ML3D Solutions viewer iframe URL.
+  const floorplanUrl =
+    $('iframe#floor-plan').attr('data-src') ||
+    $('iframe#floor-plan').attr('src') ||
+    null;
+
+  // Geo coordinates (JSON-LD GeoCoordinates) for the map embed.
+  const latMatch = html.match(/"latitude"\s*:\s*(-?\d+(?:\.\d+)?)/);
+  const lngMatch = html.match(/"longitude"\s*:\s*(-?\d+(?:\.\d+)?)/);
+  const latitude = latMatch ? latMatch[1] : null;
+  const longitude = lngMatch ? lngMatch[1] : null;
+
   // Description: the full block from the body's opening paragraph to the
   // `<!-- and done -->` marker. The opener wording varies per home ("Step
   // inside ...", "Discover this ..."), so use the meta description's opening
@@ -447,7 +462,7 @@ async function fetchMIHomeDetail(detailUrl: string): Promise<{
     description = metaDesc;
   }
 
-  return { galleryUrls, description, specs, extraDetails };
+  return { galleryUrls, description, specs, extraDetails, floorplanUrl, latitude, longitude };
 }
 
 // Bounded-concurrency mapper so we don't fire ~93 detail requests at once.
@@ -539,7 +554,16 @@ export async function fetchMIHomesAustin(): Promise<{
     try {
       const detail = await fetchMIHomeDetail(row.sourceUrl);
       if (detail.galleryUrls) row.galleryUrls = detail.galleryUrls;
-      if (detail.extraDetails) row.extraDetails = detail.extraDetails;
+      // Merge the <dl> details + floorplan URL + geo into extraDetails.
+      // Floorplan/geo use _-prefixed keys so the property-details panel skips
+      // them (they render as dedicated Floorplan / Location sections).
+      if (detail.extraDetails || detail.floorplanUrl || detail.latitude) {
+        const ed: Record<string, string> = { ...(detail.extraDetails ?? {}) };
+        if (detail.floorplanUrl) ed._floorplanUrl = detail.floorplanUrl;
+        if (detail.latitude) ed._latitude = detail.latitude;
+        if (detail.longitude) ed._longitude = detail.longitude;
+        if (Object.keys(ed).length > 0) row.extraDetails = ed;
+      }
       // Backfill specs the Sitecore API omitted (bedrooms is frequently null).
       if (row.bedsMin == null && detail.specs.beds != null) {
         row.bedsMin = detail.specs.beds;

@@ -134,6 +134,13 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
   const garageLabel = parseGarage(row.description);
   const cleanedDesc = cleanDescription(row.description);
 
+  // Floorplan viewer + geo live as _-prefixed meta keys in extraDetails.
+  const extra = row.extraDetails ?? {};
+  const floorplanUrl = extra._floorplanUrl ?? null;
+  const latitude = extra._latitude ?? null;
+  const longitude = extra._longitude ?? null;
+  const hasMap = !!(latitude && longitude);
+
   // For master-planned developers, the underlying builder is in the title.
   const isMpDeveloper = MASTER_PLANNED_DEVELOPERS.has(row.builderName);
   const embeddedBuilder = isMpDeveloper ? extractEmbeddedBuilder(row.title) : null;
@@ -277,19 +284,74 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
         </aside>
       </div>
 
-      {row.extraDetails && Object.keys(row.extraDetails).length > 0 && (
+      {row.extraDetails && Object.keys(row.extraDetails).some((k) => !k.startsWith('_')) && (
         <section className="mt-10 border-t border-gray-200 pt-6">
           <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-4">
             Property details
           </h2>
           <dl className="grid grid-cols-2 sm:grid-cols-3 gap-y-4 gap-x-6 text-sm">
-            {Object.entries(row.extraDetails).map(([label, value]) => (
+            {Object.entries(row.extraDetails).filter(([k]) => !k.startsWith('_')).map(([label, value]) => (
               <div key={label}>
                 <dt className="text-xs uppercase tracking-[0.1em] text-gray-500">{label}</dt>
                 <dd className="mt-0.5 text-gray-900 font-medium">{value}</dd>
               </div>
             ))}
           </dl>
+        </section>
+      )}
+
+      {floorplanUrl && (
+        <section className="mt-10 border-t border-gray-200 pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
+              Floorplan
+            </h2>
+            <a
+              href={floorplanUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-emerald-700 hover:underline"
+            >
+              Open full screen
+            </a>
+          </div>
+          <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+            <iframe
+              src={floorplanUrl}
+              title="Floorplan"
+              loading="lazy"
+              scrolling="no"
+              className="w-full"
+              style={{ height: 560 }}
+            />
+          </div>
+        </section>
+      )}
+
+      {hasMap && (
+        <section className="mt-10 border-t border-gray-200 pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
+              Location
+            </h2>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-emerald-700 hover:underline"
+            >
+              Get directions
+            </a>
+          </div>
+          <div className="rounded-lg overflow-hidden border border-gray-200">
+            <iframe
+              src={`https://maps.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`}
+              title="Map"
+              loading="lazy"
+              className="w-full"
+              style={{ height: 360 }}
+            />
+          </div>
         </section>
       )}
 
