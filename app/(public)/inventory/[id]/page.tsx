@@ -138,11 +138,15 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
   // Floorplan viewer + geo live as _-prefixed meta keys in extraDetails.
   const extra = row.extraDetails ?? {};
   const floorplanUrl = extra._floorplanUrl ?? null;
+  // Image unless it's M/I's interactive ML3D viewer (ml3ds-icon.com), which
+  // needs an <iframe>. Newmark's JPG and La Cima's pipsy CDN images both
+  // render via FloorplanViewer.
   const isFloorplanImage =
-    !!floorplanUrl && /\.(jpe?g|png|webp|gif|bmp)/i.test(floorplanUrl);
+    !!floorplanUrl && !/ml3ds-icon\.com/i.test(floorplanUrl);
   const latitude = extra._latitude ?? null;
   const longitude = extra._longitude ?? null;
   const hasMap = !!(latitude && longitude);
+  const virtualTourUrl = extra._virtualTourUrl ?? null;
 
   // For master-planned developers, the underlying builder is in the title.
   const isMpDeveloper = MASTER_PLANNED_DEVELOPERS.has(row.builderName);
@@ -331,6 +335,34 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
                 style={{ height: 560 }}
               />
             )}
+          </div>
+        </section>
+      )}
+
+      {virtualTourUrl && (
+        <section className="mt-10 border-t border-gray-200 pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium">
+              3D Tour
+            </h2>
+            <a
+              href={virtualTourUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-emerald-700 hover:underline"
+            >
+              Open in new tab
+            </a>
+          </div>
+          <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+            <iframe
+              src={virtualTourUrl}
+              title="3D Tour"
+              loading="lazy"
+              className="w-full"
+              style={{ height: 560 }}
+              allow="fullscreen; xr-spatial-tracking"
+            />
           </div>
         </section>
       )}

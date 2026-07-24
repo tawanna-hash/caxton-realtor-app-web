@@ -103,6 +103,12 @@ type PipsyHome = {
   latitude?: number | null;
   longitude?: number | null;
   elevation?: string | null;
+  home_type?: string | null;
+  marketing_home_type?: string | null;
+  lot_size?: string | null;
+  virtual?: string | null;
+  video?: string | null;
+  brochure?: string | null;
   images?: string[] | null;
   builder_id?: number | null;
   move_in_date?: number | null;     // epoch seconds
@@ -115,6 +121,8 @@ type PipsyHome = {
     id?: number | null;
     name?: string | null;
     feed_name?: string | null;
+    floorplan_images?: string[] | null;
+    files?: { url?: string | null; type?: string | null }[] | null;
   } | null;
 };
 
@@ -268,6 +276,27 @@ function buildRow(home: PipsyHome): UpsertScrapedInput | null {
   // their built-in share button generates.
   const detailUrl = `${SHOP_HOMES_URL}#home-${home.id}`;
 
+  // Property details + geo + floorplan + virtual tour (Pipsy exposes all per
+  // home). _-prefixed keys are meta (map / floorplan / tour); the rest
+  // render in the property-details panel.
+  const extraDetails: Record<string, string> = {};
+  if (home.stories) extraDetails['Stories'] = String(home.stories);
+  if (home.garage != null) extraDetails['Garage'] = `${home.garage}-car`;
+  if (home.elevation) extraDetails['Elevation'] = home.elevation;
+  const homeTypeLabel = home.marketing_home_type || home.home_type;
+  if (homeTypeLabel) extraDetails['Home Type'] = homeTypeLabel;
+  if (home.lot_size) extraDetails['Lot Size'] = home.lot_size;
+  if (status) extraDetails['Status'] = status;
+  if (typeof home.latitude === 'number') extraDetails._latitude = String(home.latitude);
+  if (typeof home.longitude === 'number') extraDetails._longitude = String(home.longitude);
+  const fp = home.floorplan;
+  const fpImg =
+    fp?.floorplan_images?.[0] ||
+    fp?.files?.find((f) => (f.type || '').toLowerCase() === 'floorplan')?.url ||
+    null;
+  if (fpImg) extraDetails._floorplanUrl = fpImg;
+  if (home.virtual) extraDetails._virtualTourUrl = home.virtual;
+
   return {
     externalId: `lacima/pipsy-${home.id}`,
     kind: 'listing',
@@ -295,6 +324,7 @@ function buildRow(home: PipsyHome): UpsertScrapedInput | null {
     planName,
     communityName: neighborhood ? `La Cima · ${neighborhood}` : 'La Cima',
     homeType: 'showcase',
+    extraDetails: Object.keys(extraDetails).length > 0 ? extraDetails : null,
   };
 }
 
