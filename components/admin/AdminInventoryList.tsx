@@ -286,12 +286,6 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
               Promotion Guide
             </Link>
             <Link
-              href="/admin/inventory/builders"
-              className="shrink-0 border border-brand-700 text-brand-700 px-4 py-2 text-sm font-medium hover:bg-brand-50 rounded-md transition-colors whitespace-nowrap"
-            >
-              Advertiser Pages
-            </Link>
-            <Link
               href={`/admin/inventory/new?kind=${kind}`}
               className="shrink-0 bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 rounded-md transition-colors whitespace-nowrap"
             >
