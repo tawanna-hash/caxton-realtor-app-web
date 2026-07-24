@@ -355,7 +355,7 @@ export default async function CommunityDetailPage(
         <aside className="lg:col-span-2">
           <Link
             href={`/builders/${builderSlug}`}
-            className="inline-flex items-center gap-2 rounded-full bg-neutral-100 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
+            className="inline-block text-xs uppercase tracking-[0.1em] font-semibold px-3 py-1.5 border border-[#5a0e5f] bg-[#5a0e5f] text-white rounded-md hover:bg-[#301D5D] hover:border-[#301D5D] transition-colors"
           >
             {row.builderName}
           </Link>

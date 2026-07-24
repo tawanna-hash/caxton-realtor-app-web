@@ -52,7 +52,7 @@ export default async function Page({ searchParams }: PageProps) {
         <div className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
           <header className="mb-6">
             {builder && (
-              <div className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">
+              <div className="text-xs uppercase tracking-[0.18em] text-[#5a0e5f] font-medium">
                 {builder}
               </div>
             )}

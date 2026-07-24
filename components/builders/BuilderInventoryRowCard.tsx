@@ -129,7 +129,7 @@ export default function BuilderInventoryRowCard({
       </div>
       <div className="flex-1 min-w-0">
         {!hideBuilderName && (
-          <div className="text-[11px] uppercase tracking-[0.12em] text-gray-500 font-medium truncate">
+          <div className="text-[11px] uppercase tracking-[0.12em] text-[#5a0e5f] font-medium truncate">
             {row.builderName}
           </div>
         )}

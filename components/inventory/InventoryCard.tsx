@@ -165,7 +165,7 @@ export default function InventoryCard({ row }: Props) {
 
       {/* Body */}
       <div className="flex-1 flex flex-col px-4 py-4 gap-1.5">
-        <p className="text-xs uppercase tracking-[0.15em] text-gray-500 font-medium">
+        <p className="text-xs uppercase tracking-[0.15em] text-[#5a0e5f] font-medium">
           {row.builderName}
         </p>
         <h3 className="text-base font-semibold text-gray-900 leading-snug line-clamp-2 group-hover:underline underline-offset-2 decoration-1">
