@@ -293,7 +293,7 @@ async function parsePromotion(url: string, market: Market): Promise<UpsertScrape
 // these so we never (re)publish an offer that has already ended — Drees often
 // leaves expired promo pages in the sitemap after the offer's end date. A null
 // expiresAt (no date found) is treated as not-expired (can't tell).
-function isExpired(isoDate: string | null): boolean {
+function isExpired(isoDate: string | null | undefined): boolean {
   if (!isoDate) return false;
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   return isoDate < today;
