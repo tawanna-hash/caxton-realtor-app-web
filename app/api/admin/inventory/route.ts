@@ -38,7 +38,7 @@ export const GET = withErrorHandling(async (req: Request) => {
 
   // includeDisabledBuilders:true so disabled advertiser pages (e.g. Newmark)
   // remain visible/manageable in admin even though they're hidden publicly.
-  const rows = await listBuilderInventory({ status, kind: kind ?? null, limit, includeDisabledBuilders: true });
+  const rows = await listBuilderInventory({ status, kind: kind ?? undefined, limit, includeDisabledBuilders: true });
 
   // Counts for the tab badges — scoped to the requested kind when present so
   // each split page (Inventory vs Promotions) shows only its own counts.
