@@ -21,6 +21,9 @@ export const dynamic = 'force-dynamic';
 
 const listInventoryQuerySchema = z.object({
   status: z.enum(['pending', 'active', 'rejected', 'expired']).default('pending'),
+  // Scope the list + counts to one kind so the split Inventory / Promotions
+  // admin pages each fetch only their own rows.
+  kind: z.enum(['listing', 'promotion']).optional(),
   // Raised from 200 to 2000 on 2026-06-22 because the active queue grew past
   // 200 (currently ~666) and newly-created promotions were getting hidden
   // behind the older listings in the truncated window.
@@ -31,18 +34,26 @@ export const GET = withErrorHandling(async (req: Request) => {
   await requireAdmin();
   await ensureBuilderInventorySchema();
 
-  const { status, limit } = parseQuery(req, listInventoryQuerySchema);
+  const { status, kind, limit } = parseQuery(req, listInventoryQuerySchema);
 
   // includeDisabledBuilders:true so disabled advertiser pages (e.g. Newmark)
   // remain visible/manageable in admin even though they're hidden publicly.
-  const rows = await listBuilderInventory({ status, limit, includeDisabledBuilders: true });
+  const rows = await listBuilderInventory({ status, kind: kind ?? null, limit, includeDisabledBuilders: true });
 
-  // Counts for the tab badges — single query across all statuses.
-  const countRows = (await sql`
-    SELECT status, COUNT(*)::int AS count
-    FROM builder_inventory
-    GROUP BY status
-  `) as { status: Status; count: number }[];
+  // Counts for the tab badges — scoped to the requested kind when present so
+  // each split page (Inventory vs Promotions) shows only its own counts.
+  const countRows = kind
+    ? (await sql`
+        SELECT status, COUNT(*)::int AS count
+        FROM builder_inventory
+        WHERE kind = ${kind}
+        GROUP BY status
+      `) as { status: Status; count: number }[]
+    : (await sql`
+        SELECT status, COUNT(*)::int AS count
+        FROM builder_inventory
+        GROUP BY status
+      `) as { status: Status; count: number }[];
 
   const counts: Record<Status, number> = { pending: 0, active: 0, rejected: 0, expired: 0 };
   for (const r of countRows) counts[r.status] = r.count;

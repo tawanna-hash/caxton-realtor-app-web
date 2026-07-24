@@ -55,6 +55,10 @@ export default function AdminInventoryCreateForm() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
+  // Flyer auto-fill state
+  const [extracting, setExtracting] = useState(false);
+  const [extractNote, setExtractNote] = useState<string | null>(null);
+
   // Publication-aware city defaults
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- city default mirrors selected publication; refactor tracked separately
@@ -62,6 +66,15 @@ export default function AdminInventoryCreateForm() {
     else if (publication === 'newsline') setCity('Greater San Antonio');
     // 'both' leaves city untouched — admin chooses
   }, [publication]);
+
+  // Preselect the kind from ?kind= (deep-linked from the split list pages'
+  // "+ Create" buttons). Client-only — window isn't available during SSR.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const k = new URLSearchParams(window.location.search).get('kind');
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time URL param read on mount
+    if (k === 'listing' || k === 'promotion') setKind(k);
+  }, []);
 
   function onImageChange(e: ChangeEvent<HTMLInputElement>) {
     setImageError(null);
@@ -102,6 +115,54 @@ export default function AdminInventoryCreateForm() {
       return;
     }
     setPdfFile(f);
+  }
+
+  // Auto-populate form fields from the attached flyer PDF. Best-effort —
+  // the admin reviews/tweaks before publishing. Only fills empty fields so
+  // it never clobbers a manual edit.
+  async function handleAutoFill() {
+    if (!pdfFile) {
+      setPdfError('Attach a flyer PDF first, then auto-fill.');
+      return;
+    }
+    setExtracting(true);
+    setExtractNote(null);
+    setPdfError(null);
+    try {
+      const fd = new FormData();
+      fd.append('flyerPdf', pdfFile);
+      const res = await fetch('/api/admin/inventory/extract-flyer', {
+        method: 'POST',
+        body: fd,
+        credentials: 'include',
+      });
+      const body = (await res.json().catch(() => null)) as
+        | { error?: string; title?: string | null; description?: string | null;
+            builderName?: string | null; expiresAt?: string | null;
+            priceMin?: number | null; priceMax?: number | null;
+            bedsMin?: number | null; bedsMax?: number | null;
+            sqftMin?: number | null; sqftMax?: number | null; }
+        | null;
+      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
+      if (!body) throw new Error('No response from server');
+      if (body.title && !title.trim()) setTitle(body.title);
+      if (body.description && !description.trim()) setDescription(body.description);
+      if (body.builderName && !builderName.trim()) setBuilderName(body.builderName);
+      if (body.expiresAt && !expiresAt) setExpiresAt(body.expiresAt);
+      if (kind === 'listing') {
+        if (body.priceMin && !priceMin) setPriceMin(String(body.priceMin));
+        if (body.priceMax && !priceMax) setPriceMax(String(body.priceMax));
+        if (body.bedsMin && !bedsMin) setBedsMin(String(body.bedsMin));
+        if (body.bedsMax && !bedsMax) setBedsMax(String(body.bedsMax));
+        if (body.sqftMin && !sqftMin) setSqftMin(String(body.sqftMin));
+        if (body.sqftMax && !sqftMax) setSqftMax(String(body.sqftMax));
+      }
+      setExtractNote('Flyer fields auto-filled — review before publishing.');
+    } catch (err) {
+      setPdfError(err instanceof Error ? err.message : 'Auto-fill failed');
+    } finally {
+      setExtracting(false);
+    }
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -178,7 +239,7 @@ export default function AdminInventoryCreateForm() {
       }
 
       // Success → go to the active list, new row will be at top
-      router.push('/admin/inventory?status=active');
+      router.push(kind === 'promotion' ? '/admin/inventory/promotions?status=active' : '/admin/inventory?status=active');
     } catch (err) {
       setErrorMessage(
         err instanceof Error
@@ -360,6 +421,19 @@ export default function AdminInventoryCreateForm() {
         )}
         {pdfError && <p className="mt-1 text-xs text-red-600">{pdfError}</p>}
         <p className={helpStyle}>Max 25 MB. Optional when an image is provided.</p>
+        {pdfFile && (
+          <button
+            type="button"
+            onClick={handleAutoFill}
+            disabled={extracting || submitting}
+            className="mt-2 inline-flex items-center gap-1.5 bg-brand-600 text-white px-4 py-2 text-sm font-medium hover:bg-brand-700 rounded-md transition-colors disabled:opacity-60"
+          >
+            {extracting ? 'Extracting…' : 'Auto-fill from flyer'}
+          </button>
+        )}
+        {extractNote && (
+          <p className="mt-1 text-xs text-green-700">{extractNote}</p>
+        )}
       </div>
 
       {/* Source URL */}
@@ -465,7 +539,7 @@ export default function AdminInventoryCreateForm() {
         </button>
         <button
           type="button"
-          onClick={() => router.push('/admin/inventory')}
+          onClick={() => router.push(kind === 'promotion' ? '/admin/inventory/promotions' : '/admin/inventory')}
           disabled={submitting}
           className="border border-gray-300 text-gray-700 px-4 py-2 text-sm font-medium hover:border-gray-500 disabled:opacity-50 rounded-md transition-colors"
         >
