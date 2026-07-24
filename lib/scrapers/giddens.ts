@@ -201,9 +201,9 @@ function parseCard(card: string): ScrapedGiddensRow | null {
   // so synthesize from the structured data-* fields so the inventory detail
   // page has copy where a description would render.
   const descParts: string[] = [];
-  if (titleText && communityName) descParts.push(`${titleText} at ${communityName}`);
-  else if (titleText) descParts.push(titleText);
-  else if (communityName) descParts.push(`Inventory home at ${communityName}`);
+  if (titleText && communityName) descParts.push(`${titleText} at ${communityName}.`);
+  else if (titleText) descParts.push(`${titleText}.`);
+  else if (communityName) descParts.push(`Inventory home at ${communityName}.`);
   const specParts: string[] = [];
   if (beds != null) specParts.push(`${beds} bedrooms`);
   if (baths != null) specParts.push(`${baths} bathrooms`);

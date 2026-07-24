@@ -335,9 +335,9 @@ function normalize(
   // detail page has copy where a description would render (Drees/La Cima
   // pull real marketing copy from their feeds; David Weekley's has none).
   const descParts: string[] = [];
-  if (planName && communityName) descParts.push(`The ${planName} at ${communityName}`);
-  else if (planName) descParts.push(`The ${planName}`);
-  else if (communityName) descParts.push(`Inventory home at ${communityName}`);
+  if (planName && communityName) descParts.push(`The ${planName} at ${communityName}.`);
+  else if (planName) descParts.push(`The ${planName}.`);
+  else if (communityName) descParts.push(`Inventory home at ${communityName}.`);
   const specParts: string[] = [];
   if (beds != null) specParts.push(`${beds} bedrooms`);
   if (baths != null) specParts.push(`${baths} bathrooms`);
@@ -345,7 +345,7 @@ function normalize(
   if (price != null) specParts.push(`from $${price.toLocaleString()}`);
   if (specParts.length) descParts.push(specParts.join(', ') + '.');
   if (readyDate) descParts.push(`Ready ${readyDate}.`);
-  if (address) descParts.push(`Located at ${address}, ${city}, ${state}.`);
+  if (address) descParts.push(`Located at ${address}.`);
   const description = descParts.join(' ').trim() || null;
   const galleryUrls = s.Thumbnail?.trim() ? [s.Thumbnail.trim()] : null;
   const sourceUrl = normalizeUrl(s.Token);
