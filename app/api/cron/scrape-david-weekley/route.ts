@@ -221,16 +221,21 @@ async function runScrape(opts: { refresh: boolean }) {
   let ingestionErrors = 0;
   const communityListUrls: string[] = [];
   const ingestionDetails: { url: string; action: string }[] = [];
+  const listFetchResults: {
+    listUrl: string;
+    status: number | null;
+    htmlLength: number;
+    linksFound: number;
+    sampleHrefs: string[];
+    error: string | null;
+    urls: string[];
+  }[] = [];
   const listUrls = [COMING_SOON_LIST, CLOSE_OUT_LIST];
   for (const listUrl of listUrls) {
-    let urls: string[] = [];
-    try {
-      urls = await fetchDavidWeekleyCommunityList(listUrl);
-    } catch {
-      urls = [];
-    }
-    communityListUrls.push(...urls);
-    for (const url of urls) {
+    const r = await fetchDavidWeekleyCommunityList(listUrl);
+    listFetchResults.push({ listUrl, ...r });
+    communityListUrls.push(...r.urls);
+    for (const url of r.urls) {
       try {
         const exists = await builderInventoryExistsByUrl(BUILDER_NAME, url);
         if (exists) {
@@ -296,6 +301,7 @@ async function runScrape(opts: { refresh: boolean }) {
       communitiesIngested,
       ingestionErrors,
       communityListUrls,
+      listFetchResults,
       ingestionDetails,
       elapsedMs,
     },

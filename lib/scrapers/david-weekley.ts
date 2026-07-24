@@ -728,9 +728,18 @@ export async function fetchDavidWeekleyCommunityData(
 // category/listing page (e.g. /new-homes/tx/austin/coming-soon). The close-out
 // and market pages are JS-rendered and yield no server-side community links, so
 // this is best-effort — coming-soon is server-rendered and works reliably.
+export type CommunityListResult = {
+  urls: string[];
+  status: number | null;
+  htmlLength: number;
+  linksFound: number;
+  sampleHrefs: string[];
+  error: string | null;
+};
+
 export async function fetchDavidWeekleyCommunityList(
   listUrl: string,
-): Promise<string[]> {
+): Promise<CommunityListResult> {
   let res: Response;
   try {
     res = await fetch(listUrl, {
@@ -744,14 +753,32 @@ export async function fetchDavidWeekleyCommunityList(
       signal: AbortSignal.timeout(15_000),
       cache: 'no-store',
     });
-  } catch {
-    return [];
+  } catch (e) {
+    return {
+      urls: [],
+      status: null,
+      htmlLength: 0,
+      linksFound: 0,
+      sampleHrefs: [],
+      error: e instanceof Error ? e.message : String(e),
+    };
   }
-  if (!res.ok) return [];
+  if (!res.ok) {
+    return {
+      urls: [],
+      status: res.status,
+      htmlLength: 0,
+      linksFound: 0,
+      sampleHrefs: [],
+      error: `HTTP ${res.status}`,
+    };
+  }
   const html = await res.text();
   const matches = new Set<string>();
+  const allHrefs: string[] = [];
   for (const m of html.matchAll(/href="(\/new-homes\/tx\/[^"]+)"/g)) {
     const path = m[1].replace(/\/$/, '');
+    allHrefs.push(path);
     const segs = path.split('/').filter(Boolean);
     // /new-homes/tx/austin/<city>/<community> => 6 segments
     if (
@@ -763,5 +790,12 @@ export async function fetchDavidWeekleyCommunityList(
       matches.add(`https://www.davidweekleyhomes.com${path}`);
     }
   }
-  return [...matches];
+  return {
+    urls: [...matches],
+    status: res.status,
+    htmlLength: html.length,
+    linksFound: allHrefs.length,
+    sampleHrefs: allHrefs.slice(0, 8),
+    error: null,
+  };
 }
