@@ -137,6 +137,8 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
   // Floorplan viewer + geo live as _-prefixed meta keys in extraDetails.
   const extra = row.extraDetails ?? {};
   const floorplanUrl = extra._floorplanUrl ?? null;
+  const isFloorplanImage =
+    !!floorplanUrl && /\.(jpe?g|png|webp|gif|bmp)/i.test(floorplanUrl);
   const latitude = extra._latitude ?? null;
   const longitude = extra._longitude ?? null;
   const hasMap = !!(latitude && longitude);
@@ -316,14 +318,24 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
             </a>
           </div>
           <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-            <iframe
-              src={floorplanUrl}
-              title="Floorplan"
-              loading="lazy"
-              scrolling="no"
-              className="w-full"
-              style={{ height: 560 }}
-            />
+            {isFloorplanImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={floorplanUrl}
+                alt="Floorplan"
+                loading="lazy"
+                className="w-full h-auto"
+              />
+            ) : (
+              <iframe
+                src={floorplanUrl}
+                title="Floorplan"
+                loading="lazy"
+                scrolling="no"
+                className="w-full"
+                style={{ height: 560 }}
+              />
+            )}
           </div>
         </section>
       )}
