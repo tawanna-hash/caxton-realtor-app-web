@@ -71,7 +71,7 @@ export default function RequestInfoBox({
         </div>
         <div className="px-4 py-5">
           <p className="text-sm text-gray-700">
-            Interested in {communityLabel}? Use {builderName}&apos;s contact form and their
+            Interested in {communityLabel}? Use {builderName}&apos;s contact page and their
             sales team will follow up directly.
           </p>
           <a
@@ -85,7 +85,7 @@ export default function RequestInfoBox({
             <span aria-hidden="true" className="text-base leading-none">↗</span>
           </a>
           <p className="mt-2 text-center text-[11px] text-gray-400">
-            Opens {builderName}&apos;s contact form in a new tab.
+            Opens {builderName}&apos;s contact page in a new tab.
           </p>
         </div>
       </div>

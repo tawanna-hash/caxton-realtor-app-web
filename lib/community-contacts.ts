@@ -1,15 +1,23 @@
 // lib/community-contacts.ts
 //
-// Per-community "Request more information" contact links. Each entry maps a
-// builder + community to the builder's own contact form on their site (e.g.
-// Newmark's per-community #contactarea). The inventory detail "Request more
-// information" CTA links out to it — the builder's form forwards the lead to
-// their sales team. Communities without an entry fall back to the inline
-// email form (POST /api/listing-inquiry).
+// "Request more information" contact links for inventory listings.
 //
-// Key: `${builderName}||${communityName}`. Community names can repeat across
-// builders, so the builder scopes them. Matched case-insensitively against
-// inventory row.builderName + row.communityName.
+// Two layers, checked in order:
+//   1. COMMUNITY_CONTACT_LINKS — per-community (builder + community) URLs to
+//      the builder's own contact form (e.g. Newmark's #contactarea, David
+//      Weekley's #schedule-tour-form-scroll-anchor). The builder's form
+//      forwards the lead to their sales team.
+//   2. BUILDER_SALES_LINKS — a single builder-level sales page for builders
+//      that don't expose per-community forms (e.g. M/I Homes' central sales
+//      selector).
+//
+// Listings with no match at either layer fall back to the inline email form
+// (POST /api/listing-inquiry), which forwards to the builder's sales-team
+// email when configured (lib/builder-contacts.ts) and CCs the RNN inbox.
+//
+// Per-community key: `${builderName}||${communityName}`. Community names can
+// repeat across builders, so the builder scopes them. Matched case-
+// insensitively against inventory row.builderName + row.communityName.
 
 export const COMMUNITY_CONTACT_LINKS: Record<string, string> = {
   // Newmark Homes (Austin-area communities)
@@ -86,17 +94,36 @@ export const COMMUNITY_CONTACT_LINKS: Record<string, string> = {
     "https://www.davidweekleyhomes.com/new-homes/tx/austin/dripping-springs/headwaters-80#schedule-tour-form-scroll-anchor",
 };
 
+// Builder-level sales pages for builders without per-community contact
+// forms. Used as a fallback when no per-community link matches.
+export const BUILDER_SALES_LINKS: Record<string, string> = {
+  // M/I Homes uses a single central sales page (a market selector) rather
+  // than per-community contact forms.
+  'M/I Homes': 'https://www.mihomes.com/support/sales',
+};
+
 export function getCommunityContactLink(
   builderName: string | null | undefined,
   communityName: string | null | undefined,
 ): string | null {
   const b = builderName?.trim();
+  if (!b) return null;
   const c = communityName?.trim();
-  if (!b || !c) return null;
-  const key = `${b}||${c}`;
-  if (COMMUNITY_CONTACT_LINKS[key]) return COMMUNITY_CONTACT_LINKS[key];
-  const found = Object.entries(COMMUNITY_CONTACT_LINKS).find(
-    ([k]) => k.toLowerCase() === key.toLowerCase(),
+
+  // 1. Per-community link (Newmark, David Weekley).
+  if (c) {
+    const key = `${b}||${c}`;
+    if (COMMUNITY_CONTACT_LINKS[key]) return COMMUNITY_CONTACT_LINKS[key];
+    const found = Object.entries(COMMUNITY_CONTACT_LINKS).find(
+      ([k]) => k.toLowerCase() === key.toLowerCase(),
+    );
+    if (found) return found[1];
+  }
+
+  // 2. Builder-level sales page (M/I Homes, …).
+  if (BUILDER_SALES_LINKS[b]) return BUILDER_SALES_LINKS[b];
+  const bFound = Object.entries(BUILDER_SALES_LINKS).find(
+    ([k]) => k.toLowerCase() === b.toLowerCase(),
   );
-  return found ? found[1] : null;
+  return bFound ? bFound[1] : null;
 }
