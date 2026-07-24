@@ -194,7 +194,19 @@ async function runScrape(opts: { refresh: boolean }) {
           // Kissing Tree is David Weekley's active-adult (55+) community.
           if (/kissing tree/i.test(row.title)) cd.adultOnly = true;
           try {
-            await updateBuilderInventory(row.id, { description, communityData: cd });
+            const updateInput: Parameters<typeof updateBuilderInventory>[1] = {
+              description,
+              communityData: cd,
+            };
+            // Coming-soon communities (Flora, Caliterra) ship with no
+            // row-level price/beds/baths/sqft. Fill the numeric stats from
+            // the plan list so list cards render details like other
+            // communities. Only fill when price is null — never overwrite
+            // stats already set on the row.
+            if (row.priceMin == null) {
+              Object.assign(updateInput, computeCommunityRanges(cd));
+            }
+            await updateBuilderInventory(row.id, updateInput);
             communityDataBackfilled++;
           } catch (err) {
             communityDataErrors++;

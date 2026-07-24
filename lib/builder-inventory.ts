@@ -690,7 +690,7 @@ export type UpdateBuilderInventoryInput = {
 export async function listBuilderInventoryCommunityBackfill(
   builderName: string,
   opts: { refresh?: boolean } = {},
-): Promise<{ id: number; flyerPdfUrl: string | null; title: string }[]> {
+): Promise<{ id: number; flyerPdfUrl: string | null; title: string; priceMin: number | null }[]> {
   await ensureBuilderInventorySchema();
   // By default only rows still missing description/community_data are touched
   // (idempotent). With refresh=true every active community row for this builder
@@ -698,14 +698,14 @@ export async function listBuilderInventoryCommunityBackfill(
   const refresh = opts.refresh === true;
   const rows = (refresh
     ? (await sql`
-        SELECT id, flyer_pdf_url, title FROM builder_inventory
+        SELECT id, flyer_pdf_url, title, price_min FROM builder_inventory
         WHERE builder_name = ${builderName}
           AND home_type = 'community'
           AND status = 'active'
           AND flyer_pdf_url IS NOT NULL
       `)
     : (await sql`
-        SELECT id, flyer_pdf_url, title FROM builder_inventory
+        SELECT id, flyer_pdf_url, title, price_min FROM builder_inventory
         WHERE builder_name = ${builderName}
           AND home_type = 'community'
           AND status = 'active'
@@ -716,6 +716,7 @@ export async function listBuilderInventoryCommunityBackfill(
     id: Number(r.id),
     flyerPdfUrl: (r.flyer_pdf_url as string) ?? null,
     title: (r.title as string) ?? '',
+    priceMin: r.price_min == null ? null : Number(r.price_min),
   }));
 }
 

@@ -780,9 +780,10 @@ export async function fetchDavidWeekleyCommunityList(
     const path = m[1].replace(/\/$/, '');
     allHrefs.push(path);
     const segs = path.split('/').filter(Boolean);
-    // /new-homes/tx/austin/<city>/<community> => 6 segments
+    // /new-homes/tx/austin/<city>/<community> => 5 segments
+    // (market/city pages like /new-homes/tx/austin/bastrop have 4)
     if (
-      segs.length === 6 &&
+      segs.length === 5 &&
       !/(financing|close-out|coming-soon|design-center|model-home-gallery|homes-ready-soon)/.test(
         path,
       )
