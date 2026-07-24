@@ -62,16 +62,19 @@ export default function BuilderInventoryRowCard({
   // Destination logic:
   //   - community variant: go to /communities/[id] (internal detail page
   //     with floater pill for back/website/download/share/inventory).
-  //   - listing/promotion: link to the actual listing on the builder's
-  //     site. Prefer a non-PDF sourceUrl; otherwise fall back to a non-PDF
-  //     flyerPdfUrl (David Weekley stores the per-home listing URL there;
-  //     Giddens stores the /homes/ page). If only a PDF or nothing is
-  //     available, route to the builder's internal profile page.
+  //   - listing variant (move-in-ready homes): go to /inventory/[id]
+  //     (internal detail page with photo gallery, specs, marketing
+  //     description, and a Builder Site pill that opens the builder's site).
+  //     Do NOT bounce the user straight to the builder's website.
+  //   - promotion: link to the actual listing on the builder's site. Prefer
+  //     a non-PDF sourceUrl; otherwise fall back to a non-PDF flyerPdfUrl.
+  //     If only a PDF or nothing is available, route to the builder profile.
   const isPdf = (u: string | null | undefined) =>
     !!u && u.toLowerCase().endsWith('.pdf');
   const communityHref = `/communities/${row.id}`;
+  const listingHref = `/inventory/${row.id}`;
   const externalUrl =
-    variant === 'community'
+    variant === 'community' || variant === 'listing'
       ? null
       : (row.sourceUrl && !isPdf(row.sourceUrl)
             ? row.sourceUrl
@@ -81,7 +84,9 @@ export default function BuilderInventoryRowCard({
   const href =
     variant === 'community'
       ? communityHref
-      : externalUrl || `/builders/${builderNameToSlug(row.builderName)}`;
+      : variant === 'listing'
+        ? listingHref
+        : externalUrl || `/builders/${builderNameToSlug(row.builderName)}`;
   const external = !!externalUrl;
 
   const onClick = () => {
