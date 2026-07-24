@@ -6,8 +6,8 @@
 // /inventory). Thin call site over the shared useDetailFloaterActions factory
 // — see components/ui/floater/.
 //
-// Primary: Back · Share · Inventory.
-// Overflow (More): Download results · Share results.
+// Primary: Back · Inventory · Promos.
+// Overflow (More): Download Search Results · Share Search Results.
 //
 // "Results" actions reflect the InventoryBrowser's current filters: the
 // browser syncs filter state to the URL (replaceState), so Download results

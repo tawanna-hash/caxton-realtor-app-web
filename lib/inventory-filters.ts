@@ -24,6 +24,9 @@ export interface InventoryFilterState {
   builder: string | null;
   city: string | null;
   promo: PromoType | null;
+  // Deep-link-only kind filter (no UI tab): ?kind=promotion shows just
+  // promotions, ?kind=listing just move-in ready homes. null = both.
+  kind: 'listing' | 'promotion' | null;
 }
 
 export const DEFAULT_FILTERS: InventoryFilterState = {
@@ -34,6 +37,7 @@ export const DEFAULT_FILTERS: InventoryFilterState = {
   builder: null,
   city: null,
   promo: null,
+  kind: null,
 };
 
 const PROMO_VALUES: PromoType[] = [
@@ -47,6 +51,7 @@ const PROMO_VALUES: PromoType[] = [
 const SORT_VALUES: SortKey[] = ['featured', 'price-asc', 'price-desc', 'newest'];
 
 export function matchesFilter(row: BuilderInventoryRow, f: InventoryFilterState): boolean {
+  if (f.kind && row.kind !== f.kind) return false;
   if (f.builder && row.builderName !== f.builder) return false;
   if (f.beds > 0 && (row.bedsMax == null || row.bedsMax < f.beds)) return false;
   if (f.baths > 0 && (row.bathsMax == null || row.bathsMax < f.baths)) return false;
@@ -97,6 +102,7 @@ export function sortRows(
 
 export function activeFilterCount(f: InventoryFilterState): number {
   return (
+    (f.kind ? 1 : 0) +
     (f.beds > 0 ? 1 : 0) +
     (f.baths > 0 ? 1 : 0) +
     (f.priceMin != null || f.priceMax != null ? 1 : 0) +
@@ -129,6 +135,9 @@ export function parseFilters(
   const sort = sortRaw && SORT_VALUES.includes(sortRaw as SortKey)
     ? (sortRaw as SortKey)
     : 'featured';
+  const kindRaw = get('kind');
+  const kind =
+    kindRaw === 'listing' || kindRaw === 'promotion' ? kindRaw : null;
   return {
     filters: {
       beds: parseNum(get('beds')) ?? 0,
@@ -138,6 +147,7 @@ export function parseFilters(
       builder: get('builder') || null,
       city: get('city') || null,
       promo,
+      kind,
     },
     sort,
   };
@@ -158,6 +168,7 @@ export function serializeFilters(f: InventoryFilterState, sort: SortKey): string
   if (f.builder) p.set('builder', f.builder);
   if (f.city) p.set('city', f.city);
   if (f.promo) p.set('promo', f.promo);
+  if (f.kind) p.set('kind', f.kind);
   if (sort !== 'featured') p.set('sort', sort);
   const s = p.toString();
   return s ? `?${s}` : '';
