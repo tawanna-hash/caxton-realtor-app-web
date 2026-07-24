@@ -9,6 +9,7 @@ import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { createGiveawayRule } from '@/lib/server/giveaways-store';
 import { logAudit } from '@/lib/server/audit';
 import { giveawayIdParamSchema, ruleSchema } from '@/lib/server/schemas/giveaways';
+import { ensureSchema } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -16,6 +17,7 @@ type Ctx = { params: Promise<{ id: string }> };
 
 export const POST = withErrorHandling(async (req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
+  await ensureSchema();
   const { id } = giveawayIdParamSchema.parse(await ctx.params);
   const input = ruleSchema.parse(await req.json());
 

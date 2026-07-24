@@ -10,11 +10,13 @@ import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { listGiveaways, createGiveaway } from '@/lib/server/giveaways-store';
 import { logAudit } from '@/lib/server/audit';
 import { createGiveawaySchema } from '@/lib/server/schemas/giveaways';
+import { ensureSchema } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
 export const GET = withErrorHandling(async () => {
   await requireAdmin();
+  await ensureSchema();
   const giveaways = await listGiveaways();
   return NextResponse.json({ giveaways });
 });

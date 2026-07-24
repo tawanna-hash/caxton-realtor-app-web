@@ -25,11 +25,13 @@ import { signIn, INTERNAL_TRUSTED_PROVIDER_ID } from '@/lib/server/auth/authjs';
 import { signInternalTrustToken } from '@/lib/server/auth/internal-trust-token';
 import { logger } from '@/lib/server/logger';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
+import { ensureSchema } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
 export const POST = withErrorHandling(async (req: Request) => {
   await rateLimit('auth');
+  await ensureSchema();
 
   const { token } = verifySchema.parse(await req.json());
 

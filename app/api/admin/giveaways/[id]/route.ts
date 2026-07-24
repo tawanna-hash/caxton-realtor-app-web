@@ -18,6 +18,7 @@ import {
   giveawayIdParamSchema,
   updateGiveawaySchema,
 } from '@/lib/server/schemas/giveaways';
+import { ensureSchema } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
@@ -25,6 +26,7 @@ type Ctx = { params: Promise<{ id: string }> };
 
 export const GET = withErrorHandling(async (_req: Request, ctx: Ctx) => {
   await requireAdmin();
+  await ensureSchema();
   const { id } = giveawayIdParamSchema.parse(await ctx.params);
   const detail = await getGiveawayDetail(id);
   if (!detail) throw new ApiError(404, 'Giveaway not found');

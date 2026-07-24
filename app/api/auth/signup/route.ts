@@ -14,6 +14,7 @@ import { withErrorHandling } from '@/lib/server/error';
 import { rateLimit } from '@/lib/server/rate-limit';
 import { signupSchema } from '@/lib/server/schemas/auth';
 import { createAndSendMagicLink } from '@/lib/server/magic-link';
+import { ensureSchema } from '@/lib/db';
 import {
   autoEnrollSignupGiveaways,
   findRealtorByEmailTx,
@@ -46,6 +47,7 @@ const MONTH_NAMES = [
 
 export const POST = withErrorHandling(async (req: Request) => {
   await rateLimit('auth');
+  await ensureSchema();
 
   const input = signupSchema.parse(await req.json());
   const ipAddress = await getRequestIp();

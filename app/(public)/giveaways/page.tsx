@@ -6,6 +6,7 @@ import {
   type PublicGiveawayRow,
   type PublicGiveawayRule,
 } from '@/lib/server/giveaways-store';
+import { ensureSchema } from '@/lib/db';
 import {
   PUBLICATION_LABELS_WITH_BOTH,
   type PublicationId,
@@ -36,6 +37,7 @@ function formatRange(startsAt: Date, endsAt: Date): string {
 export default async function Page() {
   const pub = await getServerPub();
   const market = PUB_TO_MARKET[pub] ?? null;
+  await ensureSchema();
   const giveaways = await listPublicGiveaways(market);
 
   return (
