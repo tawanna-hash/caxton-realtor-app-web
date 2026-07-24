@@ -411,7 +411,7 @@ async function fetchSrrFloorplan(detailUrl: string): Promise<string | null> {
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       },
       redirect: 'follow',
-      signal: AbortSignal.timeout(20_000),
+      signal: AbortSignal.timeout(15_000),
       cache: 'no-store',
     });
     if (!res.ok) return null;
@@ -498,7 +498,7 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
   const detailRows = rows.filter(
     (r) => r.flyerPdfUrl && r.flyerPdfUrl.includes('/new-homes-austin-texas/'),
   );
-  await mapWithConcurrency(detailRows, 6, async (r) => {
+  await mapWithConcurrency(detailRows, 12, async (r) => {
     const fp = await fetchSrrFloorplan(r.flyerPdfUrl!);
     if (fp) {
       r.extraDetails = { ...(r.extraDetails ?? {}), _floorplanUrl: fp };

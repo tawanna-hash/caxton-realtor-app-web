@@ -15,7 +15,7 @@ import { upsertBuilderInventoryByExternalId } from '../../../../lib/builder-inve
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function authorized(req: Request): boolean {
   if (process.env.VERCEL_ENV !== 'production') return true;
