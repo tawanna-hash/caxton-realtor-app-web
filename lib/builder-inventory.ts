@@ -826,7 +826,7 @@ export async function updateBuilderInventory(
       home_type      = ${m.homeType},
       gallery_urls   = ${(m.galleryUrls ?? null) as string[] | null},
       community_data = ${m.communityData != null ? JSON.stringify(m.communityData) : null}::jsonb,
-      extra_details  = ${m.extraDetails != null ? JSON.stringify(m.extraDetails) : null}::jsonb
+      extra_details  = COALESCE(${m.extraDetails != null ? JSON.stringify(m.extraDetails) : null}::jsonb, extra_details)
     WHERE id = ${id}
     RETURNING *
   `) as Record<string, unknown>[];
