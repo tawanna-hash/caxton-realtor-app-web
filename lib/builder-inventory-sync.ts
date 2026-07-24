@@ -85,3 +85,52 @@ export async function deleteStaleBuilderPromotions(args: {
   `;
   return Array.isArray(rows) ? rows.length : 0;
 }
+
+
+/**
+ * Hard-delete every promotion the system has marked status='expired' — i.e.
+ * promotions whose expires_at already passed and were auto-hidden from the
+ * public feed by the every-3-hours /api/cron/expire-promotions job. This is
+ * the monthly purge step in the promotion lifecycle:
+ *
+ *   scrape -> status='active' (or 'rejected' by a human)
+ *   expire-promotions (every 3h) -> status='expired' once expires_at < today (CT),
+ *                                    hidden from feed + daily 8am digest email
+ *   prune-expired-promotions (monthly, 1st @ ~12:01am CT) -> hard DELETE  <-- here
+ *
+ * Safety:
+ *  - Only matches status='expired' rows, so active/pending/rejected promotions
+ *    are never touched (a promo stays alive as long as its status isn't 'expired').
+ *  - Limited to kind='promotion' (listings/communities use a different
+ *    deactivation path via deactivateStaleBuilderInventory).
+ *
+ * Returns the count deleted plus a sample (for the cron response / logs).
+ */
+export async function deleteExpiredPromotions(): Promise<{
+  deleted: number;
+  sample: {
+    id: number;
+    builder_name: string | null;
+    title: string | null;
+    publication: string | null;
+    expires_at: string | null;
+  }[];
+}> {
+  await ensureBuilderInventorySchema();
+
+  const deleted = (await sql`
+    DELETE FROM builder_inventory
+    WHERE kind = 'promotion'
+      AND status = 'expired'
+    RETURNING id, builder_name, title, publication,
+              expires_at::text AS expires_at
+  `) as {
+    id: number;
+    builder_name: string | null;
+    title: string | null;
+    publication: string | null;
+    expires_at: string | null;
+  }[];
+
+  return { deleted: deleted.length, sample: deleted.slice(0, 100) };
+}
