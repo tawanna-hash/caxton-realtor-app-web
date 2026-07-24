@@ -189,6 +189,49 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
             alt={`${row.builderName} — ${row.title}`}
           />
 
+          {row.flyerPdfUrl && row.flyerPdfUrl.toLowerCase().endsWith('.pdf') && (
+            <section className="mt-6">
+              <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-3">
+                Flyer
+              </h2>
+              <div className="rounded-md overflow-hidden border border-gray-200 bg-gray-50">
+                {/* Inline PDF viewer. Desktop browsers render the flyer in-page;
+                    mobile browsers that can't render PDFs show the fallback
+                    link inside the <object>. A visible Download button sits
+                    below so the flyer is reachable everywhere. */}
+                <object
+                  data={row.flyerPdfUrl}
+                  type="application/pdf"
+                  className="w-full"
+                  style={{ height: '70vh', minHeight: 480 }}
+                  aria-label={`${row.title} flyer`}
+                >
+                  <div className="p-6 text-center">
+                    <p className="text-sm text-gray-600 mb-3">
+                      Your browser can&apos;t display the flyer inline.
+                    </p>
+                    <a
+                      href={row.flyerPdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block px-4 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
+                    >
+                      Download flyer
+                    </a>
+                  </div>
+                </object>
+              </div>
+              <a
+                href={row.flyerPdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 flex w-full items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
+              >
+                Download flyer
+              </a>
+            </section>
+          )}
+
           {cleanedDesc && (
             <section className="mt-8">
               <h2 className="text-sm uppercase tracking-[0.15em] text-gray-500 font-medium mb-3">
@@ -285,19 +328,8 @@ function DetailView({ row }: { row: BuilderInventoryRow }) {
 
           {/* Action buttons live in the bottom floater pill (see below)
               so the right-side summary stays compact. The floater hosts:
-              Back · Visit builder site · Promotions. */}
-          {row.flyerPdfUrl && row.flyerPdfUrl.toLowerCase().endsWith('.pdf') && (
-            <div className="border-t border-gray-200 pt-4">
-              <a
-                href={row.flyerPdfUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full text-center px-4 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
-              >
-                Download flyer
-              </a>
-            </div>
-          )}
+              Back · Visit builder site · Promotions. The Download-flyer
+              button lives under the featured image above (left column). */}
         </aside>
       </div>
 
