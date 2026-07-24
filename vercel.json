@@ -135,10 +135,6 @@
     {
       "path": "/api/cron/scrape-brookfield-residential-communities",
       "schedule": "15 20 * * *"
-    },
-    {
-      "path": "/api/cron/scrape-drees-promotions",
-      "schedule": "0 19 * * *"
     }
   ]
 }
