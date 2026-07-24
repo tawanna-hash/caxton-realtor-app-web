@@ -420,7 +420,7 @@ export async function fetchMIHomesAustin(): Promise<{
   if (rawCount === 0) {
     // Not necessarily an error — Austin inventory may genuinely be zero.
     // Return empty rather than throw, so the cron logs success.
-    return { rows: [], rawCount: 0, skipped: 0 };
+    return { rows: [], rawCount: 0, skipped: 0, detailFetched: 0, detailErrors: 0 };
   }
 
   const rows: ScrapedMIHomesRow[] = [];
