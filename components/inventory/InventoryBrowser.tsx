@@ -2,7 +2,7 @@
 
 // InventoryBrowser — NewHomeSource-style search filters for the
 // /inventory and /builders directories. Owns ALL filtering client-side so
-// toggling Beds / Baths / Price / Builder / City / Promo-type / sort is
+// toggling Builder / Beds / Baths / Price / City / Promo-type / sort is
 // instant (no full page reload).
 //
 // Filter state is seeded from the URL (parsed server-side by the host page
@@ -11,22 +11,15 @@
 // change. That makes a filtered view shareable and lets the floater's
 // Download-results button append the same params to the PDF endpoint.
 //
-// Filter dimensions (restricted to fields builder_inventory stores):
-//   - Builder               (builder_name)          → dropdown in the sticky bar
-//   - Bedrooms / Bathrooms  (beds_max / baths_max)  → segmented "n+"
-//   - Price range           (price_min / price_max) → presets + custom min/max
-//   - City                  (city)                  → select
-//   - Promo type            (promo_type)            → select
-//   - Sort                  featured / price / newest
-// Listings and promotions are shown together; each card renders by its own
-// row.kind. The matching/filtering/sorting logic lives in
-// @/lib/inventory-filters and is shared with /api/inventory/pdf.
+// The control surface is a single compact row of small <select> dropdowns
+// (no big segmented pills or a separate filter panel) so the search bar
+// stays tight on mobile — closer to NewHomeSource's compact search.
 //
 // Every filter change fires `inventory_filter_clicked` with { filter, value }
 // so the existing admin metrics dashboard (filter_usage breakdown by
 // properties.filter) picks it up.
 
-import { useId, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { BuilderInventoryRow, PromoType } from '@/lib/builder-inventory';
 import {
   activeFilterCount,
@@ -43,13 +36,13 @@ import PageTitle from '@/components/ui/PageTitle';
 
 const BED_BATH_OPTS = [0, 1, 2, 3, 4, 5];
 
-const PRICE_PRESETS: { label: string; min: number | null; max: number | null }[] = [
-  { label: 'Any', min: null, max: null },
-  { label: 'Under $400k', min: null, max: 399_999 },
-  { label: '$400k–$600k', min: 400_000, max: 600_000 },
-  { label: '$600k–$800k', min: 600_000, max: 800_000 },
-  { label: '$800k–$1M', min: 800_000, max: 1_000_000 },
-  { label: '$1M+', min: 1_000_000, max: null },
+const PRICE_OPTS: { value: string; label: string; min: number | null; max: number | null }[] = [
+  { value: '', label: 'Any price', min: null, max: null },
+  { value: 'u400', label: 'Under $400k', min: null, max: 399_999 },
+  { value: '400-600', label: '$400k–$600k', min: 400_000, max: 600_000 },
+  { value: '600-800', label: '$600k–$800k', min: 600_000, max: 800_000 },
+  { value: '800-1m', label: '$800k–$1M', min: 800_000, max: 1_000_000 },
+  { value: '1m+', label: '$1M+', min: 1_000_000, max: null },
 ];
 
 const SORTS: { value: SortKey; label: string }[] = [
@@ -67,22 +60,11 @@ const PROMO_LABELS: Record<PromoType, string> = {
   other: 'Other',
 };
 
-function fmtMoney(n: number): string {
-  if (n >= 1_000_000) {
-    const m = n / 1_000_000;
-    return `${Number.isInteger(m) ? m : m.toFixed(1)}M`;
-  }
-  return `${Math.round(n / 1000)}k`;
-}
-
-function dollarInput(n: number | null): string {
-  return n == null ? '' : String(n);
-}
-
-function parseNum(raw: string): number | null {
-  if (!raw.trim()) return null;
-  const n = Number(raw.replace(/[^0-9]/g, ''));
-  return Number.isFinite(n) && n > 0 ? n : null;
+function priceValueFor(f: InventoryFilterState): string {
+  const match = PRICE_OPTS.find(
+    (p) => p.min === f.priceMin && p.max === f.priceMax,
+  );
+  return match ? match.value : '';
 }
 
 interface Props {
@@ -102,8 +84,6 @@ export default function InventoryBrowser({
 }: Props) {
   const [filters, setFilters] = useState<InventoryFilterState>(initialFilters);
   const [sort, setSort] = useState<SortKey>(initialSort);
-  const [panelOpen, setPanelOpen] = useState(true);
-  const priceId = useId();
 
   // Distinct filter option sources (derived from the full row set so the
   // menus reflect what's actually available).
@@ -152,31 +132,23 @@ export default function InventoryBrowser({
   };
 
   const onBuilder = (v: string) => update({ builder: v || null }, 'builder', v || 'any');
-  const onBeds = (n: number) => update({ beds: n }, 'beds', n === 0 ? 'any' : `${n}+`);
-  const onBaths = (n: number) => update({ baths: n }, 'baths', n === 0 ? 'any' : `${n}+`);
+  const onBeds = (v: string) => {
+    const n = Number(v) || 0;
+    update({ beds: n }, 'beds', n === 0 ? 'any' : `${n}+`);
+  };
+  const onBaths = (v: string) => {
+    const n = Number(v) || 0;
+    update({ baths: n }, 'baths', n === 0 ? 'any' : `${n}+`);
+  };
+  const onPrice = (v: string) => {
+    const opt = PRICE_OPTS.find((p) => p.value === v);
+    const min = opt?.min ?? null;
+    const max = opt?.max ?? null;
+    update({ priceMin: min, priceMax: max }, 'price', v || 'any');
+  };
   const onCity = (v: string) => update({ city: v || null }, 'city', v || 'any');
   const onPromo = (v: string) =>
     update({ promo: (v || null) as PromoType | null }, 'promo_type', v || 'any');
-
-  const onPreset = (p: { min: number | null; max: number | null }) => {
-    update({ priceMin: p.min, priceMax: p.max }, 'price', presetLabel(p));
-  };
-  const onPriceMin = (raw: string) => {
-    const n = parseNum(raw);
-    if (n != null || raw === '') {
-      update({ priceMin: n }, 'price_min', n == null ? 'any' : fmtMoney(n));
-    } else {
-      setFilters((prev) => ({ ...prev, priceMin: n }));
-    }
-  };
-  const onPriceMax = (raw: string) => {
-    const n = parseNum(raw);
-    if (n != null || raw === '') {
-      update({ priceMax: n }, 'price_max', n == null ? 'any' : fmtMoney(n));
-    } else {
-      setFilters((prev) => ({ ...prev, priceMax: n }));
-    }
-  };
   const onSort = (v: string) => {
     const nextSort = v as SortKey;
     setSort(nextSort);
@@ -191,166 +163,92 @@ export default function InventoryBrowser({
   };
 
   const heading = 'Move-in Ready & Promotions';
-  const noun = 'listing';
 
   return (
     <div>
       {!hideHeader && (
-        <header className="mb-5">
+        <header className="mb-4">
           <PageTitle size="md">{heading}</PageTitle>
-          <p className="text-base text-gray-700 font-light leading-relaxed mt-3">
+          <p className="text-sm text-gray-700 font-light leading-relaxed mt-2">
             Move-in ready homes and current promotions from our builder partners.
           </p>
         </header>
       )}
 
-      {/* Section label when embedded under a host page's own title. */}
       {hideHeader && (
-        <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-3">
+        <h2 className="text-[11px] uppercase tracking-[0.18em] text-gray-500 font-semibold mb-2">
           {heading}
         </h2>
       )}
 
-      {/* Builder dropdown + Filters button + Sort + count */}
-      <div className="sticky top-0 z-20 -mx-4 px-4 py-2.5 bg-white/95 backdrop-blur border-b border-gray-200 mb-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <select
+      {/* Compact search bar: one wrapping row of small selects. */}
+      <div className="sticky top-0 z-20 -mx-4 px-3 py-2 bg-white/95 backdrop-blur border-b border-gray-200 mb-3">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <FilterSelect
+            label="Builder"
             value={filters.builder ?? ''}
-            onChange={(e) => onBuilder(e.target.value)}
-            aria-label="Builder"
-            className="text-xs font-medium rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 max-w-[45vw] truncate focus:outline-none focus:ring-2 focus:ring-brand-500"
-          >
-            <option value="">All builders</option>
-            {builderOptions.map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
-            ))}
-          </select>
-
-          <button
-            onClick={() => setPanelOpen((o) => !o)}
-            aria-expanded={panelOpen}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider rounded-md border transition-colors"
-            style={
-              panelOpen || count > 0
-                ? { backgroundColor: '#5a0e5f', color: 'white', borderColor: '#5a0e5f' }
-                : { color: '#374151', borderColor: '#d1d5db', backgroundColor: 'white' }
-            }
-          >
-            Filters
-            {count > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold bg-white text-brand-700">
-                {count}
-              </span>
-            )}
-          </button>
+            onChange={onBuilder}
+            options={[{ value: '', label: 'All builders' }, ...builderOptions.map((b) => ({ value: b, label: b }))]}
+          />
+          <FilterSelect
+            label="Beds"
+            value={String(filters.beds)}
+            onChange={onBeds}
+            options={BED_BATH_OPTS.map((n) => ({ value: String(n), label: n === 0 ? 'Any' : `${n}+` }))}
+          />
+          <FilterSelect
+            label="Baths"
+            value={String(filters.baths)}
+            onChange={onBaths}
+            options={BED_BATH_OPTS.map((n) => ({ value: String(n), label: n === 0 ? 'Any' : `${n}+` }))}
+          />
+          <FilterSelect
+            label="Price"
+            value={priceValueFor(filters)}
+            onChange={onPrice}
+            options={PRICE_OPTS.map((p) => ({ value: p.value, label: p.label }))}
+          />
+          {cityOptions.length > 0 && (
+            <FilterSelect
+              label="City"
+              value={filters.city ?? ''}
+              onChange={onCity}
+              options={[{ value: '', label: 'Any city' }, ...cityOptions.map((c) => ({ value: c, label: c }))]}
+            />
+          )}
+          {promoOptions.length > 0 && (
+            <FilterSelect
+              label="Promo"
+              value={filters.promo ?? ''}
+              onChange={onPromo}
+              options={[
+                { value: '', label: 'Any promo' },
+                ...promoOptions.map((p) => ({ value: p, label: PROMO_LABELS[p] })),
+              ]}
+            />
+          )}
 
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-gray-500 font-medium">
-              {filtered.length} {filtered.length === 1 ? noun : `${noun}s`}
+            <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap">
+              {filtered.length} {filtered.length === 1 ? 'result' : 'results'}
             </span>
-            <select
+            <FilterSelect
+              label="Sort"
               value={sort}
-              onChange={(e) => onSort(e.target.value)}
-              aria-label="Sort"
-              className="text-xs font-medium rounded-md border border-gray-300 bg-white px-2 py-1.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
-            >
-              {SORTS.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+              onChange={onSort}
+              options={SORTS.map((s) => ({ value: s.value, label: s.label }))}
+            />
           </div>
         </div>
 
-        {/* Filter panel */}
-        {panelOpen && (
-          <div className="mt-3 pt-3 border-t border-gray-200 space-y-4">
-            {/* Beds + Baths */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FilterGroup label="Bedrooms">
-                <Segmented
-                  options={BED_BATH_OPTS}
-                  value={filters.beds}
-                  onSelect={onBeds}
-                  format={(n) => (n === 0 ? 'Any' : `${n}+`)}
-                />
-              </FilterGroup>
-              <FilterGroup label="Bathrooms">
-                <Segmented
-                  options={BED_BATH_OPTS}
-                  value={filters.baths}
-                  onSelect={onBaths}
-                  format={(n) => (n === 0 ? 'Any' : `${n}+`)}
-                />
-              </FilterGroup>
-            </div>
-
-            {/* Price */}
-            <FilterGroup label="Price">
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {PRICE_PRESETS.map((p) => (
-                  <button
-                    key={p.label}
-                    onClick={() => onPreset(p)}
-                    className="px-2.5 py-1 text-xs font-medium rounded-md border transition-colors"
-                    style={{
-                      backgroundColor: 'white',
-                      color: '#374151',
-                      borderColor: '#d1d5db',
-                    }}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <PriceInput
-                  id={`${priceId}-min`}
-                  label="Min"
-                  value={dollarInput(filters.priceMin)}
-                  onChange={onPriceMin}
-                />
-                <span className="text-gray-400 text-xs">–</span>
-                <PriceInput
-                  id={`${priceId}-max`}
-                  label="Max"
-                  value={dollarInput(filters.priceMax)}
-                  onChange={onPriceMax}
-                />
-              </div>
-            </FilterGroup>
-
-            {/* City / Promo selects */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {cityOptions.length > 0 && (
-                <SelectGroup
-                  label="City"
-                  value={filters.city ?? ''}
-                  onChange={onCity}
-                  options={cityOptions}
-                />
-              )}
-              {promoOptions.length > 0 && (
-                <SelectGroup
-                  label="Promo type"
-                  value={filters.promo ?? ''}
-                  onChange={onPromo}
-                  options={promoOptions.map((p) => ({ value: p, label: PROMO_LABELS[p] }))}
-                />
-              )}
-            </div>
-
-            {count > 0 && (
-              <button
-                onClick={clearAll}
-                className="text-xs font-semibold uppercase tracking-wider text-brand-700 hover:text-brand-800"
-              >
-                Clear all filters
-              </button>
-            )}
+        {count > 0 && (
+          <div className="mt-1.5 flex items-center gap-2">
+            <button
+              onClick={clearAll}
+              className="text-[11px] font-semibold uppercase tracking-wider text-brand-700 hover:text-brand-800"
+            >
+              Clear {count} {count === 1 ? 'filter' : 'filters'}
+            </button>
           </div>
         )}
       </div>
@@ -373,94 +271,8 @@ export default function InventoryBrowser({
   );
 }
 
-function presetLabel(p: { min: number | null; max: number | null }): string {
-  if (p.min == null && p.max == null) return 'any';
-  if (p.max == null) return `${fmtMoney(p.min!)}+`;
-  if (p.min == null) return `under ${fmtMoney(p.max)}`;
-  return `${fmtMoney(p.min)}-${fmtMoney(p.max)}`;
-}
-
-function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-        {label}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function Segmented({
-  options,
-  value,
-  onSelect,
-  format,
-}: {
-  options: number[];
-  value: number;
-  onSelect: (n: number) => void;
-  format: (n: number) => string;
-}) {
-  return (
-    <div className="inline-flex flex-wrap bg-gray-100 rounded-md p-1 gap-0.5">
-      {options.map((n) => {
-        const active = n === value;
-        return (
-          <button
-            key={n}
-            onClick={() => onSelect(n)}
-            aria-pressed={active}
-            className="px-2.5 py-1 text-xs font-semibold rounded-md transition-colors"
-            style={
-              active
-                ? { backgroundColor: '#5a0e5f', color: 'white' }
-                : { color: '#6b7280' }
-            }
-          >
-            {format(n)}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function PriceInput({
-  id,
-  label,
-  value,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (raw: string) => void;
-}) {
-  return (
-    <div className="flex-1">
-      <label htmlFor={id} className="sr-only">
-        {label} price
-      </label>
-      <div className="relative">
-        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-          $
-        </span>
-        <input
-          id={id}
-          type="text"
-          inputMode="numeric"
-          placeholder={label}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full rounded-md border border-gray-300 bg-white py-1.5 pl-5 pr-2 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
-        />
-      </div>
-    </div>
-  );
-}
-
-function SelectGroup({
+/** Compact labeled select — small text, tight, inline. */
+function FilterSelect({
   label,
   value,
   onChange,
@@ -469,29 +281,34 @@ function SelectGroup({
   label: string;
   value: string;
   onChange: (v: string) => void;
-  options: (string | { value: string; label: string })[];
+  options: { value: string; label: string }[];
 }) {
-  const opts = options.map((o) =>
-    typeof o === 'string' ? { value: o, label: o } : o,
-  );
   return (
-    <div>
-      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
-        {label}
-      </label>
+    <label className="relative inline-flex items-center">
+      <span className="sr-only">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full text-xs font-medium rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+        aria-label={label}
+        className="appearance-none text-[11px] font-medium rounded-md border border-gray-300 bg-white pl-2 pr-5 py-1 text-gray-700 max-w-[42vw] truncate focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
       >
-        <option value="">Any</option>
-        {opts.map((o) => (
+        {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
           </option>
         ))}
       </select>
-    </div>
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 12 12"
+        className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M3 4.5l3 3 3-3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </label>
   );
 }
 

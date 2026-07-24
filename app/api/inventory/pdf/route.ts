@@ -17,36 +17,44 @@ import { matchesFilter, parseFilters } from '@/lib/inventory-filters';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET(
-  req: Request,
-) {
-  const url = new URL(req.url);
-  const params: Record<string, string | string[] | undefined> = {};
-  url.searchParams.forEach((value, key) => {
-    // parseFilters only reads single values; keep the first for each key.
-    if (params[key] === undefined) params[key] = value;
-  });
-  const { filters } = parseFilters(params);
+export async function GET(req: Request) {
+  try {
+    const url = new URL(req.url);
+    const params: Record<string, string | string[] | undefined> = {};
+    url.searchParams.forEach((value, key) => {
+      // parseFilters only reads single values; keep the first for each key.
+      if (params[key] === undefined) params[key] = value;
+    });
+    const { filters } = parseFilters(params);
 
-  const pub = await getServerPub();
-  const rows = await listBuilderInventory({
-    status: 'active',
-    publication: pub,
-    limit: 1000,
-  });
+    const pub = await getServerPub();
+    const rows = await listBuilderInventory({
+      status: 'active',
+      publication: pub,
+      limit: 1000,
+    });
 
-  const filtered = filters
-    ? rows.filter((r) => matchesFilter(r, filters))
-    : rows;
+    const filtered = rows.filter((r) => matchesFilter(r, filters));
 
-  const bytes = await generateInventoryPdf({ rows: filtered });
+    const bytes = await generateInventoryPdf({ rows: filtered });
 
-  return new NextResponse(Buffer.from(bytes), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="inventory-and-promotions.pdf"',
-      'Cache-Control': 'no-store',
-    },
-  });
+    return new NextResponse(Buffer.from(bytes), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="inventory-and-promotions.pdf"',
+        'Cache-Control': 'no-store',
+      },
+    });
+  } catch (err) {
+    const e = err as Error;
+    console.error('[inventory/pdf] failed:', e);
+    return new NextResponse(
+      JSON.stringify({ error: e?.message ?? String(e), stack: e?.stack }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+  }
 }
