@@ -50,3 +50,38 @@ export async function deactivateStaleBuilderInventory(args: {
   `;
   return Array.isArray(rows) ? rows.length : 0;
 }
+
+
+/**
+ * DELETE builder_inventory promotion rows for a builder that are no longer
+ * present in a scrape. After upserting the current promotions, any scraper-
+ * produced promotion row (kind='promotion') for this builder whose external_id
+ * is NOT in `activeExternalIds` is deleted (cascades to subordinate rows via
+ * the inventory_id FK).
+ *
+ * Safety:
+ *  - Returns 0 when activeExternalIds is empty — a transient empty scrape never
+ *    wipes the set.
+ *  - Rows with a NULL external_id (human-submitted promotions) are never
+ *    deleted, since NULL <> ALL(...) is NULL (not true).
+ *
+ * Returns the count of rows deleted.
+ */
+export async function deleteStaleBuilderPromotions(args: {
+  builderName: string;
+  activeExternalIds: string[];
+}): Promise<number> {
+  await ensureBuilderInventorySchema();
+  const { builderName, activeExternalIds } = args;
+  if (activeExternalIds.length === 0) return 0;
+
+  const rows = await sql`
+    DELETE FROM builder_inventory
+    WHERE builder_name = ${builderName}
+      AND kind        = 'promotion'
+      AND external_id IS NOT NULL
+      AND external_id <> ALL (${activeExternalIds}::text[])
+    RETURNING id
+  `;
+  return Array.isArray(rows) ? rows.length : 0;
+}

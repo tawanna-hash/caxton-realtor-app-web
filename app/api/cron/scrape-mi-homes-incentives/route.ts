@@ -12,6 +12,7 @@
 import { NextResponse } from 'next/server';
 import { fetchMIHomesIncentives } from '../../../../lib/scrapers/mi-homes-incentives';
 import { upsertBuilderInventoryByExternalId } from '../../../../lib/builder-inventory';
+import { deleteStaleBuilderPromotions } from '../../../../lib/builder-inventory-sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -59,13 +60,33 @@ async function handle(req: Request) {
     }
   }
 
-  return NextResponse.json({
+  // Prune: delete M/I Homes promotions no longer in the source (offers that
+  // have rotated off mihomes.com). Keeps only the promotions present in this
+  // scrape. Guarded — never runs on an empty scrape; human-submitted
+  // promotions (NULL external_id) are never deleted.
+  let deleted = 0;
+  if (scrape.rows.length > 0) {
+    try {
+      deleted = await deleteStaleBuilderPromotions({
+        builderName: 'M/I Homes',
+        activeExternalIds: scrape.rows.map((r) => r.externalId),
+      });
+    } catch (err) {
+      console.error(
+        '[scrape-mi-homes-incentives] delete stale promotions failed:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
+    return NextResponse.json({
     ok: true,
     ms: Date.now() - startedAt,
     rawCount: scrape.rawCount,
     upserted: scrape.rows.length,
     created,
     updated,
+    deleted,
     skipped: scrape.skipped,
     upsertErrors,
   });
