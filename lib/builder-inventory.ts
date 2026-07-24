@@ -15,6 +15,7 @@
 // to title-only when null.
 
 import { neon } from '@neondatabase/serverless';
+import { notifyPromotionPending } from '@/lib/server/inventory-promotion-notify';
 import type { CommunityData } from './scrapers/david-weekley';
 
 const sql = neon(process.env.DATABASE_URL!);
@@ -558,7 +559,7 @@ export async function listBuilderInventory(
   const status = filters.status ?? null;
   const builder = filters.builderName ?? null;
   const featured = filters.featured ?? null;
-  const limit = Math.min(filters.limit ?? 100, 500);
+  const limit = Math.min(filters.limit ?? 100, 5000);
 
   // S13: home_type filter dispatch.
   const homeType = filters.homeType ?? null;
@@ -639,6 +640,7 @@ export async function bulkApprovePendingBuilderInventory(
         reviewed_at  = NOW(),
         reviewed_by  = ${reviewedBy}
     WHERE status = 'pending'
+      AND kind = 'listing'
     RETURNING id
   `) as Record<string, unknown>[];
   return rows.length;
@@ -951,6 +953,22 @@ export async function upsertBuilderInventoryByExternalId(
           reviewed_by = 'system:scraper-trusted'
       WHERE id = ${created.id}
     `;
+  }
+  if (created && input.kind === 'promotion') {
+    // Best-effort admin email — never let a notify failure break the upsert.
+    try {
+      await notifyPromotionPending({
+        id: created.id,
+        title: created.title,
+        builderName: created.builderName,
+        promoType: created.promoType,
+        communityName: created.communityName,
+        city: created.city,
+        source: 'scraper',
+      });
+    } catch (err) {
+      console.warn('[upsertBuilderInventoryByExternalId] notify failed', err);
+    }
   }
   const activated = await getBuilderInventoryById(created.id);
   return { row: activated ?? created, created: true };

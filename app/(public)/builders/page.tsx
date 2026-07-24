@@ -35,7 +35,7 @@ export default async function BuildersHubPage() {
   const rows = await listBuilderInventory({
     status: 'active',
     publication: pub,
-    limit: 500,
+    limit: 5000,
   });
   const builders = summarizeBuilders(rows);
 

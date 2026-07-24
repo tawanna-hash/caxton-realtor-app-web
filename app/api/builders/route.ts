@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     const rows = await listBuilderInventory({
       publication: pub,
       status: 'active',
-      limit: 500,
+      limit: 5000,
     });
 
     const builders = summarizeBuilders(rows);
