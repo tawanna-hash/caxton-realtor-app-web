@@ -591,7 +591,7 @@ export async function fetchMIHomesAustin(): Promise<{
           desc = desc.replace(/(at\s+)([^,\n]+?)(\s+in\s+)/, `$1${street}$3`);
         }
       }
-      if (desc && detail.specs.garage != null && !/(\d+)-car garage/i.test(desc)) {
+      if (desc && detail.specs.garage != null && detail.specs.garage > 0 && !/(\d+)-car garage/i.test(desc)) {
         desc = `${desc}\n\nKey Features: ${detail.specs.garage}-car garage`;
       }
       if (desc) row.description = desc;

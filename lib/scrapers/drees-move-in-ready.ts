@@ -301,7 +301,8 @@ function normalize(h: DreesQmiHome): ScrapedDreesQmiRow | null {
   if (elevation) extraDetails['Elevation'] = elevation;
   if (planName) extraDetails['Plan'] = planName;
   if (h.storiesLow) extraDetails['Stories'] = String(h.storiesLow);
-  if (h.garagesLow != null) extraDetails['Garage'] = `${h.garagesLow}-car`;
+  const garages = nonZeroOrNull(h.garagesLow);
+  if (garages) extraDetails['Garage'] = `${garages}-car`;
   const schools = Array.isArray(h.schoolDistricts) ? h.schoolDistricts.filter(Boolean) : [];
   if (schools.length > 0) extraDetails['School District'] = schools.join(', ');
   if (typeof h.latitude === 'number') extraDetails._latitude = String(h.latitude);

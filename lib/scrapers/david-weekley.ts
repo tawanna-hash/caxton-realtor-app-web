@@ -319,7 +319,8 @@ function normalize(
   const extraDetails: Record<string, string> = {};
   if (planName) extraDetails['Plan'] = planName;
   if (s.Stories) extraDetails['Stories'] = String(s.Stories);
-  if (s.Garages != null) extraDetails['Garage'] = `${s.Garages}-car`;
+  const garages = nonZeroOrNull(s.Garages);
+  if (garages) extraDetails['Garage'] = `${garages}-car`;
   if (typeof s.Latitude === 'number') extraDetails._latitude = String(s.Latitude);
   if (typeof s.Longitude === 'number') extraDetails._longitude = String(s.Longitude);
   if (s.VirtualTour) extraDetails._virtualTourUrl = s.VirtualTour;

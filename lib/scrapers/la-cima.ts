@@ -251,8 +251,10 @@ function buildRow(home: PipsyHome): UpsertScrapedInput | null {
   meta.push(`Built by ${builderName}.`);
   if (planName) meta.push(`Plan: ${planName}.`);
   if (home.stories) meta.push(`${home.stories}-story.`);
-  if (beds && baths != null && home.garage != null) {
-    meta.push(`${beds} bed / ${baths} bath / ${home.garage}-car garage.`);
+  if (beds && baths != null) {
+    const parts = [`${beds} bed`, `${baths} bath`];
+    if (typeof home.garage === 'number' && home.garage > 0) parts.push(`${home.garage}-car garage`);
+    meta.push(`${parts.join(' / ')}.`);
   }
   if (sqft) meta.push(`${sqft.toLocaleString()} sq ft.`);
   if (home.was_price && home.was_price > price) {
@@ -281,7 +283,7 @@ function buildRow(home: PipsyHome): UpsertScrapedInput | null {
   // render in the property-details panel.
   const extraDetails: Record<string, string> = {};
   if (home.stories) extraDetails['Stories'] = String(home.stories);
-  if (home.garage != null) extraDetails['Garage'] = `${home.garage}-car`;
+  if (typeof home.garage === 'number' && home.garage > 0) extraDetails['Garage'] = `${home.garage}-car`;
   if (home.elevation) extraDetails['Elevation'] = home.elevation;
   const homeTypeLabel = home.marketing_home_type || home.home_type;
   if (homeTypeLabel) extraDetails['Home Type'] = homeTypeLabel;

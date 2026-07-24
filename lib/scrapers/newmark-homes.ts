@@ -509,6 +509,11 @@ async function fetchHomeDetail(sourceUrl: string): Promise<HomeDetail | null> {
     const label = $td.contents().first().text().trim().replace(/\s+/g, ' ');
     const value = $td.find('b').text().trim();
     if (label && value && !SKIP_SPEC.has(label.toLowerCase())) {
+      // Omit a zero garage (townhomes) rather than show "Garage: 0".
+      if (label.toLowerCase() === 'garage') {
+        const g = Number(value);
+        if (Number.isFinite(g) && g === 0) return;
+      }
       extraDetails[label] = value;
     }
   });
