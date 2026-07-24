@@ -255,6 +255,12 @@ export default function AdminInventoryPage() {
               Community Guide
             </Link>
             <Link
+              href="/admin/inventory/promotion-scraper-guide"
+              className="shrink-0 border border-brand-700 text-brand-700 px-4 py-2 text-sm font-medium hover:bg-brand-50 rounded-md transition-colors whitespace-nowrap"
+            >
+              Promotion Guide
+            </Link>
+            <Link
               href="/admin/inventory/builders"
               className="shrink-0 border border-brand-700 text-brand-700 px-4 py-2 text-sm font-medium hover:bg-brand-50 rounded-md transition-colors whitespace-nowrap"
             >
