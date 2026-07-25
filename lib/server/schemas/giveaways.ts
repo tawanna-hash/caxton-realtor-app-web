@@ -48,3 +48,13 @@ export const ruleIdParamSchema = z.object({
 export type CreateGiveawayInput = z.infer<typeof createGiveawaySchema>;
 export type UpdateGiveawayInput = z.infer<typeof updateGiveawaySchema>;
 export type RuleInput = z.infer<typeof ruleSchema>;
+
+// ── Entry management ───────────────────────────────────────────────
+
+export const addEntrySchema = z.object({
+  email: z.string().email(),
+  // When omitted, entries are created for ALL rules on the giveaway.
+  ruleId: z.string().uuid().optional(),
+});
+
+export type AddEntryInput = z.infer<typeof addEntrySchema>;

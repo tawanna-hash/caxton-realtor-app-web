@@ -395,6 +395,70 @@ export async function listGiveawayEntries(
   return rows.map((r) => ({ ...r, tickets: Number(r.tickets) }));
 }
 
+export async function countGiveawayEntries(
+  giveawayId: string,
+): Promise<number> {
+  const rows = await query<{ count: string }>(
+    `SELECT COUNT(DISTINCT realtor_id) AS count
+     FROM giveaway_entries WHERE giveaway_id = $1`,
+    [giveawayId],
+  );
+  return Number(rows[0]?.count ?? 0);
+}
+
+export async function findRealtorByEmail(
+  email: string,
+): Promise<RealtorLookup | null> {
+  const rows = await query<RealtorLookup>(
+    `SELECT id, email, first_name, last_name
+     FROM realtors WHERE lower(email) = lower($1)`,
+    [email],
+  );
+  return rows[0] ?? null;
+}
+
+export interface RealtorLookup {
+  id: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+}
+
+/**
+ * Insert a single giveaway_entries row.  Idempotent — returns
+ * `{ ok: false, reason: 'conflict' }` if the entry already exists.
+ */
+export async function addGiveawayEntry(
+  giveawayId: string,
+  realtorId: string,
+  ruleId: string,
+): Promise<{ ok: true; id: string } | { ok: false; reason: 'conflict' }> {
+  const rows = await query<{ id: string }>(
+    `INSERT INTO giveaway_entries (giveaway_id, realtor_id, rule_id, completed_at)
+     VALUES ($1, $2, $3, NOW())
+     ON CONFLICT (giveaway_id, realtor_id, rule_id) DO NOTHING
+     RETURNING id`,
+    [giveawayId, realtorId, ruleId],
+  );
+  if (rows.length === 0) return { ok: false, reason: 'conflict' };
+  return { ok: true, id: rows[0].id };
+}
+
+/**
+ * Delete ALL entries for a realtor in a giveaway (removes them entirely).
+ * Returns the number of rows deleted.
+ */
+export async function deleteGiveawayEntries(
+  giveawayId: string,
+  realtorId: string,
+): Promise<number> {
+  const result = await exec(
+    `DELETE FROM giveaway_entries WHERE giveaway_id = $1 AND realtor_id = $2`,
+    [giveawayId, realtorId],
+  );
+  return result.rowCount;
+}
+
 // -----------------------------------------------------------------------------
 // Draw winner (transaction)
 // -----------------------------------------------------------------------------

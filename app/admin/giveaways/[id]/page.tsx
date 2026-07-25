@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
@@ -288,7 +288,7 @@ export default function GiveawayDetailPage() {
       </section>
 
       <RulesSection giveawayId={id} rules={rules} onChange={loadGiveaway} />
-      <EntriesSection giveawayId={id} />
+      <EntriesSection giveawayId={id} rules={rules} />
     </div>
   );
 }
@@ -523,38 +523,136 @@ function RulesSection({
 
 // === Entries ===
 
-function EntriesSection({ giveawayId }: { giveawayId: string }) {
+function EntriesSection({
+  giveawayId,
+  rules,
+}: {
+  giveawayId: string;
+  rules: Record<string, unknown>[];
+}) {
   const [entries, setEntries] = useState<Record<string, unknown>[]>([]);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize] = useState(50);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- preexisting pattern; refactor tracked separately
+  // Add-entry form state
+  const [email, setEmail] = useState('');
+  const [ruleId, setRuleId] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [addMsg, setAddMsg] = useState<string | null>(null);
+
+  const load = useCallback(() => {
     setLoading(true);
-    adminApi.listEntries(giveawayId, page)
+    adminApi
+      .listEntries(giveawayId, page, pageSize)
       .then((data) => {
         const list = (data?.entries || data?.realtors || data || []) as Record<string, unknown>[];
         setEntries(list);
         setTotal((data?.total as number) || list.length);
-        if (data?.page_size) setPageSize(data.page_size as number);
         setLoading(false);
       })
       .catch((err) => {
         setError((err as Error).message);
         setLoading(false);
       });
-  }, [giveawayId, page]);
+  }, [giveawayId, page, pageSize]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- preexisting pattern; refactor tracked separately
+    load();
+  }, [load]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setAdding(true);
+    setAddMsg(null);
+    setError(null);
+    try {
+      const res = (await adminApi.addEntry(giveawayId, email.trim(), ruleId || undefined)) as Record<string, unknown>;
+      const realtor = res.realtor as Record<string, unknown> | undefined;
+      const added = (res.added as number) ?? 0;
+      const dup = res.duplicate as boolean | undefined;
+      if (dup) {
+        setAddMsg(`Already entered: ${realtor?.email ?? email}`);
+      } else if (added > 1) {
+        setAddMsg(`Added ${added} entries for ${realtor?.email ?? email}`);
+      } else {
+        setAddMsg(`Entry added for ${realtor?.email ?? email}`);
+      }
+      setEmail('');
+      setRuleId('');
+      load();
+    } catch (err) {
+      setAddMsg(null);
+      setError((err as Error).message);
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleDelete = async (realtorId: string, name: string) => {
+    if (!confirm(`Remove all entries for ${name}?`)) return;
+    setError(null);
+    try {
+      await adminApi.deleteEntry(giveawayId, realtorId);
+      load();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
 
   return (
     <section className="bg-white border border-gray-200 p-6 rounded-md">
       <h2 className="text-sm uppercase tracking-wider text-gray-500 mb-5">
         Entries {total > 0 && <span className="text-brand-700 normal-case">({total})</span>}
       </h2>
+
+      {/* Add entry form */}
+      <form onSubmit={handleAdd} className="border border-gray-100 p-4 mb-5 space-y-3 rounded-md">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Subscriber Email</label>
+            <input
+              type="email"
+              required
+              placeholder="realtor@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700 rounded-md"
+            />
+          </div>
+          <div className="min-w-[180px]">
+            <label className="block text-xs uppercase tracking-wider text-gray-500 mb-1.5">Rule (optional)</label>
+            <select
+              value={ruleId}
+              onChange={(e) => setRuleId(e.target.value)}
+              className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-brand-700 rounded-md"
+            >
+              <option value="">All rules</option>
+              {rules.map((r) => (
+                <option key={r.id as string} value={r.id as string}>
+                  {(r.label as string) || (r.action_type as string)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            type="submit"
+            disabled={adding}
+            className="bg-brand-700 text-white px-4 py-2 text-sm font-medium hover:bg-brand-800 disabled:opacity-60 transition-colors rounded-md whitespace-nowrap"
+          >
+            {adding ? 'Adding...' : 'Add Entry'}
+          </button>
+        </div>
+        {addMsg && (
+          <p className="text-xs text-green-700 bg-green-50 border border-green-100 px-3 py-2 rounded-md">{addMsg}</p>
+        )}
+      </form>
 
       {error && (
         <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 mb-4 rounded-md">{error}</div>
@@ -570,19 +668,26 @@ function EntriesSection({ giveawayId }: { giveawayId: string }) {
         <>
           <div className="border border-gray-100 divide-y divide-gray-100 rounded-md">
             {entries.map((e, i) => {
-              const name = (e.realtor_name || e.name || e.email || '-') as string;
-              const email = (e.realtor_email || e.email) as string | undefined;
-              const completions = (e.completed_count || e.completions || 0) as number;
-              const tickets = (e.tickets || e.ticket_count || 0) as number;
+              const rid = (e.realtor_id as string) || (e.id as string) || '';
+              const firstName = (e.first_name as string | null) || '';
+              const lastName = (e.last_name as string | null) || '';
+              const emailVal = (e.email as string | undefined) || '';
+              const name = (firstName || lastName) ? `${firstName} ${lastName}`.trim() : emailVal || '-';
+              const tickets = Number(e.tickets) || 0;
               return (
-                <div key={(e.realtor_id as string) || (e.id as string) || i} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                <div key={rid || i} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                   <div className="min-w-0">
                     <div className="font-medium text-brand-700 truncate">{name}</div>
-                    {email && <div className="text-xs text-gray-500 truncate">{email}</div>}
+                    {emailVal && <div className="text-xs text-gray-500 truncate">{emailVal}</div>}
                   </div>
                   <div className="flex items-center gap-4 text-xs text-gray-600 flex-shrink-0">
-                    <span>{completions} completions</span>
-                    <span><strong className="text-brand-700">{tickets}</strong> tickets</span>
+                    <span><strong className="text-brand-700">{tickets}</strong> ticket{tickets === 1 ? '' : 's'}</span>
+                    <button
+                      onClick={() => handleDelete(rid, name)}
+                      className="text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
               );

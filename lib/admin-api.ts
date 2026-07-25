@@ -66,8 +66,17 @@ export const adminApi = {
     adminFetch(`/admin/giveaways/${giveawayId}/rules/${ruleId}`, { method: 'DELETE' }),
 
   // Entries & draw
-  listEntries: (giveawayId: string, page = 1) =>
-    adminFetch(`/admin/giveaways/${giveawayId}/entries?page=${page}`),
+  listEntries: (giveawayId: string, page = 1, pageSize = 50) =>
+    adminFetch(`/admin/giveaways/${giveawayId}/entries?limit=${pageSize}&offset=${(page - 1) * pageSize}`),
+  addEntry: (giveawayId: string, email: string, ruleId?: string) =>
+    adminFetch(`/admin/giveaways/${giveawayId}/entries`, {
+      method: 'POST',
+      body: ruleId ? { email, ruleId } : { email },
+    }),
+  deleteEntry: (giveawayId: string, realtorId: string) =>
+    adminFetch(`/admin/giveaways/${giveawayId}/entries?realtorId=${realtorId}`, {
+      method: 'DELETE',
+    }),
   drawWinner: (giveawayId: string) =>
     adminFetch(`/admin/giveaways/${giveawayId}/draw`, { method: 'POST' }),
 
