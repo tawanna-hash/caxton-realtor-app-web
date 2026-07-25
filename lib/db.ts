@@ -1242,4 +1242,24 @@ async function _runEnsureSchema(): Promise<void> {
       AND action_type = 'signup'
       AND deadline_at IS NOT NULL
   `;
+
+  // ── One-time backfill: enroll all existing subscribers into signup-rule
+  //    giveaways.  Idempotent via ON CONFLICT — a no-op after the first run.
+  //    Matches autoEnrollSignupGiveaways logic (publication scope + deadline)
+  //    but without the active/date filters so draft giveaways are covered too.
+  try {
+    await sql`
+      INSERT INTO giveaway_entries (giveaway_id, realtor_id, rule_id)
+      SELECT gr.giveaway_id, r.id, gr.id
+      FROM giveaway_rules gr
+      JOIN giveaways g ON g.id = gr.giveaway_id
+      CROSS JOIN realtors r
+      WHERE gr.action_type = 'signup'
+        AND (gr.deadline_at IS NULL OR gr.deadline_at >= NOW())
+        AND (g.publication = r.market OR g.publication = 'both' OR r.market = 'both')
+      ON CONFLICT (giveaway_id, realtor_id, rule_id) DO NOTHING
+    `;
+  } catch (err) {
+    console.warn('[ensureSchema] giveaway signup backfill failed:', err);
+  }
 }
