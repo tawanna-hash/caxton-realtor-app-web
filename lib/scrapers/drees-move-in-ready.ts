@@ -369,14 +369,10 @@ async function fetchDetailPageImages(
       signal: AbortSignal.timeout(15_000),
       cache: 'no-store',
     });
-  } catch (err) {
-    console.warn(`[drees-qmi] detail fetch failed for ${fullUrl}:`, err instanceof Error ? err.message : String(err));
+  } catch {
     return null; // network error — skip gracefully
   }
-  if (!res.ok) {
-    console.warn(`[drees-qmi] detail page ${fullUrl} returned HTTP ${res.status}`);
-    return null;
-  }
+  if (!res.ok) return null;
 
   const html = await res.text();
   // Unescape HTML entities (Drees embeds JSON with &quot; encoding)
@@ -396,9 +392,6 @@ async function fetchDetailPageImages(
       seen.add(imagePath);
       images.push({ imagePath, altText: 'Exterior' });
     }
-  }
-  if (images.length === 0) {
-    console.warn(`[drees-qmi] no imagePath found in detail page ${fullUrl} (html len=${html.length})`);
   }
   return images.length > 0 ? images : null;
 }
@@ -467,7 +460,6 @@ export async function fetchDreesAustinQmi(): Promise<{
     (h) => !h.images || h.images.length === 0,
   );
   if (homesNeedingImages.length > 0) {
-    console.log(`[drees-qmi] ${homesNeedingImages.length} homes missing images — fetching detail pages...`);
     const CONCURRENCY = 5;
     for (let i = 0; i < homesNeedingImages.length; i += CONCURRENCY) {
       const batch = homesNeedingImages.slice(i, i + CONCURRENCY);
@@ -477,10 +469,8 @@ export async function fetchDreesAustinQmi(): Promise<{
             const images = await fetchDetailPageImages(h.url);
             if (images && images.length > 0) {
               h.images = images;
-              console.log(`[drees-qmi] got ${images.length} images for ${h.url}`);
             }
-          } catch (err) {
-            console.warn(`[drees-qmi] detail fallback error for ${h.url}:`, err instanceof Error ? err.message : String(err));
+          } catch {
             // skip — home keeps null images and shows the placeholder
           }
         }),
