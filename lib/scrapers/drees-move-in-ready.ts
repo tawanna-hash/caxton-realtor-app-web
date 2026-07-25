@@ -240,7 +240,7 @@ function parseMoveInDate(raw: string | null | undefined): string | null {
 // Per-home normalization
 // ─────────────────────────────────────────────────────────────────────────
 
-function normalize(h: DreesQmiHome): ScrapedDreesQmiRow | null {
+function normalize(h: DreesQmiHome, floorplanUrl?: string | null): ScrapedDreesQmiRow | null {
   if (h.isModelHome === true) return null; // defense in depth
 
   const id =
@@ -308,6 +308,7 @@ function normalize(h: DreesQmiHome): ScrapedDreesQmiRow | null {
   if (typeof h.latitude === 'number') extraDetails._latitude = String(h.latitude);
   if (typeof h.longitude === 'number') extraDetails._longitude = String(h.longitude);
   if (h.uTourUrl) extraDetails._virtualTourUrl = h.uTourUrl;
+  if (floorplanUrl) extraDetails._floorplanUrl = floorplanUrl;
 
   return {
     externalId: `drees-qmi/${id}`,
@@ -353,9 +354,14 @@ const DETAIL_PAGE_HEADERS = {
   'Accept-Language': 'en-US,en;q=0.9',
 } as const;
 
-async function fetchDetailPageImages(
+type DetailPageData = {
+  images: DreesImage[] | null;
+  floorplanUrl: string | null;
+};
+
+async function fetchDetailPageData(
   urlPath: string | null | undefined,
-): Promise<DreesImage[] | null> {
+): Promise<DetailPageData | null> {
   if (!urlPath) return null;
   const fullUrl = urlPath.startsWith('http')
     ? urlPath
@@ -381,19 +387,30 @@ async function fetchDetailPageImages(
     .replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&');
 
-  // Extract all imagePath values pointing to assetcloud
-  const re = /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/transform\/[^"]+)"/g;
+  // Extract exterior photos (transform/ URLs) from imagePath values
+  const imgRe = /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/transform\/[^"]+)"/g;
+  // Extract floorplan SVGs (asset/ URLs ending in .svg) from imagePath values
+  const fpRe = /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/asset\/[^"]+\.svg)"/g;
   const seen = new Set<string>();
   let m: RegExpExecArray | null;
   const images: DreesImage[] = [];
-  while ((m = re.exec(decoded)) !== null) {
+  let floorplanUrl: string | null = null;
+
+  while ((m = imgRe.exec(decoded)) !== null) {
     const imagePath = m[1];
     if (!seen.has(imagePath)) {
       seen.add(imagePath);
       images.push({ imagePath, altText: 'Exterior' });
     }
   }
-  return images.length > 0 ? images : null;
+  while ((m = fpRe.exec(decoded)) !== null) {
+    if (!floorplanUrl) floorplanUrl = m[1];
+  }
+
+  return {
+    images: images.length > 0 ? images : null,
+    floorplanUrl,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -452,36 +469,39 @@ export async function fetchDreesAustinQmi(): Promise<{
     return { rows: [], rawCount: 0, skipped: 0 };
   }
 
-  // ── Detail-page image fallback ──────────────────────────────────────
-  // For homes where the QMI API returned `images: null`, fetch the home's
-  // detail page and extract the exterior photo embedded in the HTML JSON.
+  // ── Detail-page enrichment ───────────────────────────────────────────
+  // Always fetch detail pages for ALL homes to extract:
+  //  1. Exterior photos for homes where the QMI API returned images: null
+  //  2. Floorplan SVG URLs (not available in the QMI API response)
   // Batched at CONCURRENCY=5 to be polite to dreeshomes.com.
-  const homesNeedingImages = homes.filter(
-    (h) => !h.images || h.images.length === 0,
-  );
-  if (homesNeedingImages.length > 0) {
-    const CONCURRENCY = 5;
-    for (let i = 0; i < homesNeedingImages.length; i += CONCURRENCY) {
-      const batch = homesNeedingImages.slice(i, i + CONCURRENCY);
-      await Promise.all(
-        batch.map(async (h) => {
-          try {
-            const images = await fetchDetailPageImages(h.url);
-            if (images && images.length > 0) {
-              h.images = images;
+  const floorplanMap = new Map<string, string | null>();
+  const CONCURRENCY = 5;
+  for (let i = 0; i < homes.length; i += CONCURRENCY) {
+    const batch = homes.slice(i, i + CONCURRENCY);
+    await Promise.all(
+      batch.map(async (h) => {
+        try {
+          const data = await fetchDetailPageData(h.url);
+          if (data) {
+            const key = h.url ?? h.productFavoriteId ?? '';
+            floorplanMap.set(key, data.floorplanUrl);
+            if ((!h.images || h.images.length === 0) && data.images && data.images.length > 0) {
+              h.images = data.images;
             }
-          } catch {
-            // skip — home keeps null images and shows the placeholder
           }
-        }),
-      );
-    }
+        } catch {
+          // skip — home keeps null images and no floorplan
+        }
+      }),
+    );
   }
 
   const rows: ScrapedDreesQmiRow[] = [];
   let skipped = 0;
   for (const h of homes) {
-    const row = normalize(h);
+    const key = h.url ?? h.productFavoriteId ?? '';
+    const fp = floorplanMap.get(key) ?? null;
+    const row = normalize(h, fp);
     if (row) rows.push(row);
     else skipped++;
   }
