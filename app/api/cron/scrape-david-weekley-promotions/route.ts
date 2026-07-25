@@ -1,23 +1,28 @@
-// app/api/cron/scrape-david-weekley/route.ts
+// app/api/cron/scrape-david-weekley-promotions/route.ts
 //
-// Vercel Cron endpoint. Runs daily, fetches David Weekley Homes Austin
-// Quick Move-in inventory (showcases) from /Search/ShowcaseData and
-// upserts one row per home into builder_inventory, keyed on
-// (builder_name, external_id).
+// Vercel Cron endpoint. Fetches David Weekley Homes Austin promotions
+// from /promotion/marketpromotionslist and upserts one row per offer
+// into builder_inventory as kind='promotion'.
+//
+// Auto-publishes verbatim builder copy (with rejected guard).
+// Prunes stale promotions via deleteStaleBuilderPromotions (DELETE, not
+// deactivate).
+//
+// Template: docs/promotion-scraper-template.md §10
 
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchDavidWeekleyAustin } from '@/lib/scrapers/david-weekley';
-import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
-import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
+import { fetchDavidWeekleyAustinPromotions } from '@/lib/scrapers/david-weekley-promotions';
+import {
+  upsertBuilderInventoryByExternalId,
+  updateBuilderInventory,
+} from '@/lib/builder-inventory';
+import { deleteStaleBuilderPromotions } from '@/lib/builder-inventory-sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Two parallel HTTP calls (CommunityData lookup + ShowcaseData) ~1s each,
-// ~77 upserts at ~50ms each. 150s gives headroom for Neon cold starts.
-export const maxDuration = 150;
+// One API call + ~4 upserts. 60s is plenty.
+export const maxDuration = 60;
 
-const SCRAPER_SUBMITTER_NAME = 'David Weekley Auto-Importer';
-const SCRAPER_SUBMITTER_EMAIL = 'scraper-david-weekley@harmonyone.system';
 const BUILDER_NAME = 'David Weekley Homes';
 
 function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
@@ -40,10 +45,11 @@ function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
 
 async function runScrape() {
   const startedAt = Date.now();
-  const { rows, rawCount, skipped } = await fetchDavidWeekleyAustin();
+  const { rows, rawCount, skipped } = await fetchDavidWeekleyAustinPromotions();
 
-  let inserted = 0;
+  let created = 0;
   let updated = 0;
+  let published = 0;
   let errors = 0;
   const errorDetails: { title: string; error: string }[] = [];
 
@@ -51,60 +57,59 @@ async function runScrape() {
     try {
       const result = await upsertBuilderInventoryByExternalId({
         externalId: row.externalId,
-        kind: 'listing',
-        publication: 'realtyline',
-        submittedByName: SCRAPER_SUBMITTER_NAME,
-        submittedByEmail: SCRAPER_SUBMITTER_EMAIL,
+        kind: 'promotion',
+        publication: row.publication,
+        submittedByName: row.submittedByName,
+        submittedByEmail: row.submittedByEmail,
         builderName: row.builderName,
         title: row.title,
         city: row.city,
         state: row.state,
         description: row.description,
-        bedsMin: row.bedsMin,
-        bedsMax: row.bedsMax,
-        bathsMin: row.bathsMin,
-        bathsMax: row.bathsMax,
-        sqftMin: row.sqftMin,
-        sqftMax: row.sqftMax,
-        priceMin: row.priceMin,
-        priceMax: row.priceMax,
+        promoType: row.promoType,
+        startsAt: row.startsAt,
+        expiresAt: row.expiresAt,
         flyerPdfUrl: row.flyerPdfUrl,
-        sourceUrl: row.sourceUrl,
         thumbnailUrl: row.thumbnailUrl,
+        sourceUrl: row.sourceUrl,
         galleryUrls: row.galleryUrls,
-        address: row.address,
-        readyDate: row.readyDate,
-        planName: row.planName,
         communityName: row.communityName,
-        homeType: row.homeType,
-        extraDetails: row.extraDetails,
       });
-      if (result.created) inserted++;
+
+      if (result.created) created++;
       else updated++;
+
+      // Auto-publish verbatim builder copy (never re-activate rejected rows).
+      if (
+        result.row.status !== 'active' &&
+        result.row.status !== 'rejected'
+      ) {
+        await updateBuilderInventory(result.row.id, { status: 'active' });
+        published++;
+      }
     } catch (err) {
       errors++;
       const msg = err instanceof Error ? err.message : String(err);
       errorDetails.push({ title: row.title, error: msg });
       console.error(
-        `[scrape-david-weekley] upsert failed for "${row.title}" (${row.externalId}):`,
+        `[scrape-david-weekley-promotions] upsert failed for "${row.title}" (${row.externalId}):`,
         msg,
       );
     }
   }
 
-  // Prune: deactivate inventory homes no longer in David Weekley's source
-  // (sold / off-market). Guarded — never runs on an empty scrape.
-  let deactivated = 0;
+  // Prune: DELETE promotions no longer in the source feed.
+  // Guarded — returns 0 on an empty scrape.
+  let deleted = 0;
   if (rows.length > 0) {
     try {
-      deactivated = await deactivateStaleBuilderInventory({
+      deleted = await deleteStaleBuilderPromotions({
         builderName: BUILDER_NAME,
-        homeType: 'showcase',
         activeExternalIds: rows.map((r) => r.externalId),
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error('[scrape-david-weekley] deactivate stale inventory failed:', msg);
+      console.error('[scrape-david-weekley-promotions] delete stale failed:', msg);
     }
   }
 
@@ -116,9 +121,10 @@ async function runScrape() {
       rawCount,
       normalized: rows.length,
       skipped,
-      inserted,
+      created,
       updated,
-      deactivated,
+      published,
+      deleted,
       errors,
       elapsedMs,
     },
@@ -140,7 +146,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[scrape-david-weekley] fatal error:', msg);
+    console.error('[scrape-david-weekley-promotions] fatal error:', msg);
     return NextResponse.json(
       { ok: false, error: msg },
       { status: 500 },

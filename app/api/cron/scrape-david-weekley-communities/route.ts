@@ -1,19 +1,22 @@
-// app/api/cron/scrape-david-weekley/route.ts
+// app/api/cron/scrape-david-weekley-communities/route.ts
 //
-// Vercel Cron endpoint. Runs daily, fetches David Weekley Homes Austin
-// Quick Move-in inventory (showcases) from /Search/ShowcaseData and
-// upserts one row per home into builder_inventory, keyed on
-// (builder_name, external_id).
+// Vercel Cron endpoint. Fetches David Weekley Homes Austin communities
+// from /search/CommunityData and enriches each with structured detail
+// (home plans, amenities, schools, tax, sales office) from the community
+// detail page. Upserts one row per community into builder_inventory, keyed
+// on (builder_name, external_id).
+//
+// Template: docs/community-scraper-template.md §9
 
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchDavidWeekleyAustin } from '@/lib/scrapers/david-weekley';
+import { fetchDavidWeekleyAustinCommunities } from '@/lib/scrapers/david-weekley-communities';
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Two parallel HTTP calls (CommunityData lookup + ShowcaseData) ~1s each,
-// ~77 upserts at ~50ms each. 150s gives headroom for Neon cold starts.
+// 26 communities + 26 detail page fetches (concurrency 5) + upserts.
+// 150s gives headroom for Neon cold starts and retries.
 export const maxDuration = 150;
 
 const SCRAPER_SUBMITTER_NAME = 'David Weekley Auto-Importer';
@@ -40,7 +43,7 @@ function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
 
 async function runScrape() {
   const startedAt = Date.now();
-  const { rows, rawCount, skipped } = await fetchDavidWeekleyAustin();
+  const { rows, rawCount, skipped } = await fetchDavidWeekleyAustinCommunities();
 
   let inserted = 0;
   let updated = 0;
@@ -69,15 +72,12 @@ async function runScrape() {
         priceMin: row.priceMin,
         priceMax: row.priceMax,
         flyerPdfUrl: row.flyerPdfUrl,
-        sourceUrl: row.sourceUrl,
         thumbnailUrl: row.thumbnailUrl,
+        sourceUrl: row.sourceUrl,
         galleryUrls: row.galleryUrls,
-        address: row.address,
-        readyDate: row.readyDate,
-        planName: row.planName,
         communityName: row.communityName,
         homeType: row.homeType,
-        extraDetails: row.extraDetails,
+        communityData: row.communityData,
       });
       if (result.created) inserted++;
       else updated++;
@@ -86,25 +86,25 @@ async function runScrape() {
       const msg = err instanceof Error ? err.message : String(err);
       errorDetails.push({ title: row.title, error: msg });
       console.error(
-        `[scrape-david-weekley] upsert failed for "${row.title}" (${row.externalId}):`,
+        `[scrape-david-weekley-communities] upsert failed for "${row.title}" (${row.externalId}):`,
         msg,
       );
     }
   }
 
-  // Prune: deactivate inventory homes no longer in David Weekley's source
-  // (sold / off-market). Guarded — never runs on an empty scrape.
+  // Prune: deactivate communities no longer in David Weekley's source.
+  // Guarded — never runs on an empty scrape.
   let deactivated = 0;
   if (rows.length > 0) {
     try {
       deactivated = await deactivateStaleBuilderInventory({
         builderName: BUILDER_NAME,
-        homeType: 'showcase',
+        homeType: 'community',
         activeExternalIds: rows.map((r) => r.externalId),
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error('[scrape-david-weekley] deactivate stale inventory failed:', msg);
+      console.error('[scrape-david-weekley-communities] deactivate stale failed:', msg);
     }
   }
 
@@ -140,7 +140,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error('[scrape-david-weekley] fatal error:', msg);
+    console.error('[scrape-david-weekley-communities] fatal error:', msg);
     return NextResponse.json(
       { ok: false, error: msg },
       { status: 500 },

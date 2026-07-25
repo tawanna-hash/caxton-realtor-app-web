@@ -240,7 +240,10 @@ function formatSqftRange(
   return fmt((min ?? max)!);
 }
 
-function normalize(n: DreesNeighborhood): ScrapedDreesCommunityRow | null {
+function normalize(
+  n: DreesNeighborhood,
+  detail?: CommunityDetailData | null,
+): ScrapedDreesCommunityRow | null {
   // Stable id. contentId is Drees' internal numeric id (preferred);
   // productFavoriteId is a string like "AUST::PROV::PRV6" (fallback).
   const id =
@@ -289,7 +292,7 @@ function normalize(n: DreesNeighborhood): ScrapedDreesCommunityRow | null {
   if (specParts.length > 0) descParts.push(specParts.join(', ') + '.');
   const description = descParts.length > 0 ? descParts.join(' ') : null;
 
-  // communityData: build from available API fields.
+  // communityData: build from API fields + enriched detail page data.
   const communityData: CommunityData = {
     communityName: communityName ?? neighborhoodName ?? title,
     status: deriveCommunityStatus(n.neighborhoodType),
@@ -300,15 +303,18 @@ function normalize(n: DreesNeighborhood): ScrapedDreesCommunityRow | null {
     sqftRange: sqftMin != null || sqftMax != null
       ? formatSqftRange(sqftMin, sqftMax)
       : null,
-    amenities: [],
+    amenities: detail?.amenities ?? [],
     homePlans: [],
-    schools: { district: null, list: [] },
+    schools: {
+      district: detail?.schoolDistrict ?? null,
+      list: [],
+    },
     taxInfo: { entities: [], total: null },
     salesOffice: {
       address: fullAddress(n),
       hours: null,
-      lat: typeof n.lat === 'number' ? n.lat : null,
-      lng: typeof n.lng === 'number' ? n.lng : null,
+      lat: detail?.latitude ?? (typeof n.lat === 'number' ? n.lat : null),
+      lng: detail?.longitude ?? (typeof n.lng === 'number' ? n.lng : null),
       directions: [],
     },
     imageUrls: gal ?? [],
@@ -338,6 +344,127 @@ function normalize(n: DreesNeighborhood): ScrapedDreesCommunityRow | null {
     homeType: 'community',
     communityData,
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Community detail page enrichment
+// ─────────────────────────────────────────────────────────────────────────
+//
+// The community list API returns neighborhood-level summary data but NOT
+// amenities, school districts, phone numbers, or precise lat/lng. These
+// live in the detail page HTML as embedded JSON. We fetch each community's
+// detail page to enrich the communityData object.
+
+const DETAIL_PAGE_HEADERS = {
+  'User-Agent': USER_AGENT,
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9',
+} as const;
+
+type CommunityDetailData = {
+  amenities: string[];
+  schoolDistrict: string | null;
+  phoneNumber: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  mapImageUrl: string | null;
+};
+
+function decodeHtmlEntities(s: string): string {
+  return s
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2B;/g, '+')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ');
+}
+
+async function fetchCommunityDetailData(
+  urlPath: string | null | undefined,
+): Promise<CommunityDetailData | null> {
+  const url = normalizeUrl(urlPath);
+  if (!url) return null;
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: DETAIL_PAGE_HEADERS,
+      redirect: 'follow',
+      signal: AbortSignal.timeout(30_000),
+      cache: 'no-store',
+    });
+  } catch {
+    return null;
+  }
+  if (!res.ok) return null;
+
+  let html: string;
+  try {
+    html = await res.text();
+  } catch {
+    return null;
+  }
+
+  const decoded = html.replace(/&quot;/g, '"');
+
+  // Extract amenities JSON array
+  const amenities: string[] = [];
+  const amenMatch = decoded.match(/"amenities"\s*:\s*\[/);
+  if (amenMatch) {
+    const start = amenMatch.index! + amenMatch[0].length - 1;
+    let depth = 0;
+    let end = start;
+    for (let i = start; i < decoded.length; i++) {
+      if (decoded[i] === '[') depth++;
+      else if (decoded[i] === ']') {
+        depth--;
+        if (depth === 0) { end = i + 1; break; }
+      }
+    }
+    try {
+      const arr = JSON.parse(decoded.slice(start, end));
+      for (const a of arr) {
+        if (a && typeof a.name === 'string') {
+          amenities.push(decodeHtmlEntities(a.name));
+        }
+      }
+    } catch { /* parse failed — skip amenities */ }
+  }
+
+  // Extract school district from FAQ
+  let schoolDistrict: string | null = null;
+  const faqMatches = decoded.matchAll(
+    /"question"\s*:\s*"([^"]+)","answer"\s*:\s*"([^"]+)"/g,
+  );
+  for (const m of faqMatches) {
+    if (m[1].toLowerCase().includes('school district')) {
+      schoolDistrict = decodeHtmlEntities(m[2]);
+      break;
+    }
+  }
+
+  // Extract phone number
+  let phoneNumber: string | null = null;
+  const phoneMatch = decoded.match(/"phoneNumber"\s*:\s*"([^"]+)"/);
+  if (phoneMatch) phoneNumber = phoneMatch[1];
+
+  // Extract latitude/longitude (more precise from detail page)
+  let latitude: number | null = null;
+  let longitude: number | null = null;
+  const latMatch = decoded.match(/"latitude"\s*:\s*([0-9.-]+)/);
+  const lngMatch = decoded.match(/"longitude"\s*:\s*([0-9.-]+)/);
+  if (latMatch) latitude = parseFloat(latMatch[1]);
+  if (lngMatch) longitude = parseFloat(lngMatch[1]);
+
+  // Extract map image URL
+  let mapImageUrl: string | null = null;
+  const mapMatch = decoded.match(
+    /"mapImage"\s*:\s*\{[^}]*"imagePath"\s*:\s*"([^"]+)"/,
+  );
+  if (mapMatch) mapImageUrl = mapMatch[1];
+
+  return { amenities, schoolDistrict, phoneNumber, latitude, longitude, mapImageUrl };
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -398,12 +525,20 @@ export async function fetchDreesAustinCommunities(): Promise<{
     return { rows: [], rawCount: 0, skipped: 0 };
   }
 
+  // Enrich each community with detail page data (amenities, schools, phone, lat/lng).
   const rows: ScrapedDreesCommunityRow[] = [];
   let skipped = 0;
-  for (const n of neighborhoods) {
-    const row = normalize(n);
-    if (row) rows.push(row);
-    else skipped++;
+  const CONCURRENCY = 4;
+  for (let i = 0; i < neighborhoods.length; i += CONCURRENCY) {
+    const batch = neighborhoods.slice(i, i + CONCURRENCY);
+    const details = await Promise.all(
+      batch.map((n) => fetchCommunityDetailData(n.url)),
+    );
+    for (let j = 0; j < batch.length; j++) {
+      const row = normalize(batch[j], details[j]);
+      if (row) rows.push(row);
+      else skipped++;
+    }
   }
 
   return { rows, rawCount, skipped };
