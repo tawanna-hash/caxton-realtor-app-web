@@ -222,6 +222,10 @@ const REALTOR_PUBLIC_PREFIXES: ReadonlyArray<string> = [
   '/subscribe',
   '/submit-event',
   '/magazine/',
+  '/communities/',
+  '/inventory/',
+  '/builders/',
+  '/promotions/',
 ];
 
 const REALTOR_PUBLIC_EXACT = new Set<string>([
