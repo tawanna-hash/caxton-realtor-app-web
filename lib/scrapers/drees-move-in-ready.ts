@@ -344,6 +344,15 @@ function normalize(h: DreesQmiHome): ScrapedDreesQmiRow | null {
 // photos on their detail page.  We fetch the detail page HTML and extract
 // the `imagePath` values embedded in the JSON payload.
 
+// Detail pages need Accept: text/html to get the rendered HTML (which contains
+// embedded JSON with imagePath values). The API's Accept: application/json
+// header makes Episerver return a compact JSON view without imagePath.
+const DETAIL_PAGE_HEADERS = {
+  'User-Agent': USER_AGENT,
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9',
+} as const;
+
 async function fetchDetailPageImages(
   urlPath: string | null | undefined,
 ): Promise<DreesImage[] | null> {
@@ -355,7 +364,7 @@ async function fetchDetailPageImages(
   let res: Response;
   try {
     res = await fetch(fullUrl, {
-      headers: COMMON_HEADERS,
+      headers: DETAIL_PAGE_HEADERS,
       redirect: 'follow',
       signal: AbortSignal.timeout(15_000),
       cache: 'no-store',
