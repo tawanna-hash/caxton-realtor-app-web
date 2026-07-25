@@ -337,6 +337,57 @@ function normalize(h: DreesQmiHome): ScrapedDreesQmiRow | null {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Detail-page image fallback
+// ─────────────────────────────────────────────────────────────────────────
+//
+// The QMI list API sometimes returns `images: null` for homes that DO have
+// photos on their detail page.  We fetch the detail page HTML and extract
+// the `imagePath` values embedded in the JSON payload.
+
+async function fetchDetailPageImages(
+  urlPath: string | null | undefined,
+): Promise<DreesImage[] | null> {
+  if (!urlPath) return null;
+  const fullUrl = urlPath.startsWith('http')
+    ? urlPath
+    : `${SITE_BASE}${urlPath.startsWith('/') ? '' : '/'}${urlPath}`;
+
+  let res: Response;
+  try {
+    res = await fetch(fullUrl, {
+      headers: COMMON_HEADERS,
+      redirect: 'follow',
+      signal: AbortSignal.timeout(15_000),
+      cache: 'no-store',
+    });
+  } catch {
+    return null; // network error — skip gracefully
+  }
+  if (!res.ok) return null;
+
+  const html = await res.text();
+  // Unescape HTML entities (Drees embeds JSON with &quot; encoding)
+  const decoded = html
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+
+  // Extract all imagePath values pointing to assetcloud
+  const re = /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/transform\/[^"]+)"/g;
+  const seen = new Set<string>();
+  let m: RegExpExecArray | null;
+  const images: DreesImage[] = [];
+  while ((m = re.exec(decoded)) !== null) {
+    const imagePath = m[1];
+    if (!seen.has(imagePath)) {
+      seen.add(imagePath);
+      images.push({ imagePath, altText: 'Exterior' });
+    }
+  }
+  return images.length > 0 ? images : null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Public entry
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -390,6 +441,32 @@ export async function fetchDreesAustinQmi(): Promise<{
 
   if (rawCount === 0) {
     return { rows: [], rawCount: 0, skipped: 0 };
+  }
+
+  // ── Detail-page image fallback ──────────────────────────────────────
+  // For homes where the QMI API returned `images: null`, fetch the home's
+  // detail page and extract the exterior photo embedded in the HTML JSON.
+  // Batched at CONCURRENCY=5 to be polite to dreeshomes.com.
+  const homesNeedingImages = homes.filter(
+    (h) => !h.images || h.images.length === 0,
+  );
+  if (homesNeedingImages.length > 0) {
+    const CONCURRENCY = 5;
+    for (let i = 0; i < homesNeedingImages.length; i += CONCURRENCY) {
+      const batch = homesNeedingImages.slice(i, i + CONCURRENCY);
+      await Promise.all(
+        batch.map(async (h) => {
+          try {
+            const images = await fetchDetailPageImages(h.url);
+            if (images && images.length > 0) {
+              h.images = images;
+            }
+          } catch {
+            // skip — home keeps null images and shows the placeholder
+          }
+        }),
+      );
+    }
   }
 
   const rows: ScrapedDreesQmiRow[] = [];
