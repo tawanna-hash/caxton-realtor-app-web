@@ -27,6 +27,8 @@
 // Sister scraper: lib/scrapers/drees-move-in-ready.ts emits per-home rows
 // from the /qmi endpoint for the same builder.
 
+import type { CommunityData } from './david-weekley';
+
 const COMMUNITY_URL =
   'https://www.dreeshomes.com/api/en/dreeshomes/community';
 
@@ -122,9 +124,11 @@ export type ScrapedDreesCommunityRow = {
   thumbnailUrl: string | null;
   galleryUrls: string[] | null;
   flyerPdfUrl: string | null;
+  sourceUrl: string | null;
   address: string | null;
   communityName: string | null;
   homeType: 'community';
+  communityData: CommunityData;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -199,6 +203,43 @@ function fullAddress(n: DreesNeighborhood): string | null {
 // Per-neighborhood normalization
 // ─────────────────────────────────────────────────────────────────────────
 
+function deriveCommunityStatus(
+  raw: string | null | undefined,
+): 'coming-soon' | 'close-out' | null {
+  if (!raw) return null;
+  const lower = raw.toLowerCase();
+  if (lower.includes('coming soon')) return 'coming-soon';
+  if (
+    lower.includes('close out') ||
+    lower.includes('close-out') ||
+    lower.includes('final opportunit') ||
+    lower.includes('closing soon')
+  ) {
+    return 'close-out';
+  }
+  return null;
+}
+
+function formatPriceRange(
+  min: number | null,
+  max: number | null,
+): string | null {
+  if (min == null && max == null) return null;
+  const fmt = (n: number) => `$${n.toLocaleString()}`;
+  if (min != null && max != null && min !== max) return `${fmt(min)} - ${fmt(max)}`;
+  return fmt((min ?? max)!);
+}
+
+function formatSqftRange(
+  min: number | null,
+  max: number | null,
+): string | null {
+  if (min == null && max == null) return null;
+  const fmt = (n: number) => n.toLocaleString();
+  if (min != null && max != null && min !== max) return `${fmt(min)} - ${fmt(max)}`;
+  return fmt((min ?? max)!);
+}
+
 function normalize(n: DreesNeighborhood): ScrapedDreesCommunityRow | null {
   // Stable id. contentId is Drees' internal numeric id (preferred);
   // productFavoriteId is a string like "AUST::PROV::PRV6" (fallback).
@@ -230,22 +271,48 @@ function normalize(n: DreesNeighborhood): ScrapedDreesCommunityRow | null {
   const gal = gallery(n.images);
   const thumbnailUrl = gal?.[0] ?? null;
 
-  // Description: surface plan/QMI counts since Drees doesn't ship long copy
-  // on the neighborhood card. Keep it short — the public listing has its
-  // own layout space.
+  // Synthesize description per template §6.
   const descParts: string[] = [];
+  if (title) descParts.push(`${title}.`);
+  const specParts: string[] = [];
   if (n.planCount && n.planCount > 0) {
-    descParts.push(`${n.planCount} floor plan${n.planCount === 1 ? '' : 's'}`);
+    specParts.push(`${n.planCount} floor plan${n.planCount === 1 ? '' : 's'}`);
   }
   if (n.qmiCount && n.qmiCount > 0) {
-    descParts.push(
+    specParts.push(
       `${n.qmiCount} move-in ready home${n.qmiCount === 1 ? '' : 's'}`,
     );
   }
   if (n.neighborhoodType && n.neighborhoodType.trim()) {
-    descParts.push(n.neighborhoodType.trim());
+    specParts.push(n.neighborhoodType.trim());
   }
-  const description = descParts.length > 0 ? descParts.join(' • ') : null;
+  if (specParts.length > 0) descParts.push(specParts.join(', ') + '.');
+  const description = descParts.length > 0 ? descParts.join(' ') : null;
+
+  // communityData: build from available API fields.
+  const communityData: CommunityData = {
+    communityName: communityName ?? neighborhoodName ?? title,
+    status: deriveCommunityStatus(n.neighborhoodType),
+    adultOnly: false,
+    priceFrom: priceMin != null || priceMax != null
+      ? formatPriceRange(priceMin, priceMax)
+      : null,
+    sqftRange: sqftMin != null || sqftMax != null
+      ? formatSqftRange(sqftMin, sqftMax)
+      : null,
+    amenities: [],
+    homePlans: [],
+    schools: { district: null, list: [] },
+    taxInfo: { entities: [], total: null },
+    salesOffice: {
+      address: fullAddress(n),
+      hours: null,
+      lat: typeof n.lat === 'number' ? n.lat : null,
+      lng: typeof n.lng === 'number' ? n.lng : null,
+      directions: [],
+    },
+    imageUrls: gal ?? [],
+  };
 
   return {
     externalId: `drees/${id}`,
@@ -264,10 +331,12 @@ function normalize(n: DreesNeighborhood): ScrapedDreesCommunityRow | null {
     priceMax,
     thumbnailUrl,
     galleryUrls: gal,
-    flyerPdfUrl: normalizeUrl(n.url),
+    flyerPdfUrl: null,
+    sourceUrl: normalizeUrl(n.url),
     address: fullAddress(n),
     communityName: communityName ?? neighborhoodName,
     homeType: 'community',
+    communityData,
   };
 }
 

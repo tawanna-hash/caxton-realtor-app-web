@@ -8,12 +8,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchDreesAustinQmi } from '@/lib/scrapers/drees-move-in-ready';
-import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
+import {
+  upsertBuilderInventoryByExternalId,
+} from '@/lib/builder-inventory';
+import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// 1 HTTP call ~1s + ~51 upserts at ~50ms each = ~4s. 60s for headroom.
-export const maxDuration = 60;
+// 1 HTTP call ~1s + ~53 upserts + ~53 detail page fetches + prune.
+export const maxDuration = 150;
 
 const SCRAPER_SUBMITTER_NAME = 'Drees Homes Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-drees-move-in-ready@harmonyone.system';
@@ -67,7 +70,7 @@ async function runScrape() {
         priceMin: row.priceMin,
         priceMax: row.priceMax,
         flyerPdfUrl: row.flyerPdfUrl,
-        sourceUrl: row.flyerPdfUrl,
+        sourceUrl: row.sourceUrl,
         thumbnailUrl: row.thumbnailUrl,
         galleryUrls: row.galleryUrls,
         extraDetails: row.extraDetails,
@@ -90,6 +93,25 @@ async function runScrape() {
     }
   }
 
+  // Prune: deactivate homes no longer in the source feed (sold/off-market).
+  // Guarded — never runs on an empty scrape so a transient empty response
+  // can't wipe the whole set.
+  let deactivated = 0;
+  if (rows.length > 0) {
+    try {
+      deactivated = await deactivateStaleBuilderInventory({
+        builderName: 'Drees Homes',
+        homeType: 'showcase',
+        activeExternalIds: rows.map((r) => r.externalId),
+      });
+    } catch (err) {
+      console.error(
+        '[scrape-drees-move-in-ready] prune stale failed:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
   const elapsedMs = Date.now() - startedAt;
 
   return {
@@ -100,6 +122,7 @@ async function runScrape() {
       skipped,
       inserted,
       updated,
+      deactivated,
       errors,
       elapsedMs,
     },

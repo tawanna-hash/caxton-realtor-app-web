@@ -26,7 +26,6 @@ import {
   claimExistingPromotion,
 } from '../../../../lib/builder-inventory';
 import { deleteStaleBuilderPromotions } from '../../../../lib/builder-inventory-sync';
-import { neon } from '@neondatabase/serverless';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -135,32 +134,6 @@ async function handle(req: Request) {
     }
   }
 
-  // DIAGNOSTIC: snapshot every Drees promo row.
-  let allPromos: Array<{
-    id: number;
-    title: string;
-    external_id: string | null;
-    status: string;
-    publication: string;
-    promo_type: string | null;
-    starts_at: string | null;
-    expires_at: string | null;
-  }> = [];
-  try {
-    const sqlDiag = neon(process.env.DATABASE_URL!);
-    allPromos = (await sqlDiag`
-      SELECT id, title, external_id, status, publication, promo_type, starts_at, expires_at
-      FROM builder_inventory
-      WHERE builder_name = ${'Drees Homes'} AND kind = 'promotion'
-      ORDER BY id
-    `) as typeof allPromos;
-  } catch (err) {
-    console.error(
-      '[scrape-drees-promotions] diagnostic query failed:',
-      err instanceof Error ? err.message : String(err),
-    );
-  }
-
   return NextResponse.json({
     ok: true,
     ms: Date.now() - startedAt,
@@ -172,7 +145,6 @@ async function handle(req: Request) {
     deleted,
     upsertErrors,
     details,
-    allPromos,
   });
 }
 

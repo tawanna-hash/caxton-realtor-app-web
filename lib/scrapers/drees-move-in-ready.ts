@@ -130,6 +130,7 @@ export type ScrapedDreesQmiRow = {
   thumbnailUrl: string | null;
   galleryUrls: string[] | null;
   flyerPdfUrl: string | null;
+  sourceUrl: string | null;
   address: string | null;
   readyDate: string | null; // ISO YYYY-MM-DD
   planName: string | null;
@@ -291,9 +292,29 @@ function normalize(h: DreesQmiHome, floorplanUrl?: string | null): ScrapedDreesQ
   const gal = gallery(h.images);
   const thumbnailUrl = gal?.[0] ?? null;
 
-  // Description: short. Use the first 1-3 features Drees ships for the card.
+  // Description: synthesize from structured fields per template §6.
+  // Define readyDate + address before the description block (hoisting).
+  const readyDate = parseMoveInDate(h.moveInDate);
+  const address = fullAddress(h);
   const features = (h.features ?? []).map((f) => f.trim()).filter(Boolean);
-  const description = features.length > 0 ? features.slice(0, 3).join(' • ') : null;
+  const descParts: string[] = [];
+  if (planFull && communityName) {
+    descParts.push(`${planFull} at ${communityName}.`);
+  } else if (planFull) {
+    descParts.push(`${planFull}.`);
+  } else if (communityName) {
+    descParts.push(`Inventory home at ${communityName}.`);
+  }
+  const specParts: string[] = [];
+  if (beds) specParts.push(`${beds} bedrooms`);
+  if (baths) specParts.push(`${baths} bathrooms`);
+  if (sqft) specParts.push(`${sqft.toLocaleString()} sq ft`);
+  if (price) specParts.push(`from $${price.toLocaleString()}`);
+  if (readyDate) specParts.push(`ready ${readyDate}`);
+  if (address) specParts.push(`located at ${address}`);
+  if (specParts.length > 0) descParts.push(specParts.join(', ') + '.');
+  if (features.length > 0) descParts.push(features.slice(0, 3).join(' • '));
+  const description = descParts.length > 0 ? descParts.join(' ') : null;
 
   // Property details + geo + 360 tour (Drees' QMI API exposes all per home).
   const extraDetails: Record<string, string> = {};
@@ -327,9 +348,10 @@ function normalize(h: DreesQmiHome, floorplanUrl?: string | null): ScrapedDreesQ
     priceMax: price,
     thumbnailUrl,
     galleryUrls: gal,
-    flyerPdfUrl: normalizeUrl(h.url),
-    address: fullAddress(h),
-    readyDate: parseMoveInDate(h.moveInDate),
+    flyerPdfUrl: null,
+    sourceUrl: normalizeUrl(h.url),
+    address,
+    readyDate,
     planName: planFull,
     communityName,
     homeType: 'showcase',
