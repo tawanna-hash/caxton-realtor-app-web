@@ -453,7 +453,7 @@ function normalize(
     priceMin,
     priceMax,
     thumbnailUrl,
-    galleryUrls: gal,
+    galleryUrls: allImages,
     flyerPdfUrl: null,
     sourceUrl: normalizeUrl(n.url),
     address: fullAddress(n),
