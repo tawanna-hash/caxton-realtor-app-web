@@ -1038,3 +1038,33 @@ export async function upsertBuilderInventoryByExternalId(
   const activated = await getBuilderInventoryById(created.id);
   return { row: activated ?? created, created: true };
 }
+
+/**
+ * Claim a manually-entered promotion row by setting its external_id.
+ *
+ * When a promotion was originally submitted through the admin form (no
+ * external_id), a later scraper run would create a DUPLICATE because
+ * `upsertBuilderInventoryByExternalId` matches on external_id. This
+ * function retroactively tags the existing row so the upsert finds and
+ * updates it instead.
+ *
+ * Safe: only touches rows where external_id IS NULL (never overwrites an
+ * existing external_id) and only matches by builder_name + title + kind.
+ */
+export async function claimExistingPromotion(args: {
+  builderName: string;
+  title: string;
+  externalId: string;
+}): Promise<number> {
+  await ensureBuilderInventorySchema();
+  const rows = await sql`
+    UPDATE builder_inventory
+    SET external_id = ${args.externalId}
+    WHERE builder_name = ${args.builderName}
+      AND title        = ${args.title}
+      AND kind         = 'promotion'
+      AND external_id IS NULL
+    RETURNING id
+  `;
+  return Array.isArray(rows) ? rows.length : 0;
+}

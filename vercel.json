@@ -53,6 +53,10 @@
       "schedule": "45 15 * * *"
     },
     {
+      "path": "/api/cron/scrape-drees-promotions",
+      "schedule": "15 15 * * *"
+    },
+    {
       "path": "/api/cron/scrape-kb-home",
       "schedule": "0 16 * * *"
     },
