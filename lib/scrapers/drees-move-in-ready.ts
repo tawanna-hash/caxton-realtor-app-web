@@ -387,24 +387,33 @@ async function fetchDetailPageData(
     .replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&');
 
-  // Extract exterior photos (transform/ URLs) from imagePath values
+  // Extract exterior photos: imagePath values with transform/ URLs that
+  // appear BEFORE the floorPlanImages block (exterior photos are listed
+  // first in the page JSON, floorplans come later).
+  const fpBlockIdx = decoded.indexOf('"floorPlanImages"');
+  const exteriorSearchEnd = fpBlockIdx >= 0 ? fpBlockIdx : decoded.length;
+  const exteriorSlice = decoded.slice(0, exteriorSearchEnd);
   const imgRe = /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/transform\/[^"]+)"/g;
-  // Extract floorplan SVGs (asset/ URLs ending in .svg) from imagePath values
-  const fpRe = /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/asset\/[^"]+\.svg)"/g;
   const seen = new Set<string>();
   let m: RegExpExecArray | null;
   const images: DreesImage[] = [];
-  let floorplanUrl: string | null = null;
-
-  while ((m = imgRe.exec(decoded)) !== null) {
+  while ((m = imgRe.exec(exteriorSlice)) !== null) {
     const imagePath = m[1];
     if (!seen.has(imagePath)) {
       seen.add(imagePath);
       images.push({ imagePath, altText: 'Exterior' });
     }
   }
-  while ((m = fpRe.exec(decoded)) !== null) {
-    if (!floorplanUrl) floorplanUrl = m[1];
+
+  // Extract floorplan URL: first imagePath value inside the floorPlanImages
+  // block. Can be either asset/*.svg or transform/* format depending on home.
+  let floorplanUrl: string | null = null;
+  if (fpBlockIdx >= 0) {
+    const fpSlice = decoded.slice(fpBlockIdx, fpBlockIdx + 5000);
+    const fpMatch = /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/[^"]+)"/.exec(fpSlice);
+    if (fpMatch) {
+      floorplanUrl = fpMatch[1];
+    }
   }
 
   return {
