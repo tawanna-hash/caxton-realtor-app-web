@@ -65,6 +65,25 @@ type DreesImage = {
   caption?: string | null;
 };
 
+type DreesAmenity = {
+  id?: number | null;
+  name?: string | null;
+};
+
+type DreesOfficeHour = {
+  dayOfWeek?: string | null;
+  startTimeString?: string | null;
+  endTimeString?: string | null;
+  byAppointmentOnlyOnThisDay?: boolean | null;
+  closedOnThisDay?: boolean | null;
+};
+
+type DreesMapImage = {
+  imagePath?: string | null;
+  altText?: string | null;
+  caption?: string | null;
+};
+
 type DreesNeighborhood = {
   contentId?: number | null;
   productFavoriteId?: string | null;
@@ -88,10 +107,20 @@ type DreesNeighborhood = {
   planCount?: number | null;
   qmiCount?: number | null;
   modelQmiCount?: number | null;
+  neighborhoodCount?: number | null;
   lat?: number | null;
   lng?: number | null;
   url?: string | null;
   images?: DreesImage[] | null;
+  isCommunity?: boolean | null;
+  caption?: string | null;
+  homeTypes?: string[] | null;
+  amenities?: DreesAmenity[] | null;
+  modelPhone?: string | null;
+  schoolDistricts?: string[] | null;
+  drivingDirections?: string | null;
+  officehoursList?: DreesOfficeHour[] | null;
+  mapImage?: DreesMapImage | null;
 };
 
 type DreesCommunityResponse = {
@@ -200,6 +229,71 @@ function fullAddress(n: DreesNeighborhood): string | null {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Office hours + driving directions helpers
+// ─────────────────────────────────────────────────────────────────────────
+
+const DAY_ABBR: Record<string, string> = {
+  sunday: 'Sun', monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed',
+  thursday: 'Thu', friday: 'Fri', saturday: 'Sat',
+};
+
+function formatOfficeHours(
+  hours: DreesOfficeHour[] | null | undefined,
+): string | null {
+  if (!hours || hours.length === 0) return null;
+  const parts: string[] = [];
+  for (const h of hours) {
+    if (h.closedOnThisDay) {
+      parts.push(`${DAY_ABBR[h.dayOfWeek ?? ''] ?? h.dayOfWeek}: Closed`);
+      continue;
+    }
+    const start = h.startTimeString ?? '';
+    const end = h.endTimeString ?? '';
+    if (!start && !end) continue;
+    let label = `${DAY_ABBR[h.dayOfWeek ?? ''] ?? h.dayOfWeek}: ${start}-${end}`;
+    if (h.byAppointmentOnlyOnThisDay) label += ' (by appt)';
+    parts.push(label);
+  }
+  return parts.length > 0 ? parts.join(', ') : null;
+}
+
+function stripHtml(html: string | null | undefined): string | null {
+  if (!html) return null;
+  const text = html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#x27;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+  return text || null;
+}
+
+function extractAmenityNames(
+  amenities: DreesAmenity[] | null | undefined,
+): string[] {
+  if (!amenities || amenities.length === 0) return [];
+  const names: string[] = [];
+  for (const a of amenities) {
+    const name = a?.name?.trim();
+    if (name && !names.includes(name)) names.push(decodeHtmlEntities(name));
+  }
+  return names;
+}
+
+function extractMapImageUrl(
+  mapImage: DreesMapImage | null | undefined,
+): string | null {
+  if (!mapImage) return null;
+  const raw = mapImage.imagePath ?? null;
+  if (!raw) return null;
+  if (raw.startsWith('http')) return raw;
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Per-neighborhood normalization
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -293,31 +387,54 @@ function normalize(
   const description = descParts.length > 0 ? descParts.join(' ') : null;
 
   // communityData: build from API fields + enriched detail page data.
+  // API (view=floorplans) provides amenities, modelPhone, schoolDistricts,
+  // drivingDirections, officehoursList, mapImage. Detail page adds
+  // specialistName as a fallback.
+  const apiAmenities = extractAmenityNames(n.amenities);
+  const amenities = apiAmenities.length > 0
+    ? apiAmenities
+    : (detail?.amenities ?? []);
+  const schoolDistrict =
+    (n.schoolDistricts && n.schoolDistricts.length > 0
+      ? n.schoolDistricts[0]
+      : null) ?? detail?.schoolDistrict ?? null;
+  const officeHours = formatOfficeHours(n.officehoursList);
+  const directionsText = stripHtml(n.drivingDirections);
+  const directions = directionsText ? [directionsText] : [];
+  const phone = n.modelPhone ?? detail?.phoneNumber ?? null;
+  const specialistName = detail?.specialistName ?? null;
+  const mapImg = extractMapImageUrl(n.mapImage);
+  const allImages = [...(gal ?? [])];
+  if (mapImg && !allImages.includes(mapImg)) allImages.push(mapImg);
+
   const communityData: CommunityData = {
     communityName: communityName ?? neighborhoodName ?? title,
     status: deriveCommunityStatus(n.neighborhoodType),
     adultOnly: false,
+    availability: n.caption ?? null,
     priceFrom: priceMin != null || priceMax != null
       ? formatPriceRange(priceMin, priceMax)
       : null,
     sqftRange: sqftMin != null || sqftMax != null
       ? formatSqftRange(sqftMin, sqftMax)
       : null,
-    amenities: detail?.amenities ?? [],
+    amenities,
     homePlans: [],
     schools: {
-      district: detail?.schoolDistrict ?? null,
+      district: schoolDistrict,
       list: [],
     },
     taxInfo: { entities: [], total: null },
     salesOffice: {
       address: fullAddress(n),
-      hours: null,
+      hours: officeHours,
+      phone,
+      specialistName,
       lat: detail?.latitude ?? (typeof n.lat === 'number' ? n.lat : null),
       lng: detail?.longitude ?? (typeof n.lng === 'number' ? n.lng : null),
-      directions: [],
+      directions,
     },
-    imageUrls: gal ?? [],
+    imageUrls: allImages,
   };
 
   return {
@@ -368,6 +485,7 @@ type CommunityDetailData = {
   latitude: number | null;
   longitude: number | null;
   mapImageUrl: string | null;
+  specialistName: string | null;
 };
 
 function decodeHtmlEntities(s: string): string {
@@ -464,7 +582,12 @@ async function fetchCommunityDetailData(
   );
   if (mapMatch) mapImageUrl = mapMatch[1];
 
-  return { amenities, schoolDistrict, phoneNumber, latitude, longitude, mapImageUrl };
+  // Extract new home specialist name
+  let specialistName: string | null = null;
+  const specialistMatch = decoded.match(/"newHomeSpecialistName"\s*:\s*"([^"]+)"/);
+  if (specialistMatch) specialistName = specialistMatch[1];
+
+  return { amenities, schoolDistrict, phoneNumber, latitude, longitude, mapImageUrl, specialistName };
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -486,9 +609,9 @@ export async function fetchDreesAustinCommunities(): Promise<{
     searchByCity: false,
     sortBy: 'City',
     sortOrder: 'Asc',
-    view: 'neighborhoods',
-    mapState: true,
-    sort: 'City-Asc',
+    view: 'floorplans',
+    mapState: false,
+    sort: 'Price-Asc',
   };
 
   let res: Response;

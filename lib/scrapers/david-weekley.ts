@@ -458,6 +458,8 @@ export type CommunityData = {
   salesOffice?: {
     address?: string | null;
     hours?: string | null;
+    phone?: string | null;
+    specialistName?: string | null;
     directions?: string[];
     lat?: number | null;
     lng?: number | null;

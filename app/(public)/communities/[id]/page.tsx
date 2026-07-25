@@ -324,7 +324,7 @@ export default async function CommunityDetailPage(
             </section>
           )}
 
-          {sales && sales.directions && sales.directions.length > 0 && (
+          {sales && (sales.directions?.length || sales.hours || sales.address || sales.phone) ? (
             <section className="mt-8">
               <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                 Visit the Community
@@ -339,16 +339,26 @@ export default async function CommunityDetailPage(
                   {sales.hours}
                 </p>
               )}
-              <ol className="mt-3 space-y-1 text-sm text-neutral-700 dark:text-neutral-300">
-                {sales.directions.map((d, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="font-medium text-orange-600">{i + 1}.</span>
-                    <span>{d}</span>
-                  </li>
-                ))}
-              </ol>
+              {sales.phone && (
+                <p className="mt-0.5 text-sm text-neutral-600 dark:text-neutral-400">
+                  <a href={`tel:${sales.phone}`} className="text-orange-600 hover:underline">
+                    {sales.phone}
+                  </a>
+                  {sales.specialistName && <span className="ml-2">· {sales.specialistName}</span>}
+                </p>
+              )}
+              {sales.directions && sales.directions.length > 0 && (
+                <ol className="mt-3 space-y-1 text-sm text-neutral-700 dark:text-neutral-300">
+                  {sales.directions.map((d, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="font-medium text-orange-600">{i + 1}.</span>
+                      <span>{d}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
             </section>
-          )}
+          ) : null}
         </div>
 
         {/* Right: builder pill + stats + address */}
@@ -422,6 +432,22 @@ export default async function CommunityDetailPage(
               </div>
             )}
           </dl>
+
+          {sales?.phone && (
+            <div className="mt-4">
+              <a
+                href={`tel:${sales.phone}`}
+                className="inline-flex items-center rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"
+              >
+                {sales.phone}
+              </a>
+              {sales.specialistName && (
+                <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                  {sales.specialistName}
+                </p>
+              )}
+            </div>
+          )}
         </aside>
       </div>
 
