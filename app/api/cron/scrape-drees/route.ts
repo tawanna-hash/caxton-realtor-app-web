@@ -1,24 +1,30 @@
 // app/api/cron/scrape-drees/route.ts
 //
-// Vercel Cron endpoint. Daily Drees Homes Austin community (neighborhoods)
-// scrape. One row per neighborhood with homeType='community'.
+// Vercel Cron endpoint. Daily Drees Homes Austin community scrape.
+// One row per neighborhood with homeType='community' + structured communityData.
 //
-// Sister cron: /api/cron/scrape-drees-move-in-ready emits per-home QMI rows
-// for the same builder. They're split so a hiccup in one endpoint doesn't
-// poison the other and so each can run on its own schedule slot.
+// Conforms to docs/community-scraper-template.md §9.
+//
+// Auth: Authorization: Bearer ${CRON_SECRET} in production.
+// Dev/preview: open (so we can test from local without setting the secret).
+//
+// ?strip=1 — deletes ALL existing Drees community rows before upserting.
+//   Use for a clean rebuild. Subsequent runs without ?strip=1 upsert normally.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchDreesAustinCommunities } from '@/lib/scrapers/drees';
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
+import { sql } from '@neondatabase/serverless';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// 1 HTTP call ~1s + ~17 upserts + prune.
+// 1 HTTP call + ~17 detail page fetches + ~17 upserts + prune.
 export const maxDuration = 150;
 
 const SCRAPER_SUBMITTER_NAME = 'Drees Homes Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-drees@harmonyone.system';
+const BUILDER_NAME = 'Drees Homes';
 
 function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
   const isProduction = process.env.VERCEL_ENV === 'production';
@@ -38,8 +44,35 @@ function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
   return { ok: true };
 }
 
-async function runScrape() {
+async function stripExistingCommunities(): Promise<number> {
+  const result = await sql`
+    DELETE FROM builder_inventory
+    WHERE builder_name = ${BUILDER_NAME}
+      AND home_type = 'community'
+      AND external_id IS NOT NULL
+    RETURNING id
+  `;
+  return result.length;
+}
+
+async function runScrape(strip: boolean) {
   const startedAt = Date.now();
+
+  let stripped = 0;
+  if (strip) {
+    try {
+      stripped = await stripExistingCommunities();
+      console.log(
+        `[scrape-drees] stripped ${stripped} existing community rows`,
+      );
+    } catch (err) {
+      console.error(
+        '[scrape-drees] strip failed:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
   const { rows, rawCount, skipped } = await fetchDreesAustinCommunities();
 
   let inserted = 0;
@@ -72,9 +105,8 @@ async function runScrape() {
         sourceUrl: row.sourceUrl,
         thumbnailUrl: row.thumbnailUrl,
         galleryUrls: row.galleryUrls,
-        address: row.address,
         communityName: row.communityName,
-        homeType: row.homeType,
+        homeType: 'community',
         communityData: row.communityData,
       });
       if (result.created) inserted++;
@@ -91,12 +123,12 @@ async function runScrape() {
   }
 
   // Prune: deactivate communities no longer in the source feed.
-  // Guarded — never runs on an empty scrape.
+  // Guarded — never runs on an empty scrape (community-scraper-template §11).
   let deactivated = 0;
   if (rows.length > 0) {
     try {
       deactivated = await deactivateStaleBuilderInventory({
-        builderName: 'Drees Homes',
+        builderName: BUILDER_NAME,
         homeType: 'community',
         activeExternalIds: rows.map((r) => r.externalId),
       });
@@ -113,6 +145,7 @@ async function runScrape() {
   return {
     ok: true,
     summary: {
+      stripped,
       rawCount,
       normalized: rows.length,
       skipped,
@@ -135,16 +168,15 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const strip = req.nextUrl.searchParams.get('strip') === '1';
+
   try {
-    const result = await runScrape();
+    const result = await runScrape(strip);
     return NextResponse.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[scrape-drees] fatal error:', msg);
-    return NextResponse.json(
-      { ok: false, error: msg },
-      { status: 500 },
-    );
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }
 

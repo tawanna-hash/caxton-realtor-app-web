@@ -1,11 +1,10 @@
 // app/api/cron/scrape-drees-promotions/route.ts
 //
-// Cron entrypoint for the Drees Homes promotions scraper.
-// Vercel cron schedule: 30 14 * * *  (9:30 AM CT during DST)
-// (staggered off the Drees move-in 0 20 and communities 15 20 slots)
+// Cron entrypoint for the Drees Homes promotions scraper (100% rebuild).
+// Conforms to docs/promotion-scraper-template.md §10.
 //
 // Auth: Authorization: Bearer ${CRON_SECRET} in production.
-// Dev/preview: open (so we can test from local without setting the secret).
+// Dev/preview: open.
 //
 // Drees does NOT publish promotions on a public API or offers page — their
 // promotions are distributed as flyer PDFs to realtor partners. This scraper
@@ -17,19 +16,29 @@
 // status='active' (a human 'rejected' stamp is respected).
 // Pruned: promotions no longer in the config are deleted (only affects
 // scraper-created rows with external_id; human-submitted rows are safe).
+//
+// ?strip=1 — deletes ALL existing Drees promotion rows before upserting.
+//   Use for a clean rebuild.
 
 import { NextResponse } from 'next/server';
-import { getDreesPromotions, DREES_PROMOTION_CLAIMS } from '../../../../lib/scrapers/drees-promotions';
+import { NextRequest } from 'next/server';
+import {
+  getDreesPromotions,
+  DREES_PROMOTION_CLAIMS,
+} from '@/lib/scrapers/drees-promotions';
 import {
   upsertBuilderInventoryByExternalId,
   updateBuilderInventory,
   claimExistingPromotion,
-} from '../../../../lib/builder-inventory';
-import { deleteStaleBuilderPromotions } from '../../../../lib/builder-inventory-sync';
+} from '@/lib/builder-inventory';
+import { deleteStaleBuilderPromotions } from '@/lib/builder-inventory-sync';
+import { sql } from '@neondatabase/serverless';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
+
+const BUILDER_NAME = 'Drees Homes';
 
 function authorized(req: Request): boolean {
   if (process.env.VERCEL_ENV !== 'production') return true;
@@ -39,7 +48,18 @@ function authorized(req: Request): boolean {
   return got === `Bearer ${expected}`;
 }
 
-async function handle(req: Request) {
+async function stripExistingPromotions(): Promise<number> {
+  const result = await sql`
+    DELETE FROM builder_inventory
+    WHERE builder_name = ${BUILDER_NAME}
+      AND kind = 'promotion'
+      AND external_id IS NOT NULL
+    RETURNING id
+  `;
+  return result.length;
+}
+
+async function handle(req: NextRequest) {
   if (!authorized(req)) {
     return NextResponse.json(
       { ok: false, error: 'Bad or missing Authorization header' },
@@ -47,7 +67,24 @@ async function handle(req: Request) {
     );
   }
 
+  const strip = req.nextUrl.searchParams.get('strip') === '1';
   const startedAt = Date.now();
+
+  let stripped = 0;
+  if (strip) {
+    try {
+      stripped = await stripExistingPromotions();
+      console.log(
+        `[scrape-drees-promotions] stripped ${stripped} existing promotion rows`,
+      );
+    } catch (err) {
+      console.error(
+        '[scrape-drees-promotions] strip failed:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
   const { rows, rawCount } = getDreesPromotions();
 
   // Step 1: Claim existing manually-entered rows (those without external_id)
@@ -57,7 +94,7 @@ async function handle(req: Request) {
   for (const claim of DREES_PROMOTION_CLAIMS) {
     try {
       const count = await claimExistingPromotion({
-        builderName: 'Drees Homes',
+        builderName: BUILDER_NAME,
         title: claim.title,
         externalId: claim.externalId,
       });
@@ -85,12 +122,17 @@ async function handle(req: Request) {
   for (const row of rows) {
     try {
       const result = await upsertBuilderInventoryByExternalId(row);
-      if (result.created) created++; else updated++;
+      if (result.created) created++;
+      else updated++;
       let publishedThis = false;
       // Drees promo copy is verbatim from their marketing flyers — publish
       // live so it surfaces in the active feed. A human 'rejected' stamp
       // is respected (not re-activated by re-scrape).
-      if (result.row.status !== 'active' && result.row.status !== 'rejected') {
+      // (promotion-scraper-template §10a)
+      if (
+        result.row.status !== 'active' &&
+        result.row.status !== 'rejected'
+      ) {
         try {
           await updateBuilderInventory(result.row.id, { status: 'active' });
           published++;
@@ -119,11 +161,12 @@ async function handle(req: Request) {
   // Step 3: Prune — delete Drees promotions no longer in the config.
   // Guarded: never runs on an empty scrape; human-submitted promotions
   // (NULL external_id) are never deleted.
+  // (promotion-scraper-template §10b)
   let deleted = 0;
   if (rows.length > 0) {
     try {
       deleted = await deleteStaleBuilderPromotions({
-        builderName: 'Drees Homes',
+        builderName: BUILDER_NAME,
         activeExternalIds: rows.map((r) => r.externalId),
       });
     } catch (err) {
@@ -137,6 +180,7 @@ async function handle(req: Request) {
   return NextResponse.json({
     ok: true,
     ms: Date.now() - startedAt,
+    stripped,
     rawCount,
     claimed,
     created,
@@ -148,5 +192,9 @@ async function handle(req: Request) {
   });
 }
 
-export async function GET(req: Request)  { return handle(req); }
-export async function POST(req: Request) { return handle(req); }
+export async function GET(req: NextRequest) {
+  return handle(req);
+}
+export async function POST(req: NextRequest) {
+  return handle(req);
+}

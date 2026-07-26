@@ -1,18 +1,19 @@
 // lib/scrapers/drees-move-in-ready.ts
 //
-// Drees Homes Austin — Quick Move-In Ready (QMI) per-home scraper.
+// Drees Homes Austin — Quick Move-In Ready (QMI) per-home scraper (100% rebuild).
 //
-// Sister scraper to lib/scrapers/drees.ts. Same builder, different surface.
+// Conforms to docs/scraper-template.md (move-in homes).
+//
 // Drees' Vue SPA at /new-homes-austin/?view=qmi-home-search hydrates from:
 //
 //   POST https://www.dreeshomes.com/api/en/dreeshomes/qmi
 //   body: {
-//     "pageSize": 100, "pageNumber": 1,
-//     "contentid": 959,                  ← Austin area content id
-//     "selectedPoiContentIds": [],
-//     "searchByArea": true, "searchByCity": false,
-//     "sortBy": "MoveInDate", "sortOrder": "Asc",
-//     "isModelHome": false               ← excludes model homes; we want
+//     pageSize: 200, pageNumber: 1,
+//     contentid: 959,                  ← Austin area content id
+//     selectedPoiContentIds: [],
+//     searchByArea: true, searchByCity: false,
+//     sortBy: "MoveInDate", sortOrder: "Asc",
+//     isModelHome: false               ← excludes model homes; we want
 //                                          buyable QMI inventory only
 //   }
 //
@@ -20,14 +21,20 @@
 //
 // Each home in `data.homes` has a specific address, planName, elevation,
 // neighborhoodName, moveInDate (e.g. "Apr 23, 2026"), and discountedPrice.
-// We emit ONE ROW PER HOME with homeType='showcase' — same shape that
-// mi-homes + david-weekley use for buyable inventory.
+//
+// The QMI list API sometimes returns `images: null` for homes that DO have
+// photos on their detail page. We fetch each home's detail page HTML to
+// extract exterior photos and floorplan SVG URLs.
+//
+// One row per buyable QMI home → kind='listing', homeType='showcase'.
+
+// ─────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────
 
 const QMI_URL = 'https://www.dreeshomes.com/api/en/dreeshomes/qmi';
 
-// Austin metro identifiers from /areas:
-//   areaGuid:  304549ba-b3eb-42a4-be64-2ef35deabb25
-//   contentId: 959
+// Austin metro: contentId 959
 const AUSTIN_CONTENT_ID = 959;
 
 const SITE_BASE = 'https://www.dreeshomes.com';
@@ -46,8 +53,16 @@ const COMMON_HEADERS = {
   Referer: `${SITE_BASE}/new-homes-austin/?view=qmi-home-search`,
 } as const;
 
+// Detail pages need Accept: text/html to get the rendered HTML (which contains
+// embedded JSON with imagePath values).
+const DETAIL_PAGE_HEADERS = {
+  'User-Agent': USER_AGENT,
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9',
+} as const;
+
 // ─────────────────────────────────────────────────────────────────────────
-// Response types — only fields we read.
+// API response types — only the fields we read.
 // ─────────────────────────────────────────────────────────────────────────
 
 type DreesImage = {
@@ -109,10 +124,10 @@ type DreesQmiResponse = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────
-// Output shape — one row per QMI home.
+// Output shape — one row per QMI home (scraper-template.md §2).
 // ─────────────────────────────────────────────────────────────────────────
 
-export type ScrapedDreesQmiRow = {
+export type ScrapedBuilderRow = {
   externalId: string;
   builderName: 'Drees Homes';
   title: string;
@@ -158,12 +173,17 @@ function combineBath(
   return f + h * 0.5;
 }
 
-function withImageTransform(rawPath: string | null | undefined, width: number): string | null {
+function withImageTransform(
+  rawPath: string | null | undefined,
+  width: number,
+): string | null {
   if (!rawPath) return null;
   const trimmed = rawPath.trim();
   if (!trimmed) return null;
   if (trimmed.startsWith('http')) {
-    return trimmed.includes('?') ? trimmed : `${trimmed}?io=transform:fill,width:${width}`;
+    return trimmed.includes('?')
+      ? trimmed
+      : `${trimmed}?io=transform:fill,width:${width}`;
   }
   return null;
 }
@@ -195,7 +215,9 @@ function fullAddress(h: DreesQmiHome): string | null {
   if (!street) return null;
   const parts: string[] = [street];
   if (city) {
-    parts.push(state ? `${city}, ${state}${zip ? ' ' + zip : ''}` : city);
+    parts.push(
+      state ? `${city}, ${state}${zip ? ' ' + zip : ''}` : city,
+    );
   } else if (state) {
     parts.push(zip ? `${state} ${zip}` : state);
   }
@@ -203,15 +225,32 @@ function fullAddress(h: DreesQmiHome): string | null {
 }
 
 const MONTHS: Record<string, number> = {
-  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
-  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
-  january: 0, february: 1, march: 2, april: 3,
-  june: 5, july: 6, august: 7, september: 8,
-  october: 9, november: 10, december: 11,
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11,
+  january: 0,
+  february: 1,
+  march: 2,
+  april: 3,
+  june: 5,
+  july: 6,
+  august: 7,
+  september: 8,
+  october: 9,
+  november: 10,
+  december: 11,
 };
 
 // Parse Drees' "Apr 23, 2026" / "April 23, 2026" → "2026-04-23".
-// Returns null on anything we don't recognize.
 function parseMoveInDate(raw: string | null | undefined): string | null {
   if (!raw) return null;
   const text = raw.trim();
@@ -241,9 +280,13 @@ function parseMoveInDate(raw: string | null | undefined): string | null {
 // Per-home normalization
 // ─────────────────────────────────────────────────────────────────────────
 
-function normalize(h: DreesQmiHome, floorplanUrl?: string | null): ScrapedDreesQmiRow | null {
-  if (h.isModelHome === true) return null; // defense in depth
+function normalize(
+  h: DreesQmiHome,
+  floorplanUrl?: string | null,
+): ScrapedBuilderRow | null {
+  if (h.isModelHome === true) return null; // defense in depth — we want buyable only
 
+  // Stable externalId (scraper-template.md §4).
   const id =
     (h.contentId != null && Number.isFinite(h.contentId)
       ? `content/${h.contentId}`
@@ -260,7 +303,7 @@ function normalize(h: DreesQmiHome, floorplanUrl?: string | null): ScrapedDreesQ
     h.neighborhoodName?.trim() ||
     null;
 
-  // Title: "Westheimer B at The Colony - 50'" or fall back to address.
+  // Title fallback ladder (scraper-template.md §5).
   let title: string;
   if (planFull && communityName) {
     title = `${planFull} at ${communityName}`;
@@ -292,8 +335,7 @@ function normalize(h: DreesQmiHome, floorplanUrl?: string | null): ScrapedDreesQ
   const gal = gallery(h.images);
   const thumbnailUrl = gal?.[0] ?? null;
 
-  // Description: synthesize from structured fields per template §6.
-  // Define readyDate + address before the description block (hoisting).
+  // Description: synthesize from structured fields (scraper-template.md §6).
   const readyDate = parseMoveInDate(h.moveInDate);
   const address = fullAddress(h);
   const features = (h.features ?? []).map((f) => f.trim()).filter(Boolean);
@@ -324,10 +366,15 @@ function normalize(h: DreesQmiHome, floorplanUrl?: string | null): ScrapedDreesQ
   if (h.storiesLow) extraDetails['Stories'] = String(h.storiesLow);
   const garages = nonZeroOrNull(h.garagesLow);
   if (garages) extraDetails['Garage'] = `${garages}-car`;
-  const schools = Array.isArray(h.schoolDistricts) ? h.schoolDistricts.filter(Boolean) : [];
-  if (schools.length > 0) extraDetails['School District'] = schools.join(', ');
-  if (typeof h.latitude === 'number') extraDetails._latitude = String(h.latitude);
-  if (typeof h.longitude === 'number') extraDetails._longitude = String(h.longitude);
+  const schools = Array.isArray(h.schoolDistricts)
+    ? h.schoolDistricts.filter(Boolean)
+    : [];
+  if (schools.length > 0)
+    extraDetails['School District'] = schools.join(', ');
+  if (typeof h.latitude === 'number')
+    extraDetails._latitude = String(h.latitude);
+  if (typeof h.longitude === 'number')
+    extraDetails._longitude = String(h.longitude);
   if (h.uTourUrl) extraDetails._virtualTourUrl = h.uTourUrl;
   if (floorplanUrl) extraDetails._floorplanUrl = floorplanUrl;
 
@@ -360,21 +407,13 @@ function normalize(h: DreesQmiHome, floorplanUrl?: string | null): ScrapedDreesQ
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Detail-page image fallback
+// Detail-page image + floorplan fallback
 // ─────────────────────────────────────────────────────────────────────────
 //
 // The QMI list API sometimes returns `images: null` for homes that DO have
-// photos on their detail page.  We fetch the detail page HTML and extract
-// the `imagePath` values embedded in the JSON payload.
-
-// Detail pages need Accept: text/html to get the rendered HTML (which contains
-// embedded JSON with imagePath values). The API's Accept: application/json
-// header makes Episerver return a compact JSON view without imagePath.
-const DETAIL_PAGE_HEADERS = {
-  'User-Agent': USER_AGENT,
-  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-  'Accept-Language': 'en-US,en;q=0.9',
-} as const;
+// photos on their detail page. We fetch the detail page HTML and extract
+// the `imagePath` values embedded in the JSON payload. We also extract
+// floorplan SVG URLs (not available in the QMI API response).
 
 type DetailPageData = {
   images: DreesImage[] | null;
@@ -415,7 +454,8 @@ async function fetchDetailPageData(
   const fpBlockIdx = decoded.indexOf('"floorPlanImages"');
   const exteriorSearchEnd = fpBlockIdx >= 0 ? fpBlockIdx : decoded.length;
   const exteriorSlice = decoded.slice(0, exteriorSearchEnd);
-  const imgRe = /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/transform\/[^"]+)"/g;
+  const imgRe =
+    /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/transform\/[^"]+)"/g;
   const seen = new Set<string>();
   let m: RegExpExecArray | null;
   const images: DreesImage[] = [];
@@ -428,11 +468,14 @@ async function fetchDetailPageData(
   }
 
   // Extract floorplan URL: first imagePath value inside the floorPlanImages
-  // block. Can be either asset/*.svg or transform/* format depending on home.
+  // block.
   let floorplanUrl: string | null = null;
   if (fpBlockIdx >= 0) {
     const fpSlice = decoded.slice(fpBlockIdx, fpBlockIdx + 5000);
-    const fpMatch = /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/[^"]+)"/.exec(fpSlice);
+    const fpMatch =
+      /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/[^"]+)"/.exec(
+        fpSlice,
+      );
     if (fpMatch) {
       floorplanUrl = fpMatch[1];
     }
@@ -449,7 +492,7 @@ async function fetchDetailPageData(
 // ─────────────────────────────────────────────────────────────────────────
 
 export async function fetchDreesAustinQmi(): Promise<{
-  rows: ScrapedDreesQmiRow[];
+  rows: ScrapedBuilderRow[];
   rawCount: number;
   skipped: number;
 }> {
@@ -516,7 +559,11 @@ export async function fetchDreesAustinQmi(): Promise<{
           if (data) {
             const key = h.url ?? h.productFavoriteId ?? '';
             floorplanMap.set(key, data.floorplanUrl);
-            if ((!h.images || h.images.length === 0) && data.images && data.images.length > 0) {
+            if (
+              (!h.images || h.images.length === 0) &&
+              data.images &&
+              data.images.length > 0
+            ) {
               h.images = data.images;
             }
           }
@@ -527,7 +574,7 @@ export async function fetchDreesAustinQmi(): Promise<{
     );
   }
 
-  const rows: ScrapedDreesQmiRow[] = [];
+  const rows: ScrapedBuilderRow[] = [];
   let skipped = 0;
   for (const h of homes) {
     const key = h.url ?? h.productFavoriteId ?? '';

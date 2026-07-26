@@ -3,23 +3,28 @@
 // Vercel Cron endpoint. Daily Drees Homes Austin Quick Move-In Ready (QMI)
 // inventory scrape. One row per buyable QMI home with homeType='showcase'.
 //
-// Sister cron: /api/cron/scrape-drees emits per-neighborhood community rows
-// for the same builder.
+// Conforms to docs/scraper-template.md (move-in homes cron route).
+//
+// Auth: Authorization: Bearer ${CRON_SECRET} in production.
+// Dev/preview: open.
+//
+// ?strip=1 — deletes ALL existing Drees showcase rows before upserting.
+//   Use for a clean rebuild.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchDreesAustinQmi } from '@/lib/scrapers/drees-move-in-ready';
-import {
-  upsertBuilderInventoryByExternalId,
-} from '@/lib/builder-inventory';
+import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
+import { sql } from '@neondatabase/serverless';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// 1 HTTP call ~1s + ~53 upserts + ~53 detail page fetches + prune.
+// 1 HTTP call + ~53 detail page fetches + ~53 upserts + prune.
 export const maxDuration = 150;
 
 const SCRAPER_SUBMITTER_NAME = 'Drees Homes Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-drees-move-in-ready@harmonyone.system';
+const BUILDER_NAME = 'Drees Homes';
 
 function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
   const isProduction = process.env.VERCEL_ENV === 'production';
@@ -39,8 +44,35 @@ function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
   return { ok: true };
 }
 
-async function runScrape() {
+async function stripExistingShowcase(): Promise<number> {
+  const result = await sql`
+    DELETE FROM builder_inventory
+    WHERE builder_name = ${BUILDER_NAME}
+      AND home_type = 'showcase'
+      AND external_id IS NOT NULL
+    RETURNING id
+  `;
+  return result.length;
+}
+
+async function runScrape(strip: boolean) {
   const startedAt = Date.now();
+
+  let stripped = 0;
+  if (strip) {
+    try {
+      stripped = await stripExistingShowcase();
+      console.log(
+        `[scrape-drees-move-in-ready] stripped ${stripped} existing showcase rows`,
+      );
+    } catch (err) {
+      console.error(
+        '[scrape-drees-move-in-ready] strip failed:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
   const { rows, rawCount, skipped } = await fetchDreesAustinQmi();
 
   let inserted = 0;
@@ -78,7 +110,7 @@ async function runScrape() {
         readyDate: row.readyDate,
         planName: row.planName,
         communityName: row.communityName,
-        homeType: row.homeType,
+        homeType: 'showcase',
       });
       if (result.created) inserted++;
       else updated++;
@@ -94,13 +126,12 @@ async function runScrape() {
   }
 
   // Prune: deactivate homes no longer in the source feed (sold/off-market).
-  // Guarded — never runs on an empty scrape so a transient empty response
-  // can't wipe the whole set.
+  // Guarded — never runs on an empty scrape (scraper-template.md pitfalls).
   let deactivated = 0;
   if (rows.length > 0) {
     try {
       deactivated = await deactivateStaleBuilderInventory({
-        builderName: 'Drees Homes',
+        builderName: BUILDER_NAME,
         homeType: 'showcase',
         activeExternalIds: rows.map((r) => r.externalId),
       });
@@ -117,6 +148,7 @@ async function runScrape() {
   return {
     ok: true,
     summary: {
+      stripped,
       rawCount,
       normalized: rows.length,
       skipped,
@@ -139,16 +171,15 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const strip = req.nextUrl.searchParams.get('strip') === '1';
+
   try {
-    const result = await runScrape();
+    const result = await runScrape(strip);
     return NextResponse.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[scrape-drees-move-in-ready] fatal error:', msg);
-    return NextResponse.json(
-      { ok: false, error: msg },
-      { status: 500 },
-    );
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
 }
 

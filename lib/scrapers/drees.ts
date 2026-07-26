@@ -1,41 +1,46 @@
 // lib/scrapers/drees.ts
 //
-// Drees Homes Austin — Communities (neighborhoods) scraper.
+// Drees Homes Austin — Communities scraper (100% rebuild).
 //
-// Drees runs a Vue SPA at https://www.dreeshomes.com/new-homes-austin/. The
-// "view=neighborhoods" surface is hydrated by a single POST:
+// Conforms to docs/community-scraper-template.md.
+//
+// Drees runs a Vue SPA at https://www.dreeshomes.com/new-homes-austin/.
+// The community list is hydrated by a single POST to the community API:
 //
 //   POST https://www.dreeshomes.com/api/en/dreeshomes/community
 //   body: {
-//     "pageSize": 50, "pageNumber": 1,
-//     "contentid": 959,                  ← Austin area's content id
-//     "selectedPoiContentIds": [],
-//     "searchByArea": true, "searchByCity": false,
-//     "sortBy": "City", "sortOrder": "Asc",
-//     "view": "neighborhoods", "mapState": true, "sort": "City-Asc"
+//     pageSize: 50, pageNumber: 1,
+//     contentid: 959,                  ← Austin area content id
+//     selectedPoiContentIds: [],
+//     searchByArea: true, searchByCity: false,
+//     sortBy: "Price", sortOrder: "Asc",
+//     view: "floorplans",               ← returns amenities, phone, schools, etc.
+//     mapState: false, sort: "Price-Asc"
 //   }
 //
 // Response: { data: { neighborhoods: [...] }, totalRecords, isSuccess }
 //
-// No auth/cookies required. Discovered via Chrome DevTools Network capture
-// against the public /new-homes-austin/?view=neighborhoods URL.
+// The `view=floorplans` surface returns enriched fields: amenities,
+// modelPhone, schoolDistricts, drivingDirections, officehoursList, mapImage.
 //
-// One row per Austin neighborhood. Each neighborhood becomes a 'listing'
-// kind row with homeType='community' (same shape KB Home uses — communities
-// land in builder_inventory as community-level rows, not per-home rows).
+// Each community's detail page HTML also carries embedded JSON with the
+// new home specialist name (phoneNumber, newHomeSpecialistName, faqList,
+// communitySummaryList). We fetch each detail page for specialist name
+// as a fallback enrichment.
 //
-// Sister scraper: lib/scrapers/drees-move-in-ready.ts emits per-home rows
-// from the /qmi endpoint for the same builder.
+// One row per Austin neighborhood → kind='listing', homeType='community'.
+// Structured detail lives in the `communityData` JSONB column.
 
 import type { CommunityData } from './david-weekley';
+
+// ─────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────
 
 const COMMUNITY_URL =
   'https://www.dreeshomes.com/api/en/dreeshomes/community';
 
-// Austin metro identifiers from the Drees /areas endpoint:
-//   areaGuid:  304549ba-b3eb-42a4-be64-2ef35deabb25
-//   contentId: 959
-//   pageUrl:   /new-homes-austin/
+// Austin metro: contentId 959, page /new-homes-austin/
 const AUSTIN_CONTENT_ID = 959;
 
 const SITE_BASE = 'https://www.dreeshomes.com';
@@ -51,11 +56,17 @@ const COMMON_HEADERS = {
   Accept: 'application/json, text/plain, */*',
   'Accept-Language': 'en-US,en;q=0.9',
   Origin: SITE_BASE,
-  Referer: `${SITE_BASE}/new-homes-austin/?view=neighborhoods&mapState=true&sort=City-Asc`,
+  Referer: `${SITE_BASE}/new-homes-austin/?view=floorplans&sort=Price-Asc`,
+} as const;
+
+const DETAIL_PAGE_HEADERS = {
+  'User-Agent': USER_AGENT,
+  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language': 'en-US,en;q=0.9',
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────
-// Response types — only the fields we read.
+// API response types — only the fields we read.
 // ─────────────────────────────────────────────────────────────────────────
 
 type DreesImage = {
@@ -132,10 +143,10 @@ type DreesCommunityResponse = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────
-// Output shape — one row per neighborhood.
+// Output shape — one row per neighborhood (community-scraper-template §2).
 // ─────────────────────────────────────────────────────────────────────────
 
-export type ScrapedDreesCommunityRow = {
+export type ScrapedCommunityRow = {
   externalId: string;
   builderName: 'Drees Homes';
   title: string;
@@ -150,11 +161,10 @@ export type ScrapedDreesCommunityRow = {
   sqftMax: number | null;
   priceMin: number | null;
   priceMax: number | null;
-  thumbnailUrl: string | null;
-  galleryUrls: string[] | null;
   flyerPdfUrl: string | null;
+  thumbnailUrl: string | null;
   sourceUrl: string | null;
-  address: string | null;
+  galleryUrls: string[];
   communityName: string | null;
   homeType: 'community';
   communityData: CommunityData;
@@ -169,8 +179,7 @@ function nonZeroOrNull(n: number | null | undefined): number | null {
   return n;
 }
 
-// Drees half-bath fields aren't always meaningful, but if present:
-// combined bath = full + 0.5 * half.
+// Drees half-bath fields: combined bath = full + 0.5 * half.
 function combineBath(
   full: number | null | undefined,
   half: number | null | undefined,
@@ -181,14 +190,19 @@ function combineBath(
   return f + h * 0.5;
 }
 
-// Drees imagePath is the bare assetcloud URL. Append the standard transform
-// query the SPA uses for primary cards so we don't ship 5 MB hero images.
-function withImageTransform(rawPath: string | null | undefined, width: number): string | null {
+// Drees imagePath is a bare assetcloud URL. Append the standard transform
+// query the SPA uses so we don't ship multi-MB hero images.
+function withImageTransform(
+  rawPath: string | null | undefined,
+  width: number,
+): string | null {
   if (!rawPath) return null;
   const trimmed = rawPath.trim();
   if (!trimmed) return null;
   if (trimmed.startsWith('http')) {
-    return trimmed.includes('?') ? trimmed : `${trimmed}?io=transform:fill,width:${width}`;
+    return trimmed.includes('?')
+      ? trimmed
+      : `${trimmed}?io=transform:fill,width:${width}`;
   }
   return null;
 }
@@ -202,14 +216,14 @@ function normalizeUrl(path: string | null | undefined): string | null {
   return null;
 }
 
-function gallery(images: DreesImage[] | null | undefined): string[] | null {
-  if (!images || images.length === 0) return null;
+function gallery(images: DreesImage[] | null | undefined): string[] {
+  if (!images || images.length === 0) return [];
   const out: string[] = [];
   for (const img of images) {
     const url = withImageTransform(img.imagePath ?? img.path ?? null, 1200);
     if (url && !out.includes(url)) out.push(url);
   }
-  return out.length > 0 ? out : null;
+  return out;
 }
 
 function fullAddress(n: DreesNeighborhood): string | null {
@@ -221,7 +235,9 @@ function fullAddress(n: DreesNeighborhood): string | null {
   const parts: string[] = [];
   if (street) parts.push(street);
   if (city) {
-    parts.push(state ? `${city}, ${state}${zip ? ' ' + zip : ''}` : city);
+    parts.push(
+      state ? `${city}, ${state}${zip ? ' ' + zip : ''}` : city,
+    );
   } else if (state) {
     parts.push(zip ? `${state} ${zip}` : state);
   }
@@ -229,12 +245,17 @@ function fullAddress(n: DreesNeighborhood): string | null {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Office hours + driving directions helpers
+// Office hours + HTML helpers
 // ─────────────────────────────────────────────────────────────────────────
 
 const DAY_ABBR: Record<string, string> = {
-  sunday: 'Sun', monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed',
-  thursday: 'Thu', friday: 'Fri', saturday: 'Sat',
+  sunday: 'Sun',
+  monday: 'Mon',
+  tuesday: 'Tue',
+  wednesday: 'Wed',
+  thursday: 'Thu',
+  friday: 'Fri',
+  saturday: 'Sat',
 };
 
 function formatOfficeHours(
@@ -257,6 +278,17 @@ function formatOfficeHours(
   return parts.length > 0 ? parts.join(', ') : null;
 }
 
+function decodeHtmlEntities(s: string): string {
+  return s
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&#x2B;/g, '+')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ');
+}
+
 function stripHtml(html: string | null | undefined): string | null {
   if (!html) return null;
   const text = html
@@ -266,6 +298,7 @@ function stripHtml(html: string | null | undefined): string | null {
     .replace(/&gt;/g, '>')
     .replace(/&nbsp;/g, ' ')
     .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
     .replace(/\s+/g, ' ')
     .trim();
   return text || null;
@@ -294,7 +327,7 @@ function extractMapImageUrl(
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Per-neighborhood normalization
+// Lifecycle status derivation (community-scraper-template §8)
 // ─────────────────────────────────────────────────────────────────────────
 
 function deriveCommunityStatus(
@@ -320,7 +353,8 @@ function formatPriceRange(
 ): string | null {
   if (min == null && max == null) return null;
   const fmt = (n: number) => `$${n.toLocaleString()}`;
-  if (min != null && max != null && min !== max) return `${fmt(min)} - ${fmt(max)}`;
+  if (min != null && max != null && min !== max)
+    return `${fmt(min)} - ${fmt(max)}`;
   return fmt((min ?? max)!);
 }
 
@@ -330,153 +364,17 @@ function formatSqftRange(
 ): string | null {
   if (min == null && max == null) return null;
   const fmt = (n: number) => n.toLocaleString();
-  if (min != null && max != null && min !== max) return `${fmt(min)} - ${fmt(max)}`;
+  if (min != null && max != null && min !== max)
+    return `${fmt(min)} - ${fmt(max)}`;
   return fmt((min ?? max)!);
 }
 
-function normalize(
-  n: DreesNeighborhood,
-  detail?: CommunityDetailData | null,
-): ScrapedDreesCommunityRow | null {
-  // Stable id. contentId is Drees' internal numeric id (preferred);
-  // productFavoriteId is a string like "AUST::PROV::PRV6" (fallback).
-  const id =
-    (n.contentId != null && Number.isFinite(n.contentId)
-      ? `content/${n.contentId}`
-      : null) ||
-    (n.productFavoriteId ? `fav/${n.productFavoriteId}` : null);
-  if (!id) return null;
-
-  // Title: prefer the marketing neighborhoodName ("The Hollows Sanctuary - 85'")
-  // and fall back to communityName.
-  const neighborhoodName = n.neighborhoodName?.trim() || null;
-  const communityName = n.communityName?.trim() || null;
-  const title = neighborhoodName || communityName || 'Drees community';
-
-  const city = n.cityName?.trim() || 'Austin';
-  const state = (n.stateInitials?.trim() || 'TX').toUpperCase();
-
-  const bedsMin = nonZeroOrNull(n.bedLow);
-  const bedsMax = nonZeroOrNull(n.bedHigh);
-  const bathsMin = combineBath(n.bathLow, n.halfBathLow);
-  const bathsMax = combineBath(n.bathHigh, n.halfBathHigh);
-  const sqftMin = nonZeroOrNull(n.sqFtLow);
-  const sqftMax = nonZeroOrNull(n.sqFtHigh);
-  const priceMin = nonZeroOrNull(n.priceLow);
-  const priceMax = nonZeroOrNull(n.priceHigh);
-
-  const gal = gallery(n.images);
-  const thumbnailUrl = gal?.[0] ?? null;
-
-  // Synthesize description per template §6.
-  const descParts: string[] = [];
-  if (title) descParts.push(`${title}.`);
-  const specParts: string[] = [];
-  if (n.planCount && n.planCount > 0) {
-    specParts.push(`${n.planCount} floor plan${n.planCount === 1 ? '' : 's'}`);
-  }
-  if (n.qmiCount && n.qmiCount > 0) {
-    specParts.push(
-      `${n.qmiCount} move-in ready home${n.qmiCount === 1 ? '' : 's'}`,
-    );
-  }
-  if (n.neighborhoodType && n.neighborhoodType.trim()) {
-    specParts.push(n.neighborhoodType.trim());
-  }
-  if (specParts.length > 0) descParts.push(specParts.join(', ') + '.');
-  const description = descParts.length > 0 ? descParts.join(' ') : null;
-
-  // communityData: build from API fields + enriched detail page data.
-  // API (view=floorplans) provides amenities, modelPhone, schoolDistricts,
-  // drivingDirections, officehoursList, mapImage. Detail page adds
-  // specialistName as a fallback.
-  const apiAmenities = extractAmenityNames(n.amenities);
-  const amenities = apiAmenities.length > 0
-    ? apiAmenities
-    : (detail?.amenities ?? []);
-  const schoolDistrict =
-    (n.schoolDistricts && n.schoolDistricts.length > 0
-      ? n.schoolDistricts[0]
-      : null) ?? detail?.schoolDistrict ?? null;
-  const officeHours = formatOfficeHours(n.officehoursList);
-  const directionsText = stripHtml(n.drivingDirections);
-  const directions = directionsText ? [directionsText] : [];
-  const phone = n.modelPhone ?? detail?.phoneNumber ?? null;
-  const specialistName = detail?.specialistName ?? null;
-  const mapImg = extractMapImageUrl(n.mapImage);
-  const allImages = [...(gal ?? [])];
-  if (mapImg && !allImages.includes(mapImg)) allImages.push(mapImg);
-
-  const communityData: CommunityData = {
-    communityName: communityName ?? neighborhoodName ?? title,
-    status: deriveCommunityStatus(n.neighborhoodType),
-    adultOnly: false,
-    availability: n.caption ?? null,
-    priceFrom: priceMin != null || priceMax != null
-      ? formatPriceRange(priceMin, priceMax)
-      : null,
-    sqftRange: sqftMin != null || sqftMax != null
-      ? formatSqftRange(sqftMin, sqftMax)
-      : null,
-    amenities,
-    homePlans: [],
-    schools: {
-      district: schoolDistrict,
-      list: [],
-    },
-    taxInfo: { entities: [], total: null },
-    salesOffice: {
-      address: fullAddress(n),
-      hours: officeHours,
-      phone,
-      specialistName,
-      lat: detail?.latitude ?? (typeof n.lat === 'number' ? n.lat : null),
-      lng: detail?.longitude ?? (typeof n.lng === 'number' ? n.lng : null),
-      directions,
-    },
-    imageUrls: allImages,
-  };
-
-  return {
-    externalId: `drees/${id}`,
-    builderName: 'Drees Homes',
-    title,
-    city,
-    state,
-    description,
-    bedsMin,
-    bedsMax,
-    bathsMin,
-    bathsMax,
-    sqftMin,
-    sqftMax,
-    priceMin,
-    priceMax,
-    thumbnailUrl,
-    galleryUrls: allImages,
-    flyerPdfUrl: null,
-    sourceUrl: normalizeUrl(n.url),
-    address: fullAddress(n),
-    communityName: communityName ?? neighborhoodName,
-    homeType: 'community',
-    communityData,
-  };
-}
-
 // ─────────────────────────────────────────────────────────────────────────
-// Community detail page enrichment
+// Detail page enrichment
 // ─────────────────────────────────────────────────────────────────────────
 //
-// The community list API returns neighborhood-level summary data but NOT
-// amenities, school districts, phone numbers, or precise lat/lng. These
-// live in the detail page HTML as embedded JSON. We fetch each community's
-// detail page to enrich the communityData object.
-
-const DETAIL_PAGE_HEADERS = {
-  'User-Agent': USER_AGENT,
-  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-  'Accept-Language': 'en-US,en;q=0.9',
-} as const;
+// The community list API (view=floorplans) returns most enriched fields.
+// The detail page HTML adds the new home specialist name as a fallback.
 
 type CommunityDetailData = {
   amenities: string[];
@@ -484,19 +382,8 @@ type CommunityDetailData = {
   phoneNumber: string | null;
   latitude: number | null;
   longitude: number | null;
-  mapImageUrl: string | null;
   specialistName: string | null;
 };
-
-function decodeHtmlEntities(s: string): string {
-  return s
-    .replace(/&#x27;/g, "'")
-    .replace(/&#x2B;/g, '+')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&nbsp;/g, ' ');
-}
 
 async function fetchCommunityDetailData(
   urlPath: string | null | undefined,
@@ -526,7 +413,7 @@ async function fetchCommunityDetailData(
 
   const decoded = html.replace(/&quot;/g, '"');
 
-  // Extract amenities JSON array
+  // Extract amenities JSON array (fallback when API doesn't return them)
   const amenities: string[] = [];
   const amenMatch = decoded.match(/"amenities"\s*:\s*\[/);
   if (amenMatch) {
@@ -537,7 +424,10 @@ async function fetchCommunityDetailData(
       if (decoded[i] === '[') depth++;
       else if (decoded[i] === ']') {
         depth--;
-        if (depth === 0) { end = i + 1; break; }
+        if (depth === 0) {
+          end = i + 1;
+          break;
+        }
       }
     }
     try {
@@ -547,7 +437,9 @@ async function fetchCommunityDetailData(
           amenities.push(decodeHtmlEntities(a.name));
         }
       }
-    } catch { /* parse failed — skip amenities */ }
+    } catch {
+      /* parse failed — skip amenities */
+    }
   }
 
   // Extract school district from FAQ
@@ -567,7 +459,7 @@ async function fetchCommunityDetailData(
   const phoneMatch = decoded.match(/"phoneNumber"\s*:\s*"([^"]+)"/);
   if (phoneMatch) phoneNumber = phoneMatch[1];
 
-  // Extract latitude/longitude (more precise from detail page)
+  // Extract latitude/longitude
   let latitude: number | null = null;
   let longitude: number | null = null;
   const latMatch = decoded.match(/"latitude"\s*:\s*([0-9.-]+)/);
@@ -575,19 +467,160 @@ async function fetchCommunityDetailData(
   if (latMatch) latitude = parseFloat(latMatch[1]);
   if (lngMatch) longitude = parseFloat(lngMatch[1]);
 
-  // Extract map image URL
-  let mapImageUrl: string | null = null;
-  const mapMatch = decoded.match(
-    /"mapImage"\s*:\s*\{[^}]*"imagePath"\s*:\s*"([^"]+)"/,
-  );
-  if (mapMatch) mapImageUrl = mapMatch[1];
-
   // Extract new home specialist name
   let specialistName: string | null = null;
-  const specialistMatch = decoded.match(/"newHomeSpecialistName"\s*:\s*"([^"]+)"/);
+  const specialistMatch = decoded.match(
+    /"newHomeSpecialistName"\s*:\s*"([^"]+)"/,
+  );
   if (specialistMatch) specialistName = specialistMatch[1];
 
-  return { amenities, schoolDistrict, phoneNumber, latitude, longitude, mapImageUrl, specialistName };
+  return {
+    amenities,
+    schoolDistrict,
+    phoneNumber,
+    latitude,
+    longitude,
+    specialistName,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Per-neighborhood normalization
+// ─────────────────────────────────────────────────────────────────────────
+
+function normalize(
+  n: DreesNeighborhood,
+  detail?: CommunityDetailData | null,
+): ScrapedCommunityRow | null {
+  // Stable externalId (community-scraper-template §4).
+  // Prefer numeric contentId; fall back to productFavoriteId string.
+  const id =
+    (n.contentId != null && Number.isFinite(n.contentId)
+      ? `content/${n.contentId}`
+      : null) ||
+    (n.productFavoriteId ? `fav/${n.productFavoriteId}` : null);
+  if (!id) return null;
+
+  // Title fallback ladder (§5): neighborhoodName → communityName → generic.
+  const neighborhoodName = n.neighborhoodName?.trim() || null;
+  const communityName = n.communityName?.trim() || null;
+  const title = neighborhoodName || communityName || 'Drees community';
+
+  const city = n.cityName?.trim() || 'Austin';
+  const state = (n.stateInitials?.trim() || 'TX').toUpperCase();
+
+  // Numeric ranges across plans.
+  const bedsMin = nonZeroOrNull(n.bedLow);
+  const bedsMax = nonZeroOrNull(n.bedHigh);
+  const bathsMin = combineBath(n.bathLow, n.halfBathLow);
+  const bathsMax = combineBath(n.bathHigh, n.halfBathHigh);
+  const sqftMin = nonZeroOrNull(n.sqFtLow);
+  const sqftMax = nonZeroOrNull(n.sqFtHigh);
+  const priceMin = nonZeroOrNull(n.priceLow);
+  const priceMax = nonZeroOrNull(n.priceHigh);
+
+  // Gallery + thumbnail (§7).
+  const gal = gallery(n.images);
+  const thumbnailUrl = gal[0] ?? null;
+
+  // Description: synthesize from structured fields (§6).
+  const descParts: string[] = [];
+  if (title) descParts.push(`${title}.`);
+  const specParts: string[] = [];
+  if (n.planCount && n.planCount > 0) {
+    specParts.push(
+      `${n.planCount} floor plan${n.planCount === 1 ? '' : 's'}`,
+    );
+  }
+  if (n.qmiCount && n.qmiCount > 0) {
+    specParts.push(
+      `${n.qmiCount} move-in ready home${n.qmiCount === 1 ? '' : 's'}`,
+    );
+  }
+  if (n.neighborhoodType && n.neighborhoodType.trim()) {
+    specParts.push(n.neighborhoodType.trim());
+  }
+  if (specParts.length > 0) descParts.push(specParts.join(', ') + '.');
+  const description = descParts.length > 0 ? descParts.join(' ') : null;
+
+  // communityData: build from API fields + detail page enrichment (§8).
+  const apiAmenities = extractAmenityNames(n.amenities);
+  const amenities =
+    apiAmenities.length > 0 ? apiAmenities : (detail?.amenities ?? []);
+  const schoolDistrict =
+    (n.schoolDistricts && n.schoolDistricts.length > 0
+      ? n.schoolDistricts[0]
+      : null) ??
+    detail?.schoolDistrict ??
+    null;
+  const officeHours = formatOfficeHours(n.officehoursList);
+  const directionsText = stripHtml(n.drivingDirections);
+  const directions = directionsText ? [directionsText] : [];
+  const phone = n.modelPhone ?? detail?.phoneNumber ?? null;
+  const specialistName = detail?.specialistName ?? null;
+  const mapImg = extractMapImageUrl(n.mapImage);
+  const allImages = [...gal];
+  if (mapImg && !allImages.includes(mapImg)) allImages.push(mapImg);
+
+  const communityData: CommunityData = {
+    communityName: communityName ?? neighborhoodName ?? title,
+    status: deriveCommunityStatus(n.neighborhoodType),
+    adultOnly: false,
+    availability: n.caption ?? null,
+    priceFrom:
+      priceMin != null || priceMax != null
+        ? formatPriceRange(priceMin, priceMax)
+        : null,
+    sqftRange:
+      sqftMin != null || sqftMax != null
+        ? formatSqftRange(sqftMin, sqftMax)
+        : null,
+    amenities,
+    homePlans: [],
+    schools: {
+      district: schoolDistrict,
+      list: [],
+    },
+    taxInfo: { entities: [], total: null },
+    salesOffice: {
+      address: fullAddress(n),
+      hours: officeHours,
+      phone,
+      specialistName,
+      lat:
+        detail?.latitude ??
+        (typeof n.lat === 'number' ? n.lat : null),
+      lng:
+        detail?.longitude ??
+        (typeof n.lng === 'number' ? n.lng : null),
+      directions,
+    },
+    imageUrls: allImages,
+  };
+
+  return {
+    externalId: `drees/${id}`,
+    builderName: 'Drees Homes',
+    title,
+    city,
+    state,
+    description,
+    bedsMin,
+    bedsMax,
+    bathsMin,
+    bathsMax,
+    sqftMin,
+    sqftMax,
+    priceMin,
+    priceMax,
+    flyerPdfUrl: null,
+    thumbnailUrl,
+    sourceUrl: normalizeUrl(n.url),
+    galleryUrls: allImages,
+    communityName: communityName ?? neighborhoodName,
+    homeType: 'community',
+    communityData,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -595,11 +628,11 @@ async function fetchCommunityDetailData(
 // ─────────────────────────────────────────────────────────────────────────
 
 export async function fetchDreesAustinCommunities(): Promise<{
-  rows: ScrapedDreesCommunityRow[];
+  rows: ScrapedCommunityRow[];
   rawCount: number;
   skipped: number;
 }> {
-  // pageSize 50 leaves headroom — Austin currently has 17 neighborhoods.
+  // pageSize 50 leaves headroom — Austin currently has ~17 neighborhoods.
   const body = {
     pageSize: 50,
     pageNumber: 1,
@@ -607,7 +640,7 @@ export async function fetchDreesAustinCommunities(): Promise<{
     selectedPoiContentIds: [],
     searchByArea: true,
     searchByCity: false,
-    sortBy: 'City',
+    sortBy: 'Price',
     sortOrder: 'Asc',
     view: 'floorplans',
     mapState: false,
@@ -648,8 +681,10 @@ export async function fetchDreesAustinCommunities(): Promise<{
     return { rows: [], rawCount: 0, skipped: 0 };
   }
 
-  // Enrich each community with detail page data (amenities, schools, phone, lat/lng).
-  const rows: ScrapedDreesCommunityRow[] = [];
+  // Enrich each community with detail page data (specialist name, lat/lng
+  // fallback, amenities/school fallback). Batched at CONCURRENCY=4 to be
+  // polite to dreeshomes.com.
+  const rows: ScrapedCommunityRow[] = [];
   let skipped = 0;
   const CONCURRENCY = 4;
   for (let i = 0; i < neighborhoods.length; i += CONCURRENCY) {

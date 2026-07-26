@@ -1,6 +1,8 @@
 // lib/scrapers/drees-promotions.ts
 //
-// Drees Homes — Promotions scraper (config-backed).
+// Drees Homes — Promotions scraper (100% rebuild).
+//
+// Conforms to docs/promotion-scraper-template.md.
 //
 // Unlike M/I Homes (which has public incentive pages to scrape), Drees does
 // NOT publish promotions on a public API or offers page. Their promotions
@@ -41,7 +43,7 @@ type DreesPromotionConfig = {
 // Each entry maps to ONE builder_inventory row with kind='promotion'.
 // The flyerPdfUrl + thumbnailUrl are Vercel Blob URLs from the manually-
 // uploaded assets (preserved across upserts). The description is verbatim
-// builder marketing copy — safe to auto-publish (S14).
+// builder marketing copy — safe to auto-publish (promotion-scraper-template §9).
 
 const DREES_PROMOTIONS: DreesPromotionConfig[] = [
   {
@@ -49,7 +51,7 @@ const DREES_PROMOTIONS: DreesPromotionConfig[] = [
     title: '2026 REALTOR REWARDS PROGRAM EARN MORE WITH DREES CUSTOM HOMES',
     description:
       "Don't leave money on the table!\n" +
-      "Drees truly values the relationships we have developed with our Realtor partners. " +
+      'Drees truly values the relationships we have developed with our Realtor partners. ' +
       "That's why we want you to make the most of your selling. With Drees Custom Homes, " +
       "you'll earn 4% commission on ALL sales from June 1 to September 30, 2026*.",
     promoType: 'broker_bonus',
