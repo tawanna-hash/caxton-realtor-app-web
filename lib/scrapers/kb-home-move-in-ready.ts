@@ -2,28 +2,17 @@
 //
 // KB Home Austin — Move-in-ready (MIR) homes scraper.
 //
-// Fetches the sitemap to enumerate Austin community URLs, then scrapes each
-// community page for the embedded `LocalQMIs` JavaScript array — KB's
-// "Quick Move-in" / move-in-ready inventory homes.
-//
-// Each MIR entry represents a SPECIFIC built home (not a plan) with:
-//   id              → externalId (KB's internal home ID)
-//   address         → street address
-//   price           → exact asking price
-//   bedrooms        → scalar (e.g. 3)
-//   bathrooms       → scalar (e.g. 2.5)
-//   garages         → scalar (e.g. 2)
-//   size            → sqft (string, e.g. "1780")
-//   stories         → string (e.g. "2")
-//   moveInDate      → ISO date (e.g. "2025-08-22T00:00:00+00:00")
-//   moveInDateCopy  → display text (e.g. "Available Now")
-//   mlsNumber       → MLS number
-//   thumbnailImage  → exterior photo
-//   galleryPhotos   → array of { image, caption, alternateText }
-//   communityName    → community name
-//   city/state/zipCode → location
-//   communityOfficePhone → sales counselor phone
-//   amenities       → e.g. "CoveredPatio"
+// Two-phase scrape:
+//   Phase 1: Sitemap → community pages → extract `LocalQMIs` JSON array
+//            (basic home data: price, beds, baths, sqft, gallery photos,
+//             description, community info, MLS#)
+//   Phase 2: For each MIR home, fetch its detail page (/mir?homesite={id})
+//            to extract:
+//            - kb-vu.com interactive floor plan URL
+//            - Full amenities pictograms with labels (e.g. "Spacious living
+//              room", "Walk-in kitchen pantry", "Smart thermostat")
+//            - Any additional photos not in LocalQMIs
+//            - Zillow interactive tour link (if present)
 //
 // `homeType = 'showcase'`, `kind = 'listing'`.
 // Public surface: realtynewsnow.app/inventory/[id].
@@ -70,6 +59,7 @@ export type ScrapedKBHomeMIRRow = {
   planName: string | null;
   communityName: string | null;
   homeType: 'showcase';
+  floorPlanUrl: string | null;
   extraDetails: Record<string, string> | null;
 };
 
@@ -113,8 +103,13 @@ type KBMIRHome = {
   communityOfficePhone?: string | null;
   communityOfficeAddress?: string | null;
   communityDirections?: string | null;
+  communityHighlights?: string[] | null;
+  communityPriceStatus?: string | null;
+  communityCityState?: string | null;
+  floorPlanLink?: string | null;
   pageUrl?: string | null;
   isTourable?: boolean | null;
+  description?: unknown;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -123,6 +118,7 @@ type KBMIRHome = {
 
 function decodeEntities(s: string): string {
   return s
+    .replace(/&#x27;/gi, "'")
     .replace(/&#x2019;/gi, '\u2019')
     .replace(/&#x201C;/gi, '\u201C')
     .replace(/&#x201D;/gi, '\u201D')
@@ -145,7 +141,7 @@ function decodeEntities(s: string): string {
     .replace(/&copy;/gi, '\u00A9');
 }
 
-function truncateText(s: string | null | undefined, maxLen = 400): string | null {
+function truncateText(s: string | null | undefined, maxLen = 800): string | null {
   if (!s) return null;
   const decoded = decodeEntities(s).replace(/\s+/g, ' ').trim();
   if (decoded.length === 0) return null;
@@ -245,6 +241,76 @@ function extractJSArray(html: string, varName: string): unknown[] | null {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// MIR detail page enrichment
+// ─────────────────────────────────────────────────────────────────────────
+
+type MIRDetailEnrichment = {
+  floorPlanUrl: string | null;
+  amenities: string[] | null;
+  zillowTourUrl: string | null;
+  extraPhotos: string[];
+};
+
+function parseMIRDetailPage(html: string): MIRDetailEnrichment {
+  // 1. Floor plan URL — KB uses kb-vu.com interactive floor plan viewer
+  let floorPlanUrl: string | null = null;
+  const fpMatch = html.match(
+    /https:\/\/kb-vu\.com\/plan\/[A-Za-z0-9._-]+(?:\?[^"'\s&]+(?:&[^"'\s&]+)*)?/,
+  );
+  if (fpMatch) {
+    floorPlanUrl = fpMatch[0]
+      .replace(/&amp;/g, '&')
+      .replace(/&#x27;/g, "'");
+  }
+
+  // 2. Amenities pictograms with labels
+  // Pattern: floorplan-pictograms/{slug}.svg"></div>...<span>{Label}</span>
+  const amenities: string[] = [];
+  const amenRe =
+    /floorplan-pictograms\/([a-z-]+)\.svg"[^>]*><\/div>\s*<span>([^<]+)<\/span>/g;
+  let amenMatch: RegExpExecArray | null;
+  while ((amenMatch = amenRe.exec(html)) !== null) {
+    const label = decodeEntities(amenMatch[2].trim());
+    if (label && !amenities.includes(label)) {
+      amenities.push(label);
+    }
+  }
+  amenRe.lastIndex = 0;
+
+  // 3. Zillow interactive tour link
+  let zillowTourUrl: string | null = null;
+  const zillowMatch = html.match(
+    /https:\/\/www\.zillow\.com\/view-imx\/[a-f0-9-]+[^"'\s]*/,
+  );
+  if (zillowMatch) {
+    zillowTourUrl = zillowMatch[0]
+      .replace(/&amp;/g, '&')
+      .replace(/&#x27;/g, "'");
+  }
+
+  // 4. Any additional photos not already captured
+  // Look for all globalassets image URLs
+  const extraPhotos: string[] = [];
+  const photoRe =
+    /(?:src|data-src)="([^"]*globalassets\/images\/community-images[^"]*)"/g;
+  let photoMatch: RegExpExecArray | null;
+  while ((photoMatch = photoRe.exec(html)) !== null) {
+    const u = resolveUrl(photoMatch[1]);
+    if (u && !extraPhotos.includes(u)) {
+      extraPhotos.push(u);
+    }
+  }
+  photoRe.lastIndex = 0;
+
+  return {
+    floorPlanUrl,
+    amenities: amenities.length > 0 ? amenities : null,
+    zillowTourUrl,
+    extraPhotos,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // HTTP
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -280,7 +346,11 @@ async function fetchAustinCommunityUrls(): Promise<string[]> {
 // Per-home normalization
 // ─────────────────────────────────────────────────────────────────────────
 
-function normalize(home: KBMIRHome, communityUrl: string): ScrapedKBHomeMIRRow | null {
+function normalize(
+  home: KBMIRHome,
+  communityUrl: string,
+  enrichment: MIRDetailEnrichment | null,
+): ScrapedKBHomeMIRRow | null {
   const id = home.id;
   if (id == null || !Number.isFinite(id)) return null;
 
@@ -288,15 +358,18 @@ function normalize(home: KBMIRHome, communityUrl: string): ScrapedKBHomeMIRRow |
   const communityName = home.communityName?.trim() || null;
   const address = home.address?.trim() || null;
 
-  // Title: "Plan 1780 at Creekside at Estancia" or "MIR Lot 134 at ..."
-  const planName = home.name?.trim() || null;
+  // Title: prefer "Plan {planName} at {community}" — use floorPlanLink if name is generic
+  const rawName = home.name?.trim() || null;
+  const planName = rawName && !rawName.match(/^MIR Lot/i)
+    ? rawName
+    : null;
   let title: string;
   if (planName && communityName) {
     title = `${planName} at ${communityName}`;
-  } else if (planName) {
-    title = planName;
   } else if (communityName) {
-    title = `Move-in ready home at ${communityName}`;
+    // Use address for a more descriptive title
+    const lotLabel = home.homesite ? ` (Lot ${home.homesite})` : '';
+    title = `Move-in ready home at ${communityName}${lotLabel}`;
   } else {
     title = `KB Home move-in ready home ${id}`;
   }
@@ -309,7 +382,7 @@ function normalize(home: KBMIRHome, communityUrl: string): ScrapedKBHomeMIRRow |
   const sqft = toNum(home.size);
   const price = toNum(home.price);
 
-  // Gallery: prefer galleryPhotos, fall back to websitePhotos, then thumbnail.
+  // Gallery: merge galleryPhotos + websitePhotos + enrichment photos, dedupe by URL.
   const galleryRaw: string[] = [];
   const photoSources: KBPhoto[] = [
     ...(home.galleryPhotos ?? []),
@@ -319,6 +392,12 @@ function normalize(home: KBMIRHome, communityUrl: string): ScrapedKBHomeMIRRow |
     const u = resolveUrl(p?.image);
     if (u && !galleryRaw.includes(u)) galleryRaw.push(u);
   }
+  // Add any additional photos from the detail page
+  if (enrichment) {
+    for (const p of enrichment.extraPhotos) {
+      if (p && !galleryRaw.includes(p)) galleryRaw.push(p);
+    }
+  }
   const thumbnailUrl = resolveUrl(home.thumbnailImage?.image);
   if (thumbnailUrl && !galleryRaw.includes(thumbnailUrl)) {
     galleryRaw.unshift(thumbnailUrl);
@@ -326,38 +405,71 @@ function normalize(home: KBMIRHome, communityUrl: string): ScrapedKBHomeMIRRow |
   const galleryUrls = galleryRaw.length > 0 ? galleryRaw : null;
 
   const readyDate = dateOnly(home.moveInDate);
-  const sourceUrl = home.pageUrl ? resolveUrl(home.pageUrl) : communityUrl;
+  const sourceUrl = home.pageUrl
+    ? resolveUrl(home.pageUrl)
+    : communityUrl;
 
-  // Extra details.
+  // Extra details — comprehensive capture.
   const extraDetails: Record<string, string> = {};
-  if (home.stories) extraDetails['Stories'] = home.stories;
+  if (home.stories) extraDetails['Stories'] = String(home.stories);
   const garages = toNum(home.garages);
   if (garages !== null) extraDetails['Garage'] = `${garages}-car`;
-  if (home.amenities) extraDetails['Amenities'] = home.amenities;
+  if (home.style) extraDetails['Style'] = home.style;
+  if (home.homesite != null) extraDetails['Lot'] = String(home.homesite);
   if (home.mlsNumber) extraDetails['MLS#'] = String(home.mlsNumber);
   if (home.mlsIdentifier) extraDetails['MLS'] = home.mlsIdentifier;
   if (home.moveInDateCopy) extraDetails['Availability'] = home.moveInDateCopy;
   if (home.isTourable) extraDetails['Tourable'] = 'Yes';
-  if (home.communityOfficePhone) extraDetails['Phone'] = home.communityOfficePhone;
   if (home.zipCode) extraDetails['ZIP'] = home.zipCode;
+  if (home.pricedFromDisplayText) extraDetails['Price Display'] = home.pricedFromDisplayText;
+  if (home.sizeDisplayText) extraDetails['Sq Ft Display'] = home.sizeDisplayText;
+  // Sales office info
+  if (home.communityOfficePhone) extraDetails['Phone'] = home.communityOfficePhone;
+  if (home.communityOfficeAddress) extraDetails['Sales Office'] = home.communityOfficeAddress;
+  if (home.communityDirections) extraDetails['Directions'] = decodeEntities(home.communityDirections);
+  if (home.communityPriceStatus) extraDetails['Price Range'] = home.communityPriceStatus;
+  if (home.communityCityState) extraDetails['Community'] = home.communityCityState;
+  if (home.floorPlanLink) extraDetails['Plan ID'] = home.floorPlanLink;
+  // Amenity tag from LocalQMIs (e.g. "CoveredPatio")
+  if (home.amenities) extraDetails['Home Amenities'] = home.amenities;
+  // Enriched amenities from detail page (pictogram labels)
+  if (enrichment?.amenities && enrichment.amenities.length > 0) {
+    extraDetails['Features'] = enrichment.amenities.join(', ');
+  }
+  // Community highlights
+  if (home.communityHighlights && home.communityHighlights.length > 0) {
+    extraDetails['Community Highlights'] = home.communityHighlights.join('; ');
+  }
+  // Zillow tour link
+  if (enrichment?.zillowTourUrl) extraDetails['Virtual Tour'] = enrichment.zillowTourUrl;
 
   // Description: prefer KB's embedded description, else synthesize.
-  let description: string | null = null;
-  // The description field is on the raw MIR object — we need to pass it through.
-  // Since extractJSArray returns raw parsed JSON, the description object is
-  // available on the home entry.
-  const descParts: string[] = [];
-  if (planName && communityName) descParts.push(`${planName} at ${communityName}.`);
-  else if (communityName) descParts.push(`Move-in ready home at ${communityName}.`);
-  const specParts: string[] = [];
-  if (beds !== null) specParts.push(`${beds} bedrooms`);
-  if (baths !== null) specParts.push(`${baths} bathrooms`);
-  if (sqft !== null) specParts.push(`${sqft.toLocaleString()} sq ft`);
-  if (price !== null) specParts.push(`$${price.toLocaleString()}`);
-  if (specParts.length) descParts.push(specParts.join(', ') + '.');
-  if (readyDate) descParts.push(`Ready ${readyDate}.`);
-  if (address) descParts.push(`Located at ${address}.`);
-  description = descParts.join(' ').trim() || null;
+  const kbDesc = extractDescription(home.description);
+  let description: string | null;
+  if (kbDesc) {
+    // Append amenities/features to the description for searchability
+    const featParts: string[] = [kbDesc];
+    if (enrichment?.amenities && enrichment.amenities.length > 0) {
+      featParts.push(`Features: ${enrichment.amenities.join(', ')}.`);
+    }
+    description = featParts.join(' ');
+  } else {
+    const descParts: string[] = [];
+    if (planName && communityName) descParts.push(`${planName} at ${communityName}.`);
+    else if (communityName) descParts.push(`Move-in ready home at ${communityName}.`);
+    const specParts: string[] = [];
+    if (beds !== null) specParts.push(`${beds} bedrooms`);
+    if (baths !== null) specParts.push(`${baths} bathrooms`);
+    if (sqft !== null) specParts.push(`${sqft.toLocaleString()} sq ft`);
+    if (price !== null) specParts.push(`$${price.toLocaleString()}`);
+    if (specParts.length) descParts.push(specParts.join(', ') + '.');
+    if (readyDate) descParts.push(`Ready ${readyDate}.`);
+    if (address) descParts.push(`Located at ${address}.`);
+    if (enrichment?.amenities && enrichment.amenities.length > 0) {
+      descParts.push(`Features: ${enrichment.amenities.join(', ')}.`);
+    }
+    description = descParts.join(' ').trim() || null;
+  }
 
   return {
     externalId,
@@ -383,6 +495,7 @@ function normalize(home: KBMIRHome, communityUrl: string): ScrapedKBHomeMIRRow |
     planName,
     communityName,
     homeType: 'showcase',
+    floorPlanUrl: enrichment?.floorPlanUrl ?? null,
     extraDetails: Object.keys(extraDetails).length > 0 ? extraDetails : null,
   };
 }
@@ -421,13 +534,32 @@ export async function fetchKBHomeAustinMIR(): Promise<{
       if (!mirList || mirList.length === 0) continue; // community has no MIR homes
 
       for (const home of mirList) {
-        // Try to extract the description from the raw home object.
-        const rawHome = home as KBMIRHome & { description?: unknown };
-        const row = normalize(home, url);
+        const id = home.id;
+        if (id == null || !Number.isFinite(id)) {
+          skipped++;
+          continue;
+        }
+
+        // Phase 2: fetch the MIR detail page for enrichment data
+        let enrichment: MIRDetailEnrichment | null = null;
+        const detailUrl = home.pageUrl
+          ? resolveUrl(home.pageUrl)
+          : null;
+        if (detailUrl) {
+          try {
+            const detailHtml = await fetchUrl(detailUrl);
+            enrichment = parseMIRDetailPage(detailHtml);
+          } catch (err) {
+            // Non-fatal — we still have the LocalQMIs data
+            const msg = err instanceof Error ? err.message : String(err);
+            console.warn(
+              `[kb-home-mir] detail page fetch failed for home ${id} (${detailUrl}): ${msg}`,
+            );
+          }
+        }
+
+        const row = normalize(home, url, enrichment);
         if (row) {
-          // Override description with KB's embedded one if available.
-          const kbDesc = extractDescription(rawHome.description);
-          if (kbDesc) row.description = kbDesc;
           rows.push(row);
         } else {
           skipped++;

@@ -13,9 +13,10 @@ import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-// Sitemap + 14 community fetches (most will have 0 MIR homes). ~7s on happy
-// path. 150s gives headroom for Neon cold starts and retries.
-export const maxDuration = 150;
+// Sitemap + 14 community fetches + up to ~128 MIR detail page fetches.
+// ~7s for communities + ~64s for detail pages = ~71s on happy path.
+// 300s gives headroom for Neon cold starts, retries, and slow responses.
+export const maxDuration = 300;
 
 const SCRAPER_SUBMITTER_NAME = 'KB Home Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-kb-home@harmonyone.system';
@@ -78,7 +79,10 @@ async function runScrape() {
         planName: row.planName,
         communityName: row.communityName,
         homeType: row.homeType,
-        extraDetails: row.extraDetails,
+        extraDetails: {
+          ...row.extraDetails,
+          ...(row.floorPlanUrl ? { 'Floor Plan': row.floorPlanUrl } : {}),
+        },
       });
       if (result.created) inserted++;
       else updated++;
