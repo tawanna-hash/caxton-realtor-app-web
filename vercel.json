@@ -57,8 +57,16 @@
       "schedule": "15 15 * * *"
     },
     {
-      "path": "/api/cron/scrape-kb-home",
+      "path": "/api/cron/scrape-kb-home-communities",
       "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-kb-home-move-in-ready",
+      "schedule": "15 16 * * *"
+    },
+    {
+      "path": "/api/cron/scrape-kb-home-promotions",
+      "schedule": "30 16 * * *"
     },
     {
       "path": "/api/cron/scrape-david-weekley",
