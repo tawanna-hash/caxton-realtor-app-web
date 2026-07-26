@@ -599,14 +599,24 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       'https://santaritaranchaustin.com/wp-content/uploads/2022/05/splash-957x1024.jpg',
     ],
     amenities: [
-      'Ranch House (pool, splash pad, lounge areas)',
-      'Ranch Camp amenity center',
-      'Wellness Barn',
-      'The Hub / The Green',
-      'P-L-A-Y Park',
-      'Pickleball Courts',
-      'Nature Trails (miles of trails)',
-      'Farm House Welcome Center',
+      'Ranch House',
+      'Ranch Camp Amenity Center',
+      'The Paddock (newest amenity)',
+      'The Green Play Park',
+      'Happyland Play Park',
+      'Happy\'s Wellness Barn (fitness center)',
+      'Resort-Style Pools',
+      'Giant Water Slides (Big and Lil\' Dip)',
+      'Kids\' Splash Parks and Pool',
+      'Pickleball Courts (Indoor & Outdoor)',
+      'Memorial Plaza',
+      'Nature Trails',
+      'Catch-and-Release Fishing Lakes (Ed\'s Lake, C.A.\'s Lake)',
+      'Dog Park',
+      'The Hub Clubhouse',
+      'BBQ Barn',
+      'Cabanas and Lounge Areas',
+      'Regency Clubhouse (55+ exclusive)',
     ],
     builders: buildersInCommunity,
     salesOffice: {
@@ -649,10 +659,14 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       externalId: 'srr-neighborhood/homestead',
       sourceUrl: 'https://santaritaranchaustin.com/neighborhoods/homestead-neighborhood/',
       description:
-        'Homestead is one of the newest neighborhoods at Santa Rita Ranch, featuring its own information center ' +
-        'and the brand-new Ranch Camp amenity center with a resort-style pool, splash pad, and lounge areas. ' +
-        'New homes from the low $400s to $3 million+. Residents are within walking distance of Tierra Rosa Elementary ' +
-        'and Santa Rita Middle School, zoned to the A+ rated Liberty Hill ISD.',
+        'Say hello to our Homestead village! An area that promises to bring every flavor of fun ' +
+        '(not to mention, a fresh roundup of dream homes!). With new homes from the low $400s \u2013 $3 million+, ' +
+        'there\u2019s a perfectly matched dream home for everyone in this new neighborhood on The Ranch. ' +
+        'Homestead neighborhood features its own information center where homebuyers can learn more about ' +
+        'the award-winning amenities and builders at Santa Rita Ranch. Residents will be within walking distance ' +
+        'of our brand new amenity center Ranch Camp, complete with a resort-style pool, splash pad, lounge areas, ' +
+        'and so much more. This neighborhood is right across from Tierra Rosa Elementary and Santa Rita Middle School ' +
+        'and is zoned to A+ rated school district Liberty Hill ISD.',
       status: null,
       builders: [
         'CastleRock Communities', 'Coventry Homes', 'Highland Homes',
@@ -681,10 +695,11 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       externalId: 'srr-neighborhood/tierra-rosa',
       sourceUrl: 'https://santaritaranchaustin.com/neighborhoods/tierra-rosa-neightborhood/',
       description:
-        'Tierra Rosa is the second neighborhood at Santa Rita Ranch, home to The Ranch House with dual water slides, ' +
-        'splash pad, great lawn, stargazer patio, and Happy\'s Wellness Barn. The neighborhood features miles of nature ' +
-        'trails and two catch-and-release fishing lakes: Ed\'s Lake and C.A.\'s Lake. Zoned to Georgetown ISD and home ' +
-        'to San Gabriel Elementary.',
+        'Slide into fun in Tierra Rosa Santa Rita Ranch. Our second neighborhood joined The Ranch with a splash, ' +
+        'bringing our Ranch House Pool with Dual Water Slides, Big and Lil\u2019 Dip, to the community, as well as ' +
+        'the Splash Pad, Great Lawn, Stargazer Patio, Happy\u2019s Wellness Barn, miles of nature trails, and even ' +
+        'two Catch-and-Release Fishing Lakes: Ed\u2019s Lake and C.A.\u2019s Lake. Zoned to Georgetown ISD and the home ' +
+        'of San Gabriel Elementary.',
       status: null,
       builders: [
         'Chesmar Homes', 'Pulte Homes', 'Highland Homes',
@@ -713,10 +728,11 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       externalId: 'srr-neighborhood/saddleback',
       sourceUrl: 'https://santaritaranchaustin.com/neighborhoods/saddleback-neighborhood/',
       description:
-        'Saddleback is a future neighborhood at Santa Rita Ranch, located on Ronald Reagan near Divine Savior Academy. ' +
-        'The neighborhood will feature new homes by Pulte Homes and GFO Home, along with a model home park. ' +
-        'Plans include a future amenity center with resort-style pool, playscape, indoor and outdoor pickleball, ' +
-        'trike track, and covered pavilion. Students are zoned to the A-rated Liberty Hill ISD.',
+        'At Santa Rita Ranch, you can always count on more excitement. That\u2019s why we\u2019re thrilled to introduce ' +
+        'Saddleback in Liberty Hill, a vibrant neighborhood located on Ronald Reagan, right by Divine Savior Academy. ' +
+        'The Saddleback neighborhood features new homes by Pulte Homes and GFO Home, along with a model home park! ' +
+        'Residents of this neighborhood have access to all current amenities, plus plans for a future amenity center ' +
+        'within Saddleback. Students living here are zoned to the A-rated Liberty Hill ISD.',
       status: null,
       builders: ['Pulte Homes', 'GFO Home'],
       amenities: [
@@ -736,10 +752,11 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       externalId: 'srr-neighborhood/regency-55',
       sourceUrl: 'https://santaritaranchaustin.com/neighborhoods/active-adult-community/',
       description:
-        'Regency at Santa Rita Ranch is a brand-new 55+ active adult community by Toll Brothers. ' +
-        'The community features 15 floor plans, a clubhouse with resort-style pool, pickleball, bocce ball, ' +
-        'cafe & bar, game lounge, catering room, event lawn, and more. Regency residents also have access ' +
-        'to all amenities across Santa Rita Ranch.',
+        'Our beautiful, brand-new 55+ community, where you can experience life exactly the way you\u2019ve envisioned it. ' +
+        'With a line-up of amenities, events, clubs and more for everyone, there\u2019s always something fun happening here. ' +
+        'Discover 15 especially-for-you floor plans and unique amenities that enhance the activities you already enjoy. ' +
+        'Where the acclaimed Santa Rita Ranch lifestyle meets Toll Brothers\u2019 renowned craftsmanship. ' +
+        'Regency residents also have access to all amenities in Santa Rita Ranch.',
       status: null,
       adultOnly: true,
       builders: ['Toll Brothers'],
@@ -763,10 +780,12 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       externalId: 'srr-neighborhood/eldorado',
       sourceUrl: 'https://santaritaranchaustin.com/neighborhoods/eldorado/',
       description:
-        'Eldorado is the newest village at Santa Rita Ranch, designed for those seeking adventure, connection, ' +
-        'and a home that fits their lifestyle. New homes by Perry Homes and Toll Brothers offer stunning designs, ' +
-        'modern features, and access to award-winning amenities including resort-style pools, nature trails, ' +
-        'indoor and outdoor pickleball, trike track, and covered pavilion.',
+        'Welcome to Eldorado, the newest village at Santa Rita Ranch! This vibrant new neighborhood is designed ' +
+        'for those seeking adventure, connection, and a home that fits their lifestyle. New homes in Eldorado offer ' +
+        'stunning designs, modern features, and access to award-winning amenities. With resort-style pools, nature ' +
+        'trails, and highly rated schools, this community blends convenience with Hill Country charm. ' +
+        'Perry Homes brings stylish, thoughtfully designed homes to the neighborhood, and Toll Brothers is now selling ' +
+        'in Eldorado, known for luxury finishes and exceptional craftsmanship.',
       status: null,
       builders: ['Perry Homes', 'Toll Brothers'],
       amenities: [
@@ -777,6 +796,38 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
         'Trike Track',
         'Covered Pavilion',
         'Nature Trails',
+      ],
+      ogImage: 'https://santaritaranchaustin.com/wp-content/uploads/2022/05/The-Green4-1024x682.jpg',
+    },
+    {
+      slug: 'south-neighborhood',
+      name: 'South',
+      externalId: 'srr-neighborhood/south',
+      sourceUrl: 'https://santaritaranchaustin.com/neighborhoods/south-neighborhood/',
+      description:
+        'Welcome to the South Neighborhood at Santa Rita Ranch. Discover our first neighborhood, ' +
+        'Santa Rita Ranch South. This village boasts tons of ways to have fun along the way with our largest ' +
+        'and first play park amenity, The Green. This state-of-the-art play park includes The Green lawn, ' +
+        'outdoor exercise area, outdoor pavilion, basketball courts, sand volleyball, and is right next door ' +
+        'to The Hub clubhouse and pool. You can also enjoy family bonds at our one-of-a-kind park for tots ' +
+        'at Hideaway park or get to know the furry friends in the neighborhood at our Dog Park. Zoned to ' +
+        'Liberty Hill ISD and home to our first onsite elementary school, Santa Rita Elementary.',
+      status: null,
+      builders: [],
+      amenities: [
+        'The Green Play Park',
+        'The Green Lawn',
+        'Outdoor Exercise Area',
+        'Outdoor Pavilion',
+        'Basketball Courts',
+        'Sand Volleyball',
+        'The Hub Clubhouse and Pool',
+        'Hideaway Park',
+        'Dog Park',
+      ],
+      schoolDistrict: 'Liberty Hill ISD',
+      schools: [
+        { name: 'Santa Rita Elementary' },
       ],
       ogImage: 'https://santaritaranchaustin.com/wp-content/uploads/2022/05/The-Green4-1024x682.jpg',
     },
@@ -862,6 +913,8 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
     const sM = rs.length > 0 ? Math.max(...rs.map((r) => r.sqftMax ?? 0)) : null;
     const bm = rs.length > 0 ? Math.min(...rs.map((r) => r.bedsMin ?? Infinity)) : null;
     const bM = rs.length > 0 ? Math.max(...rs.map((r) => r.bedsMax ?? 0)) : null;
+    const bm2 = rs.length > 0 ? Math.min(...rs.map((r) => r.bathsMin ?? Infinity)) : null;
+    const bM2 = rs.length > 0 ? Math.max(...rs.map((r) => r.bathsMax ?? 0)) : null;
     return {
       priceMin: rs.length > 0 && Number.isFinite(pm) ? pm : null,
       priceMax: rs.length > 0 && Number.isFinite(pM) ? pM : null,
@@ -869,6 +922,8 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       sqftMax: rs.length > 0 && Number.isFinite(sM) ? sM : null,
       bedsMin: rs.length > 0 && Number.isFinite(bm) ? bm : null,
       bedsMax: rs.length > 0 && Number.isFinite(bM) ? bM : null,
+      bathsMin: rs.length > 0 && Number.isFinite(bm2) ? bm2 : null,
+      bathsMax: rs.length > 0 && Number.isFinite(bM2) ? bM2 : null,
     };
   }
 
@@ -887,7 +942,9 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       sqftRange: agg.sqftMin != null && agg.sqftMax != null
         ? `${agg.sqftMin.toLocaleString()} \u2013 ${agg.sqftMax.toLocaleString()}`
         : null,
-      imageUrls: nb.ogImage ? [nb.ogImage] : [],
+      imageUrls: nb.ogImage
+        ? [nb.ogImage, ...nbHomes.slice(0, 5).flatMap((h) => h.galleryUrls?.slice(0, 2) ?? [])]
+        : [],
       amenities: nb.amenities,
       builders: nb.builders,
       schools: nb.schoolDistrict
@@ -915,8 +972,8 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       description: nb.description,
       bedsMin: agg.bedsMin,
       bedsMax: agg.bedsMax,
-      bathsMin: null,
-      bathsMax: null,
+      bathsMin: agg.bathsMin,
+      bathsMax: agg.bathsMax,
       sqftMin: agg.sqftMin,
       sqftMax: agg.sqftMax,
       priceMin: agg.priceMin,
@@ -924,7 +981,9 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       flyerPdfUrl: null,
       sourceUrl: nb.sourceUrl,
       thumbnailUrl: nb.ogImage ?? 'https://santaritaranchaustin.com/wp-content/uploads/2021/10/SRR-Slides-Balloon-Photo.png',
-      galleryUrls: nb.ogImage ? [nb.ogImage] : null,
+      galleryUrls: nb.ogImage
+        ? [nb.ogImage, ...nbHomes.slice(0, 5).flatMap((h) => h.galleryUrls?.slice(0, 2) ?? [])]
+        : null,
       address: null,
       readyDate: null,
       planName: null,
@@ -953,14 +1012,24 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       'https://santaritaranchaustin.com/wp-content/uploads/2022/05/splash-957x1024.jpg',
     ],
     amenities: [
-      'Ranch House (pool, splash pad, lounge areas)',
-      'Ranch Camp amenity center',
-      'Wellness Barn',
-      'The Hub / The Green',
-      'P-L-A-Y Park',
-      'Pickleball Courts',
-      'Nature Trails (miles of trails)',
-      'Farm House Welcome Center',
+      'Ranch House',
+      'Ranch Camp Amenity Center',
+      'The Paddock (newest amenity)',
+      'The Green Play Park',
+      'Happyland Play Park',
+      'Happy\'s Wellness Barn (fitness center)',
+      'Resort-Style Pools',
+      'Giant Water Slides (Big and Lil\' Dip)',
+      'Kids\' Splash Parks and Pool',
+      'Pickleball Courts (Indoor & Outdoor)',
+      'Memorial Plaza',
+      'Nature Trails',
+      'Catch-and-Release Fishing Lakes (Ed\'s Lake, C.A.\'s Lake)',
+      'Dog Park',
+      'The Hub Clubhouse',
+      'BBQ Barn',
+      'Cabanas and Lounge Areas',
+      'Regency Clubhouse (55+ exclusive)',
     ],
     builders: buildersInCommunity,
     salesOffice: {
