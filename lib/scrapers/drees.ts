@@ -578,8 +578,10 @@ async function fetchCommunityPlans(
 // Fetches a plan's detail page and extracts the first exterior elevation
 // image. Drees' plan API always returns images=null, but each plan's own
 // detail page embeds a JSON gallery with imagePath URLs for exterior photos
-// and elevation renders. We grab the first JPG imagePath (the primary
-// exterior photo shown on Drees' floorplan cards).
+// and elevation renders. We grab the first non-SVG imagePath (the primary
+// exterior photo shown on Drees' floorplan cards). Some elevation render
+// URLs (ending in -jpg) 404 on the CDN, so we prefer exterior photos
+// which always appear first in the gallery JSON.
 async function fetchPlanElevationImage(
   planUrl: string | null | undefined,
 ): Promise<string | null> {
@@ -607,12 +609,20 @@ async function fetchPlanElevationImage(
     .replace(/&#39;/g, "'")
     .replace(/&amp;/g, '&');
 
-  // Find the first imagePath that's a JPG (not SVG floor plan).
-  // Exterior photos appear first in the page JSON.
+  // Find the first imagePath that's a photo (not SVG floor plan).
+  // Exterior photos appear first in the page JSON, before elevation
+  // renders and SVG floor plans. We match ALL imagePath values and
+  // return the first one that isn't an SVG.
   const imgRe =
-    /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/transform\/[^"]+[-.]jpg)"/i;
-  const m = imgRe.exec(decoded);
-  return m ? m[1] : null;
+    /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/transform\/[^"]+)"/g;
+  let m: RegExpExecArray | null;
+  while ((m = imgRe.exec(decoded)) !== null) {
+    const url = m[1];
+    if (!url.endsWith('.svg') && !url.includes('-svg')) {
+      return url;
+    }
+  }
+  return null;
 }
 
 // Batch-fetch elevation images for all plans in a community.
@@ -668,7 +678,7 @@ function toHomePlan(
   const imageUrl =
     p.images && p.images.length > 0
       ? withImageTransform(p.images[0].imagePath ?? p.images[0].path, 800)
-      : planImageUrl ?? fallbackImageUrl ?? null;
+      : withImageTransform(planImageUrl, 800) ?? fallbackImageUrl ?? null;
 
   return {
     name: p.planName ?? 'Floor Plan',
