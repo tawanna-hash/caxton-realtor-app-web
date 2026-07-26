@@ -818,7 +818,7 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       const ed = h.extraDetails as Record<string, string> | null;
       const floorplanUrl = ed?._floorplanUrl ?? null;
       const gallery = h.galleryUrls ?? [];
-      const imageUrl = floorplanUrl ?? gallery[0] ?? null;
+      const imageUrl = gallery[0] ?? null;
       const sqft = h.sqftMin ?? h.sqftMax;
       const builder = h.title.split(' \u2014 ')[1] ?? h.builderName ?? 'Plan';
       const beds = h.bedsMin != null ? String(h.bedsMin) : null;
