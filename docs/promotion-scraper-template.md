@@ -350,6 +350,30 @@ Promotion scrapers are usually light (one list page + a few offer pages).
 - **Extract and enforce expiration dates.** Promotions often have an end date
   embedded in the marketing copy (e.g. "sign a purchase agreement by 7/31/26",
   "offer valid through August 31, 2026"). Parse these into `expiresAt` (ISO
-  `YYYY-MM-DD`). If the promotion is already expired, **skip it** — return
-  empty rows so the prune pass deletes the stale row. Don't upsert expired
-  promotions.
+  `YYYY-MM-DD`). If the promotion is already expired, **skip it** — filter
+  expired rows out before returning so the prune pass deletes the stale row.
+  Don't upsert expired promotions.
+
+### Shared `isPromotionExpired` helper
+
+All promotion scrapers must use the shared helper at
+`lib/scrapers/promotion-utils.ts`:
+
+```ts
+import { isPromotionExpired } from './promotion-utils';
+
+// In the scraper's entry function, filter before returning:
+const activeRows = rows.filter((r) => !isPromotionExpired(r.expiresAt));
+const expiredCount = rows.length - activeRows.length;
+return { rows: activeRows, rawCount, skipped: skipped + expiredCount };
+```
+
+`isPromotionExpired(dateStr)` returns `false` for `null`/`undefined` (no expiry
+  date = not expired). For a date string, it compares end-of-day on the expiry
+  date to midnight today — so a promotion expiring `2026-07-31` is still valid
+  on July 31 and expired on August 1.
+
+**Every** promotion scraper that extracts `expiresAt` must filter with this
+  helper. Scrapers that set `expiresAt: null` (no end date published) don't
+  need the filter — `isPromotionExpired` returns `false` for null anyway,
+  but there's nothing to filter out.
