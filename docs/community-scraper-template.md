@@ -333,3 +333,19 @@ null (those are per-home fields). The community's address lives in
 - **`homeType='community'` is required** for the public communities route and for
   the prune filter. A community row with the wrong `homeType` will never render
   and never prune correctly.
+- **Plan API rate limiting.** Some builders (e.g. Drees) rate-limit the plan
+  endpoint after ~20 rapid requests, causing 429/403 on later batches. Add
+  retry-once-with-3s-backoff to the plan fetch, and a 500ms delay between
+  batches. Watch for this if the last batch of communities has 0 plans while
+  earlier batches populated correctly.
+- **Plan images may require per-plan detail page fetches.** The plan API
+  endpoint often returns `images: null` (Drees, M/I). To populate
+  `homePlans[].imageUrl`, fetch each plan's own detail page and extract the
+  first exterior photo from the embedded JSON gallery. Batch at
+  CONCURRENCY=5; budget ~2s per plan. Exterior photos always appear first in
+  the gallery JSON and always resolve — prefer them over elevation render
+  URLs, which can 404 on the CDN.
+- **Watch for 0-as-sentinel on low/high ranges.** Some builders use 0 as a
+  "not applicable" value on the high side (e.g. `bedLow=5, bedHigh=0` means a
+  fixed 5 beds, not a 5-0 range). Treat a zero bound as absent when the other
+  bound is positive to avoid rendering broken ranges like "5 - 0 bed".
