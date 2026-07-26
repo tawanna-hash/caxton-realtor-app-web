@@ -783,10 +783,17 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
   ];
 
   // Helper: filter showcase homes by neighborhood name.
+  // The showcase home communityName is formatted as 'Santa Rita Ranch · <Neighborhood>'
+  // (e.g. 'Santa Rita Ranch · Regency'). We match by checking if the
+  // communityName ends with '· <name>' — using the short name, not the full
+  // spec name (e.g. 'Regency', not 'Regency at Santa Rita Ranch').
   function homesInNeighborhood(name: string) {
+    // Extract the short matching key: for 'Regency at Santa Rita Ranch' → 'Regency',
+    // for 'Tierra Rosa' → 'Tierra Rosa'.
+    const shortName = name.replace(/\s+at\s+Santa Rita Ranch$/, '');
     return showcaseRows.filter((r) => {
       const cn = r.communityName ?? '';
-      return cn.includes(name);
+      return cn.includes(shortName);
     });
   }
 
