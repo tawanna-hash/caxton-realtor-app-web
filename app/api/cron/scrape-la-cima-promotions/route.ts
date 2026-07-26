@@ -59,7 +59,7 @@ async function handle(req: Request) {
 
   for (const row of scrape.rows) {
     try {
-      const result = await upsertBuilderInventoryByExternalId(row);
+      const result = await upsertBuilderInventoryByExternalId({ ...row, developerName: 'La Cima' });
       if (result.created) {
         created++;
         // La Cima promo flyers are pulled from a curated developer page

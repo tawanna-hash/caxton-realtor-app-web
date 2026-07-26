@@ -5,9 +5,12 @@
 // for a given publication. Used by the iOS app's native Builders screen
 // (Phase 2 — replaces the WebView hub).
 //
-// Pub aliasing: accepts both the web app's slugs (realtyline / newsline) and
-// the iOS internal codes (austin / san_antonio). Maps to the DB publication
-// values used by builder_inventory.
+// Query params:
+//   - pub:         realtyline | newsline | austin | san_antonio | all | both
+//   - developers:  true = only developers, false = only builders, omitted = both
+//
+// Each builder summary includes isDeveloper (true for master-planned
+// communities like Santa Rita Ranch / La Cima that aggregate many builders).
 
 import { NextRequest, NextResponse } from 'next/server';
 import {
@@ -51,7 +54,16 @@ export async function GET(req: NextRequest) {
       limit: 5000,
     });
 
-    const builders = summarizeBuilders(rows);
+    let builders = summarizeBuilders(rows);
+
+    // Filter by developer/builder if requested.
+    const devParam = req.nextUrl.searchParams.get('developers');
+    if (devParam === 'true') {
+      builders = builders.filter((b) => b.isDeveloper);
+    } else if (devParam === 'false') {
+      builders = builders.filter((b) => !b.isDeveloper);
+    }
+
     return NextResponse.json({ builders });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown error';

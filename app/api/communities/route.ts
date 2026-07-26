@@ -6,9 +6,10 @@
 // native FlatList.
 //
 // Query params:
-//   - pub:    realtyline | newsline | austin | san_antonio | all | both
-//   - builder: optional exact builder_name match
-//   - limit:  default 100, max 200
+//   - pub:       realtyline | newsline | austin | san_antonio | all | both
+//   - builder:   optional exact builder_name match
+//   - developer: optional exact developer_name match
+//   - limit:     default 100, max 200
 //
 // Phase 2 of the iOS app uses this instead of WebView-loading /communities.
 
@@ -41,6 +42,7 @@ export async function GET(req: NextRequest) {
   }
 
   const builder = req.nextUrl.searchParams.get('builder') ?? undefined;
+  const developer = req.nextUrl.searchParams.get('developer') ?? undefined;
   const limitParam = Number(req.nextUrl.searchParams.get('limit') ?? '100');
   const limit = Math.min(Math.max(Number.isFinite(limitParam) ? limitParam : 100, 1), 200);
 
@@ -50,6 +52,7 @@ export async function GET(req: NextRequest) {
       status: 'active',
       homeType: 'isNullOrCommunity',
       builderName: builder,
+      developerName: developer,
       limit,
     });
 
@@ -60,6 +63,7 @@ export async function GET(req: NextRequest) {
       featured: r.featured,
       publication: r.publication,
       builderName: r.builderName,
+      developerName: r.developerName,
       title: r.title,
       city: r.city,
       state: r.state,

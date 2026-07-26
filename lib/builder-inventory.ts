@@ -104,6 +104,10 @@ export type BuilderInventoryRow = {
   // Structured key/value details scraped from the builder's listing page
   // (county, school district, MLS, foundation, owner's suite, etc.).
   extraDetails: Record<string, string> | null;
+  // Developer name (for master-planned communities like Santa Rita Ranch).
+  // NULL for builder rows. When set, builder_name holds the developer name
+  // and individual builders appear in the title/communityData.
+  developerName: string | null;
 };
 
 export type CreateBuilderInventoryInput = {
@@ -145,6 +149,7 @@ export type CreateBuilderInventoryInput = {
   galleryUrls?: string[] | null;
   communityData?: CommunityData | null;
   extraDetails?: Record<string, string> | null;
+  developerName?: string | null;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -431,6 +436,26 @@ const MIGRATIONS: Migration[] = [
       `;
     },
   },
+  {
+    name: '2026_07_26__add_developer_name',
+    up: async () => {
+      // Developers (master-planned communities like Santa Rita Ranch, La Cima)
+      // aggregate many builders within their community. builder_name still holds
+      // the developer name for backwards compat, but developer_name marks
+      // which rows belong to a developer vs a builder. NULL = builder row.
+      await sql`ALTER TABLE builder_inventory
+                ADD COLUMN IF NOT EXISTS developer_name TEXT`;
+      // Backfill existing developer rows.
+      await sql`UPDATE builder_inventory
+                SET developer_name = builder_name
+                WHERE builder_name IN ('Santa Rita Ranch', 'La Cima')
+                  AND developer_name IS NULL`;
+      // Index for filtering developer vs builder rows.
+      await sql`CREATE INDEX IF NOT EXISTS idx_builder_inv_developer
+                ON builder_inventory (developer_name)
+                WHERE developer_name IS NOT NULL`;
+    },
+  },
 ];
 
 // Per-process cache: "the current MIGRATIONS array is fully applied in the DB."
@@ -547,6 +572,7 @@ function rowToBuilderInventoryRow(r: Record<string, unknown>): BuilderInventoryR
     galleryUrls: (r.gallery_urls as string[]) ?? null,
     communityData: parseCommunityData(r.community_data),
     extraDetails: parseExtraDetails(r.extra_details),
+    developerName: (r.developer_name as string) ?? null,
   };
 }
 
@@ -567,7 +593,7 @@ export async function createBuilderInventory(
       source_ip, user_agent,
       external_id,
       address, ready_date, plan_name, community_name, home_type,
-      gallery_urls, community_data, extra_details
+      gallery_urls, community_data, extra_details, developer_name
     ) VALUES (
       ${input.kind}, ${input.publication},
       ${input.submittedByName}, ${input.submittedByEmail}, ${input.submittedByPhone ?? null},
@@ -583,7 +609,8 @@ export async function createBuilderInventory(
 ${input.homeType ?? null},
       ${(input.galleryUrls ?? null) as string[] | null},
       ${input.communityData != null ? JSON.stringify(input.communityData) : null}::jsonb,
-      ${input.extraDetails != null ? JSON.stringify(input.extraDetails) : null}::jsonb
+      ${input.extraDetails != null ? JSON.stringify(input.extraDetails) : null}::jsonb,
+      ${input.developerName ?? null}
     )
     RETURNING *
   `) as Record<string, unknown>[];
@@ -607,6 +634,14 @@ export type ListBuilderInventoryFilters = {
   // public-safe: disabled builders are hidden from every public surface.
   // Admin inventory routes pass true so retained data stays visible in admin.
   includeDisabledBuilders?: boolean;
+  // Filter by developer_name. Pass a specific developer name to get only
+  // rows belonging to that developer. Pass 'all' to get all rows (including
+  // developer rows). When omitted/undefined, no developer_name filter is
+  // applied (returns both builder and developer rows).
+  developerName?: string | null;
+  // When true, return only rows where developer_name IS NOT NULL
+  // (developer entries only). When false, only builder rows (NULL).
+  isDeveloper?: boolean;
 };
 
 export async function listBuilderInventory(
@@ -630,6 +665,8 @@ export async function listBuilderInventory(
   const homeTypeExact =
     homeType && homeType !== 'isNullOrCommunity' ? homeType : null;
   const includeDisabled = filters.includeDisabledBuilders ?? false;
+  const developerName = filters.developerName ?? null;
+  const isDeveloper = filters.isDeveloper ?? null;
 
   const rows = (await sql`
     SELECT b.* FROM builder_inventory b
@@ -645,6 +682,10 @@ export async function listBuilderInventory(
       AND (${homeTypeIsNullOrCommunity}::boolean = false
            OR b.home_type IS NULL OR b.home_type = 'community')
       AND (${homeTypeExact}::text IS NULL OR b.home_type = ${homeTypeExact}::text)
+      AND (${developerName}::text IS NULL OR b.developer_name = ${developerName}::text)
+      AND (${isDeveloper}::boolean IS NULL
+           OR (${isDeveloper}::boolean = true AND b.developer_name IS NOT NULL)
+           OR (${isDeveloper}::boolean = false AND b.developer_name IS NULL))
       AND (${includeDisabled}::boolean = true
            OR COALESCE(v.public_enabled, true) = true)
     ORDER BY
@@ -758,6 +799,7 @@ export type UpdateBuilderInventoryInput = {
   galleryUrls?: string[] | null;
   communityData?: CommunityData | null;
   extraDetails?: Record<string, string> | null;
+  developerName?: string | null;
 };
 
 
@@ -871,7 +913,8 @@ export async function updateBuilderInventory(
       home_type      = ${m.homeType},
       gallery_urls   = ${(m.galleryUrls ?? null) as string[] | null},
       community_data = ${m.communityData != null ? JSON.stringify(m.communityData) : null}::jsonb,
-      extra_details  = COALESCE(${m.extraDetails != null ? JSON.stringify(m.extraDetails) : null}::jsonb, extra_details)
+      extra_details  = COALESCE(${m.extraDetails != null ? JSON.stringify(m.extraDetails) : null}::jsonb, extra_details),
+      developer_name = ${m.developerName}
     WHERE id = ${id}
     RETURNING *
   `) as Record<string, unknown>[];
@@ -927,6 +970,7 @@ export type UpsertScrapedInput = {
   galleryUrls?: string[] | null;
   communityData?: CommunityData | null;
   extraDetails?: Record<string, string> | null;
+  developerName?: string | null;
 };
 
 /**
@@ -979,6 +1023,7 @@ export async function upsertBuilderInventoryByExternalId(
       galleryUrls: input.galleryUrls ?? null,
       communityData: input.communityData ?? null,
       extraDetails: input.extraDetails ?? null,
+      developerName: input.developerName ?? null,
     });
     if (!updated) {
       throw new Error(`Upsert: row ${existingRow.id} vanished mid-update`);
@@ -1020,6 +1065,7 @@ export async function upsertBuilderInventoryByExternalId(
     galleryUrls: input.galleryUrls ?? null,
     communityData: input.communityData ?? null,
     extraDetails: input.extraDetails ?? null,
+    developerName: input.developerName ?? null,
   });
 
   // S13: Scraper-produced LISTING rows auto-publish to 'active'.

@@ -50,7 +50,7 @@ async function handle(req: Request) {
 
   for (const row of scrape.rows) {
     try {
-      const result = await upsertBuilderInventoryByExternalId(row);
+      const result = await upsertBuilderInventoryByExternalId({ ...row, developerName: 'La Cima' });
       if (result.created) created++; else updated++;
     } catch (err) {
       upsertErrors.push({

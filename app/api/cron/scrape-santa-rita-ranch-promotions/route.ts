@@ -88,7 +88,7 @@ async function handle(req: NextRequest) {
 
   for (const row of scrape.rows) {
     try {
-      const result = await upsertBuilderInventoryByExternalId(row);
+      const result = await upsertBuilderInventoryByExternalId({ ...row, developerName: BUILDER_NAME });
       if (result.created) {
         created++;
         await sql`

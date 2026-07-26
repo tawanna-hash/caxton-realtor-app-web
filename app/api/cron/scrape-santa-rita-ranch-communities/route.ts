@@ -95,6 +95,7 @@ async function runScrape(strip: boolean) {
         communityName: row.communityName,
         homeType: row.homeType,
         communityData: row.communityData,
+        developerName: BUILDER_NAME,
       });
       if (result.created) inserted++;
       else updated++;

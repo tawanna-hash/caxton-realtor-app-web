@@ -10,6 +10,7 @@ import { builderNameToSlug } from '@/lib/builder-slug';
 export type BuilderSummary = {
   name: string;
   slug: string;
+  isDeveloper: boolean;
   communitiesCount: number;
   inventoryCount: number;
   promotionsCount: number;
@@ -28,6 +29,7 @@ export function summarizeBuilders(rows: BuilderInventoryRow[]): BuilderSummary[]
       s = {
         name: key,
         slug: builderNameToSlug(key),
+        isDeveloper: false,
         communitiesCount: 0,
         inventoryCount: 0,
         promotionsCount: 0,
@@ -38,6 +40,7 @@ export function summarizeBuilders(rows: BuilderInventoryRow[]): BuilderSummary[]
       byBuilder.set(key, s);
     }
     s.totalCount += 1;
+    if (r.developerName) s.isDeveloper = true;
     if (r.kind === 'promotion') s.promotionsCount += 1;
     else if (r.homeType === 'community') s.communitiesCount += 1;
     else s.inventoryCount += 1;

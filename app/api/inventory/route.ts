@@ -7,10 +7,11 @@
 // Used by the iOS app's native Inventory + Promotions screens (Phase 2).
 //
 // Query params:
-//   - pub:     realtyline | newsline | austin | san_antonio | all | both
-//   - kind:    listing | promotion  (default: listing)
-//   - builder: optional exact builder_name filter
-//   - limit:   default 100, max 200
+//   - pub:       realtyline | newsline | austin | san_antonio | all | both
+//   - kind:      listing | promotion  (default: listing)
+//   - builder:   optional exact builder_name filter
+//   - developer: optional exact developer_name filter
+//   - limit:     default 100, max 200
 
 import { NextRequest, NextResponse } from 'next/server';
 import {
@@ -45,6 +46,7 @@ export async function GET(req: NextRequest) {
   const kind: Kind = rawKind === 'promotion' ? 'promotion' : 'listing';
 
   const builder = req.nextUrl.searchParams.get('builder') ?? undefined;
+  const developer = req.nextUrl.searchParams.get('developer') ?? undefined;
   const limitParam = Number(req.nextUrl.searchParams.get('limit') ?? '100');
   const limit = Math.min(Math.max(Number.isFinite(limitParam) ? limitParam : 100, 1), 200);
 
@@ -58,6 +60,7 @@ export async function GET(req: NextRequest) {
       status: 'active',
       kind,
       builderName: builder,
+      developerName: developer,
       limit: kind === 'listing' ? Math.min(limit * 2, 400) : limit,
     });
 
@@ -72,6 +75,7 @@ export async function GET(req: NextRequest) {
       featured: r.featured,
       publication: r.publication,
       builderName: r.builderName,
+      developerName: r.developerName,
       title: r.title,
       city: r.city,
       state: r.state,
