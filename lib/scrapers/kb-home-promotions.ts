@@ -110,6 +110,50 @@ function extractDate(text: string): string | null {
   return null;
 }
 
+// Extract the expiration date from phrases like "sign a purchase agreement by 7/31/26"
+// or "offer expires 7/31/2026" or "valid through July 31, 2026".
+function extractExpiryDate(text: string): string | null {
+  const monthMap: Record<string, string> = {
+    january: '01', february: '02', march: '03', april: '04',
+    may: '05', june: '06', july: '07', august: '08',
+    september: '09', october: '10', november: '11', december: '12',
+  };
+
+  // Pattern 1: "by 7/31/26" after "purchase agreement" or "offer"
+  const m1 = text.match(/(?:purchase\s+agreement|offer|valid)\s+(?:by|through|until|expires?)\s+(\d{1,2})\/(\d{1,2})\/(\d{2,4})/i);
+  if (m1) {
+    const year = m1[3].length === 2 ? `20${m1[3]}` : m1[3];
+    return `${year}-${m1[1].padStart(2, '0')}-${m1[2].padStart(2, '0')}`;
+  }
+
+  // Pattern 2: "by July 31, 2026"
+  const m2 = text.match(/(?:purchase\s+agreement|offer|valid)\s+(?:by|through|until|expires?)\s+(\w+)\s+(\d{1,2}),?\s*(\d{4})/i);
+  if (m2) {
+    const month = monthMap[m2[1].toLowerCase()];
+    if (month) {
+      return `${m2[3]}-${month}-${m2[2].padStart(2, '0')}`;
+    }
+  }
+
+  // Pattern 3: any "by M/D/YY" near "agreement" or "offer" (broader)
+  const m3 = text.match(/(?:agreement|offer|valid).{0,40}?by\s+(\d{1,2})\/(\d{1,2})\/(\d{2,4})/i);
+  if (m3) {
+    const year = m3[3].length === 2 ? `20${m3[3]}` : m3[3];
+    return `${year}-${m3[1].padStart(2, '0')}-${m3[2].padStart(2, '0')}`;
+  }
+
+  return null;
+}
+
+// Check if a date string (YYYY-MM-DD) is in the past.
+function isExpired(dateStr: string | null): boolean {
+  if (!dateStr) return false; // no expiry date = not expired
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // midnight local
+  const expiry = new Date(dateStr + 'T23:59:59'); // end of expiry day
+  return expiry < today;
+}
+
 function resolveUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (path.startsWith('http')) return path;
@@ -185,6 +229,11 @@ function normalize(html: string): ScrapedKBHomePromotionRow | null {
   // Extract rate effective date for startsAt.
   const startsAt = extractDate(bodyText);
 
+  // Extract expiration date (e.g. "sign a purchase agreement by 7/31/26").
+  const expiresAt = extractExpiryDate(bodyText);
+
+  // If the promotion is already expired, return null — don't pull it in.
+
   // Extract any specific rate values mentioned.
   const rateMatches = bodyText.match(/(\d+\.\d+)%/g);
   if (rateMatches && rateMatches.length > 0) {
@@ -205,7 +254,7 @@ function normalize(html: string): ScrapedKBHomePromotionRow | null {
     description,
     promoType: 'rate_buydown',
     startsAt,
-    expiresAt: null, // no end date published
+    expiresAt,
     flyerPdfUrl: null,
     thumbnailUrl,
     sourceUrl: RATES_URL,
@@ -229,6 +278,11 @@ export async function fetchKBHomeAustinPromotions(): Promise<{
   const row = normalize(html);
 
   if (!row) {
+    return { rows: [], rawCount: 1, skipped: 1 };
+  }
+
+  // Skip expired promotions — don't upsert, let prune handle deletion.
+  if (isExpired(row.expiresAt)) {
     return { rows: [], rawCount: 1, skipped: 1 };
   }
 

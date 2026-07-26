@@ -347,3 +347,9 @@ Promotion scrapers are usually light (one list page + a few offer pages).
   and seller contributions. Store as a single promotion row with
   `promoType='rate_buydown'` and a stable `externalId` like
   `'<builder>-special-low-rates'`.
+- **Extract and enforce expiration dates.** Promotions often have an end date
+  embedded in the marketing copy (e.g. "sign a purchase agreement by 7/31/26",
+  "offer valid through August 31, 2026"). Parse these into `expiresAt` (ISO
+  `YYYY-MM-DD`). If the promotion is already expired, **skip it** — return
+  empty rows so the prune pass deletes the stale row. Don't upsert expired
+  promotions.
