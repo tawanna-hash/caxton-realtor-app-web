@@ -1,47 +1,25 @@
 // lib/scrapers/giddens.ts
 //
-// Giddens Homes Austin — per-home scraper (S13).
+// Giddens Homes Austin — Quick Move-In Ready (QMI) inventory scraper.
 //
-// Source: https://giddenshomes.com/homes/ — a WordPress site using the
-// Smarttouch Interactive plugin. Homes are server-rendered inside
-// `<div class="wp-block-smarttouch-homes">` blocks. No JSON API, but the
-// HTML is consistent and parseable via regex on `data-*` attributes.
+// Source: https://giddenshomes.com/homes/
+// The site is WordPress + SmartTouch Interactive plugin.
 //
-// Home card structure (each one):
-//   <div id="spec_101_nighthorse" class="spec" rel="13409"
-//        data-community="4002"
-//        data-floorplan=""
-//        data-price="899000"
-//        data-bedrooms="4"
-//        data-bathrooms="4"
-//        data-garage="3"
-//        data-story="1"
-//        data-sqft="3391">
-//     <div class="title"><span>101 Nighthorse</span></div>
-//     <div class="photo"><img src="/wp-content/.../03-Front-Entry-Walkway-480x320.jpg" /></div>
-//     <div class="address">
-//       <span class="streetnumber">101</span>
-//       <span class="route">Nighthorse</span>
-//       <span class="city">Liberty Hill</span>
-//       <span class="state">TX</span>
-//     </div>
-//     <div class="community">Clearwater Ranch</div>
-//     ...
+// Data source: WordPress REST API: wp-json/wp/v2/smarttouch_spec?per_page=100
+// Each spec post includes meta.config with:
+//   - details: { price, beds, baths, sqft, story, garage, status, available,
+//                community: {id, name}, floorplan: {id, name}, agent: {id, name},
+//                study, gameroom, mediaroom, seconddining }
+//   - gallery: [{id, url, thumbnail}] — up to 30 photos
+//   - floorplans: [{id, url, thumbnail}] — floorplan images
+//   - location: { address, city, state, zip, county, location: {lat, lng} }
 //
-// Communities (from the filter selector at top of page):
-//   4002:  Clearwater Ranch
-//   4020:  The Hollows
-//   10510: Burnet Hilltop Estates
-//   11374: Riverstone
-//   12631: Leander Estates
-//   13324: Scofield Farms Estates
+// Output: one `homeType: 'showcase'` row per spec home with
+// galleryUrls, sourceUrl, extraDetails, address, readyDate.
 //
-// Notes:
-//   - bathrooms is already a decimal (e.g., "4.5") — no fullBaths/halfBaths split
-//   - "Liberty Hill", "Leander", "Burnet" etc all roll up to greater Austin
-//   - No readyDate field exists. data-available is empty for all observed homes.
+// Conforms to docs/scraper-template.md.
 
-const HOMES_URL = 'https://giddenshomes.com/homes/';
+const WP_API = 'https://giddenshomes.com/wp-json/wp/v2';
 const GIDDENS_BASE_URL = 'https://giddenshomes.com';
 
 const USER_AGENT =
@@ -51,12 +29,14 @@ const USER_AGENT =
 
 const COMMON_HEADERS = {
   'User-Agent': USER_AGENT,
-  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  Accept: 'application/json, */*',
   'Accept-Language': 'en-US,en;q=0.9',
 } as const;
 
+const BUILDER_NAME = 'Giddens Homes' as const;
+
 // ─────────────────────────────────────────────────────────────────────────
-// Output shape — one row per home.
+// Output shape — one row per spec home
 // ─────────────────────────────────────────────────────────────────────────
 
 export type ScrapedGiddensRow = {
@@ -74,154 +54,223 @@ export type ScrapedGiddensRow = {
   sqftMax: number | null;
   priceMin: number | null;
   priceMax: number | null;
-  thumbnailUrl: string | null;
   flyerPdfUrl: string | null;
+  thumbnailUrl: string | null;
   sourceUrl: string | null;
-  galleryUrls: string[] | null;
+  galleryUrls: string[];
   address: string | null;
   readyDate: string | null;
   planName: string | null;
   communityName: string | null;
   homeType: 'showcase';
+  extraDetails: Record<string, string | number | boolean>;
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// WordPress REST API types
+// ─────────────────────────────────────────────────────────────────────────
+
+type WpImage = { id: number; url: string; thumbnail?: string };
+
+type WpSpecConfig = {
+  details?: {
+    status?: { id: string; label: string };
+    price?: string;
+    beds?: string;
+    baths?: string;
+    sqft?: string;
+    story?: string;
+    garage?: string;
+    available?: string;
+    community?: { id: number; name: string };
+    floorplan?: { id: number; name: string };
+    agent?: { id: string; name: string };
+    study?: boolean;
+    gameroom?: boolean;
+    mediaroom?: boolean;
+    seconddining?: boolean;
+    secondliving?: boolean;
+  };
+  gallery?: WpImage[];
+  floorplans?: WpImage[];
+  location?: {
+    address?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
+    county?: string;
+    location?: { lat: number; lng: number };
+  };
+};
+
+type WpSpecPost = {
+  id: number;
+  slug: string;
+  link: string;
+  title: { rendered: string };
+  meta: { config: string };
 };
 
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────
 
-function parseNumber(s: string | null | undefined): number | null {
-  if (!s) return null;
-  const cleaned = s.replace(/[,$\s]/g, '').trim();
-  if (!cleaned) return null;
-  const n = parseFloat(cleaned);
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
-
-function parseInteger(s: string | null | undefined): number | null {
-  const n = parseNumber(s);
-  if (n == null) return null;
-  return Math.round(n);
-}
-
 function normalizeUrl(path: string | null | undefined): string | null {
   if (!path) return null;
-  if (path.startsWith('http')) return path;
-  if (path.startsWith('/')) return GIDDENS_BASE_URL + path;
+  const trimmed = path.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('http')) return trimmed;
+  if (trimmed.startsWith('/')) return GIDDENS_BASE_URL + trimmed;
   return null;
 }
 
-// Pull `attr="VALUE"` out of a string. Returns null if not present.
-function getAttr(html: string, attr: string): string | null {
-  const re = new RegExp(`\\b${attr}="([^"]*)"`);
-  const m = html.match(re);
-  return m ? m[1] : null;
+function parseNum(s: string | null | undefined): number | null {
+  if (s == null) return null;
+  const n = parseFloat(s.replace(/[^0-9.]/g, ''));
+  return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-// Pull inner text from `<TAG class="CLASS">TEXT</TAG>`. Strips tags inside.
-function getInnerText(html: string, klass: string): string | null {
-  const re = new RegExp(
-    `<[a-z]+[^>]*class="[^"]*\\b${klass}\\b[^"]*"[^>]*>([\\s\\S]*?)</[a-z]+>`,
-    'i',
-  );
-  const m = html.match(re);
-  if (!m) return null;
-  // Strip nested tags
-  const text = m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-  return text || null;
+function parseConfig(post: WpSpecPost): WpSpecConfig | null {
+  try {
+    return JSON.parse(post.meta?.config ?? '{}') as WpSpecConfig;
+  } catch {
+    return null;
+  }
+}
+
+// Convert "2026-08" → "2026-08-01" for readyDate
+function toReadyDate(available: string | null | undefined): string | null {
+  if (!available) return null;
+  const trimmed = available.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  if (/^\d{4}-\d{2}$/.test(trimmed)) return `${trimmed}-01`;
+  return null;
+}
+
+// Title fallback: planName at communityName
+function buildTitle(
+  planName: string | null,
+  communityName: string | null,
+  address: string | null,
+): string {
+  if (planName && communityName) return `${planName} at ${communityName}`;
+  if (planName) return planName;
+  if (communityName) return communityName;
+  if (address) return address;
+  return 'Untitled Home';
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Parsing
+// Fetch all spec homes from WordPress REST API
 // ─────────────────────────────────────────────────────────────────────────
 
-// Find all home <div class="spec" ...> blocks. Each is reasonably bounded
-// since they're siblings in a flat list.
-function extractHomeCards(html: string): string[] {
-  // Match from the opening tag of a spec div to just before the next one
-  // (or end of homes container). Greedy-safe via lazy match to `<div id="spec_`.
-  const cards: string[] = [];
-  const startRe = /<div[^>]*\bid="spec_[^"]*"[^>]*\bclass="spec"[^>]*>/g;
-  const matches: { start: number; tagLen: number }[] = [];
-  let m: RegExpExecArray | null;
-  while ((m = startRe.exec(html)) !== null) {
-    matches.push({ start: m.index, tagLen: m[0].length });
+async function fetchSpecs(): Promise<WpSpecPost[]> {
+  const url = `${WP_API}/smarttouch_spec?per_page=100&orderby=title&order=asc`;
+  const res = await fetch(url, {
+    headers: COMMON_HEADERS,
+    signal: AbortSignal.timeout(30_000),
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    throw new Error(`Spec API returned ${res.status}`);
   }
-  for (let i = 0; i < matches.length; i++) {
-    const start = matches[i].start;
-    const end = i + 1 < matches.length ? matches[i + 1].start : html.length;
-    cards.push(html.slice(start, end));
-  }
-  return cards;
+  return (await res.json()) as WpSpecPost[];
 }
 
-// Parse one card's HTML into a normalized row.
-function parseCard(card: string): ScrapedGiddensRow | null {
-  // External id — use rel attribute (e.g. "13409") which is stable.
-  const rel = getAttr(card, 'rel');
-  if (!rel) return null;
-  const externalId = `giddens/${rel}`;
+// ─────────────────────────────────────────────────────────────────────────
+// Normalize: map API data → ScrapedGiddensRow
+// ─────────────────────────────────────────────────────────────────────────
 
-  // Numeric data fields from data-* attributes
-  const beds = parseInteger(getAttr(card, 'data-bedrooms'));
-  const baths = parseNumber(getAttr(card, 'data-bathrooms'));
-  const sqft = parseInteger(getAttr(card, 'data-sqft'));
-  const price = parseInteger(getAttr(card, 'data-price'));
-  const communityName = getInnerText(card, 'community');
+function normalize(
+  post: WpSpecPost,
+  config: WpSpecConfig,
+): ScrapedGiddensRow | null {
+  const d = config.details ?? {};
+  const loc = config.location ?? {};
 
-  // Title is in <div class="title"><span>TEXT</span></div>
-  const titleText = getInnerText(card, 'title');
-  const title = titleText && communityName
-    ? `${titleText} at ${communityName}`
-    : titleText
-    ? titleText
-    : communityName
-    ? `Inventory home at ${communityName}`
-    : 'Giddens inventory home';
+  // Address
+  const streetAddress = loc.address?.trim() ?? null;
+  const city = loc.city?.trim() ?? d.community?.name?.trim() ?? '';
+  const state = loc.state?.trim() ?? 'TX';
 
-  // Address: assemble from spans inside <div class="address">
-  const streetNumber = getInnerText(card, 'streetnumber') || '';
-  const route = getInnerText(card, 'route') || '';
-  const city = getInnerText(card, 'city') || 'Austin';
-  const stateText = getInnerText(card, 'state') || 'TX';
-  const streetLine = [streetNumber, route].filter(Boolean).join(' ').trim();
-  const address = streetLine
-    ? `${streetLine}, ${city}, ${stateText}`
+  // Full address
+  const fullAddress = streetAddress
+    ? `${streetAddress}, ${city}, ${state} ${loc.zip ?? ''}`.trim()
     : null;
 
-  // Thumbnail from <img src="...">
-  const imgMatch = card.match(/<img[^>]*\bsrc="([^"]+)"/i);
-  const thumbnailUrl = imgMatch ? normalizeUrl(imgMatch[1]) : null;
+  // Plan and community names
+  const planName = d.floorplan?.name?.trim() || null;
+  const communityName = d.community?.name?.trim() || null;
 
-  // Flyer link: card uses an onclick handler, not a real href. Best link
-  // we can give realtors is the metro homes page; clicking it will let
-  // them find the home there.
-  const flyerPdfUrl = HOMES_URL;
+  // Title per template: planName at communityName
+  const title = buildTitle(planName, communityName, streetAddress);
 
-  // Deterministic fallback description: Giddens' card HTML has no prose,
-  // so synthesize from the structured data-* fields so the inventory detail
-  // page has copy where a description would render.
-  const descParts: string[] = [];
-  if (titleText && communityName) descParts.push(`${titleText} at ${communityName}.`);
-  else if (titleText) descParts.push(`${titleText}.`);
-  else if (communityName) descParts.push(`Inventory home at ${communityName}.`);
-  const specParts: string[] = [];
-  if (beds != null) specParts.push(`${beds} bedrooms`);
-  if (baths != null) specParts.push(`${baths} bathrooms`);
-  if (sqft != null) specParts.push(`${sqft.toLocaleString()} sq ft`);
-  if (price != null) specParts.push(`from $${price.toLocaleString()}`);
-  if (specParts.length) descParts.push(specParts.join(', ') + '.');
-  if (communityName) descParts.push(`Located in the ${communityName} community.`);
-  else if (address) descParts.push(`Located at ${address}.`);
-  const description = descParts.join(' ').trim() || null;
-  const galleryUrls = thumbnailUrl ? [thumbnailUrl] : null;
-  const sourceUrl = flyerPdfUrl;
+  // Gallery (full-size URLs)
+  const galleryImages: string[] = (config.gallery ?? [])
+    .map((g) => normalizeUrl(g.url))
+    .filter((u): u is string => u !== null);
+  const thumbnailUrl = galleryImages[0] ?? null;
+
+  // Floorplan images (for extraDetails)
+  const floorplanImages: string[] = (config.floorplans ?? [])
+    .map((g) => normalizeUrl(g.url))
+    .filter((u): u is string => u !== null);
+
+  // Price
+  const price = parseNum(d.price);
+
+  // Beds/baths/sqft
+  const beds = parseNum(d.beds);
+  const baths = parseNum(d.baths);
+  const sqft = parseNum(d.sqft);
+
+  // Ready date
+  const readyDate = toReadyDate(d.available);
+
+  // Source URL — the spec home's canonical WordPress permalink
+  const sourceUrl = post.link || null;
+
+  // Status
+  const statusLabel = d.status?.label?.trim() ?? null;
+  const isAvailable = d.status?.id === 'available';
+
+  // Extra details
+  const extraDetails: Record<string, string | number | boolean> = {};
+
+  if (statusLabel) extraDetails['Status'] = statusLabel;
+  if (d.story) extraDetails['Stories'] = d.story;
+  if (d.garage) extraDetails['Garage'] = d.garage;
+  if (d.agent?.name) extraDetails['Sales Agent'] = d.agent.name;
+  if (loc.county) extraDetails['County'] = loc.county;
+  if (loc.zip) extraDetails['ZIP'] = loc.zip;
+
+  // Room features
+  if (d.study) extraDetails['Study'] = true;
+  if (d.gameroom) extraDetails['Game Room'] = true;
+  if (d.mediaroom) extraDetails['Media Room'] = true;
+  if (d.seconddining) extraDetails['Second Dining'] = true;
+  if (d.secondliving) extraDetails['Second Living'] = true;
+
+  // Floorplan image
+  if (floorplanImages.length > 0) {
+    extraDetails['_floorplanUrl'] = floorplanImages[0];
+  }
+
+  // GPS coordinates
+  if (loc.location) {
+    extraDetails['_latitude'] = loc.location.lat;
+    extraDetails['_longitude'] = loc.location.lng;
+  }
+
+  // Description
+  const description = `${planName ? `The ${planName} plan` : 'This home'} is located in ${communityName ?? city || 'Austin'}${streetAddress ? ` at ${streetAddress}` : ''}. ${isAvailable ? 'Available' : statusLabel ?? 'Contact us'}${readyDate ? ` ${readyDate}` : ''}.`;
 
   return {
-    externalId,
-    builderName: 'Giddens Homes',
+    externalId: `giddens/spec/${post.id}`,
+    builderName: BUILDER_NAME,
     title,
     city,
-    state: stateText.toUpperCase(),
+    state,
     description,
     bedsMin: beds,
     bedsMax: beds,
@@ -231,20 +280,21 @@ function parseCard(card: string): ScrapedGiddensRow | null {
     sqftMax: sqft,
     priceMin: price,
     priceMax: price,
+    flyerPdfUrl: null,
     thumbnailUrl,
-    flyerPdfUrl,
     sourceUrl,
-    galleryUrls,
-    address,
-    readyDate: null, // data-available is always empty on Giddens
-    planName: null,  // no floor plan field in their data structure
+    galleryUrls: galleryImages.slice(0, 30),
+    address: fullAddress,
+    readyDate,
+    planName,
     communityName,
     homeType: 'showcase',
+    extraDetails,
   };
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Public entry
+// Main entry point
 // ─────────────────────────────────────────────────────────────────────────
 
 export async function fetchGiddensAustin(): Promise<{
@@ -252,47 +302,29 @@ export async function fetchGiddensAustin(): Promise<{
   rawCount: number;
   skipped: number;
 }> {
-  let res: Response;
-  try {
-    res = await fetch(HOMES_URL, {
-      method: 'GET',
-      headers: COMMON_HEADERS,
-      redirect: 'follow',
-      signal: AbortSignal.timeout(30_000),
-      cache: 'no-store',
-    });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(`Giddens Homes fetch failed: ${msg}`);
-  }
-
-  if (!res.ok) {
-    throw new Error(`Giddens Homes returned HTTP ${res.status}`);
-  }
-
-  const html = await res.text();
-  if (!html || html.length < 1000) {
-    throw new Error('Giddens Homes returned suspiciously small body');
-  }
-
-  const cards = extractHomeCards(html);
-  const rawCount = cards.length;
-
-  if (rawCount === 0) {
-    throw new Error(
-      'Giddens Homes: no home cards found (DOM structure may have changed)',
-    );
-  }
+  const posts = await fetchSpecs();
+  const rawCount = posts.length;
 
   const rows: ScrapedGiddensRow[] = [];
   let skipped = 0;
-  for (const card of cards) {
-    const normalized = parseCard(card);
-    if (normalized) {
-      rows.push(normalized);
-    } else {
+
+  for (const post of posts) {
+    const config = parseConfig(post);
+    if (!config) {
+      console.warn(
+        `[giddens] could not parse config for spec post ${post.id}`,
+      );
       skipped++;
+      continue;
     }
+
+    const row = normalize(post, config);
+    if (!row) {
+      skipped++;
+      continue;
+    }
+
+    rows.push(row);
   }
 
   return { rows, rawCount, skipped };

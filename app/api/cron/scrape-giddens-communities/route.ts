@@ -1,18 +1,32 @@
 // app/api/cron/scrape-giddens-communities/route.ts
 //
-// Vercel Cron endpoint. Daily Giddens Homes Austin Communities scrape.
-// Source: per-community detail pages on giddenshomes.com.
+// Vercel Cron endpoint. Daily Giddens Homes Austin community scrape.
+// One row per neighborhood with homeType='community' + structured communityData.
+//
+// Conforms to docs/community-scraper-template.md §9.
+//
+// Auth: Authorization: Bearer ${CRON_SECRET} in production.
+// Dev/preview: open (so we can test from local without setting the secret).
+//
+// ?strip=1 — deletes ALL existing Giddens community rows before upserting.
+//   Use for a clean rebuild. Subsequent runs without ?strip=1 upsert normally.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchGiddensAustinCommunities } from '@/lib/scrapers/giddens-communities';
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
+import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
+import { neon } from '@neondatabase/serverless';
+
+const sql = neon(process.env.DATABASE_URL!);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+// 1 REST API call + ~7 community page fetches + ~7 upserts + prune.
+export const maxDuration = 150;
 
 const SCRAPER_SUBMITTER_NAME = 'Giddens Homes Communities Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-giddens-communities@harmonyone.system';
+const BUILDER_NAME = 'Giddens Homes';
 
 function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
   const isProduction = process.env.VERCEL_ENV === 'production';
@@ -32,8 +46,35 @@ function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
   return { ok: true };
 }
 
-async function runScrape() {
+async function stripExistingCommunities(): Promise<number> {
+  const result = await sql`
+    DELETE FROM builder_inventory
+    WHERE builder_name = ${BUILDER_NAME}
+      AND home_type = 'community'
+      AND external_id IS NOT NULL
+    RETURNING id
+  `;
+  return result.length;
+}
+
+async function runScrape(strip: boolean) {
   const startedAt = Date.now();
+
+  let stripped = 0;
+  if (strip) {
+    try {
+      stripped = await stripExistingCommunities();
+      console.log(
+        `[scrape-giddens-communities] stripped ${stripped} existing community rows`,
+      );
+    } catch (err) {
+      console.error(
+        '[scrape-giddens-communities] strip failed:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
   const { rows, rawCount, skipped } = await fetchGiddensAustinCommunities();
 
   let inserted = 0;
@@ -64,11 +105,11 @@ async function runScrape() {
         priceMax: row.priceMax,
         flyerPdfUrl: row.flyerPdfUrl,
         thumbnailUrl: row.thumbnailUrl,
-        address: row.address,
-        readyDate: row.readyDate,
-        planName: row.planName,
+        sourceUrl: row.sourceUrl,
+        galleryUrls: row.galleryUrls,
         communityName: row.communityName,
         homeType: row.homeType,
+        communityData: row.communityData,
       });
       if (result.created) inserted++;
       else updated++;
@@ -83,6 +124,18 @@ async function runScrape() {
     }
   }
 
+  // Prune: deactivate communities no longer in the source feed.
+  // GUARDED — never run on an empty scrape so a transient empty response
+  // can't wipe the whole set.
+  let deactivated = 0;
+  if (rows.length > 0 && !strip) {
+    deactivated = await deactivateStaleBuilderInventory({
+      builderName: BUILDER_NAME,
+      homeType: 'community',
+      activeExternalIds: rows.map((r) => r.externalId),
+    });
+  }
+
   const elapsedMs = Date.now() - startedAt;
 
   return {
@@ -91,8 +144,10 @@ async function runScrape() {
       rawCount,
       normalized: rows.length,
       skipped,
+      stripped,
       inserted,
       updated,
+      deactivated,
       errors,
       elapsedMs,
     },
@@ -109,8 +164,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const strip = new URL(req.url).searchParams.get('strip') === '1';
+
   try {
-    const result = await runScrape();
+    const result = await runScrape(strip);
     return NextResponse.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

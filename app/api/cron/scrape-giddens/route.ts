@@ -1,18 +1,32 @@
 // app/api/cron/scrape-giddens/route.ts
 //
-// Vercel Cron endpoint. Daily Giddens Homes Austin inventory scrape.
-// Source: server-rendered HTML at giddenshomes.com/homes/
+// Vercel Cron endpoint. Daily Giddens Homes Austin Quick Move-In Ready (QMI)
+// inventory scrape. One row per buyable QMI home with homeType='showcase'.
+//
+// Conforms to docs/scraper-template.md (move-in homes cron route).
+//
+// Auth: Authorization: Bearer ${CRON_SECRET} in production.
+// Dev/preview: open.
+//
+// ?strip=1 — deletes ALL existing Giddens showcase rows before upserting.
+//   Use for a clean rebuild.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchGiddensAustin } from '@/lib/scrapers/giddens';
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
+import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
+import { neon } from '@neondatabase/serverless';
+
+const sql = neon(process.env.DATABASE_URL!);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+// 1 REST API call + ~11 upserts + prune.
+export const maxDuration = 150;
 
 const SCRAPER_SUBMITTER_NAME = 'Giddens Homes Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-giddens@harmonyone.system';
+const BUILDER_NAME = 'Giddens Homes';
 
 function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
   const isProduction = process.env.VERCEL_ENV === 'production';
@@ -32,8 +46,35 @@ function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
   return { ok: true };
 }
 
-async function runScrape() {
+async function stripExistingShowcase(): Promise<number> {
+  const result = await sql`
+    DELETE FROM builder_inventory
+    WHERE builder_name = ${BUILDER_NAME}
+      AND home_type = 'showcase'
+      AND external_id IS NOT NULL
+    RETURNING id
+  `;
+  return result.length;
+}
+
+async function runScrape(strip: boolean) {
   const startedAt = Date.now();
+
+  let stripped = 0;
+  if (strip) {
+    try {
+      stripped = await stripExistingShowcase();
+      console.log(
+        `[scrape-giddens] stripped ${stripped} existing showcase rows`,
+      );
+    } catch (err) {
+      console.error(
+        '[scrape-giddens] strip failed:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
   const { rows, rawCount, skipped } = await fetchGiddensAustin();
 
   let inserted = 0;
@@ -71,6 +112,7 @@ async function runScrape() {
         planName: row.planName,
         communityName: row.communityName,
         homeType: row.homeType,
+        extraDetails: row.extraDetails,
       });
       if (result.created) inserted++;
       else updated++;
@@ -85,6 +127,18 @@ async function runScrape() {
     }
   }
 
+  // Prune: deactivate homes no longer in the source feed (sold/off-market).
+  // GUARDED — never run on an empty scrape so a transient empty response
+  // can't wipe the whole set.
+  let deactivated = 0;
+  if (rows.length > 0 && !strip) {
+    deactivated = await deactivateStaleBuilderInventory({
+      builderName: BUILDER_NAME,
+      homeType: 'showcase',
+      activeExternalIds: rows.map((r) => r.externalId),
+    });
+  }
+
   const elapsedMs = Date.now() - startedAt;
 
   return {
@@ -93,8 +147,10 @@ async function runScrape() {
       rawCount,
       normalized: rows.length,
       skipped,
+      stripped,
       inserted,
       updated,
+      deactivated,
       errors,
       elapsedMs,
     },
@@ -111,8 +167,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const strip = new URL(req.url).searchParams.get('strip') === '1';
+
   try {
-    const result = await runScrape();
+    const result = await runScrape(strip);
     return NextResponse.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
