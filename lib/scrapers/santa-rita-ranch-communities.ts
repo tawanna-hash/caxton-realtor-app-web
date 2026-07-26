@@ -239,7 +239,6 @@ export async function fetchSRRCommunities(): Promise<{
           imageUrls: galleryImages,
           amenities,
           city: 'Liberty Hill',
-          description: description ?? undefined,
         };
 
         rows.push({
