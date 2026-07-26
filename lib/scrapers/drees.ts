@@ -575,6 +575,66 @@ async function fetchCommunityPlans(
   return [];
 }
 
+// Fetches a plan's detail page and extracts the first exterior elevation
+// image. Drees' plan API always returns images=null, but each plan's own
+// detail page embeds a JSON gallery with imagePath URLs for exterior photos
+// and elevation renders. We grab the first JPG imagePath (the primary
+// exterior photo shown on Drees' floorplan cards).
+async function fetchPlanElevationImage(
+  planUrl: string | null | undefined,
+): Promise<string | null> {
+  if (!planUrl) return null;
+  const fullUrl = planUrl.startsWith('http')
+    ? planUrl
+    : `${SITE_BASE}${planUrl.startsWith('/') ? '' : '/'}${planUrl}`;
+
+  let res: Response;
+  try {
+    res = await fetch(fullUrl, {
+      headers: DETAIL_PAGE_HEADERS,
+      redirect: 'follow',
+      signal: AbortSignal.timeout(15_000),
+      cache: 'no-store',
+    });
+  } catch {
+    return null;
+  }
+  if (!res.ok) return null;
+
+  const html = await res.text();
+  const decoded = html
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+
+  // Find the first imagePath that's a JPG (not SVG floor plan).
+  // Exterior photos appear first in the page JSON.
+  const imgRe =
+    /"imagePath"\s*:\s*"(https:\/\/assetcloud\.dreeshomes\.com\/transform\/[^"]+[-.]jpg)"/i;
+  const m = imgRe.exec(decoded);
+  return m ? m[1] : null;
+}
+
+// Batch-fetch elevation images for all plans in a community.
+// Returns a map of plan index → image URL (or null).
+async function fetchPlanImages(
+  plans: DreesPlan[],
+): Promise<(string | null)[]> {
+  if (plans.length === 0) return [];
+  const CONCURRENCY = 5;
+  const results: (string | null)[] = new Array(plans.length).fill(null);
+  for (let i = 0; i < plans.length; i += CONCURRENCY) {
+    const batch = plans.slice(i, i + CONCURRENCY);
+    const images = await Promise.all(
+      batch.map((p) => fetchPlanElevationImage(p.url)),
+    );
+    for (let j = 0; j < batch.length; j++) {
+      results[i + j] = images[j];
+    }
+  }
+  return results;
+}
+
 // Drees uses 0 as a "not applicable" sentinel on the *High side of a
 // low/high pair (e.g. bedLow=5, bedHigh=0 means "5 beds", not "5 - 0").
 // Formats a range, treating a zero bound as absent whenever the other
@@ -598,6 +658,7 @@ function formatDreesRange(
 // plan card showing "No image available".
 function toHomePlan(
   p: DreesPlan,
+  planImageUrl?: string | null,
   fallbackImageUrl?: string | null,
 ): CommunityHomePlan {
   const beds = formatDreesRange(p.bedLow, p.bedHigh);
@@ -607,7 +668,7 @@ function toHomePlan(
   const imageUrl =
     p.images && p.images.length > 0
       ? withImageTransform(p.images[0].imagePath ?? p.images[0].path, 800)
-      : fallbackImageUrl ?? null;
+      : planImageUrl ?? fallbackImageUrl ?? null;
 
   return {
     name: p.planName ?? 'Floor Plan',
@@ -633,6 +694,7 @@ function normalize(
   n: DreesNeighborhood,
   detail?: CommunityDetailData | null,
   plans?: DreesPlan[] | null,
+  planImages?: (string | null)[] | null,
 ): ScrapedCommunityRow | null {
   // Stable externalId (community-scraper-template §4).
   // Prefer numeric contentId; fall back to productFavoriteId string.
@@ -718,7 +780,9 @@ function normalize(
         ? formatSqftRange(sqftMin, sqftMax)
         : null,
     amenities,
-    homePlans: (plans ?? []).map((p) => toHomePlan(p, allImages[0] ?? null)),
+    homePlans: (plans ?? []).map((p, idx) =>
+      toHomePlan(p, planImages?.[idx] ?? null, allImages[0] ?? null),
+    ),
     schools: {
       district: schoolDistrict,
       list: [],
@@ -836,8 +900,17 @@ export async function fetchDreesAustinCommunities(): Promise<{
       Promise.all(batch.map((n) => fetchCommunityDetailData(n.url))),
       Promise.all(batch.map((n) => fetchCommunityPlans(n.contentId))),
     ]);
+    // Fetch elevation images for each plan (batched at CONCURRENCY=5).
+    const planImagesBatches = await Promise.all(
+      plansBatches.map((plans) => fetchPlanImages(plans ?? [])),
+    );
     for (let j = 0; j < batch.length; j++) {
-      const row = normalize(batch[j], details[j], plansBatches[j]);
+      const row = normalize(
+        batch[j],
+        details[j],
+        plansBatches[j],
+        planImagesBatches[j],
+      );
       if (row) rows.push(row);
       else skipped++;
     }
