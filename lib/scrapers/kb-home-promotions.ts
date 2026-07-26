@@ -18,6 +18,7 @@
 // Template: docs/promotion-scraper-template.md
 
 import * as cheerio from 'cheerio';
+import { isPromotionExpired } from './promotion-utils';
 
 const RATES_URL = 'https://www.kbhome.com/special-low-rates';
 
@@ -146,12 +147,9 @@ function extractExpiryDate(text: string): string | null {
 }
 
 // Check if a date string (YYYY-MM-DD) is in the past.
+// Re-exported from promotion-utils for backwards compat.
 function isExpired(dateStr: string | null): boolean {
-  if (!dateStr) return false; // no expiry date = not expired
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // midnight local
-  const expiry = new Date(dateStr + 'T23:59:59'); // end of expiry day
-  return expiry < today;
+  return isPromotionExpired(dateStr);
 }
 
 function resolveUrl(path: string | null | undefined): string | null {

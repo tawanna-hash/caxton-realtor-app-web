@@ -30,6 +30,7 @@
 import * as cheerio from 'cheerio';
 import type { Element as DomElement } from 'domhandler';
 import type { UpsertScrapedInput } from '../builder-inventory';
+import { isPromotionExpired } from './promotion-utils';
 
 const PROMOTIONS_URL = 'https://lacimatx.com/builder-promotions/';
 const LA_CIMA_CITY = 'San Marcos';
@@ -230,5 +231,14 @@ export async function fetchLaCimaPromotions(): Promise<LaCimaPromoScrapeResult> 
     });
   }
 
-  return { rows, rawCount, skipped };
+  // Filter out expired promotions — don't upsert, let prune handle deletion.
+  const activeRows = rows.filter(
+    (r) => !isPromotionExpired(r.expiresAt as string | null),
+  );
+  const expiredCount = rows.length - activeRows.length;
+  if (expiredCount > 0) {
+    skipped.push({ reason: `${expiredCount} promotion(s) expired and skipped` });
+  }
+
+  return { rows: activeRows, rawCount, skipped };
 }

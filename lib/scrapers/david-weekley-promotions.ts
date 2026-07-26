@@ -9,6 +9,8 @@
 //
 // Template: docs/promotion-scraper-template.md
 
+import { isPromotionExpired } from './promotion-utils';
+
 const DW_BASE_URL = 'https://www.davidweekleyhomes.com';
 const AUSTIN_MARKET_ID = 'markets/4';
 const PROMOTIONS_URL = `${DW_BASE_URL}/promotion/marketpromotionslist?marketId=${encodeURIComponent(AUSTIN_MARKET_ID)}`;
@@ -240,5 +242,9 @@ export async function fetchDavidWeekleyAustinPromotions(): Promise<{
     else skipped++;
   }
 
-  return { rows, rawCount, skipped };
+  // Filter out expired promotions — don't upsert, let prune handle deletion.
+  const activeRows = rows.filter((r) => !isPromotionExpired(r.expiresAt));
+  const expiredSkipped = rows.length - activeRows.length;
+
+  return { rows: activeRows, rawCount, skipped: skipped + expiredSkipped };
 }

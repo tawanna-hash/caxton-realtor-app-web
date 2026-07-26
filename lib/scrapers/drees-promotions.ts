@@ -19,6 +19,7 @@
 //   app/api/cron/scrape-drees-promotions/route.ts  (cron endpoint)
 
 import type { UpsertScrapedInput, PromoType } from '../builder-inventory';
+import { isPromotionExpired } from './promotion-utils';
 
 const SCRAPER_SUBMITTER_NAME = 'Drees Homes Auto-Importer';
 const SCRAPER_SUBMITTER_EMAIL = 'scraper-drees-promotions@harmonyone.system';
@@ -138,7 +139,10 @@ export function getDreesPromotions(): {
     extraDetails: null,
   }));
 
-  return { rows, rawCount: rows.length };
+  // Filter out expired promotions — don't upsert, let prune handle deletion.
+  const activeRows = rows.filter((r) => !isPromotionExpired(r.expiresAt as string | null));
+
+  return { rows: activeRows, rawCount: activeRows.length };
 }
 
 // ─────────────────────────────────────────────────────────────────────────

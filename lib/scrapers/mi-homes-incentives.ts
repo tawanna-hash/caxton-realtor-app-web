@@ -18,6 +18,7 @@
 
 import * as cheerio from 'cheerio';
 import type { UpsertScrapedInput, PromoType, Publication } from '../builder-inventory';
+import { isPromotionExpired } from './promotion-utils';
 
 const BASE = 'https://www.mihomes.com';
 
@@ -250,5 +251,11 @@ export async function fetchMIHomesIncentives(): Promise<IncentiveScrapeResult> {
     }
   }
 
-  return { rows, rawCount, skipped };
+  // Filter out expired promotions — don't upsert, let prune handle deletion.
+  const activeRows = rows.filter(
+    (r) => !isPromotionExpired(r.expiresAt as string | null),
+  );
+  const expiredCount = rows.length - activeRows.length;
+
+  return { rows: activeRows, rawCount, skipped: [...skipped, ...Array(expiredCount).fill({ url: '', reason: 'promotion expired' })] };
 }
