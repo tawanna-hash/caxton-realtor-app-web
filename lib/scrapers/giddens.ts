@@ -235,7 +235,7 @@ function normalize(
   const isAvailable = d.status?.id === 'available';
 
   // Extra details
-  const extraDetails: Record<string, string | number | boolean> = {};
+  const extraDetails: Record<string, string> = {};
 
   if (statusLabel) extraDetails['Status'] = statusLabel;
   if (d.story) extraDetails['Stories'] = d.story;
