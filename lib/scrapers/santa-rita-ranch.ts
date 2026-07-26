@@ -618,8 +618,317 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
     },
   };
 
-  // Prepend a synthetic community-summary row so Santa Rita Ranch surfaces
-  // on the public /communities page (which filters home_type='community').
+  // ─────────────────────────────────────────────────────────────────────────
+  // Neighborhood community rows
+  //
+  // SRR has 6 neighborhoods, each with its own page on
+  // /neighborhoods/<slug>/ with unique amenities, builders, schools,
+  // and status. We create a community row for each so they surface
+  // individually on /communities — not just one for the whole development.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  type NeighborhoodSpec = {
+    slug: string;
+    name: string;
+    externalId: string;
+    sourceUrl: string;
+    description: string;
+    status: 'coming-soon' | 'close-out' | null;
+    adultOnly?: boolean;
+    builders: string[];
+    amenities: string[];
+    schoolDistrict?: string;
+    schools?: { name: string; grades?: string }[];
+    homePlans?: { name: string; beds: string; baths: string; sqftDisplay: string; priceDisplay: string }[];
+    ogImage?: string;
+  };
+
+  const neighborhoods: NeighborhoodSpec[] = [
+    {
+      slug: 'homestead-neighborhood',
+      name: 'Homestead',
+      externalId: 'srr-neighborhood/homestead',
+      sourceUrl: 'https://santaritaranchaustin.com/neighborhoods/homestead-neighborhood/',
+      description:
+        'Homestead is one of the newest neighborhoods at Santa Rita Ranch, featuring its own information center ' +
+        'and the brand-new Ranch Camp amenity center with a resort-style pool, splash pad, and lounge areas. ' +
+        'New homes from the low $400s to $3 million+. Residents are within walking distance of Tierra Rosa Elementary ' +
+        'and Santa Rita Middle School, zoned to the A+ rated Liberty Hill ISD.',
+      status: null,
+      builders: [
+        'CastleRock Communities', 'Coventry Homes', 'Highland Homes',
+        'Perry Homes', 'Pulte Homes', 'Scott Felder Homes',
+        'Toll Brothers', 'Westin Homes',
+      ],
+      amenities: [
+        'Ranch Camp Amenity Center',
+        'Two Resort-Style Pools',
+        'Kiddie Pool and Splash Park',
+        'Two Pickleball Courts',
+        'Nature Trails',
+        'Pavilion',
+        'Happyland',
+      ],
+      schoolDistrict: 'Liberty Hill ISD',
+      schools: [
+        { name: 'Tierra Rosa Elementary' },
+        { name: 'Santa Rita Middle School' },
+      ],
+      ogImage: 'https://santaritaranchaustin.com/wp-content/uploads/2022/05/Ranch-House-Stargazer-Patio1-1024x540.jpg',
+    },
+    {
+      slug: 'tierra-rosa-neightborhood',
+      name: 'Tierra Rosa',
+      externalId: 'srr-neighborhood/tierra-rosa',
+      sourceUrl: 'https://santaritaranchaustin.com/neighborhoods/tierra-rosa-neightborhood/',
+      description:
+        'Tierra Rosa is the second neighborhood at Santa Rita Ranch, home to The Ranch House with dual water slides, ' +
+        'splash pad, great lawn, stargazer patio, and Happy\'s Wellness Barn. The neighborhood features miles of nature ' +
+        'trails and two catch-and-release fishing lakes: Ed\'s Lake and C.A.\'s Lake. Zoned to Georgetown ISD and home ' +
+        'to San Gabriel Elementary.',
+      status: null,
+      builders: [
+        'Chesmar Homes', 'Pulte Homes', 'Highland Homes',
+        'Scott Felder Homes', 'Taylor Morrison', 'Westin Homes',
+      ],
+      amenities: [
+        'The Ranch House',
+        'Dual Water Slides (Big and Lil\' Dip)',
+        'Splash Pad',
+        'Great Lawn',
+        'Stargazer Patio',
+        'Happy\'s Wellness Barn',
+        'Memorial Plaza',
+        'Nature Trails',
+        'Catch-and-Release Fishing Lakes (Ed\'s Lake, C.A.\'s Lake)',
+      ],
+      schoolDistrict: 'Georgetown ISD',
+      schools: [
+        { name: 'San Gabriel Elementary' },
+      ],
+      ogImage: 'https://santaritaranchaustin.com/wp-content/uploads/2022/05/The-Green4-1024x682.jpg',
+    },
+    {
+      slug: 'saddleback-neighborhood',
+      name: 'Saddleback',
+      externalId: 'srr-neighborhood/saddleback',
+      sourceUrl: 'https://santaritaranchaustin.com/neighborhoods/saddleback-neighborhood/',
+      description:
+        'Saddleback is a future neighborhood at Santa Rita Ranch, located on Ronald Reagan near Divine Savior Academy. ' +
+        'The neighborhood will feature new homes by Pulte Homes and GFO Home, along with a model home park. ' +
+        'Plans include a future amenity center with resort-style pool, playscape, indoor and outdoor pickleball, ' +
+        'trike track, and covered pavilion. Students are zoned to the A-rated Liberty Hill ISD.',
+      status: 'coming-soon',
+      builders: ['Pulte Homes', 'GFO Home'],
+      amenities: [
+        'Future Amenity Center',
+        'Resort-Style Pool',
+        'Playscape',
+        'Indoor & Outdoor Pickleball',
+        'Trike Track',
+        'Covered Pavilion',
+      ],
+      schoolDistrict: 'Liberty Hill ISD',
+      ogImage: 'https://santaritaranchaustin.com/wp-content/uploads/2022/05/splash-957x1024.jpg',
+    },
+    {
+      slug: 'active-adult-community',
+      name: 'Regency at Santa Rita Ranch',
+      externalId: 'srr-neighborhood/regency-55',
+      sourceUrl: 'https://santaritaranchaustin.com/neighborhoods/active-adult-community/',
+      description:
+        'Regency at Santa Rita Ranch is a brand-new 55+ active adult community by Toll Brothers. ' +
+        'The community features 15 floor plans, a clubhouse with resort-style pool, pickleball, bocce ball, ' +
+        'cafe & bar, game lounge, catering room, event lawn, and more. Regency residents also have access ' +
+        'to all amenities across Santa Rita Ranch.',
+      status: 'coming-soon',
+      adultOnly: true,
+      builders: ['Toll Brothers'],
+      amenities: [
+        'The Clubhouse',
+        'Resort-Style Pool',
+        'Pickleball Courts',
+        'Bocce Ball',
+        'Nature Trails',
+        'Cafe & Bar',
+        'Game Lounge',
+        'Catering Room',
+        'Lounge Room',
+        'Event Lawn',
+      ],
+      ogImage: 'https://santaritaranchaustin.com/wp-content/uploads/2021/10/SRR-Slides-Balloon-Photo.png',
+    },
+    {
+      slug: 'eldorado',
+      name: 'Eldorado',
+      externalId: 'srr-neighborhood/eldorado',
+      sourceUrl: 'https://santaritaranchaustin.com/neighborhoods/eldorado/',
+      description:
+        'Eldorado is the newest village at Santa Rita Ranch, designed for those seeking adventure, connection, ' +
+        'and a home that fits their lifestyle. New homes by Perry Homes and Toll Brothers offer stunning designs, ' +
+        'modern features, and access to award-winning amenities including resort-style pools, nature trails, ' +
+        'indoor and outdoor pickleball, trike track, and covered pavilion.',
+      status: null,
+      builders: ['Perry Homes', 'Toll Brothers'],
+      amenities: [
+        'Future Amenity Center',
+        'Resort-Style Pool',
+        'Playscape',
+        'Indoor & Outdoor Pickleball',
+        'Trike Track',
+        'Covered Pavilion',
+        'Nature Trails',
+      ],
+      homePlans: [
+        { name: 'Plan 1', beds: '4', baths: '3', sqftDisplay: '2,663', priceDisplay: 'From $549,900' },
+        { name: 'Plan 2', beds: '4', baths: '3.5', sqftDisplay: '2,561', priceDisplay: 'From $549,900' },
+        { name: 'Plan 3', beds: '4', baths: '3.5', sqftDisplay: '2,485', priceDisplay: 'From $574,000' },
+        { name: 'Plan 4', beds: '4', baths: '3.5', sqftDisplay: '2,942', priceDisplay: 'From $599,900' },
+        { name: 'Plan 5', beds: '4', baths: '3', sqftDisplay: '3,241', priceDisplay: 'From $599,900' },
+        { name: 'Plan 6', beds: '4', baths: '4.5', sqftDisplay: '2,964', priceDisplay: 'From $624,000' },
+        { name: 'Plan 7', beds: '4', baths: '3', sqftDisplay: '2,942', priceDisplay: 'From $639,900' },
+        { name: 'Plan 8', beds: '4', baths: '3', sqftDisplay: '3,094', priceDisplay: 'From $649,900' },
+        { name: 'Plan 9', beds: '4', baths: '3.5', sqftDisplay: '2,944', priceDisplay: 'From $674,000' },
+        { name: 'Plan 10', beds: '4', baths: '3', sqftDisplay: '3,146', priceDisplay: 'From $674,000' },
+        { name: 'Plan 11', beds: '4', baths: '4', sqftDisplay: '2,690', priceDisplay: 'From $719,000' },
+      ],
+      ogImage: 'https://santaritaranchaustin.com/wp-content/uploads/2022/05/The-Green4-1024x682.jpg',
+    },
+  ];
+
+  // Helper: filter showcase homes by neighborhood name.
+  function homesInNeighborhood(name: string) {
+    return showcaseRows.filter((r) => {
+      const cn = r.communityName ?? '';
+      return cn.includes(name);
+    });
+  }
+
+  // Helper: compute aggregate ranges from a set of rows.
+  function aggregateRange(rs: UpsertScrapedInput[]) {
+    const pm = rs.length > 0 ? Math.min(...rs.map((r) => r.priceMin ?? Infinity)) : null;
+    const pM = rs.length > 0 ? Math.max(...rs.map((r) => r.priceMax ?? 0)) : null;
+    const sm = rs.length > 0 ? Math.min(...rs.map((r) => r.sqftMin ?? Infinity)) : null;
+    const sM = rs.length > 0 ? Math.max(...rs.map((r) => r.sqftMax ?? 0)) : null;
+    const bm = rs.length > 0 ? Math.min(...rs.map((r) => r.bedsMin ?? Infinity)) : null;
+    const bM = rs.length > 0 ? Math.max(...rs.map((r) => r.bedsMax ?? 0)) : null;
+    return {
+      priceMin: rs.length > 0 && Number.isFinite(pm) ? pm : null,
+      priceMax: rs.length > 0 && Number.isFinite(pM) ? pM : null,
+      sqftMin: rs.length > 0 && Number.isFinite(sm) ? sm : null,
+      sqftMax: rs.length > 0 && Number.isFinite(sM) ? sM : null,
+      bedsMin: rs.length > 0 && Number.isFinite(bm) ? bm : null,
+      bedsMax: rs.length > 0 && Number.isFinite(bM) ? bM : null,
+    };
+  }
+
+  for (const nb of neighborhoods) {
+    const nbHomes = homesInNeighborhood(nb.name);
+    const agg = aggregateRange(nbHomes);
+
+    const nbCommunityData: CommunityData = {
+      communityName: `${nb.name} at Santa Rita Ranch`,
+      city: 'Liberty Hill',
+      status: nb.status,
+      adultOnly: nb.adultOnly,
+      priceFrom: agg.priceMin != null && agg.priceMax != null
+        ? `$${agg.priceMin.toLocaleString()} \u2013 $${agg.priceMax.toLocaleString()}`
+        : nb.homePlans && nb.homePlans.length > 0
+          ? nb.homePlans[0].priceDisplay
+          : null,
+      sqftRange: agg.sqftMin != null && agg.sqftMax != null
+        ? `${agg.sqftMin.toLocaleString()} \u2013 ${agg.sqftMax.toLocaleString()}`
+        : null,
+      imageUrls: nb.ogImage ? [nb.ogImage] : [],
+      amenities: nb.amenities,
+      builders: nb.builders,
+      schools: nb.schoolDistrict
+        ? { district: nb.schoolDistrict, list: nb.schools ?? [] }
+        : null,
+      homePlans: nb.homePlans?.map((p) => ({
+        name: p.name,
+        beds: p.beds,
+        baths: p.baths,
+        sqftDisplay: p.sqftDisplay,
+        priceDisplay: p.priceDisplay,
+      })),
+      salesOffice: {
+        address: '3000 Santa Rita Blvd, Liberty Hill, TX 78628',
+        hours: 'Mon-Sat 10am-6pm, Sun 12pm-5pm',
+        lat: 30.5669,
+        lng: -97.7834,
+      },
+    };
+
+    rows.unshift({
+      externalId: nb.externalId,
+      kind: 'listing',
+      publication: 'realtyline',
+      submittedByName: 'Santa Rita Ranch Auto-Importer',
+      submittedByEmail: 'scraper-santa-rita-ranch@harmonyone.system',
+      builderName: 'Santa Rita Ranch',
+      title: nb.name,
+      city: 'Liberty Hill',
+      state: 'TX',
+      description: nb.description,
+      bedsMin: agg.bedsMin,
+      bedsMax: agg.bedsMax,
+      bathsMin: null,
+      bathsMax: null,
+      sqftMin: agg.sqftMin,
+      sqftMax: agg.sqftMax,
+      priceMin: agg.priceMin,
+      priceMax: agg.priceMax,
+      flyerPdfUrl: null,
+      sourceUrl: nb.sourceUrl,
+      thumbnailUrl: nb.ogImage ?? 'https://santaritaranchaustin.com/wp-content/uploads/2021/10/SRR-Slides-Balloon-Photo.png',
+      galleryUrls: nb.ogImage ? [nb.ogImage] : null,
+      address: null,
+      readyDate: null,
+      planName: null,
+      communityName: nb.name,
+      homeType: 'community',
+      communityData: nbCommunityData,
+    });
+    rawCount += 1;
+  }
+
+  // Also keep the parent community row.
+  const parentCommunityData: CommunityData = {
+    communityName: 'Santa Rita Ranch',
+    city: 'Liberty Hill',
+    status: null,
+    priceFrom: priceMin != null && priceMax != null
+      ? `$${priceMin.toLocaleString()} \u2013 $${priceMax.toLocaleString()}`
+      : null,
+    sqftRange: sqftMin != null && sqftMax != null
+      ? `${sqftMin.toLocaleString()} \u2013 ${sqftMax.toLocaleString()}`
+      : null,
+    imageUrls: [
+      'https://santaritaranchaustin.com/wp-content/uploads/2021/10/SRR-Slides-Balloon-Photo.png',
+      'https://santaritaranchaustin.com/wp-content/uploads/2022/05/Ranch-House-Stargazer-Patio1-1024x540.jpg',
+      'https://santaritaranchaustin.com/wp-content/uploads/2022/05/The-Green4-1024x682.jpg',
+      'https://santaritaranchaustin.com/wp-content/uploads/2022/05/splash-957x1024.jpg',
+    ],
+    amenities: [
+      'Ranch House (pool, splash pad, lounge areas)',
+      'Ranch Camp amenity center',
+      'Wellness Barn',
+      'The Hub / The Green',
+      'P-L-A-Y Park',
+      'Pickleball Courts',
+      'Nature Trails (miles of trails)',
+      'Farm House Welcome Center',
+    ],
+    builders: buildersInCommunity,
+    salesOffice: {
+      address: '3000 Santa Rita Blvd, Liberty Hill, TX 78628',
+      hours: 'Mon-Sat 10am-6pm, Sun 12pm-5pm',
+      lat: 30.5669,
+      lng: -97.7834,
+    },
+  };
+
   rows.unshift({
     externalId: 'srr-developer/santa-rita-ranch',
     kind: 'listing',
@@ -649,16 +958,15 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
     sourceUrl: 'https://santaritaranchaustin.com/',
     thumbnailUrl:
       'https://santaritaranchaustin.com/wp-content/uploads/2021/10/SRR-Slides-Balloon-Photo.png',
-    galleryUrls: communityData.imageUrls,
+    galleryUrls: parentCommunityData.imageUrls,
     address: null,
     readyDate: null,
     planName: null,
     communityName: 'Santa Rita Ranch',
     homeType: 'community',
-    communityData,
+    communityData: parentCommunityData,
   });
   rawCount += 1;
 
   return { rows, rawCount, skipped };
 }
-

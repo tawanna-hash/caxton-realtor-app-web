@@ -36,11 +36,10 @@ function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
   return { ok: true };
 }
 
-async function stripExistingShowcase(): Promise<number> {
+async function stripExistingRows(): Promise<number> {
   const result = await sql`
     DELETE FROM builder_inventory
     WHERE builder_name = ${BUILDER_NAME}
-      AND home_type = 'showcase'
       AND external_id IS NOT NULL
     RETURNING id
   `;
@@ -63,7 +62,7 @@ async function handle(req: NextRequest) {
   let stripped = 0;
   if (strip) {
     try {
-      stripped = await stripExistingShowcase();
+      stripped = await stripExistingRows();
       console.log(`[scrape-santa-rita-ranch] stripped ${stripped} existing showcase rows`);
     } catch (err) {
       console.error('[scrape-santa-rita-ranch] strip failed:', err instanceof Error ? err.message : String(err));
@@ -97,25 +96,22 @@ async function handle(req: NextRequest) {
     }
   }
 
-  // Prune: deactivate showcase homes no longer in the source feed.
+  // Prune: deactivate rows no longer in the source feed.
   let deactivated = 0;
+  let deactivatedCommunities = 0;
   if (scrape.rows.length > 0 && !strip) {
     const showcaseIds = scrape.rows
       .filter((r) => r.homeType === 'showcase')
       .map((r) => r.externalId);
+    const communityIds = scrape.rows
+      .filter((r) => r.homeType === 'community')
+      .map((r) => r.externalId);
+
     deactivated = await deactivateStaleBuilderInventory({
       builderName: BUILDER_NAME,
       homeType: 'showcase',
       activeExternalIds: showcaseIds,
     });
-  }
-
-  // Also prune stale community rows.
-  let deactivatedCommunities = 0;
-  if (scrape.rows.length > 0 && !strip) {
-    const communityIds = scrape.rows
-      .filter((r) => r.homeType === 'community')
-      .map((r) => r.externalId);
     deactivatedCommunities = await deactivateStaleBuilderInventory({
       builderName: BUILDER_NAME,
       homeType: 'community',
