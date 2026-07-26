@@ -195,7 +195,11 @@ consumer incentive.
   labeled and linking to its own `/inventory/[id]`. So: always capture the
   PDF when one exists.
 - **`thumbnailUrl`** is the hero image shown in the builder-page Promotions
-  row and the detail gallery. Absolutize path-only URLs.
+  row and the detail gallery. Absolutize path-only URLs. **A thumbnail must
+  always be present** — if `og:image` is missing, fall back to the first
+  large content image on the page (e.g. hero foreground, promo image).
+  Scrapers should try, in order: `og:image` meta tag, page hero image,
+  first `img` with a content asset URL (not logo/icon).
 - **`sourceUrl`** becomes the "Visit builder site" pill in the floater.
   Prefer a non-PDF page; if only a PDF exists, leave `sourceUrl: null` and
   let the flyer carousel carry the content (this is the Drees case).

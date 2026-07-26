@@ -93,7 +93,7 @@ export type ScrapedBuilderRow = {
 | `city` / `state` | Listing API / detail page | `state` always 2-letter; use a `stateToAbbrev` helper. |
 | `description` | Detail-page marketing copy | Best source; if absent, **synthesize** (§6). Never `null` if avoidable. |
 | `beds/baths/sqft/price` | Listing API (scalars) | `null` if unknown. Strip comma-strings. Store min=max for one home. Price = whole dollars. |
-| `thumbnailUrl` | Listing API `image` | Absolute URL; `normalizeUrl` if path-only. |
+| `thumbnailUrl` | Listing API `image` | Absolute URL; `normalizeUrl` if path-only. **Must always be present** — if the primary image is null, fall back to `galleryUrls[0]`. |
 | `sourceUrl` | Detail-page URL | The public "Builder Site" button links here. §7. |
 | `galleryUrls` | Detail-page `data-image` srcsets | Pick the largest variant. Limit ~30. §7. |
 | `flyerPdfUrl` | Detail page link | Often `null` for move-in; keep the field. |

@@ -346,7 +346,8 @@ function parseCommunityPage(
   );
 
   // Thumbnail: og:image (sanitized to fix KB's URL bug).
-  const thumbnailUrl = sanitizeKBUrl(
+  // Fall back to first gallery image if og:image is missing.
+  let thumbnailUrl = sanitizeKBUrl(
     $('meta[property="og:image"]').attr('content'),
   );
 
@@ -362,6 +363,9 @@ function parseCommunityPage(
   });
   if (thumbnailUrl && !galleryUrlsRaw.includes(thumbnailUrl)) {
     galleryUrlsRaw.unshift(thumbnailUrl);
+  }
+  if (!thumbnailUrl && galleryUrlsRaw.length > 0) {
+    thumbnailUrl = galleryUrlsRaw[0];
   }
   const galleryUrls = galleryUrlsRaw.length > 0 ? galleryUrlsRaw : [];
 

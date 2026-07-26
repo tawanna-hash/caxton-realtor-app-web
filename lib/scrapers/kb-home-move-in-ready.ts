@@ -398,9 +398,13 @@ function normalize(
       if (p && !galleryRaw.includes(p)) galleryRaw.push(p);
     }
   }
-  const thumbnailUrl = resolveUrl(home.thumbnailImage?.image);
+  // Thumbnail: prefer the home's thumbnail image, fall back to first gallery image.
+  let thumbnailUrl = resolveUrl(home.thumbnailImage?.image);
   if (thumbnailUrl && !galleryRaw.includes(thumbnailUrl)) {
     galleryRaw.unshift(thumbnailUrl);
+  }
+  if (!thumbnailUrl && galleryRaw.length > 0) {
+    thumbnailUrl = galleryRaw[0];
   }
   const galleryUrls = galleryRaw.length > 0 ? galleryRaw : null;
 

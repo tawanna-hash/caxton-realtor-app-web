@@ -165,7 +165,17 @@ async function parseDetail(url: string, market: Market): Promise<UpsertScrapedIn
 
   const rawTitle = metaContent($, 'og:title');
   const description = metaContent($, 'og:description');
-  const thumb = metaContent($, 'og:image');
+  // Thumbnail: prefer og:image, fall back to first large content image.
+  let thumb = metaContent($, 'og:image');
+  if (!thumb) {
+    $('img').each((_, el) => {
+      if (thumb) return;
+      const src = $(el).attr('src');
+      if (src && /\.(jpg|jpeg|png|webp)/i.test(src) && !src.includes('logo') && !src.includes('icon')) {
+        thumb = src.startsWith('http') ? src : src.startsWith('/') ? `https://www.mihomes.com${src}` : null;
+      }
+    });
+  }
 
   // Prefer the detail page's real promo headline over the generic og:title
   // (og:title is "New Home Incentives in Austin - M/I Homes").

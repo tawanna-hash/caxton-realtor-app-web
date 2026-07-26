@@ -192,9 +192,14 @@ function normalize(html: string): ScrapedKBHomePromotionRow | null {
     ? decodeEntities(titleText).replace(/\s*-\s*KB Home\s*$/i, '')
     : 'KB Home Special Low Rates';
 
-  // Thumbnail from og:image (if present).
+  // Thumbnail: prefer og:image, fall back to the promo hero foreground
+  // image (the family/photo on the rates page), then any large content image.
+  const ogImage = $('meta[property="og:image"]').attr('content');
+  const heroForeground = $('img.promo-hero-foreground').attr('src');
+  const heroBackdrop = $('img.promo-hero-backdrop').attr('src');
+  const firstContentImg = $('img[src*="/contentassets/"]').attr('src');
   const thumbnailUrl = resolveUrl(
-    $('meta[property="og:image"]').attr('content'),
+    ogImage || heroForeground || firstContentImg || heroBackdrop || null,
   );
 
   // Extract the rate disclaimer text — it contains the key offer details.
