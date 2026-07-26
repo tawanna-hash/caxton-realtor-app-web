@@ -167,6 +167,64 @@ async function fetchCommunities(): Promise<WpCommunityPost[]> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
+// Fetch the communities index page and extract correct community page URLs.
+// WP REST API slugs don't always match the actual community page URLs
+// (e.g. slug "northgate-ranch-2" → page at /communities/leander-estates/).
+// ─────────────────────────────────────────────────────────────────────────
+
+async function fetchCommunityPageUrls(): Promise<Map<string, string>> {
+  // Returns a map of community title → page URL.
+  const urlMap = new Map<string, string>();
+
+  let res: Response;
+  try {
+    res = await fetch(`${GIDDENS_BASE_URL}/communities/`, {
+      headers: DETAIL_PAGE_HEADERS,
+      redirect: 'follow',
+      signal: AbortSignal.timeout(30_000),
+      cache: 'no-store',
+    });
+  } catch {
+    return urlMap;
+  }
+  if (!res.ok) return urlMap;
+
+  const html = await res.text();
+
+  // Extract all community links: <a href="https://giddenshomes.com/communities/<slug>/">
+  const linkRe =
+    /href="(https?:\/\/giddenshomes\.com\/communities\/([a-z0-9-]+)\/?)"/gi;
+  let linkMatch: RegExpExecArray | null;
+
+  while ((linkMatch = linkRe.exec(html)) !== null) {
+    const pageUrl = linkMatch[1].replace(/\/$/, '') + '/';
+    const slug = linkMatch[2];
+
+    // Skip the index page itself
+    if (!slug || slug === '') continue;
+
+    // Find the community title near this link in the HTML
+    const context = html.slice(
+      Math.max(0, linkMatch.index - 500),
+      linkMatch.index + 500,
+    );
+    const titleMatch = /<span[^>]*class="[^"]*community-overview__title[^"]*"[^>]*>([^<]+)<\/span>/i.exec(
+      context,
+    );
+    const title = titleMatch
+      ? titleMatch[1].trim()
+      : slug
+          .split('-')
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
+
+    urlMap.set(title.toLowerCase(), pageUrl);
+  }
+
+  return urlMap;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // Fetch a community detail page and parse floorplan divs
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -182,12 +240,11 @@ type ParsedFloorplan = {
 };
 
 async function fetchCommunityFloorplans(
-  slug: string,
+  pageUrl: string,
 ): Promise<ParsedFloorplan[]> {
-  const url = `${GIDDENS_BASE_URL}/communities/${slug}/`;
   let res: Response;
   try {
-    res = await fetch(url, {
+    res = await fetch(pageUrl, {
       headers: DETAIL_PAGE_HEADERS,
       redirect: 'follow',
       signal: AbortSignal.timeout(30_000),
@@ -284,6 +341,7 @@ function normalize(
   post: WpCommunityPost,
   config: WpCommunityConfig,
   floorplans: ParsedFloorplan[],
+  pageUrl: string,
 ): ScrapedGiddensCommunityRow | null {
   const title = post.title.rendered.trim();
   if (!title) return null;
@@ -298,7 +356,7 @@ function normalize(
     .filter((u): u is string => u !== null);
 
   const thumbnailUrl = galleryImages[0] ?? null;
-  const sourceUrl = `${GIDDENS_BASE_URL}/communities/${post.slug}/`;
+  const sourceUrl = pageUrl;
 
   // Story / marketing copy
   const story = config.details?.story?.trim() ?? null;
@@ -408,6 +466,10 @@ export async function fetchGiddensAustinCommunities(): Promise<{
   const posts = await fetchCommunities();
   const rawCount = posts.length;
 
+  // Fetch the communities index page to get correct community page URLs.
+  // WP REST API slugs don't always match the actual page URLs.
+  const pageUrlMap = await fetchCommunityPageUrls();
+
   const rows: ScrapedGiddensCommunityRow[] = [];
   let skipped = 0;
 
@@ -431,10 +493,18 @@ export async function fetchGiddensAustinCommunities(): Promise<{
       continue;
     }
 
-    // Fetch floorplans from the community detail page HTML.
-    const floorplans = await fetchCommunityFloorplans(post.slug);
+    const title = post.title.rendered.trim();
 
-    const row = normalize(post, config, floorplans);
+    // Look up the correct community page URL from the index.
+    // Fall back to constructing from the WP slug.
+    const pageUrl =
+      pageUrlMap.get(title.toLowerCase()) ??
+      `${GIDDENS_BASE_URL}/communities/${post.slug}/`;
+
+    // Fetch floorplans from the community detail page HTML.
+    const floorplans = await fetchCommunityFloorplans(pageUrl);
+
+    const row = normalize(post, config, floorplans, pageUrl);
     if (!row) {
       skipped++;
       continue;
