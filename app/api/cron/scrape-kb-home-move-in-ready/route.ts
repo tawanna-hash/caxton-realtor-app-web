@@ -10,6 +10,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchKBHomeAustinMIR } from '@/lib/scrapers/kb-home-move-in-ready';
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
+import { neon } from '@neondatabase/serverless';
+
+const sql = neon(process.env.DATABASE_URL!);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -40,8 +43,30 @@ function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
   return { ok: true };
 }
 
-async function runScrape() {
+async function stripExistingShowcase(): Promise<number> {
+  const result = await sql`
+    DELETE FROM builder_inventory
+    WHERE builder_name = ${BUILDER_NAME}
+      AND home_type = 'showcase'
+      AND external_id IS NOT NULL
+    RETURNING id
+  `;
+  return result.length;
+}
+
+async function runScrape(strip: boolean) {
   const startedAt = Date.now();
+
+  let stripped = 0;
+  if (strip) {
+    try {
+      stripped = await stripExistingShowcase();
+      console.log(`[scrape-kb-home-mir] stripped ${stripped} existing showcase rows`);
+    } catch (err) {
+      console.error('[scrape-kb-home-mir] strip failed:', err instanceof Error ? err.message : String(err));
+    }
+  }
+
   const { rows, rawCount, skipped } = await fetchKBHomeAustinMIR();
 
   let inserted = 0;
@@ -109,7 +134,7 @@ async function runScrape() {
   // Prune: deactivate MIR homes no longer in KB Home's source (sold / off-market).
   // Guarded — never runs on an empty scrape.
   let deactivated = 0;
-  if (rows.length > 0) {
+  if (rows.length > 0 && !strip) {
     try {
       deactivated = await deactivateStaleBuilderInventory({
         builderName: BUILDER_NAME,
@@ -130,6 +155,7 @@ async function runScrape() {
       rawCount,
       normalized: rows.length,
       skipped,
+      stripped,
       inserted,
       updated,
       deactivated,
@@ -149,8 +175,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const strip = new URL(req.url).searchParams.get('strip') === '1';
+
   try {
-    const result = await runScrape();
+    const result = await runScrape(strip);
     return NextResponse.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

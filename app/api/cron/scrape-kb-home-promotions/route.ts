@@ -17,6 +17,9 @@ import {
   updateBuilderInventory,
 } from '@/lib/builder-inventory';
 import { deleteStaleBuilderPromotions } from '@/lib/builder-inventory-sync';
+import { neon } from '@neondatabase/serverless';
+
+const sql = neon(process.env.DATABASE_URL!);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,8 +46,30 @@ function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
   return { ok: true };
 }
 
-async function runScrape() {
+async function stripExistingPromotions(): Promise<number> {
+  const result = await sql`
+    DELETE FROM builder_inventory
+    WHERE builder_name = ${BUILDER_NAME}
+      AND kind = 'promotion'
+      AND external_id IS NOT NULL
+    RETURNING id
+  `;
+  return result.length;
+}
+
+async function runScrape(strip: boolean) {
   const startedAt = Date.now();
+
+  let stripped = 0;
+  if (strip) {
+    try {
+      stripped = await stripExistingPromotions();
+      console.log(`[scrape-kb-home-promotions] stripped ${stripped} existing promotion rows`);
+    } catch (err) {
+      console.error('[scrape-kb-home-promotions] strip failed:', err instanceof Error ? err.message : String(err));
+    }
+  }
+
   const { rows, rawCount, skipped } = await fetchKBHomeAustinPromotions();
 
   let created = 0;
@@ -109,7 +134,7 @@ async function runScrape() {
   // Prune: DELETE promotions no longer in the source feed.
   // Guarded — returns 0 on an empty scrape.
   let deleted = 0;
-  if (rows.length > 0) {
+  if (rows.length > 0 && !strip) {
     try {
       deleted = await deleteStaleBuilderPromotions({
         builderName: BUILDER_NAME,
@@ -129,6 +154,7 @@ async function runScrape() {
       rawCount,
       normalized: rows.length,
       skipped,
+      stripped,
       created,
       updated,
       published,
@@ -149,8 +175,10 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const strip = new URL(req.url).searchParams.get('strip') === '1';
+
   try {
-    const result = await runScrape();
+    const result = await runScrape(strip);
     return NextResponse.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -4,19 +4,20 @@
 // Source: https://santaritaranchaustin.com/builder-incentives-in-liberty-hill/
 //
 // Auth: Authorization: Bearer ${CRON_SECRET} in production.
-// Dev/preview: open (so we can test from local without setting the secret).
+// Dev/preview: open.
 //
-// Output rows land as kind='promotion'. Unlike the generic S14 review
-// policy (promos → status='pending'), newly-imported SRR promos are
-// auto-activated here: the developer page already curates participating
+// ?strip=1 — deletes ALL existing SRR promotion rows before upserting.
+//
+// Output rows land as kind='promotion'. Newly-imported SRR promos are
+// auto-activated: the developer page already curates participating
 // builders and per-builder review adds no signal. Existing rows keep
 // whatever status they already have — admin decisions are never
 // overwritten.
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
-import { fetchSantaRitaRanchPromotions } from '../../../../lib/scrapers/santa-rita-ranch-promotions';
-import { upsertBuilderInventoryByExternalId } from '../../../../lib/builder-inventory';
+import { fetchSantaRitaRanchPromotions } from '@/lib/scrapers/santa-rita-ranch-promotions';
+import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -24,23 +25,52 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-function authorized(req: Request): boolean {
-  if (process.env.VERCEL_ENV !== 'production') return true;
+const BUILDER_NAME = 'Santa Rita Ranch';
+
+function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
+  const isProduction = process.env.VERCEL_ENV === 'production';
   const expected = process.env.CRON_SECRET;
-  if (!expected) return false;
   const got = req.headers.get('authorization');
-  return got === `Bearer ${expected}`;
+  if (!isProduction) return { ok: true };
+  if (!expected) return { ok: false, reason: 'CRON_SECRET not configured' };
+  if (got !== `Bearer ${expected}`) return { ok: false, reason: 'Bad or missing Authorization header' };
+  return { ok: true };
 }
 
-async function handle(req: Request) {
-  if (!authorized(req)) {
+async function stripExistingPromotions(): Promise<number> {
+  const result = await sql`
+    DELETE FROM builder_inventory
+    WHERE builder_name = ${BUILDER_NAME}
+      AND kind = 'promotion'
+      AND external_id IS NOT NULL
+    RETURNING id
+  `;
+  return result.length;
+}
+
+async function handle(req: NextRequest) {
+  const auth = verifyCronAuth(req);
+  if (!auth.ok) {
     return NextResponse.json(
-      { ok: false, error: 'Bad or missing Authorization header' },
+      { ok: false, error: auth.reason ?? 'Bad or missing Authorization header' },
       { status: 401 },
     );
   }
 
+  const strip = new URL(req.url).searchParams.get('strip') === '1';
+
   const startedAt = Date.now();
+
+  let stripped = 0;
+  if (strip) {
+    try {
+      stripped = await stripExistingPromotions();
+      console.log(`[scrape-srr-promotions] stripped ${stripped} existing promotion rows`);
+    } catch (err) {
+      console.error('[scrape-srr-promotions] strip failed:', err instanceof Error ? err.message : String(err));
+    }
+  }
+
   let scrape;
   try {
     scrape = await fetchSantaRitaRanchPromotions();
@@ -61,13 +91,6 @@ async function handle(req: Request) {
       const result = await upsertBuilderInventoryByExternalId(row);
       if (result.created) {
         created++;
-        // SRR builder-incentive flyers are pulled from a curated developer
-        // page that already vets participating builders. Auto-activate
-        // newly-imported promos instead of leaving them in 'pending' —
-        // the per-builder review burden adds friction without catching
-        // anything our source page hasn't already filtered.
-        // Existing rows are NOT touched here: once a human (or this same
-        // policy) sets a status, the scraper has no business overwriting it.
         await sql`
           UPDATE builder_inventory
           SET status = 'active',
@@ -96,10 +119,15 @@ async function handle(req: Request) {
     created,
     updated,
     autoActivated,
+    stripped,
     skipped: scrape.skipped,
     upsertErrors,
   });
 }
 
-export async function GET(req: Request)  { return handle(req); }
-export async function POST(req: Request) { return handle(req); }
+export async function GET(req: NextRequest) {
+  return handle(req);
+}
+export async function POST(req: NextRequest) {
+  return handle(req);
+}
