@@ -263,7 +263,7 @@ function normalize(
   }
 
   // Description
-  const description = `${planName ? `The ${planName} plan` : 'This home'} is located in ${communityName ?? city || 'Austin'}${streetAddress ? ` at ${streetAddress}` : ''}. ${isAvailable ? 'Available' : statusLabel ?? 'Contact us'}${readyDate ? ` ${readyDate}` : ''}.`;
+  const description = `${planName ? `The ${planName} plan` : 'This home'} is located in ${(communityName ?? city) || 'Austin'}${streetAddress ? ` at ${streetAddress}` : ''}. ${isAvailable ? 'Available' : (statusLabel ?? 'Contact us')}${readyDate ? ` ${readyDate}` : ''}.`;
 
   return {
     externalId: `giddens/spec/${post.id}`,
