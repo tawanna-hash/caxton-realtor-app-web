@@ -97,12 +97,20 @@ export type ScrapedBuilderRow = {
 | `sourceUrl` | Detail-page URL | The public "Builder Site" button links here. §7. |
 | `galleryUrls` | Detail-page `data-image` srcsets | Pick the largest variant. Limit ~30. §7. |
 | `flyerPdfUrl` | Detail page link | Often `null` for move-in; keep the field. |
-| `address` | `street + city, state zip` | Assemble with a `fullAddress` helper; needs at least a street. |
-| `readyDate` | ISO from source → `YYYY-MM-DD` | Use `dateOnly`; reject malformed. |
-| `planName` | `displayname` / `plan` | May include elevation letter ("San Gabriel - C"). |
+| `address` | `street + city, state zip` | Assemble with a `fullAddress` helper; needs at least a street. Frontend renders `address` if set, else falls back to `city, state`. |
+| `readyDate` | ISO from source → `YYYY-MM-DD` | Use `dateOnly`; reject malformed. Renders as "Move-in" in the stats grid. |
+| `planName` | `displayname` / `plan` | May include elevation letter ("San Gabriel - C"). Renders as "Plan" in the stats grid. |
 | `communityName` | Friendly community name | For UI grouping; not the slug. |
 | `extraDetails` | Detail-page `<dl>` "Additional Details" | JSONB; free-form keys per builder. §8. |
 | `homeType` | Constant | `'showcase'` for move-in inventory. |
+
+### Garage parsing from description
+
+The frontend parses "X-car garage" from the `description` field at render
+time and surfaces it in the stats grid as "Garage". If your source data
+includes garage count, include the phrase "2-car garage" (or similar) in
+the description text so it appears in the stats. There is no dedicated
+`garage` field — it is extracted via regex: `/((\d+)-car garage/i`.
 
 ---
 

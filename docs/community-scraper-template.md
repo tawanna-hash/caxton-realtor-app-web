@@ -97,6 +97,8 @@ type ScrapedCommunityRow = {
         { "name": "Williamson County", "rate": "0.49%" }], "total": "2.07%" },
     "salesOffice": { "address": "8000 Thompson Ln, Leander, TX 78641",
       "hours": "Mon-Sat 10am-7pm, Sun 12-7pm",
+      "phone": "512-555-0199",
+      "specialistName": "Jane Smith",
       "lat": 30.566917, "lng": -97.783389,
       "directions": ["From US-183 N, exit Whitestone Blvd", "Turn right on Thompson Ln; model home on the left"] }
   }
@@ -185,7 +187,9 @@ type CommunityData = {
   salesOffice?: {
     address?: string | null;
     hours?: string | null;
-    directions?: string[];             // ordered driving-direction steps
+    phone?: string | null;           // sales office phone — renders as tel: link
+    specialistName?: string | null;  // on-site sales specialist name
+    directions?: string[];           // ordered driving-direction steps
     lat?: number | null;
     lng?: number | null;
   } | null;
@@ -226,7 +230,7 @@ type CommunitySchool = {
 | `amenities[]` | **Amenities** bulleted grid |
 | `schools` (district + list) | **Schools** list (name, grades, address, phone, website) |
 | `taxInfo` (entities + total) | **Tax Info** table + total |
-| `salesOffice` (address/hours/directions/lat,lng) | **Visit the Community** + sidebar Address + "Get Directions" (Google Maps `dir` link) |
+| `salesOffice` (address/hours/phone/specialistName/directions/lat,lng) | **Visit the Community** + sidebar Address + phone (tel: link) + specialist name + "Get Directions" (Google Maps `dir` link) |
 | `status` | Sidebar badge — `coming-soon` (orange) or `close-out` (red) |
 | `adultOnly` | Sidebar "Adult Only" badge (plum) |
 | `priceFrom` / `sqftRange` | Sidebar Price / Sq. Ft. fallback when numeric range is absent |
