@@ -467,4 +467,8 @@ export type CommunityData = {
   homePlans?: CommunityHomePlan[];
   schools?: { district?: string | null; list: CommunitySchool[] } | null;
   taxInfo?: { entities: { name: string; rate: string }[]; total?: string | null } | null;
+  // Developer personalization: list of builders active within this
+  // community/neighborhood. Only set for developer communities (SRR, La Cima)
+  // where multiple builders sell within one master-planned development.
+  builders?: string[];
 };
