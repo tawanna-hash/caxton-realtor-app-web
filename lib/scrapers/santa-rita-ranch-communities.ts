@@ -214,13 +214,14 @@ function extractPriceFrom(html: string): string | null {
 function extractAmenities(html: string): string[] {
   const amenities = new Set<string>();
   const amenityKeywords =
-    /pool|pickleball|trail|pavilion|park|amenit|center|barn|fitness|play|dog|lake|court|field|splash|club|happyland|camp|ranch/i;
+    /pool|pickleball|trail|pavilion|park|amenit|barn|fitness|playground|dog|lake|court|field|splash|club|happyland|camp|ranch/i;
+  const excludeKeywords = /welcome|center|contact|newsletter|subscribe|search|menu|login|register/i;
 
   // h2-h4 headings that match amenity keywords
   const headings = html.matchAll(/<h[234][^>]*>([^<]+)<\/h[234]>/gi);
   for (const m of headings) {
     const text = decodeEntities(stripHtml(m[1]).trim());
-    if (text && text.length > 2 && text.length < 120 && amenityKeywords.test(text)) {
+    if (text && text.length > 2 && text.length < 120 && amenityKeywords.test(text) && !excludeKeywords.test(text)) {
       amenities.add(text);
     }
   }
@@ -231,7 +232,7 @@ function extractAmenities(html: string): string[] {
   );
   for (const m of iconList) {
     const text = decodeEntities(stripHtml(m[1]).trim());
-    if (text && text.length > 2 && text.length < 100 && amenityKeywords.test(text)) {
+    if (text && text.length > 2 && text.length < 100 && amenityKeywords.test(text) && !excludeKeywords.test(text)) {
       amenities.add(text);
     }
   }
@@ -246,22 +247,26 @@ function extractSchools(
   const list: { name: string; grades?: string | null }[] = [];
   let district: string | null = null;
 
+  // Strip HTML tags so school names split across elements are matched
+  const text = stripHtml(html);
+
   // Find school district
-  const districtMatch = html.match(
-    /(?:zoned\s+to|school\s+district|ISD)[^<]*?([A-Z][a-zA-Z\s]+ISD)/,
+  const districtMatch = text.match(
+    /(?:zoned\s+to|school\s+district|ISD)[^.]*?([A-Z][a-zA-Z\s]+ISD)/,
   );
   if (districtMatch) {
     district = districtMatch[1].trim();
   }
   // Fallback: Liberty Hill ISD is the known district for SRR
-  if (!district && /Liberty Hill ISD/i.test(html)) {
+  if (!district && /Liberty Hill ISD/i.test(text)) {
     district = 'Liberty Hill ISD';
   }
 
-  // Find school names (Elementary, Middle, High School)
+  // Find school names (Elementary, Middle School, High School)
+  // Pattern: Capitalized words followed by school type
   const schoolPattern =
-    /([A-Z][a-zA-Z\s]+(?:Elementary|Middle School|High School))/g;
-  const schoolMatches = html.matchAll(schoolPattern);
+    /([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*\s+(?:Elementary|Middle School|High School))/g;
+  const schoolMatches = text.matchAll(schoolPattern);
   const seen = new Set<string>();
   for (const m of schoolMatches) {
     const name = m[1].trim();
@@ -335,7 +340,9 @@ function extractImages(html: string): string[] {
       !u.includes('/icon.') &&
       !u.includes('logo') &&
       !u.includes('favicon') &&
-      !u.includes('-1024x') === false, // keep large images
+      !u.includes('-icon') &&
+      !u.endsWith('.svg') &&
+      !u.includes('.svg?'),
   );
 }
 
