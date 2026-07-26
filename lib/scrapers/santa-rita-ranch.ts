@@ -790,62 +790,59 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
     });
   }
 
-  // Helper: generate home plans from showcase homes. Each unique
-  // (builder, sqft) combination becomes a plan with floorplan image,
-  // price, beds, baths, and link to the home's detail page.
+  // Helper: generate home plans from showcase homes. Each home becomes
+  // its own plan entry with floorplan image, price, beds, baths, and link
+  // to the home's detail page on the SRR site.
   function generateHomePlans(homes: UpsertScrapedInput[]) {
-    type PlanKey = string;
-    const planMap = new Map<PlanKey, UpsertScrapedInput>();
+    if (homes.length === 0) return undefined;
 
-    for (const h of homes) {
-      // Group by builder + sqft (rounded to nearest 50 to merge near-identical plans)
+    // Sort by builder name then price for a natural grouping.
+    const sorted = [...homes].sort((a, b) => {
+      const ba = a.title.split(' \u2014 ')[1] ?? a.builderName ?? '';
+      const bb = b.title.split(' \u2014 ')[1] ?? b.builderName ?? '';
+      if (ba !== bb) return ba.localeCompare(bb);
+      return (a.priceMin ?? 0) - (b.priceMin ?? 0);
+    });
+
+    // Track per-builder plan numbers so each builder's plans are numbered 1, 2, 3...
+    const builderCount = new Map<string, number>();
+
+    const plans = sorted.map((h) => {
+      const ed = h.extraDetails as Record<string, string> | null;
+      const floorplanUrl = ed?._floorplanUrl ?? null;
+      const gallery = h.galleryUrls ?? [];
+      const imageUrl = floorplanUrl ?? gallery[0] ?? null;
       const sqft = h.sqftMin ?? h.sqftMax;
-      if (sqft == null) continue;
-      const roundedSqft = Math.round(sqft / 50) * 50;
       const builder = h.title.split(' \u2014 ')[1] ?? h.builderName ?? 'Plan';
-      const key = `${builder}|${roundedSqft}`;
+      const beds = h.bedsMin != null ? String(h.bedsMin) : null;
+      const baths = h.bathsMin != null ? String(h.bathsMin) : null;
+      const price = h.priceMin;
+      const priceDisplay = price != null ? `$${price.toLocaleString()}` : null;
+      const sqftDisplay = sqft != null ? sqft.toLocaleString() : null;
 
-      // Keep the home with the lowest price for this plan key
-      const existing = planMap.get(key);
-      if (!existing || (h.priceMin ?? Infinity) < (existing.priceMin ?? Infinity)) {
-        planMap.set(key, h);
-      }
-    }
+      // Extract garage/stories from description
+      const desc = h.description ?? '';
+      const garageMatch = desc.match(/(\d)\s*-?car\s*garage/i);
+      const garages = garageMatch ? garageMatch[1] : null;
+      const storiesMatch = desc.match(/(\d)\s*stor(?:y|ies)/i);
+      const stories = storiesMatch ? storiesMatch[1] : null;
 
-    const plans = Array.from(planMap.entries())
-      .sort(([, a], [, b]) => (a.priceMin ?? 0) - (b.priceMin ?? 0))
-      .map(([, h], i) => {
-        const ed = h.extraDetails as Record<string, string> | null;
-        const floorplanUrl = ed?._floorplanUrl ?? null;
-        const gallery = h.galleryUrls ?? [];
-        const imageUrl = floorplanUrl ?? gallery[0] ?? null;
-        const sqft = h.sqftMin ?? h.sqftMax;
-        const builder = h.title.split(' \u2014 ')[1] ?? h.builderName ?? 'Plan';
-        const beds = h.bedsMin != null ? String(h.bedsMin) : null;
-        const baths = h.bathsMin != null ? String(h.bathsMin) : null;
-        const price = h.priceMin;
-        const priceDisplay = price != null ? `From $${price.toLocaleString()}` : null;
-        const sqftDisplay = sqft != null ? sqft.toLocaleString() : null;
+      // Number plans per builder
+      const n = (builderCount.get(builder) ?? 0) + 1;
+      builderCount.set(builder, n);
 
-        // Extract garage/stories from description
-        const desc = h.description ?? '';
-        const garageMatch = desc.match(/(\d)\s*-?car\s*garage/i);
-        const garages = garageMatch ? garageMatch[1] : null;
-        const storiesMatch = desc.match(/(\d)\s*stor(?:y|ies)/i);
-        const stories = storiesMatch ? storiesMatch[1] : null;
-
-        return {
-          name: `${builder} \u2013 Plan ${i + 1}`,
-          beds,
-          baths,
-          sqftDisplay,
-          priceDisplay,
-          imageUrl,
-          url: h.sourceUrl ?? null,
-          garages,
-          stories,
-        };
-      });
+      return {
+        name: `${builder} \u2013 Plan ${n}`,
+        beds,
+        baths,
+        sqftDisplay,
+        priceDisplay,
+        imageUrl,
+        url: h.sourceUrl ?? null,
+        garages,
+        stories,
+      };
+    });
 
     return plans.length > 0 ? plans : undefined;
   }
