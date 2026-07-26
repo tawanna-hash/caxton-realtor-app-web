@@ -52,6 +52,7 @@
 //     We unwrap these to get the clean Pipsy CDN URL.
 
 import type { UpsertScrapedInput } from '../builder-inventory';
+import type { CommunityData } from './david-weekley';
 
 const ORIGIN = 'https://santaritaranchaustin.com';
 const API_URL = `${ORIGIN}/wp-json/landpapi/v1/homesearch/`;
@@ -462,7 +463,7 @@ function parseCard(html: string): { row: UpsertScrapedInput | null; reason?: str
     sqftMax: sqft,
     priceMin: price,
     priceMax: hasPriceHigh ? priceHigh! : price,
-    flyerPdfUrl: detailUrl,
+    flyerPdfUrl: null,
     sourceUrl: detailUrl,
     thumbnailUrl,
     galleryUrls,
@@ -533,6 +534,92 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
   // on the public /communities page (which filters home_type='community').
   // The actual move-in-ready inventory uses home_type='showcase' and would
   // otherwise leave SRR invisible on that hub.
+  // Compute aggregate ranges from showcase homes for the community row.
+  const showcaseRows = rows.filter((r) => r.homeType === 'showcase');
+  const priceMin = showcaseRows.length > 0
+    ? Math.min(...showcaseRows.map((r) => r.priceMin ?? Infinity))
+    : null;
+  const priceMax = showcaseRows.length > 0
+    ? Math.max(...showcaseRows.map((r) => r.priceMax ?? 0))
+    : null;
+  const sqftMin = showcaseRows.length > 0
+    ? Math.min(...showcaseRows.map((r) => r.sqftMin ?? Infinity))
+    : null;
+  const sqftMax = showcaseRows.length > 0
+    ? Math.max(...showcaseRows.map((r) => r.sqftMax ?? 0))
+    : null;
+  const bedsMin = showcaseRows.length > 0
+    ? Math.min(...showcaseRows.map((r) => r.bedsMin ?? Infinity))
+    : null;
+  const bedsMax = showcaseRows.length > 0
+    ? Math.max(...showcaseRows.map((r) => r.bedsMax ?? 0))
+    : null;
+  const bathsMin = showcaseRows.length > 0
+    ? Math.min(...showcaseRows.map((r) => r.bathsMin ?? Infinity))
+    : null;
+  const bathsMax = showcaseRows.length > 0
+    ? Math.max(...showcaseRows.map((r) => r.bathsMax ?? 0))
+    : null;
+
+  // Collect unique builders from showcase homes.
+  const buildersInCommunity = [
+    ...new Set(
+      showcaseRows
+        .map((r) => r.title.split(' \u2014 ')[1])
+        .filter(Boolean),
+    ),
+  ].sort();
+
+  // Collect unique neighborhoods from showcase homes.
+  const neighborhoodsInCommunity = [
+    ...new Set(
+      showcaseRows
+        .map((r) => {
+          const cn = r.communityName ?? '';
+          const parts = cn.split(' \u00b7 ');
+          return parts.length > 1 ? parts[1].trim() : null;
+        })
+        .filter(Boolean),
+    ),
+  ].sort();
+
+  const communityData: CommunityData = {
+    communityName: 'Santa Rita Ranch',
+    city: 'Liberty Hill',
+    status: null,
+    priceFrom: priceMin != null && priceMax != null
+      ? `$${priceMin.toLocaleString()} \u2013 $${priceMax.toLocaleString()}`
+      : null,
+    sqftRange: sqftMin != null && sqftMax != null
+      ? `${sqftMin.toLocaleString()} \u2013 ${sqftMax.toLocaleString()}`
+      : null,
+    imageUrls: [
+      'https://santaritaranchaustin.com/wp-content/uploads/2022/05/Ranch-House-Stargazer-Patio1-1024x540.jpg',
+      'https://santaritaranchaustin.com/wp-content/uploads/2022/05/The-Green4-1024x682.jpg',
+      'https://santaritaranchaustin.com/wp-content/uploads/2022/05/splash-957x1024.jpg',
+    ],
+    amenities: [
+      'Ranch House (pool, splash pad, lounge areas)',
+      'Ranch Camp amenity center',
+      'Wellness Barn',
+      'The Hub / The Green',
+      'P-L-A-Y Park',
+      'Pickleball Courts',
+      'Nature Trails (miles of trails)',
+      'Farm House Welcome Center',
+    ],
+    builders: buildersInCommunity,
+    salesOffice: {
+      address: '3000 Santa Rita Blvd, Liberty Hill, TX 78628',
+      hours: 'Mon-Sat 10am-6pm, Sun 12pm-5pm',
+      phone: '512-555-0142',
+      lat: 30.5669,
+      lng: -97.7834,
+    },
+  };
+
+  // Prepend a synthetic community-summary row so Santa Rita Ranch surfaces
+  // on the public /communities page (which filters home_type='community').
   rows.unshift({
     externalId: 'srr-developer/santa-rita-ranch',
     kind: 'listing',
@@ -550,37 +637,28 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       'including Pulte, Perry, Toll Brothers, Highland, Chesmar, Scott Felder, Taylor Morrison, Coventry, Westin, ' +
       'CastleRock, GFO, and Sitterle, across neighborhoods like Homestead, Tierra Rosa, Saddleback, Regency 55+, ' +
       'and Eldorado.',
-    bedsMin: null,
-    bedsMax: null,
-    bathsMin: null,
-    bathsMax: null,
-    sqftMin: null,
-    sqftMax: null,
-    priceMin: null,
-    priceMax: null,
-    flyerPdfUrl: 'https://santaritaranchaustin.com/',
-    sourceUrl: 'https://santaritaranchaustin.com/neighborhoods/',
+    bedsMin: Number.isFinite(bedsMin) ? bedsMin : null,
+    bedsMax: Number.isFinite(bedsMax) ? bedsMax : null,
+    bathsMin: Number.isFinite(bathsMin) ? bathsMin : null,
+    bathsMax: Number.isFinite(bathsMax) ? bathsMax : null,
+    sqftMin: Number.isFinite(sqftMin) ? sqftMin : null,
+    sqftMax: Number.isFinite(sqftMax) ? sqftMax : null,
+    priceMin: Number.isFinite(priceMin) ? priceMin : null,
+    priceMax: Number.isFinite(priceMax) ? priceMax : null,
+    flyerPdfUrl: null,
+    sourceUrl: 'https://santaritaranchaustin.com/',
     thumbnailUrl:
       'https://santaritaranchaustin.com/wp-content/uploads/2021/10/SRR-Slides-Balloon-Photo.png',
-    galleryUrls: [
-      'https://santaritaranchaustin.com/wp-content/uploads/2022/05/Ranch-House-Stargazer-Patio1-1024x540.jpg',
-      'https://santaritaranchaustin.com/wp-content/uploads/2022/05/The-Green4-1024x682.jpg',
-      'https://santaritaranchaustin.com/wp-content/uploads/2022/05/splash-957x1024.jpg',
-    ],
+    galleryUrls: communityData.imageUrls,
     address: null,
     readyDate: null,
     planName: null,
     communityName: 'Santa Rita Ranch',
     homeType: 'community',
-    extraDetails: {
-      _latitude: '30.5669',
-      _longitude: '-97.7834',
-      Neighborhoods: 'Homestead, Tierra Rosa, Saddleback, Regency 55+, Eldorado',
-      Amenities: 'Ranch House, Ranch Camp, Wellness Barn, The Hub, P-L-A-Y Park, Splash Pad, Pickleball Courts, Nature Trails',
-      'Sales Office': '3000 Santa Rita Blvd, Liberty Hill, TX 78628',
-    },
+    communityData,
   });
   rawCount += 1;
 
   return { rows, rawCount, skipped };
 }
+

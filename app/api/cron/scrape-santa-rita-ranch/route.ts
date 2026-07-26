@@ -100,10 +100,26 @@ async function handle(req: NextRequest) {
   // Prune: deactivate showcase homes no longer in the source feed.
   let deactivated = 0;
   if (scrape.rows.length > 0 && !strip) {
+    const showcaseIds = scrape.rows
+      .filter((r) => r.homeType === 'showcase')
+      .map((r) => r.externalId);
     deactivated = await deactivateStaleBuilderInventory({
       builderName: BUILDER_NAME,
       homeType: 'showcase',
-      activeExternalIds: scrape.rows.map((r) => r.externalId),
+      activeExternalIds: showcaseIds,
+    });
+  }
+
+  // Also prune stale community rows.
+  let deactivatedCommunities = 0;
+  if (scrape.rows.length > 0 && !strip) {
+    const communityIds = scrape.rows
+      .filter((r) => r.homeType === 'community')
+      .map((r) => r.externalId);
+    deactivatedCommunities = await deactivateStaleBuilderInventory({
+      builderName: BUILDER_NAME,
+      homeType: 'community',
+      activeExternalIds: communityIds,
     });
   }
 
@@ -116,6 +132,7 @@ async function handle(req: NextRequest) {
     updated,
     stripped,
     deactivated,
+    deactivatedCommunities,
     skipped: scrape.skipped,
     upsertErrors,
   });
