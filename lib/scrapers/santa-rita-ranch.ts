@@ -740,7 +740,7 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
         'The community features 15 floor plans, a clubhouse with resort-style pool, pickleball, bocce ball, ' +
         'cafe & bar, game lounge, catering room, event lawn, and more. Regency residents also have access ' +
         'to all amenities across Santa Rita Ranch.',
-      status: 'coming-soon',
+      status: null,
       adultOnly: true,
       builders: ['Toll Brothers'],
       amenities: [
