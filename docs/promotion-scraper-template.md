@@ -12,8 +12,12 @@ it branches on `kind === 'promotion'`).
 
 The reference implementation is `lib/scrapers/mi-homes-incentives.ts`
 (scrapes mihomes.com incentive pages verbatim) and its cron
-`app/api/cron/scrape-mi-homes-incentives/route.ts`. Use this doc as the
-field standard when adding a new builder's **promotions** scraper.
+`app/api/cron/scrape-mi-homes-incentives/route.ts`.
+`lib/scrapers/kb-home-promotions.ts` is a second reference: scrapes a
+single `/special-low-rates` static marketing page for rate-buydown
+offers (KBHS Home Loans rates, closing-cost credits, seller contributions).
+Use this doc as the field standard when adding a new builder's
+**promotions** scraper.
 
 The worked example below is the real `realtynewsnow.app/inventory/653` —
 Drees Homes' **2026 Realtor Rewards Program** (4% commission on all sales,
@@ -337,3 +341,9 @@ Promotion scrapers are usually light (one list page + a few offer pages).
   Download-flyer link.
 - **`builderName` matching is exact and case-sensitive** in the prune call
   and the inventory list. "Drees Homes" ≠ "Drees Custom Homes".
+- **Static marketing pages as promotion sources.** Some builders (KB Home)
+  have a single `/special-low-rates` page rather than a structured promotions
+  API. Scrape the static HTML for rate-buydown offers, closing-cost credits,
+  and seller contributions. Store as a single promotion row with
+  `promoType='rate_buydown'` and a stable `externalId` like
+  `'<builder>-special-low-rates'`.

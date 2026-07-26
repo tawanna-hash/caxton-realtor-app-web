@@ -9,7 +9,10 @@ status). Public surface: `realtynewsnow.app/communities/[id]`.
 The reference implementation is `lib/scrapers/mi-homes-communities.ts`
 (Sitecore community-card API + per-community detail enrichment) and
 `lib/scrapers/david-weekley.ts` (extracts `window.pageData` from
-davidweekley.com community pages). Use this doc as the field standard when
+davidweekley.com community pages). `lib/scrapers/kb-home-communities.ts`
+is a third reference: sitemap discovery → `dataLayer.page` for community
+ID/name + `FloorPlanList` JSON for home plans + `LocalQMIs` for sales
+office/highlights. Use this doc as the field standard when
 adding a new builder's **community** scraper.
 
 The worked example below is the real `realtynewsnow.app/communities/6` —
@@ -349,3 +352,14 @@ null (those are per-home fields). The community's address lives in
   "not applicable" value on the high side (e.g. `bedLow=5, bedHigh=0` means a
   fixed 5 beds, not a 5-0 range). Treat a zero bound as absent when the other
   bound is positive to avoid rendering broken ranges like "5 - 0 bed".
+- **Sitemap-based community discovery.** KB Home uses `sitemap.xml` with a
+  regex like `/new-homes-austin/[a-z0-9-]+` to find all community URLs.
+  Community pages contain `dataLayer.page` vars (community ID, name, city,
+  state, status) + embedded `FloorPlanList` JSON array (plans with price,
+  beds, baths, sqft, stories, garages, thumbnails) + `LocalQMIs` JSON array
+  (sales office info, community highlights). Use `dataLayer.page['community ID']`
+  as the `externalId` (stable across URL changes).
+- **`og:image` URL sanitization.** Some builders prepend the community path
+  segment before `/globalassets/` in `og:image` URLs, causing 404s. Strip
+  the community path segment to fix: `kbhome.com/new-homes-austin/{slug}/globalassets/`
+  → `kbhome.com/globalassets/`.

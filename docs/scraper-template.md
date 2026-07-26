@@ -159,6 +159,25 @@ Rules learned the hard way:
 Both usually require a **per-home detail-page fetch** because listing APIs rarely
 include the gallery or the canonical URL.
 
+### Two-phase scraping pattern
+
+Some builders (KB Home, David Weekley) embed a JSON array on community pages
+containing all move-in-ready homes. Use this as Phase 1 for base data, then
+fetch each home's detail page in Phase 2 for enrichment:
+
+- **Phase 1** — Community page: extract embedded JSON (e.g. `LocalQMIs`,
+  `window.pageData`) for base data: price, beds, baths, sqft, gallery photos,
+  MLS#, description fragments, community info.
+- **Phase 2** — Per-home detail page: fetch each `?homesite={id}` or equivalent
+  URL for enrichment: interactive floor plan URL (e.g. kb-vu.com iframe),
+  amenities pictograms with labels, Zillow virtual tour links, additional
+  photos not in Phase 1.
+
+Non-fatal enrichment: a Phase 2 fetch failure should not kill the row —
+fall back to Phase 1 data only and still upsert.
+
+### URL normalization
+
 ```ts
 function normalizeUrl(path: string | null): string | null {
   if (!path) return null;
@@ -219,7 +238,7 @@ listing feel "complete" (e.g. listing [909](https://realtynewsnow.app/inventory/
 | Key | Renders | Notes |
 |-----|---------|-------|
 | `_latitude` + `_longitude` | **Location** — Google Maps embed + "Get directions" link | Renders only when BOTH are set. Store as strings. |
-| `_floorplanUrl` | **Floorplan** section | Image URL → zoomable `FloorplanViewer`; `ml3ds-icon.com` URLs → interactive `<iframe>`. |
+| `_floorplanUrl` | **Floorplan** section | Image URL → zoomable `FloorplanViewer`; `ml3ds-icon.com` and `kb-vu.com` URLs → interactive `<iframe>`. **Must** be stored as `_floorplanUrl`, not a plain key like `'Floor Plan'` — the frontend only reads the `_-prefixed` key. The cron route is responsible for this mapping. |
 | `_virtualTourUrl` | **3D Tour** iframe | Optional; renders only when set. |
 
 Also: non-`_` `extraDetails` keys render in the **Property details** grid
@@ -231,6 +250,27 @@ Also: non-`_` `extraDetails` keys render in the **Property details** grid
 
 Boilerplate (copy from `scrape-mi-homes`). It does: auth → fetch rows →
 upsert each → prune stale → return a summary JSON.
+
+### Cron route responsibility: map `_-prefixed` meta keys
+
+The scraper's row type may carry `floorPlanUrl` or virtual tour URLs as
+regular fields. The **cron route** must map these into `_-prefixed`
+`extraDetails` keys that the frontend reads:
+
+```ts
+// In the cron route's upsert loop:
+const { 'Virtual Tour': vtUrl, ...restDetails } = row.extraDetails ?? {};
+const enrichedDetails: Record<string, string> = {
+  ...restDetails,
+  ...(row.floorPlanUrl ? { _floorplanUrl: row.floorPlanUrl } : {}),
+  ...(vtUrl ? { _virtualTourUrl: vtUrl } : {}),
+};
+// Pass enrichedDetails (not row.extraDetails) to upsertBuilderInventoryByExternalId
+```
+
+If you store the floor plan URL as a plain key like `'Floor Plan'`, it will
+only appear as text in the "Property details" grid — the interactive
+Floorplan / 3D Tour sections will not render. This was the KB Home bug.
 
 ```ts
 import { NextRequest, NextResponse } from 'next/server';
