@@ -525,10 +525,7 @@ const PLAN_URL = 'https://www.dreeshomes.com/api/en/dreeshomes/plan';
 async function fetchCommunityPlans(
   contentId: number | null | undefined,
 ): Promise<DreesPlan[]> {
-  if (contentId == null || !Number.isFinite(contentId)) {
-    console.error(`[drees-plan-debug] bad contentId: ${JSON.stringify(contentId)} (type ${typeof contentId})`);
-    return [];
-  }
+  if (contentId == null || !Number.isFinite(contentId)) return [];
 
   const body = {
     pageSize: 100,
@@ -546,26 +543,19 @@ async function fetchCommunityPlans(
       signal: AbortSignal.timeout(30_000),
       cache: 'no-store',
     });
-  } catch (err) {
-    console.error(`[drees-plan-debug] fetch threw for contentId=${contentId}: ${err instanceof Error ? err.message : String(err)}`);
+  } catch {
     return [];
   }
-  if (!res.ok) {
-    console.error(`[drees-plan-debug] HTTP ${res.status} for contentId=${contentId}`);
-    return [];
-  }
+  if (!res.ok) return [];
 
   let parsed: DreesPlanResponse;
   try {
     parsed = (await res.json()) as DreesPlanResponse;
-  } catch (err) {
-    console.error(`[drees-plan-debug] JSON parse failed for contentId=${contentId}: ${err instanceof Error ? err.message : String(err)}`);
+  } catch {
     return [];
   }
 
-  const plans = parsed.data?.plans ?? [];
-  console.error(`[drees-plan-debug] contentId=${contentId} -> ${plans.length} plans`);
-  return plans;
+  return parsed.data?.plans ?? [];
 }
 
 // Maps a raw Drees plan record onto the shared CommunityHomePlan shape.
