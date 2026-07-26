@@ -319,7 +319,7 @@ function normalize(
     .map((p) => parseNum(p.baths))
     .filter((n): n is number => n !== null);
   const sqftNums = homePlans
-    .map((p) => parseNum(p.sqft))
+    .map((p) => parseNum(p.sqftDisplay))
     .filter((n): n is number => n !== null);
 
   const bedsMin = bedsNums.length ? Math.min(...bedsNums) : null;
