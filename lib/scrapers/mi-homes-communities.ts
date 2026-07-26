@@ -113,6 +113,8 @@ export type ScrapedMICommunityRow = {
   priceMax: number | null;
   thumbnailUrl: string | null;
   flyerPdfUrl: string | null;
+  sourceUrl: string | null;
+  galleryUrls: string[];
   communityName: string | null;
   homeType: 'community';
   communityData: CommunityData;
@@ -668,7 +670,9 @@ export async function fetchMIHomesCommunityRows(): Promise<{
         priceMin: card.minPrice,
         priceMax: card.maxPrice,
         thumbnailUrl: card.image,
-        flyerPdfUrl: normalizeUrl(card.url),
+        flyerPdfUrl: null,
+        sourceUrl: normalizeUrl(card.url),
+        galleryUrls: data.imageUrls ?? (card.image ? [card.image] : []),
         communityName: card.communityName,
         homeType: 'community',
         communityData: data,

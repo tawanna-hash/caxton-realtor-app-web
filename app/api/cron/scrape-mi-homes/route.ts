@@ -154,6 +154,8 @@ async function runScrape(refresh: boolean) {
           priceMax: row.priceMax,
           thumbnailUrl: row.thumbnailUrl,
           flyerPdfUrl: row.flyerPdfUrl,
+          sourceUrl: row.sourceUrl,
+          galleryUrls: row.galleryUrls,
           communityName: row.communityName,
           homeType: row.homeType,
           communityData: row.communityData,

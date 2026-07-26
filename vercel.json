@@ -49,6 +49,10 @@
       "schedule": "0 15 * * *"
     },
     {
+      "path": "/api/cron/scrape-mi-homes-communities",
+      "schedule": "30 15 * * *"
+    },
+    {
       "path": "/api/cron/scrape-drees-move-in-ready",
       "schedule": "45 15 * * *"
     },
