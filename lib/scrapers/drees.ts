@@ -522,6 +522,10 @@ const PLAN_URL = 'https://www.dreeshomes.com/api/en/dreeshomes/plan';
 // A community can fan out into several priced sub-neighborhoods (e.g.
 // "Caliterra - 80'", "Caliterra - 110'"); the plan endpoint pools all of
 // them under the parent contentId, so one call covers the whole community.
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function fetchCommunityPlans(
   contentId: number | null | undefined,
 ): Promise<DreesPlan[]> {
@@ -533,29 +537,42 @@ async function fetchCommunityPlans(
     contentid: contentId,
   };
 
-  let res: Response;
-  try {
-    res = await fetch(PLAN_URL, {
-      method: 'POST',
-      headers: COMMON_HEADERS,
-      body: JSON.stringify(body),
-      redirect: 'follow',
-      signal: AbortSignal.timeout(30_000),
-      cache: 'no-store',
-    });
-  } catch {
-    return [];
+  // Retry once after a 3s backoff — Drees rate-limits the plan endpoint
+  // after ~20 rapid requests, causing 429/403 on later batches.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch(PLAN_URL, {
+        method: 'POST',
+        headers: COMMON_HEADERS,
+        body: JSON.stringify(body),
+        redirect: 'follow',
+        signal: AbortSignal.timeout(30_000),
+        cache: 'no-store',
+      });
+    } catch {
+      if (attempt === 0) {
+        await sleep(3000);
+        continue;
+      }
+      return [];
+    }
+    if (res.ok) {
+      let parsed: DreesPlanResponse;
+      try {
+        parsed = (await res.json()) as DreesPlanResponse;
+      } catch {
+        return [];
+      }
+      return parsed.data?.plans ?? [];
+    }
+    // Non-OK — retry once after backoff
+    if (attempt === 0) {
+      await sleep(3000);
+      continue;
+    }
   }
-  if (!res.ok) return [];
-
-  let parsed: DreesPlanResponse;
-  try {
-    parsed = (await res.json()) as DreesPlanResponse;
-  } catch {
-    return [];
-  }
-
-  return parsed.data?.plans ?? [];
+  return [];
 }
 
 // Drees uses 0 as a "not applicable" sentinel on the *High side of a
@@ -823,6 +840,10 @@ export async function fetchDreesAustinCommunities(): Promise<{
       const row = normalize(batch[j], details[j], plansBatches[j]);
       if (row) rows.push(row);
       else skipped++;
+    }
+    // Small delay between batches to avoid Drees' plan API rate limiting
+    if (i + CONCURRENCY < neighborhoods.length) {
+      await sleep(500);
     }
   }
 
