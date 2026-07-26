@@ -639,7 +639,6 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
     amenities: string[];
     schoolDistrict?: string;
     schools?: { name: string; grades?: string }[];
-    homePlans?: { name: string; beds: string; baths: string; sqftDisplay: string; priceDisplay: string }[];
     ogImage?: string;
   };
 
@@ -779,19 +778,6 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
         'Covered Pavilion',
         'Nature Trails',
       ],
-      homePlans: [
-        { name: 'Plan 1', beds: '4', baths: '3', sqftDisplay: '2,663', priceDisplay: 'From $549,900' },
-        { name: 'Plan 2', beds: '4', baths: '3.5', sqftDisplay: '2,561', priceDisplay: 'From $549,900' },
-        { name: 'Plan 3', beds: '4', baths: '3.5', sqftDisplay: '2,485', priceDisplay: 'From $574,000' },
-        { name: 'Plan 4', beds: '4', baths: '3.5', sqftDisplay: '2,942', priceDisplay: 'From $599,900' },
-        { name: 'Plan 5', beds: '4', baths: '3', sqftDisplay: '3,241', priceDisplay: 'From $599,900' },
-        { name: 'Plan 6', beds: '4', baths: '4.5', sqftDisplay: '2,964', priceDisplay: 'From $624,000' },
-        { name: 'Plan 7', beds: '4', baths: '3', sqftDisplay: '2,942', priceDisplay: 'From $639,900' },
-        { name: 'Plan 8', beds: '4', baths: '3', sqftDisplay: '3,094', priceDisplay: 'From $649,900' },
-        { name: 'Plan 9', beds: '4', baths: '3.5', sqftDisplay: '2,944', priceDisplay: 'From $674,000' },
-        { name: 'Plan 10', beds: '4', baths: '3', sqftDisplay: '3,146', priceDisplay: 'From $674,000' },
-        { name: 'Plan 11', beds: '4', baths: '4', sqftDisplay: '2,690', priceDisplay: 'From $719,000' },
-      ],
       ogImage: 'https://santaritaranchaustin.com/wp-content/uploads/2022/05/The-Green4-1024x682.jpg',
     },
   ];
@@ -804,48 +790,64 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
     });
   }
 
-  // Helper: match a plan to a showcase home by sqft and enrich with
-  // floorplan image + garage/stories from the home's extraDetails.
-  function enrichPlanFromHomes(
-    plan: { name: string; beds: string; baths: string; sqftDisplay: string; priceDisplay: string },
-    homes: UpsertScrapedInput[],
-  ) {
-    const planSqft = parseInt(plan.sqftDisplay.replace(/,/g, ''), 10);
-    if (!Number.isFinite(planSqft)) return plan;
+  // Helper: generate home plans from showcase homes. Each unique
+  // (builder, sqft) combination becomes a plan with floorplan image,
+  // price, beds, baths, and link to the home's detail page.
+  function generateHomePlans(homes: UpsertScrapedInput[]) {
+    type PlanKey = string;
+    const planMap = new Map<PlanKey, UpsertScrapedInput>();
 
-    // Find the closest sqft match among showcase homes.
-    let best: UpsertScrapedInput | null = null;
-    let bestDiff = Infinity;
     for (const h of homes) {
-      const hSqft = h.sqftMin ?? h.sqftMax;
-      if (hSqft == null) continue;
-      const diff = Math.abs(hSqft - planSqft);
-      if (diff < bestDiff) {
-        bestDiff = diff;
-        best = h;
+      // Group by builder + sqft (rounded to nearest 50 to merge near-identical plans)
+      const sqft = h.sqftMin ?? h.sqftMax;
+      if (sqft == null) continue;
+      const roundedSqft = Math.round(sqft / 50) * 50;
+      const builder = h.title.split(' \u2014 ')[1] ?? h.builderName ?? 'Plan';
+      const key = `${builder}|${roundedSqft}`;
+
+      // Keep the home with the lowest price for this plan key
+      const existing = planMap.get(key);
+      if (!existing || (h.priceMin ?? Infinity) < (existing.priceMin ?? Infinity)) {
+        planMap.set(key, h);
       }
     }
-    if (!best) return plan;
 
-    const ed = best.extraDetails as Record<string, string> | null;
-    const floorplanUrl = ed?._floorplanUrl ?? null;
-    const gallery = best.galleryUrls ?? [];
-    const imageUrl = floorplanUrl ?? gallery[0] ?? null;
+    const plans = Array.from(planMap.entries())
+      .sort(([, a], [, b]) => (a.priceMin ?? 0) - (b.priceMin ?? 0))
+      .map(([, h], i) => {
+        const ed = h.extraDetails as Record<string, string> | null;
+        const floorplanUrl = ed?._floorplanUrl ?? null;
+        const gallery = h.galleryUrls ?? [];
+        const imageUrl = floorplanUrl ?? gallery[0] ?? null;
+        const sqft = h.sqftMin ?? h.sqftMax;
+        const builder = h.title.split(' \u2014 ')[1] ?? h.builderName ?? 'Plan';
+        const beds = h.bedsMin != null ? String(h.bedsMin) : null;
+        const baths = h.bathsMin != null ? String(h.bathsMin) : null;
+        const price = h.priceMin;
+        const priceDisplay = price != null ? `From $${price.toLocaleString()}` : null;
+        const sqftDisplay = sqft != null ? sqft.toLocaleString() : null;
 
-    // Extract garage/stories from the best-matching home's description.
-    const desc = best.description ?? '';
-    const garageMatch = desc.match(/(\d)\s*-?car\s*garage/i);
-    const garage = garageMatch ? garageMatch[1] : null;
-    const storiesMatch = desc.match(/(\d)\s*stor(?:y|ies)/i);
-    const stories = storiesMatch ? storiesMatch[1] : null;
+        // Extract garage/stories from description
+        const desc = h.description ?? '';
+        const garageMatch = desc.match(/(\d)\s*-?car\s*garage/i);
+        const garages = garageMatch ? garageMatch[1] : null;
+        const storiesMatch = desc.match(/(\d)\s*stor(?:y|ies)/i);
+        const stories = storiesMatch ? storiesMatch[1] : null;
 
-    return {
-      ...plan,
-      imageUrl,
-      url: best.sourceUrl ?? null,
-      garages: garage,
-      stories,
-    };
+        return {
+          name: `${builder} \u2013 Plan ${i + 1}`,
+          beds,
+          baths,
+          sqftDisplay,
+          priceDisplay,
+          imageUrl,
+          url: h.sourceUrl ?? null,
+          garages,
+          stories,
+        };
+      });
+
+    return plans.length > 0 ? plans : undefined;
   }
 
   // Helper: compute aggregate ranges from a set of rows.
@@ -877,9 +879,7 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       adultOnly: nb.adultOnly,
       priceFrom: agg.priceMin != null && agg.priceMax != null
         ? `$${agg.priceMin.toLocaleString()} \u2013 $${agg.priceMax.toLocaleString()}`
-        : nb.homePlans && nb.homePlans.length > 0
-          ? nb.homePlans[0].priceDisplay
-          : null,
+        : null,
       sqftRange: agg.sqftMin != null && agg.sqftMax != null
         ? `${agg.sqftMin.toLocaleString()} \u2013 ${agg.sqftMax.toLocaleString()}`
         : null,
@@ -889,7 +889,7 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       schools: nb.schoolDistrict
         ? { district: nb.schoolDistrict, list: nb.schools ?? [] }
         : null,
-      homePlans: nb.homePlans?.map((p) => enrichPlanFromHomes(p, nbHomes)),
+      homePlans: generateHomePlans(nbHomes),
       salesOffice: {
         address: '3000 Santa Rita Blvd, Liberty Hill, TX 78628',
         hours: 'Mon-Sat 10am-6pm, Sun 12pm-5pm',
