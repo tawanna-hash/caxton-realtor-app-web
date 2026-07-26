@@ -211,9 +211,9 @@ function DetailView({
           high-resolution image (1500px+ natural width) pushes the
           implicit `1fr` track past the container and the right-side
           sidebar overflows the viewport. */}
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-8">
         {/* Left column: gallery + description */}
-        <div>
+        <div className="min-w-0">
           <InventoryGallery
             galleryUrls={row.galleryUrls}
             thumbnailUrl={row.thumbnailUrl}
@@ -237,7 +237,7 @@ function DetailView({
         </div>
 
         {/* Right column: summary */}
-        <aside className="space-y-6">
+        <aside className="space-y-6 min-w-0">
           <div>
             {/* Builder pill */}
             <div className="mb-3 flex items-center gap-2">
