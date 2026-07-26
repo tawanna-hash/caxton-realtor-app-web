@@ -717,7 +717,7 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
         'The neighborhood will feature new homes by Pulte Homes and GFO Home, along with a model home park. ' +
         'Plans include a future amenity center with resort-style pool, playscape, indoor and outdoor pickleball, ' +
         'trike track, and covered pavilion. Students are zoned to the A-rated Liberty Hill ISD.',
-      status: 'coming-soon',
+      status: null,
       builders: ['Pulte Homes', 'GFO Home'],
       amenities: [
         'Future Amenity Center',
