@@ -401,6 +401,13 @@ function parseCard(html: string): { row: UpsertScrapedInput | null; reason?: str
   const sqft = extractSqftDisplay(html) ?? parseInt0(getAttr(html, 'data-sqft'));
   const readyDate = extractReadyDate(html);
 
+  // Skip cards missing price entirely — those aren't actionable listings.
+  if (price == null) {
+    return { row: null, reason: `no price on card (${addressLine ?? 'unknown address'})` };
+  }
+
+  const hasPriceHigh = priceHigh != null && priceHigh > price;
+
   // Santa Rita Ranch is a master-planned developer that aggregates homes
   // from many builders. We attribute the listing to the developer in the
   // builder_name column (so it surfaces as a single "Santa Rita Ranch"
@@ -421,17 +428,12 @@ function parseCard(html: string): { row: UpsertScrapedInput | null; reason?: str
     meta.push(`${Math.round(beds)} bed / ${baths} bath.`);
   }
   if (sqft) meta.push(`${sqft.toLocaleString()} sq ft.`);
-  if (priceHigh && priceHigh > price) {
-    meta.push(`Price range: $${price.toLocaleString()} – $${priceHigh.toLocaleString()}.`);
+  if (hasPriceHigh) {
+    meta.push(`Price range: $${price.toLocaleString()} – $${priceHigh!.toLocaleString()}.`);
   }
   if (readyDate) meta.push(`Available ${readyDate}.`);
   meta.push('Santa Rita Ranch is a master-planned community in Liberty Hill, TX.');
   const description = meta.join(' ');
-
-  // Skip cards missing price entirely — those aren't actionable listings.
-  if (price == null) {
-    return { row: null, reason: `no price on card (${addressLine ?? 'unknown address'})` };
-  }
 
   // extraDetails: geo + floorplan + property details.
   const extraDetails: Record<string, string> = {};
@@ -439,7 +441,7 @@ function parseCard(html: string): { row: UpsertScrapedInput | null; reason?: str
   if (lng) extraDetails._longitude = lng;
   if (floorplanUrl) extraDetails._floorplanUrl = floorplanUrl;
   if (neighborhood) extraDetails['Neighborhood'] = neighborhood;
-  if (priceHigh && priceHigh > price) extraDetails['Price High'] = `$${priceHigh.toLocaleString()}`;
+  if (hasPriceHigh) extraDetails['Price High'] = `$${priceHigh!.toLocaleString()}`;
 
   const row: UpsertScrapedInput = {
     externalId,
@@ -459,7 +461,7 @@ function parseCard(html: string): { row: UpsertScrapedInput | null; reason?: str
     sqftMin: sqft,
     sqftMax: sqft,
     priceMin: price,
-    priceMax: priceHigh && priceHigh > price ? priceHigh : price,
+    priceMax: hasPriceHigh ? priceHigh! : price,
     flyerPdfUrl: detailUrl,
     sourceUrl: detailUrl,
     thumbnailUrl,
