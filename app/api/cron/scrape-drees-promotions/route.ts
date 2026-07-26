@@ -32,7 +32,9 @@ import {
   claimExistingPromotion,
 } from '@/lib/builder-inventory';
 import { deleteStaleBuilderPromotions } from '@/lib/builder-inventory-sync';
-import { sql } from '@neondatabase/serverless';
+import { neon } from '@neondatabase/serverless';
+
+const sql = neon(process.env.DATABASE_URL!);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

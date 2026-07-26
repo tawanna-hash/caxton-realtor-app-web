@@ -15,7 +15,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchDreesAustinQmi } from '@/lib/scrapers/drees-move-in-ready';
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
-import { sql } from '@neondatabase/serverless';
+import { neon } from '@neondatabase/serverless';
+
+const sql = neon(process.env.DATABASE_URL!);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
