@@ -804,6 +804,50 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
     });
   }
 
+  // Helper: match a plan to a showcase home by sqft and enrich with
+  // floorplan image + garage/stories from the home's extraDetails.
+  function enrichPlanFromHomes(
+    plan: { name: string; beds: string; baths: string; sqftDisplay: string; priceDisplay: string },
+    homes: UpsertScrapedInput[],
+  ) {
+    const planSqft = parseInt(plan.sqftDisplay.replace(/,/g, ''), 10);
+    if (!Number.isFinite(planSqft)) return plan;
+
+    // Find the closest sqft match among showcase homes.
+    let best: UpsertScrapedInput | null = null;
+    let bestDiff = Infinity;
+    for (const h of homes) {
+      const hSqft = h.sqftMin ?? h.sqftMax;
+      if (hSqft == null) continue;
+      const diff = Math.abs(hSqft - planSqft);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        best = h;
+      }
+    }
+    if (!best) return plan;
+
+    const ed = best.extraDetails as Record<string, string> | null;
+    const floorplanUrl = ed?._floorplanUrl ?? null;
+    const gallery = best.galleryUrls ?? [];
+    const imageUrl = floorplanUrl ?? gallery[0] ?? null;
+
+    // Extract garage/stories from the best-matching home's description.
+    const desc = best.description ?? '';
+    const garageMatch = desc.match(/(\d)\s*-?car\s*garage/i);
+    const garage = garageMatch ? garageMatch[1] : null;
+    const storiesMatch = desc.match(/(\d)\s*stor(?:y|ies)/i);
+    const stories = storiesMatch ? storiesMatch[1] : null;
+
+    return {
+      ...plan,
+      imageUrl,
+      url: best.sourceUrl ?? null,
+      garages: garage,
+      stories,
+    };
+  }
+
   // Helper: compute aggregate ranges from a set of rows.
   function aggregateRange(rs: UpsertScrapedInput[]) {
     const pm = rs.length > 0 ? Math.min(...rs.map((r) => r.priceMin ?? Infinity)) : null;
@@ -845,13 +889,7 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       schools: nb.schoolDistrict
         ? { district: nb.schoolDistrict, list: nb.schools ?? [] }
         : null,
-      homePlans: nb.homePlans?.map((p) => ({
-        name: p.name,
-        beds: p.beds,
-        baths: p.baths,
-        sqftDisplay: p.sqftDisplay,
-        priceDisplay: p.priceDisplay,
-      })),
+      homePlans: nb.homePlans?.map((p) => enrichPlanFromHomes(p, nbHomes)),
       salesOffice: {
         address: '3000 Santa Rita Blvd, Liberty Hill, TX 78628',
         hours: 'Mon-Sat 10am-6pm, Sun 12pm-5pm',
