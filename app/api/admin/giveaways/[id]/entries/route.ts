@@ -59,7 +59,7 @@ export const POST = withErrorHandling(async (req: Request, ctx: Ctx) => {
       adminId: admin.adminId,
       action: 'giveaway.entry.add',
       entityType: 'giveaway_entry',
-      entityId: result.ok ? result.id : `${id}:${realtor.id}:${input.ruleId}`,
+      entityId: result.ok ? result.id : null,
       afterState: { giveawayId: id, realtorId: realtor.id, ruleId: input.ruleId, created: result.ok },
       ipAddress: await getRequestIp(),
     });
@@ -84,7 +84,7 @@ export const POST = withErrorHandling(async (req: Request, ctx: Ctx) => {
     adminId: admin.adminId,
     action: 'giveaway.entry.add',
     entityType: 'giveaway_entry',
-    entityId: `${id}:${realtor.id}`,
+    entityId: null,
     afterState: { giveawayId: id, realtorId: realtor.id, added },
     ipAddress: await getRequestIp(),
   });
@@ -107,7 +107,7 @@ export const DELETE = withErrorHandling(async (req: Request, ctx: Ctx) => {
     adminId: admin.adminId,
     action: 'giveaway.entry.delete',
     entityType: 'giveaway_entry',
-    entityId: `${id}:${realtorId}`,
+    entityId: null,
     afterState: { giveawayId: id, realtorId, deleted },
     ipAddress: await getRequestIp(),
   });
