@@ -12,12 +12,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const sql = neon(process.env.DATABASE_URL!);
-  const externalId = req.nextUrl.searchParams.get('externalId') ?? 'content/1145';
+  const title = req.nextUrl.searchParams.get('title') ?? 'Caliterra';
   const rows = await sql`
-    SELECT id, title, community_data->'homePlans' AS home_plans,
+    SELECT id, title, external_id, community_data->'homePlans' AS home_plans,
            jsonb_array_length(coalesce(community_data->'homePlans', '[]'::jsonb)) AS plan_count
     FROM builder_inventory
-    WHERE builder_name = 'Drees Homes' AND home_type = 'community' AND external_id = ${externalId}
+    WHERE builder_name = 'Drees Homes' AND home_type = 'community' AND title ILIKE ${'%' + title + '%'}
   `;
   return NextResponse.json({ rows });
 }
