@@ -31,7 +31,7 @@
 // One row per Austin neighborhood → kind='listing', homeType='community'.
 // Structured detail lives in the `communityData` JSONB column.
 
-import type { CommunityData } from './david-weekley';
+import type { CommunityData, CommunityHomePlan } from './david-weekley';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Constants
@@ -132,6 +132,38 @@ type DreesNeighborhood = {
   drivingDirections?: string | null;
   officehoursList?: DreesOfficeHour[] | null;
   mapImage?: DreesMapImage | null;
+};
+
+// POST /api/en/dreeshomes/plan — floor plans for a given community contentId.
+// Response: { data: { plans: [...] } }. Each plan carries its own
+// neighborhoodName (a community can have several priced sub-neighborhoods,
+// e.g. "Caliterra - 80'", "Caliterra - 110'") — we pool all plans returned
+// for the community's contentId into one homePlans[] list.
+type DreesPlan = {
+  planName?: string | null;
+  neighborhoodName?: string | null;
+  url?: string | null;
+  priceLow?: number | null;
+  priceHigh?: number | null;
+  sqFtLow?: number | null;
+  sqFtHigh?: number | null;
+  bedLow?: number | null;
+  bedHigh?: number | null;
+  bathLow?: number | null;
+  bathHigh?: number | null;
+  garagesLow?: number | null;
+  garagesHigh?: number | null;
+  storiesLow?: number | null;
+  storiesHigh?: number | null;
+  images?: DreesImage[] | null;
+  moveInDate?: string | null;
+  contentId?: number | null;
+};
+
+type DreesPlanResponse = {
+  data?: {
+    plans?: DreesPlan[] | null;
+  } | null;
 };
 
 type DreesCommunityResponse = {
@@ -484,6 +516,99 @@ async function fetchCommunityDetailData(
   };
 }
 
+const PLAN_URL = 'https://www.dreeshomes.com/api/en/dreeshomes/plan';
+
+// POST /api/en/dreeshomes/plan — floor plans for a community's contentId.
+// A community can fan out into several priced sub-neighborhoods (e.g.
+// "Caliterra - 80'", "Caliterra - 110'"); the plan endpoint pools all of
+// them under the parent contentId, so one call covers the whole community.
+async function fetchCommunityPlans(
+  contentId: number | null | undefined,
+): Promise<DreesPlan[]> {
+  if (contentId == null || !Number.isFinite(contentId)) return [];
+
+  const body = {
+    pageSize: 100,
+    pageNumber: 1,
+    contentid: contentId,
+  };
+
+  let res: Response;
+  try {
+    res = await fetch(PLAN_URL, {
+      method: 'POST',
+      headers: COMMON_HEADERS,
+      body: JSON.stringify(body),
+      redirect: 'follow',
+      signal: AbortSignal.timeout(30_000),
+      cache: 'no-store',
+    });
+  } catch {
+    return [];
+  }
+  if (!res.ok) return [];
+
+  let parsed: DreesPlanResponse;
+  try {
+    parsed = (await res.json()) as DreesPlanResponse;
+  } catch {
+    return [];
+  }
+
+  return parsed.data?.plans ?? [];
+}
+
+// Maps a raw Drees plan record onto the shared CommunityHomePlan shape.
+function toHomePlan(p: DreesPlan): CommunityHomePlan {
+  const beds =
+    p.bedLow != null || p.bedHigh != null
+      ? p.bedLow != null && p.bedHigh != null && p.bedLow !== p.bedHigh
+        ? `${p.bedLow} - ${p.bedHigh}`
+        : String(p.bedLow ?? p.bedHigh)
+      : null;
+  const baths =
+    p.bathLow != null || p.bathHigh != null
+      ? p.bathLow != null && p.bathHigh != null && p.bathLow !== p.bathHigh
+        ? `${p.bathLow} - ${p.bathHigh}`
+        : String(p.bathLow ?? p.bathHigh)
+      : null;
+  const garages =
+    p.garagesLow != null || p.garagesHigh != null
+      ? p.garagesLow != null &&
+        p.garagesHigh != null &&
+        p.garagesLow !== p.garagesHigh
+        ? `${p.garagesLow} - ${p.garagesHigh}`
+        : String(p.garagesLow ?? p.garagesHigh)
+      : null;
+  const stories =
+    p.storiesLow != null || p.storiesHigh != null
+      ? p.storiesLow != null &&
+        p.storiesHigh != null &&
+        p.storiesLow !== p.storiesHigh
+        ? `${p.storiesLow} - ${p.storiesHigh}`
+        : String(p.storiesLow ?? p.storiesHigh)
+      : null;
+  const imageUrl =
+    p.images && p.images.length > 0
+      ? withImageTransform(p.images[0].imagePath ?? p.images[0].path, 800)
+      : null;
+
+  return {
+    name: p.planName ?? 'Floor Plan',
+    url: normalizeUrl(p.url),
+    priceDisplay: formatPriceRange(p.priceLow ?? null, p.priceHigh ?? null),
+    basePrice: p.priceLow ?? p.priceHigh ?? null,
+    sqftDisplay: formatSqftRange(p.sqFtLow ?? null, p.sqFtHigh ?? null),
+    beds,
+    baths,
+    garages,
+    stories,
+    imageUrl,
+    status: null,
+    isModel: false,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // Per-neighborhood normalization
 // ─────────────────────────────────────────────────────────────────────────
@@ -491,6 +616,7 @@ async function fetchCommunityDetailData(
 function normalize(
   n: DreesNeighborhood,
   detail?: CommunityDetailData | null,
+  plans?: DreesPlan[] | null,
 ): ScrapedCommunityRow | null {
   // Stable externalId (community-scraper-template §4).
   // Prefer numeric contentId; fall back to productFavoriteId string.
@@ -576,7 +702,7 @@ function normalize(
         ? formatSqftRange(sqftMin, sqftMax)
         : null,
     amenities,
-    homePlans: [],
+    homePlans: (plans ?? []).map(toHomePlan),
     schools: {
       district: schoolDistrict,
       list: [],
@@ -682,18 +808,20 @@ export async function fetchDreesAustinCommunities(): Promise<{
   }
 
   // Enrich each community with detail page data (specialist name, lat/lng
-  // fallback, amenities/school fallback). Batched at CONCURRENCY=4 to be
-  // polite to dreeshomes.com.
+  // fallback, amenities/school fallback) and floor plans (homePlans[] via
+  // POST /api/en/dreeshomes/plan keyed by contentId). Batched at
+  // CONCURRENCY=4 to be polite to dreeshomes.com.
   const rows: ScrapedCommunityRow[] = [];
   let skipped = 0;
   const CONCURRENCY = 4;
   for (let i = 0; i < neighborhoods.length; i += CONCURRENCY) {
     const batch = neighborhoods.slice(i, i + CONCURRENCY);
-    const details = await Promise.all(
-      batch.map((n) => fetchCommunityDetailData(n.url)),
-    );
+    const [details, plansBatches] = await Promise.all([
+      Promise.all(batch.map((n) => fetchCommunityDetailData(n.url))),
+      Promise.all(batch.map((n) => fetchCommunityPlans(n.contentId))),
+    ]);
     for (let j = 0; j < batch.length; j++) {
-      const row = normalize(batch[j], details[j]);
+      const row = normalize(batch[j], details[j], plansBatches[j]);
       if (row) rows.push(row);
       else skipped++;
     }
