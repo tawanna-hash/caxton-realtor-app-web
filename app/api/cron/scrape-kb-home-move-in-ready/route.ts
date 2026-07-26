@@ -51,6 +51,18 @@ async function runScrape() {
 
   for (const row of rows) {
     try {
+      // Move 'Virtual Tour' from the scraper's extraDetails into the
+      // underscore-prefixed _virtualTourUrl key the frontend reads, and
+      // strip the old key so it doesn't duplicate in Property details.
+      const {
+        'Virtual Tour': vtUrl,
+        ...restDetails
+      } = row.extraDetails ?? {};
+      const enrichedDetails: Record<string, string> = {
+        ...restDetails,
+        ...(row.floorPlanUrl ? { _floorplanUrl: row.floorPlanUrl } : {}),
+        ...(vtUrl ? { _virtualTourUrl: vtUrl } : {}),
+      } as Record<string, string>;
       const result = await upsertBuilderInventoryByExternalId({
         externalId: row.externalId,
         kind: 'listing',
@@ -79,10 +91,7 @@ async function runScrape() {
         planName: row.planName,
         communityName: row.communityName,
         homeType: row.homeType,
-        extraDetails: {
-          ...row.extraDetails,
-          ...(row.floorPlanUrl ? { 'Floor Plan': row.floorPlanUrl } : {}),
-        },
+        extraDetails: Object.keys(enrichedDetails).length > 0 ? enrichedDetails : null,
       });
       if (result.created) inserted++;
       else updated++;

@@ -175,7 +175,7 @@ function DetailView({
   // needs an <iframe>. Newmark's JPG and La Cima's pipsy CDN images both
   // render via FloorplanViewer.
   const isFloorplanImage =
-    !!floorplanUrl && !/ml3ds-icon\.com/i.test(floorplanUrl);
+    !!floorplanUrl && !/ml3ds-icon\.com|kb-vu\.com/i.test(floorplanUrl);
   const latitude = extra._latitude ?? null;
   const longitude = extra._longitude ?? null;
   const hasMap = !!(latitude && longitude);
