@@ -558,40 +558,39 @@ async function fetchCommunityPlans(
   return parsed.data?.plans ?? [];
 }
 
+// Drees uses 0 as a "not applicable" sentinel on the *High side of a
+// low/high pair (e.g. bedLow=5, bedHigh=0 means "5 beds", not "5 - 0").
+// Formats a range, treating a zero bound as absent whenever the other
+// bound is a positive number.
+function formatDreesRange(
+  low: number | null | undefined,
+  high: number | null | undefined,
+): string | null {
+  const validLow = low != null && low > 0 ? low : null;
+  const validHigh = high != null && high > 0 ? high : null;
+  if (validLow == null && validHigh == null) return null;
+  if (validLow != null && validHigh != null && validLow !== validHigh) {
+    return `${validLow} - ${validHigh}`;
+  }
+  return String(validLow ?? validHigh);
+}
+
 // Maps a raw Drees plan record onto the shared CommunityHomePlan shape.
-function toHomePlan(p: DreesPlan): CommunityHomePlan {
-  const beds =
-    p.bedLow != null || p.bedHigh != null
-      ? p.bedLow != null && p.bedHigh != null && p.bedLow !== p.bedHigh
-        ? `${p.bedLow} - ${p.bedHigh}`
-        : String(p.bedLow ?? p.bedHigh)
-      : null;
-  const baths =
-    p.bathLow != null || p.bathHigh != null
-      ? p.bathLow != null && p.bathHigh != null && p.bathLow !== p.bathHigh
-        ? `${p.bathLow} - ${p.bathHigh}`
-        : String(p.bathLow ?? p.bathHigh)
-      : null;
-  const garages =
-    p.garagesLow != null || p.garagesHigh != null
-      ? p.garagesLow != null &&
-        p.garagesHigh != null &&
-        p.garagesLow !== p.garagesHigh
-        ? `${p.garagesLow} - ${p.garagesHigh}`
-        : String(p.garagesLow ?? p.garagesHigh)
-      : null;
-  const stories =
-    p.storiesLow != null || p.storiesHigh != null
-      ? p.storiesLow != null &&
-        p.storiesHigh != null &&
-        p.storiesLow !== p.storiesHigh
-        ? `${p.storiesLow} - ${p.storiesHigh}`
-        : String(p.storiesLow ?? p.storiesHigh)
-      : null;
+// `fallbackImageUrl` is the parent community's own thumbnail — Drees'
+// plan API never returns per-plan images, so we use it to avoid every
+// plan card showing "No image available".
+function toHomePlan(
+  p: DreesPlan,
+  fallbackImageUrl?: string | null,
+): CommunityHomePlan {
+  const beds = formatDreesRange(p.bedLow, p.bedHigh);
+  const baths = formatDreesRange(p.bathLow, p.bathHigh);
+  const garages = formatDreesRange(p.garagesLow, p.garagesHigh);
+  const stories = formatDreesRange(p.storiesLow, p.storiesHigh);
   const imageUrl =
     p.images && p.images.length > 0
       ? withImageTransform(p.images[0].imagePath ?? p.images[0].path, 800)
-      : null;
+      : fallbackImageUrl ?? null;
 
   return {
     name: p.planName ?? 'Floor Plan',
@@ -702,7 +701,7 @@ function normalize(
         ? formatSqftRange(sqftMin, sqftMax)
         : null,
     amenities,
-    homePlans: (plans ?? []).map(toHomePlan),
+    homePlans: (plans ?? []).map((p) => toHomePlan(p, allImages[0] ?? null)),
     schools: {
       district: schoolDistrict,
       list: [],
