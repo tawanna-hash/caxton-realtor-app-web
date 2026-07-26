@@ -63,7 +63,7 @@ export type ScrapedGiddensRow = {
   planName: string | null;
   communityName: string | null;
   homeType: 'showcase';
-  extraDetails: Record<string, string | number | boolean>;
+  extraDetails: Record<string, string>;
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -245,11 +245,11 @@ function normalize(
   if (loc.zip) extraDetails['ZIP'] = loc.zip;
 
   // Room features
-  if (d.study) extraDetails['Study'] = true;
-  if (d.gameroom) extraDetails['Game Room'] = true;
-  if (d.mediaroom) extraDetails['Media Room'] = true;
-  if (d.seconddining) extraDetails['Second Dining'] = true;
-  if (d.secondliving) extraDetails['Second Living'] = true;
+  if (d.study) extraDetails['Study'] = 'Yes';
+  if (d.gameroom) extraDetails['Game Room'] = 'Yes';
+  if (d.mediaroom) extraDetails['Media Room'] = 'Yes';
+  if (d.seconddining) extraDetails['Second Dining'] = 'Yes';
+  if (d.secondliving) extraDetails['Second Living'] = 'Yes';
 
   // Floorplan image
   if (floorplanImages.length > 0) {
@@ -258,8 +258,8 @@ function normalize(
 
   // GPS coordinates
   if (loc.location) {
-    extraDetails['_latitude'] = loc.location.lat;
-    extraDetails['_longitude'] = loc.location.lng;
+    extraDetails['_latitude'] = String(loc.location.lat);
+    extraDetails['_longitude'] = String(loc.location.lng);
   }
 
   // Description
