@@ -149,7 +149,7 @@ export default function EventGallery({ months }: Props) {
               )}
               <p className="text-white/50 text-xs mt-1">
                 {new Date(photos[lightboxIndex].eventDate + 'T00:00:00').toLocaleDateString('en-US', {
-                  year: 'numeric', month: 'long', day: 'numeric',
+                  year: 'numeric', month: 'long',
                 })}
               </p>
             </div>

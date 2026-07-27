@@ -66,7 +66,7 @@ export default function AdminEventImagesPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title, eventDate, imageUrl,
+          title, eventDate: eventDate.length === 7 ? eventDate + '-01' : eventDate, imageUrl,
           thumbnailUrl: thumbnailUrl || null,
           description: description || null,
         }),
@@ -181,9 +181,9 @@ export default function AdminEventImagesPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Event Date *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Issue Month *</label>
             <input
-              type="date"
+              type="month"
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
               required
@@ -253,10 +253,10 @@ export default function AdminEventImagesPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Event Date <span className="text-gray-400">(defaults to today)</span>
+                  Issue Month <span className="text-gray-400">(defaults to current month)</span>
                 </label>
                 <input
-                  type="date"
+                  type="month"
                   value={bulkDate}
                   onChange={(e) => setBulkDate(e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -335,7 +335,7 @@ export default function AdminEventImagesPage() {
 
             <p className="mt-3 text-xs text-gray-400">
               Images are uploaded to Vercel Blob storage. Each file becomes a separate photo entry
-              with the event date and title specified above.
+              with the issue month and title specified above.
             </p>
           </div>
         )}
@@ -366,7 +366,7 @@ export default function AdminEventImagesPage() {
                   <p className="text-xs font-medium text-gray-900 truncate">{p.title}</p>
                   <p className="text-xs text-gray-500">
                     {new Date(p.eventDate + 'T00:00:00').toLocaleDateString('en-US', {
-                      month: 'short', day: 'numeric', year: 'numeric',
+                      month: 'long', year: 'numeric',
                     })}
                   </p>
                 </div>

@@ -4,7 +4,7 @@
 //
 // Optional FormData fields:
 //   files[]    — one or more image files (required)
-//   eventDate  — ISO date string (defaults to today)
+//   eventDate  — YYYY-MM (month input) or ISO date string (defaults to current month)
 //   title      — base title; each photo gets "_1", "_2", etc. appended
 //               if not provided, the filename (without extension) is used
 
@@ -29,7 +29,9 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
 
   const form = await req.formData();
   const files = form.getAll('files');
-  const eventDate = (form.get('eventDate') as string) || new Date().toISOString().slice(0, 10);
+  const rawDate = (form.get('eventDate') as string) || (new Date().toISOString().slice(0, 7) + '-01');
+  // Support both YYYY-MM (month input) and full ISO dates
+  const eventDate = rawDate.length === 7 ? rawDate + '-01' : rawDate;
   const baseTitle = (form.get('title') as string) || '';
 
   if (files.length === 0) {
@@ -50,7 +52,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
 
     try {
       // Upload to Vercel Blob
-      const blobPath = `event-images/${eventDate}/${Date.now()}-${i}-${cleanName}.${ext}`;
+      const blobPath = `event-images/${eventDate.slice(0,7)}/${Date.now()}-${i}-${cleanName}.${ext}`;
       const blob = await put(blobPath, file, { access: 'public' });
 
       // Derive title

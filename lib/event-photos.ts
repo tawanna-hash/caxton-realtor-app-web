@@ -7,7 +7,7 @@
 //   event_photos (
 //     id            SERIAL PK,
 //     title         TEXT NOT NULL,
-//     event_date    DATE NOT NULL,         -- date of the event (not upload date)
+//     event_date    DATE NOT NULL,         -- issue month (stored as YYYY-MM-01)
 //     image_url     TEXT NOT NULL,          -- full-size image URL
 //     thumbnail_url TEXT,                   -- optional separate thumbnail
 //     description   TEXT,
@@ -23,7 +23,7 @@ const sql = neon(process.env.DATABASE_URL!);
 export type EventPhoto = {
   id: number;
   title: string;
-  eventDate: string;       // ISO date
+  eventDate: string;       // ISO date (YYYY-MM-01, represents issue month)
   imageUrl: string;
   thumbnailUrl: string | null;
   description: string | null;
