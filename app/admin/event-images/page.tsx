@@ -104,36 +104,51 @@ export default function AdminEventImagesPage() {
 
   const handleBulkUpload = async (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
     setBulkUploading(true);
-    setBulkProgress({ uploaded: 0, failed: 0, total: fileList.length });
+    setBulkProgress({ uploaded: 0, failed: 0, total: files.length });
     setError(null);
-    try {
-      const formData = new FormData();
-      for (const file of Array.from(fileList)) {
-        formData.append('files', file);
-      }
-      if (bulkDate) formData.append('eventDate', bulkDate);
-      if (bulkTitle) formData.append('title', bulkTitle);
 
-      const res = await fetch('/api/admin/event-images/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        throw new Error(`Upload failed (${res.status}) ${txt}`);
+    let uploaded = 0;
+    let failed = 0;
+
+    // Upload one file at a time to avoid Vercel's 4.5MB payload limit
+    for (const file of files) {
+      try {
+        const formData = new FormData();
+        formData.append('files', file);
+        if (bulkDate) formData.append('eventDate', bulkDate);
+        if (bulkTitle) formData.append('title', bulkTitle);
+
+        const res = await fetch('/api/admin/event-images/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          console.error(`Upload failed for ${file.name}:`, txt);
+          failed++;
+        } else {
+          uploaded++;
+        }
+        setBulkProgress({ uploaded, failed, total: files.length });
+      } catch (e) {
+        console.error(`Upload error for ${file.name}:`, e);
+        failed++;
+        setBulkProgress({ uploaded, failed, total: files.length });
       }
-      const data = await res.json();
-      setBulkProgress({ uploaded: data.uploaded, failed: data.failed, total: fileList.length });
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Bulk upload failed');
-    } finally {
-      setBulkUploading(false);
-      // Reset file inputs so the same files can be selected again
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      if (folderInputRef.current) folderInputRef.current.value = '';
     }
+
+    if (failed > 0 && uploaded === 0) {
+      setError(`All ${failed} image(s) failed to upload. Check file sizes — Vercel limits each upload to ~4.5MB.`);
+    } else if (failed > 0) {
+      setError(`${failed} of ${files.length} image(s) failed to upload.`);
+    }
+
+    await load();
+    setBulkUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (folderInputRef.current) folderInputRef.current.value = '';
   };
 
   return (
@@ -319,7 +334,7 @@ export default function AdminEventImagesPage() {
             {bulkUploading && (
               <div className="mt-4 flex items-center gap-3 text-sm text-gray-600">
                 <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-gray-700 rounded-full" />
-                Uploading images...
+                Uploading {bulkProgress?.uploaded ?? 0}/{bulkProgress?.total ?? 0}...
               </div>
             )}
             {bulkProgress && !bulkUploading && (
