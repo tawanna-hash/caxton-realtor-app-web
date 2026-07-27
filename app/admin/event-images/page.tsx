@@ -222,7 +222,14 @@ export default function AdminEventImagesPage() {
             console.error(`Upload failed for ${file.name}:`, txt);
             failed++;
           } else {
-            uploaded++;
+            const data = await res.json().catch(() => ({}));
+            if (data.uploaded === 0 && data.failed > 0) {
+              const errMsg = data.results?.[0]?.error || 'DB record creation failed';
+              console.error(`DB record failed for ${file.name}:`, errMsg);
+              failed++;
+            } else {
+              uploaded++;
+            }
           }
           setBulkProgress({ uploaded, failed, total: files.length });
         } catch (e) {

@@ -71,6 +71,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
 
       results.push({ url: blob.url, title, ok: true });
     } catch (err) {
+      console.error(`[event-images] Upload failed for ${file.name}:`, err);
       results.push({
         url: '',
         title: cleanName,
