@@ -5,7 +5,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Trash2, Plus, ExternalLink, Upload, FolderOpen, Image as ImageIcon } from 'lucide-react';
-import { upload as blobUpload } from '@vercel/blob/client';
 import PageTitle from '@/components/ui/PageTitle';
 
 type EventPhoto = {
@@ -34,6 +33,59 @@ export default function AdminEventImagesPage() {
   const [showBulk, setShowBulk] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+
+  // Compress an image file client-side using Canvas.
+  // Resizes to max 2400px on the longest edge, JPEG at 0.92 quality.
+  // This keeps photos sharp while reducing file size well under Vercel's limit.
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      if (!file.type.startsWith('image/')) {
+        resolve(file); // pass through non-images
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX_DIM = 2400;
+          let { width, height } = img;
+          if (width > MAX_DIM || height > MAX_DIM) {
+            if (width >= height) {
+              height = Math.round((height / width) * MAX_DIM);
+              width = MAX_DIM;
+            } else {
+              width = Math.round((width / height) * MAX_DIM);
+              height = MAX_DIM;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) { resolve(file); return; }
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) { resolve(file); return; }
+              const compressed = new File(
+                [blob],
+                file.name.replace(/\.[^.]+$/, '.jpg'),
+                { type: 'image/jpeg' },
+              );
+              resolve(compressed);
+            },
+            'image/jpeg',
+            0.92,
+          );
+        };
+        img.onerror = () => resolve(file);
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
+  };
 
   // Form state
   const [title, setTitle] = useState('');
@@ -115,7 +167,7 @@ export default function AdminEventImagesPage() {
     let failed = 0;
 
     for (const file of files) {
-      // Client-side size check
+      // Client-side size check (before compression)
       if (file.size > MAX_FILE_SIZE) {
         failed++;
         setBulkProgress({ uploaded, failed, total: files.length });
@@ -126,37 +178,22 @@ export default function AdminEventImagesPage() {
       }
 
       try {
-        // 1. Upload directly to Vercel Blob from the browser
-        const ext = file.name.split('.').pop() || 'jpg';
-        const cleanName = file.name.replace(/\.[^.]+$/, '');
-        const monthStr = bulkDate || new Date().toISOString().slice(0, 7);
-        const blobPath = `event-images/${monthStr}/${Date.now()}-${cleanName}.${ext}`;
+        // 1. Compress the image client-side
+        const compressed = await compressImage(file);
 
-        const blob = await blobUpload(file, {
-          access: 'public',
-          handleUploadUrl: '/api/admin/event-images/blob-upload',
-          pathname: blobPath,
-          contentType: file.type,
-        });
+        // 2. Upload to Vercel Blob via server route (one file at a time)
+        const formData = new FormData();
+        formData.append('files', compressed);
+        if (bulkDate) formData.append('eventDate', bulkDate);
+        if (bulkTitle) formData.append('title', bulkTitle);
 
-        // 2. Create the DB record with the blob URL
-        const eventDate = monthStr.length === 7 ? monthStr + '-01' : monthStr;
-        const title = bulkTitle
-          ? (files.length > 1 ? `${bulkTitle} ${uploaded + 1}` : bulkTitle)
-          : cleanName;
-
-        const res = await fetch('/api/admin/event-images', {
+        const res = await fetch('/api/admin/event-images/upload', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title,
-            eventDate,
-            imageUrl: blob.url,
-          }),
+          body: formData,
         });
-
         if (!res.ok) {
-          console.error(`DB record failed for ${file.name}`);
+          const txt = await res.text().catch(() => '');
+          console.error(`Upload failed for ${file.name}:`, txt);
           failed++;
         } else {
           uploaded++;
@@ -379,8 +416,8 @@ export default function AdminEventImagesPage() {
             )}
 
             <p className="mt-3 text-xs text-gray-400">
-              Images upload directly to Vercel Blob storage. Max 10MB per image. Each file
-              becomes a separate photo entry with the issue month and title specified above.
+              Images are compressed (max 2400px, JPEG 92% quality) then uploaded to Vercel Blob.
+              Max 10MB per image before compression. Each file becomes a separate photo entry.
             </p>
           </div>
         )}
