@@ -163,6 +163,27 @@ export async function deleteEventPhoto(id: number): Promise<boolean> {
   return rows.length > 0;
 }
 
+export async function deleteEventPhotos(ids: number[]): Promise<number> {
+  await ensureEventPhotosSchema();
+  const sql = getSql();
+  let deleted = 0;
+  for (const id of ids) {
+    const rows = await sql`DELETE FROM event_photos WHERE id = ${id} RETURNING id`;
+    if (rows.length > 0) deleted++;
+  }
+  return deleted;
+}
+
+export async function deleteEventPhotosByMonth(monthKey: string): Promise<number> {
+  await ensureEventPhotosSchema();
+  const sql = getSql();
+  const startDate = `${monthKey}-01`;
+  const rows = await sql`
+    DELETE FROM event_photos WHERE TO_CHAR(event_date, 'YYYY-MM') = ${monthKey} RETURNING id
+  `;
+  return rows.length;
+}
+
 export async function updateEventPhoto(id: number, fields: {
   title?: string;
   eventDate?: string;

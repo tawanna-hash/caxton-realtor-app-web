@@ -8,6 +8,8 @@ import {
   listEventPhotos,
   createEventPhoto,
   deleteEventPhoto,
+  deleteEventPhotos,
+  deleteEventPhotosByMonth,
   updateEventPhoto,
 } from '@/lib/event-photos';
 import { requireAdmin } from '@/lib/server/auth/admin';
@@ -64,9 +66,30 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
 
 export const DELETE = withErrorHandling(async (req: NextRequest) => {
   await requireAdmin();
-  const id = parseInt(new URL(req.url).searchParams.get('id') ?? '', 10);
+  const url = new URL(req.url);
+
+  // Bulk delete: DELETE /api/admin/event-images?ids=1,2,3
+  const idsParam = url.searchParams.get('ids');
+  if (idsParam) {
+    const ids = idsParam.split(',').map(Number).filter(Boolean);
+    if (ids.length === 0) {
+      return NextResponse.json({ error: 'No valid ids' }, { status: 400 });
+    }
+    const deleted = await deleteEventPhotos(ids);
+    return NextResponse.json({ deleted, total: ids.length });
+  }
+
+  // Folder delete: DELETE /api/admin/event-images?month=2026-07
+  const monthParam = url.searchParams.get('month');
+  if (monthParam) {
+    const deleted = await deleteEventPhotosByMonth(monthParam);
+    return NextResponse.json({ deleted, month: monthParam });
+  }
+
+  // Single delete: DELETE /api/admin/event-images?id=123
+  const id = parseInt(url.searchParams.get('id') ?? '', 10);
   if (!id) {
-    return NextResponse.json({ error: 'id query param required' }, { status: 400 });
+    return NextResponse.json({ error: 'id, ids, or month query param required' }, { status: 400 });
   }
   const ok = await deleteEventPhoto(id);
   return NextResponse.json({ ok, id });
