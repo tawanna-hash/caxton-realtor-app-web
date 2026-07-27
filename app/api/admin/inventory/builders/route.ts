@@ -28,14 +28,14 @@ export const GET = withErrorHandling(async () => {
   const rows = (await sql`
     SELECT
       b.builder_name                        AS builder_name,
-      MAX(b.developer_name)                 AS developer_name,
+      b.developer_name                      AS developer_name,
       COUNT(*)::int                          AS total_count,
       COUNT(*) FILTER (WHERE b.status='active')::int AS active_count,
       COALESCE(v.public_enabled, true)       AS public_enabled,
       BOOL_OR(b.builder_name = b.developer_name) AS is_developer
     FROM builder_inventory b
     LEFT JOIN builder_page_visibility v ON v.builder_name = b.builder_name
-    GROUP BY b.builder_name, v.public_enabled
+    GROUP BY b.builder_name, b.developer_name, v.public_enabled
     ORDER BY b.builder_name ASC
   `) as {
     builder_name: string;
