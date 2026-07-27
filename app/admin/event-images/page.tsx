@@ -33,6 +33,8 @@ export default function AdminEventImagesPage() {
   const [bulkProgress, setBulkProgress] = useState<{ uploaded: number; failed: number; total: number } | null>(null);
   const [showBulk, setShowBulk] = useState(false);
   const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
+  const [editingTitle, setEditingTitle] = useState<number | null>(null);
+  const [editTitleValue, setEditTitleValue] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -45,7 +47,9 @@ export default function AdminEventImagesPage() {
     if (!photos) return [];
     const map = new Map<string, EventPhoto[]>();
     for (const p of photos) {
-      const d = new Date(p.eventDate + 'T00:00:00');
+      // Neon returns DATE columns as full ISO strings (e.g. "2026-07-01T00:00:00.000Z")
+      // Don't append T00:00:00 if it already has a T
+      const d = p.eventDate.includes('T') ? new Date(p.eventDate) : new Date(p.eventDate + 'T00:00:00');
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(p);
@@ -178,6 +182,54 @@ export default function AdminEventImagesPage() {
       setError(e instanceof Error ? e.message : 'Failed to delete');
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const startEditTitle = (id: number, currentTitle: string) => {
+    setEditingTitle(id);
+    setEditTitleValue(currentTitle);
+  };
+
+  const saveTitle = async (id: number) => {
+    const newTitle = editTitleValue.trim();
+    if (!newTitle) {
+      setEditingTitle(null);
+      return;
+    }
+    try {
+      const res = await fetch('/api/admin/event-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, title: newTitle }),
+      });
+      if (!res.ok) throw new Error(`Failed to update (${res.status})`);
+      // Update local state immediately
+      setPhotos((prev) => prev?.map((p) => p.id === id ? { ...p, title: newTitle } : p) ?? null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to update title');
+    } finally {
+      setEditingTitle(null);
+    }
+  };
+
+  // Batch update all titles in a month folder
+  const saveFolderTitle = async (group: { key: string; photos: EventPhoto[] }, newTitle: string) => {
+    const trimmed = newTitle.trim();
+    if (!trimmed) return;
+    setBulkUploading(true);
+    try {
+      for (const p of group.photos) {
+        await fetch('/api/admin/event-images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: p.id, title: trimmed }),
+        });
+      }
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to update titles');
+    } finally {
+      setBulkUploading(false);
     }
   };
 
@@ -469,49 +521,98 @@ export default function AdminEventImagesPage() {
         ) : (
           <div className="space-y-3">
             {monthGroups.map((group) => {
-              const expanded = expandedMonths[group.key] ?? true; // default expanded
+              const expanded = expandedMonths[group.key] ?? true;
               return (
                 <div key={group.key} className="border border-gray-200 rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => toggleMonth(group.key)}
-                    className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
-                  >
-                    <Folder size={18} className="text-gray-400 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">{group.label}</span>
-                    <span className="text-xs text-gray-500 bg-white border border-gray-200 rounded-full px-2 py-0.5">
-                      {group.photos.length} {group.photos.length === 1 ? 'photo' : 'photos'}
-                    </span>
-                    <ChevronDown
-                      size={16}
-                      className={`text-gray-400 ml-auto transition-transform ${expanded ? 'rotate-180' : ''}`}
-                    />
-                  </button>
+                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-50">
+                    <button
+                      onClick={() => toggleMonth(group.key)}
+                      className="flex items-center gap-3 text-left flex-1"
+                    >
+                      <Folder size={18} className="text-gray-400 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-900">{group.label}</span>
+                      <span className="text-xs text-gray-500 bg-white border border-gray-200 rounded-full px-2 py-0.5">
+                        {group.photos.length} {group.photos.length === 1 ? 'photo' : 'photos'}
+                      </span>
+                      <ChevronDown
+                        size={16}
+                        className={`text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                  </div>
                   {expanded && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-3">
-                      {group.photos.map((p) => (
-                        <div key={p.id} className="group relative rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-                          <div className="aspect-square relative">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={p.thumbnailUrl || p.imageUrl}
-                              alt={p.title}
-                              className="object-cover w-full h-full"
-                            />
+                    <>
+                      {/* Batch rename for this folder */}
+                      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 bg-white">
+                        <input
+                          type="text"
+                          defaultValue={group.photos[0]?.title ?? ''}
+                          placeholder="Rename all photos in this folder..."
+                          className="flex-1 text-xs border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              saveFolderTitle(group, (e.target as HTMLInputElement).value);
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={(e) => {
+                            const input = (e.currentTarget.previousSibling as HTMLInputElement);
+                            saveFolderTitle(group, input.value);
+                          }}
+                          disabled={bulkUploading}
+                          className="text-xs bg-brand-600 text-white px-3 py-1.5 rounded-md hover:bg-brand-700 disabled:opacity-40"
+                        >
+                          Update All
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-3">
+                        {group.photos.map((p) => (
+                          <div key={p.id} className="group relative rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                            <div className="aspect-square relative">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={p.thumbnailUrl || p.imageUrl}
+                                alt={p.title}
+                                className="object-cover w-full h-full"
+                              />
+                            </div>
+                            <div className="p-2">
+                              {editingTitle === p.id ? (
+                                <input
+                                  autoFocus
+                                  type="text"
+                                  value={editTitleValue}
+                                  onChange={(e) => setEditTitleValue(e.target.value)}
+                                  onBlur={() => saveTitle(p.id)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') saveTitle(p.id);
+                                    if (e.key === 'Escape') setEditingTitle(null);
+                                  }}
+                                  className="w-full text-xs border border-brand-400 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                />
+                              ) : (
+                                <button
+                                  onClick={() => startEditTitle(p.id, p.title)}
+                                  className="text-xs font-medium text-gray-900 truncate block w-full text-left hover:text-brand-600"
+                                  title="Click to edit title"
+                                >
+                                  {p.title}
+                                </button>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => handleDelete(p.id)}
+                              disabled={deleting === p.id}
+                              className="absolute top-2 right-2 bg-white/90 hover:bg-white text-red-600 p-1.5 rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40"
+                              title="Delete"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </div>
-                          <div className="p-2">
-                            <p className="text-xs font-medium text-gray-900 truncate">{p.title}</p>
-                          </div>
-                          <button
-                            onClick={() => handleDelete(p.id)}
-                            disabled={deleting === p.id}
-                            className="absolute top-2 right-2 bg-white/90 hover:bg-white text-red-600 p-1.5 rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40"
-                            title="Delete"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    </>
                   )}
                 </div>
               );

@@ -103,7 +103,7 @@ export async function listEventPhotosGrouped(opts: {
   const byMonth = new Map<string, EventPhoto[]>();
 
   for (const p of photos) {
-    const d = new Date(p.eventDate + 'T00:00:00Z');
+    const d = p.eventDate.includes('T') ? new Date(p.eventDate) : new Date(p.eventDate + 'T00:00:00Z');
     const monthKey = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
     if (!byMonth.has(monthKey)) byMonth.set(monthKey, []);
     byMonth.get(monthKey)!.push(p);
@@ -152,4 +152,38 @@ export async function deleteEventPhoto(id: number): Promise<boolean> {
     DELETE FROM event_photos WHERE id = ${id} RETURNING id
   `;
   return rows.length > 0;
+}
+
+export async function updateEventPhoto(id: number, fields: {
+  title?: string;
+  eventDate?: string;
+  description?: string | null;
+}): Promise<EventPhoto | null> {
+  await ensureEventPhotosSchema();
+  const sql = getSql();
+
+  // Build SET clause dynamically
+  const sets: string[] = [];
+  const params: any[] = [];
+  let paramIdx = 1;
+
+  if (fields.title !== undefined) {
+    sets.push(`title = $${paramIdx++}`);
+    params.push(fields.title);
+  }
+  if (fields.eventDate !== undefined) {
+    sets.push(`event_date = $${paramIdx++}`);
+    params.push(fields.eventDate);
+  }
+  if (fields.description !== undefined) {
+    sets.push(`description = $${paramIdx++}`);
+    params.push(fields.description);
+  }
+
+  if (sets.length === 0) return null;
+
+  params.push(id);
+  const query = `UPDATE event_photos SET ${sets.join(', ')} WHERE id = $${paramIdx} RETURNING *`;
+  const rows = await sql(query, ...params);
+  return rows.length > 0 ? rowToPhoto(rows[0]) : null;
 }

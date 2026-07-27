@@ -8,6 +8,7 @@ import {
   listEventPhotos,
   createEventPhoto,
   deleteEventPhoto,
+  updateEventPhoto,
 } from '@/lib/event-photos';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { withErrorHandling } from '@/lib/server/error';
@@ -24,6 +25,23 @@ export const GET = withErrorHandling(async () => {
 export const POST = withErrorHandling(async (req: NextRequest) => {
   await requireAdmin();
   const body = await req.json();
+
+  // PUT-style update if `id` is provided in the body
+  if (body.id) {
+    const { id, title, eventDate, description } = body;
+    const updates: { title?: string; eventDate?: string; description?: string | null } = {};
+    if (title !== undefined) updates.title = title;
+    if (eventDate !== undefined) {
+      // Normalize to YYYY-MM-01
+      if (/^\d{4}-\d{2}$/.test(eventDate)) updates.eventDate = eventDate + '-01';
+      else if (/^\d{4}-\d{2}-\d{2}/.test(eventDate)) updates.eventDate = eventDate.slice(0, 10);
+      else updates.eventDate = eventDate;
+    }
+    if (description !== undefined) updates.description = description;
+    const photo = await updateEventPhoto(id, updates);
+    return NextResponse.json({ photo });
+  }
+
   const { title, eventDate, imageUrl, thumbnailUrl, description } = body;
 
   if (!title || !eventDate || !imageUrl) {
