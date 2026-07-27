@@ -1,5 +1,6 @@
 import PageTitle from '@/components/ui/PageTitle';
 import { AdSlot } from '@/components/ads/AdSlot';
+import TrackPageView from '@/components/analytics/TrackPageView';
 import { getServerPub } from '@/lib/publication';
 import {
   listPublicGiveaways,
@@ -42,6 +43,7 @@ export default async function Page() {
 
   return (
     <main className="min-h-screen bg-white">
+      <TrackPageView event="giveaway_page_viewed" />
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
         <header className="mb-8 sm:mb-10">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">

@@ -8,6 +8,7 @@
 
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
+import TrackPageView from '@/components/analytics/TrackPageView';
 import { EBLASTS } from '@/lib/media-kit';
 
 export const metadata = {
@@ -28,6 +29,8 @@ function fmtUsd(n: number): string {
 
 export default function AdvertiseEmailPage() {
   return (
+    <>
+      <TrackPageView event="advertise_email_page_viewed" />
     <main className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
       <header className="mb-8 sm:mb-10">
@@ -192,5 +195,6 @@ export default function AdvertiseEmailPage() {
       </section>
         </div>
     </main>
+    </>
   );
 }

@@ -2,9 +2,13 @@
 //
 // GET — Record a link click for the recipient row, then 302 to the
 // original URL passed as ?u=.
+//
+// Also fires a PostHog `email_clicked` event so email engagement is visible
+// in the PostHog dashboards alongside other analytics.
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
+import { captureServerEvent } from '@/lib/server/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,12 +35,23 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
       try {
         await ensureSchema();
         const sql = getSql();
-        await sql`
+        const rows = await sql`
           UPDATE marketing_campaign_outreach_recipients
           SET clicked_at = COALESCE(clicked_at, now()),
               click_count = click_count + 1
           WHERE id = ${id}
-        `;
+          RETURNING email, campaign_id
+        ` as unknown as { email: string | null; campaign_id: string | null }[];
+        const row = rows[0];
+        // Fire PostHog event so email engagement shows up in analytics
+        if (row) {
+          captureServerEvent('email_clicked', row.email || id, {
+            recipient_id: id,
+            campaign_id: row.campaign_id || undefined,
+            target_url: target,
+            source: 'email_pixel',
+          });
+        }
       } catch {
         // ignore
       }

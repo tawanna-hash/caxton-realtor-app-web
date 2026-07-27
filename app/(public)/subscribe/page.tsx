@@ -3,12 +3,17 @@
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
 import { haptics } from '@/lib/native/haptics';
+import { trackEvent } from '@/app/posthog-provider';
 
 type Selection = 'realtyline' | 'newslinesa' | 'both' | null;
 
 export default function SubscribePage() {
   const [selection, setSelection] = useState<Selection>(null);
   const formsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    trackEvent('subscribe_page_viewed');
+  }, []);
 
   const realtylineActive = selection === 'realtyline' || selection === 'both';
   const newslineActive = selection === 'newslinesa' || selection === 'both';
@@ -246,6 +251,7 @@ function SubscribeForm({
     if (!active) return;
     setSubmitting(true);
     setErrorMessage(null);
+    trackEvent('subscribe_attempted', { publication, market });
 
     try {
       const res = await fetch('/api/print-subscribe', {

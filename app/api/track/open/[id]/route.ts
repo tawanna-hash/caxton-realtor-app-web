@@ -2,9 +2,13 @@
 //
 // GET — 1x1 transparent GIF that records an "email opened" event for the
 // recipient row. Always returns 200 so the user never sees a broken image.
+//
+// Also fires a PostHog `email_opened` event so email engagement is visible
+// in the PostHog dashboards alongside other analytics.
 
 import type { NextRequest } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
+import { captureServerEvent } from '@/lib/server/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -25,12 +29,14 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
       try {
         await ensureSchema();
         const sql = getSql();
-        await sql`
+        const rows = await sql`
           UPDATE marketing_campaign_outreach_recipients
           SET opened_at = COALESCE(opened_at, now()),
               open_count = open_count + 1
           WHERE id = ${id}
-        `;
+          RETURNING email, campaign_id
+        ` as unknown as { email: string | null; campaign_id: string | null }[];
+        const row = rows[0];
         // Roll up to the CRM advertiser row (best-effort — silently no-ops
         // for recipients whose email isn't in advertisers, e.g. one-off
         // manual sends we haven't synced yet).
@@ -42,6 +48,14 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
           WHERE r.id = ${id}
             AND lower(a.contact_email) = lower(r.email)
         `;
+        // Fire PostHog event so email engagement shows up in analytics
+        if (row) {
+          captureServerEvent('email_opened', row.email || id, {
+            recipient_id: id,
+            campaign_id: row.campaign_id || undefined,
+            source: 'email_pixel',
+          });
+        }
       } catch {
         // Swallow — tracking failures must never error the pixel.
       }

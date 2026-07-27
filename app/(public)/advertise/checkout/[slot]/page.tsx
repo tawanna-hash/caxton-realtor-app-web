@@ -10,6 +10,7 @@ import { APP_AD_SLOTS } from '@/lib/media-kit';
 import { getBookedPubsForSlot } from '@/lib/server/slot-availability';
 import CheckoutForm from './CheckoutForm';
 import PageTitle from '@/components/ui/PageTitle';
+import TrackPageView from '@/components/analytics/TrackPageView';
 import type { Metadata } from 'next';
 
 type RouteCtx = {
@@ -99,6 +100,7 @@ export default async function CheckoutPage(ctx: RouteCtx) {
 
   return (
     <div className="min-h-screen bg-white">
+      <TrackPageView event="advertise_checkout_page_viewed" properties={{ slot: slug }} />
       <div className="max-w-3xl mx-auto px-4 py-10 sm:py-14">
         <div className="mb-8">
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">

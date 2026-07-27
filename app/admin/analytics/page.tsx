@@ -116,6 +116,13 @@ const ALL_CONVERSION_EVENT_OPTIONS = [
   'pdf_generation_failed',
   'renewal_email_sent',
   'verify_failed',
+  // Email engagement (pixel-based)
+  'email_opened',
+  'email_clicked',
+  // Standalone public page events
+  'login_attempted',
+  'subscribe_attempted',
+  'newsletter_signup_attempted',
 ];
 
 const SPARKLINE_PATHS: Record<Trend, string> = {

@@ -11,6 +11,7 @@ import { type PubKey } from '@/lib/pub-meta';
 // public AppShell footer, dedicated /newsletter page, and any future page.
 
 import { useEffect, useState } from 'react';
+import { trackEvent } from '@/app/posthog-provider';
 
 type Publication = PubKey;
 
@@ -73,6 +74,7 @@ export default function NewsletterCTA({
     if (!email || submitting) return;
     setSubmitting(true);
     setError(null);
+    trackEvent('newsletter_signup_attempted', { source, publication: resolvedPub });
     try {
       const res = await fetch('/api/newsletter/subscribe', {
         method: 'POST',

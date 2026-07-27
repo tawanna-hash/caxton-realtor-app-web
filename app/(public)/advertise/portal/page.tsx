@@ -15,6 +15,7 @@
 
 import Link from 'next/link';
 import PageTitle from '@/components/ui/PageTitle';
+import TrackPageView from '@/components/analytics/TrackPageView';
 import { APP_AD_SLOTS, MARKET_MULTIPLIERS, weeklyRateForMarkets } from '@/lib/media-kit';
 
 export const metadata = {
@@ -71,6 +72,8 @@ export default function SelfServicePortalPage() {
   });
 
   return (
+    <>
+      <TrackPageView event="advertise_portal_page_viewed" />
     <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
         {/* Header */}
@@ -285,5 +288,6 @@ export default function SelfServicePortalPage() {
         </section>
       </div>
     </main>
+    </>
   );
 }

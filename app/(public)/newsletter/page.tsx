@@ -7,6 +7,7 @@
 
 import PageTitle from '@/components/ui/PageTitle';
 import NewsletterCTA from '@/components/NewsletterCTA';
+import TrackPageView from '@/components/analytics/TrackPageView';
 
 export const metadata = {
   title: 'Newsletter — RealtyLine & Newsline San Antonio',
@@ -16,6 +17,7 @@ export const metadata = {
 export default function NewsletterLandingPage() {
   return (
     <div className="max-w-3xl mx-auto px-5 py-10">
+      <TrackPageView event="newsletter_page_viewed" />
       <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
         Newsletter
       </p>

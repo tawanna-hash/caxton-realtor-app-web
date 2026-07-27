@@ -94,6 +94,25 @@ export const EVENT_LABELS: Record<string, string> = {
   // Admin API tracking — fired by withAdminTracking wrapper on all
   // POST/PUT/PATCH/DELETE admin API mutations.
   admin_action: 'Admin — API action',
+  // Email engagement tracking (from /api/track/open and /api/track/click pixels)
+  email_opened: 'Email — Opened (pixel)',
+  email_clicked: 'Email — Clicked (pixel)',
+  // Standalone public page view tracking
+  login_page_viewed: 'Login page — Viewed',
+  login_attempted: 'Login — Attempted',
+  subscribe_page_viewed: 'Subscribe page — Viewed',
+  subscribe_attempted: 'Subscribe — Attempted',
+  newsletter_page_viewed: 'Newsletter landing — Viewed',
+  giveaway_page_viewed: 'Giveaways page — Viewed',
+  advertise_page_viewed: 'Advertise main — Viewed',
+  advertise_digital_page_viewed: 'Advertise digital — Viewed',
+  advertise_print_page_viewed: 'Advertise print — Viewed',
+  advertise_email_page_viewed: 'Advertise e-Blast — Viewed',
+  advertise_inquire_page_viewed: 'Advertise inquire — Viewed',
+  advertise_placements_page_viewed: 'Advertise placements — Viewed',
+  advertise_portal_page_viewed: 'Advertise portal — Viewed',
+  advertise_checkout_page_viewed: 'Advertise checkout — Viewed',
+  newsletter_signup_attempted: 'Newsletter — Signup attempted',
 };
 
 export const SURFACE_LABELS: Record<string, string> = {

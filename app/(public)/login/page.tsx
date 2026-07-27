@@ -11,16 +11,21 @@
 // the caxton_session_v2 cookie and lands the user on their feed (or the
 // picker if no caxton_pub yet).
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getApiBase } from '@/lib/api-base';
+import { trackEvent } from '@/app/posthog-provider';
 
 const API = getApiBase();
 
 function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
+
+  useEffect(() => {
+    trackEvent('login_page_viewed');
+  }, []);
   const rawNext = params.get('next');
   const next =
     rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//')
@@ -40,6 +45,7 @@ function LoginInner() {
     setBusy(true);
     setErr(null);
     setMsg(null);
+    trackEvent('login_attempted', { mode });
     try {
       if (mode === 'password') {
         const r = await fetch(`${API}/auth/password-login`, {
