@@ -38,6 +38,77 @@ export default async function BuildersHubPage() {
     limit: 5000,
   });
   const builders = summarizeBuilders(rows);
+  const developers = builders.filter((b) => b.isDeveloper);
+  const buildersOnly = builders.filter((b) => !b.isDeveloper);
+
+  const renderList = (list: typeof builders) =>
+    list.length > 0 && (
+      <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">
+        {list.map((b) => {
+          const countsParts: string[] = [];
+          if (b.communitiesCount)
+            countsParts.push(
+              `${b.communitiesCount} ${
+                b.communitiesCount === 1 ? 'community' : 'communities'
+              }`,
+            );
+          if (b.inventoryCount)
+            countsParts.push(`${b.inventoryCount} move-in ready`);
+          if (b.promotionsCount)
+            countsParts.push(
+              `${b.promotionsCount} ${
+                b.promotionsCount === 1 ? 'promo' : 'promos'
+              }`,
+            );
+          const counts = countsParts.join(' · ');
+          const cities = b.cities.slice(0, 3).join(', ');
+
+          return (
+            <li key={b.slug}>
+              <Link
+                href={`/builders/${b.slug}`}
+                className="flex items-center gap-4 py-4 group hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-md"
+              >
+                <div className="relative flex-shrink-0 w-14 h-14 rounded-md bg-gray-50 overflow-hidden flex items-center justify-center">
+                  {b.thumbnailUrl ? (
+                    <Image
+                      src={b.thumbnailUrl}
+                      alt=""
+                      fill
+                      sizes="56px"
+                      className="object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <Building2 strokeWidth={1.5} size={20} className="text-gray-400" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-base font-semibold text-gray-900 truncate">
+                    {b.name}
+                  </div>
+                  {counts && (
+                    <div className="text-sm text-gray-600 truncate mt-0.5">
+                      {counts}
+                    </div>
+                  )}
+                  {cities && (
+                    <div className="text-xs text-gray-500 truncate mt-0.5">
+                      {cities}
+                    </div>
+                  )}
+                </div>
+                <ChevronRight
+                  strokeWidth={1.75}
+                  size={18}
+                  className="flex-shrink-0 text-gray-400 group-hover:text-gray-700 transition-colors"
+                />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    );
 
   return (
     <main className="min-h-screen bg-white">
@@ -58,76 +129,21 @@ export default async function BuildersHubPage() {
 
         <AdSlot slug="featured_builder_strip" className="mb-6" />
 
-        {builders.length > 0 && (
+        {developers.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-3">
+              Developers
+            </h2>
+            {renderList(developers)}
+          </section>
+        )}
+
+        {buildersOnly.length > 0 && (
           <section>
             <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-3">
               Builders
             </h2>
-            <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">
-              {builders.map((b) => {
-                const countsParts: string[] = [];
-                if (b.communitiesCount)
-                  countsParts.push(
-                    `${b.communitiesCount} ${
-                      b.communitiesCount === 1 ? 'community' : 'communities'
-                    }`,
-                  );
-                if (b.inventoryCount)
-                  countsParts.push(`${b.inventoryCount} move-in ready`);
-                if (b.promotionsCount)
-                  countsParts.push(
-                    `${b.promotionsCount} ${
-                      b.promotionsCount === 1 ? 'promo' : 'promos'
-                    }`,
-                  );
-                const counts = countsParts.join(' · ');
-                const cities = b.cities.slice(0, 3).join(', ');
-
-                return (
-                  <li key={b.slug}>
-                    <Link
-                      href={`/builders/${b.slug}`}
-                      className="flex items-center gap-4 py-4 group hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-md"
-                    >
-                      <div className="relative flex-shrink-0 w-14 h-14 rounded-md bg-gray-50 overflow-hidden flex items-center justify-center">
-                        {b.thumbnailUrl ? (
-                          <Image
-                            src={b.thumbnailUrl}
-                            alt=""
-                            fill
-                            sizes="56px"
-                            className="object-cover"
-                            unoptimized
-                          />
-                        ) : (
-                          <Building2 strokeWidth={1.5} size={20} className="text-gray-400" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-base font-semibold text-gray-900 truncate">
-                          {b.name}
-                        </div>
-                        {counts && (
-                          <div className="text-sm text-gray-600 truncate mt-0.5">
-                            {counts}
-                          </div>
-                        )}
-                        {cities && (
-                          <div className="text-xs text-gray-500 truncate mt-0.5">
-                            {cities}
-                          </div>
-                        )}
-                      </div>
-                      <ChevronRight
-                        strokeWidth={1.75}
-                        size={18}
-                        className="flex-shrink-0 text-gray-400 group-hover:text-gray-700 transition-colors"
-                      />
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+            {renderList(buildersOnly)}
           </section>
         )}
       </div>

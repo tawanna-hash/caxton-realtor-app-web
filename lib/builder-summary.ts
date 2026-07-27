@@ -52,8 +52,7 @@ export function summarizeBuilders(rows: BuilderInventoryRow[]): BuilderSummary[]
     if (r.city && !s.cities.includes(r.city)) s.cities.push(r.city);
   }
 
-  return Array.from(byBuilder.values()).sort((a, b) => {
-    if (b.totalCount !== a.totalCount) return b.totalCount - a.totalCount;
-    return a.name.localeCompare(b.name);
-  });
+  return Array.from(byBuilder.values()).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
 }
