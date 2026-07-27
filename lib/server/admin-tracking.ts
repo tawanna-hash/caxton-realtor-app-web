@@ -74,24 +74,27 @@ export function withAdminTracking<
     // Run the actual handler
     const response = await handler(...args);
 
-    // Only track mutations
+    // Only track mutations — wrap in try-catch so PostHog errors
+    // NEVER interfere with the actual API response
     if (TRACKED_METHODS.has(method)) {
-      const durationMs = Date.now() - startTime;
-      const action = pathToAction(method, pathname);
-      const status = response.status;
+      try {
+        const durationMs = Date.now() - startTime;
+        const action = pathToAction(method, pathname);
+        const status = response.status;
 
-      // Fire-and-forget PostHog event
-      const distinctId = req ? await getAdminDistinctId(req) : 'admin_unknown';
-      captureServerEvent('admin_action', distinctId, {
-        method,
-        path: pathname,
-        action,
-        status,
-        duration_ms: durationMs,
-        success: status < 400,
-      });
-      // Ensure event is flushed before the serverless function terminates
-      void flushServerEvents();
+        const distinctId = req ? await getAdminDistinctId(req) : 'admin_unknown';
+        captureServerEvent('admin_action', distinctId, {
+          method,
+          path: pathname,
+          action,
+          status,
+          duration_ms: durationMs,
+          success: status < 400,
+        });
+        void flushServerEvents();
+      } catch {
+        // Tracking failure must not affect the API response
+      }
     }
 
     return response;
