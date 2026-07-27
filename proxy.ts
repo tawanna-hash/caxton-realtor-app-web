@@ -226,6 +226,7 @@ const REALTOR_PUBLIC_PREFIXES: ReadonlyArray<string> = [
   '/inventory/',
   '/builders/',
   '/promotions/',
+  '/event-images',
 ];
 
 const REALTOR_PUBLIC_EXACT = new Set<string>([
