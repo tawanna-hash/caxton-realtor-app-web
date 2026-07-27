@@ -4,7 +4,7 @@
 // Add photos (title, date, image URL), view existing, delete.
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Trash2, Plus, ExternalLink, Upload, FolderOpen, Image as ImageIcon } from 'lucide-react';
+import { Trash2, Plus, ExternalLink, Upload, FolderOpen, Image as ImageIcon, ChevronDown, Folder } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
 
 type EventPhoto = {
@@ -31,8 +31,32 @@ export default function AdminEventImagesPage() {
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ uploaded: number; failed: number; total: number } | null>(null);
   const [showBulk, setShowBulk] = useState(false);
+  const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+
+  const toggleMonth = (key: string) => {
+    setExpandedMonths((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  // Group photos by issue month
+  const monthGroups: { key: string; label: string; photos: EventPhoto[] }[] = (() => {
+    if (!photos) return [];
+    const map = new Map<string, EventPhoto[]>();
+    for (const p of photos) {
+      const d = new Date(p.eventDate + 'T00:00:00');
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(p);
+    }
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    return Array.from(map.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([key, items]) => {
+        const [y, m] = key.split('-').map(Number);
+        return { key, label: `${MONTHS[m - 1]} ${y}`, photos: items };
+      });
+  })();
 
   // Compress an image file client-side using Canvas.
   // Resizes to max 2400px on the longest edge, JPEG at 0.92 quality.
@@ -428,7 +452,7 @@ export default function AdminEventImagesPage() {
         )}
       </div>
 
-      {/* Existing photos */}
+      {/* Existing photos — grouped by month */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Existing Photos ({photos?.length ?? 0})
@@ -438,35 +462,55 @@ export default function AdminEventImagesPage() {
         ) : photos.length === 0 ? (
           <p className="text-sm text-gray-500">No photos yet. Add one above.</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {photos.map((p) => (
-              <div key={p.id} className="group relative rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-                <div className="aspect-square relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.thumbnailUrl || p.imageUrl}
-                    alt={p.title}
-                    className="object-cover w-full h-full"
-                  />
+          <div className="space-y-3">
+            {monthGroups.map((group) => {
+              const expanded = expandedMonths[group.key] ?? true; // default expanded
+              return (
+                <div key={group.key} className="border border-gray-200 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => toggleMonth(group.key)}
+                    className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+                  >
+                    <Folder size={18} className="text-gray-400 flex-shrink-0" />
+                    <span className="text-sm font-medium text-gray-900">{group.label}</span>
+                    <span className="text-xs text-gray-500 bg-white border border-gray-200 rounded-full px-2 py-0.5">
+                      {group.photos.length} {group.photos.length === 1 ? 'photo' : 'photos'}
+                    </span>
+                    <ChevronDown
+                      size={16}
+                      className={`text-gray-400 ml-auto transition-transform ${expanded ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {expanded && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-3">
+                      {group.photos.map((p) => (
+                        <div key={p.id} className="group relative rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                          <div className="aspect-square relative">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={p.thumbnailUrl || p.imageUrl}
+                              alt={p.title}
+                              className="object-cover w-full h-full"
+                            />
+                          </div>
+                          <div className="p-2">
+                            <p className="text-xs font-medium text-gray-900 truncate">{p.title}</p>
+                          </div>
+                          <button
+                            onClick={() => handleDelete(p.id)}
+                            disabled={deleting === p.id}
+                            className="absolute top-2 right-2 bg-white/90 hover:bg-white text-red-600 p-1.5 rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="p-2">
-                  <p className="text-xs font-medium text-gray-900 truncate">{p.title}</p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(p.eventDate + 'T00:00:00').toLocaleDateString('en-US', {
-                      month: 'long', year: 'numeric',
-                    })}
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleDelete(p.id)}
-                  disabled={deleting === p.id}
-                  className="absolute top-2 right-2 bg-white/90 hover:bg-white text-red-600 p-1.5 rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-40"
-                  title="Delete"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
