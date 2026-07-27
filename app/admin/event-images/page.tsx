@@ -63,13 +63,22 @@ export default function AdminEventImagesPage() {
     setExpandedMonths((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  // Parse YYYY-MM from an eventDate string WITHOUT timezone conversion.
+  // Neon returns DATE columns as ISO strings like "2026-07-01T00:00:00.000Z".
+  // Using new Date() applies local timezone, causing off-by-one errors (UTC midnight → June 30 in CDT).
+  // Instead, extract the date portion directly from the string.
+  function parseMonthKey(eventDate: string): string {
+    // Get just the YYYY-MM-DD part, then take YYYY-MM
+    const datePart = eventDate.slice(0, 10); // "2026-07-01" or "2026-07"
+    return datePart.slice(0, 7);             // "2026-07"
+  }
+
   // Group photos by issue month
   const monthGroups: { key: string; label: string; photos: EventPhoto[] }[] = (() => {
     if (!photos) return [];
     const map = new Map<string, EventPhoto[]>();
     for (const p of photos) {
-      const d = p.eventDate.includes('T') ? new Date(p.eventDate) : new Date(p.eventDate + 'T00:00:00');
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const key = parseMonthKey(p.eventDate);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(p);
     }
@@ -509,10 +518,7 @@ export default function AdminEventImagesPage() {
                       {/* Photo grid */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-3">
                         {group.photos.map((p) => {
-                          const photoMonth = (() => {
-                            const d = p.eventDate.includes('T') ? new Date(p.eventDate) : new Date(p.eventDate + 'T00:00:00');
-                            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                          })();
+                          const photoMonth = parseMonthKey(p.eventDate);
                           const isSelected = selectedPhotos.has(p.id);
                           return (
                             <div key={p.id} className={`group relative rounded-lg overflow-hidden border-2 bg-gray-50 transition-colors ${

@@ -148,9 +148,11 @@ export default function EventGallery({ months }: Props) {
                 <p className="text-white/70 text-sm mt-1">{photos[lightboxIndex].description}</p>
               )}
               <p className="text-white/50 text-xs mt-1">
-                {new Date(photos[lightboxIndex].eventDate + 'T00:00:00').toLocaleDateString('en-US', {
-                  year: 'numeric', month: 'long',
-                })}
+                {(() => {
+                  const m = photos[lightboxIndex].eventDate.slice(0, 7);
+                  const [y, mo] = m.split('-').map(Number);
+                  return new Date(y, mo - 1).toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+                })()}
               </p>
             </div>
           </div>

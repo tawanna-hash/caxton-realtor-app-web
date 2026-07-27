@@ -112,8 +112,10 @@ export async function listEventPhotosGrouped(opts: {
   const byMonth = new Map<string, EventPhoto[]>();
 
   for (const p of photos) {
-    const d = p.eventDate.includes('T') ? new Date(p.eventDate) : new Date(p.eventDate + 'T00:00:00Z');
-    const monthKey = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+    // Extract YYYY-MM directly from the string to avoid timezone conversion.
+    // Neon returns DATE as ISO like "2026-07-01T00:00:00.000Z".
+    // new Date() applies local TZ, causing off-by-one month errors.
+    const monthKey = p.eventDate.slice(0, 7); // "2026-07"
     if (!byMonth.has(monthKey)) byMonth.set(monthKey, []);
     byMonth.get(monthKey)!.push(p);
   }
