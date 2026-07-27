@@ -35,6 +35,10 @@ export default function AdminEventImagesPage() {
   const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
   const [editingTitle, setEditingTitle] = useState<number | null>(null);
   const [editTitleValue, setEditTitleValue] = useState('');
+  const [editingDesc, setEditingDesc] = useState<number | null>(null);
+  const [editDescValue, setEditDescValue] = useState('');
+  const [editingMonth, setEditingMonth] = useState<number | null>(null);
+  const [editMonthValue, setEditMonthValue] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -185,11 +189,6 @@ export default function AdminEventImagesPage() {
     }
   };
 
-  const startEditTitle = (id: number, currentTitle: string) => {
-    setEditingTitle(id);
-    setEditTitleValue(currentTitle);
-  };
-
   const saveTitle = async (id: number) => {
     const newTitle = editTitleValue.trim();
     if (!newTitle) {
@@ -203,12 +202,49 @@ export default function AdminEventImagesPage() {
         body: JSON.stringify({ id, title: newTitle }),
       });
       if (!res.ok) throw new Error(`Failed to update (${res.status})`);
-      // Update local state immediately
       setPhotos((prev) => prev?.map((p) => p.id === id ? { ...p, title: newTitle } : p) ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to update title');
     } finally {
       setEditingTitle(null);
+    }
+  };
+
+  const saveDesc = async (id: number) => {
+    const newDesc = editDescValue.trim();
+    try {
+      const res = await fetch('/api/admin/event-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, description: newDesc || null }),
+      });
+      if (!res.ok) throw new Error(`Failed to update (${res.status})`);
+      setPhotos((prev) => prev?.map((p) => p.id === id ? { ...p, description: newDesc || null } : p) ?? null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to update description');
+    } finally {
+      setEditingDesc(null);
+    }
+  };
+
+  const saveMonth = async (id: number) => {
+    const newMonth = editMonthValue; // YYYY-MM format
+    if (!newMonth) {
+      setEditingMonth(null);
+      return;
+    }
+    try {
+      const res = await fetch('/api/admin/event-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, eventDate: newMonth }),
+      });
+      if (!res.ok) throw new Error(`Failed to update (${res.status})`);
+      await load(); // reload to regroup into correct month folder
+      setEditingMonth(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to update month');
+      setEditingMonth(null);
     }
   };
 
@@ -567,7 +603,13 @@ export default function AdminEventImagesPage() {
                         </button>
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-3">
-                        {group.photos.map((p) => (
+                        {group.photos.map((p) => {
+                          // Extract YYYY-MM from eventDate for MonthPicker
+                          const photoMonth = (() => {
+                            const d = p.eventDate.includes('T') ? new Date(p.eventDate) : new Date(p.eventDate + 'T00:00:00');
+                            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                          })();
+                          return (
                           <div key={p.id} className="group relative rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
                             <div className="aspect-square relative">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -577,7 +619,8 @@ export default function AdminEventImagesPage() {
                                 className="object-cover w-full h-full"
                               />
                             </div>
-                            <div className="p-2">
+                            <div className="p-2 space-y-1">
+                              {/* Title */}
                               {editingTitle === p.id ? (
                                 <input
                                   autoFocus
@@ -593,11 +636,56 @@ export default function AdminEventImagesPage() {
                                 />
                               ) : (
                                 <button
-                                  onClick={() => startEditTitle(p.id, p.title)}
+                                  onClick={() => { setEditingTitle(p.id); setEditTitleValue(p.title); }}
                                   className="text-xs font-medium text-gray-900 truncate block w-full text-left hover:text-brand-600"
                                   title="Click to edit title"
                                 >
                                   {p.title}
+                                </button>
+                              )}
+                              {/* Issue Month */}
+                              {editingMonth === p.id ? (
+                                <div className="flex gap-1">
+                                  <MonthPicker
+                                    value={editMonthValue || photoMonth}
+                                    onChange={setEditMonthValue}
+                                  />
+                                  <button
+                                    onClick={() => saveMonth(p.id)}
+                                    className="text-xs bg-brand-600 text-white px-2 rounded hover:bg-brand-700"
+                                  >OK</button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => { setEditingMonth(p.id); setEditMonthValue(photoMonth); }}
+                                  className="text-xs text-gray-500 hover:text-brand-600 block w-full text-left"
+                                  title="Click to change issue month"
+                                >
+                                  {group.label}
+                                </button>
+                              )}
+                              {/* Description */}
+                              {editingDesc === p.id ? (
+                                <textarea
+                                  autoFocus
+                                  value={editDescValue}
+                                  onChange={(e) => setEditDescValue(e.target.value)}
+                                  onBlur={() => saveDesc(p.id)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveDesc(p.id); }
+                                    if (e.key === 'Escape') setEditingDesc(null);
+                                  }}
+                                  rows={2}
+                                  placeholder="Add description..."
+                                  className="w-full text-xs border border-brand-400 rounded px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-brand-500 resize-none"
+                                />
+                              ) : (
+                                <button
+                                  onClick={() => { setEditingDesc(p.id); setEditDescValue(p.description ?? ''); }}
+                                  className="text-xs text-gray-400 hover:text-brand-600 block w-full text-left truncate"
+                                  title="Click to edit description"
+                                >
+                                  {p.description || 'Add description...'}
                                 </button>
                               )}
                             </div>
@@ -610,7 +698,8 @@ export default function AdminEventImagesPage() {
                               <Trash2 size={14} />
                             </button>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </>
                   )}

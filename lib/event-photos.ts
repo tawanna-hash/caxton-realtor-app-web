@@ -85,11 +85,20 @@ export async function listEventPhotos(opts: {
   await ensureEventPhotosSchema();
   const sql = getSql();
   const limit = Math.min(opts.limit ?? 500, 2000);
-  const pub = opts.publication ?? 'realtyline';
+
+  // If no publication specified, return all
+  if (!opts.publication) {
+    const rows = await sql`
+      SELECT * FROM event_photos
+      ORDER BY event_date DESC, created_at DESC
+      LIMIT ${limit}
+    `;
+    return rows.map(rowToPhoto);
+  }
 
   const rows = await sql`
     SELECT * FROM event_photos
-    WHERE publication = ${pub}
+    WHERE publication = ${opts.publication}
     ORDER BY event_date DESC, created_at DESC
     LIMIT ${limit}
   `;

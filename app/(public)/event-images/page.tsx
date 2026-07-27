@@ -3,7 +3,6 @@
 // Client child handles month filtering + lightbox.
 
 import { listEventPhotosGrouped } from '@/lib/event-photos';
-import { getServerPub } from '@/lib/publication';
 import EventGallery from './EventGallery';
 
 export const dynamic = 'force-dynamic';
@@ -14,8 +13,8 @@ export const metadata = {
 };
 
 export default async function EventImagesPage() {
-  const pub = await getServerPub();
-  const months = await listEventPhotosGrouped({ publication: pub });
+  // Event images are cross-publication content — show all
+  const months = await listEventPhotosGrouped({});
 
   return (
     <main className="min-h-screen bg-white">
