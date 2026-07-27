@@ -30,12 +30,16 @@ export default function AdminEventImagesPage() {
   const [deleting, setDeleting] = useState<number | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
-  // New folder form
-  const [newFolderMonth, setNewFolderMonth] = useState('');
+  // New folder form — default to current month
+  const currentMonth = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  })();
+  const [newFolderMonth, setNewFolderMonth] = useState(currentMonth);
   const [newFolderTitle, setNewFolderTitle] = useState('');
 
   // Bulk upload state
-  const [bulkDate, setBulkDate] = useState('');
+  const [bulkDate, setBulkDate] = useState(currentMonth);
   const [bulkTitle, setBulkTitle] = useState('');
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ uploaded: number; failed: number; total: number } | null>(null);
