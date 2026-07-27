@@ -100,18 +100,35 @@ async function handle(req: NextRequest) {
   let deactivated = 0;
   let deactivatedCommunities = 0;
   if (scrape.rows.length > 0 && !strip) {
-    const showcaseIds = scrape.rows
-      .filter((r) => r.homeType === 'showcase')
-      .map((r) => r.externalId);
+    const showcaseRows = scrape.rows.filter((r) => r.homeType === 'showcase');
     const communityIds = scrape.rows
       .filter((r) => r.homeType === 'community')
       .map((r) => r.externalId);
 
-    deactivated = await deactivateStaleBuilderInventory({
+    // Showcase rows now use the actual builder name (Perry Homes, Pulte, etc.)
+    // so we need to prune per builder.
+    const showcaseByBuilder = new Map<string, string[]>();
+    for (const r of showcaseRows) {
+      const bn = r.builderName ?? BUILDER_NAME;
+      if (!showcaseByBuilder.has(bn)) showcaseByBuilder.set(bn, []);
+      showcaseByBuilder.get(bn)!.push(r.externalId);
+    }
+    for (const [bn, ids] of showcaseByBuilder) {
+      deactivated += await deactivateStaleBuilderInventory({
+        builderName: bn,
+        homeType: 'showcase',
+        activeExternalIds: ids,
+      });
+    }
+
+    // Also prune any old 'Santa Rita Ranch' showcase rows from before the
+    // builderName migration.
+    deactivated += await deactivateStaleBuilderInventory({
       builderName: BUILDER_NAME,
       homeType: 'showcase',
-      activeExternalIds: showcaseIds,
+      activeExternalIds: [],
     });
+
     deactivatedCommunities = await deactivateStaleBuilderInventory({
       builderName: BUILDER_NAME,
       homeType: 'community',

@@ -271,9 +271,15 @@ function extractGalleryUrls(html: string): string[] {
   return urls;
 }
 
-// Find the floorplan image in the gallery (URL contains 'floorplan' or 'floorplans')
+// Find the floorplan image in the gallery.
+// Matches URLs containing 'floorplan'/'floorplans' (S3 path convention)
+// or '-FP_' / '-FP.' (Perry Homes Cloudinary convention).
 function findFloorplanInGallery(gallery: string[]): string | null {
-  return gallery.find((url) => /floorplan/i.test(url)) ?? null;
+  return (
+    gallery.find((url) => /floorplan/i.test(url)) ??
+    gallery.find((url) => /[-_]FP[_.]/i.test(url)) ??
+    null
+  );
 }
 
 // Detail URL — homelink anchor.
@@ -450,7 +456,7 @@ function parseCard(html: string): { row: UpsertScrapedInput | null; reason?: str
     publication: 'realtyline',
     submittedByName: 'Santa Rita Ranch Auto-Importer',
     submittedByEmail: 'scraper-santa-rita-ranch@harmonyone.system',
-    builderName: 'Santa Rita Ranch',
+    builderName: builderName,
     title,
     city,
     state,
