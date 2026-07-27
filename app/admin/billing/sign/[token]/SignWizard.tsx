@@ -549,7 +549,7 @@ export default function SignWizard({
   const [billingContactPhone, setBillingContactPhone] = useState(formatPhone(ag.billing_contact_phone ?? ''));
   // Digital/e-Blast/App require prepayment by credit card before placement;
   // Check is only offered for print agreements.
-  const checkDisabled = channel !== 'print';
+  const checkDisabled = false;
   const [paymentType, setPaymentType] = useState<string>(
     checkDisabled
       ? 'Credit Card'
