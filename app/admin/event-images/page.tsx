@@ -3,8 +3,8 @@
 // Admin event images manager.
 // Add photos (title, date, image URL), view existing, delete.
 
-import { useState, useEffect, useCallback } from 'react';
-import { Trash2, Plus, ExternalLink } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Trash2, Plus, ExternalLink, Upload, FolderOpen, Image as ImageIcon } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
 
 type EventPhoto = {
@@ -24,6 +24,15 @@ export default function AdminEventImagesPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
+
+  // Bulk upload state
+  const [bulkDate, setBulkDate] = useState('');
+  const [bulkTitle, setBulkTitle] = useState('');
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ uploaded: number; failed: number; total: number } | null>(null);
+  const [showBulk, setShowBulk] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -90,6 +99,40 @@ export default function AdminEventImagesPage() {
       setError(e instanceof Error ? e.message : 'Failed to delete');
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const handleBulkUpload = async (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    setBulkUploading(true);
+    setBulkProgress({ uploaded: 0, failed: 0, total: fileList.length });
+    setError(null);
+    try {
+      const formData = new FormData();
+      for (const file of Array.from(fileList)) {
+        formData.append('files', file);
+      }
+      if (bulkDate) formData.append('eventDate', bulkDate);
+      if (bulkTitle) formData.append('title', bulkTitle);
+
+      const res = await fetch('/api/admin/event-images/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error(`Upload failed (${res.status}) ${txt}`);
+      }
+      const data = await res.json();
+      setBulkProgress({ uploaded: data.uploaded, failed: data.failed, total: fileList.length });
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Bulk upload failed');
+    } finally {
+      setBulkUploading(false);
+      // Reset file inputs so the same files can be selected again
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (folderInputRef.current) folderInputRef.current.value = '';
     }
   };
 
@@ -194,6 +237,109 @@ export default function AdminEventImagesPage() {
           </button>
         </div>
       </form>
+
+      {/* Bulk upload */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8">
+        <button
+          onClick={() => setShowBulk(!showBulk)}
+          className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+        >
+          <Upload size={16} />
+          {showBulk ? 'Hide Bulk Upload' : 'Bulk Upload'}
+        </button>
+
+        {showBulk && (
+          <div className="mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Event Date <span className="text-gray-400">(defaults to today)</span>
+                </label>
+                <input
+                  type="date"
+                  value={bulkDate}
+                  onChange={(e) => setBulkDate(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Base Title <span className="text-gray-400">(optional — filenames used if blank)</span>
+                </label>
+                <input
+                  type="text"
+                  value={bulkTitle}
+                  onChange={(e) => setBulkTitle(e.target.value)}
+                  placeholder="e.g., KW Austin Charity Event"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={bulkUploading}
+                className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 text-sm font-medium hover:bg-gray-50 rounded-md transition-colors disabled:opacity-60"
+              >
+                <ImageIcon size={16} />
+                Select Images
+              </button>
+              <button
+                onClick={() => folderInputRef.current?.click()}
+                disabled={bulkUploading}
+                className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 px-4 py-2 text-sm font-medium hover:bg-gray-50 rounded-md transition-colors disabled:opacity-60"
+              >
+                <FolderOpen size={16} />
+                Select Folder
+              </button>
+            </div>
+
+            {/* Hidden file inputs */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => handleBulkUpload(e.target.files)}
+            />
+            <input
+              ref={folderInputRef}
+              type="file"
+              // @ts-expect-error — webkitdirectory is a non-standard attribute
+              webkitdirectory=""
+              directory=""
+              multiple
+              className="hidden"
+              onChange={(e) => handleBulkUpload(e.target.files)}
+            />
+
+            {/* Progress */}
+            {bulkUploading && (
+              <div className="mt-4 flex items-center gap-3 text-sm text-gray-600">
+                <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-gray-700 rounded-full" />
+                Uploading images...
+              </div>
+            )}
+            {bulkProgress && !bulkUploading && (
+              <div className={`mt-4 rounded-md px-4 py-2 text-sm ${
+                bulkProgress.failed > 0
+                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                  : 'bg-green-50 text-green-700 border border-green-200'
+              }`}>
+                Uploaded {bulkProgress.uploaded} of {bulkProgress.total} images
+                {bulkProgress.failed > 0 && ` (${bulkProgress.failed} failed)`}
+              </div>
+            )}
+
+            <p className="mt-3 text-xs text-gray-400">
+              Images are uploaded to Vercel Blob storage. Each file becomes a separate photo entry
+              with the event date and title specified above.
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Existing photos */}
       <div>
