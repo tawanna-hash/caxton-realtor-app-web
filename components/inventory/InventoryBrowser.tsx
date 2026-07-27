@@ -187,10 +187,10 @@ export default function InventoryBrowser({
         : 'Move-in Ready & Promotions';
   const lede =
     filters.kind === 'listing'
-      ? 'Move-in ready homes from our builder partners.'
+      ? 'Move-in ready homes from our builder and developer partners.'
       : filters.kind === 'promotion'
-        ? 'Current promotions and incentives from our builder partners.'
-        : 'Move-in ready homes and current promotions from our builder partners.';
+        ? 'Current promotions and incentives from our builder and developer partners.'
+        : 'Move-in ready homes and current promotions from our builder and developer partners.';
 
   return (
     <div>

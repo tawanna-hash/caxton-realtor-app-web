@@ -57,7 +57,7 @@ const PUB_COLORS: Record<string, string> = {
 const PUBLIC_DESKTOP_LINKS: { label: string; href: string }[] = [
   { label: 'Home',        href: '/dashboard' },
   { label: 'Calendar',    href: '/calendar' },
-  { label: 'Builders',    href: '/builders' },
+  { label: 'Builders / Developers',    href: '/builders' },
   { label: 'Advertisers', href: '/advertisers' },
   { label: 'Resources',   href: '/resources' },
   { label: 'Subscribe',   href: '/subscribe' },

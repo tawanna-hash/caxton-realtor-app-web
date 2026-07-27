@@ -141,7 +141,7 @@ export default function BottomNav({ info, onMoreClick }: Props) {
         <Tab label="Calendar" active={isCalendar} accent={accent} onClick={() => navigate('/calendar')}>
           <Calendar strokeWidth={1.75} size={22} />
         </Tab>
-        <Tab label="Builders" active={isBuilders} accent={accent} onClick={() => navigate('/builders')}>
+        <Tab label="Builders / Devs" active={isBuilders} accent={accent} onClick={() => navigate('/builders')}>
           <Building2 strokeWidth={1.75} size={22} />
         </Tab>
         <Tab label="Issues" active={isMagazine} accent={accent} onClick={() => navigate('/magazine')}>
