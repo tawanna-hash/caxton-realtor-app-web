@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Trash2, Plus, ExternalLink, Upload, FolderOpen, Image as ImageIcon } from 'lucide-react';
+import { upload as blobUpload } from '@vercel/blob/client';
 import PageTitle from '@/components/ui/PageTitle';
 
 type EventPhoto = {
@@ -109,24 +110,53 @@ export default function AdminEventImagesPage() {
     setBulkProgress({ uploaded: 0, failed: 0, total: files.length });
     setError(null);
 
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     let uploaded = 0;
     let failed = 0;
 
-    // Upload one file at a time to avoid Vercel's 4.5MB payload limit
     for (const file of files) {
-      try {
-        const formData = new FormData();
-        formData.append('files', file);
-        if (bulkDate) formData.append('eventDate', bulkDate);
-        if (bulkTitle) formData.append('title', bulkTitle);
+      // Client-side size check
+      if (file.size > MAX_FILE_SIZE) {
+        failed++;
+        setBulkProgress({ uploaded, failed, total: files.length });
+        if (uploaded === 0 && failed === 1) {
+          setError(`"${file.name}" is ${(file.size / 1024 / 1024).toFixed(1)}MB — max is 10MB.`);
+        }
+        continue;
+      }
 
-        const res = await fetch('/api/admin/event-images/upload', {
-          method: 'POST',
-          body: formData,
+      try {
+        // 1. Upload directly to Vercel Blob from the browser
+        const ext = file.name.split('.').pop() || 'jpg';
+        const cleanName = file.name.replace(/\.[^.]+$/, '');
+        const monthStr = bulkDate || new Date().toISOString().slice(0, 7);
+        const blobPath = `event-images/${monthStr}/${Date.now()}-${cleanName}.${ext}`;
+
+        const blob = await blobUpload(file, {
+          access: 'public',
+          handleUploadUrl: '/api/admin/event-images/blob-upload',
+          pathname: blobPath,
+          contentType: file.type,
         });
+
+        // 2. Create the DB record with the blob URL
+        const eventDate = monthStr.length === 7 ? monthStr + '-01' : monthStr;
+        const title = bulkTitle
+          ? (files.length > 1 ? `${bulkTitle} ${uploaded + 1}` : bulkTitle)
+          : cleanName;
+
+        const res = await fetch('/api/admin/event-images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            eventDate,
+            imageUrl: blob.url,
+          }),
+        });
+
         if (!res.ok) {
-          const txt = await res.text().catch(() => '');
-          console.error(`Upload failed for ${file.name}:`, txt);
+          console.error(`DB record failed for ${file.name}`);
           failed++;
         } else {
           uploaded++;
@@ -140,7 +170,7 @@ export default function AdminEventImagesPage() {
     }
 
     if (failed > 0 && uploaded === 0) {
-      setError(`All ${failed} image(s) failed to upload. Check file sizes — Vercel limits each upload to ~4.5MB.`);
+      setError(`All ${failed} image(s) failed to upload.`);
     } else if (failed > 0) {
       setError(`${failed} of ${files.length} image(s) failed to upload.`);
     }
@@ -349,8 +379,8 @@ export default function AdminEventImagesPage() {
             )}
 
             <p className="mt-3 text-xs text-gray-400">
-              Images are uploaded to Vercel Blob storage. Each file becomes a separate photo entry
-              with the issue month and title specified above.
+              Images upload directly to Vercel Blob storage. Max 10MB per image. Each file
+              becomes a separate photo entry with the issue month and title specified above.
             </p>
           </div>
         )}
