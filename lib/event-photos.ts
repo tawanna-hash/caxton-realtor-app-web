@@ -16,9 +16,7 @@
 //     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 //   )
 
-import { neon } from '@neondatabase/serverless';
-
-const sql = neon(process.env.DATABASE_URL!);
+import { getSql } from '@/lib/db';
 
 export type EventPhoto = {
   id: number;
@@ -42,6 +40,7 @@ let schemaReady = false;
 
 export async function ensureEventPhotosSchema() {
   if (schemaReady) return;
+  const sql = getSql();
   await sql`
     CREATE TABLE IF NOT EXISTS event_photos (
       id            SERIAL PRIMARY KEY,
@@ -84,6 +83,7 @@ export async function listEventPhotos(opts: {
   limit?: number;
 }): Promise<EventPhoto[]> {
   await ensureEventPhotosSchema();
+  const sql = getSql();
   const limit = Math.min(opts.limit ?? 500, 2000);
   const pub = opts.publication ?? 'realtyline';
 
@@ -132,6 +132,7 @@ export async function createEventPhoto(input: {
   uploadedBy?: string | null;
 }): Promise<EventPhoto> {
   await ensureEventPhotosSchema();
+  const sql = getSql();
   const pub = input.publication ?? 'realtyline';
 
   const rows = await sql`
@@ -146,6 +147,7 @@ export async function createEventPhoto(input: {
 
 export async function deleteEventPhoto(id: number): Promise<boolean> {
   await ensureEventPhotosSchema();
+  const sql = getSql();
   const rows = await sql`
     DELETE FROM event_photos WHERE id = ${id} RETURNING id
   `;
