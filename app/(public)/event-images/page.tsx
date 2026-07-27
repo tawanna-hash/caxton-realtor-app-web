@@ -1,8 +1,11 @@
 // Public event images gallery page.
 // Server component — fetches photos grouped by month, renders the gallery.
 // Client child handles month filtering + lightbox.
+// RealtyLine Austin only — not available for Newsline San Antonio.
 
 import { listEventPhotosGrouped } from '@/lib/event-photos';
+import { getServerPub } from '@/lib/publication';
+import { redirect } from 'next/navigation';
 import EventGallery from './EventGallery';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +16,12 @@ export const metadata = {
 };
 
 export default async function EventImagesPage() {
-  // Event images are cross-publication content — show all
+  // Event images are RealtyLine Austin only
+  const pub = await getServerPub();
+  if (pub !== 'realtyline') {
+    redirect('/dashboard');
+  }
+
   const months = await listEventPhotosGrouped({});
 
   return (

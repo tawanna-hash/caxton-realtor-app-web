@@ -48,6 +48,8 @@ interface NavItem {
   /** Hide this link when no user is signed in. Used to keep auth-gated
    *  routes (e.g. /dashboard, /profile) from masquerading as public links. */
   authOnly?: boolean;
+  /** Only show this link for specific publications (e.g. 'realtyline'). */
+  pubOnly?: string[];
   /** Optional collapsible sub-menu. Parent link remains clickable. */
   subitems?: NavItem[];
 }
@@ -85,7 +87,7 @@ const DRAWER_SECTIONS: NavSection[] = [
     items: [
       { label: 'Issues', href: '/magazine' },
       { label: 'Calendar', href: '/calendar' },
-      { label: 'Event Images', href: '/event-images' },
+      { label: 'Event Images', href: '/event-images', pubOnly: ['realtyline'] },
       { label: 'Giveaways', href: '/giveaways' },
       { label: 'Inventory & Promotions', href: '/inventory' },
       { label: 'Communities', href: '/communities' },
@@ -303,6 +305,8 @@ export default function NavDrawer({
               // Hide auth-only items for logged-out visitors so they don't
               // appear to be public links that bounce to the AuthGate.
               if (item.authOnly && !user) return null;
+              // Hide publication-restricted items when pub doesn't match
+              if (item.pubOnly && !item.pubOnly.includes(pub)) return null;
               const isActive =
                 pathname === item.href || pathname.startsWith(item.href + '/');
 

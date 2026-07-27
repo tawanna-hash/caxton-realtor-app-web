@@ -11,7 +11,6 @@ import MonthPicker from './MonthPicker';
 
 const PUBLICATIONS = [
   { id: 'realtyline', label: 'RealtyLine Austin' },
-  { id: 'newsline', label: 'Newsline San Antonio' },
 ] as const;
 
 type EventPhoto = {
