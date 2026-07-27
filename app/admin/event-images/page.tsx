@@ -147,7 +147,8 @@ export default function AdminEventImagesPage() {
     try {
       const res = await fetch(`/api/admin/event-images?id=${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(`Failed to delete (${res.status})`);
-      setPhotos((prev) => (prev ?? []).filter((p) => p.id !== id));
+      // Force refresh from server so the list is always in sync
+      await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to delete');
     } finally {
@@ -166,56 +167,60 @@ export default function AdminEventImagesPage() {
     let uploaded = 0;
     let failed = 0;
 
-    for (const file of files) {
-      // Client-side size check (before compression)
-      if (file.size > MAX_FILE_SIZE) {
-        failed++;
-        setBulkProgress({ uploaded, failed, total: files.length });
-        if (uploaded === 0 && failed === 1) {
-          setError(`"${file.name}" is ${(file.size / 1024 / 1024).toFixed(1)}MB — max is 10MB.`);
-        }
-        continue;
-      }
-
-      try {
-        // 1. Compress the image client-side
-        const compressed = await compressImage(file);
-
-        // 2. Upload to Vercel Blob via server route (one file at a time)
-        const formData = new FormData();
-        formData.append('files', compressed);
-        if (bulkDate) formData.append('eventDate', bulkDate);
-        if (bulkTitle) formData.append('title', bulkTitle);
-
-        const res = await fetch('/api/admin/event-images/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        if (!res.ok) {
-          const txt = await res.text().catch(() => '');
-          console.error(`Upload failed for ${file.name}:`, txt);
+    try {
+      for (const file of files) {
+        // Client-side size check (before compression)
+        if (file.size > MAX_FILE_SIZE) {
           failed++;
-        } else {
-          uploaded++;
+          setBulkProgress({ uploaded, failed, total: files.length });
+          if (uploaded === 0 && failed === 1) {
+            setError(`"${file.name}" is ${(file.size / 1024 / 1024).toFixed(1)}MB — max is 10MB.`);
+          }
+          continue;
         }
-        setBulkProgress({ uploaded, failed, total: files.length });
-      } catch (e) {
-        console.error(`Upload error for ${file.name}:`, e);
-        failed++;
-        setBulkProgress({ uploaded, failed, total: files.length });
+
+        try {
+          // 1. Compress the image client-side
+          const compressed = await compressImage(file);
+
+          // 2. Upload to Vercel Blob via server route (one file at a time)
+          const formData = new FormData();
+          formData.append('files', compressed);
+          if (bulkDate) formData.append('eventDate', bulkDate);
+          if (bulkTitle) formData.append('title', bulkTitle);
+
+          const res = await fetch('/api/admin/event-images/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          if (!res.ok) {
+            const txt = await res.text().catch(() => '');
+            console.error(`Upload failed for ${file.name}:`, txt);
+            failed++;
+          } else {
+            uploaded++;
+          }
+          setBulkProgress({ uploaded, failed, total: files.length });
+        } catch (e) {
+          console.error(`Upload error for ${file.name}:`, e);
+          failed++;
+          setBulkProgress({ uploaded, failed, total: files.length });
+        }
       }
-    }
 
-    if (failed > 0 && uploaded === 0) {
-      setError(`All ${failed} image(s) failed to upload.`);
-    } else if (failed > 0) {
-      setError(`${failed} of ${files.length} image(s) failed to upload.`);
+      if (failed > 0 && uploaded === 0) {
+        setError(`All ${failed} image(s) failed to upload.`);
+      } else if (failed > 0) {
+        setError(`${failed} of ${files.length} image(s) failed to upload.`);
+      }
+    } finally {
+      // Always reset inputs and refresh the list, even if something went wrong
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (folderInputRef.current) folderInputRef.current.value = '';
+      setBulkUploading(false);
+      // Small delay to let DB writes commit before re-fetching
+      setTimeout(() => { load(); }, 300);
     }
-
-    await load();
-    setBulkUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    if (folderInputRef.current) folderInputRef.current.value = '';
   };
 
   return (
