@@ -162,28 +162,35 @@ export async function updateEventPhoto(id: number, fields: {
   await ensureEventPhotosSchema();
   const sql = getSql();
 
-  // Build SET clause dynamically
-  const sets: string[] = [];
-  const params: any[] = [];
-  let paramIdx = 1;
-
+  // Neon's tagged template doesn't support dynamic SQL strings,
+  // so we branch on which fields are present.
+  if (fields.title !== undefined && fields.eventDate !== undefined && fields.description !== undefined) {
+    const rows = await sql`UPDATE event_photos SET title = ${fields.title}, event_date = ${fields.eventDate}, description = ${fields.description} WHERE id = ${id} RETURNING *`;
+    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
+  }
+  if (fields.title !== undefined && fields.eventDate !== undefined) {
+    const rows = await sql`UPDATE event_photos SET title = ${fields.title}, event_date = ${fields.eventDate} WHERE id = ${id} RETURNING *`;
+    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
+  }
+  if (fields.title !== undefined && fields.description !== undefined) {
+    const rows = await sql`UPDATE event_photos SET title = ${fields.title}, description = ${fields.description} WHERE id = ${id} RETURNING *`;
+    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
+  }
+  if (fields.eventDate !== undefined && fields.description !== undefined) {
+    const rows = await sql`UPDATE event_photos SET event_date = ${fields.eventDate}, description = ${fields.description} WHERE id = ${id} RETURNING *`;
+    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
+  }
   if (fields.title !== undefined) {
-    sets.push(`title = $${paramIdx++}`);
-    params.push(fields.title);
+    const rows = await sql`UPDATE event_photos SET title = ${fields.title} WHERE id = ${id} RETURNING *`;
+    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
   }
   if (fields.eventDate !== undefined) {
-    sets.push(`event_date = $${paramIdx++}`);
-    params.push(fields.eventDate);
+    const rows = await sql`UPDATE event_photos SET event_date = ${fields.eventDate} WHERE id = ${id} RETURNING *`;
+    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
   }
   if (fields.description !== undefined) {
-    sets.push(`description = $${paramIdx++}`);
-    params.push(fields.description);
+    const rows = await sql`UPDATE event_photos SET description = ${fields.description} WHERE id = ${id} RETURNING *`;
+    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
   }
-
-  if (sets.length === 0) return null;
-
-  params.push(id);
-  const query = `UPDATE event_photos SET ${sets.join(', ')} WHERE id = $${paramIdx} RETURNING *`;
-  const rows = await sql(query, ...params);
-  return rows.length > 0 ? rowToPhoto(rows[0]) : null;
+  return null;
 }
