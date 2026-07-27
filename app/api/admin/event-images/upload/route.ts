@@ -30,8 +30,22 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
   const form = await req.formData();
   const files = form.getAll('files');
   const rawDate = (form.get('eventDate') as string) || (new Date().toISOString().slice(0, 7) + '-01');
-  // Support both YYYY-MM (month input) and full ISO dates
-  const eventDate = rawDate.length === 7 ? rawDate + '-01' : rawDate;
+  // Normalize to YYYY-MM-01 for Postgres DATE column
+  // Supports: YYYY-MM (month picker), YYYY-MM-DD, or full ISO date
+  let eventDate: string;
+  if (/^\d{4}-\d{2}$/.test(rawDate)) {
+    eventDate = rawDate + '-01';
+  } else if (/^\d{4}-\d{2}-\d{2}/.test(rawDate)) {
+    eventDate = rawDate.slice(0, 10);
+  } else {
+    // Fallback: try to parse month names like "July 2026" → 2026-07-01
+    const parsed = new Date(rawDate);
+    if (!isNaN(parsed.getTime())) {
+      eventDate = parsed.toISOString().slice(0, 10);
+    } else {
+      eventDate = new Date().toISOString().slice(0, 10);
+    }
+  }
   const baseTitle = (form.get('title') as string) || '';
 
   if (files.length === 0) {

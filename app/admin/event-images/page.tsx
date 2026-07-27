@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Trash2, Plus, ExternalLink, Upload, FolderOpen, Image as ImageIcon, ChevronDown, Folder } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
+import MonthPicker from './MonthPicker';
 
 type EventPhoto = {
   id: number;
@@ -300,12 +301,10 @@ export default function AdminEventImagesPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Issue Month *</label>
-            <input
-              type="month"
+            <MonthPicker
               value={eventDate}
-              onChange={(e) => setEventDate(e.target.value)}
-              required
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+              onChange={setEventDate}
+              className="w-full"
             />
           </div>
           <div className="sm:col-span-2">
@@ -373,11 +372,10 @@ export default function AdminEventImagesPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Issue Month <span className="text-gray-400">(defaults to current month)</span>
                 </label>
-                <input
-                  type="month"
+                <MonthPicker
                   value={bulkDate}
-                  onChange={(e) => setBulkDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  onChange={setBulkDate}
+                  className="w-full"
                 />
               </div>
               <div>
