@@ -65,7 +65,7 @@ function bucketRows(rows: BuilderInventoryRow[]): Bucketed {
   return out;
 }
 
-function summarize(b: Bucketed): string {
+function summarize(b: Bucketed, subBuilderCount = 0): string {
   const parts: string[] = [];
   if (b.communities.length)
     parts.push(
@@ -73,6 +73,7 @@ function summarize(b: Bucketed): string {
         b.communities.length === 1 ? 'community' : 'communities'
       }`,
     );
+  if (subBuilderCount) parts.push(`${subBuilderCount} builders`);
   if (b.listings.length) parts.push(`${b.listings.length} move-in ready`);
   if (b.promotions.length)
     parts.push(
@@ -92,36 +93,61 @@ export default async function Page({ params }: PageProps) {
 
   // Each market is standalone — scope to the active publication only.
   const pub = await getServerPub();
+  // Query by developerName first (covers developers like Santa Rita Ranch
+  // whose showcase homes have builderName = actual builder). Fall back to
+  // builderName for standalone builders without a developer.
   const rows = await listBuilderInventory({
     status: 'active',
-    builderName,
+    developerName: builderName,
     publication: pub,
     limit: 500,
   });
-  const bucketed = bucketRows(rows);
+  // If no developer results, try builderName directly.
+  const finalRows = rows.length > 0
+    ? rows
+    : await listBuilderInventory({
+        status: 'active',
+        builderName,
+        publication: pub,
+        limit: 500,
+      });
+  const bucketed = bucketRows(finalRows);
   const total =
     bucketed.communities.length +
     bucketed.listings.length +
     bucketed.promotions.length;
 
+  // Extract unique sub-builders (e.g. Perry Homes, Pulte, etc. under SRR).
+  // Only relevant for developer pages where rows have a developerName.
+  const subBuilderMap = new Map<string, number>();
+  for (const r of finalRows) {
+    if (r.developerName && r.builderName && r.builderName !== r.developerName) {
+      const bn = r.builderName.trim();
+      subBuilderMap.set(bn, (subBuilderMap.get(bn) ?? 0) + 1);
+    }
+  }
+  const subBuilders = Array.from(subBuilderMap.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+
   // Pick the builder's website URL from the first inventory row that has a
   // non-PDF source_url (the actual community/listing page on the builder's
   // site). Powers the "Website" pill in the floater.
-  const websiteUrl = pickBuilderWebsiteUrl(rows);
+  const websiteUrl = pickBuilderWebsiteUrl(finalRows);
 
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
         <header className="mb-8">
           <div className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">
-            Builder
+            {finalRows.some((r) => r.developerName) ? 'Developer' : 'Builder'}
           </div>
           <PageTitle size="md" className="mt-2">
             {builderName}
           </PageTitle>
           {total > 0 ? (
             <p className="text-base text-gray-700 font-light leading-relaxed mt-3">
-              {summarize(bucketed)}
+              {summarize(bucketed, subBuilders.length)}
             </p>
           ) : (
             <p className="text-base text-gray-700 font-light leading-relaxed mt-3">
@@ -148,13 +174,38 @@ export default async function Page({ params }: PageProps) {
           viewAllHref={`/communities?builder=${encodeURIComponent(builderName)}`}
         />
 
+        {subBuilders.length > 0 && (
+          <section className="mt-8">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Builders</h2>
+              <span className="text-sm text-gray-500">{subBuilders.length} builders</span>
+            </div>
+            <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">
+              {subBuilders.map((b) => (
+                <li key={b.name}>
+                  <Link
+                    href={`/inventory?kind=listing&builder=${encodeURIComponent(b.name)}`}
+                    className="flex items-center justify-between py-3 group hover:bg-gray-50 transition-colors -mx-2 px-2 rounded-md"
+                  >
+                    <span className="text-base font-medium text-gray-900">{b.name}</span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-sm text-gray-500">{b.count} homes</span>
+                      <ArrowRight strokeWidth={1.75} size={14} className="text-gray-400 group-hover:text-gray-700 transition-colors" />
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <PreviewSection
           title="Move-in Ready"
           rows={bucketed.listings}
           builderName={builderName}
           emptyLabel="No move-in ready homes."
           variant="listing"
-          viewAllHref={`/inventory?kind=listing&builder=${encodeURIComponent(builderName)}`}
+          viewAllHref={`/inventory?kind=listing&developer=${encodeURIComponent(builderName)}`}
         />
 
         <PreviewSection
@@ -163,7 +214,7 @@ export default async function Page({ params }: PageProps) {
           builderName={builderName}
           emptyLabel="No active promotions."
           variant="promotion"
-          viewAllHref={`/inventory?kind=promotion&builder=${encodeURIComponent(builderName)}`}
+          viewAllHref={`/inventory?kind=promotion&developer=${encodeURIComponent(builderName)}`}
         />
       </div>
 

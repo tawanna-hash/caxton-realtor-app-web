@@ -22,7 +22,10 @@ export type BuilderSummary = {
 export function summarizeBuilders(rows: BuilderInventoryRow[]): BuilderSummary[] {
   const byBuilder = new Map<string, BuilderSummary>();
   for (const r of rows) {
-    const key = r.builderName?.trim();
+    // Rows with a developerName roll up under the developer (e.g. all SRR
+    // builders like Perry Homes, Pulte, etc. appear as "Santa Rita Ranch").
+    // Standalone rows without a developer use builderName as before.
+    const key = (r.developerName?.trim() || r.builderName?.trim());
     if (!key || key.toLowerCase() === 'test') continue;
     let s = byBuilder.get(key);
     if (!s) {
