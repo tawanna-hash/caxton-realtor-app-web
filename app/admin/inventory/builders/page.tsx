@@ -2,13 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
 
 type BuilderVisibility = {
   builder_name: string;
+  developer_name: string | null;
   total_count: number;
   active_count: number;
   public_enabled: boolean;
+  is_developer: boolean;
 };
 
 export default function AdminBuilderPagesPage() {
@@ -16,6 +19,8 @@ export default function AdminBuilderPagesPage() {
   const [builders, setBuilders] = useState<BuilderVisibility[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -51,7 +56,6 @@ export default function AdminBuilderPagesPage() {
         const txt = await res.text().catch(() => '');
         throw new Error(`Failed to update (${res.status}) ${txt}`);
       }
-      // optimistic local update
       setBuilders((prev) =>
         (prev ?? []).map((b) =>
           b.builder_name === builderName ? { ...b, public_enabled: next } : b,
@@ -65,6 +69,79 @@ export default function AdminBuilderPagesPage() {
     }
   }, []);
 
+  const handleDelete = useCallback(async (builderName: string) => {
+    if (!confirm(`Delete all rows for "${builderName}"?\nThis removes all inventory and community rows. This cannot be undone.`)) {
+      return;
+    }
+    setDeleting(builderName);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/inventory/builders?builderName=${encodeURIComponent(builderName)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error(`Failed to delete (${res.status}) ${txt}`);
+      }
+      setBuilders((prev) =>
+        (prev ?? []).filter((b) => b.builder_name !== builderName),
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to delete');
+      setReloadKey((k) => k + 1);
+    } finally {
+      setDeleting(null);
+    }
+  }, []);
+
+  const toggleCollapse = (name: string) =>
+    setCollapsed((p) => ({ ...p, [name]: !p[name] }));
+
+  // Group: developers, their children, and standalone builders
+  const allBuilders = builders ?? [];
+  const developers = allBuilders.filter((b) => b.is_developer);
+  const standaloneBuilders = allBuilders.filter((b) => !b.is_developer && !b.developer_name);
+  const childrenOf = (devName: string) =>
+    allBuilders.filter((b) => !b.is_developer && b.developer_name === devName);
+
+  const renderToggle = (b: BuilderVisibility) => {
+    const busy = pending === b.builder_name;
+    return b.public_enabled ? (
+      <button
+        type="button"
+        onClick={() => toggle(b.builder_name, false)}
+        disabled={busy}
+        className="bg-green-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-green-700 rounded-md transition-colors disabled:opacity-60"
+      >
+        {busy ? '…' : 'Enabled · hide'}
+      </button>
+    ) : (
+      <button
+        type="button"
+        onClick={() => toggle(b.builder_name, true)}
+        disabled={busy}
+        className="bg-red-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-red-700 rounded-md transition-colors disabled:opacity-60"
+      >
+        {busy ? '…' : 'Hidden · enable'}
+      </button>
+    );
+  };
+
+  const renderDelete = (b: BuilderVisibility) => {
+    const isDeleting = deleting === b.builder_name;
+    return (
+      <button
+        type="button"
+        onClick={() => handleDelete(b.builder_name)}
+        disabled={isDeleting}
+        className="text-red-600 hover:text-red-700 disabled:opacity-40 transition-colors"
+        title={`Delete ${b.builder_name}`}
+      >
+        {isDeleting ? '…' : <Trash2 size={16} />}
+      </button>
+    );
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -75,8 +152,7 @@ export default function AdminBuilderPagesPage() {
           <PageTitle size="md">Advertiser Pages</PageTitle>
           <p className="text-sm text-gray-600 font-light mt-2 max-w-2xl">
             Enable or disable individual builder (advertiser) public pages.
-            Disabling a builder hides its listings, communities, and detail pages
-            from the public site while keeping all data in the database.
+            Developers show their child builders as nested rows.
           </p>
         </div>
         <Link
@@ -98,60 +174,94 @@ export default function AdminBuilderPagesPage() {
           <thead className="bg-gray-50 text-left text-gray-600">
             <tr>
               <th className="px-4 py-3 font-medium">Builder / Advertiser</th>
-              <th className="px-4 py-3 font-medium text-right">Active rows</th>
-              <th className="px-4 py-3 font-medium text-right">Total rows</th>
+              <th className="px-4 py-3 font-medium text-right">Active</th>
+              <th className="px-4 py-3 font-medium text-right">Total</th>
               <th className="px-4 py-3 font-medium text-right">Public page</th>
+              <th className="px-4 py-3 font-medium text-right w-12">Delete</th>
             </tr>
           </thead>
           <tbody>
             {builders === null ? (
               <tr>
-                <td colSpan={4} className="px-4 py-10 text-center text-gray-500">
+                <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
                   Loading…
                 </td>
               </tr>
             ) : builders.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-10 text-center text-gray-500">
+                <td colSpan={5} className="px-4 py-10 text-center text-gray-500">
                   No builders found.
                 </td>
               </tr>
             ) : (
-              builders.map((b) => {
-                const busy = pending === b.builder_name;
-                return (
-                  <tr key={b.builder_name} className="border-t border-gray-100">
-                    <td className="px-4 py-3 font-medium text-gray-900">{b.builder_name}</td>
-                    <td className="px-4 py-3 text-right text-gray-700">{b.active_count}</td>
-                    <td className="px-4 py-3 text-right text-gray-500">{b.total_count}</td>
-                    <td className="px-4 py-3 text-right">
-                      {b.public_enabled ? (
-                        <button
-                          type="button"
-                          onClick={() => toggle(b.builder_name, false)}
-                          disabled={busy}
-                          className="bg-green-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-green-700 rounded-md transition-colors disabled:opacity-60"
-                        >
-                          {busy ? '…' : 'Enabled · click to hide'}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => toggle(b.builder_name, true)}
-                          disabled={busy}
-                          className="bg-red-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-red-700 rounded-md transition-colors disabled:opacity-60"
-                        >
-                          {busy ? '…' : 'Hidden · click to enable'}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
+              <>
+                {/* Developers with collapsible child builders */}
+                {developers.map((dev) => {
+                  const kids = childrenOf(dev.builder_name);
+                  const isCollapsed = collapsed[dev.builder_name] ?? false;
+                  return (
+                    <RowsForKey key={dev.builder_name}>
+                      <tr className="border-t border-gray-100">
+                        <td className="px-4 py-3 font-semibold text-gray-900">
+                          {kids.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => toggleCollapse(dev.builder_name)}
+                              className="inline-flex items-center mr-1 text-gray-400 hover:text-gray-700"
+                            >
+                              {isCollapsed
+                                ? <ChevronRight size={14} />
+                                : <ChevronDown size={14} />}
+                            </button>
+                          )}
+                          {dev.builder_name}
+                          <span className="ml-2 text-xs text-gray-400 font-normal">
+                            developer
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right text-gray-700">{dev.active_count}</td>
+                        <td className="px-4 py-3 text-right text-gray-500">{dev.total_count}</td>
+                        <td className="px-4 py-3 text-right">{renderToggle(dev)}</td>
+                        <td className="px-4 py-3 text-right">{renderDelete(dev)}</td>
+                      </tr>
+                      {!isCollapsed && kids.map((kid) => (
+                        <tr key={kid.builder_name} className="border-t border-gray-100 bg-gray-50/60">
+                          <td className="px-4 py-3 pl-10 text-gray-700">
+                            ↳ {kid.builder_name}
+                          </td>
+                          <td className="px-4 py-3 text-right text-gray-700">{kid.active_count}</td>
+                          <td className="px-4 py-3 text-right text-gray-500">{kid.total_count}</td>
+                          <td className="px-4 py-3 text-right">{renderToggle(kid)}</td>
+                          <td className="px-4 py-3 text-right">{renderDelete(kid)}</td>
+                        </tr>
+                      ))}
+                    </RowsForKey>
+                  );
+                })}
+
+                {/* Standalone builders */}
+                {standaloneBuilders.map((b) => (
+                  <RowsForKey key={b.builder_name}>
+                    <tr className="border-t border-gray-100">
+                      <td className="px-4 py-3 font-medium text-gray-900">{b.builder_name}</td>
+                      <td className="px-4 py-3 text-right text-gray-700">{b.active_count}</td>
+                      <td className="px-4 py-3 text-right text-gray-500">{b.total_count}</td>
+                      <td className="px-4 py-3 text-right">{renderToggle(b)}</td>
+                      <td className="px-4 py-3 text-right">{renderDelete(b)}</td>
+                    </tr>
+                  </RowsForKey>
+                ))}
+              </>
             )}
           </tbody>
         </table>
       </div>
     </div>
   );
+}
+
+// Wrapper that renders its children directly (no extra DOM node) so React
+// fragments with multiple <tr> elements work inside .map().
+function RowsForKey({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
 }

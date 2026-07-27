@@ -28,6 +28,7 @@ export const GET = withErrorHandling(async () => {
   const rows = (await sql`
     SELECT
       b.builder_name                        AS builder_name,
+      MAX(b.developer_name)                 AS developer_name,
       COUNT(*)::int                          AS total_count,
       COUNT(*) FILTER (WHERE b.status='active')::int AS active_count,
       COALESCE(v.public_enabled, true)       AS public_enabled,
@@ -38,6 +39,7 @@ export const GET = withErrorHandling(async () => {
     ORDER BY b.builder_name ASC
   `) as {
     builder_name: string;
+    developer_name: string | null;
     total_count: number;
     active_count: number;
     public_enabled: boolean;
@@ -64,4 +66,32 @@ export const PATCH = withErrorHandling(async (req: Request) => {
   `;
 
   return NextResponse.json({ builderName, publicEnabled });
+});
+
+const deleteSchema = z.object({
+  builderName: z.string().trim().min(1).max(120),
+});
+
+export const DELETE = withErrorHandling(async (req: Request) => {
+  await requireAdmin();
+  await ensureBuilderInventorySchema();
+
+  const url = new URL(req.url);
+  const builderName = url.searchParams.get('builderName');
+  if (!builderName) throw new Error('builderName query param required');
+
+  // Delete all rows for this builder from builder_inventory.
+  const deleted = await sql`
+    DELETE FROM builder_inventory
+    WHERE builder_name = ${builderName}
+    RETURNING id
+  `;
+
+  // Also remove the visibility entry.
+  await sql`
+    DELETE FROM builder_page_visibility
+    WHERE builder_name = ${builderName}
+  `;
+
+  return NextResponse.json({ builderName, deleted: deleted.length });
 });

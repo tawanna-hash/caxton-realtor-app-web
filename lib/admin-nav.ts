@@ -74,6 +74,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Events',    href: '/admin/events',    description: 'Calendar publications' },
       { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries' },
       { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
+      { label: 'Scraper Hub', href: '/admin/content/scrapers', description: 'Run & monitor all scrapers' },
       { label: 'Promotions', href: '/admin/inventory/promotions', description: 'Builder offers & rate buydowns' },
       { label: 'Advertiser Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility' },
       { label: 'SABOR Report', href: '/admin/content/saborreport', description: 'San Antonio MLS monthly report card' },
