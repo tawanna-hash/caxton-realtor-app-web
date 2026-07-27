@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { ensureSchema, getSql } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseQuery, uuidSchema } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
@@ -36,7 +36,7 @@ interface JobRow {
   updated_at:    string;
 }
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
   const sql = getSql();

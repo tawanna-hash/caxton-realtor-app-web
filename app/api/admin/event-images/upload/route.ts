@@ -11,13 +11,13 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { put } from '@vercel/blob';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { createEventPhoto } from '@/lib/event-photos';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export const POST = withErrorHandling(async (req: NextRequest) => {
+export const POST = withAdminTracking(async (req: NextRequest) => {
   await requireAdmin();
 
   if (!process.env.BLOB_READ_WRITE_TOKEN) {

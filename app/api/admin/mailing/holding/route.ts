@@ -12,7 +12,7 @@ import {
   isSortableColumn,
   listHoldingContacts,
 } from '@/lib/mailing';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { paginationSchema, parseQuery } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
@@ -26,7 +26,7 @@ const listHoldingQuerySchema = paginationSchema.extend({
   dir:    z.enum(['asc', 'desc']).default('desc'),
 });
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
 

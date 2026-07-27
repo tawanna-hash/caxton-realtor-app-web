@@ -6,13 +6,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { listSuppressions, removeSuppression } from '@/lib/server/email-suppressions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export const GET = withErrorHandling(async (req: NextRequest) => {
+export const GET = withAdminTracking(async (req: NextRequest) => {
   await requireAdmin();
   await ensureSchema();
   const url = new URL(req.url);
@@ -23,7 +24,7 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
   return NextResponse.json({ rows, total, limit, offset, q });
 });
 
-export const DELETE = withErrorHandling(async (req: NextRequest) => {
+export const DELETE = withAdminTracking(async (req: NextRequest) => {
   await requireAdmin();
   await ensureSchema();
   let body: { email?: unknown };

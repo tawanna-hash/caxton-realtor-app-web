@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -60,7 +60,7 @@ interface AborRow extends BaseRow {
   distance_fivepoints_mi: number | null;
 }
 
-export const GET = withErrorHandling(async (req: NextRequest) => {
+export const GET = withAdminTracking(async (req: NextRequest) => {
   await requireAdmin();
   await ensureSchema();
   const sql = getSql();

@@ -11,7 +11,7 @@
 import { NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,7 +23,7 @@ function publicationLabel(pub: string | null): string {
   return '—';
 }
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   await requireAdmin();
   await ensureSchema();
   {

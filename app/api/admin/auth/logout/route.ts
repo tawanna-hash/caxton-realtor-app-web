@@ -5,11 +5,11 @@
 
 import { NextResponse } from 'next/server';
 import { clearAdminSessionCookie } from '@/lib/server/auth/cookies';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 
-export const POST = withErrorHandling(async () => {
+export const POST = withAdminTracking(async () => {
   const response = NextResponse.json({ success: true });
   await clearAdminSessionCookie(response);
   return response;

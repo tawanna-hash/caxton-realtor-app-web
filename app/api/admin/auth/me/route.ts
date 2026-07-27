@@ -9,12 +9,13 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { query } from '@/lib/server/db/neon';
 
 export const runtime = 'nodejs';
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   const session = await requireAdmin();
   const rows = await query<{ id: string; email: string; full_name: string }>(
     `SELECT id, email, full_name FROM admins WHERE id = $1`,

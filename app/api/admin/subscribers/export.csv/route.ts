@@ -7,7 +7,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import {
   EXPORT_COLUMNS,
   csvEscape,
@@ -18,7 +18,7 @@ import { logger } from '@/lib/server/logger';
 
 export const runtime = 'nodejs';
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   const admin = await requireAdmin();
   const rows = await listAllSubscribersForExport();
 

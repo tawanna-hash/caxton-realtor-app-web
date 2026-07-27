@@ -11,7 +11,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { approvePendingEvent } from '@/lib/server/events-store';
 import { logEventAudit } from '@/lib/server/audit';
 import { eventIdParamSchema } from '@/lib/server/schemas/events';
@@ -20,7 +21,7 @@ export const runtime = 'nodejs';
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export const POST = withErrorHandling(async (_req: Request, ctx: Ctx) => {
+export const POST = withAdminTracking(async (_req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const { id } = eventIdParamSchema.parse(await ctx.params);
 

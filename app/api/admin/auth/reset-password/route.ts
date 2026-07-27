@@ -6,7 +6,8 @@
 import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { withNeonTransaction } from '@/lib/server/db/neon';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { getRequestIp, getRequestUserAgent } from '@/lib/server/auth/admin';
 import { hashPassword } from '@/lib/server/auth/passwords';
 import { rateLimit } from '@/lib/server/rate-limit';
@@ -14,7 +15,7 @@ import { adminResetPasswordSchema } from '@/lib/server/schemas/auth-admin';
 
 export const runtime = 'nodejs';
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await rateLimit('adminAuth');
   const input = adminResetPasswordSchema.parse(await req.json());
 

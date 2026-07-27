@@ -18,7 +18,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureSchema, getSql } from '@/lib/db';
 import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
 
@@ -30,7 +30,7 @@ interface AgreementRow {
   channel: string | null;
 }
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
   const sql = getSql();

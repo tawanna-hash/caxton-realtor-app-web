@@ -11,14 +11,14 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureSchema, getSql } from '@/lib/db';
 import { getApnsConfigStatus } from '@/lib/server/native-push';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   await requireAdmin();
   await ensureSchema();
 

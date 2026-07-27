@@ -6,7 +6,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { listCampaigns, createCampaign } from '@/lib/server/ads-store';
 import { logAudit } from '@/lib/server/audit';
 import { createCampaignSchema } from '@/lib/server/schemas/ads';
@@ -14,13 +15,13 @@ import { logger } from '@/lib/server/logger';
 
 export const runtime = 'nodejs';
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   await requireAdmin();
   const campaigns = await listCampaigns();
   return NextResponse.json({ campaigns });
 });
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   const admin = await requireAdmin();
   const body = createCampaignSchema.parse(await req.json());
   if (body.end_date < body.start_date) {

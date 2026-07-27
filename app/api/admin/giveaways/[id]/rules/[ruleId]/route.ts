@@ -6,7 +6,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import {
   updateGiveawayRule,
   deleteGiveawayRule,
@@ -18,7 +19,7 @@ export const runtime = 'nodejs';
 
 type Ctx = { params: Promise<{ id: string; ruleId: string }> };
 
-export const PATCH = withErrorHandling(async (req: Request, ctx: Ctx) => {
+export const PATCH = withAdminTracking(async (req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const { id, ruleId } = ruleIdParamSchema.parse(await ctx.params);
   const input = ruleSchema.partial().parse(await req.json());
@@ -40,7 +41,7 @@ export const PATCH = withErrorHandling(async (req: Request, ctx: Ctx) => {
   return NextResponse.json({ success: true });
 });
 
-export const DELETE = withErrorHandling(async (_req: Request, ctx: Ctx) => {
+export const DELETE = withAdminTracking(async (_req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const { id, ruleId } = ruleIdParamSchema.parse(await ctx.params);
 

@@ -7,7 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getRenewalReminders, createRenewalReminder } from '@/lib/renewal-reminders';
-import { ApiError, withErrorHandling } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseQuery } from '@/lib/server/schemas/_common';
 import {
   renewalReminderCreateSchema,
@@ -17,7 +18,7 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export const GET = withErrorHandling(async (req: NextRequest) => {
+export const GET = withAdminTracking(async (req: NextRequest) => {
   const admin = await getCurrentAdmin();
   if (!admin) throw new ApiError(401, 'Unauthorized');
 
@@ -27,7 +28,7 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
   return NextResponse.json({ reminders });
 });
 
-export const POST = withErrorHandling(async (req: NextRequest) => {
+export const POST = withAdminTracking(async (req: NextRequest) => {
   const admin = await getCurrentAdmin();
   if (!admin) throw new ApiError(401, 'Unauthorized');
 

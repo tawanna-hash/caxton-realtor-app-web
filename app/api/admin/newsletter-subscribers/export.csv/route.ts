@@ -6,7 +6,8 @@
  */
 
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { getSql } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -21,7 +22,7 @@ function csvEscape(v: string | null | undefined): string {
   return s;
 }
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const url = new URL(req.url);
 

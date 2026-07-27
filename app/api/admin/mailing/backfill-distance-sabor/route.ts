@@ -4,7 +4,8 @@ import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { ANCHOR_SABOR, geocodeAddress } from '@/lib/geocode';
 import { persistGeocode, type MailingContactRow } from '@/lib/mailing';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseJson } from '@/lib/server/schemas/_common';
 
 export const runtime     = 'nodejs';
@@ -70,7 +71,7 @@ async function getCounts(
   `) as unknown as CountRow[];
 }
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   const admin = await getCurrentAdmin();
   if (!admin && !authorizedByBearer(req)) {
     throw new ApiError(401, 'unauthorized');

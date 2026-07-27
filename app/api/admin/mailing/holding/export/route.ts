@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { ensureSchema } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { listHoldingContacts } from '@/lib/mailing';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseQuery } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
@@ -58,7 +58,7 @@ function toDelimited(rows: Record<string, unknown>[], delim: string): string {
   return lines.join('\n');
 }
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const { source, format } = parseQuery(req, exportQuerySchema);
 

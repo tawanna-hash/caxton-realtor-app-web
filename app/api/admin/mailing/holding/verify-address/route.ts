@@ -21,14 +21,15 @@ import {
   formatUspsAddress,
 } from '@/lib/usps-verify';
 import { geocodeAddress } from '@/lib/geocode';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { idParamSchema, parseJson } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const { id } = await parseJson(req, idParamSchema);
 

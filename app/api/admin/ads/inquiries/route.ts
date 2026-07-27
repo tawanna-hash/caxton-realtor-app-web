@@ -7,7 +7,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import {
   listAdInquiries,
   countAdInquiries,
@@ -38,7 +38,7 @@ function parseChannel(v: string | null): AdChannel | undefined {
   return v && isAdChannel(v) ? v : undefined;
 }
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
 

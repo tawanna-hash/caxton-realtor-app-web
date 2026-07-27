@@ -13,12 +13,12 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { listPendingEvents } from '@/lib/server/events-store';
 
 export const runtime = 'nodejs';
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   await requireAdmin();
   const events = await listPendingEvents();
   return NextResponse.json({ events, count: events.length });

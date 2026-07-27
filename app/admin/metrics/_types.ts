@@ -91,6 +91,9 @@ export const EVENT_LABELS: Record<string, string> = {
   pdf_generation_failed: 'PDF — Generation failed',
   renewal_email_sent: 'CRM — Renewal email sent',
   verify_failed: 'Verify — Failed',
+  // Admin API tracking — fired by withAdminTracking wrapper on all
+  // POST/PUT/PATCH/DELETE admin API mutations.
+  admin_action: 'Admin — API action',
 };
 
 export const SURFACE_LABELS: Record<string, string> = {

@@ -9,7 +9,8 @@ import { z } from 'zod';
 import { ensureSchema } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { markAddrVerified, markEmailVerified } from '@/lib/mailing';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { uuidSchema, parseJson } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
@@ -21,7 +22,7 @@ const verifySchema = z.object({
   status: z.enum(['Valid', 'Invalid', 'Pending']).default('Valid'),
 });
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
 

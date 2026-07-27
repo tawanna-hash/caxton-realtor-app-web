@@ -12,7 +12,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseQuery } from '@/lib/server/schemas/_common';
 
 const metricsQuerySchema = z.object({
@@ -50,7 +51,7 @@ async function runHogQL(query: string): Promise<unknown[]> {
   return data.results ?? [];
 }
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   if (!POSTHOG_API_KEY || !POSTHOG_PROJECT_ID) {
     throw new ApiError(500, 'Server misconfigured: POSTHOG_PERSONAL_API_KEY or POSTHOG_PROJECT_ID missing.');
   }

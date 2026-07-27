@@ -23,7 +23,8 @@ import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { persistEmailVerification } from '@/lib/mailing';
 import { verifyEmail } from '@/lib/email-verify';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { uuidSchema } from '@/lib/server/schemas/_common';
 
 export const runtime     = 'nodejs';
@@ -58,7 +59,7 @@ const verifyBatchSchema = z
   .partial()
   .default({});
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   // Auth: admin OR cron. We can't use `requireAdmin` directly because
   // the cron path is unauthenticated except for the bearer token.
   const admin = await getCurrentAdmin();

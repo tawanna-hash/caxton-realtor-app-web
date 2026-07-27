@@ -12,7 +12,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { listBookedWindows } from '@/lib/server/availability-store';
 import { isAdChannel } from '@/lib/ad-channels';
 import { ensureSchema } from '@/lib/db';
@@ -25,7 +25,7 @@ function asIso(v: string | null): string | undefined {
   return v && ISO_DATE.test(v) ? v : undefined;
 }
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
 

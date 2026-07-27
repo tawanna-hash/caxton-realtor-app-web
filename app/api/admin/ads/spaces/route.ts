@@ -4,12 +4,12 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { listAdSpaces } from '@/lib/server/ads-store';
 
 export const runtime = 'nodejs';
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   await requireAdmin();
   const spaces = await listAdSpaces();
   return NextResponse.json({ spaces });

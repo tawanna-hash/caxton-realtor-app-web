@@ -18,7 +18,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { ensureSchema, getSql } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseJson } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
@@ -31,7 +31,7 @@ const startSchema = z
   .partial()
   .default({});
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   const admin = await requireAdmin();
   await ensureSchema();
   const sql = getSql();

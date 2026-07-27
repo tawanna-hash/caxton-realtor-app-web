@@ -21,7 +21,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureSchema, getSql } from '@/lib/db';
 import { FREQ_MONTHS } from '@/lib/pressbook-constants';
 
@@ -34,7 +34,7 @@ interface AgreementRow {
   total_monthly_rate_cents: number | null;
 }
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
   const sql = getSql();

@@ -8,7 +8,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureBuilderInventorySchema } from '@/lib/builder-inventory';
 
 export const runtime = 'nodejs';
@@ -21,7 +21,7 @@ const patchSchema = z.object({
   publicEnabled: z.boolean(),
 });
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   await requireAdmin();
   await ensureBuilderInventorySchema();
 
@@ -49,7 +49,7 @@ export const GET = withErrorHandling(async () => {
   return NextResponse.json({ builders: rows });
 });
 
-export const PATCH = withErrorHandling(async (req: Request) => {
+export const PATCH = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureBuilderInventorySchema();
 
@@ -72,7 +72,7 @@ const deleteSchema = z.object({
   builderName: z.string().trim().min(1).max(120),
 });
 
-export const DELETE = withErrorHandling(async (req: Request) => {
+export const DELETE = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureBuilderInventorySchema();
 

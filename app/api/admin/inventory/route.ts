@@ -11,7 +11,7 @@ import {
 } from '@/lib/builder-inventory';
 import { neon } from '@neondatabase/serverless';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseQuery } from '@/lib/server/schemas/_common';
 
 const sql = neon(process.env.DATABASE_URL!);
@@ -30,7 +30,7 @@ const listInventoryQuerySchema = z.object({
   limit:  z.coerce.number().int().min(1).max(2000).default(2000),
 });
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureBuilderInventorySchema();
 

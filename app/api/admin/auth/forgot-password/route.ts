@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { query } from '@/lib/server/db/neon';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { getRequestIp, getRequestUserAgent } from '@/lib/server/auth/admin';
 import { rateLimit } from '@/lib/server/rate-limit';
 import { logger } from '@/lib/server/logger';
@@ -20,7 +20,7 @@ export const runtime = 'nodejs';
 
 const EXPIRY_MINUTES = 15;
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await rateLimit('adminAuth');
   const input = adminForgotPasswordSchema.parse(await req.json());
 

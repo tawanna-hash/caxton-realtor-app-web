@@ -10,7 +10,8 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import type { Publication } from '@/lib/server/wp-news';
 import {
   upsertArticleOverride,
@@ -109,7 +110,7 @@ function validateBody(raw: unknown): PatchBody {
   return out;
 }
 
-export const PATCH = withErrorHandling(
+export const PATCH = withAdminTracking(
   async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
     const admin = await requireAdmin();
     const { id } = await ctx.params;
@@ -130,7 +131,7 @@ export const PATCH = withErrorHandling(
   },
 );
 
-export const DELETE = withErrorHandling(
+export const DELETE = withAdminTracking(
   async (_req: Request, ctx: { params: Promise<{ id: string }> }) => {
     await requireAdmin();
     const { id } = await ctx.params;

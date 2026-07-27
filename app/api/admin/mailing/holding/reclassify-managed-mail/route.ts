@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { ensureSchema, getSql } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { classifyManagedMail } from '@/lib/email-verify';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseJson } from '@/lib/server/schemas/_common';
 
 // ────────────────────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ async function resolveMxSafe(domain: string): Promise<string[]> {
   }
 }
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
   const sql = getSql();

@@ -11,7 +11,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { drawGiveawayWinner } from '@/lib/server/giveaways-store';
 import { logAudit } from '@/lib/server/audit';
 import { getEmailProvider } from '@/lib/server/email';
@@ -23,7 +24,7 @@ export const runtime = 'nodejs';
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export const POST = withErrorHandling(async (_req: Request, ctx: Ctx) => {
+export const POST = withAdminTracking(async (_req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const { id } = giveawayIdParamSchema.parse(await ctx.params);
 

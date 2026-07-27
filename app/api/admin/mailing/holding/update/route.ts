@@ -13,7 +13,8 @@ import { z } from 'zod';
 import { ensureSchema } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { updateHoldingContact, type HoldingEditInput } from '@/lib/mailing';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { uuidSchema, parseJson } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
@@ -62,7 +63,7 @@ function normalize(value: string | null | undefined, key: keyof HoldingEditInput
   return trimmed === '' ? null : trimmed;
 }
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
 

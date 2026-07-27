@@ -18,7 +18,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { verifyEmail } from '@/lib/email-verify';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseJson } from '@/lib/server/schemas/_common';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 
@@ -32,7 +32,7 @@ const singleSchema = z.object({
   email: z.string().trim().min(3).max(320),
 });
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const { email } = await parseJson(req, singleSchema);
 

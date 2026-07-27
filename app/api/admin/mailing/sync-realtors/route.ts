@@ -14,7 +14,7 @@ import { ensureSchema } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { scrapeAborRealtors } from '@/lib/abor-realtor-scraper';
 import { upsertHoldingContacts } from '@/lib/mailing';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseJson } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
@@ -31,7 +31,7 @@ const syncBodySchema = z
   .partial()
   .default({});
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const body = await parseJson(req, syncBodySchema);
 

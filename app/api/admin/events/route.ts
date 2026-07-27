@@ -8,7 +8,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import {
   listAllEventsForAdmin,
   createManualEvent,
@@ -22,7 +23,7 @@ import {
 
 export const runtime = 'nodejs';
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const url = new URL(req.url);
   const pubParam = url.searchParams.get('publication');
@@ -33,7 +34,7 @@ export const GET = withErrorHandling(async (req: Request) => {
   return NextResponse.json({ events });
 });
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   const admin = await requireAdmin();
   const body = await req.json();
   const input = manualEventInputSchema.parse(body);

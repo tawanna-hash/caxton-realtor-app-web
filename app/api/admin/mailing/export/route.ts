@@ -14,7 +14,8 @@ import {
   slugFromSegment,
   type MailingSegment,
 } from '@/lib/mailing';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseQuery } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
@@ -63,7 +64,7 @@ function toDelimited(rows: Record<string, unknown>[], delim: string): string {
   return lines.join('\n');
 }
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const { segment: segRaw, format, tag } = parseQuery(req, exportQuerySchema);
 

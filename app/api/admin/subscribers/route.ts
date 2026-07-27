@@ -4,13 +4,14 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { listSubscribers } from '@/lib/server/subscribers-store';
 import { listSubscribersQuerySchema } from '@/lib/server/schemas/subscribers';
 
 export const runtime = 'nodejs';
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const url = new URL(req.url);
   const parsed = listSubscribersQuerySchema.safeParse(Object.fromEntries(url.searchParams));

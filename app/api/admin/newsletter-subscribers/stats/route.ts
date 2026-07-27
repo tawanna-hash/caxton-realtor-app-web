@@ -17,12 +17,12 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { getSql } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const url = new URL(req.url);
   const daysRaw = Number(url.searchParams.get('days') || '30');

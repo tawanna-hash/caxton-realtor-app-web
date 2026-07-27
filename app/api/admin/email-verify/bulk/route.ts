@@ -17,7 +17,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { verifyEmail, type EmailVerifyResult } from '@/lib/email-verify';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseJson } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
@@ -112,7 +112,7 @@ async function verifyAll(emails: string[]): Promise<BulkRow[]> {
   return results;
 }
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const { emails } = await parseJson(req, bulkSchema);
 

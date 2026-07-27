@@ -17,7 +17,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { getSql } from '@/lib/db';
 import { suppressedSubset } from '@/lib/server/email-suppressions';
 
@@ -222,7 +223,7 @@ async function buildList(pub: Pub): Promise<{ rows: Row[]; stats: Record<string,
   };
 }
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const url = new URL(req.url);
   const pubParam = (url.searchParams.get('list') || url.searchParams.get('pub') || '').toLowerCase();

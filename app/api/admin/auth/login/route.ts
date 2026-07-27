@@ -6,7 +6,8 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { query } from '@/lib/server/db/neon';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { signAdminSessionToken } from '@/lib/server/jwt';
 import { setAdminSessionCookie } from '@/lib/server/auth/cookies';
 import { getRequestIp, getRequestUserAgent } from '@/lib/server/auth/admin';
@@ -20,7 +21,7 @@ export const runtime = 'nodejs';
 const DUMMY_HASH =
   '$2b$12$invalidsaltinvalidsaltinvalidsaltinvalidsaltinvalidsa';
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await rateLimit('adminAuth');
   const input = adminLoginSchema.parse(await req.json());
 

@@ -19,7 +19,8 @@ import {
   segmentFromSlug,
   type MailingSegment,
 } from '@/lib/mailing';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import {
   paginationSchema,
   parseQuery,
@@ -81,7 +82,7 @@ const createContactSchema = z.object({
 // Handlers
 // ---------------------------------------------------------------------------
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
 
@@ -106,7 +107,7 @@ export const GET = withErrorHandling(async (req: Request) => {
   return NextResponse.json({ rows, total, counts, stats });
 });
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
 

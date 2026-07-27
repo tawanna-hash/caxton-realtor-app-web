@@ -14,7 +14,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureSchema, getSql } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -72,14 +72,14 @@ async function runSync() {
   };
 }
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { updated, mirrors, channelsFixed } = await runSync();
   return NextResponse.json({ updated: updated.length, rows: updated, mirrorsRefreshed: mirrors.length, channelsFixed: channelsFixed.length });
 });
 
-export const POST = withErrorHandling(async () => {
+export const POST = withAdminTracking(async () => {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { updated, mirrors, channelsFixed } = await runSync();

@@ -23,6 +23,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       api_host: host,
       capture_pageview: false,
       capture_pageleave: true,
+      autocapture: true,
       // crossorigin='anonymous' on the recorder/loader scripts so the
       // browser unmasks any error they throw. Without this, errors from
       // PostHog-loaded scripts hit window.onerror as the literal string

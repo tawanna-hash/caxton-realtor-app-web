@@ -11,11 +11,11 @@
 import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 
-export const POST = withErrorHandling(async () => {
+export const POST = withAdminTracking(async () => {
   await requireAdmin();
 
   // Next 16: revalidateTag(tag, 'max') uses stale-while-revalidate — the

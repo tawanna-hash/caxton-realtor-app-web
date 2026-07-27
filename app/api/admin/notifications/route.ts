@@ -9,7 +9,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureSchema, getSql } from '@/lib/db';
 import { broadcastPushAll } from '@/lib/server/push';
 
@@ -61,7 +61,7 @@ interface NotificationRow {
   clicked_count: number;
 }
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   await requireAdmin();
   await ensureSchema();
   const sql = getSql();
@@ -77,7 +77,7 @@ export const GET = withErrorHandling(async () => {
   return NextResponse.json({ notifications: rows });
 });
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   const admin = await requireAdmin();
   await ensureSchema();
   const sql = getSql();

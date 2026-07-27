@@ -26,7 +26,8 @@ import { NextResponse } from 'next/server';
 import { unstable_cache } from 'next/cache';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseJson } from '@/lib/server/schemas/_common';
 
 const posthogBodySchema = z.object({
@@ -436,7 +437,7 @@ const getCachedReport = unstable_cache(
 // Handler
 // ============================================================
 
-export const POST = withErrorHandling(async (request: Request) => {
+export const POST = withAdminTracking(async (request: Request) => {
   await requireAdmin();
   const body = await parseJson(request, posthogBodySchema);
 

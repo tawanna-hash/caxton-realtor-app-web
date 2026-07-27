@@ -11,7 +11,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { logAudit } from '@/lib/server/audit';
 import {
   deleteAdInquiry,
@@ -39,7 +40,7 @@ const patchSchema = z.object({
   notes: z.string().max(10_000).nullable().optional(),
 });
 
-export const GET = withErrorHandling(async (
+export const GET = withAdminTracking(async (
   _req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) => {
@@ -51,7 +52,7 @@ export const GET = withErrorHandling(async (
   return NextResponse.json({ inquiry: row });
 });
 
-export const PATCH = withErrorHandling(async (
+export const PATCH = withAdminTracking(async (
   req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) => {
@@ -101,7 +102,7 @@ export const PATCH = withErrorHandling(async (
   return NextResponse.json({ inquiry: updated });
 });
 
-export const DELETE = withErrorHandling(async (
+export const DELETE = withAdminTracking(async (
   _req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) => {

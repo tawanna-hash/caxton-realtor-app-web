@@ -15,7 +15,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { getSql } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -24,7 +25,7 @@ const ALLOWED_PUBS = new Set(['realtyline', 'newsline']);
 const ALLOWED_STATUS = new Set(['active', 'unsubscribed']);
 const ALLOWED_VERIFIED = new Set(['valid','invalid','risky','unknown','pending','unverified']);
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const url = new URL(req.url);
 

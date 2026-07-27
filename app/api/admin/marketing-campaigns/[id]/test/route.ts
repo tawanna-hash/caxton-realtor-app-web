@@ -7,7 +7,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseJson } from '@/lib/server/schemas/_common';
 import { getSql, ensureSchema } from '@/lib/db';
 import { testSendSchema } from '@/lib/server/schemas/marketing-outreach';
@@ -20,7 +21,7 @@ export const dynamic = 'force-dynamic';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export const POST = withErrorHandling(async (
+export const POST = withAdminTracking(async (
   req: NextRequest,
   ctx: { params: Promise<{ id: string }> },
 ) => {

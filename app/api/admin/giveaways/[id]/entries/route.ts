@@ -7,7 +7,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import {
   listGiveawayEntries,
   countGiveawayEntries,
@@ -23,7 +24,7 @@ export const runtime = 'nodejs';
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export const GET = withErrorHandling(async (req: Request, ctx: Ctx) => {
+export const GET = withAdminTracking(async (req: Request, ctx: Ctx) => {
   await requireAdmin();
   await ensureSchema();
   const { id } = giveawayIdParamSchema.parse(await ctx.params);
@@ -41,7 +42,7 @@ export const GET = withErrorHandling(async (req: Request, ctx: Ctx) => {
   return NextResponse.json({ entries, total, limit, offset });
 });
 
-export const POST = withErrorHandling(async (req: Request, ctx: Ctx) => {
+export const POST = withAdminTracking(async (req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   await ensureSchema();
   const { id } = giveawayIdParamSchema.parse(await ctx.params);
@@ -92,7 +93,7 @@ export const POST = withErrorHandling(async (req: Request, ctx: Ctx) => {
   return NextResponse.json({ realtor, added }, { status: 201 });
 });
 
-export const DELETE = withErrorHandling(async (req: Request, ctx: Ctx) => {
+export const DELETE = withAdminTracking(async (req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   await ensureSchema();
   const { id } = giveawayIdParamSchema.parse(await ctx.params);

@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureSchema } from '@/lib/db';
 import {
   ensureTrendingSchema,
@@ -28,7 +28,7 @@ function coerceMarkets(v: unknown): TrendingMarket[] {
   return filtered.length ? filtered : ['realtyline'];
 }
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   await requireAdmin();
   await ensureSchema();
   await ensureTrendingSchema();
@@ -36,7 +36,7 @@ export const GET = withErrorHandling(async () => {
   return NextResponse.json({ items });
 });
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   const admin = await requireAdmin();
   await ensureSchema();
   await ensureTrendingSchema();

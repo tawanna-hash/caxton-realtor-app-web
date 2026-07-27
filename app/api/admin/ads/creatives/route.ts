@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { listCreatives, createCreative } from '@/lib/server/ads-store';
 import { logAudit } from '@/lib/server/audit';
 import { createCreativeSchema } from '@/lib/server/schemas/ads';
@@ -14,13 +14,13 @@ import { logger } from '@/lib/server/logger';
 
 export const runtime = 'nodejs';
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   await requireAdmin();
   const creatives = await listCreatives();
   return NextResponse.json({ creatives });
 });
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   const admin = await requireAdmin();
   const body = createCreativeSchema.parse(await req.json());
 

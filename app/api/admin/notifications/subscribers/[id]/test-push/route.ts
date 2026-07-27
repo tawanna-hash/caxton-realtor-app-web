@@ -10,7 +10,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureSchema, getSql } from '@/lib/db';
 import { sendPush, markSubscriptionGone } from '@/lib/server/push';
 
@@ -24,7 +24,7 @@ interface SubRow {
   revoked_at: string | null;
 }
 
-export const POST = withErrorHandling(
+export const POST = withAdminTracking(
   async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
     await requireAdmin();
     await ensureSchema();

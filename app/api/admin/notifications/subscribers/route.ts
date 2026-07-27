@@ -10,7 +10,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureSchema, getSql } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -29,7 +29,7 @@ interface SubscriberRow {
   revoked_at: string | null;
 }
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   await requireAdmin();
   await ensureSchema();
   const sql = getSql();

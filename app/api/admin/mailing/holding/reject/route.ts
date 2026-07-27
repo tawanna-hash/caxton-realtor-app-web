@@ -9,14 +9,14 @@ import { NextResponse } from 'next/server';
 import { ensureSchema } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { rejectHoldingContactsWithSnapshot } from '@/lib/mailing';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { bulkIdsSchema, parseJson } from '@/lib/server/schemas/_common';
 import { suppressEmailsBatch } from '@/lib/server/email-suppressions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   const admin = await requireAdmin();
   await ensureSchema();
 

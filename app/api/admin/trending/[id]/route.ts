@@ -4,7 +4,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureSchema } from '@/lib/db';
 import {
   ensureTrendingSchema,
@@ -32,7 +32,7 @@ function parseId(raw: string): number | null {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
-export const GET = withErrorHandling(async (_req: Request, ctx: { params: Promise<{ id: string }> }) => {
+export const GET = withAdminTracking(async (_req: Request, ctx: { params: Promise<{ id: string }> }) => {
   await requireAdmin();
   await ensureSchema();
   await ensureTrendingSchema();
@@ -44,7 +44,7 @@ export const GET = withErrorHandling(async (_req: Request, ctx: { params: Promis
   return NextResponse.json({ item });
 });
 
-export const PATCH = withErrorHandling(async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
+export const PATCH = withAdminTracking(async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
   await requireAdmin();
   await ensureSchema();
   await ensureTrendingSchema();
@@ -69,7 +69,7 @@ export const PATCH = withErrorHandling(async (req: Request, ctx: { params: Promi
   return NextResponse.json({ item });
 });
 
-export const DELETE = withErrorHandling(async (_req: Request, ctx: { params: Promise<{ id: string }> }) => {
+export const DELETE = withAdminTracking(async (_req: Request, ctx: { params: Promise<{ id: string }> }) => {
   await requireAdmin();
   await ensureSchema();
   await ensureTrendingSchema();

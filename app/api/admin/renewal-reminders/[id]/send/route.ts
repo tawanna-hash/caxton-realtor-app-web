@@ -11,7 +11,8 @@ import { sendEmail } from '@/lib/email';
 import { renewalEmail } from '@/lib/email-templates';
 import type { Agreement } from '@/lib/agreements';
 import type { RenewalReminder } from '@/lib/types/renewal-reminder';
-import { ApiError, withErrorHandling } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { idParamSchema } from '@/lib/server/schemas/_common';
 import { renewalReminderSendBodySchema } from '@/lib/server/schemas/renewal-reminders';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
@@ -36,7 +37,7 @@ function humanDate(iso: string | null | undefined): string {
   } catch { return String(iso); }
 }
 
-export const POST = withErrorHandling(async (req: NextRequest, ctx: RouteCtx) => {
+export const POST = withAdminTracking(async (req: NextRequest, ctx: RouteCtx) => {
   const admin = await getCurrentAdmin();
   if (!admin) throw new ApiError(401, 'Unauthorized');
 

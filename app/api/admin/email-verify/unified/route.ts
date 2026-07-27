@@ -10,7 +10,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureSchema } from '@/lib/db';
 import { verifyAndStore, getStatus } from '@/lib/server/email-verifications';
 
@@ -18,7 +19,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
 
@@ -37,7 +38,7 @@ export const POST = withErrorHandling(async (req: Request) => {
   return NextResponse.json({ ok: true, row });
 });
 
-export const GET = withErrorHandling(async (req: Request) => {
+export const GET = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureSchema();
   const url = new URL(req.url);

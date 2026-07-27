@@ -7,7 +7,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { deactivateSubscriber } from '@/lib/server/subscribers-store';
 import { logAudit } from '@/lib/server/audit';
 import { logger } from '@/lib/server/logger';
@@ -17,7 +18,7 @@ export const runtime = 'nodejs';
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export const POST = withErrorHandling(async (_req: Request, ctx: Ctx) => {
+export const POST = withAdminTracking(async (_req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const parsed = subscriberIdParamSchema.safeParse(await ctx.params);
   if (!parsed.success) throw new ApiError(400, 'invalid_id', parsed.error.message);

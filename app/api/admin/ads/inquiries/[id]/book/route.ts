@@ -35,7 +35,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { logAudit } from '@/lib/server/audit';
 import { ensureSchema, getSql } from '@/lib/db';
 import {
@@ -126,7 +127,7 @@ interface InvoiceRow {
   amount_cents: number | null;
 }
 
-export const POST = withErrorHandling(async (
+export const POST = withAdminTracking(async (
   req: Request,
   ctx: { params: Promise<{ id: string }> },
 ) => {

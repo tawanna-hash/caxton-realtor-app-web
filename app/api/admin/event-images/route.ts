@@ -13,18 +13,18 @@ import {
   updateEventPhoto,
 } from '@/lib/event-photos';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   await requireAdmin();
   const photos = await listEventPhotos({ limit: 1000 });
   return NextResponse.json({ photos });
 });
 
-export const POST = withErrorHandling(async (req: NextRequest) => {
+export const POST = withAdminTracking(async (req: NextRequest) => {
   await requireAdmin();
   const body = await req.json();
 
@@ -64,7 +64,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
   return NextResponse.json({ photo }, { status: 201 });
 });
 
-export const DELETE = withErrorHandling(async (req: NextRequest) => {
+export const DELETE = withAdminTracking(async (req: NextRequest) => {
   await requireAdmin();
   const url = new URL(req.url);
 

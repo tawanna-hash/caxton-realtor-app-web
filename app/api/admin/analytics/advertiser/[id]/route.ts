@@ -14,7 +14,8 @@ import { z } from 'zod';
 import { getSql, ensureSchema } from '@/lib/db';
 import type { Advertiser } from '@/lib/advertisers';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseQuery } from '@/lib/server/schemas/_common';
 
 export const runtime = 'nodejs';
@@ -27,7 +28,7 @@ const rangeQuerySchema = z.object({
 
 type RouteCtx = { params: Promise<{ id: string }> };
 
-export const GET = withErrorHandling(async (req: Request, ctx: RouteCtx) => {
+export const GET = withAdminTracking(async (req: Request, ctx: RouteCtx) => {
   await requireAdmin();
   const { id } = await ctx.params;
   const idNum = Number(id);

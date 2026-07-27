@@ -16,7 +16,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import {
   getSubscriberById,
   patchSubscriber,
@@ -33,7 +34,7 @@ export const runtime = 'nodejs';
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export const GET = withErrorHandling(async (_req: Request, ctx: Ctx) => {
+export const GET = withAdminTracking(async (_req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const parsed = subscriberIdParamSchema.safeParse(await ctx.params);
   if (!parsed.success) throw new ApiError(400, 'invalid_id', parsed.error.message);
@@ -56,7 +57,7 @@ export const GET = withErrorHandling(async (_req: Request, ctx: Ctx) => {
   return NextResponse.json({ subscriber });
 });
 
-export const PATCH = withErrorHandling(async (req: Request, ctx: Ctx) => {
+export const PATCH = withAdminTracking(async (req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const paramsParsed = subscriberIdParamSchema.safeParse(await ctx.params);
   if (!paramsParsed.success) throw new ApiError(400, 'invalid_id', paramsParsed.error.message);
@@ -86,7 +87,7 @@ export const PATCH = withErrorHandling(async (req: Request, ctx: Ctx) => {
   return NextResponse.json({ subscriber, changed: Object.keys(changed) });
 });
 
-export const DELETE = withErrorHandling(async (_req: Request, ctx: Ctx) => {
+export const DELETE = withAdminTracking(async (_req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const parsed = subscriberIdParamSchema.safeParse(await ctx.params);
   if (!parsed.success) throw new ApiError(400, 'invalid_id', parsed.error.message);

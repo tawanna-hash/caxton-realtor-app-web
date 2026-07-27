@@ -7,7 +7,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import {
   getEventById,
   updateEvent,
@@ -23,7 +24,7 @@ export const runtime = 'nodejs';
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export const GET = withErrorHandling(async (_req: Request, ctx: Ctx) => {
+export const GET = withAdminTracking(async (_req: Request, ctx: Ctx) => {
   await requireAdmin();
   const { id } = eventIdParamSchema.parse(await ctx.params);
   const event = await getEventById(id);
@@ -31,7 +32,7 @@ export const GET = withErrorHandling(async (_req: Request, ctx: Ctx) => {
   return NextResponse.json({ event });
 });
 
-export const PATCH = withErrorHandling(async (req: Request, ctx: Ctx) => {
+export const PATCH = withAdminTracking(async (req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const { id } = eventIdParamSchema.parse(await ctx.params);
   const input = updateEventInputSchema.parse(await req.json());
@@ -55,7 +56,7 @@ export const PATCH = withErrorHandling(async (req: Request, ctx: Ctx) => {
   return NextResponse.json({ event });
 });
 
-export const DELETE = withErrorHandling(async (_req: Request, ctx: Ctx) => {
+export const DELETE = withAdminTracking(async (_req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const { id } = eventIdParamSchema.parse(await ctx.params);
 

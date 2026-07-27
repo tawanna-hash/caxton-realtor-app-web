@@ -7,7 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { updateRenewalReminder } from '@/lib/renewal-reminders';
-import { ApiError, withErrorHandling } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { idParamSchema } from '@/lib/server/schemas/_common';
 import { renewalReminderPatchSchema } from '@/lib/server/schemas/renewal-reminders';
 
@@ -16,7 +17,7 @@ export const dynamic = 'force-dynamic';
 
 type RouteCtx = { params: Promise<{ id: string }> };
 
-export const PATCH = withErrorHandling(async (req: NextRequest, ctx: RouteCtx) => {
+export const PATCH = withAdminTracking(async (req: NextRequest, ctx: RouteCtx) => {
   const admin = await getCurrentAdmin();
   if (!admin) throw new ApiError(401, 'Unauthorized');
 
@@ -35,7 +36,7 @@ export const PATCH = withErrorHandling(async (req: NextRequest, ctx: RouteCtx) =
   return NextResponse.json({ reminder });
 });
 
-export const DELETE = withErrorHandling(async (_req: NextRequest, ctx: RouteCtx) => {
+export const DELETE = withAdminTracking(async (_req: NextRequest, ctx: RouteCtx) => {
   const admin = await getCurrentAdmin();
   if (!admin) throw new ApiError(401, 'Unauthorized');
 

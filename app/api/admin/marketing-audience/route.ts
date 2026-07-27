@@ -9,7 +9,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { parseJson } from '@/lib/server/schemas/_common';
 import { getSql, ensureSchema } from '@/lib/db';
 import { resolveAudience } from '@/lib/marketing-campaigns';
@@ -28,7 +28,7 @@ interface PreviewRecipient {
   publication: string | null;
 }
 
-export const POST = withErrorHandling(async (req: Request) => {
+export const POST = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   const input = await parseJson(req, audiencePreviewSchema);
   await ensureSchema();

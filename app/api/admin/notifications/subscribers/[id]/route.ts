@@ -8,7 +8,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureSchema, getSql } from '@/lib/db';
 
 export const runtime = 'nodejs';
@@ -26,7 +26,7 @@ type UpdateBody = {
   market?: Market | null;
 };
 
-export const PATCH = withErrorHandling(
+export const PATCH = withAdminTracking(
   async (req: Request, ctx: { params: Promise<{ id: string }> }) => {
     await requireAdmin();
     await ensureSchema();
@@ -50,7 +50,7 @@ export const PATCH = withErrorHandling(
   },
 );
 
-export const DELETE = withErrorHandling(
+export const DELETE = withAdminTracking(
   async (_req: Request, ctx: { params: Promise<{ id: string }> }) => {
     await requireAdmin();
     await ensureSchema();

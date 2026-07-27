@@ -7,7 +7,8 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
-import { withErrorHandling, ApiError } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import {
   getGiveawayDetail,
   updateGiveaway,
@@ -24,7 +25,7 @@ export const runtime = 'nodejs';
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export const GET = withErrorHandling(async (_req: Request, ctx: Ctx) => {
+export const GET = withAdminTracking(async (_req: Request, ctx: Ctx) => {
   await requireAdmin();
   await ensureSchema();
   const { id } = giveawayIdParamSchema.parse(await ctx.params);
@@ -33,7 +34,7 @@ export const GET = withErrorHandling(async (_req: Request, ctx: Ctx) => {
   return NextResponse.json(detail);
 });
 
-export const PATCH = withErrorHandling(async (req: Request, ctx: Ctx) => {
+export const PATCH = withAdminTracking(async (req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const { id } = giveawayIdParamSchema.parse(await ctx.params);
   const input = updateGiveawaySchema.parse(await req.json());
@@ -55,7 +56,7 @@ export const PATCH = withErrorHandling(async (req: Request, ctx: Ctx) => {
   return NextResponse.json({ success: true });
 });
 
-export const DELETE = withErrorHandling(async (_req: Request, ctx: Ctx) => {
+export const DELETE = withAdminTracking(async (_req: Request, ctx: Ctx) => {
   const admin = await requireAdmin();
   const { id } = giveawayIdParamSchema.parse(await ctx.params);
 

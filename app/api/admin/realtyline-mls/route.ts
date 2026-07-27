@@ -17,7 +17,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
-import { ApiError, withErrorHandling } from '@/lib/server/error';
+import { ApiError } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 import type {
   RealtyLineReport,
   IndicatorStat,
@@ -151,7 +152,7 @@ async function ensureSchema() {
   await sql`CREATE INDEX IF NOT EXISTS realtyline_mls_reports_released_at_idx ON realtyline_mls_reports (released_at DESC)`;
 }
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   const admin = await getCurrentAdmin();
   if (!admin) throw new ApiError(401, 'unauthorized');
   await ensureSchema();
@@ -169,7 +170,7 @@ export const GET = withErrorHandling(async () => {
   return NextResponse.json({ ok: true, reports: rows });
 });
 
-export const POST = withErrorHandling(async (req: NextRequest) => {
+export const POST = withAdminTracking(async (req: NextRequest) => {
   const admin = await getCurrentAdmin();
   if (!admin) throw new ApiError(401, 'unauthorized');
   await ensureSchema();
@@ -200,7 +201,7 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
   return NextResponse.json({ ok: true, id: (rows as { id: number }[])[0]?.id });
 });
 
-export const PATCH = withErrorHandling(async (req: NextRequest) => {
+export const PATCH = withAdminTracking(async (req: NextRequest) => {
   const admin = await getCurrentAdmin();
   if (!admin) throw new ApiError(401, 'unauthorized');
   await ensureSchema();
@@ -234,7 +235,7 @@ export const PATCH = withErrorHandling(async (req: NextRequest) => {
   return NextResponse.json({ ok: true });
 });
 
-export const DELETE = withErrorHandling(async (req: NextRequest) => {
+export const DELETE = withAdminTracking(async (req: NextRequest) => {
   const admin = await getCurrentAdmin();
   if (!admin) throw new ApiError(401, 'unauthorized');
   await ensureSchema();

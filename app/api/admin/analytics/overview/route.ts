@@ -18,7 +18,7 @@ import { NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { listSubscribers } from '@/lib/server/subscribers-store';
-import { withErrorHandling } from '@/lib/server/error';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,7 +48,7 @@ async function fetchSubscriberCounts(): Promise<{
   return { total, austin, san_antonio };
 }
 
-export const GET = withErrorHandling(async () => {
+export const GET = withAdminTracking(async () => {
   await requireAdmin();
   await ensureSchema();
   {
