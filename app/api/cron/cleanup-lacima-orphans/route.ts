@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     deleted: deleted.length,
-    deletedIds: deleted.map((r: { id: number }) => r.id),
+    deletedIds: deleted.map((r: Record<string, any>) => r.id),
     remainingActive: remaining,
   });
 }
