@@ -47,6 +47,7 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
     }
   }
   const baseTitle = (form.get('title') as string) || '';
+  const publication = (form.get('publication') as string) || 'realtyline';
 
   if (files.length === 0) {
     return NextResponse.json({ error: 'No files provided' }, { status: 400 });
@@ -79,8 +80,9 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
         title,
         eventDate,
         imageUrl: blob.url,
-        thumbnailUrl: null, // Vercel Blob doesn't auto-generate thumbnails
+        thumbnailUrl: null,
         description: null,
+        publication,
       });
 
       results.push({ url: blob.url, title, ok: true });

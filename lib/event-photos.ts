@@ -200,6 +200,7 @@ export async function updateEventPhoto(id: number, fields: {
   title?: string;
   eventDate?: string;
   description?: string | null;
+  publication?: string;
 }): Promise<EventPhoto | null> {
   await ensureEventPhotosSchema();
   const sql = getSql();
@@ -232,6 +233,10 @@ export async function updateEventPhoto(id: number, fields: {
   }
   if (fields.description !== undefined) {
     const rows = await sql`UPDATE event_photos SET description = ${fields.description} WHERE id = ${id} RETURNING *`;
+    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
+  }
+  if (fields.publication !== undefined) {
+    const rows = await sql`UPDATE event_photos SET publication = ${fields.publication} WHERE id = ${id} RETURNING *`;
     return rows.length > 0 ? rowToPhoto(rows[0]) : null;
   }
   return null;

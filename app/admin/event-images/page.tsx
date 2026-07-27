@@ -9,6 +9,11 @@ import { Trash2, Plus, ExternalLink, Upload, FolderOpen, Image as ImageIcon, Che
 import PageTitle from '@/components/ui/PageTitle';
 import MonthPicker from './MonthPicker';
 
+const PUBLICATIONS = [
+  { id: 'realtyline', label: 'RealtyLine Austin' },
+  { id: 'newsline', label: 'Newsline San Antonio' },
+] as const;
+
 type EventPhoto = {
   id: number;
   title: string;
@@ -37,10 +42,12 @@ export default function AdminEventImagesPage() {
   })();
   const [newFolderMonth, setNewFolderMonth] = useState(currentMonth);
   const [newFolderTitle, setNewFolderTitle] = useState('');
+  const [newFolderPub, setNewFolderPub] = useState<string>('realtyline');
 
   // Bulk upload state
   const [bulkDate, setBulkDate] = useState(currentMonth);
   const [bulkTitle, setBulkTitle] = useState('');
+  const [bulkPub, setBulkPub] = useState<string>('realtyline');
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ uploaded: number; failed: number; total: number } | null>(null);
   const [showBulk, setShowBulk] = useState(false);
@@ -145,6 +152,7 @@ export default function AdminEventImagesPage() {
     // Pre-fill bulk upload fields and open bulk section
     setBulkDate(newFolderMonth);
     setBulkTitle(newFolderTitle);
+    setBulkPub(newFolderPub);
     setShowBulk(true);
     setNewFolderTitle('');
     // Clear selection
@@ -182,6 +190,7 @@ export default function AdminEventImagesPage() {
           formData.append('files', compressed);
           if (bulkDate) formData.append('eventDate', bulkDate);
           if (bulkTitle) formData.append('title', bulkTitle);
+          if (bulkPub) formData.append('publication', bulkPub);
           const res = await fetch('/api/admin/event-images/upload', { method: 'POST', body: formData });
           if (!res.ok) {
             console.error(`Upload failed for ${file.name}:`, await res.text().catch(() => ''));
@@ -377,7 +386,7 @@ export default function AdminEventImagesPage() {
           <Folder size={18} className="text-brand-600" />
           <h2 className="text-sm font-semibold text-gray-900">Create New Folder</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Issue Month *</label>
             <MonthPicker value={newFolderMonth} onChange={setNewFolderMonth} className="w-full" />
@@ -387,6 +396,13 @@ export default function AdminEventImagesPage() {
             <input type="text" value={newFolderTitle} onChange={(e) => setNewFolderTitle(e.target.value)} required
               placeholder="e.g., ABREP Monthly Luncheon"
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Publication</label>
+            <select value={newFolderPub} onChange={(e) => setNewFolderPub(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
+              {PUBLICATIONS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+            </select>
           </div>
         </div>
         <div className="mt-4">
@@ -407,7 +423,7 @@ export default function AdminEventImagesPage() {
 
         {showBulk && (
           <div className="mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Issue Month *</label>
                 <MonthPicker value={bulkDate} onChange={setBulkDate} className="w-full" />
@@ -419,6 +435,13 @@ export default function AdminEventImagesPage() {
                 <input type="text" value={bulkTitle} onChange={(e) => setBulkTitle(e.target.value)}
                   placeholder="e.g., ABREP Monthly Luncheon"
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Publication</label>
+                <select value={bulkPub} onChange={(e) => setBulkPub(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
+                  {PUBLICATIONS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+                </select>
               </div>
             </div>
 
@@ -579,6 +602,18 @@ export default function AdminEventImagesPage() {
                                     {p.description || 'Add description...'}
                                   </button>
                                 )}
+                                {/* Publication */}
+                                <select value={p.publication}
+                                  onChange={(e) => {
+                                    fetch('/api/admin/event-images', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ id: p.id, publication: e.target.value }),
+                                    }).then(() => load()).catch(() => {});
+                                  }}
+                                  className="w-full text-xs border border-gray-300 rounded px-1 py-0.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                  {PUBLICATIONS.map((pub) => <option key={pub.id} value={pub.id}>{pub.label}</option>)}
+                                </select>
                               </div>
                               {/* Delete */}
                               <button onClick={() => handleDelete(p.id)} disabled={deleting === p.id}

@@ -30,8 +30,8 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
 
   // PUT-style update if `id` is provided in the body
   if (body.id) {
-    const { id, title, eventDate, description } = body;
-    const updates: { title?: string; eventDate?: string; description?: string | null } = {};
+    const { id, title, eventDate, description, publication } = body;
+    const updates: { title?: string; eventDate?: string; description?: string | null; publication?: string } = {};
     if (title !== undefined) updates.title = title;
     if (eventDate !== undefined) {
       // Normalize to YYYY-MM-01
@@ -40,11 +40,12 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
       else updates.eventDate = eventDate;
     }
     if (description !== undefined) updates.description = description;
+    if (publication !== undefined) updates.publication = publication;
     const photo = await updateEventPhoto(id, updates);
     return NextResponse.json({ photo });
   }
 
-  const { title, eventDate, imageUrl, thumbnailUrl, description } = body;
+  const { title, eventDate, imageUrl, thumbnailUrl, description, publication } = body;
 
   if (!title || !eventDate || !imageUrl) {
     return NextResponse.json(
@@ -59,6 +60,7 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
     imageUrl,
     thumbnailUrl: thumbnailUrl || null,
     description: description || null,
+    publication,
   });
 
   return NextResponse.json({ photo }, { status: 201 });
