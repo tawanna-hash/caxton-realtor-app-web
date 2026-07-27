@@ -27,7 +27,6 @@ export async function POST(req: NextRequest) {
   const deleted = await sql`
     DELETE FROM builder_inventory
     WHERE builder_name = 'La Cima'
-      AND external_id IS NULL
       AND home_type = 'showcase'
       AND kind = 'listing'
     RETURNING id
