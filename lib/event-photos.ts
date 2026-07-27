@@ -60,16 +60,26 @@ export async function ensureEventPhotosSchema() {
 }
 
 function rowToPhoto(r: Record<string, any>): EventPhoto {
+  // Neon returns DATE columns as JS Date objects, not strings.
+  // Convert to string to avoid timezone issues and ensure .slice() works.
+  const eventDateRaw = r.event_date;
+  const eventDateStr = eventDateRaw instanceof Date
+    ? eventDateRaw.toISOString().slice(0, 10)
+    : String(eventDateRaw);
+  const createdAtRaw = r.created_at;
+  const createdAtStr = createdAtRaw instanceof Date
+    ? createdAtRaw.toISOString()
+    : String(createdAtRaw);
   return {
     id: r.id,
     title: r.title,
-    eventDate: r.event_date,
+    eventDate: eventDateStr,
     imageUrl: r.image_url,
     thumbnailUrl: r.thumbnail_url ?? null,
     description: r.description ?? null,
     publication: r.publication,
     uploadedBy: r.uploaded_by ?? null,
-    createdAt: r.created_at,
+    createdAt: createdAtStr,
   };
 }
 
