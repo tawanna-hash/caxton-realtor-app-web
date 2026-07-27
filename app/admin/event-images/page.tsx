@@ -64,6 +64,7 @@ export default function AdminEventImagesPage() {
   const [editDescValue, setEditDescValue] = useState('');
   const [editingMonth, setEditingMonth] = useState<number | null>(null);
   const [editMonthValue, setEditMonthValue] = useState('');
+  const [folderTitles, setFolderTitles] = useState<Record<string, string>>({});
 
   const toggleMonth = (key: string) => {
     setExpandedMonths((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -312,17 +313,21 @@ export default function AdminEventImagesPage() {
   };
 
   // Batch rename all in folder
-  const saveFolderTitle = async (group: { photos: EventPhoto[] }, newTitle: string) => {
+  const saveFolderTitle = async (group: { key: string; photos: EventPhoto[] }, newTitle: string) => {
     const v = newTitle.trim();
     if (!v) return;
     setBulkUploading(true);
+    setError(null);
     try {
+      let failed = 0;
       for (const p of group.photos) {
-        await fetch('/api/admin/event-images', {
+        const res = await fetch('/api/admin/event-images', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: p.id, title: v }),
         });
+        if (!res.ok) failed++;
       }
+      if (failed > 0) setError(`${failed} of ${group.photos.length} photos failed to rename.`);
       await load();
     } catch (e) { setError(e instanceof Error ? e.message : 'Failed'); }
     finally { setBulkUploading(false); }
@@ -527,11 +532,13 @@ export default function AdminEventImagesPage() {
                     <>
                       {/* Batch rename */}
                       <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 bg-white">
-                        <input type="text" defaultValue={group.photos[0]?.title ?? ''}
+                        <input type="text"
+                          value={folderTitles[group.key] ?? group.photos[0]?.title ?? ''}
+                          onChange={(e) => setFolderTitles((prev) => ({ ...prev, [group.key]: e.target.value }))}
                           placeholder="Rename all photos in this folder..."
                           className="flex-1 text-xs border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-brand-500"
                           onKeyDown={(e) => { if (e.key === 'Enter') saveFolderTitle(group, (e.target as HTMLInputElement).value); }} />
-                        <button onClick={(e) => saveFolderTitle(group, (e.currentTarget.previousSibling as HTMLInputElement).value)}
+                        <button onClick={() => saveFolderTitle(group, folderTitles[group.key] ?? group.photos[0]?.title ?? '')}
                           disabled={bulkUploading}
                           className="text-xs bg-brand-600 text-white px-3 py-1.5 rounded-md hover:bg-brand-700 disabled:opacity-40">
                           Update All
