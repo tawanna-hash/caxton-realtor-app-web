@@ -1,34 +1,44 @@
 // app/api/cron/scrape-la-cima/route.ts
 //
 // Daily cron entrypoint for the La Cima (developer) move-in-ready
-// homes scraper. Source: lacimatx.com/available-new-home-inventory/
+// homes scraper. Source: lacimatx.com Pipsy API (public1.pipsy.io)
 //
 // Auth: Authorization: Bearer ${CRON_SECRET} in production.
-// Dev/preview: open (so we can test from local without setting the secret).
+// Dev/preview: open.
 //
 // Output rows land as kind='listing' (auto-active) — these are public
 // inventory homes already curated by the developer.
+//
+// Prune: deactivates stale showcase rows per builder (not the developer
+// umbrella) so each builder's inventory stays in sync independently.
 
-import { NextResponse } from 'next/server';
-import { fetchLaCima } from '../../../../lib/scrapers/la-cima';
-import { upsertBuilderInventoryByExternalId } from '../../../../lib/builder-inventory';
+import { NextResponse, type NextRequest } from 'next/server';
+import { neon } from '@neondatabase/serverless';
+import { fetchLaCima } from '@/lib/scrapers/la-cima';
+import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
+import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
+
+const sql = neon(process.env.DATABASE_URL!);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-function authorized(req: Request): boolean {
-  if (process.env.VERCEL_ENV !== 'production') return true;
+function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
+  const isProduction = process.env.VERCEL_ENV === 'production';
   const expected = process.env.CRON_SECRET;
-  if (!expected) return false;
   const got = req.headers.get('authorization');
-  return got === `Bearer ${expected}`;
+  if (!isProduction) return { ok: true };
+  if (!expected) return { ok: false, reason: 'CRON_SECRET not configured' };
+  if (got !== `Bearer ${expected}`) return { ok: false, reason: 'Bad or missing Authorization header' };
+  return { ok: true };
 }
 
-async function handle(req: Request) {
-  if (!authorized(req)) {
+async function handle(req: NextRequest) {
+  const auth = verifyCronAuth(req);
+  if (!auth.ok) {
     return NextResponse.json(
-      { ok: false, error: 'Bad or missing Authorization header' },
+      { ok: false, error: auth.reason },
       { status: 401 },
     );
   }
@@ -60,6 +70,25 @@ async function handle(req: Request) {
     }
   }
 
+  // Prune stale showcase rows per builder (same pattern as SRR).
+  let deactivated = 0;
+  const showcaseRows = scrape.rows.filter((r) => r.homeType === 'showcase');
+  if (showcaseRows.length > 0) {
+    const byBuilder = new Map<string, string[]>();
+    for (const r of showcaseRows) {
+      const bn = r.builderName ?? 'La Cima';
+      if (!byBuilder.has(bn)) byBuilder.set(bn, []);
+      byBuilder.get(bn)!.push(r.externalId);
+    }
+    for (const [bn, ids] of byBuilder) {
+      deactivated += await deactivateStaleBuilderInventory({
+        builderName: bn,
+        homeType: 'showcase',
+        activeExternalIds: ids,
+      });
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     ms: Date.now() - startedAt,
@@ -67,10 +96,11 @@ async function handle(req: Request) {
     upserted: scrape.rows.length,
     created,
     updated,
+    deactivated,
     skipped: scrape.skipped,
     upsertErrors,
   });
 }
 
-export async function GET(req: Request)  { return handle(req); }
-export async function POST(req: Request) { return handle(req); }
+export async function GET(req: NextRequest)  { return handle(req); }
+export async function POST(req: NextRequest) { return handle(req); }

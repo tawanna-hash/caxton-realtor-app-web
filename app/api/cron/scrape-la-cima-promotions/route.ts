@@ -4,20 +4,19 @@
 // Source: https://lacimatx.com/builder-promotions/
 //
 // Auth: Authorization: Bearer ${CRON_SECRET} in production.
-// Dev/preview: open (so we can test from local without setting the secret).
+// Dev/preview: open.
 //
-// Output rows land as kind='promotion'. Following the same auto-activate
-// policy established for Santa Rita Ranch promos: newly-imported La Cima
-// promos are flipped to status='active' here. The developer page already
-// curates participating builders, so per-builder review adds friction
-// without catching anything our source page hasn't already filtered.
-// Existing rows keep whatever status they already have — admin decisions
-// are never overwritten.
+// Output rows land as kind='promotion'. Newly-imported La Cima promos
+// are auto-activated (the developer page already curates participating
+// builders). Existing rows keep their human-set status.
+//
+// Prune: deletes stale promotion rows per builder (same pattern as SRR).
 
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { neon } from '@neondatabase/serverless';
-import { fetchLaCimaPromotions } from '../../../../lib/scrapers/la-cima-promotions';
-import { upsertBuilderInventoryByExternalId } from '../../../../lib/builder-inventory';
+import { fetchLaCimaPromotions } from '@/lib/scrapers/la-cima-promotions';
+import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
+import { deleteStaleBuilderPromotions } from '@/lib/builder-inventory-sync';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -25,18 +24,21 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-function authorized(req: Request): boolean {
-  if (process.env.VERCEL_ENV !== 'production') return true;
+function verifyCronAuth(req: NextRequest): { ok: boolean; reason?: string } {
+  const isProduction = process.env.VERCEL_ENV === 'production';
   const expected = process.env.CRON_SECRET;
-  if (!expected) return false;
   const got = req.headers.get('authorization');
-  return got === `Bearer ${expected}`;
+  if (!isProduction) return { ok: true };
+  if (!expected) return { ok: false, reason: 'CRON_SECRET not configured' };
+  if (got !== `Bearer ${expected}`) return { ok: false, reason: 'Bad or missing Authorization header' };
+  return { ok: true };
 }
 
-async function handle(req: Request) {
-  if (!authorized(req)) {
+async function handle(req: NextRequest) {
+  const auth = verifyCronAuth(req);
+  if (!auth.ok) {
     return NextResponse.json(
-      { ok: false, error: 'Bad or missing Authorization header' },
+      { ok: false, error: auth.reason },
       { status: 401 },
     );
   }
@@ -62,11 +64,7 @@ async function handle(req: Request) {
       const result = await upsertBuilderInventoryByExternalId({ ...row, developerName: 'La Cima' });
       if (result.created) {
         created++;
-        // La Cima promo flyers are pulled from a curated developer page
-        // that already vets participating builders. Auto-activate newly-
-        // imported promos. Existing rows are NOT touched: once a human
-        // (or this same policy) sets a status, the scraper has no
-        // business overwriting it.
+        // Auto-activate newly-imported promos. Existing rows keep their status.
         await sql`
           UPDATE builder_inventory
           SET status = 'active',
@@ -87,6 +85,23 @@ async function handle(req: Request) {
     }
   }
 
+  // Prune stale promotions per builder (same pattern as SRR).
+  let pruned = 0;
+  if (scrape.rows.length > 0) {
+    const byBuilder = new Map<string, string[]>();
+    for (const r of scrape.rows) {
+      const bn = r.builderName ?? 'La Cima';
+      if (!byBuilder.has(bn)) byBuilder.set(bn, []);
+      byBuilder.get(bn)!.push(r.externalId);
+    }
+    for (const [bn, ids] of byBuilder) {
+      pruned += await deleteStaleBuilderPromotions({
+        builderName: bn,
+        activeExternalIds: ids,
+      });
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     ms: Date.now() - startedAt,
@@ -95,10 +110,11 @@ async function handle(req: Request) {
     created,
     updated,
     autoActivated,
+    pruned,
     skipped: scrape.skipped,
     upsertErrors,
   });
 }
 
-export async function GET(req: Request)  { return handle(req); }
-export async function POST(req: Request) { return handle(req); }
+export async function GET(req: NextRequest)  { return handle(req); }
+export async function POST(req: NextRequest) { return handle(req); }

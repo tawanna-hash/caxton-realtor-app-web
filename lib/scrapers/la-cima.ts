@@ -271,7 +271,17 @@ function buildRow(home: PipsyHome): UpsertScrapedInput | null {
   // Images: cap, keep order Pipsy returns.
   const images = Array.isArray(home.images) ? home.images.filter(Boolean) : [];
   const gallery = images.slice(0, MAX_GALLERY);
-  const thumbnail = images[0] ?? null;
+
+  // Thumbnail: first home image, then first elevation image, then
+  // first floorplan image, then community hero as last resort.
+  const fp = home.floorplan;
+  const elevationImg =
+    fp?.files?.find((f) => (f.type || '').toLowerCase() === 'elevation')?.url ?? null;
+  const floorplanImg =
+    fp?.floorplan_images?.[0] ??
+    fp?.files?.find((f) => (f.type || '').toLowerCase() === 'floorplan')?.url ??
+    null;
+  const thumbnail = images[0] ?? elevationImg ?? floorplanImg ?? COMMUNITY_HERO_IMAGE;
 
   // Detail link — Pipsy's shop-homes widget uses an in-page selection
   // model, not URL routing, but the home anchor `#home-<id>` is what
@@ -291,12 +301,7 @@ function buildRow(home: PipsyHome): UpsertScrapedInput | null {
   if (status) extraDetails['Status'] = status;
   if (typeof home.latitude === 'number') extraDetails._latitude = String(home.latitude);
   if (typeof home.longitude === 'number') extraDetails._longitude = String(home.longitude);
-  const fp = home.floorplan;
-  const fpImg =
-    fp?.floorplan_images?.[0] ||
-    fp?.files?.find((f) => (f.type || '').toLowerCase() === 'floorplan')?.url ||
-    null;
-  if (fpImg) extraDetails._floorplanUrl = fpImg;
+  if (floorplanImg) extraDetails._floorplanUrl = floorplanImg;
   if (home.virtual) extraDetails._virtualTourUrl = home.virtual;
 
   return {
@@ -305,7 +310,7 @@ function buildRow(home: PipsyHome): UpsertScrapedInput | null {
     publication: 'realtyline',
     submittedByName: 'La Cima Auto-Importer',
     submittedByEmail: 'scraper-la-cima@harmonyone.system',
-    builderName: 'La Cima',
+    builderName: builderName,
     title,
     city: LA_CIMA_CITY,
     state: LA_CIMA_STATE,

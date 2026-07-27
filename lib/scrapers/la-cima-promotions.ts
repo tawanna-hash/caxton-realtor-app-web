@@ -208,7 +208,7 @@ export async function fetchLaCimaPromotions(): Promise<LaCimaPromoScrapeResult> 
       publication: 'realtyline',
       submittedByName: 'La Cima Promotions Auto-Importer',
       submittedByEmail: 'scraper-la-cima-promotions@harmonyone.system',
-      builderName: 'La Cima',
+      builderName: c.builderName,
       title: `${c.builderName} incentive at La Cima`,
       city: LA_CIMA_CITY,
       state: LA_CIMA_STATE,
