@@ -562,13 +562,23 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
     : null;
 
   // Collect unique builders from showcase homes.
+  // All builders from the SRR builders page (not just those with showcase homes)
   const buildersInCommunity = [
-    ...new Set(
-      showcaseRows
-        .map((r) => r.title.split(' \u2014 ')[1])
-        .filter(Boolean),
-    ),
-  ].sort();
+    'CastleRock Communities',
+    'Chesmar Homes',
+    'Coventry Homes',
+    'GFO Home',
+    'Highland Homes',
+    'Highland Homes Cottage Homes',
+    'Perry Homes',
+    'Perry Homes Cottage Homes',
+    'Pulte Homes',
+    'Scott Felder Homes',
+    'Sitterle Estate Homes',
+    'Taylor Morrison',
+    'Toll Brothers',
+    'Westin Homes',
+  ];
 
   // Collect unique neighborhoods from showcase homes.
   const neighborhoodsInCommunity = [
@@ -670,8 +680,8 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
       status: null,
       builders: [
         'CastleRock Communities', 'Coventry Homes', 'Highland Homes',
-        'Perry Homes', 'Pulte Homes', 'Scott Felder Homes',
-        'Toll Brothers', 'Westin Homes',
+        'Highland Homes Cottage Homes', 'Perry Homes', 'Perry Homes Cottage Homes',
+        'Pulte Homes', 'Scott Felder Homes', 'Toll Brothers', 'Westin Homes',
       ],
       amenities: [
         'Ranch Camp Amenity Center',
@@ -702,8 +712,9 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
         'of San Gabriel Elementary.',
       status: null,
       builders: [
-        'Chesmar Homes', 'Pulte Homes', 'Highland Homes',
-        'Scott Felder Homes', 'Taylor Morrison', 'Westin Homes',
+        'Chesmar Homes', 'Highland Homes', 'Highland Homes Cottage Homes',
+        'Perry Homes', 'Perry Homes Cottage Homes', 'Scott Felder Homes',
+        'Sitterle Estate Homes', 'Taylor Morrison',
       ],
       amenities: [
         'The Ranch House',
@@ -813,7 +824,7 @@ export async function fetchSantaRitaRanch(): Promise<SantaRitaScrapeResult> {
         'at Hideaway park or get to know the furry friends in the neighborhood at our Dog Park. Zoned to ' +
         'Liberty Hill ISD and home to our first onsite elementary school, Santa Rita Elementary.',
       status: null,
-      builders: [],
+      builders: ['Coventry Homes'],
       amenities: [
         'The Green Play Park',
         'The Green Lawn',
