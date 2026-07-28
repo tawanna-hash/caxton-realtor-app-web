@@ -695,13 +695,13 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                   <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
                   <div className="flex-1 h-px bg-gray-200" />
                 </div>
-                <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">License Number</p>
+                <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3">License Number <span className="text-gray-300 normal-case tracking-normal">(optional)</span></p>
                 <div className="flex gap-2 mb-3">
                   {LICENSE_TYPES.map((lt) => (
                     <button key={lt} onClick={() => setLicenseType(lt)} className={licenseType === lt ? 'flex-1 py-3 text-base font-medium text-center border-2 border-brand-700 text-brand-700' : 'flex-1 py-3 text-base font-light text-center border border-gray-300 text-gray-500'}>{lt}</button>
                   ))}
                 </div>
-                <input type="text" placeholder={licenseType === 'TREC #' ? 'TREC License Number' : 'NMLS ID Number'} value={licenseNum} onChange={(e) => setLicenseNum(e.target.value)} className={ic} autoComplete="off" autoCapitalize="characters" inputMode={licenseType === 'TREC #' ? 'numeric' : 'text'} />
+                <input type="text" placeholder={licenseType === 'TREC #' ? 'TREC License Number (optional)' : 'NMLS ID Number (optional)'} value={licenseNum} onChange={(e) => setLicenseNum(e.target.value)} className={ic} autoComplete="off" autoCapitalize="characters" inputMode={licenseType === 'TREC #' ? 'numeric' : 'text'} />
 <p className="text-sm uppercase tracking-wider text-gray-400 font-medium mb-3 mt-6">Your Information</p>
                 <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} className={ic} autoComplete="name" autoCapitalize="words" />
                 <select value={title} onChange={(e) => setTitle(e.target.value)} className={sc + (!title ? ' text-[#d1d5db]' : ' text-gray-900')}>
@@ -709,7 +709,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                   {TITLES.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
 
-                <button onClick={() => { void haptics.light(); setStep(2); }} disabled={!fullName || !licenseNum} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mt-4 disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
+                <button onClick={() => { void haptics.light(); setStep(2); }} disabled={!fullName} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mt-4 disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
                 <button onClick={() => setMode('choice')} className="w-full text-center py-2 text-base text-gray-400 font-light mt-2">Back</button>
               </div>
             )}
@@ -810,7 +810,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 <div className="bg-gray-50 border border-gray-200 p-4 mb-4 space-y-2 rounded-md">
                   <p className="text-base text-gray-900 font-medium">{fullName}</p>
                   <p className="text-sm text-gray-500 font-light">{title || 'No title selected'}</p>
-                  <p className="text-sm text-gray-500 font-light">{licenseType} {licenseNum}</p>
+                  <p className="text-sm text-gray-500 font-light">{licenseNum ? `${licenseType} ${licenseNum}` : 'No license provided'}</p>
                   <p className="text-sm text-gray-500 font-light">{email}</p>
                   {mobile && <p className="text-sm text-gray-500 font-light">{mobile}</p>}
                   {addr1 && <p className="text-sm text-gray-500 font-light">{addr1}{addr2 ? ', ' + addr2 : ''}</p>}
@@ -823,7 +823,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                   )}
                 </div>
 
-                <p className="text-xs text-gray-500 font-light mb-3">Your license number is used only to avoid duplicate records and for RealtyLine&apos;s use only. It is never shared, sold or displayed publicly.</p>
+                <p className="text-xs text-gray-500 font-light mb-3">Your license number is used only to avoid duplicate records and for RealtyLine&apos;s use only. It is never shared, sold or displayed publicly. Providing a license number is optional.</p>
                 <p className="text-xs text-gray-400 font-light mb-4">By creating an account, you agree to receive communications from Caxton Publications, Inc. We will send a magic link to your email - no password needed.</p>
 
                 <div className="flex gap-2">
