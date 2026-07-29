@@ -14,6 +14,7 @@ import { ensurePublicationColumn, getPublicationTheme } from '@/lib/publication-
 import type { Advertiser, AdvertiserLocation, AdvertiserStaff } from '@/lib/advertisers';
 import { listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
 import { listEventPhotosByAdvertiser, type EventPhotoMonth } from '@/lib/event-photos';
+import { listFeatureArticlesByAdvertiser, type FeatureArticle } from '@/lib/feature-articles';
 import AdvertiserDetailClient from './AdvertiserDetailClient';
 
 // Advertiser detail pages change infrequently (edits happen via /admin, not
@@ -173,6 +174,15 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
     console.warn('[advertiser detail] event photos load failed:', err);
   }
 
+  // Editorial features the admin wrote for this advertiser. Best-effort for the
+  // same reason as the gallery above — supplementary content shouldn't 500.
+  let featureArticles: FeatureArticle[] = [];
+  try {
+    featureArticles = await listFeatureArticlesByAdvertiser(advertiser.id);
+  } catch (err) {
+    console.warn('[advertiser detail] feature articles load failed:', err);
+  }
+
   const theme = getPublicationTheme(advertiser.publication);
 
   return (
@@ -182,6 +192,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
       locations={locations}
       staff={staff}
       eventPhotos={eventPhotos}
+      featureArticles={featureArticles}
       theme={{
         accent: theme.primaryColor,
         label:

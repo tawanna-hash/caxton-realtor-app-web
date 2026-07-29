@@ -16,6 +16,7 @@ import type {
 } from '@/lib/advertisers';
 import type { BuilderInventoryRow } from '@/lib/builder-inventory';
 import type { EventPhoto, EventPhotoMonth } from '@/lib/event-photos';
+import type { FeatureArticle } from '@/lib/feature-articles';
 import { builderNameToSlug } from '@/lib/builder-slug';
 import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 import AdvertiserHeader from '@/components/AdvertiserHeader';
@@ -28,6 +29,7 @@ type Props = {
   locations?: AdvertiserLocation[];
   staff?: AdvertiserStaff[];
   eventPhotos?: EventPhotoMonth[];
+  featureArticles?: FeatureArticle[];
   theme: ThemeInfo;
   backHref: string;
 };
@@ -78,6 +80,7 @@ export default function AdvertiserDetailClient({
   locations = [],
   staff = [],
   eventPhotos = [],
+  featureArticles = [],
   theme,
   backHref,
 }: Props) {
@@ -140,6 +143,8 @@ export default function AdvertiserDetailClient({
         />
 
         {eventPhotos.length > 0 && <EventPhotosSection months={eventPhotos} />}
+
+        {featureArticles.length > 0 && <FeatureArticlesSection articles={featureArticles} />}
 
         {a.bio && (
           <section className="mb-10">
@@ -463,17 +468,23 @@ function ListingThumbnail({ src }: { src: string | null }) {
   );
 }
 
+const MONTHS_PER_PAGE = 3;
+
 // Event coverage the publication shot for this advertiser, newest month first.
 // Months collapse so an advertiser with years of archives doesn't push the rest
-// of the profile off the page; the most recent month starts open.
+// of the profile off the page; the most recent month starts open, and only a
+// page of folders renders until the visitor asks for more.
 function EventPhotosSection({ months }: { months: EventPhotoMonth[] }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => ({
     [months[0].monthKey]: true,
   }));
   const [lightbox, setLightbox] = useState<EventPhoto | null>(null);
+  const [visibleCount, setVisibleCount] = useState(MONTHS_PER_PAGE);
 
   const toggle = (monthKey: string) =>
     setExpanded((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
+
+  const visibleMonths = months.slice(0, visibleCount);
 
   return (
     <section className="border-t border-gray-200 pt-8 mb-10">
@@ -485,7 +496,7 @@ function EventPhotosSection({ months }: { months: EventPhotoMonth[] }) {
       </h2>
 
       <div className="space-y-3">
-        {months.map((month) => {
+        {visibleMonths.map((month) => {
           const isOpen = expanded[month.monthKey] ?? false;
           return (
             <div key={month.monthKey} className="border border-gray-200 rounded-md overflow-hidden">
@@ -547,9 +558,125 @@ function EventPhotosSection({ months }: { months: EventPhotoMonth[] }) {
         })}
       </div>
 
+      {months.length > MONTHS_PER_PAGE && (
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <p className="text-xs text-gray-500">
+            Showing {visibleMonths.length} of {months.length} months
+          </p>
+          {visibleCount < months.length && (
+            <button
+              type="button"
+              onClick={() => setVisibleCount((n) => n + MONTHS_PER_PAGE)}
+              className="px-5 py-2 rounded-md text-sm font-medium text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: BRAND_PURPLE }}
+            >
+              Load More
+            </button>
+          )}
+        </div>
+      )}
+
       {lightbox && <EventPhotoLightbox photo={lightbox} onClose={() => setLightbox(null)} />}
     </section>
   );
+}
+
+// Editorial pieces the publication wrote about this advertiser. Articles either
+// link out to the full piece (WordPress) or carry their body inline, in which
+// case the card expands in place rather than navigating away.
+function FeatureArticlesSection({ articles }: { articles: FeatureArticle[] }) {
+  return (
+    <section className="border-t border-gray-200 pt-8 mb-10">
+      <h2
+        className="text-xl sm:text-2xl font-semibold tracking-tight mb-5"
+        style={{ color: BRAND_PURPLE }}
+      >
+        Feature Articles
+      </h2>
+
+      <ul className="space-y-4">
+        {articles.map((article) => (
+          <li key={article.id}>
+            <FeatureArticleCard article={article} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function FeatureArticleCard({ article }: { article: FeatureArticle }) {
+  const [expanded, setExpanded] = useState(false);
+  const href = normalizeUrl(article.articleUrl);
+  const byline = [article.author, formatArticleDate(article.publishedAt)]
+    .filter(Boolean)
+    .join(' · ');
+
+  return (
+    <article className="border border-gray-200 rounded-md overflow-hidden">
+      {article.imageUrl && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={article.imageUrl}
+          alt=""
+          loading="lazy"
+          className="w-full max-h-72 object-cover bg-gray-100"
+        />
+      )}
+      <div className="p-4">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 leading-snug">
+          {article.title}
+        </h3>
+        {byline && <p className="mt-1 text-xs text-gray-500">{byline}</p>}
+        {article.excerpt && (
+          <p className="mt-2 text-sm text-gray-700 font-light leading-relaxed">
+            {article.excerpt}
+          </p>
+        )}
+
+        {expanded && article.content && (
+          <p className="mt-3 text-sm text-gray-800 font-light leading-relaxed whitespace-pre-line">
+            {article.content}
+          </p>
+        )}
+
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 mt-3 text-sm font-medium underline underline-offset-2 hover:no-underline"
+            style={{ color: BRAND_PURPLE }}
+          >
+            Read article →
+          </a>
+        ) : article.content ? (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            className="inline-flex items-center gap-1 mt-3 text-sm font-medium underline underline-offset-2 hover:no-underline"
+            style={{ color: BRAND_PURPLE }}
+          >
+            {expanded ? 'Show less' : 'Read article →'}
+          </button>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+// Dates arrive as YYYY-MM-DD. Parsing through Date() applies the local
+// timezone and can shift the day, so the parts are pinned to UTC.
+function formatArticleDate(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return iso;
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
 }
 
 function EventPhotoLightbox({ photo, onClose }: { photo: EventPhoto; onClose: () => void }) {
