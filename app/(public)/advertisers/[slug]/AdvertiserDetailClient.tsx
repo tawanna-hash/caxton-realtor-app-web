@@ -185,7 +185,7 @@ export default function AdvertiserDetailClient({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-gray-900 underline underline-offset-2 hover:no-underline"
                 >
-                  Get directions →
+                  Get Directions →
                 </a>
               )}
             </section>
@@ -260,7 +260,7 @@ export default function AdvertiserDetailClient({
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-gray-900 underline underline-offset-2 hover:no-underline"
                       >
-                        Get directions
+                        Get Directions
                       </a>
                     )}
                   </li>
@@ -353,7 +353,7 @@ export default function AdvertiserDetailClient({
             <h2
               className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight mb-5"
             >
-              Active listings &amp; promotions
+              Move-in Ready &amp; Promotions
             </h2>
 
             {promotions.length > 0 && (
@@ -372,7 +372,7 @@ export default function AdvertiserDetailClient({
             {listings.length > 0 && (
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
-                  Listings
+                  Move-in Ready Homes
                 </p>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {listings.map((l) => (
@@ -391,19 +391,19 @@ export default function AdvertiserDetailClient({
               href={`/builders/${builderNameToSlug(a.name)}`}
               className="inline-flex items-center gap-1 mt-5 text-sm font-medium text-gray-900 underline underline-offset-2 hover:no-underline"
             >
-              View all from {a.name} →
+              View All From {a.name} →
             </Link>
           </section>
         )}
 
         <div className="border-t border-gray-200 pt-6">
           <p className="text-sm text-gray-600 font-light">
-            Interested in becoming a partner?{' '}
+            Interested In Becoming A Partner?{' '}
             <Link
               href="/advertise"
               className="text-gray-900 underline underline-offset-2 hover:no-underline"
             >
-              Learn about advertising on Realty News Now
+              Learn About Advertising On Realty News Now
             </Link>
             .
           </p>
@@ -507,7 +507,7 @@ function SectionPills({
   if (hasArticles) pills.push({ id: 'feature-articles', label: 'Articles' });
   if (hasLocations) pills.push({ id: 'locations', label: 'Locations' });
   if (hasStaff) pills.push({ id: 'team', label: 'Team' });
-  if (hasInventory) pills.push({ id: 'listings', label: 'Listings' });
+  if (hasInventory) pills.push({ id: 'listings', label: 'Move-in Ready Homes' });
 
   if (pills.length <= 1) return null;
 
