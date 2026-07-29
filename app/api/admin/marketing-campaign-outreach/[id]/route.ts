@@ -15,6 +15,7 @@ import {
   type AudienceFilter,
 } from '@/lib/marketing-campaigns';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -108,7 +109,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
   }
 }
 
-export async function DELETE(_req: NextRequest, ctx: RouteCtx) {
+export const DELETE = withAdminTracking(async function DELETE(_req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await ctx.params;
@@ -122,4 +123,4 @@ export async function DELETE(_req: NextRequest, ctx: RouteCtx) {
   } catch (err) {
     return NextResponse.json({ error: 'delete failed', detail: err instanceof Error ? err.message : 'error' }, { status: 500 });
   }
-}
+});

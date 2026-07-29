@@ -33,6 +33,7 @@ import {
   type AgreementStatus,
   type PaymentMode,
 } from '@/lib/agreements';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -549,7 +550,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST() {
+export const POST = withAdminTracking(async function POST() {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -563,4 +564,4 @@ export async function POST() {
       { status: 500 },
     );
   }
-}
+});

@@ -9,6 +9,7 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { sendOneRecipient } from '@/lib/marketing-email';
 import { resolveAttachments, appendAttachmentLinkButton, type AttachmentRef } from '@/lib/server/email-attachments';
 import { appendSignature } from '@/lib/email/signature';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,7 +35,7 @@ const testSchema = z.object({
   include_signature: z.boolean().default(true),
 }).strict();
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -107,4 +108,4 @@ export async function POST(req: NextRequest) {
       detail: err instanceof Error ? err.message : 'error',
     }, { status: 500 });
   }
-}
+});

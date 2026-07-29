@@ -21,6 +21,7 @@ import { requireAdmin } from '@/lib/server/auth/admin';
 import { ensureSchema } from '@/lib/db';
 import { isAdChannel, type AdChannel } from '@/lib/ad-channels';
 import { createTearsheet } from '@/lib/server/tearsheets-store';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,7 +42,7 @@ function readNumber(fd: FormData, key: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await requireAdmin().catch(() => null);
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
@@ -112,4 +113,4 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

@@ -8,11 +8,12 @@ import { NextResponse } from 'next/server';
 import { ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { syncAdvertisersFromAdvertisers } from '@/lib/mailing';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST() {
+export const POST = withAdminTracking(async function POST() {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -27,4 +28,4 @@ export async function POST() {
     console.error('[admin/mailing/sync-advertisers]', msg);
     return NextResponse.json({ error: 'sync failed', detail: msg }, { status: 500 });
   }
-}
+});

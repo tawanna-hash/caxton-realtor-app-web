@@ -23,6 +23,7 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { extractUploadedAgreementFields } from '@/lib/server/agreement-upload-extract';
 import { type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
 import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -55,7 +56,7 @@ function sanitizeFilename(filename: string): string {
     .join(' ');
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -215,4 +216,4 @@ export async function POST(req: NextRequest) {
     console.error('[admin/agreements/upload POST]', errMessage(err));
     return NextResponse.json({ error: 'upload failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});

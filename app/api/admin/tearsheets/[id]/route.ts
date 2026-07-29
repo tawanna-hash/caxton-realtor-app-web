@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { ensureSchema } from '@/lib/db';
 import { deleteTearsheet, getTearsheet } from '@/lib/server/tearsheets-store';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,11 +21,11 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   return NextResponse.json({ tearsheet: ts });
 }
 
-export async function DELETE(_req: NextRequest, ctx: Ctx) {
+export const DELETE = withAdminTracking(async function DELETE(_req: NextRequest, ctx: Ctx) {
   const admin = await requireAdmin().catch(() => null);
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   await ensureSchema();
   const { id } = await ctx.params;
   const ok = await deleteTearsheet(id);
   return NextResponse.json({ ok });
-}
+});

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withAdminTracking(async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   await ensureSchema();
@@ -34,4 +35,4 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   `;
 
   return NextResponse.json({ ok: true, cancelled: cancelled.length, root_id: rootId });
-}
+});

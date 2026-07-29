@@ -20,6 +20,7 @@ import {
 import type { Advertiser } from '@/lib/advertisers';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getEmailProvider } from '@/lib/server/email';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -56,7 +57,7 @@ interface BatchResult {
   error?: string;
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -267,4 +268,4 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   }
-}
+});

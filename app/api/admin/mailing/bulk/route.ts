@@ -17,6 +17,7 @@ import {
   type MailingContactInput,
 } from '@/lib/mailing';
 import { suppressEmailsBatch } from '@/lib/server/email-suppressions';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,7 +28,7 @@ function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -281,4 +282,4 @@ export async function POST(req: NextRequest) {
     console.error('[admin/mailing bulk]', errMessage(err));
     return NextResponse.json({ error: 'bulk action failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});

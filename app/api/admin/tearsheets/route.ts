@@ -12,6 +12,7 @@ import {
   TEARSHEET_STATUS_VALUES,
   type TearsheetStatus,
 } from '@/lib/insertion-orders';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ rows });
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await requireAdmin().catch(() => null);
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   await ensureSchema();
@@ -72,4 +73,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ tearsheet: ts }, { status: 201 });
-}
+});

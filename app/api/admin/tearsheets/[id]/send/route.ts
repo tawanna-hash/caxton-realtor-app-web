@@ -8,13 +8,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { ensureSchema, getSql } from '@/lib/db';
 import { getTearsheet, markTearsheetSent } from '@/lib/server/tearsheets-store';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export async function POST(req: NextRequest, ctx: Ctx) {
+export const POST = withAdminTracking(async function POST(req: NextRequest, ctx: Ctx) {
   const admin = await requireAdmin().catch(() => null);
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   await ensureSchema();
@@ -71,4 +72,4 @@ export async function POST(req: NextRequest, ctx: Ctx) {
 
   const updated = await markTearsheetSent(id, to);
   return NextResponse.json({ tearsheet: updated, emailed, to });
-}
+});

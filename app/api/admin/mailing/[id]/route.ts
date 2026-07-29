@@ -15,6 +15,7 @@ import {
   type MailingSegment,
 } from '@/lib/mailing';
 import { suppressEmail } from '@/lib/server/email-suppressions';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,7 +34,7 @@ function resolveSegment(raw: unknown): MailingSegment | null {
 
 type RouteCtx = { params: Promise<{ id: string }> };
 
-export async function PATCH(req: NextRequest, ctx: RouteCtx) {
+export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -79,9 +80,9 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     console.error('[admin/mailing PATCH]', errMessage(err));
     return NextResponse.json({ error: 'update failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(req: NextRequest, ctx: RouteCtx) {
+export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -138,4 +139,4 @@ export async function DELETE(req: NextRequest, ctx: RouteCtx) {
     console.error('[admin/mailing DELETE]', errMessage(err));
     return NextResponse.json({ error: 'delete failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});

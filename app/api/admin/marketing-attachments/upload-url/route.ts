@@ -13,13 +13,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { requireAdmin } from '@/lib/server/auth/admin';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const MAX_BYTES = 40 * 1024 * 1024; // Resend per-email ceiling
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   await requireAdmin();
   const body = (await req.json()) as HandleUploadBody;
   try {
@@ -45,4 +46,4 @@ export async function POST(req: NextRequest) {
     const message = err instanceof Error ? err.message : 'upload token failed';
     return NextResponse.json({ error: message }, { status: 400 });
   }
-}
+});

@@ -27,6 +27,7 @@
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse, type NextRequest } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,7 +46,7 @@ async function isAdmin(): Promise<boolean> {
   }
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withAdminTracking(async function POST(request: NextRequest) {
   // Auth check — fail-closed before we even parse the body.
   const ok = await isAdmin();
   if (!ok) {
@@ -100,4 +101,4 @@ export async function POST(request: NextRequest) {
     console.error('[admin/inventory/upload-token] error:', msg);
     return NextResponse.json({ error: msg }, { status: 400 });
   }
-}
+});

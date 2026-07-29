@@ -14,6 +14,7 @@ import {
 } from '@/lib/invoices';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -162,4 +163,4 @@ export async function POST(req: NextRequest) {
     await flushServerEvents();
     return NextResponse.json({ error: 'create failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});

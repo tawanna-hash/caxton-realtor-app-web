@@ -18,6 +18,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getDocumentProxy, extractText } from 'unpdf';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -170,7 +171,7 @@ function classifyPromoType(text: string): 'rate_buydown' | 'incentive' | 'broker
 
 // ── Route ─────────────────────────────────────────────────────────────────
 
-export async function POST(request: NextRequest) {
+export const POST = withAdminTracking(async function POST(request: NextRequest) {
   const ok = await isAdmin();
   if (!ok) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -245,4 +246,4 @@ export async function POST(request: NextRequest) {
     sqftMax: sqft.max,
     text: body.slice(0, 4000),
   });
-}
+});

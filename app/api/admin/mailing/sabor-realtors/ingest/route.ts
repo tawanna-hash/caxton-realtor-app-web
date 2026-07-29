@@ -16,6 +16,7 @@ import { NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
 import { upsertHoldingContacts } from '@/lib/mailing';
 import type { SaborMemberRecord } from '@/lib/sabor-realtor-scraper';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -86,7 +87,7 @@ interface IngestBody {
   partial?: boolean;
 }
 
-export async function POST(req: Request) {
+export const POST = withAdminTracking(async function POST(req: Request) {
   if (!process.env.CRON_SECRET) {
     return NextResponse.json(
       { ok: false, message: 'CRON_SECRET env var is not set.' },
@@ -164,4 +165,4 @@ export async function POST(req: Request) {
     received: records.length,
     ...upsert,
   });
-}
+});

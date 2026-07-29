@@ -7,11 +7,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { resolveCrmAudience, type CrmAudienceFilter } from '../_shared';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -40,4 +41,4 @@ export async function POST(req: NextRequest) {
       detail: err instanceof Error ? err.message : 'error',
     }, { status: 500 });
   }
-}
+});

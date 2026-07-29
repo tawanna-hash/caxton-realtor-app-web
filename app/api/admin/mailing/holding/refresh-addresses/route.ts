@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { ensureSchema } from '@/lib/db';
 import { refreshHoldingAddressesFromAdvertisers } from '@/lib/server/mailing/advertiser-sync';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,7 +25,7 @@ function errMessage(err: unknown): string {
 
 const ALLOWED_SOURCES = new Set(['ramco-sabor', 'unlockmls']);
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -52,4 +53,4 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     return NextResponse.json({ error: errMessage(err) }, { status: 500 });
   }
-}
+});

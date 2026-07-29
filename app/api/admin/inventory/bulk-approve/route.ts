@@ -10,11 +10,12 @@
 import { NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { bulkApprovePendingBuilderInventory } from '@/lib/builder-inventory';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST() {
+export const POST = withAdminTracking(async function POST() {
   let adminEmail: string | null = null;
   try {
     const admin = await getCurrentAdmin();
@@ -40,4 +41,4 @@ export async function POST() {
       { status: 500 },
     );
   }
-}
+});

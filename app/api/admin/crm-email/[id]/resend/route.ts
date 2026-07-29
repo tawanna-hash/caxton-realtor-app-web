@@ -8,11 +8,12 @@ import {
 } from '@/lib/server/marketing-send';
 import { resolveCrmAudience, type CrmAudienceFilter } from '../../_shared';
 import { resolveAttachments, type AttachmentRef } from '@/lib/server/email-attachments';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withAdminTracking(async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   await ensureSchema();
@@ -92,4 +93,4 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   });
 
   return NextResponse.json({ ok: true, outreach_id: newId, ...result });
-}
+});

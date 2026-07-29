@@ -16,6 +16,7 @@ import {
   getInsertionOrder,
   setInsertionOrderPdfUrl,
 } from '@/lib/server/insertion-orders-store';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,7 +28,7 @@ function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-export async function POST(req: NextRequest, ctx: Ctx) {
+export const POST = withAdminTracking(async function POST(req: NextRequest, ctx: Ctx) {
   const admin = await requireAdmin().catch(() => null);
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
@@ -86,13 +87,13 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       { status: 500 },
     );
   }
-}
+});
 
 /**
  * DELETE — clear the uploaded PDF and fall back to the generated renderer.
  * Body: none. Optional if you want a "remove" affordance in the drawer.
  */
-export async function DELETE(_req: NextRequest, ctx: Ctx) {
+export const DELETE = withAdminTracking(async function DELETE(_req: NextRequest, ctx: Ctx) {
   const admin = await requireAdmin().catch(() => null);
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
@@ -103,4 +104,4 @@ export async function DELETE(_req: NextRequest, ctx: Ctx) {
   const updated = await setInsertionOrderPdfUrl(id, null);
   if (!updated) return NextResponse.json({ error: 'not found' }, { status: 404 });
   return NextResponse.json({ io: updated });
-}
+});

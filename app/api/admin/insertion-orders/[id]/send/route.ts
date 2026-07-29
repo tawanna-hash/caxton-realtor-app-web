@@ -11,13 +11,14 @@ import {
   getInsertionOrder,
   updateInsertionOrder,
 } from '@/lib/server/insertion-orders-store';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export async function POST(_req: NextRequest, ctx: Ctx) {
+export const POST = withAdminTracking(async function POST(_req: NextRequest, ctx: Ctx) {
   const admin = await requireAdmin().catch(() => null);
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
@@ -51,4 +52,4 @@ export async function POST(_req: NextRequest, ctx: Ctx) {
       { status: 400 },
     );
   }
-}
+});

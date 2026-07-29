@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -64,7 +65,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
   }
 }
 
-export async function PATCH(req: NextRequest, ctx: RouteCtx) {
+export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ctx: RouteCtx) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -176,9 +177,9 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     console.error('[admin/magazines/[id] PATCH] failed:', msg);
     return NextResponse.json({ error: 'database error', detail: msg }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(req: NextRequest, ctx: RouteCtx) {
+export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, ctx: RouteCtx) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -198,4 +199,4 @@ export async function DELETE(req: NextRequest, ctx: RouteCtx) {
     console.error('[admin/magazines/[id] DELETE] failed:', errMessage(err));
     return NextResponse.json({ error: 'database error' }, { status: 500 });
   }
-}
+});

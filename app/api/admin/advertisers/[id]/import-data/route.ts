@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { insertExtractedAdvertiserData } from '@/lib/server/advertiser-import-insert';
 import { detectTabularKind, parseTabularUpload } from '@/lib/server/tabular-import';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -25,7 +26,7 @@ function errMessage(err: unknown): string {
 
 type RouteCtx = { params: Promise<{ id: string }> };
 
-export async function POST(req: NextRequest, ctx: RouteCtx) {
+export const POST = withAdminTracking(async function POST(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -101,4 +102,4 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       { status: 500 },
     );
   }
-}
+});

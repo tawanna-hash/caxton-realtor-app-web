@@ -10,6 +10,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { ensureSchema, getSql } from '@/lib/db';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,7 +33,7 @@ export async function GET() {
 
 // Add a new industry label to the picklist so it appears in the dropdown for
 // every advertiser. Idempotent on label (ON CONFLICT DO NOTHING).
-export async function POST(req: Request) {
+export const POST = withAdminTracking(async function POST(req: Request) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -50,4 +51,4 @@ export async function POST(req: Request) {
     ON CONFLICT (label) DO NOTHING
   `;
   return NextResponse.json({ label });
-}
+});

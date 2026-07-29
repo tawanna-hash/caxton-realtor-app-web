@@ -26,6 +26,7 @@ import {
 } from '@/lib/server/billing-crm-sync';
 import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
 import { captureServerEvent } from '@/lib/server/posthog';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -61,7 +62,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
   }
 }
 
-export async function PATCH(req: NextRequest, ctx: RouteCtx) {
+export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await ctx.params;
@@ -312,9 +313,9 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     console.error('[admin/agreements PATCH]', errMessage(err));
     return NextResponse.json({ error: 'patch failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(_req: NextRequest, ctx: RouteCtx) {
+export const DELETE = withAdminTracking(async function DELETE(_req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await ctx.params;
@@ -328,4 +329,4 @@ export async function DELETE(_req: NextRequest, ctx: RouteCtx) {
   } catch (err) {
     return NextResponse.json({ error: 'delete failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});

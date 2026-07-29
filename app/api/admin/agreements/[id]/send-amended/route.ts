@@ -20,6 +20,7 @@ import { sendEmail } from '@/lib/email';
 import { amendedAgreementEmail } from '@/lib/email-templates';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -39,7 +40,7 @@ function slugifyForFilename(s: string): string {
     .slice(0, 60) || 'agreement';
 }
 
-export async function POST(req: NextRequest, ctx: RouteCtx) {
+export const POST = withAdminTracking(async function POST(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -148,4 +149,4 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       { status: 500 },
     );
   }
-}
+});

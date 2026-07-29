@@ -19,6 +19,7 @@ import {
   type PromoType,
   type Status,
 } from '@/lib/builder-inventory';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -102,7 +103,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   }
 }
 
-export async function PATCH(req: NextRequest, ctx: Ctx) {
+export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ctx: Ctx) {
   const admin = await fetchAdmin();
   if (!admin) {
     return NextResponse.json(
@@ -234,9 +235,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       { status: 500 },
     );
   }
-}
+});
 
-export async function DELETE(req: NextRequest, ctx: Ctx) {
+export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, ctx: Ctx) {
   const admin = await fetchAdmin();
   if (!admin) {
     return NextResponse.json(
@@ -265,4 +266,4 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
       { status: 500 },
     );
   }
-}
+});

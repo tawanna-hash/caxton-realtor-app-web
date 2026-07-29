@@ -16,6 +16,7 @@ import {
 import { resolveCrmAudience, ensureCrmOutreachCampaign, type CrmAudienceFilter } from '../_shared';
 import { resolveAttachments, appendAttachmentLinkButton, type AttachmentRef } from '@/lib/server/email-attachments';
 import { appendSignature } from '@/lib/email/signature';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -59,7 +60,7 @@ const sendSchema = z.object({
   { message: 'scheduled_for required when mode=schedule', path: ['scheduled_for'] },
 );
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -188,4 +189,4 @@ export async function POST(req: NextRequest) {
     sent: result.sent,
     failed: result.failed,
   });
-}
+});

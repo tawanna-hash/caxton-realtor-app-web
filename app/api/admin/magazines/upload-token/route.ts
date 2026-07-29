@@ -13,6 +13,7 @@
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse, type NextRequest } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,7 +34,7 @@ async function isAdmin(): Promise<boolean> {
   }
 }
 
-export async function POST(request: NextRequest) {  const ok = await isAdmin();
+export const POST = withAdminTracking(async function POST(request: NextRequest) {  const ok = await isAdmin();
   if (!ok) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -92,4 +93,4 @@ export async function POST(request: NextRequest) {  const ok = await isAdmin();
     console.error('[admin/magazines/upload-token] error:', msg);
     return NextResponse.json({ error: msg }, { status: 400 });
   }
-}
+});

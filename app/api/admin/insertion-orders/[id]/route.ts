@@ -10,6 +10,7 @@ import {
   updateInsertionOrder,
 } from '@/lib/server/insertion-orders-store';
 import { IO_STATUS_VALUES, type IoStatus } from '@/lib/insertion-orders';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,7 +27,7 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
   return NextResponse.json({ io });
 }
 
-export async function PATCH(req: NextRequest, ctx: Ctx) {
+export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ctx: Ctx) {
   const admin = await requireAdmin().catch(() => null);
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   await ensureSchema();
@@ -64,13 +65,13 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
       { status: 400 },
     );
   }
-}
+});
 
-export async function DELETE(_req: NextRequest, ctx: Ctx) {
+export const DELETE = withAdminTracking(async function DELETE(_req: NextRequest, ctx: Ctx) {
   const admin = await requireAdmin().catch(() => null);
   if (!admin) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   await ensureSchema();
   const { id } = await ctx.params;
   const ok = await deleteInsertionOrder(id);
   return NextResponse.json({ ok });
-}
+});

@@ -19,6 +19,7 @@ import {
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { upsertAdvertiserMailingByAdvertiserId } from '@/lib/mailing';
 import { syncAdvertiserToAgreement } from '@/lib/server/billing-crm-sync';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -269,7 +270,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
   }
 }
 
-export async function DELETE(req: NextRequest, ctx: RouteCtx) {
+export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, ctx: RouteCtx) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -292,4 +293,4 @@ export async function DELETE(req: NextRequest, ctx: RouteCtx) {
     console.error('[admin/advertisers DELETE]', errMessage(err));
     return NextResponse.json({ error: 'delete failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});

@@ -23,6 +23,7 @@ import type {
   PriceBand,
   DeltaDirection,
 } from '@/lib/sabor-mls';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const dynamic = 'force-dynamic';
 
@@ -165,7 +166,7 @@ export async function GET() {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   try {
@@ -201,9 +202,9 @@ export async function POST(req: NextRequest) {
     console.error('[admin/sabor-mls POST]', err);
     return NextResponse.json({ ok: false, error: 'failed to save report' }, { status: 500 });
   }
-}
+});
 
-export async function PATCH(req: NextRequest) {
+export const PATCH = withAdminTracking(async function PATCH(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   try {
@@ -241,9 +242,9 @@ export async function PATCH(req: NextRequest) {
     console.error('[admin/sabor-mls PATCH]', err);
     return NextResponse.json({ ok: false, error: 'failed to update report' }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(req: NextRequest) {
+export const DELETE = withAdminTracking(async function DELETE(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   try {
@@ -257,4 +258,4 @@ export async function DELETE(req: NextRequest) {
     console.error('[admin/sabor-mls DELETE]', err);
     return NextResponse.json({ ok: false, error: 'failed to delete report' }, { status: 500 });
   }
-}
+});

@@ -15,6 +15,7 @@ import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { isMailingSegment, segmentFromSlug, splitFullName } from '@/lib/mailing';
 import { marketForSegment } from '@/lib/server/mailing/email-only-routing';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -47,7 +48,7 @@ function s(v: unknown): string | null {
   return t || null;
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -200,4 +201,4 @@ export async function POST(req: NextRequest) {
     console.error('[admin/mailing import]', errMessage(err));
     return NextResponse.json({ error: 'import failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});

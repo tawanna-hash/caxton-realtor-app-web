@@ -19,6 +19,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { buildMagazineGif, type GifVariant } from '@/lib/magazine-gif';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,7 +49,7 @@ type MagazineRow = {
   gif_pingpong_url: string | null;
 };
 
-export async function POST(req: NextRequest, ctx: RouteCtx) {
+export const POST = withAdminTracking(async function POST(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -125,4 +126,4 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     console.error('[admin/magazines/gif POST]', message);
     return NextResponse.json({ error: 'render failed', detail: message }, { status: 500 });
   }
-}
+});

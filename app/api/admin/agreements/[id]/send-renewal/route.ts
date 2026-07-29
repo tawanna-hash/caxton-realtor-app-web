@@ -11,6 +11,7 @@ import { sendEmail } from '@/lib/email';
 import { renewalEmail } from '@/lib/email-templates';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,7 +34,7 @@ function humanDate(iso: string | null | undefined): string {
   } catch { return iso; }
 }
 
-export async function POST(req: NextRequest, ctx: RouteCtx) {
+export const POST = withAdminTracking(async function POST(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -107,4 +108,4 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const msg = err instanceof Error ? err.message : 'unknown error';
     return NextResponse.json({ error: 'send-renewal failed', detail: msg }, { status: 500 });
   }
-}
+});

@@ -13,6 +13,7 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getSyncSourceForWebsite } from '@/lib/server/website-sync';
 import { syncAdvertiserFromWebsite } from '@/lib/server/website-sync/upsert';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -53,7 +54,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
   });
 }
 
-export async function POST(_req: NextRequest, ctx: RouteCtx) {
+export const POST = withAdminTracking(async function POST(_req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -107,4 +108,4 @@ export async function POST(_req: NextRequest, ctx: RouteCtx) {
       { status: 500 },
     );
   }
-}
+});

@@ -21,6 +21,7 @@ import {
 } from '@/lib/publication-theme';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { upsertAdvertiserMailingByAdvertiserId } from '@/lib/mailing';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -81,7 +82,7 @@ export async function GET() {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -157,4 +158,4 @@ export async function POST(req: NextRequest) {
     console.error('[admin/advertisers POST]', errMessage(err));
     return NextResponse.json({ error: 'create failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});

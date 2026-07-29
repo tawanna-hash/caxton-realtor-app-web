@@ -14,6 +14,7 @@ import {
   type PortalLinkPurpose,
 } from '@/lib/portal';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     return NextResponse.json({ error: 'create failed', detail: err instanceof Error ? err.message : 'error' }, { status: 500 });
   }
-}
+});
 
 // ── Email templates ─────────────────────────────────────────────────
 function purposeBlurb(p: PortalLinkPurpose): string {

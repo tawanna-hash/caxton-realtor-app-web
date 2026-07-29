@@ -18,6 +18,7 @@ import {
   type Hotspot,
 } from '@/lib/hotspots';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -74,7 +75,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
   }
 }
 
-export async function POST(req: NextRequest, ctx: RouteCtx) {
+export const POST = withAdminTracking(async function POST(req: NextRequest, ctx: RouteCtx) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -175,4 +176,4 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       { status: 500 },
     );
   }
-}
+});

@@ -18,6 +18,7 @@ import { syncAgreementToAdvertiser } from '@/lib/server/billing-crm-sync';
 import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
 import type { Agreement } from '@/lib/agreements';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,7 +63,7 @@ export async function GET() {
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -265,4 +266,4 @@ export async function POST(req: NextRequest) {
     await flushServerEvents();
     return NextResponse.json({ error: 'create failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});

@@ -13,6 +13,7 @@
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,7 +37,7 @@ async function verifyAdmin(): Promise<boolean> {
   }
 }
 
-export async function POST(request: Request): Promise<NextResponse> {
+export const POST = withAdminTracking(async function POST(request: Request): Promise<NextResponse> {
   if (!(await verifyAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -65,4 +66,4 @@ export async function POST(request: Request): Promise<NextResponse> {
     const message = err instanceof Error ? err.message : 'Upload failed';
     return NextResponse.json({ error: message }, { status: 400 });
   }
-}
+});

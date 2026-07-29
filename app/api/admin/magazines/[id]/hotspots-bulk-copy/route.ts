@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import type { Hotspot } from '@/lib/hotspots';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,7 +36,7 @@ function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
 }
 
-export async function POST(req: NextRequest, ctx: RouteCtx) {
+export const POST = withAdminTracking(async function POST(req: NextRequest, ctx: RouteCtx) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -110,4 +111,4 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     console.error('[admin/hotspots-bulk-copy] failed:', errMessage(err));
     return NextResponse.json({ error: 'database error', detail: errMessage(err) }, { status: 500 });
   }
-}
+});

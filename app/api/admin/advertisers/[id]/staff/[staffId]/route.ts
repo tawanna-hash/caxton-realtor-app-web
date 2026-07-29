@@ -8,6 +8,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import type { AdvertiserStaff } from '@/lib/advertisers';
 import { upsertStaffMailingByStaffId } from '@/lib/mailing';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 type RouteCtx = { params: Promise<{ id: string; staffId: string }> };
 type StaffRow = Omit<AdvertiserStaff, 'location_ids'>;
 
-export async function PATCH(req: NextRequest, ctx: RouteCtx) {
+export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -118,9 +119,9 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     console.error('[staff PATCH]', errMessage(err));
     return NextResponse.json({ error: 'update failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(req: NextRequest, ctx: RouteCtx) {
+export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -149,4 +150,4 @@ export async function DELETE(req: NextRequest, ctx: RouteCtx) {
     console.error('[staff DELETE]', errMessage(err));
     return NextResponse.json({ error: 'delete failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});

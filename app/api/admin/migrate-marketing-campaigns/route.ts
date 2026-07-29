@@ -23,13 +23,14 @@
 import { NextResponse } from 'next/server';
 import { getSql } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const MIGRATION_NAME = '2026_05_29__marketing_campaigns';
 
-export async function POST() {
+export const POST = withAdminTracking(async function POST() {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -169,4 +170,4 @@ export async function POST() {
       (SELECT count(*)::int FROM marketing_campaign_outreach) AS outreach
   `;
   return NextResponse.json({ migration: MIGRATION_NAME, status: 'applied', results, counts: counts[0] });
-}
+});

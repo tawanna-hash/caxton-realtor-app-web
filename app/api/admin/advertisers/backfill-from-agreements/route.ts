@@ -14,6 +14,7 @@ import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { syncAgreementToAdvertiser } from '@/lib/server/billing-crm-sync';
 import type { Agreement } from '@/lib/agreements';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,7 +23,7 @@ function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
 }
 
-export async function POST() {
+export const POST = withAdminTracking(async function POST() {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -68,4 +69,4 @@ export async function POST() {
       { status: 500 },
     );
   }
-}
+});

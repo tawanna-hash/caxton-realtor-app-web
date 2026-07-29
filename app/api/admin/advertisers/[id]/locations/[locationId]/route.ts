@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { type AdvertiserLocation } from '@/lib/advertisers';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,7 +20,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 type RouteCtx = { params: Promise<{ id: string; locationId: string }> };
 
-export async function PATCH(req: NextRequest, ctx: RouteCtx) {
+export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -90,9 +91,9 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     console.error('[locations PATCH]', errMessage(err));
     return NextResponse.json({ error: 'update failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(req: NextRequest, ctx: RouteCtx) {
+export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, ctx: RouteCtx) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -121,4 +122,4 @@ export async function DELETE(req: NextRequest, ctx: RouteCtx) {
     console.error('[locations DELETE]', errMessage(err));
     return NextResponse.json({ error: 'delete failed', detail: errMessage(err) }, { status: 500 });
   }
-}
+});

@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { extractFromRealtylineGraphic } from '@/lib/server/gemini-realtyline-extract';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,7 +31,7 @@ function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
 
@@ -87,4 +88,4 @@ export async function POST(req: NextRequest) {
   await flushServerEvents();
 
   return NextResponse.json({ ok: true, extracted: d });
-}
+});

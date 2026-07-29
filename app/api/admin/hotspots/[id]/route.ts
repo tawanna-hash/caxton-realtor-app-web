@@ -17,6 +17,7 @@ import {
   type HotspotType,
 } from '@/lib/hotspots';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
+import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,7 +46,7 @@ function errMessage(err: unknown): string {
   return err instanceof Error ? err.message : 'unknown error';
 }
 
-export async function PATCH(req: NextRequest, ctx: RouteCtx) {
+export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ctx: RouteCtx) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -166,9 +167,9 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     console.error('[admin/hotspots PATCH] failed:', errMessage(err));
     return NextResponse.json({ error: errMessage(err) }, { status: 400 });
   }
-}
+});
 
-export async function DELETE(req: NextRequest, ctx: RouteCtx) {
+export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, ctx: RouteCtx) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -191,4 +192,4 @@ export async function DELETE(req: NextRequest, ctx: RouteCtx) {
     console.error('[admin/hotspots DELETE] failed:', errMessage(err));
     return NextResponse.json({ error: 'database error' }, { status: 500 });
   }
-}
+});
