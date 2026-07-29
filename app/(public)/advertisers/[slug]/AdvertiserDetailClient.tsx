@@ -142,12 +142,20 @@ export default function AdvertiserDetailClient({
           }}
         />
 
-        {eventPhotos.length > 0 && <EventPhotosSection months={eventPhotos} />}
-
-        {featureArticles.length > 0 && <FeatureArticlesSection articles={featureArticles} />}
+        {/* Section anchor pills — quick jump nav */}
+        <SectionPills
+          advertiser={a}
+          hasBio={!!a.bio}
+          hasEventPhotos={eventPhotos.length > 0}
+          hasArticles={featureArticles.length > 0}
+          hasLocations={sortedLocations.length > 0 || (!!address && locations.length === 0)}
+          hasStaff={sortedStaff.length > 0}
+          hasInventory={listings.length > 0 || promotions.length > 0}
+          accent={BRAND_PURPLE}
+        />
 
         {a.bio && (
-          <section className="mb-10">
+          <section id="about" className="mb-10 scroll-mt-4">
             <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
               About
             </h2>
@@ -157,9 +165,13 @@ export default function AdvertiserDetailClient({
           </section>
         )}
 
+        {eventPhotos.length > 0 && <EventPhotosSection months={eventPhotos} />}
+
+        {featureArticles.length > 0 && <FeatureArticlesSection articles={featureArticles} />}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8 mb-10">
           {locations.length === 0 && address && (
-            <section>
+            <section id="location" className="scroll-mt-4">
               <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
                 Location
               </h2>
@@ -181,7 +193,7 @@ export default function AdvertiserDetailClient({
         </div>
 
         {sortedLocations.length > 0 && (
-          <section className="mb-10">
+          <section id="locations" className="mb-10 scroll-mt-4">
             <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
               {sortedLocations.length === 1 ? 'Location' : 'Locations'}
             </h2>
@@ -259,7 +271,7 @@ export default function AdvertiserDetailClient({
         )}
 
         {sortedStaff.length > 0 && (
-          <section className="mb-10">
+          <section id="team" className="mb-10 scroll-mt-4">
             <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
               Team
             </h2>
@@ -337,7 +349,7 @@ export default function AdvertiserDetailClient({
 
 
         {(listings.length > 0 || promotions.length > 0) && (
-          <section className="border-t border-gray-200 pt-8 mb-10">
+          <section id="listings" className="border-t border-gray-200 pt-8 mb-10 scroll-mt-4">
             <h2
               className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight mb-5"
             >
@@ -468,6 +480,57 @@ function ListingThumbnail({ src }: { src: string | null }) {
   );
 }
 
+// Horizontal scrollable row of anchor pills for quick section jumping.
+// Each pill links to #section-id so the browser handles smooth scroll.
+// Only sections that exist on this advertiser's page are shown.
+function SectionPills({
+  hasBio,
+  hasEventPhotos,
+  hasArticles,
+  hasLocations,
+  hasStaff,
+  hasInventory,
+  accent,
+}: {
+  advertiser: Advertiser;
+  hasBio: boolean;
+  hasEventPhotos: boolean;
+  hasArticles: boolean;
+  hasLocations: boolean;
+  hasStaff: boolean;
+  hasInventory: boolean;
+  accent: string;
+}) {
+  const pills: { id: string; label: string }[] = [];
+  if (hasBio) pills.push({ id: 'about', label: 'About' });
+  if (hasEventPhotos) pills.push({ id: 'event-photos', label: 'Event Photos' });
+  if (hasArticles) pills.push({ id: 'feature-articles', label: 'Articles' });
+  if (hasLocations) pills.push({ id: 'locations', label: 'Locations' });
+  if (hasStaff) pills.push({ id: 'team', label: 'Team' });
+  if (hasInventory) pills.push({ id: 'listings', label: 'Listings' });
+
+  if (pills.length <= 1) return null;
+
+  return (
+    <nav className="flex flex-wrap gap-2 mb-8" aria-label="Section navigation">
+      {pills.map((pill) => (
+        <a
+          key={pill.id}
+          href={`#${pill.id}`}
+          className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border transition-colors hover:bg-gray-50"
+          style={{
+            color: accent,
+            borderColor: `${accent}40`,
+            background: `${accent}08`,
+          }}
+        >
+          {pill.label}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
 const MONTHS_PER_PAGE = 3;
 
 // Event coverage the publication shot for this advertiser, newest month first.
@@ -487,7 +550,7 @@ function EventPhotosSection({ months }: { months: EventPhotoMonth[] }) {
   const visibleMonths = months.slice(0, visibleCount);
 
   return (
-    <section className="border-t border-gray-200 pt-8 mb-10">
+    <section id="event-photos" className="border-t border-gray-200 pt-8 mb-10 scroll-mt-4">
       <h2
         className="text-xl sm:text-2xl font-semibold tracking-tight mb-5"
         style={{ color: BRAND_PURPLE }}
@@ -586,7 +649,7 @@ function EventPhotosSection({ months }: { months: EventPhotoMonth[] }) {
 // case the card expands in place rather than navigating away.
 function FeatureArticlesSection({ articles }: { articles: FeatureArticle[] }) {
   return (
-    <section className="border-t border-gray-200 pt-8 mb-10">
+    <section id="feature-articles" className="border-t border-gray-200 pt-8 mb-10 scroll-mt-4">
       <h2
         className="text-xl sm:text-2xl font-semibold tracking-tight mb-5"
         style={{ color: BRAND_PURPLE }}
