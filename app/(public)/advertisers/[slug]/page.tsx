@@ -13,6 +13,7 @@ import { ensureSchema, getSql } from '@/lib/db';
 import { ensurePublicationColumn, getPublicationTheme } from '@/lib/publication-theme';
 import type { Advertiser, AdvertiserLocation, AdvertiserStaff } from '@/lib/advertisers';
 import { listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
+import { listEventPhotosByAdvertiser, type EventPhotoMonth } from '@/lib/event-photos';
 import AdvertiserDetailClient from './AdvertiserDetailClient';
 
 // Advertiser detail pages change infrequently (edits happen via /admin, not
@@ -163,6 +164,15 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
     console.warn('[advertiser detail] locations/staff load failed:', err);
   }
 
+  // Event photo coverage the admin tagged with this advertiser. Best-effort:
+  // the gallery is supplementary, so a failure here shouldn't 500 the profile.
+  let eventPhotos: EventPhotoMonth[] = [];
+  try {
+    eventPhotos = await listEventPhotosByAdvertiser(advertiser.id);
+  } catch (err) {
+    console.warn('[advertiser detail] event photos load failed:', err);
+  }
+
   const theme = getPublicationTheme(advertiser.publication);
 
   return (
@@ -171,6 +181,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
       inventory={inventoryRows}
       locations={locations}
       staff={staff}
+      eventPhotos={eventPhotos}
       theme={{
         accent: theme.primaryColor,
         label:

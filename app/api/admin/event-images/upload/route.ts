@@ -7,12 +7,14 @@
 //   eventDate  — YYYY-MM (month input) or ISO date string (defaults to current month)
 //   title      — base title; each photo gets "_1", "_2", etc. appended
 //               if not provided, the filename (without extension) is used
+//   advertiserId — associates the photos with an advertiser so they surface on
+//                  that advertiser's public detail page
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { put } from '@vercel/blob';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
-import { createEventPhoto } from '@/lib/event-photos';
+import { createEventPhoto, normalizeAdvertiserId } from '@/lib/event-photos';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -48,6 +50,7 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
   }
   const baseTitle = (form.get('title') as string) || '';
   const publication = (form.get('publication') as string) || 'realtyline';
+  const advertiserId = normalizeAdvertiserId(form.get('advertiserId'));
 
   if (files.length === 0) {
     return NextResponse.json({ error: 'No files provided' }, { status: 400 });
@@ -83,6 +86,7 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
         thumbnailUrl: null,
         description: null,
         publication,
+        advertiserId,
       });
 
       results.push({ url: blob.url, title, ok: true });

@@ -13,6 +13,7 @@
 //     description   TEXT,
 //     publication    TEXT NOT NULL DEFAULT 'realtyline',
 //     uploaded_by    TEXT,
+//     advertiser_id  INTEGER REFERENCES advertisers(id) ON DELETE SET NULL,
 //     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 //   )
 
@@ -27,6 +28,7 @@ export type EventPhoto = {
   description: string | null;
   publication: string;
   uploadedBy: string | null;
+  advertiserId: number | null;
   createdAt: string;
 };
 
@@ -35,6 +37,15 @@ export type EventPhotoMonth = {
   monthLabel: string;       // "December 2025"
   photos: EventPhoto[];
 };
+
+// The advertiser association is optional, and callers hand it over in whatever
+// shape their transport produced: the admin form posts '' for "no advertiser",
+// FormData yields strings, JSON clients send null. Anything that isn't a
+// positive integer means "unassociated".
+export function normalizeAdvertiserId(raw: unknown): number | null {
+  const n = typeof raw === 'string' ? Number(raw) : typeof raw === 'number' ? raw : NaN;
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
 
 let schemaReady = false;
 
@@ -54,8 +65,13 @@ export async function ensureEventPhotosSchema() {
       created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `;
+  await sql`
+    ALTER TABLE event_photos
+    ADD COLUMN IF NOT EXISTS advertiser_id INT REFERENCES advertisers(id) ON DELETE SET NULL
+  `;
   await sql`CREATE INDEX IF NOT EXISTS idx_event_photos_date ON event_photos (event_date DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_event_photos_pub ON event_photos (publication)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_event_photos_advertiser ON event_photos (advertiser_id)`;
   schemaReady = true;
 }
 
@@ -79,6 +95,7 @@ function rowToPhoto(r: Record<string, any>): EventPhoto {
     description: r.description ?? null,
     publication: r.publication,
     uploadedBy: r.uploaded_by ?? null,
+    advertiserId: r.advertiser_id ?? null,
     createdAt: createdAtStr,
   };
 }
@@ -90,25 +107,21 @@ const MONTH_LABELS = [
 
 export async function listEventPhotos(opts: {
   publication?: string;
+  advertiserId?: number | null;
   limit?: number;
 }): Promise<EventPhoto[]> {
   await ensureEventPhotosSchema();
   const sql = getSql();
   const limit = Math.min(opts.limit ?? 500, 2000);
+  const pub = opts.publication ?? null;
+  const advertiserId = opts.advertiserId ?? null;
 
-  // If no publication specified, return all
-  if (!opts.publication) {
-    const rows = await sql`
-      SELECT * FROM event_photos
-      ORDER BY event_date DESC, created_at DESC
-      LIMIT ${limit}
-    `;
-    return rows.map(rowToPhoto);
-  }
-
+  // Null-tolerant predicates keep this to one query — Neon's tagged template
+  // can't interpolate a dynamically built WHERE clause.
   const rows = await sql`
     SELECT * FROM event_photos
-    WHERE publication = ${opts.publication}
+    WHERE (${pub}::text IS NULL OR publication = ${pub}::text)
+      AND (${advertiserId}::int IS NULL OR advertiser_id = ${advertiserId}::int)
     ORDER BY event_date DESC, created_at DESC
     LIMIT ${limit}
   `;
@@ -117,8 +130,19 @@ export async function listEventPhotos(opts: {
 
 export async function listEventPhotosGrouped(opts: {
   publication?: string;
+  advertiserId?: number | null;
 }): Promise<EventPhotoMonth[]> {
   const photos = await listEventPhotos(opts);
+  return groupByMonth(photos);
+}
+
+export async function listEventPhotosByAdvertiser(
+  advertiserId: number,
+): Promise<EventPhotoMonth[]> {
+  return listEventPhotosGrouped({ advertiserId });
+}
+
+function groupByMonth(photos: EventPhoto[]): EventPhotoMonth[] {
   const byMonth = new Map<string, EventPhoto[]>();
 
   for (const p of photos) {
@@ -151,16 +175,17 @@ export async function createEventPhoto(input: {
   description?: string | null;
   publication?: string;
   uploadedBy?: string | null;
+  advertiserId?: number | null;
 }): Promise<EventPhoto> {
   await ensureEventPhotosSchema();
   const sql = getSql();
   const pub = input.publication ?? 'realtyline';
 
   const rows = await sql`
-    INSERT INTO event_photos (title, event_date, image_url, thumbnail_url, description, publication, uploaded_by)
+    INSERT INTO event_photos (title, event_date, image_url, thumbnail_url, description, publication, uploaded_by, advertiser_id)
     VALUES (${input.title}, ${input.eventDate}, ${input.imageUrl},
             ${input.thumbnailUrl ?? null}, ${input.description ?? null},
-            ${pub}, ${input.uploadedBy ?? null})
+            ${pub}, ${input.uploadedBy ?? null}, ${input.advertiserId ?? null})
     RETURNING *
   `;
   return rowToPhoto(rows[0]);
@@ -201,43 +226,32 @@ export async function updateEventPhoto(id: number, fields: {
   eventDate?: string;
   description?: string | null;
   publication?: string;
+  advertiserId?: number | null;
 }): Promise<EventPhoto | null> {
   await ensureEventPhotosSchema();
   const sql = getSql();
 
-  // Neon's tagged template doesn't support dynamic SQL strings,
-  // so we branch on which fields are present.
-  if (fields.title !== undefined && fields.eventDate !== undefined && fields.description !== undefined) {
-    const rows = await sql`UPDATE event_photos SET title = ${fields.title}, event_date = ${fields.eventDate}, description = ${fields.description} WHERE id = ${id} RETURNING *`;
-    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
-  }
-  if (fields.title !== undefined && fields.eventDate !== undefined) {
-    const rows = await sql`UPDATE event_photos SET title = ${fields.title}, event_date = ${fields.eventDate} WHERE id = ${id} RETURNING *`;
-    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
-  }
-  if (fields.title !== undefined && fields.description !== undefined) {
-    const rows = await sql`UPDATE event_photos SET title = ${fields.title}, description = ${fields.description} WHERE id = ${id} RETURNING *`;
-    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
-  }
-  if (fields.eventDate !== undefined && fields.description !== undefined) {
-    const rows = await sql`UPDATE event_photos SET event_date = ${fields.eventDate}, description = ${fields.description} WHERE id = ${id} RETURNING *`;
-    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
-  }
-  if (fields.title !== undefined) {
-    const rows = await sql`UPDATE event_photos SET title = ${fields.title} WHERE id = ${id} RETURNING *`;
-    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
-  }
-  if (fields.eventDate !== undefined) {
-    const rows = await sql`UPDATE event_photos SET event_date = ${fields.eventDate} WHERE id = ${id} RETURNING *`;
-    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
-  }
-  if (fields.description !== undefined) {
-    const rows = await sql`UPDATE event_photos SET description = ${fields.description} WHERE id = ${id} RETURNING *`;
-    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
-  }
-  if (fields.publication !== undefined) {
-    const rows = await sql`UPDATE event_photos SET publication = ${fields.publication} WHERE id = ${id} RETURNING *`;
-    return rows.length > 0 ? rowToPhoto(rows[0]) : null;
-  }
-  return null;
+  const setTitle = fields.title !== undefined;
+  const setDate = fields.eventDate !== undefined;
+  const setDesc = fields.description !== undefined;
+  const setPub = fields.publication !== undefined;
+  const setAdvertiser = fields.advertiserId !== undefined;
+  if (!setTitle && !setDate && !setDesc && !setPub && !setAdvertiser) return null;
+
+  // Neon's tagged template can't interpolate a dynamically built SET clause, so
+  // every column is assigned unconditionally and a per-field flag decides
+  // whether the new value or the existing one wins. A flag is needed rather
+  // than COALESCE because `description` and `advertiser_id` can be cleared to
+  // NULL deliberately, which COALESCE would read as "not provided".
+  const rows = await sql`
+    UPDATE event_photos SET
+      title         = CASE WHEN ${setTitle}::boolean THEN ${fields.title ?? null}::text ELSE title END,
+      event_date    = CASE WHEN ${setDate}::boolean THEN ${fields.eventDate ?? null}::date ELSE event_date END,
+      description   = CASE WHEN ${setDesc}::boolean THEN ${fields.description ?? null}::text ELSE description END,
+      publication   = CASE WHEN ${setPub}::boolean THEN ${fields.publication ?? null}::text ELSE publication END,
+      advertiser_id = CASE WHEN ${setAdvertiser}::boolean THEN ${fields.advertiserId ?? null}::int ELSE advertiser_id END
+    WHERE id = ${id}
+    RETURNING *
+  `;
+  return rows.length > 0 ? rowToPhoto(rows[0]) : null;
 }
