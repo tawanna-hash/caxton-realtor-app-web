@@ -15,6 +15,7 @@ import type { Advertiser, AdvertiserLocation, AdvertiserStaff } from '@/lib/adve
 import { listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
 import { listEventPhotosByAdvertiser, type EventPhotoMonth } from '@/lib/event-photos';
 import { listFeatureArticlesByAdvertiser, type FeatureArticle } from '@/lib/feature-articles';
+import { getNews, type NewsArticle } from '@/lib/server/wp-news';
 import AdvertiserDetailClient from './AdvertiserDetailClient';
 
 // Advertiser detail pages change infrequently (edits happen via /admin, not
@@ -181,6 +182,53 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
     featureArticles = await listFeatureArticlesByAdvertiser(advertiser.id);
   } catch (err) {
     console.warn('[advertiser detail] feature articles load failed:', err);
+  }
+
+  // Auto-match WordPress news articles whose headline or summary mentions
+  // the advertiser by name. This pulls prior/published articles into the
+  // advertiser's Feature Articles section without manual re-entry.
+  try {
+    const [austinNews, saNews] = await Promise.allSettled([
+      getNews('austin'),
+      getNews('san_antonio'),
+    ]);
+    const allNews: NewsArticle[] = [];
+    if (austinNews.status === 'fulfilled') allNews.push(...austinNews.value);
+    if (saNews.status === 'fulfilled') allNews.push(...saNews.value);
+
+    const lowerName = advertiser.name.toLowerCase();
+    // Avoid overly short names that would false-positive (e.g. "MAX").
+    const minLen = Math.max(advertiser.name.length, 4);
+    const matched = allNews.filter(
+      (a) =>
+        advertiser.name.length >= minLen &&
+        (a.head.toLowerCase().includes(lowerName) ||
+          (a.sum && a.sum.toLowerCase().includes(lowerName))),
+    );
+
+    // Convert matched WP articles to FeatureArticle shape, dedupe by link.
+    const existingLinks = new Set(featureArticles.map((f) => f.articleUrl?.toLowerCase()).filter(Boolean));
+    let nextId = -1; // negative IDs to distinguish from DB rows
+    for (const a of matched) {
+      const linkKey = a.link?.toLowerCase();
+      if (linkKey && existingLinks.has(linkKey)) continue;
+      featureArticles.push({
+        id: nextId--,
+        advertiserId: advertiser.id,
+        title: a.head,
+        excerpt: a.excerpt ?? a.sum ?? null,
+        content: null,
+        imageUrl: a.imageUrl ?? null,
+        articleUrl: a.link ?? null,
+        author: a.author?.name ?? null,
+        publishedAt: a.dateIso ?? a.publishedAt ?? a.time ?? new Date().toISOString(),
+        sortOrder: 100, // WP-matched articles sort after manually curated ones
+        status: 'published',
+        createdAt: a.dateIso ?? new Date().toISOString(),
+      });
+    }
+  } catch (err) {
+    console.warn('[advertiser detail] WP news auto-match failed:', err);
   }
 
   const theme = getPublicationTheme(advertiser.publication);
