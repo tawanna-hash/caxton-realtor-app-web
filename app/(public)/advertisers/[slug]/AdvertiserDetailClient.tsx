@@ -150,7 +150,8 @@ export default function AdvertiserDetailClient({
           hasArticles={featureArticles.length > 0}
           hasLocations={sortedLocations.length > 0 || (!!address && locations.length === 0)}
           hasStaff={sortedStaff.length > 0}
-          hasInventory={listings.length > 0 || promotions.length > 0}
+          hasPromotions={promotions.length > 0}
+          hasMoveInReady={listings.length > 0}
           accent={BRAND_PURPLE}
         />
 
@@ -357,7 +358,7 @@ export default function AdvertiserDetailClient({
             </h2>
 
             {promotions.length > 0 && (
-              <div className="mb-6">
+              <div id="promotions" className="mb-6 scroll-mt-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
                   Promotions
                 </p>
@@ -370,7 +371,7 @@ export default function AdvertiserDetailClient({
             )}
 
             {listings.length > 0 && (
-              <div>
+              <div id="move-in-ready-homes" className="scroll-mt-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
                   Move-in Ready Homes
                 </p>
@@ -489,7 +490,8 @@ function SectionPills({
   hasArticles,
   hasLocations,
   hasStaff,
-  hasInventory,
+  hasPromotions,
+  hasMoveInReady,
   accent,
 }: {
   advertiser: Advertiser;
@@ -498,7 +500,8 @@ function SectionPills({
   hasArticles: boolean;
   hasLocations: boolean;
   hasStaff: boolean;
-  hasInventory: boolean;
+  hasPromotions: boolean;
+  hasMoveInReady: boolean;
   accent: string;
 }) {
   const pills: { id: string; label: string }[] = [];
@@ -507,7 +510,8 @@ function SectionPills({
   if (hasArticles) pills.push({ id: 'feature-articles', label: 'Articles' });
   if (hasLocations) pills.push({ id: 'locations', label: 'Locations' });
   if (hasStaff) pills.push({ id: 'team', label: 'Team' });
-  if (hasInventory) pills.push({ id: 'listings', label: 'Move-in Ready Homes' });
+  if (hasPromotions) pills.push({ id: 'promotions', label: 'Promotions' });
+  if (hasMoveInReady) pills.push({ id: 'move-in-ready-homes', label: 'Move-in Ready Homes' });
 
   if (pills.length <= 1) return null;
 
