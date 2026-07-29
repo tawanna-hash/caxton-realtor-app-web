@@ -22,13 +22,20 @@ type EventPhoto = {
   description: string | null;
   publication: string;
   uploadedBy: string | null;
+  advertiserId: number | null;
   createdAt: string;
+};
+
+type PickerAdvertiser = {
+  id: number;
+  name: string;
 };
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 export default function AdminEventImagesPage() {
   const [photos, setPhotos] = useState<EventPhoto[] | null>(null);
+  const [advertisers, setAdvertisers] = useState<PickerAdvertiser[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
@@ -42,11 +49,13 @@ export default function AdminEventImagesPage() {
   const [newFolderMonth, setNewFolderMonth] = useState(currentMonth);
   const [newFolderTitle, setNewFolderTitle] = useState('');
   const [newFolderPub, setNewFolderPub] = useState<string>('realtyline');
+  const [newFolderAdvertiser, setNewFolderAdvertiser] = useState<number | null>(null);
 
   // Bulk upload state
   const [bulkDate, setBulkDate] = useState(currentMonth);
   const [bulkTitle, setBulkTitle] = useState('');
   const [bulkPub, setBulkPub] = useState<string>('realtyline');
+  const [bulkAdvertiser, setBulkAdvertiser] = useState<number | null>(null);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ uploaded: number; failed: number; total: number } | null>(null);
   const [showBulk, setShowBulk] = useState(false);
@@ -145,6 +154,26 @@ export default function AdminEventImagesPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Advertisers populate the optional association pickers. A failure here is
+  // non-fatal — the pickers just stay empty and photos upload unassociated.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/advertisers/picker', { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json() as { advertisers?: PickerAdvertiser[] };
+        if (!cancelled) setAdvertisers(data.advertisers ?? []);
+      } catch {
+        // Ignored — association is optional.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const advertiserName = (id: number | null) =>
+    id == null ? null : advertisers.find((a) => a.id === id)?.name ?? null;
+
   // --- Create new folder (sets up bulk upload context) ---
   const handleCreateFolder = (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,6 +182,7 @@ export default function AdminEventImagesPage() {
     setBulkDate(newFolderMonth);
     setBulkTitle(newFolderTitle);
     setBulkPub(newFolderPub);
+    setBulkAdvertiser(newFolderAdvertiser);
     setShowBulk(true);
     setNewFolderTitle('');
     // Clear selection
@@ -191,6 +221,7 @@ export default function AdminEventImagesPage() {
           if (bulkDate) formData.append('eventDate', bulkDate);
           if (bulkTitle) formData.append('title', bulkTitle);
           if (bulkPub) formData.append('publication', bulkPub);
+          if (bulkAdvertiser != null) formData.append('advertiserId', String(bulkAdvertiser));
           const res = await fetch('/api/admin/event-images/upload', { method: 'POST', body: formData });
           if (!res.ok) {
             console.error(`Upload failed for ${file.name}:`, await res.text().catch(() => ''));
@@ -333,6 +364,25 @@ export default function AdminEventImagesPage() {
     finally { setBulkUploading(false); }
   };
 
+  // Re-point every photo in a folder at one advertiser (or clear it).
+  const saveFolderAdvertiser = async (group: { key: string; photos: EventPhoto[] }, advertiserId: number | null) => {
+    setBulkUploading(true);
+    setError(null);
+    try {
+      let failed = 0;
+      for (const p of group.photos) {
+        const res = await fetch('/api/admin/event-images', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: p.id, advertiserId }),
+        });
+        if (!res.ok) failed++;
+      }
+      if (failed > 0) setError(`${failed} of ${group.photos.length} photos failed to update.`);
+      await load();
+    } catch (e) { setError(e instanceof Error ? e.message : 'Failed'); }
+    finally { setBulkUploading(false); }
+  };
+
   // --- Selection helpers ---
   const toggleSelect = (id: number) => {
     setSelectedPhotos((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -390,7 +440,7 @@ export default function AdminEventImagesPage() {
           <Folder size={18} className="text-brand-600" />
           <h2 className="text-sm font-semibold text-gray-900">Create New Folder</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Issue Month *</label>
             <MonthPicker value={newFolderMonth} onChange={setNewFolderMonth} className="w-full" />
@@ -407,6 +457,12 @@ export default function AdminEventImagesPage() {
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
               {PUBLICATIONS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Advertiser <span className="text-gray-400">(optional)</span>
+            </label>
+            <AdvertiserPicker advertisers={advertisers} value={newFolderAdvertiser} onChange={setNewFolderAdvertiser} />
           </div>
         </div>
         <div className="mt-4">
@@ -427,7 +483,7 @@ export default function AdminEventImagesPage() {
 
         {showBulk && (
           <div className="mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Issue Month *</label>
                 <MonthPicker value={bulkDate} onChange={setBulkDate} className="w-full" />
@@ -446,6 +502,13 @@ export default function AdminEventImagesPage() {
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
                   {PUBLICATIONS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Advertiser <span className="text-gray-400">(optional)</span>
+                </label>
+                <AdvertiserPicker advertisers={advertisers} value={bulkAdvertiser} onChange={setBulkAdvertiser} />
+                <p className="mt-1 text-xs text-gray-400">Shown on that advertiser&apos;s public page.</p>
               </div>
             </div>
 
@@ -530,8 +593,8 @@ export default function AdminEventImagesPage() {
                   </div>
                   {expanded && (
                     <>
-                      {/* Batch rename */}
-                      <div className="flex items-center gap-2 px-3 py-2 border-b border-gray-100 bg-white">
+                      {/* Batch rename + batch advertiser assign */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 px-3 py-2 border-b border-gray-100 bg-white">
                         <input type="text"
                           value={folderTitles[group.key] ?? group.photos[0]?.title ?? ''}
                           onChange={(e) => setFolderTitles((prev) => ({ ...prev, [group.key]: e.target.value }))}
@@ -540,15 +603,25 @@ export default function AdminEventImagesPage() {
                           onKeyDown={(e) => { if (e.key === 'Enter') saveFolderTitle(group, (e.target as HTMLInputElement).value); }} />
                         <button onClick={() => saveFolderTitle(group, folderTitles[group.key] ?? group.photos[0]?.title ?? '')}
                           disabled={bulkUploading}
-                          className="text-xs bg-brand-600 text-white px-3 py-1.5 rounded-md hover:bg-brand-700 disabled:opacity-40">
+                          className="text-xs bg-brand-600 text-white px-3 py-1.5 rounded-md hover:bg-brand-700 disabled:opacity-40 whitespace-nowrap">
                           Update All
                         </button>
+                        <div className="sm:w-56">
+                          <AdvertiserPicker
+                            advertisers={advertisers}
+                            value={group.photos[0]?.advertiserId ?? null}
+                            onChange={(id) => saveFolderAdvertiser(group, id)}
+                            placeholder="Assign advertiser..."
+                            compact
+                          />
+                        </div>
                       </div>
                       {/* Photo grid */}
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-3">
                         {group.photos.map((p) => {
                           const photoMonth = parseMonthKey(p.eventDate);
                           const isSelected = selectedPhotos.has(p.id);
+                          const advName = advertiserName(p.advertiserId);
                           return (
                             <div key={p.id} className={`group relative rounded-lg overflow-hidden border-2 bg-gray-50 transition-colors ${
                               isSelected ? 'border-brand-500' : 'border-gray-200'
@@ -608,6 +681,12 @@ export default function AdminEventImagesPage() {
                                     {p.description || 'Add description...'}
                                   </button>
                                 )}
+                                {/* Advertiser association — set per folder above */}
+                                {advName && (
+                                  <p className="text-xs text-brand-700 truncate" title="Associated advertiser">
+                                    {advName}
+                                  </p>
+                                )}
                                 {/* Publication */}
                                 <select value={p.publication}
                                   onChange={(e) => {
@@ -639,6 +718,81 @@ export default function AdminEventImagesPage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Searchable single-select for the optional advertiser association. A native
+// <select> would be unusable once the advertiser list grows into the hundreds,
+// so this filters by typed query instead.
+function AdvertiserPicker({
+  advertisers,
+  value,
+  onChange,
+  placeholder = 'No advertiser',
+  compact = false,
+}: {
+  advertisers: PickerAdvertiser[];
+  value: number | null;
+  onChange: (id: number | null) => void;
+  placeholder?: string;
+  compact?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocMouseDown = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, [open]);
+
+  const selected = advertisers.find((a) => a.id === value) ?? null;
+  const q = query.trim().toLowerCase();
+  const filtered = q ? advertisers.filter((a) => a.name.toLowerCase().includes(q)) : advertisers;
+  const sizing = compact ? 'text-xs px-2 py-1.5' : 'text-sm px-3 py-2';
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <button type="button" onClick={() => { setOpen(!open); setQuery(''); }}
+        className={`w-full flex items-center justify-between gap-2 border border-gray-300 rounded-md bg-white text-left focus:outline-none focus:ring-2 focus:ring-brand-500 ${sizing}`}>
+        <span className={`truncate ${selected ? 'text-gray-900' : 'text-gray-400'}`}>
+          {selected ? selected.name : placeholder}
+        </span>
+        <ChevronDown size={14} className="text-gray-400 flex-shrink-0" />
+      </button>
+      {open && (
+        <div className="absolute z-20 mt-1 w-full min-w-56 bg-white border border-gray-200 rounded-md shadow-lg">
+          <input autoFocus type="text" value={query} onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search advertisers..."
+            className="w-full border-b border-gray-200 px-3 py-2 text-xs focus:outline-none" />
+          <ul className="max-h-56 overflow-y-auto py-1">
+            <li>
+              <button type="button" onClick={() => { onChange(null); setOpen(false); }}
+                className="w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-50">
+                {placeholder}
+              </button>
+            </li>
+            {filtered.map((a) => (
+              <li key={a.id}>
+                <button type="button" onClick={() => { onChange(a.id); setOpen(false); }}
+                  className={`w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 truncate ${a.id === value ? 'text-brand-700 font-medium' : 'text-gray-800'}`}>
+                  {a.name}
+                </button>
+              </li>
+            ))}
+            {filtered.length === 0 && (
+              <li className="px-3 py-2 text-xs text-gray-400">
+                {advertisers.length === 0 ? 'No advertisers available' : 'No matches'}
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

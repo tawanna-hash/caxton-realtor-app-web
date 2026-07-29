@@ -8,13 +8,14 @@
 // pulled from builder_inventory by name.
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type {
   Advertiser,
   AdvertiserLocation,
   AdvertiserStaff,
 } from '@/lib/advertisers';
 import type { BuilderInventoryRow } from '@/lib/builder-inventory';
+import type { EventPhoto, EventPhotoMonth } from '@/lib/event-photos';
 import { builderNameToSlug } from '@/lib/builder-slug';
 import { toTitleCaseName, toTitleCaseRole } from '@/lib/format-name';
 import AdvertiserHeader from '@/components/AdvertiserHeader';
@@ -26,9 +27,12 @@ type Props = {
   inventory: BuilderInventoryRow[];
   locations?: AdvertiserLocation[];
   staff?: AdvertiserStaff[];
+  eventPhotos?: EventPhotoMonth[];
   theme: ThemeInfo;
   backHref: string;
 };
+
+const BRAND_PURPLE = '#301D5D';
 
 function formatLocationAddress(l: AdvertiserLocation): string | null {
   const parts: string[] = [];
@@ -73,6 +77,7 @@ export default function AdvertiserDetailClient({
   inventory,
   locations = [],
   staff = [],
+  eventPhotos = [],
   theme,
   backHref,
 }: Props) {
@@ -372,6 +377,8 @@ export default function AdvertiserDetailClient({
           </section>
         )}
 
+        {eventPhotos.length > 0 && <EventPhotosSection months={eventPhotos} />}
+
         <div className="border-t border-gray-200 pt-6">
           <p className="text-sm text-gray-600 font-light">
             Interested in becoming a partner?{' '}
@@ -453,5 +460,135 @@ function ListingThumbnail({ src }: { src: string | null }) {
       loading="lazy"
       onError={() => setErrored(true)}
     />
+  );
+}
+
+// Event coverage the publication shot for this advertiser, newest month first.
+// Months collapse so an advertiser with years of archives doesn't push the rest
+// of the profile off the page; the most recent month starts open.
+function EventPhotosSection({ months }: { months: EventPhotoMonth[] }) {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(() => ({
+    [months[0].monthKey]: true,
+  }));
+  const [lightbox, setLightbox] = useState<EventPhoto | null>(null);
+
+  const toggle = (monthKey: string) =>
+    setExpanded((prev) => ({ ...prev, [monthKey]: !prev[monthKey] }));
+
+  return (
+    <section className="border-t border-gray-200 pt-8 mb-10">
+      <h2
+        className="text-xl sm:text-2xl font-semibold tracking-tight mb-5"
+        style={{ color: BRAND_PURPLE }}
+      >
+        Event Photos
+      </h2>
+
+      <div className="space-y-3">
+        {months.map((month) => {
+          const isOpen = expanded[month.monthKey] ?? false;
+          return (
+            <div key={month.monthKey} className="border border-gray-200 rounded-md overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggle(month.monthKey)}
+                aria-expanded={isOpen}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+              >
+                <span className="flex items-baseline gap-2">
+                  <span className="text-sm font-semibold" style={{ color: BRAND_PURPLE }}>
+                    {month.monthLabel}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {month.photos.length} {month.photos.length === 1 ? 'photo' : 'photos'}
+                  </span>
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={`text-gray-400 text-xs transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                >
+                  ▼
+                </span>
+              </button>
+
+              {isOpen && (
+                <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-3">
+                  {month.photos.map((photo) => (
+                    <li key={photo.id}>
+                      <button
+                        type="button"
+                        onClick={() => setLightbox(photo)}
+                        className="w-full text-left group"
+                      >
+                        <span className="block aspect-square bg-gray-100 rounded-md overflow-hidden border border-gray-200 group-hover:border-gray-400 transition-colors">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={photo.thumbnailUrl || photo.imageUrl}
+                            alt={photo.title}
+                            loading="lazy"
+                            className="w-full h-full object-cover"
+                          />
+                        </span>
+                        <span className="block mt-1.5 text-xs font-medium text-gray-800 line-clamp-2">
+                          {photo.title}
+                        </span>
+                        {photo.description && (
+                          <span className="block text-xs text-gray-500 font-light line-clamp-2">
+                            {photo.description}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {lightbox && <EventPhotoLightbox photo={lightbox} onClose={() => setLightbox(null)} />}
+    </section>
+  );
+}
+
+function EventPhotoLightbox({ photo, onClose }: { photo: EventPhoto; onClose: () => void }) {
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={photo.title}
+      onClick={onClose}
+      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto"
+    >
+      <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-end mb-2">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="text-white/80 hover:text-white text-2xl leading-none px-2"
+          >
+            ×
+          </button>
+        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={photo.imageUrl}
+          alt={photo.title}
+          className="w-full max-h-[75vh] object-contain bg-black rounded-md"
+        />
+        <p className="mt-3 text-sm font-medium text-white">{photo.title}</p>
+        {photo.description && (
+          <p className="mt-1 text-sm text-white/70 font-light">{photo.description}</p>
+        )}
+      </div>
+    </div>
   );
 }
