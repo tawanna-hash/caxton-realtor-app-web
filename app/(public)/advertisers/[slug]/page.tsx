@@ -168,7 +168,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
   // the gallery is supplementary, so a failure here shouldn't 500 the profile.
   let eventPhotos: EventPhotoMonth[] = [];
   try {
-    eventPhotos = await listEventPhotosByAdvertiser(advertiser.id);
+    eventPhotos = await listEventPhotosByAdvertiser(advertiser.id, advertiser.name);
   } catch (err) {
     console.warn('[advertiser detail] event photos load failed:', err);
   }

@@ -138,8 +138,40 @@ export async function listEventPhotosGrouped(opts: {
 
 export async function listEventPhotosByAdvertiser(
   advertiserId: number,
+  advertiserName?: string,
 ): Promise<EventPhotoMonth[]> {
-  return listEventPhotosGrouped({ advertiserId });
+  // Primary: photos explicitly tagged with this advertiser_id.
+  // Fallback: photos whose title contains the advertiser's name (case-insensitive),
+  // so existing photos uploaded before the advertiser_id column was added still
+  // surface on the advertiser's public page without manual re-tagging.
+  const photos = await listEventPhotos({ advertiserId });
+
+  if (advertiserName) {
+    await ensureEventPhotosSchema();
+    const sql = getSql();
+    const namePattern = `%${advertiserName.replace(/[%_]/g, '\\$&')}%`;
+    const titleMatched = await sql`
+      SELECT * FROM event_photos
+      WHERE title ILIKE ${namePattern}
+        AND (advertiser_id IS NULL OR advertiser_id != ${advertiserId})
+      ORDER BY event_date DESC, created_at DESC
+      LIMIT 500
+    `;
+    const mapped = titleMatched.map(rowToPhoto);
+    // Dedupe by photo id — a photo might match both the explicit tag and the
+    // title pattern. Keep the explicitly-tagged version.
+    const seen = new Set(photos.map((p) => p.id));
+    for (const p of mapped) {
+      if (!seen.has(p.id)) {
+        photos.push(p);
+        seen.add(p.id);
+      }
+    }
+    // Re-sort by date since we merged two result sets.
+    photos.sort((a, b) => b.eventDate.localeCompare(a.eventDate));
+  }
+
+  return groupByMonth(photos);
 }
 
 function groupByMonth(photos: EventPhoto[]): EventPhotoMonth[] {
