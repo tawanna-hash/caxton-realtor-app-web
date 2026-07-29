@@ -139,6 +139,8 @@ export default function AdvertiserDetailClient({
           }}
         />
 
+        {eventPhotos.length > 0 && <EventPhotosSection months={eventPhotos} />}
+
         {a.bio && (
           <section className="mb-10">
             <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-3">
@@ -376,8 +378,6 @@ export default function AdvertiserDetailClient({
             </Link>
           </section>
         )}
-
-        {eventPhotos.length > 0 && <EventPhotosSection months={eventPhotos} />}
 
         <div className="border-t border-gray-200 pt-6">
           <p className="text-sm text-gray-600 font-light">
