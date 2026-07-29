@@ -73,6 +73,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions' },
       { label: 'Events',    href: '/admin/events',    description: 'Calendar publications' },
       { label: 'Event Images', href: '/admin/event-images', description: 'Event photo gallery' },
+      { label: 'Feature Articles', href: '/admin/feature-articles', description: 'Editorial features on advertiser pages' },
       { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries' },
       { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
       { label: 'Scraper Hub', href: '/admin/content/scrapers', description: 'Run & monitor all scrapers' },
