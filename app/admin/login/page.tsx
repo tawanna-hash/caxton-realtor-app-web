@@ -91,9 +91,10 @@ function AdminLoginForm() {
               }}
               onBlur={handleEmailBlur}
               autoComplete="username"
+              inputMode="email"
               aria-invalid={emailError ? true : undefined}
               aria-describedby={emailError ? 'admin-email-error' : undefined}
-              className={`w-full border px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none ${
+              className={`w-full border px-4 py-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none ${
                 emailError
                   ? 'border-red-400 focus:border-red-500'
                   : 'border-gray-300 focus:border-brand-700'
@@ -114,7 +115,7 @@ function AdminLoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                className="w-full border border-gray-300 px-3 py-2 pr-16 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700"
+                className="w-full border border-gray-300 px-4 py-3 pr-16 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-brand-700"
               />
               <button
                 type="button"
@@ -131,7 +132,7 @@ function AdminLoginForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-brand-700 text-white py-2.5 text-sm font-medium tracking-wide hover:bg-brand-800 disabled:opacity-60 transition-colors rounded-md"
+            className="w-full bg-brand-700 text-white py-3 text-sm font-medium tracking-wide hover:bg-brand-800 disabled:opacity-60 transition-colors rounded-md"
           >
             {submitting ? 'Signing in...' : 'Sign In'}
           </button>

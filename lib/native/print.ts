@@ -2,20 +2,20 @@
 //
 // Print helper that works inside the Capacitor WebView.
 //
-// On native iOS/Android, window.print() is a no-op inside the WKWebView,
-// so we open the page in the system browser (SFSafariViewController) with
-// ?print=1 appended. The AutoPrint component shows an instruction banner
-// telling the user to tap Safari's Share button → Print.
+// On native iOS with the AirPrint plugin (requires app rebuild):
+//   Calls UIPrintInteractionController directly — one tap, native
+//   print dialog, no browser redirect.
 //
-// On web (realtynewsnow.app), window.print() works directly.
+// On native iOS without the plugin (old app builds):
+//   Falls back to opening the page in SFSafariViewController with
+//   ?print=1, where the AutoPrint banner tells the user to use
+//   Safari's Share → Print.
+//
+// On web (realtynewsnow.app):
+//   window.print() works directly.
 
 import { isNative } from './runtime';
 
-/**
- * Open the current page (or a specific URL) in the system browser for
- * printing. On native, SFSafariViewController opens with ?print=1.
- * On web, window.print() fires immediately.
- */
 export async function printCurrentPage(opts?: {
   url?: string;
   pub?: string;
@@ -23,8 +23,19 @@ export async function printCurrentPage(opts?: {
   if (typeof window === 'undefined') return;
 
   if (isNative()) {
-    const { Browser } = await import('@capacitor/browser');
+    // Try the native AirPrint plugin first (requires app rebuild).
+    try {
+      const AirPrint = (await import('./airprint')).default;
+      await AirPrint.printWebView({
+        jobName: 'Realty News Now Listing',
+      });
+      return; // Native dialog presented successfully
+    } catch {
+      // Plugin not available (old app build) — fall through to browser
+    }
 
+    // Fallback: open in SFSafariViewController with ?print=1
+    const { Browser } = await import('@capacitor/browser');
     const baseUrl = opts?.url ?? window.location.href;
     const url = new URL(baseUrl, 'https://realtynewsnow.app');
 
