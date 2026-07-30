@@ -106,3 +106,34 @@ export function isAdminGroupActive(group: AdminNavGroup, pathname: string): bool
     (l) => pathname === l.href || pathname.startsWith(l.href + '/'),
   );
 }
+
+/**
+ * Human-readable title for the current admin route, used by the mobile
+ * header where there's no room for the desktop dropdown bar.
+ *
+ * Prefers the label of the most specific matching ADMIN_NAV link so the
+ * header text always matches what the user tapped in the drawer. Routes
+ * that aren't in the nav (detail pages, one-off tools) fall back to a
+ * prettified final path segment.
+ */
+export function getAdminNavTitle(pathname: string): string {
+  let best: AdminNavLink | null = null;
+  for (const group of ADMIN_NAV) {
+    for (const link of group.links) {
+      const matches = pathname === link.href || pathname.startsWith(link.href + '/');
+      if (matches && (!best || link.href.length > best.href.length)) best = link;
+    }
+  }
+  if (best) return best.label;
+
+  const segments = pathname.split('/').filter(Boolean).slice(1);
+  // Dynamic segments resolve to opaque ids — name the parent segment instead.
+  const last = /^[0-9a-f-]{8,}$/i.test(segments[segments.length - 1] ?? '')
+    ? segments[segments.length - 2]
+    : segments[segments.length - 1];
+  if (!last) return 'Admin';
+  return last
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
