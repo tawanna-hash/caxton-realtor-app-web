@@ -17,6 +17,7 @@ import { notFound } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
 import { listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
+import { summarizeBuilders } from '@/lib/builder-summary';
 import { slugToBuilderName } from '@/lib/builder-slug-server';
 import { getServerPub } from '@/lib/publication';
 import BuilderInventoryRowCard from '@/components/builders/BuilderInventoryRowCard';
@@ -73,7 +74,8 @@ function summarize(b: Bucketed, subBuilderCount = 0): string {
         b.communities.length === 1 ? 'community' : 'communities'
       }`,
     );
-  if (subBuilderCount) parts.push(`${subBuilderCount} builders`);
+  if (subBuilderCount)
+    parts.push(`${subBuilderCount} ${subBuilderCount === 1 ? 'builder' : 'builders'}`);
   if (b.listings.length) parts.push(`${b.listings.length} move-in ready`);
   if (b.promotions.length)
     parts.push(
@@ -82,6 +84,21 @@ function summarize(b: Bucketed, subBuilderCount = 0): string {
       }`,
     );
   return parts.join(' · ');
+}
+
+function extractSubBuilders(
+  rows: BuilderInventoryRow[],
+): { name: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const r of rows) {
+    if (r.developerName && r.builderName && r.builderName !== r.developerName) {
+      const bn = r.builderName.trim();
+      counts.set(bn, (counts.get(bn) ?? 0) + 1);
+    }
+  }
+  return Array.from(counts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 }
 
 export default async function Page({ params }: PageProps) {
@@ -117,18 +134,18 @@ export default async function Page({ params }: PageProps) {
     bucketed.listings.length +
     bucketed.promotions.length;
 
-  // Extract unique sub-builders (e.g. Perry Homes, Pulte, etc. under SRR).
-  // Only relevant for developer pages where rows have a developerName.
-  const subBuilderMap = new Map<string, number>();
-  for (const r of finalRows) {
-    if (r.developerName && r.builderName && r.builderName !== r.developerName) {
-      const bn = r.builderName.trim();
-      subBuilderMap.set(bn, (subBuilderMap.get(bn) ?? 0) + 1);
-    }
-  }
-  const subBuilders = Array.from(subBuilderMap.entries())
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  // Single source of truth, shared with the /builders list page: an entity is
+  // a developer only when rows exist that name it as their developer. A row's
+  // own developerName is a parent pointer, so it says nothing about this page.
+  const isDeveloper =
+    summarizeBuilders(finalRows).find(
+      (s) => s.name.trim().toLowerCase() === builderName.trim().toLowerCase(),
+    )?.isDeveloper ?? false;
+
+  // Sub-builders (e.g. Perry Homes, Pulte, etc. under SRR) exist only beneath
+  // a developer. Gating on isDeveloper keeps stray developerName values on a
+  // builder's own rows from inventing a sub-builder list.
+  const subBuilders = isDeveloper ? extractSubBuilders(finalRows) : [];
 
   // Pick the builder's website URL from the first inventory row that has a
   // non-PDF source_url (the actual community/listing page on the builder's
@@ -140,7 +157,7 @@ export default async function Page({ params }: PageProps) {
       <div className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
         <header className="mb-8">
           <div className="text-xs uppercase tracking-[0.18em] text-gray-500 font-medium">
-            {finalRows.some((r) => r.developerName) ? 'Developer' : 'Builder'}
+            {isDeveloper ? 'Developer' : 'Builder'}
           </div>
           <PageTitle size="md" className="mt-2">
             {builderName}
