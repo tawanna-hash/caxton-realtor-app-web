@@ -71,7 +71,9 @@ export default function InventoryDetailFloater({
       builder_name: builderName,
       action: 'print',
     });
-    void printCurrentPage();
+    void printCurrentPage({
+      url: `/inventory/${rowId}`,
+    });
   }, [rowId, builderName]);
 
   const printAction: FloaterAction = {
