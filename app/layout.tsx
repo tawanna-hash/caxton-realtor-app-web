@@ -10,6 +10,7 @@ import BiometricEnrollPrompt from "@/components/BiometricEnrollPrompt";
 import NativeKeyboard from "@/components/NativeKeyboard";
 import ExternalLinkInterceptor from "@/components/ExternalLinkInterceptor";
 import NativeScrollToTop from "@/components/NativeScrollToTop";
+import BackToTopButton from "@/components/BackToTopButton";
 import MarketOnboardingPicker from "@/components/MarketOnboardingPicker";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -128,6 +129,7 @@ export default function RootLayout({
           <NativeKeyboard />
           <ExternalLinkInterceptor />
           <NativeScrollToTop />
+          <BackToTopButton />
           {/* First-launch market picker. Shows once when caxton_pub isn't
               set yet (no cookie, no localStorage). Self-dismisses after a
               choice and stays hidden on every subsequent launch. */}

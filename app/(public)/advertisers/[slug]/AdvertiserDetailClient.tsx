@@ -95,15 +95,6 @@ export default function AdvertiserDetailClient({
     ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`
     : null;
 
-  // Back-to-top button: appears after scrolling 400px.
-  const [showTop, setShowTop] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setShowTop(window.scrollY > 400);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
   const listings = inventory.filter((r) => r.kind === 'listing');
   const promotions = inventory.filter((r) => r.kind === 'promotion');
 
@@ -419,30 +410,6 @@ export default function AdvertiserDetailClient({
           </p>
         </div>
       </div>
-
-      {/* Floating back-to-top arrow */}
-      {showTop && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-11 h-11 rounded-full shadow-lg transition-opacity hover:opacity-90"
-          style={{ backgroundColor: BRAND_PURPLE }}
-          aria-label="Back to top"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12 19V5M5 12l7-7 7 7" />
-          </svg>
-        </button>
-      )}
     </main>
   );
 }
