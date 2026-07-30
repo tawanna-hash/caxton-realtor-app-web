@@ -18,13 +18,14 @@
 // (inventory_shared) plus the generic inventory_floater_clicked (with action)
 // for every pill.
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import FloaterPill from '@/components/ui/FloaterPill';
 import type { FloaterAction } from '@/components/ui/FloaterPill';
 import { useDetailFloaterActions } from '@/components/ui/floater/useDetailFloaterActions';
 import { IconPrint } from '@/components/ui/floater/icons';
 import { trackEvent } from '@/app/posthog-provider';
 import { haptics } from '@/lib/native/haptics';
+import { printCurrentPage, maybeAutoPrint } from '@/lib/native/print';
 
 type Props = {
   rowId: number;
@@ -70,7 +71,7 @@ export default function InventoryDetailFloater({
       builder_name: builderName,
       action: 'print',
     });
-    if (typeof window !== 'undefined') window.print();
+    void printCurrentPage();
   }, [rowId, builderName]);
 
   const printAction: FloaterAction = {
@@ -82,6 +83,12 @@ export default function InventoryDetailFloater({
   };
 
   const actions = [...pillActions, printAction];
+
+  // Auto-print when opened in system browser via ?print=1 (native app
+  // opens this URL in Safari, which triggers the print dialog).
+  useEffect(() => {
+    maybeAutoPrint();
+  }, []);
 
   return <FloaterPill actions={actions} bottomOffsetClass="bottom-[80px]" />;
 }
