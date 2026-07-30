@@ -110,37 +110,44 @@ export default async function Page({ params }: PageProps) {
 
   // Each market is standalone — scope to the active publication only.
   const pub = await getServerPub();
-  // Query by developerName first (covers developers like Santa Rita Ranch
-  // whose showcase homes have builderName = actual builder). Fall back to
-  // builderName for standalone builders without a developer.
-  const rows = await listBuilderInventory({
-    status: 'active',
-    developerName: builderName,
-    publication: pub,
-    limit: 500,
-  });
-  // If no developer results, try builderName directly.
-  const finalRows = rows.length > 0
-    ? rows
-    : await listBuilderInventory({
-        status: 'active',
-        builderName,
-        publication: pub,
-        limit: 500,
-      });
-  const bucketed = bucketRows(finalRows);
-  const total =
-    bucketed.communities.length +
-    bucketed.listings.length +
-    bucketed.promotions.length;
+  // Both candidate row sets, fetched together. Which one this page renders is
+  // decided by isDeveloper below, never by "developerName first, builderName
+  // only if that came back empty" — under that fallback a single row naming a
+  // builder as its own developer made the first query non-empty and silently
+  // swallowed the builder's whole move-in ready list.
+  const [developerRows, builderRows] = await Promise.all([
+    listBuilderInventory({
+      status: 'active',
+      developerName: builderName,
+      publication: pub,
+      limit: 500,
+    }),
+    listBuilderInventory({
+      status: 'active',
+      builderName,
+      publication: pub,
+      limit: 500,
+    }),
+  ]);
 
   // Single source of truth, shared with the /builders list page: an entity is
   // a developer only when rows exist that name it as their developer. A row's
   // own developerName is a parent pointer, so it says nothing about this page.
   const isDeveloper =
-    summarizeBuilders(finalRows).find(
+    summarizeBuilders(developerRows.concat(builderRows)).find(
       (s) => s.name.trim().toLowerCase() === builderName.trim().toLowerCase(),
     )?.isDeveloper ?? false;
+
+  // A developer's inventory is the rows that point at it via developerName —
+  // its children, plus its own rows, which point at themselves. A builder's
+  // inventory is simply the rows carrying its builderName.
+  const finalRows = isDeveloper ? developerRows : builderRows;
+
+  const bucketed = bucketRows(finalRows);
+  const total =
+    bucketed.communities.length +
+    bucketed.listings.length +
+    bucketed.promotions.length;
 
   // Sub-builders (e.g. Perry Homes, Pulte, etc. under SRR) exist only beneath
   // a developer. Gating on isDeveloper keeps stray developerName values on a
