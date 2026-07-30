@@ -392,3 +392,66 @@ input::placeholder,
 textarea::placeholder {
   color: #9ca3af; /* gray-400 — visible but clearly a placeholder */
 }
+
+/* ==========================================================================
+   Print styles — clean, paper-friendly layout when printing or ?print=1
+   ==========================================================================
+   Hides all app chrome (nav bars, floaters, buttons, CTAs) and shows
+   only the page content. */
+@media print {
+  /* Hide app chrome */
+  nav,
+  header,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Hide fixed/floating elements (floater pills, back-to-top, etc.) */
+  [class*="fixed"],
+  [class*="sticky"] {
+    display: none !important;
+  }
+
+  /* Reset page layout for paper */
+  body {
+    background: white !important;
+    color: #171717 !important;
+    font-size: 12pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Full-width content, no max-width constraint */
+  main,
+  [class*="max-w"] {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0.5in !important;
+  }
+
+  /* Remove rounded corners, shadows for print */
+  * {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Ensure images print */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+  }
+
+  /* Avoid breaking inside cards/sections */
+  section,
+  article {
+    page-break-inside: avoid;
+  }
+
+  /* Brand purple headings for print */
+  h1, h2, h3 {
+    color: #301D5D !important;
+  }
+}
