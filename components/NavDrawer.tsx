@@ -480,8 +480,16 @@ export default function NavDrawer({
                 >
                   Login
                 </Link>
-                {/* Admin login is intentionally not exposed in the public nav.
-                    Staff bookmark /admin/login directly. */}
+                {/* Staff entry point into the admin app. `next=/admin` is the
+                    shape /admin/login's safeNext() accepts, and /admin then
+                    redirects on to /admin/dashboard. */}
+                <Link
+                  href="/admin/login?next=/admin"
+                  onClick={onClose}
+                  className="block px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/80 font-medium rounded-md hover:text-white hover:bg-white/10 transition"
+                >
+                  Admin Login
+                </Link>
               </>
             )}
           </div>
