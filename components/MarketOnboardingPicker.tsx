@@ -32,6 +32,11 @@ export default function MarketOnboardingPicker() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    // Skip the onboarding picker when opened for printing (?print=1).
+    // The in-app Safari (SFSafariViewController) doesn't share localStorage
+    // with the native app, so the picker would intercept the page load.
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('print') === '1') return;
     queueMicrotask(() => {
       try {
         const seen = localStorage.getItem(SEEN_KEY);
