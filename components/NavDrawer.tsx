@@ -296,6 +296,53 @@ export default function NavDrawer({
           </button>
         </div>
 
+        {/* Admin shortcut — the first thing an admin sees when the drawer
+            opens, so staff can jump straight to the dashboard instead of
+            scanning the ADMIN_GROUPS sections below. Targets
+            /admin/dashboard directly because /admin only redirects there. */}
+        {isAdmin && (
+          <div className="px-5 pt-6 pb-2">
+            <Link
+              href="/admin/dashboard"
+              onClick={onClose}
+              className="flex items-center gap-3 min-h-11 px-3 py-3 rounded-md bg-white/15 ring-1 ring-white/25 text-sm uppercase tracking-[0.1em] text-white font-medium hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 transition"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="flex-shrink-0"
+                aria-hidden
+              >
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+              <span className="flex-1">Go to Admin</span>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="flex-shrink-0 text-white/70"
+                aria-hidden
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Link>
+          </div>
+        )}
+
         {/* Publication switcher — always visible (except admin) so users
             can change markets from any page, not only /dashboard. */}
         {!isAdmin && (
