@@ -12,11 +12,11 @@
 // was removed per Tawanna's direction - one-tap download for
 // everyone, no role fetch, no sheet.
 
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
 import { downloadCalcReport, type CalcReport } from './calcPdf';
-import { printCurrentPage, maybeAutoPrint } from '@/lib/native/print';
+import { printCurrentPage } from '@/lib/native/print';
 
 interface Props {
   /** Share dialog title - usually the calculator name. */
@@ -70,11 +70,6 @@ export default function ResourceFloater({
 
   const onPrint = useCallback(() => {
     void printCurrentPage();
-  }, []);
-
-  // Auto-print when opened in system browser via ?print=1.
-  useEffect(() => {
-    maybeAutoPrint();
   }, []);
 
   const actions: FloaterAction[] = [

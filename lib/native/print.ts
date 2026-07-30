@@ -17,6 +17,8 @@ export async function printCurrentPage(): Promise<void> {
 
   if (isNative()) {
     // Open in system browser with ?print=1 so the page auto-prints on load.
+    // The global AutoPrint component detects ?print=1, waits for window load,
+    // then calls window.print() after a short settle delay.
     const { Browser } = await import('@capacitor/browser');
     const url = new URL(window.location.href);
     url.searchParams.set('print', '1');
@@ -29,22 +31,4 @@ export async function printCurrentPage(): Promise<void> {
   } else {
     window.print();
   }
-}
-
-/**
- * Call from a client component's useEffect when ?print=1 is in the URL.
- * Returns true if print was triggered so the component can skip
- * unnecessary work.
- */
-export function maybeAutoPrint(): boolean {
-  if (typeof window === 'undefined') return false;
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('print') !== '1') return false;
-
-  // Small delay to let images/layout settle before the print dialog opens.
-  setTimeout(() => {
-    window.print();
-  }, 500);
-
-  return true;
 }
