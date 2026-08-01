@@ -106,6 +106,14 @@ export const adminApi = {
   approvePendingEvent: (id: number) =>
     adminFetch(`/admin/events/${id}/approve`, { method: 'POST' }),
 
+  // Gmail event scanner queue. Approval reuses approvePendingEvent above —
+  // only the list, reject, source-email and manual-scan calls are Gmail-specific.
+  listPendingGmailEvents: () => adminFetch('/admin/events/gmail/pending'),
+  rejectGmailEvent: (id: number) =>
+    adminFetch(`/admin/events/gmail/${id}/reject`, { method: 'POST' }),
+  getGmailEventSource: (id: number) => adminFetch(`/admin/events/gmail/${id}/source`),
+  scanGmailNow: () => adminFetch('/admin/events/gmail/scan', { method: 'POST' }),
+
   // Ads dashboard (Phase 1 — May 9, 2026)
   // Spaces: read-only catalog of 15 ad slots
   listAdSpaces: () => adminFetch('/admin/ads/spaces'),

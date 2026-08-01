@@ -163,6 +163,10 @@
     {
       "path": "/api/cron/scrape-brookfield-residential-communities",
       "schedule": "15 20 * * *"
+    },
+    {
+      "path": "/api/cron/scan-gmail",
+      "schedule": "0 16 * * *"
     }
   ]
 }

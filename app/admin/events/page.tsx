@@ -38,6 +38,7 @@ const SOURCE_LABELS: Record<string, string> = {
   wordpress: 'WordPress',
   fpr: 'Five Points',
   hba: 'HBA Austin',
+  gmail: 'Gmail',
 };
 
 function formatDateTime(s: string | null) {

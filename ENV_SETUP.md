@@ -159,7 +159,36 @@ primary name is already set; the alias is redundant.
 - DO droplet `caxton-api-prod` (104.131.176.86) and managed Postgres
   `caxton-prod-db` destroyed. No remaining references in code or env vars.
 
-## 5. Recommended optional sets
+## 5. Gmail event scanner
+
+Required for the Gmail event scanner (`docs/GMAIL_EVENT_SCANNER.md`). Without
+them the admin page renders a "not configured" banner and the cron is a no-op —
+nothing else in the app is affected.
+
+```
+GOOGLE_OAUTH_CLIENT_ID=<client id>.apps.googleusercontent.com
+GOOGLE_OAUTH_CLIENT_SECRET=<client secret>
+GOOGLE_OAUTH_REDIRECT_URI=https://realtynewsnow.app/api/admin/gmail-auth/callback
+```
+
+### `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET`
+- **Source**: `lib/server/gmail-client.ts`. Issued by Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID (type "Web application").
+- **Verdict**: ⚠️ Required to connect a mailbox. Secret — set in Vercel, never commit.
+
+### `GOOGLE_OAUTH_REDIRECT_URI`
+- **Default**: derived from `NEXT_PUBLIC_SITE_URL`, else `VERCEL_URL`.
+- **Source**: `lib/server/gmail-client.ts` → `getOAuthRedirectUri()`.
+- **When to set**: Whenever the derived value would not exactly match an
+  Authorized redirect URI on the OAuth client — notably on preview deploys,
+  whose `VERCEL_URL` changes per deployment. Google rejects the exchange on any
+  mismatch.
+
+Already set for other features and reused here: `GEMINI_API_KEY` (event
+extraction) and `CRON_SECRET` (guards `/api/cron/scan-gmail`).
+
+---
+
+## 6. Recommended optional sets
 
 If you want a tidier configuration with no behavioral change in steady state:
 

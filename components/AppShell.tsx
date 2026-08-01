@@ -35,6 +35,7 @@ import NewsletterCTA from '@/components/NewsletterCTA';
 import { ADMIN_NAV as ADMIN_GROUPS, isAdminGroupActive as isGroupActive } from '@/lib/admin-nav';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
+import PendingGmailBadge from '@/components/PendingGmailBadge';
 import MarketSwitcherSheet from '@/components/MarketSwitcherSheet';
 import { getActivePub } from '@/lib/publications';
 
@@ -330,6 +331,9 @@ export default function AppShell({
                         {group.links.some((l) => l.href === '/admin/agreements') && (
                           <BillingAlertsBadge />
                         )}
+                        {group.links.some((l) => l.href === '/admin/events/gmail') && (
+                          <PendingGmailBadge />
+                        )}
                         <svg
                           width="10"
                           height="10"
@@ -378,6 +382,9 @@ export default function AppShell({
                                   )}
                                   {link.href === '/admin/agreements' && (
                                     <BillingAlertsBadge variant="inline" />
+                                  )}
+                                  {link.href === '/admin/events/gmail' && (
+                                    <PendingGmailBadge variant="inline" />
                                   )}
                                 </div>
                                 {link.description && (

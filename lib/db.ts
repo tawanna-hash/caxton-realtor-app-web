@@ -53,6 +53,35 @@ export async function ensureSchema(): Promise<void> {
   return schemaEnsurePromise;
 }
 
+/**
+ * Initial curated senders for the Gmail event scanner. Seeded by domain, so
+ * `communications@abor.com` and any other ABoR mailbox are already covered by
+ * the single `abor.com` row.
+ *
+ * NAHREP and AREAA are national domains — chapter mail for both markets
+ * arrives from the same host, so they default to Austin and rely on the
+ * scanner's keyword auto-detect to route San Antonio events correctly.
+ *
+ * Admins extend this list at runtime by inserting into `event_source_orgs`
+ * directly; new rows here are only for bootstrapping a fresh environment.
+ */
+const EVENT_SOURCE_ORG_SEEDS: ReadonlyArray<{
+  name: string;
+  domain: string;
+  defaultPublication: 'austin' | 'san_antonio';
+}> = [
+  { name: 'Austin Board of REALTORS', domain: 'abor.com', defaultPublication: 'austin' },
+  { name: 'Five Points Board of REALTORS', domain: 'fivepointsrealtors.com', defaultPublication: 'austin' },
+  // wcraustin.com is unverified — WCR chapters have historically used both
+  // wcr.org subdomains and standalone chapter sites. Confirm the real sending
+  // domain from a recent chapter email and UPDATE the row if it differs.
+  { name: 'WCR Austin', domain: 'wcraustin.com', defaultPublication: 'austin' },
+  { name: 'NAHREP', domain: 'nahrep.org', defaultPublication: 'austin' },
+  { name: 'AREAA', domain: 'areaa.org', defaultPublication: 'austin' },
+  { name: 'Texas REALTORS', domain: 'texasrealestate.com', defaultPublication: 'austin' },
+  { name: 'SABOR', domain: 'sabor.com', defaultPublication: 'san_antonio' },
+];
+
 async function _runEnsureSchema(): Promise<void> {
   const sql = getSql();
   await sql`
@@ -731,6 +760,56 @@ async function _runEnsureSchema(): Promise<void> {
   await sql`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_events_source_post
     ON events(source_post_id) WHERE source_post_id IS NOT NULL
+  `;
+
+  // ============================================================
+  // Gmail event scanner (Path F)
+  // Curated associations/boards whose mail we scan for events, plus the
+  // OAuth token for the mailbox we read. Advertiser domains come from
+  // advertisers.contact_email at scan time, so only non-advertiser
+  // organizations need a row here.
+  // No `events` DDL is needed for the new source — external_source is TEXT
+  // and the review queue filters app-side.
+  // ============================================================
+  await sql`
+    CREATE TABLE IF NOT EXISTS event_source_orgs (
+      id                  SERIAL PRIMARY KEY,
+      name                TEXT NOT NULL,
+      domain              TEXT NOT NULL UNIQUE,
+      default_publication TEXT NOT NULL,
+      active              BOOLEAN NOT NULL DEFAULT true,
+      created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_event_source_orgs_active
+    ON event_source_orgs(active) WHERE active = true
+  `;
+
+  // Seed the associations Tawanna already receives event mail from. Domain
+  // is the unique key, so re-seeding is a no-op and an admin's later edit to
+  // name/default_publication/active is never clobbered.
+  for (const org of EVENT_SOURCE_ORG_SEEDS) {
+    await sql`
+      INSERT INTO event_source_orgs (name, domain, default_publication)
+      VALUES (${org.name}, ${org.domain}, ${org.defaultPublication})
+      ON CONFLICT (domain) DO NOTHING
+    `;
+  }
+
+  // One row per connected mailbox. refresh_token is the long-lived grant;
+  // access_token/token_expiry are a cache the client refreshes in place.
+  await sql`
+    CREATE TABLE IF NOT EXISTS gmail_oauth_tokens (
+      id            SERIAL PRIMARY KEY,
+      email_address TEXT NOT NULL UNIQUE,
+      access_token  TEXT,
+      refresh_token TEXT NOT NULL,
+      token_expiry  TIMESTAMPTZ,
+      scope         TEXT NOT NULL,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
   `;
 
   await sql`
