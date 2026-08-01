@@ -12,10 +12,14 @@ export const runtime = 'nodejs';
 // runtime budget the other daily scrapers use.
 export const maxDuration = 300;
 
-// The cron runs daily; a 3-day window covers a missed run or a late-arriving
-// message without leaving a gap. Re-scanned messages are skipped before the
-// Gemini call, so the overlap costs almost nothing.
-const DEFAULT_LOOKBACK_DAYS = 3;
+// The cron runs daily over a 30-day rolling window. The wide overlap covers
+// missed runs and back-dated newsletters that mention an upcoming event weeks
+// before it happens. Re-scanned messages are skipped before the Gemini call,
+// so re-reading the same month every day costs almost nothing.
+const DEFAULT_LOOKBACK_DAYS = 30;
+
+// Callers can widen the window for a one-off backfill via `?days=`.
+const MAX_LOOKBACK_DAYS = 90;
 
 export async function GET(req: Request) {
   // ---- auth ----
@@ -42,7 +46,7 @@ export async function GET(req: Request) {
     const daysParam = new URL(req.url).searchParams.get('days');
     const lookbackDays = Math.max(
       1,
-      Math.min(parseInt(daysParam || '', 10) || DEFAULT_LOOKBACK_DAYS, 30),
+      Math.min(parseInt(daysParam || '', 10) || DEFAULT_LOOKBACK_DAYS, MAX_LOOKBACK_DAYS),
     );
 
     const result = await scanGmailForEvents({ lookbackDays });

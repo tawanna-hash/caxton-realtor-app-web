@@ -72,6 +72,14 @@ const EVENT_SOURCE_ORG_SEEDS: ReadonlyArray<{
 }> = [
   { name: 'Austin Board of REALTORS', domain: 'abor.com', defaultPublication: 'austin' },
   { name: 'Five Points Board of REALTORS', domain: 'fivepointsrealtors.com', defaultPublication: 'austin' },
+  // Home Builders Association of Greater Austin. Their events also flow in via
+  // the existing `scrape-hba` cron (external_source='hba'); Gmail catches
+  // promo/mailing-list events that don't appear on the public HBA calendar.
+  { name: 'HBA Austin', domain: 'hbaaustin.com', defaultPublication: 'austin' },
+  // Realty Austin merged into Compass RE Texas in 2023; realtyaustin.com may
+  // still forward or be aliased. If mail arrives from `@compass.com` instead,
+  // add that domain via a separate seed row or an admin insert.
+  { name: 'Realty Austin', domain: 'realtyaustin.com', defaultPublication: 'austin' },
   // wcraustin.com is unverified — WCR chapters have historically used both
   // wcr.org subdomains and standalone chapter sites. Confirm the real sending
   // domain from a recent chapter email and UPDATE the row if it differs.

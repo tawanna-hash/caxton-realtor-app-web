@@ -88,18 +88,20 @@ security settings.
 queued, plus skipped-as-duplicate / skipped-for-no-date / errored.
 
 **Scheduled** — Vercel Cron hits `/api/cron/scan-gmail` daily at 16:00 UTC
-(see `vercel.json`), with a 3-day lookback. The overlap covers a missed run or
-a late-arriving message; already-scanned messages are skipped before the Gemini
-call, so re-scanning is nearly free.
+(see `vercel.json`), over a 30-day rolling window. The wide overlap covers
+missed runs and back-dated newsletters that mention an event weeks before it
+happens; already-scanned messages are skipped before the Gemini call, so
+re-reading the same month every day is nearly free.
 
 **By hand** —
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" \
-  "https://realtynewsnow.app/api/cron/scan-gmail?days=14"
+  "https://realtynewsnow.app/api/cron/scan-gmail?days=60"
 ```
 
-`days` is clamped to 1–30.
+`days` is clamped to 1–90, so a one-off backfill can reach further back than
+the daily window.
 
 **Dry run** — `scanGmailForEvents({ lookbackDays: 7, dryRun: true })` parses and
 returns candidates without writing anything. Useful when tuning the prompt or
@@ -132,6 +134,8 @@ the database will not be undone by a later deploy.
 |---|---|---|
 | Austin Board of REALTORS | `abor.com` | austin |
 | Five Points Board of REALTORS | `fivepointsrealtors.com` | austin |
+| HBA Austin | `hbaaustin.com` | austin |
+| Realty Austin | `realtyaustin.com` | austin |
 | WCR Austin | `wcraustin.com` | austin |
 | NAHREP | `nahrep.org` | austin |
 | AREAA | `areaa.org` | austin |
@@ -142,9 +146,18 @@ Domains are matched per-domain, not per-address, so every mailbox at a listed
 domain (`communications@abor.com`, `events@abor.com`, …) is already covered by
 its single row.
 
-`wcraustin.com` is a best guess — WCR chapters have used both `wcr.org`
-subdomains and standalone chapter sites. Confirm against a recent chapter email
-and correct the row if it differs.
+Three rows need confirmation against real mail:
+
+- `wcraustin.com` is a best guess — WCR chapters have used both `wcr.org`
+  subdomains and standalone chapter sites.
+- `realtyaustin.com` — Realty Austin merged into Compass RE Texas in 2023 and
+  the domain may only forward. If their mail arrives from `@compass.com`, add
+  that domain instead.
+- `hbaaustin.com` overlaps the existing `scrape-hba` cron, which already pulls
+  HBA's public calendar as `external_source='hba'`. Gmail is here to catch
+  promo and mailing-list events that never reach that calendar; expect the odd
+  near-duplicate in the queue, since the two sources have separate
+  `external_id` namespaces and cannot dedupe against each other.
 
 Add a source:
 
