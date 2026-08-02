@@ -48,7 +48,14 @@ export type EventSource =
   | 'hba'
   | 'submission'    // Advertiser self-submission via /submit-event/[token]
   | 'facebook-llm'  // Gemini-detected event from RealtyLine FB Page post
-  | 'facebook-graph'; // Native Facebook Page event pulled via Graph API
+  | 'facebook-graph' // Native Facebook Page event pulled via Graph API
+  | 'gmail';        // LLM-detected event from advertiser/association Gmail
+
+/**
+ * Sources that land in the admin review queue (hidden=true until approved).
+ * Manual admin-hidden events are excluded — an admin hid those deliberately.
+ */
+const REVIEW_QUEUE_SOURCES = ['submission', 'facebook-llm', 'facebook-graph', 'gmail'] as const;
 
 export interface AdminCalendarEvent {
   id: number;
@@ -440,6 +447,70 @@ export async function createFeedPostDetectedEvent(input: {
 }
 
 /**
+ * Insert a pending event detected by Gemini from an advertiser or association
+ * email (Path F). Mirrors createLLMDetectedEvent, but keyed on the Gmail
+ * message id rather than a featured_social_posts row.
+ *
+ * external_id is `gmail-<messageId>`, so the events_external_uniq constraint
+ * makes re-scanning the same message idempotent across overlapping cron
+ * windows. A message that yields several events disambiguates with
+ * `eventIndex`.
+ *
+ * Returns null when this message/event pair was already inserted.
+ */
+export async function createGmailDetectedEvent(input: {
+  publication: Publication;
+  messageId: string;
+  /** Position within a multi-event email; omit for single-event messages. */
+  eventIndex?: number;
+  title: string;
+  description: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  location: string | null;
+  link: string | null;
+  organizer: string | null;
+  /** Sender address — stored in organizer_email for the review queue. */
+  emailFrom: string | null;
+  confidence: number;
+}): Promise<AdminCalendarEvent | null> {
+  const suffix = input.eventIndex && input.eventIndex > 0 ? `-${input.eventIndex}` : '';
+  const externalId = `gmail-${input.messageId}${suffix}`;
+  const coords = await geocodeEventLocation(input.location);
+  const rows = await query<EventRow>(
+    `INSERT INTO events (
+       external_source, external_id, publication, title, description, link,
+       start_date, end_date, location, organizer, organizer_email,
+       confidence, lat, lng, hidden,
+       last_synced_at, updated_at
+     ) VALUES (
+       'gmail', $1, $2, $3, $4, $5,
+       $6, $7, $8, $9, $10,
+       $11, $12, $13, true,
+       NOW(), NOW()
+     )
+     ON CONFLICT ON CONSTRAINT events_external_uniq DO NOTHING
+     RETURNING ${SELECT_COLS}`,
+    [
+      externalId,
+      input.publication,
+      input.title,
+      input.description,
+      input.link,
+      input.startDate,
+      input.endDate,
+      input.location,
+      input.organizer,
+      input.emailFrom,
+      input.confidence,
+      coords?.lat ?? null,
+      coords?.lng ?? null,
+    ],
+  );
+  return rows[0] ? rowToAdminEvent(rows[0]) : null;
+}
+
+/**
  * Cheap pre-check: has this FB post already been scanned by either the curated
  * (fb-llm-<sourcePostId>) or feed (fb-llm-feed-<fbPostId>) path? Used by the
  * Page-feed cron to skip Gemini calls for posts we've already processed.
@@ -451,6 +522,23 @@ export async function hasScannedFbPost(fbPostId: string): Promise<boolean> {
         AND external_id = $1
       LIMIT 1`,
     [`fb-llm-feed-${fbPostId}`],
+  );
+  return rows.length > 0;
+}
+
+/**
+ * Cheap pre-check for the Gmail scanner: has this message already produced
+ * events on a prior run? Matches the `gmail-<messageId>` prefix so a message
+ * that yielded several events is still recognised. Lets overlapping cron
+ * windows skip the Gemini call instead of relying on the INSERT conflict.
+ */
+export async function hasScannedGmailMessage(messageId: string): Promise<boolean> {
+  const rows = await query<{ id: number }>(
+    `SELECT id FROM events
+      WHERE external_source = 'gmail'
+        AND (external_id = $1 OR external_id LIKE $2)
+      LIMIT 1`,
+    [`gmail-${messageId}`, `gmail-${messageId}-%`],
   );
   return rows.length > 0;
 }
@@ -513,16 +601,29 @@ export async function createGraphDetectedEvent(input: {
 }
 
 /**
- * Admin queue: events awaiting review. Either source='submission' (advertiser
- * self-submitted via public form) or source='facebook-llm' (Gemini extracted
- * from a FB Page post). Manual hidden events authored by admins themselves
- * are excluded — they used the "Hide" toggle deliberately.
+ * Admin queue: events awaiting review. Source is one of REVIEW_QUEUE_SOURCES —
+ * an advertiser self-submission, a Gemini extraction from a FB Page post, a
+ * native FB Page event, or a Gemini extraction from association/advertiser
+ * Gmail. Manual hidden events authored by admins themselves are excluded —
+ * they used the "Hide" toggle deliberately.
  */
 export async function listPendingEvents(): Promise<AdminCalendarEvent[]> {
   const rows = await query<EventRow>(
     `SELECT ${SELECT_COLS} FROM events
       WHERE hidden = true
-        AND external_source IN ('submission', 'facebook-llm', 'facebook-graph')
+        AND external_source = ANY($1)
+      ORDER BY created_at DESC`,
+    [REVIEW_QUEUE_SOURCES],
+  );
+  return rows.map(rowToAdminEvent);
+}
+
+/** Admin queue: the Gmail-only slice, for /admin/events/gmail. */
+export async function listPendingGmailEvents(): Promise<AdminCalendarEvent[]> {
+  const rows = await query<EventRow>(
+    `SELECT ${SELECT_COLS} FROM events
+      WHERE hidden = true
+        AND external_source = 'gmail'
       ORDER BY created_at DESC`,
   );
   return rows.map(rowToAdminEvent);
@@ -533,7 +634,17 @@ export async function countPendingEvents(): Promise<number> {
   const rows = await query<{ count: string }>(
     `SELECT COUNT(*)::text AS count FROM events
       WHERE hidden = true
-        AND external_source IN ('submission', 'facebook-llm', 'facebook-graph')`,
+        AND external_source = ANY($1)`,
+    [REVIEW_QUEUE_SOURCES],
+  );
+  return rows[0] ? parseInt(rows[0].count, 10) : 0;
+}
+
+/** Admin queue: count of pending Gmail events, for the nav badge. */
+export async function countPendingGmailEvents(): Promise<number> {
+  const rows = await query<{ count: string }>(
+    `SELECT COUNT(*)::text AS count FROM events
+      WHERE hidden = true AND external_source = 'gmail'`,
   );
   return rows[0] ? parseInt(rows[0].count, 10) : 0;
 }
@@ -546,9 +657,31 @@ export async function approvePendingEvent(
   const rows = await query<EventRow>(
     `UPDATE events SET hidden = false, edited_by = $1, edited_at = NOW(), updated_at = NOW()
       WHERE id = $2 AND hidden = true
-        AND external_source IN ('submission', 'facebook-llm', 'facebook-graph')
+        AND external_source = ANY($3)
       RETURNING ${SELECT_COLS}`,
-    [editedBy, id],
+    [editedBy, id, REVIEW_QUEUE_SOURCES],
+  );
+  return rows[0] ? rowToAdminEvent(rows[0]) : null;
+}
+
+/**
+ * Admin: reject a pending review-queue event.
+ *
+ * Hard delete rather than a `rejected` flag: the queue's whole purpose is to
+ * stay empty, and the unique (external_source, external_id) constraint is what
+ * would normally suppress a re-detection. Deleting therefore means a rescan of
+ * the same Gmail message CAN re-surface the event — acceptable because the
+ * cron's lookback window is only a few days, and the audit log records the
+ * rejection. Guarded to the review-queue sources so this can never delete a
+ * live scraped or manual event.
+ */
+export async function rejectPendingEvent(id: number): Promise<AdminCalendarEvent | null> {
+  const rows = await query<EventRow>(
+    `DELETE FROM events
+      WHERE id = $1 AND hidden = true
+        AND external_source = ANY($2)
+      RETURNING ${SELECT_COLS}`,
+    [id, REVIEW_QUEUE_SOURCES],
   );
   return rows[0] ? rowToAdminEvent(rows[0]) : null;
 }

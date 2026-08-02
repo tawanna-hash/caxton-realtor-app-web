@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { ADMIN_NAV } from '@/lib/admin-nav';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
+import PendingGmailBadge from '@/components/PendingGmailBadge';
 import PushOptInButton from '@/components/PushOptInButton';
 import { isNative } from '@/lib/native/runtime';
 import {
@@ -412,6 +413,9 @@ export default function NavDrawer({
                   )}
                   {item.href === '/admin/agreements' && (
                     <BillingAlertsBadge variant="inline" />
+                  )}
+                  {item.href === '/admin/events/gmail' && (
+                    <PendingGmailBadge variant="inline" />
                   )}
                 </Link>
               );
