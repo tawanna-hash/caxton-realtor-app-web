@@ -8,8 +8,12 @@
 //
 // Styling and data-loading follow app/admin/events/page.tsx so the two review
 // surfaces stay visually consistent.
+//
+// Unlike that page, this one reads the OAuth callback's query string, so the
+// useSearchParams() consumer sits behind a Suspense boundary — without one the
+// production build fails to prerender this route.
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAdmin } from '@/hooks/use-admin';
@@ -95,7 +99,19 @@ function confidenceStyle(c: number): string {
   return 'bg-gray-100 text-gray-700';
 }
 
+function LoadingShell() {
+  return <div className="max-w-6xl mx-auto px-6 py-12 text-sm text-gray-500">Loading...</div>;
+}
+
 export default function GmailEventsPage() {
+  return (
+    <Suspense fallback={<LoadingShell />}>
+      <GmailEventsQueue />
+    </Suspense>
+  );
+}
+
+function GmailEventsQueue() {
   const { admin, loading: authLoading } = useAdmin();
   const searchParams = useSearchParams();
 
@@ -213,7 +229,7 @@ export default function GmailEventsPage() {
   };
 
   if (authLoading || !admin) {
-    return <div className="max-w-6xl mx-auto px-6 py-12 text-sm text-gray-500">Loading...</div>;
+    return <LoadingShell />;
   }
 
   return (
