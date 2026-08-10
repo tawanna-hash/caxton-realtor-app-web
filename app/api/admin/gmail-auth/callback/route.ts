@@ -26,9 +26,23 @@ const SAFE_OAUTH_REASONS = new Set([
   'access_denied',
 ]);
 
-function oauthFailureReason(err: unknown): string {
+type GmailCallbackReason =
+  | 'invalid_client'
+  | 'invalid_grant'
+  | 'invalid_request'
+  | 'redirect_uri_mismatch'
+  | 'unauthorized_client'
+  | 'access_denied'
+  | 'no_refresh_token'
+  | 'gmail_profile_failed'
+  | 'token_exchange_failed'
+  | 'token_save_failed'
+  | 'unknown';
+
+function oauthFailureReason(err: unknown): GmailCallbackReason {
   const candidate = err as {
     code?: unknown;
+    message?: unknown;
     response?: { data?: unknown };
   };
   const data = candidate?.response?.data;
@@ -39,8 +53,13 @@ function oauthFailureReason(err: unknown): string {
     ? fromResponse
     : typeof candidate?.code === 'string'
       ? candidate.code
-      : 'unknown';
-  return SAFE_OAUTH_REASONS.has(reason) ? reason : 'unknown';
+      : '';
+  if (SAFE_OAUTH_REASONS.has(reason)) return reason as GmailCallbackReason;
+
+  const message = typeof candidate?.message === 'string' ? candidate.message : '';
+  if (message.includes('Google returned no refresh token')) return 'no_refresh_token';
+  if (message.includes('Could not read the connected mailbox')) return 'gmail_profile_failed';
+  return 'token_exchange_failed';
 }
 
 export const GET = withAdminTracking(async (req: Request) => {
@@ -60,19 +79,9 @@ export const GET = withAdminTracking(async (req: Request) => {
     return NextResponse.redirect(target);
   }
 
+  let mailbox;
   try {
-    const mailbox = await exchangeCodeForMailbox(code);
-    await saveGmailTokens(mailbox);
-    await logAudit({
-      adminId: admin.adminId,
-      action: 'gmail.connect',
-      entityType: 'gmail_oauth_token',
-      entityId: null,
-      afterState: { email_address: mailbox.emailAddress, scope: mailbox.scope },
-      ipAddress: await getRequestIp(),
-    });
-    target.searchParams.set('connected', '1');
-    return NextResponse.redirect(target);
+    mailbox = await exchangeCodeForMailbox(code);
   } catch (err) {
     const reason = oauthFailureReason(err);
     logger.warn({ reason }, '[gmail-auth] token exchange failed');
@@ -80,4 +89,25 @@ export const GET = withAdminTracking(async (req: Request) => {
     target.searchParams.set('reason', reason);
     return NextResponse.redirect(target);
   }
+
+  try {
+    await saveGmailTokens(mailbox);
+  } catch {
+    const reason: GmailCallbackReason = 'token_save_failed';
+    logger.warn({ reason }, '[gmail-auth] token save failed');
+    target.searchParams.set('error', 'exchange_failed');
+    target.searchParams.set('reason', reason);
+    return NextResponse.redirect(target);
+  }
+
+  await logAudit({
+    adminId: admin.adminId,
+    action: 'gmail.connect',
+    entityType: 'gmail_oauth_token',
+    entityId: null,
+    afterState: { email_address: mailbox.emailAddress, scope: mailbox.scope },
+    ipAddress: await getRequestIp(),
+  });
+  target.searchParams.set('connected', '1');
+  return NextResponse.redirect(target);
 });
