@@ -33,17 +33,22 @@ type GmailCallbackReason =
   | 'redirect_uri_mismatch'
   | 'unauthorized_client'
   | 'access_denied'
+  | 'oauth_config_missing'
   | 'no_refresh_token'
   | 'gmail_profile_failed'
   | 'token_exchange_failed'
-  | 'token_save_failed'
-  | 'unknown';
+  | 'token_save_failed';
 
-function oauthFailureReason(err: unknown): GmailCallbackReason {
+type OAuthFailure = {
+  reason: GmailCallbackReason;
+  status?: number;
+};
+
+function oauthFailure(err: unknown): OAuthFailure {
   const candidate = err as {
     code?: unknown;
     message?: unknown;
-    response?: { data?: unknown };
+    response?: { status?: unknown; data?: unknown };
   };
   const data = candidate?.response?.data;
   const fromResponse = data && typeof data === 'object'
@@ -54,12 +59,33 @@ function oauthFailureReason(err: unknown): GmailCallbackReason {
     : typeof candidate?.code === 'string'
       ? candidate.code
       : '';
-  if (SAFE_OAUTH_REASONS.has(reason)) return reason as GmailCallbackReason;
+  const status = typeof candidate?.response?.status === 'number'
+    ? candidate.response.status
+    : undefined;
+  if (SAFE_OAUTH_REASONS.has(reason)) {
+    return { reason: reason as GmailCallbackReason, status };
+  }
 
-  const message = typeof candidate?.message === 'string' ? candidate.message : '';
-  if (message.includes('Google returned no refresh token')) return 'no_refresh_token';
-  if (message.includes('Could not read the connected mailbox')) return 'gmail_profile_failed';
-  return 'token_exchange_failed';
+  const message = typeof candidate?.message === 'string'
+    ? candidate.message.toLowerCase()
+    : '';
+  if (message.includes('no refresh token')) return { reason: 'no_refresh_token', status };
+  if (message.includes('could not read the connected mailbox')) {
+    return { reason: 'gmail_profile_failed', status };
+  }
+  if (/(not configured|missing.*oauth|oauth.*missing|client id.*missing|client secret.*missing)/.test(message)) {
+    return { reason: 'oauth_config_missing', status };
+  }
+  if (/(invalid client|client secret|client authentication)/.test(message)) {
+    return { reason: 'invalid_client', status };
+  }
+  if (/(redirect.?uri|redirect url)/.test(message)) {
+    return { reason: 'redirect_uri_mismatch', status };
+  }
+  if (/(invalid grant|authorization code|auth code|code expired|code already)/.test(message)) {
+    return { reason: 'invalid_grant', status };
+  }
+  return { reason: 'token_exchange_failed', status };
 }
 
 export const GET = withAdminTracking(async (req: Request) => {
@@ -83,10 +109,11 @@ export const GET = withAdminTracking(async (req: Request) => {
   try {
     mailbox = await exchangeCodeForMailbox(code);
   } catch (err) {
-    const reason = oauthFailureReason(err);
-    logger.warn({ reason }, '[gmail-auth] token exchange failed');
+    const failure = oauthFailure(err);
+    logger.warn(failure, '[gmail-auth] token exchange failed');
     target.searchParams.set('error', 'exchange_failed');
-    target.searchParams.set('reason', reason);
+    target.searchParams.set('reason', failure.reason);
+    if (failure.status) target.searchParams.set('status', String(failure.status));
     return NextResponse.redirect(target);
   }
 
