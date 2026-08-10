@@ -5,12 +5,6 @@
  *       gmail.readonly scope. Exchanges the code for a refresh token, stores
  *       it against the mailbox that was actually connected, and bounces back
  *       to the review page.
- *
- * This URL must be registered verbatim as an Authorized redirect URI on the
- * OAuth client in Google Cloud Console — see docs/GMAIL_EVENT_SCANNER.md.
- *
- * Failures redirect back with ?error=… rather than rendering a JSON blob, so
- * the admin lands somewhere they can retry from.
  */
 
 import { NextResponse } from 'next/server';
@@ -23,14 +17,37 @@ import { logger } from '@/lib/server/logger';
 export const runtime = 'nodejs';
 
 const REVIEW_PAGE = '/admin/events/gmail';
+const SAFE_OAUTH_REASONS = new Set([
+  'invalid_client',
+  'invalid_grant',
+  'invalid_request',
+  'redirect_uri_mismatch',
+  'unauthorized_client',
+  'access_denied',
+]);
+
+function oauthFailureReason(err: unknown): string {
+  const candidate = err as {
+    code?: unknown;
+    response?: { data?: unknown };
+  };
+  const data = candidate?.response?.data;
+  const fromResponse = data && typeof data === 'object'
+    ? (data as { error?: unknown }).error
+    : undefined;
+  const reason = typeof fromResponse === 'string'
+    ? fromResponse
+    : typeof candidate?.code === 'string'
+      ? candidate.code
+      : 'unknown';
+  return SAFE_OAUTH_REASONS.has(reason) ? reason : 'unknown';
+}
 
 export const GET = withAdminTracking(async (req: Request) => {
   const admin = await requireAdmin();
   const params = new URL(req.url).searchParams;
   const target = new URL(REVIEW_PAGE, req.url);
 
-  // The admin can decline on the consent screen — Google sends back
-  // ?error=access_denied rather than a code.
   const denied = params.get('error');
   if (denied) {
     target.searchParams.set('error', denied);
@@ -57,13 +74,10 @@ export const GET = withAdminTracking(async (req: Request) => {
     target.searchParams.set('connected', '1');
     return NextResponse.redirect(target);
   } catch (err) {
-    // The message can quote Google's response — log it for operators, show
-    // the admin a short reason.
-    logger.warn(
-      { err: err instanceof Error ? err.message : String(err) },
-      '[gmail-auth] token exchange failed',
-    );
+    const reason = oauthFailureReason(err);
+    logger.warn({ reason }, '[gmail-auth] token exchange failed');
     target.searchParams.set('error', 'exchange_failed');
+    target.searchParams.set('reason', reason);
     return NextResponse.redirect(target);
   }
 });
