@@ -73,6 +73,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions' },
       { label: 'Events',    href: '/admin/events',    description: 'Calendar publications' },
       { label: 'Gmail Events', href: '/admin/events/gmail', description: 'Scanned advertiser & association event mail' },
+      { label: 'FastEmail Realtor Review', href: '/admin/content/fastemail-realtors', description: 'Review realtor contacts scanned from FastEmail flyers' },
       { label: 'Event Images', href: '/admin/event-images', description: 'Event photo gallery' },
       { label: 'Feature Articles', href: '/admin/feature-articles', description: 'Editorial features on advertiser pages' },
       { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries' },
