@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ensureSchema, getSql } from '@/lib/db';
+import { getSql } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import {
   persistAddressVerificationAnyStage,
@@ -21,8 +21,6 @@ export const POST = withAdminTracking(async (req: Request) => {
   await requireAdmin();
 
   const { id } = await parseJson(req, idParamSchema);
-
-  await ensureSchema();
 
   const sql = getSql();
   const rows = (await sql`

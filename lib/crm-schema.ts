@@ -695,7 +695,24 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
      WHERE segment = 'non-advertiser'
   `);
   await step(() => sql`ALTER TABLE mailing_contacts DROP CONSTRAINT IF EXISTS mailing_contacts_segment_check`);
-  await step(() => sql`ALTER TABLE mailing_contacts ADD CONSTRAINT mailing_contacts_segment_check CHECK (segment IN ('manual-newsline','realtor','active-advertiser-atx','active-advertiser-sa','non-advertiser-atx','non-advertiser-sa','email-only-atx','email-only-sa'))`);
+  await step(() => sql`
+    ALTER TABLE mailing_contacts
+    ADD CONSTRAINT mailing_contacts_segment_check
+    CHECK (
+      segment IN (
+        'manual-newsline',
+        'newsline-sa-print',
+        'realtyline-atx-print',
+        'realtor',
+        'active-advertiser-atx',
+        'active-advertiser-sa',
+        'non-advertiser-atx',
+        'non-advertiser-sa',
+        'email-only-atx',
+        'email-only-sa'
+      )
+    )
+  `);
 
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mailing_segment       ON mailing_contacts(segment)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_mailing_email_lower   ON mailing_contacts(LOWER(email))`);
