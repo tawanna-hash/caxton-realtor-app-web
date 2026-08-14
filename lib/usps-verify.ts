@@ -55,8 +55,6 @@ async function getAccessToken(): Promise<string> {
     },
     body: new URLSearchParams({
       grant_type: 'client_credentials',
-      client_id: id,
-      client_secret: secret,
     }).toString(),
   });
 
