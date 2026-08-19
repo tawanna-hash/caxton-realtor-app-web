@@ -79,6 +79,18 @@ const API = getApiBase();
 // Component
 // ============================================================
 
+const LAST_FRONTEND_KEY = 'caxton_last_frontend';
+
+/** Read the most-recent non-admin route the user was on, or '/' if none. */
+function getLastFrontendRoute(): string {
+    if (typeof window === 'undefined') return '/';
+    try {
+      const v = window.localStorage.getItem(LAST_FRONTEND_KEY);
+      if (v && v.startsWith('/') && !v.startsWith('/admin')) return v;
+    } catch {}
+    return '/';
+}
+
 export default function AppShell({
   children,
   variant = 'public',
@@ -274,6 +286,19 @@ export default function AppShell({
   // Close menu when route changes
   useEffect(() => {
     queueMicrotask(() => { setOpenMenu(null); });
+  }, [pathname]);
+
+  // Record last front-end route so admins can jump back to it from the
+  // admin surfaces (header link + drawer entry). Skip admin paths, auth
+  // pages, and API paths — none of them are useful landing spots.
+  useEffect(() => {
+    if (!pathname) return;
+    if (pathname.startsWith('/admin')) return;
+    if (pathname.startsWith('/auth')) return;
+    if (pathname.startsWith('/api')) return;
+    try {
+      window.localStorage.setItem(LAST_FRONTEND_KEY, pathname);
+    } catch {}
   }, [pathname]);
 
   const drawerBg = PUB_COLORS[pub] ?? PUB_COLORS.realtynewsnow;
@@ -485,10 +510,27 @@ export default function AppShell({
               </nav>
             )}
 
-            {/* Logout lives in the More drawer — no header icon.
-                Render a same-size spacer so the centered title stays
-                visually centered relative to the hamburger on the left. */}
-            <span className="w-9" aria-hidden />
+            {/* Admin: quick jump back to the front end (mobile + desktop).
+                Public: same-size spacer keeps the centered title visually
+                balanced against the hamburger on the left. */}
+            {isAdmin ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const target = getLastFrontendRoute();
+                  router.push(target);
+                }}
+                aria-label="Return to app"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs uppercase tracking-[0.1em] font-medium text-white/80 hover:text-white hover:bg-white/10 transition"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M3 12l6-6M3 12l6 6M3 12h18" />
+                </svg>
+                <span className="hidden sm:inline">App</span>
+              </button>
+            ) : (
+              <span className="w-9" aria-hidden />
+            )}
           </div>
         </div>
       </header>
