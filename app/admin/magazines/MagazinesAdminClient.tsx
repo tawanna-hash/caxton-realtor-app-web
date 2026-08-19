@@ -138,6 +138,18 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
     }
   }
 
+  async function handleCopyShare(magazineId: number) {
+    const key = `share:${magazineId}`;
+    const url = `${window.location.origin}/magazine/${magazineId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey((curr) => (curr === key ? null : curr)), 1500);
+    } catch (err) {
+      console.error('[MagazinesAdminClient] Clipboard write failed:', err);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-6xl mx-auto">
@@ -176,6 +188,7 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
             variantError={variantError}
             onGenerateGif={handleGenerateGif}
             onCopy={handleCopy}
+            onCopyShare={handleCopyShare}
           />
           <Column
             label={PUB_LABEL.san_antonio}
@@ -187,6 +200,7 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
             variantError={variantError}
             onGenerateGif={handleGenerateGif}
             onCopy={handleCopy}
+            onCopyShare={handleCopyShare}
           />
         </div>
       </div>
@@ -204,6 +218,7 @@ function Column({
   variantError,
   onGenerateGif,
   onCopy,
+  onCopyShare,
 }: {
   label: string;
   magazines: Magazine[];
@@ -214,6 +229,7 @@ function Column({
   variantError: Record<string, string>;
   onGenerateGif: (magazine: Magazine, variant: GifVariant, force: boolean) => void;
   onCopy: (magazineId: number, variant: GifVariant, url: string) => void;
+  onCopyShare: (magazineId: number) => void;
 }) {
   return (
     <div>
@@ -265,6 +281,13 @@ function Column({
                     className="text-sm text-red-600 hover:underline disabled:opacity-50"
                   >
                     {deletingId === m.id ? 'Deleting…' : 'Delete'}
+                  </button>
+                  <button
+                    onClick={() => onCopyShare(m.id)}
+                    className="text-sm text-purple-700 hover:underline"
+                    title="Copy public share link for social media"
+                  >
+                    {copiedKey === `share:${m.id}` ? 'Copied!' : 'Copy Share Link'}
                   </button>
                 </div>
 
