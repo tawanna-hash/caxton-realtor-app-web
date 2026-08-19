@@ -151,7 +151,7 @@ export default function BiometricGate() {
 
   const onSignOut = useCallback(() => {
     try {
-      document.cookie = 'caxton_session=; Path=/; Max-Age=0; SameSite=Lax';
+      document.cookie = 'caxton_session_v2=; Path=/; Max-Age=0; SameSite=Lax';
     } catch {}
     try {
       window.localStorage.removeItem('caxton_session_user');
