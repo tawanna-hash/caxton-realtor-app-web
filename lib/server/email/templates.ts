@@ -261,7 +261,8 @@ export function renderPasswordResetEmail(opts: {
 }): { subject: string; text: string; html: string } {
   const subject = 'Reset your admin password — Caxton Publications';
   const greeting = `Hi ${opts.fullName},`;
-  const intro = 'We received a request to reset your admin password. Click the link below to choose a new one.';
+  const intro =
+    'We received a request to reset your admin password. Click the link below to choose a new one.';
 
   const text = `${greeting}
 
@@ -277,6 +278,15 @@ RealtyLine — Putting A Face on Real Estate since 1995
 Newsline San Antonio
 `;
 
+  // NOTE: no styled button. Gmail's link auditor was rewriting styled
+  // <a> anchors and dropping the ?token= query string, causing recipients
+  // to land on /admin/forgot-password. A single prominent text link
+  // (Stripe / GitHub / Vercel pattern) survives every mail client and
+  // keeps the query string intact.
+  //
+  // The href is the raw URL (no escapeHtml) because the URL contains no
+  // characters that need HTML-attribute escaping in this template. The
+  // visible link text IS escaped so a malformed URL cannot inject HTML.
   const html = `
 <!DOCTYPE html>
 <html>
@@ -300,14 +310,9 @@ Newsline San Antonio
             <td style="padding:32px 40px;color:#333;font-size:16px;line-height:1.6;">
               <p style="margin:0 0 16px;">${escapeHtml(greeting)}</p>
               <p style="margin:0 0 24px;">${escapeHtml(intro)}</p>
-              <p style="margin:0 0 32px;text-align:center;">
-                <a href="${escapeHtml(opts.resetUrl)}"
-                   style="display:inline-block;background:#301D5D;color:#ffffff;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:600;font-size:15px;">
-                  Reset my password
-                </a>
+              <p style="margin:0 0 24px;font-size:15px;">
+                <a href="${opts.resetUrl}" style="color:#301D5D;font-weight:600;text-decoration:underline;word-break:break-all;">${escapeHtml(opts.resetUrl)}</a>
               </p>
-              <p style="margin:0 0 8px;color:#666;font-size:14px;">Or copy and paste this URL into your browser:</p>
-              <p style="margin:0 0 24px;word-break:break-all;font-size:13px;color:#301D5D;">${escapeHtml(opts.resetUrl)}</p>
               <p style="margin:0;color:#888;font-size:13px;line-height:1.5;">
                 This link expires in ${opts.expiryMinutes} minutes. If you did not request a password reset, you can safely ignore this email — your password will not change.
               </p>
@@ -325,7 +330,7 @@ Newsline San Antonio
   </table>
 </body>
 </html>
-`.trim();
+`;
 
   return { subject, text, html };
 }
