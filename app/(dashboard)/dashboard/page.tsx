@@ -506,6 +506,14 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
             if (meRes.ok) {
               const meData = await meRes.json().catch(() => ({}));
               const realtor = meData?.realtor || meData;
+              try {
+                if (realtor?.id && realtor?.email) {
+                  window.localStorage.setItem(
+                    'caxton_session_user',
+                    JSON.stringify({ id: realtor.id, email: realtor.email }),
+                  );
+                }
+              } catch {}
               if (realtor?.id) {
                 void haptics.notify('success');
                 try { window.dispatchEvent(new CustomEvent('caxton:authSuccess', { detail: { mode: 'signup' } })); } catch {}
@@ -618,6 +626,15 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       if (!realtor) throw new Error('Signed in but could not load your account');
       trackEvent('password_signin_succeeded', { pub });
       void haptics.notify('success');
+      // Persist to localStorage FIRST so AppShell + NavDrawer see the user
+      // synchronously (before /auth/me round-trip). Fixes drawer showing
+      // LOGIN after sign-in.
+      try {
+        window.localStorage.setItem(
+          'caxton_session_user',
+          JSON.stringify({ id: realtor.id, email: realtor.email }),
+        );
+      } catch {}
       try { window.dispatchEvent(new CustomEvent('caxton:authSuccess', { detail: { mode: 'password' } })); } catch {}
       onAuth({
         id: realtor.id,

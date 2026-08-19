@@ -129,28 +129,77 @@ export default function AppShell({
     return () => window.removeEventListener('savedPubChange', onPubChange);
   }, []);
 
-  // Hydrate user — re-probe on:
-  //   1. Mount (cold launch, page refresh)
-  //   2. caxton:authSuccess event (dispatched by AuthGate after login/signup)
-  //   3. pathname change (e.g. after /login → /dashboard navigation)
-  // Without listeners 2+3 the drawer stayed on "LOGIN" forever after signing
-  // in via the inline AuthGate (BUG-A in the sign-in audit).
+  // Hydrate user — 3 sources, in priority order:
+  //   PRIORITY 1 (synchronous, no network): localStorage `caxton_session_user`
+  //     mirror. Written by AuthGate (login/signup) and this component's
+  //     /auth/me probe. Cleared by handleLogout + BiometricGate.onSignOut.
+  //     Guarantees the drawer says LOGOUT immediately after sign-in without
+  //     waiting for a round-trip.
+  //   PRIORITY 2 (async, source of truth): /api/auth/me — the server-side
+  //     session decode. Confirms/refutes the localStorage snapshot.
+  //   TRIGGERS: mount, pathname change, caxton:authSuccess event.
+  //
+  // WHY: after login the /auth/me probe MAY return null in the iOS WebView
+  // if the just-set Set-Cookie header hasn't been committed to WKWebView's
+  // cookie store yet (there's a brief write-back window). The localStorage
+  // fallback closes that gap — drawer stays correct even if the network
+  // check races with cookie persistence.
   useEffect(() => {
     let cancelled = false;
+
+    // PRIORITY 1: sync read from localStorage. setState is deferred into a
+    // microtask so the first commit lands before this update — matches the
+    // pattern of the setPub effect above (react-hooks/set-state-in-effect).
+    try {
+      const cached = window.localStorage.getItem('caxton_session_user');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.id && parsed?.email) {
+          queueMicrotask(() => {
+            if (!cancelled) setUser({ id: parsed.id, email: parsed.email });
+          });
+        }
+      }
+    } catch {}
+
+    // PRIORITY 2: server confirmation
     const probe = () => {
       fetch(`${API}/auth/me`, { credentials: 'include' })
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
           if (cancelled) return;
-          if (data?.realtor) setUser({ id: data.realtor.id, email: data.realtor.email });
-          else setUser(null);
+          if (data?.realtor) {
+            const next = { id: data.realtor.id, email: data.realtor.email };
+            setUser(next);
+            try {
+              window.localStorage.setItem('caxton_session_user', JSON.stringify(next));
+            } catch {}
+          } else {
+            // Server says no session. But if we JUST dispatched authSuccess
+            // (i.e. localStorage has a cached user), trust the client for one
+            // more cycle — WKWebView may not have written the cookie yet.
+            const cached = (() => {
+              try { return window.localStorage.getItem('caxton_session_user'); }
+              catch { return null; }
+            })();
+            if (!cached) {
+              setUser(null);
+            }
+            // Note: we DON'T clear localStorage here — only handleLogout does.
+            // That's the single point of truth for "user signed out".
+          }
         })
         .catch(() => {
-          if (!cancelled) setUser(null);
+          // Network error — don't touch state, keep localStorage snapshot.
         });
     };
     probe();
-    const onAuthSuccess = () => probe();
+
+    const onAuthSuccess = () => {
+      // Re-probe once cookie should be committed. 500ms is enough for
+      // WKWebView cookie write-back on the same domain.
+      setTimeout(probe, 500);
+    };
     window.addEventListener('caxton:authSuccess', onAuthSuccess);
     return () => {
       cancelled = true;
@@ -171,8 +220,10 @@ export default function AppShell({
         localStorage.removeItem('caxton_phase');
         localStorage.removeItem('caxton_selected_article');
         localStorage.removeItem('caxton_selected_event');
+        localStorage.removeItem('caxton_session_user');
       } catch {}
     }
+    setUser(null);
     setUser(null);
     setDrawerOpen(false);
     router.push(isAdmin ? '/admin/login' : '/login');
