@@ -1,17 +1,15 @@
 /**
  * Server-side PDF generator for the Gmail Event Review queue.
- * Letter paper, Helvetica (embedded from StandardFonts), brand purple
- * for accents. Deliberately mirrors the visual weight of the admin page.
+ * Ships only pertinent event details: what, when, where, who.
+ * The raw source email is intentionally NOT included.
  */
 
 import { PDFDocument, rgb, StandardFonts, type PDFPage, type PDFFont } from 'pdf-lib';
 import type { AdminCalendarEvent } from '@/lib/server/events-store';
-import type { GmailEventSource } from '@/lib/server/gmail-source-fetch';
 import { PUBLICATION_FILTER_LABELS } from '@/lib/publications';
 
 export interface GmailQueuePdfInput {
   event: AdminCalendarEvent;
-  source: GmailEventSource | null;
   confidence: number | null;
 }
 
@@ -50,17 +48,15 @@ function ensure(ctx: Ctx, needed: number): void {
   if (ctx.y - needed < MARGIN + 40) addPage(ctx);
 }
 
-/** Sanitize a string for WinAnsi encoding (pdf-lib StandardFonts). */
+/** Fold unicode → WinAnsi-safe. StandardFonts can't render smart quotes. */
 function sanitize(input: string): string {
   return input
     .replace(/\r/g, '')
-    // Smart quotes / dashes → ASCII
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/[\u2013\u2014]/g, '-')
     .replace(/[\u2026]/g, '...')
     .replace(/[\u00A0]/g, ' ')
-    // Anything outside printable Latin-1 → '?'
     .replace(/[^\x09\x0A\x20-\x7E\xA1-\xFF]/g, '?');
 }
 
@@ -175,7 +171,7 @@ export async function generateGmailQueuePdf(items: GmailQueuePdfInput[]): Promis
   }
 
   for (const [i, item] of items.entries()) {
-    const { event, source, confidence } = item;
+    const { event, confidence } = item;
     ensure(ctx, 80);
     drawText(ctx, `${i + 1}. ${event.title || '(no title)'}`, {
       font: bold,
@@ -210,24 +206,6 @@ export async function generateGmailQueuePdf(items: GmailQueuePdfInput[]): Promis
       ctx.y -= 4;
       drawText(ctx, 'Description', { font: bold, size: 9, color: DARK });
       drawText(ctx, event.description.trim(), { size: 9, color: DARK });
-    }
-
-    if (source) {
-      ctx.y -= 4;
-      drawText(ctx, 'Source email', { font: bold, size: 9, color: DARK });
-      if (source.from) drawText(ctx, `From: ${source.from}`, { size: 8.5, color: GRAY });
-      if (source.subject) drawText(ctx, `Subject: ${source.subject}`, { size: 8.5, color: GRAY });
-      if (source.receivedAt) drawText(ctx, `Received: ${fmtDate(source.receivedAt)}`, { size: 8.5, color: GRAY });
-      if (source.body) {
-        const truncated = source.body.length > 2000 ? source.body.slice(0, 2000) + '...' : source.body;
-        drawText(ctx, truncated, { size: 8.5, color: DARK });
-      }
-    } else if (event.externalSource === 'gmail') {
-      drawText(ctx, '(Source email could not be fetched from Gmail.)', {
-        font: italic,
-        size: 8.5,
-        color: GRAY,
-      });
     }
 
     ctx.y -= 8;

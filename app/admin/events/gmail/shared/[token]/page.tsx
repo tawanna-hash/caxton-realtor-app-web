@@ -1,7 +1,7 @@
 /**
  * PUBLIC read-only view of the current Gmail event review queue,
- * unlocked by a signed share token. No approve/reject controls.
- * Includes a Download PDF button that hits the token-authed variant.
+ * unlocked by a signed share token. No approve/reject controls, no
+ * raw source emails — only the pertinent event details.
  */
 
 import { notFound } from 'next/navigation';
@@ -58,7 +58,7 @@ export default async function SharedGmailQueuePage({ params }: PageProps) {
         <p className="text-gray-500 italic">The queue is empty — no pending events to review.</p>
       ) : (
         <div className="space-y-4">
-          {items.map(({ event, source, confidence }, i) => (
+          {items.map(({ event, confidence }, i) => (
             <article key={event.id} className="border border-gray-200 rounded-md p-4 bg-white">
               <header className="mb-2">
                 <h2 className="text-lg font-semibold text-gray-900">
@@ -95,26 +95,6 @@ export default async function SharedGmailQueuePage({ params }: PageProps) {
               </dl>
               {event.description && (
                 <div className="mt-3 text-sm text-gray-700 whitespace-pre-wrap">{event.description}</div>
-              )}
-              {source && (
-                <details className="mt-3 text-sm text-gray-600">
-                  <summary className="cursor-pointer font-medium text-gray-700">Source email</summary>
-                  <div className="mt-2 space-y-1">
-                    {source.from && <div><span className="font-medium">From:</span> {source.from}</div>}
-                    {source.subject && <div><span className="font-medium">Subject:</span> {source.subject}</div>}
-                    {source.receivedAt && <div><span className="font-medium">Received:</span> {fmt(source.receivedAt)}</div>}
-                    {source.body && (
-                      <pre className="whitespace-pre-wrap break-words text-xs bg-gray-50 border border-gray-200 rounded p-2 mt-2">
-                        {source.body.length > 4000 ? source.body.slice(0, 4000) + '…' : source.body}
-                      </pre>
-                    )}
-                  </div>
-                </details>
-              )}
-              {!source && event.externalSource === 'gmail' && (
-                <p className="mt-3 text-xs text-gray-400 italic">
-                  Source email could not be fetched from Gmail.
-                </p>
               )}
             </article>
           ))}
