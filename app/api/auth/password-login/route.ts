@@ -26,7 +26,7 @@ import { encode } from 'next-auth/jwt';
 import { withErrorHandling, ApiError } from '@/lib/server/error';
 import { rateLimit } from '@/lib/server/rate-limit';
 import { passwordLoginSchema } from '@/lib/server/schemas/auth';
-import { verifyCredentials, EmailNotVerifiedError } from '@/lib/server/auth/verify-credentials';
+import { verifyCredentials } from '@/lib/server/auth/verify-credentials';
 import { SESSION_COOKIE_NAME } from '@/lib/auth/cookie-names';
 import { logger } from '@/lib/server/logger';
 
@@ -41,18 +41,7 @@ export const POST = withErrorHandling(async (req: Request) => {
 
   const input = passwordLoginSchema.parse(await req.json());
 
-  let result;
-  try {
-    result = await verifyCredentials(input.email, input.password);
-  } catch (err) {
-    if (err instanceof EmailNotVerifiedError) {
-      throw new ApiError(
-        403,
-        'Please verify your email first — check your inbox for the verification link',
-      );
-    }
-    throw err;
-  }
+  const result = await verifyCredentials(input.email, input.password);
   if (!result) {
     throw new ApiError(401, INVALID_CREDENTIALS_MSG);
   }
@@ -81,12 +70,18 @@ export const POST = withErrorHandling(async (req: Request) => {
 
   logger.info({ email: input.email }, 'Password login succeeded (Auth.js encode())');
   const response = NextResponse.json({ success: true });
+  // WKWebView on iOS treats cookies with only Max-Age (no Expires) as
+  // session cookies and drops them on app termination. Setting both
+  // Max-Age (for standards-compliant browsers) and Expires (for WKWebView)
+  // guarantees the cookie survives cold launches in the iOS Capacitor app.
+  const sessionExpires = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);
   response.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
     maxAge: SESSION_MAX_AGE_SECONDS,
+    expires: sessionExpires,
   });
   return response;
 });
