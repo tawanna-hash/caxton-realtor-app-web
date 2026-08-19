@@ -231,6 +231,7 @@ const REALTOR_PUBLIC_PREFIXES: ReadonlyArray<string> = [
 
 const REALTOR_PUBLIC_EXACT = new Set<string>([
   '/',
+  '/login',
   '/magazine',
   '/manifest.webmanifest',
 ]);

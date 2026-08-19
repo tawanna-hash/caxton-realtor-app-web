@@ -56,11 +56,8 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
   const handlePick = (id: PubId) => {
     void haptics.selection();
     persistPub(id);
-    // Reload the current page (not navigate to a new URL) so the app
-    // re-mounts with the new pub context. Navigating to '/' or even
-    // '/dashboard' can trigger the proxy auth gate and force re-auth.
-    // reload() stays on the current URL where the session is valid.
-    window.location.reload();
+    // No hard reload — persistPub() dispatches 'savedPubChange'.
+    onClose();
   };
 
   const handleNotify = (id: string) => {

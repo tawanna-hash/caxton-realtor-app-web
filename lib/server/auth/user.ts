@@ -26,9 +26,16 @@ export { SESSION_COOKIE_NAME };
  * (see L3 in the sign-in audit). Routes that need a 401 must call requireUser.
  */
 export async function getCurrentUser(): Promise<RealtorSessionPayload | null> {
-  const session = await auth();
-  if (!session?.user) return null;
-  return { realtorId: session.user.realtorId, email: session.user.email };
+  try {
+    const session = await auth();
+    if (!session?.user) return null;
+    if (typeof session.user.realtorId !== 'string' || typeof session.user.email !== 'string') {
+      return null;
+    }
+    return { realtorId: session.user.realtorId, email: session.user.email };
+  } catch {
+    return null;
+  }
 }
 
 export async function requireUser(): Promise<RealtorSessionPayload> {
