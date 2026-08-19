@@ -124,6 +124,8 @@ function GmailEventsQueue() {
   const [busyId, setBusyId] = useState<number | null>(null);
   const [scanning, setScanning] = useState(false);
 
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
   const [drawerFor, setDrawerFor] = useState<GmailEvent | null>(null);
   const [source, setSource] = useState<SourceEmail | null>(null);
   const [sourceError, setSourceError] = useState<string | null>(null);
@@ -194,6 +196,31 @@ function GmailEventsQueue() {
     }
   };
 
+  const handleDownloadPdf = () => {
+    setShareMenuOpen(false);
+    // Admin route is cookie-authed — a direct navigation works.
+    window.location.assign('/api/admin/events/gmail/pdf');
+  };
+
+  const handleCopyShareLink = async () => {
+    setShareLoading(true);
+    try {
+      const res = await adminApi.createGmailShareLink();
+      if (!res?.url) throw new Error('No URL returned');
+      try {
+        await navigator.clipboard.writeText(res.url);
+        setToast(`Share link copied — expires in ${Math.round(res.expiresInSeconds / 86400)} days.`);
+      } catch {
+        window.prompt('Copy this share link:', res.url);
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setShareLoading(false);
+      setShareMenuOpen(false);
+    }
+  };
+
   const handleScan = async () => {
     setScanning(true);
     setToast(null);
@@ -243,6 +270,42 @@ function GmailEventsQueue() {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShareMenuOpen((v) => !v)}
+              disabled={shareLoading}
+              className="px-4 py-2 bg-white text-brand-700 text-sm font-medium rounded-md border border-brand-700 hover:bg-gray-50 transition-colors disabled:opacity-40 whitespace-nowrap"
+              aria-haspopup="menu"
+              aria-expanded={shareMenuOpen}
+            >
+              {shareLoading ? 'Working…' : 'Share'}
+            </button>
+            {shareMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg z-10"
+                onMouseLeave={() => setShareMenuOpen(false)}
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={handleDownloadPdf}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-gray-50"
+                >
+                  Download PDF
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={handleCopyShareLink}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-gray-50 border-t border-gray-100"
+                >
+                  Copy share link
+                </button>
+              </div>
+            )}
+          </div>
           {mailbox && (
             <button
               type="button"

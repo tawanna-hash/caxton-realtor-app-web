@@ -227,6 +227,8 @@ const REALTOR_PUBLIC_PREFIXES: ReadonlyArray<string> = [
   '/builders/',
   '/promotions/',
   '/event-images',
+  // Signed public share of the Gmail event review queue (7-day tokens).
+  '/admin/events/gmail/shared/',
 ];
 
 const REALTOR_PUBLIC_EXACT = new Set<string>([
@@ -350,6 +352,10 @@ export async function proxy(req: NextRequest) {
   if (pubRedirect) return pubRedirect;
 
   // 3. Admin auth gate (only when on /admin/*).
+  // Signed public share of the Gmail event review queue — bypass the admin gate.
+  if (pathname.startsWith('/admin/events/gmail/shared/')) {
+    return NextResponse.next();
+  }
   if (pathname.startsWith('/admin')) {
     if (isPublicAdminPath(pathname)) {
       return NextResponse.next();

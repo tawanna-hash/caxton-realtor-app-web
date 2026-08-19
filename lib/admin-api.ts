@@ -113,6 +113,11 @@ export const adminApi = {
     adminFetch(`/admin/events/gmail/${id}/reject`, { method: 'POST' }),
   getGmailEventSource: (id: number) => adminFetch(`/admin/events/gmail/${id}/source`),
   scanGmailNow: () => adminFetch('/admin/events/gmail/scan', { method: 'POST' }),
+  createGmailShareLink: () =>
+    adminFetch('/admin/events/gmail/share', { method: 'POST' }) as Promise<{
+      url: string;
+      expiresInSeconds: number;
+    }>,
 
   // Ads dashboard (Phase 1 — May 9, 2026)
   // Spaces: read-only catalog of 15 ad slots
