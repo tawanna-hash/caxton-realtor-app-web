@@ -176,12 +176,12 @@ export default function AppShell({
     } catch {}
     setPub(other);
     setDrawerOpen(false);
-    // Force a hard reload to '/' so the entire app re-mounts with the new
-    // pub context (server components, pub-scoped fetches, header chrome, etc.).
-    // The previous soft setState left stale data on the screen, which was
-    // the reported "switch button does nothing" bug (BUG-03).
+    // Reload the CURRENT page (not navigate to '/') so the app re-mounts
+    // with the new pub context. Navigating to '/' triggers a root → redirect
+    // → proxy chain that can force re-authentication. reload() stays on the
+    // current URL where the session is already validated.
     if (typeof window !== 'undefined') {
-      window.location.assign('/');
+      window.location.reload();
     }
   }, [pub]);
 

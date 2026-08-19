@@ -56,9 +56,11 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
   const handlePick = (id: PubId) => {
     void haptics.selection();
     persistPub(id);
-    // Hard reload to '/' so the entire app re-mounts under the new pub
-    // context. Soft setState left stale data on screen (BUG-03).
-    window.location.assign('/');
+    // Reload the current page (not navigate to a new URL) so the app
+    // re-mounts with the new pub context. Navigating to '/' or even
+    // '/dashboard' can trigger the proxy auth gate and force re-auth.
+    // reload() stays on the current URL where the session is valid.
+    window.location.reload();
   };
 
   const handleNotify = (id: string) => {
