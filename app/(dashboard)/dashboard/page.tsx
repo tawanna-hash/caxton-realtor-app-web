@@ -611,10 +611,11 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Sign-in failed');
       }
-      const meRes = await fetch(API + '/auth/me', { credentials: 'include' });
-      if (!meRes.ok) throw new Error('Signed in but could not load your account');
-      const meData = await meRes.json();
-      const realtor = meData.realtor || meData;
+      // /auth/password-login now returns the realtor payload — no need for
+      // a second /auth/me round-trip (BUG-C in the sign-in audit).
+      const data = await res.json().catch(() => ({}));
+      const realtor = data.realtor;
+      if (!realtor) throw new Error('Signed in but could not load your account');
       trackEvent('password_signin_succeeded', { pub });
       void haptics.notify('success');
       try { window.dispatchEvent(new CustomEvent('caxton:authSuccess', { detail: { mode: 'password' } })); } catch {}

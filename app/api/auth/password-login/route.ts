@@ -28,6 +28,7 @@ import { rateLimit } from '@/lib/server/rate-limit';
 import { passwordLoginSchema } from '@/lib/server/schemas/auth';
 import { verifyCredentials } from '@/lib/server/auth/verify-credentials';
 import { SESSION_COOKIE_NAME } from '@/lib/auth/cookie-names';
+import { getRealtorMe } from '@/lib/server/realtors-store';
 import { logger } from '@/lib/server/logger';
 
 export const runtime = 'nodejs';
@@ -69,7 +70,23 @@ export const POST = withErrorHandling(async (req: Request) => {
   });
 
   logger.info({ email: input.email }, 'Password login succeeded (Auth.js encode())');
-  const response = NextResponse.json({ success: true });
+  // Fetch full realtor payload so the client can skip a second /auth/me
+  // round-trip (BUG-C in the sign-in audit). Same shape as /api/auth/me.
+  const realtor = await getRealtorMe(result.realtorId);
+  const payload = realtor
+    ? (() => {
+        const { password_set_at: passwordSetAt, ...rest } = realtor;
+        return {
+          ...rest,
+          firstName: rest.first_name ?? null,
+          lastName: rest.last_name ?? null,
+          hasPassword: passwordSetAt !== null,
+          passwordSetAt,
+        };
+      })()
+    : null;
+
+  const response = NextResponse.json({ success: true, realtor: payload });
   // WKWebView on iOS treats cookies with only Max-Age (no Expires) as
   // session cookies and drops them on app termination. Setting both
   // Max-Age (for standards-compliant browsers) and Expires (for WKWebView)

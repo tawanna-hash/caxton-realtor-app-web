@@ -149,16 +149,24 @@ export default function BiometricGate() {
     void runUnlock();
   }, [phase, runUnlock]);
 
-  const onSignOut = useCallback(() => {
+  const onSignOut = useCallback(async () => {
+    // caxton_session_v2 is HttpOnly — document.cookie can't clear it.
+    // POST /api/auth/logout is the only way to actually destroy the
+    // session (BUG-D in the sign-in audit).
     try {
-      document.cookie = 'caxton_session_v2=; Path=/; Max-Age=0; SameSite=Lax';
-    } catch {}
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {
+      /* best-effort */
+    }
     try {
       window.localStorage.removeItem('caxton_session_user');
     } catch {}
     disableBiometricGate();
     try {
-      window.location.replace('/dashboard');
+      window.location.replace('/login');
     } catch {
       window.location.reload();
     }
@@ -199,7 +207,7 @@ export default function BiometricGate() {
         </button>
         <button
           type="button"
-          onClick={onSignOut}
+          onClick={() => { void onSignOut(); }}
           className="text-sm text-gray-500 underline underline-offset-4 mt-2"
         >
           Sign out

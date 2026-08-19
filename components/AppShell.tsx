@@ -129,17 +129,34 @@ export default function AppShell({
     return () => window.removeEventListener('savedPubChange', onPubChange);
   }, []);
 
-  // Hydrate user + pub
+  // Hydrate user — re-probe on:
+  //   1. Mount (cold launch, page refresh)
+  //   2. caxton:authSuccess event (dispatched by AuthGate after login/signup)
+  //   3. pathname change (e.g. after /login → /dashboard navigation)
+  // Without listeners 2+3 the drawer stayed on "LOGIN" forever after signing
+  // in via the inline AuthGate (BUG-A in the sign-in audit).
   useEffect(() => {
-// User auth probe
-    fetch(`${API}/auth/me`, { credentials: 'include' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.realtor) setUser({ id: data.realtor.id, email: data.realtor.email });
-        else setUser(null);
-      })
-      .catch(() => setUser(null));
-  }, []);
+    let cancelled = false;
+    const probe = () => {
+      fetch(`${API}/auth/me`, { credentials: 'include' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (cancelled) return;
+          if (data?.realtor) setUser({ id: data.realtor.id, email: data.realtor.email });
+          else setUser(null);
+        })
+        .catch(() => {
+          if (!cancelled) setUser(null);
+        });
+    };
+    probe();
+    const onAuthSuccess = () => probe();
+    window.addEventListener('caxton:authSuccess', onAuthSuccess);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('caxton:authSuccess', onAuthSuccess);
+    };
+  }, [pathname]);
 
   const handleLogout = useCallback(async () => {
     const logoutUrl = isAdmin ? `${API}/admin/auth/logout` : `${API}/auth/logout`;
