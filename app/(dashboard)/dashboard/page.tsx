@@ -9,8 +9,6 @@ import { useSwipeBack } from '@/hooks/use-swipe-back';
 import ProfilePanel from '@/components/ProfilePanel';
 import { getApiBase } from '@/lib/api-base';
 import { DashboardHero } from '@/components/dashboard/DashboardHero';
-import PushOptInBanner from '@/components/PushOptInBanner';
-import NativePushBanner from '@/components/NativePushBanner';
 import { SocialLinks } from '@/components/SocialLinks';
 import NewsletterCTA from '@/components/NewsletterCTA';
 import SaborReportCard from '@/components/SaborReportCard';
@@ -1468,37 +1466,6 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
           MarketSwitcherSheet, per iOS HIG dedupe pass. */}
       {!showPreLaunch && (
         <DashboardHero pub={pub as "realtyline" | "newsline"} />
-      )}
-      {!showPreLaunch && (
-        <PushOptInBanner
-          market={
-            pub === 'realtyline'
-              ? 'austin'
-              : pub === 'newsline'
-              ? 'san_antonio'
-              : pub === 'realtyline-houston'
-              ? 'houston'
-              : pub === 'realtyline-dallas'
-              ? 'dallas'
-              : null
-          }
-        />
-      )}
-      {!showPreLaunch && (
-        <NativePushBanner
-          realtorId={user?.id ?? null}
-          market={
-            pub === 'realtyline'
-              ? 'austin'
-              : pub === 'newsline'
-              ? 'san_antonio'
-              : pub === 'realtyline-houston'
-              ? 'houston'
-              : pub === 'realtyline-dallas'
-              ? 'dallas'
-              : null
-          }
-        />
       )}
       {user?.guest && (
         <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between">

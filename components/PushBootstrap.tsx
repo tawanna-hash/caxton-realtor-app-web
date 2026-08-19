@@ -49,7 +49,15 @@ export default function PushBootstrap() {
         if (cancelled) return;
         const perm = await PushNotifications.checkPermissions();
         if (perm.receive === 'granted') {
+          // Already granted — refresh the server-side token.
           await registerNativePush();
+        } else if (perm.receive === 'prompt') {
+          // Auto-request permission on first launch — no opt-in banner needed.
+          // User can still disable via iOS Settings → Notifications.
+          const req = await PushNotifications.requestPermissions();
+          if (req.receive === 'granted') {
+            await registerNativePush();
+          }
         }
       } catch {
         /* best-effort */

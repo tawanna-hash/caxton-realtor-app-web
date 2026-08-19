@@ -5,7 +5,6 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { getApiBase } from '@/lib/api-base';
 import PasswordSection from '@/components/PasswordSection';
-import PushOptInButton from '@/components/PushOptInButton';
 import DeleteAccountSection from '@/components/DeleteAccountSection';
 
 const API = getApiBase();
@@ -120,24 +119,6 @@ export default function ProfileClient() {
 
       <div className="p-5 space-y-5">
         <PasswordSection accentColor={accent} hasPassword={!!user.hasPassword} />
-
-        <section className="rounded-md border border-gray-200 bg-white p-4">
-          <h2 className="text-sm font-medium text-gray-900 mb-1">Notifications</h2>
-          <p className="text-xs text-gray-500 font-light mb-3">
-            Get breaking news and new issue alerts delivered to this device.
-          </p>
-          <PushOptInButton
-            market={
-              pub === 'newsline'
-                ? 'san_antonio'
-                : pub === 'realtyline-houston'
-                ? 'houston'
-                : pub === 'realtyline-dallas'
-                ? 'dallas'
-                : 'austin'
-            }
-          />
-        </section>
 
         <DeleteAccountSection accentColor={accent} email={user.email ?? ''} />
 
