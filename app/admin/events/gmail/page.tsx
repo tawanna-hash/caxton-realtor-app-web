@@ -144,6 +144,8 @@ function GmailEventsQueue() {
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('when');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
   const [drawerFor, setDrawerFor] = useState<GmailEvent | null>(null);
   const [source, setSource] = useState<SourceEmail | null>(null);
@@ -212,6 +214,42 @@ function GmailEventsQueue() {
       alert(err instanceof Error ? err.message : String(err));
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const toggleRow = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      if (prev.size === items.length && items.length > 0) return new Set();
+      return new Set(items.map((e) => e.id));
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    const n = selectedIds.size;
+    if (!window.confirm(`Delete ${n} pending event${n === 1 ? '' : 's'} permanently? This cannot be undone.`)) return;
+    setBulkBusy(true);
+    setError(null);
+    try {
+      const res = await adminApi.bulkRejectGmailEvents(Array.from(selectedIds));
+      setToast(`Deleted ${res.deleted} event${res.deleted === 1 ? '' : 's'}${res.missing > 0 ? ` (${res.missing} already gone)` : ''}.`);
+      setSelectedIds(new Set());
+      reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Bulk delete failed');
+    } finally {
+      setBulkBusy(false);
     }
   };
 
@@ -436,10 +474,46 @@ function GmailEventsQueue() {
           Nothing awaiting review. The scanner runs daily; use &ldquo;Scan now&rdquo; to check immediately.
         </div>
       ) : (
+        <>
+        {selectedIds.size > 0 && (
+          <div className="mb-3 flex items-center gap-3 flex-wrap bg-brand-700/5 border border-brand-700/20 rounded-md px-3 py-2 text-sm">
+            <span className="font-medium text-gray-800">{selectedIds.size} selected</span>
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              disabled={bulkBusy}
+              className="px-3 py-1.5 rounded-md text-white bg-red-600 hover:bg-red-700 text-xs font-medium disabled:opacity-50"
+            >
+              {bulkBusy ? 'Deleting…' : `Delete selected (${selectedIds.size})`}
+            </button>
+            <button
+              type="button"
+              onClick={clearSelection}
+              disabled={bulkBusy}
+              className="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-medium disabled:opacity-50"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
         <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
+                <th className="px-3 py-3 w-10">
+                  <label className="sr-only" htmlFor="gmail-select-all">Select all</label>
+                  <input
+                    id="gmail-select-all"
+                    type="checkbox"
+                    checked={items.length > 0 && selectedIds.size === items.length}
+                    ref={(el) => {
+                      if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < items.length;
+                    }}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4 rounded border-gray-300 text-brand-700 focus:ring-brand-700"
+                  />
+                </th>
                 <SortableTh label="Event"       k="title"       sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
                 <SortableTh label="When"        k="when"        sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
                 <SortableTh label="Location"    k="location"    sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
@@ -453,6 +527,16 @@ function GmailEventsQueue() {
             <tbody className="divide-y divide-gray-100">
               {sortedItems.map((ev) => (
                 <tr key={ev.id}>
+                  <td className="px-3 py-3 w-10">
+                    <label className="sr-only" htmlFor={`gmail-select-${ev.id}`}>Select row</label>
+                    <input
+                      id={`gmail-select-${ev.id}`}
+                      type="checkbox"
+                      checked={selectedIds.has(ev.id)}
+                      onChange={() => toggleRow(ev.id)}
+                      className="h-4 w-4 rounded border-gray-300 text-brand-700 focus:ring-brand-700"
+                    />
+                  </td>
                   <td className="px-4 py-3 max-w-xs">
                     <div className="font-medium text-gray-900">{ev.title}</div>
                     {ev.description && (
@@ -529,6 +613,7 @@ function GmailEventsQueue() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {drawerFor && (

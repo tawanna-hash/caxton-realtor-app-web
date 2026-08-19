@@ -111,6 +111,11 @@ export const adminApi = {
   listPendingGmailEvents: () => adminFetch('/admin/events/gmail/pending'),
   rejectGmailEvent: (id: number) =>
     adminFetch(`/admin/events/gmail/${id}/reject`, { method: 'POST' }),
+  bulkRejectGmailEvents: (ids: number[]) =>
+    adminFetch('/admin/events/gmail/bulk-reject', {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    }) as Promise<{ deleted: number; missing: number; ids: number[] }>,
   getGmailEventSource: (id: number) => adminFetch(`/admin/events/gmail/${id}/source`),
   scanGmailNow: () => adminFetch('/admin/events/gmail/scan', { method: 'POST' }),
   createGmailShareLink: () =>
