@@ -32,47 +32,31 @@ function LoginInner() {
       ? rawNext
       : '/dashboard';
 
-  const [mode, setMode] = useState<'password' | 'magic'>('password');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setErr(null);
-    setMsg(null);
-    trackEvent('login_attempted', { mode });
+    trackEvent('login_attempted', { mode: 'password' });
     try {
-      if (mode === 'password') {
-        const r = await fetch(`${API}/auth/password-login`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email: email.trim(), password }),
-        });
-        if (!r.ok) {
-          const j = await r.json().catch(() => ({}));
-          throw new Error(j.error || j.message || `Sign-in failed (${r.status})`);
-        }
-        router.push(next);
-        router.refresh();
-      } else {
-        const r = await fetch(`${API}/auth/login`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ email: email.trim() }),
-        });
-        if (!r.ok) {
-          const j = await r.json().catch(() => ({}));
-          throw new Error(j.error || j.message || `Could not send link (${r.status})`);
-        }
-        setMsg('Check your email for the sign-in link.');
+      const r = await fetch(`${API}/auth/password-login`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j.error || j.message || `Sign-in failed (${r.status})`);
       }
+      router.push(next);
+      router.refresh();
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Sign-in failed');
     } finally {
@@ -93,23 +77,6 @@ function LoginInner() {
           Sign in to access your market feed.
         </p>
 
-        <div className="mx-auto mb-6 inline-flex w-full rounded-lg border border-gray-200 bg-gray-50 p-1 text-sm">
-          <button
-            type="button"
-            onClick={() => setMode('password')}
-            className={`flex-1 px-3 py-2 rounded-md ${mode === 'password' ? 'bg-white shadow-sm font-medium text-gray-900' : 'text-gray-600'}`}
-          >
-            Password
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode('magic')}
-            className={`flex-1 px-3 py-2 rounded-md ${mode === 'magic' ? 'bg-white shadow-sm font-medium text-gray-900' : 'text-gray-600'}`}
-          >
-            Email link
-          </button>
-        </div>
-
         <form onSubmit={submit} className="space-y-3">
           <input
             type="email"
@@ -120,8 +87,7 @@ function LoginInner() {
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-3.5 border border-gray-300 rounded-md text-base bg-white focus:outline-none focus:border-brand-700"
           />
-          {mode === 'password' && (
-            <div className="relative">
+          <div className="relative">
               <input
                 type={showPw ? 'text' : 'password'}
                 required
@@ -139,15 +105,13 @@ function LoginInner() {
                 {showPw ? 'Hide' : 'Show'}
               </button>
             </div>
-          )}
           {err && <p className="text-sm text-red-600">{err}</p>}
-          {msg && <p className="text-sm text-emerald-700">{msg}</p>}
           <button
             type="submit"
-            disabled={busy || !email || (mode === 'password' && !password)}
+            disabled={busy || !email || !password}
             className="w-full py-3.5 bg-brand-700 text-white text-base font-medium uppercase tracking-wider rounded-md disabled:opacity-40"
           >
-            {busy ? 'Working…' : mode === 'password' ? 'Sign In' : 'Send Sign-In Link'}
+            {busy ? 'Working…' : 'Sign In'}
           </button>
         </form>
 
