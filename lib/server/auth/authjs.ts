@@ -1,4 +1,4 @@
-import NextAuth, { customFetch } from "next-auth";
+import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
 import { getPool } from "@/lib/server/db/neon";
@@ -20,6 +20,12 @@ export { EmailNotVerifiedError };
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: realtorAdapter(),
+  // Trust the request Host header. Required on Vercel (and any reverse-proxied
+  // deployment) so Auth.js doesn't throw UntrustedHost on every auth() call.
+  // Without this, getCurrentUser() returned null in production for signed-in
+  // users → /api/auth/me returned { realtor: null } → the drawer showed LOGIN.
+  // https://authjs.dev/getting-started/deployment#securing-a-preview-deployment
+  trustHost: true,
   session: {
     strategy: "jwt",
     maxAge: 60 * 60 * 24 * 30, // 30 days
@@ -106,7 +112,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
 
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn() {
       // -- Credentials provider: always allow (auth already verified) -----
       return true;
     },
