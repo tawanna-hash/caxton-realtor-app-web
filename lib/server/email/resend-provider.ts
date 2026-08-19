@@ -37,6 +37,15 @@ export class ResendEmailProvider implements EmailProvider {
       tags,
     };
 
+    if (input.disableTracking) {
+      // Resend accepts tracking flags either as top-level `tracking`
+      // (newer API) or as flat `click_tracking`/`open_tracking`
+      // booleans (older). Set both to be safe across API versions.
+      (payload as Record<string, unknown>).tracking = { click: false, open: false };
+      (payload as Record<string, unknown>).click_tracking = false;
+      (payload as Record<string, unknown>).open_tracking = false;
+    }
+
     const replyTo = input.replyTo ?? process.env.EMAIL_REPLY_TO;
     if (replyTo) payload.reply_to = replyTo;
 

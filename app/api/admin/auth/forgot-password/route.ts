@@ -74,6 +74,7 @@ export const POST = withAdminTracking(async (req: Request) => {
     html: template.html,
     emailType: 'admin_password_reset',
     tags: ['admin_password_reset'],
+    disableTracking: true,
   });
 
   if (!result.success) {
