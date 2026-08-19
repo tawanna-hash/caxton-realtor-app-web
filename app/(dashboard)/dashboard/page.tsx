@@ -824,7 +824,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 </div>
 
                 <p className="text-xs text-gray-500 font-light mb-3">Your license number is used only to avoid duplicate records and for RealtyLine&apos;s use only. It is never shared, sold or displayed publicly. Providing a license number is optional.</p>
-                <p className="text-xs text-gray-400 font-light mb-4">By creating an account, you agree to receive communications from Caxton Publications, Inc. We will send a magic link to your email - no password needed.</p>
+                <p className="text-xs text-gray-400 font-light mb-4">By creating an account, you agree to receive communications from Caxton Publications, Inc. Your password lets you sign in anytime — no email link needed.</p>
 
                 <div className="flex gap-2">
                   <button onClick={() => { void haptics.light(); setStep(2); }} className="flex-1 text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-500 rounded-md">Back</button>
@@ -985,6 +985,29 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  // Listen for cross-component pub changes (MarketSwitcherSheet /
+  // AppShell NavDrawer call persistPub() which dispatches this event).
+  // Updating pub state here triggers the Feed's useEffect to re-fetch
+  // data for the new market — no hard reload needed (which was causing
+  // re-auth via the Edge proxy).
+  useEffect(() => {
+    function onPubChange() {
+      try {
+        const saved = localStorage.getItem('caxton_pub');
+        if (saved === 'realtyline' || saved === 'newsline') {
+          setPub(saved);
+          // The existing useEffect [pub] already resets the category.
+          // Clear any saved article from the old market.
+          setSelectedArticle(null);
+          try { localStorage.removeItem('caxton_selected_article'); } catch {}
+          try { localStorage.removeItem('caxton_selected_event'); } catch {}
+        }
+      } catch {}
+    }
+    window.addEventListener('savedPubChange', onPubChange);
+    return () => window.removeEventListener('savedPubChange', onPubChange);
   }, []);
 
   // Persist phase + pub on every change (after initial hydration).
