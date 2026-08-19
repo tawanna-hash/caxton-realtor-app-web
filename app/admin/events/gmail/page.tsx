@@ -36,6 +36,23 @@ type GmailEvent = {
   confidence: number | null;
 };
 
+type SortKey = 'title' | 'when' | 'location' | 'organizer' | 'publication' | 'confidence';
+type SortDir = 'asc' | 'desc';
+
+/** Comparator that puts nulls/undefineds last regardless of direction. */
+function compareWithNullsLast<T>(a: T | null | undefined, b: T | null | undefined, dir: SortDir): number {
+  const aNull = a === null || a === undefined || a === '';
+  const bNull = b === null || b === undefined || b === '';
+  if (aNull && bNull) return 0;
+  if (aNull) return 1;
+  if (bNull) return -1;
+  const av = a as unknown as number | string;
+  const bv = b as unknown as number | string;
+  if (av < bv) return dir === 'asc' ? -1 : 1;
+  if (av > bv) return dir === 'asc' ? 1 : -1;
+  return 0;
+}
+
 type Mailbox = { emailAddress: string; scope: string; updatedAt: string | null } | null;
 
 type SourceEmail = {
@@ -125,6 +142,8 @@ function GmailEventsQueue() {
   const [scanning, setScanning] = useState(false);
 
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>('when');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [shareLoading, setShareLoading] = useState(false);
   const [drawerFor, setDrawerFor] = useState<GmailEvent | null>(null);
   const [source, setSource] = useState<SourceEmail | null>(null);
@@ -195,6 +214,38 @@ function GmailEventsQueue() {
       setBusyId(null);
     }
   };
+
+  const toggleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sortedItems = [...items].sort((a, b) => {
+    switch (sortKey) {
+      case 'title':
+        return compareWithNullsLast(a.title?.toLowerCase(), b.title?.toLowerCase(), sortDir);
+      case 'when':
+        return compareWithNullsLast(a.startDate, b.startDate, sortDir);
+      case 'location':
+        return compareWithNullsLast(a.location?.toLowerCase(), b.location?.toLowerCase(), sortDir);
+      case 'organizer':
+        return compareWithNullsLast(a.organizer?.toLowerCase(), b.organizer?.toLowerCase(), sortDir);
+      case 'publication':
+        return compareWithNullsLast(
+          PUBLICATION_FILTER_LABELS[a.publication],
+          PUBLICATION_FILTER_LABELS[b.publication],
+          sortDir,
+        );
+      case 'confidence':
+        return compareWithNullsLast(a.confidence, b.confidence, sortDir);
+      default:
+        return 0;
+    }
+  });
 
   const handleDownloadPdf = () => {
     setShareMenuOpen(false);
@@ -389,18 +440,18 @@ function GmailEventsQueue() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Event</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">When</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Location</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Host</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Publication</th>
+                <SortableTh label="Event"       k="title"       sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
+                <SortableTh label="When"        k="when"        sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
+                <SortableTh label="Location"    k="location"    sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
+                <SortableTh label="Host"        k="organizer"   sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
+                <SortableTh label="Publication" k="publication" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
                 <th className="text-left px-4 py-3 font-medium text-gray-700">Source Email</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-700">Confidence</th>
+                <SortableTh label="Confidence"  k="confidence"  sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
                 <th className="text-right px-4 py-3 font-medium text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {items.map((ev) => (
+              {sortedItems.map((ev) => (
                 <tr key={ev.id}>
                   <td className="px-4 py-3 max-w-xs">
                     <div className="font-medium text-gray-900">{ev.title}</div>
@@ -545,5 +596,41 @@ function SourceDrawer({
         </div>
       </aside>
     </div>
+  );
+}
+
+/** Clickable table header cell that shows the current sort state. */
+function SortableTh({
+  label,
+  k,
+  sortKey,
+  sortDir,
+  onToggle,
+}: {
+  label: string;
+  k: SortKey;
+  sortKey: SortKey;
+  sortDir: SortDir;
+  onToggle: (k: SortKey) => void;
+}) {
+  const active = sortKey === k;
+  const indicator = active ? (sortDir === 'asc' ? '▲' : '▼') : '↕';
+  return (
+    <th
+      className="text-left px-4 py-3 font-medium text-gray-700"
+      aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+    >
+      <button
+        type="button"
+        onClick={() => onToggle(k)}
+        className={`inline-flex items-center gap-1 hover:text-brand-700 transition-colors ${
+          active ? 'text-brand-700' : 'text-gray-700'
+        }`}
+        aria-label={`Sort by ${label}`}
+      >
+        <span>{label}</span>
+        <span className={`text-xs ${active ? 'opacity-100' : 'opacity-40'}`}>{indicator}</span>
+      </button>
+    </th>
   );
 }
