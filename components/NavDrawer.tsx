@@ -505,31 +505,39 @@ export default function NavDrawer({
                 >
                   Login
                 </Link>
-                {/* Admin login — accessible to staff from the public drawer
-                    so they don't need to bookmark /admin/login separately. */}
-                <Link
-                  href="/admin/login"
-                  onClick={onClose}
-                  className="flex items-center gap-2 px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/60 font-medium rounded-md hover:bg-white/10 hover:text-white/90 transition"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="3" y="11" width="18" height="11" rx="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                  Admin Login
-                </Link>
               </>
             )}
           </div>
+
+          {/* Admin Login — always visible to non-admins (whether signed
+              in as a realtor or not) so staff can reach /admin/login
+              without bookmarking it. Hidden once you're already inside
+              the admin surface. */}
+          {!isAdmin && (
+            <div className="py-2 border-t border-white/10">
+              <Link
+                href="/admin/login"
+                onClick={onClose}
+                className="flex items-center gap-2 px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/60 font-medium rounded-md hover:bg-white/10 hover:text-white/90 transition"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Admin Login
+              </Link>
+            </div>
+          )}
 
           <p className="text-[10px] text-white/25 font-light text-center pt-4">
             {'\u00A9'} 2026 Realty News Now
