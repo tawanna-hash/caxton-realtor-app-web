@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useSyncExternalStore } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getApiBase } from '@/lib/api-base';
@@ -8,10 +8,35 @@ import { getApiBase } from '@/lib/api-base';
 import PageTitle from '@/components/ui/PageTitle';
 const API_URL = getApiBase();
 
+// useSyncExternalStore helpers for the reset-token read.
+function subscribeNoop(): () => void {
+  return () => {};
+}
+function getSessionToken(): string | null {
+  try {
+    return sessionStorage.getItem('caxton_admin_reset_token');
+  } catch {
+    return null;
+  }
+}
+function getServerToken(): string | null {
+  return null;
+}
+
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  // Prefer sessionStorage (set by /admin/r/<token>) so Resend's
+  // click-tracking wrapper can't strip the token via query-string
+  // mangling. Fall back to ?token= for legacy in-flight emails.
+  const sessionToken = useSyncExternalStore(
+    subscribeNoop,
+    getSessionToken,
+    getServerToken,
+  );
+  const queryToken = searchParams.get('token');
+  const token = sessionToken ?? queryToken;
+  const tokenReady = typeof window !== 'undefined';
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -19,7 +44,7 @@ function ResetPasswordForm() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!token) {
+  if (tokenReady && !token) {
     return (
       <div className="bg-white border border-gray-200 p-6 rounded-md">
         <p className="text-sm text-red-600 mb-4">
@@ -60,6 +85,11 @@ function ResetPasswordForm() {
         throw new Error(data?.error?.message || data?.message || 'Reset failed');
       }
       setSuccess(true);
+      try {
+        sessionStorage.removeItem('caxton_admin_reset_token');
+      } catch {
+        // ignore
+      }
       setTimeout(() => router.push('/admin/login'), 2000);
     } catch (err) {
       setError((err as Error).message);
@@ -72,6 +102,14 @@ function ResetPasswordForm() {
       <div className="bg-white border border-gray-200 p-6 rounded-md">
         <p className="text-sm text-brand-700 mb-2">Password updated.</p>
         <p className="text-sm text-gray-500">Redirecting you to the sign-in page...</p>
+      </div>
+    );
+  }
+
+  if (!tokenReady) {
+    return (
+      <div className="bg-white border border-gray-200 p-6 text-sm text-gray-500 rounded-md">
+        Loading…
       </div>
     );
   }

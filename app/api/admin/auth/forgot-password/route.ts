@@ -58,7 +58,10 @@ export const POST = withAdminTracking(async (req: Request) => {
   const host = h.get('host') ?? 'realtynewsnow.app';
   const proto = h.get('x-forwarded-proto') ?? 'https';
   const base = process.env.NEXT_PUBLIC_SITE_URL || `${proto}://${host}`;
-  const resetUrl = `${base}/admin/reset-password?token=${encodeURIComponent(raw)}`;
+  // Path-only short link: Resend's click-tracking wrapper drops
+  // query strings on redirect but preserves paths. The short-link
+  // page hops to /admin/reset-password.
+  const resetUrl = `${base}/admin/r/${encodeURIComponent(raw)}`;
 
   const template = renderPasswordResetEmail({
     fullName: admin.full_name,

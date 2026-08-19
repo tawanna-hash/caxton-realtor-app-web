@@ -141,6 +141,7 @@ const PUBLIC_ADMIN_PATHS = new Set<string>([
   '/admin/login',
   '/admin/forgot-password',
   '/admin/reset-password',
+  '/admin/r',
 ]);
 
 function isPublicAdminPath(pathname: string): boolean {
