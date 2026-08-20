@@ -112,8 +112,11 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
   // to catch cascading-render bugs, but a one-shot fetch-on-mount is
   // exactly the kind of "subscribe to external system" use case effects
   // are meant for. Disable for this single line.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { reload(); }, [reload]);
+  // Only re-fetch when the advertiser changes. Depending on [reload]
+  // caused a re-fetch on every parent render when callers passed a
+  // fresh onError arrow, which stomped input state mid-type.
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+  useEffect(() => { reload(); }, [advertiserId]);
 
   // Probe whether this advertiser has a configured website-sync source.
   useEffect(() => {
