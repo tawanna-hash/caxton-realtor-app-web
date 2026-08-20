@@ -29,6 +29,10 @@ type Props = {
 
 export default function LocationsStaffEditor({ advertiserId, onError, onStaffChange }: Props) {
   const [locations, setLocations] = useState<AdvertiserLocation[]>([]);
+  // Per-field draft store for location text inputs. Save-on-blur so we
+  // don't PATCH on every keystroke.
+  const [locPending, setLocPending] = useState<Record<string, Partial<AdvertiserLocation>>>({});
+
   const [staff, setStaff] = useState<AdvertiserStaff[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -172,6 +176,33 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
     } catch (err) {
       reportError(err instanceof Error ? err.message : 'add location failed');
     }
+  };
+
+  const locFieldValue = <K extends keyof AdvertiserLocation>(loc: AdvertiserLocation, field: K): AdvertiserLocation[K] => {
+    const pending = locPending[loc.id];
+    if (pending && field in pending) return pending[field] as AdvertiserLocation[K];
+    return loc[field];
+  };
+
+  const setLocDraft = <K extends keyof AdvertiserLocation>(id: string, field: K, value: AdvertiserLocation[K]) => {
+    setLocPending((prev) => ({ ...prev, [id]: { ...(prev[id] ?? {}), [field]: value } }));
+  };
+
+  const commitLocField = async <K extends keyof AdvertiserLocation>(loc: AdvertiserLocation, field: K) => {
+    const pending = locPending[loc.id];
+    if (!pending || !(field in pending)) return;
+    const draft = pending[field];
+    // Clear this field from pending FIRST so re-renders read from server truth.
+    setLocPending((prev) => {
+      const forId = { ...(prev[loc.id] ?? {}) };
+      delete forId[field];
+      const next = { ...prev };
+      if (Object.keys(forId).length === 0) delete next[loc.id];
+      else next[loc.id] = forId;
+      return next;
+    });
+    if (draft === loc[field]) return;
+    await patchLocation(loc.id, { [field]: draft } as Partial<AdvertiserLocation>);
   };
 
   const patchLocation = async (id: string, patch: Partial<AdvertiserLocation>) => {
@@ -574,8 +605,10 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
             >
               <div className="flex items-center gap-2">
                 <input
-                  value={loc.label ?? ''}
-                  onChange={(e) => patchLocation(loc.id, { label: e.target.value })}
+                  value={locFieldValue(loc, 'label') ?? ''}
+                  onChange={(e) => setLocDraft(loc.id, 'label', e.target.value)}
+                  onBlur={() => commitLocField(loc, 'label')}
+                  onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                   placeholder="Label (e.g. Houston Office)"
                   className={`${INPUT} flex-1`}
                 />
@@ -597,49 +630,63 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
                 </button>
               </div>
               <input
-                value={loc.address ?? ''}
-                onChange={(e) => patchLocation(loc.id, { address: e.target.value })}
+                value={locFieldValue(loc, 'address') ?? ''}
+                onChange={(e) => setLocDraft(loc.id, 'address', e.target.value)}
+                onBlur={() => commitLocField(loc, 'address')}
+                onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                 placeholder="Street address"
                 className={INPUT}
               />
               <input
-                value={loc.address_2 ?? ''}
-                onChange={(e) => patchLocation(loc.id, { address_2: e.target.value })}
+                value={locFieldValue(loc, 'address_2') ?? ''}
+                onChange={(e) => setLocDraft(loc.id, 'address_2', e.target.value)}
+                onBlur={() => commitLocField(loc, 'address_2')}
+                onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                 placeholder="Suite / floor (optional)"
                 className={INPUT}
               />
               <div className="grid grid-cols-3 gap-2">
                 <input
-                  value={loc.city ?? ''}
-                  onChange={(e) => patchLocation(loc.id, { city: e.target.value })}
+                  value={locFieldValue(loc, 'city') ?? ''}
+                  onChange={(e) => setLocDraft(loc.id, 'city', e.target.value)}
+                  onBlur={() => commitLocField(loc, 'city')}
+                  onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                   placeholder="City"
                   className={INPUT}
                 />
                 <input
-                  value={loc.state ?? ''}
-                  onChange={(e) => patchLocation(loc.id, { state: e.target.value })}
+                  value={locFieldValue(loc, 'state') ?? ''}
+                  onChange={(e) => setLocDraft(loc.id, 'state', e.target.value)}
+                  onBlur={() => commitLocField(loc, 'state')}
+                  onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                   placeholder="State"
                   className={INPUT}
                 />
                 <input
-                  value={loc.zip ?? ''}
-                  onChange={(e) => patchLocation(loc.id, { zip: e.target.value })}
+                  value={locFieldValue(loc, 'zip') ?? ''}
+                  onChange={(e) => setLocDraft(loc.id, 'zip', e.target.value)}
+                  onBlur={() => commitLocField(loc, 'zip')}
+                  onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                   placeholder="ZIP"
                   className={INPUT}
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <input
-                  value={loc.phone ?? ''}
-                  onChange={(e) => patchLocation(loc.id, { phone: formatPhoneInput(e.target.value) })}
+                  value={locFieldValue(loc, 'phone') ?? ''}
+                  onChange={(e) => setLocDraft(loc.id, 'phone', formatPhoneInput(e.target.value))}
+                  onBlur={() => commitLocField(loc, 'phone')}
+                  onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                   placeholder="(000) 000-0000"
                   inputMode="tel"
                   className={INPUT}
                 />
                 <div className="flex items-center gap-1">
                   <input
-                    value={loc.email ?? ''}
-                    onChange={(e) => patchLocation(loc.id, { email: e.target.value })}
+                    value={locFieldValue(loc, 'email') ?? ''}
+                    onChange={(e) => setLocDraft(loc.id, 'email', e.target.value)}
+                    onBlur={() => commitLocField(loc, 'email')}
+                    onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                     placeholder="Office email"
                     className={`${INPUT} flex-1`}
                   />
@@ -656,8 +703,10 @@ export default function LocationsStaffEditor({ advertiserId, onError, onStaffCha
                 </div>
               </div>
               <input
-                value={loc.hours ?? ''}
-                onChange={(e) => patchLocation(loc.id, { hours: e.target.value })}
+                value={locFieldValue(loc, 'hours') ?? ''}
+                onChange={(e) => setLocDraft(loc.id, 'hours', e.target.value)}
+                onBlur={() => commitLocField(loc, 'hours')}
+                onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                 placeholder="Hours (e.g. Mon–Fri 9am–6pm)"
                 className={INPUT}
               />
