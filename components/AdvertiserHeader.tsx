@@ -219,11 +219,10 @@ function LogoTile({
 
 function Identity({
   data,
-  theme,
   size = 'lg',
 }: {
   data: AdvertiserHeaderData;
-  theme: AdvertiserHeaderTheme;
+  theme?: AdvertiserHeaderTheme;
   size?: 'md' | 'lg' | 'xl';
 }) {
   const nameCls =
@@ -234,12 +233,6 @@ function Identity({
         : 'text-xl sm:text-2xl';
   return (
     <>
-      <p
-        className="text-xs uppercase tracking-[0.2em] font-medium mb-2"
-        style={{ color: theme.accent }}
-      >
-        {theme.label}
-      </p>
       <h1
         className={`${nameCls} font-semibold text-gray-900 tracking-tight`}
       >
@@ -344,9 +337,6 @@ function Chip({ data, theme }: { data: AdvertiserHeaderData; theme: AdvertiserHe
           )}
         </span>
         <span className="text-sm font-semibold text-gray-900">{data.name}</span>
-        <span className="text-xs uppercase tracking-wider" style={{ color: theme.accent }}>
-          {theme.label}
-        </span>
       </div>
       {data.tagline ? (
         <h1
@@ -384,12 +374,6 @@ function Tint({ data, theme }: { data: AdvertiserHeaderData; theme: AdvertiserHe
 function Centered({ data, theme }: { data: AdvertiserHeaderData; theme: AdvertiserHeaderTheme }) {
   return (
     <header className="text-center mb-8 sm:mb-10">
-      <p
-        className="text-xs uppercase tracking-[0.2em] font-medium mb-4"
-        style={{ color: theme.accent }}
-      >
-        {theme.label}
-      </p>
       <div className="flex items-center justify-center mb-5">
         {data.avatar_url && isBrowserRenderableImage(data.avatar_url) ? (
           // eslint-disable-next-line @next/next/no-img-element
