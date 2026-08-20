@@ -107,10 +107,22 @@ export default function AdvertiserDetailClient({
     return (x.label || '').localeCompare(y.label || '', undefined, { sensitivity: 'base' });
   });
 
-  // Staff alphabetized by name.
-  const sortedStaff = [...staff].sort((x, y) =>
-    (x.name || '').localeCompare(y.name || '', undefined, { sensitivity: 'base' }),
-  );
+  // Staff: President / Co-President first (title match), then
+  // alphabetized by name. Rank 0 = President-ish, 1 = everyone else.
+  const presidentRank = (title: string | null | undefined): number => {
+    const t = (title || '').toLowerCase();
+    // Matches 'President', 'Co-President', 'Co President', 'Vice President-ish' NO.
+    // Require the whole word 'president' but ignore common non-owner variants.
+    if (!/\bpresident\b/.test(t)) return 1;
+    if (/vice[- ]?president|vp\b|avp\b/.test(t)) return 1;
+    return 0;
+  };
+  const sortedStaff = [...staff].sort((x, y) => {
+    const rx = presidentRank(x.title);
+    const ry = presidentRank(y.title);
+    if (rx !== ry) return rx - ry;
+    return (x.name || '').localeCompare(y.name || '', undefined, { sensitivity: 'base' });
+  });
 
   return (
     <main className="min-h-screen bg-white">
