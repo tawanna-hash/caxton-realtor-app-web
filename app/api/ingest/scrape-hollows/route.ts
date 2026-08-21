@@ -19,6 +19,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 import type { UpsertScrapedInput } from '@/lib/builder-inventory';
 import { neon } from '@neondatabase/serverless';
+import { recordScraperRun } from '@/lib/scraper-runs';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -138,6 +139,20 @@ export async function POST(req: NextRequest) {
       deactivated = Array.isArray(pruned) ? pruned.length : 0;
     }
   }
+
+  await recordScraperRun({
+    scraperPath: 'scrape-hollows',
+    durationMs: Date.now() - startedAt,
+    status: upsertErrors.length > 0 ? 'error' : (rows.length === 0 ? 'skipped' : 'ok'),
+    rowCount: rows.length - upsertErrors.length,
+    rawCount,
+    created,
+    updated,
+    deactivated,
+    errorMessage: upsertErrors.length > 0
+      ? `${upsertErrors.length} upsert error(s): ${upsertErrors.slice(0, 3).map((e) => e.reason).join('; ')}`
+      : null,
+  });
 
   return NextResponse.json({
     ok: true,
