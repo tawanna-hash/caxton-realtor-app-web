@@ -166,11 +166,12 @@ export default function NavDrawer({
   // current pathname so users see where they are without a manual click.
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
   const isSubmenuOpen = (parent: NavItem): boolean => {
+    // Explicit user toggle wins over any default.
     if (openSubmenus[parent.href] !== undefined) return openSubmenus[parent.href];
     if (!parent.subitems) return false;
-    return parent.subitems.some(
-      (s) => pathname === s.href || pathname.startsWith(s.href + '/'),
-    );
+    // Default to open so subitems are discoverable without needing
+    // a chevron tap.  User can still collapse via the chevron.
+    return true;
   };
   const toggleSubmenu = (parent: NavItem) => {
     setOpenSubmenus((prev) => ({
@@ -352,7 +353,13 @@ export default function NavDrawer({
                       </Link>
                       <button
                         type="button"
-                        onClick={() => toggleSubmenu(item)}
+                        onClick={(e) => {
+                          // Don't let the chevron bubble to the parent
+                          // Link — keep the tap strictly a toggle.
+                          e.preventDefault();
+                          e.stopPropagation();
+                          toggleSubmenu(item);
+                        }}
                         aria-expanded={expanded}
                         aria-label={expanded ? 'Collapse menu' : 'Expand menu'}
                         className="px-3 flex items-center justify-center text-white/60 hover:text-white"
