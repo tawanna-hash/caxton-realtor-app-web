@@ -103,7 +103,6 @@ const GROUPS: ScraperGroup[] = [
   },
 ];
 
-const CRON_SECRET = 'eb10c51ad296ab4ac135296befba8a9519a38ce0b572dd0c798c6af661fdd776';
 
 type RunState = Record<string, { status: 'idle' | 'running' | 'success' | 'error'; result?: string }>;
 
@@ -124,12 +123,12 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
   const runScraper = useCallback(async (path: string) => {
     setRunState((prev) => ({ ...prev, [path]: { status: 'running' } }));
     try {
-      const res = await fetch(`/api/cron/${path}`, {
+      // Hit the admin-only proxy — the bearer is injected server-side
+      // by /api/admin/scrapers/run. The browser must never see CRON_SECRET.
+      const res = await fetch('/api/admin/scrapers/run', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${CRON_SECRET}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || data.message || `HTTP ${res.status}`);
