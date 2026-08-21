@@ -149,6 +149,8 @@ export default function ActivityClient() {
   const [bucket, setBucket] = useState<typeof BUCKETS[number]['id']>('all');
   const [minutes, setMinutes] = useState<number>(60);
   const [pathFilter, setPathFilter] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+  const [searchFilter, setSearchFilter] = useState('');
   const [events, setEvents] = useState<Event[]>([]);
   const [rollup, setRollup] = useState<Rollup>({ pageviews: 0, clicks: 0, forms: 0, errors: 0, visitors: 0 });
   const [loading, setLoading] = useState(true);
@@ -157,7 +159,11 @@ export default function ActivityClient() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [lastFetchedAt, setLastFetchedAt] = useState<Date | null>(null);
   const pathDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cityDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [debouncedPath, setDebouncedPath] = useState('');
+  const [debouncedCity, setDebouncedCity] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   useEffect(() => {
     if (pathDebounce.current) clearTimeout(pathDebounce.current);
@@ -167,12 +173,30 @@ export default function ActivityClient() {
     };
   }, [pathFilter]);
 
+  useEffect(() => {
+    if (cityDebounce.current) clearTimeout(cityDebounce.current);
+    cityDebounce.current = setTimeout(() => setDebouncedCity(cityFilter), 300);
+    return () => {
+      if (cityDebounce.current) clearTimeout(cityDebounce.current);
+    };
+  }, [cityFilter]);
+
+  useEffect(() => {
+    if (searchDebounce.current) clearTimeout(searchDebounce.current);
+    searchDebounce.current = setTimeout(() => setDebouncedSearch(searchFilter), 300);
+    return () => {
+      if (searchDebounce.current) clearTimeout(searchDebounce.current);
+    };
+  }, [searchFilter]);
+
   const fetchEvents = useCallback(async (showLoadingSpinner: boolean) => {
     if (showLoadingSpinner) setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams({ bucket, minutes: String(minutes), limit: '200' });
       if (debouncedPath) params.set('path', debouncedPath);
+      if (debouncedCity) params.set('city', debouncedCity);
+      if (debouncedSearch) params.set('search', debouncedSearch);
       const res = await fetch(`/api/admin/activity?${params.toString()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -185,7 +209,7 @@ export default function ActivityClient() {
     } finally {
       setLoading(false);
     }
-  }, [bucket, minutes, debouncedPath]);
+  }, [bucket, minutes, debouncedPath, debouncedCity, debouncedSearch]);
 
   // Initial load + refetch on filter changes. The rule's a heuristic; here
   // we're synchronizing React state with an external system (the activity
@@ -277,6 +301,18 @@ export default function ActivityClient() {
             onChange={(e) => setPathFilter(e.target.value)}
             placeholder="Filter by path (e.g. /advertisers)"
             className="flex-1 min-w-[180px] border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+          />
+          <input
+            value={cityFilter}
+            onChange={(e) => setCityFilter(e.target.value)}
+            placeholder="City (e.g. Grayton Beach)"
+            className="w-40 border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+          />
+          <input
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            placeholder="Search errors / text"
+            className="w-48 border border-gray-300 rounded-md px-3 py-1.5 text-sm"
           />
           <button
             onClick={() => setPaused((p) => !p)}

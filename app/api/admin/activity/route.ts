@@ -26,6 +26,8 @@ const FILTER_SCHEMA = z.object({
   bucket: z.enum(['all', 'pageview', 'click', 'form', 'error']).default('all'),
   minutes: z.coerce.number().int().min(1).max(10080).default(60),
   path: z.string().optional(),
+  city: z.string().optional(),
+  search: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(500).default(200),
 });
 
@@ -70,10 +72,12 @@ export const GET = withAdminTracking(async (req: Request) => {
     bucket: url.searchParams.get('bucket') ?? undefined,
     minutes: url.searchParams.get('minutes') ?? undefined,
     path: url.searchParams.get('path') ?? undefined,
+    city: url.searchParams.get('city') ?? undefined,
+    search: url.searchParams.get('search') ?? undefined,
     limit: url.searchParams.get('limit') ?? undefined,
   });
   if (!parsed.success) throw new ApiError(400, 'Invalid query params');
-  const { bucket, minutes, path, limit } = parsed.data;
+  const { bucket, minutes, path, city, search, limit } = parsed.data;
 
   const conditions: string[] = [
     `timestamp >= now() - INTERVAL ${minutes} MINUTE`,
@@ -86,6 +90,27 @@ export const GET = withAdminTracking(async (req: Request) => {
     // Safe: HogQL escapes via parameter substitution? Be defensive with a regex.
     const safePath = path.replace(/[^a-zA-Z0-9/_-]/g, '');
     if (safePath) conditions.push(`properties.$pathname LIKE '%${safePath}%'`);
+  }
+  if (city) {
+    // Cities can have spaces, hyphens, apostrophes, and periods.
+    // Strip everything else to keep the string safe to interpolate.
+    const safeCity = city.replace(/[^a-zA-Z\s\-'.]/g, '').trim();
+    if (safeCity) conditions.push(`properties.$geoip_city_name ILIKE '%${safeCity}%'`);
+  }
+  if (search) {
+    // Free-text search across error message, exception value, and
+    // clicked element text.  Restrict character set so we can safely
+    // interpolate into HogQL without a param binding path.
+    const safeSearch = search.replace(/[^a-zA-Z0-9 ._\-]/g, '').trim();
+    if (safeSearch) {
+      conditions.push(
+        `(
+          positionCaseInsensitive(properties.$exception_message, '${safeSearch}') > 0
+          OR positionCaseInsensitive(properties.$exception_list.1.value, '${safeSearch}') > 0
+          OR positionCaseInsensitive(properties.$el_text, '${safeSearch}') > 0
+        )`,
+      );
+    }
   }
 
   // Limit-bound HogQL query. Pull the fields the dashboard needs.
@@ -151,6 +176,6 @@ export const GET = withAdminTracking(async (req: Request) => {
       errors: Number(rollup[3] ?? 0),
       visitors: Number(rollup[4] ?? 0),
     },
-    window: { bucket, minutes, path: path ?? null, limit },
+    window: { bucket, minutes, path: path ?? null, city: city ?? null, search: search ?? null, limit },
   });
 });
