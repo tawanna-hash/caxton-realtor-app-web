@@ -162,19 +162,6 @@ export default function PrintDeadlinesPage() {
               </table>
             </div>
 
-            {data.sourceUrl && (
-              <p className="mt-3 text-xs text-gray-500">
-                Source:{' '}
-                <a
-                  href={data.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-gray-700"
-                >
-                  {data.sourceUrl.replace(/^https?:\/\//, '')}
-                </a>
-              </p>
-            )}
           </>
         )}
 
