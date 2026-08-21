@@ -31,6 +31,24 @@ const MAX_PDF_BYTES = 25 * 1024 * 1024;
 const MAX_IMG_BYTES = 10 * 1024 * 1024;
 const ADMIN_EMAIL = 'admin:tawanna@myrealtyline.com';
 
+// Vercel Blob host allowlist for validating URLs submitted in the
+// admin JSON path.  The client uploads directly to blob.vercel-storage.com
+// via @vercel/blob/client, then POSTs the resulting URLs to us.  We
+// only accept URLs whose host matches this pattern so an attacker
+// can't submit a row that points its image at an arbitrary URL.
+const VERCEL_BLOB_HOST_RE = /\.public\.blob\.vercel-storage\.com$/;
+
+function isVercelBlobUrl(u: string | null | undefined): boolean {
+  if (!u) return false;
+  try {
+    const parsed = new URL(u);
+    if (parsed.protocol !== 'https:') return false;
+    return VERCEL_BLOB_HOST_RE.test(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
 async function verifyAdmin(): Promise<boolean> {
   try {
     const admin = await getCurrentAdmin();
@@ -61,7 +79,190 @@ function readFloat(fd: FormData, key: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+async function handleAdminJsonSubmit(req: NextRequest): Promise<NextResponse> {
+  try {
+    const ok = await verifyAdmin();
+    if (!ok) {
+      return NextResponse.json(
+        { ok: false, error: 'Admin authentication required.' },
+        { status: 403 },
+      );
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = (await req.json()) as Record<string, unknown>;
+    } catch {
+      return NextResponse.json(
+        { ok: false, error: 'Invalid JSON body.' },
+        { status: 400 },
+      );
+    }
+
+    const readB = (k: string): string | null => {
+      const v = body[k];
+      if (typeof v !== 'string') return null;
+      const t = v.trim();
+      return t.length > 0 ? t : null;
+    };
+    const readBInt = (k: string): number | null => {
+      const v = body[k];
+      if (typeof v === 'number' && Number.isFinite(v)) return Math.trunc(v);
+      if (typeof v === 'string' && v.trim()) {
+        const n = parseInt(v, 10);
+        return Number.isFinite(n) ? n : null;
+      }
+      return null;
+    };
+    const readBFloat = (k: string): number | null => {
+      const v = body[k];
+      if (typeof v === 'number' && Number.isFinite(v)) return v;
+      if (typeof v === 'string' && v.trim()) {
+        const n = parseFloat(v);
+        return Number.isFinite(n) ? n : null;
+      }
+      return null;
+    };
+
+    const kind = readB('kind') as Kind | null;
+    if (kind !== 'listing' && kind !== 'promotion') {
+      return NextResponse.json(
+        { ok: false, error: 'Invalid kind. Must be \"listing\" or \"promotion\".' },
+        { status: 400 },
+      );
+    }
+
+    const publication = readB('publication') as Publication | null;
+    if (
+      publication !== 'realtyline' &&
+      publication !== 'newsline' &&
+      publication !== 'both'
+    ) {
+      return NextResponse.json(
+        { ok: false, error: 'Invalid publication.' },
+        { status: 400 },
+      );
+    }
+
+    const required = {
+      submittedByName: readB('submittedByName'),
+      submittedByEmail: readB('submittedByEmail'),
+      builderName: readB('builderName'),
+      title: readB('title'),
+      city: readB('city'),
+    };
+    for (const [key, val] of Object.entries(required)) {
+      if (!val) {
+        return NextResponse.json(
+          { ok: false, error: `Missing required field: ${key}` },
+          { status: 400 },
+        );
+      }
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(required.submittedByEmail!)) {
+      return NextResponse.json(
+        { ok: false, error: 'Submitter email is not valid.' },
+        { status: 400 },
+      );
+    }
+
+    const imageUrl = readB('imageUrl');
+    const flyerPdfUrl = readB('flyerPdfUrl');
+    if (!imageUrl && !flyerPdfUrl) {
+      return NextResponse.json(
+        { ok: false, error: 'Admin submissions require either an image or a PDF.' },
+        { status: 400 },
+      );
+    }
+    // Both URLs (if present) must point at Vercel Blob storage — the
+    // client is trusted to be admin, but we still don't accept arbitrary
+    // externally-hosted URLs (an admin session hijack could otherwise
+    // stash any URL into thumbnail_url).
+    if (imageUrl && !isVercelBlobUrl(imageUrl)) {
+      return NextResponse.json(
+        { ok: false, error: 'imageUrl must be a Vercel Blob URL.' },
+        { status: 400 },
+      );
+    }
+    if (flyerPdfUrl && !isVercelBlobUrl(flyerPdfUrl)) {
+      return NextResponse.json(
+        { ok: false, error: 'flyerPdfUrl must be a Vercel Blob URL.' },
+        { status: 400 },
+      );
+    }
+
+    const sourceIp =
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      req.headers.get('x-real-ip') ||
+      null;
+    const userAgent = req.headers.get('user-agent') || null;
+
+    const input: CreateBuilderInventoryInput = {
+      kind,
+      publication,
+      submittedByName: required.submittedByName!,
+      submittedByEmail: required.submittedByEmail!,
+      submittedByPhone: readB('submittedByPhone'),
+      builderName: required.builderName!,
+      title: required.title!,
+      city: required.city!,
+      state: readB('state') ?? 'TX',
+      description: readB('description'),
+      bedsMin: kind === 'listing' ? readBInt('bedsMin') : null,
+      bedsMax: kind === 'listing' ? readBInt('bedsMax') : null,
+      bathsMin: kind === 'listing' ? readBFloat('bathsMin') : null,
+      bathsMax: kind === 'listing' ? readBFloat('bathsMax') : null,
+      sqftMin: kind === 'listing' ? readBInt('sqftMin') : null,
+      sqftMax: kind === 'listing' ? readBInt('sqftMax') : null,
+      priceMin: kind === 'listing' ? readBInt('priceMin') : null,
+      priceMax: kind === 'listing' ? readBInt('priceMax') : null,
+      promoType: null,
+      expiresAt: kind === 'promotion' ? readB('expiresAt') : null,
+      flyerPdfUrl,
+      thumbnailUrl: imageUrl,
+      sourceIp,
+      userAgent,
+    };
+
+    const row = await createBuilderInventory(input);
+
+    // Admin JSON path is always admin mode → auto-active, skip queue.
+    await ensureBuilderInventorySchema();
+    await sql`
+      UPDATE builder_inventory
+      SET status = 'active',
+          reviewed_by = ${ADMIN_EMAIL},
+          reviewed_at = NOW()
+      WHERE id = ${row.id}
+    `;
+
+    return NextResponse.json({ ok: true, id: row.id });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    console.error('[inventory/submit JSON] error:', message);
+    return NextResponse.json(
+      { ok: false, error: 'Server error processing submission. Please try again.' },
+      { status: 500 },
+    );
+  }
+}
+
 export const POST = withErrorHandling(async (req: NextRequest) => {
+  const contentType = req.headers.get('content-type') || '';
+
+  // -----------------------------------------------------------------
+  // JSON path: admin create form uploads image + PDF directly to Blob,
+  // then POSTs { imageUrl, flyerPdfUrl, ...fields } here.  No multipart,
+  // no 4.5MB serverless body cap risk.
+  // -----------------------------------------------------------------
+  if (contentType.includes('application/json')) {
+    return handleAdminJsonSubmit(req);
+  }
+
+  // -----------------------------------------------------------------
+  // Multipart path (public builder submit + legacy admin fallback).
+  // Original implementation — unchanged.
+  // -----------------------------------------------------------------
   try {
     const fd = await req.formData();
 

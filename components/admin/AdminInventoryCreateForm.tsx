@@ -1,5 +1,7 @@
 'use client';
 
+import { upload } from '@vercel/blob/client';
+
 import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -190,39 +192,81 @@ export default function AdminInventoryCreateForm() {
         throw new Error('Expiration date is required for promotions.');
       }
 
-      const fd = new FormData();
-      fd.append('mode', 'admin');
-      fd.append('kind', kind);
-      fd.append('publication', publication);
-      fd.append('submittedByName', 'Admin');
-      fd.append('submittedByEmail', 'tawanna@myrealtyline.com');
-      fd.append('builderName', builderName.trim());
-      fd.append('title', title.trim());
-      fd.append('city', city.trim());
-      fd.append('state', state.trim() || 'TX');
-      if (description.trim()) fd.append('description', description.trim());
-      if (sourceUrl.trim()) fd.append('sourceUrl', sourceUrl.trim());
+      // Direct-to-Blob upload for image + PDF (bypasses the 4.5MB
+      // Vercel serverless body cap).  The files never touch our
+      // /api/inventory/submit function — they go straight to Blob
+      // edge, and we send only the resulting URLs to the server.
+      const draftId =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-      if (kind === 'listing') {
-        if (bedsMin) fd.append('bedsMin', bedsMin);
-        if (bedsMax) fd.append('bedsMax', bedsMax);
-        if (bathsMin) fd.append('bathsMin', bathsMin);
-        if (bathsMax) fd.append('bathsMax', bathsMax);
-        if (sqftMin) fd.append('sqftMin', sqftMin);
-        if (sqftMax) fd.append('sqftMax', sqftMax);
-        if (priceMin) fd.append('priceMin', priceMin);
-        if (priceMax) fd.append('priceMax', priceMax);
-      } else {
-        if (startsAt) fd.append('startsAt', startsAt);
-        if (expiresAt) fd.append('expiresAt', expiresAt);
+      let uploadedImageUrl: string | null = null;
+      let uploadedFlyerPdfUrl: string | null = null;
+
+      if (imageFile) {
+        setPdfError(null);
+        const safeName = imageFile.name.replace(/[^a-zA-Z0-9._-]+/g, '-');
+        const b = await upload(
+          `inventory-thumbs/new/${draftId}/${safeName}`,
+          imageFile,
+          {
+            access: 'public',
+            handleUploadUrl: '/api/admin/inventory/upload-token',
+            contentType: imageFile.type,
+          },
+        );
+        uploadedImageUrl = b.url;
+      }
+      if (pdfFile) {
+        setPdfError(null);
+        const safeName = pdfFile.name.replace(/[^a-zA-Z0-9._-]+/g, '-');
+        const b = await upload(
+          `inventory-flyers/new/${draftId}/${safeName}`,
+          pdfFile,
+          {
+            access: 'public',
+            handleUploadUrl: '/api/admin/inventory/upload-token',
+            contentType: 'application/pdf',
+          },
+        );
+        uploadedFlyerPdfUrl = b.url;
       }
 
-      if (imageFile) fd.append('image', imageFile);
-      if (pdfFile) fd.append('flyerPdf', pdfFile);
+      // JSON body — every field goes as a string/number, no multipart.
+      const jsonBody: Record<string, unknown> = {
+        mode: 'admin',
+        kind,
+        publication,
+        submittedByName: 'Admin',
+        submittedByEmail: 'tawanna@myrealtyline.com',
+        builderName: builderName.trim(),
+        title: title.trim(),
+        city: city.trim(),
+        state: (state.trim() || 'TX'),
+        description: description.trim() || null,
+        sourceUrl: sourceUrl.trim() || null,
+        imageUrl: uploadedImageUrl,
+        flyerPdfUrl: uploadedFlyerPdfUrl,
+      };
+      if (kind === 'listing') {
+        if (bedsMin) jsonBody.bedsMin = bedsMin;
+        if (bedsMax) jsonBody.bedsMax = bedsMax;
+        if (bathsMin) jsonBody.bathsMin = bathsMin;
+        if (bathsMax) jsonBody.bathsMax = bathsMax;
+        if (sqftMin) jsonBody.sqftMin = sqftMin;
+        if (sqftMax) jsonBody.sqftMax = sqftMax;
+        if (priceMin) jsonBody.priceMin = priceMin;
+        if (priceMax) jsonBody.priceMax = priceMax;
+      } else {
+        if (startsAt) jsonBody.startsAt = startsAt;
+        if (expiresAt) jsonBody.expiresAt = expiresAt;
+      }
 
       const res = await fetch('/api/inventory/submit', {
         method: 'POST',
-        body: fd,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonBody),
         credentials: 'include',
       });
 
