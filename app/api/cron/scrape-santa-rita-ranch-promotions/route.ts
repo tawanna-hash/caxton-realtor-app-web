@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 import { fetchSantaRitaRanchPromotions } from '@/lib/scrapers/santa-rita-ranch-promotions';
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -125,9 +126,11 @@ async function handle(req: NextRequest) {
   });
 }
 
-export async function GET(req: NextRequest) {
+async function _GET(req: NextRequest) {
   return handle(req);
 }
 export async function POST(req: NextRequest) {
   return handle(req);
 }
+
+export const GET = withScraperRun('scrape-santa-rita-ranch-promotions', _GET);

@@ -12,6 +12,7 @@
 import { NextResponse } from 'next/server';
 // removed: ensureSchema import
 import { syncAdvertisersFromAdvertisers } from '@/lib/mailing';
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -25,7 +26,7 @@ function authorized(req: Request): boolean {
   return req.headers.get('x-vercel-cron') === '1';
 }
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   if (!process.env.CRON_SECRET) {
     return NextResponse.json(
       { ok: false, message: 'CRON_SECRET env var is not set.' },
@@ -51,3 +52,5 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   return GET(req);
 }
+
+export const GET = withScraperRun('sync-advertisers', _GET);

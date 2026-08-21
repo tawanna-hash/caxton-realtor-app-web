@@ -33,6 +33,7 @@ import {
 } from '@/lib/builder-inventory';
 import { deleteStaleBuilderPromotions } from '@/lib/builder-inventory-sync';
 import { neon } from '@neondatabase/serverless';
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -194,9 +195,11 @@ async function handle(req: NextRequest) {
   });
 }
 
-export async function GET(req: NextRequest) {
+async function _GET(req: NextRequest) {
   return handle(req);
 }
 export async function POST(req: NextRequest) {
   return handle(req);
 }
+
+export const GET = withScraperRun('scrape-drees-promotions', _GET);

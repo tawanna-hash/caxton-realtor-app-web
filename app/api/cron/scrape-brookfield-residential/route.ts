@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchBrookfieldResidentialAustin } from '@/lib/scrapers/brookfield-residential';
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -134,7 +135,7 @@ async function runScrape(refresh: boolean) {
   };
 }
 
-export async function GET(req: NextRequest) {
+async function _GET(req: NextRequest) {
   const auth = verifyCronAuth(req);
   if (!auth.ok) {
     return NextResponse.json({ ok: false, error: auth.reason }, { status: 401 });
@@ -154,3 +155,5 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return GET(req);
 }
+
+export const GET = withScraperRun('scrape-brookfield-residential', _GET);

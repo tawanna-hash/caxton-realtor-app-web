@@ -19,6 +19,7 @@ import {
 } from '../../../../lib/builder-inventory';
 import { deleteStaleBuilderPromotions } from '../../../../lib/builder-inventory-sync';
 import { neon } from '@neondatabase/serverless';
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -157,5 +158,7 @@ async function handle(req: Request) {
   });
 }
 
-export async function GET(req: Request)  { return handle(req); }
+async function _GET(req: Request)  { return handle(req); }
 export async function POST(req: Request) { return handle(req); }
+
+export const GET = withScraperRun('scrape-mi-homes-incentives', _GET);

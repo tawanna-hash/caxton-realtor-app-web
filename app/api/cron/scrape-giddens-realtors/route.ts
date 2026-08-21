@@ -12,6 +12,7 @@
 import { NextResponse } from 'next/server';
 import { fetchGiddensPromotions } from '../../../../lib/scrapers/giddens-realtors';
 import { upsertBuilderInventoryByExternalId } from '../../../../lib/builder-inventory';
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -72,5 +73,7 @@ async function handle(req: Request) {
   });
 }
 
-export async function GET(req: Request)  { return handle(req); }
+async function _GET(req: Request)  { return handle(req); }
 export async function POST(req: Request) { return handle(req); }
+
+export const GET = withScraperRun('scrape-giddens-realtors', _GET);

@@ -13,12 +13,10 @@
 // umbrella) so each builder's inventory stays in sync independently.
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { neon } from '@neondatabase/serverless';
 import { fetchLaCima } from '@/lib/scrapers/la-cima';
 import { upsertBuilderInventoryByExternalId } from '@/lib/builder-inventory';
 import { deactivateStaleBuilderInventory } from '@/lib/builder-inventory-sync';
-
-const sql = neon(process.env.DATABASE_URL!);
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -102,5 +100,7 @@ async function handle(req: NextRequest) {
   });
 }
 
-export async function GET(req: NextRequest)  { return handle(req); }
+async function _GET(req: NextRequest)  { return handle(req); }
 export async function POST(req: NextRequest) { return handle(req); }
+
+export const GET = withScraperRun('scrape-la-cima', _GET);

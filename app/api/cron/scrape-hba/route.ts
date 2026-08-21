@@ -7,6 +7,7 @@
 
 import { upsertEvents, pruneStale } from '@/lib/events-store';
 import { scrapeHba } from '@/lib/hba-scraper';
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 export const runtime = 'nodejs';
 // The HBA scrape is API-only (no headless browser) but does one detail call
@@ -14,7 +15,7 @@ export const runtime = 'nodejs';
 // other cron routes' 300s budget for symmetry.
 export const maxDuration = 300;
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   // ---- auth ----
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret) {
@@ -67,3 +68,5 @@ export async function GET(req: Request) {
     );
   }
 }
+
+export const GET = withScraperRun('scrape-hba', _GET);

@@ -9,11 +9,12 @@
 
 import { upsertEvents, pruneStale } from '@/lib/events-store';
 import { scrapeNahrepAll } from '@/lib/nahrep-scraper';
+import { withScraperRun } from '@/lib/with-scraper-run';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
-export async function GET(req: Request) {
+async function _GET(req: Request) {
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret) {
     const auth = req.headers.get('authorization') || '';
@@ -64,3 +65,5 @@ export async function GET(req: Request) {
     );
   }
 }
+
+export const GET = withScraperRun('scrape-nahrep', _GET);
