@@ -32,6 +32,7 @@ type Event = {
   captured_user_agent: string | null;
   el_text: string | null;
   el_href: string | null;
+  elements_chain: string | null;
   action: string | null;
   form_name: string | null;
 };
@@ -70,7 +71,7 @@ const FIELD_ORDER: (keyof Event)[] = [
   'distinct_id', 'email',
   'error_message', 'exception_type', 'exception_source', 'exception_lineno',
   'masked_by_browser', 'captured_user_agent',
-  'el_text', 'el_href', 'action', 'form_name',
+  'el_text', 'el_href', 'elements_chain', 'action', 'form_name',
 ];
 
 function parseRow(row: RawRow): Event {
@@ -104,6 +105,22 @@ function eventBadge(event: string): { label: string; color: string } {
   return { label: event.slice(0, 12), color: 'bg-gray-100 text-gray-700' };
 }
 
+// PostHog $elements_chain is a leaf->root ';'-separated string:
+//   tag.class1.class2:attr="value";tag.class:attr="value";...
+// Return the leaf's tag + first class as "tag.class" (or just tag).
+function parseElementsChainLeaf(chain: string | null | undefined): string | null {
+  if (!chain) return null;
+  const leaf = chain.split(';')[0]?.trim();
+  if (!leaf) return null;
+  // Strip everything after the first ':' (attrs), keep tag.class1[.class2]
+  const head = leaf.split(':')[0]?.trim() ?? '';
+  // Keep tag + first class only to stay short.
+  const parts = head.split('.');
+  const tag = parts[0] || 'element';
+  const cls = parts[1];
+  return cls ? `${tag}.${cls}` : tag;
+}
+
 function describeAction(e: Event): string {
   if (e.event === '$pageview') return `Viewed ${e.pathname ?? '/'}`;
   if (e.event === '$exception' || e.event === 'client_error') {
@@ -116,8 +133,12 @@ function describeAction(e: Event): string {
     return 'Unknown error (no message captured)';
   }
   if (e.event === '$autocapture' || e.event === '$rageclick') {
+    const verb = e.event === '$rageclick' ? 'Rage-clicked' : 'Clicked';
     const t = e.el_text?.trim();
-    return t ? `Clicked "${t.slice(0, 40)}"` : `Click on ${e.pathname ?? '/'}`;
+    if (t) return `${verb} "${t.slice(0, 40)}"`;
+    const leaf = parseElementsChainLeaf(e.elements_chain);
+    if (leaf) return `${verb} <${leaf}> on ${e.pathname ?? '/'}`;
+    return `${verb} on ${e.pathname ?? '/'} (unlabeled element)`;
   }
   if (e.form_name) return `Submitted ${e.form_name}`;
   if (e.action) return e.action;

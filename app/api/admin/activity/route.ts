@@ -115,6 +115,7 @@ export const GET = withAdminTracking(async (req: Request) => {
       properties.user_agent AS captured_user_agent,
       properties.$el_text AS el_text,
       properties.$el_href AS el_href,
+      properties.$elements_chain AS elements_chain,
       properties.action AS action,
       properties.form_name AS form_name
     FROM events
