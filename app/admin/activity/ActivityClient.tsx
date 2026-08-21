@@ -133,6 +133,8 @@ function describeAction(e: Event): string {
     if (msg === 'Script error.') return 'Script error (cross-origin, browser-masked)';
     if (masked) return 'Script error (cross-origin, browser-masked)';
     if (e.exception_type) return `${e.exception_type} (no message)`;
+    if (e.exception_source) return `Unknown error at ${e.exception_source}`;
+    if (e.pathname) return `Unknown error on ${e.pathname}`;
     return 'Unknown error (no message captured)';
   }
   if (e.event === '$autocapture' || e.event === '$rageclick') {
