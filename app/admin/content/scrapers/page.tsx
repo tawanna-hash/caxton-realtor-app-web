@@ -37,6 +37,7 @@ const GROUPS: ScraperGroup[] = [
       { name: 'La Cima',           path: 'scrape-la-cima',            schedule: '2:45 PM CDT',  description: 'Move-in ready homes' },
       { name: 'Newmark',           path: 'scrape-newmark',             schedule: '3:30 PM CDT',  description: 'Move-in ready homes' },
       { name: 'Brookfield',        path: 'scrape-brookfield-residential', schedule: '3:00 PM CDT', description: 'Move-in ready homes' },
+      { name: 'The Hollows',        path: 'scrape-hollows',             schedule: '3:45 PM CDT', description: 'Move-in ready homes (multi-builder)' },
     ],
   },
   {
@@ -123,6 +124,7 @@ export default function ScraperHubPage() {
       setRunState((prev) => ({ ...prev, [path]: { status: 'success', result: summary } }));
     } catch (e) {
       setRunState((prev) => ({
+        ...prev,
         [path]: { status: 'error', result: e instanceof Error ? e.message : 'Failed' },
       }));
     }
