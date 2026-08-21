@@ -1,0 +1,31 @@
+name: scrape-hollows
+
+# Daily at 20:45 UTC (3:45 PM CDT / 2:45 PM CST). Manual dispatch always allowed.
+on:
+  schedule:
+    - cron: '45 20 * * *'
+  workflow_dispatch:
+    inputs:
+      ingest_url:
+        description: 'Override INGEST_URL (default: https://realtynewsnow.app)'
+        required: false
+        default: ''
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run scraper
+        env:
+          INGEST_URL: ${{ github.event.inputs.ingest_url || 'https://realtynewsnow.app' }}
+          INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
+        run: node scripts/scrape-hollows.mjs
