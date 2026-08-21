@@ -23,7 +23,7 @@ const POSTHOG_API_KEY = process.env.POSTHOG_PERSONAL_API_KEY;
 
 // UI exposes four logical buckets. We translate to PostHog event names below.
 const FILTER_SCHEMA = z.object({
-  bucket: z.enum(['all', 'pageview', 'click', 'form', 'error']).default('all'),
+  bucket: z.enum(['all', 'pageview', 'click', 'rageclick', 'form', 'error']).default('all'),
   minutes: z.coerce.number().int().min(1).max(10080).default(60),
   path: z.string().optional(),
   city: z.string().optional(),
@@ -36,6 +36,7 @@ const BUCKET_FILTER: Record<string, string> = {
   all: "event IN ('$pageview','$autocapture','$rageclick','$exception','form_submitted','cta_clicked','newsletter_signup','giveaway_entered','advertiser_signed','article_opened','share_click')",
   pageview: "event = '$pageview'",
   click: "event IN ('$autocapture','$rageclick','cta_clicked','share_click','article_opened')",
+  rageclick: "event = '$rageclick'",
   form: "event IN ('form_submitted','newsletter_signup','giveaway_entered','advertiser_signed')",
   error: "event IN ('$exception','client_error')",
 };
@@ -158,7 +159,8 @@ export const GET = withAdminTracking(async (req: Request) => {
       countIf(event IN ('$autocapture','$rageclick','cta_clicked','share_click','article_opened')) AS clicks,
       countIf(event IN ('form_submitted','newsletter_signup','giveaway_entered','advertiser_signed')) AS forms,
       countIf(event IN ('$exception','client_error')) AS errors,
-      uniq(distinct_id) AS visitors
+      uniq(distinct_id) AS visitors,
+      countIf(event = '$rageclick') AS rageclicks
     FROM events
     WHERE timestamp >= now() - INTERVAL ${minutes} MINUTE
       AND properties.$pathname NOT LIKE '/admin%'
@@ -175,6 +177,7 @@ export const GET = withAdminTracking(async (req: Request) => {
       forms: Number(rollup[2] ?? 0),
       errors: Number(rollup[3] ?? 0),
       visitors: Number(rollup[4] ?? 0),
+      rageclicks: Number(rollup[5] ?? 0),
     },
     window: { bucket, minutes, path: path ?? null, city: city ?? null, search: search ?? null, limit },
   });

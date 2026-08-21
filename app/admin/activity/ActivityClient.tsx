@@ -42,6 +42,7 @@ type RawRow = (string | number | null)[];
 type Rollup = {
   pageviews: number;
   clicks: number;
+  rageclicks: number;
   forms: number;
   errors: number;
   visitors: number;
@@ -51,6 +52,7 @@ const BUCKETS = [
   { id: 'all', label: 'All events' },
   { id: 'pageview', label: 'Page views' },
   { id: 'click', label: 'Clicks' },
+  { id: 'rageclick', label: 'Rageclicks' },
   { id: 'form', label: 'Form submits' },
   { id: 'error', label: 'Errors' },
 ] as const;
@@ -95,7 +97,8 @@ function formatTime(ts: string): string {
 function eventBadge(event: string): { label: string; color: string } {
   if (event === '$pageview') return { label: 'view', color: 'bg-gray-100 text-gray-700' };
   if (event === '$exception' || event === 'client_error') return { label: 'error', color: 'bg-rose-100 text-rose-800' };
-  if (event === '$autocapture' || event === '$rageclick') return { label: 'click', color: 'bg-sky-100 text-sky-800' };
+  if (event === '$rageclick') return { label: 'RAGE', color: 'bg-rose-100 text-rose-900 font-semibold' };
+  if (event === '$autocapture') return { label: 'click', color: 'bg-sky-100 text-sky-800' };
   if (event.includes('form_') || event.includes('_signed') || event.includes('signup') || event.includes('entered')) {
     return { label: 'form', color: 'bg-emerald-100 text-emerald-800' };
   }
@@ -152,7 +155,7 @@ export default function ActivityClient() {
   const [cityFilter, setCityFilter] = useState('');
   const [searchFilter, setSearchFilter] = useState('');
   const [events, setEvents] = useState<Event[]>([]);
-  const [rollup, setRollup] = useState<Rollup>({ pageviews: 0, clicks: 0, forms: 0, errors: 0, visitors: 0 });
+  const [rollup, setRollup] = useState<Rollup>({ pageviews: 0, clicks: 0, rageclicks: 0, forms: 0, errors: 0, visitors: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
@@ -268,6 +271,9 @@ export default function ActivityClient() {
           <Tile label="Visitors" value={rollup.visitors} accent="bg-gray-900 text-white" />
           <Tile label="Page views" value={rollup.pageviews} />
           <Tile label="Clicks" value={rollup.clicks} />
+          {rollup.rageclicks > 0 && (
+            <Tile label="Rageclicks" value={rollup.rageclicks} accent="bg-rose-100 text-rose-900" />
+          )}
           <Tile label="Form submits" value={rollup.forms} accent="bg-emerald-50" />
           <Tile label="Errors" value={rollup.errors} accent={rollup.errors > 0 ? 'bg-rose-50 text-rose-900' : ''} />
         </div>
