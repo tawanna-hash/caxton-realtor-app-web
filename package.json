@@ -57,7 +57,7 @@
     "next": "^16.2.9",
     "next-auth": "5.0.0-beta.31",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^5.7.284",
+    "pdfjs-dist": "4.8.69",
     "pg": "^8.21.0",
     "posthog-js": "^1.372.10",
     "posthog-node": "^5.40.0",
