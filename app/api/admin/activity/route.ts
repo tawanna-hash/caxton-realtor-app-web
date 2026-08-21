@@ -104,7 +104,15 @@ export const GET = withAdminTracking(async (req: Request) => {
       properties.$geoip_country_name AS country,
       distinct_id,
       person.properties.email AS email,
-      properties.$exception_message AS error_message,
+      coalesce(
+        properties.$exception_message,
+        properties.$exception_list.1.value
+      ) AS error_message,
+      properties.$exception_list.1.type AS exception_type,
+      properties.$exception_source AS exception_source,
+      properties.$exception_lineno AS exception_lineno,
+      properties.masked_by_browser AS masked_by_browser,
+      properties.user_agent AS captured_user_agent,
       properties.$el_text AS el_text,
       properties.$el_href AS el_href,
       properties.action AS action,

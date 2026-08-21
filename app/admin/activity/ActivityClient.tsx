@@ -25,6 +25,11 @@ type Event = {
   distinct_id: string;
   email: string | null;
   error_message: string | null;
+  exception_type: string | null;
+  exception_source: string | null;
+  exception_lineno: string | number | null;
+  masked_by_browser: boolean | string | null;
+  captured_user_agent: string | null;
   el_text: string | null;
   el_href: string | null;
   action: string | null;
@@ -57,11 +62,15 @@ const WINDOWS = [
   { minutes: 60 * 24 * 7, label: 'Last 7 days' },
 ];
 
+// Order MUST match app/api/admin/activity/route.ts SELECT column order,
+// because runHogQL() returns positional arrays.
 const FIELD_ORDER: (keyof Event)[] = [
   'timestamp', 'event', 'pathname', 'host', 'url', 'publication',
   'device', 'browser', 'os', 'city', 'country',
   'distinct_id', 'email',
-  'error_message', 'el_text', 'el_href', 'action', 'form_name',
+  'error_message', 'exception_type', 'exception_source', 'exception_lineno',
+  'masked_by_browser', 'captured_user_agent',
+  'el_text', 'el_href', 'action', 'form_name',
 ];
 
 function parseRow(row: RawRow): Event {
@@ -97,7 +106,15 @@ function eventBadge(event: string): { label: string; color: string } {
 
 function describeAction(e: Event): string {
   if (e.event === '$pageview') return `Viewed ${e.pathname ?? '/'}`;
-  if (e.event === '$exception' || e.event === 'client_error') return e.error_message ?? 'Error';
+  if (e.event === '$exception' || e.event === 'client_error') {
+    const masked = e.masked_by_browser === true || e.masked_by_browser === 'true';
+    const msg = e.error_message?.trim();
+    if (msg && msg !== 'Script error.') return msg;
+    if (msg === 'Script error.') return 'Script error (cross-origin, browser-masked)';
+    if (masked) return 'Script error (cross-origin, browser-masked)';
+    if (e.exception_type) return `${e.exception_type} (no message)`;
+    return 'Unknown error (no message captured)';
+  }
   if (e.event === '$autocapture' || e.event === '$rageclick') {
     const t = e.el_text?.trim();
     return t ? `Clicked "${t.slice(0, 40)}"` : `Click on ${e.pathname ?? '/'}`;
@@ -289,7 +306,25 @@ export default function ActivityClient() {
                   {e.device && <span className="text-xs text-gray-500 hidden md:inline">· {e.device}</span>}
                 </button>
                 {isOpen && (
-                  <div className="px-4 pb-3 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-xs">
+                  <div className="px-4 pb-3">
+                    {(e.event === '$exception' || e.event === 'client_error') &&
+                      (e.masked_by_browser === true || e.masked_by_browser === 'true' ||
+                        (e.error_message?.trim() === 'Script error.')) && (
+                      <div className="mb-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                        <div className="font-medium">Browser-masked cross-origin error</div>
+                        <div className="mt-1 leading-relaxed">
+                          A script from a different origin threw an error without the required
+                          CORS <code className="font-mono">crossorigin</code> attribute, so the
+                          browser hid the actual message and stack trace. Common sources: third-
+                          party ads/analytics, embedded iframes, browser extensions, magazine
+                          reader, Stripe/PostHog SDK loaders. Fix by adding
+                          <code className="font-mono">{'crossorigin="anonymous"'}</code> to the
+                          offending &lt;script&gt; tag and ensuring the CDN returns
+                          <code className="font-mono">Access-Control-Allow-Origin</code>.
+                        </div>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-xs">
                     {FIELD_ORDER.map((k) => {
                       const v = e[k];
                       if (v === null || v === undefined || v === '') return null;
@@ -300,6 +335,7 @@ export default function ActivityClient() {
                         </div>
                       );
                     })}
+                    </div>
                   </div>
                 )}
               </div>
