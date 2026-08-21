@@ -45,6 +45,10 @@
       "schedule": "45 14 * * *"
     },
     {
+      "path": "/api/cron/scrape-hollows",
+      "schedule": "45 20 * * *"
+    },
+    {
       "path": "/api/cron/scrape-mi-homes",
       "schedule": "0 15 * * *"
     },
