@@ -18,12 +18,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PRINT_DEADLINES_BY_PUB, type DeadlinesPub } from '@/lib/media-kit';
 
-type ColKey = 'deadline' | 'mail' | 'digitalRelease';
+type ColKey = 'deadline' | 'mail' | 'eReplicaRelease';
 
 const COLUMNS: Array<{ key: ColKey; label: string; sub: string }> = [
   { key: 'deadline',       label: 'Space Deadlines',   sub: 'Camera-ready artwork due' },
   { key: 'mail',           label: 'Print Release',     sub: 'Magazine mails on'         },
-  { key: 'digitalRelease', label: 'Digital Release',   sub: 'e-Replica + e-blast live'  },
+  { key: 'eReplicaRelease', label: 'e-Replica Release', sub: 'e-Replica + e-Blast go live (Fridays)' },
 ];
 
 function readActivePub(): DeadlinesPub {
@@ -146,8 +146,8 @@ export default function PrintDeadlinesPage() {
                 <tbody className="divide-y divide-gray-100">
                   {data.rows.map((row) => {
                     const value =
-                      col === 'digitalRelease'
-                        ? row.digitalRelease ?? '—'
+                      col === 'eReplicaRelease'
+                        ? row.eReplicaRelease ?? '—'
                         : row[col];
                     return (
                       <tr key={row.month}>

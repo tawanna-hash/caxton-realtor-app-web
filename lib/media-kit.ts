@@ -87,8 +87,12 @@ export interface PrintDeadline {
   deadline: string;
   /** Print magazine mail date. */
   mail: string;
-  /** Optional digital edition + email blast release date. */
-  digitalRelease?: string;
+  /**
+   * e-Replica edition + e-Blast release date.  Business rule:
+   * this is the Friday following the mid-month digital drop, or
+   * the drop date itself if it already falls on a Friday.
+   */
+  eReplicaRelease?: string;
 }
 
 export type DeadlinesPub = 'realtyline' | 'newsline';
@@ -648,18 +652,18 @@ export const EBLASTS: EBlast[] = [
 // https://realtyline.us/2026-deadlines-2/
 // Verified against WordPress editor 2026-08-21.
 const REALTYLINE_2026: PrintDeadline[] = [
-  { month: 'January',   deadline: 'January 7',    mail: 'January 21',    digitalRelease: 'January 16'   },
-  { month: 'February',  deadline: 'February 5',   mail: 'February 20',   digitalRelease: 'February 16'  },
-  { month: 'March',     deadline: 'March 5',      mail: 'March 23',      digitalRelease: 'March 16'     },
-  { month: 'April',     deadline: 'April 7',      mail: 'April 23',      digitalRelease: 'April 15'     },
-  { month: 'May',       deadline: 'May 6',        mail: 'May 22',        digitalRelease: 'May 15'       },
-  { month: 'June',      deadline: 'June 5',       mail: 'June 22',       digitalRelease: 'June 16'      },
-  { month: 'July',      deadline: 'July 8',       mail: 'July 23',       digitalRelease: 'July 16'      },
-  { month: 'August',    deadline: 'August 5',     mail: 'August 21',     digitalRelease: 'August 14'    },
-  { month: 'September', deadline: 'September 9',  mail: 'September 22',  digitalRelease: 'September 16' },
-  { month: 'October',   deadline: 'October 7',    mail: 'October 23',    digitalRelease: 'October 16'   },
-  { month: 'November',  deadline: 'November 6',   mail: 'November 23',   digitalRelease: 'November 16'  },
-  { month: 'December',  deadline: 'December 9',   mail: 'December 21',   digitalRelease: 'December 18'  },
+  { month: 'January',   deadline: 'January 7',    mail: 'January 21',    eReplicaRelease: 'January 16'   },
+  { month: 'February',  deadline: 'February 5',   mail: 'February 20',   eReplicaRelease: 'February 20'  },
+  { month: 'March',     deadline: 'March 5',      mail: 'March 23',      eReplicaRelease: 'March 20'     },
+  { month: 'April',     deadline: 'April 7',      mail: 'April 23',      eReplicaRelease: 'April 17'     },
+  { month: 'May',       deadline: 'May 6',        mail: 'May 22',        eReplicaRelease: 'May 15'       },
+  { month: 'June',      deadline: 'June 5',       mail: 'June 22',       eReplicaRelease: 'June 19'      },
+  { month: 'July',      deadline: 'July 8',       mail: 'July 23',       eReplicaRelease: 'July 17'      },
+  { month: 'August',    deadline: 'August 5',     mail: 'August 21',     eReplicaRelease: 'August 14'    },
+  { month: 'September', deadline: 'September 9',  mail: 'September 22',  eReplicaRelease: 'September 18' },
+  { month: 'October',   deadline: 'October 7',    mail: 'October 23',    eReplicaRelease: 'October 16'   },
+  { month: 'November',  deadline: 'November 6',   mail: 'November 23',   eReplicaRelease: 'November 20'  },
+  { month: 'December',  deadline: 'December 9',   mail: 'December 21',   eReplicaRelease: 'December 18'  },
 ];
 
 // Newsline San Antonio publishes on the same 2026 print / digital
