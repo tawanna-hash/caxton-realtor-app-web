@@ -29,13 +29,19 @@ export const maxDuration = 120;
 const DEVELOPER_NAME = 'The Hollows at Lake Travis';
 
 function verifyIngestAuth(req: NextRequest): { ok: boolean; reason?: string } {
-  const expected = process.env.INGEST_SECRET;
-  if (!expected) return { ok: false, reason: 'INGEST_SECRET not configured' };
-  const got = req.headers.get('authorization');
-  if (got !== `Bearer ${expected}`) {
-    return { ok: false, reason: 'Bad or missing Authorization header' };
+  // Accept EITHER the generic INGEST_SECRET (shared across future
+  // ingesters) OR HOLLOWS_INGEST_SECRET (Hollows-only, used by the
+  // Perplexity-side scheduled task — smaller blast radius).
+  const generic = process.env.INGEST_SECRET;
+  const hollows = process.env.HOLLOWS_INGEST_SECRET;
+  if (!generic && !hollows) {
+    return { ok: false, reason: 'no ingest secret configured' };
   }
-  return { ok: true };
+  const got = req.headers.get('authorization');
+  if (!got) return { ok: false, reason: 'missing Authorization header' };
+  if (generic && got === `Bearer ${generic}`) return { ok: true };
+  if (hollows && got === `Bearer ${hollows}`) return { ok: true };
+  return { ok: false, reason: 'bad Authorization header' };
 }
 
 async function stripExistingRows(): Promise<number> {
