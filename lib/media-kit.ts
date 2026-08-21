@@ -83,8 +83,24 @@ export function eblastFeaturesForPub(blast: EBlast, pub: MediaKitPub): string[] 
 
 export interface PrintDeadline {
   month: string;
+  /** Space-reservation / ads-due deadline (camera-ready). */
   deadline: string;
+  /** Print magazine mail date. */
   mail: string;
+  /** Optional digital edition + email blast release date. */
+  digitalRelease?: string;
+}
+
+export type DeadlinesPub = 'realtyline' | 'newsline';
+
+export interface PubDeadlines {
+  pub: DeadlinesPub;
+  name: string;
+  year: number;
+  /** Empty array = deadlines not yet published for this pub. */
+  rows: PrintDeadline[];
+  /** Source-of-truth page users can visit to double-check dates. */
+  sourceUrl?: string;
 }
 
 export interface PolicyNote {
@@ -628,20 +644,50 @@ export const EBLASTS: EBlast[] = [
 
 // ── Print Deadlines (2026) ─────────────────────────────────────────────────
 
-export const PRINT_DEADLINES: PrintDeadline[] = [
-  { month: 'January',   deadline: 'January 12',    mail: 'January 20'   },
-  { month: 'February',  deadline: 'February 5',    mail: 'February 20'  },
-  { month: 'March',     deadline: 'March 5',       mail: 'March 20'     },
-  { month: 'April',     deadline: 'April 7',       mail: 'April 20'     },
-  { month: 'May',       deadline: 'May 6',         mail: 'May 20'       },
-  { month: 'June',      deadline: 'June 5',        mail: 'June 20'      },
-  { month: 'July',      deadline: 'July 8',        mail: 'July 21'      },
-  { month: 'August',    deadline: 'August 5',      mail: 'August 20'    },
-  { month: 'September', deadline: 'September 9',   mail: 'September 20' },
-  { month: 'October',   deadline: 'October 7',     mail: 'October 20'   },
-  { month: 'November',  deadline: 'November 6',    mail: 'November 20'  },
-  { month: 'December',  deadline: 'December 9',    mail: 'December 19'  },
+// Source of truth for RealtyLine 2026 dates:
+// https://realtyline.us/2026-deadlines-2/
+// Verified against WordPress editor 2026-08-21.
+const REALTYLINE_2026: PrintDeadline[] = [
+  { month: 'January',   deadline: 'January 7',    mail: 'January 21',    digitalRelease: 'January 16'   },
+  { month: 'February',  deadline: 'February 5',   mail: 'February 20',   digitalRelease: 'February 16'  },
+  { month: 'March',     deadline: 'March 5',      mail: 'March 23',      digitalRelease: 'March 16'     },
+  { month: 'April',     deadline: 'April 7',      mail: 'April 23',      digitalRelease: 'April 15'     },
+  { month: 'May',       deadline: 'May 6',        mail: 'May 22',        digitalRelease: 'May 15'       },
+  { month: 'June',      deadline: 'June 5',       mail: 'June 22',       digitalRelease: 'June 16'      },
+  { month: 'July',      deadline: 'July 8',       mail: 'July 23',       digitalRelease: 'July 16'      },
+  { month: 'August',    deadline: 'August 5',     mail: 'August 21',     digitalRelease: 'August 14'    },
+  { month: 'September', deadline: 'September 9',  mail: 'September 22',  digitalRelease: 'September 16' },
+  { month: 'October',   deadline: 'October 7',    mail: 'October 23',    digitalRelease: 'October 16'   },
+  { month: 'November',  deadline: 'November 6',   mail: 'November 23',   digitalRelease: 'November 16'  },
+  { month: 'December',  deadline: 'December 9',   mail: 'December 21',   digitalRelease: 'December 18'  },
 ];
+
+// Newsline San Antonio publishes on the same 2026 print / digital
+// calendar as RealtyLine.  Alias the RealtyLine array so future
+// corrections only need to touch REALTYLINE_2026.
+const NEWSLINE_2026: PrintDeadline[] = REALTYLINE_2026;
+
+export const PRINT_DEADLINES_BY_PUB: Record<DeadlinesPub, PubDeadlines> = {
+  realtyline: {
+    pub: 'realtyline',
+    name: 'RealtyLine',
+    year: 2026,
+    rows: REALTYLINE_2026,
+    sourceUrl: 'https://realtyline.us/2026-deadlines-2/',
+  },
+  newsline: {
+    pub: 'newsline',
+    name: 'Newsline San Antonio',
+    year: 2026,
+    rows: NEWSLINE_2026,
+  },
+};
+
+// Legacy alias for existing callers that still expect a bare 2026
+// RealtyLine list (app/(public)/advertise/print/page.tsx, admin
+// media-kit reference, availability calendar).  Do not remove
+// without updating those callers.
+export const PRINT_DEADLINES: PrintDeadline[] = REALTYLINE_2026;
 
 // ── Rate matrix (Size × Frequency) ─────────────────────────────────────────
 

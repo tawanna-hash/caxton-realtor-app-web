@@ -111,7 +111,13 @@ const DRAWER_SECTIONS: NavSection[] = [
     items: [
       { label: 'My Feed', href: '/dashboard', authOnly: true },
       { label: 'About Us', href: '/about' },
-      { label: 'Advertise', href: '/advertise' },
+      {
+        label: 'Advertise',
+        href: '/advertise',
+        subitems: [
+          { label: 'Print Deadlines', href: '/print-deadlines' },
+        ],
+      },
       { label: 'Support', href: '/support' },
       { label: 'My Profile', href: '/profile', authOnly: true },
     ],

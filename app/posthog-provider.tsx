@@ -32,6 +32,13 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       // land in /admin/activity as 'Unknown error (no message
       // captured)' (see 12:35 PM 8/21 /magazine/330 iOS mobile bursts).
       capture_exceptions: false,
+      // Disable PostHog's built-in exception autocapture — we have our
+      // own onError() in lib/activity-tracker.ts that emits
+      // 'client_error' with a guaranteed non-empty message.  Leaving
+      // PostHog's built-in on produces duplicate $exception events
+      // with empty $exception_message for non-Error throws, which
+      // land in /admin/activity as 'Unknown error (no message
+      // captured)' (see 12:35 PM 8/21 /magazine/330 iOS mobile bursts).
       // crossorigin='anonymous' on the recorder/loader scripts so the
       // browser unmasks any error they throw. Without this, errors from
       // PostHog-loaded scripts hit window.onerror as the literal string
