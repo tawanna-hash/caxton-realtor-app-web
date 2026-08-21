@@ -141,14 +141,17 @@ function onError(message: string, source?: string, lineno?: number, colno?: numb
   // Tawanna's mailbox doesn't drown in non-actionable noise.
   const skipEmailAlert = !hasMeaningfulMessage(message);
 
-  // 'Script error.' with no source/lineno is the well-known cross-origin
-  // masking pattern. Tag it explicitly so the alert email is honest about
-  // what we know vs. what the browser hid.
+  // Cross-origin script errors are masked by the browser: no source,
+  // no lineno, no errorObj, and either the classic 'Script error.'
+  // sentinel (most engines) or an empty/whitespace message (iOS Safari
+  // 18+ dropped the sentinel in some cases and fires window.onerror
+  // with message=''). Match both shapes so we can tag consistently.
+  const trimmedMessage = String(message ?? '').trim();
   const isMasked =
-    String(message) === 'Script error.' &&
     !source &&
     lineno === undefined &&
-    !errorObj;
+    !errorObj &&
+    (trimmedMessage === 'Script error.' || trimmedMessage === '');
 
   const ctx = buildErrorContext();
   const stack = errorObj instanceof Error ? errorObj.stack : null;
@@ -163,8 +166,11 @@ function onError(message: string, source?: string, lineno?: number, colno?: numb
   if (ctx) detailParts.push(ctx);
   const detail = detailParts.join('\n');
 
+  const reportedMessage = isMasked && !trimmedMessage
+    ? 'Script error (masked; no message from browser)'
+    : message;
   captureToPostHog('client_error', {
-    $exception_message: message,
+    $exception_message: reportedMessage,
     $exception_source: source,
     $exception_lineno: lineno,
     $exception_colno: colno,
