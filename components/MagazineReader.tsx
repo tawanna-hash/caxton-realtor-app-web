@@ -429,7 +429,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
             <button
               onClick={() => setActionMode('search')}
               aria-label="Search in issue"
-              className="text-white/80 hover:text-white p-1"
+              className="text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
               title="Search (S)"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -441,7 +441,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
           <button
             onClick={() => cycleZoom(1)}
             aria-label="Zoom"
-            className="text-white/80 hover:text-white p-1"
+            className="text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md"
             title={`Zoom ${zoom}x (next: cycle)`}
           >
             <span className="text-[10px] uppercase tracking-wider">{zoom}x</span>
@@ -452,7 +452,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
               onClick={toggleGrab}
               aria-label={grabActive ? 'Disable grab tool' : 'Enable grab tool to drag the page'}
               aria-pressed={grabActive}
-              className={`p-1 transition-colors ${grabActive ? 'text-white bg-white/20 rounded' : 'text-white/80 hover:text-white'}`}
+              className={`p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors ${grabActive ? 'text-white bg-white/20 rounded' : 'text-white/80 hover:text-white'}`}
               title={grabActive ? 'Grab tool ON — click to disable' : 'Grab tool — drag to move the page'}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -466,7 +466,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
           <button
             onClick={toggleFullscreen}
             aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-            className="text-white/80 hover:text-white p-1"
+            className="text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center"
             title="Fullscreen (F)"
           >
             {isFullscreen ? (
@@ -586,9 +586,10 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
       >
         <button
           onClick={flipPrev}
-          disabled={currentPage === 0}
           aria-label="Previous page"
-          className="text-white/80 hover:text-white p-1.5 disabled:opacity-30"
+          aria-hidden={currentPage === 0}
+          tabIndex={currentPage === 0 ? -1 : 0}
+          className={`text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center ${currentPage === 0 ? 'invisible pointer-events-none' : ''}`}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="m15 18-6-6 6-6" />
@@ -611,9 +612,10 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
 
         <button
           onClick={flipNext}
-          disabled={currentPage >= magazine.page_count - 1}
           aria-label="Next page"
-          className="text-white/80 hover:text-white p-1.5 disabled:opacity-30"
+          aria-hidden={currentPage >= magazine.page_count - 1}
+          tabIndex={currentPage >= magazine.page_count - 1 ? -1 : 0}
+          className={`text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center ${currentPage >= magazine.page_count - 1 ? 'invisible pointer-events-none' : ''}`}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="m9 18 6-6-6-6" />

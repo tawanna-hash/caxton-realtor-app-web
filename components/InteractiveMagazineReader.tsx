@@ -1256,7 +1256,7 @@ export default function InteractiveMagazineReader({
                 <path d="m21 21-4.3-4.3" />
               </svg>
             </button>
-            <button onClick={zoomOut} disabled={zoomIdx === 0} aria-label="Zoom out" className="text-white/80 hover:text-white p-1.5 disabled:opacity-30 min-w-[44px] min-h-[44px] flex items-center justify-center">
+            <button onClick={zoomOut} aria-label="Zoom out" aria-hidden={zoomIdx === 0} tabIndex={zoomIdx === 0 ? -1 : 0} className={`text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center ${zoomIdx === 0 ? 'invisible pointer-events-none' : ''}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3M8 11h6" />
@@ -1281,7 +1281,7 @@ export default function InteractiveMagazineReader({
                 <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
               </svg>
             </button>
-            <button onClick={zoomIn} disabled={zoomIdx === ZOOM_LEVELS.length - 1} aria-label="Zoom in" className="text-white/80 hover:text-white p-1.5 disabled:opacity-30 min-w-[44px] min-h-[44px] flex items-center justify-center">
+            <button onClick={zoomIn} aria-label="Zoom in" aria-hidden={zoomIdx === ZOOM_LEVELS.length - 1} tabIndex={zoomIdx === ZOOM_LEVELS.length - 1 ? -1 : 0} className={`text-white/80 hover:text-white p-1.5 min-w-[44px] min-h-[44px] flex items-center justify-center ${zoomIdx === ZOOM_LEVELS.length - 1 ? 'invisible pointer-events-none' : ''}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3M11 8v6M8 11h6" />
