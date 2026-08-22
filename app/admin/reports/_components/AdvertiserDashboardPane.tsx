@@ -274,7 +274,42 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
               <div className="px-4 py-3 border-b border-gray-200">
                 <h3 className="text-sm font-medium text-gray-700">Hotspot breakdown</h3>
               </div>
-              <div className="overflow-x-auto">
+              {/* mobile card list */}
+              <ul className="sm:hidden divide-y divide-gray-100">
+                {data.hotspot_breakdown.length === 0 ? (
+                  <li className="px-4 py-8 text-center text-sm text-gray-500">No hotspots linked to this advertiser yet.</li>
+                ) : (
+                  data.hotspot_breakdown.map((h) => (
+                    <li key={`m-${h.hotspot_id}`} className="p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm text-gray-900 truncate">{h.magazine_label}</div>
+                          <div className="text-xs text-gray-500">Page {h.page_idx + 1}</div>
+                        </div>
+                        {h.is_published
+                          ? <span className="shrink-0 text-xs text-green-700">live</span>
+                          : <span className="shrink-0 text-xs text-amber-700">draft</span>}
+                      </div>
+                      <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                        <dt className="text-gray-500">Label</dt>
+                        <dd className="text-gray-700">{h.label || '—'}</dd>
+                        <dt className="text-gray-500">URL</dt>
+                        <dd className="text-gray-500 break-all">
+                          {h.config_url ? (
+                            <a href={h.config_url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                              {h.config_url.replace(/^https?:\/\//, '').slice(0, 60)}
+                              {h.config_url.length > 60 ? '…' : ''}
+                            </a>
+                          ) : '—'}
+                        </dd>
+                        <dt className="text-gray-500">Clicks</dt>
+                        <dd className="text-gray-900 font-medium">{h.clicks} <span className="text-gray-500 font-normal">({h.unique_sessions} unique)</span></dd>
+                      </dl>
+                    </li>
+                  ))
+                )}
+              </ul>
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr className="text-left text-xs uppercase tracking-wider text-gray-600">

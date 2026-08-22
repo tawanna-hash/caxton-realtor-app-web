@@ -397,7 +397,58 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
 
         {sortedRows != null && sortedRows.length > 0 && (
           <>
-          <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
+          {/* mobile card list */}
+          <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+            {pagedRows.map((r) => (
+              <li key={`m-${r.id}`} className="p-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-14 h-14 bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center rounded-md flex-shrink-0">
+                    {r.thumbnailUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={r.thumbnailUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span className="text-gray-300 text-2xl" aria-hidden="true">&#x1F3E0;</span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 truncate">{r.builderName}</p>
+                        <p className="text-sm text-gray-700 truncate">{r.title}</p>
+                        <p className="text-xs text-gray-500 truncate">{r.city}, {r.state}</p>
+                      </div>
+                      <Link
+                        href={`/admin/inventory/${r.id}`}
+                        onClick={(e) => handleEditClick(e, r.id)}
+                        className="shrink-0 text-xs font-medium text-gray-900 hover:underline whitespace-nowrap"
+                      >
+                        Review →
+                      </Link>
+                    </div>
+                    <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                      <dt className="text-gray-500">Submitted</dt>
+                      <dd className="text-gray-700">
+                        {new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </dd>
+                      <dt className="text-gray-500">Publication</dt>
+                      <dd className="text-gray-700">{r.publication}</dd>
+                      <dt className="text-gray-500">Submitter</dt>
+                      <dd className="text-gray-700 truncate">
+                        {r.submittedByName}
+                        <div className="text-[11px] text-gray-500 truncate">{r.submittedByEmail}</div>
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden sm:block bg-white border border-gray-200 rounded-md overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr className="text-left text-xs uppercase tracking-wider text-gray-500">

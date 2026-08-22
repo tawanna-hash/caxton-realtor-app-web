@@ -169,7 +169,78 @@ export default function AdminBuilderPagesPage() {
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
+      {/* mobile card list */}
+      <div className="sm:hidden bg-white border border-gray-200 rounded-md overflow-hidden">
+        {builders === null ? (
+          <div className="px-4 py-10 text-center text-gray-500">Loading…</div>
+        ) : builders.length === 0 ? (
+          <div className="px-4 py-10 text-center text-gray-500">No builders found.</div>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {developers.map((dev) => {
+              const kids = childrenOf(dev.builder_name);
+              const isCollapsed = collapsed[dev.builder_name] ?? false;
+              return (
+                <li key={`m-${dev.builder_name}`}>
+                  <div className="p-3">
+                    <div className="flex items-start gap-2">
+                      {kids.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleCollapse(dev.builder_name)}
+                          className="mt-0.5 text-gray-400 hover:text-gray-700 shrink-0"
+                          aria-label={isCollapsed ? 'Expand' : 'Collapse'}
+                        >
+                          {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                        </button>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-gray-900 truncate">
+                          {dev.builder_name}
+                          <span className="ml-2 text-xs text-gray-400 font-normal">developer</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {dev.active_count} active · {dev.total_count} total
+                        </div>
+                        <div className="mt-2 flex items-center gap-3 text-xs">
+                          <div>{renderToggle(dev)}</div>
+                          <div>{renderDelete(dev)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {!isCollapsed && kids.map((kid) => (
+                    <div key={`m-kid-${kid.builder_name}`} className="p-3 pl-8 border-t border-gray-100 bg-gray-50/60">
+                      <div className="text-sm text-gray-700 truncate">↳ {kid.builder_name}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {kid.active_count} active · {kid.total_count} total
+                      </div>
+                      <div className="mt-2 flex items-center gap-3 text-xs">
+                        <div>{renderToggle(kid)}</div>
+                        <div>{renderDelete(kid)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </li>
+              );
+            })}
+            {standaloneBuilders.map((b) => (
+              <li key={`m-solo-${b.builder_name}`} className="p-3">
+                <div className="font-medium text-gray-900 truncate">{b.builder_name}</div>
+                <div className="text-xs text-gray-500 mt-0.5">
+                  {b.active_count} active · {b.total_count} total
+                </div>
+                <div className="mt-2 flex items-center gap-3 text-xs">
+                  <div>{renderToggle(b)}</div>
+                  <div>{renderDelete(b)}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="hidden sm:block bg-white border border-gray-200 rounded-md overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-gray-600">
             <tr>

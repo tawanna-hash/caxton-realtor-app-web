@@ -563,7 +563,33 @@ function BulkPanel() {
             </button>
           </div>
 
-          <div className="overflow-x-auto rounded-lg border border-gray-200">
+          {/* mobile card list */}
+          <ul className="sm:hidden divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white overflow-hidden">
+            {response.results.map((r, i) => (
+              <li key={`m-${r.input}-${i}`} className="p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-mono text-xs text-gray-900 break-all">{r.input}</div>
+                    {r.suggestion && (
+                      <div className="text-[11px] text-amber-700 mt-0.5">→ {r.suggestion}</div>
+                    )}
+                  </div>
+                  <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${verdictClasses(r.verdict)}`}>
+                    {r.verdict}
+                  </span>
+                </div>
+                <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                  <dt className="text-gray-500">Detail</dt>
+                  <dd className="text-gray-700">{r.detail}</dd>
+                  <dt className="text-gray-500">Signals</dt>
+                  <dd><SignalBadges signals={r.signals} /></dd>
+                  <dt className="text-gray-500">Risk</dt>
+                  <dd className="text-gray-600 tabular-nums">{r.risk}</dd>
+                </dl>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden sm:block overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-gray-50">
                 <tr className="text-left text-xs uppercase tracking-wide text-gray-500">

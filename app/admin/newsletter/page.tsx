@@ -283,7 +283,67 @@ export default function NewsletterSubscribersPage() {
             </div>
           )}
 
-          <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
+          {/* mobile card list */}
+          <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+            <li className="flex items-center gap-2 px-3 py-2 bg-gray-50">
+              <input
+                id="newsletter-select-all-mobile"
+                type="checkbox"
+                aria-label="Select all on this page"
+                checked={mounted && data.subscribers.length > 0 && data.subscribers.every((s) => selectedIds.has(s.id))}
+                onChange={(e) => toggleAllOnPage(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <label htmlFor="newsletter-select-all-mobile" className="text-xs font-medium text-gray-700">Select all on this page</label>
+            </li>
+            {data.subscribers.length === 0 ? (
+              <li className="px-3 py-8 text-center text-sm text-gray-400">No newsletter subscribers found.</li>
+            ) : (
+              data.subscribers.map((s) => (
+                <li key={`m-${s.id}`} className="p-3">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${s.email}`}
+                      checked={mounted && selectedIds.has(s.id)}
+                      onChange={(e) => toggleRow(s.id, e.target.checked)}
+                      className="h-4 w-4 mt-1 rounded border-gray-300"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-gray-900 truncate">{s.email}</span>
+                          <EmailBadge
+                            status={s.email_verification_status ?? null}
+                            title={s.email_verification_reason ?? undefined}
+                          />
+                        </div>
+                        <span
+                          className={
+                            'shrink-0 inline-block px-2 py-0.5 text-[10px] rounded-md ' +
+                            (s.status === 'active'
+                              ? 'bg-green-50 text-green-700 border border-green-200'
+                              : 'bg-gray-100 text-gray-600 border border-gray-200')
+                          }
+                        >
+                          {s.status}
+                        </span>
+                      </div>
+                      <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                        <dt className="text-gray-500">Publication</dt>
+                        <dd className="text-gray-700">{s.publication}</dd>
+                        <dt className="text-gray-500">Source</dt>
+                        <dd className="text-gray-700">{s.source}</dd>
+                        <dt className="text-gray-500">Joined</dt>
+                        <dd className="text-gray-600">{formatDate(s.created_at)}</dd>
+                      </dl>
+                    </div>
+                  </div>
+                </li>
+              ))
+            )}
+          </ul>
+          <div className="hidden sm:block bg-white border border-gray-200 rounded-md overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>

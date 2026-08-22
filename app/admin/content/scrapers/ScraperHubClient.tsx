@@ -195,7 +195,70 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
               <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-3">
                 {group.label}
               </h2>
-              <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
+              {/* mobile card list */}
+              <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+                {group.scrapers.map((s) => {
+                  const st = runState[s.path];
+                  const status = st?.status ?? 'idle';
+                  const r = runMap.get(s.path);
+                  const badgeColor = r?.status === 'ok' ? 'text-green-700 bg-green-50' : r?.status === 'error' ? 'text-red-700 bg-red-50' : 'text-amber-700 bg-amber-50';
+                  return (
+                    <li key={`m-${s.path}`} className="p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-gray-900 truncate">{s.name}</div>
+                          <button
+                            onClick={() => navigator.clipboard.writeText(`/api/cron/${s.path}`)}
+                            className="text-[11px] text-gray-400 hover:text-gray-600 truncate block max-w-full text-left"
+                            title="Copy path"
+                          >
+                            /api/cron/{s.path}
+                          </button>
+                        </div>
+                        {s.external ? (
+                          <span className="shrink-0 text-xs text-gray-400">external</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => runScraper(s.path)}
+                            disabled={status === 'running'}
+                            className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors disabled:opacity-50 ${
+                              status === 'success'
+                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                : status === 'error'
+                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {status === 'running' ? (
+                              <><Loader2 size={13} className="animate-spin" /> Running…</>
+                            ) : status === 'success' ? (
+                              <><CheckCircle2 size={13} /> {st.result}</>
+                            ) : status === 'error' ? (
+                              <><XCircle size={13} /> Failed</>
+                            ) : (
+                              <><Play size={13} /> Run</>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                      <div className="mt-1.5 text-xs text-gray-600">{s.description}</div>
+                      <div className="mt-1 text-[11px] text-gray-500">Schedule (CDT): {s.schedule}</div>
+                      {r && (
+                        <div className="mt-1 text-[11px] text-gray-500">
+                          <span className={`inline-block px-1.5 py-0.5 rounded ${badgeColor} font-medium mr-1.5`}>{r.status}</span>
+                          {r.rowCount} rows · {(() => {
+                            const ago = Math.floor((Date.now() - new Date(r.lastRunAt).getTime()) / 60000);
+                            return ago < 60 ? `${ago}m ago` : ago < 1440 ? `${Math.floor(ago/60)}h ago` : `${Math.floor(ago/1440)}d ago`;
+                          })()}
+                          {r.errorMessage && <div className="text-red-600 mt-0.5 break-all">{r.errorMessage}</div>}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="hidden sm:block bg-white border border-gray-200 rounded-md overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 text-left text-gray-600">
                     <tr>
