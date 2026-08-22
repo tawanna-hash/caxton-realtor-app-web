@@ -200,7 +200,7 @@ export default function AdminFeatureArticlesPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">Admin</p>
           <PageTitle size="md">Feature Articles</PageTitle>

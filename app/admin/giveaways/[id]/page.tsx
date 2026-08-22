@@ -157,7 +157,7 @@ export default function GiveawayDetailPage() {
         </Link>
       </div>
 
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <PageTitle size="md">{giveaway.title as string}</PageTitle>
           <div className="text-xs uppercase tracking-wider text-gray-500 mt-1">
