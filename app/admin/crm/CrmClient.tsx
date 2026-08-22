@@ -443,7 +443,7 @@ export default function CrmClient({ initialRows }: Props) {
 
       {/* List */}
       <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
-        <div className="grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
+        <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
           <div className="col-span-4">Contact</div>
           <div className="col-span-1">Status</div>
           <div className="col-span-2">Publication</div>
@@ -544,78 +544,108 @@ function CrmRow({
   onOpen: () => void;
   onCopyLink: () => void | Promise<void>;
 }) {
-  return (
-    <div className="grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-blue-50/40 transition">
+  // Shared cells so mobile card and desktop grid stay in sync.
+  const contactCell = (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="min-w-0 text-left w-full"
+    >
+      <div className="font-medium text-gray-900 truncate hover:underline">{row.name}</div>
+      <div className="text-xs text-gray-500 truncate">
+        {[row.contact_email, formatPhone(row.phone)].filter(Boolean).join(' - ') || row.slug}
+      </div>
+    </button>
+  );
+
+  const hotspotCell = (
+    <div className="text-sm text-gray-700">
+      {row.hotspot_count} <span className="text-gray-400">/</span>{' '}
+      <span className="text-gray-500">{row.clicks_30d} clicks</span>
+      {row.last_click_at && (
+        <div className="text-xs text-gray-400">
+          last touch {relativeTime(row.last_click_at)}
+        </div>
+      )}
+    </div>
+  );
+
+  const opensCell = row.last_bounced_at ? (
+    <div className="flex flex-col leading-tight gap-0.5">
+      <span
+        className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-800 border border-red-300 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider w-fit"
+        title={`Last bounce: ${row.last_bounce_type ?? 'unknown'} on ${formatShortDate(row.last_bounced_at)}`}
+      >
+        Bounced
+      </span>
+      <span className="text-gray-500 text-xs">{formatShortDate(row.last_bounced_at)}</span>
+    </div>
+  ) : row.open_count && row.open_count > 0 ? (
+    <div className="flex flex-col leading-tight">
+      <span className="font-medium text-emerald-700 text-sm">{row.open_count} opens</span>
+      <span className="text-gray-500 text-xs">{formatShortDate(row.last_opened_at)}</span>
+    </div>
+  ) : (
+    <span className="text-gray-400 text-xs">No opens</span>
+  );
+
+  const actionsCell = (
+    <div className="flex items-center justify-end gap-1.5 flex-wrap">
+      <button
+        type="button"
+        onClick={onCopyLink}
+        className="px-2 py-1 text-xs rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+        title="Copy public share link"
+      >
+        Copy link
+      </button>
+      <Link
+        href={`/admin/reports?tab=advertisers&advertiserId=${row.id}`}
+        className="px-2 py-1 text-xs rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+        title="Open advertiser analytics dashboard"
+      >
+        Open
+      </Link>
       <button
         type="button"
         onClick={onOpen}
-        className="col-span-4 min-w-0 text-left"
+        className="px-2 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
       >
-        <div className="font-medium text-gray-900 truncate hover:underline">{row.name}</div>
-        <div className="text-xs text-gray-500 truncate">
-          {[row.contact_email, formatPhone(row.phone)].filter(Boolean).join(' - ') || row.slug}
-        </div>
+        Edit
       </button>
-      <div className="col-span-1">
-        <StatusBadge status={row.status ?? 'prospect'} />
-      </div>
-      <div className="col-span-2">
-        <PublicationBadge publication={row.publication ?? 'austin'} />
-      </div>
-      <div className="col-span-2 text-sm text-gray-700">
-        {row.hotspot_count} <span className="text-gray-400">/</span>{' '}
-        <span className="text-gray-500">{row.clicks_30d} clicks</span>
-        {row.last_click_at && (
-          <div className="text-xs text-gray-400">
-            last touch {relativeTime(row.last_click_at)}
-          </div>
-        )}
-      </div>
-      <div className="col-span-1 text-xs">
-        {row.last_bounced_at ? (
-          <div className="flex flex-col leading-tight gap-0.5">
-            <span
-              className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-800 border border-red-300 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider w-fit"
-              title={`Last bounce: ${row.last_bounce_type ?? 'unknown'} on ${formatShortDate(row.last_bounced_at)}`}
-            >
-              Bounced
-            </span>
-            <span className="text-gray-500">{formatShortDate(row.last_bounced_at)}</span>
-          </div>
-        ) : row.open_count && row.open_count > 0 ? (
-          <div className="flex flex-col leading-tight">
-            <span className="font-medium text-emerald-700">{row.open_count}</span>
-            <span className="text-gray-500">{formatShortDate(row.last_opened_at)}</span>
-          </div>
-        ) : (
-          <span className="text-gray-400">-</span>
-        )}
-      </div>
-      <div className="col-span-2 flex items-center justify-end gap-1.5 flex-wrap">
-        <button
-          type="button"
-          onClick={onCopyLink}
-          className="px-2 py-1 text-xs rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
-          title="Copy public share link"
-        >
-          Copy link
-        </button>
-        <Link
-          href={`/admin/reports?tab=advertisers&advertiserId=${row.id}`}
-          className="px-2 py-1 text-xs rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
-          title="Open advertiser analytics dashboard"
-        >
-          Open
-        </Link>
-        <button
-          type="button"
-          onClick={onOpen}
-          className="px-2 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
-        >
-          Edit
-        </button>
-      </div>
     </div>
+  );
+
+  return (
+    <>
+      {/* Desktop grid ≥ sm — unchanged layout */}
+      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-blue-50/40 transition">
+        <div className="col-span-4">{contactCell}</div>
+        <div className="col-span-1">
+          <StatusBadge status={row.status ?? 'prospect'} />
+        </div>
+        <div className="col-span-2">
+          <PublicationBadge publication={row.publication ?? 'austin'} />
+        </div>
+        <div className="col-span-2">{hotspotCell}</div>
+        <div className="col-span-1 text-xs">{opensCell}</div>
+        <div className="col-span-2">{actionsCell}</div>
+      </div>
+
+      {/* Mobile card < sm */}
+      <div className="sm:hidden px-4 py-3 space-y-2 hover:bg-blue-50/40 transition">
+        {contactCell}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <StatusBadge status={row.status ?? 'prospect'} />
+          <PublicationBadge publication={row.publication ?? 'austin'} />
+        </div>
+        <div className="flex items-start justify-between gap-3">
+          {hotspotCell}
+          <div className="text-right">{opensCell}</div>
+        </div>
+        {actionsCell}
+      </div>
+    </>
   );
 }
 
