@@ -23,7 +23,7 @@ export const FOOTER_TEMPLATE_IDS = [
 
 export type FooterTemplateId = (typeof FOOTER_TEMPLATE_IDS)[number];
 
-export const FOOTER_TEMPLATE_DEFAULT: FooterTemplateId = 'business-card';
+const FOOTER_TEMPLATE_DEFAULT: FooterTemplateId = 'business-card';
 
 export function coerceFooterTemplateId(value: unknown): FooterTemplateId {
   if (typeof value !== 'string') return FOOTER_TEMPLATE_DEFAULT;
@@ -146,16 +146,4 @@ export const FOOTER_TEMPLATE_META: Record<FooterTemplateId, FooterTemplateMeta> 
 
 export function getFooterTemplateMeta(id: FooterTemplateId): FooterTemplateMeta {
   return FOOTER_TEMPLATE_META[id] ?? FOOTER_TEMPLATE_META[FOOTER_TEMPLATE_DEFAULT];
-}
-
-/** True when a brand has enough fields to make any footer template look real. */
-export function brandLooksComplete(b: FooterBrand): boolean {
-  // Want at least: name OR company, plus one of (phone, email, website).
-  const hasIdentity = Boolean((b.name && b.name.trim()) || (b.company && b.company.trim()));
-  const hasChannel = Boolean(
-    (b.phone && b.phone.trim()) ||
-    (b.email && b.email.trim()) ||
-    (b.website && b.website.trim()),
-  );
-  return hasIdentity && hasChannel;
 }

@@ -15,11 +15,9 @@
 import { ApiError } from '../error';
 import type { RealtorSessionPayload } from '../jwt';
 import { auth } from './authjs';
-import { SESSION_COOKIE_NAME } from '@/lib/auth/cookie-names';
-
 // Re-exported so existing call sites keep working. Canonical declaration
 // lives in lib/auth/cookie-names.ts (see admin.ts for the same pattern).
-export { SESSION_COOKIE_NAME };
+;
 
 /**
  * /api/auth/me intentionally returns 200 with `{ realtor: null }` for guests

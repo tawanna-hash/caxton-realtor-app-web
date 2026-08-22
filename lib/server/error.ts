@@ -19,7 +19,7 @@ export class ApiError extends Error {
   }
 }
 
-export function handleApiError(err: unknown): NextResponse {
+function handleApiError(err: unknown): NextResponse {
   // Zod validation errors → 400 with field errors
   if (err instanceof ZodError) {
     return NextResponse.json(

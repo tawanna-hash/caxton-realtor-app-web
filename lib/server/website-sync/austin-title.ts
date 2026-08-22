@@ -114,7 +114,7 @@ function parseAddressBlock(text: string): ParsedAddress {
 }
 
 // Parse austintitle.com /locations into ExtractedLocation[]
-export function parseLocationsHtml(html: string): ExtractedLocation[] {
+function parseLocationsHtml(html: string): ExtractedLocation[] {
   const locations: ExtractedLocation[] = [];
 
   // Each office card opens with: <h3 ...><a href="...">LABEL</a></h3>
@@ -169,7 +169,7 @@ interface StaffWithSection {
   section: string; // H2 text the card appeared under, e.g. "Hartland Plaza"
 }
 
-export function parseTeamHtml(html: string): StaffWithSection[] {
+function parseTeamHtml(html: string): StaffWithSection[] {
   const out: StaffWithSection[] = [];
 
   // Find each H2 marker location and use it to assign sections.

@@ -2,7 +2,7 @@
  * Provider-agnostic email interface used by all server code.
  */
 
-export interface EmailRecipient {
+interface EmailRecipient {
   email: string;
   name?: string;
 }

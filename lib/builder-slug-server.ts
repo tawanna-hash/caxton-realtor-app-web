@@ -36,25 +36,3 @@ export async function slugToBuilderName(slug: string): Promise<string | null> {
   }
   return null;
 }
-
-export async function listActiveBuilders(): Promise<string[]> {
-  const rows = (await sql`
-    SELECT DISTINCT name FROM (
-      SELECT b.builder_name AS name
-      FROM builder_inventory b
-      LEFT JOIN builder_page_visibility v ON v.builder_name = b.builder_name
-      WHERE b.status = 'active'
-        AND COALESCE(v.public_enabled, true) = true
-      UNION
-      SELECT b.developer_name AS name
-      FROM builder_inventory b
-      LEFT JOIN builder_page_visibility v ON v.builder_name = b.developer_name
-      WHERE b.status = 'active'
-        AND b.developer_name IS NOT NULL
-        AND COALESCE(v.public_enabled, true) = true
-    ) t
-    WHERE name IS NOT NULL
-    ORDER BY name ASC
-  `) as { name: string }[];
-  return rows.map((r) => r.name);
-}

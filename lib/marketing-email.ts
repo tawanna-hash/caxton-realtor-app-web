@@ -10,7 +10,7 @@ import type { MarketingCampaignOutreachRecipient } from './marketing-campaigns';
 
 // ── Public site base for tracking + unsubscribe links ──────────────
 // Falls back to the realtynewsnow.app domain (Cloudflare blocks the .com).
-export function getPublicBase(): string {
+function getPublicBase(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.PUBLIC_BASE_URL ||
@@ -21,7 +21,7 @@ export function getPublicBase(): string {
 // ── Token substitution ─────────────────────────────────────────────
 // Supports {{first_name}}, {{last_name}}, {{full_name}}, {{company}},
 // {{email}}, {{unsubscribe_url}}, {{rep_name}}.
-export interface TokenContext {
+interface TokenContext {
   first_name?: string | null;
   last_name?: string | null;
   full_name?: string | null;
@@ -32,7 +32,7 @@ export interface TokenContext {
   [key: string]: string | null | undefined;
 }
 
-export function substituteTokens(input: string, ctx: TokenContext): string {
+function substituteTokens(input: string, ctx: TokenContext): string {
   // Replace {{token}} and {{ token }} with the value, falling back to a
   // friendly default ("there" for first_name) when the field is empty.
   return input.replace(/\{\{\s*([a-z_]+)\s*\}\}/gi, (_match, key: string) => {
@@ -54,7 +54,7 @@ export function substituteTokens(input: string, ctx: TokenContext): string {
 //   2) Rich-text-editor HTML: rewrite block elements with inline styles
 //      so they render correctly in every major email client (Gmail strips
 //      <style> tags). We also defang dangerous tags/attributes.
-export function bodyToHtml(body: string): string {
+function bodyToHtml(body: string): string {
   if (/<[a-z][^>]*>/i.test(body)) return inlineStyleHtml(sanitizeHtml(body));
   const escaped = body
     .replace(/&/g, '&amp;')
@@ -71,7 +71,7 @@ export function bodyToHtml(body: string): string {
 // it permissive on tags (paragraphs / headings / lists / links etc.)
 // because the source is our own contentEditable editor, not user-generated
 // open input. This is defense in depth, not the primary trust boundary.
-export function sanitizeHtml(html: string): string {
+function sanitizeHtml(html: string): string {
   return html
     // Drop full <script>, <style>, <iframe>, <object>, <embed> blocks.
     .replace(/<\s*(script|style|iframe|object|embed|link|meta)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
@@ -85,7 +85,7 @@ export function sanitizeHtml(html: string): string {
 // ── Inline-style rewriter ──────────────────────────────────────────
 // Email clients (especially Gmail) strip <style> tags. We post-process
 // rich-text HTML to attach inline styles to common block elements.
-export function inlineStyleHtml(html: string): string {
+function inlineStyleHtml(html: string): string {
   const REPLACEMENTS: Array<[RegExp, string]> = [
     // Paragraphs.
     [/<p(\s[^>]*)?>/gi, '<p$1 style="margin:0 0 14px 0;line-height:1.55;color:#1f2937;">'],
@@ -115,7 +115,7 @@ export function inlineStyleHtml(html: string): string {
 }
 
 // ── Wrap the body in a branded outer HTML email ────────────────────
-export interface RenderOptions {
+interface RenderOptions {
   subject: string;
   previewText?: string | null;
   bodyHtml: string;
@@ -127,7 +127,7 @@ export interface RenderOptions {
   attachmentLinks?: Array<{ filename: string; url: string }>;
 }
 
-export function renderEmail(opts: RenderOptions): string {
+function renderEmail(opts: RenderOptions): string {
   const brand = opts.brand ?? 'realtyline';
   const accent = brand === 'newsline' ? '#0e7490' : '#301D5D';
   const wordmark = brand === 'newsline' ? 'Newsline' : brand === 'caxton' ? 'Caxton' : 'RealtyLine';
@@ -194,7 +194,7 @@ function escapeHtml(s: string): string {
 }
 
 // ── Rewrite anchor tags to go through the click-tracking endpoint ──
-export function rewriteLinks(html: string, recipientId: string): string {
+function rewriteLinks(html: string, recipientId: string): string {
   const base = getPublicBase();
   return html.replace(/<a\s+([^>]*?)href=("|')([^"']+)(\2)([^>]*)>/gi, (full, pre: string, q: string, href: string, _q2: string, post: string) => {
     // Skip mailto/tel/anchor links and our own unsubscribe links.

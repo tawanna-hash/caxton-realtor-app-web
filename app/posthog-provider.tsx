@@ -112,7 +112,7 @@ export function trackEvent(event: string, properties?: Record<string, unknown>) 
 
 const PUB_STORAGE_KEY = 'caxton_pub';
 
-export function registerActivePublication(): void {
+function registerActivePublication(): void {
   if (typeof window === 'undefined') return;
   if (!initialized) return;
 

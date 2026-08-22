@@ -5,7 +5,7 @@
 // drawer in components/NavDrawer.tsx import from here. Add or move a
 // link in this file and both surfaces stay in sync.
 
-export type AdminNavLink = {
+type AdminNavLink = {
   label: string;
   href: string;
   description?: string;

@@ -24,7 +24,7 @@ function ensureVapid(): void {
   vapidConfigured = true;
 }
 
-export type PushSubscriptionRow = {
+type PushSubscriptionRow = {
   id: string;
   realtor_id: string | null;
   endpoint: string;
@@ -108,7 +108,7 @@ export type PushMarketFilter = 'austin' | 'san_antonio' | 'houston' | 'dallas';
  * so the admin can see per-realtor delivery status. Anonymous subscriptions
  * (realtor_id NULL) are still sent to but skip the delivery row.
  */
-export async function broadcastPush(
+async function broadcastPush(
   notificationId: string,
   payload: PushPayload,
   marketFilter?: PushMarketFilter,

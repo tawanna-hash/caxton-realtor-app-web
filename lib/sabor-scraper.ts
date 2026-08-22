@@ -175,7 +175,7 @@ function decodeIcsText(value: string): string {
  * The response body looks like `callback([ ... ])`. We strip the wrapper.
  * If `type` is omitted, the server returns all event types in one call.
  */
-export async function fetchSaborApi(type: 'all' | SaborType = 'all'): Promise<SaborApiEvent[]> {
+async function fetchSaborApi(type: 'all' | SaborType = 'all'): Promise<SaborApiEvent[]> {
   const params = new URLSearchParams({ type, filter: '', tag: '', vers: 'caxton' });
   const url = `${API_URL}?${params.toString()}`;
   const body = await fetchText(url);
@@ -202,7 +202,7 @@ export async function fetchSaborApi(type: 'all' | SaborType = 'all'): Promise<Sa
  * by the bare UID (the `<guid>` before `@sabor.com`). Each entry holds the
  * description (HTML stripped to plain text) and location string.
  */
-export async function fetchSaborIcs(type: SaborType): Promise<Map<string, IcsEntry>> {
+async function fetchSaborIcs(type: SaborType): Promise<Map<string, IcsEntry>> {
   const url = `${ICS_BASE}?type=${type}`;
   const body = await fetchText(url);
   const lines = unfoldIcs(body);

@@ -270,7 +270,7 @@ function extractTaxInfo(html: string): { entities: { name: string; rate: string 
 
 // Parse a David Weekley community page into the description text + a structured
 // community_data blob.
-export function extractCommunityData(html: string): {
+function extractCommunityData(html: string): {
   description: string | null;
   communityData: CommunityData;
 } {
@@ -358,7 +358,7 @@ export function extractCommunityData(html: string): {
 
 // Fetch a single David Weekley community page and return its description text
 // + structured community_data blob, or null if the page can't be fetched.
-export async function fetchDavidWeekleyCommunityData(
+async function fetchDavidWeekleyCommunityData(
   pageUrl: string,
 ): Promise<{ description: string | null; communityData: CommunityData } | null> {
   let res: Response;

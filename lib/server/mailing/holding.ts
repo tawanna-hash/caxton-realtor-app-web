@@ -247,17 +247,6 @@ export async function promoteHoldingContacts(ids: string[]): Promise<PromoteResu
 }
 
 /**
- * Reject (delete) holding contacts. Different code path from
- * deleteMailingContacts so callers can confirm the rejected rows were
- * actually in holding (mistakes shouldn't blow away active mailing
- * list rows).
- */
-export async function rejectHoldingContacts(ids: string[]): Promise<number> {
-  const r = await rejectHoldingContactsWithSnapshot(ids);
-  return r.removed;
-}
-
-/**
  * Same as rejectHoldingContacts but also returns the email + source
  * metadata of every deleted row so the caller can write a permanent
  * suppression entry. We RETURNING the columns we need so the snapshot

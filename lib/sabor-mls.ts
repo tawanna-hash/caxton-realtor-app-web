@@ -161,7 +161,7 @@ export function makeBlankReport(month_label = '', released_at = ''): SaborReport
  * by the public API so cards keep rendering for any report row created
  * before the v2 schema landed.
  */
-export interface LegacyMiniStat { value: string; label: string }
+interface LegacyMiniStat { value: string; label: string }
 export interface LegacyReport {
   month_label: string;
   released_at: string;

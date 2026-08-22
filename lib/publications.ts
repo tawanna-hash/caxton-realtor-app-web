@@ -62,14 +62,6 @@ export const PUBLICATIONS: readonly Publication[] = [
 
 // Convenience lookup by id. Throws if id is not a known publication —
 // callers should only pass values typed as PublicationId.
-export function getPublication(id: PublicationId): Publication {
-  const found = PUBLICATIONS.find((p) => p.id === id);
-  if (!found) {
-    throw new Error(`Unknown publication id: ${id}`);
-  }
-  return found;
-}
-
 // Legacy compatibility shim: callers that previously had a local
 // PUB_LABELS or PUBLICATION_LABELS map keyed by id can use this directly.
 // New code should prefer getPublication(id).label.

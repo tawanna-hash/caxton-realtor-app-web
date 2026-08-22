@@ -105,41 +105,6 @@ Newsline San Antonio
 }
 
 /**
- * Render a simple welcome email after first email verification.
- */
-export function renderWelcomeEmail(opts: {
-  firstName: string;
-  appUrl: string;
-}): MagicLinkTemplate {
-  const subject = 'Welcome to Caxton Publications';
-  const text = `Hi ${opts.firstName},
-
-Welcome to the Caxton Publications REALTOR® app! Your account is now active.
-
-You can sign in anytime at: ${opts.appUrl}
-
-Here's what you can do right away:
-  • Browse aggregated Texas real estate news
-  • View the upcoming events calendar (HBA, ABoR, SABOR, GSABA, and more)
-  • Search the verified vendor directory
-  • Look up TREC license status
-
-You'll also start receiving the print edition of ${opts.firstName}, plus our weekly digest with digital replica access, events, and advertiser incentives.
-
-—
-Caxton Publications, Inc.
-RealtyLine · Newsline San Antonio
-`;
-
-  const html = `<p>Hi ${escapeHtml(opts.firstName)},</p>
-<p>Welcome to the Caxton Publications REALTOR® app! Your account is now active.</p>
-<p><a href="${escapeHtml(opts.appUrl)}">Sign in</a> anytime to browse news, events, and tools built for Texas REALTORS®.</p>
-<p>—<br>Caxton Publications, Inc.<br>RealtyLine · Newsline San Antonio</p>`;
-
-  return { subject, text, html };
-}
-
-/**
  * Render the newsletter signup confirmation email. Sent immediately after a
  * visitor signs up via the inline NewsletterCTA on the public site.
  */
@@ -185,10 +150,6 @@ RealtyLine \u00B7 Newsline San Antonio
 
 
 // Re-export config-derived constants if templates need them
-export const FROM_NAME = process.env.EMAIL_FROM_NAME ?? 'Caxton Publications';
-export const FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS ?? '';
-
-
 // =============================================================================
 // Giveaway winner notification
 // =============================================================================

@@ -10,10 +10,10 @@
 // from PUB_META so a market only has one source of truth.
 
 import type { PubKey } from './pub-meta';
-import { PRE_LAUNCH_PUB_KEYS, isPreLaunchPub, PUB_META } from './pub-meta';
+import { PRE_LAUNCH_PUB_KEYS, PUB_META } from './pub-meta';
 
 // Re-exports for callers that imported the old surface.
-export { PRE_LAUNCH_PUB_KEYS, isPreLaunchPub };
+;
 
 // Legacy alias for ComingSoonPubId - kept so existing imports keep working.
 // New code should use `PubKey` and filter with `isPreLaunchPub`.
@@ -61,7 +61,3 @@ export const COMING_SOON_PUBS: PreLaunchTileMeta[] = (
     monogram: MONOGRAM[id],
   };
 });
-
-export function isComingSoonPub(id: string): id is ComingSoonPubId {
-  return id === 'realtyline-houston' || id === 'realtyline-dallas';
-}

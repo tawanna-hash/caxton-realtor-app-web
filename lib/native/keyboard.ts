@@ -69,17 +69,3 @@ export async function installKeyboardListeners(): Promise<void> {
     installed = false;
   }
 }
-
-/**
- * Force-dismiss the on-screen keyboard. Useful for "Save & close" actions
- * inside drawers where the keyboard would otherwise stay up over a toast.
- */
-export async function dismissKeyboard(): Promise<void> {
-  if (!isNative()) return;
-  try {
-    const { Keyboard } = await import('@capacitor/keyboard');
-    await Keyboard.hide();
-  } catch {
-    // ignore
-  }
-}

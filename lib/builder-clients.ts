@@ -13,5 +13,3 @@ export const BUILDER_CLIENTS = [
   { value: 'the-hollows-at-lake-travis', label: 'The Hollows at Lake Travis', type: 'developer' as const },
   { value: 'other', label: 'Other (specify)', type: 'other' as const },
 ] as const;
-
-export type BuilderClientValue = typeof BUILDER_CLIENTS[number]['value'];

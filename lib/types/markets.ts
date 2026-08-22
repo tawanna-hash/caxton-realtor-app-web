@@ -11,27 +11,16 @@
 
 export const MARKETS = ['austin', 'san_antonio', 'houston', 'dallas'] as const;
 export type Market = (typeof MARKETS)[number];
-
-export const MARKET_LABELS: Record<Market, string> = {
-  austin: 'Austin',
-  san_antonio: 'San Antonio',
-  houston: 'Houston',
-  dallas: 'Dallas / Ft. Worth',
-};
-
 // Legacy — historically only Austin + San Antonio were live, so a lot of
 // existing UI enumerates these two + 'both'. Keep the union around for
 // back-compat with `ad_campaigns.publication`, checkout flow, etc.
-export const MARKETS_WITH_BOTH = ['austin', 'san_antonio', 'both'] as const;
-export type MarketWithBoth = (typeof MARKETS_WITH_BOTH)[number];
-
 // ── Live-status registry ─────────────────────────────────────────────
 // Which markets are open for business today. Houston + Dallas are stubbed
 // in the type system + rate cards, but public-facing pages show a "Coming
 // soon" badge and admin surfaces mute them.
-export const LIVE_MARKETS: readonly Market[] = ['austin', 'san_antonio'] as const;
+const LIVE_MARKETS: readonly Market[] = ['austin', 'san_antonio'] as const;
 
-export type MarketStatus = 'live' | 'coming_soon';
+type MarketStatus = 'live' | 'coming_soon';
 
 export interface MarketMeta {
   id: Market;
@@ -69,21 +58,6 @@ export const MARKET_META: Record<Market, MarketMeta> = {
   },
 };
 
-export function isMarket(v: unknown): v is Market {
-  return v === 'austin' || v === 'san_antonio' || v === 'houston' || v === 'dallas';
-}
-
 export function isMarketLive(m: Market): boolean {
   return LIVE_MARKETS.includes(m);
-}
-
-export function marketsInOrder(): Market[] {
-  // Live markets first, then coming-soon markets, both alphabetical by label.
-  const live = [...LIVE_MARKETS].sort((a, b) =>
-    MARKET_META[a].label.localeCompare(MARKET_META[b].label),
-  );
-  const soon = MARKETS.filter((m) => !isMarketLive(m)).sort((a, b) =>
-    MARKET_META[a].label.localeCompare(MARKET_META[b].label),
-  );
-  return [...live, ...soon];
 }

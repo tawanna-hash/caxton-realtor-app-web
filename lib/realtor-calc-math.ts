@@ -407,7 +407,7 @@ export interface RentVsBuyInput {
   horizonYears: number;
 }
 
-export interface RentVsBuyYear {
+interface RentVsBuyYear {
   year: number;
   /** Cumulative cost of buying through end of this year, net of equity if sold. */
   buyNetCost: number;
@@ -879,157 +879,7 @@ export function dayOfYear(isoDate: string): number {
 // Numbers are LTV-banded for Conventional only; the others are flat.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type LoanProgram = 'conventional' | 'fha' | 'va' | 'usda';
-export type Occupancy = 'primary' | 'second_home' | 'investment';
-
-export interface ConcessionLimitInput {
-  program: LoanProgram;
-  occupancy: Occupancy;
-  ltvPct: number; // loan-to-value, 0-100
-  salePrice: number;
-}
-
-export interface ConcessionLimitResult {
-  capPct: number;            // e.g. 3, 6, 4
-  capAmount: number;         // capPct * salePrice / 100
-  rule: string;              // human-readable basis
-  citation: string;          // which agency rule
-}
-
-/**
- * Return the maximum interested-party contribution (a.k.a. seller
- * concession) allowed for the given loan program, occupancy, and LTV.
- *
- * The conventional table follows Fannie/Freddie agency conformance.
- * Investor/lender overlays can be stricter — always confirm with the
- * lender before structuring an offer.
- */
-export function computeConcessionLimit(
-  input: ConcessionLimitInput,
-): ConcessionLimitResult {
-  const { program, occupancy, ltvPct, salePrice } = input;
-
-  let capPct = 0;
-  let rule = '';
-  let citation = '';
-
-  if (program === 'conventional') {
-    citation = 'Fannie Mae Selling Guide B3-4.1-02 / Freddie Mac §5501.5';
-    if (occupancy === 'investment') {
-      capPct = 2;
-      rule = 'Investment property — 2% regardless of LTV';
-    } else {
-      // Primary residence or second home
-      if (ltvPct > 90) {
-        capPct = 3;
-        rule = 'Primary/2nd home, LTV > 90% — 3%';
-      } else if (ltvPct > 75) {
-        capPct = 6;
-        rule = 'Primary/2nd home, LTV 75.01–90% — 6%';
-      } else {
-        capPct = 9;
-        rule = 'Primary/2nd home, LTV ≤ 75% — 9%';
-      }
-    }
-  } else if (program === 'fha') {
-    capPct = 6;
-    citation = 'HUD Handbook 4000.1 (II.A.4.d)';
-    rule = 'FHA — 6% of sale price (all LTVs, primary residence)';
-  } else if (program === 'va') {
-    capPct = 4;
-    citation = 'VA Lenders Handbook M26-7 Ch. 8';
-    rule = 'VA — 4% of the lesser of sale price or reasonable value';
-  } else if (program === 'usda') {
-    capPct = 6;
-    citation = 'USDA HB-1-3555 Chapter 6';
-    rule = 'USDA — 6% of sale price';
-  }
-
-  const capAmount = Math.round((capPct / 100) * salePrice);
-  return { capPct, capAmount, rule, citation };
-}
-
-/**
- * For displaying the full agency matrix at a glance. Rows are the slots
- * we render on the public reference page.
- */
-export interface ConcessionMatrixRow {
-  program: LoanProgram;
-  programLabel: string;
-  occupancy: Occupancy;
-  occupancyLabel: string;
-  ltvBand: string; // human-readable band
-  capPct: number;
-  notes?: string;
-}
-
-export const CONCESSION_MATRIX: ConcessionMatrixRow[] = [
-  // Conventional
-  {
-    program: 'conventional',
-    programLabel: 'Conventional',
-    occupancy: 'primary',
-    occupancyLabel: 'Primary / Second home',
-    ltvBand: 'LTV ≤ 75%',
-    capPct: 9,
-  },
-  {
-    program: 'conventional',
-    programLabel: 'Conventional',
-    occupancy: 'primary',
-    occupancyLabel: 'Primary / Second home',
-    ltvBand: 'LTV 75.01% – 90%',
-    capPct: 6,
-  },
-  {
-    program: 'conventional',
-    programLabel: 'Conventional',
-    occupancy: 'primary',
-    occupancyLabel: 'Primary / Second home',
-    ltvBand: 'LTV > 90%',
-    capPct: 3,
-    notes: 'Includes most high-LTV first-time buyer scenarios',
-  },
-  {
-    program: 'conventional',
-    programLabel: 'Conventional',
-    occupancy: 'investment',
-    occupancyLabel: 'Investment property',
-    ltvBand: 'Any LTV',
-    capPct: 2,
-  },
-  // FHA
-  {
-    program: 'fha',
-    programLabel: 'FHA',
-    occupancy: 'primary',
-    occupancyLabel: 'Primary residence',
-    ltvBand: 'Any LTV',
-    capPct: 6,
-    notes: 'Excess concessions reduce the sale price dollar-for-dollar',
-  },
-  // VA
-  {
-    program: 'va',
-    programLabel: 'VA',
-    occupancy: 'primary',
-    occupancyLabel: 'Primary residence (veteran/SM)',
-    ltvBand: 'Any LTV',
-    capPct: 4,
-    notes:
-      'Separate from closing costs the seller may also pay; VA defines concessions narrowly (e.g. prepaids, escrows, payoff of debts, gifts).',
-  },
-  // USDA
-  {
-    program: 'usda',
-    programLabel: 'USDA',
-    occupancy: 'primary',
-    occupancyLabel: 'Eligible rural primary residence',
-    ltvBand: 'Any LTV',
-    capPct: 6,
-  },
-];
-
+type LoanProgram = 'conventional' | 'fha' | 'va' | 'usda';
 // ─────────────────────────────────────────────────────────────────────────────
 // Display matrix (richer than CONCESSION_MATRIX) for the public reference
 // table on the Seller's Concession Limits page. Each row encodes one
@@ -1042,7 +892,7 @@ export const CONCESSION_MATRIX: ConcessionMatrixRow[] = [
 // VA can look generous on paper.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type ConcessionRowKind = 'capped' | 'unlimited';
+type ConcessionRowKind = 'capped' | 'unlimited';
 
 export interface ConcessionDisplayRow {
   /** Down-payment band as the operator should think of it. */
@@ -1054,7 +904,7 @@ export interface ConcessionDisplayRow {
   capLabel?: string;
 }
 
-export interface ConcessionDisplayScenario {
+interface ConcessionDisplayScenario {
   /** Sub-label under the program name (e.g. "Primary & secondary home"). */
   occupancyLabel: string;
   /** "What's covered" caption that appears under the occupancy. */

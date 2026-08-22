@@ -36,7 +36,7 @@ let cachedClient: ApnsClient | null | undefined;
 let lastClientError: string | null = null;
 
 /** True when APNS_* env vars are all set and the client constructed cleanly. */
-export function isApnsConfigured(): boolean {
+function isApnsConfigured(): boolean {
   return getApnsClient() !== null;
 }
 

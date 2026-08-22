@@ -19,7 +19,7 @@
 // repeat across builders, so the builder scopes them. Matched case-
 // insensitively against inventory row.builderName + row.communityName.
 
-export const COMMUNITY_CONTACT_LINKS: Record<string, string> = {
+const COMMUNITY_CONTACT_LINKS: Record<string, string> = {
   // Newmark Homes (Austin-area communities)
   'Newmark Homes||Anthem':
     'https://newmarkhomes.com/new-homes/austin/kyle/anthem#contactarea',
@@ -101,7 +101,7 @@ export const COMMUNITY_CONTACT_LINKS: Record<string, string> = {
 // communityName, which the contains-match also satisfies. URLs are the
 // builder's per-community contact/location section. Clearwater Ranch (no
 // user-provided URL) is derived from Drees' community API.
-export const DREES_COMMUNITY_LINKS: { name: string; url: string }[] = [
+const DREES_COMMUNITY_LINKS: { name: string; url: string }[] = [
   { name: "Wolf Ranch West Bend", url: "https://www.dreeshomes.com/new-homes-austin/georgetown-tx/wolf-ranch/?mapState=false&view=neighborhoods&sort=Price-Asc#community-location-block" },
   { name: "Wolf Ranch South Fork", url: "https://www.dreeshomes.com/new-homes-austin/georgetown-tx/wolf-ranch-south-fork/wolf-ranch-south-fork/?mapState=false&view=floorplans&sort=Price-Asc#neighborhood-block:-location-info" },
   { name: "Lakeside Estates", url: "https://www.dreeshomes.com/new-homes-austin/lakeway-tx/comm-lakeside-estates/lakeside-estates/?mapState=false&view=floorplans&sort=Price-Asc#neighborhood-block:-location-info" },
@@ -122,7 +122,7 @@ export const DREES_COMMUNITY_LINKS: { name: string; url: string }[] = [
 
 // Builder-level sales pages for builders without per-community contact
 // forms. Used as a fallback when no per-community link matches.
-export const BUILDER_SALES_LINKS: Record<string, string> = {
+const BUILDER_SALES_LINKS: Record<string, string> = {
   // M/I Homes uses a single central sales page (a market selector) rather
   // than per-community contact forms.
   'M/I Homes': 'https://www.mihomes.com/support/sales',

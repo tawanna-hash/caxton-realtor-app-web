@@ -16,7 +16,7 @@ import {
   CartesianGrid,
 } from 'recharts';
 
-export type DailyClickPoint = { date: string; clicks: number };
+type DailyClickPoint = { date: string; clicks: number };
 
 type Props = {
   data: DailyClickPoint[];

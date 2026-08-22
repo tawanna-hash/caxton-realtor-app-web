@@ -27,7 +27,7 @@ export type AudienceFilter = {
   no_agreement_in_days?: number;  // advertisers w/o any agreement in last N days
 };
 
-export interface MarketingCampaign {
+interface MarketingCampaign {
   id: string;
   name: string;
   status: MarketingCampaignStatus;
@@ -131,10 +131,6 @@ export const OUTREACH_PATCHABLE_FIELDS = [
   'scheduled_for','sent_at','recipient_ids','recipient_count','stats','error_message',
   'from_name','reply_to','preview_text','audience_sources','subscriber_ids','manual_emails',
 ] as const;
-
-export const AUDIENCE_SOURCE_VALUES = new Set<OutreachAudienceSource>(
-  ['advertisers','subscribers','manual','segment']);
-
 // ── Validation sets ─────────────────────────────────────────────
 export const CAMPAIGN_STATUS_VALUES = new Set<MarketingCampaignStatus>(
   ['draft','planning','active','completed','archived']);
@@ -191,19 +187,4 @@ export async function resolveAudience<Row extends { id: number }>(
     ORDER BY a.name ASC
   `) as unknown as Row[];
   return rows.map((r) => r.id);
-}
-
-/** Human-readable summary of an audience filter — for UI display. */
-export function summarizeAudience(f: AudienceFilter | null | undefined): string {
-  if (!f || Object.keys(f).length === 0) return 'All advertisers';
-  const parts: string[] = [];
-  if (f.status?.length)      parts.push(`status: ${f.status.join('/')}`);
-  if (f.type?.length)        parts.push(`type: ${f.type.join('/')}`);
-  if (f.publication?.length) parts.push(`pub: ${f.publication.join('/')}`);
-  if (f.tags?.length)        parts.push(`tags: ${f.tags.join('/')}`);
-  if (f.industry?.length)    parts.push(`industry: ${f.industry.join('/')}`);
-  if (f.has_active_agreement === true)  parts.push('has active agreement');
-  if (f.has_active_agreement === false) parts.push('no active agreement');
-  if (f.no_agreement_in_days != null)   parts.push(`no agreement in ${f.no_agreement_in_days}d`);
-  return parts.join(' · ');
 }

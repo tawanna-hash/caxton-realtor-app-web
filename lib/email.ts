@@ -9,7 +9,7 @@
  * client. `contentType` is recommended but optional — Resend will sniff
  * if omitted. See https://resend.com/docs/api-reference/emails/send-email
  */
-export interface EmailAttachment {
+interface EmailAttachment {
   filename: string;
   content: string; // base64
   contentType?: string;

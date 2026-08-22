@@ -23,7 +23,7 @@ export type AdminJobKind =
   | 'mailing_bulk_move'
   | 'mailing_bulk_patch';
 
-export type AdminJobStatus = 'queued' | 'running' | 'done' | 'failed';
+type AdminJobStatus = 'queued' | 'running' | 'done' | 'failed';
 
 export type AdminJob = {
   id: string;
@@ -72,7 +72,7 @@ export async function getAdminJob(id: string): Promise<AdminJob | null> {
   return rows[0] ?? null;
 }
 
-export async function markJobRunning(id: string, total?: number): Promise<void> {
+async function markJobRunning(id: string, total?: number): Promise<void> {
   const sql = getSql();
   if (typeof total === 'number') {
     await sql`
@@ -90,7 +90,7 @@ export async function markJobRunning(id: string, total?: number): Promise<void> 
 }
 
 /** Increment processed count atomically. Called after each batch. */
-export async function bumpJobProgress(id: string, delta: number): Promise<void> {
+async function bumpJobProgress(id: string, delta: number): Promise<void> {
   const sql = getSql();
   await sql`
     UPDATE admin_jobs
@@ -99,7 +99,7 @@ export async function bumpJobProgress(id: string, delta: number): Promise<void> 
   `;
 }
 
-export async function markJobDone(id: string): Promise<void> {
+async function markJobDone(id: string): Promise<void> {
   const sql = getSql();
   await sql`
     UPDATE admin_jobs
@@ -108,7 +108,7 @@ export async function markJobDone(id: string): Promise<void> {
   `;
 }
 
-export async function markJobFailed(id: string, error: string): Promise<void> {
+async function markJobFailed(id: string, error: string): Promise<void> {
   const sql = getSql();
   await sql`
     UPDATE admin_jobs

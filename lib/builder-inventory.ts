@@ -27,8 +27,8 @@ export type Kind = 'listing' | 'promotion';
 // Re-export from lib/types/ — Single Source of Truth.
 import type { BuilderInventoryStatus } from './types/builder-inventory';
 export type Status = BuilderInventoryStatus;
-export type { BuilderInventoryStatus };
-export { BUILDER_INVENTORY_STATUSES } from './types/builder-inventory';
+;
+;
 // Publication scope for a builder_inventory row. Mirrors the CHECK
 // constraint in the table (see migration 2026_06_15__widen_builder_inventory_publication_check).
 // 'both' covers Austin + San Antonio (the original launched markets). Pre-launch
@@ -699,33 +699,6 @@ export async function listBuilderInventory(
   return rows.map(rowToBuilderInventoryRow);
 }
 
-/**
- * Return the distinct list of builder_name values for active rows in a
- * publication. Used to render builder chip strips (e.g. on /inventory and
- * /communities) so the strip can't be silently truncated by a row-LIMIT.
- */
-export async function listActiveBuilderNames(
-  publication: 'all' | Publication = 'all',
-  includeDisabledBuilders = false,
-): Promise<string[]> {
-  await ensureBuilderInventorySchema();
-  const rows = (await sql`
-    SELECT DISTINCT b.builder_name
-    FROM builder_inventory b
-    LEFT JOIN builder_page_visibility v ON v.builder_name = b.builder_name
-    WHERE b.status = 'active'
-      AND (${publication} = 'all'
-        OR b.publication = ${publication}::text
-        OR b.publication = 'both')
-      AND (${includeDisabledBuilders}::boolean = true
-           OR COALESCE(v.public_enabled, true) = true)
-    ORDER BY b.builder_name ASC
-  `) as Record<string, unknown>[];
-  return rows
-    .map((r) => String(r.builder_name ?? ''))
-    .filter((s) => s.length > 0 && s.toLowerCase() !== 'test');
-}
-
 export async function getBuilderInventoryById(
   id: number,
   includeDisabledBuilders = false,
@@ -808,55 +781,9 @@ export type UpdateBuilderInventoryInput = {
 // description=null; community_data is new (2026_07_23). Returns the id plus
 // the builder page URL stored in flyer_pdf_url so the caller can fetch each
 // community page and extract the full structured blob.
-export async function listBuilderInventoryCommunityBackfill(
-  builderName: string,
-  opts: { refresh?: boolean } = {},
-): Promise<{ id: number; flyerPdfUrl: string | null; title: string; priceMin: number | null }[]> {
-  await ensureBuilderInventorySchema();
-  // By default only rows still missing description/community_data are touched
-  // (idempotent). With refresh=true every active community row for this builder
-  // is re-fetched so scraper improvements (e.g. new image fields) propagate.
-  const refresh = opts.refresh === true;
-  const rows = (refresh
-    ? (await sql`
-        SELECT id, flyer_pdf_url, title, price_min FROM builder_inventory
-        WHERE builder_name = ${builderName}
-          AND home_type = 'community'
-          AND status = 'active'
-          AND flyer_pdf_url IS NOT NULL
-      `)
-    : (await sql`
-        SELECT id, flyer_pdf_url, title, price_min FROM builder_inventory
-        WHERE builder_name = ${builderName}
-          AND home_type = 'community'
-          AND status = 'active'
-          AND (description IS NULL OR community_data IS NULL)
-          AND flyer_pdf_url IS NOT NULL
-      `)) as Record<string, unknown>[];
-  return rows.map((r) => ({
-    id: Number(r.id),
-    flyerPdfUrl: (r.flyer_pdf_url as string) ?? null,
-    title: (r.title as string) ?? '',
-    priceMin: r.price_min == null ? null : Number(r.price_min),
-  }));
-}
-
 // Used by the David Weekley ingestion step to avoid creating duplicate
 // community rows for communities already tracked (by external_id or the
 // community page URL stored in flyer_pdf_url).
-export async function builderInventoryExistsByUrl(
-  builderName: string,
-  url: string,
-): Promise<boolean> {
-  await ensureBuilderInventorySchema();
-  const rows = (await sql`
-    SELECT 1 FROM builder_inventory
-    WHERE builder_name = ${builderName}
-      AND (external_id = ${url} OR flyer_pdf_url = ${url})
-    LIMIT 1
-  `) as Record<string, unknown>[];
-  return rows.length > 0;
-}
 
 export async function updateBuilderInventory(
   id: number,

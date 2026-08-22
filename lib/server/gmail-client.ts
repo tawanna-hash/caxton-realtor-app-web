@@ -25,7 +25,7 @@ import { logger } from './logger';
 // googleapis actually hands us keeps `google.gmail({ auth })` type-checking.
 type OAuth2Client = InstanceType<typeof google.auth.OAuth2>;
 
-export const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+const GMAIL_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
 
 export interface ConnectedMailbox {
   emailAddress: string;
@@ -52,7 +52,7 @@ function toIso(v: string | Date | null): string | null {
  * preview deployments can point at a stable authorized URI; otherwise derive
  * it from the site URL the rest of the app already uses for absolute links.
  */
-export function getOAuthRedirectUri(): string {
+function getOAuthRedirectUri(): string {
   const explicit = process.env.GOOGLE_OAUTH_REDIRECT_URI;
   if (explicit) return explicit;
   const base = process.env.NEXT_PUBLIC_SITE_URL

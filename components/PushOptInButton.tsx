@@ -40,7 +40,7 @@ function isStandalonePWA(): boolean {
   );
 }
 
-export type PushMarket = 'austin' | 'san_antonio' | 'houston' | 'dallas';
+type PushMarket = 'austin' | 'san_antonio' | 'houston' | 'dallas';
 
 type Props = {
   realtorId?: string | null;

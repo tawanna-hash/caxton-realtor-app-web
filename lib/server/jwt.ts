@@ -106,16 +106,6 @@ export function signAdminSessionToken(
 // edge gate stay in agreement.
 const VERIFY_OPTIONS = { algorithms: ['HS256' as const] };
 
-export function verifySessionToken(token: string): RealtorSessionPayload | null {
-  try {
-    const decoded = jwt.verify(token, getRealtorSecret(), VERIFY_OPTIONS) as Partial<RealtorSessionPayload>;
-    if (typeof decoded.realtorId !== 'string' || typeof decoded.email !== 'string') return null;
-    return { realtorId: decoded.realtorId, email: decoded.email };
-  } catch {
-    return null;
-  }
-}
-
 export function verifyAdminSessionToken(token: string): AdminSessionPayload | null {
   // Try the admin secret first. If ADMIN_JWT_SECRET isn't set, this is the
   // same as JWT_SECRET and the fallback is a no-op.

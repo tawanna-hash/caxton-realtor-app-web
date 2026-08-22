@@ -23,7 +23,7 @@
 import { getSql } from '@/lib/db';
 import type { AdChannel } from '@/lib/ad-channels';
 
-export type AvailabilitySource = 'campaign' | 'agreement';
+type AvailabilitySource = 'campaign' | 'agreement';
 
 export interface BookedWindow {
   /** Stable row id (uuid for campaigns, uuid for agreements). */

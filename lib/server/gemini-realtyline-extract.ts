@@ -40,7 +40,7 @@ interface PriceBand {
   delta_direction: DeltaDirection;
 }
 
-export interface ExtractedRealtylineReport {
+interface ExtractedRealtylineReport {
   month_label?: string;
   released_at?: string;
   subtitle_en?: string;

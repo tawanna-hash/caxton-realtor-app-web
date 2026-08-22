@@ -58,7 +58,7 @@ function hasNoAddress(input: Pick<RoutingInput, 'address' | 'city' | 'state' | '
 /**
  * Pure predicate — does this row qualify as email-only right now?
  */
-export function isEmailOnly(input: Pick<RoutingInput, 'email' | 'address' | 'city' | 'state' | 'zip'>): boolean {
+function isEmailOnly(input: Pick<RoutingInput, 'email' | 'address' | 'city' | 'state' | 'zip'>): boolean {
   return looksLikeEmail(input.email) && hasNoAddress(input);
 }
 

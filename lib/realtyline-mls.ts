@@ -104,13 +104,13 @@ export const INDICATOR_PRESETS: Array<Omit<IndicatorStat, 'value' | 'delta' | 'd
  * empty by default. Admin can still populate them if a future infographic
  * splits them out — keeps the schema identical to SABOR.
  */
-export const LISTING_COUNT_PRESETS: Array<Omit<ListingCount, 'value' | 'delta' | 'delta_direction'>> = [];
+const LISTING_COUNT_PRESETS: Array<Omit<ListingCount, 'value' | 'delta' | 'delta_direction'>> = [];
 
 /**
  * ABoR's price-band breakdown is a separate quarterly piece, so we leave
  * these empty by default for parity with the SABOR shape.
  */
-export const PRICE_BAND_PRESETS: Array<Omit<PriceBand, 'share'>> = [];
+const PRICE_BAND_PRESETS: Array<Omit<PriceBand, 'share'>> = [];
 
 export const DEFAULT_SUBTITLE_EN =
   'Percent change reflects a year-over-year comparison. Central Texas (Austin-Round Rock-Georgetown MSA) market indicators across single-family, multifamily, rental and commercial segments.';

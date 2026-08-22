@@ -13,14 +13,14 @@ export interface BrandConfig {
   websiteUrl?: string;
 }
 
-export const REALTYLINE_BRAND: BrandConfig = {
+const REALTYLINE_BRAND: BrandConfig = {
   brandName: 'RealtyLine',
   brandColor: '#5a0e5f',
   brandLogo: '',
   websiteUrl: 'https://realtynewsnow.app',
 };
 
-export const NEWSLINE_SA_BRAND: BrandConfig = {
+const NEWSLINE_SA_BRAND: BrandConfig = {
   brandName: 'Newsline San Antonio',
   brandColor: '#5a0e5f',
   brandLogo: '',
@@ -32,7 +32,7 @@ export function brandForPublication(pub: string | null | undefined): BrandConfig
   return pub === 'san_antonio' ? NEWSLINE_SA_BRAND : REALTYLINE_BRAND;
 }
 
-export interface AgreementNotificationLine {
+interface AgreementNotificationLine {
   lineNo: number;
   channel: 'print' | 'email' | 'app';
   label: string;

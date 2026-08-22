@@ -70,15 +70,6 @@ export function serializePublications(pubs: readonly PublicationKey[]): string {
   return PUBLICATION_KEYS.filter((k) => set.has(k)).join(',');
 }
 
-/**
- * Return the "primary" pub for fallbacks that still need a single value
- * (invoice prefix, footer color, magic-link from-name). First in the
- * canonical order wins.
- */
-export function primaryPublication(raw: string | null | undefined): PublicationKey {
-  return parsePublications(raw)[0]!;
-}
-
 export interface PublicationTheme {
   id: Publication;
   /** Full display name — used in headers and email subject. */

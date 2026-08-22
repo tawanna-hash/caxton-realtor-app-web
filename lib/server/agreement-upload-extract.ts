@@ -17,7 +17,7 @@
 // drawLabelValue() draws "Label: value" on a single line, e.g.
 // "Ad Size: 1/2 page", "Ad Rate: $1,234.56".
 
-export type ExtractedAgreementFields = {
+type ExtractedAgreementFields = {
   company_name?: string;
   advertiser_email?: string;
   advertiser_phone?: string;

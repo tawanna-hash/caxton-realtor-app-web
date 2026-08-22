@@ -9,7 +9,7 @@ const FB_ICON = 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/ic
 const IG_ICON = 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/instagram.svg';
 const LI_ICON = 'https://cdn.jsdelivr.net/gh/simple-icons/simple-icons@latest/icons/linkedin.svg';
 
-export function buildSignatureHtml(): string {
+function buildSignatureHtml(): string {
   if (!GIF_URL) return '';
   return `
 <!-- BEGIN Doren & Tawanna signature -->

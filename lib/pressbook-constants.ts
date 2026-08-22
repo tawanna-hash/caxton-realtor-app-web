@@ -1,9 +1,5 @@
 // lib/pressbook-constants.ts
 // Verbatim Pressbook CRM constants ported to TypeScript.
-
-export type AdSize = '1/4 page' | '1/2 page' | 'Full-page';
-export type Frequency = '1x' | '3x' | '6x' | '12x';
-
 export const AD_RATE_TABLE: Record<string, Record<string, number>> = {
   '1x':  { 'Full-page': 1440, '1/2 page': 1150, '1/4 page': 880 },
   '3x':  { 'Full-page': 1205, '1/2 page': 915,  '1/4 page': 645 },
@@ -42,8 +38,6 @@ export const FREQ_PKG_AG: Record<string, string> = {
 export const FREQ_MONTHS: Record<string, number> = {
   '1x': 1, '3x': 3, '6x': 6, '12x': 12,
 };
-
-export const AG_STATUSES = ['Draft', 'Sent', 'Signed', 'Active', 'Cancelled', 'Expired'] as const;
 export const AD_SIZES     = ['1/4 page', '1/2 page', 'Full-page'] as const;
 export const FREQUENCIES  = ['1x', '3x', '6x', '12x'] as const;
 export const PAYMENT_TYPES = ['Check', 'Credit Card'] as const;

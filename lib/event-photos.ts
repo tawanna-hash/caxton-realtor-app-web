@@ -49,7 +49,7 @@ export function normalizeAdvertiserId(raw: unknown): number | null {
 
 let schemaReady = false;
 
-export async function ensureEventPhotosSchema() {
+async function ensureEventPhotosSchema() {
   if (schemaReady) return;
   const sql = getSql();
   await sql`

@@ -18,7 +18,7 @@ import {
   getFooterTemplateMeta,
 } from '@/lib/footer-templates';
 
-export interface CalcReportRow {
+interface CalcReportRow {
   label: string;
   value: string;
   /** Render emphasised (bold + slightly larger) — for subtotals/totals. */
@@ -27,7 +27,7 @@ export interface CalcReportRow {
   negative?: boolean;
 }
 
-export interface CalcReportSection {
+interface CalcReportSection {
   heading?: string;
   rows: CalcReportRow[];
 }

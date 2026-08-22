@@ -7,7 +7,7 @@
 import { fetchAustinTitleSync } from './austin-title';
 import type { ExtractedLocation, ExtractedStaffMember } from '../gemini-screenshot-extract';
 
-export interface WebsiteSyncResult {
+interface WebsiteSyncResult {
   locations: ExtractedLocation[];
   staff: ExtractedStaffMember[];
 }

@@ -1,10 +1,10 @@
 // app/admin/metrics/_types.ts
 // Shared types for the admin metrics dashboard.
 
-export type EventTotal = { event: string; total: number };
-export type FilterUsage = { filter: string; total: number };
-export type TopBuilder = { builder_name: string; source_page: string; total: number };
-export type TopInventory = {
+type EventTotal = { event: string; total: number };
+type FilterUsage = { filter: string; total: number };
+type TopBuilder = { builder_name: string; source_page: string; total: number };
+type TopInventory = {
   builder_name: string;
   row_id: string;
   kind: string;
@@ -17,13 +17,13 @@ export type TimeSeriesPoint = { day: string; event: string; total: number };
 // `surface` is one of: 'inventory', 'communities', 'builders', 'event',
 // 'inventory_detail', 'magazine'. `action` is one of: 'back', 'share',
 // 'download', 'add_calendar', 'directions', 'promotions'.
-export type PillEngagement = {
+type PillEngagement = {
   surface: string;
   action: string;
   total: number;
 };
 
-export type ShareBreakdown = {
+type ShareBreakdown = {
   surface: string;
   channel: string;
   total: number;
@@ -32,7 +32,7 @@ export type ShareBreakdown = {
 // 'Request more information' actions from /inventory/[id], grouped by
 // builder. Covers link-outs to a builder's community contact form and
 // inline-form submissions.
-export type ListingInquiry = {
+type ListingInquiry = {
   builder_name: string;
   total: number;
 };
@@ -148,7 +148,7 @@ export const EVENT_COLORS: Record<string, string> = {
   builder_tab_clicked: '#c2410c',
 };
 
-export type KPISummary = {
+type KPISummary = {
   today: number;
   yesterday: number;
   week: number;

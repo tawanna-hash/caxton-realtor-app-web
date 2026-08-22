@@ -50,7 +50,7 @@ export type CheckoutPub =
 // inquire route's sold-out probe, and pickAlternativeSlots all treat
 // house-ad-only slots as available. When a real advertiser books, the
 // admin deactivates the house campaign from /admin/ads.
-export const HOUSE_AD_ADVERTISER = 'RealtyLine House';
+const HOUSE_AD_ADVERTISER = 'RealtyLine House';
 
 interface ActiveCampaignRow {
   ad_space_slug: string;
@@ -220,7 +220,7 @@ function countsToInventory(
  * Fails open: on DB error, returns a Map of empty Sets for every slot so
  * the UI does not brick.
  */
-export async function getBookedPubsForAllSlots(
+async function getBookedPubsForAllSlots(
   startDate?: string,
   endDate?: string,
 ): Promise<Map<string, Set<CheckoutPub>>> {

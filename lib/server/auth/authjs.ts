@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 
 import { getPool } from "@/lib/server/db/neon";
 import { verifyAndClaimInternalTrustToken } from "./internal-trust-token";
-import { verifyCredentials, EmailNotVerifiedError } from "./verify-credentials";
+import { verifyCredentials } from "./verify-credentials";
 import { realtorAdapter } from "./adapter";
 import { logger } from "@/lib/server/logger";
 
@@ -14,7 +14,7 @@ export const INTERNAL_TRUSTED_PROVIDER_ID = "internal-trusted";
 
 // Re-exported so existing call sites (app/api/auth/password-login/route.ts)
 // don't need to know it actually lives in ./verify-credentials.
-export { EmailNotVerifiedError };
+;
 
 // -----------------------------------------------------------------------
 

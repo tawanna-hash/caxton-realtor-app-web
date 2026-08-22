@@ -72,7 +72,7 @@ const HTML_HEADERS = {
 type MIFlag = { text: string; color: string | null };
 type MISeries = { id: string; name: string; price: number | null; url: string };
 
-export type MICommunityCard = {
+type MICommunityCard = {
   id: string;
   communityName: string;
   url: string;
@@ -336,7 +336,7 @@ function mapCommunityCard(item: MICommunityApiItem): MICommunityCard | null {
   };
 }
 
-export async function fetchMIHomesCommunities(): Promise<{
+async function fetchMIHomesCommunities(): Promise<{
   cards: MICommunityCard[];
   rawCount: number;
 }> {
@@ -576,7 +576,7 @@ function cardToCommunityData(card: MICommunityCard): CommunityData {
 
 // Fetch a community detail page and enrich card data with plans/amenities/
 // gallery/sales-office. Never throws — on failure returns card-only data.
-export async function fetchMIHomesCommunityData(
+async function fetchMIHomesCommunityData(
   card: MICommunityCard,
 ): Promise<{ data: CommunityData; detailFetched: boolean; error: string | null }> {
   const detailUrl = normalizeUrl(card.url);

@@ -10,7 +10,7 @@
 //   M = P * r / (1 - (1 + r)^-n)
 // where r = monthly rate (decimal), n = total months.
 // ─────────────────────────────────────────────────────────────────────────────
-export function monthlyPI(
+function monthlyPI(
   principal: number,
   annualRatePct: number,
   termYears: number
@@ -241,7 +241,7 @@ export function computeAffordability(
 }
 
 /** Invert the P&I formula to solve for principal given a target payment. */
-export function solveLoanFromPayment(
+function solveLoanFromPayment(
   monthlyPayment: number,
   annualRatePct: number,
   termYears: number

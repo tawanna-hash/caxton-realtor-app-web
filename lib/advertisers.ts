@@ -9,9 +9,9 @@ import type { AdvertiserHeaderStyle } from '@/lib/advertiser-header-styles';
 // ── CRM enums (mirror migration CHECK constraints) ────────────────
 export type AdvertiserType   = 'advertiser' | 'client' | 'prospect' | 'mailing';
 export type AdvertiserStatus = 'prospect' | 'advertiser' | 'archived';
-export type EmailStatus      = 'valid' | 'invalid' | 'risk' | 'unknown';
+type EmailStatus      = 'valid' | 'invalid' | 'risk' | 'unknown';
 
-export type AdditionalContact = {
+type AdditionalContact = {
   first_name?: string;
   last_name?: string;
   email?: string;
@@ -172,17 +172,6 @@ export interface AdvertiserStaff {
   updated_at: string;
 }
 
-export const LOCATION_PATCHABLE_FIELDS = [
-  'label', 'address', 'address_2', 'city', 'state', 'zip',
-  'phone', 'email', 'hours', 'is_primary', 'sort_order',
-] as const;
-export type LocationPatchableField = (typeof LOCATION_PATCHABLE_FIELDS)[number];
-
-export const STAFF_PATCHABLE_FIELDS = [
-  'name', 'title', 'email', 'phone', 'photo_url', 'sort_order',
-] as const;
-export type StaffPatchableField = (typeof STAFF_PATCHABLE_FIELDS)[number];
-
 export interface AdvertiserWithStats extends Advertiser {
   hotspot_count: number;
   clicks_30d: number;
@@ -212,8 +201,6 @@ export const CRM_PATCHABLE_FIELDS = [
   'portal_activated_at', 'portal_onboarded_at',
   'additional_contacts', 'notes', 'tags',
 ] as const;
-
-export type CrmPatchableField = (typeof CRM_PATCHABLE_FIELDS)[number];
 
 /** Generate a URL-safe slug from a free-form name. */
 export function slugify(name: string): string {

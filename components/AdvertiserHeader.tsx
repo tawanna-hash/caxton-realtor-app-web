@@ -20,7 +20,7 @@ import type {
 } from '@/lib/advertiser-header-styles';
 import { coerceHeaderStyle } from '@/lib/advertiser-header-styles';
 
-export type SocialKey = 'Facebook' | 'Instagram' | 'LinkedIn' | 'X' | 'YouTube';
+type SocialKey = 'Facebook' | 'Instagram' | 'LinkedIn' | 'X' | 'YouTube';
 
 export interface AdvertiserHeaderData {
   name: string;
@@ -38,7 +38,7 @@ export interface AdvertiserHeaderTheme {
   accent: string;
 }
 
-export function isBrowserRenderableImage(url: string): boolean {
+function isBrowserRenderableImage(url: string): boolean {
   const m = url.match(/\.([a-z0-9]+)(?:\?|#|$)/i);
   if (!m) return true;
   const ext = m[1].toLowerCase();

@@ -152,4 +152,3 @@ export function Pager({
   );
 }
 
-export default Pager;

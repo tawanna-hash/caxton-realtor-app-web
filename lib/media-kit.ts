@@ -5,7 +5,7 @@
 // PressBook CRM (pressbook-crm/app2.js lines 17150–17240) so the same source
 // of truth drives both apps.
 
-export interface AdSizeRate {
+interface AdSizeRate {
   size: string;
   dim: string;
   price: number;
@@ -71,16 +71,6 @@ export function eblastPriceForPub(blast: EBlast, pub: MediaKitPub): number {
   return blast.priceByPub?.[pub] ?? blast.price;
 }
 
-/** Resolve the bundled-send count for the active publication tab. */
-export function eblastSendsForPub(blast: EBlast, pub: MediaKitPub): number {
-  return blast.sendsByPub?.[pub] ?? blast.sends;
-}
-
-/** Resolve the feature-list for the active publication tab. */
-export function eblastFeaturesForPub(blast: EBlast, pub: MediaKitPub): string[] {
-  return blast.featuresByPub?.[pub] ?? blast.features;
-}
-
 export interface PrintDeadline {
   month: string;
   /** Space-reservation / ads-due deadline (camera-ready). */
@@ -131,8 +121,8 @@ export interface PolicyNote {
 // (lib/server/slot-availability.ts) and the rate card share one source.
 export const ROTATION_CAPACITY = 6;
 
-export type AppAdSlotTier = 'standard' | 'premium';
-export type AppAdSlotZone =
+type AppAdSlotTier = 'standard' | 'premium';
+type AppAdSlotZone =
   | 'feed'
   | 'article'
   | 'calendar'
@@ -465,10 +455,6 @@ export const APP_AD_SLOTS: AppAdSlot[] = [
     notes: 'Top of calendar tab, both pubs.',
   },
 ];
-
-export const APP_AD_AUDIENCE_NOTE =
-  '16 ad spaces unified under <AdSlot>. PostHog ad_impression / ad_click tracking on every render. Unsold inventory auto-fills with RealtyLine House creatives.';
-
 // ── Packages ────────────────────────────────────────────────────────────────
 
 export const PACKAGES: Package[] = [
@@ -708,8 +694,6 @@ export const FREQ_TERMS:  [string, string, string, string] = [
 ];
 
 // Brand[12 Plus] is a separate premium tier — Full Page only at $1,680/mo
-export const BRAND_12_PLUS_RATE = 1680;
-
 // ── Audience stats (RealtyLine) ────────────────────────────────────────────
 
 export interface AudienceStat {
@@ -769,7 +753,7 @@ export const AUDIENCE_STATS: AudienceStat[] = [
 // MediaKitPub should filter through this so pricing, slot inventory, and public
 // checkout stay in sync with the Expansion section.
 
-export const LAUNCHING_SOON_PUBS: ReadonlySet<MediaKitPub> = new Set<MediaKitPub>([
+const LAUNCHING_SOON_PUBS: ReadonlySet<MediaKitPub> = new Set<MediaKitPub>([
   'realtyline-houston',
   'realtyline-dallas',
 ]);
@@ -784,7 +768,7 @@ export function isLive(pub: MediaKitPub): boolean {
 
 // ── Network expansion — publications by launch status ────────────────────
 
-export type ExpansionStatus = 'active' | 'launching-soon';
+type ExpansionStatus = 'active' | 'launching-soon';
 
 export interface ExpansionPub {
   name: string;

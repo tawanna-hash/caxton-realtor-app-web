@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 
-export const renewalReminderStatusSchema = z.enum(['Pending', 'Completed', 'Dismissed']);
+const renewalReminderStatusSchema = z.enum(['Pending', 'Completed', 'Dismissed']);
 
 export const renewalReminderListQuerySchema = z.object({
   status: renewalReminderStatusSchema.optional(),

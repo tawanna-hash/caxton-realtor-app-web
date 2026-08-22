@@ -39,7 +39,7 @@ import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
 
 // e-Blast IDs are derived the same way as in the public inquiry form:
 // lowercase + spaces stripped from the human name.
-export function eblastId(name: string): string {
+function eblastId(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '');
 }
 
@@ -48,7 +48,7 @@ export function eblastId(name: string): string {
  * scope. The database uses 'austin' | 'san_antonio' | 'both'; the media
  * kit data uses 'realtyline' | 'newsline' | 'both'.
  */
-export function eblastCentsForDbPub(
+function eblastCentsForDbPub(
   eb: (typeof EBLASTS)[number],
   dbPub: 'austin' | 'san_antonio' | 'both',
 ): number {

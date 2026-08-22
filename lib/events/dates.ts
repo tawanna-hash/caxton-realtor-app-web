@@ -1,7 +1,7 @@
 import type { CalendarEvent } from '@/lib/events-store';
 
-export const CAXTON_EV_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-export const CAXTON_EV_MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const CAXTON_EV_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const CAXTON_EV_MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export function formatEventDateLong(iso: string | null): string {
   if (!iso) return 'Date TBD';
@@ -10,7 +10,7 @@ export function formatEventDateLong(iso: string | null): string {
   return `${CAXTON_EV_MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
-export function formatEventTime(iso: string | null): string {
+function formatEventTime(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
@@ -30,7 +30,7 @@ export function formatEventTimeRange(start: string | null, end: string | null): 
   return `${s} – ${e}`;
 }
 
-export function monthKey(iso: string | null): string {
+function monthKey(iso: string | null): string {
   if (!iso) return 'TBD';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return 'TBD';

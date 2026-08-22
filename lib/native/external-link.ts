@@ -84,17 +84,3 @@ export async function openExternal(url: string): Promise<OpenExternalResult> {
     return { ok: false, method: 'error', error };
   }
 }
-
-/**
- * Close any open SFSafariViewController. iOS users dismiss it themselves
- * via Done so this is rarely needed, but useful for programmatic flows
- * (e.g. completing an OAuth handshake server-side).
- */
-export async function closeExternal(): Promise<void> {
-  if (!isNative()) return;
-  try {
-    await Browser.close();
-  } catch {
-    /* ignore */
-  }
-}

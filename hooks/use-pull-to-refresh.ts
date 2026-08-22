@@ -19,7 +19,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { haptics } from '@/lib/native/haptics';
 
-export type PullToRefreshState = {
+type PullToRefreshState = {
   pulling: boolean;
   distance: number;
   armed: boolean;

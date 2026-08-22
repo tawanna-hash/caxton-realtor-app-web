@@ -6,7 +6,7 @@ import type { MailingSegment } from './segments';
 
 // ============================================================
 
-export type MailingStage = 'holding' | 'mailing';
+type MailingStage = 'holding' | 'mailing';
 export type VerifyStatus = 'Pending' | 'Valid' | 'Invalid';
 
 export type MailingContactRow = {

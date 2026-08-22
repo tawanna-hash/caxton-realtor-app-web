@@ -80,20 +80,3 @@ export function isCampaignActive(c: AdCampaign): boolean {
   const today = new Date().toISOString().slice(0, 10);
   return c.start_date <= today && today <= c.end_date;
 }
-
-export function campaignStatus(c: AdCampaign): {
-  label: string;
-  className: string;
-} {
-  if (!c.active) {
-    return { label: 'Paused', className: 'bg-gray-100 text-gray-700 rounded-md' };
-  }
-  const today = new Date().toISOString().slice(0, 10);
-  if (today < c.start_date) {
-    return { label: 'Scheduled', className: 'bg-blue-100 text-blue-800' };
-  }
-  if (today > c.end_date) {
-    return { label: 'Expired', className: 'bg-red-100 text-red-700 rounded-md' };
-  }
-  return { label: 'Live', className: 'bg-green-100 text-green-800 rounded-md' };
-}

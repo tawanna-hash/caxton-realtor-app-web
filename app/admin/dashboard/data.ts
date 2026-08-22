@@ -25,7 +25,7 @@ export interface MarketSnapshot {
   } | null;
 }
 
-export interface AttentionItem {
+interface AttentionItem {
   kind: 'bounce' | 'unsigned_agreement' | 'unpaid_invoice' | 'renewal_due';
   count: number;
   label: string;

@@ -8,17 +8,17 @@ export type ArticleListItem = {
   opens: number;
 };
 
-export type ShareChannel = {
+type ShareChannel = {
   channel: string;
   total: number;
 };
 
-export type ScrollMilestone = {
+type ScrollMilestone = {
   milestone: number;
   total: number;
 };
 
-export type ArticleMeta = {
+type ArticleMeta = {
   article_id: string;
   title: string | null;
   pub: string | null;
@@ -71,7 +71,7 @@ export type BrandConfig = {
   tagline: string;
 };
 
-export const BRANDS: Record<string, BrandConfig> = {
+const BRANDS: Record<string, BrandConfig> = {
   realtyline: {
     pub_key: 'realtyline',
     pub_display: 'RealtyLine Austin',
@@ -115,7 +115,7 @@ export type EventListItem = {
   registrations: number;
 };
 
-export type EventMeta = {
+type EventMeta = {
   event_id: string;
   title: string | null;
   pub: string | null;

@@ -26,8 +26,8 @@ import type { PubKey } from './pub-meta';
 import { isPubKey, isPreLaunchPub } from './pub-meta';
 export type Pub = PubKey;
 
-export const PUB_COOKIE = 'caxton_pub';
-export const PUB_LS_KEY = 'caxton_pub'; // legacy mirror
+const PUB_COOKIE = 'caxton_pub';
+const PUB_LS_KEY = 'caxton_pub'; // legacy mirror
 export const PUB_CHANGE_EVENT = 'savedPubChange';
 export const PUB_DEFAULT: Pub = 'realtyline';
 
@@ -42,7 +42,7 @@ export const PUB_DEFAULT: Pub = 'realtyline';
  *   flip pre-launch markets to fully-launched in PUB_META and remove this
  *   guard for them.
  */
-export function normalizePub(
+function normalizePub(
   v: unknown,
   opts: { allowPreLaunch?: boolean } = {},
 ): Pub | null {

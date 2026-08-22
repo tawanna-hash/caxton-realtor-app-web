@@ -4,8 +4,8 @@
 
 import { z } from 'zod';
 
-export const publicationSchema = z.enum(['austin', 'san_antonio', 'both']);
-export const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
+const publicationSchema = z.enum(['austin', 'san_antonio', 'both']);
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
 
 // Strip whitespace anywhere in a click destination. Browsers refuse to
 // dispatch malformed mailto: URIs with a space after the scheme (e.g.

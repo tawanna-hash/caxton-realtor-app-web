@@ -26,7 +26,7 @@ import {
 // Public shape returned to the caller. Every field is optional so the
 // UI can merge whatever the model produced without clobbering unedited
 // state.
-export interface ExtractedSaborReport {
+interface ExtractedSaborReport {
   month_label?: string;
   released_at?: string;
   subtitle_en?: string;

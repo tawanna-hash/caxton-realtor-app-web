@@ -52,8 +52,6 @@ export const INVOICE_PATCHABLE_FIELDS = [
   'bill_to_name','bill_to_email','bill_to_address',
   'memo','line_items',
 ] as const;
-export type InvoicePatchableField = (typeof INVOICE_PATCHABLE_FIELDS)[number];
-
 export const INVOICE_STATUS_VALUES = new Set<InvoiceStatus>([
   'draft','sent','paid','overdue','void',
 ]);

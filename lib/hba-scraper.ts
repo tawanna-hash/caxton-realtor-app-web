@@ -221,7 +221,7 @@ async function fetchEventDescription(
  * breaks preserved. The Atlas editor stores rich-text descriptions as HTML;
  * we strip tags but keep the structural cues for readability.
  */
-export function cleanDescription(raw: string | null): string | null {
+function cleanDescription(raw: string | null): string | null {
   if (!raw) return null;
 
   let text = raw
@@ -254,7 +254,7 @@ export function cleanDescription(raw: string | null): string | null {
  * run a full title-casing pass because the Atlas API titles are already
  * mixed-case (unlike FPR's all-caps feed).
  */
-export function normalizeTitle(raw: string): string {
+function normalizeTitle(raw: string): string {
   let t = clean(raw);
   if (!t) return t;
 

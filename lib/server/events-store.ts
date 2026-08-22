@@ -40,7 +40,7 @@ async function geocodeEventLocation(
 }
 
 export type Publication = 'austin' | 'san_antonio';
-export type EventSource =
+type EventSource =
   | 'unlockmls'
   | 'wordpress'
   | 'manual'
@@ -328,125 +328,6 @@ export async function createSubmittedEvent(input: {
 }
 
 /**
- * Insert a pending event detected by Gemini from a Facebook Page post (Path D).
- *
- * source_post_id is unique-indexed so re-running the scanner cron on the
- * same post idempotently no-ops (no duplicate detection rows).
- *
- * Returns null when this post has already been scanned (caller treats as
- * "nothing to do, move on").
- */
-export async function createLLMDetectedEvent(input: {
-  publication: Publication;
-  title: string;
-  description: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  location: string | null;
-  link: string | null;
-  imageUrl: string | null;
-  organizer: string | null;
-  confidence: number;
-  sourcePostId: number;
-}): Promise<AdminCalendarEvent | null> {
-  const externalId = `fb-llm-${input.sourcePostId}`;
-  const coords = await geocodeEventLocation(input.location);
-  // ON CONFLICT on source_post_id idempotency: re-scanning the same FB post
-  // returns 0 rows so the cron knows to skip. The unique partial index on
-  // events(source_post_id) WHERE source_post_id IS NOT NULL enforces this.
-  const rows = await query<EventRow>(
-    `INSERT INTO events (
-       external_source, external_id, publication, title, description, link,
-       start_date, end_date, location, organizer, image_url,
-       source_post_id, confidence, lat, lng, hidden,
-       last_synced_at, updated_at
-     ) VALUES (
-       'facebook-llm', $1, $2, $3, $4, $5,
-       $6, $7, $8, $9, $10,
-       $11, $12, $13, $14, true,
-       NOW(), NOW()
-     )
-     ON CONFLICT ON CONSTRAINT events_external_uniq DO NOTHING
-     RETURNING ${SELECT_COLS}`,
-    [
-      externalId,
-      input.publication,
-      input.title,
-      input.description,
-      input.link,
-      input.startDate,
-      input.endDate,
-      input.location,
-      input.organizer,
-      input.imageUrl,
-      input.sourcePostId,
-      input.confidence,
-      coords?.lat ?? null,
-      coords?.lng ?? null,
-    ],
-  );
-  return rows[0] ? rowToAdminEvent(rows[0]) : null;
-}
-
-/**
- * Insert a pending event detected by Gemini from a raw Facebook Page post
- * pulled directly via the Graph API /{page-id}/posts endpoint (no
- * featured_social_posts row required).
- *
- * external_id = `fb-llm-feed-<fbPostId>` so the events_external_uniq
- * constraint makes re-running idempotent across cron ticks.
- *
- * Returns null when this post was already scanned on a prior tick.
- */
-export async function createFeedPostDetectedEvent(input: {
-  publication: Publication;
-  fbPostId: string;
-  title: string;
-  description: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  location: string | null;
-  link: string;
-  imageUrl: string | null;
-  organizer: string | null;
-  confidence: number;
-}): Promise<AdminCalendarEvent | null> {
-  const externalId = `fb-llm-feed-${input.fbPostId}`;
-  const coords = await geocodeEventLocation(input.location);
-  const rows = await query<EventRow>(
-    `INSERT INTO events (
-       external_source, external_id, publication, title, description, link,
-       start_date, end_date, location, organizer, image_url,
-       confidence, lat, lng, hidden,
-       last_synced_at, updated_at
-     ) VALUES (
-       'facebook-llm', $1, $2, $3, $4, $5,
-       $6, $7, $8, $9, $10,
-       $11, $12, $13, true,
-       NOW(), NOW()
-     )
-     ON CONFLICT ON CONSTRAINT events_external_uniq DO NOTHING
-     RETURNING ${SELECT_COLS}`,
-    [
-      externalId,
-      input.publication,
-      input.title,
-      input.description,
-      input.link,
-      input.startDate,
-      input.endDate,
-      input.location,
-      input.organizer,
-      input.imageUrl,
-      input.confidence,
-      coords?.lat ?? null,
-      coords?.lng ?? null,
-    ],
-  );
-  return rows[0] ? rowToAdminEvent(rows[0]) : null;
-}
-
-/**
  * Insert a pending event detected by Gemini from an advertiser or association
  * email (Path F). Mirrors createLLMDetectedEvent, but keyed on the Gmail
  * message id rather than a featured_social_posts row.
@@ -511,22 +392,6 @@ export async function createGmailDetectedEvent(input: {
 }
 
 /**
- * Cheap pre-check: has this FB post already been scanned by either the curated
- * (fb-llm-<sourcePostId>) or feed (fb-llm-feed-<fbPostId>) path? Used by the
- * Page-feed cron to skip Gemini calls for posts we've already processed.
- */
-export async function hasScannedFbPost(fbPostId: string): Promise<boolean> {
-  const rows = await query<{ id: number }>(
-    `SELECT id FROM events
-      WHERE external_source = 'facebook-llm'
-        AND external_id = $1
-      LIMIT 1`,
-    [`fb-llm-feed-${fbPostId}`],
-  );
-  return rows.length > 0;
-}
-
-/**
  * Cheap pre-check for the Gmail scanner: has this message already produced
  * events on a prior run? Matches the `gmail-<messageId>` prefix so a message
  * that yielded several events is still recognised. Lets overlapping cron
@@ -541,63 +406,6 @@ export async function hasScannedGmailMessage(messageId: string): Promise<boolean
     [`gmail-${messageId}`, `gmail-${messageId}-%`],
   );
   return rows.length > 0;
-}
-
-/**
- * Insert a pending event pulled from the Facebook Graph API /{page-id}/events
- * endpoint (Path E). Fallback to Gemini-on-posts detection: this catches
- * events admins published natively through Facebook's event tool, which often
- * don't have a corresponding wall post for Gemini to read.
- *
- * external_id is `fb-graph-<facebookEventId>` so the events_external_uniq
- * constraint makes re-running idempotent. (We don't use source_post_id here
- * because there is no featured_social_posts row — this is a Page-level
- * event, not a post-level detection.)
- *
- * Returns null when the event was already inserted on a prior cron run.
- */
-export async function createGraphDetectedEvent(input: {
-  publication: Publication;
-  facebookEventId: string;
-  title: string;
-  description: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  location: string | null;
-  link: string;
-  imageUrl: string | null;
-}): Promise<AdminCalendarEvent | null> {
-  const externalId = `fb-graph-${input.facebookEventId}`;
-  const coords = await geocodeEventLocation(input.location);
-  const rows = await query<EventRow>(
-    `INSERT INTO events (
-       external_source, external_id, publication, title, description, link,
-       start_date, end_date, location, image_url,
-       lat, lng, hidden,
-       last_synced_at, updated_at
-     ) VALUES (
-       'facebook-graph', $1, $2, $3, $4, $5,
-       $6, $7, $8, $9,
-       $10, $11, true,
-       NOW(), NOW()
-     )
-     ON CONFLICT ON CONSTRAINT events_external_uniq DO NOTHING
-     RETURNING ${SELECT_COLS}`,
-    [
-      externalId,
-      input.publication,
-      input.title,
-      input.description,
-      input.link,
-      input.startDate,
-      input.endDate,
-      input.location,
-      input.imageUrl,
-      coords?.lat ?? null,
-      coords?.lng ?? null,
-    ],
-  );
-  return rows[0] ? rowToAdminEvent(rows[0]) : null;
 }
 
 /**

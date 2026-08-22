@@ -25,7 +25,7 @@ export interface LatLon {
 }
 
 /** Austin Board of Realtors HQ. */
-export const ANCHOR_ABOR: LatLon = {
+const ANCHOR_ABOR: LatLon = {
   lat: 30.40175,
   lon: -97.76889,
 };
@@ -36,7 +36,7 @@ export const ANCHOR_ABOR: LatLon = {
  * Coordinates verified against both the US Census geocoder and Nominatim;
  * both returned the same point to within ~30 ft.
  */
-export const ANCHOR_FIVE_POINTS: LatLon = {
+const ANCHOR_FIVE_POINTS: LatLon = {
   lat: 30.534815,
   lon: -97.683454,
 };
@@ -46,15 +46,12 @@ export const ANCHOR_SABOR: LatLon = {
   lat: 29.524318,
   lon: -98.557229,
 };
-
-export const NEAR_RADIUS_MI = 60;
-
 const EARTH_RADIUS_MI = 3958.7613;
 
 /**
  * Great-circle distance between two lat/lon points, in miles.
  */
-export function haversineMiles(a: LatLon, b: LatLon): number {
+function haversineMiles(a: LatLon, b: LatLon): number {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const dLat = toRad(b.lat - a.lat);
   const dLon = toRad(b.lon - a.lon);
@@ -295,19 +292,5 @@ async function geocodeViaNominatim(
     distAbor:       haversineMiles(here, ANCHOR_ABOR),
     distFivePoints: haversineMiles(here, ANCHOR_FIVE_POINTS),
     distSabor:      haversineMiles(here, ANCHOR_SABOR),
-  };
-}
-
-/**
- * Convenience helper: given pre-computed distances, return which boards
- * a row is "near" (within 60 mi).
- */
-export function nearBoards(
-  distAbor: number | null,
-  distFivePoints: number | null,
-): { abor: boolean; fivePoints: boolean } {
-  return {
-    abor:        distAbor       !== null && distAbor       <= NEAR_RADIUS_MI,
-    fivePoints:  distFivePoints !== null && distFivePoints <= NEAR_RADIUS_MI,
   };
 }

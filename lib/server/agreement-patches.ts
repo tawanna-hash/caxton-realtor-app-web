@@ -12,7 +12,7 @@ import type { getSql } from '@/lib/db';
 type Sql = ReturnType<typeof getSql>;
 
 // Fields the advertiser is allowed to update via the portal — strings / null
-export const SIGN_PATCHABLE_STR = new Set([
+const SIGN_PATCHABLE_STR = new Set([
   'company_name', 'rep_name', 'advertiser_email', 'advertiser_phone',
   'address', 'city', 'state', 'zip',
   'ad_size', 'frequency', 'page_position',
@@ -23,15 +23,15 @@ export const SIGN_PATCHABLE_STR = new Set([
 ]);
 
 // Integer cents fields
-export const SIGN_PATCHABLE_INT = new Set([
+const SIGN_PATCHABLE_INT = new Set([
   'ad_rate_cents', 'discount_cents', 'ad_premium_cents', 'total_monthly_rate_cents',
 ]);
 
 // Date fields (YYYY-MM-DD)
-export const SIGN_PATCHABLE_DATE = new Set(['exp_date', 'start_date', 'end_date']);
+const SIGN_PATCHABLE_DATE = new Set(['exp_date', 'start_date', 'end_date']);
 
 // JSON object fields
-export const SIGN_PATCHABLE_JSON = new Set(['ad_timing_months']);
+const SIGN_PATCHABLE_JSON = new Set(['ad_timing_months']);
 
 const MAX_CENTS = 100_000_000;
 

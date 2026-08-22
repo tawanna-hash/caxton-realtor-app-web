@@ -44,7 +44,7 @@ const AGENTS_PER_PAGE = 300; // observed; used only for bounds estimation
  * All optional fields are nullable rather than empty strings so the DB
  * upsert keeps NULL semantics.
  */
-export interface RealtorRecord {
+interface RealtorRecord {
   external_id: string;          // MemberKey
   external_source: 'unlockmls'; // discriminator
   first_name: string;
@@ -238,7 +238,7 @@ function pageUrl(page: number): string {
  * __NEXT_DATA__). Returns an empty array when the page exists but has
  * no agents (signals end of pagination).
  */
-export async function fetchAborRealtorPage(
+async function fetchAborRealtorPage(
   page: number,
 ): Promise<{ agents: RealtorRecord[]; reportedTotal: number | null } | null> {
   const html = await fetchHtml(pageUrl(page));

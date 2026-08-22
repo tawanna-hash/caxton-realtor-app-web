@@ -34,7 +34,7 @@ function cacheToken(token: string): void {
   }
 }
 
-export function getCachedNativePushToken(): string | null {
+function getCachedNativePushToken(): string | null {
   try {
     if (typeof window === 'undefined') return null;
     return window.localStorage.getItem(LAST_TOKEN_KEY);

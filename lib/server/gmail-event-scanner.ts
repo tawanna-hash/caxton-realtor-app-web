@@ -30,7 +30,7 @@ import {
 import { query } from './db/neon';
 import { logger } from './logger';
 
-export interface GmailScanCounts {
+interface GmailScanCounts {
   /** Messages fetched and passed to Gemini. */
   scanned: number;
   /** Candidate events Gemini returned across all messages. */
@@ -43,7 +43,7 @@ export interface GmailScanCounts {
   errors: number;
 }
 
-export interface GmailEventCandidate {
+interface GmailEventCandidate {
   messageId: string;
   emailFrom: string;
   emailSubject: string;
@@ -162,7 +162,7 @@ function buildKeywordPattern(keywords: readonly string[]): RegExp {
  * mail far more often than San Antonio terms do, so an email mentioning both
  * ("Texas REALTORS, San Antonio chapter") is almost always the SA event.
  */
-export function detectPublication(
+function detectPublication(
   parts: ReadonlyArray<string | null>,
   fallback: Publication,
 ): Publication {
@@ -303,7 +303,7 @@ function parseTimes(timeText: string | null): Array<{ hour: number; minute: numb
  * Returns nulls when the date is unparseable — the caller keeps the raw text
  * in the description so an admin can fix it by hand.
  */
-export function parseEventWhen(
+function parseEventWhen(
   dateText: string | null,
   timeText: string | null,
   receivedAt: Date | null,

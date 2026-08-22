@@ -261,7 +261,7 @@ export async function deactivateSubscriber(id: string): Promise<
 // Delete (cascade-aware, transaction)
 // -----------------------------------------------------------------------------
 
-export interface DeleteSubscriberCounts {
+interface DeleteSubscriberCounts {
   event_rsvps: number;
   notification_deliveries: number;
   magic_links: number;

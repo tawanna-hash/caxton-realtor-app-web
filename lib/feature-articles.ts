@@ -39,7 +39,7 @@ export type FeatureArticle = {
 
 let schemaReady = false;
 
-export async function ensureFeatureArticlesSchema() {
+async function ensureFeatureArticlesSchema() {
   if (schemaReady) return;
   const sql = getSql();
   await sql`

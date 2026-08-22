@@ -14,7 +14,7 @@
 const LEAD_ONE = /^1(?=\d{10}$)/;
 
 /** Return only the digit characters of `s`. */
-export function phoneDigits(s: string | null | undefined): string {
+function phoneDigits(s: string | null | undefined): string {
   if (!s) return '';
   return String(s).replace(/\D/g, '');
 }

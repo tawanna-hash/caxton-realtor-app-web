@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 
-export const SUBSCRIBER_SORT_COLUMNS = [
+const SUBSCRIBER_SORT_COLUMNS = [
   'created_at',
   'last_app_open_at',
   'last_login_at',
@@ -14,11 +14,7 @@ export const SUBSCRIBER_SORT_COLUMNS = [
   'market',
   'city',
 ] as const;
-export type SubscriberSortColumn = typeof SUBSCRIBER_SORT_COLUMNS[number];
-
-export const VERIFIED_FILTER_OPTIONS = ['valid','invalid','risky','unknown','pending','unverified'] as const;
-export type VerifiedFilter = typeof VERIFIED_FILTER_OPTIONS[number];
-
+const VERIFIED_FILTER_OPTIONS = ['valid','invalid','risky','unknown','pending','unverified'] as const;
 export const listSubscribersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(500).default(50),
