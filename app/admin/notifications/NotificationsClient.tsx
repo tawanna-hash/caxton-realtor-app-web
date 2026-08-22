@@ -156,7 +156,8 @@ export default function NotificationsClient({ initialNotifications, initialStats
             No notifications yet. Click <span className="font-medium">New notification</span> to send the first one.
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
                 <tr>
@@ -224,6 +225,64 @@ export default function NotificationsClient({ initialNotifications, initialStats
               </tbody>
             </table>
           </div>
+          {/* Mobile card list. */}
+          <ul className="sm:hidden divide-y divide-gray-100">
+            {notifications.map((n) => {
+              const market = n.target_audience?.market;
+              const marketLabel =
+                market === 'all' ? 'All' :
+                market === 'austin' ? 'Austin' :
+                market === 'san_antonio' ? 'San Antonio' :
+                market === 'houston' ? 'Houston' :
+                market === 'dallas' ? 'Dallas' :
+                '—';
+              const isDraftOrScheduled = n.status === 'draft' || n.status === 'scheduled';
+              return (
+                <li key={n.id} className="px-4 py-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-gray-900 line-clamp-2 break-words">{n.title}</div>
+                      <div className="text-gray-500 text-xs line-clamp-2 break-words">{n.body}</div>
+                    </div>
+                    <StatusPill status={n.status} />
+                  </div>
+                  <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                    <dt className="text-gray-500 uppercase tracking-wider">Category</dt>
+                    <dd className="text-gray-800 text-right">{formatCategory(n.category)}</dd>
+                    <dt className="text-gray-500 uppercase tracking-wider">Market</dt>
+                    <dd className="text-gray-800 text-right">{marketLabel}</dd>
+                    <dt className="text-gray-500 uppercase tracking-wider">Delivered</dt>
+                    <dd className="text-gray-800 text-right tabular-nums">{n.delivered_count}</dd>
+                    <dt className="text-gray-500 uppercase tracking-wider">Clicks</dt>
+                    <dd className="text-gray-800 text-right tabular-nums">{n.clicked_count}</dd>
+                    <dt className="text-gray-500 uppercase tracking-wider">Sent</dt>
+                    <dd className="text-gray-800 text-right">{formatDate(n.sent_at || n.created_at)}</dd>
+                  </dl>
+                  {isDraftOrScheduled && (
+                    <div className="pt-1 flex gap-3 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(n)}
+                        disabled={busyId === n.id}
+                        className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => cancelNotification(n)}
+                        disabled={busyId === n.id}
+                        className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+                      >
+                        {busyId === n.id ? 'Cancelling...' : 'Cancel'}
+                      </button>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          </>
         )}
       </section>
 
