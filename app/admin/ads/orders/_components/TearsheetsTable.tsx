@@ -175,7 +175,55 @@ export default function TearsheetsTable() {
       )}
 
       {!loading && !error && (
-        <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+        <>
+        {/* mobile card list */}
+        <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+          {rows.length === 0 ? (
+            <li className="px-3 py-6 text-center text-sm text-gray-500">No tearsheets yet.</li>
+          ) : (
+            rows.map((t) => (
+              <li key={`m-${t.id}`} className="p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-gray-900">{t.issue_label ?? '—'}</div>
+                    <div className="text-xs text-gray-500">{formatDate(t.issue_date)}</div>
+                    <p className="text-sm text-gray-800 mt-1 truncate">{t.advertiser_name ?? '—'}</p>
+                  </div>
+                  <span className={'inline-block px-2 py-0.5 rounded border text-[10px] font-medium ' + STATUS_BADGE[t.status]}>
+                    {TEARSHEET_STATUS_LABEL[t.status]}
+                  </span>
+                </div>
+                <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                  <dt className="text-gray-500">Channel</dt>
+                  <dd className="text-gray-700 capitalize">{t.channel}</dd>
+                  <dt className="text-gray-500">IO #</dt>
+                  <dd className="text-gray-700 font-mono">{t.io_number ?? '—'}</dd>
+                  <dt className="text-gray-500">File</dt>
+                  <dd>
+                    {t.file_url ? (
+                      <a href={t.file_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">View</a>
+                    ) : (
+                      <span className="text-gray-400">No file</span>
+                    )}
+                  </dd>
+                  {t.sent_to && (
+                    <>
+                      <dt className="text-gray-500">Sent to</dt>
+                      <dd className="text-gray-700 truncate">{t.sent_to}</dd>
+                    </>
+                  )}
+                </dl>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {t.status !== 'sent' && t.file_url && (
+                    <button type="button" disabled={busyId === t.id} onClick={() => sendTearsheet(t.id)} className="text-xs px-2 py-1 rounded border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">Send</button>
+                  )}
+                  <button type="button" disabled={busyId === t.id} onClick={() => deleteTearsheet(t.id)} className="text-xs px-2 py-1 rounded border border-red-300 bg-red-50 text-red-700 hover:bg-red-100 disabled:opacity-50">Delete</button>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
+        <div className="hidden sm:block overflow-x-auto rounded-md border border-gray-200 bg-white">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
               <tr>
@@ -264,6 +312,7 @@ export default function TearsheetsTable() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

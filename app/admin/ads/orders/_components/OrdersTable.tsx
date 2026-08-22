@@ -343,7 +343,78 @@ export default function OrdersTable() {
             No orders match this view.
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* mobile card list */}
+          <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+            {data.rows.map((row) => (
+              <li key={`m:${row.source}:${row.id}`} className="p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider border ${CHANNEL_BADGE_CLASS[row.channel]}`}>
+                        {AD_CHANNEL_LABEL[row.channel]}
+                      </span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${STATUS_BADGE_CLASS[row.status]}`}>
+                        {row.status}
+                      </span>
+                    </div>
+                    <p className="font-medium text-gray-900 mt-1.5 truncate">
+                      {row.advertiser_name ?? '—'}
+                    </p>
+                    {row.advertiser_email && (
+                      <p className="text-xs text-gray-600 truncate">{row.advertiser_email}</p>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-sm font-medium tabular-nums text-gray-900">
+                      {fmtCents(row.amount_cents)}
+                    </div>
+                    <Link href={detailHref(row)} className="text-xs text-blue-700 hover:underline">
+                      Open
+                    </Link>
+                  </div>
+                </div>
+                <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                  <dt className="text-gray-500">Source</dt>
+                  <dd className="text-gray-700">{SOURCE_LABEL[row.source]}</dd>
+                  <dt className="text-gray-500">Slot / size</dt>
+                  <dd className="text-gray-700 truncate">{row.slot_or_size ?? '—'}</dd>
+                  <dt className="text-gray-500">Pub</dt>
+                  <dd className="text-gray-700">{fmtPublication(row.publication)}</dd>
+                  <dt className="text-gray-500">Dates</dt>
+                  <dd className="text-gray-700">
+                    {fmtDate(row.start_date)}
+                    {row.end_date ? ` – ${fmtDate(row.end_date)}` : ''}
+                  </dd>
+                  <dt className="text-gray-500">Payment</dt>
+                  <dd className="text-gray-700">
+                    {row.paid_at ? (
+                      <span className="text-green-700 font-medium">Paid {fmtDate(row.paid_at)}</span>
+                    ) : row.stripe_payment_link_url ? (
+                      <a href={row.stripe_payment_link_url} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline">
+                        Stripe link ↗
+                      </a>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </dd>
+                </dl>
+                {row.needs_approval && (
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={() => approve(row.id)}
+                      disabled={approvingId === row.id}
+                      className="inline-flex items-center rounded-md bg-green-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {approvingId === row.id ? 'Approving…' : 'Approve & go live'}
+                    </button>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-600">
                 <tr>
@@ -444,6 +515,7 @@ export default function OrdersTable() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>

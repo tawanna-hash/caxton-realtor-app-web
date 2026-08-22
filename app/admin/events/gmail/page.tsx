@@ -497,7 +497,86 @@ function GmailEventsQueue() {
           </div>
         )}
 
-        <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
+        {/* mobile card list */}
+        <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+          <li className="flex items-center gap-2 px-3 py-2 bg-gray-50">
+            <input
+              id="gmail-select-all-mobile"
+              type="checkbox"
+              checked={items.length > 0 && selectedIds.size === items.length}
+              ref={(el) => {
+                if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < items.length;
+              }}
+              onChange={toggleSelectAll}
+              className="h-4 w-4 rounded border-gray-300 text-brand-700 focus:ring-brand-700"
+            />
+            <label htmlFor="gmail-select-all-mobile" className="text-xs font-medium text-gray-700">Select all</label>
+          </li>
+          {sortedItems.map((ev) => (
+            <li key={`m-${ev.id}`} className="p-3">
+              <div className="flex items-start gap-3">
+                <input
+                  id={`gmail-select-mobile-${ev.id}`}
+                  type="checkbox"
+                  checked={selectedIds.has(ev.id)}
+                  onChange={() => toggleRow(ev.id)}
+                  aria-label={`Select ${ev.title}`}
+                  className="h-4 w-4 mt-1 rounded border-gray-300 text-brand-700 focus:ring-brand-700"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-medium text-gray-900 line-clamp-2">{ev.title}</p>
+                    <span className={`shrink-0 inline-block px-2 py-0.5 rounded-md text-xs font-medium ${confidenceStyle(ev.confidence ?? 0)}`}>
+                      {ev.confidence === null ? '—' : `${Math.round(ev.confidence * 100)}%`}
+                    </span>
+                  </div>
+                  {ev.description && (
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{ev.description}</p>
+                  )}
+                  <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                    <dt className="text-gray-500">When</dt>
+                    <dd className="text-gray-700">
+                      {ev.startDate ? formatWhen(ev.startDate, ev.endDate) : <span className="text-amber-700">Date TBD</span>}
+                    </dd>
+                    <dt className="text-gray-500">Location</dt>
+                    <dd className="text-gray-700">{ev.location || '—'}</dd>
+                    <dt className="text-gray-500">Host</dt>
+                    <dd className="text-gray-700">{ev.organizer || '—'}</dd>
+                  </dl>
+                  <div className="mt-2">
+                    <label className="sr-only" htmlFor={`pub-mobile-${ev.id}`}>Publication for {ev.title}</label>
+                    <select
+                      id={`pub-mobile-${ev.id}`}
+                      value={ev.publication}
+                      disabled={busyId === ev.id}
+                      onChange={(e) => handlePublicationChange(ev, e.target.value as PublicationId)}
+                      className="text-xs font-semibold px-2 py-1 rounded-md border bg-brand-700/10 text-brand-700 border-brand-700/20 disabled:opacity-50"
+                    >
+                      {PUB_OPTIONS.map((pp) => (
+                        <option key={pp} value={pp}>{PUBLICATION_FILTER_LABELS[pp]}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mt-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => openDrawer(ev)}
+                      className="text-brand-700 hover:underline break-all"
+                    >
+                      {senderAddress(ev.organizerEmail)}
+                    </button>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                    <button onClick={() => handleApprove(ev)} disabled={busyId === ev.id} className="text-green-700 hover:text-green-900 font-medium disabled:opacity-50">Approve</button>
+                    <Link href={`/admin/events/${ev.id}`} className="text-brand-700 hover:underline">Edit</Link>
+                    <button onClick={() => handleReject(ev)} disabled={busyId === ev.id} className="text-red-600 hover:text-red-800 disabled:opacity-50">Reject</button>
+                  </div>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="hidden sm:block bg-white border border-gray-200 rounded-md overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>

@@ -264,7 +264,63 @@ export default function EventsPage() {
           No events found. <Link href="/admin/events/new" className="text-brand-700 underline">Create one</Link>.
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
+        <>
+        {/* mobile card list */}
+        <ul className="sm:hidden divide-y divide-gray-100 rounded-md border border-gray-200 bg-white overflow-hidden">
+          {sorted.map((ev) => {
+            const isManual = ev.externalSource === 'manual';
+            const hasEdits = ev.editedFields.length > 0;
+            return (
+              <li key={`m-${ev.id}`} className={`p-3 ${ev.hidden ? 'bg-gray-50' : ''}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <Link href={`/admin/events/${ev.id}`} className="font-medium text-gray-900 hover:text-brand-700 hover:underline">
+                      {ev.title}
+                    </Link>
+                    {hasEdits && !isManual && (
+                      <div className="text-xs text-amber-700 mt-0.5">✎ Edited: {ev.editedFields.join(', ')}</div>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md border ${PUB_STYLES[ev.publication] || ''}`}>
+                      {PUBLICATION_FILTER_LABELS[ev.publication] || ev.publication}
+                    </span>
+                    {ev.hidden ? (
+                      <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-medium bg-gray-100 text-gray-700">Hidden</span>
+                    ) : (
+                      <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-medium bg-green-100 text-green-800">Visible</span>
+                    )}
+                  </div>
+                </div>
+                <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                  <dt className="text-gray-500">When</dt>
+                  <dd className="text-gray-700">{formatDateTime(ev.startDate)}</dd>
+                  <dt className="text-gray-500">Source</dt>
+                  <dd className="text-gray-600">{SOURCE_LABELS[ev.externalSource] || ev.externalSource}</dd>
+                </dl>
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                  <Link href={`/admin/events/${ev.id}`} className="text-brand-700 hover:underline">Edit</Link>
+                  <button
+                    onClick={() => handleHideToggle(ev)}
+                    disabled={busyId === ev.id}
+                    className="text-gray-700 hover:text-gray-900 disabled:opacity-50"
+                  >
+                    {ev.hidden ? 'Unhide' : 'Hide'}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(ev)}
+                    disabled={!isManual || busyId === ev.id}
+                    title={isManual ? '' : 'Scraped events can only be hidden — they would be recreated on next scraper run.'}
+                    className="text-red-600 hover:text-red-800 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="hidden sm:block bg-white border border-gray-200 rounded-md overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -336,6 +392,7 @@ export default function EventsPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );
