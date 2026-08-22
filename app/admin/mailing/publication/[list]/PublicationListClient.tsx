@@ -247,7 +247,35 @@ export default function PublicationListClient({ pub, initialCounts }: Props) {
       {pagerNode}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+      {/* Mobile card list — read-only mirror of the desktop table above. */}
+      <div className="sm:hidden rounded-md border border-gray-200 bg-white divide-y divide-gray-100">
+        {loading && (
+          <div className="px-3 py-6 text-center text-sm text-gray-500">Loading…</div>
+        )}
+        {!loading && pageRows.length === 0 && (
+          <div className="px-3 py-6 text-center text-sm text-gray-500">No matching rows.</div>
+        )}
+        {!loading && pageRows.map((r) => {
+          const name = [r.first_name, r.last_name].filter(Boolean).join(' ') || '—';
+          const badgeStatus: EmailBadgeStatus =
+            r.verification_status === 'unverified' ? null : (r.verification_status as EmailBadgeStatus);
+          return (
+            <div key={r.email} className="px-3 py-3 space-y-1.5">
+              <div className="font-mono text-[13px] text-gray-900 break-all">{r.email}</div>
+              <div className="text-sm text-gray-800">{name}</div>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                <dt className="text-gray-500 uppercase tracking-wider">Source</dt>
+                <dd className="text-gray-800 text-right break-words">{prettySource(r.source_table)}</dd>
+                <dt className="text-gray-500 uppercase tracking-wider">Segment</dt>
+                <dd className="text-gray-800 text-right break-words">{r.source_segment}</dd>
+              </dl>
+              <div className="pt-0.5"><EmailBadge status={badgeStatus} /></div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hidden sm:block overflow-x-auto rounded-md border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
