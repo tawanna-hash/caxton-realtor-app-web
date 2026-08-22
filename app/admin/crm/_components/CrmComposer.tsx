@@ -843,29 +843,31 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
             </div>
 
             <div className="mt-3 flex-1 overflow-y-auto rounded-md border border-gray-200 bg-white">
-              <table className="w-full text-xs">
-                <thead className="sticky top-0 bg-gray-100 text-gray-600">
-                  <tr>
-                    <th className="px-2 py-1 text-left font-medium">Email</th>
-                    <th className="px-2 py-1 text-left font-medium">Name</th>
-                    <th className="px-2 py-1 text-left font-medium">Pub</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sampleForDisplay.length === 0 && !previewLoading && (
-                    <tr><td colSpan={3} className="px-2 py-4 text-center text-gray-400">No recipients match this filter.</td></tr>
-                  )}
-                  {sampleForDisplay.map((r) => (
-                    <tr key={r.id} className="border-t border-gray-100">
-                      <td className="px-2 py-1 font-mono text-gray-800">{r.email}</td>
-                      <td className="px-2 py-1 text-gray-700">
-                        {[r.first_name, r.last_name].filter(Boolean).join(' ') || r.company || '—'}
-                      </td>
-                      <td className="px-2 py-1 text-gray-500">{r.publication ?? '—'}</td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-gray-100 text-gray-600">
+                    <tr>
+                      <th className="px-2 py-1 text-left font-medium">Email</th>
+                      <th className="px-2 py-1 text-left font-medium">Name</th>
+                      <th className="px-2 py-1 text-left font-medium">Pub</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {sampleForDisplay.length === 0 && !previewLoading && (
+                      <tr><td colSpan={3} className="px-2 py-4 text-center text-gray-400">No recipients match this filter.</td></tr>
+                    )}
+                    {sampleForDisplay.map((r) => (
+                      <tr key={r.id} className="border-t border-gray-100">
+                        <td className="px-2 py-1 font-mono text-gray-800">{r.email}</td>
+                        <td className="px-2 py-1 text-gray-700">
+                          {[r.first_name, r.last_name].filter(Boolean).join(' ') || r.company || '—'}
+                        </td>
+                        <td className="px-2 py-1 text-gray-500">{r.publication ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div className="mt-4 space-y-2">

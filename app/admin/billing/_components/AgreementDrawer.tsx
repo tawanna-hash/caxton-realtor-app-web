@@ -746,7 +746,7 @@ export function AgreementDrawer({
       <Section title="Insertion Order">
         {lineItems.length > 0 ? (
         <div className="space-y-3">
-          <div className="rounded-md border border-gray-200 overflow-hidden">
+          <div className="rounded-md border border-gray-200 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                 <tr>

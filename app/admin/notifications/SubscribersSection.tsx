@@ -225,90 +225,92 @@ export default function SubscribersSection() {
             No subscribers yet.
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium">User</th>
-                <th className="text-left px-4 py-3 font-medium">Device</th>
-                <th className="text-left px-4 py-3 font-medium">Market</th>
-                <th className="text-left px-4 py-3 font-medium">Subscribed</th>
-                <th className="text-left px-4 py-3 font-medium">Last seen</th>
-                <th className="text-right px-4 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {visible.map((sub) => (
-                <tr
-                  key={sub.id}
-                  className={`hover:bg-gray-50 ${sub.active ? '' : 'opacity-60'}`}
-                >
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900 text-sm">
-                      {sub.realtorName || (
-                        <span className="text-gray-500 italic">Anonymous</span>
-                      )}
-                    </div>
-                    {sub.realtorEmail && (
-                      <div className="text-xs text-gray-500">{sub.realtorEmail}</div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 text-xs">
-                    {deviceLabel(sub.userAgent)}
-                    {sub.endpointHost && (
-                      <div className="text-gray-400">{sub.endpointHost}</div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={sub.market || ''}
-                      onChange={(e) => updateMarket(sub, e.target.value as Market)}
-                      disabled={!sub.active || busy === sub.id}
-                      className="text-xs border border-gray-300 rounded px-2 py-1 bg-white disabled:opacity-50"
-                    >
-                      <option value="" disabled>
-                        Unset
-                      </option>
-                      {(Object.keys(MARKET_LABELS) as Market[]).map((m) => (
-                        <option key={m} value={m}>
-                          {MARKET_LABELS[m]}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 text-xs">
-                    {formatDate(sub.createdAt)}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 text-xs">
-                    {formatDate(sub.lastSeenAt)}
-                  </td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
-                    {sub.active ? (
-                      <div className="inline-flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => sendTest(sub)}
-                          disabled={busy === sub.id}
-                          className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
-                        >
-                          {busy === sub.id ? 'Sending…' : 'Send test'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => revoke(sub)}
-                          disabled={busy === sub.id}
-                          className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
-                        >
-                          Revoke
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-400">Revoked</span>
-                    )}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium">User</th>
+                  <th className="text-left px-4 py-3 font-medium">Device</th>
+                  <th className="text-left px-4 py-3 font-medium">Market</th>
+                  <th className="text-left px-4 py-3 font-medium">Subscribed</th>
+                  <th className="text-left px-4 py-3 font-medium">Last seen</th>
+                  <th className="text-right px-4 py-3 font-medium">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {visible.map((sub) => (
+                  <tr
+                    key={sub.id}
+                    className={`hover:bg-gray-50 ${sub.active ? '' : 'opacity-60'}`}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900 text-sm">
+                        {sub.realtorName || (
+                          <span className="text-gray-500 italic">Anonymous</span>
+                        )}
+                      </div>
+                      {sub.realtorEmail && (
+                        <div className="text-xs text-gray-500">{sub.realtorEmail}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 text-xs">
+                      {deviceLabel(sub.userAgent)}
+                      {sub.endpointHost && (
+                        <div className="text-gray-400">{sub.endpointHost}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={sub.market || ''}
+                        onChange={(e) => updateMarket(sub, e.target.value as Market)}
+                        disabled={!sub.active || busy === sub.id}
+                        className="text-xs border border-gray-300 rounded px-2 py-1 bg-white disabled:opacity-50"
+                      >
+                        <option value="" disabled>
+                          Unset
+                        </option>
+                        {(Object.keys(MARKET_LABELS) as Market[]).map((m) => (
+                          <option key={m} value={m}>
+                            {MARKET_LABELS[m]}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 text-xs">
+                      {formatDate(sub.createdAt)}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 text-xs">
+                      {formatDate(sub.lastSeenAt)}
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      {sub.active ? (
+                        <div className="inline-flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => sendTest(sub)}
+                            disabled={busy === sub.id}
+                            className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
+                          >
+                            {busy === sub.id ? 'Sending…' : 'Send test'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => revoke(sub)}
+                            disabled={busy === sub.id}
+                            className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+                          >
+                            Revoke
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">Revoked</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

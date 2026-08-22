@@ -169,24 +169,26 @@ export default function AdminMetricsPage() {
               {metrics.filter_usage.length === 0 ? (
                 <p className="text-sm text-gray-500">No filter clicks yet.</p>
               ) : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs uppercase tracking-wide text-gray-500">
-                      <th className="text-left pb-2 font-medium">Filter</th>
-                      <th className="text-right pb-2 font-medium">Clicks</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.filter_usage.map((f) => (
-                      <tr key={f.filter} className="border-t border-gray-100">
-                        <td className="py-2 text-gray-900 capitalize">{f.filter}</td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {f.total.toLocaleString()}
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs uppercase tracking-wide text-gray-500">
+                        <th className="text-left pb-2 font-medium">Filter</th>
+                        <th className="text-right pb-2 font-medium">Clicks</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {metrics.filter_usage.map((f) => (
+                        <tr key={f.filter} className="border-t border-gray-100">
+                          <td className="py-2 text-gray-900 capitalize">{f.filter}</td>
+                          <td className="py-2 text-right tabular-nums text-gray-700">
+                            {f.total.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </section>
@@ -199,26 +201,28 @@ export default function AdminMetricsPage() {
               {metrics.top_builders.length === 0 ? (
                 <p className="text-sm text-gray-500">No builder chip clicks yet.</p>
               ) : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs uppercase tracking-wide text-gray-500">
-                      <th className="text-left pb-2 font-medium">Builder</th>
-                      <th className="text-left pb-2 font-medium">From</th>
-                      <th className="text-right pb-2 font-medium">Clicks</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.top_builders.map((b, i) => (
-                      <tr key={`${b.builder_name}-${b.source_page}-${i}`} className="border-t border-gray-100">
-                        <td className="py-2 text-gray-900">{b.builder_name}</td>
-                        <td className="py-2 text-gray-500 text-xs">{b.source_page}</td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {b.total.toLocaleString()}
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs uppercase tracking-wide text-gray-500">
+                        <th className="text-left pb-2 font-medium">Builder</th>
+                        <th className="text-left pb-2 font-medium">From</th>
+                        <th className="text-right pb-2 font-medium">Clicks</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {metrics.top_builders.map((b, i) => (
+                        <tr key={`${b.builder_name}-${b.source_page}-${i}`} className="border-t border-gray-100">
+                          <td className="py-2 text-gray-900">{b.builder_name}</td>
+                          <td className="py-2 text-gray-500 text-xs">{b.source_page}</td>
+                          <td className="py-2 text-right tabular-nums text-gray-700">
+                            {b.total.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </section>
@@ -231,30 +235,32 @@ export default function AdminMetricsPage() {
               {metrics.top_inventory.length === 0 ? (
                 <p className="text-sm text-gray-500">No card clicks yet.</p>
               ) : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs uppercase tracking-wide text-gray-500">
-                      <th className="text-left pb-2 font-medium">Builder</th>
-                      <th className="text-left pb-2 font-medium">Row</th>
-                      <th className="text-left pb-2 font-medium">Kind</th>
-                      <th className="text-left pb-2 font-medium">Dest</th>
-                      <th className="text-right pb-2 font-medium">Clicks</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.top_inventory.map((row, i) => (
-                      <tr key={`${row.row_id}-${row.destination}-${i}`} className="border-t border-gray-100">
-                        <td className="py-2 text-gray-900">{row.builder_name}</td>
-                        <td className="py-2 text-gray-500 text-xs tabular-nums">#{row.row_id}</td>
-                        <td className="py-2 text-gray-700 capitalize">{row.kind}</td>
-                        <td className="py-2 text-gray-500 text-xs">{row.destination}</td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.total.toLocaleString()}
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs uppercase tracking-wide text-gray-500">
+                        <th className="text-left pb-2 font-medium">Builder</th>
+                        <th className="text-left pb-2 font-medium">Row</th>
+                        <th className="text-left pb-2 font-medium">Kind</th>
+                        <th className="text-left pb-2 font-medium">Dest</th>
+                        <th className="text-right pb-2 font-medium">Clicks</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {metrics.top_inventory.map((row, i) => (
+                        <tr key={`${row.row_id}-${row.destination}-${i}`} className="border-t border-gray-100">
+                          <td className="py-2 text-gray-900">{row.builder_name}</td>
+                          <td className="py-2 text-gray-500 text-xs tabular-nums">#{row.row_id}</td>
+                          <td className="py-2 text-gray-700 capitalize">{row.kind}</td>
+                          <td className="py-2 text-gray-500 text-xs">{row.destination}</td>
+                          <td className="py-2 text-right tabular-nums text-gray-700">
+                            {row.total.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </section>
@@ -267,30 +273,32 @@ export default function AdminMetricsPage() {
               {!metrics.pill_engagement || metrics.pill_engagement.length === 0 ? (
                 <p className="text-sm text-gray-500">No pill clicks recorded yet.</p>
               ) : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs uppercase tracking-wide text-gray-500">
-                      <th className="text-left pb-2 font-medium">Surface</th>
-                      <th className="text-left pb-2 font-medium">Action</th>
-                      <th className="text-right pb-2 font-medium">Clicks</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.pill_engagement.map((row, i) => (
-                      <tr key={`${row.surface}-${row.action}-${i}`} className="border-t border-gray-100">
-                        <td className="py-2 text-gray-900">
-                          {SURFACE_LABELS[row.surface] ?? row.surface}
-                        </td>
-                        <td className="py-2 text-gray-700">
-                          {ACTION_LABELS[row.action] ?? row.action}
-                        </td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.total.toLocaleString()}
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs uppercase tracking-wide text-gray-500">
+                        <th className="text-left pb-2 font-medium">Surface</th>
+                        <th className="text-left pb-2 font-medium">Action</th>
+                        <th className="text-right pb-2 font-medium">Clicks</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {metrics.pill_engagement.map((row, i) => (
+                        <tr key={`${row.surface}-${row.action}-${i}`} className="border-t border-gray-100">
+                          <td className="py-2 text-gray-900">
+                            {SURFACE_LABELS[row.surface] ?? row.surface}
+                          </td>
+                          <td className="py-2 text-gray-700">
+                            {ACTION_LABELS[row.action] ?? row.action}
+                          </td>
+                          <td className="py-2 text-right tabular-nums text-gray-700">
+                            {row.total.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </section>
@@ -303,28 +311,30 @@ export default function AdminMetricsPage() {
               {!metrics.share_breakdown || metrics.share_breakdown.length === 0 ? (
                 <p className="text-sm text-gray-500">No shares recorded yet.</p>
               ) : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs uppercase tracking-wide text-gray-500">
-                      <th className="text-left pb-2 font-medium">Surface</th>
-                      <th className="text-left pb-2 font-medium">Channel</th>
-                      <th className="text-right pb-2 font-medium">Shares</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.share_breakdown.map((row, i) => (
-                      <tr key={`${row.surface}-${row.channel}-${i}`} className="border-t border-gray-100">
-                        <td className="py-2 text-gray-900">
-                          {SURFACE_LABELS[row.surface] ?? row.surface}
-                        </td>
-                        <td className="py-2 text-gray-700 capitalize">{row.channel}</td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.total.toLocaleString()}
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs uppercase tracking-wide text-gray-500">
+                        <th className="text-left pb-2 font-medium">Surface</th>
+                        <th className="text-left pb-2 font-medium">Channel</th>
+                        <th className="text-right pb-2 font-medium">Shares</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {metrics.share_breakdown.map((row, i) => (
+                        <tr key={`${row.surface}-${row.channel}-${i}`} className="border-t border-gray-100">
+                          <td className="py-2 text-gray-900">
+                            {SURFACE_LABELS[row.surface] ?? row.surface}
+                          </td>
+                          <td className="py-2 text-gray-700 capitalize">{row.channel}</td>
+                          <td className="py-2 text-right tabular-nums text-gray-700">
+                            {row.total.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </section>
@@ -337,24 +347,26 @@ export default function AdminMetricsPage() {
               {!metrics.listing_inquiries || metrics.listing_inquiries.length === 0 ? (
                 <p className="text-sm text-gray-500">No &ldquo;Request more information&rdquo; submissions yet.</p>
               ) : (
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs uppercase tracking-wide text-gray-500">
-                      <th className="text-left pb-2 font-medium">Builder</th>
-                      <th className="text-right pb-2 font-medium">Inquiries</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.listing_inquiries.map((row, i) => (
-                      <tr key={`${row.builder_name}-${i}`} className="border-t border-gray-100">
-                        <td className="py-2 text-gray-900">{row.builder_name}</td>
-                        <td className="py-2 text-right tabular-nums text-gray-900 font-medium">
-                          {row.total.toLocaleString()}
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs uppercase tracking-wide text-gray-500">
+                        <th className="text-left pb-2 font-medium">Builder</th>
+                        <th className="text-right pb-2 font-medium">Inquiries</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {metrics.listing_inquiries.map((row, i) => (
+                        <tr key={`${row.builder_name}-${i}`} className="border-t border-gray-100">
+                          <td className="py-2 text-gray-900">{row.builder_name}</td>
+                          <td className="py-2 text-right tabular-nums text-gray-900 font-medium">
+                            {row.total.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </section>

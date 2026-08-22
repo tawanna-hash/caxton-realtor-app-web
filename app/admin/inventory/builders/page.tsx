@@ -169,7 +169,7 @@ export default function AdminBuilderPagesPage() {
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-gray-600">
             <tr>

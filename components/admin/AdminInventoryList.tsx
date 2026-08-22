@@ -397,7 +397,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
 
         {sortedRows != null && sortedRows.length > 0 && (
           <>
-          <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+          <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr className="text-left text-xs uppercase tracking-wider text-gray-500">

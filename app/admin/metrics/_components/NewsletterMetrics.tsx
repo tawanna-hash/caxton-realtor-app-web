@@ -133,18 +133,20 @@ export function NewsletterMetrics({ days }: { days: number }) {
               {stats.by_source.length === 0 ? (
                 <p className="text-sm text-gray-500">No data yet.</p>
               ) : (
-                <table className="w-full text-sm">
-                  <tbody>
-                    {stats.by_source.map((row) => (
-                      <tr key={row.source} className="border-t border-gray-100 first:border-t-0">
-                        <td className="py-2 text-gray-900">{row.source}</td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.count.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <tbody>
+                      {stats.by_source.map((row) => (
+                        <tr key={row.source} className="border-t border-gray-100 first:border-t-0">
+                          <td className="py-2 text-gray-900">{row.source}</td>
+                          <td className="py-2 text-right tabular-nums text-gray-700">
+                            {row.count.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
 
@@ -155,18 +157,20 @@ export function NewsletterMetrics({ days }: { days: number }) {
               {stats.by_publication.length === 0 ? (
                 <p className="text-sm text-gray-500">No data yet.</p>
               ) : (
-                <table className="w-full text-sm">
-                  <tbody>
-                    {stats.by_publication.map((row) => (
-                      <tr key={row.publication} className="border-t border-gray-100 first:border-t-0">
-                        <td className="py-2 text-gray-900 capitalize">{row.publication}</td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.count.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <tbody>
+                      {stats.by_publication.map((row) => (
+                        <tr key={row.publication} className="border-t border-gray-100 first:border-t-0">
+                          <td className="py-2 text-gray-900 capitalize">{row.publication}</td>
+                          <td className="py-2 text-right tabular-nums text-gray-700">
+                            {row.count.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>

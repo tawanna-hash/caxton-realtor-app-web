@@ -12,8 +12,6 @@ import { useRouter } from 'next/navigation';
 import NewNotificationModal, { type EditableNotification } from '@/components/admin/NewNotificationModal';
 import SubscribersSection from './SubscribersSection';
 
-type Status = 'draft' | 'scheduled' | 'sending' | 'sent' | 'cancelled';
-
 interface Notification {
   id: string;
   category: string;
@@ -158,72 +156,74 @@ export default function NotificationsClient({ initialNotifications, initialStats
             No notifications yet. Click <span className="font-medium">New notification</span> to send the first one.
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium">Title</th>
-                <th className="text-left px-4 py-3 font-medium">Category</th>
-                <th className="text-left px-4 py-3 font-medium">Market</th>
-                <th className="text-left px-4 py-3 font-medium">Status</th>
-                <th className="text-left px-4 py-3 font-medium">Delivered</th>
-                <th className="text-left px-4 py-3 font-medium">Clicks</th>
-                <th className="text-left px-4 py-3 font-medium">Sent</th>
-                <th className="text-right px-4 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {notifications.map((n) => (
-                <tr key={n.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900 line-clamp-1">{n.title}</div>
-                    <div className="text-gray-500 text-xs line-clamp-1">{n.body}</div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-700">{formatCategory(n.category)}</td>
-                  <td className="px-4 py-3 text-gray-700">
-                    {n.target_audience?.market === 'all'
-                      ? 'All'
-                      : n.target_audience?.market === 'austin'
-                      ? 'Austin'
-                      : n.target_audience?.market === 'san_antonio'
-                      ? 'San Antonio'
-                      : n.target_audience?.market === 'houston'
-                      ? 'Houston'
-                      : n.target_audience?.market === 'dallas'
-                      ? 'Dallas'
-                      : '—'}
-                  </td>
-                  <td className="px-4 py-3"><StatusPill status={n.status} /></td>
-                  <td className="px-4 py-3 text-gray-700">{n.delivered_count}</td>
-                  <td className="px-4 py-3 text-gray-700">{n.clicked_count}</td>
-                  <td className="px-4 py-3 text-gray-700 text-xs">{formatDate(n.sent_at || n.created_at)}</td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
-                    {(n.status === 'draft' || n.status === 'scheduled') ? (
-                      <div className="inline-flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(n)}
-                          disabled={busyId === n.id}
-                          className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => cancelNotification(n)}
-                          disabled={busyId === n.id}
-                          className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
-                        >
-                          {busyId === n.id ? 'Cancelling...' : 'Cancel'}
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-gray-400">—</span>
-                    )}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium">Title</th>
+                  <th className="text-left px-4 py-3 font-medium">Category</th>
+                  <th className="text-left px-4 py-3 font-medium">Market</th>
+                  <th className="text-left px-4 py-3 font-medium">Status</th>
+                  <th className="text-left px-4 py-3 font-medium">Delivered</th>
+                  <th className="text-left px-4 py-3 font-medium">Clicks</th>
+                  <th className="text-left px-4 py-3 font-medium">Sent</th>
+                  <th className="text-right px-4 py-3 font-medium">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {notifications.map((n) => (
+                  <tr key={n.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900 line-clamp-1">{n.title}</div>
+                      <div className="text-gray-500 text-xs line-clamp-1">{n.body}</div>
+                    </td>
+                    <td className="px-4 py-3 text-gray-700">{formatCategory(n.category)}</td>
+                    <td className="px-4 py-3 text-gray-700">
+                      {n.target_audience?.market === 'all'
+                        ? 'All'
+                        : n.target_audience?.market === 'austin'
+                        ? 'Austin'
+                        : n.target_audience?.market === 'san_antonio'
+                        ? 'San Antonio'
+                        : n.target_audience?.market === 'houston'
+                        ? 'Houston'
+                        : n.target_audience?.market === 'dallas'
+                        ? 'Dallas'
+                        : '—'}
+                    </td>
+                    <td className="px-4 py-3"><StatusPill status={n.status} /></td>
+                    <td className="px-4 py-3 text-gray-700">{n.delivered_count}</td>
+                    <td className="px-4 py-3 text-gray-700">{n.clicked_count}</td>
+                    <td className="px-4 py-3 text-gray-700 text-xs">{formatDate(n.sent_at || n.created_at)}</td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      {(n.status === 'draft' || n.status === 'scheduled') ? (
+                        <div className="inline-flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(n)}
+                            disabled={busyId === n.id}
+                            className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => cancelNotification(n)}
+                            disabled={busyId === n.id}
+                            className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+                          >
+                            {busyId === n.id ? 'Cancelling...' : 'Cancel'}
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 

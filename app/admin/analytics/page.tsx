@@ -560,34 +560,36 @@ export default function AdminAnalyticsPage() {
             {loading ? (
               <TableSkeleton rows={5} cols={3} />
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-[11px] text-gray-500 border-b border-gray-200">
-                    <th className="text-left font-medium pb-2">Page</th>
-                    <th className="text-right font-medium pb-2">Views</th>
-                    <th className="text-right font-medium pb-2">Users</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {(report?.topPages ?? []).map((row) => {
-                    const isActive = pageFilter === row.url;
-                    return (
-                      <tr
-                        key={row.url}
-                        onClick={() => togglePage(row.url)}
-                        className={`cursor-pointer transition ${isActive ? 'bg-blue-50 text-blue-900' : 'hover:bg-gray-50'}`}
-                      >
-                        <td className="py-2.5 pl-2 font-mono text-xs truncate max-w-[200px]" title={row.url}>{row.url}</td>
-                        <td className="py-2.5 text-right font-mono">{row.views}</td>
-                        <td className="py-2.5 text-right font-mono text-gray-500 pr-2">{row.users}</td>
-                      </tr>
-                    );
-                  })}
-                  {!report?.topPages?.length ? (
-                    <tr><td colSpan={3} className="py-4 text-center text-gray-400 text-xs">No data in window</td></tr>
-                  ) : null}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-[11px] text-gray-500 border-b border-gray-200">
+                      <th className="text-left font-medium pb-2">Page</th>
+                      <th className="text-right font-medium pb-2">Views</th>
+                      <th className="text-right font-medium pb-2">Users</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {(report?.topPages ?? []).map((row) => {
+                      const isActive = pageFilter === row.url;
+                      return (
+                        <tr
+                          key={row.url}
+                          onClick={() => togglePage(row.url)}
+                          className={`cursor-pointer transition ${isActive ? 'bg-blue-50 text-blue-900' : 'hover:bg-gray-50'}`}
+                        >
+                          <td className="py-2.5 pl-2 font-mono text-xs truncate max-w-[200px]" title={row.url}>{row.url}</td>
+                          <td className="py-2.5 text-right font-mono">{row.views}</td>
+                          <td className="py-2.5 text-right font-mono text-gray-500 pr-2">{row.users}</td>
+                        </tr>
+                      );
+                    })}
+                    {!report?.topPages?.length ? (
+                      <tr><td colSpan={3} className="py-4 text-center text-gray-400 text-xs">No data in window</td></tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
             )}
           </Card>
 
@@ -595,34 +597,36 @@ export default function AdminAnalyticsPage() {
             {loading ? (
               <TableSkeleton rows={5} cols={3} />
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-[11px] text-gray-500 border-b border-gray-200">
-                    <th className="text-left font-medium pb-2">Event</th>
-                    <th className="text-right font-medium pb-2">Count</th>
-                    <th className="text-right font-medium pb-2">Users</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {(report?.topEvents ?? []).map((row) => {
-                    const isActive = eventFilter === row.name;
-                    return (
-                      <tr
-                        key={row.name}
-                        onClick={() => toggleEvent(row.name)}
-                        className={`cursor-pointer transition ${isActive ? 'bg-blue-50 text-blue-900' : 'hover:bg-gray-50'}`}
-                      >
-                        <td className="py-2.5 pl-2 font-mono text-xs">{row.name}</td>
-                        <td className="py-2.5 text-right font-mono">{row.count}</td>
-                        <td className="py-2.5 text-right font-mono text-gray-500 pr-2">{row.users}</td>
-                      </tr>
-                    );
-                  })}
-                  {!report?.topEvents?.length ? (
-                    <tr><td colSpan={3} className="py-4 text-center text-gray-400 text-xs">No data in window</td></tr>
-                  ) : null}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-[11px] text-gray-500 border-b border-gray-200">
+                      <th className="text-left font-medium pb-2">Event</th>
+                      <th className="text-right font-medium pb-2">Count</th>
+                      <th className="text-right font-medium pb-2">Users</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {(report?.topEvents ?? []).map((row) => {
+                      const isActive = eventFilter === row.name;
+                      return (
+                        <tr
+                          key={row.name}
+                          onClick={() => toggleEvent(row.name)}
+                          className={`cursor-pointer transition ${isActive ? 'bg-blue-50 text-blue-900' : 'hover:bg-gray-50'}`}
+                        >
+                          <td className="py-2.5 pl-2 font-mono text-xs">{row.name}</td>
+                          <td className="py-2.5 text-right font-mono">{row.count}</td>
+                          <td className="py-2.5 text-right font-mono text-gray-500 pr-2">{row.users}</td>
+                        </tr>
+                      );
+                    })}
+                    {!report?.topEvents?.length ? (
+                      <tr><td colSpan={3} className="py-4 text-center text-gray-400 text-xs">No data in window</td></tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
             )}
           </Card>
         </div>
@@ -637,36 +641,38 @@ export default function AdminAnalyticsPage() {
           {loading ? (
             <TableSkeleton rows={4} cols={4} />
           ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-[11px] text-gray-500 border-b border-gray-200">
-                  <th className="text-left font-medium pb-2">Source</th>
-                  <th className="text-right font-medium pb-2">Visits</th>
-                  <th className="text-right font-medium pb-2">Users</th>
-                  <th className="text-right font-medium pb-2">New users</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {(report?.trafficSources ?? []).map((row) => {
-                  const isActive = sourceFilter === row.source;
-                  return (
-                    <tr
-                      key={row.source}
-                      onClick={() => toggleSource(row.source)}
-                      className={`cursor-pointer transition ${isActive ? 'bg-blue-50 text-blue-900' : 'hover:bg-gray-50'}`}
-                    >
-                      <td className="py-2.5 pl-2 font-mono text-xs">{row.source}</td>
-                      <td className="py-2.5 text-right font-mono">{row.visits}</td>
-                      <td className="py-2.5 text-right font-mono">{row.users}</td>
-                      <td className="py-2.5 text-right font-mono text-gray-500 pr-2">{row.newUsers}</td>
-                    </tr>
-                  );
-                })}
-                {!report?.trafficSources?.length ? (
-                  <tr><td colSpan={4} className="py-4 text-center text-gray-400 text-xs">No data in window</td></tr>
-                ) : null}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-[11px] text-gray-500 border-b border-gray-200">
+                    <th className="text-left font-medium pb-2">Source</th>
+                    <th className="text-right font-medium pb-2">Visits</th>
+                    <th className="text-right font-medium pb-2">Users</th>
+                    <th className="text-right font-medium pb-2">New users</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {(report?.trafficSources ?? []).map((row) => {
+                    const isActive = sourceFilter === row.source;
+                    return (
+                      <tr
+                        key={row.source}
+                        onClick={() => toggleSource(row.source)}
+                        className={`cursor-pointer transition ${isActive ? 'bg-blue-50 text-blue-900' : 'hover:bg-gray-50'}`}
+                      >
+                        <td className="py-2.5 pl-2 font-mono text-xs">{row.source}</td>
+                        <td className="py-2.5 text-right font-mono">{row.visits}</td>
+                        <td className="py-2.5 text-right font-mono">{row.users}</td>
+                        <td className="py-2.5 text-right font-mono text-gray-500 pr-2">{row.newUsers}</td>
+                      </tr>
+                    );
+                  })}
+                  {!report?.trafficSources?.length ? (
+                    <tr><td colSpan={4} className="py-4 text-center text-gray-400 text-xs">No data in window</td></tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
           )}
         </Card>
 

@@ -1447,7 +1447,7 @@ function EditDrawer({
           <Section title="Location & Staff">
             <LocationsStaffEditor
               advertiserId={row.id}
-              onError={(msg) => onError(msg)}
+              onError={onError}
               onStaffChange={setEditorStaff}
             />
           </Section>

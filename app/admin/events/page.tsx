@@ -264,7 +264,7 @@ export default function EventsPage() {
           No events found. <Link href="/admin/events/new" className="text-brand-700 underline">Create one</Link>.
         </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>

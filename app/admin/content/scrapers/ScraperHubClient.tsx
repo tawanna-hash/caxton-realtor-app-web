@@ -195,7 +195,7 @@ export default function ScraperHubClient({ initialRuns }: { initialRuns: Scraper
               <h2 className="text-xs uppercase tracking-[0.2em] text-gray-500 font-semibold mb-3">
                 {group.label}
               </h2>
-              <div className="bg-white border border-gray-200 rounded-md overflow-hidden">
+              <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 text-left text-gray-600">
                     <tr>
