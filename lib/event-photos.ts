@@ -75,17 +75,31 @@ export async function ensureEventPhotosSchema() {
   schemaReady = true;
 }
 
-function rowToPhoto(r: Record<string, any>): EventPhoto {
+// Shape of an event_photos row as returned by Neon.
+// DATE / TIMESTAMPTZ come back as JS Date objects; nullable columns
+// are typed as `| null` because Neon preserves SQL NULL faithfully.
+interface EventPhotoRow {
+  id: number;
+  title: string;
+  event_date: Date | string;
+  image_url: string;
+  thumbnail_url: string | null;
+  description: string | null;
+  publication: string;
+  uploaded_by: string | null;
+  advertiser_id: number | null;
+  created_at: Date | string;
+}
+
+function rowToPhoto(r: EventPhotoRow): EventPhoto {
   // Neon returns DATE columns as JS Date objects, not strings.
   // Convert to string to avoid timezone issues and ensure .slice() works.
-  const eventDateRaw = r.event_date;
-  const eventDateStr = eventDateRaw instanceof Date
-    ? eventDateRaw.toISOString().slice(0, 10)
-    : String(eventDateRaw);
-  const createdAtRaw = r.created_at;
-  const createdAtStr = createdAtRaw instanceof Date
-    ? createdAtRaw.toISOString()
-    : String(createdAtRaw);
+  const eventDateStr = r.event_date instanceof Date
+    ? r.event_date.toISOString().slice(0, 10)
+    : String(r.event_date);
+  const createdAtStr = r.created_at instanceof Date
+    ? r.created_at.toISOString()
+    : String(r.created_at);
   return {
     id: r.id,
     title: r.title,
@@ -125,7 +139,7 @@ export async function listEventPhotos(opts: {
     ORDER BY event_date DESC, created_at DESC
     LIMIT ${limit}
   `;
-  return rows.map(rowToPhoto);
+  return (rows as EventPhotoRow[]).map(rowToPhoto);
 }
 
 export async function listEventPhotosGrouped(opts: {
@@ -157,7 +171,7 @@ export async function listEventPhotosByAdvertiser(
       ORDER BY event_date DESC, created_at DESC
       LIMIT 500
     `;
-    const mapped = titleMatched.map(rowToPhoto);
+    const mapped = (titleMatched as EventPhotoRow[]).map(rowToPhoto);
     // Dedupe by photo id — a photo might match both the explicit tag and the
     // title pattern. Keep the explicitly-tagged version.
     const seen = new Set(photos.map((p) => p.id));
@@ -220,7 +234,7 @@ export async function createEventPhoto(input: {
             ${pub}, ${input.uploadedBy ?? null}, ${input.advertiserId ?? null})
     RETURNING *
   `;
-  return rowToPhoto(rows[0]);
+  return rowToPhoto(rows[0] as EventPhotoRow);
 }
 
 export async function deleteEventPhoto(id: number): Promise<boolean> {
@@ -246,7 +260,6 @@ export async function deleteEventPhotos(ids: number[]): Promise<number> {
 export async function deleteEventPhotosByMonth(monthKey: string): Promise<number> {
   await ensureEventPhotosSchema();
   const sql = getSql();
-  const startDate = `${monthKey}-01`;
   const rows = await sql`
     DELETE FROM event_photos WHERE TO_CHAR(event_date, 'YYYY-MM') = ${monthKey} RETURNING id
   `;
@@ -285,5 +298,5 @@ export async function updateEventPhoto(id: number, fields: {
     WHERE id = ${id}
     RETURNING *
   `;
-  return rows.length > 0 ? rowToPhoto(rows[0]) : null;
+  return rows.length > 0 ? rowToPhoto(rows[0] as EventPhotoRow) : null;
 }

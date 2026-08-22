@@ -5,7 +5,7 @@
 // inline edit all fields, single/bulk/folder delete.
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Trash2, Plus, ExternalLink, Upload, FolderOpen, Image as ImageIcon, ChevronDown, Folder, CheckSquare, Square, X } from 'lucide-react';
+import { Trash2, Plus, ExternalLink, Upload, FolderOpen, Image as ImageIcon, ChevronDown, Folder, CheckSquare, Square, MinusSquare, X } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
 import MonthPicker from './MonthPicker';
 
@@ -37,7 +37,6 @@ export default function AdminEventImagesPage() {
   const [photos, setPhotos] = useState<EventPhoto[] | null>(null);
   const [advertisers, setAdvertisers] = useState<PickerAdvertiser[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
@@ -108,7 +107,7 @@ export default function AdminEventImagesPage() {
 
   // Compress image client-side: max 2400px, JPEG 0.92
   const compressImage = (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if (!file.type.startsWith('image/')) { resolve(file); return; }
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -152,7 +151,11 @@ export default function AdminEventImagesPage() {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    // load() only touches state — safe inside effect, and we want it on mount + load-fn change
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+  }, [load]);
 
   // Advertisers populate the optional association pickers. A failure here is
   // non-fatal — the pickers just stay empty and photos upload unassociated.
@@ -385,7 +388,12 @@ export default function AdminEventImagesPage() {
 
   // --- Selection helpers ---
   const toggleSelect = (id: number) => {
-    setSelectedPhotos((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+    setSelectedPhotos((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
   };
   const toggleSelectAllInFolder = (photoIds: number[]) => {
     setSelectedPhotos((prev) => {
@@ -400,7 +408,7 @@ export default function AdminEventImagesPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">Admin</p>
           <PageTitle size="md">Event Images</PageTitle>
@@ -583,7 +591,11 @@ export default function AdminEventImagesPage() {
                     {/* Select all in folder */}
                     <button onClick={() => toggleSelectAllInFolder(folderPhotoIds)}
                       className="text-gray-400 hover:text-brand-600 p-1" title={allSelected ? 'Deselect all' : 'Select all'}>
-                      {allSelected ? <CheckSquare size={16} className="text-brand-600" /> : <Square size={16} />}
+                      {allSelected
+                        ? <CheckSquare size={16} className="text-brand-600" />
+                        : someSelected
+                          ? <MinusSquare size={16} className="text-brand-600" />
+                          : <Square size={16} />}
                     </button>
                     {/* Delete folder */}
                     <button onClick={() => handleDeleteFolder(group.key, group.label)} disabled={bulkDeleting}

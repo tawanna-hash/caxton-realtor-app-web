@@ -68,10 +68,6 @@ export const PATCH = withAdminTracking(async (req: Request) => {
   return NextResponse.json({ builderName, publicEnabled });
 });
 
-const deleteSchema = z.object({
-  builderName: z.string().trim().min(1).max(120),
-});
-
 export const DELETE = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureBuilderInventorySchema();

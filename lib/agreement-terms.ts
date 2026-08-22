@@ -286,9 +286,7 @@ export const TERMS_APP = ADVERTISING_TERMS;
  * but no longer affect the returned text.
  */
 export function termsForChannel(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for call-site compatibility
   _channel: AdChannel,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for call-site compatibility
   _publication?: string | null,
 ): string {
   return ADVERTISING_TERMS;

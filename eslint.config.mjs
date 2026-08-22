@@ -17,6 +17,22 @@ const eslintConfig = defineConfig([
     "resources/**",
     "scripts/generate-ios-*.mjs",
   ]),
+  // Treat _-prefixed identifiers as intentionally unused. Established Node/TS convention;
+  // eslint-config-next doesn't set this by default.
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

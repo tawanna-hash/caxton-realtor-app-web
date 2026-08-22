@@ -137,6 +137,11 @@ export default function EventGallery({ months }: Props) {
             className="max-w-[90vw] max-h-[85vh] relative"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Lightbox uses raw <img> so the viewport-sized image can auto-size to its
+                natural aspect ratio without a fixed width/height. next/image would either
+                force a stretch (fill) or a fixed intrinsic size, neither of which fits a
+                dynamic lightbox. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={photos[lightboxIndex].imageUrl}
               alt={photos[lightboxIndex].title}

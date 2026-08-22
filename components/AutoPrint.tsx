@@ -21,6 +21,8 @@ export default function AutoPrint() {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     if (params.get('print') !== '1') return;
+    // One-shot mount check for a URL query param — setShow(true) here is intentional.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShow(true);
   }, []);
 

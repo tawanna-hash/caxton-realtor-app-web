@@ -230,6 +230,10 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
           return (
             <div key={c.id} className="rounded-md border border-gray-200 bg-white overflow-hidden">
               <div className="aspect-[4/3] bg-gray-100 flex items-center justify-center">
+                {/* Admin-only creatives gallery from arbitrary blob URLs; next/image
+                    would need per-image intrinsic dimensions we don't track. Raw <img>
+                    is fine here — low-traffic surface, no LCP concern. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={c.blob_url}
                   alt={c.alt_text || c.advertiser_name}

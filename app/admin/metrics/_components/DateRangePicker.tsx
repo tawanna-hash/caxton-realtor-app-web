@@ -20,7 +20,6 @@ export function DateRangePicker({ value, onChange, disabled = false }: Props) {
       {OPTIONS.map((opt, idx) => {
         const isActive = opt.value === value;
         const isFirst = idx === 0;
-        const isLast = idx === OPTIONS.length - 1;
         return (
           <button
             key={opt.value}
