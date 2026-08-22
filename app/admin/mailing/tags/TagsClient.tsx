@@ -63,6 +63,7 @@ export default function TagsClient() {
   const [error, setError] = useState<string | null>(null);
   const [busyTag, setBusyTag] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<{ from: string; to: string } | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [creating, setCreating] = useState<string>('');
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
@@ -197,7 +198,83 @@ export default function TagsClient() {
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile card list. */}
+        <div className="sm:hidden divide-y divide-gray-100">
+          {visibleRows.length === 0 && !loading && (
+            <div className="px-4 py-6 text-center text-sm text-gray-500">No tags yet.</div>
+          )}
+          {visibleRows.map((r) => {
+            const isRenaming = renaming?.from === r.tag;
+            const isBusy = busyTag === r.tag;
+            return (
+              <div key={r.tag} className="px-4 py-3 space-y-2">
+                {isRenaming ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="text"
+                      value={renaming.to}
+                      onChange={(e) => setRenaming({ ...renaming, to: e.target.value })}
+                      className="rounded border border-gray-300 px-2 py-1 text-sm flex-1 min-w-[120px]"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') void doRename(r.tag, renaming.to);
+                        if (e.key === 'Escape') setRenaming(null);
+                      }}
+                    />
+                    <button
+                      onClick={() => void doRename(r.tag, renaming.to)}
+                      disabled={isBusy}
+                      className="rounded bg-brand-700 px-2 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                    >
+                      {isBusy ? 'Saving…' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => setRenaming(null)}
+                      className="rounded border border-gray-300 px-2 py-1 text-xs"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <TagChip tag={r.tag} />
+                    <span className="font-mono text-xs text-gray-400 break-all">{r.tag}</span>
+                  </div>
+                )}
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                  <dt className="text-gray-500 uppercase tracking-wider">Mailing</dt>
+                  <dd className="text-gray-800 text-right tabular-nums">{r.mailing_contacts.toLocaleString()}</dd>
+                  <dt className="text-gray-500 uppercase tracking-wider">Advertisers</dt>
+                  <dd className="text-gray-800 text-right tabular-nums">{r.advertisers.toLocaleString()}</dd>
+                  <dt className="text-gray-500 uppercase tracking-wider">Realtors</dt>
+                  <dd className="text-gray-800 text-right tabular-nums">{r.realtors.toLocaleString()}</dd>
+                  <dt className="text-gray-500 uppercase tracking-wider">Total</dt>
+                  <dd className="text-gray-900 text-right tabular-nums font-semibold">{r.total.toLocaleString()}</dd>
+                </dl>
+                {!isRenaming && (
+                  <div className="pt-1 flex gap-2 justify-end">
+                    <button
+                      onClick={() => setRenaming({ from: r.tag, to: r.tag })}
+                      disabled={isBusy}
+                      className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Rename
+                    </button>
+                    <button
+                      onClick={() => void doDelete(r.tag, r.total)}
+                      disabled={isBusy}
+                      className="rounded border border-red-200 px-2 py-1 text-xs text-red-700 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {isBusy ? 'Working…' : 'Delete'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="hidden sm:block overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-xs uppercase text-gray-500">
               <tr>
