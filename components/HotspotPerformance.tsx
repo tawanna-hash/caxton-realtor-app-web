@@ -88,7 +88,7 @@ export default function HotspotPerformance() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-[11px] text-gray-500 border-b border-gray-200">
-                    <th className="text-left font-medium pb-2">Advertiser</th>
+                    <th className="text-left font-medium pb-2">Partner</th>
                     <th className="text-right font-medium pb-2">Hotspots</th>
                     <th className="text-right font-medium pb-2">Clicks</th>
                   </tr>

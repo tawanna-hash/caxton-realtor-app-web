@@ -701,11 +701,11 @@ export function AgreementDrawer({
         </div>
       )}
 
-      {/* ── Advertiser Information ── */}
-      <Section title="Advertiser Information">
+      {/* ── Partner Information ── */}
+      <Section title="Partner Information">
         <Field label="Company Name *">
           <input value={form.company_name} onChange={(e) => upd('company_name', e.target.value)}
-            className={INPUT} placeholder="Advertiser company name" />
+            className={INPUT} placeholder="Partner company name" />
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Representative Name *">

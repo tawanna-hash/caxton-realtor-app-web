@@ -37,7 +37,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: 'Sales',
     links: [
-      { label: 'Advertisers',  href: '/admin/crm',           description: 'Accounts, contacts, share links' },
+      { label: 'Partners',     href: '/admin/crm',           description: 'Accounts, contacts, share links' },
       { label: 'Inquiries',    href: '/admin/ads/inquiries', description: 'Print / Digital / Email leads' },
       { label: 'Agreements',   href: '/admin/agreements',    description: 'Contracts, renewals & pipeline' },
       { label: 'Invoices',     href: '/admin/invoices',      description: 'Billable charges & payment status' },
@@ -80,7 +80,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
       { label: 'Scraper Hub', href: '/admin/content/scrapers', description: 'Run & monitor all scrapers' },
       { label: 'Promotions', href: '/admin/inventory/promotions', description: 'Builder offers & rate buydowns' },
-      { label: 'Advertiser Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility' },
+      { label: 'Partner Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility' },
       { label: 'SABOR Report', href: '/admin/content/saborreport', description: 'San Antonio MLS monthly report card' },
       { label: 'ABOR Report', href: '/admin/content/realtylinereport', description: 'Austin (ABOR) MLS monthly report card' },
       { label: 'Notifications', href: '/admin/notifications', description: 'Web push to subscribers' },

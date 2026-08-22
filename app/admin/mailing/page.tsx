@@ -161,8 +161,8 @@ export default async function MailingHubPage() {
       {/* KPI strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-3">
         <KpiCard label="Segments total"      value={counts.total}                       sub="all mailing segments" />
-        <KpiCard label="RealtyLine ATX Print" value={counts['realtyline-atx-print']}    sub="advertisers + REALTORS" accent="#301D5D" />
-        <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="advertisers + non-advertisers + manual" accent="#c2410c" />
+        <KpiCard label="RealtyLine ATX Print" value={counts['realtyline-atx-print']}    sub="partners + REALTORS" accent="#301D5D" />
+        <KpiCard label="Newsline SA Print"   value={counts['newsline-sa-print']}        sub="partners + non-partners + manual" accent="#c2410c" />
         <KpiCard label="ABOR Members"        value={sources.aborMembers}                sub="UnlockMLS holding"   accent="#6b7280" />
         <KpiCard label="SABOR Members"       value={sources.saborMembers}               sub="RAMCO holding"       accent="#ea580c" />
         <KpiCard label="App Subscribers"     value={sources.appSubscribers}             sub="newsletter signups"  accent="#ea580c" />

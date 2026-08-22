@@ -421,7 +421,7 @@ export default function OrdersTable() {
                   <th className="px-4 py-2 font-medium">Channel</th>
                   <th className="px-4 py-2 font-medium">Source</th>
                   <th className="px-4 py-2 font-medium">Status</th>
-                  <th className="px-4 py-2 font-medium">Advertiser</th>
+                  <th className="px-4 py-2 font-medium">Partner</th>
                   <th className="px-4 py-2 font-medium">Slot / size</th>
                   <th className="px-4 py-2 font-medium">Pub</th>
                   <th className="px-4 py-2 font-medium">Dates</th>

@@ -149,7 +149,7 @@ export default function AdminBuilderPagesPage() {
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">
             Admin
           </p>
-          <PageTitle size="md">Advertiser Pages</PageTitle>
+          <PageTitle size="md">Partner Pages</PageTitle>
           <p className="text-sm text-gray-600 font-light mt-2 max-w-2xl">
             Enable or disable individual builder (advertiser) public pages.
             Developers show their child builders as nested rows.
@@ -244,7 +244,7 @@ export default function AdminBuilderPagesPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-left text-gray-600">
             <tr>
-              <th className="px-4 py-3 font-medium">Builder / Advertiser</th>
+              <th className="px-4 py-3 font-medium">Builder / Partner</th>
               <th className="px-4 py-3 font-medium text-right">Active</th>
               <th className="px-4 py-3 font-medium text-right">Total</th>
               <th className="px-4 py-3 font-medium text-right">Public page</th>

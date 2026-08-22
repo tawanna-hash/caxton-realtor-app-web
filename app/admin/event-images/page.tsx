@@ -468,7 +468,7 @@ export default function AdminEventImagesPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Advertiser <span className="text-gray-400">(optional)</span>
+              Partner <span className="text-gray-400">(optional)</span>
             </label>
             <AdvertiserPicker advertisers={advertisers} value={newFolderAdvertiser} onChange={setNewFolderAdvertiser} />
           </div>
@@ -513,7 +513,7 @@ export default function AdminEventImagesPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Advertiser <span className="text-gray-400">(optional)</span>
+                  Partner <span className="text-gray-400">(optional)</span>
                 </label>
                 <AdvertiserPicker advertisers={advertisers} value={bulkAdvertiser} onChange={setBulkAdvertiser} />
                 <p className="mt-1 text-xs text-gray-400">Shown on that advertiser&apos;s public page.</p>
@@ -780,7 +780,7 @@ function AdvertiserPicker({
       {open && (
         <div className="absolute z-20 mt-1 w-full min-w-56 bg-white border border-gray-200 rounded-md shadow-lg">
           <input autoFocus type="text" value={query} onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search advertisers..."
+            placeholder="Search partners..."
             className="w-full border-b border-gray-200 px-3 py-2 text-xs focus:outline-none" />
           <ul className="max-h-56 overflow-y-auto py-1">
             <li>
@@ -799,7 +799,7 @@ function AdvertiserPicker({
             ))}
             {filtered.length === 0 && (
               <li className="px-3 py-2 text-xs text-gray-400">
-                {advertisers.length === 0 ? 'No advertisers available' : 'No matches'}
+                {advertisers.length === 0 ? 'No partners available' : 'No matches'}
               </li>
             )}
           </ul>

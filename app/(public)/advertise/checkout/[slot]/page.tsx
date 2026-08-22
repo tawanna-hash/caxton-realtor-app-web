@@ -28,7 +28,7 @@ export async function generateMetadata(ctx: RouteCtx): Promise<Metadata> {
   const { slot } = await ctx.params;
   const s = APP_AD_SLOTS.find((x) => x.slug === slot);
   return {
-    title: s ? `Book ${s.name} — RealtyLine Austin` : 'Advertiser Checkout',
+    title: s ? `Book ${s.name} — RealtyLine Austin` : 'Partner Checkout',
     robots: { index: false, follow: false },
   };
 }

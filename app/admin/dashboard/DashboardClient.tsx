@@ -74,7 +74,7 @@ function MarketCard({ snapshot }: { snapshot: MarketSnapshot }) {
         <span className="text-4xl font-bold tabular-nums text-gray-900">
           {fmtNumber(snapshot.advertiserCount)}
         </span>
-        <span className="text-sm text-gray-500">advertisers</span>
+        <span className="text-sm text-gray-500">partners</span>
       </div>
 
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">

@@ -396,7 +396,7 @@ export default function MoveInReadyGuideContent() {
           <code className="text-xs bg-white/60 px-1 py-0.5 rounded">
             status=&apos;expired&apos;
           </code>{' '}
-          — use the Advertiser Pages visibility toggle instead.
+          — use the Partner Pages visibility toggle instead.
         </div>
       </Section>
     </>

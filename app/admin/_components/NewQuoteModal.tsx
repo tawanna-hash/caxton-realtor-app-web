@@ -1111,7 +1111,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                                 <div>Preferred dates: <b>{line.preferredSendDates.join(', ')}</b></div>
                               )}
                               {(!line.preferredSendDates || line.preferredSendDates.length === 0) && (
-                                <div className="italic text-gray-500">Advertiser will pick dates</div>
+                                <div className="italic text-gray-500">Partner will pick dates</div>
                               )}
                             </>
                           )}

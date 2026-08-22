@@ -171,7 +171,7 @@ export function CampaignForm({ initial }: Props) {
       )}
 
       {/* Advertiser */}
-      <Field label="Advertiser name" required>
+      <Field label="Partner name" required>
         <input
           type="text"
           value={advertiserName}

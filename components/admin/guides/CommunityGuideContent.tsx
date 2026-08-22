@@ -494,7 +494,7 @@ export default function CommunityGuideContent() {
           imageUrls); tax rates are display strings (&quot;1.28%&quot;), not numbers;
           split school grades out of the name into the grades field; never
           remove the <code className="text-xs bg-white/60 px-1 py-0.5 rounded">rows.length &gt; 0</code> prune
-          guard; and hide a community via the Advertiser Pages visibility
+          guard; and hide a community via the Partner Pages visibility
           toggle, not status=&apos;expired&apos;.
         </div>
       </Section>

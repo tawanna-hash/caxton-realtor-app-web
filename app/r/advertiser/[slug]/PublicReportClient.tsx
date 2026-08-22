@@ -127,7 +127,7 @@ function Dashboard({
     <div className="min-h-screen bg-white">
       <div style={{ backgroundColor: theme.primaryColor }} className="text-white">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="text-sm font-medium">{theme.name} &middot; Advertiser Report</div>
+          <div className="text-sm font-medium">{theme.name} &middot; Partner Report</div>
           <div className="text-xs opacity-75">{advertiser.name}</div>
         </div>
       </div>

@@ -266,7 +266,7 @@ function AdminReportsPageInner() {
           {([
             { key: 'articles', label: 'Articles' },
             { key: 'events', label: 'Events' },
-            { key: 'advertisers', label: 'Advertisers' },
+            { key: 'advertisers', label: 'Partners' },
           ] as const).map((tab) => {
             const isActive = activeTab === tab.key;
             return (

@@ -166,7 +166,7 @@ export function InvoiceDrawer({
     >
       <Section title="Linkage">
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Advertiser">
+          <Field label="Partner">
             <select value={form.advertiser_id ?? ''} onChange={(e) => update('advertiser_id', e.target.value ? +e.target.value : null)} className={INPUT} disabled={!isCreate}>
               <option value="">— select —</option>
               {advertisers.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}

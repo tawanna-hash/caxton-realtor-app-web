@@ -10,7 +10,7 @@
 // in a new tab when set. The gated analytics report at
 // /r/advertiser/<slug> is separate and unchanged.
 //
-// Linked from the BottomNav "Advertisers" tab and the NavDrawer Content
+// Linked from the BottomNav "Partners" tab and the NavDrawer Content
 // section.
 
 import { ensureSchema, getSql } from '@/lib/db';
@@ -20,7 +20,7 @@ import { AdSlot } from '@/components/ads/AdSlot';
 import AdvertisersDirectoryClient from './AdvertisersDirectoryClient';
 
 export const metadata = {
-  title: 'Advertisers \u2014 Realty News Now',
+  title: 'Partners \u2014 Realty News Now',
   description:
     'Our advertising partners across RealtyLine Austin and Newsline San Antonio.',
 };
@@ -80,7 +80,7 @@ export default async function AdvertisersDirectoryPage() {
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
             Partners
           </p>
-          <PageTitle size="md">Advertisers</PageTitle>
+          <PageTitle size="md">Partners</PageTitle>
           <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
             The local businesses, builders, and brands who make our
             publication possible. Switch publications to see partners

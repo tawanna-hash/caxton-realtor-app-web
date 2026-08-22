@@ -1144,7 +1144,7 @@ export default function SignWizard({
         <div className="text-center space-y-4">
           <div className="text-5xl">📋</div>
           <h2 className="text-xl text-gray-900">
-            Welcome, {ag.rep_name ?? 'Advertiser'}
+            Welcome, {ag.rep_name ?? 'Partner'}
           </h2>
           <p className="text-sm text-gray-600 max-w-md mx-auto leading-relaxed">
             You&apos;re about to sign an <strong>Advertising Agreement</strong> with{' '}
@@ -1176,9 +1176,9 @@ export default function SignWizard({
         saving={saving}
       >
         <div className="space-y-4">
-          <Eyebrow>Advertiser Information</Eyebrow>
+          <Eyebrow>Partner Information</Eyebrow>
           <h2 className="text-lg text-gray-900">
-            Your advertiser details
+            Your partner details
           </h2>
           <p className="text-sm text-gray-600">
             Fill in or update your information below. Fields marked <span className="text-red-500">*</span> are required.

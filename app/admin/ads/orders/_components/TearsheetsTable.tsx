@@ -228,7 +228,7 @@ export default function TearsheetsTable() {
             <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
               <tr>
                 <th className="px-3 py-2">Issue</th>
-                <th className="px-3 py-2">Advertiser</th>
+                <th className="px-3 py-2">Partner</th>
                 <th className="px-3 py-2">Channel</th>
                 <th className="px-3 py-2">IO #</th>
                 <th className="px-3 py-2">File</th>

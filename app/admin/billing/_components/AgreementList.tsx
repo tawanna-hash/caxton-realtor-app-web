@@ -154,7 +154,7 @@ export function AgreementList({
     <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
       {/* Column header bar — shown once at the top, not per bucket */}
       <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
-        <div className="col-span-3">Advertiser</div>
+        <div className="col-span-3">Partner</div>
         <div className="col-span-2">Type &middot; Size</div>
         <div className="col-span-2">Term</div>
         <div className="col-span-2">Amount</div>

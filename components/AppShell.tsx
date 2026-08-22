@@ -59,7 +59,7 @@ const PUBLIC_DESKTOP_LINKS: { label: string; href: string }[] = [
   { label: 'Home',        href: '/dashboard' },
   { label: 'Calendar',    href: '/calendar' },
   { label: 'Builders / Developers',    href: '/builders' },
-  { label: 'Advertisers', href: '/advertisers' },
+  { label: 'Partners', href: '/advertisers' },
   { label: 'Resources',   href: '/resources' },
   { label: 'Subscribe',   href: '/subscribe' },
 ];

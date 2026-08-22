@@ -137,7 +137,7 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
           style={{ color: theme.accent }}
         >
           {filtered.length}{' '}
-          {filtered.length === 1 ? 'advertiser' : 'advertisers'}
+          {filtered.length === 1 ? 'partner' : 'partners'}
         </span>
       </div>
 
@@ -145,7 +145,7 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
         <div className="mb-4 space-y-3">
           {/* Search */}
           <label className="block">
-            <span className="sr-only">Search advertisers</span>
+            <span className="sr-only">Search partners</span>
             <div className="relative">
               <svg
                 aria-hidden="true"

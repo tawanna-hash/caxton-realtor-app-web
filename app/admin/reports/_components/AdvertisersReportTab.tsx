@@ -178,16 +178,16 @@ export default function AdvertisersReportTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900">Advertiser reports</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Partner reports</h2>
         <p className="text-sm text-gray-500 mt-0.5">
-          Pick an advertiser to see their live performance dashboard, or select multiple to email
-          their reports in one click. Only advertisers with a contact email can be sent to.
+          Pick a partner to see their live performance dashboard, or select multiple to email
+          their reports in one click. Only partners with a contact email can be sent to.
         </p>
       </div>
 
       {loadError ? (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          Failed to load advertisers: {loadError}
+          Failed to load partners: {loadError}
         </div>
       ) : null}
 
@@ -246,7 +246,7 @@ export default function AdvertisersReportTab() {
                 ))}
               </div>
             ) : advertisers.length === 0 ? (
-              <p className="p-4 text-sm text-gray-400">No advertisers yet.</p>
+              <p className="p-4 text-sm text-gray-400">No partners yet.</p>
             ) : (
               <ul className="divide-y divide-gray-100">
                 {advertisers.map((a) => {

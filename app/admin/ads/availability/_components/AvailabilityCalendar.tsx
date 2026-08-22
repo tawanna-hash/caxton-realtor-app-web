@@ -399,7 +399,7 @@ export default function AvailabilityCalendar() {
               <thead className="bg-gray-50 text-left text-xs font-medium uppercase text-gray-600">
                 <tr>
                   <th className="px-3 py-2">Channel</th>
-                  <th className="px-3 py-2">Advertiser</th>
+                  <th className="px-3 py-2">Partner</th>
                   <th className="px-3 py-2">Slot / size</th>
                   <th className="px-3 py-2">Window</th>
                   <th className="px-3 py-2">Status</th>

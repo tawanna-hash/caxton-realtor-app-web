@@ -329,7 +329,7 @@ function AdvertiserPicker({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">Advertiser</label>
+      <label className="block text-sm font-medium text-gray-700 mb-1">Partner</label>
       <select
         value={selectedId === null ? '' : String(selectedId)}
         onChange={(e) => handleSelect(e.target.value)}

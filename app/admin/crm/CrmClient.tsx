@@ -49,12 +49,12 @@ type Props = { initialRows: AdvertiserCrmRow[] };
 
 const STATUS_OPTIONS: { value: AdvertiserStatus; label: string; tone: string }[] = [
   { value: 'prospect',   label: 'Prospect',   tone: 'bg-sky-50 text-sky-700 border-sky-200' },
-  { value: 'advertiser', label: 'Advertiser', tone: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  { value: 'advertiser', label: 'Partner', tone: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   { value: 'archived',   label: 'Archived',   tone: 'bg-gray-100 text-gray-600 border-gray-200' },
 ];
 
 const TYPE_OPTIONS: { value: AdvertiserType; label: string }[] = [
-  { value: 'advertiser', label: 'Advertiser' },
+  { value: 'advertiser', label: 'Partner' },
   { value: 'client',     label: 'Client' },
   { value: 'prospect',   label: 'Prospect' },
   { value: 'mailing',    label: 'Mailing only' },
@@ -262,13 +262,13 @@ export default function CrmClient({ initialRows }: Props) {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
-            Admin · Advertisers
+            Admin · Partners
           </div>
           <PageTitle size="md">
-            Advertisers
+            Partners
           </PageTitle>
           <p className="text-sm text-gray-600 mt-1">
-            Unified workspace for advertiser relationships. Search, filter,
+            Unified workspace for partner relationships. Search, filter,
             copy share links, view analytics, and edit contact details, status,
             notes, and tags.
           </p>
@@ -286,7 +286,7 @@ export default function CrmClient({ initialRows }: Props) {
             onClick={() => setCreating(true)}
             className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
           >
-            New advertiser
+            New partner
           </button>
         </div>
       </div>
@@ -404,7 +404,7 @@ export default function CrmClient({ initialRows }: Props) {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             className="px-3 py-2 rounded-md border border-gray-300 text-sm"
-            aria-label="Sort advertisers"
+            aria-label="Sort partners"
           >
             {SORT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
@@ -415,7 +415,7 @@ export default function CrmClient({ initialRows }: Props) {
             <span className="text-lg leading-none">⚠</span>
             <div className="flex-1 min-w-0">
               <div className="font-semibold">
-                {recentBounces.length} advertiser{recentBounces.length === 1 ? '' : 's'} with recent bounce{recentBounces.length === 1 ? '' : 's'}
+                {recentBounces.length} partner{recentBounces.length === 1 ? '' : 's'} with recent bounce{recentBounces.length === 1 ? '' : 's'}
               </div>
               <div className="mt-1 text-xs text-red-800 truncate">
                 {recentBounces.slice(0, 5).map((r) => r.contact_email ?? r.name).filter(Boolean).join(', ')}
@@ -602,7 +602,7 @@ function CrmRow({
       <Link
         href={`/admin/reports?tab=advertisers&advertiserId=${row.id}`}
         className="px-2 py-1 text-xs rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
-        title="Open advertiser analytics dashboard"
+        title="Open partner analytics dashboard"
       >
         Open
       </Link>
@@ -1507,7 +1507,7 @@ function EditDrawer({
                 onClick={deleteAdvertiser}
                 disabled={deleting}
                 className="px-3 py-1.5 rounded-md border border-red-200 text-red-700 text-xs hover:bg-red-50 disabled:opacity-50"
-                title="Delete this advertiser (hotspots remain, links unlinked)"
+                title="Delete this partner (hotspots remain, links unlinked)"
               >
                 {deleting ? 'Deleting...' : 'Delete advertiser'}
               </button>
@@ -1753,7 +1753,7 @@ function CreateAdvertiserModal({
     >
       <div className="w-full max-w-lg rounded-md bg-white shadow-xl border border-gray-200">
         <div className="px-5 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">New advertiser</h2>
+          <h2 className="text-lg font-semibold text-gray-900">New partner</h2>
           <p className="text-xs text-gray-500 mt-0.5">Create the contact record. You can fill in everything else from the edit drawer afterwards.</p>
         </div>
         <div className="p-5 space-y-4">
@@ -1786,7 +1786,7 @@ function CreateAdvertiserModal({
                 </label>
               ))}
             </div>
-            <p className="text-[11px] text-gray-500">Check one or more publications this advertiser belongs to.</p>
+            <p className="text-[11px] text-gray-500">Check one or more publications this partner belongs to.</p>
           </div>
           <label className="block space-y-1">
             <span className="text-sm font-medium text-gray-700">Status</span>
@@ -1797,9 +1797,9 @@ function CreateAdvertiserModal({
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="prospect">Prospect</option>
-              <option value="advertiser">Advertiser</option>
+              <option value="advertiser">Partner</option>
             </select>
-            <p className="text-[11px] text-gray-500">Use Prospect for leads, Advertiser once they are active.</p>
+            <p className="text-[11px] text-gray-500">Use Prospect for leads, Partner once they are active.</p>
           </label>
           <label className="block space-y-1">
             <span className="text-sm font-medium text-gray-700">Contact email</span>

@@ -74,7 +74,7 @@ export default function KpiStrip() {
         href="/admin/magazines"
       />
       <Tile
-        label="Top advertiser · 30d"
+        label="Top partner · 30d"
         value={data?.topAdvertiser ? data.topAdvertiser.name : '—'}
         sub={data?.topAdvertiser ? `${fmt(data.topAdvertiser.clicks)} clicks` : 'No clicks yet'}
         loading={loading}
@@ -82,7 +82,7 @@ export default function KpiStrip() {
         valueSmall
       />
       <Tile
-        label="Linked advertisers"
+        label="Linked partners"
         value={fmt(data?.linkedAdvertisers)}
         sub="With ≥1 tracked hotspot"
         loading={loading}

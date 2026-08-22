@@ -162,7 +162,7 @@ export default function TagsClient() {
 
       <div className="rounded border border-gray-200 bg-white p-4 text-sm text-gray-600">
         <p>
-          Tags live on <strong>mailing_contacts</strong>, <strong>advertisers</strong>, and{' '}
+          Tags live on <strong>mailing_contacts</strong>, <strong>partners</strong>, and{' '}
           <strong>realtors</strong>. Renaming a tag updates every row that has it across all three tables.
           Deleting a tag strips it from every row but keeps the rows themselves.
         </p>
@@ -244,7 +244,7 @@ export default function TagsClient() {
                 <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
                   <dt className="text-gray-500 uppercase tracking-wider">Mailing</dt>
                   <dd className="text-gray-800 text-right tabular-nums">{r.mailing_contacts.toLocaleString()}</dd>
-                  <dt className="text-gray-500 uppercase tracking-wider">Advertisers</dt>
+                  <dt className="text-gray-500 uppercase tracking-wider">Partners</dt>
                   <dd className="text-gray-800 text-right tabular-nums">{r.advertisers.toLocaleString()}</dd>
                   <dt className="text-gray-500 uppercase tracking-wider">Realtors</dt>
                   <dd className="text-gray-800 text-right tabular-nums">{r.realtors.toLocaleString()}</dd>
@@ -280,7 +280,7 @@ export default function TagsClient() {
               <tr>
                 <th className="px-4 py-2 text-left">Tag</th>
                 <th className="px-4 py-2 text-right">Mailing</th>
-                <th className="px-4 py-2 text-right">Advertisers</th>
+                <th className="px-4 py-2 text-right">Partners</th>
                 <th className="px-4 py-2 text-right">Realtors</th>
                 <th className="px-4 py-2 text-right">Total</th>
                 <th className="px-4 py-2 text-right">Actions</th>

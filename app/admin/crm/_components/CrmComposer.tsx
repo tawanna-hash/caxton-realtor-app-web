@@ -65,7 +65,7 @@ const TOKENS = [
 
 const STATUS_OPTIONS: Array<{ value: AdvertiserStatus; label: string }> = [
   { value: 'prospect',   label: 'Prospect' },
-  { value: 'advertiser', label: 'Advertiser' },
+  { value: 'advertiser', label: 'Partner' },
   { value: 'archived',   label: 'Archived' },
 ];
 

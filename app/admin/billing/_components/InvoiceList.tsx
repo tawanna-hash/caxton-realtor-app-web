@@ -24,7 +24,7 @@ export function InvoiceList({
     <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
       <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
         <div className="col-span-2">Number</div>
-        <div className="col-span-3">Advertiser</div>
+        <div className="col-span-3">Partner</div>
         <div className="col-span-2">Total</div>
         <div className="col-span-2">Due</div>
         <div className="col-span-2">Payment</div>

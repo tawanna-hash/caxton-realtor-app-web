@@ -228,12 +228,12 @@ export default function AdminFeatureArticlesPage() {
           <h2 className="text-sm font-semibold text-gray-900">Filter</h2>
         </div>
         <div className="max-w-sm">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Advertiser</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Partner</label>
           <AdvertiserPicker
             advertisers={advertisers}
             value={filterAdvertiser}
             onChange={setFilterAdvertiser}
-            placeholder="All advertisers"
+            placeholder="All partners"
           />
         </div>
       </div>
@@ -328,10 +328,10 @@ export default function AdminFeatureArticlesPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Advertiser *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Partner *</label>
                 <AdvertiserPicker advertisers={advertisers} value={form.advertiserId}
                   onChange={(id) => setForm((f) => ({ ...f, advertiserId: id }))}
-                  placeholder="Select an advertiser" />
+                  placeholder="Select a partner" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
@@ -425,7 +425,7 @@ function AdvertiserPicker({
   advertisers,
   value,
   onChange,
-  placeholder = 'All advertisers',
+  placeholder = 'All partners',
 }: {
   advertisers: PickerAdvertiser[];
   value: number | null;
@@ -461,7 +461,7 @@ function AdvertiserPicker({
       {open && (
         <div className="absolute z-20 mt-1 w-full min-w-56 bg-white border border-gray-200 rounded-md shadow-lg">
           <input autoFocus type="text" value={query} onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search advertisers..."
+            placeholder="Search partners..."
             className="w-full border-b border-gray-200 px-3 py-2 text-xs focus:outline-none" />
           <ul className="max-h-56 overflow-y-auto py-1">
             <li>
@@ -480,7 +480,7 @@ function AdvertiserPicker({
             ))}
             {filtered.length === 0 && (
               <li className="px-3 py-2 text-xs text-gray-400">
-                {advertisers.length === 0 ? 'No advertisers available' : 'No matches'}
+                {advertisers.length === 0 ? 'No partners available' : 'No matches'}
               </li>
             )}
           </ul>

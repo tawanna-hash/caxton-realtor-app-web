@@ -57,7 +57,7 @@ const CATEGORIES: Array<{ value: Category; label: string }> = [
   { value: 'breaking_news', label: 'Breaking news' },
   { value: 'issue_release', label: 'Issue release' },
   { value: 'event_reminder', label: 'Event reminder' },
-  { value: 'advertiser_incentive', label: 'Advertiser incentive' },
+  { value: 'advertiser_incentive', label: 'Partner incentive' },
   { value: 'weekly_digest', label: 'Weekly digest' },
 ];
 

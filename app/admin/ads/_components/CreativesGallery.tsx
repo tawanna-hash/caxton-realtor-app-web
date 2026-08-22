@@ -172,7 +172,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
-                <span className="text-xs text-gray-600">Advertiser name *</span>
+                <span className="text-xs text-gray-600">Partner name *</span>
                 <input
                   type="text"
                   value={uploadAdvertiser}
@@ -243,7 +243,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
               {isEditing && draft ? (
                 <div className="p-3 text-sm space-y-2">
                   <label className="block">
-                    <span className="text-xs text-gray-600">Advertiser</span>
+                    <span className="text-xs text-gray-600">Partner</span>
                     <input
                       type="text"
                       value={draft.advertiser_name}
