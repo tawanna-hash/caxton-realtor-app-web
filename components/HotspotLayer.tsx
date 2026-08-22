@@ -190,11 +190,34 @@ export default function HotspotLayer({
         }
         if (h.type === 'email' && h.config.type === 'email') {
           const cfg = h.config;
-          const parts = [`mailto:${cfg.address}`];
+          // Normalize the address before building the mailto URI:
+          //   - trim leading/trailing whitespace (legacy rows sometimes have it)
+          //   - URL-encode the local + domain so Chrome's Gmail handler
+          //     (registered as `?extsrc=mailto&url=%s`) can pass the URI
+          //     through without losing the To. An unencoded address occasionally
+          //     causes Gmail's URL parser to drop the recipient and just
+          //     open compose with an empty To field.
+          const rawAddress = (cfg.address ?? '').trim();
+          if (!rawAddress) {
+            // No usable address on this row — render a non-interactive slot
+            // instead of a broken link that would open Gmail with no To.
+            return (
+              <div
+                key={h.id}
+                className={`${baseClass} opacity-40`}
+                style={style}
+                aria-label={ariaLabel}
+                aria-disabled="true"
+              />
+            );
+          }
+          const encodedAddress = encodeURIComponent(rawAddress);
           const q: string[] = [];
           if (cfg.subject) q.push(`subject=${encodeURIComponent(cfg.subject)}`);
           if (cfg.body) q.push(`body=${encodeURIComponent(cfg.body)}`);
-          const href = q.length ? `${parts[0]}?${q.join('&')}` : parts[0];
+          const href = q.length
+            ? `mailto:${encodedAddress}?${q.join('&')}`
+            : `mailto:${encodedAddress}`;
           return (
             <a
               key={h.id}
