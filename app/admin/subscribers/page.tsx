@@ -178,8 +178,8 @@ function SubscribersInner() {
         </button>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-md p-4 mb-4 flex items-center gap-3">
-        <div className="flex items-center gap-2 flex-1">
+      <div className="bg-white border border-gray-200 rounded-md p-4 mb-4 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 flex-1 min-w-[200px]">
           <input
             type="text"
             value={qInput}

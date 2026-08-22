@@ -305,9 +305,20 @@ export default function NavDrawer({
           </div>
         )}
 
-        {/* Sections */}
+        {/* Sections. When on an admin route, surface the Admin section first
+            so admin users don't have to scroll past Content/Subscribe/About to
+            reach their day-to-day nav. */}
         <div className="px-5 py-6 space-y-1">
-          {DRAWER_SECTIONS.map((section) => {
+          {(() => {
+            const onAdminRoute = isAdmin && pathname.startsWith('/admin');
+            const ordered = onAdminRoute
+              ? [
+                  ...DRAWER_SECTIONS.filter((s) => s.title === 'Admin'),
+                  ...DRAWER_SECTIONS.filter((s) => s.title !== 'Admin'),
+                ]
+              : DRAWER_SECTIONS;
+            return ordered;
+          })().map((section) => {
             if (section.adminOnly && !isAdmin) return null;
 
             const renderItem = (item: NavItem) => {

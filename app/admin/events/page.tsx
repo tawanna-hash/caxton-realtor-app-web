@@ -237,7 +237,7 @@ export default function EventsPage() {
         </div>
         {/* BUG-29: surface counts so admins can see at a glance how many events are loaded + how many are hidden */}
         {!loading && items.length > 0 && (
-          <div className="flex items-center gap-2 text-xs text-gray-600">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
             <span className="inline-flex items-center px-2 py-1 rounded-full bg-gray-100 border border-gray-200 font-medium">
               {items.length} total
             </span>

@@ -313,7 +313,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
           </Link>
         </div>
 
-        <div className="flex gap-1 border-b border-gray-200 mb-6">
+        <div className="flex gap-1 border-b border-gray-200 mb-6 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
           {(Object.keys(TAB_LABELS) as Tab[]).map((t) => {
             const active = t === tab;
             const count = counts?.[t];
@@ -322,7 +322,7 @@ export default function AdminInventoryList({ kind }: { kind: Kind }) {
                 key={t}
                 onClick={() => switchTab(t)}
                 className={
-                  'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ' +
+                  'shrink-0 whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ' +
                   (active
                     ? 'border-gray-900 text-gray-900'
                     : 'border-transparent text-gray-500 hover:text-gray-700')
