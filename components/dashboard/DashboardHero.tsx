@@ -13,8 +13,8 @@ const BRAND: Record<Pub, string> = {
 
 // Skyline assets per pub.
 const SKYLINE: Partial<Record<Pub, { src: string; w: number; h: number }>> = {
-  realtyline: { src: "/hero/austin-skyline.jpg", w: 2400, h: 1000 },
-  newsline: { src: "/hero/san-antonio-skyline.jpg", w: 2400, h: 1000 },
+  realtyline: { src: "/hero/austin-skyline.jpg", w: 1902, h: 1080 },
+  newsline: { src: "/hero/san-antonio-skyline.jpg", w: 1902, h: 1080 },
 };
 
 type Props = {
@@ -31,7 +31,7 @@ export function DashboardHero({ pub, eyebrow, headline }: Props) {
     <section
       aria-label={`${pub} dashboard hero`}
       className="relative w-full overflow-hidden"
-      style={{ backgroundColor: BRAND[pub], aspectRatio: "12 / 5" }}
+      style={{ backgroundColor: BRAND[pub], aspectRatio: "16 / 9" }}
     >
       <Image
         src={sky.src}
