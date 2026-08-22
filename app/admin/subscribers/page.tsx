@@ -162,7 +162,7 @@ function SubscribersInner() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
         <div>
           <PageTitle size="md">Subscribers</PageTitle>
           <p className="text-sm text-gray-500 mt-1">

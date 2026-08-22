@@ -38,7 +38,7 @@ export default async function SharedGmailQueuePage({ params }: PageProps) {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-      <div className="flex items-start justify-between gap-4 mb-6">
+      <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Gmail Event Review Queue</h1>
           <p className="text-sm text-gray-500 mt-1">

@@ -53,7 +53,7 @@ export default function EditCampaignPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <PageTitle size="md">Edit campaign</PageTitle>
           <p className="text-sm text-gray-700 mt-1">

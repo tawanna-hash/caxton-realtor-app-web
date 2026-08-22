@@ -262,7 +262,7 @@ export default function AgreementsClient({
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 space-y-5">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin · Agreements</div>
           <PageTitle size="md">Agreements</PageTitle>

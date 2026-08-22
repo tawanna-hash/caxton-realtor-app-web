@@ -350,7 +350,7 @@ function GmailEventsQueue() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
-      <div className="flex items-start justify-between gap-4 mb-6">
+      <div className="flex items-start justify-between gap-4 flex-wrap mb-6">
         <div>
           <PageTitle size="md">Gmail Event Review</PageTitle>
           <p className="text-sm text-gray-500 mt-1">
