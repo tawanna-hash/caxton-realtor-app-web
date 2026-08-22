@@ -245,6 +245,34 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
     }
   }, [magazine.id]);
 
+  // ----- Stable modal callbacks -----
+  // The modal is a controlled child. If we passed inline arrows to its
+  // props they would get a new identity every parent render (e.g. every
+  // 10s from the Saved-indicator ticker), which would refire any effect
+  // in the modal that depends on those callbacks. We stabilise them via
+  // useCallback + a ref for editingHotspot so the current row is always
+  // reachable without adding it to the deps.
+  const editingHotspotRef = useRef(editingHotspot);
+  useEffect(() => { editingHotspotRef.current = editingHotspot; }, [editingHotspot]);
+
+  const handleModalSave = useCallback(async (updates: Parameters<typeof updateHotspot>[1]) => {
+    const current = editingHotspotRef.current;
+    if (!current) return;
+    await updateHotspot(current.id, updates);
+    setEditingHotspot(null);
+  }, [updateHotspot]);
+
+  const handleModalClose = useCallback(() => {
+    setEditingHotspot(null);
+  }, []);
+
+  const handleModalRequestDelete = useCallback(() => {
+    const current = editingHotspotRef.current;
+    if (!current) return;
+    setPendingDeleteId(current.id);
+    setEditingHotspot(null);
+  }, []);
+
   // ============================================================
   // RENDER
   // ============================================================
@@ -398,20 +426,16 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
         </div>
       </div>
 
-      {/* ===== CONFIG MODAL ===== */}
+      {/* ===== CONFIG MODAL =====
+           Callbacks are stable across parent re-renders so the modal's
+           own effects/refs don't have to work around identity churn. */}
       {editingHotspot && (
         <HotspotConfigModal
           hotspot={editingHotspot}
           defaultPublication={magazine.publication}
-          onSave={async (updates) => {
-            await updateHotspot(editingHotspot.id, updates);
-            setEditingHotspot(null);
-          }}
-          onClose={() => setEditingHotspot(null)}
-          onRequestDelete={() => {
-            setPendingDeleteId(editingHotspot.id);
-            setEditingHotspot(null);
-          }}
+          onSave={handleModalSave}
+          onClose={handleModalClose}
+          onRequestDelete={handleModalRequestDelete}
         />
       )}
 

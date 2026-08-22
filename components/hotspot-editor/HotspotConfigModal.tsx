@@ -63,20 +63,28 @@ export default function HotspotConfigModal({
     setConfig(defaultConfigForType(newType));
   };
 
-  // Trap focus, restore on close, support escape.
+  // Trap focus once on mount, restore on unmount, support escape.
+  // We deliberately keep the dep array empty and read the latest onClose
+  // through a ref so parent re-renders (e.g. the 10s Saved-indicator
+  // ticker) don't refire this effect and steal focus from the input the
+  // editor is typing into. Prior behaviour was a `[onClose]` dep, which
+  // caused `dialogRef.current.focus()` to yank focus off the active
+  // input every parent render — the "jumpy fields" bug.
   const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
   useEffect(() => {
     const prevFocus = document.activeElement as HTMLElement | null;
     dialogRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
     };
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
       prevFocus?.focus?.();
     };
-  }, [onClose]);
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
