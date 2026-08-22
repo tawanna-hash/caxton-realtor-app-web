@@ -225,7 +225,8 @@ export default function SubscribersSection() {
             No subscribers yet.
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
                 <tr>
@@ -311,6 +312,73 @@ export default function SubscribersSection() {
               </tbody>
             </table>
           </div>
+          {/* Mobile card list. */}
+          <ul className="sm:hidden divide-y divide-gray-100">
+            {visible.map((sub) => (
+              <li
+                key={sub.id}
+                className={`px-4 py-3 space-y-2 ${sub.active ? '' : 'opacity-60'}`}
+              >
+                <div>
+                  <div className="font-medium text-gray-900 text-sm">
+                    {sub.realtorName || <span className="text-gray-500 italic">Anonymous</span>}
+                  </div>
+                  {sub.realtorEmail && (
+                    <div className="text-xs text-gray-500 break-all">{sub.realtorEmail}</div>
+                  )}
+                </div>
+                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                  <dt className="text-gray-500 uppercase tracking-wider">Device</dt>
+                  <dd className="text-gray-800 text-right break-words">
+                    {deviceLabel(sub.userAgent)}
+                    {sub.endpointHost && (
+                      <div className="text-gray-400">{sub.endpointHost}</div>
+                    )}
+                  </dd>
+                  <dt className="text-gray-500 uppercase tracking-wider">Subscribed</dt>
+                  <dd className="text-gray-800 text-right">{formatDate(sub.createdAt)}</dd>
+                  <dt className="text-gray-500 uppercase tracking-wider">Last seen</dt>
+                  <dd className="text-gray-800 text-right">{formatDate(sub.lastSeenAt)}</dd>
+                </dl>
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <select
+                    value={sub.market || ''}
+                    onChange={(e) => updateMarket(sub, e.target.value as Market)}
+                    disabled={!sub.active || busy === sub.id}
+                    className="text-xs border border-gray-300 rounded px-2 py-1 bg-white disabled:opacity-50"
+                  >
+                    <option value="" disabled>Unset</option>
+                    {(Object.keys(MARKET_LABELS) as Market[]).map((m) => (
+                      <option key={m} value={m}>{MARKET_LABELS[m]}</option>
+                    ))}
+                  </select>
+                  {sub.active ? (
+                    <div className="inline-flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => sendTest(sub)}
+                        disabled={busy === sub.id}
+                        className="text-xs font-medium text-brand-700 hover:underline disabled:opacity-50"
+                      >
+                        {busy === sub.id ? 'Sending…' : 'Send test'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => revoke(sub)}
+                        disabled={busy === sub.id}
+                        className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+                      >
+                        Revoke
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-400">Revoked</span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+          </>
         )}
       </div>
 
