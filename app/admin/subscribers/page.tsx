@@ -250,7 +250,7 @@ function SubscribersInner() {
             </div>
           )}
 
-          <div className="bg-white border border-gray-200 rounded-md overflow-x-auto">
+          <div className="bg-white border border-gray-200 rounded-md hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -312,6 +312,67 @@ function SubscribersInner() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile card list. */}
+          <ul className="sm:hidden bg-white border border-gray-200 rounded-md divide-y divide-gray-100">
+            {data.subscribers.length === 0 && (
+              <li className="px-4 py-8 text-center text-gray-400 text-sm">
+                No subscribers found.
+              </li>
+            )}
+            {data.subscribers.map((s) => (
+              <li
+                key={s.id}
+                onClick={() => router.push(`/admin/subscribers/${s.id}`)}
+                className="px-4 py-3 space-y-2 hover:bg-gray-50 cursor-pointer"
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${s.email}`}
+                    checked={mounted && selectedIds.has(s.id)}
+                    onChange={(e) => toggleRow(s.id, e.target.checked)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-1 shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900 text-sm truncate">
+                      {s.first_name} {s.last_name}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-600 mt-0.5">
+                      <span className="truncate">{s.email}</span>
+                      <EmailBadge
+                        status={s.email_verification_status ?? null}
+                        title={s.email_verification_reason ?? undefined}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs pl-6">
+                  <dt className="text-gray-500 uppercase tracking-wider">Market</dt>
+                  <dd className="text-gray-800 text-right">
+                    {PUBLICATION_LABELS[s.market as keyof typeof PUBLICATION_LABELS] || s.market}
+                  </dd>
+                  <dt className="text-gray-500 uppercase tracking-wider">License</dt>
+                  <dd className="text-gray-800 text-right">
+                    {s.license_type === 'TREC' && s.trec_license_number ? `TREC ${s.trec_license_number}` :
+                     s.license_type === 'NMLS' && s.nmls_license_number ? `NMLS ${s.nmls_license_number}` :
+                     s.license_type || '-'}
+                  </dd>
+                  <dt className="text-gray-500 uppercase tracking-wider">Mobile</dt>
+                  <dd className="text-gray-800 text-right">{formatPhone(s.mobile) || '-'}</dd>
+                  <dt className="text-gray-500 uppercase tracking-wider">City</dt>
+                  <dd className="text-gray-800 text-right">{s.city || '-'}</dd>
+                  <dt className="text-gray-500 uppercase tracking-wider">Joined</dt>
+                  <dd className="text-gray-800 text-right">{formatDate(s.created_at)}</dd>
+                  <dt className="text-gray-500 uppercase tracking-wider">Last open</dt>
+                  <dd className="text-gray-800 text-right">
+                    {formatDate(s.last_app_open_at || s.last_login_at)}
+                  </dd>
+                </dl>
+              </li>
+            ))}
+          </ul>
 
           <div className="mt-4">
             <Pager
