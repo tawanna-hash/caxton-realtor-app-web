@@ -245,7 +245,61 @@ export default function SuppressionsClient() {
 
       {pagerNode}
 
-      <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
+      {/* Mobile card list. */}
+      <div className="sm:hidden rounded-md border border-gray-200 bg-white divide-y divide-gray-100">
+        {loading && (
+          <div className="px-3 py-6 text-center text-sm text-gray-500">Loading…</div>
+        )}
+        {!loading && rows.length === 0 && (
+          <div className="px-3 py-6 text-center text-sm text-gray-500">
+            {debouncedQuery
+              ? `No suppressions match "${debouncedQuery}".`
+              : 'No suppressed emails yet. Deleting a Mailing Hub contact will tombstone them here.'}
+          </div>
+        )}
+        {!loading && rows.map((r) => {
+          const reasonLabel = REASON_LABEL[r.reason] ?? r.reason;
+          const reasonColor = REASON_COLOR[r.reason] ?? '#475569';
+          let when = '—';
+          try {
+            when = formatDate.format(new Date(r.suppressed_at));
+          } catch {
+            /* ignore */
+          }
+          return (
+            <div key={r.email} className="px-3 py-3 space-y-1.5">
+              <div className="font-mono text-[13px] text-gray-900 break-all">{r.email}</div>
+              <div className="text-sm text-gray-800">{snapshotName(r.source_snapshot) || '—'}</div>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                <dt className="text-gray-500 uppercase tracking-wider">Segment</dt>
+                <dd className="text-gray-800 text-right break-words">{snapshotSegment(r.source_snapshot) || '—'}</dd>
+                <dt className="text-gray-500 uppercase tracking-wider">Suppressed</dt>
+                <dd className="text-gray-800 text-right">{when}</dd>
+                <dt className="text-gray-500 uppercase tracking-wider">By</dt>
+                <dd className="text-gray-800 text-right break-words">{r.suppressed_by || '—'}</dd>
+              </dl>
+              <div className="pt-0.5 flex items-center justify-between gap-2">
+                <span
+                  className="inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold text-white"
+                  style={{ backgroundColor: reasonColor }}
+                >
+                  {reasonLabel}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => unsuppress(r.email)}
+                  disabled={busyEmail === r.email}
+                  className="inline-flex items-center px-2.5 py-1 rounded-md border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {busyEmail === r.email ? 'Lifting…' : 'Unsuppress'}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hidden sm:block overflow-x-auto rounded-md border border-gray-200 bg-white">
         <table className="min-w-full text-sm">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
