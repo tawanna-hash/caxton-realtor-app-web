@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { KPITile } from './KPITile';
+import { MetricList } from './MetricList';
 
 type Metrics = {
   totals: {
@@ -128,43 +129,17 @@ export function TrendingMetrics({ days }: { days: number }) {
                 No trending activity yet. Publish items and wait for events to ingest.
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-xs uppercase tracking-wider text-gray-500">
-                      <th className="pb-2">Headline</th>
-                      <th className="pb-2 text-right">Impr.</th>
-                      <th className="pb-2 text-right">Clicks</th>
-                      <th className="pb-2 text-right">CTR</th>
-                      <th className="pb-2 text-right">Dismissed</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.top_items.map((row) => (
-                      <tr
-                        key={row.trending_id}
-                        className="border-t border-gray-100 first:border-t-0"
-                      >
-                        <td className="py-2 text-gray-900 truncate max-w-xs">
-                          {row.headline}
-                        </td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.impressions.toLocaleString()}
-                        </td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.clicks.toLocaleString()}
-                        </td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.ctr}%
-                        </td>
-                        <td className="py-2 text-right tabular-nums text-gray-500">
-                          {row.dismissals.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <MetricList
+                rows={metrics.top_items}
+                keyFn={(row) => row.trending_id}
+                columns={[
+                  { header: 'Headline', role: 'primary', className: 'truncate max-w-xs', render: (row) => row.headline },
+                  { header: 'Impr.', role: 'secondary', className: 'tabular-nums text-gray-700', render: (row) => `${row.impressions.toLocaleString()} impr` },
+                  { header: 'Clicks', role: 'secondary', className: 'tabular-nums text-gray-700', render: (row) => `${row.clicks.toLocaleString()} clicks` },
+                  { header: 'CTR', role: 'secondary', className: 'tabular-nums text-gray-700', render: (row) => `${row.ctr}% CTR` },
+                  { header: 'Dismissed', role: 'value', render: (row) => row.dismissals.toLocaleString() },
+                ]}
+              />
             )}
           </div>
 
@@ -175,34 +150,16 @@ export function TrendingMetrics({ days }: { days: number }) {
             {metrics.by_market.length === 0 ? (
               <p className="text-sm text-gray-500">No data yet.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-xs uppercase tracking-wider text-gray-500">
-                      <th className="pb-2">Market</th>
-                      <th className="pb-2 text-right">Impr.</th>
-                      <th className="pb-2 text-right">Clicks</th>
-                      <th className="pb-2 text-right">CTR</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.by_market.map((row) => (
-                      <tr key={row.market} className="border-t border-gray-100 first:border-t-0">
-                        <td className="py-2 text-gray-900 capitalize">{row.market}</td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.impressions.toLocaleString()}
-                        </td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.clicks.toLocaleString()}
-                        </td>
-                        <td className="py-2 text-right tabular-nums text-gray-700">
-                          {row.ctr}%
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <MetricList
+                rows={metrics.by_market}
+                keyFn={(row) => row.market}
+                columns={[
+                  { header: 'Market', role: 'primary', render: (row) => <span className="capitalize">{row.market}</span> },
+                  { header: 'Impr.', role: 'secondary', className: 'tabular-nums text-gray-700', render: (row) => `${row.impressions.toLocaleString()} impr` },
+                  { header: 'Clicks', role: 'secondary', className: 'tabular-nums text-gray-700', render: (row) => `${row.clicks.toLocaleString()} clicks` },
+                  { header: 'CTR', role: 'value', render: (row) => `${row.ctr}%` },
+                ]}
+              />
             )}
           </div>
         </div>

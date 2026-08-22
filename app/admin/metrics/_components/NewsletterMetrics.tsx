@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { KPITile } from './KPITile';
+import { MetricList } from './MetricList';
 
 type Stats = {
   totals: { active: number; unsubscribed: number; total: number };
@@ -130,48 +131,30 @@ export function NewsletterMetrics({ days }: { days: number }) {
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
                 By source
               </p>
-              {stats.by_source.length === 0 ? (
-                <p className="text-sm text-gray-500">No data yet.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <tbody>
-                      {stats.by_source.map((row) => (
-                        <tr key={row.source} className="border-t border-gray-100 first:border-t-0">
-                          <td className="py-2 text-gray-900">{row.source}</td>
-                          <td className="py-2 text-right tabular-nums text-gray-700">
-                            {row.count.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <MetricList
+                rows={stats.by_source}
+                keyFn={(row) => row.source}
+                emptyMessage="No data yet."
+                columns={[
+                  { header: 'Source', role: 'primary', render: (row) => row.source },
+                  { header: 'Count', role: 'value', render: (row) => row.count.toLocaleString() },
+                ]}
+              />
             </div>
 
             <div className="bg-white border border-gray-200 rounded-md p-4">
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">
                 By publication
               </p>
-              {stats.by_publication.length === 0 ? (
-                <p className="text-sm text-gray-500">No data yet.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <tbody>
-                      {stats.by_publication.map((row) => (
-                        <tr key={row.publication} className="border-t border-gray-100 first:border-t-0">
-                          <td className="py-2 text-gray-900 capitalize">{row.publication}</td>
-                          <td className="py-2 text-right tabular-nums text-gray-700">
-                            {row.count.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <MetricList
+                rows={stats.by_publication}
+                keyFn={(row) => row.publication}
+                emptyMessage="No data yet."
+                columns={[
+                  { header: 'Publication', role: 'primary', render: (row) => <span className="capitalize">{row.publication}</span> },
+                  { header: 'Count', role: 'value', render: (row) => row.count.toLocaleString() },
+                ]}
+              />
             </div>
           </div>
         </div>

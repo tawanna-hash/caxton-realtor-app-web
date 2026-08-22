@@ -20,6 +20,7 @@ import { DateRangePicker } from './_components/DateRangePicker';
 import type { DaysOption } from './_components/DateRangePicker';
 import { NewsletterMetrics } from './_components/NewsletterMetrics';
 import { TrendingMetrics } from './_components/TrendingMetrics';
+import { MetricList } from './_components/MetricList';
 
 import PageTitle from '@/components/ui/PageTitle';
 export default function AdminMetricsPage() {
@@ -166,30 +167,15 @@ export default function AdminMetricsPage() {
               Show filter usage · last 7 days
             </h2>
             <div className="bg-white border border-gray-200 rounded-md p-4">
-              {metrics.filter_usage.length === 0 ? (
-                <p className="text-sm text-gray-500">No filter clicks yet.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-xs uppercase tracking-wide text-gray-500">
-                        <th className="text-left pb-2 font-medium">Filter</th>
-                        <th className="text-right pb-2 font-medium">Clicks</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metrics.filter_usage.map((f) => (
-                        <tr key={f.filter} className="border-t border-gray-100">
-                          <td className="py-2 text-gray-900 capitalize">{f.filter}</td>
-                          <td className="py-2 text-right tabular-nums text-gray-700">
-                            {f.total.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <MetricList
+                rows={metrics.filter_usage}
+                keyFn={(f) => f.filter}
+                emptyMessage="No filter clicks yet."
+                columns={[
+                  { header: 'Filter', role: 'primary', render: (f) => <span className="capitalize">{f.filter}</span> },
+                  { header: 'Clicks', role: 'value', render: (f) => f.total.toLocaleString() },
+                ]}
+              />
             </div>
           </section>
 
@@ -198,32 +184,16 @@ export default function AdminMetricsPage() {
               Top builders · last 30 days
             </h2>
             <div className="bg-white border border-gray-200 rounded-md p-4">
-              {metrics.top_builders.length === 0 ? (
-                <p className="text-sm text-gray-500">No builder chip clicks yet.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-xs uppercase tracking-wide text-gray-500">
-                        <th className="text-left pb-2 font-medium">Builder</th>
-                        <th className="text-left pb-2 font-medium">From</th>
-                        <th className="text-right pb-2 font-medium">Clicks</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metrics.top_builders.map((b, i) => (
-                        <tr key={`${b.builder_name}-${b.source_page}-${i}`} className="border-t border-gray-100">
-                          <td className="py-2 text-gray-900">{b.builder_name}</td>
-                          <td className="py-2 text-gray-500 text-xs">{b.source_page}</td>
-                          <td className="py-2 text-right tabular-nums text-gray-700">
-                            {b.total.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <MetricList
+                rows={metrics.top_builders}
+                keyFn={(b, i) => `${b.builder_name}-${b.source_page}-${i}`}
+                emptyMessage="No builder chip clicks yet."
+                columns={[
+                  { header: 'Builder', role: 'primary', render: (b) => b.builder_name },
+                  { header: 'From', role: 'secondary', className: 'text-gray-500 text-xs', render: (b) => b.source_page },
+                  { header: 'Clicks', role: 'value', render: (b) => b.total.toLocaleString() },
+                ]}
+              />
             </div>
           </section>
 
@@ -232,36 +202,18 @@ export default function AdminMetricsPage() {
               Top inventory cards · last 30 days
             </h2>
             <div className="bg-white border border-gray-200 rounded-md p-4">
-              {metrics.top_inventory.length === 0 ? (
-                <p className="text-sm text-gray-500">No card clicks yet.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-xs uppercase tracking-wide text-gray-500">
-                        <th className="text-left pb-2 font-medium">Builder</th>
-                        <th className="text-left pb-2 font-medium">Row</th>
-                        <th className="text-left pb-2 font-medium">Kind</th>
-                        <th className="text-left pb-2 font-medium">Dest</th>
-                        <th className="text-right pb-2 font-medium">Clicks</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metrics.top_inventory.map((row, i) => (
-                        <tr key={`${row.row_id}-${row.destination}-${i}`} className="border-t border-gray-100">
-                          <td className="py-2 text-gray-900">{row.builder_name}</td>
-                          <td className="py-2 text-gray-500 text-xs tabular-nums">#{row.row_id}</td>
-                          <td className="py-2 text-gray-700 capitalize">{row.kind}</td>
-                          <td className="py-2 text-gray-500 text-xs">{row.destination}</td>
-                          <td className="py-2 text-right tabular-nums text-gray-700">
-                            {row.total.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <MetricList
+                rows={metrics.top_inventory}
+                keyFn={(row, i) => `${row.row_id}-${row.destination}-${i}`}
+                emptyMessage="No card clicks yet."
+                columns={[
+                  { header: 'Builder', role: 'primary', render: (row) => row.builder_name },
+                  { header: 'Row', role: 'secondary', className: 'text-gray-500 text-xs tabular-nums', render: (row) => `#${row.row_id}` },
+                  { header: 'Kind', role: 'secondary', className: 'text-gray-700', render: (row) => <span className="capitalize">{row.kind}</span> },
+                  { header: 'Dest', role: 'secondary', className: 'text-gray-500 text-xs', render: (row) => row.destination },
+                  { header: 'Clicks', role: 'value', render: (row) => row.total.toLocaleString() },
+                ]}
+              />
             </div>
           </section>
 
@@ -270,36 +222,16 @@ export default function AdminMetricsPage() {
               Pill engagement · last {days} days
             </h2>
             <div className="bg-white border border-gray-200 rounded-md p-4">
-              {!metrics.pill_engagement || metrics.pill_engagement.length === 0 ? (
-                <p className="text-sm text-gray-500">No pill clicks recorded yet.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-xs uppercase tracking-wide text-gray-500">
-                        <th className="text-left pb-2 font-medium">Surface</th>
-                        <th className="text-left pb-2 font-medium">Action</th>
-                        <th className="text-right pb-2 font-medium">Clicks</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metrics.pill_engagement.map((row, i) => (
-                        <tr key={`${row.surface}-${row.action}-${i}`} className="border-t border-gray-100">
-                          <td className="py-2 text-gray-900">
-                            {SURFACE_LABELS[row.surface] ?? row.surface}
-                          </td>
-                          <td className="py-2 text-gray-700">
-                            {ACTION_LABELS[row.action] ?? row.action}
-                          </td>
-                          <td className="py-2 text-right tabular-nums text-gray-700">
-                            {row.total.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <MetricList
+                rows={metrics.pill_engagement ?? []}
+                keyFn={(row, i) => `${row.surface}-${row.action}-${i}`}
+                emptyMessage="No pill clicks recorded yet."
+                columns={[
+                  { header: 'Surface', role: 'primary', render: (row) => SURFACE_LABELS[row.surface] ?? row.surface },
+                  { header: 'Action', role: 'secondary', className: 'text-gray-700', render: (row) => ACTION_LABELS[row.action] ?? row.action },
+                  { header: 'Clicks', role: 'value', render: (row) => row.total.toLocaleString() },
+                ]}
+              />
             </div>
           </section>
 
@@ -308,34 +240,16 @@ export default function AdminMetricsPage() {
               Share channel breakdown · last {days} days
             </h2>
             <div className="bg-white border border-gray-200 rounded-md p-4">
-              {!metrics.share_breakdown || metrics.share_breakdown.length === 0 ? (
-                <p className="text-sm text-gray-500">No shares recorded yet.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-xs uppercase tracking-wide text-gray-500">
-                        <th className="text-left pb-2 font-medium">Surface</th>
-                        <th className="text-left pb-2 font-medium">Channel</th>
-                        <th className="text-right pb-2 font-medium">Shares</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metrics.share_breakdown.map((row, i) => (
-                        <tr key={`${row.surface}-${row.channel}-${i}`} className="border-t border-gray-100">
-                          <td className="py-2 text-gray-900">
-                            {SURFACE_LABELS[row.surface] ?? row.surface}
-                          </td>
-                          <td className="py-2 text-gray-700 capitalize">{row.channel}</td>
-                          <td className="py-2 text-right tabular-nums text-gray-700">
-                            {row.total.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <MetricList
+                rows={metrics.share_breakdown ?? []}
+                keyFn={(row, i) => `${row.surface}-${row.channel}-${i}`}
+                emptyMessage="No shares recorded yet."
+                columns={[
+                  { header: 'Surface', role: 'primary', render: (row) => SURFACE_LABELS[row.surface] ?? row.surface },
+                  { header: 'Channel', role: 'secondary', className: 'text-gray-700', render: (row) => <span className="capitalize">{row.channel}</span> },
+                  { header: 'Shares', role: 'value', render: (row) => row.total.toLocaleString() },
+                ]}
+              />
             </div>
           </section>
 
@@ -344,30 +258,15 @@ export default function AdminMetricsPage() {
               Listing inquiries · last {days} days
             </h2>
             <div className="bg-white border border-gray-200 rounded-md p-4">
-              {!metrics.listing_inquiries || metrics.listing_inquiries.length === 0 ? (
-                <p className="text-sm text-gray-500">No &ldquo;Request more information&rdquo; submissions yet.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-xs uppercase tracking-wide text-gray-500">
-                        <th className="text-left pb-2 font-medium">Builder</th>
-                        <th className="text-right pb-2 font-medium">Inquiries</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metrics.listing_inquiries.map((row, i) => (
-                        <tr key={`${row.builder_name}-${i}`} className="border-t border-gray-100">
-                          <td className="py-2 text-gray-900">{row.builder_name}</td>
-                          <td className="py-2 text-right tabular-nums text-gray-900 font-medium">
-                            {row.total.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+              <MetricList
+                rows={metrics.listing_inquiries ?? []}
+                keyFn={(row, i) => `${row.builder_name}-${i}`}
+                emptyMessage={'No "Request more information" submissions yet.'}
+                columns={[
+                  { header: 'Builder', role: 'primary', render: (row) => row.builder_name },
+                  { header: 'Inquiries', role: 'value', render: (row) => row.total.toLocaleString() },
+                ]}
+              />
             </div>
           </section>
 
