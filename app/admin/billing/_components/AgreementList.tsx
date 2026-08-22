@@ -65,6 +65,80 @@ function groupRows(rows: AgreementWithAdvertiser[]): Bucket[] {
   return ordered;
 }
 
+function AgreementRowLayout({ row: r, onOpen, onEmail }: {
+  row: AgreementWithAdvertiser;
+  onOpen: () => void;
+  onEmail?: () => void;
+}) {
+  const typeLabel = AG_TYPES.find((t) => t.value === r.type)?.label ?? r.type ?? '—';
+  const sizeFreq = `${r.ad_size ?? ''} ${r.frequency ? `· ${r.frequency}` : ''}`.trim();
+  const term = `${r.start_date ? new Date(r.start_date).toLocaleDateString() : '—'} → ${r.end_date ? new Date(r.end_date).toLocaleDateString() : '—'}`;
+
+  const advertiserCell = (
+    <button onClick={onOpen} className="text-left min-w-0 w-full sm:w-auto">
+      <div className="font-medium text-gray-900 truncate">{r.advertiser_name ?? r.company_name ?? '—'}</div>
+      <div className="text-xs text-gray-500 truncate">{r.rep_name ?? r.advertiser_email ?? ''}</div>
+    </button>
+  );
+
+  const actionsCell = (
+    <div className="flex items-center gap-1 flex-wrap">
+      <StatusPill value={r.status} options={AG_STATUS} />
+      <button
+        title="Send signing link email"
+        onClick={onEmail}
+        className="p-1 text-xs rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50"
+      >✉</button>
+      <a
+        href={`/api/admin/agreements/${r.id}/pdf`}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Download PDF"
+        className="p-1 text-xs rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50"
+      >PDF</a>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop */}
+      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-blue-50/40">
+        <div className="col-span-3">{advertiserCell}</div>
+        <button onClick={onOpen} className="col-span-2 text-left text-sm text-gray-700">
+          <div>{typeLabel}</div>
+          <div className="text-xs text-gray-500">{sizeFreq}</div>
+        </button>
+        <button onClick={onOpen} className="col-span-2 text-left text-sm text-gray-700">{term}</button>
+        <button
+          onClick={onOpen}
+          title={r.amount_cents == null ? 'No contract amount set yet — open the agreement to add one.' : undefined}
+          className={`col-span-2 text-left text-sm ${r.amount_cents == null ? 'text-amber-700' : 'text-gray-900'}`}
+        >
+          {r.amount_cents == null ? 'Not set' : formatCents(r.amount_cents)}
+        </button>
+        <button onClick={onOpen} className="col-span-1 text-left text-sm text-gray-700">{formatCents(r.invoiced_cents)}</button>
+        <div className="col-span-2">{actionsCell}</div>
+      </div>
+
+      {/* Mobile card */}
+      <div className="sm:hidden px-4 py-3 space-y-2 hover:bg-blue-50/40">
+        {advertiserCell}
+        <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+          <dt className="text-gray-500 uppercase tracking-wider">Type</dt>
+          <dd className="text-gray-800 text-right">{typeLabel}{sizeFreq && <span className="text-gray-500"> · {sizeFreq}</span>}</dd>
+          <dt className="text-gray-500 uppercase tracking-wider">Term</dt>
+          <dd className="text-gray-800 text-right">{term}</dd>
+          <dt className="text-gray-500 uppercase tracking-wider">Amount</dt>
+          <dd className={`text-right ${r.amount_cents == null ? 'text-amber-700' : 'text-gray-900'}`}>{r.amount_cents == null ? 'Not set' : formatCents(r.amount_cents)}</dd>
+          <dt className="text-gray-500 uppercase tracking-wider">Invoiced</dt>
+          <dd className="text-gray-800 text-right">{formatCents(r.invoiced_cents)}</dd>
+        </dl>
+        {actionsCell}
+      </div>
+    </>
+  );
+}
+
 export function AgreementList({
   rows, onOpen, onEmail,
 }: {
@@ -79,7 +153,7 @@ export function AgreementList({
   return (
     <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
       {/* Column header bar — shown once at the top, not per bucket */}
-      <div className="grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
+      <div className="hidden sm:grid grid-cols-12 gap-3 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
         <div className="col-span-3">Advertiser</div>
         <div className="col-span-2">Type &middot; Size</div>
         <div className="col-span-2">Term</div>
@@ -100,45 +174,12 @@ export function AgreementList({
 
           <div className="divide-y divide-gray-100">
             {b.rows.map((r) => (
-              <div key={r.id} className="grid grid-cols-12 gap-3 px-4 py-3 items-center hover:bg-blue-50/40">
-                <button onClick={() => onOpen(r)} className="col-span-3 text-left min-w-0">
-                  <div className="font-medium text-gray-900 truncate">{r.advertiser_name ?? r.company_name ?? '—'}</div>
-                  <div className="text-xs text-gray-500 truncate">{r.rep_name ?? r.advertiser_email ?? ''}</div>
-                </button>
-                <button onClick={() => onOpen(r)} className="col-span-2 text-left text-sm text-gray-700">
-                  <div>{AG_TYPES.find((t) => t.value === r.type)?.label ?? r.type ?? '—'}</div>
-                  <div className="text-xs text-gray-500">{r.ad_size ?? ''} {r.frequency ? `· ${r.frequency}` : ''}</div>
-                </button>
-                <button onClick={() => onOpen(r)} className="col-span-2 text-left text-sm text-gray-700">
-                  {r.start_date ? new Date(r.start_date).toLocaleDateString() : '—'}
-                  {' → '}
-                  {r.end_date ? new Date(r.end_date).toLocaleDateString() : '—'}
-                </button>
-                {/* BUG-39: disambiguate "—" (no contract amount set) from $0.00 invoiced. */}
-                <button
-                  onClick={() => onOpen(r)}
-                  title={r.amount_cents == null ? 'No contract amount set yet — open the agreement to add one.' : undefined}
-                  className={`col-span-2 text-left text-sm ${r.amount_cents == null ? 'text-amber-700' : 'text-gray-900'}`}
-                >
-                  {r.amount_cents == null ? 'Not set' : formatCents(r.amount_cents)}
-                </button>
-                <button onClick={() => onOpen(r)} className="col-span-1 text-left text-sm text-gray-700">{formatCents(r.invoiced_cents)}</button>
-                <div className="col-span-2 flex items-center gap-1 flex-wrap">
-                  <StatusPill value={r.status} options={AG_STATUS} />
-                  <button
-                    title="Send signing link email"
-                    onClick={() => onEmail?.(r)}
-                    className="p-1 text-xs rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50"
-                  >✉</button>
-                  <a
-                    href={`/api/admin/agreements/${r.id}/pdf`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Download PDF"
-                    className="p-1 text-xs rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50"
-                  >PDF</a>
-                </div>
-              </div>
+              <AgreementRowLayout
+                key={r.id}
+                row={r}
+                onOpen={() => onOpen(r)}
+                onEmail={onEmail ? () => onEmail(r) : undefined}
+              />
             ))}
           </div>
         </div>

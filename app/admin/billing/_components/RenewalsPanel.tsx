@@ -54,7 +54,7 @@ export function RenewalsPanel({
 
       {activeTab === 'expiring' && (
         <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
-          <div className="grid grid-cols-12 gap-2 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
+          <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
             <div className="col-span-2">Client</div>
             <div className="col-span-2">Email</div>
             <div className="col-span-2">Company</div>
@@ -71,25 +71,57 @@ export function RenewalsPanel({
               {expiringSoon.map((r) => {
                 const days = getDaysUntil(r.exp_date ?? r.end_date);
                 return (
-                  <div key={r.id} className="grid grid-cols-12 gap-2 px-4 py-3 items-center hover:bg-blue-50/30">
-                    <button onClick={() => onOpen(r)} className="col-span-2 text-left text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}</button>
-                    <div className="col-span-2 text-xs text-gray-600 truncate">{r.advertiser_email ?? '—'}</div>
-                    <div className="col-span-2 text-xs text-gray-600 truncate">{r.company_name ?? '—'}</div>
-                    <div className="col-span-1 text-xs text-gray-600">{r.ad_size ?? '—'}</div>
-                    <div className="col-span-1 text-xs text-gray-700">{r.ad_rate_cents != null ? `$${(r.ad_rate_cents / 100).toFixed(0)}` : '—'}</div>
-                    <div className="col-span-1 text-xs text-gray-600">{r.exp_date ? humanDate(r.exp_date) : '—'}</div>
-                    <div className="col-span-1"><DaysBadge days={days} /></div>
-                    <div className="col-span-1"><StatusPill value={r.status} options={AG_STATUS} /></div>
-                    <div className="col-span-1 flex gap-1 justify-end">
-                      <button
-                        className="px-2 py-1 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
-                        title="Send renewal email"
-                        onClick={() => onSendRenewal?.(r)}
-                      >Email</button>
-                      <button
-                        className="px-2 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
-                        onClick={() => onRenew(r)}
-                      >Renew</button>
+                  <div key={r.id} className="hover:bg-blue-50/30">
+                    {/* Desktop */}
+                    <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-3 items-center">
+                      <button onClick={() => onOpen(r)} className="col-span-2 text-left text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}</button>
+                      <div className="col-span-2 text-xs text-gray-600 truncate">{r.advertiser_email ?? '—'}</div>
+                      <div className="col-span-2 text-xs text-gray-600 truncate">{r.company_name ?? '—'}</div>
+                      <div className="col-span-1 text-xs text-gray-600">{r.ad_size ?? '—'}</div>
+                      <div className="col-span-1 text-xs text-gray-700">{r.ad_rate_cents != null ? `$${(r.ad_rate_cents / 100).toFixed(0)}` : '—'}</div>
+                      <div className="col-span-1 text-xs text-gray-600">{r.exp_date ? humanDate(r.exp_date) : '—'}</div>
+                      <div className="col-span-1"><DaysBadge days={days} /></div>
+                      <div className="col-span-1"><StatusPill value={r.status} options={AG_STATUS} /></div>
+                      <div className="col-span-1 flex gap-1 justify-end">
+                        <button
+                          className="px-2 py-1 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          title="Send renewal email"
+                          onClick={() => onSendRenewal?.(r)}
+                        >Email</button>
+                        <button
+                          className="px-2 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                          onClick={() => onRenew(r)}
+                        >Renew</button>
+                      </div>
+                    </div>
+                    {/* Mobile card */}
+                    <div className="sm:hidden px-4 py-3 space-y-2">
+                      <button onClick={() => onOpen(r)} className="text-left w-full">
+                        <div className="text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}</div>
+                        <div className="text-xs text-gray-500 truncate">{r.advertiser_email ?? '—'}{r.company_name ? ` · ${r.company_name}` : ''}</div>
+                      </button>
+                      <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                        <dt className="text-gray-500 uppercase tracking-wider">Size</dt>
+                        <dd className="text-gray-800 text-right">{r.ad_size ?? '—'}</dd>
+                        <dt className="text-gray-500 uppercase tracking-wider">Rate</dt>
+                        <dd className="text-gray-800 text-right">{r.ad_rate_cents != null ? `$${(r.ad_rate_cents / 100).toFixed(0)}` : '—'}</dd>
+                        <dt className="text-gray-500 uppercase tracking-wider">Exp</dt>
+                        <dd className="text-gray-800 text-right">{r.exp_date ? humanDate(r.exp_date) : '—'}</dd>
+                        <dt className="text-gray-500 uppercase tracking-wider">Days</dt>
+                        <dd className="text-right"><DaysBadge days={days} /></dd>
+                        <dt className="text-gray-500 uppercase tracking-wider">Status</dt>
+                        <dd className="text-right"><StatusPill value={r.status} options={AG_STATUS} /></dd>
+                      </dl>
+                      <div className="flex gap-1 justify-end">
+                        <button
+                          className="px-2 py-1 text-xs rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          onClick={() => onSendRenewal?.(r)}
+                        >Email</button>
+                        <button
+                          className="px-2 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                          onClick={() => onRenew(r)}
+                        >Renew</button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -101,7 +133,7 @@ export function RenewalsPanel({
 
       {activeTab === 'all_renewals' && (
         <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
-          <div className="grid grid-cols-12 gap-2 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
+          <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
             <div className="col-span-2">Client</div>
             <div className="col-span-2">Email</div>
             <div className="col-span-2">Company</div>
@@ -114,14 +146,34 @@ export function RenewalsPanel({
             ? <div className="p-8 text-center text-sm text-gray-500">No renewals yet.</div>
             : <div className="divide-y divide-gray-100">
               {allRenewals.map((r) => (
-                <button key={r.id} onClick={() => onOpen(r)} className="w-full grid grid-cols-12 gap-2 px-4 py-3 text-left items-center hover:bg-blue-50/30">
-                  <div className="col-span-2 text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}</div>
-                  <div className="col-span-2 text-xs text-gray-600 truncate">{r.advertiser_email ?? '—'}</div>
-                  <div className="col-span-2 text-xs text-gray-600 truncate">{r.company_name ?? '—'}</div>
-                  <div className="col-span-1 text-xs text-gray-600">{r.ad_size ?? '—'}</div>
-                  <div className="col-span-2 text-xs text-gray-700">{r.ad_rate_cents != null ? `$${(r.ad_rate_cents / 100).toFixed(0)}/mo` : '—'}</div>
-                  <div className="col-span-2 text-xs text-gray-600">{r.signed_at ? new Date(r.signed_at).toLocaleDateString() : '—'}</div>
-                  <div className="col-span-1"><StatusPill value={r.status} options={AG_STATUS} /></div>
+                <button key={r.id} onClick={() => onOpen(r)} className="w-full text-left hover:bg-blue-50/30 block">
+                  {/* Desktop */}
+                  <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-3 items-center">
+                    <div className="col-span-2 text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}</div>
+                    <div className="col-span-2 text-xs text-gray-600 truncate">{r.advertiser_email ?? '—'}</div>
+                    <div className="col-span-2 text-xs text-gray-600 truncate">{r.company_name ?? '—'}</div>
+                    <div className="col-span-1 text-xs text-gray-600">{r.ad_size ?? '—'}</div>
+                    <div className="col-span-2 text-xs text-gray-700">{r.ad_rate_cents != null ? `$${(r.ad_rate_cents / 100).toFixed(0)}/mo` : '—'}</div>
+                    <div className="col-span-2 text-xs text-gray-600">{r.signed_at ? new Date(r.signed_at).toLocaleDateString() : '—'}</div>
+                    <div className="col-span-1"><StatusPill value={r.status} options={AG_STATUS} /></div>
+                  </div>
+                  {/* Mobile card */}
+                  <div className="sm:hidden px-4 py-3 space-y-2">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}</div>
+                      <div className="text-xs text-gray-500 truncate">{r.advertiser_email ?? '—'}{r.company_name ? ` · ${r.company_name}` : ''}</div>
+                    </div>
+                    <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                      <dt className="text-gray-500 uppercase tracking-wider">Size</dt>
+                      <dd className="text-gray-800 text-right">{r.ad_size ?? '—'}</dd>
+                      <dt className="text-gray-500 uppercase tracking-wider">Rate</dt>
+                      <dd className="text-gray-800 text-right">{r.ad_rate_cents != null ? `$${(r.ad_rate_cents / 100).toFixed(0)}/mo` : '—'}</dd>
+                      <dt className="text-gray-500 uppercase tracking-wider">Signed</dt>
+                      <dd className="text-gray-800 text-right">{r.signed_at ? new Date(r.signed_at).toLocaleDateString() : '—'}</dd>
+                      <dt className="text-gray-500 uppercase tracking-wider">Status</dt>
+                      <dd className="text-right"><StatusPill value={r.status} options={AG_STATUS} /></dd>
+                    </dl>
+                  </div>
                 </button>
               ))}
             </div>
@@ -131,7 +183,7 @@ export function RenewalsPanel({
 
       {activeTab === 'reminders' && (
         <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
-          <div className="grid grid-cols-12 gap-2 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
+          <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-2 text-xs uppercase tracking-wider text-gray-500 border-b border-gray-200 bg-gray-50">
             <div className="col-span-2">Client</div>
             <div className="col-span-2">Company</div>
             <div className="col-span-1">Rate</div>
@@ -153,15 +205,29 @@ export function RenewalsPanel({
                     ? 'text-amber-600'
                     : 'text-gray-600';
                 return (
-                  <div key={r.id} className="grid grid-cols-12 gap-2 px-4 py-3 items-start hover:bg-gray-50/40">
-                    <div className="col-span-2 text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}</div>
-                    <div className="col-span-2 text-xs text-gray-600 truncate">{r.company_name ?? '—'}</div>
-                    <div className="col-span-1 text-xs text-gray-700">{r.ad_rate_cents != null ? `$${(r.ad_rate_cents / 100).toFixed(0)}` : '—'}</div>
-                    <div className="col-span-1 text-xs text-gray-600">{r.exp_date ? humanDate(r.exp_date) : '—'}</div>
-                    <div className="col-span-1"><DaysBadge days={daysLeft} /></div>
-                    <div className={`col-span-2 text-xs ${remindUrgency}`}>{r.remind_date ? humanDate(r.remind_date) : '—'}</div>
-                    <div className="col-span-1"><ReminderStatusBadge status={r.status} /></div>
-                    <div className="col-span-2 flex flex-col gap-1 items-end">
+                  <div key={r.id} className="flex flex-col space-y-2 sm:space-y-0 sm:grid sm:grid-cols-12 sm:gap-2 px-4 py-3 sm:items-start hover:bg-gray-50/40">
+                    <div className="sm:col-span-2 text-sm font-medium text-gray-900 truncate">{r.rep_name ?? '—'}{r.company_name && <span className="sm:hidden text-xs text-gray-500 font-normal"> · {r.company_name}</span>}</div>
+                    <div className="hidden sm:block sm:col-span-2 text-xs text-gray-600 truncate">{r.company_name ?? '—'}</div>
+                    <div className="sm:hidden">
+                      <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                        <dt className="text-gray-500 uppercase tracking-wider">Rate</dt>
+                        <dd className="text-gray-800 text-right">{r.ad_rate_cents != null ? `$${(r.ad_rate_cents / 100).toFixed(0)}` : '—'}</dd>
+                        <dt className="text-gray-500 uppercase tracking-wider">Expires</dt>
+                        <dd className="text-gray-800 text-right">{r.exp_date ? humanDate(r.exp_date) : '—'}</dd>
+                        <dt className="text-gray-500 uppercase tracking-wider">Days left</dt>
+                        <dd className="text-right"><DaysBadge days={daysLeft} /></dd>
+                        <dt className="text-gray-500 uppercase tracking-wider">Remind on</dt>
+                        <dd className={`text-right ${remindUrgency}`}>{r.remind_date ? humanDate(r.remind_date) : '—'}</dd>
+                        <dt className="text-gray-500 uppercase tracking-wider">Status</dt>
+                        <dd className="text-right"><ReminderStatusBadge status={r.status} /></dd>
+                      </dl>
+                    </div>
+                    <div className="hidden sm:block sm:col-span-1 text-xs text-gray-700">{r.ad_rate_cents != null ? `$${(r.ad_rate_cents / 100).toFixed(0)}` : '—'}</div>
+                    <div className="hidden sm:block sm:col-span-1 text-xs text-gray-600">{r.exp_date ? humanDate(r.exp_date) : '—'}</div>
+                    <div className="hidden sm:block sm:col-span-1"><DaysBadge days={daysLeft} /></div>
+                    <div className={`hidden sm:block sm:col-span-2 text-xs ${remindUrgency}`}>{r.remind_date ? humanDate(r.remind_date) : '—'}</div>
+                    <div className="hidden sm:block sm:col-span-1"><ReminderStatusBadge status={r.status} /></div>
+                    <div className="sm:col-span-2 flex flex-col gap-1 items-end">
                       {noteId === r.id ? (
                         <div className="w-full space-y-1">
                           <textarea

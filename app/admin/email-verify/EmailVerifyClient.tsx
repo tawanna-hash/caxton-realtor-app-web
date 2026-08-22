@@ -544,7 +544,7 @@ function BulkPanel() {
 
       {response && (
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <BulkKpi label="Valid" value={response.summary.valid} tone="emerald" />
             <BulkKpi label="Pending" value={response.summary.pending} tone="amber" />
             <BulkKpi label="Invalid" value={response.summary.invalid} tone="red" />

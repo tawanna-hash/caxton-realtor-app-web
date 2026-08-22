@@ -290,6 +290,7 @@ export function CampaignForm({ initial }: Props) {
           {selectedCreative && (
             <div className="rounded-md border border-gray-200 p-2 bg-white">
               <p className="text-xs text-gray-600 mb-1">Selected creative:</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={selectedCreative.blob_url}
                 alt={selectedCreative.alt_text || ''}
@@ -326,7 +327,7 @@ export function CampaignForm({ initial }: Props) {
       </div>
 
       {/* Price */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Field label="Price total ($)">
           <input
             type="number"

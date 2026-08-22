@@ -727,7 +727,7 @@ export function AgreementDrawer({
               className={INPUT} placeholder="Street address" />
           </Field>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Field label="City" className="col-span-1">
             <input value={form.city} onChange={(e) => upd('city', e.target.value)} className={INPUT} placeholder="City" />
           </Field>

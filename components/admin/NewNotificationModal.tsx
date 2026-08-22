@@ -274,7 +274,7 @@ export default function NewNotificationModal({ onClose, onSent, stats, existing 
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Audience</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {([
                     { v: 'all', label: `All (${stats.total})` },
                     { v: 'austin', label: `Austin (${stats.austin})` },
