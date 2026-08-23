@@ -12,7 +12,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { PublicHotspot, HotspotType } from '@/lib/hotspots';
+import type { PublicHotspot } from '@/lib/hotspots';
+import { TYPE_LABELS, TYPE_ICONS } from '@/lib/hotspot-editor-helpers';
 
 // ------- Session id (matches HotspotLayer's cookie) -----------------------
 const SESSION_COOKIE = 'mz_session';
@@ -51,20 +52,6 @@ function trackClick(hotspotId: number): void {
     keepalive: true,
   }).catch(() => { /* noop */ });
 }
-
-// Per-type icon + human label. Kept in one place so the panel stays
-// consistent with what a reader is about to see when they tap.
-const TYPE_META: Record<HotspotType, { icon: string; label: string }> = {
-  link:   { icon: '🔗', label: 'Link' },
-  video:  { icon: '🎬', label: 'Video' },
-  image:  { icon: '🖼️', label: 'Gallery' },
-  phone:  { icon: '📞', label: 'Call' },
-  email:  { icon: '✉️', label: 'Email' },
-  form:   { icon: '📝', label: 'Form' },
-  mls:    { icon: '🏠', label: 'MLS' },
-  audio:  { icon: '🔊', label: 'Audio' },
-  reveal: { icon: '🎁', label: 'Reveal' },
-};
 
 // Extract a short, human-readable secondary line for the row.
 function secondaryLine(h: PublicHotspot): string | null {
@@ -236,17 +223,18 @@ export default function ReaderLinksPanel({ hotspots, brandColor }: ReaderLinksPa
 }
 
 function LinkRow({ hotspot, onOpen }: { hotspot: PublicHotspot; onOpen: () => void }) {
-  const meta = TYPE_META[hotspot.type];
+  const icon = TYPE_ICONS[hotspot.type];
+  const label = TYPE_LABELS[hotspot.type];
   const secondary = secondaryLine(hotspot);
   const action = actionFor(hotspot);
 
   const commonInner = (
     <>
-      <span className="text-lg leading-none shrink-0" aria-hidden>{meta.icon}</span>
+      <span className="text-lg leading-none shrink-0" aria-hidden>{icon}</span>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 justify-between">
           <span className="text-xs font-semibold uppercase tracking-wider text-gray-600">
-            {meta.label}
+            {label}
           </span>
         </div>
         {hotspot.label && (

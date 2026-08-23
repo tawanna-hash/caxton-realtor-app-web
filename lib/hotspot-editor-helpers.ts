@@ -52,6 +52,21 @@ export const TYPE_LABELS: Record<HotspotType, string> = {
   reveal: 'Reveal',
 };
 
+/** Short emoji icon per type. Used in the reader links panel and any small
+ *  chip UI where a full label would be too wide. Kept alongside TYPE_LABELS
+ *  so the editor and reader stay in visual sync. */
+export const TYPE_ICONS: Record<HotspotType, string> = {
+  link:   '🔗',
+  video:  '🎬',
+  image:  '🖼️',
+  phone:  '📞',
+  email:  '✉️',
+  form:   '📝',
+  mls:    '🏠',
+  audio:  '🔊',
+  reveal: '🎁',
+};
+
 /** Color tint for each type. Matches HotspotLayer.tsx so the editor and reader agree. */
 export const TYPE_COLORS: Record<HotspotType, { fill: string; stroke: string; text: string }> = {
   link:   { fill: 'rgba(59, 130, 246, 0.20)', stroke: 'rgb(59, 130, 246)', text: 'text-blue-700' },
