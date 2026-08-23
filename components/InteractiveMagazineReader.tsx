@@ -30,6 +30,7 @@ import QRCode from 'qrcode';
 import type { Magazine } from '@/lib/magazines';
 import { trackEvent } from '../app/posthog-provider';
 import HotspotLayer from './HotspotLayer';
+import ReaderLinksPanel from './ReaderLinksPanel';
 import type { PublicHotspot } from '@/lib/hotspots';
 
 // ---- Phase 6 (Option C): PDF-annotation link click tracking ----
@@ -1324,6 +1325,18 @@ export default function InteractiveMagazineReader({
             </button>
           )}
         </>
+      )}
+
+      {/* Interactive links panel — pill + slide-out sidebar. Only shown when
+          the visible spread actually has hotspots, so pages with none stay
+          uncluttered. */}
+      {chromeVisible && (
+        <ReaderLinksPanel
+          hotspots={hotspots.filter((h) =>
+            h.page_idx === currentSpread.left || h.page_idx === currentSpread.right
+          )}
+          brandColor={brandColor}
+        />
       )}
 
       {/* Bottom chrome — floating */}

@@ -96,3 +96,62 @@ export function sortHotspots(hotspots: Hotspot[]): Hotspot[] {
     return a.id - b.id;
   });
 }
+
+/**
+ * Compute z-index moves for one hotspot on its page. Given the full page list
+ * sorted by (z_index, id), returns the new z_index the moved hotspot should
+ * get. Returns `null` if no change is needed (already at the requested edge).
+ *
+ * The rule: we don't try to normalize the whole page (that would require N
+ * server writes). Instead we pick a single new z_index that lands the target
+ * in the desired slot relative to the others on the page.
+ *
+ *   'front' : one higher than the current max on the page
+ *   'back'  : one lower than the current min on the page
+ *   'forward' : swap with the next-higher neighbor (returns that neighbor's z)
+ *              — caller can also PATCH the neighbor to the target's old z
+ *              to keep values dense, but a simple +/- works too.
+ *   'backward': swap with the next-lower neighbor.
+ *
+ * For simplicity, forward/backward return an integer that guarantees the
+ * hotspot lands just above/below the neighbor without a swap PATCH.
+ */
+export type ZMove = 'front' | 'back' | 'forward' | 'backward';
+
+export function computeZMove(
+  pageHotspots: Hotspot[],
+  hotspotId: number,
+  move: ZMove,
+): number | null {
+  const sorted = [...pageHotspots].sort((a, b) => {
+    const az = a.z_index ?? 0;
+    const bz = b.z_index ?? 0;
+    if (az !== bz) return az - bz;
+    return a.id - b.id;
+  });
+  const idx = sorted.findIndex((h) => h.id === hotspotId);
+  if (idx < 0) return null;
+  const cur = sorted[idx];
+  const curZ = cur.z_index ?? 0;
+
+  if (move === 'front') {
+    const maxZ = sorted.reduce((m, h) => Math.max(m, h.z_index ?? 0), 0);
+    if (idx === sorted.length - 1 && curZ >= maxZ) return null;
+    return maxZ + 1;
+  }
+  if (move === 'back') {
+    const minZ = sorted.reduce((m, h) => Math.min(m, h.z_index ?? 0), 0);
+    if (idx === 0 && curZ <= minZ) return null;
+    return minZ - 1;
+  }
+  if (move === 'forward') {
+    if (idx >= sorted.length - 1) return null;
+    const nextZ = sorted[idx + 1].z_index ?? 0;
+    // Land just above the neighbor.
+    return nextZ + 1;
+  }
+  // backward
+  if (idx <= 0) return null;
+  const prevZ = sorted[idx - 1].z_index ?? 0;
+  return prevZ - 1;
+}

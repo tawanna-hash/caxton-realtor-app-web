@@ -20,8 +20,10 @@ import {
   TYPE_LABELS,
   TYPE_COLORS,
   clampRect,
+  computeZMove,
   formatRelativeTime,
   sortHotspots,
+  type ZMove,
 } from '@/lib/hotspot-editor-helpers';
 import HotspotConfigModal from '@/components/hotspot-editor/HotspotConfigModal';
 
@@ -163,6 +165,36 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
       console.error('[hotspot-editor] update failed:', err);
       setSaveState('error');
     }
+  }, []);
+
+  // Move a hotspot forward/backward in the z-order for its page.
+  // Uses computeZMove to pick a target z_index that lands the hotspot in the
+  // right slot without renumbering every row.
+  const moveHotspotZ = useCallback(async (id: number, move: ZMove) => {
+    setHotspots((prev) => {
+      const target = prev.find((h) => h.id === id);
+      if (!target) return prev;
+      const pageHotspots = prev.filter((h) => h.page_idx === target.page_idx);
+      const nextZ = computeZMove(pageHotspots, id, move);
+      if (nextZ === null) return prev;
+      // Fire PATCH separately — we already have the optimistic array.
+      setSaveState('saving');
+      fetch(`/api/admin/hotspots/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ z_index: nextZ }),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error(`z-move failed (${res.status})`);
+          setSaveState('saved');
+          setLastSavedAt(new Date());
+        })
+        .catch((err) => {
+          console.error('[hotspot-editor] z-move failed:', err);
+          setSaveState('error');
+        });
+      return sortHotspots(prev.map((h) => h.id === id ? { ...h, z_index: nextZ } : h));
+    });
   }, []);
 
   // Delete a hotspot.
@@ -406,9 +438,50 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
         </button>
       </div>
 
-      {/* ===== PAGES ===== */}
-      <div className="p-4 flex justify-center">
-        <div className={`flex gap-2 ${viewMode === 'spread' ? '' : ''}`}>
+      {/* ===== Z-ORDER TOOLBAR (shown while a hotspot is selected) ===== */}
+      {selectedId !== null && (
+        <div className="px-4 pb-2 flex items-center justify-center gap-2 text-xs">
+          <span className="text-gray-500">Layer</span>
+          <button
+            type="button"
+            onClick={() => moveHotspotZ(selectedId, 'back')}
+            className="px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-50"
+            title="Send to back"
+          >
+            ⇤ Back
+          </button>
+          <button
+            type="button"
+            onClick={() => moveHotspotZ(selectedId, 'backward')}
+            className="px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-50"
+            title="Send backward"
+          >
+            ← Backward
+          </button>
+          <button
+            type="button"
+            onClick={() => moveHotspotZ(selectedId, 'forward')}
+            className="px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-50"
+            title="Bring forward"
+          >
+            Forward →
+          </button>
+          <button
+            type="button"
+            onClick={() => moveHotspotZ(selectedId, 'front')}
+            className="px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-50"
+            title="Bring to front"
+          >
+            Front ⇥
+          </button>
+          <span className="text-gray-400">·</span>
+          <span className="text-gray-500">Alt-click to cycle overlapping hotspots</span>
+        </div>
+      )}
+
+      {/* ===== PAGES + SIDEBAR ===== */}
+      <div className="p-4 flex justify-center items-start gap-6">
+        <div className="flex gap-2">
           {visiblePageIdxs.map((pageIdx) => (
             <EditorPage
               key={pageIdx}
@@ -424,6 +497,13 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
             />
           ))}
         </div>
+        <SpreadSidebar
+          hotspots={hotspots.filter((h) => visiblePageIdxs.includes(h.page_idx))}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          onEdit={setEditingHotspot}
+          onMoveZ={moveHotspotZ}
+        />
       </div>
 
       {/* ===== CONFIG MODAL =====
@@ -519,6 +599,34 @@ interface EditorPageProps {
   onUpdatePosition: (id: number, rect: { x_frac: number; y_frac: number; w_frac: number; h_frac: number }) => void;
 }
 
+// Given a click at (x, y) in fractional page coords, return the id of the
+// next hotspot at that point after `currentId` (or the topmost if none is
+// currently selected). Used for alt-click cycling through stacked overlaps.
+function nextOverlapId(
+  pageHotspots: Hotspot[],
+  currentId: number | null,
+  xFrac: number,
+  yFrac: number,
+): number | null {
+  const hits = pageHotspots.filter((h) =>
+    xFrac >= h.x_frac && xFrac <= h.x_frac + h.w_frac &&
+    yFrac >= h.y_frac && yFrac <= h.y_frac + h.h_frac
+  );
+  if (hits.length === 0) return null;
+  // Order by z-index descending (topmost first) so a normal click gets the top,
+  // and Alt-click cycles downward through the stack.
+  hits.sort((a, b) => {
+    const az = a.z_index ?? 0;
+    const bz = b.z_index ?? 0;
+    if (az !== bz) return bz - az;
+    return b.id - a.id;
+  });
+  if (currentId === null) return hits[0].id;
+  const curIdx = hits.findIndex((h) => h.id === currentId);
+  if (curIdx < 0) return hits[0].id;
+  return hits[(curIdx + 1) % hits.length].id;
+}
+
 function EditorPage({
   pageIdx, pageUrl, hotspots, selectedId,
   onSelect, onEdit, onRequestDelete, onCreate, onUpdatePosition,
@@ -565,15 +673,28 @@ function EditorPage({
         draggable={false}
       />
 
-      {/* Hotspot overlays */}
-      {imgSize.w > 0 && hotspots.map((h) => (
+      {/* Hotspot overlays. Rendered in z-order ascending so higher z paints on top. */}
+      {imgSize.w > 0 && [...hotspots].sort((a, b) => {
+        const az = a.z_index ?? 0;
+        const bz = b.z_index ?? 0;
+        if (az !== bz) return az - bz;
+        return a.id - b.id;
+      }).map((h) => (
         <DraggableHotspot
           key={h.id}
           hotspot={h}
           containerW={imgSize.w}
           containerH={imgSize.h}
           selected={selectedId === h.id}
-          onSelect={() => onSelect(h.id)}
+          onSelect={(altKey) => {
+            if (altKey) {
+              // Cycle through overlapping hotspots at this pixel.
+              const nextId = nextOverlapId(hotspots, selectedId, h.x_frac + h.w_frac / 2, h.y_frac + h.h_frac / 2);
+              onSelect(nextId);
+            } else {
+              onSelect(h.id);
+            }
+          }}
           onEdit={() => onEdit(h)}
           onRequestDelete={() => onRequestDelete(h.id)}
           onChange={(rect) => onUpdatePosition(h.id, rect)}
@@ -603,7 +724,7 @@ function DraggableHotspot({
   containerW: number;
   containerH: number;
   selected: boolean;
-  onSelect: () => void;
+  onSelect: (altKey: boolean) => void;
   onEdit: () => void;
   onRequestDelete: () => void;
   onChange: (rect: { x_frac: number; y_frac: number; w_frac: number; h_frac: number }) => void;
@@ -615,6 +736,10 @@ function DraggableHotspot({
   const ph = hotspot.h_frac * containerH;
   const opacity = hotspot.is_published ? 1 : 0.55;
   const dashed = !hotspot.is_published;
+  // z_index in the DOM: real stored z (offset by 10 so we sit above the image),
+  // plus a big lift when selected so resize handles are never trapped under a
+  // sibling. Ties broken by id are already reflected in map order.
+  const domZ = 10 + (hotspot.z_index ?? 0) + (selected ? 1000 : 0);
 
   return (
     <Rnd
@@ -641,7 +766,7 @@ function DraggableHotspot({
       }}
       onMouseDown={(e) => {
         e.stopPropagation();
-        onSelect();
+        onSelect(e.altKey || e.metaKey);
       }}
       style={{
         background: colors.fill,
@@ -650,11 +775,12 @@ function DraggableHotspot({
         outlineOffset: 1,
         opacity,
         cursor: 'move',
+        zIndex: domZ,
       }}
     >
-      {/* Type label */}
-      <div className="absolute -top-6 left-0 flex items-center gap-1 text-xs font-medium whitespace-nowrap pointer-events-none">
-        <span className={`px-1.5 py-0.5 bg-white border border-gray-300 rounded-md shadow-sm ${colors.text}`}>
+      {/* Type label — inside the hotspot so stacked labels don't collide. */}
+      <div className="absolute top-0.5 left-0.5 flex items-center gap-1 text-[10px] font-medium whitespace-nowrap pointer-events-none">
+        <span className={`px-1 py-0.5 bg-white/95 border border-gray-300 rounded-sm shadow-sm ${colors.text}`}>
           {TYPE_LABELS[hotspot.type]}{hotspot.label ? ` · ${hotspot.label}` : ''}
         </span>
       </div>
@@ -830,6 +956,167 @@ function CopyFromPreviousDialog({
             Copy hotspots
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Right-side "Hotspots on this spread" panel.
+// Lists every hotspot on the visible page(s), grouped by advertiser.
+// Clicking a row selects the hotspot; the toolbar / z-lift handles the rest.
+// ============================================================
+function SpreadSidebar({
+  hotspots,
+  selectedId,
+  onSelect,
+  onEdit,
+  onMoveZ,
+}: {
+  hotspots: Hotspot[];
+  selectedId: number | null;
+  onSelect: (id: number | null) => void;
+  onEdit: (h: Hotspot) => void;
+  onMoveZ: (id: number, move: ZMove) => void;
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  // Sort by (page_idx, z_index desc, id) so the topmost of each stack shows
+  // first — that's how designers think about layers ("the top one is what a
+  // reader clicks by default").
+  const sorted = useMemo(() => [...hotspots].sort((a, b) => {
+    if (a.page_idx !== b.page_idx) return a.page_idx - b.page_idx;
+    const az = a.z_index ?? 0;
+    const bz = b.z_index ?? 0;
+    if (az !== bz) return bz - az;
+    return a.id - b.id;
+  }), [hotspots]);
+
+  // Group by advertiser_name (or "Unassigned"). Preserves inner order.
+  const groups = useMemo(() => {
+    const acc = new Map<string, Hotspot[]>();
+    for (const h of sorted) {
+      const key = (h.advertiser_name && h.advertiser_name.trim()) || 'Unassigned';
+      const arr = acc.get(key) ?? [];
+      arr.push(h);
+      acc.set(key, arr);
+    }
+    return Array.from(acc.entries());
+  }, [sorted]);
+
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        onClick={() => setCollapsed(false)}
+        className="sticky top-24 shrink-0 px-2 py-2 text-xs bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+        aria-label="Show hotspots list"
+      >
+        ▶ Hotspots
+      </button>
+    );
+  }
+
+  return (
+    <aside className="w-72 shrink-0 sticky top-24 bg-white border border-gray-200 rounded-md shadow-sm">
+      <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-between">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-700">
+          Hotspots on this spread ({sorted.length})
+        </h3>
+        <button
+          type="button"
+          onClick={() => setCollapsed(true)}
+          className="text-gray-400 hover:text-gray-700 text-xs"
+          aria-label="Collapse hotspots list"
+        >
+          ◀
+        </button>
+      </div>
+      <div className="max-h-[70vh] overflow-y-auto divide-y divide-gray-100">
+        {groups.length === 0 && (
+          <p className="px-3 py-4 text-xs text-gray-500 italic">
+            No hotspots on this spread. Click &ldquo;Add hotspot&rdquo; below a page to draw one.
+          </p>
+        )}
+        {groups.map(([advName, hs]) => (
+          <div key={advName}>
+            <div className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider text-gray-500 font-medium bg-gray-50">
+              {advName}
+            </div>
+            {hs.map((h) => (
+              <SidebarRow
+                key={h.id}
+                hotspot={h}
+                selected={selectedId === h.id}
+                onSelect={() => onSelect(h.id)}
+                onEdit={() => onEdit(h)}
+                onMoveZ={(move) => onMoveZ(h.id, move)}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+function SidebarRow({
+  hotspot, selected, onSelect, onEdit, onMoveZ,
+}: {
+  hotspot: Hotspot;
+  selected: boolean;
+  onSelect: () => void;
+  onEdit: () => void;
+  onMoveZ: (move: ZMove) => void;
+}) {
+  const colors = TYPE_COLORS[hotspot.type];
+  return (
+    <div
+      className={`px-3 py-2 text-xs flex items-start gap-2 cursor-pointer hover:bg-gray-50 ${selected ? 'bg-blue-50' : ''}`}
+      onClick={onSelect}
+    >
+      <span
+        className={`mt-0.5 inline-block w-2 h-2 rounded-sm shrink-0`}
+        style={{ backgroundColor: colors.stroke }}
+        aria-hidden
+      />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 justify-between">
+          <span className={`font-medium ${colors.text}`}>{TYPE_LABELS[hotspot.type]}</span>
+          <span className="text-[10px] text-gray-400">
+            p{hotspot.page_idx + 1}{hotspot.is_published ? '' : ' · draft'}
+          </span>
+        </div>
+        {hotspot.label && (
+          <p className="text-gray-800 truncate">{hotspot.label}</p>
+        )}
+        {selected && (
+          <div className="mt-1 flex gap-1">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
+              className="px-1.5 py-0.5 text-[10px] border border-gray-300 rounded hover:bg-white"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onMoveZ('forward'); }}
+              className="px-1.5 py-0.5 text-[10px] border border-gray-300 rounded hover:bg-white"
+              title="Bring forward"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onMoveZ('backward'); }}
+              className="px-1.5 py-0.5 text-[10px] border border-gray-300 rounded hover:bg-white"
+              title="Send backward"
+            >
+              ↓
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
