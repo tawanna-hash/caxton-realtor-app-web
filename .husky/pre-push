@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+# Run before every `git push`. Blocks the push if the working tree does not
+# typecheck, so we can't ship a build that would fail on Vercel.
+#
+# NODE_OPTIONS bumps the heap because the monorepo's tsc pass otherwise OOMs
+# on 4GB laptops (and matches CI).
+#
+# Skip with `git push --no-verify` if you know what you are doing.
+
+echo "→ husky pre-push: typechecking with tsc..."
+NODE_OPTIONS="--max-old-space-size=6144" npx tsc --noEmit
