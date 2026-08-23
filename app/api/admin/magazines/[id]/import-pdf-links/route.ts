@@ -354,7 +354,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
              is_published, source, created_by, created_at, updated_by, updated_at
       FROM magazine_hotspots
       WHERE magazine_id = ${idNum}
-      ORDER BY page_idx, id
+      ORDER BY page_idx, z_index, id
     `) as unknown as Hotspot[];
 
     return NextResponse.json({

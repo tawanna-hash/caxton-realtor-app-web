@@ -34,11 +34,11 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
       SELECT id, magazine_id, page_idx,
              x_frac, y_frac, w_frac, h_frac,
              type, config, label, advertiser_name,
-             is_published, created_by, created_at, updated_by, updated_at
+             is_published, z_index, created_by, created_at, updated_by, updated_at
       FROM magazine_hotspots
       WHERE magazine_id = ${idNum}
         AND is_published = true
-      ORDER BY page_idx, id
+      ORDER BY page_idx, z_index, id
     `) as unknown as Hotspot[];
     return NextResponse.json({
       hotspots: rows.map(toPublicHotspot),

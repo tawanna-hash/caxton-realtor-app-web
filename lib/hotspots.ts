@@ -49,6 +49,8 @@ export interface Hotspot {
   /** Phase 6: explicit FK link to advertisers table. Null = unlinked. */
   advertiser_id: number | null;
   is_published: boolean;
+  /** Option B: paint order within a page. Higher = on top. Ties broken by id. */
+  z_index: number;
   created_by: string | null;
   created_at: string;
   updated_by: string | null;
@@ -68,6 +70,8 @@ export interface PublicHotspot {
   type: HotspotType;
   label: string | null;
   config: HotspotConfig;
+  /** Option B: paint order within a page. Higher = on top. */
+  z_index: number;
 }
 
 /** Map a DB row to the public shape. */
@@ -82,6 +86,7 @@ export function toPublicHotspot(row: Hotspot): PublicHotspot {
     type: row.type,
     label: row.label,
     config: row.config,
+    z_index: row.z_index ?? 0,
   };
 }
 

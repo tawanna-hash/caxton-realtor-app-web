@@ -90,6 +90,9 @@ export function formatRelativeTime(date: Date): string {
 export function sortHotspots(hotspots: Hotspot[]): Hotspot[] {
   return [...hotspots].sort((a, b) => {
     if (a.page_idx !== b.page_idx) return a.page_idx - b.page_idx;
+    const az = a.z_index ?? 0;
+    const bz = b.z_index ?? 0;
+    if (az !== bz) return az - bz;
     return a.id - b.id;
   });
 }

@@ -67,6 +67,7 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
     advertiser_id?: number | null;
     is_published?: boolean;
     page_idx?: number;
+    z_index?: number;
   };
   try {
     body = await req.json();
@@ -81,7 +82,7 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
     // Load current row to merge against.
     const existing = (await sql`
       SELECT id, magazine_id, page_idx, x_frac, y_frac, w_frac, h_frac,
-             type, config, label, advertiser_name, advertiser_id, is_published
+             type, config, label, advertiser_name, advertiser_id, is_published, z_index
       FROM magazine_hotspots WHERE id = ${idNum}
     `) as unknown as Hotspot[];
     if (existing.length === 0) {
@@ -144,6 +145,10 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
           ? (body.page_idx as number)
           : (() => { throw new Error('invalid page_idx'); })());
 
+    const nextZ: number = body.z_index === undefined
+      ? (cur.z_index ?? 0)
+      : (Number.isInteger(body.z_index) ? (body.z_index as number) : 0);
+
     const rows = (await sql`
       UPDATE magazine_hotspots SET
         page_idx = ${nextPageIdx},
@@ -154,13 +159,14 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
         advertiser_name = ${nextAdv},
         advertiser_id = ${nextAdvId},
         is_published = ${nextPublished},
+        z_index = ${nextZ},
         updated_by = ${adminEmail},
         updated_at = NOW()
       WHERE id = ${idNum}
       RETURNING id, magazine_id, page_idx,
                 x_frac, y_frac, w_frac, h_frac,
                 type, config, label, advertiser_name, advertiser_id,
-                is_published, created_by, created_at, updated_by, updated_at
+                is_published, z_index, created_by, created_at, updated_by, updated_at
     `) as unknown as Hotspot[];
     return NextResponse.json({ hotspot: rows[0] });
   } catch (err: unknown) {

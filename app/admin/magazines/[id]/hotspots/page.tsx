@@ -63,7 +63,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
            is_published, source, created_by, created_at, updated_by, updated_at
     FROM magazine_hotspots
     WHERE magazine_id = ${idNum}
-    ORDER BY page_idx, id
+    ORDER BY page_idx, z_index, id
   `) as unknown as Hotspot[];
 
   // 3. Fetch up to 12 previous issues of the same publication that have

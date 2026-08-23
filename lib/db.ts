@@ -664,6 +664,15 @@ async function _runEnsureSchema(): Promise<void> {
     ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'manual'
   `;
 
+  // Option B: per-hotspot paint order within a page. Higher z_index paints on
+  // top. Default 0 preserves creation order (ties broken by id). Editors
+  // change this via bring-forward / send-backward controls; readers just
+  // consume the order.
+  await sql`
+    ALTER TABLE magazine_hotspots
+    ADD COLUMN IF NOT EXISTS z_index INTEGER NOT NULL DEFAULT 0
+  `;
+
   // Fast lookup of published hotspots for a given magazine page.
   await sql`
     CREATE INDEX IF NOT EXISTS idx_hotspots_magazine_page
