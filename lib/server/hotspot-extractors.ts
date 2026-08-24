@@ -295,13 +295,43 @@ const BARE_DOMAIN_RE = /(?<![@\w])[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(
 
 // TLDs we'll accept for bare-domain matches. Restricting to a curated list
 // avoids matching filenames (foo.pdf, screenshot.jpg), version strings
-// (v1.2.3), decimals ($1.5m), etc. Extend as needed — this is intentionally
-// conservative.
+// (v1.2.3), decimals ($1.5m), etc.
+//
+// This list is intentionally broad — real estate advertisers use everything
+// from generic gTLDs to industry-specific (.realty, .homes, .broker) to
+// vanity (.austin, .texas) domains. The false-positive risk (filenames,
+// version strings) is caught downstream by the file-extension blocklist
+// and the "looks like a file" check.
 const BARE_DOMAIN_TLDS = new Set([
+  // Common gTLDs
   'com', 'net', 'org', 'io', 'co', 'us', 'app', 'dev', 'ai', 'biz', 'info',
-  'realtor', 'realty', 'homes', 'house', 'properties', 'estate', 'agency',
-  'group', 'company', 'llc', 'team', 'live', 'life', 'today', 'online',
-  'tv', 'me', 'ly', 'gov', 'edu', 'club', 'store', 'shop', 'pro',
+  'pro', 'me', 'ly', 'tv', 'club', 'store', 'shop', 'site', 'online',
+  'live', 'life', 'today', 'news', 'blog', 'link', 'page', 'tech',
+  // Real-estate industry gTLDs
+  'realtor', 'realty', 'homes', 'house', 'properties', 'estate', 'condos',
+  'apartments', 'rentals', 'lease', 'sale', 'construction', 'builders',
+  'contractors', 'kitchen', 'plumbing', 'lighting', 'furniture', 'design',
+  // Services / business gTLDs
+  'agency', 'group', 'company', 'llc', 'team', 'partners', 'services',
+  'solutions', 'consulting', 'management', 'financial', 'insurance',
+  'loans', 'mortgage', 'capital', 'investments', 'bank', 'exchange',
+  // Country codes commonly seen in US ads
+  'ca', 'mx', 'uk', 'au',
+  // Government / education / non-profit
+  'gov', 'edu', 'mil',
+  // Geographic new gTLDs relevant to Texas real estate
+  'austin', 'texas', 'dallas', 'houston', 'nyc', 'la', 'miami', 'vegas',
+]);
+
+// Known file extensions that BARE_DOMAIN_RE will match but that must be
+// rejected. The regex allows any 2+ letter TLD-like suffix, so a filename
+// like "screenshot.jpg" or "contract.pdf" would be caught without this.
+const FILE_EXTENSION_BLOCKLIST = new Set([
+  'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf',
+  'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'tiff', 'heic',
+  'mp3', 'mp4', 'mov', 'wav', 'avi', 'zip', 'rar', 'tar', 'gz',
+  'html', 'htm', 'css', 'js', 'ts', 'json', 'xml', 'yml', 'yaml',
+  'sql', 'db', 'log', 'md',
 ]);
 
 function normalizePhone(m: RegExpExecArray): string {
@@ -527,6 +557,7 @@ export async function extractPdfTextContacts(pdfBuffer: ArrayBuffer): Promise<Ex
           if (before.includes('@') || before.endsWith('/') || before.endsWith('.')) continue;
           // Skip if it's clearly a file extension / version string.
           const tld = raw.split('/')[0].split('.').pop()?.toLowerCase() ?? '';
+          if (FILE_EXTENSION_BLOCKLIST.has(tld)) continue;
           if (!BARE_DOMAIN_TLDS.has(tld)) continue;
 
           const bbox = bboxForMatch(line, m.index, raw.length);
