@@ -20,6 +20,7 @@ import {
   DEFAULT_NEW_RECT,
   TYPE_LABELS,
   TYPE_COLORS,
+  TYPE_ICONS,
   clampRect,
   computeZMove,
   formatRelativeTime,
@@ -96,6 +97,24 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
     const leftIdx = currentPageIdx % 2 === 1 ? currentPageIdx : currentPageIdx - 1;
     return [leftIdx, leftIdx + 1].filter((i) => i < magazine.page_count);
   }, [viewMode, currentPageIdx, magazine.page_count]);
+
+  // Number every hotspot on the visible spread. The number is the same on
+  // the canvas pin and in the sidebar row, so users can eye-track between
+  // the spatial view (pin "3") and the semantic view (row "3") instantly.
+  // Sort order matches the sidebar so numbering feels natural top-to-bottom.
+  const spreadNumberById = useMemo((): Map<number, number> => {
+    const visible = hotspots.filter((h) => visiblePageIdxs.includes(h.page_idx));
+    visible.sort((a, b) => {
+      if (a.page_idx !== b.page_idx) return a.page_idx - b.page_idx;
+      const az = a.z_index ?? 0;
+      const bz = b.z_index ?? 0;
+      if (az !== bz) return bz - az;
+      return a.id - b.id;
+    });
+    const map = new Map<number, number>();
+    visible.forEach((h, i) => map.set(h.id, i + 1));
+    return map;
+  }, [hotspots, visiblePageIdxs]);
 
   // ============================================================
   // MUTATIONS
@@ -502,6 +521,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
               pageIdx={pageIdx}
               pageUrl={magazine.page_urls?.[pageIdx]}
               hotspots={hotspots.filter((h) => h.page_idx === pageIdx)}
+              spreadNumberById={spreadNumberById}
               selectedId={selectedId}
               onSelect={setSelectedId}
               onEdit={setEditingHotspot}
@@ -513,6 +533,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
         </div>
         <SpreadSidebar
           hotspots={hotspots.filter((h) => visiblePageIdxs.includes(h.page_idx))}
+          spreadNumberById={spreadNumberById}
           selectedId={selectedId}
           onSelect={setSelectedId}
           onEdit={setEditingHotspot}
@@ -605,6 +626,7 @@ interface EditorPageProps {
   pageIdx: number;
   pageUrl: string | undefined;
   hotspots: Hotspot[];
+  spreadNumberById: Map<number, number>;
   selectedId: number | null;
   onSelect: (id: number | null) => void;
   onEdit: (h: Hotspot) => void;
@@ -642,7 +664,7 @@ function nextOverlapId(
 }
 
 function EditorPage({
-  pageIdx, pageUrl, hotspots, selectedId,
+  pageIdx, pageUrl, hotspots, spreadNumberById, selectedId,
   onSelect, onEdit, onRequestDelete, onCreate, onUpdatePosition,
 }: EditorPageProps) {
   const imgRef = useRef<HTMLImageElement>(null);
@@ -697,6 +719,7 @@ function EditorPage({
         <DraggableHotspot
           key={h.id}
           hotspot={h}
+          number={spreadNumberById.get(h.id) ?? 0}
           containerW={imgSize.w}
           containerH={imgSize.h}
           selected={selectedId === h.id}
@@ -730,11 +753,19 @@ function EditorPage({
 // ============================================================
 // A single draggable/resizable hotspot, wrapped in react-rnd
 // ============================================================
+//
+// Visual design: the box itself carries only color + published/draft +
+// PDF-import indication. Identity lives in a numbered pin in the top-left
+// corner that matches the number in the sidebar row. This keeps stacked
+// hotspots readable no matter how small they are or how many overlap.
+// The full type + label only appears as a floating chip when selected
+// (permanent) or hovered (transient).
 function DraggableHotspot({
-  hotspot, containerW, containerH, selected,
+  hotspot, number, containerW, containerH, selected,
   onSelect, onEdit, onRequestDelete, onChange,
 }: {
   hotspot: Hotspot;
+  number: number;
   containerW: number;
   containerH: number;
   selected: boolean;
@@ -748,12 +779,24 @@ function DraggableHotspot({
   const py = hotspot.y_frac * containerH;
   const pw = hotspot.w_frac * containerW;
   const ph = hotspot.h_frac * containerH;
-  const opacity = hotspot.is_published ? 1 : 0.55;
-  const dashed = !hotspot.is_published;
+  const isPdfImport = hotspot.source === 'pdf_import';
+
+  // PDF-imported hotspots visually recede so hand-drawn work reads on top:
+  // lighter fill, dashed border regardless of publish state, softer opacity.
+  // Hand-drawn drafts still use dashed borders + 0.55 opacity to signal
+  // "unpublished", so the two cues combine naturally.
+  const isDraft = !hotspot.is_published;
+  const dashed = isDraft || isPdfImport;
+  const opacity = isPdfImport ? (isDraft ? 0.35 : 0.55) : (isDraft ? 0.55 : 1);
+
   // z_index in the DOM: real stored z (offset by 10 so we sit above the image),
   // plus a big lift when selected so resize handles are never trapped under a
   // sibling. Ties broken by id are already reflected in map order.
   const domZ = 10 + (hotspot.z_index ?? 0) + (selected ? 1000 : 0);
+
+  // Selected label positioning: normally above the box, but if the box is
+  // near the top of the page we flip it below so it isn't clipped.
+  const labelBelow = py < 32;
 
   return (
     <Rnd
@@ -791,14 +834,43 @@ function DraggableHotspot({
         cursor: 'move',
         zIndex: domZ,
       }}
+      className="group/hotspot"
     >
-      {/* Type label — inside the hotspot so stacked labels don't collide. */}
-      <div className="absolute top-0.5 left-0.5 flex items-center gap-1 text-[10px] font-medium whitespace-nowrap pointer-events-none">
-        <span className={`px-1 py-0.5 bg-white/95 border border-gray-300 rounded-sm shadow-sm ${colors.text}`}>
-          {TYPE_LABELS[hotspot.type]}{hotspot.label ? ` · ${hotspot.label}` : ''}
+      {/* Numbered pin badge — always visible, tiny, matches sidebar row. */}
+      <div
+        className="absolute -top-2 -left-2 flex items-center gap-0.5 pointer-events-none"
+        style={{ zIndex: 2 }}
+      >
+        <span
+          className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold text-white rounded-full shadow-sm ring-1 ring-white"
+          style={{ background: colors.stroke }}
+        >
+          {number}
+        </span>
+        {isPdfImport && (
+          <span className="inline-flex items-center h-[16px] px-1 text-[9px] font-semibold text-gray-700 bg-white/95 border border-gray-300 rounded-sm shadow-sm">
+            PDF
+          </span>
+        )}
+      </div>
+
+      {/* Floating label chip — shown when selected (always) or hovered
+          (transient). Positioned above the box, or below if the box is near
+          the top of the page. Never overflows the pin because it's absolutely
+          positioned relative to the Rnd container. */}
+      <div
+        className={`absolute left-0 flex items-center gap-1 text-[10px] font-medium whitespace-nowrap pointer-events-none transition-opacity ${
+          selected ? 'opacity-100' : 'opacity-0 group-hover/hotspot:opacity-100'
+        } ${labelBelow ? '-bottom-6' : '-top-6'}`}
+      >
+        <span className={`px-1.5 py-0.5 bg-white/95 border border-gray-300 rounded shadow-sm ${colors.text}`}>
+          <span className="font-semibold">#{number}</span> · {TYPE_LABELS[hotspot.type]}
+          {hotspot.label ? ` · ${hotspot.label}` : ''}
         </span>
       </div>
-      {/* Action buttons (only when selected) */}
+
+      {/* Action buttons (only when selected). Anchored to the bottom-right
+          of the box; if the box is short they still float below cleanly. */}
       {selected && (
         <div className="absolute -bottom-9 right-0 flex gap-1">
           <button
@@ -982,12 +1054,14 @@ function CopyFromPreviousDialog({
 // ============================================================
 function SpreadSidebar({
   hotspots,
+  spreadNumberById,
   selectedId,
   onSelect,
   onEdit,
   onMoveZ,
 }: {
   hotspots: Hotspot[];
+  spreadNumberById: Map<number, number>;
   selectedId: number | null;
   onSelect: (id: number | null) => void;
   onEdit: (h: Hotspot) => void;
@@ -997,7 +1071,8 @@ function SpreadSidebar({
 
   // Sort by (page_idx, z_index desc, id) so the topmost of each stack shows
   // first — that's how designers think about layers ("the top one is what a
-  // reader clicks by default").
+  // reader clicks by default"). Numbering in spreadNumberById uses the same
+  // sort order so canvas pins line up with sidebar rows.
   const sorted = useMemo(() => [...hotspots].sort((a, b) => {
     if (a.page_idx !== b.page_idx) return a.page_idx - b.page_idx;
     const az = a.z_index ?? 0;
@@ -1005,6 +1080,13 @@ function SpreadSidebar({
     if (az !== bz) return bz - az;
     return a.id - b.id;
   }), [hotspots]);
+
+  // Split hand-drawn vs PDF-imported so the header can show the ratio.
+  const importedCount = useMemo(
+    () => sorted.filter((h) => h.source === 'pdf_import').length,
+    [sorted],
+  );
+  const yoursCount = sorted.length - importedCount;
 
   // Group by advertiser_name (or "Unassigned"). Preserves inner order.
   const groups = useMemo(() => {
@@ -1035,7 +1117,13 @@ function SpreadSidebar({
     <aside className="w-72 shrink-0 sticky top-24 bg-white border border-gray-200 rounded-md shadow-sm">
       <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-700">
-          Hotspots on this spread ({sorted.length})
+          Hotspots on this spread
+          <span className="ml-1 normal-case tracking-normal font-normal text-gray-500">
+            ({sorted.length}
+            {importedCount > 0 && (
+              <> · {yoursCount} yours · {importedCount} imported</>
+            )})
+          </span>
         </h3>
         <button
           type="button"
@@ -1061,6 +1149,7 @@ function SpreadSidebar({
               <SidebarRow
                 key={h.id}
                 hotspot={h}
+                number={spreadNumberById.get(h.id) ?? 0}
                 selected={selectedId === h.id}
                 onSelect={() => onSelect(h.id)}
                 onEdit={() => onEdit(h)}
@@ -1075,35 +1164,42 @@ function SpreadSidebar({
 }
 
 function SidebarRow({
-  hotspot, selected, onSelect, onEdit, onMoveZ,
+  hotspot, number, selected, onSelect, onEdit, onMoveZ,
 }: {
   hotspot: Hotspot;
+  number: number;
   selected: boolean;
   onSelect: () => void;
   onEdit: () => void;
   onMoveZ: (move: ZMove) => void;
 }) {
   const colors = TYPE_COLORS[hotspot.type];
+  const isPdfImport = hotspot.source === 'pdf_import';
   return (
     <div
       className={`px-3 py-2 text-xs flex items-start gap-2 cursor-pointer hover:bg-gray-50 ${selected ? 'bg-blue-50' : ''}`}
       onClick={onSelect}
     >
+      {/* Numbered chip — matches the pin on the canvas box. */}
       <span
-        className={`mt-0.5 inline-block w-2 h-2 rounded-sm shrink-0`}
-        style={{ backgroundColor: colors.stroke }}
+        className="mt-0.5 inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[11px] font-semibold text-white rounded-full shrink-0 ring-1 ring-white"
+        style={{ background: colors.stroke }}
         aria-hidden
-      />
+      >
+        {number}
+      </span>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 justify-between">
-          <span className={`font-medium ${colors.text}`}>{TYPE_LABELS[hotspot.type]}</span>
-          <span className="text-[10px] text-gray-400">
-            p{hotspot.page_idx + 1}{hotspot.is_published ? '' : ' · draft'}
+          <span className={`font-medium ${colors.text} truncate`} title={hotspot.label ?? undefined}>
+            <span aria-hidden className="mr-0.5">{TYPE_ICONS[hotspot.type]}</span>
+            {hotspot.label || <span className="italic text-gray-500">Unlabeled</span>}
+          </span>
+          <span className="text-[10px] text-gray-400 shrink-0">
+            p{hotspot.page_idx + 1}
+            {isPdfImport && ' · PDF'}
+            {!hotspot.is_published && ' · draft'}
           </span>
         </div>
-        {hotspot.label && (
-          <p className="text-gray-800 truncate">{hotspot.label}</p>
-        )}
         {selected && (
           <div className="mt-1 flex gap-1">
             <button
