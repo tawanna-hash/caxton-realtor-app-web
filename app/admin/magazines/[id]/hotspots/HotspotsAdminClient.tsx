@@ -54,6 +54,17 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
   // ----- Hotspot state (canonical client copy) -----
   const [hotspots, setHotspots] = useState<Hotspot[]>(() => sortHotspots(initialHotspots));
   const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  // Mac-aware modifier label. Detected on mount to avoid SSR hydration
+  // mismatch (window/navigator aren't available server-side).
+  const [isMac, setIsMac] = useState(false);
+  useEffect(() => {
+    if (typeof navigator === 'undefined') return;
+    const ua = navigator.userAgent || '';
+    const plat = navigator.platform || '';
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- platform sniff must run client-side; SSR has no navigator
+    setIsMac(/Mac|iPhone|iPad|iPod/.test(plat) || /Mac OS X/.test(ua));
+  }, []);
   const [editingHotspot, setEditingHotspot] = useState<Hotspot | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
 
@@ -478,7 +489,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
             Front ⇥
           </button>
           <span className="text-gray-400">·</span>
-          <span className="text-gray-500">Alt-click to cycle overlapping hotspots</span>
+          <span className="text-gray-500">{isMac ? 'Option-click' : 'Alt-click'} to cycle overlapping hotspots</span>
         </div>
       )}
 
