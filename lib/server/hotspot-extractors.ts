@@ -706,33 +706,49 @@ export async function extractQrCodes(pageImageUrls: string[]): Promise<Extracted
 //
 // Text scans and PDF link annotations both miss logos: they're raster (or
 // vector art) with no adjacent contact text and no clickable annotation.
-// Instead we:
 //
-//   1. Walk every page's PDF operator list and collect the bounding box
-//      of every embedded image (Do XObject calls). This gives us candidate
-//      logo regions with exact page-space coords — much cheaper and more
-//      accurate than trying to segment the rendered raster.
-//   2. Crop each candidate from the pre-rendered page JPEG (page_urls).
-//   3. Perceptual-hash (dhash via sharp-phash) the crop.
-//   4. Compare against a phash of each advertiser's stored logo
-//      (avatar_url). Small Hamming distance => match.
-//   5. On match, insert a link hotspot pointing at the advertiser's
-//      website, with advertiser_id set.
+// v2 (render-then-detect): the earlier operator-list approach missed logos
+// that were exported as vector art (paths + fills, no paintImageXObject).
+// Every real magazine logo we shipped hit that path — result was zero
+// matches. v2 works on the rendered page JPEG instead so raster and vector
+// logos are equally visible.
+//
+// Pipeline:
+//   1. Fetch each page JPEG (already in Vercel Blob at 220 DPI).
+//   2. Downscale to ~1200px on the long side; convert to grayscale.
+//   3. Threshold to binary (near-white = background). Project onto x and
+//      y axes to find whitespace bands. Cut on wide bands to get boxes.
+//   4. Filter boxes by size (skip tiny icons and full-page photos).
+//   5. Perceptual-hash (dhash) each candidate crop and match against a
+//      pre-built advertiser phash index. Lowest Hamming distance under
+//      the threshold wins.
+//   6. On match, emit a link hotspot pointing at the advertiser's website,
+//      is_published = true (the caller flips this bit; see insertExtracted).
 //
 // Advertisers with no logo or no website can't be matched — we skip them.
-//
-// The dhash phash implementation in sharp-phash returns a 64-bit binary
-// string. Hamming distance <= 12 (out of 64) is a common empirical
-// threshold for "same image, different size/compression." We use 14 to
-// be a bit more forgiving of resize artifacts on smaller ad-block logos,
-// and re-tune if we see false positives.
 
+// Hamming distance threshold on the 64-bit dhash. <=12 is the empirical
+// "same image at different sizes" line; we use 14 to be forgiving of
+// resize + JPEG artifacts on ad-block logos.
 const LOGO_PHASH_MAX_DISTANCE = 14;
-// Skip anything tiny (page 'images' that are actually decorative bullets
-// or icons) or full-page (background photos). Values are page-space
-// fractions, so 0.02 = 2% of the smaller page dimension.
-const LOGO_MIN_FRAC_SHORT_SIDE = 0.03;
-const LOGO_MAX_FRAC = 0.6;
+// Skip anything tiny (bullets, punctuation) or full-page (background).
+// Values are page-space fractions.
+const LOGO_MIN_FRAC_SHORT_SIDE = 0.025;
+const LOGO_MIN_FRAC_LONG_SIDE = 0.05;
+const LOGO_MAX_FRAC = 0.5;
+// Downscale target for segmentation — big enough that a 3% logo (~36px)
+// is still recognizable, small enough that projection is cheap.
+const SEGMENT_TARGET_LONG_SIDE = 1200;
+// Pixel is "background" if grayscale value >= this. 245 catches off-white
+// paper stock while still cutting on real ink.
+const BG_THRESHOLD = 245;
+// A row/column is a whitespace band if fewer than this fraction of pixels
+// are ink. 0.005 = half a percent — permissive so we don't split a logo
+// with a thin baseline.
+const BAND_INK_FRACTION = 0.005;
+// Minimum whitespace band width (in scaled pixels) to count as a real
+// separator. Smaller gaps within a logo don't cut.
+const MIN_GAP_PX = 12;
 
 function hammingDistance(a: string, b: string): number {
   if (a.length !== b.length) return Infinity;
@@ -749,106 +765,125 @@ interface ImageRegion {
   h_frac: number;
 }
 
-/** Walk a PDF page's operator list and return every image paint (Do) with
- *  its bounding box in page-space (top-left origin, fractional). Uses
- *  pdfjs-dist via unpdf. */
-async function extractImageRegions(pdfBuffer: ArrayBuffer): Promise<ImageRegion[]> {
-  const { getDocumentProxy } = await import('unpdf');
-  const pdf = (await getDocumentProxy(new Uint8Array(pdfBuffer))) as unknown as {
-    numPages: number;
-    getPage: (n: number) => Promise<{
-      getViewport: (args: { scale: number }) => { width: number; height: number };
-      getOperatorList: () => Promise<{ fnArray: number[]; argsArray: unknown[][] }>;
-      commonObjs?: { get?: (name: string) => unknown };
-      objs?: { get?: (name: string) => unknown };
-    }>;
-    destroy?: () => Promise<void>;
-  };
+/** Given a 1-D ink-density array and a minimum gap width, return
+ *  [start, end) index pairs of contiguous "content" runs, split on any
+ *  whitespace band >= minGap pixels. */
+function segmentRuns(ink: Float32Array, minGap: number): Array<[number, number]> {
+  const runs: Array<[number, number]> = [];
+  let inContent = false;
+  let contentStart = 0;
+  let gapCount = 0;
 
-  // pdfjs operator IDs: import them from the module so we don't hard-code
-  // magic numbers. Different pdfjs versions have different int values.
-  const pdfjsMod = await import('unpdf/pdfjs') as unknown as { OPS?: Record<string, number> };
-  const OPS = pdfjsMod.OPS;
-  if (!OPS) {
-    // Fallback: pdfjs OPS not exported here. Return empty rather than
-    // guessing — the logo pass just contributes zero hits in that case.
-    return [];
-  }
-
-  const out: ImageRegion[] = [];
-  try {
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const viewport = page.getViewport({ scale: 1 });
-      const pageW = viewport.width;
-      const pageH = viewport.height;
-
-      const opList = await page.getOperatorList();
-      // Track the current transformation matrix (CTM) stack. pdfjs emits
-      // save/restore + transform ops we need to accumulate to know the
-      // final placement of each paintImageXObject.
-      const ctmStack: number[][] = [[1, 0, 0, 1, 0, 0]];
-      let ctm: number[] = [1, 0, 0, 1, 0, 0];
-
-      const mul = (a: number[], b: number[]) => [
-        a[0] * b[0] + a[2] * b[1],
-        a[1] * b[0] + a[3] * b[1],
-        a[0] * b[2] + a[2] * b[3],
-        a[1] * b[2] + a[3] * b[3],
-        a[0] * b[4] + a[2] * b[5] + a[4],
-        a[1] * b[4] + a[3] * b[5] + a[5],
-      ];
-
-      for (let i = 0; i < opList.fnArray.length; i++) {
-        const op = opList.fnArray[i];
-        const args = opList.argsArray[i];
-
-        if (op === OPS.save) {
-          ctmStack.push([...ctm]);
-        } else if (op === OPS.restore) {
-          ctm = ctmStack.pop() ?? [1, 0, 0, 1, 0, 0];
-        } else if (op === OPS.transform) {
-          ctm = mul(ctm, args as number[]);
-        } else if (
-          op === OPS.paintImageXObject ||
-          op === OPS.paintInlineImageXObject ||
-          op === OPS.paintImageMaskXObject ||
-          op === OPS.paintJpegXObject
-        ) {
-          // Image is drawn in the unit square [0,0]-[1,1] then transformed
-          // by the CTM. The final rect corners are the four transformed
-          // unit-square corners.
-          const corners: [number, number][] = [
-            [ctm[4], ctm[5]],
-            [ctm[0] + ctm[4], ctm[1] + ctm[5]],
-            [ctm[2] + ctm[4], ctm[3] + ctm[5]],
-            [ctm[0] + ctm[2] + ctm[4], ctm[1] + ctm[3] + ctm[5]],
-          ];
-          const xs = corners.map((c) => c[0]);
-          const ys = corners.map((c) => c[1]);
-          const minX = Math.min(...xs);
-          const maxX = Math.max(...xs);
-          const minY = Math.min(...ys);
-          const maxY = Math.max(...ys);
-          const w = maxX - minX;
-          const h = maxY - minY;
-          if (w < 1 || h < 1) continue;
-
-          // pdfjs y-axis is bottom-up; convert to top-down for hotspot coords.
-          const topDownY = pageH - maxY;
-          const frac = rectToFrac(minX, topDownY, w, h, pageW, pageH);
-
-          const shortSide = Math.min(frac.w_frac, frac.h_frac);
-          const longSide = Math.max(frac.w_frac, frac.h_frac);
-          if (shortSide < LOGO_MIN_FRAC_SHORT_SIDE) continue;
-          if (longSide > LOGO_MAX_FRAC) continue;
-
-          out.push({ page_idx: pageNum - 1, ...frac });
-        }
+  for (let i = 0; i < ink.length; i++) {
+    const isInk = ink[i] > BAND_INK_FRACTION;
+    if (isInk) {
+      if (!inContent) {
+        inContent = true;
+        contentStart = i;
+      }
+      gapCount = 0;
+    } else if (inContent) {
+      gapCount++;
+      if (gapCount >= minGap) {
+        runs.push([contentStart, i - gapCount + 1]);
+        inContent = false;
+        gapCount = 0;
       }
     }
-  } finally {
-    await pdf.destroy?.().catch(() => undefined);
+  }
+  if (inContent) runs.push([contentStart, ink.length]);
+  return runs;
+}
+
+/** Segment a rendered page JPEG into candidate content regions by
+ *  projecting on x and y and cutting at wide whitespace bands. */
+async function segmentPageRegions(
+  pageIdx: number, pageBuffer: Buffer,
+): Promise<ImageRegion[]> {
+  const meta = await sharp(pageBuffer).metadata();
+  const origW = meta.width ?? 0;
+  const origH = meta.height ?? 0;
+  if (origW < 200 || origH < 200) return [];
+
+  // Downscale + grayscale in one pass. `raw` gets us direct pixel access.
+  const scale = SEGMENT_TARGET_LONG_SIDE / Math.max(origW, origH);
+  const w = Math.max(1, Math.round(origW * scale));
+  const h = Math.max(1, Math.round(origH * scale));
+  const raw = await sharp(pageBuffer)
+    .resize({ width: w, height: h, fit: 'fill' })
+    .grayscale()
+    .raw()
+    .toBuffer();
+  if (raw.length !== w * h) return [];
+
+  // 1D binary mask: 1 for ink, 0 for background. Then row-sum and col-sum
+  // into normalized ink-fraction arrays for projection cuts.
+  const rowInk = new Float32Array(h);
+  const colInk = new Float32Array(w);
+  for (let y = 0; y < h; y++) {
+    let row = 0;
+    for (let x = 0; x < w; x++) {
+      if (raw[y * w + x] < BG_THRESHOLD) {
+        row++;
+        colInk[x]++;
+      }
+    }
+    rowInk[y] = row / w;
+  }
+  for (let x = 0; x < w; x++) colInk[x] /= h;
+
+  const out: ImageRegion[] = [];
+
+  // Two segmentation strategies run in parallel and their results are
+  // both emitted — cheap dedupe happens later via bbox overlap when we
+  // hash and match. The two strategies capture different layouts:
+  //   A. row-first: split into horizontal bands, then columns per band.
+  //      Great for sponsor strips (a row of logos across the page).
+  //   B. col-first: split into vertical bands, then rows per band.
+  //      Great for sidebar ad columns.
+  const rowBands = segmentRuns(rowInk, MIN_GAP_PX);
+  for (const [y0, y1] of rowBands) {
+    // Restrict column projection to this band only.
+    const bandColInk = new Float32Array(w);
+    for (let y = y0; y < y1; y++) {
+      for (let x = 0; x < w; x++) {
+        if (raw[y * w + x] < BG_THRESHOLD) bandColInk[x]++;
+      }
+    }
+    for (let x = 0; x < w; x++) bandColInk[x] /= Math.max(1, y1 - y0);
+    const colRuns = segmentRuns(bandColInk, MIN_GAP_PX);
+    for (const [x0, x1] of colRuns) {
+      const bx = x0 / w, by = y0 / h;
+      const bw = (x1 - x0) / w, bh = (y1 - y0) / h;
+      const shortSide = Math.min(bw, bh);
+      const longSide = Math.max(bw, bh);
+      if (shortSide < LOGO_MIN_FRAC_SHORT_SIDE) continue;
+      if (longSide < LOGO_MIN_FRAC_LONG_SIDE) continue;
+      if (longSide > LOGO_MAX_FRAC) continue;
+      out.push({ page_idx: pageIdx, x_frac: bx, y_frac: by, w_frac: bw, h_frac: bh });
+    }
+  }
+
+  const colBands = segmentRuns(colInk, MIN_GAP_PX);
+  for (const [x0, x1] of colBands) {
+    const bandRowInk = new Float32Array(h);
+    for (let y = 0; y < h; y++) {
+      for (let x = x0; x < x1; x++) {
+        if (raw[y * w + x] < BG_THRESHOLD) bandRowInk[y]++;
+      }
+    }
+    for (let y = 0; y < h; y++) bandRowInk[y] /= Math.max(1, x1 - x0);
+    const rowRuns = segmentRuns(bandRowInk, MIN_GAP_PX);
+    for (const [y0, y1] of rowRuns) {
+      const bx = x0 / w, by = y0 / h;
+      const bw = (x1 - x0) / w, bh = (y1 - y0) / h;
+      const shortSide = Math.min(bw, bh);
+      const longSide = Math.max(bw, bh);
+      if (shortSide < LOGO_MIN_FRAC_SHORT_SIDE) continue;
+      if (longSide < LOGO_MIN_FRAC_LONG_SIDE) continue;
+      if (longSide > LOGO_MAX_FRAC) continue;
+      out.push({ page_idx: pageIdx, x_frac: bx, y_frac: by, w_frac: bw, h_frac: bh });
+    }
   }
 
   return out;
@@ -916,34 +951,26 @@ async function phashPageRegion(
   }
 }
 
-/** Full logo pass. */
+/** Full logo pass (v2 — render-then-detect). The `pdfBuffer` parameter is
+ *  kept so callers don't have to change; it is currently unused because
+ *  segmentation runs on the rendered page JPEG. */
 export async function extractLogoMatches(
-  pdfBuffer: ArrayBuffer,
+  _pdfBuffer: ArrayBuffer,
   pageImageUrls: string[],
   advertisers: AdvertiserLite[],
 ): Promise<ExtractedHotspot[]> {
-  // 1. Build advertiser phash index (parallel with region detection below).
-  const [advIndex, regions] = await Promise.all([
-    buildAdvertiserPhashIndex(advertisers),
-    extractImageRegions(pdfBuffer),
-  ]);
-  if (advIndex.length === 0 || regions.length === 0) return [];
-
-  // 2. Group regions by page so we only fetch each page JPEG once.
-  const byPage = new Map<number, ImageRegion[]>();
-  for (const r of regions) {
-    const list = byPage.get(r.page_idx) ?? [];
-    list.push(r);
-    byPage.set(r.page_idx, list);
-  }
+  if (pageImageUrls.length === 0) return [];
+  // Build advertiser phash index eagerly — without it, no page work is
+  // worth doing.
+  const advIndex = await buildAdvertiserPhashIndex(advertisers);
+  if (advIndex.length === 0) return [];
 
   const out: ExtractedHotspot[] = [];
   const PAGE_CONCURRENCY = 4;
-  const pageEntries = Array.from(byPage.entries());
-  for (let i = 0; i < pageEntries.length; i += PAGE_CONCURRENCY) {
-    const batch = pageEntries.slice(i, i + PAGE_CONCURRENCY);
-    const results = await Promise.all(batch.map(async ([pageIdx, pageRegions]) => {
-      const pageUrl = pageImageUrls[pageIdx];
+  for (let i = 0; i < pageImageUrls.length; i += PAGE_CONCURRENCY) {
+    const batch = pageImageUrls.slice(i, i + PAGE_CONCURRENCY);
+    const results = await Promise.all(batch.map(async (pageUrl, batchOffset) => {
+      const pageIdx = i + batchOffset;
       if (!pageUrl) return [] as ExtractedHotspot[];
       let pageBuf: Buffer;
       try {
@@ -954,12 +981,26 @@ export async function extractLogoMatches(
         return [] as ExtractedHotspot[];
       }
 
-      const pageHits: ExtractedHotspot[] = [];
+      let pageRegions: ImageRegion[];
+      try {
+        pageRegions = await segmentPageRegions(pageIdx, pageBuf);
+      } catch {
+        return [] as ExtractedHotspot[];
+      }
+      if (pageRegions.length === 0) return [] as ExtractedHotspot[];
+
+      // Track best match per advertiser — a magazine page can have the
+      // same logo appear twice (e.g. sponsor strip + article callout).
+      // We keep the tightest bounding box for each advertiser to avoid
+      // stacking overlapping hotspots on the same visual element.
+      const bestByAdv = new Map<number, {
+        region: ImageRegion; dist: number; adv: AdvertiserLite;
+      }>();
+
       for (const region of pageRegions) {
         const regionPhash = await phashPageRegion(pageBuf, region);
         if (!regionPhash) continue;
 
-        // Find nearest advertiser under threshold.
         let bestAdv: AdvertiserLite | null = null;
         let bestDist = LOGO_PHASH_MAX_DISTANCE + 1;
         for (const { adv, phash } of advIndex) {
@@ -971,7 +1012,15 @@ export async function extractLogoMatches(
         }
         if (!bestAdv || bestDist > LOGO_PHASH_MAX_DISTANCE) continue;
 
-        const url = normalizeUrl(String(bestAdv.website));
+        const prev = bestByAdv.get(bestAdv.id);
+        if (!prev || bestDist < prev.dist) {
+          bestByAdv.set(bestAdv.id, { region, dist: bestDist, adv: bestAdv });
+        }
+      }
+
+      const pageHits: ExtractedHotspot[] = [];
+      for (const { region, adv } of bestByAdv.values()) {
+        const url = normalizeUrl(String(adv.website));
         pageHits.push({
           page_idx: pageIdx,
           x_frac: region.x_frac,
@@ -980,11 +1029,11 @@ export async function extractLogoMatches(
           h_frac: region.h_frac,
           type: 'link',
           config: { type: 'link', url, open_in: 'new_tab' },
-          identity: `logo:${bestAdv.id}`,
-          label: `Logo · ${bestAdv.name}`,
+          identity: `logo:${adv.id}`,
+          label: `Logo · ${adv.name}`,
           origin: 'logo_match',
-          advertiser_id: bestAdv.id,
-          advertiser_name: bestAdv.name,
+          advertiser_id: adv.id,
+          advertiser_name: adv.name,
         });
       }
       return pageHits;
@@ -1108,6 +1157,11 @@ export async function insertExtracted(
     batchKeys.add(composite);
 
     const configJson = JSON.stringify(row.config);
+    // Auto-publish logo matches only — the phash matcher already tied
+    // them to a specific advertiser, so clicks route correctly on day
+    // one. Text/QR/link imports stay as drafts because they still need
+    // admin review to pick the right advertiser and pointer target.
+    const isPublished = row.origin === 'logo_match';
     // z_index = -100 → imports naturally stack below any manual hotspot
     // (which defaults to 0) so the human's work always reads on top.
     await sql`
@@ -1121,7 +1175,7 @@ export async function insertExtracted(
         ${row.x_frac}, ${row.y_frac}, ${row.w_frac}, ${row.h_frac},
         ${row.type}, ${configJson}::jsonb,
         ${row.label}, ${row.advertiser_name ?? null}, ${row.advertiser_id ?? null},
-        false, 'pdf_import', -100, ${opts.adminEmail}, ${opts.adminEmail}
+        ${isPublished}, 'pdf_import', -100, ${opts.adminEmail}, ${opts.adminEmail}
       )
     `;
     result.inserted++;

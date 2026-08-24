@@ -1220,6 +1220,10 @@ function SidebarRow({
 }) {
   const colors = TYPE_COLORS[hotspot.type];
   const isPdfImport = hotspot.source === 'pdf_import';
+  // Logo-match rows carry the label prefix "Logo · " from the extractor.
+  // They're auto-published — which means clicks route immediately — so
+  // we flag them prominently for admin review to catch any misroute.
+  const isLogoMatch = isPdfImport && (hotspot.label ?? '').startsWith('Logo · ');
   return (
     <div
       className={`px-3 py-2 text-xs flex items-start gap-2 cursor-pointer hover:bg-gray-50 ${selected ? 'bg-blue-50' : ''}`}
@@ -1235,9 +1239,19 @@ function SidebarRow({
       </span>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 justify-between">
-          <span className={`font-medium ${colors.text} truncate`} title={hotspot.label ?? undefined}>
-            <span aria-hidden className="mr-0.5">{TYPE_ICONS[hotspot.type]}</span>
-            {hotspot.label || <span className="italic text-gray-500">Unlabeled</span>}
+          <span className={`font-medium ${colors.text} truncate flex items-center gap-1`} title={hotspot.label ?? undefined}>
+            <span aria-hidden>{TYPE_ICONS[hotspot.type]}</span>
+            {isLogoMatch && (
+              <span
+                className="px-1 py-[1px] text-[9px] font-semibold uppercase tracking-wide bg-purple-600 text-white rounded shrink-0"
+                title="Auto-published from logo detection — verify it points to the right advertiser"
+              >
+                Review
+              </span>
+            )}
+            <span className="truncate">
+              {hotspot.label || <span className="italic text-gray-500">Unlabeled</span>}
+            </span>
           </span>
           <span className="text-[10px] text-gray-400 shrink-0">
             p{hotspot.page_idx + 1}
