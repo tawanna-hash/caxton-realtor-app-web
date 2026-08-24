@@ -1,28 +1,34 @@
 // lib/server/hotspot-extractors.ts
 //
-// Shared helpers for auto-populating magazine hotspots from a PDF:
+// Hotspot auto-extraction for magazine PDFs. Three independent passes, one
+// shared inserter:
 //
-//   1. extractLinksFromPdf(buffer)
-//        Reads embedded <a href> annotations via pdf-lib. Fast, deterministic,
-//        no false positives — but only catches links the designer actually
-//        made clickable in the source file.
+//   1. extractPdfLinkAnnotations(buffer)
+//        Read every embedded <a href> annotation via pdf-lib. This is the
+//        cheapest, most precise source — but it only catches links the
+//        designer actually made clickable in the source file.
 //
-//   2. scanPageTextForContacts(buffer)
-//        Reads the PDF text layer via unpdf (serverless-friendly pdfjs) and
-//        regex-scans each page for email addresses, phone numbers, and
-//        plain-text URLs. Positions each hit as a small hotspot at the
-//        detected text's bounding box. Catches everything a designer wrote
-//        as plain text (e.g. "call 512-555-1234" that isn't a tel: link).
+//   2. extractPdfTextContacts(buffer)
+//        Read the PDF text layer via unpdf. Text items are grouped into
+//        LINES (by baseline y), sorted left-to-right, and re-assembled into
+//        continuous strings with a per-item character offset map. Regex
+//        scans run against the reconstructed line, and each hit is mapped
+//        back to the item(s) it covers — giving us a real bounding box
+//        that spans multi-item matches like kerned emails or spaced-out
+//        phone numbers. This is the key improvement over v1, which ran
+//        regexes per-item and lost anything spanning items.
 //
-//   3. matchAdvertiser(url, advertisers)
-//        Domain-based match against curated advertiser slugs. Shared so both
-//        extractors auto-link the same way.
+//   3. extractQrCodes(pageImageUrls)
+//        Fetch each pre-rendered page JPEG from Vercel Blob, resize to
+//        1200px wide, and run jsqr on both the original and inverted
+//        rasters. Falls back to a 90-degree rotation for QRs printed
+//        sideways.
 //
-//   4. insertExtractedHotspots(sql, magazineId, extracted, opts)
-//        Deletes previous source='pdf_import' rows for this magazine, then
-//        inserts fresh ones. Deduplicates within the batch by (page_idx,
-//        type, normalized identifier) so we never insert the same email
-//        twice on the same page. Idempotent across re-runs.
+//   4. insertExtracted(sql, rows, opts)
+//        Central inserter. Dedupes against existing hotspots on the same
+//        page by (page_idx, type, normalized identity). Sets source =
+//        'pdf_import', is_published = false, z_index = -100 so imports
+//        naturally stack below manual hotspots.
 
 import { PDFDocument, PDFDict, PDFArray, PDFName, PDFString, PDFNumber, PDFRef } from 'pdf-lib';
 import sharp from 'sharp';
@@ -32,7 +38,7 @@ import type { HotspotType } from '@/lib/hotspots';
 import type { NeonQueryFunction } from '@neondatabase/serverless';
 
 // ============================================================
-// Advertiser matching (shared)
+// Advertiser matching (shared across all three passes)
 // ============================================================
 
 const ADVERTISER_MATCH_SKIPLIST = [
@@ -67,7 +73,6 @@ export function matchAdvertiser(url: string, advertisers: AdvertiserLite[]): Adv
     const sc = coreAlnum(adv.slug.replace(/-/g, ''));
     if (sc.length < 5) continue;
     if (sc.includes(dc) || dc.includes(sc)) return adv;
-    // shared-prefix fallback (catches stewart.com vs stewart-title-austin)
     let plen = 0;
     const max = Math.min(sc.length, dc.length);
     for (let i = 0; i < max; i++) {
@@ -79,17 +84,34 @@ export function matchAdvertiser(url: string, advertisers: AdvertiserLite[]): Adv
 }
 
 // ============================================================
-// PDF link-annotation extraction (existing, moved from route)
+// Unified extraction result type
 // ============================================================
+//
+// Every pass produces the same shape so the inserter is source-agnostic.
+// `identity` is the dedupe key (normalized email / phone / URL).
+// `label` is a short human-readable summary the editor uses as the
+// hotspot's display label so imports are searchable and self-describing.
 
-export interface ExtractedLink {
+export interface ExtractedHotspot {
   page_idx: number;
   x_frac: number;
   y_frac: number;
   w_frac: number;
   h_frac: number;
-  url: string;
+  type: 'link' | 'email' | 'phone';
+  config: Record<string, unknown>;
+  identity: string;
+  label: string;
+  /** Where this hit came from — populated for diagnostics/UI, not stored. */
+  origin: 'pdf_link' | 'text_scan' | 'qr_code';
+  /** Set later by the inserter after advertiser matching. */
+  advertiser_id?: number | null;
+  advertiser_name?: string | null;
 }
+
+// ============================================================
+// PASS 1: PDF link annotations (pdf-lib)
+// ============================================================
 
 function numFromPdfValue(v: unknown): number | null {
   if (v instanceof PDFNumber) return v.asNumber();
@@ -103,29 +125,36 @@ function stringFromPdfValue(v: unknown): string | null {
   return null;
 }
 
-export async function extractLinksFromPdf(pdfBuffer: ArrayBuffer): Promise<ExtractedLink[]> {
-  const pdfDoc = await PDFDocument.load(new Uint8Array(pdfBuffer), {
-    updateMetadata: false,
-    ignoreEncryption: true,
-  });
+/** Fixed-viewport rect → bounded fractional rect. */
+function rectToFrac(
+  left: number, top: number, w: number, h: number, pageW: number, pageH: number,
+): { x_frac: number; y_frac: number; w_frac: number; h_frac: number } {
+  let x_frac = left / pageW;
+  let y_frac = top / pageH;
+  let w_frac = w / pageW;
+  let h_frac = h / pageH;
+  x_frac = Math.max(0, Math.min(1, x_frac));
+  y_frac = Math.max(0, Math.min(1, y_frac));
+  w_frac = Math.max(0.005, Math.min(1 - x_frac, w_frac));
+  h_frac = Math.max(0.005, Math.min(1 - y_frac, h_frac));
+  return { x_frac, y_frac, w_frac, h_frac };
+}
 
-  const links: ExtractedLink[] = [];
+export async function extractPdfLinkAnnotations(pdfBuffer: ArrayBuffer): Promise<ExtractedHotspot[]> {
+  const pdfDoc = await PDFDocument.load(new Uint8Array(pdfBuffer), {
+    updateMetadata: false, ignoreEncryption: true,
+  });
+  const out: ExtractedHotspot[] = [];
   const pages = pdfDoc.getPages();
 
   for (let pageIdx = 0; pageIdx < pages.length; pageIdx++) {
     const page = pages[pageIdx];
     const { width: pageWidth, height: pageHeight } = page.getSize();
-    const pageNode = page.node;
+    const annotsRaw = page.node.lookup(PDFName.of('Annots'));
+    if (!(annotsRaw instanceof PDFArray)) continue;
 
-    let annotsArr: PDFArray | undefined;
-    const annotsRaw = pageNode.lookup(PDFName.of('Annots'));
-    if (annotsRaw instanceof PDFArray) {
-      annotsArr = annotsRaw;
-    }
-    if (!annotsArr) continue;
-
-    for (let i = 0; i < annotsArr.size(); i++) {
-      const annotEntry = annotsArr.get(i);
+    for (let i = 0; i < annotsRaw.size(); i++) {
+      const annotEntry = annotsRaw.get(i);
       let annotDict: PDFDict | undefined;
       if (annotEntry instanceof PDFDict) {
         annotDict = annotEntry;
@@ -162,40 +191,48 @@ export async function extractLinksFromPdf(pdfBuffer: ArrayBuffer): Promise<Extra
       const h = top - bottom;
       if (w < 1 || h < 1) continue;
 
-      let x_frac = left / pageWidth;
-      let y_frac = (pageHeight - top) / pageHeight;
-      let w_frac = w / pageWidth;
-      let h_frac = h / pageHeight;
-
-      x_frac = Math.max(0, Math.min(1, x_frac));
-      y_frac = Math.max(0, Math.min(1, y_frac));
-      w_frac = Math.max(0.001, Math.min(1 - x_frac, w_frac));
-      h_frac = Math.max(0.001, Math.min(1 - y_frac, h_frac));
-
-      links.push({
+      const frac = rectToFrac(left, pageHeight - top, w, h, pageWidth, pageHeight);
+      const trimmedUrl = url.trim();
+      out.push({
         page_idx: pageIdx,
-        x_frac, y_frac, w_frac, h_frac,
-        url: url.trim(),
+        ...frac,
+        type: 'link',
+        config: { type: 'link', url: trimmedUrl, open_in: 'new_tab' },
+        identity: normalizeUrl(trimmedUrl),
+        label: labelForUrl(trimmedUrl),
+        origin: 'pdf_link',
       });
     }
   }
 
-  return links;
+  return out;
 }
 
 // ============================================================
-// PDF text-layer scan for missing contact info (NEW)
+// PASS 2: text-layer scan (unpdf) with LINE RECONSTRUCTION
 // ============================================================
 //
-// unpdf is a serverless-friendly pdfjs wrapper. It returns TextItems with
-// {str, transform, width, height}. transform is a 6-element PDF matrix
-// [a b c d e f] where (e, f) is the item's position (bottom-left origin,
-// PDF coordinates). We use e/f + width/height to place the hotspot.
+// This is the piece v1 got wrong. unpdf emits TextItems one "run" at a time
+// where a run is a group of characters emitted by a single Tj/TJ operator
+// in the PDF content stream. In practice a run is usually a word or a short
+// phrase — so an email like "hello@company.com" often lands in ONE item,
+// but "hello@ company.com" (with a soft-hyphen or kerning) can be TWO or
+// THREE items. Same for phone numbers with formatted separators, and same
+// for wrapped URLs.
+//
+// v1 ran regexes on each item independently → missed anything spanning.
+//
+// v2 groups items by baseline y (with a small tolerance for anti-aliasing
+// noise), sorts each line left-to-right by x, joins with a " " separator
+// where the horizontal gap between items exceeds ~30% of their character
+// height (to preserve word boundaries), and builds a char-offset table so
+// any regex match on the joined line can be mapped back to the source
+// items and their bounding boxes.
 
 interface UnpdfTextItem {
   str?: string;
   hasEOL?: boolean;
-  transform?: number[];   // [a, b, c, d, e, f]
+  transform?: number[];   // [a, b, c, d, e, f] — 2d affine
   width?: number;
   height?: number;
 }
@@ -211,37 +248,56 @@ interface UnpdfDoc {
   destroy?: () => Promise<void>;
 }
 
-export interface ExtractedContact {
-  page_idx: number;
-  x_frac: number;
-  y_frac: number;
-  w_frac: number;
-  h_frac: number;
-  type: 'link' | 'email' | 'phone';
-  /** For emails/phones: the raw address/number. For links: the URL. */
-  value: string;
+interface PositionedItem {
+  str: string;
+  /** page-space bottom-left x in PDF coords */
+  x: number;
+  /** page-space bottom-left y in PDF coords */
+  y: number;
+  w: number;
+  h: number;
 }
 
-// Regexes. Kept narrow to reduce false positives — designers write things
-// that LOOK like phone numbers in address fields, addresses that end in .co
-// domains, etc.
-//
-// EMAIL: standard RFC-lite. Requires a real TLD segment (>=2 letters).
-// PHONE: US-format 10-digit, tolerant of separators. Requires area code
-//        to start 2-9 (real NANP), no leading 0/1. Rejects obvious ZIPs.
-// URL:   http(s):// or www. prefixed. Requires a TLD segment >=2 letters.
-//        Trailing punctuation stripped in normalizer below.
-const RX_EMAIL = /\b[a-zA-Z0-9][a-zA-Z0-9._%+-]{0,63}@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z]{2,})+\b/g;
-const RX_PHONE = /(?<![\d-])(?:\+?1[\s.-]?)?\(?([2-9]\d{2})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})(?!\d)/g;
-const RX_URL = /\b(?:https?:\/\/|www\.)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9-]+)*(?:\.[a-zA-Z]{2,})(?:\/[^\s)]*)?\b/g;
+interface LineChunk {
+  /** Index into the source `items` array. */
+  itemIdx: number;
+  /** Char offset in the joined line where this item's text starts. */
+  offset: number;
+  /** Length of this item's text in the joined line (equals items[itemIdx].str.length). */
+  length: number;
+}
 
-function normalizePhone(match: RegExpMatchArray): string {
-  // capture groups: 1=area, 2=exchange, 3=line
-  return `+1${match[1]}${match[2]}${match[3]}`;
+interface ReconstructedLine {
+  text: string;
+  chunks: LineChunk[];
+  items: PositionedItem[];
+}
+
+const EMAIL_RE = /\b[a-zA-Z0-9][a-zA-Z0-9._%+-]{0,63}@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z]{2,})+\b/g;
+const PHONE_RE = /(?<![\d/])(?:\+?1[\s.-]?)?\(?([2-9]\d{2})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})(?!\d)/g;
+const URL_RE = /\b(?:https?:\/\/|www\.)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9-]+)*(?:\.[a-zA-Z]{2,})(?:\/[^\s)]*)?\b/g;
+// A bare hostname URL WITHOUT scheme/www. e.g. "stewart.com/contact". Common
+// in print ads and magazines. We match these too but require a real-looking
+// TLD (avoids false positives on filenames like "file.pdf" — see filter below).
+const BARE_DOMAIN_RE = /(?<![@\w])[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9-]+){0,3}\.[a-zA-Z]{2,}(?:\/[^\s)]*)?\b/g;
+
+// TLDs we'll accept for bare-domain matches. Restricting to a curated list
+// avoids matching filenames (foo.pdf, screenshot.jpg), version strings
+// (v1.2.3), decimals ($1.5m), etc. Extend as needed — this is intentionally
+// conservative.
+const BARE_DOMAIN_TLDS = new Set([
+  'com', 'net', 'org', 'io', 'co', 'us', 'app', 'dev', 'ai', 'biz', 'info',
+  'realtor', 'realty', 'homes', 'house', 'properties', 'estate', 'agency',
+  'group', 'company', 'llc', 'team', 'live', 'life', 'today', 'online',
+  'tv', 'me', 'ly', 'gov', 'edu', 'club', 'store', 'shop', 'pro',
+]);
+
+function normalizePhone(m: RegExpExecArray): string {
+  return `+1${m[1]}${m[2]}${m[3]}`;
 }
 
 function normalizeUrl(raw: string): string {
-  let u = raw.replace(/[),.;:!?]+$/, ''); // strip trailing punctuation
+  let u = raw.trim().replace(/[),.;:!?\]}]+$/, '');
   if (!/^https?:\/\//i.test(u)) u = `https://${u}`;
   return u;
 }
@@ -250,11 +306,140 @@ function normalizeEmail(raw: string): string {
   return raw.trim().toLowerCase();
 }
 
-export async function scanPageTextForContacts(pdfBuffer: ArrayBuffer): Promise<ExtractedContact[]> {
+function normalizeIdentityUrl(url: string): string {
+  return url.replace(/^https?:\/\//i, '').replace(/\/$/, '').toLowerCase();
+}
+
+function normalizeIdentityPhone(phone: string): string {
+  return phone.replace(/[^0-9]/g, '').replace(/^1/, '');
+}
+
+function labelForEmail(email: string): string {
+  return `Email · ${email}`;
+}
+
+function labelForPhone(phone: string): string {
+  // Pretty-format E.164 back into (xxx) xxx-xxxx for the label
+  const digits = phone.replace(/[^0-9]/g, '').replace(/^1/, '');
+  if (digits.length === 10) {
+    return `Phone · (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  return `Phone · ${phone}`;
+}
+
+function labelForUrl(url: string): string {
+  const host = url.replace(/^https?:\/\//i, '').split('/')[0].replace(/^www\./i, '');
+  return `Link · ${host}`;
+}
+
+/** Group text items into lines by shared baseline y, then sort each line
+ *  left-to-right and produce a joined text + chunk offset table. */
+function reconstructLines(items: UnpdfTextItem[]): ReconstructedLine[] {
+  // Convert to PositionedItem, dropping empties and items without geometry.
+  const positioned: (PositionedItem & { orig: UnpdfTextItem })[] = [];
+  for (const it of items) {
+    const str = it.str;
+    if (!str || !it.transform || it.transform.length < 6) continue;
+    const a = it.transform[0];
+    const d = it.transform[3];
+    const e = it.transform[4];
+    const f = it.transform[5];
+    const w = it.width ?? Math.abs(a) * str.length * 0.5;
+    const h = it.height ?? Math.abs(d);
+    if (w < 0.5 || h < 0.5) continue;
+    positioned.push({ str, x: e, y: f, w, h, orig: it });
+  }
+
+  if (positioned.length === 0) return [];
+
+  // Sort by baseline y descending (top of page first in PDF coords).
+  positioned.sort((a, b) => b.y - a.y);
+
+  // Group by y with a tolerance = 40% of median height (handles anti-aliasing
+  // jitter and superscripts/subscripts that share the visual line).
+  const heights = positioned.map((p) => p.h).sort((a, b) => a - b);
+  const medianH = heights[Math.floor(heights.length / 2)] || 8;
+  const lineTolerance = Math.max(1, medianH * 0.4);
+
+  const groups: (PositionedItem & { orig: UnpdfTextItem })[][] = [];
+  let current: (PositionedItem & { orig: UnpdfTextItem })[] = [];
+  let currentY = positioned[0].y;
+  for (const p of positioned) {
+    if (current.length === 0 || Math.abs(p.y - currentY) <= lineTolerance) {
+      current.push(p);
+      currentY = current.reduce((s, x) => s + x.y, 0) / current.length;
+    } else {
+      groups.push(current);
+      current = [p];
+      currentY = p.y;
+    }
+  }
+  if (current.length > 0) groups.push(current);
+
+  // Within each line, sort left-to-right and assemble text with real offsets.
+  const lines: ReconstructedLine[] = [];
+  for (const group of groups) {
+    group.sort((a, b) => a.x - b.x);
+    let text = '';
+    const chunks: LineChunk[] = [];
+    const groupItems: PositionedItem[] = [];
+    for (let idx = 0; idx < group.length; idx++) {
+      const item = group[idx];
+      // Insert a space separator between items if there's a visible gap AND
+      // the previous chunk didn't already end with whitespace. This preserves
+      // token boundaries without inflating regex text — critical because URLs
+      // and emails MUST be scanned as single tokens.
+      if (idx > 0) {
+        const prev = group[idx - 1];
+        const gap = item.x - (prev.x + prev.w);
+        const needsSpace = gap > (item.h * 0.3) &&
+          !/\s$/.test(text) && !/^\s/.test(item.str);
+        if (needsSpace) text += ' ';
+      }
+      const offset = text.length;
+      chunks.push({ itemIdx: idx, offset, length: item.str.length });
+      text += item.str;
+      groupItems.push(item);
+    }
+    lines.push({ text, chunks, items: groupItems });
+  }
+
+  return lines;
+}
+
+/** Given a match on `line.text` starting at `matchStart` with length
+ *  `matchLen`, compute the bounding box covering every text item the match
+ *  touches. Returns bottom-left x,y and width,height in PDF page coords. */
+function bboxForMatch(
+  line: ReconstructedLine,
+  matchStart: number,
+  matchLen: number,
+): { x: number; y: number; w: number; h: number } | null {
+  const matchEnd = matchStart + matchLen;
+  let minX = Infinity, maxX = -Infinity;
+  let minY = Infinity, maxY = -Infinity;
+  let touched = false;
+
+  for (const chunk of line.chunks) {
+    const chunkEnd = chunk.offset + chunk.length;
+    // Chunks that overlap the match at all count.
+    if (chunkEnd <= matchStart || chunk.offset >= matchEnd) continue;
+    const item = line.items[chunk.itemIdx];
+    if (!item) continue;
+    touched = true;
+    minX = Math.min(minX, item.x);
+    maxX = Math.max(maxX, item.x + item.w);
+    minY = Math.min(minY, item.y);
+    maxY = Math.max(maxY, item.y + item.h);
+  }
+  if (!touched) return null;
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+export async function extractPdfTextContacts(pdfBuffer: ArrayBuffer): Promise<ExtractedHotspot[]> {
   const { getDocumentProxy } = await import('unpdf');
   const pdf = (await getDocumentProxy(new Uint8Array(pdfBuffer))) as unknown as UnpdfDoc;
-
-  const contacts: ExtractedContact[] = [];
+  const out: ExtractedHotspot[] = [];
 
   try {
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
@@ -264,324 +449,386 @@ export async function scanPageTextForContacts(pdfBuffer: ArrayBuffer): Promise<E
       const pageHeight = viewport.height;
 
       const content = await page.getTextContent();
-      const items = content.items;
+      const lines = reconstructLines(content.items);
 
-      // Build a per-line index: for every text item store its char range in
-      // the concatenated line-text plus its bounding box. When a regex hits,
-      // we can look up which item(s) it covers and compute a bounding rect
-      // that spans them all.
-      //
-      // We concatenate PER ITEM (no across-item glue characters) so regex
-      // offsets map cleanly back to items. Emails/phones/URLs almost never
-      // span across two pdfjs text items — a single "run" of characters is
-      // typically emitted as one item.
-      for (const item of items) {
-        const str = item.str;
-        if (!str || !item.transform || item.transform.length < 6) continue;
-
-        const a = item.transform[0];
-        const d = item.transform[3];
-        const e = item.transform[4];
-        const f = item.transform[5];
-        const w = item.width ?? Math.abs(a) * str.length * 0.5;
-        const h = item.height ?? Math.abs(d);
-        if (w < 1 || h < 1) continue;
-
-        // pdfjs coordinates: bottom-left origin. Convert to top-left frac.
-        const x_frac = e / pageWidth;
-        const y_frac = (pageHeight - f - h) / pageHeight;
-        const w_frac = w / pageWidth;
-        const h_frac = h / pageHeight;
-
-        const tryPush = (type: ExtractedContact['type'], value: string): void => {
-          contacts.push({
-            page_idx: pageNum - 1,
-            x_frac: Math.max(0, Math.min(1, x_frac)),
-            y_frac: Math.max(0, Math.min(1, y_frac)),
-            w_frac: Math.max(0.005, Math.min(1 - x_frac, w_frac)),
-            h_frac: Math.max(0.005, Math.min(1 - y_frac, h_frac)),
-            type,
-            value,
-          });
-        };
-
-        // Reset regex state per string.
-        RX_EMAIL.lastIndex = 0;
+      for (const line of lines) {
+        // EMAIL
+        EMAIL_RE.lastIndex = 0;
         let m: RegExpExecArray | null;
-        while ((m = RX_EMAIL.exec(str)) !== null) tryPush('email', normalizeEmail(m[0]));
+        while ((m = EMAIL_RE.exec(line.text)) !== null) {
+          const bbox = bboxForMatch(line, m.index, m[0].length);
+          if (!bbox) continue;
+          const frac = rectToFrac(bbox.x, pageHeight - bbox.y - bbox.h, bbox.w, bbox.h, pageWidth, pageHeight);
+          const email = normalizeEmail(m[0]);
+          out.push({
+            page_idx: pageNum - 1, ...frac,
+            type: 'email',
+            config: { type: 'email', address: email },
+            identity: email,
+            label: labelForEmail(email),
+            origin: 'text_scan',
+          });
+        }
 
-        RX_PHONE.lastIndex = 0;
-        while ((m = RX_PHONE.exec(str)) !== null) tryPush('phone', normalizePhone(m));
+        // PHONE
+        PHONE_RE.lastIndex = 0;
+        while ((m = PHONE_RE.exec(line.text)) !== null) {
+          const bbox = bboxForMatch(line, m.index, m[0].length);
+          if (!bbox) continue;
+          const frac = rectToFrac(bbox.x, pageHeight - bbox.y - bbox.h, bbox.w, bbox.h, pageWidth, pageHeight);
+          const e164 = normalizePhone(m);
+          out.push({
+            page_idx: pageNum - 1, ...frac,
+            type: 'phone',
+            config: { type: 'phone', number: e164 },
+            identity: normalizeIdentityPhone(e164),
+            label: labelForPhone(e164),
+            origin: 'text_scan',
+          });
+        }
 
-        RX_URL.lastIndex = 0;
-        while ((m = RX_URL.exec(str)) !== null) tryPush('link', normalizeUrl(m[0]));
+        // URL — http(s) or www.
+        URL_RE.lastIndex = 0;
+        while ((m = URL_RE.exec(line.text)) !== null) {
+          const bbox = bboxForMatch(line, m.index, m[0].length);
+          if (!bbox) continue;
+          const frac = rectToFrac(bbox.x, pageHeight - bbox.y - bbox.h, bbox.w, bbox.h, pageWidth, pageHeight);
+          const url = normalizeUrl(m[0]);
+          out.push({
+            page_idx: pageNum - 1, ...frac,
+            type: 'link',
+            config: { type: 'link', url, open_in: 'new_tab' },
+            identity: normalizeIdentityUrl(url),
+            label: labelForUrl(url),
+            origin: 'text_scan',
+          });
+        }
+
+        // BARE DOMAIN (foo.com, foo.com/path — no scheme, no www.)
+        BARE_DOMAIN_RE.lastIndex = 0;
+        while ((m = BARE_DOMAIN_RE.exec(line.text)) !== null) {
+          const raw = m[0];
+          // Skip if the "domain" is actually the tail of an email/URL we
+          // already caught on this pass. Cheap check: does an @ sit within
+          // 3 chars before the match start on this line?
+          const before = line.text.slice(Math.max(0, m.index - 3), m.index);
+          if (before.includes('@') || before.endsWith('/') || before.endsWith('.')) continue;
+          // Skip if it's clearly a file extension / version string.
+          const tld = raw.split('/')[0].split('.').pop()?.toLowerCase() ?? '';
+          if (!BARE_DOMAIN_TLDS.has(tld)) continue;
+
+          const bbox = bboxForMatch(line, m.index, raw.length);
+          if (!bbox) continue;
+          const frac = rectToFrac(bbox.x, pageHeight - bbox.y - bbox.h, bbox.w, bbox.h, pageWidth, pageHeight);
+          const url = normalizeUrl(raw);
+          out.push({
+            page_idx: pageNum - 1, ...frac,
+            type: 'link',
+            config: { type: 'link', url, open_in: 'new_tab' },
+            identity: normalizeIdentityUrl(url),
+            label: labelForUrl(url),
+            origin: 'text_scan',
+          });
+        }
       }
     }
   } finally {
     await pdf.destroy?.().catch(() => undefined);
   }
 
-  return contacts;
+  return out;
 }
 
 // ============================================================
-// QR-code detection from pre-rendered page images (NEW)
+// PASS 3: QR-code scan (sharp + jsqr)
 // ============================================================
 //
-// Magazines already have page_urls — pre-rendered JPEGs in Vercel Blob
-// from the upload pipeline. We fetch each page image, downscale to ~800px
-// with sharp (jsqr's sweet spot for print QRs), and decode. Each detected
-// QR becomes a link hotspot positioned at the QR's bounding box.
+// Pre-rendered page JPEGs are already in Vercel Blob (page_urls). We fetch,
+// downscale to 1200px (higher than v1's 800px — the extra resolution matters
+// for small QRs on busy pages), and try:
+//   a) original raster
+//   b) inverted raster (light-on-dark QRs)
+//   c) rotated raster (some magazines print QRs sideways)
 //
-// Cost: sharp downscale + jsqr decode is ~200-400ms per page. For a 20-page
-// issue that's ~5-8s total — acceptable within the 60s function budget.
-// Downscaling to 800px is the key: at full print DPI a page image can be
-// 3000+px, which would take 5-10x longer to decode and give the same result.
-//
-// Detection is best-effort: pages with no QR return quickly (jsqr's initial
-// scan is fast on QR-free images). Malformed QRs are skipped silently.
+// A QR that decodes in ANY of these attempts wins.
 
-export interface ExtractedQr {
-  page_idx: number;
-  x_frac: number;
-  y_frac: number;
-  w_frac: number;
-  h_frac: number;
-  /** The URL / text encoded in the QR. */
-  value: string;
+interface JsQrLocation {
+  topLeftCorner: { x: number; y: number };
+  topRightCorner: { x: number; y: number };
+  bottomLeftCorner: { x: number; y: number };
+  bottomRightCorner: { x: number; y: number };
 }
 
-async function decodeQrFromImageUrl(url: string, pageIdx: number): Promise<ExtractedQr | null> {
+interface QrHit {
+  data: string;
+  loc: JsQrLocation;
+  /** Width/height of the raster the location refers to. */
+  rasterW: number;
+  rasterH: number;
+  /** Which pass produced the hit (for logs). */
+  attempt: 'original' | 'inverted' | 'rotated';
+}
+
+async function tryDecodeBuffer(
+  pixels: Uint8Array,
+  info: { width: number; height: number },
+  attempt: QrHit['attempt'],
+): Promise<QrHit | null> {
+  const clamped = new Uint8ClampedArray(pixels.buffer, pixels.byteOffset, pixels.byteLength);
+  const res = jsQR(clamped, info.width, info.height, { inversionAttempts: 'attemptBoth' });
+  if (!res || !res.data) return null;
+  return { data: res.data, loc: res.location, rasterW: info.width, rasterH: info.height, attempt };
+}
+
+async function decodeQrForPage(url: string, pageIdx: number): Promise<ExtractedHotspot | null> {
   try {
     const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) return null;
     const buf = Buffer.from(await res.arrayBuffer());
 
-    // Downscale to a max 800px width — jsqr works well at this size for
-    // typical print QRs (which are usually >=100px on-page) and the decode
-    // is 5-10x faster than at full DPI. Convert to raw RGBA for jsqr.
-    const img = sharp(buf).rotate();
-    const meta = await img.metadata();
-    const origW = meta.width ?? 0;
-    const origH = meta.height ?? 0;
-    if (origW < 50 || origH < 50) return null;
+    const meta = await sharp(buf).metadata();
+    if ((meta.width ?? 0) < 50 || (meta.height ?? 0) < 50) return null;
 
-    const targetW = Math.min(origW, 800);
-    const { data, info } = await img
+    const targetW = 1200;
+    // Attempt 1: normal
+    const base = await sharp(buf).rotate()
       .resize({ width: targetW, withoutEnlargement: true })
-      .ensureAlpha()
-      .raw()
-      .toBuffer({ resolveWithObject: true });
+      .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    let hit = await tryDecodeBuffer(base.data, base.info, 'original');
 
-    const result = jsQR(new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength), info.width, info.height, {
-      inversionAttempts: 'attemptBoth',
-    });
-    if (!result || !result.data) return null;
+    // Attempt 2: 90-degree rotation (sideways-printed QRs)
+    if (!hit) {
+      const rot = await sharp(buf).rotate(90)
+        .resize({ width: targetW, withoutEnlargement: true })
+        .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+      hit = await tryDecodeBuffer(rot.data, rot.info, 'rotated');
+    }
 
-    // jsqr returns finder-pattern locations in the DOWNSCALED image. Convert
-    // to fractions of the FULL page (fractions are scale-invariant).
-    const loc = result.location;
-    const xs = [loc.topLeftCorner.x, loc.topRightCorner.x, loc.bottomLeftCorner.x, loc.bottomRightCorner.x];
-    const ys = [loc.topLeftCorner.y, loc.topRightCorner.y, loc.bottomLeftCorner.y, loc.bottomRightCorner.y];
-    const minX = Math.max(0, Math.min(...xs));
-    const maxX = Math.min(info.width, Math.max(...xs));
-    const minY = Math.max(0, Math.min(...ys));
-    const maxY = Math.min(info.height, Math.max(...ys));
+    if (!hit) return null;
 
-    const x_frac = minX / info.width;
-    const y_frac = minY / info.height;
-    const w_frac = (maxX - minX) / info.width;
-    const h_frac = (maxY - minY) / info.height;
-    if (w_frac < 0.01 || h_frac < 0.01) return null;
+    // The location comes from the raster at the resolution jsQR saw. When
+    // the raster was rotated we can't map back to the original page image
+    // orientation without inverting the rotation on the corner coordinates.
+    // For our purposes (placing a hotspot roughly where the QR is), fall
+    // back to the CENTER of the raster with a generous default size if the
+    // raster was rotated. This is rare enough that a rough placement is fine.
+    let x_frac: number, y_frac: number, w_frac: number, h_frac: number;
+    if (hit.attempt === 'rotated') {
+      // Use the center of the ORIGINAL image with a reasonable size.
+      x_frac = 0.35;
+      y_frac = 0.35;
+      w_frac = 0.15;
+      h_frac = 0.15;
+    } else {
+      const xs = [hit.loc.topLeftCorner.x, hit.loc.topRightCorner.x, hit.loc.bottomLeftCorner.x, hit.loc.bottomRightCorner.x];
+      const ys = [hit.loc.topLeftCorner.y, hit.loc.topRightCorner.y, hit.loc.bottomLeftCorner.y, hit.loc.bottomRightCorner.y];
+      const minX = Math.max(0, Math.min(...xs));
+      const maxX = Math.min(hit.rasterW, Math.max(...xs));
+      const minY = Math.max(0, Math.min(...ys));
+      const maxY = Math.min(hit.rasterH, Math.max(...ys));
+      x_frac = minX / hit.rasterW;
+      y_frac = minY / hit.rasterH;
+      w_frac = (maxX - minX) / hit.rasterW;
+      h_frac = (maxY - minY) / hit.rasterH;
+      if (w_frac < 0.01 || h_frac < 0.01) return null;
+    }
 
-    return {
-      page_idx: pageIdx,
-      x_frac, y_frac, w_frac, h_frac,
-      value: result.data.trim(),
-    };
+    const value = hit.data.trim();
+    return qrValueToExtracted(value, pageIdx, x_frac, y_frac, w_frac, h_frac);
   } catch {
-    // Any decode error — image fetch failed, corrupt JPEG, no QR present —
-    // is treated as "no QR on this page" and skipped.
     return null;
   }
 }
 
-export async function scanPagesForQrCodes(pageUrls: string[]): Promise<ExtractedQr[]> {
-  // Decode pages in parallel with a modest concurrency cap so we don't hammer
-  // Blob or blow the function's memory budget on huge issues.
-  const CONCURRENCY = 4;
-  const results: ExtractedQr[] = [];
-
-  for (let i = 0; i < pageUrls.length; i += CONCURRENCY) {
-    const batch = pageUrls.slice(i, i + CONCURRENCY);
-    const decoded = await Promise.all(
-      batch.map((url, offset) => decodeQrFromImageUrl(url, i + offset)),
-    );
-    for (const qr of decoded) {
-      if (qr) results.push(qr);
-    }
+function qrValueToExtracted(
+  value: string, pageIdx: number,
+  x_frac: number, y_frac: number, w_frac: number, h_frac: number,
+): ExtractedHotspot {
+  const base = { page_idx: pageIdx, x_frac, y_frac, w_frac, h_frac, origin: 'qr_code' as const };
+  if (/^mailto:/i.test(value)) {
+    const address = normalizeEmail(value.replace(/^mailto:/i, '').split('?')[0]);
+    return {
+      ...base, type: 'email',
+      config: { type: 'email', address },
+      identity: address,
+      label: `QR · ${labelForEmail(address)}`,
+    };
   }
-
-  return results;
+  if (/^tel:/i.test(value)) {
+    const raw = value.replace(/^tel:/i, '').trim();
+    const digits = raw.replace(/[^0-9]/g, '').replace(/^1/, '');
+    const e164 = digits.length === 10 ? `+1${digits}` : raw;
+    return {
+      ...base, type: 'phone',
+      config: { type: 'phone', number: e164 },
+      identity: normalizeIdentityPhone(e164),
+      label: `QR · ${labelForPhone(e164)}`,
+    };
+  }
+  const looksLikeUrl = /^https?:\/\//i.test(value) || /^www\./i.test(value) || /\.[a-z]{2,}(\/|$)/i.test(value);
+  const url = looksLikeUrl ? normalizeUrl(value) : value;
+  return {
+    ...base, type: 'link',
+    config: { type: 'link', url, open_in: 'new_tab' },
+    identity: normalizeIdentityUrl(url),
+    label: `QR · ${labelForUrl(url)}`,
+  };
 }
 
-export function prepareQrRows(
-  qrs: ExtractedQr[],
-  advertisers: AdvertiserLite[],
-): InsertableRow[] {
-  return qrs.map((qr) => {
-    const value = qr.value;
-    // QR could contain a URL, tel:, mailto:, or plain text. We prefer to
-    // create the most specific hotspot type possible.
-    if (/^mailto:/i.test(value)) {
-      const address = value.replace(/^mailto:/i, '').split('?')[0].trim();
-      return {
-        page_idx: qr.page_idx,
-        x_frac: qr.x_frac, y_frac: qr.y_frac, w_frac: qr.w_frac, h_frac: qr.h_frac,
-        type: 'email' as HotspotType,
-        config: { type: 'email', address },
-        key: address.toLowerCase(),
-        advertiser_id: null,
-        advertiser_name: null,
-      };
-    }
-    if (/^tel:/i.test(value)) {
-      const raw = value.replace(/^tel:/i, '').trim();
-      return {
-        page_idx: qr.page_idx,
-        x_frac: qr.x_frac, y_frac: qr.y_frac, w_frac: qr.w_frac, h_frac: qr.h_frac,
-        type: 'phone' as HotspotType,
-        config: { type: 'phone', number: raw },
-        key: raw.replace(/[^0-9]/g, '').replace(/^1/, ''),
-        advertiser_id: null,
-        advertiser_name: null,
-      };
-    }
-    // URL or plain text — store as link. Non-URL plain text is rare in
-    // real-estate print (QRs there are always contact/website) and would
-    // fail domain matching anyway so it just stays an unlinked draft.
-    const looksLikeUrl = /^https?:\/\//i.test(value) || /^www\./i.test(value);
-    const url = looksLikeUrl
-      ? (value.startsWith('http') ? value : `https://${value}`)
-      : value;
-    const matched = looksLikeUrl ? matchAdvertiser(url, advertisers) : null;
-    return {
-      page_idx: qr.page_idx,
-      x_frac: qr.x_frac, y_frac: qr.y_frac, w_frac: qr.w_frac, h_frac: qr.h_frac,
-      type: 'link' as HotspotType,
-      config: { type: 'link', url, open_in: 'new_tab' },
-      key: url.replace(/^https?:\/\//i, '').replace(/\/$/, '').toLowerCase(),
-      advertiser_id: matched?.id ?? null,
-      advertiser_name: matched?.name ?? null,
-    };
-  });
+export async function extractQrCodes(pageImageUrls: string[]): Promise<ExtractedHotspot[]> {
+  const CONCURRENCY = 4;
+  const out: ExtractedHotspot[] = [];
+  for (let i = 0; i < pageImageUrls.length; i += CONCURRENCY) {
+    const batch = pageImageUrls.slice(i, i + CONCURRENCY);
+    const decoded = await Promise.all(
+      batch.map((url, offset) => decodeQrForPage(url, i + offset)),
+    );
+    for (const qr of decoded) if (qr) out.push(qr);
+  }
+  return out;
 }
 
 // ============================================================
-// Combined inserter: dedupes within batch + against existing hotspots
+// Central inserter: shortener resolution + dedupe + advertiser link + DB write
 // ============================================================
 
 export interface InsertOptions {
   magazineId: number;
   adminEmail: string | null;
-  /** True = wipe & reinsert pdf_import rows (used by the link-annotation
-   *  extractor as its designed re-sync path). False = only insert what
-   *  isn't already present as a manual OR pdf_import row on the same page. */
-  wipeExistingImports: boolean;
+  advertisers: AdvertiserLite[];
+  pageCount: number;
+  /** If true, DELETE existing source='pdf_import' rows first. Used by the
+   *  full "extract all" flow so that re-runs replace rather than accumulate.
+   *  Manual rows are never touched. */
+  wipeImports: boolean;
 }
 
-interface InsertableRow {
-  page_idx: number;
-  x_frac: number;
-  y_frac: number;
-  w_frac: number;
-  h_frac: number;
-  type: HotspotType;
-  config: Record<string, unknown>;
-  /** Normalized identity key for dedupe (e.g. lowercased email, e164 phone,
-   *  resolved URL). */
-  key: string;
-  advertiser_id: number | null;
-  advertiser_name: string | null;
+export interface InsertResult {
+  inserted: number;
+  skipped_duplicates: number;
+  auto_linked_advertisers: number;
+  by_origin: Record<'pdf_link' | 'text_scan' | 'qr_code', number>;
 }
 
 type SqlFn = NeonQueryFunction<false, false>;
 
-/**
- * Insert extracted hotspots as source='pdf_import' drafts. Skips any row
- * whose (page_idx, type, key) already matches an existing hotspot on that
- * page — regardless of whether the existing one is manual or a prior import.
- * This is what makes re-runs safe and lets the text-scan complement the
- * link-annotation extractor without duplicating.
- */
-export async function insertExtractedHotspots(
+export async function insertExtracted(
   sql: SqlFn,
-  rows: InsertableRow[],
+  rows: ExtractedHotspot[],
   opts: InsertOptions,
-): Promise<{ inserted: number; skipped_duplicates: number }> {
-  const { magazineId, adminEmail, wipeExistingImports } = opts;
-
-  if (wipeExistingImports) {
+): Promise<InsertResult> {
+  // 1. Optionally wipe. Only source='pdf_import' — manual rows survive.
+  if (opts.wipeImports) {
     await sql`
       DELETE FROM magazine_hotspots
-      WHERE magazine_id = ${magazineId} AND source = 'pdf_import'
+      WHERE magazine_id = ${opts.magazineId} AND source = 'pdf_import'
     `;
   }
 
-  // Load existing hotspots on this magazine to dedupe against. We compute
-  // the same "key" for each existing row so a manual hotspot for
-  // hello@foo.com blocks a scan-inserted duplicate on the same page.
+  // 2. Resolve any known shorteners so identity dedupe works on the real
+  //    destination URL (bit.ly, tinyurl, etc.). Parallel with a bounded
+  //    concurrency to keep response time predictable.
+  const CONCURRENCY = 6;
+  const resolved: ExtractedHotspot[] = [];
+  for (let i = 0; i < rows.length; i += CONCURRENCY) {
+    const batch = rows.slice(i, i + CONCURRENCY);
+    const done = await Promise.all(batch.map(async (row) => {
+      if (row.type !== 'link') return row;
+      const url = String((row.config as { url?: string }).url ?? '');
+      if (!url || !isShortenerUrl(url)) return row;
+      try {
+        const r = await resolveUrl(url, { maxHops: 8, timeoutMs: 5000 });
+        return {
+          ...row,
+          config: { type: 'link', url: r.resolved, tracking_url: url, open_in: 'new_tab' },
+          identity: normalizeIdentityUrl(r.resolved),
+          label: labelForUrl(r.resolved),
+        };
+      } catch {
+        return row;
+      }
+    }));
+    resolved.push(...done);
+  }
+
+  // 3. Drop rows past the page count (defensive).
+  const inRange = opts.pageCount > 0
+    ? resolved.filter((r) => r.page_idx < opts.pageCount)
+    : resolved;
+
+  // 4. Advertiser match for every URL.
+  for (const row of inRange) {
+    if (row.type !== 'link') continue;
+    const url = String((row.config as { url?: string; tracking_url?: string }).url ?? '');
+    const tracking = String((row.config as { tracking_url?: string }).tracking_url ?? '');
+    const matched = matchAdvertiser(url, opts.advertisers) ||
+      (tracking ? matchAdvertiser(tracking, opts.advertisers) : null);
+    if (matched) {
+      row.advertiser_id = matched.id;
+      row.advertiser_name = matched.name;
+    }
+  }
+
+  // 5. Existing hotspots on this magazine → dedupe set.
   const existing = await sql`
     SELECT page_idx, type, config
     FROM magazine_hotspots
-    WHERE magazine_id = ${magazineId}
+    WHERE magazine_id = ${opts.magazineId}
   ` as Array<{ page_idx: number; type: HotspotType; config: Record<string, unknown> }>;
 
   const existingKeys = new Set<string>();
   for (const row of existing) {
-    const key = configKey(row.type, row.config);
+    const key = configIdentity(row.type, row.config);
     if (key) existingKeys.add(`${row.page_idx}:${row.type}:${key}`);
   }
 
-  // Within-batch dedupe too (same email appearing on same page in multiple
-  // text items).
+  // 6. Insert with within-batch dedupe (same email/phone can appear on the
+  //    same page in multiple text items — keep the first, drop the rest).
   const batchKeys = new Set<string>();
-  let inserted = 0;
-  let skipped_duplicates = 0;
+  const result: InsertResult = {
+    inserted: 0,
+    skipped_duplicates: 0,
+    auto_linked_advertisers: 0,
+    by_origin: { pdf_link: 0, text_scan: 0, qr_code: 0 },
+  };
 
-  for (const row of rows) {
-    const composite = `${row.page_idx}:${row.type}:${row.key}`;
+  for (const row of inRange) {
+    const composite = `${row.page_idx}:${row.type}:${row.identity}`;
     if (existingKeys.has(composite) || batchKeys.has(composite)) {
-      skipped_duplicates++;
+      result.skipped_duplicates++;
       continue;
     }
     batchKeys.add(composite);
 
     const configJson = JSON.stringify(row.config);
+    // z_index = -100 → imports naturally stack below any manual hotspot
+    // (which defaults to 0) so the human's work always reads on top.
     await sql`
       INSERT INTO magazine_hotspots (
         magazine_id, page_idx,
         x_frac, y_frac, w_frac, h_frac,
         type, config, label, advertiser_name, advertiser_id,
-        is_published, source, created_by, updated_by
+        is_published, source, z_index, created_by, updated_by
       ) VALUES (
-        ${magazineId}, ${row.page_idx},
+        ${opts.magazineId}, ${row.page_idx},
         ${row.x_frac}, ${row.y_frac}, ${row.w_frac}, ${row.h_frac},
         ${row.type}, ${configJson}::jsonb,
-        null, ${row.advertiser_name}, ${row.advertiser_id},
-        false, 'pdf_import', ${adminEmail}, ${adminEmail}
+        ${row.label}, ${row.advertiser_name ?? null}, ${row.advertiser_id ?? null},
+        false, 'pdf_import', -100, ${opts.adminEmail}, ${opts.adminEmail}
       )
     `;
-    inserted++;
+    result.inserted++;
+    result.by_origin[row.origin]++;
+    if (row.advertiser_id) result.auto_linked_advertisers++;
   }
 
-  return { inserted, skipped_duplicates };
+  return result;
 }
 
-function configKey(type: HotspotType, config: Record<string, unknown>): string | null {
+function configIdentity(type: HotspotType, config: Record<string, unknown>): string | null {
   if (type === 'link' || type === 'mls') {
     const url = typeof config.url === 'string' ? config.url : '';
-    return url ? url.replace(/^https?:\/\//i, '').replace(/\/$/, '').toLowerCase() : null;
+    return url ? normalizeIdentityUrl(url) : null;
   }
   if (type === 'email') {
     const addr = typeof config.address === 'string' ? config.address : '';
@@ -589,94 +836,7 @@ function configKey(type: HotspotType, config: Record<string, unknown>): string |
   }
   if (type === 'phone') {
     const raw = typeof config.number === 'string' ? config.number : '';
-    return raw ? raw.replace(/[^0-9]/g, '').replace(/^1/, '') : null;
+    return raw ? normalizeIdentityPhone(raw) : null;
   }
   return null;
-}
-
-// ============================================================
-// Convenience: turn extracted contacts into insertable rows with
-// advertiser matching for the link type.
-// ============================================================
-
-export async function preparePdfLinkRows(
-  links: ExtractedLink[],
-  advertisers: AdvertiserLite[],
-): Promise<InsertableRow[]> {
-  // Pre-resolve shortener URLs in parallel.
-  const resolved = await Promise.all(links.map(async (link) => {
-    if (!isShortenerUrl(link.url)) {
-      return { ...link, final_url: link.url, tracking_url: null as string | null };
-    }
-    try {
-      const r = await resolveUrl(link.url, { maxHops: 8, timeoutMs: 5000 });
-      return { ...link, final_url: r.resolved, tracking_url: link.url };
-    } catch {
-      return { ...link, final_url: link.url, tracking_url: null as string | null };
-    }
-  }));
-
-  return resolved.map((link) => {
-    const matched =
-      matchAdvertiser(link.final_url, advertisers) ||
-      (link.tracking_url ? matchAdvertiser(link.tracking_url, advertisers) : null);
-    const config: Record<string, unknown> = {
-      type: 'link', url: link.final_url, open_in: 'new_tab',
-    };
-    if (link.tracking_url) config.tracking_url = link.tracking_url;
-    return {
-      page_idx: link.page_idx,
-      x_frac: link.x_frac, y_frac: link.y_frac,
-      w_frac: link.w_frac, h_frac: link.h_frac,
-      type: 'link' as HotspotType,
-      config,
-      key: link.final_url.replace(/^https?:\/\//i, '').replace(/\/$/, '').toLowerCase(),
-      advertiser_id: matched?.id ?? null,
-      advertiser_name: matched?.name ?? null,
-    };
-  });
-}
-
-export function prepareContactRows(
-  contacts: ExtractedContact[],
-  advertisers: AdvertiserLite[],
-): InsertableRow[] {
-  return contacts.map((c) => {
-    if (c.type === 'email') {
-      return {
-        page_idx: c.page_idx,
-        x_frac: c.x_frac, y_frac: c.y_frac,
-        w_frac: c.w_frac, h_frac: c.h_frac,
-        type: 'email' as HotspotType,
-        config: { type: 'email', address: c.value },
-        key: c.value,
-        advertiser_id: null,
-        advertiser_name: null,
-      };
-    }
-    if (c.type === 'phone') {
-      return {
-        page_idx: c.page_idx,
-        x_frac: c.x_frac, y_frac: c.y_frac,
-        w_frac: c.w_frac, h_frac: c.h_frac,
-        type: 'phone' as HotspotType,
-        config: { type: 'phone', number: c.value },
-        key: c.value.replace(/[^0-9]/g, '').replace(/^1/, ''),
-        advertiser_id: null,
-        advertiser_name: null,
-      };
-    }
-    // link
-    const matched = matchAdvertiser(c.value, advertisers);
-    return {
-      page_idx: c.page_idx,
-      x_frac: c.x_frac, y_frac: c.y_frac,
-      w_frac: c.w_frac, h_frac: c.h_frac,
-      type: 'link' as HotspotType,
-      config: { type: 'link', url: c.value, open_in: 'new_tab' },
-      key: c.value.replace(/^https?:\/\//i, '').replace(/\/$/, '').toLowerCase(),
-      advertiser_id: matched?.id ?? null,
-      advertiser_name: matched?.name ?? null,
-    };
-  });
 }

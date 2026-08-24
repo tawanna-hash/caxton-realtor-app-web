@@ -251,13 +251,12 @@ export default function MagazineUploadForm() {
       { label: 'Upload page images', status: 'pending' },
       ...(pdfFile ? [{ label: 'Extract page text from PDF', status: 'pending' as StepStatus }] : []),
       { label: 'Create magazine record', status: 'pending' },
-      // Auto-populate hotspots from the PDF: embedded <a> links, then a
-      // text-layer + QR pass for whatever wasn't already linked. Both are
-      // best-effort — a failure just leaves the magazine with no imported
-      // hotspots so the admin can run the tools manually from the editor.
+      // Unified auto-extract: embedded PDF links + text-layer scan + QR
+      // codes in one server call. Best-effort — a failure just leaves the
+      // magazine with no imported hotspots and the admin can re-run from
+      // the hotspot editor toolbar.
       ...(pdfFile ? [
-        { label: 'Import embedded PDF links as hotspots', status: 'pending' as StepStatus },
-        { label: 'Scan pages for QR codes + plain-text contacts', status: 'pending' as StepStatus },
+        { label: 'Extract hotspots (PDF links + text + QR codes)', status: 'pending' as StepStatus },
       ] : []),
     ];
     setSteps(stepList);
@@ -426,44 +425,25 @@ export default function MagazineUploadForm() {
       return;
     }
 
-    // Auto-populate hotspots. Only when we have a real PDF (both endpoints
-    // require reader_url). Failures here are non-fatal — the magazine row
-    // has already been created and the admin can re-run manually from the
-    // hotspot editor toolbar.
+    // Auto-populate hotspots via the unified extract-all endpoint. Failures
+    // here are non-fatal — the magazine row has already been created and
+    // the admin can re-run from the hotspot editor toolbar.
     if (pdfFile) {
       stepIdx++;
       updateStep(stepIdx, { status: 'running' });
       try {
-        const r = await fetch(`/api/admin/magazines/${createdId}/import-pdf-links`, {
+        const r = await fetch(`/api/admin/magazines/${createdId}/extract-all`, {
           method: 'POST',
         });
         if (!r.ok) throw new Error(await r.text());
         const body = await r.json();
-        updateStep(stepIdx, {
-          status: 'done',
-          detail: `${body.imported_count ?? 0} link(s) imported`,
-        });
-      } catch (err: unknown) {
-        // Non-fatal — continue to the next step.
-        updateStep(stepIdx, {
-          status: 'error',
-          detail: `${errMessage(err)} (retry from editor)`,
-        });
-      }
-
-      stepIdx++;
-      updateStep(stepIdx, { status: 'running' });
-      try {
-        const r = await fetch(`/api/admin/magazines/${createdId}/scan-page-text`, {
-          method: 'POST',
-        });
-        if (!r.ok) throw new Error(await r.text());
-        const body = await r.json();
+        const d = body?.diagnostics ?? {};
+        const findings = d.findings ?? {};
         updateStep(stepIdx, {
           status: 'done',
           detail:
-            `${body.inserted_count ?? 0} added ` +
-            `(${body.text_findings ?? 0} text, ${body.qr_findings ?? 0} QR)`,
+            `${d.inserted ?? 0} hotspot(s) added ` +
+            `(${findings.pdf_links ?? 0} embedded, ${findings.text_scan ?? 0} text, ${findings.qr_codes ?? 0} QR)`,
         });
       } catch (err: unknown) {
         // Non-fatal.

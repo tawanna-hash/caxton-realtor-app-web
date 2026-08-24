@@ -7,7 +7,7 @@
 //
 // Used by:
 //   - POST /api/admin/resolve-url (manual resolve from the editor)
-//   - POST /api/admin/magazines/:id/import-pdf-links (auto-resolve at import)
+//   - POST /api/admin/magazines/:id/extract-all (auto-resolve at import)
 //
 // SSRF protection: rejects private IPv4 ranges and localhost.
 

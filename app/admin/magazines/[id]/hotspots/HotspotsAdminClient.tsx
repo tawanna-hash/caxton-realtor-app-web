@@ -77,18 +77,17 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
   // ----- Copy-from-previous dialog -----
   const [showCopyDialog, setShowCopyDialog] = useState(false);
 
-  // ----- PDF import state -----
-  const [showImportDialog, setShowImportDialog] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<{ imported: number; total: number } | null>(null);
-
-  // ----- Page text/QR scan state -----
-  const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<{
+  // ----- Extract-all state (unified: PDF links + text scan + QR) -----
+  // Rewritten from v1's two-endpoint flow into a single call so results are
+  // atomic (all imports wiped + re-inserted in one transaction on the
+  // server) and the UI has one loading state instead of two racy ones.
+  const [showExtractDialog, setShowExtractDialog] = useState(false);
+  const [extracting, setExtracting] = useState(false);
+  const [extractResult, setExtractResult] = useState<{
     inserted: number;
-    skipped: number;
-    text_findings: number;
-    qr_findings: number;
+    skipped_duplicates: number;
+    auto_linked_advertisers: number;
+    findings: { pdf_links: number; text_scan: number; qr_codes: number };
   } | null>(null);
 
   // Tick every 10s so the "saved Xs ago" indicator updates.
@@ -273,58 +272,34 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
     }
   }, [magazine.id]);
 
-  // Phase 2.5: import embedded PDF links as draft hotspots.
-  // Deletes existing source='pdf_import' rows then inserts fresh ones.
-  // Manual hotspots are preserved.
-  const importPdfLinks = useCallback(async () => {
-    setImporting(true);
+  // Unified auto-extract. Wipes existing PDF-import hotspots then re-inserts
+  // findings from all three passes (embedded PDF links + text-layer scan +
+  // QR-code decode) in a single server transaction. Manual hotspots are
+  // never touched.
+  const runExtractAll = useCallback(async () => {
+    setExtracting(true);
     setSaveState('saving');
     try {
-      const res = await fetch(`/api/admin/magazines/${magazine.id}/import-pdf-links`, {
+      const res = await fetch(`/api/admin/magazines/${magazine.id}/extract-all`, {
         method: 'POST',
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setHotspots(sortHotspots(data.hotspots as Hotspot[]));
-      setImportResult({ imported: data.imported_count, total: data.total_links_in_pdf });
-      setSaveState('saved');
-      setLastSavedAt(new Date());
-    } catch (err) {
-      console.error('[hotspot-editor] PDF import failed:', err);
-      setSaveState('error');
-      setImportResult(null);
-    } finally {
-      setImporting(false);
-    }
-  }, [magazine.id]);
-
-  // Additive scan for emails, phones, plain URLs (via PDF text layer) and QR
-  // codes (via page images). Complements /import-pdf-links — the two together
-  // capture every kind of contact info a magazine might contain.
-  const scanPageText = useCallback(async () => {
-    setScanning(true);
-    setSaveState('saving');
-    try {
-      const res = await fetch(`/api/admin/magazines/${magazine.id}/scan-page-text`, {
-        method: 'POST',
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      setHotspots(sortHotspots(data.hotspots as Hotspot[]));
-      setScanResult({
-        inserted: data.inserted_count,
-        skipped: data.skipped_duplicate_count,
-        text_findings: data.text_findings,
-        qr_findings: data.qr_findings,
+      setExtractResult({
+        inserted: data.diagnostics.inserted,
+        skipped_duplicates: data.diagnostics.skipped_duplicates,
+        auto_linked_advertisers: data.diagnostics.auto_linked_advertisers,
+        findings: data.diagnostics.findings,
       });
       setSaveState('saved');
       setLastSavedAt(new Date());
     } catch (err) {
-      console.error('[hotspot-editor] page-text scan failed:', err);
+      console.error('[hotspot-editor] extract-all failed:', err);
       setSaveState('error');
-      setScanResult(null);
+      setExtractResult(null);
     } finally {
-      setScanning(false);
+      setExtracting(false);
     }
   }, [magazine.id]);
 
@@ -445,21 +420,12 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
           )}
           <button
             type="button"
-            onClick={() => setShowImportDialog(true)}
-            disabled={importing}
-            className="px-3 py-1.5 text-sm font-medium text-white bg-blue-700 rounded-md hover:bg-blue-800 disabled:opacity-50"
-            title="Extract clickable links embedded in the magazine PDF and import them as draft hotspots."
-          >
-            {importing ? 'Importing…' : 'Import PDF links'}
-          </button>
-          <button
-            type="button"
-            onClick={scanPageText}
-            disabled={scanning}
+            onClick={() => setShowExtractDialog(true)}
+            disabled={extracting}
             className="px-3 py-1.5 text-sm font-medium text-white bg-purple-700 rounded-md hover:bg-purple-800 disabled:opacity-50"
-            title="Scan every page for emails, phone numbers, plain URLs, and QR codes that aren't already linked."
+            title="Auto-populate hotspots: embedded PDF links, page-text scan (emails/phones/URLs), and QR codes. Manual hotspots are preserved."
           >
-            {scanning ? 'Scanning…' : 'Scan for missing links'}
+            {extracting ? 'Extracting…' : 'Extract all links'}
           </button>
         </div>
 
@@ -614,56 +580,41 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
         />
       )}
 
-      {/* ===== IMPORT-PDF-LINKS DIALOG ===== */}
-      {showImportDialog && (
+      {/* ===== EXTRACT-ALL DIALOG ===== */}
+      {showExtractDialog && (
         <ImportPdfLinksDialog
           existingPdfImportCount={hotspots.filter((h) => h.source === 'pdf_import').length}
           onConfirm={async () => {
-            setShowImportDialog(false);
-            await importPdfLinks();
+            setShowExtractDialog(false);
+            await runExtractAll();
           }}
-          onCancel={() => setShowImportDialog(false)}
+          onCancel={() => setShowExtractDialog(false)}
         />
       )}
 
-      {/* ===== SCAN RESULT TOAST ===== */}
-      {scanResult && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 bg-gray-900 text-white text-sm rounded-md shadow-xl flex items-center gap-3">
+      {/* ===== EXTRACT RESULT TOAST ===== */}
+      {extractResult && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 bg-gray-900 text-white text-sm rounded-md shadow-xl flex items-center gap-3 max-w-2xl">
           <span>
-            {scanResult.inserted > 0 ? (
+            {extractResult.inserted > 0 ? (
               <>
-                Added <strong>{scanResult.inserted}</strong> new hotspot{scanResult.inserted === 1 ? '' : 's'}
-                {' '}
-                ({scanResult.text_findings} text finding{scanResult.text_findings === 1 ? '' : 's'},{' '}
-                {scanResult.qr_findings} QR code{scanResult.qr_findings === 1 ? '' : 's'}).
+                Added <strong>{extractResult.inserted}</strong> hotspot{extractResult.inserted === 1 ? '' : 's'}
+                {' '}({extractResult.findings.pdf_links} embedded, {extractResult.findings.text_scan} text-scan,{' '}
+                {extractResult.findings.qr_codes} QR){extractResult.auto_linked_advertisers > 0 && (
+                  <>. Linked <strong>{extractResult.auto_linked_advertisers}</strong> to advertisers.</>
+                )}
               </>
             ) : (
-              <>No new links found ({scanResult.skipped} already covered).</>
+              <>No new links found.</>
             )}
           </span>
           <button
             type="button"
-            onClick={() => setScanResult(null)}
+            onClick={() => setExtractResult(null)}
             className="text-xs opacity-70 hover:opacity-100"
             aria-label="Dismiss"
           >
             ✕
-          </button>
-        </div>
-      )}
-
-      {/* ===== IMPORT RESULT TOAST ===== */}
-      {importResult && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 bg-gray-900 text-white text-sm rounded-md shadow-xl flex items-center gap-3">
-          <span>
-            Imported <strong>{importResult.imported}</strong> of {importResult.total} embedded link{importResult.total === 1 ? '' : 's'} from the PDF.
-          </span>
-          <button
-            type="button"
-            onClick={() => setImportResult(null)}
-            className="text-white/70 hover:text-white text-xs"
-          >
-            Dismiss
           </button>
         </div>
       )}
@@ -912,13 +863,28 @@ function DraggableHotspot({
         opacity,
         cursor: 'move',
         zIndex: domZ,
+        // PDF-imported hotspots that aren't currently selected let clicks
+        // pass through their fill to whatever is beneath — which is either
+        // a manual hotspot (higher intent) or the page image. The number
+        // pin (rendered below with `pointer-events: auto`) is still
+        // clickable so the import itself can be selected. Once selected,
+        // pointerEvents flips to 'auto' so drag/resize handles work.
+        pointerEvents: (isPdfImport && !selected) ? 'none' : 'auto',
       }}
       className="group/hotspot"
     >
       {/* Numbered pin badge — always visible, tiny, matches sidebar row. */}
       <div
-        className="absolute -top-2 -left-2 flex items-center gap-0.5 pointer-events-none"
-        style={{ zIndex: 2 }}
+        // The pin badge stays clickable even when its parent has
+        // pointer-events: none (for pdf_import unselected hotspots) — this
+        // is how the user can still adopt an imported hotspot despite the
+        // fill being click-through.
+        className="absolute -top-2 -left-2 flex items-center gap-0.5"
+        style={{ pointerEvents: 'auto', zIndex: 2 }}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          onSelect(e.altKey || e.metaKey);
+        }}
       >
         <span
           className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold text-white rounded-full shadow-sm ring-1 ring-white"
@@ -1029,9 +995,9 @@ function ImportPdfLinksDialog({
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6" onClick={onCancel}>
       <div className="bg-white rounded-md shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Import embedded PDF links</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">Extract all links</h2>
         <p className="text-sm text-gray-700 mb-4">
-          This will download the magazine PDF, extract every clickable link, and create a draft hotspot for each one. You can then review and publish them.
+          Auto-populate hotspots from three sources: <strong>embedded PDF links</strong>, a <strong>text-layer scan</strong> for emails / phone numbers / plain URLs, and <strong>QR-code decode</strong> on the page images. Each finding becomes a draft hotspot you can review and publish.
         </p>
         {existingPdfImportCount > 0 && (
           <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3 mb-4">
@@ -1052,9 +1018,9 @@ function ImportPdfLinksDialog({
           <button
             type="button"
             onClick={onConfirm}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-700 rounded-md hover:bg-blue-800 whitespace-nowrap"
+            className="px-4 py-2 text-sm font-medium text-white bg-purple-700 rounded-md hover:bg-purple-800 whitespace-nowrap"
           >
-            Start import
+            Extract now
           </button>
         </div>
       </div>
