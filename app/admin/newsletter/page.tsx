@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAdmin } from '@/hooks/use-admin';
+import { useUrlNumber, useUrlState, useUrlString } from '@/lib/use-url-state';
 
 import PageTitle from '@/components/ui/PageTitle';
 import { Pager } from '@/app/admin/_components/Pager';
@@ -60,16 +61,22 @@ export default function NewsletterSubscribersPage() {
   const [data, setData] = useState<ListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
+  // Pagination / filters / sort are URL-backed so refresh keeps the same view.
+  const [page, setPage] = useUrlNumber('page', 1);
   const [pageSize] = useState(50);
-  const [publication, setPublication] = useState<'' | 'realtyline' | 'newsline'>('');
-  const [status, setStatus] = useState<'' | 'active' | 'unsubscribed'>('');
-  const [verified, setVerified] = useState<'' | 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending' | 'unverified'>('');
-  const [q, setQ] = useState('');
-  const [qInput, setQInput] = useState('');
+  const [publication, setPublication] = useUrlString<'' | 'realtyline' | 'newsline'>('publication', '');
+  const [status, setStatus] = useUrlString<'' | 'active' | 'unsubscribed'>('status', '');
+  const [verified, setVerified] = useUrlString<'' | 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending' | 'unverified'>('verified', '');
+  const [q, setQ] = useUrlState<string>('q', '', {
+    parse: (raw) => raw ?? '',
+    stringify: (v) => (v ? v : null),
+  });
+  // Seed the debounced input from the URL-backed q so refresh keeps the
+  // search field populated. useState lazy-init reads q at mount only.
+  const [qInput, setQInput] = useState<string>(() => q);
   const [exporting, setExporting] = useState(false);
-  const [sort, setSort] = useState<'created_at' | 'email' | 'publication' | 'source' | 'status'>('created_at');
-  const [dir, setDir] = useState<'asc' | 'desc'>('desc');
+  const [sort, setSort] = useUrlString<'created_at' | 'email' | 'publication' | 'source' | 'status'>('sort', 'created_at');
+  const [dir, setDir] = useUrlString<'asc' | 'desc'>('dir', 'desc');
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [mounted, setMounted] = useState(false);
   useEffect(() => { queueMicrotask(() => setMounted(true)); }, []);
@@ -132,6 +139,9 @@ export default function NewsletterSubscribersPage() {
       setQ(trimmed);
     }, 300);
     return () => clearTimeout(handle);
+    // setPage / setQ are stable useUrlState setters (useCallback under
+    // the hood); eslint can't see through the custom hook.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qInput, q]);
 
   const handleExport = async () => {

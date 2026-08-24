@@ -5,6 +5,7 @@ import { PostHogProvider } from "./posthog-provider";
 import PushBootstrap from "@/components/PushBootstrap";
 import NativeSplashBootstrap from "@/components/NativeSplashBootstrap";
 import DeepLinkBootstrap from "@/components/DeepLinkBootstrap";
+import NativeLastRouteBridge from "@/components/NativeLastRouteBridge";
 import BiometricGate from "@/components/BiometricGate";
 import BiometricEnrollPrompt from "@/components/BiometricEnrollPrompt";
 import NativeKeyboard from "@/components/NativeKeyboard";
@@ -127,6 +128,12 @@ export default function RootLayout({
               (e.g. magic-link emails) and route the WebView to the deep
               path so cold-launches don't strand users on the homepage. */}
           <DeepLinkBootstrap />
+          {/* Native iOS/Android shell: remember the last route the user
+              was on and restore it on cold start so they don't get
+              kicked back to the homepage every time the app relaunches.
+              No-op on web (still persists to localStorage as a cheap
+              baseline). */}
+          <NativeLastRouteBridge />
           <NativeKeyboard />
           <ExternalLinkInterceptor />
           <NativeScrollToTop />

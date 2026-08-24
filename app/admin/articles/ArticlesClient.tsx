@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useMemo, useState, useTransition } from 'react';
+import { useUrlState, useUrlString } from '@/lib/use-url-state';
 import { useRouter } from 'next/navigation';
 import type { NewsArticle } from '@/lib/server/wp-news';
 
@@ -40,8 +41,12 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
-  const [filter, setFilter] = useState<PubFilter>('all');
-  const [search, setSearch] = useState('');
+  // Filter and search live in the URL so refresh preserves them.
+  const [filter, setFilter] = useUrlString<PubFilter>('filter', 'all');
+  const [search, setSearch] = useUrlState<string>('q', '', {
+    parse: (raw) => raw ?? '',
+    stringify: (v) => (v ? v : null),
+  });
   const [editing, setEditing] = useState<AdminArticle | null>(null);
 
   const filtered = useMemo(() => {

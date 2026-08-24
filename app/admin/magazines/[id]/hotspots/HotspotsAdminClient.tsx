@@ -12,6 +12,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useUrlNumber, useUrlString } from '@/lib/use-url-state';
 import { Rnd } from 'react-rnd';
 import type { Magazine } from '@/lib/magazines';
 import type { Hotspot, HotspotConfig } from '@/lib/hotspots';
@@ -45,8 +46,10 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
 export default function HotspotsAdminClient({ magazine, initialHotspots, prevIssues }: Props) {
   // ----- View state -----
-  const [viewMode, setViewMode] = useState<ViewMode>('spread');
-  const [currentPageIdx, setCurrentPageIdx] = useState(0);
+  // URL-backed so refresh (F5, iOS pull-to-refresh) restores the same spread
+  // and view mode. Defaults are stripped from the URL so it stays clean.
+  const [viewMode, setViewMode] = useUrlString<ViewMode>('view', 'spread');
+  const [currentPageIdx, setCurrentPageIdx] = useUrlNumber('p', 0);
 
   // ----- Hotspot state (canonical client copy) -----
   const [hotspots, setHotspots] = useState<Hotspot[]>(() => sortHotspots(initialHotspots));

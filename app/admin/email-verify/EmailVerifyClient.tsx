@@ -13,6 +13,7 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
+import { useUrlString } from '@/lib/use-url-state';
 import PageTitle from '@/components/ui/PageTitle';
 import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
 
@@ -222,7 +223,8 @@ function downloadCsv(filename: string, csv: string) {
 type Tab = 'single' | 'bulk';
 
 export default function EmailVerifyClient() {
-  const [tab, setTab] = useState<Tab>('single');
+  // Tab lives in the URL so refresh keeps the admin on the same panel.
+  const [tab, setTab] = useUrlString<Tab>('tab', 'single');
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">

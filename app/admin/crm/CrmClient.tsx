@@ -15,6 +15,7 @@
 
 import { useEffect, useCallback, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useUrlState, useUrlString } from '@/lib/use-url-state';
 import Link from 'next/link';
 import type {
   AdvertiserCrmRow,
@@ -75,15 +76,20 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
 
 export default function CrmClient({ initialRows }: Props) {
   const [rows, setRows] = useState(initialRows);
-  const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<AdvertiserStatus | 'all'>('all');
-  const [typeFilter, setTypeFilter] = useState<AdvertiserType | 'all'>('all');
-  const [pubFilter, setPubFilter] = useState<PublicationKey | 'all'>('all');
-  const [sortBy, setSortBy] = useState('updated_desc');
+  // Filters / view / sort are URL-backed so refresh restores them.
+  // Defaults are stripped from the URL to keep it clean.
+  const [query, setQuery] = useUrlState<string>('q', '', {
+    parse: (raw) => raw ?? '',
+    stringify: (v) => (v ? v : null),
+  });
+  const [statusFilter, setStatusFilter] = useUrlString<AdvertiserStatus | 'all'>('status', 'all');
+  const [typeFilter, setTypeFilter] = useUrlString<AdvertiserType | 'all'>('type', 'all');
+  const [pubFilter, setPubFilter] = useUrlString<PublicationKey | 'all'>('pub', 'all');
+  const [sortBy, setSortBy] = useUrlString<string>('sort', 'updated_desc');
   const [editing, setEditing] = useState<AdvertiserCrmRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
-  const [view, setView] = useState<'audience' | 'sent'>('audience');
+  const [view, setView] = useUrlString<'audience' | 'sent'>('view', 'audience');
   const [prefillOutreachId, setPrefillOutreachId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -133,19 +139,24 @@ export default function CrmClient({ initialRows }: Props) {
 
   const handleMarketTab = useCallback(
     (market: Market | 'all') => {
+      // Preserve any other URL-backed filters (?status, ?type, ?view, ?sort,
+      // ?q) when switching markets — we only rewrite the `market` param.
+      const params = new URLSearchParams(searchParams?.toString() ?? '');
       if (market === 'all') {
         setPubFilter('all');
-        router.replace('/admin/crm');
-        return;
+        params.delete('market');
+      } else {
+        // Store the market key directly. Market ids and PublicationKey
+        // values share strings ('austin', 'san_antonio', 'houston', 'dallas'),
+        // and parsePublications() returns PublicationKey — so comparing
+        // filter against advPubs works one-to-one.
+        setPubFilter(market as unknown as PublicationKey);
+        params.set('market', market);
       }
-      // Store the market key directly. Market ids and PublicationKey
-      // values share strings ('austin', 'san_antonio', 'houston', 'dallas'),
-      // and parsePublications() returns PublicationKey — so comparing
-      // filter against advPubs works one-to-one.
-      setPubFilter(market as unknown as PublicationKey);
-      router.replace(`/admin/crm?market=${market}`);
+      const qs = params.toString();
+      router.replace(qs ? `/admin/crm?${qs}` : '/admin/crm');
     },
-    [router],
+    [router, searchParams, setPubFilter],
   );
 
   const marketCounts = useMemo(() => {

@@ -18,6 +18,10 @@ interface MagazineReaderProps {
   onClose: () => void;
   /** Optional handler for the reader's "home" link in the top chrome. Defaults to window.location.assign('/'). */
   onHome?: () => void;
+  /** Zero-indexed page to open the reader on. Used to restore position after refresh. */
+  initialPage?: number;
+  /** Fires whenever the current page changes so the parent can persist it (URL / storage). */
+  onPageChange?: (page: number) => void;
 }
 
 type ActionMode = null | 'share' | 'qr' | 'download' | 'email' | 'embed' | 'search';
@@ -42,7 +46,7 @@ interface MagazineMaybeWithTexts {
   page_texts?: unknown;
 }
 
-export default function MagazineReader({ magazine, brandColor, onClose, onHome }: MagazineReaderProps) {
+export default function MagazineReader({ magazine, brandColor, onClose, onHome, initialPage, onPageChange }: MagazineReaderProps) {
   const handleHome = () => {
     if (onHome) {
       onHome();
@@ -53,7 +57,14 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
       window.location.assign('/');
     }
   };
-  const [currentPage, setCurrentPage] = useState(0);
+  // Zero-indexed. Initial value comes from prop (restored from ?page= in
+  // MagazineClient). Clamped to the magazine's page range.
+  const clampedInitial = (() => {
+    const n = initialPage ?? 0;
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.min(magazine.page_count - 1, Math.floor(n)));
+  })();
+  const [currentPage, setCurrentPage] = useState(clampedInitial);
   const [actionMode, setActionMode] = useState<ActionMode>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [dims, setDims] = useState({ w: 400, h: 560 });
@@ -360,6 +371,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
       const prev = currentPage;
       const next = e.data;
       setCurrentPage(next);
+      if (onPageChange) onPageChange(next);
       // Recenter the page after a flip so the user doesn't land on a new
       // page already panned off-screen.
       setPanX(0);
@@ -546,7 +558,7 @@ export default function MagazineReader({ magazine, brandColor, onClose, onHome }
             drawShadow={true}
             flippingTime={650}
             usePortrait={true}
-            startPage={0}
+            startPage={clampedInitial}
             autoSize={false}
             maxShadowOpacity={0.5}
             showCover={true}

@@ -114,6 +114,10 @@ interface InteractiveMagazineReaderProps {
   onClose: () => void;
   /** Optional handler for the reader's "home" link in the top chrome. Defaults to window.location.assign('/'). */
   onHome?: () => void;
+  /** Zero-indexed page to open the reader on. Used to restore position after refresh. */
+  initialPage?: number;
+  /** Fires whenever the current page changes so the parent can persist it (URL / storage). */
+  onPageChange?: (page: number) => void;
 }
 
 type ActionMode = null | 'share' | 'qr' | 'download' | 'email' | 'embed' | 'search';
@@ -266,6 +270,8 @@ export default function InteractiveMagazineReader({
   brandColor,
   onClose,
   onHome,
+  initialPage,
+  onPageChange,
 }: InteractiveMagazineReaderProps) {
   const handleHome = () => {
     if (onHome) {
@@ -278,7 +284,14 @@ export default function InteractiveMagazineReader({
     }
   };
   const [doc, setDoc] = useState<PdfJsDoc | null>(null);
-  const [currentPage, setCurrentPage] = useState(0); // zero-indexed
+  // Zero-indexed. Restored from ?page= via prop from MagazineClient.
+  const clampedInitialPage = (() => {
+    const n = initialPage ?? 0;
+    if (!Number.isFinite(n)) return 0;
+    const max = Math.max(0, magazine.page_count - 1);
+    return Math.max(0, Math.min(max, Math.floor(n)));
+  })();
+  const [currentPage, setCurrentPage] = useState(clampedInitialPage);
   const [zoomIdx, setZoomIdx] = useState<number>(() => getDefaultZoomIdx());
   const [actionMode, setActionMode] = useState<ActionMode>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -389,6 +402,16 @@ export default function InteractiveMagazineReader({
       setPanY(0);
     });
   }, [zoomIdx, currentPage]);
+
+  // Notify parent (MagazineClient) whenever the current page changes so it
+  // can persist ?page=<n> to the URL. On refresh MagazineClient reads that
+  // param back and passes it in as initialPage, restoring position.
+  useEffect(() => {
+    if (onPageChange) onPageChange(currentPage);
+    // Only fire when the page changes; onPageChange identity is stable via
+    // useCallback in the parent.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   // ---- Load PDF on mount ----
   useEffect(() => {

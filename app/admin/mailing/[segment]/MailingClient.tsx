@@ -21,6 +21,7 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useUrlNumber, useUrlState, useUrlString } from '@/lib/use-url-state';
 import {
   isSaborSegment,
   guessField,
@@ -121,17 +122,22 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [search, setSearch] = useState<string>('');
-  const [filter, setFilter] = useState<FilterKey>('all');
+  // Search / filter / sort / pagination are URL-backed so refresh keeps the
+  // exact same slice of contacts on screen.
+  const [search, setSearch] = useUrlState<string>('q', '', {
+    parse: (raw) => raw ?? '',
+    stringify: (v) => (v ? v : null),
+  });
+  const [filter, setFilter] = useUrlString<FilterKey>('filter', 'all');
   // Tag filter for the merged print segments (realtyline-atx-print and
   // newsline-sa-print). 'all' shows every row; the rest filter by tag.
   // SA also has a 'manual' bucket for the legacy Manual Newsline rows.
   // Ignored on every other segment.
-  const [tagFilter, setTagFilter] = useState<'all' | 'active-advertiser' | 'non-advertiser' | 'manual' | 'REALTOR' | 'Loan Officer' | 'Business Development'>('all');
-  const [sort, setSort] = useState<MailingColumnId>('created_at');
-  const [dir, setDir] = useState<'asc' | 'desc'>('desc');
-  const [offset, setOffset] = useState<number>(0);
-  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
+  const [tagFilter, setTagFilter] = useUrlString<'all' | 'active-advertiser' | 'non-advertiser' | 'manual' | 'REALTOR' | 'Loan Officer' | 'Business Development'>('tag', 'all');
+  const [sort, setSort] = useUrlString<MailingColumnId>('sort', 'created_at');
+  const [dir, setDir] = useUrlString<'asc' | 'desc'>('dir', 'desc');
+  const [offset, setOffset] = useUrlNumber('offset', 0);
+  const [pageSize, setPageSize] = useUrlNumber('pageSize', DEFAULT_PAGE_SIZE);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   // filterAll === true means "every row matching the current segment+search+filter"
@@ -231,8 +237,12 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
   useEffect(() => {
     const t = setTimeout(() => { queueMicrotask(() => { setOffset(0); setFilterAll(false); }); }, 300);
     return () => clearTimeout(t);
+    // setOffset is now returned from useUrlState — stable via useCallback but
+    // eslint can't verify that. Same story for setFilterAll (plain useState).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- setOffset stable via useUrlState/useCallback
   useEffect(() => { queueMicrotask(() => { setOffset(0); setSelectedIds(new Set()); setFilterAll(false); }); }, [filter, segment]);
 
   const showToast = (msg: string) => {

@@ -1,8 +1,9 @@
 'use client';
 
 import { type PubKey } from '@/lib/pub-meta';
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReaderRouter from '@/components/MagazineReaderRouter';
 import MagazineFeatured from '@/components/MagazineFeatured';
@@ -69,9 +70,59 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
     : storedPub;
   const info = PUBS_INFO[pub];
 
-  const [openMag, setOpenMag] = useState<Magazine | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [openMag, setOpenMagState] = useState<Magazine | null>(null);
   const [currentMag, setCurrentMag] = useState<Magazine | null>(null);
   const [autoOpenLatest, setAutoOpenLatest] = useState<boolean>(false);
+
+  // Snapshot ?page= from the URL exactly once on mount so both readers seed
+  // their initial page from it. useState lazy-init runs only on the first
+  // render — later URL writes (from onPageChange below) won't cause the
+  // reader to remount / lose animation state because we never read the
+  // URL again for this value.
+  const [initialReaderPage] = useState<number>(() => {
+    const raw = searchParams?.get('page');
+    const n = raw == null ? NaN : Number(raw);
+    return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
+  });
+
+  // Wrap setOpenMag so opening / closing the reader keeps ?read=<id> in the
+  // URL. On refresh the effect below rehydrates openMag by fetching the
+  // magazine by that id so the reader re-opens on the same page (BUG-30).
+  function setOpenMag(m: Magazine | null) {
+    setOpenMagState(m);
+    try {
+      const params = new URLSearchParams(searchParams?.toString() ?? '');
+      if (m) {
+        params.set('read', String(m.id));
+      } else {
+        params.delete('read');
+        // also strip in-reader page cursor when closing
+        params.delete('page');
+      }
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : (pathname || '/magazine'), { scroll: false });
+    } catch {}
+  }
+
+  // Persist the reader's current page into ?page=<n>. Stable identity via
+  // useCallback so we don't retrigger the reader's onPageChange effect.
+  const handleReaderPageChange = useCallback((page: number) => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (page > 0) {
+        params.set('page', String(page));
+      } else {
+        params.delete('page');
+      }
+      const qs = params.toString();
+      const url = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+      router.replace(url, { scroll: false });
+    } catch {}
+  }, [router]);
   // Guest article gate: probe /api/auth/me once on mount so we know
   // whether to intercept article link clicks with a sign-up modal.
   // Defaults to 'guest' so a network failure errs on showing the modal
@@ -96,15 +147,41 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
       setOpenMag(currentMag);
       setAutoOpenLatest(false);
     }
+    // setOpenMag is a stable function declared in this component, safe to
+    // omit from deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoOpenLatest, currentMag]);
 
   // When opened via /magazine/[id], auto-open the reader on mount.
   useEffect(() => {
     if (initialMagazine) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time on mount, matches autoOpenLatest pattern above
-      setOpenMag(initialMagazine);
+      setOpenMagState(initialMagazine);
     }
     // initialMagazine is a server-passed prop, never changes after mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Rehydrate the reader from ?read=<id> on refresh so the user lands back
+  // in the same issue they were reading. Only runs on /magazine (no
+  // initialMagazine) since /magazine/[id] already opens the reader above.
+  useEffect(() => {
+    if (initialMagazine) return;
+    if (openMag) return;
+    const readId = searchParams?.get('read');
+    if (!readId) return;
+    const idNum = Number(readId);
+    if (!Number.isInteger(idNum) || idNum < 1) return;
+    let cancelled = false;
+    fetch(`/api/magazines/${idNum}`, { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((mag) => {
+        if (cancelled || !mag) return;
+        setOpenMagState(mag as Magazine);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+    // Only run once on mount; ?read= is captured from initial searchParams.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -196,6 +273,8 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
           magazine={openMag}
           brandColor={info.color}
           onClose={() => setOpenMag(null)}
+          initialPage={initialReaderPage}
+          onPageChange={handleReaderPageChange}
         />
       )}
       {showArticleGate && (

@@ -8,6 +8,7 @@
 // any row to expand full event JSON. CSV export downloads current view.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useUrlNumber, useUrlState, useUrlString } from '@/lib/use-url-state';
 
 import PageTitle from '@/components/ui/PageTitle';
 type Event = {
@@ -151,11 +152,22 @@ function describeAction(e: Event): string {
 }
 
 export default function ActivityClient() {
-  const [bucket, setBucket] = useState<typeof BUCKETS[number]['id']>('all');
-  const [minutes, setMinutes] = useState<number>(60);
-  const [pathFilter, setPathFilter] = useState('');
-  const [cityFilter, setCityFilter] = useState('');
-  const [searchFilter, setSearchFilter] = useState('');
+  // Bucket / time window / text filters are URL-backed so refresh restores
+  // whatever slice of activity the admin was inspecting.
+  const [bucket, setBucket] = useUrlString<typeof BUCKETS[number]['id']>('bucket', 'all');
+  const [minutes, setMinutes] = useUrlNumber('minutes', 60);
+  const [pathFilter, setPathFilter] = useUrlState<string>('path', '', {
+    parse: (raw) => raw ?? '',
+    stringify: (v) => (v ? v : null),
+  });
+  const [cityFilter, setCityFilter] = useUrlState<string>('city', '', {
+    parse: (raw) => raw ?? '',
+    stringify: (v) => (v ? v : null),
+  });
+  const [searchFilter, setSearchFilter] = useUrlState<string>('q', '', {
+    parse: (raw) => raw ?? '',
+    stringify: (v) => (v ? v : null),
+  });
   const [events, setEvents] = useState<Event[]>([]);
   const [rollup, setRollup] = useState<Rollup>({ pageviews: 0, clicks: 0, rageclicks: 0, forms: 0, errors: 0, visitors: 0 });
   const [loading, setLoading] = useState(true);
