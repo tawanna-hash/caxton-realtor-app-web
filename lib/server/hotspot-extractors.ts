@@ -36,6 +36,7 @@ import jsQR from 'jsqr';
 import { isShortenerUrl, resolveUrl } from '@/lib/url-resolver';
 import type { HotspotType } from '@/lib/hotspots';
 import type { NeonQueryFunction } from '@neondatabase/serverless';
+import { logger } from './logger';
 
 // ============================================================
 // Advertiser matching (shared across all three passes)
@@ -732,313 +733,291 @@ export async function extractQrCodes(pageImageUrls: string[]): Promise<Extracted
 }
 
 // ============================================================
-// PASS 4: logo detection via perceptual hash matching
+// PASS 4: logo detection via Gemini vision
 // ============================================================
 //
-// Text scans and PDF link annotations both miss logos: they're raster (or
-// vector art) with no adjacent contact text and no clickable annotation.
+// v3 (Gemini vision): earlier passes tried operator-list image extraction
+// and then whitespace-projection + perceptual hash matching. Both failed
+// on real magazine pages — script/cursive wordmarks (Austin Title,
+// Independence Title, LaCima, Stewart, Champions School) don't survive
+// dhash comparison against a differently-cropped DB avatar.
 //
-// v2 (render-then-detect): the earlier operator-list approach missed logos
-// that were exported as vector art (paths + fills, no paintImageXObject).
-// Every real magazine logo we shipped hit that path — result was zero
-// matches. v2 works on the rendered page JPEG instead so raster and vector
-// logos are equally visible.
+// v3 uses Gemini 2.5 Flash: for each page image we send the full page and
+// the list of advertiser names+IDs and ask the model to return normalized
+// bounding boxes for every advertiser logo it can spot on the page.
+// Gemini is very good at logo/text recognition and returns coordinates in
+// its standard 0..1000 normalized space (per the Gemini vision docs).
 //
-// Pipeline:
-//   1. Fetch each page JPEG (already in Vercel Blob at 220 DPI).
-//   2. Downscale to ~1200px on the long side; convert to grayscale.
-//   3. Threshold to binary (near-white = background). Project onto x and
-//      y axes to find whitespace bands. Cut on wide bands to get boxes.
-//   4. Filter boxes by size (skip tiny icons and full-page photos).
-//   5. Perceptual-hash (dhash) each candidate crop and match against a
-//      pre-built advertiser phash index. Lowest Hamming distance under
-//      the threshold wins.
-//   6. On match, emit a link hotspot pointing at the advertiser's website,
-//      is_published = true (the caller flips this bit; see insertExtracted).
+// Failure mode: Gemini can hallucinate boxes for advertisers that aren't
+// on the page. We defend by (a) requiring the returned ID to be in the
+// input list, (b) rejecting boxes with implausible aspect ratios or
+// sizes, (c) rejecting boxes that overlap heavily with each other beyond
+// the first per advertiser.
 //
-// Advertisers with no logo or no website can't be matched — we skip them.
+// Cost: ~1 Gemini Flash vision call per magazine page. A 20-page issue
+// runs ~20 calls total.
 
-// Hamming distance threshold on the 64-bit dhash. <=12 is the empirical
-// "same image at different sizes" line for clean identical rasters.
-// Real magazine logos (cursive scripts, painterly marks, aspect-ratio
-// changes between the DB avatar and the on-page render) push distance
-// well past 14, so we widen to 20 — still tight enough to reject an
-// unrelated ad image, loose enough to catch "LaCima" script vs. its
-// horizontal wordmark variant.
-const LOGO_PHASH_MAX_DISTANCE = 20;
-// Skip anything tiny (bullets, punctuation) or full-page (background).
-// Values are page-space fractions.
-const LOGO_MIN_FRAC_SHORT_SIDE = 0.025;
-const LOGO_MIN_FRAC_LONG_SIDE = 0.05;
-const LOGO_MAX_FRAC = 0.5;
-// Fraction of the region to pad on each side before phashing. Segmenter
-// cuts tight on ink, but DB avatars are stored with breathing room, so
-// a tight crop of the same logo will phash further from the padded
-// avatar than expected. 5% padding on each side splits the difference.
-const REGION_PAD_FRAC = 0.05;
-// Downscale target for segmentation — bigger = better recall on small
-// logos at the cost of CPU. 1600 keeps ~3% logos at ~48px, plenty for
-// phash after crop-and-normalize.
-const SEGMENT_TARGET_LONG_SIDE = 1600;
-// Pixel is "background" if grayscale value >= this. 235 (was 245) catches
-// anti-aliased edges on script/cursive wordmarks that would otherwise
-// bleed the whitespace between adjacent logos in a sponsor strip and
-// merge them into one un-hashable box.
-const BG_THRESHOLD = 235;
-// A row/column is a whitespace band if fewer than this fraction of pixels
-// are ink. 0.003 (was 0.005) makes the projection more sensitive so
-// narrow gutters between tight-set sponsor logos still register as
-// whitespace bands.
-const BAND_INK_FRACTION = 0.003;
-// Minimum whitespace band width in scaled pixels. At SEGMENT_TARGET=1600
-// on a 3225px native page (2x scale), 8 scaled px ≈ 16 native px — wider
-// than JPEG edge noise but narrower than typical inter-logo padding in
-// a sponsor strip.
-const MIN_GAP_PX = 8;
+// Gemini 2.5 Flash is the current GA stable Flash model with image input.
+// Override via GEMINI_VISION_MODEL if a newer model becomes available.
+const LOGO_MODEL = process.env.GEMINI_VISION_MODEL ?? 'gemini-2.5-flash';
+const LOGO_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${LOGO_MODEL}:generateContent`;
 
-function hammingDistance(a: string, b: string): number {
-  if (a.length !== b.length) return Infinity;
-  let d = 0;
-  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) d++;
-  return d;
+// Per-page vision call timeout. Gemini Flash typically returns in <10s
+// but we allow generous headroom before giving up on a page.
+const LOGO_TIMEOUT_MS = 45_000;
+
+// Bound how many pages we scan in parallel. Each call is fully independent
+// (page image + advertiser list in, boxes out). 4 keeps us under Gemini's
+// per-second free-tier budget without dragging out a 20-page magazine.
+const LOGO_PAGE_CONCURRENCY = 4;
+
+// Reject boxes that are obviously wrong:
+//   - too tiny (icon-sized fragments in body copy)
+//   - full-page (Gemini occasionally returns the whole page for a
+//     background watermark)
+//   - extreme aspect ratio (>15:1 either way — no real logo is a hairline)
+const LOGO_MIN_FRAC = 0.01;
+const LOGO_MAX_FRAC = 0.6;
+const LOGO_MAX_ASPECT = 15;
+
+interface GeminiLogoBox {
+  advertiser_id: number;
+  /** Gemini returns coordinates in a normalized 0..1000 space, ordered
+   *  [ymin, xmin, ymax, xmax]. We convert to page-space fractions. */
+  box_2d: [number, number, number, number];
 }
 
-interface ImageRegion {
-  page_idx: number;
-  x_frac: number;
-  y_frac: number;
-  w_frac: number;
-  h_frac: number;
+function isFiniteNumber(v: unknown): v is number {
+  return typeof v === 'number' && Number.isFinite(v);
 }
 
-/** Given a 1-D ink-density array and a minimum gap width, return
- *  [start, end) index pairs of contiguous "content" runs, split on any
- *  whitespace band >= minGap pixels. */
-function segmentRuns(ink: Float32Array, minGap: number): Array<[number, number]> {
-  const runs: Array<[number, number]> = [];
-  let inContent = false;
-  let contentStart = 0;
-  let gapCount = 0;
-
-  for (let i = 0; i < ink.length; i++) {
-    const isInk = ink[i] > BAND_INK_FRACTION;
-    if (isInk) {
-      if (!inContent) {
-        inContent = true;
-        contentStart = i;
-      }
-      gapCount = 0;
-    } else if (inContent) {
-      gapCount++;
-      if (gapCount >= minGap) {
-        runs.push([contentStart, i - gapCount + 1]);
-        inContent = false;
-        gapCount = 0;
-      }
+function parseGeminiLogoBoxes(raw: unknown, validIds: Set<number>): GeminiLogoBox[] {
+  if (!Array.isArray(raw)) return [];
+  const out: GeminiLogoBox[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const r = item as Record<string, unknown>;
+    const id = Number(r.advertiser_id);
+    if (!Number.isInteger(id) || !validIds.has(id)) continue;
+    const box = r.box_2d;
+    if (!Array.isArray(box) || box.length !== 4) continue;
+    const [a, b, c, d] = box;
+    if (!isFiniteNumber(a) || !isFiniteNumber(b) || !isFiniteNumber(c) || !isFiniteNumber(d)) {
+      continue;
     }
+    out.push({ advertiser_id: id, box_2d: [a, b, c, d] });
   }
-  if (inContent) runs.push([contentStart, ink.length]);
-  return runs;
-}
-
-/** Segment a rendered page JPEG into candidate content regions by
- *  projecting on x and y and cutting at wide whitespace bands. */
-async function segmentPageRegions(
-  pageIdx: number, pageBuffer: Buffer,
-): Promise<ImageRegion[]> {
-  const meta = await sharp(pageBuffer).metadata();
-  const origW = meta.width ?? 0;
-  const origH = meta.height ?? 0;
-  if (origW < 200 || origH < 200) return [];
-
-  // Downscale + grayscale in one pass. `raw` gets us direct pixel access.
-  const scale = SEGMENT_TARGET_LONG_SIDE / Math.max(origW, origH);
-  const w = Math.max(1, Math.round(origW * scale));
-  const h = Math.max(1, Math.round(origH * scale));
-  const raw = await sharp(pageBuffer)
-    .resize({ width: w, height: h, fit: 'fill' })
-    .grayscale()
-    .raw()
-    .toBuffer();
-  if (raw.length !== w * h) return [];
-
-  // 1D binary mask: 1 for ink, 0 for background. Then row-sum and col-sum
-  // into normalized ink-fraction arrays for projection cuts.
-  const rowInk = new Float32Array(h);
-  const colInk = new Float32Array(w);
-  for (let y = 0; y < h; y++) {
-    let row = 0;
-    for (let x = 0; x < w; x++) {
-      if (raw[y * w + x] < BG_THRESHOLD) {
-        row++;
-        colInk[x]++;
-      }
-    }
-    rowInk[y] = row / w;
-  }
-  for (let x = 0; x < w; x++) colInk[x] /= h;
-
-  const out: ImageRegion[] = [];
-
-  // Two segmentation strategies run in parallel and their results are
-  // both emitted — cheap dedupe happens later via bbox overlap when we
-  // hash and match. The two strategies capture different layouts:
-  //   A. row-first: split into horizontal bands, then columns per band.
-  //      Great for sponsor strips (a row of logos across the page).
-  //   B. col-first: split into vertical bands, then rows per band.
-  //      Great for sidebar ad columns.
-  const rowBands = segmentRuns(rowInk, MIN_GAP_PX);
-  for (const [y0, y1] of rowBands) {
-    // Restrict column projection to this band only.
-    const bandColInk = new Float32Array(w);
-    for (let y = y0; y < y1; y++) {
-      for (let x = 0; x < w; x++) {
-        if (raw[y * w + x] < BG_THRESHOLD) bandColInk[x]++;
-      }
-    }
-    for (let x = 0; x < w; x++) bandColInk[x] /= Math.max(1, y1 - y0);
-    const colRuns = segmentRuns(bandColInk, MIN_GAP_PX);
-    for (const [x0, x1] of colRuns) {
-      const bx = x0 / w, by = y0 / h;
-      const bw = (x1 - x0) / w, bh = (y1 - y0) / h;
-      const shortSide = Math.min(bw, bh);
-      const longSide = Math.max(bw, bh);
-      if (shortSide < LOGO_MIN_FRAC_SHORT_SIDE) continue;
-      if (longSide < LOGO_MIN_FRAC_LONG_SIDE) continue;
-      if (longSide > LOGO_MAX_FRAC) continue;
-      out.push({ page_idx: pageIdx, x_frac: bx, y_frac: by, w_frac: bw, h_frac: bh });
-    }
-  }
-
-  const colBands = segmentRuns(colInk, MIN_GAP_PX);
-  for (const [x0, x1] of colBands) {
-    const bandRowInk = new Float32Array(h);
-    for (let y = 0; y < h; y++) {
-      for (let x = x0; x < x1; x++) {
-        if (raw[y * w + x] < BG_THRESHOLD) bandRowInk[y]++;
-      }
-    }
-    for (let y = 0; y < h; y++) bandRowInk[y] /= Math.max(1, x1 - x0);
-    const rowRuns = segmentRuns(bandRowInk, MIN_GAP_PX);
-    for (const [y0, y1] of rowRuns) {
-      const bx = x0 / w, by = y0 / h;
-      const bw = (x1 - x0) / w, bh = (y1 - y0) / h;
-      const shortSide = Math.min(bw, bh);
-      const longSide = Math.max(bw, bh);
-      if (shortSide < LOGO_MIN_FRAC_SHORT_SIDE) continue;
-      if (longSide < LOGO_MIN_FRAC_LONG_SIDE) continue;
-      if (longSide > LOGO_MAX_FRAC) continue;
-      out.push({ page_idx: pageIdx, x_frac: bx, y_frac: by, w_frac: bw, h_frac: bh });
-    }
-  }
-
   return out;
 }
 
-/** Compute the phash of a raster fetched from a URL. sharp-phash accepts
- *  a Buffer directly; we downscale to 256px on the long side first for
- *  consistent hashing across differently-sized source images. */
-async function phashFromUrl(url: string): Promise<string | null> {
+function extractJsonArray(raw: string): string | null {
+  const trimmed = raw.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  if (fenced) return fenced[1].trim();
+  const first = trimmed.indexOf('[');
+  const last = trimmed.lastIndexOf(']');
+  if (first === -1 || last === -1 || last < first) return null;
+  return trimmed.slice(first, last + 1);
+}
+
+function withVisionTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(`timeout after ${ms}ms`)), ms);
+    p.then((v) => { clearTimeout(t); resolve(v); })
+      .catch((e) => { clearTimeout(t); reject(e); });
+  });
+}
+
+/** Call Gemini for one page. Returns advertiser matches with page-space
+ *  fractional coords, or [] on any failure (never throws). */
+async function detectLogosOnPage(args: {
+  apiKey: string;
+  pageIdx: number;
+  pageBase64: string;
+  mimeType: string;
+  advertisers: AdvertiserLite[];
+}): Promise<Array<{ adv: AdvertiserLite; x_frac: number; y_frac: number; w_frac: number; h_frac: number }>> {
+  const validIds = new Set(args.advertisers.map((a) => a.id));
+
+  // The prompt names every advertiser with an ID. Gemini can't match
+  // against images it hasn't seen, so we rely on the model's OCR +
+  // brand-recognition + business-name matching to link a wordmark on
+  // the page to an advertiser name in the list.
+  const advList = args.advertisers
+    .map((a) => `- id=${a.id} name="${a.name.replace(/"/g, "'")}"`)
+    .join('\n');
+
+  const systemPrompt = `You are a logo-detection service for a real-estate magazine. Given a page image and a list of advertisers, find every advertiser logo/wordmark visible on the page and return its bounding box.
+
+You will receive:
+- One page image from a print magazine.
+- A list of known advertisers with numeric IDs and names.
+
+Return ONLY a JSON array. No prose. No code fences. Each element:
+  { "advertiser_id": <integer from the list>, "box_2d": [ymin, xmin, ymax, xmax] }
+
+Coordinates MUST be in Gemini's standard 0..1000 normalized image space (0,0 = top-left, 1000,1000 = bottom-right).
+
+Matching rules:
+- Match by logo/wordmark text: e.g. a script "Austin Title" wordmark matches advertiser named "Austin Title Company".
+- If a name in the ad differs slightly (missing/added "The", "Company", "Inc", "LLC", location suffixes), still match to the closest advertiser in the list.
+- Return a box for EACH visible occurrence — a logo may appear multiple times on a page (sponsor strip + repeated in an ad).
+- If a logo/wordmark on the page does NOT correspond to any advertiser in the provided list, do NOT return it. Only return matches to the provided list.
+- If nothing matches, return an empty array [].
+- Do NOT invent boxes. Do NOT return boxes for body-copy text or article headlines.
+- Do NOT return a box for the magazine's own masthead or a page number.
+
+Provided advertisers:
+${advList}`;
+
+  const body = {
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          { text: 'Detect every advertiser logo visible on this page and return their bounding boxes as JSON.' },
+          { inline_data: { mime_type: args.mimeType, data: args.pageBase64 } },
+        ],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.0,
+      maxOutputTokens: 4_000,
+      response_mime_type: 'application/json',
+    },
+  };
+
+  let res: Response;
   try {
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) return null;
-    const buf = Buffer.from(await res.arrayBuffer());
-    const normalized = await sharp(buf).rotate()
-      .resize({ width: 256, height: 256, fit: 'inside', withoutEnlargement: false })
-      .toBuffer();
-    const phash = await (await import('sharp-phash')).default(normalized);
-    return phash;
-  } catch {
-    return null;
+    res = await withVisionTimeout(
+      fetch(`${LOGO_ENDPOINT}?key=${encodeURIComponent(args.apiKey)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+      LOGO_TIMEOUT_MS,
+    );
+  } catch (err) {
+    logger.warn(
+      { pageIdx: args.pageIdx, err: err instanceof Error ? err.message : String(err) },
+      '[logo-vision] fetch failed',
+    );
+    return [];
   }
-}
 
-/** Load and phash every advertiser's stored logo. */
-async function buildAdvertiserPhashIndex(
-  advertisers: AdvertiserLite[],
-): Promise<Array<{ adv: AdvertiserLite; phash: string }>> {
-  const eligible = advertisers.filter((a) => a.avatar_url && a.website);
-  const CONCURRENCY = 8;
-  const index: Array<{ adv: AdvertiserLite; phash: string }> = [];
-  for (let i = 0; i < eligible.length; i += CONCURRENCY) {
-    const batch = eligible.slice(i, i + CONCURRENCY);
-    const done = await Promise.all(batch.map(async (adv) => {
-      const phash = await phashFromUrl(adv.avatar_url!);
-      return phash ? { adv, phash } : null;
-    }));
-    for (const d of done) if (d) index.push(d);
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '(no body)');
+    logger.warn(
+      { pageIdx: args.pageIdx, status: res.status, detail: detail.slice(0, 400) },
+      '[logo-vision] non-2xx',
+    );
+    return [];
   }
-  return index;
-}
 
-/** Crop a region from a page JPEG (by URL) and return two phashes:
- *  the normal crop and its color-inverted twin. dhash is direction-
- *  sensitive: a light-on-dark logo hashes very differently from its
- *  dark-on-light twin, so we hash both and let the matcher take the
- *  min distance. The crop is padded by REGION_PAD_FRAC on each side
- *  because DB avatars are stored with breathing room and a tight ink
- *  crop hashes further from them than expected. */
-async function phashPageRegion(
-  pageBuffer: Buffer, region: ImageRegion,
-): Promise<{ normal: string; inverted: string } | null> {
+  let json: unknown;
   try {
-    const meta = await sharp(pageBuffer).metadata();
-    const w = meta.width ?? 0;
-    const h = meta.height ?? 0;
-    if (w < 20 || h < 20) return null;
-
-    // Pad the region by REGION_PAD_FRAC on each side (in region-space,
-    // not page-space) so a padded avatar hashes close to a padded crop.
-    const padX = region.w_frac * REGION_PAD_FRAC;
-    const padY = region.h_frac * REGION_PAD_FRAC;
-    const paddedX = Math.max(0, region.x_frac - padX);
-    const paddedY = Math.max(0, region.y_frac - padY);
-    const paddedW = Math.min(1 - paddedX, region.w_frac + 2 * padX);
-    const paddedH = Math.min(1 - paddedY, region.h_frac + 2 * padY);
-
-    const left = Math.max(0, Math.floor(paddedX * w));
-    const top = Math.max(0, Math.floor(paddedY * h));
-    const width = Math.min(w - left, Math.ceil(paddedW * w));
-    const height = Math.min(h - top, Math.ceil(paddedH * h));
-    if (width < 20 || height < 20) return null;
-
-    const cropped = await sharp(pageBuffer)
-      .extract({ left, top, width, height })
-      .resize({ width: 256, height: 256, fit: 'inside' })
-      .toBuffer();
-    const inverted = await sharp(cropped).negate({ alpha: false }).toBuffer();
-    const phashMod = (await import('sharp-phash')).default;
-    const [normal, invertedHash] = await Promise.all([
-      phashMod(cropped),
-      phashMod(inverted),
-    ]);
-    return { normal, inverted: invertedHash };
+    json = await res.json();
   } catch {
-    return null;
+    return [];
   }
+
+  const text =
+    ((json as Record<string, unknown>)?.candidates as unknown[] | undefined)
+      ?.map((c) => {
+        const parts =
+          ((c as Record<string, unknown>)?.content as Record<string, unknown>)
+            ?.parts as unknown[] | undefined;
+        return parts
+          ?.map((p) => (p as Record<string, unknown>)?.text)
+          .filter((t): t is string => typeof t === 'string')
+          .join('');
+      })
+      .filter((t): t is string => typeof t === 'string')
+      .join('\n') ?? '';
+
+  if (!text) return [];
+
+  const blob = extractJsonArray(text);
+  if (!blob) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(blob);
+  } catch {
+    return [];
+  }
+
+  const boxes = parseGeminiLogoBoxes(parsed, validIds);
+  if (boxes.length === 0) return [];
+
+  const advById = new Map(args.advertisers.map((a) => [a.id, a] as const));
+
+  // Convert Gemini's 0..1000 [ymin, xmin, ymax, xmax] to page-space
+  // fractional [x, y, w, h], drop degenerate boxes, and enforce sanity
+  // filters. Track best (largest) box per advertiser id so we don't
+  // stack overlapping duplicates for the same logo occurrence.
+  const bestByAdv = new Map<number, { adv: AdvertiserLite; x_frac: number; y_frac: number; w_frac: number; h_frac: number; area: number }>();
+
+  for (const b of boxes) {
+    const [rawYMin, rawXMin, rawYMax, rawXMax] = b.box_2d;
+    const yMin = Math.min(rawYMin, rawYMax) / 1000;
+    const yMax = Math.max(rawYMin, rawYMax) / 1000;
+    const xMin = Math.min(rawXMin, rawXMax) / 1000;
+    const xMax = Math.max(rawXMin, rawXMax) / 1000;
+    const x = Math.max(0, Math.min(1, xMin));
+    const y = Math.max(0, Math.min(1, yMin));
+    const w = Math.max(0, Math.min(1 - x, xMax - xMin));
+    const h = Math.max(0, Math.min(1 - y, yMax - yMin));
+    if (w < LOGO_MIN_FRAC || h < LOGO_MIN_FRAC) continue;
+    if (w > LOGO_MAX_FRAC && h > LOGO_MAX_FRAC) continue;
+    const aspect = Math.max(w, h) / Math.max(0.001, Math.min(w, h));
+    if (aspect > LOGO_MAX_ASPECT) continue;
+    const adv = advById.get(b.advertiser_id);
+    if (!adv) continue;
+    if (!adv.website) continue;
+    const area = w * h;
+    const prev = bestByAdv.get(adv.id);
+    if (!prev || area > prev.area) {
+      bestByAdv.set(adv.id, { adv, x_frac: x, y_frac: y, w_frac: w, h_frac: h, area });
+    }
+  }
+
+  return Array.from(bestByAdv.values()).map(({ adv, x_frac, y_frac, w_frac, h_frac }) => ({
+    adv, x_frac, y_frac, w_frac, h_frac,
+  }));
 }
 
-/** Full logo pass (v2 — render-then-detect). The `pdfBuffer` parameter is
- *  kept so callers don't have to change; it is currently unused because
- *  segmentation runs on the rendered page JPEG. */
+/** Full logo pass (v3 — Gemini vision). The `_pdfBuffer` parameter is kept
+ *  so callers don't have to change; the pass runs entirely on the
+ *  rendered page JPEGs. */
 export async function extractLogoMatches(
   _pdfBuffer: ArrayBuffer,
   pageImageUrls: string[],
   advertisers: AdvertiserLite[],
 ): Promise<ExtractedHotspot[]> {
   if (pageImageUrls.length === 0) return [];
-  // Build advertiser phash index eagerly — without it, no page work is
-  // worth doing.
-  const advIndex = await buildAdvertiserPhashIndex(advertisers);
-  if (advIndex.length === 0) return [];
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    logger.warn({}, '[logo-vision] GEMINI_API_KEY unset — skipping logo pass');
+    return [];
+  }
+
+  // An advertiser without a website can't produce a clickable hotspot, so
+  // we filter them out of the prompt entirely — no point asking Gemini to
+  // find a logo we can't act on. We keep advertisers even without an
+  // avatar_url because Gemini can OCR wordmarks it's never seen before.
+  const eligible = advertisers.filter((a) => a.website);
+  if (eligible.length === 0) return [];
 
   const out: ExtractedHotspot[] = [];
-  const PAGE_CONCURRENCY = 4;
-  for (let i = 0; i < pageImageUrls.length; i += PAGE_CONCURRENCY) {
-    const batch = pageImageUrls.slice(i, i + PAGE_CONCURRENCY);
-    const results = await Promise.all(batch.map(async (pageUrl, batchOffset) => {
+
+  for (let i = 0; i < pageImageUrls.length; i += LOGO_PAGE_CONCURRENCY) {
+    const batch = pageImageUrls.slice(i, i + LOGO_PAGE_CONCURRENCY);
+    const batchResults = await Promise.all(batch.map(async (pageUrl, batchOffset) => {
       const pageIdx = i + batchOffset;
       if (!pageUrl) return [] as ExtractedHotspot[];
+
       let pageBuf: Buffer;
       try {
         const res = await fetch(pageUrl, { cache: 'no-store' });
@@ -1048,86 +1027,47 @@ export async function extractLogoMatches(
         return [] as ExtractedHotspot[];
       }
 
-      let pageRegions: ImageRegion[];
+      // Downscale the page image before base64-encoding it — Gemini
+      // charges per input token and a 3225x3600 magazine JPEG is
+      // gratuitously large. 1600px on the long side is plenty for
+      // logo/wordmark detection at page zoom.
+      let compact: Buffer;
+      const mimeType = 'image/jpeg';
       try {
-        pageRegions = await segmentPageRegions(pageIdx, pageBuf);
+        compact = await sharp(pageBuf)
+          .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+          .jpeg({ quality: 82 })
+          .toBuffer();
       } catch {
-        return [] as ExtractedHotspot[];
-      }
-      if (pageRegions.length === 0) return [] as ExtractedHotspot[];
-
-      // Track best match per advertiser — a magazine page can have the
-      // same logo appear twice (e.g. sponsor strip + article callout).
-      // We keep the tightest bounding box for each advertiser to avoid
-      // stacking overlapping hotspots on the same visual element.
-      const bestByAdv = new Map<number, {
-        region: ImageRegion; dist: number; adv: AdvertiserLite;
-      }>();
-      // Page-0 diagnostic: dump every candidate's nearest advertiser and
-      // distance. Free signal for tuning on the next miss without a
-      // second deploy.
-      const debugLog = pageIdx === 0 ? [] as string[] : null;
-
-      for (const region of pageRegions) {
-        const regionPhash = await phashPageRegion(pageBuf, region);
-        if (!regionPhash) continue;
-
-        let bestAdv: AdvertiserLite | null = null;
-        let bestDist = 65;  // sentinel > any real distance
-        for (const { adv, phash } of advIndex) {
-          // Hash both the crop and its inverted twin; take the min.
-          const dNormal = hammingDistance(phash, regionPhash.normal);
-          const dInverted = hammingDistance(phash, regionPhash.inverted);
-          const dist = Math.min(dNormal, dInverted);
-          if (dist < bestDist) {
-            bestDist = dist;
-            bestAdv = adv;
-          }
-        }
-        if (debugLog) {
-          debugLog.push(
-            `[logo-debug] p=${pageIdx} box=(${region.x_frac.toFixed(3)},${region.y_frac.toFixed(3)},` +
-            `${region.w_frac.toFixed(3)}x${region.h_frac.toFixed(3)}) ` +
-            `nearest=${bestAdv?.name ?? '—'} dist=${bestDist} ` +
-            `${bestDist <= LOGO_PHASH_MAX_DISTANCE ? 'MATCH' : 'miss'}`,
-          );
-        }
-        if (!bestAdv || bestDist > LOGO_PHASH_MAX_DISTANCE) continue;
-
-        const prev = bestByAdv.get(bestAdv.id);
-        if (!prev || bestDist < prev.dist) {
-          bestByAdv.set(bestAdv.id, { region, dist: bestDist, adv: bestAdv });
-        }
-      }
-      if (debugLog && debugLog.length > 0) {
-        console.log(debugLog.join('\n'));
+        compact = pageBuf;
       }
 
-      const pageHits: ExtractedHotspot[] = [];
-      for (const { region, adv } of bestByAdv.values()) {
-        const url = normalizeUrl(String(adv.website));
-        pageHits.push({
-          page_idx: pageIdx,
-          x_frac: region.x_frac,
-          y_frac: region.y_frac,
-          w_frac: region.w_frac,
-          h_frac: region.h_frac,
-          type: 'link',
-          config: { type: 'link', url, open_in: 'new_tab' },
-          identity: `logo:${adv.id}`,
-          label: `Logo · ${adv.name}`,
-          origin: 'logo_match',
-          advertiser_id: adv.id,
-          advertiser_name: adv.name,
-        });
-      }
-      return pageHits;
+      const matches = await detectLogosOnPage({
+        apiKey,
+        pageIdx,
+        pageBase64: compact.toString('base64'),
+        mimeType,
+        advertisers: eligible,
+      });
+
+      return matches.map(({ adv, x_frac, y_frac, w_frac, h_frac }) => ({
+        page_idx: pageIdx,
+        x_frac, y_frac, w_frac, h_frac,
+        type: 'link',
+        config: { type: 'link', url: normalizeUrl(String(adv.website)), open_in: 'new_tab' },
+        identity: `logo:${adv.id}`,
+        label: `Logo · ${adv.name}`,
+        origin: 'logo_match',
+        advertiser_id: adv.id,
+        advertiser_name: adv.name,
+      } satisfies ExtractedHotspot));
     }));
-    for (const r of results) out.push(...r);
+    for (const r of batchResults) out.push(...r);
   }
 
   return out;
 }
+
 
 // ============================================================
 // Central inserter: shortener resolution + dedupe + advertiser link + DB write
