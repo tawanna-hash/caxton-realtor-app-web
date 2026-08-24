@@ -763,13 +763,14 @@ const LOGO_MODEL = process.env.GEMINI_VISION_MODEL ?? 'gemini-2.5-flash';
 const LOGO_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${LOGO_MODEL}:generateContent`;
 
 // Per-page vision call timeout. Gemini Flash typically returns in <10s
-// but we allow generous headroom before giving up on a page.
-const LOGO_TIMEOUT_MS = 45_000;
+// so 25s is generous headroom. A stuck page shouldn't be able to burn
+// through the extract-all function budget by hogging a worker slot.
+const LOGO_TIMEOUT_MS = 25_000;
 
 // Bound how many pages we scan in parallel. Each call is fully independent
-// (page image + advertiser list in, boxes out). 4 keeps us under Gemini's
-// per-second free-tier budget without dragging out a 20-page magazine.
-const LOGO_PAGE_CONCURRENCY = 4;
+// (page image + advertiser list in, boxes out). 8 finishes a 20-page issue
+// in ~3 batches while staying well under Gemini Flash's per-minute quota.
+const LOGO_PAGE_CONCURRENCY = 8;
 
 // Reject boxes that are obviously wrong:
 //   - too tiny (icon-sized fragments in body copy)

@@ -30,7 +30,11 @@ import {
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+// v3 logo pass fires 1 Gemini vision call per magazine page (20 for a
+// typical issue). At concurrency=8 with a 25s per-page timeout that fits
+// comfortably in 300s, but 60s is not enough — the function timed out
+// mid-run on the first v3 deploy.
+export const maxDuration = 300;
 
 async function isAdmin(): Promise<boolean> {
   try {
