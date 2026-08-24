@@ -36,8 +36,11 @@ function getOrCreateSessionId(): string {
 
 function trackClick(hotspotId: number): void {
   const sessionId = getOrCreateSessionId();
-  console.log('[HotspotLayer] trackClick fired', { hotspotId, sessionId });
-  if (!sessionId) { console.warn('[HotspotLayer] no session id, aborting'); return; }
+  // No session id means the browser refused to set a cookie (private mode
+  // with strict settings, or document undefined during SSR). Nothing to
+  // attribute a click to — skip. All other errors are silent by design;
+  // click tracking is best-effort and must never surface to the reader.
+  if (!sessionId) return;
   // Fire and forget. sendBeacon survives navigation away from the page —
   // important for link hotspots where the user is leaving.
   const payload = JSON.stringify({ session_id: sessionId });
