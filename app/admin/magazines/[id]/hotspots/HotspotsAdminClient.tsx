@@ -789,10 +789,15 @@ function DraggableHotspot({
   const dashed = isDraft || isPdfImport;
   const opacity = isPdfImport ? (isDraft ? 0.35 : 0.55) : (isDraft ? 0.55 : 1);
 
-  // z_index in the DOM: real stored z (offset by 10 so we sit above the image),
-  // plus a big lift when selected so resize handles are never trapped under a
-  // sibling. Ties broken by id are already reflected in map order.
-  const domZ = 10 + (hotspot.z_index ?? 0) + (selected ? 1000 : 0);
+  // z_index in the DOM: this MUST stay well below the Configure-hotspot modal
+  // wrapper (`z-50` = 50). A prior version added +1000 when selected which
+  // let the selected box punch through the modal backdrop, making it look
+  // like the popup had a transparent hole and letting clicks fall through to
+  // the hotspot underneath. Now we compress stored z into a small range and
+  // apply a bounded lift so the whole hotspot layer stays under z=40.
+  // Ties broken by id are already reflected in map order.
+  const compressedZ = Math.min(hotspot.z_index ?? 0, 20);
+  const domZ = 10 + compressedZ + (selected ? 5 : 0);
 
   // Selected label positioning: normally above the box, but if the box is
   // near the top of the page we flip it below so it isn't clipped.
