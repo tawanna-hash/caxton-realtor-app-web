@@ -1,7 +1,7 @@
 'use client';
 
 import { type PubKey } from '@/lib/pub-meta';
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import MagazineCarousel from '@/components/MagazineCarousel';
@@ -89,13 +89,29 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
     return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
   });
 
+  // Track the currently-open magazine id in a ref so URL writers always
+  // see the latest value even when scheduled router.replace calls race
+  // each other. Reading `openMag` from closure isn't enough — the reader's
+  // onPageChange effect fires on mount before the setOpenMag render has
+  // committed, so a plain state read there would see null.
+  const openMagIdRef = useRef<number | null>(null);
+
   // Wrap setOpenMag so opening / closing the reader keeps ?read=<id> in the
   // URL. On refresh the effect below rehydrates openMag by fetching the
   // magazine by that id so the reader re-opens on the same page (BUG-30).
+  //
+  // URL writers read from window.location.search (live) rather than the
+  // useSearchParams snapshot (stale between render commits). setOpenMag
+  // and handleReaderPageChange can fire in the same tick when the user
+  // clicks a cover — the reader mounts, its useEffect([currentPage])
+  // fires onPageChange(initialPage), and both writers race to router.replace.
+  // Reading from the live URL and preserving ?read=<openMagIdRef.current>
+  // makes the last-write-wins reconcile keep both params.
   function setOpenMag(m: Magazine | null) {
+    openMagIdRef.current = m ? m.id : null;
     setOpenMagState(m);
     try {
-      const params = new URLSearchParams(searchParams?.toString() ?? '');
+      const params = new URLSearchParams(window.location.search);
       if (m) {
         params.set('read', String(m.id));
       } else {
@@ -110,9 +126,15 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
 
   // Persist the reader's current page into ?page=<n>. Stable identity via
   // useCallback so we don't retrigger the reader's onPageChange effect.
+  // Always reasserts ?read=<id> from the ref so a racing router.replace
+  // that hasn't landed yet can't strip it (see setOpenMag comment).
   const handleReaderPageChange = useCallback((page: number) => {
     try {
       const params = new URLSearchParams(window.location.search);
+      const openId = openMagIdRef.current;
+      if (openId != null) {
+        params.set('read', String(openId));
+      }
       if (page > 0) {
         params.set('page', String(page));
       } else {
@@ -155,6 +177,7 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
   // When opened via /magazine/[id], auto-open the reader on mount.
   useEffect(() => {
     if (initialMagazine) {
+      openMagIdRef.current = initialMagazine.id;
       // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time on mount, matches autoOpenLatest pattern above
       setOpenMagState(initialMagazine);
     }
@@ -173,10 +196,14 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
     const idNum = Number(readId);
     if (!Number.isInteger(idNum) || idNum < 1) return;
     let cancelled = false;
+    // Seed the ref immediately so URL writers preserve ?read= while the
+    // fetch is in flight and the reader hasn't mounted yet.
+    openMagIdRef.current = idNum;
     fetch(`/api/magazines/${idNum}`, { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
       .then((mag) => {
         if (cancelled || !mag) return;
+        openMagIdRef.current = (mag as Magazine).id;
         setOpenMagState(mag as Magazine);
       })
       .catch(() => {});
