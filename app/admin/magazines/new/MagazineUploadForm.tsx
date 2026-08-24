@@ -256,7 +256,7 @@ export default function MagazineUploadForm() {
       // magazine with no imported hotspots and the admin can re-run from
       // the hotspot editor toolbar.
       ...(pdfFile ? [
-        { label: 'Extract hotspots (PDF links + text + QR codes)', status: 'pending' as StepStatus },
+        { label: 'Extract hotspots (PDF links + text + QR + logo matches)', status: 'pending' as StepStatus },
       ] : []),
     ];
     setSteps(stepList);
@@ -443,7 +443,7 @@ export default function MagazineUploadForm() {
           status: 'done',
           detail:
             `${d.inserted ?? 0} hotspot(s) added ` +
-            `(${findings.pdf_links ?? 0} embedded, ${findings.text_scan ?? 0} text, ${findings.qr_codes ?? 0} QR)`,
+            `(${findings.pdf_links ?? 0} embedded, ${findings.text_scan ?? 0} text, ${findings.qr_codes ?? 0} QR, ${findings.logo_matches ?? 0} logo)`,
         });
       } catch (err: unknown) {
         // Non-fatal.

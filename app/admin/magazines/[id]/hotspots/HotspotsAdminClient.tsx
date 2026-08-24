@@ -87,7 +87,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
     inserted: number;
     skipped_duplicates: number;
     auto_linked_advertisers: number;
-    findings: { pdf_links: number; text_scan: number; qr_codes: number };
+    findings: { pdf_links: number; text_scan: number; qr_codes: number; logo_matches: number };
   } | null>(null);
 
   // Tick every 10s so the "saved Xs ago" indicator updates.
@@ -600,7 +600,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
               <>
                 Added <strong>{extractResult.inserted}</strong> hotspot{extractResult.inserted === 1 ? '' : 's'}
                 {' '}({extractResult.findings.pdf_links} embedded, {extractResult.findings.text_scan} text-scan,{' '}
-                {extractResult.findings.qr_codes} QR){extractResult.auto_linked_advertisers > 0 && (
+                {extractResult.findings.qr_codes} QR, {extractResult.findings.logo_matches} logo){extractResult.auto_linked_advertisers > 0 && (
                   <>. Linked <strong>{extractResult.auto_linked_advertisers}</strong> to advertisers.</>
                 )}
               </>

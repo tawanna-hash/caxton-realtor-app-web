@@ -22,6 +22,7 @@ import {
   extractPdfLinkAnnotations,
   extractPdfTextContacts,
   extractQrCodes,
+  extractLogoMatches,
   insertExtracted,
   type AdvertiserLite,
   type ExtractedHotspot,
@@ -109,17 +110,26 @@ export const POST = withAdminTracking(async function POST(_req: NextRequest, ctx
       }),
     ]);
 
-    // 4. Load advertisers for URL auto-matching.
+    // 4. Load advertisers for URL auto-matching AND logo perceptual-hash
+    //    matching. avatar_url and website are needed by extractLogoMatches:
+    //    an advertiser without one of them is invisible to the logo pass.
     const advertisers = (await sql`
-      SELECT id, name, slug FROM advertisers
+      SELECT id, name, slug, avatar_url, website FROM advertisers
     `) as unknown as AdvertiserLite[];
 
-    // 5. Combined insert with wipe-then-reinsert. Order matters for
+    // 5. Run the logo pass. This does its own PDF walk (operator-list) and
+    //    fetches page images for cropping. Non-fatal on any error.
+    const logoHits = await extractLogoMatches(pdfBuffer, pageUrls, advertisers).catch((err) => {
+      console.error('[extract-all] logo pass threw:', errMessage(err));
+      return [] as ExtractedHotspot[];
+    });
+
+    // 6. Combined insert with wipe-then-reinsert. Order matters for
     //    dedupe: PDF link annotations are the most authoritative (they
-    //    already have real coords) so they go first, then text, then QR.
-    //    Within-batch dedupe means subsequent passes won't create a
-    //    duplicate for the same identity on the same page.
-    const combined: ExtractedHotspot[] = [...linkHits, ...textHits, ...qrHits];
+    //    already have real coords) so they go first, then text, then QR,
+    //    then logo matches. Within-batch dedupe means subsequent passes
+    //    won't create a duplicate for the same identity on the same page.
+    const combined: ExtractedHotspot[] = [...linkHits, ...textHits, ...qrHits, ...logoHits];
     const result = await insertExtracted(sql, combined, {
       magazineId: idNum,
       adminEmail,
@@ -130,8 +140,8 @@ export const POST = withAdminTracking(async function POST(_req: NextRequest, ctx
 
     console.log(
       `[extract-all] mag=${idNum} link=${linkHits.length} text=${textHits.length} ` +
-      `qr=${qrHits.length} inserted=${result.inserted} skipped=${result.skipped_duplicates} ` +
-      `auto_linked=${result.auto_linked_advertisers}`,
+      `qr=${qrHits.length} logo=${logoHits.length} inserted=${result.inserted} ` +
+      `skipped=${result.skipped_duplicates} auto_linked=${result.auto_linked_advertisers}`,
     );
 
     // 6. Return fresh hotspot list + diagnostics.
@@ -152,6 +162,7 @@ export const POST = withAdminTracking(async function POST(_req: NextRequest, ctx
           pdf_links: linkHits.length,
           text_scan: textHits.length,
           qr_codes: qrHits.length,
+          logo_matches: logoHits.length,
         },
         inserted: result.inserted,
         skipped_duplicates: result.skipped_duplicates,

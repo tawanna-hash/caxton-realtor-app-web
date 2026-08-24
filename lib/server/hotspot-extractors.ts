@@ -47,7 +47,19 @@ const ADVERTISER_MATCH_SKIPLIST = [
   'tiktok', 'pinterest', 'bit', 'tinyurl', 'goo', 'ow',
 ];
 
-export interface AdvertiserLite { id: number; name: string; slug: string }
+export interface AdvertiserLite {
+  id: number;
+  name: string;
+  slug: string;
+  /** Publicly-hosted logo URL (Vercel Blob). Optional — used by the logo
+   *  perceptual-hash pass to match page image regions against known
+   *  advertisers. Advertisers without a logo can't be matched by image. */
+  avatar_url?: string | null;
+  /** Advertiser's public website. Used as the destination URL of any
+   *  hotspot created by the logo pass. Advertisers without a website
+   *  can't produce a clickable logo hotspot — we skip them. */
+  website?: string | null;
+}
 
 function coreAlnum(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -103,7 +115,7 @@ export interface ExtractedHotspot {
   identity: string;
   label: string;
   /** Where this hit came from — populated for diagnostics/UI, not stored. */
-  origin: 'pdf_link' | 'text_scan' | 'qr_code';
+  origin: 'pdf_link' | 'text_scan' | 'qr_code' | 'logo_match';
   /** Set later by the inserter after advertiser matching. */
   advertiser_id?: number | null;
   advertiser_name?: string | null;
@@ -689,6 +701,301 @@ export async function extractQrCodes(pageImageUrls: string[]): Promise<Extracted
 }
 
 // ============================================================
+// PASS 4: logo detection via perceptual hash matching
+// ============================================================
+//
+// Text scans and PDF link annotations both miss logos: they're raster (or
+// vector art) with no adjacent contact text and no clickable annotation.
+// Instead we:
+//
+//   1. Walk every page's PDF operator list and collect the bounding box
+//      of every embedded image (Do XObject calls). This gives us candidate
+//      logo regions with exact page-space coords — much cheaper and more
+//      accurate than trying to segment the rendered raster.
+//   2. Crop each candidate from the pre-rendered page JPEG (page_urls).
+//   3. Perceptual-hash (dhash via sharp-phash) the crop.
+//   4. Compare against a phash of each advertiser's stored logo
+//      (avatar_url). Small Hamming distance => match.
+//   5. On match, insert a link hotspot pointing at the advertiser's
+//      website, with advertiser_id set.
+//
+// Advertisers with no logo or no website can't be matched — we skip them.
+//
+// The dhash phash implementation in sharp-phash returns a 64-bit binary
+// string. Hamming distance <= 12 (out of 64) is a common empirical
+// threshold for "same image, different size/compression." We use 14 to
+// be a bit more forgiving of resize artifacts on smaller ad-block logos,
+// and re-tune if we see false positives.
+
+const LOGO_PHASH_MAX_DISTANCE = 14;
+// Skip anything tiny (page 'images' that are actually decorative bullets
+// or icons) or full-page (background photos). Values are page-space
+// fractions, so 0.02 = 2% of the smaller page dimension.
+const LOGO_MIN_FRAC_SHORT_SIDE = 0.03;
+const LOGO_MAX_FRAC = 0.6;
+
+function hammingDistance(a: string, b: string): number {
+  if (a.length !== b.length) return Infinity;
+  let d = 0;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) d++;
+  return d;
+}
+
+interface ImageRegion {
+  page_idx: number;
+  x_frac: number;
+  y_frac: number;
+  w_frac: number;
+  h_frac: number;
+}
+
+/** Walk a PDF page's operator list and return every image paint (Do) with
+ *  its bounding box in page-space (top-left origin, fractional). Uses
+ *  pdfjs-dist via unpdf. */
+async function extractImageRegions(pdfBuffer: ArrayBuffer): Promise<ImageRegion[]> {
+  const { getDocumentProxy } = await import('unpdf');
+  const pdf = (await getDocumentProxy(new Uint8Array(pdfBuffer))) as unknown as {
+    numPages: number;
+    getPage: (n: number) => Promise<{
+      getViewport: (args: { scale: number }) => { width: number; height: number };
+      getOperatorList: () => Promise<{ fnArray: number[]; argsArray: unknown[][] }>;
+      commonObjs?: { get?: (name: string) => unknown };
+      objs?: { get?: (name: string) => unknown };
+    }>;
+    destroy?: () => Promise<void>;
+  };
+
+  // pdfjs operator IDs: import them from the module so we don't hard-code
+  // magic numbers. Different pdfjs versions have different int values.
+  const pdfjsMod = await import('unpdf/pdfjs') as unknown as { OPS?: Record<string, number> };
+  const OPS = pdfjsMod.OPS;
+  if (!OPS) {
+    // Fallback: pdfjs OPS not exported here. Return empty rather than
+    // guessing — the logo pass just contributes zero hits in that case.
+    return [];
+  }
+
+  const out: ImageRegion[] = [];
+  try {
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 1 });
+      const pageW = viewport.width;
+      const pageH = viewport.height;
+
+      const opList = await page.getOperatorList();
+      // Track the current transformation matrix (CTM) stack. pdfjs emits
+      // save/restore + transform ops we need to accumulate to know the
+      // final placement of each paintImageXObject.
+      const ctmStack: number[][] = [[1, 0, 0, 1, 0, 0]];
+      let ctm: number[] = [1, 0, 0, 1, 0, 0];
+
+      const mul = (a: number[], b: number[]) => [
+        a[0] * b[0] + a[2] * b[1],
+        a[1] * b[0] + a[3] * b[1],
+        a[0] * b[2] + a[2] * b[3],
+        a[1] * b[2] + a[3] * b[3],
+        a[0] * b[4] + a[2] * b[5] + a[4],
+        a[1] * b[4] + a[3] * b[5] + a[5],
+      ];
+
+      for (let i = 0; i < opList.fnArray.length; i++) {
+        const op = opList.fnArray[i];
+        const args = opList.argsArray[i];
+
+        if (op === OPS.save) {
+          ctmStack.push([...ctm]);
+        } else if (op === OPS.restore) {
+          ctm = ctmStack.pop() ?? [1, 0, 0, 1, 0, 0];
+        } else if (op === OPS.transform) {
+          ctm = mul(ctm, args as number[]);
+        } else if (
+          op === OPS.paintImageXObject ||
+          op === OPS.paintInlineImageXObject ||
+          op === OPS.paintImageMaskXObject ||
+          op === OPS.paintJpegXObject
+        ) {
+          // Image is drawn in the unit square [0,0]-[1,1] then transformed
+          // by the CTM. The final rect corners are the four transformed
+          // unit-square corners.
+          const corners: [number, number][] = [
+            [ctm[4], ctm[5]],
+            [ctm[0] + ctm[4], ctm[1] + ctm[5]],
+            [ctm[2] + ctm[4], ctm[3] + ctm[5]],
+            [ctm[0] + ctm[2] + ctm[4], ctm[1] + ctm[3] + ctm[5]],
+          ];
+          const xs = corners.map((c) => c[0]);
+          const ys = corners.map((c) => c[1]);
+          const minX = Math.min(...xs);
+          const maxX = Math.max(...xs);
+          const minY = Math.min(...ys);
+          const maxY = Math.max(...ys);
+          const w = maxX - minX;
+          const h = maxY - minY;
+          if (w < 1 || h < 1) continue;
+
+          // pdfjs y-axis is bottom-up; convert to top-down for hotspot coords.
+          const topDownY = pageH - maxY;
+          const frac = rectToFrac(minX, topDownY, w, h, pageW, pageH);
+
+          const shortSide = Math.min(frac.w_frac, frac.h_frac);
+          const longSide = Math.max(frac.w_frac, frac.h_frac);
+          if (shortSide < LOGO_MIN_FRAC_SHORT_SIDE) continue;
+          if (longSide > LOGO_MAX_FRAC) continue;
+
+          out.push({ page_idx: pageNum - 1, ...frac });
+        }
+      }
+    }
+  } finally {
+    await pdf.destroy?.().catch(() => undefined);
+  }
+
+  return out;
+}
+
+/** Compute the phash of a raster fetched from a URL. sharp-phash accepts
+ *  a Buffer directly; we downscale to 256px on the long side first for
+ *  consistent hashing across differently-sized source images. */
+async function phashFromUrl(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    const normalized = await sharp(buf).rotate()
+      .resize({ width: 256, height: 256, fit: 'inside', withoutEnlargement: false })
+      .toBuffer();
+    const phash = await (await import('sharp-phash')).default(normalized);
+    return phash;
+  } catch {
+    return null;
+  }
+}
+
+/** Load and phash every advertiser's stored logo. */
+async function buildAdvertiserPhashIndex(
+  advertisers: AdvertiserLite[],
+): Promise<Array<{ adv: AdvertiserLite; phash: string }>> {
+  const eligible = advertisers.filter((a) => a.avatar_url && a.website);
+  const CONCURRENCY = 8;
+  const index: Array<{ adv: AdvertiserLite; phash: string }> = [];
+  for (let i = 0; i < eligible.length; i += CONCURRENCY) {
+    const batch = eligible.slice(i, i + CONCURRENCY);
+    const done = await Promise.all(batch.map(async (adv) => {
+      const phash = await phashFromUrl(adv.avatar_url!);
+      return phash ? { adv, phash } : null;
+    }));
+    for (const d of done) if (d) index.push(d);
+  }
+  return index;
+}
+
+/** Crop a region from a page JPEG (by URL) and return its phash. */
+async function phashPageRegion(
+  pageBuffer: Buffer, region: ImageRegion,
+): Promise<string | null> {
+  try {
+    const meta = await sharp(pageBuffer).metadata();
+    const w = meta.width ?? 0;
+    const h = meta.height ?? 0;
+    if (w < 20 || h < 20) return null;
+
+    const left = Math.max(0, Math.floor(region.x_frac * w));
+    const top = Math.max(0, Math.floor(region.y_frac * h));
+    const width = Math.min(w - left, Math.ceil(region.w_frac * w));
+    const height = Math.min(h - top, Math.ceil(region.h_frac * h));
+    if (width < 20 || height < 20) return null;
+
+    const cropped = await sharp(pageBuffer)
+      .extract({ left, top, width, height })
+      .resize({ width: 256, height: 256, fit: 'inside' })
+      .toBuffer();
+    return await (await import('sharp-phash')).default(cropped);
+  } catch {
+    return null;
+  }
+}
+
+/** Full logo pass. */
+export async function extractLogoMatches(
+  pdfBuffer: ArrayBuffer,
+  pageImageUrls: string[],
+  advertisers: AdvertiserLite[],
+): Promise<ExtractedHotspot[]> {
+  // 1. Build advertiser phash index (parallel with region detection below).
+  const [advIndex, regions] = await Promise.all([
+    buildAdvertiserPhashIndex(advertisers),
+    extractImageRegions(pdfBuffer),
+  ]);
+  if (advIndex.length === 0 || regions.length === 0) return [];
+
+  // 2. Group regions by page so we only fetch each page JPEG once.
+  const byPage = new Map<number, ImageRegion[]>();
+  for (const r of regions) {
+    const list = byPage.get(r.page_idx) ?? [];
+    list.push(r);
+    byPage.set(r.page_idx, list);
+  }
+
+  const out: ExtractedHotspot[] = [];
+  const PAGE_CONCURRENCY = 4;
+  const pageEntries = Array.from(byPage.entries());
+  for (let i = 0; i < pageEntries.length; i += PAGE_CONCURRENCY) {
+    const batch = pageEntries.slice(i, i + PAGE_CONCURRENCY);
+    const results = await Promise.all(batch.map(async ([pageIdx, pageRegions]) => {
+      const pageUrl = pageImageUrls[pageIdx];
+      if (!pageUrl) return [] as ExtractedHotspot[];
+      let pageBuf: Buffer;
+      try {
+        const res = await fetch(pageUrl, { cache: 'no-store' });
+        if (!res.ok) return [] as ExtractedHotspot[];
+        pageBuf = Buffer.from(await res.arrayBuffer());
+      } catch {
+        return [] as ExtractedHotspot[];
+      }
+
+      const pageHits: ExtractedHotspot[] = [];
+      for (const region of pageRegions) {
+        const regionPhash = await phashPageRegion(pageBuf, region);
+        if (!regionPhash) continue;
+
+        // Find nearest advertiser under threshold.
+        let bestAdv: AdvertiserLite | null = null;
+        let bestDist = LOGO_PHASH_MAX_DISTANCE + 1;
+        for (const { adv, phash } of advIndex) {
+          const dist = hammingDistance(phash, regionPhash);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestAdv = adv;
+          }
+        }
+        if (!bestAdv || bestDist > LOGO_PHASH_MAX_DISTANCE) continue;
+
+        const url = normalizeUrl(String(bestAdv.website));
+        pageHits.push({
+          page_idx: pageIdx,
+          x_frac: region.x_frac,
+          y_frac: region.y_frac,
+          w_frac: region.w_frac,
+          h_frac: region.h_frac,
+          type: 'link',
+          config: { type: 'link', url, open_in: 'new_tab' },
+          identity: `logo:${bestAdv.id}`,
+          label: `Logo · ${bestAdv.name}`,
+          origin: 'logo_match',
+          advertiser_id: bestAdv.id,
+          advertiser_name: bestAdv.name,
+        });
+      }
+      return pageHits;
+    }));
+    for (const r of results) out.push(...r);
+  }
+
+  return out;
+}
+
+// ============================================================
 // Central inserter: shortener resolution + dedupe + advertiser link + DB write
 // ============================================================
 
@@ -707,7 +1014,7 @@ export interface InsertResult {
   inserted: number;
   skipped_duplicates: number;
   auto_linked_advertisers: number;
-  by_origin: Record<'pdf_link' | 'text_scan' | 'qr_code', number>;
+  by_origin: Record<'pdf_link' | 'text_scan' | 'qr_code' | 'logo_match', number>;
 }
 
 type SqlFn = NeonQueryFunction<false, false>;
@@ -789,7 +1096,7 @@ export async function insertExtracted(
     inserted: 0,
     skipped_duplicates: 0,
     auto_linked_advertisers: 0,
-    by_origin: { pdf_link: 0, text_scan: 0, qr_code: 0 },
+    by_origin: { pdf_link: 0, text_scan: 0, qr_code: 0, logo_match: 0 },
   };
 
   for (const row of inRange) {
