@@ -749,16 +749,21 @@ const REGION_PAD_FRAC = 0.05;
 // logos at the cost of CPU. 1600 keeps ~3% logos at ~48px, plenty for
 // phash after crop-and-normalize.
 const SEGMENT_TARGET_LONG_SIDE = 1600;
-// Pixel is "background" if grayscale value >= this. 245 catches off-white
-// paper stock while still cutting on real ink.
-const BG_THRESHOLD = 245;
+// Pixel is "background" if grayscale value >= this. 235 (was 245) catches
+// anti-aliased edges on script/cursive wordmarks that would otherwise
+// bleed the whitespace between adjacent logos in a sponsor strip and
+// merge them into one un-hashable box.
+const BG_THRESHOLD = 235;
 // A row/column is a whitespace band if fewer than this fraction of pixels
-// are ink. 0.005 = half a percent — permissive so we don't split a logo
-// with a thin baseline.
-const BAND_INK_FRACTION = 0.005;
-// Minimum whitespace band width (in scaled pixels) to count as a real
-// separator. Smaller gaps within a logo don't cut.
-const MIN_GAP_PX = 12;
+// are ink. 0.003 (was 0.005) makes the projection more sensitive so
+// narrow gutters between tight-set sponsor logos still register as
+// whitespace bands.
+const BAND_INK_FRACTION = 0.003;
+// Minimum whitespace band width in scaled pixels. At SEGMENT_TARGET=1600
+// on a 3225px native page (2x scale), 8 scaled px ≈ 16 native px — wider
+// than JPEG edge noise but narrower than typical inter-logo padding in
+// a sponsor strip.
+const MIN_GAP_PX = 8;
 
 function hammingDistance(a: string, b: string): number {
   if (a.length !== b.length) return Infinity;
