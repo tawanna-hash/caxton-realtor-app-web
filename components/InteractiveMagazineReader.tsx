@@ -105,6 +105,41 @@ function matchHotspotByUrl(
   }
   return null;
 }
+
+// Decide whether a PDF-embedded link annotation should be suppressed on a
+// page that also has manual admin-drawn hotspots. Rules:
+//   1. If the overlay's URL matches any manual link/mls hotspot on the page,
+//      the manual hotspot wins — the PDF overlay is redundant and would
+//      swallow clicks because it renders on top.
+//   2. If the overlay's rectangle geometrically contains at least one manual
+//      hotspot on the page (e.g. a page-wide storefront link with email
+//      hotspots sitting inside it), the smaller manual hotspots would never
+//      catch a click — suppress the overlay so they can.
+// Coordinates: overlay rect is in CSS pixels; manual hotspots are fractions
+// of displayWidth/displayHeight.
+function shouldSuppressOverlay(
+  overlay: LinkOverlay,
+  pageHotspots: PublicHotspot[],
+  displayWidth: number,
+  displayHeight: number,
+): boolean {
+  if (matchHotspotByUrl(overlay.url, pageHotspots)) return true;
+  if (displayWidth <= 0 || displayHeight <= 0) return false;
+  // Small epsilon so a hotspot flush with a page-wide overlay still counts.
+  const eps = 1;
+  const ox1 = overlay.x - eps;
+  const oy1 = overlay.y - eps;
+  const ox2 = overlay.x + overlay.w + eps;
+  const oy2 = overlay.y + overlay.h + eps;
+  for (const h of pageHotspots) {
+    const hx1 = h.x * displayWidth;
+    const hy1 = h.y * displayHeight;
+    const hx2 = hx1 + h.w * displayWidth;
+    const hy2 = hy1 + h.h * displayHeight;
+    if (hx1 >= ox1 && hy1 >= oy1 && hx2 <= ox2 && hy2 <= oy2) return true;
+  }
+  return false;
+}
 // ---- end Phase 6 (Option C) helpers ----
 
 
@@ -1481,11 +1516,16 @@ function PageCanvas({
   canvasRef, overlays, pageNum, trackContext, transitionClass,
   hotspots, displayWidth, displayHeight,
 }: PageCanvasProps) {
+  // Suppress PDF-embedded link annotations that would eat clicks meant for
+  // manual hotspots on the same page. See shouldSuppressOverlay above.
+  const visibleOverlays = overlays.filter(
+    (o) => !shouldSuppressOverlay(o, hotspots, displayWidth, displayHeight),
+  );
   return (
     <div className="relative inline-block shadow-2xl">
       <canvas ref={canvasRef} className="block bg-white" />
       <HotspotLayer hotspots={hotspots} displayWidth={displayWidth} displayHeight={displayHeight} />
-      {overlays.map((o, i) => (
+      {visibleOverlays.map((o, i) => (
         <a
           key={i}
           href={o.url}
