@@ -728,17 +728,27 @@ export async function extractQrCodes(pageImageUrls: string[]): Promise<Extracted
 // Advertisers with no logo or no website can't be matched — we skip them.
 
 // Hamming distance threshold on the 64-bit dhash. <=12 is the empirical
-// "same image at different sizes" line; we use 14 to be forgiving of
-// resize + JPEG artifacts on ad-block logos.
-const LOGO_PHASH_MAX_DISTANCE = 14;
+// "same image at different sizes" line for clean identical rasters.
+// Real magazine logos (cursive scripts, painterly marks, aspect-ratio
+// changes between the DB avatar and the on-page render) push distance
+// well past 14, so we widen to 20 — still tight enough to reject an
+// unrelated ad image, loose enough to catch "LaCima" script vs. its
+// horizontal wordmark variant.
+const LOGO_PHASH_MAX_DISTANCE = 20;
 // Skip anything tiny (bullets, punctuation) or full-page (background).
 // Values are page-space fractions.
 const LOGO_MIN_FRAC_SHORT_SIDE = 0.025;
 const LOGO_MIN_FRAC_LONG_SIDE = 0.05;
 const LOGO_MAX_FRAC = 0.5;
-// Downscale target for segmentation — big enough that a 3% logo (~36px)
-// is still recognizable, small enough that projection is cheap.
-const SEGMENT_TARGET_LONG_SIDE = 1200;
+// Fraction of the region to pad on each side before phashing. Segmenter
+// cuts tight on ink, but DB avatars are stored with breathing room, so
+// a tight crop of the same logo will phash further from the padded
+// avatar than expected. 5% padding on each side splits the difference.
+const REGION_PAD_FRAC = 0.05;
+// Downscale target for segmentation — bigger = better recall on small
+// logos at the cost of CPU. 1600 keeps ~3% logos at ~48px, plenty for
+// phash after crop-and-normalize.
+const SEGMENT_TARGET_LONG_SIDE = 1600;
 // Pixel is "background" if grayscale value >= this. 245 catches off-white
 // paper stock while still cutting on real ink.
 const BG_THRESHOLD = 245;
@@ -925,27 +935,48 @@ async function buildAdvertiserPhashIndex(
   return index;
 }
 
-/** Crop a region from a page JPEG (by URL) and return its phash. */
+/** Crop a region from a page JPEG (by URL) and return two phashes:
+ *  the normal crop and its color-inverted twin. dhash is direction-
+ *  sensitive: a light-on-dark logo hashes very differently from its
+ *  dark-on-light twin, so we hash both and let the matcher take the
+ *  min distance. The crop is padded by REGION_PAD_FRAC on each side
+ *  because DB avatars are stored with breathing room and a tight ink
+ *  crop hashes further from them than expected. */
 async function phashPageRegion(
   pageBuffer: Buffer, region: ImageRegion,
-): Promise<string | null> {
+): Promise<{ normal: string; inverted: string } | null> {
   try {
     const meta = await sharp(pageBuffer).metadata();
     const w = meta.width ?? 0;
     const h = meta.height ?? 0;
     if (w < 20 || h < 20) return null;
 
-    const left = Math.max(0, Math.floor(region.x_frac * w));
-    const top = Math.max(0, Math.floor(region.y_frac * h));
-    const width = Math.min(w - left, Math.ceil(region.w_frac * w));
-    const height = Math.min(h - top, Math.ceil(region.h_frac * h));
+    // Pad the region by REGION_PAD_FRAC on each side (in region-space,
+    // not page-space) so a padded avatar hashes close to a padded crop.
+    const padX = region.w_frac * REGION_PAD_FRAC;
+    const padY = region.h_frac * REGION_PAD_FRAC;
+    const paddedX = Math.max(0, region.x_frac - padX);
+    const paddedY = Math.max(0, region.y_frac - padY);
+    const paddedW = Math.min(1 - paddedX, region.w_frac + 2 * padX);
+    const paddedH = Math.min(1 - paddedY, region.h_frac + 2 * padY);
+
+    const left = Math.max(0, Math.floor(paddedX * w));
+    const top = Math.max(0, Math.floor(paddedY * h));
+    const width = Math.min(w - left, Math.ceil(paddedW * w));
+    const height = Math.min(h - top, Math.ceil(paddedH * h));
     if (width < 20 || height < 20) return null;
 
     const cropped = await sharp(pageBuffer)
       .extract({ left, top, width, height })
       .resize({ width: 256, height: 256, fit: 'inside' })
       .toBuffer();
-    return await (await import('sharp-phash')).default(cropped);
+    const inverted = await sharp(cropped).negate({ alpha: false }).toBuffer();
+    const phashMod = (await import('sharp-phash')).default;
+    const [normal, invertedHash] = await Promise.all([
+      phashMod(cropped),
+      phashMod(inverted),
+    ]);
+    return { normal, inverted: invertedHash };
   } catch {
     return null;
   }
@@ -996,19 +1027,34 @@ export async function extractLogoMatches(
       const bestByAdv = new Map<number, {
         region: ImageRegion; dist: number; adv: AdvertiserLite;
       }>();
+      // Page-0 diagnostic: dump every candidate's nearest advertiser and
+      // distance. Free signal for tuning on the next miss without a
+      // second deploy.
+      const debugLog = pageIdx === 0 ? [] as string[] : null;
 
       for (const region of pageRegions) {
         const regionPhash = await phashPageRegion(pageBuf, region);
         if (!regionPhash) continue;
 
         let bestAdv: AdvertiserLite | null = null;
-        let bestDist = LOGO_PHASH_MAX_DISTANCE + 1;
+        let bestDist = 65;  // sentinel > any real distance
         for (const { adv, phash } of advIndex) {
-          const dist = hammingDistance(phash, regionPhash);
+          // Hash both the crop and its inverted twin; take the min.
+          const dNormal = hammingDistance(phash, regionPhash.normal);
+          const dInverted = hammingDistance(phash, regionPhash.inverted);
+          const dist = Math.min(dNormal, dInverted);
           if (dist < bestDist) {
             bestDist = dist;
             bestAdv = adv;
           }
+        }
+        if (debugLog) {
+          debugLog.push(
+            `[logo-debug] p=${pageIdx} box=(${region.x_frac.toFixed(3)},${region.y_frac.toFixed(3)},` +
+            `${region.w_frac.toFixed(3)}x${region.h_frac.toFixed(3)}) ` +
+            `nearest=${bestAdv?.name ?? '—'} dist=${bestDist} ` +
+            `${bestDist <= LOGO_PHASH_MAX_DISTANCE ? 'MATCH' : 'miss'}`,
+          );
         }
         if (!bestAdv || bestDist > LOGO_PHASH_MAX_DISTANCE) continue;
 
@@ -1016,6 +1062,9 @@ export async function extractLogoMatches(
         if (!prev || bestDist < prev.dist) {
           bestByAdv.set(bestAdv.id, { region, dist: bestDist, adv: bestAdv });
         }
+      }
+      if (debugLog && debugLog.length > 0) {
+        console.log(debugLog.join('\n'));
       }
 
       const pageHits: ExtractedHotspot[] = [];
