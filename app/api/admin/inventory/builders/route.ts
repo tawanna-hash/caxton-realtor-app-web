@@ -6,15 +6,13 @@
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { neon } from '@neondatabase/serverless';
+import { getSql } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { ensureBuilderInventorySchema } from '@/lib/builder-inventory';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const sql = neon(process.env.DATABASE_URL!);
 
 const patchSchema = z.object({
   builderName: z.string().trim().min(1).max(120),
@@ -24,6 +22,7 @@ const patchSchema = z.object({
 export const GET = withAdminTracking(async () => {
   await requireAdmin();
   await ensureBuilderInventorySchema();
+  const sql = getSql();
 
   const rows = (await sql`
     SELECT
@@ -52,6 +51,7 @@ export const GET = withAdminTracking(async () => {
 export const PATCH = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureBuilderInventorySchema();
+  const sql = getSql();
 
   const body = await req.json();
   const { builderName, publicEnabled } = patchSchema.parse(body);
@@ -71,6 +71,7 @@ export const PATCH = withAdminTracking(async (req: Request) => {
 export const DELETE = withAdminTracking(async (req: Request) => {
   await requireAdmin();
   await ensureBuilderInventorySchema();
+  const sql = getSql();
 
   const url = new URL(req.url);
   const builderName = url.searchParams.get('builderName');

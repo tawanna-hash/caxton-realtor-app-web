@@ -14,10 +14,27 @@
 // The public listing groups rows by community_name when set, falling back
 // to title-only when null.
 
-import { neon } from '@neondatabase/serverless';
 import type { CommunityData } from './scrapers/david-weekley';
+import { getSql } from './db';
 
-const sql = neon(process.env.DATABASE_URL!);
+// Lazy SQL client. Building on Vercel occasionally runs page-data collection
+// in a subprocess without DATABASE_URL, which crashes an eager neon() call
+// at module load. getSql() from lib/db reads the env at call time. Wrapped
+// in a callable Proxy so `sql\`SELECT ...\`` tagged-template usage still
+// works throughout this file without touching call sites.
+const sqlProxyTarget = function () { /* callable stub */ } as unknown as ReturnType<typeof getSql>;
+const sql = new Proxy(sqlProxyTarget, {
+  get(_target, prop) {
+    const real = getSql();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return Reflect.get(real as any, prop);
+  },
+  apply(_target, thisArg, args) {
+    const real = getSql();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (real as any).apply(thisArg, args);
+  },
+}) as ReturnType<typeof getSql>;
 
 // ─────────────────────────────────────────────────────────────────────────
 // Types
