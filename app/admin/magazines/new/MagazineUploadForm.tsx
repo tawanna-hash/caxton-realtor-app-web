@@ -251,6 +251,14 @@ export default function MagazineUploadForm() {
       { label: 'Upload page images', status: 'pending' },
       ...(pdfFile ? [{ label: 'Extract page text from PDF', status: 'pending' as StepStatus }] : []),
       { label: 'Create magazine record', status: 'pending' },
+      // Auto-populate hotspots from the PDF: embedded <a> links, then a
+      // text-layer + QR pass for whatever wasn't already linked. Both are
+      // best-effort — a failure just leaves the magazine with no imported
+      // hotspots so the admin can run the tools manually from the editor.
+      ...(pdfFile ? [
+        { label: 'Import embedded PDF links as hotspots', status: 'pending' as StepStatus },
+        { label: 'Scan pages for QR codes + plain-text contacts', status: 'pending' as StepStatus },
+      ] : []),
     ];
     setSteps(stepList);
     let stepIdx = 0;
@@ -418,7 +426,64 @@ export default function MagazineUploadForm() {
       return;
     }
 
-    setTimeout(() => router.push('/admin/magazines'), 800);
+    // Auto-populate hotspots. Only when we have a real PDF (both endpoints
+    // require reader_url). Failures here are non-fatal — the magazine row
+    // has already been created and the admin can re-run manually from the
+    // hotspot editor toolbar.
+    if (pdfFile) {
+      stepIdx++;
+      updateStep(stepIdx, { status: 'running' });
+      try {
+        const r = await fetch(`/api/admin/magazines/${createdId}/import-pdf-links`, {
+          method: 'POST',
+        });
+        if (!r.ok) throw new Error(await r.text());
+        const body = await r.json();
+        updateStep(stepIdx, {
+          status: 'done',
+          detail: `${body.imported_count ?? 0} link(s) imported`,
+        });
+      } catch (err: unknown) {
+        // Non-fatal — continue to the next step.
+        updateStep(stepIdx, {
+          status: 'error',
+          detail: `${errMessage(err)} (retry from editor)`,
+        });
+      }
+
+      stepIdx++;
+      updateStep(stepIdx, { status: 'running' });
+      try {
+        const r = await fetch(`/api/admin/magazines/${createdId}/scan-page-text`, {
+          method: 'POST',
+        });
+        if (!r.ok) throw new Error(await r.text());
+        const body = await r.json();
+        updateStep(stepIdx, {
+          status: 'done',
+          detail:
+            `${body.inserted_count ?? 0} added ` +
+            `(${body.text_findings ?? 0} text, ${body.qr_findings ?? 0} QR)`,
+        });
+      } catch (err: unknown) {
+        // Non-fatal.
+        updateStep(stepIdx, {
+          status: 'error',
+          detail: `${errMessage(err)} (retry from editor)`,
+        });
+      }
+    }
+
+    // After a PDF upload we auto-populate hotspots, so route the admin
+    // straight to the hotspot editor to review the drafts. Non-PDF uploads
+    // (image-only pages) still go to the list — nothing to review.
+    setTimeout(() => {
+      if (pdfFile) {
+        router.push(`/admin/magazines/${createdId}/hotspots`);
+      } else {
+        router.push('/admin/magazines');
+      }
+    }, 800);
   }
 
   // __DROPZONE_HANDLER_V2__

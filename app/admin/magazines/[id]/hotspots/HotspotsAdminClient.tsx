@@ -82,6 +82,15 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ imported: number; total: number } | null>(null);
 
+  // ----- Page text/QR scan state -----
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<{
+    inserted: number;
+    skipped: number;
+    text_findings: number;
+    qr_findings: number;
+  } | null>(null);
+
   // Tick every 10s so the "saved Xs ago" indicator updates.
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 10_000);
@@ -289,6 +298,36 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
     }
   }, [magazine.id]);
 
+  // Additive scan for emails, phones, plain URLs (via PDF text layer) and QR
+  // codes (via page images). Complements /import-pdf-links — the two together
+  // capture every kind of contact info a magazine might contain.
+  const scanPageText = useCallback(async () => {
+    setScanning(true);
+    setSaveState('saving');
+    try {
+      const res = await fetch(`/api/admin/magazines/${magazine.id}/scan-page-text`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setHotspots(sortHotspots(data.hotspots as Hotspot[]));
+      setScanResult({
+        inserted: data.inserted_count,
+        skipped: data.skipped_duplicate_count,
+        text_findings: data.text_findings,
+        qr_findings: data.qr_findings,
+      });
+      setSaveState('saved');
+      setLastSavedAt(new Date());
+    } catch (err) {
+      console.error('[hotspot-editor] page-text scan failed:', err);
+      setSaveState('error');
+      setScanResult(null);
+    } finally {
+      setScanning(false);
+    }
+  }, [magazine.id]);
+
   // Copy hotspots from a previous issue.
   const copyFromPrevious = useCallback(async (sourceMagazineId: number, publishedOnly: boolean) => {
     setSaveState('saving');
@@ -412,6 +451,15 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
             title="Extract clickable links embedded in the magazine PDF and import them as draft hotspots."
           >
             {importing ? 'Importing…' : 'Import PDF links'}
+          </button>
+          <button
+            type="button"
+            onClick={scanPageText}
+            disabled={scanning}
+            className="px-3 py-1.5 text-sm font-medium text-white bg-purple-700 rounded-md hover:bg-purple-800 disabled:opacity-50"
+            title="Scan every page for emails, phone numbers, plain URLs, and QR codes that aren't already linked."
+          >
+            {scanning ? 'Scanning…' : 'Scan for missing links'}
           </button>
         </div>
 
@@ -576,6 +624,32 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
           }}
           onCancel={() => setShowImportDialog(false)}
         />
+      )}
+
+      {/* ===== SCAN RESULT TOAST ===== */}
+      {scanResult && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-3 bg-gray-900 text-white text-sm rounded-md shadow-xl flex items-center gap-3">
+          <span>
+            {scanResult.inserted > 0 ? (
+              <>
+                Added <strong>{scanResult.inserted}</strong> new hotspot{scanResult.inserted === 1 ? '' : 's'}
+                {' '}
+                ({scanResult.text_findings} text finding{scanResult.text_findings === 1 ? '' : 's'},{' '}
+                {scanResult.qr_findings} QR code{scanResult.qr_findings === 1 ? '' : 's'}).
+              </>
+            ) : (
+              <>No new links found ({scanResult.skipped} already covered).</>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => setScanResult(null)}
+            className="text-xs opacity-70 hover:opacity-100"
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
       )}
 
       {/* ===== IMPORT RESULT TOAST ===== */}
