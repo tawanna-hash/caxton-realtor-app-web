@@ -288,6 +288,30 @@ interface ReconstructedLine {
 
 const EMAIL_RE = /\b[a-zA-Z0-9][a-zA-Z0-9._%+-]{0,63}@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z]{2,})+\b/g;
 const PHONE_RE = /(?<![\d/])(?:\+?1[\s.-]?)?\(?([2-9]\d{2})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})(?!\d)/g;
+// Vanity phone numbers with mnemonic letters. Common in print ads:
+//   1-888-KB-HOMES   →  1-888-524-6637
+//   800-FLOWERS      →  800-356-9377
+//   512-CALL-BOB     →  512-225-5262   (7 alpha chars, last one padded)
+// Must contain at least one letter in the local part (otherwise PHONE_RE
+// already covers it). Local part is exactly 7 chars of [A-Z0-9] separated
+// by any run of [\s.-] hyphens/dots/spaces. Area code follows the same
+// [2-9]xx rule as PHONE_RE; leading "1-" optional. The character class
+// [A-Z] is intentionally uppercase-only because case-sensitive matching
+// avoids matching sentence-cased words like "Call us at 555 today".
+const VANITY_PHONE_RE = /(?<![\w/])(?:1[\s.-]?)?\(?([2-9]\d{2})\)?[\s.-]?([A-Z0-9][\s.-]?){6}[A-Z0-9](?!\w)/g;
+// E.161 keypad mapping used to decode vanity letters. 1 and 0 map to
+// themselves. Anything else (like Q/Z on some old phones — both are 7 or
+// 9 depending on region) uses the standard US mapping: Q=7, Z=9.
+const KEYPAD: Record<string, string> = {
+  A: '2', B: '2', C: '2',
+  D: '3', E: '3', F: '3',
+  G: '4', H: '4', I: '4',
+  J: '5', K: '5', L: '5',
+  M: '6', N: '6', O: '6',
+  P: '7', Q: '7', R: '7', S: '7',
+  T: '8', U: '8', V: '8',
+  W: '9', X: '9', Y: '9', Z: '9',
+};
 const URL_RE = /\b(?:https?:\/\/|www\.)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9-]+)*(?:\.[a-zA-Z]{2,})(?:\/[^\s)]*)?\b/g;
 // A bare hostname URL WITHOUT scheme/www. e.g. "stewart.com/contact". Common
 // in print ads and magazines. We match these too but require a real-looking
@@ -339,6 +363,46 @@ function normalizePhone(m: RegExpExecArray): string {
   return `+1${m[1]}${m[2]}${m[3]}`;
 }
 
+/** Decode a vanity-phone match like "1-888-KB-HOMES" into E.164 (+18885246637).
+ *  Returns null if the local part somehow contains only digits (would
+ *  duplicate PHONE_RE) or doesn't yield exactly 7 keypad digits. */
+function decodeVanityPhone(raw: string): string | null {
+  const stripped = raw.replace(/[\s.\-()]/g, '').toUpperCase();
+  // Drop optional leading "1" country code.
+  const withoutCountry = stripped.startsWith('1') && stripped.length === 11
+    ? stripped.slice(1)
+    : stripped;
+  if (withoutCountry.length !== 10) return null;
+  const areaCode = withoutCountry.slice(0, 3);
+  const localRaw = withoutCountry.slice(3);
+  // Reject if the local part has zero letters — PHONE_RE already covers
+  // all-digit numbers, and we don't want duplicates.
+  if (!/[A-Z]/.test(localRaw)) return null;
+  let localDigits = '';
+  for (const ch of localRaw) {
+    if (/[0-9]/.test(ch)) {
+      localDigits += ch;
+    } else if (KEYPAD[ch]) {
+      localDigits += KEYPAD[ch];
+    } else {
+      return null;
+    }
+  }
+  if (localDigits.length !== 7) return null;
+  return `+1${areaCode}${localDigits}`;
+}
+
+/** Pretty label for a vanity phone: display as plain 10-digit hyphenated
+ *  form. "1-888-KB-HOMES" → "Phone · 888-524-6637". Underlying config
+ *  keeps E.164 (+18885246637) so tel: links work correctly on mobile. */
+function labelForVanityPhone(_raw: string, e164: string): string {
+  const digits = e164.replace(/[^0-9]/g, '').replace(/^1/, '');
+  const pretty = digits.length === 10
+    ? `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
+    : e164;
+  return `Phone · ${pretty}`;
+}
+
 function normalizeUrl(raw: string): string {
   let u = raw.trim().replace(/[),.;:!?\]}]+$/, '');
   if (!/^https?:\/\//i.test(u)) u = `https://${u}`;
@@ -362,10 +426,10 @@ function labelForEmail(email: string): string {
 }
 
 function labelForPhone(phone: string): string {
-  // Pretty-format E.164 back into (xxx) xxx-xxxx for the label
+  // Pretty-format E.164 back into xxx-xxx-xxxx for the label
   const digits = phone.replace(/[^0-9]/g, '').replace(/^1/, '');
   if (digits.length === 10) {
-    return `Phone · (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    return `Phone · ${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
   }
   return `Phone · ${phone}`;
 }
@@ -526,6 +590,25 @@ export async function extractPdfTextContacts(pdfBuffer: ArrayBuffer): Promise<Ex
             config: { type: 'phone', number: e164 },
             identity: normalizeIdentityPhone(e164),
             label: labelForPhone(e164),
+            origin: 'text_scan',
+          });
+        }
+
+        // VANITY PHONE (e.g. 1-888-KB-HOMES)
+        VANITY_PHONE_RE.lastIndex = 0;
+        while ((m = VANITY_PHONE_RE.exec(line.text)) !== null) {
+          const raw = m[0];
+          const e164 = decodeVanityPhone(raw);
+          if (!e164) continue;
+          const bbox = bboxForMatch(line, m.index, raw.length);
+          if (!bbox) continue;
+          const frac = rectToFrac(bbox.x, pageHeight - bbox.y - bbox.h, bbox.w, bbox.h, pageWidth, pageHeight);
+          out.push({
+            page_idx: pageNum - 1, ...frac,
+            type: 'phone',
+            config: { type: 'phone', number: e164 },
+            identity: normalizeIdentityPhone(e164),
+            label: labelForVanityPhone(raw, e164),
             origin: 'text_scan',
           });
         }
