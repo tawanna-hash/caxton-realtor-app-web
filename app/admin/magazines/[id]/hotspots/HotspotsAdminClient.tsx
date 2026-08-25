@@ -280,6 +280,30 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
     }
   }, [magazine.id]);
 
+  // Dedupe: scan every page for hotspots that share the same normalized
+  // URL / email / phone identity, keep the best row per group, delete the
+  // rest. Safe to run repeatedly — idempotent when there are no dupes.
+  const dedupeHotspots = useCallback(async () => {
+    if (!confirm('Delete duplicate hotspots on every page? Keeps the best row per URL/email/phone.')) return;
+    setSaveState('saving');
+    try {
+      const res = await fetch(`/api/admin/magazines/${magazine.id}/hotspots-dedupe`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setHotspots(sortHotspots(data.hotspots as Hotspot[]));
+      setSaveState('saved');
+      setLastSavedAt(new Date());
+      console.log(
+        `[hotspot-editor] dedupe: scanned ${data.scanned} · ${data.dupe_groups} dupe groups · deleted ${data.deleted}`,
+      );
+    } catch (err) {
+      console.error('[hotspot-editor] dedupe failed:', err);
+      setSaveState('error');
+    }
+  }, [magazine.id]);
+
   // Streaming auto-extract. Consumes NDJSON from /extract-all:
   //   { type: 'start', page_count }
   //   { type: 'page', page_idx, inserted, ... }   — one per committed page
@@ -529,6 +553,15 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
               Copy from previous
             </button>
           )}
+          <button
+            type="button"
+            onClick={dedupeHotspots}
+            disabled={extracting}
+            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+            title="Find hotspots on the same page that point to the same URL / email / phone, keep the best one, delete the rest."
+          >
+            Remove duplicates
+          </button>
           <button
             type="button"
             onClick={() => setShowExtractDialog(true)}
