@@ -136,6 +136,54 @@ export default function HotspotConfigModal({
     backdropMouseDownRef.current = false;
   }, [onClose]);
 
+  // Draggable dialog: the modal is a lot of vertical real estate on smaller
+  // laptops and often covers the very hotspot the editor is trying to see.
+  // We track a translation offset applied on top of the centered position
+  // so the editor can drag it out of the way by the header. Reset to (0,0)
+  // whenever the modal reopens (i.e. hotspot id changes) so it always
+  // starts centered.
+  // Reset the offset when the hotspot id changes. React's official
+  // "resetting state on prop change" pattern: store the previous key in
+  // useState and compare in render, then setState synchronously if it
+  // changed. React re-runs the render immediately and doesn't cascade.
+  const [prevHotspotId, setPrevHotspotId] = useState(hotspot.id);
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  if (prevHotspotId !== hotspot.id) {
+    setPrevHotspotId(hotspot.id);
+    setDragOffset({ x: 0, y: 0 });
+  }
+  const dragStateRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number } | null>(null);
+  const handleHeaderMouseDown = useCallback((e: ReactMouseEvent) => {
+    // Only start a drag on the header background itself — don't hijack
+    // clicks that land on the title text (harmless) or the close button
+    // (which needs its own click). Buttons/anchors bubble up but we detect
+    // them via closest().
+    const targetEl = e.target as HTMLElement;
+    if (targetEl.closest('button, a, input, select, textarea')) return;
+    e.preventDefault();
+    dragStateRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      baseX: dragOffset.x,
+      baseY: dragOffset.y,
+    };
+    const onMove = (ev: MouseEvent) => {
+      const st = dragStateRef.current;
+      if (!st) return;
+      setDragOffset({
+        x: st.baseX + (ev.clientX - st.startX),
+        y: st.baseY + (ev.clientY - st.startY),
+      });
+    };
+    const onUp = () => {
+      dragStateRef.current = null;
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [dragOffset.x, dragOffset.y]);
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto"
@@ -148,11 +196,17 @@ export default function HotspotConfigModal({
         role="dialog"
         aria-modal="true"
         className="bg-white rounded-md shadow-xl max-w-2xl w-full my-8 outline-none"
+        style={{ transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)` }}
         onMouseDown={(e) => e.stopPropagation()}
         onMouseUp={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        {/* Header — drag handle. cursor-move signals draggability; the close
+            (X) button and any future header controls short-circuit the drag
+            via the closest() guard in handleHeaderMouseDown. */}
+        <div
+          className="px-6 py-4 border-b border-gray-200 flex items-center justify-between select-none cursor-move"
+          onMouseDown={handleHeaderMouseDown}
+        >
           <h2 className="text-lg font-semibold text-gray-900">Configure hotspot</h2>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <span className="sr-only">Close</span>
