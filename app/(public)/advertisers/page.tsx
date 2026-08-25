@@ -82,9 +82,8 @@ export default async function AdvertisersDirectoryPage() {
           </p>
           <PageTitle size="md">Partners</PageTitle>
           <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
-            The local businesses, builders, and brands who make our
-            publication possible. Switch publications to see partners
-            for RealtyLine Austin or Newsline San Antonio.
+            The local businesses, builders, and brands who make each
+            publication possible. Switch publications to see local partners.
           </p>
         </header>
 

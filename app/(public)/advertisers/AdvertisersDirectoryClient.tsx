@@ -1,6 +1,6 @@
 'use client';
 
-import { type PubKey } from '@/lib/pub-meta';
+import { isPubKey, type PubKey } from '@/lib/pub-meta';
 
 // app/(public)/advertisers/AdvertisersDirectoryClient.tsx
 //
@@ -55,7 +55,7 @@ function readSavedPub(): SitePub {
   if (typeof window === 'undefined') return 'realtyline';
   try {
     const v = window.localStorage.getItem('caxton_pub');
-    if (v === 'realtyline' || v === 'newsline') return v;
+    if (isPubKey(v)) return v;
   } catch {}
   return 'realtyline';
 }
@@ -76,14 +76,13 @@ function getServerPubSnapshot(): SitePub {
 }
 
 // Maps the UI-level site pub to the DB-level publication value used on
-// the advertisers table. Houston/Dallas inherit the RealtyLine ('austin')
-// publication slug because they're pre-launch with no advertisers of their
-// own yet - filtering on 'austin' returns the empty set safely.
-const SITE_TO_DB: Record<SitePub, 'austin' | 'san_antonio'> = {
+// the advertisers table. Houston/Dallas do not have advertiser publication
+// values yet, so they intentionally render an empty directory.
+const SITE_TO_DB: Record<SitePub, 'austin' | 'san_antonio' | null> = {
   realtyline: 'austin',
   newsline: 'san_antonio',
-  'realtyline-houston': 'austin',
-  'realtyline-dallas': 'austin',
+  'realtyline-houston': null,
+  'realtyline-dallas': null,
 };
 
 export default function AdvertisersDirectoryClient({ advertisers, themes }: Props) {
@@ -95,7 +94,7 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
 
   const dbPub = SITE_TO_DB[pub];
   const inPub = useMemo(
-    () => advertisers.filter((a) => a.publication === dbPub),
+    () => dbPub === null ? [] : advertisers.filter((a) => a.publication === dbPub),
     [advertisers, dbPub],
   );
   const theme = themes[pub];
