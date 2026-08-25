@@ -944,6 +944,33 @@ function EditorPage({
         />
       ))}
 
+      {/* Independent pin-badge overlay. Rendered from hotspot coordinates
+          directly (not from RND's DOM) so a pin is guaranteed to appear even
+          when the underlying RND element gets into a weird state (0-size,
+          clipped by transform, etc.). The RND element still owns
+          drag/resize; this layer is purely visual and pointer-events:none. */}
+      {imgSize.w > 0 && hotspots.map((h) => {
+        const num = spreadNumberById.get(h.id) ?? 0;
+        if (num === 0) return null;
+        const colors = TYPE_COLORS[h.type] ?? { stroke: 'rgb(107, 114, 128)' };
+        const cx = (h.x_frac + h.w_frac / 2) * imgSize.w;
+        const cy = (h.y_frac + h.h_frac / 2) * imgSize.h;
+        return (
+          <div
+            key={`pin-${h.id}`}
+            className="absolute pointer-events-none"
+            style={{ left: cx, top: cy, transform: 'translate(-50%, -50%)', zIndex: 45 }}
+          >
+            <span
+              className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[11px] font-semibold text-white rounded-full shadow ring-2 ring-white"
+              style={{ background: colors.stroke }}
+            >
+              {num}
+            </span>
+          </div>
+        );
+      })}
+
       {/* Floating actions: Add hotspot + Extract page. Both hug the page's
           bottom center; Extract-page runs the same four-pass pipeline as
           Extract-all but scoped to this page (edited-imports on the page
