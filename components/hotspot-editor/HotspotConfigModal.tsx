@@ -17,7 +17,7 @@
 
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { upload } from '@vercel/blob/client';
 import type { Hotspot, HotspotType, HotspotConfig } from '@/lib/hotspots';
 import { defaultConfigForType, TYPE_LABELS } from '@/lib/hotspot-editor-helpers';
@@ -120,10 +120,27 @@ export default function HotspotConfigModal({
     }
   }, []);
 
+  // Backdrop close only fires if BOTH mousedown and mouseup happen on the
+  // backdrop itself. Prevents the modal from closing when a text selection
+  // or drag starts inside the dialog and releases outside it, and when a
+  // stray click bubbles from an autocomplete/portal element that unmounts
+  // between mousedown and click.
+  const backdropMouseDownRef = useRef(false);
+  const handleBackdropMouseDown = useCallback((e: ReactMouseEvent) => {
+    backdropMouseDownRef.current = e.target === e.currentTarget;
+  }, []);
+  const handleBackdropMouseUp = useCallback((e: ReactMouseEvent) => {
+    if (backdropMouseDownRef.current && e.target === e.currentTarget) {
+      onClose();
+    }
+    backdropMouseDownRef.current = false;
+  }, [onClose]);
+
   return (
     <div
       className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto"
-      onClick={onClose}
+      onMouseDown={handleBackdropMouseDown}
+      onMouseUp={handleBackdropMouseUp}
     >
       <div
         ref={dialogRef}
@@ -131,7 +148,8 @@ export default function HotspotConfigModal({
         role="dialog"
         aria-modal="true"
         className="bg-white rounded-md shadow-xl max-w-2xl w-full my-8 outline-none"
-        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
