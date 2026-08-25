@@ -2,19 +2,22 @@
 
 import Image from "next/image";
 
-type Pub = "realtyline" | "newsline";
+type Pub = "realtyline" | "newsline" | "realtyline-dallas" | "realtyline-houston";
 
 // Colors match PUBS in app/(dashboard)/dashboard/page.tsx so the hero
 // blends with the pub-color bar above it.
 const BRAND: Record<Pub, string> = {
   realtyline: "transparent",
   newsline: "transparent",
+  "realtyline-dallas": "transparent",
+  "realtyline-houston": "transparent",
 };
 
 // Skyline assets per pub.
 const SKYLINE: Partial<Record<Pub, { src: string; w: number; h: number }>> = {
   realtyline: { src: "/hero/austin-skyline.jpg", w: 1902, h: 1080 },
   newsline: { src: "/hero/san-antonio-skyline.jpg", w: 1902, h: 1080 },
+  "realtyline-dallas": { src: "/hero/dallas-skyline.jpg", w: 1902, h: 1080 },
 };
 
 type Props = {

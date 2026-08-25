@@ -1483,7 +1483,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
           the AppShell header now handles title-as-switcher with the same
           MarketSwitcherSheet, per iOS HIG dedupe pass. */}
       {!showPreLaunch && (
-        <DashboardHero pub={pub as "realtyline" | "newsline"} />
+        <DashboardHero pub={pub as "realtyline" | "newsline" | "realtyline-dallas" | "realtyline-houston"} />
       )}
       {user?.guest && (
         <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between">
