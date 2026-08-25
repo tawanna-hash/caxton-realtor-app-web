@@ -1497,9 +1497,7 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
       {tab === 'n' && !showPreLaunch && (
         <div>
           <FeedTopBanner pub={pub} />
-          {(pub === 'realtyline' || pub === 'newsline') && (
-            <TrendingTicker market={pub} className="mx-4 mt-3" />
-          )}
+          <TrendingTicker market={pub as PubKey} className="mx-4 mt-3" />
           <div className="flex gap-2 overflow-x-auto px-4 py-3 bg-white border-b border-gray-200" style={{ scrollbarWidth: 'none' }}>
             {CATS.map((c) => (
               <button
@@ -2560,4 +2558,3 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
     </div>
   );
 }
-

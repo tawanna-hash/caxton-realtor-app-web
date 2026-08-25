@@ -70,7 +70,14 @@ export async function getActiveTrending(market: TrendingMarket): Promise<Trendin
     WHERE is_published = true
       AND (published_at IS NULL OR published_at <= NOW())
       AND (expires_at IS NULL OR expires_at > NOW())
-      AND ${market} = ANY(markets)
+      AND (
+        ${market} = ANY(markets)
+        OR (
+          ${market} IN ('realtyline-houston', 'realtyline-dallas')
+          AND 'realtyline' = ANY(markets)
+          AND 'newsline' = ANY(markets)
+        )
+      )
     ORDER BY sort_order ASC, published_at DESC NULLS LAST
     LIMIT 12
   ` as unknown as TrendingItem[];
