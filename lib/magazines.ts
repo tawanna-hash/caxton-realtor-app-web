@@ -1,8 +1,10 @@
 // Magazine types and client-side fetch helper.
 
+import type { PublicationId } from '@/lib/publications';
+
 export interface Magazine {
   id: number;
-  publication: 'austin' | 'san_antonio';
+  publication: PublicationId;
   year: number;
   month: number;
   issue_label: string;

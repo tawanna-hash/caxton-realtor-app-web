@@ -7,6 +7,7 @@ import { useUrlNumber, useUrlState, useUrlString } from '@/lib/use-url-state';
 import PageTitle from '@/components/ui/PageTitle';
 import { Pager } from '@/app/admin/_components/Pager';
 import EmailBadge, { type EmailBadgeStatus } from '@/app/admin/_components/EmailBadge';
+import type { PubId } from '@/lib/publications';
 
 type Subscriber = {
   id: number;
@@ -64,7 +65,7 @@ export default function NewsletterClient() {
   // Pagination / filters / sort are URL-backed so refresh keeps the same view.
   const [page, setPage] = useUrlNumber('page', 1);
   const [pageSize] = useState(50);
-  const [publication, setPublication] = useUrlString<'' | 'realtyline' | 'newsline'>('publication', '');
+  const [publication, setPublication] = useUrlString<'' | PubId>('publication', '');
   const [status, setStatus] = useUrlString<'' | 'active' | 'unsubscribed'>('status', '');
   const [verified, setVerified] = useUrlString<'' | 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending' | 'unverified'>('verified', '');
   const [q, setQ] = useUrlState<string>('q', '', {
@@ -222,14 +223,16 @@ export default function NewsletterClient() {
         <select
           value={publication}
           onChange={(e) => {
-            setPublication(e.target.value as '' | 'realtyline' | 'newsline');
+            setPublication(e.target.value as '' | PubId);
             setPage(1);
           }}
           className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
         >
           <option value="">All publications</option>
-          <option value="realtyline">RealtyLine</option>
-          <option value="newsline">NewsLine</option>
+          <option value="realtyline">RealtyLine Austin</option>
+          <option value="newsline">Newsline San Antonio</option>
+          <option value="realtyline-houston">RealtyLine Houston</option>
+          <option value="realtyline-dallas">RealtyLine Dallas/Ft. Worth</option>
         </select>
         <select
           value={status}

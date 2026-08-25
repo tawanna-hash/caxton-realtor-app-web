@@ -28,7 +28,7 @@ async function isAdmin(): Promise<boolean> {
 
 type PrevIssue = {
   id: number;
-  publication: 'austin' | 'san_antonio';
+  publication: 'austin' | 'san_antonio' | 'houston' | 'dallas';
   issue_label: string;
   hotspot_count: number;
 };

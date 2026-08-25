@@ -26,7 +26,7 @@ function isMissingSchemaError(err: unknown): err is { code: string } {
 export interface ListSubscribersOptions {
   page: number;
   pageSize: number;
-  market?: 'austin' | 'san_antonio';
+  market?: import('@/lib/publications').PublicationId;
   q?: string;
   sort?: string;
   dir?: 'asc' | 'desc';
@@ -398,4 +398,3 @@ export function csvEscape(v: unknown): string {
   }
   return s;
 }
-

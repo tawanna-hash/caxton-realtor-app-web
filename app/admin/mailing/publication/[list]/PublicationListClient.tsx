@@ -14,8 +14,9 @@ import MailingBreadcrumb from '@/components/admin/MailingBreadcrumb';
 import EmailBadge, { type EmailBadgeStatus } from '@/app/admin/_components/EmailBadge';
 import { PAGE_SIZE_OPTIONS } from '@/app/admin/_components/Pager';
 import type { PublicationCount } from '@/lib/server/mailing/publication-counts';
+import type { PubId } from '@/lib/publications';
 
-type Pub = 'realtyline' | 'newsline';
+type Pub = PubId;
 
 type Row = {
   email: string;
@@ -44,10 +45,14 @@ const DEFAULT_PAGE_SIZE = 50;
 const PUB_LABEL: Record<Pub, string> = {
   realtyline: 'RealtyLine (Austin)',
   newsline: 'Newsline (San Antonio)',
+  'realtyline-houston': 'RealtyLine (Houston)',
+  'realtyline-dallas': 'RealtyLine (Dallas/Ft. Worth)',
 };
 const PUB_ACCENT: Record<Pub, string> = {
   realtyline: '#301D5D',
   newsline: '#c2410c',
+  'realtyline-houston': '#301D5D',
+  'realtyline-dallas': '#301D5D',
 };
 
 interface Props {

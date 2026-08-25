@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
-import { PUBLICATION_LABELS, type PublicationId } from '@/lib/publications';
+import { PUBLICATION_LABELS, isPublicationId } from '@/lib/publications';
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 
 import PageTitle from '@/components/ui/PageTitle';
@@ -39,10 +39,6 @@ type EditableState = {
   status: string;
   subscriptions: string;
 };
-
-function isPublicationId(v: unknown): v is PublicationId {
-  return v === 'austin' || v === 'san_antonio';
-}
 
 function fmtDate(s: any): string {
   if (!s) return '—';

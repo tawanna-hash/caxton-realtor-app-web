@@ -7,12 +7,13 @@ import { getSql } from '@/lib/db';
 import { resolveAudience, type AudienceFilter, type OutreachAudienceSource } from '@/lib/marketing-campaigns';
 import { sendOneRecipient, makeUnsubToken } from '@/lib/marketing-email';
 import { syncProspectFromOutreach } from '@/lib/server/marketing-prospect-sync';
+import type { PubId } from '@/lib/publications';
 
 export interface MaterializeAudienceInput {
   sources: OutreachAudienceSource[];
   advertiserFilter?: AudienceFilter;
   subscriberFilter?: {
-    publication?: 'realtyline' | 'newsline';
+    publication?: PubId;
     status?: 'active' | 'unsubscribed';
     verified?: string;
   };

@@ -6,6 +6,7 @@ import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import PageTitle from '@/components/ui/PageTitle';
 import {
+  PUBLICATIONS,
   PUBLICATION_FILTER_LABELS,
   type PublicationId,
 } from '@/lib/publications';
@@ -14,7 +15,7 @@ type AdminEvent = {
   id: number;
   externalSource: 'unlockmls' | 'wordpress' | 'manual' | 'fpr' | 'hba';
   externalId: string;
-  publication: 'austin' | 'san_antonio';
+  publication: PublicationId;
   title: string;
   startDate: string | null;
   endDate: string | null;
@@ -30,6 +31,8 @@ type SortKey = 'title' | 'pub' | 'when' | 'source' | 'status';
 const PUB_STYLES: Record<PublicationId, string> = {
   austin: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
   san_antonio: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
+  houston: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
+  dallas: 'bg-brand-700/10 text-brand-700 border-brand-700/20',
 };
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -57,7 +60,7 @@ export default function EventsPage() {
   const [items, setItems] = useState<AdminEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'austin' | 'san_antonio'>('all');
+  const [filter, setFilter] = useState<'all' | PublicationId>('all');
   const [busyId, setBusyId] = useState<number | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('when');
@@ -181,7 +184,7 @@ export default function EventsPage() {
     return <div className="max-w-6xl mx-auto px-6 py-12 text-sm text-gray-500">Loading...</div>;
   }
 
-  const filterButton = (key: 'all' | 'austin' | 'san_antonio', label: string) => (
+  const filterButton = (key: 'all' | PublicationId, label: string) => (
     <button
       key={key}
       onClick={() => setFilter(key)}
@@ -232,8 +235,9 @@ export default function EventsPage() {
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center gap-2">
           {filterButton('all', 'All')}
-          {filterButton('austin', 'RealtyLine')}
-          {filterButton('san_antonio', 'Newsline San Antonio')}
+          {PUBLICATIONS.map((publication) => (
+            filterButton(publication.id, publication.filterLabel)
+          ))}
         </div>
         {/* BUG-29: surface counts so admins can see at a glance how many events are loaded + how many are hidden */}
         {!loading && items.length > 0 && (

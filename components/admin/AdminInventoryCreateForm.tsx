@@ -6,11 +6,13 @@ import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Kind = 'listing' | 'promotion';
-type Publication = 'realtyline' | 'newsline' | 'both';
+type Publication = 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas' | 'both';
 const PUBLICATION_OPTIONS: { value: Publication; label: string }[] = [
   { value: 'realtyline', label: 'RealtyLine Austin' },
   { value: 'newsline', label: 'Newsline San Antonio' },
-  { value: 'both', label: 'Both publications' },
+  { value: 'realtyline-houston', label: 'RealtyLine Houston' },
+  { value: 'realtyline-dallas', label: 'RealtyLine Dallas/Ft. Worth' },
+  { value: 'both', label: 'Austin + San Antonio' },
 ];
 
 const fieldStyle =
@@ -66,6 +68,8 @@ export default function AdminInventoryCreateForm() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- city default mirrors selected publication; refactor tracked separately
     if (publication === 'realtyline') setCity('Greater Austin');
     else if (publication === 'newsline') setCity('Greater San Antonio');
+    else if (publication === 'realtyline-houston') setCity('Greater Houston');
+    else if (publication === 'realtyline-dallas') setCity('Dallas/Ft. Worth');
     // 'both' leaves city untouched — admin chooses
   }, [publication]);
 

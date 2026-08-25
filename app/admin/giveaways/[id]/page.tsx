@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
+import { PUBLICATIONS } from '@/lib/publications';
 
 import PageTitle from '@/components/ui/PageTitle';
 const RULE_ACTIONS = [
@@ -231,9 +232,12 @@ export default function GiveawayDetailPage() {
                 onChange={(e) => setPublication(e.target.value)}
                 className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-brand-700 bg-white rounded-md"
               >
-                <option value="both">Both Publications</option>
-                <option value="austin">RealtyLine Austin</option>
-                <option value="san_antonio">Newsline San Antonio</option>
+                <option value="both">Austin + San Antonio</option>
+                {PUBLICATIONS.map((publicationOption) => (
+                  <option key={publicationOption.id} value={publicationOption.id}>
+                    {publicationOption.label}
+                  </option>
+                ))}
               </select>
             </FieldRow>
             <FieldRow label="Status">

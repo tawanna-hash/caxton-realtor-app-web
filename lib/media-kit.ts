@@ -753,10 +753,7 @@ export const AUDIENCE_STATS: AudienceStat[] = [
 // MediaKitPub should filter through this so pricing, slot inventory, and public
 // checkout stay in sync with the Expansion section.
 
-const LAUNCHING_SOON_PUBS: ReadonlySet<MediaKitPub> = new Set<MediaKitPub>([
-  'realtyline-houston',
-  'realtyline-dallas',
-]);
+const LAUNCHING_SOON_PUBS: ReadonlySet<MediaKitPub> = new Set<MediaKitPub>();
 
 export function isLaunchingSoon(pub: MediaKitPub): boolean {
   return LAUNCHING_SOON_PUBS.has(pub);

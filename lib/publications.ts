@@ -5,7 +5,7 @@
 //
 // Two ID schemes coexist here:
 //
-//   1. PublicationId ('austin' | 'san_antonio')
+//   1. PublicationId ('austin' | 'san_antonio' | 'houston' | 'dallas')
 //      - Used by the admin surfaces (events, ads, subscribers, giveaways,
 //        inventory). Stored in the database. Do NOT rename.
 //
@@ -25,7 +25,14 @@
 // Admin (database-backed) publication catalog
 // -----------------------------------------------------------------------------
 
-export type PublicationId = 'austin' | 'san_antonio';
+export const PUBLICATION_IDS = ['austin', 'san_antonio', 'houston', 'dallas'] as const;
+export type PublicationId = (typeof PUBLICATION_IDS)[number];
+export type PublicationScope = PublicationId | 'both';
+
+export function isPublicationId(value: unknown): value is PublicationId {
+  return typeof value === 'string'
+    && (PUBLICATION_IDS as readonly string[]).includes(value);
+}
 
 export interface Publication {
   id: PublicationId;
@@ -58,6 +65,22 @@ export const PUBLICATIONS: readonly Publication[] = [
     filterLabel: 'Newsline San Antonio',
     pillStyle: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
   },
+  {
+    id: 'houston',
+    name: 'RealtyLine Houston',
+    market: 'Houston',
+    label: 'RealtyLine Houston',
+    filterLabel: 'Houston',
+    pillStyle: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
+  },
+  {
+    id: 'dallas',
+    name: 'RealtyLine Dallas/Ft. Worth',
+    market: 'Dallas/Ft. Worth',
+    label: 'RealtyLine Dallas/Ft. Worth',
+    filterLabel: 'Dallas/Ft. Worth',
+    pillStyle: 'bg-[#301D5D]/10 text-[#301D5D] border-[#301D5D]/20',
+  },
 ] as const;
 
 // Convenience lookup by id. Throws if id is not a known publication —
@@ -68,12 +91,16 @@ export const PUBLICATIONS: readonly Publication[] = [
 export const PUBLICATION_LABELS: Record<PublicationId, string> = {
   austin: 'RealtyLine Austin',
   san_antonio: 'Newsline San Antonio',
+  houston: 'RealtyLine Houston',
+  dallas: 'RealtyLine Dallas/Ft. Worth',
 };
 
 // Same shape as above but with the short filter labels.
 export const PUBLICATION_FILTER_LABELS: Record<PublicationId, string> = {
   austin: 'RealtyLine',
   san_antonio: 'Newsline San Antonio',
+  houston: 'Houston',
+  dallas: 'Dallas/Ft. Worth',
 };
 
 // Variant for surfaces that also support "both publications" scope.
@@ -82,6 +109,8 @@ export const PUBLICATION_FILTER_LABELS: Record<PublicationId, string> = {
 export const PUBLICATION_LABELS_WITH_BOTH: Record<PublicationId | 'both', string> = {
   austin: 'RealtyLine Austin',
   san_antonio: 'Newsline San Antonio',
+  houston: 'RealtyLine Houston',
+  dallas: 'RealtyLine Dallas/Ft. Worth',
   both: 'Both publications',
 };
 
@@ -100,6 +129,33 @@ export const PUBLICATION_LABELS_WITH_BOTH: Record<PublicationId | 'both', string
 // re-mount with the new context (the BUG-03 fix).
 
 export type PubId = 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas';
+
+export function isPubId(value: unknown): value is PubId {
+  return typeof value === 'string'
+    && ['realtyline', 'newsline', 'realtyline-houston', 'realtyline-dallas'].includes(value);
+}
+
+export const PUBLICATION_TO_PUB_ID: Record<PublicationId, PubId> = {
+  austin: 'realtyline',
+  san_antonio: 'newsline',
+  houston: 'realtyline-houston',
+  dallas: 'realtyline-dallas',
+};
+
+export const PUB_ID_TO_PUBLICATION: Record<PubId, PublicationId> = {
+  realtyline: 'austin',
+  newsline: 'san_antonio',
+  'realtyline-houston': 'houston',
+  'realtyline-dallas': 'dallas',
+};
+
+export function publicationToPubId(publication: PublicationId): PubId {
+  return PUBLICATION_TO_PUB_ID[publication];
+}
+
+export function pubIdToPublication(pub: PubId): PublicationId {
+  return PUB_ID_TO_PUBLICATION[pub];
+}
 
 export type PubMeta = {
   id: PubId;
@@ -140,7 +196,7 @@ export const PUB_ACTIVE: PubMeta[] = [
   {
     id: 'realtyline-dallas',
     label: 'RealtyLine Dallas/Ft. Worth',
-    shortLabel: 'Dallas/FW',
+    shortLabel: 'Dallas / Ft. Worth',
     monogram: 'RD',
   },
 ];

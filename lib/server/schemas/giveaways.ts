@@ -3,12 +3,13 @@
  */
 
 import { z } from 'zod';
+import { PUBLICATION_IDS } from '@/lib/publications';
 
 export const createGiveawaySchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(5000).optional(),
   prize: z.string().min(1).max(500),
-  publication: z.enum(['austin', 'san_antonio', 'both']),
+  publication: z.enum([...PUBLICATION_IDS, 'both']),
   startsAt: z.string().datetime(),
   endsAt: z.string().datetime(),
   drawAt: z.string().datetime().optional(),

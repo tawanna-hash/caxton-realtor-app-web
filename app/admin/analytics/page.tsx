@@ -22,7 +22,13 @@ import PageTitle from '@/components/ui/PageTitle';
 // ============================================================
 
 type Trend = 'up' | 'down' | 'flat';
-type Publication = 'RealtyLine Austin' | 'Newsline San Antonio' | 'RealtyNewsNow' | 'All';
+type Publication =
+  | 'RealtyLine Austin'
+  | 'Newsline San Antonio'
+  | 'RealtyLine Houston'
+  | 'RealtyLine Dallas/Ft. Worth'
+  | 'RealtyNewsNow'
+  | 'All';
 
 interface Kpi {
   label: string;
@@ -73,6 +79,8 @@ const TIMEFRAME_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
 const PUBLICATION_OPTIONS: ReadonlyArray<Publication> = [
   'RealtyLine Austin',
   'Newsline San Antonio',
+  'RealtyLine Houston',
+  'RealtyLine Dallas/Ft. Worth',
   'RealtyNewsNow',
   'All',
 ];

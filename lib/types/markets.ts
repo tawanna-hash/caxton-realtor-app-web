@@ -11,14 +11,9 @@
 
 export const MARKETS = ['austin', 'san_antonio', 'houston', 'dallas'] as const;
 export type Market = (typeof MARKETS)[number];
-// Legacy — historically only Austin + San Antonio were live, so a lot of
-// existing UI enumerates these two + 'both'. Keep the union around for
-// back-compat with `ad_campaigns.publication`, checkout flow, etc.
 // ── Live-status registry ─────────────────────────────────────────────
-// Which markets are open for business today. Houston + Dallas are stubbed
-// in the type system + rate cards, but public-facing pages show a "Coming
-// soon" badge and admin surfaces mute them.
-const LIVE_MARKETS: readonly Market[] = ['austin', 'san_antonio'] as const;
+// Which markets are open for business today.
+const LIVE_MARKETS: readonly Market[] = MARKETS;
 
 type MarketStatus = 'live' | 'coming_soon';
 
@@ -47,13 +42,13 @@ export const MARKET_META: Record<Market, MarketMeta> = {
   houston: {
     id: 'houston',
     label: 'Houston',
-    status: 'coming_soon',
+    status: 'live',
     publication: 'realtyline-houston',
   },
   dallas: {
     id: 'dallas',
     label: 'Dallas / Ft. Worth',
-    status: 'coming_soon',
+    status: 'live',
     publication: 'realtyline-dallas',
   },
 };

@@ -4,6 +4,12 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { PACKAGES, EBLASTS, eblastPriceForPub } from '@/lib/media-kit';
 import type { AdInquiryRow } from '@/lib/server/ad-inquiries-store';
+import {
+  PUBLICATION_IDS,
+  PUBLICATION_LABELS_WITH_BOTH,
+  publicationToPubId,
+  type PublicationScope,
+} from '@/lib/publications';
 
 // Stable id for an e-Blast package — same convention as the public form.
 function eblastId(name: string): string {
@@ -54,7 +60,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
   const [months, setMonths] = useState<number>(1);
   const [sends, setSends] = useState<number>(1);
   // Publication scope for e-Blast pricing. 'austin' | 'san_antonio' | 'both'.
-  const [publication, setPublication] = useState<'austin' | 'san_antonio' | 'both'>('austin');
+  const [publication, setPublication] = useState<PublicationScope>('austin');
   const [startDate, setStartDate] = useState<string>(defaultStart());
   const [endDate, setEndDate] = useState<string>(defaultEnd());
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('link');
@@ -88,7 +94,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
       return sizeRow.price * 100 * Math.max(months, 1);
     }
     if (isEmail && selectedEmailPackage) {
-      const mkPub = publication === 'austin' ? 'realtyline' as const : publication === 'san_antonio' ? 'newsline' as const : 'both' as const;
+      const mkPub = publication === 'both' ? 'both' : publicationToPubId(publication);
       return Math.round(eblastPriceForPub(selectedEmailPackage, mkPub) * 100) * Math.max(sends, 1);
     }
     return 0;
@@ -230,7 +236,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
           {isEmail &&
             EBLASTS.map((e) => (
               <option key={e.name} value={eblastId(e.name)}>
-                {e.name} — ${eblastPriceForPub(e, publication === 'austin' ? 'realtyline' : publication === 'san_antonio' ? 'newsline' : 'both').toLocaleString()}/send
+                {e.name} — ${eblastPriceForPub(e, publication === 'both' ? 'both' : publicationToPubId(publication)).toLocaleString()}/send
               </option>
             ))}
         </select>
@@ -279,12 +285,13 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
           </label>
           <select
             value={publication}
-            onChange={(e) => setPublication(e.target.value as 'austin' | 'san_antonio' | 'both')}
+            onChange={(e) => setPublication(e.target.value as PublicationScope)}
             className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm bg-white"
           >
-            <option value="austin">RealtyLine Austin</option>
-            <option value="san_antonio">Newsline San Antonio</option>
-            <option value="both">Both markets bundle — 10% off</option>
+            {PUBLICATION_IDS.map((id) => (
+              <option key={id} value={id}>{PUBLICATION_LABELS_WITH_BOTH[id]}</option>
+            ))}
+            <option value="both">Austin + San Antonio bundle — 10% off</option>
           </select>
         </div>
       )}

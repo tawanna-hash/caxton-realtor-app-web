@@ -4,7 +4,9 @@
 
 export type AdZone = 'article' | 'feed' | 'calendar' | 'newsletter' | 'app' | 'account' | 'misc';
 export type AdTier = 'premium' | 'standard' | 'house';
-export type AdPublication = 'austin' | 'san_antonio' | 'both';
+import type { PublicationScope } from '@/lib/publications';
+
+export type AdPublication = PublicationScope;
 
 export interface AdSize {
   w: number;

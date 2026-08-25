@@ -39,7 +39,7 @@ interface AgreementNotificationLine {
   adSize?: string | null;
   frequency?: string | null;
   quantity?: number | null;
-  publication?: 'austin' | 'san_antonio' | 'both' | null;
+  publication?: import('./publications').PublicationScope | null;
   startDate?: string | Date | null;
   endDate?: string | Date | null;
   amountCents: number;

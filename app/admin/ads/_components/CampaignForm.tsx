@@ -13,7 +13,7 @@ import type {
   AdSpace, AdCreative, AdCampaign, AdPublication,
 } from './types';
 import { ZONE_LABELS, formatSizes } from './types';
-import { PUBLICATION_LABELS_WITH_BOTH as PUBLICATION_LABELS } from '@/lib/publications';
+import { PUBLICATION_IDS, PUBLICATION_LABELS_WITH_BOTH as PUBLICATION_LABELS } from '@/lib/publications';
 
 interface Props {
   initial?: AdCampaign;  // edit mode if present, create mode if not
@@ -207,7 +207,7 @@ export function CampaignForm({ initial }: Props) {
       {/* Publication */}
       <Field label="Publication" required>
         <div className="space-y-2">
-          {(['both', 'austin', 'san_antonio'] as const).map((pub) => (
+          {(['both', ...PUBLICATION_IDS] as const).map((pub) => (
             <label key={pub} className="flex items-center gap-2">
               <input
                 type="radio"

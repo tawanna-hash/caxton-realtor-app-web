@@ -16,6 +16,7 @@ import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { logAudit } from '@/lib/server/audit';
 import { ensureSchema, getSql } from '@/lib/db';
+import { PUBLICATION_IDS, type PublicationScope } from '@/lib/publications';
 import {
   getAdInquiry,
   updateAdInquiry,
@@ -35,7 +36,7 @@ const quoteSchema = z
     size: z.string().trim().max(40).optional(),
     months: z.number().int().min(1).max(24).optional(),
     sends: z.number().int().min(1).max(24).optional(),
-    publication: z.enum(['austin', 'san_antonio', 'both']).optional(),
+    publication: z.enum([...PUBLICATION_IDS, 'both']).optional(),
     due_date: z.string().optional(),
     memo: z.string().max(2000).optional(),
   })
@@ -45,8 +46,10 @@ const quoteSchema = z
  * Map inquiry.publication ('realtyline' | 'newsline' | 'both' | null) to
  * the DB enum. Mirrors normalizeDbPub() in /api/checkout/submit.
  */
-function inquiryPubToDb(p: string | null): 'austin' | 'san_antonio' | 'both' {
+function inquiryPubToDb(p: string | null): PublicationScope {
   if (p === 'newsline' || p === 'san_antonio') return 'san_antonio';
+  if (p === 'realtyline-houston' || p === 'houston') return 'houston';
+  if (p === 'realtyline-dallas' || p === 'dallas') return 'dallas';
   if (p === 'both') return 'both';
   return 'austin';
 }
@@ -154,4 +157,3 @@ export const POST = withAdminTracking(async (
     { status: 201 },
   );
 });
-

@@ -18,10 +18,10 @@ import { requireAdmin } from '@/lib/server/auth/admin';
 import { ApiError } from '@/lib/server/error';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { getSql } from '@/lib/db';
+import { isPubId } from '@/lib/publications';
 
 export const runtime = 'nodejs';
 
-const ALLOWED_PUBS = new Set(['realtyline', 'newsline']);
 const ALLOWED_STATUS = new Set(['active', 'unsubscribed']);
 const ALLOWED_VERIFIED = new Set(['valid','invalid','risky','unknown','pending','unverified']);
 
@@ -36,7 +36,7 @@ export const GET = withAdminTracking(async (req: Request) => {
   );
 
   const pubParam = url.searchParams.get('publication') || '';
-  const publication = ALLOWED_PUBS.has(pubParam) ? pubParam : null;
+  const publication = isPubId(pubParam) ? pubParam : null;
 
   const statusParam = url.searchParams.get('status') || '';
   const status = ALLOWED_STATUS.has(statusParam) ? statusParam : null;

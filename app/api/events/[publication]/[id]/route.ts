@@ -3,23 +3,22 @@
 // GET /api/events/san_antonio/456  -> { event: CalendarEvent }
 // 404 if the event doesn't exist, is hidden, or belongs to a different pub.
 
-import { getEventById, type Publication } from '@/lib/events-store';
+import { getEventById } from '@/lib/events-store';
+import { isPublicationId } from '@/lib/publications';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-const VALID: Publication[] = ['austin', 'san_antonio'];
 
 export async function GET(
   _req: Request,
   context: { params: Promise<{ publication: string; id: string }> },
 ) {
   const { publication, id: idParam } = await context.params;
-  if (!VALID.includes(publication as Publication)) {
+  if (!isPublicationId(publication)) {
     return Response.json(
       {
         error: 'invalid_publication',
-        message: "publication must be 'austin' or 'san_antonio'",
+        message: 'publication must be a valid active market',
       },
       { status: 400 },
     );
@@ -32,7 +31,7 @@ export async function GET(
     );
   }
   try {
-    const event = await getEventById(publication as Publication, id);
+    const event = await getEventById(publication, id);
     if (!event) {
       return Response.json(
         { error: 'event_not_found', message: 'No such event' },

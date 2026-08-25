@@ -3,6 +3,12 @@
 import { useMemo, useState } from 'react';
 import { PACKAGES, EBLASTS, eblastPriceForPub } from '@/lib/media-kit';
 import type { AdInquiryRow } from '@/lib/server/ad-inquiries-store';
+import {
+  PUBLICATION_IDS,
+  PUBLICATION_LABELS_WITH_BOTH,
+  publicationToPubId,
+  type PublicationScope,
+} from '@/lib/publications';
 
 // Stable id for an e-Blast package — same convention as the public form.
 function eblastId(name: string): string {
@@ -38,7 +44,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
   const [months, setMonths] = useState<number>(1);
   const [sends, setSends] = useState<number>(1);
   // Publication scope for e-Blast pricing. 'austin' | 'san_antonio' | 'both'.
-  const [publication, setPublication] = useState<'austin' | 'san_antonio' | 'both'>('austin');
+  const [publication, setPublication] = useState<PublicationScope>('austin');
   const [dueDate, setDueDate] = useState<string>('');
   const [memo, setMemo] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
@@ -71,7 +77,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
       return sizeRow.price * 100 * Math.max(months, 1);
     }
     if (isEmail && selectedEmailPackage) {
-      const mkPub = publication === 'austin' ? 'realtyline' as const : publication === 'san_antonio' ? 'newsline' as const : 'both' as const;
+      const mkPub = publication === 'both' ? 'both' : publicationToPubId(publication);
       return Math.round(eblastPriceForPub(selectedEmailPackage, mkPub) * 100) * Math.max(sends, 1);
     }
     return 0;
@@ -259,7 +265,7 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
           {isEmail &&
             EBLASTS.map((e) => (
               <option key={eblastId(e.name)} value={eblastId(e.name)}>
-                {e.name} — ${eblastPriceForPub(e, publication === 'austin' ? 'realtyline' : publication === 'san_antonio' ? 'newsline' : 'both').toLocaleString()}/send
+                {e.name} — ${eblastPriceForPub(e, publication === 'both' ? 'both' : publicationToPubId(publication)).toLocaleString()}/send
               </option>
             ))}
         </select>
@@ -322,13 +328,14 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
           <select
             id="quote-publication"
             value={publication}
-            onChange={(e) => setPublication(e.target.value as 'austin' | 'san_antonio' | 'both')}
+            onChange={(e) => setPublication(e.target.value as PublicationScope)}
             disabled={submitting}
             className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="austin">RealtyLine Austin</option>
-            <option value="san_antonio">Newsline San Antonio</option>
-            <option value="both">Both markets bundle — 10% off</option>
+            {PUBLICATION_IDS.map((id) => (
+              <option key={id} value={id}>{PUBLICATION_LABELS_WITH_BOTH[id]}</option>
+            ))}
+            <option value="both">Austin + San Antonio bundle — 10% off</option>
           </select>
         </div>
       )}
@@ -418,4 +425,3 @@ export default function QuoteBuilder({ inquiry, onQuoted }: Props) {
     </form>
   );
 }
-

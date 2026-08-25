@@ -23,6 +23,8 @@ export const metadata = { title: 'Giveaways — Realty News Now' };
 const PUB_TO_MARKET: Record<string, PublicationId> = {
   realtyline: 'austin',
   newsline: 'san_antonio',
+  'realtyline-houston': 'houston',
+  'realtyline-dallas': 'dallas',
 };
 
 function formatRange(startsAt: Date, endsAt: Date): string {

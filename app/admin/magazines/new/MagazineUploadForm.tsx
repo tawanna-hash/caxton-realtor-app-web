@@ -27,9 +27,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { upload } from '@vercel/blob/client';
 import MagazineDropZone from '@/components/MagazineDropZone';
+import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
 import PageTitle from '@/components/ui/PageTitle';
-type Pub = 'austin' | 'san_antonio';
+type Pub = PublicationId;
 
 type StepStatus = 'pending' | 'running' | 'done' | 'error';
 
@@ -519,8 +520,11 @@ export default function MagazineUploadForm() {
               disabled={running}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900"
             >
-              <option value="austin">RealtyLine Austin</option>
-              <option value="san_antonio">Newsline San Antonio</option>
+              {PUBLICATIONS.map((publication) => (
+                <option key={publication.id} value={publication.id}>
+                  {publication.label}
+                </option>
+              ))}
             </select>
           </div>
 

@@ -21,12 +21,17 @@ import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouse
 import { upload } from '@vercel/blob/client';
 import type { Hotspot, HotspotType, HotspotConfig } from '@/lib/hotspots';
 import { defaultConfigForType, TYPE_LABELS } from '@/lib/hotspot-editor-helpers';
+import {
+  PUBLICATIONS,
+  PUBLICATION_LABELS_WITH_BOTH,
+  type PublicationScope,
+} from '@/lib/publications';
 
 type PickerAdvertiser = {
   id: number;
   name: string;
   slug: string;
-  publication: 'austin' | 'san_antonio' | 'both';
+  publication: PublicationScope;
 };
 
 interface Props {
@@ -42,7 +47,7 @@ interface Props {
   onClose: () => void;
   onRequestDelete: () => void;
   /** Default publication for the inline "+ New advertiser" form. */
-  defaultPublication?: 'austin' | 'san_antonio' | 'both';
+  defaultPublication?: PublicationScope;
 }
 
 export default function HotspotConfigModal({
@@ -323,7 +328,7 @@ function AdvertiserPicker({
 }: {
   selectedId: number | null;
   legacyName: string;
-  defaultPublication: 'austin' | 'san_antonio' | 'both';
+  defaultPublication: PublicationScope;
   onChange: (adv: PickerAdvertiser | null) => void;
   onError: (err: string | null) => void;
 }) {
@@ -331,7 +336,7 @@ function AdvertiserPicker({
   const [loading, setLoading] = useState(true);
   const [showNewForm, setShowNewForm] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newPublication, setNewPublication] = useState<'austin' | 'san_antonio' | 'both'>(defaultPublication);
+  const [newPublication, setNewPublication] = useState<PublicationScope>(defaultPublication);
   const [newEmail, setNewEmail] = useState('');
   const [creating, setCreating] = useState(false);
 
@@ -421,7 +426,7 @@ function AdvertiserPicker({
         <option value="">— None —</option>
         {advertisers.map((a) => (
           <option key={a.id} value={String(a.id)}>
-            {a.name} {a.publication === 'san_antonio' ? '(Newsline San Antonio)' : a.publication === 'both' ? '(Both)' : '(RealtyLine)'}
+            {a.name} ({a.publication === 'both' ? 'Austin + San Antonio' : PUBLICATION_LABELS_WITH_BOTH[a.publication]})
           </option>
         ))}
       </select>
@@ -463,12 +468,15 @@ function AdvertiserPicker({
               <label className="block text-xs font-medium text-gray-700 mb-1">Publication</label>
               <select
                 value={newPublication}
-                onChange={(e) => setNewPublication(e.target.value as 'austin' | 'san_antonio' | 'both')}
+                onChange={(e) => setNewPublication(e.target.value as PublicationScope)}
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md bg-white"
               >
-                <option value="austin">RealtyLine Austin</option>
-                <option value="san_antonio">Newsline San Antonio</option>
-                <option value="both">Both</option>
+                {PUBLICATIONS.map((publication) => (
+                  <option key={publication.id} value={publication.id}>
+                    {publication.label}
+                  </option>
+                ))}
+                <option value="both">Austin + San Antonio</option>
               </select>
             </div>
             <div>

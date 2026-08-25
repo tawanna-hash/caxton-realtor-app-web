@@ -40,11 +40,20 @@ export default async function MailingHubPage() {
   //    and app subscribers (realtors table). These match what each
   //    dedicated page reports, so the HUB tiles agree with their
   //    destination pages.
-  const [counts, sources, realtylineCount, newslineCount] = await Promise.all([
+  const [
+    counts,
+    sources,
+    realtylineCount,
+    newslineCount,
+    houstonCount,
+    dallasCount,
+  ] = await Promise.all([
     countBySegment(),
     countAudienceSources(),
     countPublicationList('realtyline'),
     countPublicationList('newsline'),
+    countPublicationList('realtyline-houston'),
+    countPublicationList('realtyline-dallas'),
   ]);
 
   // Accents: each tile uses a distinct palette hue so they remain visually
@@ -100,6 +109,26 @@ export default async function MailingHubPage() {
     },
   ];
 
+  const houstonAudienceTiles: AudienceTile[] = [
+    {
+      label: 'App Subscribers — RealtyLine Houston',
+      href: '/admin/subscribers?market=houston',
+      caption: 'Houston app and newsletter subscribers.',
+      accent: '#301D5D',
+      initial: 'H',
+    },
+  ];
+
+  const dallasAudienceTiles: AudienceTile[] = [
+    {
+      label: 'App Subscribers — RealtyLine Dallas/Ft. Worth',
+      href: '/admin/subscribers?market=dallas',
+      caption: 'Dallas/Ft. Worth app and newsletter subscribers.',
+      accent: '#301D5D',
+      initial: 'D',
+    },
+  ];
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <MailingBreadcrumb trail={[{ label: 'Mailing' }]} />
@@ -140,6 +169,30 @@ export default async function MailingHubPage() {
               title={`${newslineCount.total.toLocaleString()} unique deliverable emails`}
             >
               {newslineCount.total.toLocaleString()}
+            </span>
+          </Link>
+          <Link
+            href="/admin/mailing/publication/realtyline-houston"
+            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
+          >
+            <span>RealtyLine Houston</span>
+            <span
+              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-700/10 text-brand-700 group-hover/dl:bg-white/20 group-hover/dl:text-white"
+              title={`${houstonCount.total.toLocaleString()} unique deliverable emails`}
+            >
+              {houstonCount.total.toLocaleString()}
+            </span>
+          </Link>
+          <Link
+            href="/admin/mailing/publication/realtyline-dallas"
+            className="group/dl inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-brand-700 text-brand-700 text-xs font-semibold hover:bg-brand-700 hover:text-white transition"
+          >
+            <span>RealtyLine Dallas/Ft. Worth</span>
+            <span
+              className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-700/10 text-brand-700 group-hover/dl:bg-white/20 group-hover/dl:text-white"
+              title={`${dallasCount.total.toLocaleString()} unique deliverable emails`}
+            >
+              {dallasCount.total.toLocaleString()}
             </span>
           </Link>
           <span className="text-xs text-gray-500">
@@ -272,6 +325,22 @@ export default async function MailingHubPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {sanAntonioAudienceTiles.map(renderAudienceTile)}
+              </div>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-3 mb-3">
+                <h2 className="font-serif text-xl text-gray-900">RealtyLine Houston audience pages</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {houstonAudienceTiles.map(renderAudienceTile)}
+              </div>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-3 mb-3">
+                <h2 className="font-serif text-xl text-gray-900">RealtyLine Dallas/Ft. Worth audience pages</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {dallasAudienceTiles.map(renderAudienceTile)}
               </div>
             </div>
           </div>

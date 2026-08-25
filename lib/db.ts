@@ -1037,6 +1037,10 @@ async function _runEnsureSchema(): Promise<void> {
     INSERT INTO publication_settings (publication) VALUES ('san_antonio')
     ON CONFLICT (publication) DO NOTHING
   `;
+  await sql`
+    INSERT INTO publication_settings (publication) VALUES ('houston'), ('dallas')
+    ON CONFLICT (publication) DO NOTHING
+  `;
 
   await ensureCrmSchema(sql);
 

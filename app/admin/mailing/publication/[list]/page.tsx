@@ -12,6 +12,7 @@ import { ensureSchema } from '@/lib/db';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { countPublicationList } from '@/lib/server/mailing/publication-counts';
 import PublicationListClient from './PublicationListClient';
+import { isPubId, type PubId } from '@/lib/publications';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,8 +36,8 @@ export default async function PublicationListViewPage({
   await ensureSchema();
 
   const { list } = await params;
-  if (list !== 'realtyline' && list !== 'newsline') notFound();
-  const pub = list as 'realtyline' | 'newsline';
+  if (!isPubId(list)) notFound();
+  const pub = list as PubId;
 
   // Counts are cheap (one CTE) — render them server-side so the header
   // shows the right number even before the row payload arrives.

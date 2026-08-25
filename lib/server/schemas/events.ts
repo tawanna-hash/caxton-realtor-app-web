@@ -3,8 +3,9 @@
  */
 
 import { z } from 'zod';
+import { PUBLICATION_IDS } from '@/lib/publications';
 
-export const publicationSchema = z.enum(['austin', 'san_antonio']);
+export const publicationSchema = z.enum(PUBLICATION_IDS);
 
 export const manualEventInputSchema = z.object({
   publication: publicationSchema,

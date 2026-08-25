@@ -18,6 +18,7 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts';
 import AdvertiserReportDrawer from './AdvertiserReportDrawer';
+import type { PublicationScope } from '@/lib/publications';
 
 type RangePreset = '7d' | '30d' | '90d' | 'all';
 
@@ -26,7 +27,7 @@ interface PaneAdvertiser {
   name: string;
   slug: string;
   contact_email: string | null;
-  publication: 'austin' | 'san_antonio' | 'both';
+  publication: PublicationScope;
 }
 
 interface AnalyticsResponse {

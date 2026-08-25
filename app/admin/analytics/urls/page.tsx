@@ -14,6 +14,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageTitle from '@/components/ui/PageTitle';
+import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
 interface UrlRollupRow {
   url_key: string;
@@ -35,7 +36,7 @@ interface UrlRollupResponse {
   to: string;
 }
 
-type PublicationFilter = 'all' | 'austin' | 'san_antonio';
+type PublicationFilter = 'all' | PublicationId;
 
 // Local date helpers — the API takes ISO strings, but the <input type="date">
 // value is YYYY-MM-DD in the browser's local timezone. We convert both ways.
@@ -164,8 +165,11 @@ export default function UrlAnalyticsPage() {
             className="rounded border border-gray-300 px-2 py-1.5 text-sm"
           >
             <option value="all">All</option>
-            <option value="austin">RealtyLine (Austin)</option>
-            <option value="san_antonio">Newsline (San Antonio)</option>
+            {PUBLICATIONS.map((publicationOption) => (
+              <option key={publicationOption.id} value={publicationOption.id}>
+                {publicationOption.label}
+              </option>
+            ))}
           </select>
         </div>
         <div>

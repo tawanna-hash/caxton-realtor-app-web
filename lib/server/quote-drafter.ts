@@ -36,6 +36,10 @@ import {
 import type { Agreement, AgreementType } from '@/lib/agreements';
 import { ensureAdvertiserForAgreement } from '@/lib/advertisers-from-agreement';
 import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
+import {
+  publicationToPubId,
+  type PublicationScope,
+} from '@/lib/publications';
 
 // e-Blast IDs are derived the same way as in the public inquiry form:
 // lowercase + spaces stripped from the human name.
@@ -45,17 +49,14 @@ function eblastId(name: string): string {
 
 /**
  * Resolve the eblast unit price in cents for a database-side publication
- * scope. The database uses 'austin' | 'san_antonio' | 'both'; the media
- * kit data uses 'realtyline' | 'newsline' | 'both'.
+ * scope. Legacy `both` means Austin + San Antonio; single-market scopes
+ * map to their corresponding public publication ID.
  */
 function eblastCentsForDbPub(
   eb: (typeof EBLASTS)[number],
-  dbPub: 'austin' | 'san_antonio' | 'both',
+  dbPub: PublicationScope,
 ): number {
-  const mkPub =
-    dbPub === 'austin'      ? 'realtyline' as const :
-    dbPub === 'san_antonio' ? 'newsline'   as const :
-                              'both'       as const;
+  const mkPub = dbPub === 'both' ? 'both' : publicationToPubId(dbPub);
   return Math.round(eblastPriceForPub(eb, mkPub) * 100);
 }
 
@@ -155,7 +156,7 @@ export interface DrafterInput {
    * sends, weeks). Mutually exclusive with override_total_cents.
    */
   override_unit_cents?: number;
-  publication?: 'austin' | 'san_antonio' | 'both';
+  publication?: PublicationScope;
   due_date?: string;
   memo?: string;
   /** Contact info that lives on the agreement (rep-facing). */
@@ -188,7 +189,7 @@ export interface DrafterInput {
     app_cadence?: 'weekly' | 'monthly';
     app_weeks?: number;
     app_markets?: number;
-    publication?: 'austin' | 'san_antonio' | 'both';
+    publication?: PublicationScope;
     start_date?: string;
     end_date?: string;
     override_total_cents?: number;
@@ -559,10 +560,12 @@ export async function draftQuote(
  * Advertiser rows use a CSV publication field. For quote pricing we need
  * a single scope value. Falls back to 'austin' if it can't decide.
  */
-function normalizeAdvertiserPub(pub: string): 'austin' | 'san_antonio' | 'both' {
+function normalizeAdvertiserPub(pub: string): PublicationScope {
   if (!pub) return 'austin';
   const first = pub.split(',')[0]?.trim().toLowerCase();
   if (first === 'san_antonio' || first === 'newsline') return 'san_antonio';
+  if (first === 'houston' || first === 'realtyline-houston') return 'houston';
+  if (first === 'dallas' || first === 'realtyline-dallas') return 'dallas';
   if (first === 'both') return 'both';
   return 'austin';
 }
@@ -589,7 +592,7 @@ async function draftBundledQuote(
     quantity: number;
     unit_cents: number;
     amount_cents: number;
-    publication: 'austin' | 'san_antonio' | 'both';
+    publication: PublicationScope;
     start_date: string;
     end_date: string;
     pay_now: boolean;

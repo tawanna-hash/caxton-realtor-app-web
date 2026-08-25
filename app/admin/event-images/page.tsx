@@ -8,10 +8,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Trash2, Plus, ExternalLink, Upload, FolderOpen, Image as ImageIcon, ChevronDown, Folder, CheckSquare, Square, MinusSquare, X } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
 import MonthPicker from './MonthPicker';
-
-const PUBLICATIONS = [
-  { id: 'realtyline', label: 'RealtyLine Austin' },
-] as const;
+import { PUB_ACTIVE, type PubId } from '@/lib/publications';
 
 type EventPhoto = {
   id: number;
@@ -20,7 +17,7 @@ type EventPhoto = {
   imageUrl: string;
   thumbnailUrl: string | null;
   description: string | null;
-  publication: string;
+  publication: PubId;
   uploadedBy: string | null;
   advertiserId: number | null;
   createdAt: string;
@@ -47,13 +44,13 @@ export default function AdminEventImagesPage() {
   })();
   const [newFolderMonth, setNewFolderMonth] = useState(currentMonth);
   const [newFolderTitle, setNewFolderTitle] = useState('');
-  const [newFolderPub, setNewFolderPub] = useState<string>('realtyline');
+  const [newFolderPub, setNewFolderPub] = useState<PubId>('realtyline');
   const [newFolderAdvertiser, setNewFolderAdvertiser] = useState<number | null>(null);
 
   // Bulk upload state
   const [bulkDate, setBulkDate] = useState(currentMonth);
   const [bulkTitle, setBulkTitle] = useState('');
-  const [bulkPub, setBulkPub] = useState<string>('realtyline');
+  const [bulkPub, setBulkPub] = useState<PubId>('realtyline');
   const [bulkAdvertiser, setBulkAdvertiser] = useState<number | null>(null);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState<{ uploaded: number; failed: number; total: number } | null>(null);
@@ -461,9 +458,9 @@ export default function AdminEventImagesPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Publication</label>
-            <select value={newFolderPub} onChange={(e) => setNewFolderPub(e.target.value)}
+            <select value={newFolderPub} onChange={(e) => setNewFolderPub(e.target.value as PubId)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
-              {PUBLICATIONS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+              {PUB_ACTIVE.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
             </select>
           </div>
           <div>
@@ -506,9 +503,9 @@ export default function AdminEventImagesPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Publication</label>
-                <select value={bulkPub} onChange={(e) => setBulkPub(e.target.value)}
+                <select value={bulkPub} onChange={(e) => setBulkPub(e.target.value as PubId)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white">
-                  {PUBLICATIONS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+                  {PUB_ACTIVE.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
                 </select>
               </div>
               <div>
@@ -709,7 +706,7 @@ export default function AdminEventImagesPage() {
                                     }).then(() => load()).catch(() => {});
                                   }}
                                   className="w-full text-xs border border-gray-300 rounded px-1 py-0.5 bg-white text-gray-600 focus:outline-none focus:ring-1 focus:ring-brand-500">
-                                  {PUBLICATIONS.map((pub) => <option key={pub.id} value={pub.id}>{pub.label}</option>)}
+                                  {PUB_ACTIVE.map((pub) => <option key={pub.id} value={pub.id}>{pub.label}</option>)}
                                 </select>
                               </div>
                               {/* Delete */}

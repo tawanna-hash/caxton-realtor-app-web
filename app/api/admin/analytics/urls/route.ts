@@ -25,6 +25,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { isPublicationId } from '@/lib/publications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -110,7 +111,7 @@ export const GET = withAdminTracking(async (req: NextRequest) => {
   ];
   const params: unknown[] = [from.toISOString(), to.toISOString()];
 
-  if (publication === 'austin' || publication === 'san_antonio') {
+  if (isPublicationId(publication)) {
     params.push(publication);
     where.push(`m.publication = $${params.length}`);
   }

@@ -38,7 +38,7 @@ function eblastId(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '');
 }
 
-type Publication = 'austin' | 'san_antonio' | 'both';
+type Publication = PublicationScope;
 import {
   AD_SIZES, FREQUENCIES, FREQ_PKG_AG, MONTHS_LIST,
 } from '@/lib/pressbook-constants';
@@ -46,6 +46,12 @@ import {
   lookupRate, pagePositionPremium, computeExp,
 } from '@/lib/agreement-pricing';
 import { quoteLineSubtotalCents } from '@/lib/quote-pricing';
+import {
+  PUBLICATION_IDS,
+  PUBLICATION_LABELS_WITH_BOTH,
+  publicationToPubId,
+  type PublicationScope,
+} from '@/lib/publications';
 
 type Channel = 'print' | 'email' | 'app';
 type AppCadence = 'weekly' | 'monthly';
@@ -407,10 +413,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       return 0;
     }
     if (channel === 'email' && selectedEmailPackage) {
-      const mkPub =
-        publication === 'austin' ? 'realtyline' :
-        publication === 'san_antonio' ? 'newsline' :
-        'both';
+      const mkPub = publication === 'both' ? 'both' : publicationToPubId(publication);
       return Math.round(eblastPriceForPub(selectedEmailPackage, mkPub) * 100) * sends;
     }
     if (channel === 'app' && selectedAppSlot) {
@@ -1265,9 +1268,10 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   onChange={(e) => setNewPublication(e.target.value as Publication)}
                   className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
                 >
-                  <option value="austin">RealtyLine (Austin)</option>
-                  <option value="san_antonio">Newsline (San Antonio)</option>
-                  <option value="both">Both</option>
+                  {PUBLICATION_IDS.map((id) => (
+                    <option key={id} value={id}>{PUBLICATION_LABELS_WITH_BOTH[id]}</option>
+                  ))}
+                  <option value="both">Austin + San Antonio</option>
                 </select>
               </label>
             </div>
@@ -1563,9 +1567,10 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                     onChange={(e) => setPublication(e.target.value as Publication)}
                     className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm bg-white"
                   >
-                    <option value="austin">RealtyLine (Austin)</option>
-                    <option value="san_antonio">Newsline (San Antonio)</option>
-                    <option value="both">Both</option>
+                    {PUBLICATION_IDS.map((id) => (
+                      <option key={id} value={id}>{PUBLICATION_LABELS_WITH_BOTH[id]}</option>
+                    ))}
+                    <option value="both">Austin + San Antonio bundle</option>
                   </select>
                 </label>
                 <div className="sm:col-span-2 border-t border-gray-200 pt-3 mt-1">
@@ -1962,4 +1967,3 @@ function ModalShell({
     </div>
   );
 }
-

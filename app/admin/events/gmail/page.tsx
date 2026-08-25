@@ -19,7 +19,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import PageTitle from '@/components/ui/PageTitle';
-import { PUBLICATION_FILTER_LABELS, type PublicationId } from '@/lib/publications';
+import { PUBLICATION_FILTER_LABELS, PUBLICATION_IDS, type PublicationId } from '@/lib/publications';
 
 type GmailEvent = {
   id: number;
@@ -72,7 +72,7 @@ type ScanCounts = {
   errors: number;
 };
 
-const PUB_OPTIONS: PublicationId[] = ['austin', 'san_antonio'];
+const PUB_OPTIONS: readonly PublicationId[] = PUBLICATION_IDS;
 
 // Google's error codes are terse; map the ones an admin can actually act on.
 const OAUTH_ERRORS: Record<string, string> = {

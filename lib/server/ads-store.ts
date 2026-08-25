@@ -4,8 +4,9 @@
  */
 
 import { getPool } from './db/neon';
+import { publicationToPubId, type PublicationId, type PublicationScope } from '@/lib/publications';
 
-export type Publication = 'austin' | 'san_antonio' | 'both';
+export type Publication = PublicationScope;
 
 export interface AdSpace {
   slug: string;
@@ -317,7 +318,7 @@ export async function approveSelfServeCampaign(
 // Random selection done in SQL. Returns null if nothing matches.
 export async function getActiveCampaignForSlot(
   slot: string,
-  publication: 'austin' | 'san_antonio',
+  publication: PublicationId,
 ): Promise<AdCampaignWithRefs | null> {
   const rows = await getActiveCampaignsForSlot(slot, publication, 1);
   return rows[0] ?? null;
@@ -328,11 +329,11 @@ export async function getActiveCampaignForSlot(
 // SQL randomizes order so each request returns a fresh shuffle.
 export async function getActiveCampaignsForSlot(
   slot: string,
-  publication: 'austin' | 'san_antonio',
+  publication: PublicationId,
   limit = 5,
 ): Promise<AdCampaignWithRefs[]> {
   const today = new Date().toISOString().slice(0, 10);
-  const pubKey = publication === 'austin' ? 'realtyline' : 'newsline';
+  const pubKey = publicationToPubId(publication);
   const safeLimit = Math.max(1, Math.min(20, Math.floor(limit)));
   const r = await getPool().query<AdCampaignWithRefs>(
     `SELECT

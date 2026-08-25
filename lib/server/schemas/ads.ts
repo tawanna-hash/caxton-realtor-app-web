@@ -3,8 +3,9 @@
  */
 
 import { z } from 'zod';
+import { PUBLICATION_IDS } from '@/lib/publications';
 
-const publicationSchema = z.enum(['austin', 'san_antonio', 'both']);
+const publicationSchema = z.enum([...PUBLICATION_IDS, 'both']);
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD');
 
 // Strip whitespace anywhere in a click destination. Browsers refuse to

@@ -3,6 +3,7 @@
  */
 
 import { z } from 'zod';
+import { PUBLICATION_IDS } from '@/lib/publications';
 
 const SUBSCRIBER_SORT_COLUMNS = [
   'created_at',
@@ -18,7 +19,7 @@ const VERIFIED_FILTER_OPTIONS = ['valid','invalid','risky','unknown','pending','
 export const listSubscribersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(500).default(50),
-  market: z.enum(['austin', 'san_antonio']).optional(),
+  market: z.enum(PUBLICATION_IDS).optional(),
   q: z.string().max(200).optional(),
   sort: z.enum(SUBSCRIBER_SORT_COLUMNS).default('created_at'),
   dir: z.enum(['asc', 'desc']).default('desc'),
@@ -51,7 +52,7 @@ export const patchSubscriberBodySchema = z
     li_handle: editableTextNullable,
     birthday_month: z.number().int().min(1).max(12).nullable().optional(),
     birthday_day: z.number().int().min(1).max(31).nullable().optional(),
-    market: z.enum(['austin', 'san_antonio']).optional(),
+    market: z.enum(PUBLICATION_IDS).optional(),
     subscriptions: z.array(z.string()).optional(),
     status: z.enum(['active', 'inactive']).optional(),
   })

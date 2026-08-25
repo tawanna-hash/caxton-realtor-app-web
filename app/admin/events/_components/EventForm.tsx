@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/admin-api';
-import type { PublicationId } from '@/lib/publications';
+import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
 export type EventFormData = {
   id?: number;
@@ -182,8 +182,11 @@ export function EventForm({
               onChange={(e) => update('publication', e.target.value as PublicationId)}
               className={fieldClass}
             >
-              <option value="austin">RealtyLine Austin</option>
-              <option value="san_antonio">Newsline San Antonio</option>
+              {PUBLICATIONS.map((publication) => (
+                <option key={publication.id} value={publication.id}>
+                  {publication.label}
+                </option>
+              ))}
             </select>
           </div>
           <div>

@@ -15,6 +15,7 @@ import { put } from '@vercel/blob';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import { createEventPhoto, normalizeAdvertiserId } from '@/lib/event-photos';
+import { isPubId } from '@/lib/publications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -54,6 +55,9 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
 
   if (files.length === 0) {
     return NextResponse.json({ error: 'No files provided' }, { status: 400 });
+  }
+  if (!isPubId(publication)) {
+    return NextResponse.json({ error: 'Invalid publication' }, { status: 400 });
   }
 
   const validFiles = files.filter((f): f is File => f instanceof File);

@@ -57,7 +57,7 @@ export interface FooterBrand {
   zip: string | null;
   license_number: string | null;
   tagline: string | null;
-  publication: 'austin' | 'san_antonio' | 'both' | null;
+  publication: import('./publications').PublicationScope | null;
 }
 
 /** Color palette derived from a brand's publication. The renderer uses

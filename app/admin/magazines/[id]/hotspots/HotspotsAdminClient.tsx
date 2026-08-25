@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { useUrlNumber, useUrlString } from '@/lib/use-url-state';
 import { Rnd } from 'react-rnd';
 import type { Magazine } from '@/lib/magazines';
+import { PUBLICATION_LABELS } from '@/lib/publications';
 import type { Hotspot, HotspotConfig } from '@/lib/hotspots';
 import {
   DEFAULT_NEW_RECT,
@@ -31,7 +32,7 @@ import HotspotConfigModal from '@/components/hotspot-editor/HotspotConfigModal';
 
 type PrevIssue = {
   id: number;
-  publication: 'austin' | 'san_antonio';
+  publication: 'austin' | 'san_antonio' | 'houston' | 'dallas';
   issue_label: string;
   hotspot_count: number;
 };
@@ -517,7 +518,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-semibold text-gray-900 truncate">
-              Hotspots · {magazine.publication === 'austin' ? 'RealtyLine' : 'Newsline San Antonio'} · {magazine.issue_label}
+              Hotspots · {PUBLICATION_LABELS[magazine.publication]} · {magazine.issue_label}
             </h1>
             <p className="text-xs text-gray-500">
               {hotspots.length} hotspot{hotspots.length === 1 ? '' : 's'} · {magazine.page_count} pages

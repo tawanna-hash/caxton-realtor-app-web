@@ -32,6 +32,12 @@ import {
   computeExp,
 } from '@/lib/agreement-pricing';
 import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
+import {
+  PUBLICATIONS,
+  isPublicationId,
+  type PublicationId,
+  type PublicationScope,
+} from '@/lib/publications';
 
 // Admin palette purple — matches /admin dashboards and CRM.
 const ACCENT = '#5a0e5f';
@@ -489,11 +495,12 @@ export default function SignWizard({
   const [applyPagePremium, setApplyPagePremium] = useState(false);
   const [timing, setTiming] = useState<TimingState>(() => initTiming(ag));
   // ── Markets (proposal stage) ──────────────────────────────────────────────
-  // Austin + San Antonio are launched; Houston / Dallas are not (gated).
-  const [markets, setMarkets] = useState<Set<'austin' | 'san_antonio'>>(() => {
-    const s = new Set<'austin' | 'san_antonio'>();
+  const [markets, setMarkets] = useState<Set<PublicationId>>(() => {
+    const s = new Set<PublicationId>();
     if (ag.publication === 'austin' || ag.publication === 'both') s.add('austin');
     if (ag.publication === 'san_antonio' || ag.publication === 'both') s.add('san_antonio');
+    if (ag.publication === 'houston') s.add('houston');
+    if (ag.publication === 'dallas') s.add('dallas');
     return s;
   });
 
@@ -619,9 +626,7 @@ export default function SignWizard({
               applyBool('applyPagePremium', setApplyPagePremium);
               if (d.timing && typeof d.timing === 'object') setTiming(d.timing as TimingState);
               if (Array.isArray(d.markets)) {
-                const valid = (d.markets as unknown[]).filter(
-                  (m): m is 'austin' | 'san_antonio' => m === 'austin' || m === 'san_antonio',
-                );
+                const valid = (d.markets as unknown[]).filter(isPublicationId);
                 setMarkets(new Set(valid));
               }
               if (d.lineStarts && typeof d.lineStarts === 'object') {
@@ -923,8 +928,12 @@ export default function SignWizard({
       const patches = buildPatchPayload();
       const numMarkets = markets.size;
       if (channel === 'print' && numMarkets > 0) {
-        patches.publication =
-          numMarkets === 2 ? 'both' : (markets.has('austin') ? 'austin' : 'san_antonio');
+        const selectedMarkets = Array.from(markets);
+        patches.publication = (
+          numMarkets === 2 && markets.has('austin') && markets.has('san_antonio')
+            ? 'both'
+            : selectedMarkets.join(',')
+        ) as PublicationScope;
         // Multi-market pricing: base monthly x number of selected markets.
         const baseCents = strToCents(totalMonthly.toFixed(2)) ?? 0;
         patches.total_monthly_rate_cents = Math.round(baseCents * numMarkets);
@@ -984,13 +993,8 @@ export default function SignWizard({
       ? baseMonthly * (numMarkets || 1)
       : (ag.amount_cents ? ag.amount_cents / 100 : baseMonthly);
 
-    const marketList: Array<{ id: 'austin' | 'san_antonio' | 'hou' | 'dal'; label: string; live: boolean }> = [
-      { id: 'austin', label: 'RealtyLine Austin', live: true },
-      { id: 'san_antonio', label: 'Newsline San Antonio', live: true },
-      { id: 'hou', label: 'RealtyLine Houston', live: false },
-      { id: 'dal', label: 'RealtyLine Dallas/FTW', live: false },
-    ];
-    const toggleMarket = (id: 'austin' | 'san_antonio') => {
+    const marketList = PUBLICATIONS;
+    const toggleMarket = (id: PublicationId) => {
       setMarkets((prev) => {
         const next = new Set(prev);
         if (next.has(id)) next.delete(id);
@@ -1053,24 +1057,19 @@ export default function SignWizard({
                   <Eyebrow>Markets</Eyebrow>
                   <div className="grid grid-cols-2 gap-2">
                     {marketList.map((m) => {
-                      const checked =
-                        m.id === 'austin' ? markets.has('austin')
-                        : m.id === 'san_antonio' ? markets.has('san_antonio')
-                        : false;
+                      const checked = markets.has(m.id);
                       return (
                         <label
                           key={m.id}
-                          className={`flex items-center gap-2 border rounded-md px-3 py-2 text-sm ${m.live ? 'cursor-pointer border-gray-300' : 'opacity-50 cursor-not-allowed bg-gray-100 border-gray-200'} ${checked ? 'bg-[#faf5fb] border-[#5a0e5f]' : ''}`}
+                          className={`flex items-center gap-2 border rounded-md px-3 py-2 text-sm cursor-pointer border-gray-300 ${checked ? 'bg-[#faf5fb] border-[#5a0e5f]' : ''}`}
                         >
                           <input
                             type="checkbox"
                             checked={checked}
-                            disabled={!m.live}
-                            onChange={() => { if (m.live) toggleMarket(m.id as 'austin' | 'san_antonio'); }}
+                            onChange={() => toggleMarket(m.id)}
                             className="accent-purple-600"
                           />
                           <span>{m.label}</span>
-                          {!m.live && <span className="ml-auto text-[9px] uppercase tracking-wider text-gray-400 font-semibold">Coming soon</span>}
                         </label>
                       );
                     })}
@@ -1751,4 +1750,3 @@ export default function SignWizard({
     </Shell>
   );
 }
-

@@ -3,6 +3,8 @@
 // Types + helpers for the `agreements` table. Pattern mirrors
 // `lib/advertisers.ts`.
 
+import type { PublicationScope } from './publications';
+
 export type AgreementStatus =
   | 'draft' | 'proposal_sent' | 'proposal_approved' | 'sent' | 'signed' | 'active' | 'expired' | 'cancelled';
 
@@ -119,7 +121,7 @@ export interface Agreement {
   // 'san_antonio' (Newsline San Antonio), or 'both'. Drives the PUB column
   // on /admin/ads/orders and per-market filtering for agreement-sourced
   // orders. Defaults from the linked advertiser's publication on create.
-  publication: 'austin' | 'san_antonio' | 'both' | null;
+  publication: PublicationScope | null;
 
   audit_log: AgreementAuditEntry[];
   created_by: string | null;
@@ -180,4 +182,3 @@ export function appendAudit(
   const base = Array.isArray(log) ? log : [];
   return [...base, entry];
 }
-

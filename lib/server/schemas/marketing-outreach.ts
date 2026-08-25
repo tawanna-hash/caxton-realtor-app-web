@@ -8,6 +8,7 @@
 // All endpoints live under /api/admin/marketing-campaigns/*.
 
 import { z } from 'zod';
+import { PUB_ACTIVE } from '@/lib/publications';
 
 // ── Audience source ────────────────────────────────────────────────
 const audienceSourceSchema = z.enum(['advertisers', 'subscribers', 'manual', 'segment']);
@@ -25,7 +26,10 @@ const audienceFilterSchema = z.object({
 }).partial();
 
 const subscriberFilterSchema = z.object({
-  publication: z.enum(['realtyline', 'newsline']).optional(),
+  publication: z.enum(PUB_ACTIVE.map((publication) => publication.id) as [
+    'realtyline',
+    ...Array<'newsline' | 'realtyline-houston' | 'realtyline-dallas'>,
+  ]).optional(),
   status: z.enum(['active', 'unsubscribed']).optional(),
   verified: z.enum(['valid', 'invalid', 'risky', 'unknown', 'pending', 'unverified']).optional(),
 }).partial();

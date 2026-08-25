@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
-import type { PublicationId } from '@/lib/publications';
+import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
 import PageTitle from '@/components/ui/PageTitle';
 export default function NewGiveawayPage() {
@@ -97,9 +97,12 @@ export default function NewGiveawayPage() {
             onChange={(e) => setPublication(e.target.value as PublicationId | 'both')}
             className="w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-brand-700 bg-white rounded-md"
           >
-            <option value="both">Both Publications</option>
-            <option value="austin">RealtyLine Austin</option>
-            <option value="san_antonio">Newsline San Antonio</option>
+            <option value="both">Austin + San Antonio</option>
+            {PUBLICATIONS.map((publicationOption) => (
+              <option key={publicationOption.id} value={publicationOption.id}>
+                {publicationOption.label}
+              </option>
+            ))}
           </select>
         </Field>
 

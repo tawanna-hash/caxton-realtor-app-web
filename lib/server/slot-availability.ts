@@ -167,7 +167,12 @@ function rowsToBlockedSet(
 // slot's placement-level availability is judged solely on RealtyLine +
 // Newsline. Mirrors the BOOKABLE_PUBS list the public /advertise/digital page
 // used before this logic was centralized here.
-const BOOKABLE_PUBS: readonly CheckoutPub[] = ['realtyline', 'newsline'];
+const BOOKABLE_PUBS: readonly CheckoutPub[] = [
+  'realtyline',
+  'newsline',
+  'realtyline-houston',
+  'realtyline-dallas',
+];
 
 /**
  * Placement-level inventory for a rotating/standard slot, judged across the

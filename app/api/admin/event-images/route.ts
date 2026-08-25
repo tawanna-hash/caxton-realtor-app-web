@@ -15,6 +15,7 @@ import {
 } from '@/lib/event-photos';
 import { requireAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { isPubId, type PubId } from '@/lib/publications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,7 +37,7 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
       title?: string;
       eventDate?: string;
       description?: string | null;
-      publication?: string;
+      publication?: PubId;
       advertiserId?: number | null;
     } = {};
     if (title !== undefined) updates.title = title;
@@ -47,7 +48,12 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
       else updates.eventDate = eventDate;
     }
     if (description !== undefined) updates.description = description;
-    if (publication !== undefined) updates.publication = publication;
+    if (publication !== undefined) {
+      if (!isPubId(publication)) {
+        return NextResponse.json({ error: 'invalid publication' }, { status: 400 });
+      }
+      updates.publication = publication;
+    }
     if (advertiserId !== undefined) updates.advertiserId = normalizeAdvertiserId(advertiserId);
     const photo = await updateEventPhoto(id, updates);
     return NextResponse.json({ photo });
@@ -60,6 +66,10 @@ export const POST = withAdminTracking(async (req: NextRequest) => {
       { error: 'title, eventDate, and imageUrl are required' },
       { status: 400 },
     );
+  }
+
+  if (!isPubId(publication)) {
+    return NextResponse.json({ error: 'invalid publication' }, { status: 400 });
   }
 
   const photo = await createEventPhoto({

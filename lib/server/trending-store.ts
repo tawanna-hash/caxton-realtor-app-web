@@ -6,7 +6,7 @@
 
 import { getSql } from '@/lib/db';
 
-export type TrendingMarket = 'realtyline' | 'newsline';
+export type TrendingMarket = 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas';
 
 export interface TrendingItem {
   id: number;

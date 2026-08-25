@@ -10,7 +10,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 import PageTitle from '@/components/ui/PageTitle';
-export type Publication = 'austin' | 'san_antonio';
+import { PUBLICATIONS as PUBLICATION_OPTIONS, type PublicationId } from '@/lib/publications';
+export type Publication = PublicationId;
 
 export type PublicationSettingsRow = {
   publication: Publication;
@@ -25,6 +26,8 @@ type Props = {
 const PUB_LABEL: Record<Publication, string> = {
   austin: 'RealtyLine Austin',
   san_antonio: 'Newsline San Antonio',
+  houston: 'RealtyLine Houston',
+  dallas: 'RealtyLine Dallas/Ft. Worth',
 };
 
 const PUB_HELP: Record<Publication, string> = {
@@ -32,9 +35,13 @@ const PUB_HELP: Record<Publication, string> = {
     'Paste the GA4 Measurement ID for the RealtyLine property. Looks like G-XXXXXXX. Leave blank to disable tracking on RealtyLine magazines.',
   san_antonio:
     'Paste the GA4 Measurement ID for the Newsline San Antonio property. Looks like G-XXXXXXX. Leave blank to disable tracking on Newsline San Antonio magazines.',
+  houston:
+    'Paste the GA4 Measurement ID for the RealtyLine Houston property. Looks like G-XXXXXXX. Leave blank to disable tracking on RealtyLine Houston magazines.',
+  dallas:
+    'Paste the GA4 Measurement ID for the RealtyLine Dallas/Ft. Worth property. Looks like G-XXXXXXX. Leave blank to disable tracking on RealtyLine Dallas/Ft. Worth magazines.',
 };
 
-const PUBLICATIONS: Publication[] = ['austin', 'san_antonio'];
+const PUBLICATIONS: Publication[] = PUBLICATION_OPTIONS.map((publication) => publication.id);
 
 function findRow(rows: PublicationSettingsRow[], pub: Publication): PublicationSettingsRow {
   return (
@@ -51,6 +58,8 @@ export default function PublicationSettingsForm({ initialSettings }: Props) {
   const [draft, setDraft] = useState<Record<Publication, string>>(() => ({
     austin: findRow(initialSettings, 'austin').ga_measurement_id ?? '',
     san_antonio: findRow(initialSettings, 'san_antonio').ga_measurement_id ?? '',
+    houston: findRow(initialSettings, 'houston').ga_measurement_id ?? '',
+    dallas: findRow(initialSettings, 'dallas').ga_measurement_id ?? '',
   }));
   const [savingPub, setSavingPub] = useState<Publication | null>(null);
   const [savedPub, setSavedPub] = useState<Publication | null>(null);

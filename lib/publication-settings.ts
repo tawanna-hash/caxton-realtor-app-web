@@ -6,8 +6,9 @@
 // settings table to the public.
 
 import { ensureSchema, getSql } from '@/lib/db';
+import type { PublicationId } from '@/lib/publications';
 
-export type PublicationKey = 'austin' | 'san_antonio';
+export type PublicationKey = PublicationId;
 
 export async function getMeasurementId(
   publication: PublicationKey,

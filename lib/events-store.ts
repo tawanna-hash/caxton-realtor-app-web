@@ -5,7 +5,7 @@
 
 import { ensureSchema, getSql } from './db';
 
-export type Publication = 'austin' | 'san_antonio';
+export type Publication = import('@/lib/publications').PublicationId;
 export type EventSource =
   | 'unlockmls'
   | 'wordpress'

@@ -13,13 +13,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { PUBLICATIONS, PUBLICATION_LABELS, type PublicationId } from '@/lib/publications';
 
 import PageTitle from '@/components/ui/PageTitle';
 type GifVariant = 'full' | 'teaser' | 'pingpong';
 
 type Magazine = {
   id: number;
-  publication: 'austin' | 'san_antonio';
+  publication: PublicationId;
   year: number;
   month: number;
   issue_label: string;
@@ -35,11 +36,6 @@ type Magazine = {
 
 type Props = {
   initialMagazines: Magazine[];
-};
-
-const PUB_LABEL: Record<'austin' | 'san_antonio', string> = {
-  austin: 'RealtyLine Austin',
-  san_antonio: 'Newsline San Antonio',
 };
 
 const VARIANT_LABEL: Record<GifVariant, string> = {
@@ -69,9 +65,6 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [variantError, setVariantError] = useState<Record<string, string>>({});
-
-  const austin = magazines.filter((m) => m.publication === 'austin');
-  const sa = magazines.filter((m) => m.publication === 'san_antonio');
 
   async function handleDelete(id: number, label: string) {
     if (!confirm(`Delete "${label}"? This removes the row from the database. Uploaded files remain in Vercel Blob.`)) {
@@ -178,30 +171,21 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Column
-            label={PUB_LABEL.austin}
-            magazines={austin}
-            deletingId={deletingId}
-            onDelete={handleDelete}
-            busyKey={busyKey}
-            copiedKey={copiedKey}
-            variantError={variantError}
-            onGenerateGif={handleGenerateGif}
-            onCopy={handleCopy}
-            onCopyShare={handleCopyShare}
-          />
-          <Column
-            label={PUB_LABEL.san_antonio}
-            magazines={sa}
-            deletingId={deletingId}
-            onDelete={handleDelete}
-            busyKey={busyKey}
-            copiedKey={copiedKey}
-            variantError={variantError}
-            onGenerateGif={handleGenerateGif}
-            onCopy={handleCopy}
-            onCopyShare={handleCopyShare}
-          />
+          {PUBLICATIONS.map((publication) => (
+            <Column
+              key={publication.id}
+              label={PUBLICATION_LABELS[publication.id]}
+              magazines={magazines.filter((magazine) => magazine.publication === publication.id)}
+              deletingId={deletingId}
+              onDelete={handleDelete}
+              busyKey={busyKey}
+              copiedKey={copiedKey}
+              variantError={variantError}
+              onGenerateGif={handleGenerateGif}
+              onCopy={handleCopy}
+              onCopyShare={handleCopyShare}
+            />
+          ))}
         </div>
       </div>
     </div>

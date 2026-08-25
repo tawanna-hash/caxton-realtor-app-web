@@ -39,7 +39,7 @@ async function geocodeEventLocation(
   }
 }
 
-export type Publication = 'austin' | 'san_antonio';
+export type Publication = import('@/lib/publications').PublicationId;
 type EventSource =
   | 'unlockmls'
   | 'wordpress'

@@ -4,7 +4,12 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
-import { PUBLICATIONS, PUBLICATION_LABELS } from '@/lib/publications';
+import {
+  PUBLICATIONS,
+  PUBLICATION_LABELS,
+  isPublicationId,
+  type PublicationId,
+} from '@/lib/publications';
 import { formatPhone } from '@/lib/format-phone';
 
 import PageTitle from '@/components/ui/PageTitle';
@@ -16,7 +21,7 @@ type Subscriber = {
   email: string;
   first_name: string;
   last_name: string;
-  market: 'austin' | 'san_antonio';
+  market: PublicationId;
   license_type: string | null;
   trec_license_number: string | null;
   nmls_license_number: string | null;
@@ -67,18 +72,18 @@ function SubscribersInner() {
   const { admin, loading: authLoading } = useAdmin();
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Initial market filter can be deep-linked via ?market=austin|san_antonio
+  // Initial market filter can be deep-linked via any canonical market id.
   // (used by the Mailing Hub publication-split tiles).
-  const initialMarket: '' | 'austin' | 'san_antonio' = (() => {
+  const initialMarket: '' | PublicationId = (() => {
     const m = searchParams?.get('market');
-    return m === 'austin' || m === 'san_antonio' ? m : '';
+    return isPublicationId(m) ? m : '';
   })();
   const [data, setData] = useState<ListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(50);
-  const [market, setMarket] = useState<'' | 'austin' | 'san_antonio'>(initialMarket);
+  const [market, setMarket] = useState<'' | PublicationId>(initialMarket);
   const [verified, setVerified] = useState<'' | 'valid' | 'invalid' | 'risky' | 'unknown' | 'pending' | 'unverified'>('');
   const [q, setQ] = useState('');
   const [qInput, setQInput] = useState('');
@@ -199,7 +204,7 @@ function SubscribersInner() {
         </div>
         <select
           value={market}
-          onChange={(e) => { setMarket(e.target.value as '' | 'austin' | 'san_antonio'); setPage(1); }}
+          onChange={(e) => { setMarket(e.target.value as '' | PublicationId); setPage(1); }}
           className="px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900"
         >
           <option value="">All markets</option>

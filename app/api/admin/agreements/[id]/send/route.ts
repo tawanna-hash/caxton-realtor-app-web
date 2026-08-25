@@ -81,7 +81,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       ad_size: string | null;
       frequency: string | null;
       quantity: number;
-      publication: 'austin' | 'san_antonio' | 'both' | null;
+      publication: import('@/lib/publications').PublicationScope | null;
       start_date: string | null;
       end_date: string | null;
       amount_cents: number;

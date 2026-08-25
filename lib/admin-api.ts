@@ -81,7 +81,7 @@ export const adminApi = {
     adminFetch(`/admin/giveaways/${giveawayId}/draw`, { method: 'POST' }),
 
   // Events (manual events admin — Phase 3 endpoints on droplet)
-  listEvents: (publication?: 'austin' | 'san_antonio') => {
+  listEvents: (publication?: import('@/lib/publications').PublicationId) => {
     const qs = publication ? `?publication=${publication}` : '';
     return adminFetch(`/admin/events${qs}`);
   },
@@ -146,7 +146,7 @@ export const adminApi = {
   deleteSubscriber: (id: string) =>
     adminFetch(`/admin/subscribers/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 
-  listSubscribers: (params: { page?: number; pageSize?: number; market?: 'austin' | 'san_antonio'; q?: string; sort?: string; dir?: 'asc' | 'desc'; verified?: string } = {}) => {
+  listSubscribers: (params: { page?: number; pageSize?: number; market?: import('@/lib/publications').PublicationId; q?: string; sort?: string; dir?: 'asc' | 'desc'; verified?: string } = {}) => {
     const qs = new URLSearchParams();
     if (params.page) qs.set('page', String(params.page));
     if (params.pageSize) qs.set('pageSize', String(params.pageSize));
@@ -203,7 +203,7 @@ export const adminApi = {
     advertiser_name: string;
     ad_space_slug: string;
     creative_id: string;
-    publication: 'austin' | 'san_antonio' | 'both';
+    publication: import('@/lib/publications').PublicationScope;
     start_date: string;
     end_date: string;
     price_total: number | null;

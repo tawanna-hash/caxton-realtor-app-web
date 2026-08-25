@@ -14,8 +14,9 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { PUB_ACTIVE } from '@/lib/publications';
 
-export type TrendingMarket = 'realtyline' | 'newsline';
+export type TrendingMarket = 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas';
 
 export interface TrendingItem {
   id: number;
@@ -283,16 +284,16 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
             <label className="block text-sm font-medium text-gray-900 mb-1">
               Markets <span className="text-red-600">*</span>
             </label>
-            <div className="flex gap-4">
-              {(['realtyline', 'newsline'] as TrendingMarket[]).map((m) => (
-                <label key={m} className="flex items-center gap-2 text-sm cursor-pointer">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {PUB_ACTIVE.map((publication) => (
+                <label key={publication.id} className="flex items-center gap-2 text-sm cursor-pointer">
                   <input
                     type="checkbox"
-                    checked={markets.includes(m)}
-                    onChange={() => toggleMarket(m)}
+                    checked={markets.includes(publication.id)}
+                    onChange={() => toggleMarket(publication.id)}
                     className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                   />
-                  <span className="capitalize">{m}</span>
+                  <span>{publication.shortLabel}</span>
                 </label>
               ))}
             </div>

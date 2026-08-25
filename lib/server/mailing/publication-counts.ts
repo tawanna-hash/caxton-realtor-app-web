@@ -18,8 +18,9 @@
  */
 
 import { getSql } from '@/lib/db';
+import type { PubId } from '@/lib/publications';
 
-export type Pub = 'realtyline' | 'newsline';
+export type Pub = PubId;
 
 export type PublicationCount = {
   publication: Pub;
@@ -40,19 +41,33 @@ type Cfg = {
 };
 
 function configFor(pub: Pub): Cfg {
-  return pub === 'realtyline'
-    ? {
+  const configs: Record<Pub, Cfg> = {
+    realtyline: {
         segments: ['realtyline-atx-print', 'email-only-atx'],
         market: 'austin',
         holdingSource: 'unlockmls',
         newsletterPub: 'realtyline',
-      }
-    : {
+    },
+    newsline: {
         segments: ['newsline-sa-print', 'email-only-sa'],
         market: 'san_antonio',
         holdingSource: 'ramco-sabor',
         newsletterPub: 'newsline',
-      };
+    },
+    'realtyline-houston': {
+      segments: [],
+      market: 'houston',
+      holdingSource: '__none__',
+      newsletterPub: 'realtyline-houston',
+    },
+    'realtyline-dallas': {
+      segments: [],
+      market: 'dallas',
+      holdingSource: '__none__',
+      newsletterPub: 'realtyline-dallas',
+    },
+  };
+  return configs[pub];
 }
 
 // Drop the same statuses the CSV route drops, computed inside SQL so

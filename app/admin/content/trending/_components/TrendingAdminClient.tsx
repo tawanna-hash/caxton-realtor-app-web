@@ -1,10 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { PUB_ACTIVE } from '@/lib/publications';
 import TrendingEditorModal, { type TrendingItem, type TrendingMarket } from './TrendingEditorModal';
 
 type MarketFilter = 'all' | TrendingMarket;
 type StatusFilter = 'all' | 'live' | 'scheduled' | 'draft' | 'expired';
+
+const MARKET_LABELS = Object.fromEntries(
+  PUB_ACTIVE.map((publication) => [publication.id, publication.shortLabel]),
+) as Record<TrendingMarket, string>;
 
 function itemStatus(it: TrendingItem): StatusFilter {
   if (!it.is_published) return 'draft';
@@ -161,8 +166,11 @@ export default function TrendingAdminClient() {
             className="text-sm border border-gray-300 rounded-md px-2 py-1 bg-white"
           >
             <option value="all">All markets</option>
-            <option value="realtyline">RealtyLine</option>
-            <option value="newsline">Newsline</option>
+            {PUB_ACTIVE.map((publication) => (
+              <option key={publication.id} value={publication.id}>
+                {publication.shortLabel}
+              </option>
+            ))}
           </select>
         </div>
         <div className="flex items-center gap-2">
@@ -260,7 +268,7 @@ export default function TrendingAdminClient() {
                     </span>
                     {it.markets.map((m) => (
                       <span key={m} className="text-[10px] uppercase tracking-wider font-medium text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded-full">
-                        {m}
+                        {MARKET_LABELS[m]}
                       </span>
                     ))}
                     <span className="text-[10px] text-gray-500 tabular-nums">#{it.sort_order}</span>

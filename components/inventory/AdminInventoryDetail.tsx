@@ -587,9 +587,11 @@ export default function AdminInventoryDetail({
                   onChange={(e) => setEdit({ ...edit, publication: e.target.value as Publication })}
                   className={fieldStyle}
                 >
-                  <option value="both">Both (RealtyLine + Newsline San Antonio)</option>
-                  <option value="realtyline">RealtyLine only</option>
-                  <option value="newsline">Newsline San Antonio only</option>
+                  <option value="realtyline">RealtyLine Austin</option>
+                  <option value="newsline">Newsline San Antonio</option>
+                  <option value="realtyline-houston">RealtyLine Houston</option>
+                  <option value="realtyline-dallas">RealtyLine Dallas/Ft. Worth</option>
+                  <option value="both">Austin + San Antonio</option>
                 </select>
               </div>
 

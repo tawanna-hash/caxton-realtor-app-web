@@ -7,16 +7,13 @@
 // UID so calendar apps de-duplicate on re-fetch.
 
 import { listEvents, type Publication, type CalendarEvent } from '@/lib/events-store';
+import { PUBLICATION_IDS, PUBLICATION_LABELS } from '@/lib/publications';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const VALID: Publication[] = ['austin', 'san_antonio'];
-
-const PUB_NAMES: Record<Publication, string> = {
-  austin: 'RealtyLine Austin',
-  san_antonio: 'Newsline San Antonio',
-};
+const VALID: Publication[] = [...PUBLICATION_IDS];
+const PUB_NAMES: Record<Publication, string> = PUBLICATION_LABELS;
 
 /** Escape per RFC 5545 §3.3.11 for text values (SUMMARY, DESCRIPTION, LOCATION). */
 function icsEscape(input: string): string {

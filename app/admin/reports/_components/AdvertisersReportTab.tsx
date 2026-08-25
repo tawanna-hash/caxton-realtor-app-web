@@ -19,6 +19,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import {
+  PUBLICATION_LABELS_WITH_BOTH,
+  type PublicationScope,
+} from '@/lib/publications';
 
 // Lazy-load recharts so admin/reports first paint isn't blocked by ~320 kB.
 const AdvertiserDashboardPane = dynamic(() => import('./AdvertiserDashboardPane'), {
@@ -42,7 +46,7 @@ interface Advertiser {
   id: number;
   name: string;
   slug: string;
-  publication: 'austin' | 'san_antonio' | 'both';
+  publication: PublicationScope;
   contact_email: string | null;
 }
 
@@ -55,7 +59,7 @@ interface SendResult {
 }
 
 function publicationLabel(pub: Advertiser['publication']): string {
-  return pub === 'san_antonio' ? 'Newsline San Antonio' : pub === 'both' ? 'Both' : 'RealtyLine';
+  return pub === 'both' ? 'Austin + San Antonio' : PUBLICATION_LABELS_WITH_BOTH[pub];
 }
 
 function rangeFromDays(days: DaysOption): { from: string; to: string } {

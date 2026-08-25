@@ -27,8 +27,12 @@ async function isAdmin(): Promise<boolean> {
 const PUB_ALIAS: Record<string, string> = {
   realtyline: 'austin',
   newsline: 'san_antonio',
+  'realtyline-houston': 'houston',
+  'realtyline-dallas': 'dallas',
   austin: 'austin',
   san_antonio: 'san_antonio',
+  houston: 'houston',
+  dallas: 'dallas',
 };
 
 function str(v: unknown): string {

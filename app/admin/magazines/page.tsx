@@ -18,7 +18,7 @@ export const metadata = { title: 'Admin · Magazines' };
 
 type Magazine = {
   id: number;
-  publication: 'austin' | 'san_antonio';
+  publication: 'austin' | 'san_antonio' | 'houston' | 'dallas';
   year: number;
   month: number;
   issue_label: string;

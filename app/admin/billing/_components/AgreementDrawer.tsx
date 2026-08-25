@@ -26,6 +26,11 @@ import { DrawerShell, Section, Field } from './DrawerShell';
 import { AG_STATUS, AG_TYPES, PAY_MODES, INPUT, INPUT_READONLY } from './constants';
 import { toISODateString, humanDate, formatDateISO } from './helpers';
 import type { AdvertiserOption, AdCampaignOption } from './types';
+import {
+  PUBLICATION_IDS,
+  PUBLICATION_LABELS_WITH_BOTH,
+  type PublicationScope,
+} from '@/lib/publications';
 
 type AgForm = {
   // Advertiser info
@@ -71,7 +76,7 @@ type AgForm = {
   advertiser_id: number | null;
   type: AgreementType | null;
   payment_mode: PaymentMode | null;
-  publication: 'austin' | 'san_antonio' | 'both' | null;
+  publication: PublicationScope | null;
   ad_campaign_id: string;
   // Attachments (new files to upload)
   pendingFiles: File[];
@@ -1166,9 +1171,10 @@ export function AgreementDrawer({
               className={INPUT}
             >
               <option value="">—</option>
-              <option value="austin">RealtyLine Austin</option>
-              <option value="san_antonio">Newsline San Antonio</option>
-              <option value="both">Both</option>
+              {PUBLICATION_IDS.map((id) => (
+                <option key={id} value={id}>{PUBLICATION_LABELS_WITH_BOTH[id]}</option>
+              ))}
+              <option value="both">Austin + San Antonio</option>
             </select>
           </Field>
         </div>
