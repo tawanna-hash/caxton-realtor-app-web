@@ -389,6 +389,23 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
       setHotspots(sortHotspots(data.hotspots as Hotspot[]));
       setSaveState('saved');
       setLastSavedAt(new Date());
+      // Surface a concise summary so it's obvious what happened. Prefer a
+      // proper snackbar/log; for now, alert() keeps the fix scoped.
+      const d = data.diagnostics as {
+        findings?: { pdf_links: number; text_scan: number; qr_codes: number; logo_matches: number };
+        inserted?: number;
+        skipped_duplicates?: number;
+      } | undefined;
+      if (d?.findings) {
+        const f = d.findings;
+        const parts = [
+          `${f.pdf_links} PDF link${f.pdf_links === 1 ? '' : 's'}`,
+          `${f.text_scan} text hit${f.text_scan === 1 ? '' : 's'}`,
+          `${f.qr_codes} QR`,
+          `${f.logo_matches} logo${f.logo_matches === 1 ? '' : 's'}`,
+        ].join(' · ');
+        console.log(`[hotspot-editor] extract-page ${pageIdx + 1}: found ${parts} — inserted ${d.inserted ?? 0}, skipped ${d.skipped_duplicates ?? 0} dupes`);
+      }
     } catch (err) {
       console.error('[hotspot-editor] extract-page failed:', err);
       setSaveState('error');

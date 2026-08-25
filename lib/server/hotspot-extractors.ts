@@ -42,8 +42,11 @@ import { logger } from './logger';
 // Advertiser matching (shared across all three passes)
 // ============================================================
 
+// Domain cores we NEVER auto-match to an advertiser, even if a slug
+// or website coincidentally overlaps. Publisher's own domain and the
+// generic social/shortener hosts every advertiser links to.
 const ADVERTISER_MATCH_SKIPLIST = [
-  'realtyline', 'myrealtyline', 'realtynewsnow',
+  'realtynewsnow',
   'facebook', 'instagram', 'linkedin', 'youtube', 'twitter',
   'tiktok', 'pinterest', 'bit', 'tinyurl', 'goo', 'ow',
 ];
@@ -82,6 +85,18 @@ export function matchAdvertiser(url: string, advertisers: AdvertiserLite[]): Adv
   if (!dc || dc.length < 5) return null;
   if (ADVERTISER_MATCH_SKIPLIST.includes(dc)) return null;
 
+  // 1. Exact website match wins over slug matching. Advertisers often
+  //    have branded URLs (unlockmls.com) that share nothing with their
+  //    canonical slug (austin-board-of-realtors), so slug matching alone
+  //    leaves those URLs orphaned.
+  for (const adv of advertisers) {
+    if (!adv.website) continue;
+    const wc = domainCoreFromUrl(adv.website);
+    if (!wc || wc.length < 5) continue;
+    if (wc === dc) return adv;
+  }
+
+  // 2. Slug-based matching (substring or 6-char shared prefix).
   for (const adv of advertisers) {
     const sc = coreAlnum(adv.slug.replace(/-/g, ''));
     if (sc.length < 5) continue;
