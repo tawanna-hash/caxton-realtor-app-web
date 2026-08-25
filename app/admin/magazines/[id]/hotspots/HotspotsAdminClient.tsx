@@ -849,16 +849,41 @@ function EditorPage({
   const [imgSize, setImgSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
 
   // Update measured size whenever image loads OR window resizes.
+  //
+  // Cached-image bug: when the browser already has the page image in disk
+  // cache, the <img> can fire `load` synchronously during React's initial
+  // paint — before our `onLoad` handler is attached — so `imgSize` stays
+  // {0,0} forever and the whole hotspot layer is gated off. The effect
+  // below re-measures whenever `pageUrl` changes, but it can also run
+  // before layout is complete (rect w=0). To cover both, we poll a couple
+  // of frames with `img.complete` before giving up on the `onLoad`
+  // fallback, and re-measure once naturalWidth appears.
   useEffect(() => {
-    const updateSize = () => {
-      if (imgRef.current) {
-        const rect = imgRef.current.getBoundingClientRect();
+    let cancelled = false;
+    const measure = () => {
+      if (cancelled || !imgRef.current) return false;
+      const el = imgRef.current;
+      const rect = el.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0 && el.complete && el.naturalWidth > 0) {
         setImgSize({ w: rect.width, h: rect.height });
+        return true;
       }
+      return false;
     };
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
+    if (!measure()) {
+      let tries = 0;
+      const raf = () => {
+        if (measure() || cancelled) return;
+        if (++tries < 30) requestAnimationFrame(raf);
+      };
+      requestAnimationFrame(raf);
+    }
+    const onResize = () => { measure(); };
+    window.addEventListener('resize', onResize);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('resize', onResize);
+    };
   }, [pageUrl]);
 
   if (!pageUrl) {
@@ -880,8 +905,11 @@ function EditorPage({
         className="block max-h-[80vh] w-auto select-none"
         style={{ maxWidth: 'min(45vw, 600px)' }}
         onLoad={(e) => {
-          const r = e.currentTarget.getBoundingClientRect();
-          setImgSize({ w: r.width, h: r.height });
+          const el = e.currentTarget;
+          const r = el.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0) {
+            setImgSize({ w: r.width, h: r.height });
+          }
         }}
         onClick={() => onSelect(null)}
         draggable={false}
