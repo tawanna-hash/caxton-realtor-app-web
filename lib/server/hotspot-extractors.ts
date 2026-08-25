@@ -1190,18 +1190,22 @@ export async function insertExtracted(
     const isPublished = row.origin === 'logo_match';
     // z_index = -100 → imports naturally stack below any manual hotspot
     // (which defaults to 0) so the human's work always reads on top.
+    // was_imported=true marks this row as coming from the extractor forever,
+    // even after a human edit later promotes source → 'manual'. The admin
+    // editor uses this to render an 'Edited' chip that distinguishes
+    // edited-imports from truly hand-drawn hotspots.
     await sql`
       INSERT INTO magazine_hotspots (
         magazine_id, page_idx,
         x_frac, y_frac, w_frac, h_frac,
         type, config, label, advertiser_name, advertiser_id,
-        is_published, source, z_index, created_by, updated_by
+        is_published, source, was_imported, z_index, created_by, updated_by
       ) VALUES (
         ${opts.magazineId}, ${row.page_idx},
         ${row.x_frac}, ${row.y_frac}, ${row.w_frac}, ${row.h_frac},
         ${row.type}, ${configJson}::jsonb,
         ${row.label}, ${row.advertiser_name ?? null}, ${row.advertiser_id ?? null},
-        ${isPublished}, 'pdf_import', -100, ${opts.adminEmail}, ${opts.adminEmail}
+        ${isPublished}, 'pdf_import', TRUE, -100, ${opts.adminEmail}, ${opts.adminEmail}
       )
     `;
     result.inserted++;

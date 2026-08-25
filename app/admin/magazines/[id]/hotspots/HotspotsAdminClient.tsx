@@ -805,6 +805,10 @@ function DraggableHotspot({
   const pw = hotspot.w_frac * containerW;
   const ph = hotspot.h_frac * containerH;
   const isPdfImport = hotspot.source === 'pdf_import';
+  // Edited-imports (was_imported=true but source flipped to 'manual' by a
+  // human edit) intentionally look identical to hand-drawn work on the
+  // canvas — the sidebar 'Edited' chip is where that origin distinction
+  // lives, so the canvas stays visually calm.
 
   // PDF-imported hotspots visually recede so hand-drawn work reads on top:
   // lighter fill, dashed border regardless of publish state, softer opacity.
@@ -1220,6 +1224,12 @@ function SidebarRow({
 }) {
   const colors = TYPE_COLORS[hotspot.type];
   const isPdfImport = hotspot.source === 'pdf_import';
+  // was_imported stays true forever once the extractor produced this row.
+  // When source is no longer 'pdf_import', that means a human has edited
+  // it — flag it as an edited-import so it can't be mistaken for a totally
+  // hand-drawn hotspot, and so the user knows their edits are locked in
+  // against future Extract-all runs.
+  const isEditedImport = hotspot.was_imported === true && !isPdfImport;
   // Logo-match rows carry the label prefix "Logo · " from the extractor.
   // They're auto-published — which means clicks route immediately — so
   // we flag them prominently for admin review to catch any misroute.
@@ -1249,6 +1259,14 @@ function SidebarRow({
                 Review
               </span>
             )}
+            {isEditedImport && (
+              <span
+                className="px-1 py-[1px] text-[9px] font-semibold uppercase tracking-wide bg-emerald-600 text-white rounded shrink-0"
+                title="Extracted from the PDF and hand-edited — safe from future Extract-all runs"
+              >
+                Edited
+              </span>
+            )}
             <span className="truncate">
               {hotspot.label || <span className="italic text-gray-500">Unlabeled</span>}
             </span>
@@ -1256,6 +1274,7 @@ function SidebarRow({
           <span className="text-[10px] text-gray-400 shrink-0">
             p{hotspot.page_idx + 1}
             {isPdfImport && ' · PDF'}
+            {isEditedImport && ' · edited'}
             {!hotspot.is_published && ' · draft'}
           </span>
         </div>

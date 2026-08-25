@@ -63,7 +63,8 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
       SELECT id, magazine_id, page_idx,
              x_frac, y_frac, w_frac, h_frac,
              type, config, label, advertiser_name, advertiser_id,
-             is_published, z_index, created_by, created_at, updated_by, updated_at
+             is_published, z_index, source, was_imported,
+             created_by, created_at, updated_by, updated_at
       FROM magazine_hotspots
       WHERE magazine_id = ${idNum}
       ORDER BY page_idx, z_index, id
@@ -166,7 +167,8 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       RETURNING id, magazine_id, page_idx,
                 x_frac, y_frac, w_frac, h_frac,
                 type, config, label, advertiser_name, advertiser_id,
-                is_published, z_index, created_by, created_at, updated_by, updated_at
+                is_published, z_index, source, was_imported,
+                created_by, created_at, updated_by, updated_at
     `) as unknown as Hotspot[];
     return NextResponse.json({ hotspot: rows[0] }, { status: 201 });
   } catch (err: unknown) {

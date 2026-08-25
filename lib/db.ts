@@ -657,11 +657,30 @@ async function _runEnsureSchema(): Promise<void> {
   `;
 
   // Phase 2.5: track how each hotspot was created.
-  // 'manual' = drawn in the editor; 'pdf_import' = extracted from embedded PDF links.
-  // Re-importing PDF links deletes existing 'pdf_import' rows but never touches 'manual'.
+  // 'manual' = drawn in the editor OR edited-from-import; 'pdf_import' = a
+  // still-untouched extractor row eligible for wipe-and-reinsert on the next
+  // Extract-all. On any human edit the row is promoted to 'manual' so it
+  // survives future re-runs (see app/api/admin/hotspots/[id]/route.ts).
   await sql`
     ALTER TABLE magazine_hotspots
     ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'manual'
+  `;
+
+  // Origin flag: true if this row was ever created by the extractor pipeline,
+  // even after being edited (source flips to 'manual' on edit, but this stays
+  // true). Used by the admin editor to visually distinguish edited-imports
+  // from truly hand-drawn hotspots.
+  await sql`
+    ALTER TABLE magazine_hotspots
+    ADD COLUMN IF NOT EXISTS was_imported BOOLEAN NOT NULL DEFAULT FALSE
+  `;
+  // Backfill: every row currently marked source='pdf_import' was, by
+  // definition, imported. Safe to run every boot — the WHERE keeps it O(0)
+  // once each row's flag has been set.
+  await sql`
+    UPDATE magazine_hotspots
+    SET was_imported = TRUE
+    WHERE source = 'pdf_import' AND was_imported = FALSE
   `;
 
   // Option B: per-hotspot paint order within a page. Higher z_index paints on

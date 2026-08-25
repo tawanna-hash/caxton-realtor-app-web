@@ -55,8 +55,13 @@ export interface Hotspot {
   created_at: string;
   updated_by: string | null;
   updated_at: string;
-  /** Phase 2.5: how the hotspot was created. */
+  /** Phase 2.5: current custody of the row. Flips 'pdf_import' → 'manual' on
+   *  the first human edit, protecting it from Extract-all's wipe filter. */
   source?: 'manual' | 'pdf_import';
+  /** Sticky origin flag: true if this row was ever produced by the extractor
+   *  pipeline, even after edits promoted `source` to 'manual'. Used by the
+   *  admin editor to render an 'Edited' chip for edited-imports. */
+  was_imported?: boolean;
 }
 
 /** Lighter shape returned to the public reader. No admin / tracking metadata. */
