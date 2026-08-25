@@ -934,7 +934,7 @@ export default function DashboardPage() {
       const savedPub = localStorage.getItem('caxton_pub');
       const savedPhase = localStorage.getItem('caxton_phase');
       const savedArticle = localStorage.getItem('caxton_selected_article');
-      if (savedPub === 'realtyline' || savedPub === 'newsline') {
+      if (isPubKey(savedPub)) {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO(S18-lint-debt): restructure rehydration effect
         setPub(savedPub);
       }
@@ -1012,7 +1012,7 @@ export default function DashboardPage() {
     function onPubChange() {
       try {
         const saved = localStorage.getItem('caxton_pub');
-        if (saved === 'realtyline' || saved === 'newsline') {
+        if (isPubKey(saved)) {
           setPub(saved);
           // The existing useEffect [pub] already resets the category.
           // Clear any saved article from the old market.
@@ -1031,7 +1031,7 @@ export default function DashboardPage() {
     if (!hydrated) return;
     try {
       const maxAge = 60 * 60 * 24 * 365;
-      if (pub === 'realtyline' || pub === 'newsline') {
+      if (isPubKey(pub)) {
         document.cookie = `caxton_pub=${pub}; path=/; max-age=${maxAge}; SameSite=Lax`;
         localStorage.setItem('caxton_pub', pub);
       } else {

@@ -125,7 +125,7 @@ export default function AppShell({
       // Defer setState so React commits the initial render first — mirrors
       // the queueMicrotask pattern used by the openMenu / pathname effect
       // below. Satisfies react-hooks/set-state-in-effect.
-      if (saved === 'realtyline' || saved === 'newsline') {
+      if (saved === 'realtyline' || saved === 'newsline' || saved === 'realtyline-houston' || saved === 'realtyline-dallas') {
         queueMicrotask(() => { setPub(saved); });
       }
     } catch {}
