@@ -133,6 +133,8 @@ export default function MarketOnboardingPicker() {
             ))}
           </ul>
 
+          {PUB_COMING_SOON.length > 0 && (
+          <>
           <p className="text-[11px] uppercase tracking-[0.18em] text-gray-400 font-medium text-center mt-8 mb-3">
             Coming soon
           </p>
@@ -159,6 +161,8 @@ export default function MarketOnboardingPicker() {
               </li>
             ))}
           </ul>
+          </>
+          )}
         </div>
       </div>
     </div>

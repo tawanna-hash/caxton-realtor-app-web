@@ -99,7 +99,7 @@ export const PUBLICATION_LABELS_WITH_BOTH: Record<PublicationId | 'both', string
 // hard reload to '/' so server components, pub-scoped fetches, and chrome
 // re-mount with the new context (the BUG-03 fix).
 
-export type PubId = 'realtyline' | 'newsline';
+export type PubId = 'realtyline' | 'newsline' | 'realtyline-houston' | 'realtyline-dallas';
 
 export type PubMeta = {
   id: PubId;
@@ -131,9 +131,6 @@ export const PUB_ACTIVE: PubMeta[] = [
     shortLabel: 'San Antonio',
     monogram: 'NS',
   },
-];
-
-export const PUB_COMING_SOON: ComingSoonPub[] = [
   {
     id: 'realtyline-houston',
     label: 'RealtyLine Houston',
@@ -147,6 +144,8 @@ export const PUB_COMING_SOON: ComingSoonPub[] = [
     monogram: 'RD',
   },
 ];
+
+export const PUB_COMING_SOON: ComingSoonPub[] = [];
 
 /** Resolve a PubMeta by id. Returns null for coming-soon or unknown ids. */
 export function getActivePub(id: string | null | undefined): PubMeta | null {

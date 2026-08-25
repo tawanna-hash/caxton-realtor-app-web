@@ -18,6 +18,7 @@ const SKYLINE: Partial<Record<Pub, { src: string; w: number; h: number }>> = {
   realtyline: { src: "/hero/austin-skyline.jpg", w: 1902, h: 1080 },
   newsline: { src: "/hero/san-antonio-skyline.jpg", w: 1902, h: 1080 },
   "realtyline-dallas": { src: "/hero/dallas-skyline.jpg", w: 1902, h: 1080 },
+  "realtyline-houston": { src: "/hero/houston-skyline.jpg", w: 1902, h: 1080 },
 };
 
 type Props = {

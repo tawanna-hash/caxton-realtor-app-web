@@ -149,6 +149,7 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
         </ul>
 
         {/* Coming soon */}
+        {PUB_COMING_SOON.length > 0 && (
         <div className="border-t border-gray-100 pt-2">
           <p className="px-5 text-[11px] uppercase tracking-[0.15em] text-gray-400 font-medium pb-1">
             Coming soon
@@ -190,6 +191,7 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
             ))}
           </ul>
         </div>
+        )}
 
         {/* Cancel */}
         <div className="px-5 pt-2 pb-3 border-t border-gray-100">
