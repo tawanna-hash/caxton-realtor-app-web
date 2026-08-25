@@ -153,36 +153,35 @@ export default function HotspotConfigModal({
     setDragOffset({ x: 0, y: 0 });
   }
   const dragStateRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number } | null>(null);
-  const handleHeaderMouseDown = useCallback((e: ReactMouseEvent) => {
+  const handleHeaderPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     // Only start a drag on the header background itself — don't hijack
-    // clicks that land on the title text (harmless) or the close button
-    // (which needs its own click). Buttons/anchors bubble up but we detect
-    // them via closest().
+    // clicks that land on interactive header controls.
     const targetEl = e.target as HTMLElement;
     if (targetEl.closest('button, a, input, select, textarea')) return;
-    e.preventDefault();
+    // Pointer capture routes every subsequent pointermove/pointerup for
+    // this pointerId to this element, even if the pointer leaves it.
+    // That means the drag reliably ends on release regardless of where
+    // the cursor is — no window-level listeners, no stuck-drag bugs.
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     dragStateRef.current = {
       startX: e.clientX,
       startY: e.clientY,
       baseX: dragOffset.x,
       baseY: dragOffset.y,
     };
-    const onMove = (ev: MouseEvent) => {
-      const st = dragStateRef.current;
-      if (!st) return;
-      setDragOffset({
-        x: st.baseX + (ev.clientX - st.startX),
-        y: st.baseY + (ev.clientY - st.startY),
-      });
-    };
-    const onUp = () => {
-      dragStateRef.current = null;
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
   }, [dragOffset.x, dragOffset.y]);
+  const handleHeaderPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const st = dragStateRef.current;
+    if (!st) return;
+    setDragOffset({
+      x: st.baseX + (e.clientX - st.startX),
+      y: st.baseY + (e.clientY - st.startY),
+    });
+  }, []);
+  const handleHeaderPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    dragStateRef.current = null;
+    try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+  }, []);
 
   return (
     <div
@@ -204,8 +203,11 @@ export default function HotspotConfigModal({
             (X) button and any future header controls short-circuit the drag
             via the closest() guard in handleHeaderMouseDown. */}
         <div
-          className="px-6 py-4 border-b border-gray-200 flex items-center justify-between select-none cursor-move"
-          onMouseDown={handleHeaderMouseDown}
+          className="px-6 py-4 border-b border-gray-200 flex items-center justify-between select-none cursor-move touch-none"
+          onPointerDown={handleHeaderPointerDown}
+          onPointerMove={handleHeaderPointerMove}
+          onPointerUp={handleHeaderPointerUp}
+          onPointerCancel={handleHeaderPointerUp}
         >
           <h2 className="text-lg font-semibold text-gray-900">Configure hotspot</h2>
           <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600">
