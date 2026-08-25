@@ -160,6 +160,14 @@ const MASTHEAD_BY_PUBLICATION: Record<string, { url: string; label: string }> = 
   newsline:   { url: 'https://newslinesa.com', label: 'Link · Newsline masthead' },
 };
 
+const MASTHEAD_HOSTS: Set<string> = new Set(
+  Object.values(MASTHEAD_BY_PUBLICATION).map((s) => normalizeIdentityUrl(s.url)),
+);
+
+function isKnownMastheadHost(host: string): boolean {
+  return MASTHEAD_HOSTS.has(host);
+}
+
 export function buildMastheadHotspots(publication: string): ExtractedHotspot[] {
   const spec = MASTHEAD_BY_PUBLICATION[publication.toLowerCase()];
   if (!spec) return [];
@@ -690,12 +698,23 @@ export async function extractPdfTextContacts(pdfBuffer: ArrayBuffer): Promise<Ex
         // BARE DOMAIN (foo.com, foo.com/path — no scheme, no www.)
         BARE_DOMAIN_RE.lastIndex = 0;
         while ((m = BARE_DOMAIN_RE.exec(line.text)) !== null) {
-          const raw = m[0];
+          let raw = m[0];
           // Skip if the "domain" is actually the tail of an email/URL we
           // already caught on this pass. Cheap check: does an @ sit within
           // 3 chars before the match start on this line?
           const before = line.text.slice(Math.max(0, m.index - 3), m.index);
           if (before.includes('@') || before.endsWith('/') || before.endsWith('.')) continue;
+          // "VISIT US ONLINE AT REALTYLINE.US" gets rendered by pdfjs
+          // sometimes as one glued run "ATREALTYLINE.US" with no space, so
+          // the regex captures the leading "AT". Only strip when the stripped
+          // remainder equals a known masthead host — anchoring on the small
+          // whitelist avoids false positives like "atlas.com" → "las.com".
+          if (/^at/i.test(raw)) {
+            const strippedHost = raw.slice(2).split('/')[0].toLowerCase();
+            if (isKnownMastheadHost(strippedHost)) {
+              raw = raw.slice(2);
+            }
+          }
           // Skip if it's clearly a file extension / version string.
           const tld = raw.split('/')[0].split('.').pop()?.toLowerCase() ?? '';
           if (FILE_EXTENSION_BLOCKLIST.has(tld)) continue;
