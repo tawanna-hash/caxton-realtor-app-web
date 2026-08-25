@@ -997,8 +997,18 @@ function DraggableHotspot({
   const colors = TYPE_COLORS[hotspot.type];
   const px = hotspot.x_frac * containerW;
   const py = hotspot.y_frac * containerH;
-  const pw = hotspot.w_frac * containerW;
-  const ph = hotspot.h_frac * containerH;
+  // Display floor: a hotspot with 0-width or near-0 height (some PDF-import
+  // paths can produce degenerate rects when the source annotation has no
+  // area) still needs to be visible so the user can find and fix it. We
+  // clamp the ON-SCREEN size to at least 12px each axis without touching
+  // the stored fractions — resize/drag handlers write back the real user
+  // dimensions, which will then exceed the floor.
+  const MIN_DISPLAY_PX = 12;
+  const rawPw = hotspot.w_frac * containerW;
+  const rawPh = hotspot.h_frac * containerH;
+  const pw = Math.max(rawPw, MIN_DISPLAY_PX);
+  const ph = Math.max(rawPh, MIN_DISPLAY_PX);
+  const isDegenerate = rawPw < MIN_DISPLAY_PX || rawPh < MIN_DISPLAY_PX;
   const isPdfImport = hotspot.source === 'pdf_import';
   // Edited-imports (was_imported=true but source flipped to 'manual' by a
   // human edit) intentionally look identical to hand-drawn work on the
@@ -1055,11 +1065,13 @@ function DraggableHotspot({
         onSelect(e.altKey || e.metaKey);
       }}
       style={{
-        background: colors.fill,
+        // Degenerate boxes get a solid saturated fill so they read as
+        // "needs attention" instead of vanishing.
+        background: isDegenerate ? colors.stroke : colors.fill,
         border: `2px ${dashed ? 'dashed' : 'solid'} ${colors.stroke}`,
         outline: selected ? '2px solid black' : 'none',
         outlineOffset: 1,
-        opacity,
+        opacity: isDegenerate ? 0.9 : opacity,
         cursor: 'move',
         zIndex: domZ,
         // PDF-imported hotspots that aren't currently selected let clicks
