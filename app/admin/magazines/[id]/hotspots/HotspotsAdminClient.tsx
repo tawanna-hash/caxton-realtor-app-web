@@ -83,6 +83,14 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
   // server) and the UI has one loading state instead of two racy ones.
   const [showExtractDialog, setShowExtractDialog] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  // NDJSON progress from the streaming extract-all endpoint. current is the
+  // number of pages committed so far; total is the magazine page count.
+  // Cleared when a run finishes (success or error).
+  const [extractProgress, setExtractProgress] = useState<{ current: number; total: number } | null>(null);
+  // Page index currently being processed by the per-page endpoint, so the
+  // per-page "Extract page" button can show a spinner state without
+  // blocking clicks on other pages.
+  const [extractingPage, setExtractingPage] = useState<number | null>(null);
   const [extractResult, setExtractResult] = useState<{
     inserted: number;
     skipped_duplicates: number;
@@ -272,25 +280,84 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
     }
   }, [magazine.id]);
 
-  // Unified auto-extract. Wipes existing PDF-import hotspots then re-inserts
-  // findings from all three passes (embedded PDF links + text-layer scan +
-  // QR-code decode) in a single server transaction. Manual hotspots are
-  // never touched.
+  // Streaming auto-extract. Consumes NDJSON from /extract-all:
+  //   { type: 'start', page_count }
+  //   { type: 'page', page_idx, inserted, ... }   — one per committed page
+  //   { type: 'done', hotspots, diagnostics } OR { type: 'error', ... }
+  //
+  // Per-page commits mean if the stream dies mid-way, earlier pages are
+  // already in the DB — the user can hit Extract-all again to pick up
+  // where it left off (the page-scoped wipe won't touch already-committed
+  // pages beyond the crash point until they're re-processed).
   const runExtractAll = useCallback(async () => {
     setExtracting(true);
+    setExtractProgress(null);
     setSaveState('saving');
     try {
       const res = await fetch(`/api/admin/magazines/${magazine.id}/extract-all`, {
         method: 'POST',
       });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      setHotspots(sortHotspots(data.hotspots as Hotspot[]));
+      if (!res.ok || !res.body) throw new Error(await res.text().catch(() => `HTTP ${res.status}`));
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      let total = 0;
+      let current = 0;
+      let finalHotspots: Hotspot[] | null = null;
+      let finalDiagnostics: {
+        inserted: number;
+        skipped_duplicates: number;
+        auto_linked_advertisers: number;
+        findings: { pdf_links: number; text_scan: number; qr_codes: number; logo_matches: number };
+      } | null = null;
+      let streamError: string | null = null;
+
+      // Drain the stream line-by-line. Each NDJSON line is a complete JSON
+      // object; buf holds the trailing partial until the next chunk.
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let nl = buf.indexOf('\n');
+        while (nl >= 0) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          nl = buf.indexOf('\n');
+          if (!line) continue;
+          let evt: Record<string, unknown>;
+          try { evt = JSON.parse(line); }
+          catch { continue; }
+          if (evt.type === 'start') {
+            total = Number(evt.page_count) || 0;
+            setExtractProgress({ current: 0, total });
+          } else if (evt.type === 'page') {
+            current += 1;
+            setExtractProgress({ current, total });
+          } else if (evt.type === 'done') {
+            finalHotspots = evt.hotspots as Hotspot[];
+            const d = evt.diagnostics as {
+              inserted: number;
+              skipped_duplicates: number;
+              auto_linked_advertisers: number;
+              findings: { pdf_links: number; text_scan: number; qr_codes: number; logo_matches: number };
+            };
+            finalDiagnostics = d;
+          } else if (evt.type === 'error') {
+            streamError = String(evt.message ?? 'extraction failed');
+          }
+        }
+      }
+
+      if (streamError) throw new Error(streamError);
+      if (!finalHotspots || !finalDiagnostics) throw new Error('stream ended without done event');
+
+      setHotspots(sortHotspots(finalHotspots));
       setExtractResult({
-        inserted: data.diagnostics.inserted,
-        skipped_duplicates: data.diagnostics.skipped_duplicates,
-        auto_linked_advertisers: data.diagnostics.auto_linked_advertisers,
-        findings: data.diagnostics.findings,
+        inserted: finalDiagnostics.inserted,
+        skipped_duplicates: finalDiagnostics.skipped_duplicates,
+        auto_linked_advertisers: finalDiagnostics.auto_linked_advertisers,
+        findings: finalDiagnostics.findings,
       });
       setSaveState('saved');
       setLastSavedAt(new Date());
@@ -300,6 +367,33 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
       setExtractResult(null);
     } finally {
       setExtracting(false);
+      setExtractProgress(null);
+    }
+  }, [magazine.id]);
+
+  // Per-page extract. Same four passes as extract-all but scoped to one
+  // page: wipes source='pdf_import' rows for that page only, then re-
+  // inserts fresh findings. Edited-imports (source='manual', was_imported
+  // true) on this page survive because the wipe filter targets 'pdf_import'.
+  const runExtractPage = useCallback(async (pageIdx: number) => {
+    setExtractingPage(pageIdx);
+    setSaveState('saving');
+    try {
+      const res = await fetch(`/api/admin/magazines/${magazine.id}/extract-page`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page_idx: pageIdx }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setHotspots(sortHotspots(data.hotspots as Hotspot[]));
+      setSaveState('saved');
+      setLastSavedAt(new Date());
+    } catch (err) {
+      console.error('[hotspot-editor] extract-page failed:', err);
+      setSaveState('error');
+    } finally {
+      setExtractingPage(null);
     }
   }, [magazine.id]);
 
@@ -423,9 +517,13 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
             onClick={() => setShowExtractDialog(true)}
             disabled={extracting}
             className="px-3 py-1.5 text-sm font-medium text-white bg-purple-700 rounded-md hover:bg-purple-800 disabled:opacity-50"
-            title="Auto-populate hotspots: embedded PDF links, page-text scan (emails/phones/URLs), and QR codes. Manual hotspots are preserved."
+            title="Auto-populate hotspots: embedded PDF links, page-text scan (emails/phones/URLs), QR codes, and logo matches. Manual and edited-import hotspots are preserved."
           >
-            {extracting ? 'Extracting…' : 'Extract all links'}
+            {extracting
+              ? (extractProgress
+                  ? `Extracting… ${extractProgress.current}/${extractProgress.total}`
+                  : 'Extracting…')
+              : 'Extract all links'}
           </button>
         </div>
 
@@ -541,6 +639,8 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
               onEdit={setEditingHotspot}
               onRequestDelete={setPendingDeleteId}
               onCreate={() => createHotspot(pageIdx)}
+              onExtract={() => runExtractPage(pageIdx)}
+              extracting={extractingPage === pageIdx}
               onUpdatePosition={(id, rect) => updateHotspot(id, rect)}
             />
           ))}
@@ -657,6 +757,8 @@ interface EditorPageProps {
   onEdit: (h: Hotspot) => void;
   onRequestDelete: (id: number) => void;
   onCreate: () => void;
+  onExtract: () => void;
+  extracting: boolean;
   onUpdatePosition: (id: number, rect: { x_frac: number; y_frac: number; w_frac: number; h_frac: number }) => void;
 }
 
@@ -690,7 +792,8 @@ function nextOverlapId(
 
 function EditorPage({
   pageIdx, pageUrl, hotspots, spreadNumberById, selectedId,
-  onSelect, onEdit, onRequestDelete, onCreate, onUpdatePosition,
+  onSelect, onEdit, onRequestDelete, onCreate, onExtract, extracting,
+  onUpdatePosition,
 }: EditorPageProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   const [imgSize, setImgSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
@@ -763,14 +866,28 @@ function EditorPage({
         />
       ))}
 
-      {/* Add hotspot floating button */}
-      <button
-        type="button"
-        onClick={onCreate}
-        className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-1.5 text-xs font-medium bg-gray-900 text-white rounded-md shadow-lg hover:bg-gray-800 whitespace-nowrap"
-      >
-        + Add hotspot to page {pageIdx + 1}
-      </button>
+      {/* Floating actions: Add hotspot + Extract page. Both hug the page's
+          bottom center; Extract-page runs the same four-pass pipeline as
+          Extract-all but scoped to this page (edited-imports on the page
+          survive, other pages are untouched). */}
+      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={onCreate}
+          className="px-3 py-1.5 text-xs font-medium bg-gray-900 text-white rounded-md shadow-lg hover:bg-gray-800 whitespace-nowrap"
+        >
+          + Add hotspot to page {pageIdx + 1}
+        </button>
+        <button
+          type="button"
+          onClick={onExtract}
+          disabled={extracting}
+          title="Re-run the four extractor passes for this page only. Your edits on this page are preserved."
+          className="px-2.5 py-1.5 text-xs font-medium bg-white text-gray-800 border border-gray-300 rounded-md shadow-lg hover:bg-gray-50 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {extracting ? 'Extracting…' : 'Extract page'}
+        </button>
+      </div>
     </div>
   );
 }

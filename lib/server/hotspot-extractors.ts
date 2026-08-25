@@ -1081,8 +1081,13 @@ export interface InsertOptions {
   pageCount: number;
   /** If true, DELETE existing source='pdf_import' rows first. Used by the
    *  full "extract all" flow so that re-runs replace rather than accumulate.
-   *  Manual rows are never touched. */
+   *  Manual rows are never touched. Mutually exclusive with
+   *  `wipeImportsForPages` — that one wins if both are set. */
   wipeImports: boolean;
+  /** If set, restrict the wipe to just these page_idx values. Used by the
+   *  per-page and streaming Extract-all flows so a partial run only
+   *  replaces rows on the pages it processed. Empty array = no wipe. */
+  wipeImportsForPages?: number[];
 }
 
 export interface InsertResult {
@@ -1099,8 +1104,18 @@ export async function insertExtracted(
   rows: ExtractedHotspot[],
   opts: InsertOptions,
 ): Promise<InsertResult> {
-  // 1. Optionally wipe. Only source='pdf_import' — manual rows survive.
-  if (opts.wipeImports) {
+  // 1. Optionally wipe. Only source='pdf_import' — manual rows and
+  //    edited-imports (source='manual', was_imported=true) both survive.
+  //    Page-scoped wipe wins over the magazine-wide flag when both are set.
+  if (opts.wipeImportsForPages && opts.wipeImportsForPages.length > 0) {
+    const pages = opts.wipeImportsForPages;
+    await sql`
+      DELETE FROM magazine_hotspots
+      WHERE magazine_id = ${opts.magazineId}
+        AND source = 'pdf_import'
+        AND page_idx = ANY(${pages}::int[])
+    `;
+  } else if (opts.wipeImports) {
     await sql`
       DELETE FROM magazine_hotspots
       WHERE magazine_id = ${opts.magazineId} AND source = 'pdf_import'
