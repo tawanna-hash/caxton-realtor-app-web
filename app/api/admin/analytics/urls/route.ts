@@ -122,7 +122,9 @@ export const GET = withAdminTracking(async (req: NextRequest) => {
   const whereSql = where.join(' AND ');
 
   // Count of distinct url_keys for pagination.
-  const totalRes = await sql.query(
+  // Note: neon's sql.query() returns rows directly (not a { rows } wrapper),
+  // matching the pattern used throughout /app/api/admin/mailing/*.
+  const totalRows = (await sql.query(
     `
       SELECT COUNT(*)::int AS total FROM (
         SELECT ${URL_KEY_SQL} AS url_key
@@ -134,15 +136,15 @@ export const GET = withAdminTracking(async (req: NextRequest) => {
       ) t
     `,
     params,
-  ) as unknown as { rows: Array<{ total: number }> };
-  const total = totalRes.rows[0]?.total ?? 0;
+  )) as unknown as Array<{ total: number }>;
+  const total = totalRows[0]?.total ?? 0;
 
   // Paginated rollup query — same filters, same URL_KEY_SQL.
   const pageSizeParam = params.length + 1;
   const offsetParam = params.length + 2;
   const dataParams = [...params, pageSize, offset];
 
-  const dataRes = await sql.query(
+  const dataRows = (await sql.query(
     `
       SELECT
         ${URL_KEY_SQL}                             AS url_key,
@@ -161,19 +163,17 @@ export const GET = withAdminTracking(async (req: NextRequest) => {
       LIMIT $${pageSizeParam} OFFSET $${offsetParam}
     `,
     dataParams,
-  ) as unknown as {
-    rows: Array<{
-      url_key: string;
-      clicks: number;
-      unique_sessions: number;
-      magazines: number;
-      hotspots: number;
-      first_click_at: string | Date | null;
-      last_click_at: string | Date | null;
-    }>;
-  };
+  )) as unknown as Array<{
+    url_key: string;
+    clicks: number;
+    unique_sessions: number;
+    magazines: number;
+    hotspots: number;
+    first_click_at: string | Date | null;
+    last_click_at: string | Date | null;
+  }>;
 
-  const out: UrlRollupRow[] = dataRes.rows.map((r) => ({
+  const out: UrlRollupRow[] = dataRows.map((r) => ({
     url_key: r.url_key,
     display_url: r.url_key ? `https://${r.url_key}` : '',
     clicks: r.clicks,
