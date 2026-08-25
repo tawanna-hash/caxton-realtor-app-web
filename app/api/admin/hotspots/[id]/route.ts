@@ -149,6 +149,10 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
       ? (cur.z_index ?? 0)
       : (Number.isInteger(body.z_index) ? (body.z_index as number) : 0);
 
+    // Any human edit on an imported hotspot promotes it to source='manual'
+    // so a subsequent Extract-all (which wipes source='pdf_import' rows)
+    // won't clobber the edit. Cheap and idempotent — the DELETE filter is
+    // the single source of truth for what re-runs are allowed to touch.
     const rows = (await sql`
       UPDATE magazine_hotspots SET
         page_idx = ${nextPageIdx},
@@ -160,6 +164,7 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
         advertiser_id = ${nextAdvId},
         is_published = ${nextPublished},
         z_index = ${nextZ},
+        source = 'manual',
         updated_by = ${adminEmail},
         updated_at = NOW()
       WHERE id = ${idNum}
