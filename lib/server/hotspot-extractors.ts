@@ -138,6 +138,48 @@ export interface ExtractedHotspot {
 }
 
 // ============================================================
+// PASS 5: Hardcoded masthead (cover-page wordmark)
+// ============================================================
+//
+// Every RealtyLine / Newsline issue has the publisher's wordmark at the
+// top of page 1. Gemini's logo pass reliably misses text-only wordmarks
+// (it treats them as headers, not logos), and even when the caption
+// underneath says the URL it's usually inside a rasterized logo strip so
+// the text-scan pass can't see it either. Rather than fight vision, we
+// just insert the masthead as a known-position hotspot whenever we know
+// the publication.
+//
+// If a real PDF-link annotation or a text-scan hit for the same URL
+// already exists on p0 (a proper embedded link on the wordmark, or the
+// tiny "VISIT US ONLINE AT ..." text at the top), identity dedupe drops
+// this masthead row — buildMastheadHotspots is bucketed AFTER every real
+// pass, so real hits win.
+
+const MASTHEAD_BY_PUBLICATION: Record<string, { url: string; label: string }> = {
+  realtyline: { url: 'https://realtyline.us', label: 'Link · RealtyLine masthead' },
+  newsline:   { url: 'https://newslinesa.com', label: 'Link · Newsline masthead' },
+};
+
+export function buildMastheadHotspots(publication: string): ExtractedHotspot[] {
+  const spec = MASTHEAD_BY_PUBLICATION[publication.toLowerCase()];
+  if (!spec) return [];
+  return [{
+    page_idx: 0,
+    // Wordmark spans the top strip of the cover — generous box so clicks
+    // near the logo still land. Tuned against RealtyLine cover layout.
+    x_frac: 0.05,
+    y_frac: 0.02,
+    w_frac: 0.90,
+    h_frac: 0.09,
+    type: 'link',
+    config: { type: 'link', url: spec.url, open_in: 'new_tab' },
+    identity: normalizeIdentityUrl(spec.url),
+    label: spec.label,
+    origin: 'pdf_link',
+  }];
+}
+
+// ============================================================
 // PASS 1: PDF link annotations (pdf-lib)
 // ============================================================
 

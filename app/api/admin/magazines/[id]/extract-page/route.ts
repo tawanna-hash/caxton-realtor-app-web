@@ -24,6 +24,7 @@ import {
   extractPdfTextContacts,
   extractQrCodes,
   extractLogoMatches,
+  buildMastheadHotspots,
   insertExtracted,
   type AdvertiserLite,
   type ExtractedHotspot,
@@ -78,7 +79,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     const sql = getSql();
 
     const mags = await sql`
-      SELECT id, reader_url, page_urls, page_count
+      SELECT id, reader_url, page_urls, page_count, publication
       FROM magazines WHERE id = ${idNum}
     `;
     if (mags.length === 0) {
@@ -88,6 +89,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     const readerUrl = String(mag.reader_url || '');
     const pageUrls = Array.isArray(mag.page_urls) ? (mag.page_urls as string[]) : [];
     const pageCount = Number(mag.page_count) || 0;
+    const publication = String(mag.publication || '').toLowerCase();
 
     if (!readerUrl || !/^https?:\/\//.test(readerUrl)) {
       return NextResponse.json({ error: 'magazine has no PDF reader_url' }, { status: 400 });
@@ -141,13 +143,15 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     });
 
     // Filter every pass to just this page. Insertion order (link > text >
-    // qr > logo) matches extract-all so within-batch dedupe picks the
-    // same winner.
+    // qr > logo > masthead) matches extract-all so within-batch dedupe
+    // picks the same winner.
+    const mastheadHits = pageIdx === 0 ? buildMastheadHotspots(publication) : [];
     const combined: ExtractedHotspot[] = [
       ...linkHits.filter((r) => r.page_idx === pageIdx),
       ...textHits.filter((r) => r.page_idx === pageIdx),
       ...qrHits.filter((r) => r.page_idx === pageIdx),
       ...logoHits.filter((r) => r.page_idx === pageIdx),
+      ...mastheadHits,
     ];
 
     const result = await insertExtracted(sql, combined, {
@@ -188,6 +192,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
           text_scan: textHits.filter((r) => r.page_idx === pageIdx).length,
           qr_codes: qrHits.filter((r) => r.page_idx === pageIdx).length,
           logo_matches: logoHits.filter((r) => r.page_idx === pageIdx).length,
+          masthead: mastheadHits.length,
         },
         inserted: result.inserted,
         skipped_duplicates: result.skipped_duplicates,
