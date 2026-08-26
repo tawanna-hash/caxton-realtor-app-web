@@ -14,7 +14,14 @@ import { usePathname } from 'next/navigation';
 
 export default function ResourcesLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isIndex = pathname === '/resources' || pathname === '/resources/';
+  const isIndex = [
+    '/resources',
+    '/resources/',
+    '/resources/guides',
+    '/resources/guides/',
+    '/resources/links',
+    '/resources/links/',
+  ].includes(pathname);
 
   return (
     <>
@@ -25,7 +32,7 @@ export default function ResourcesLayout({ children }: { children: React.ReactNod
             className="inline-flex items-center gap-1 text-xs uppercase tracking-[0.15em] text-gray-500 hover:text-gray-900 transition-colors"
           >
             <span aria-hidden>{'\u2190'}</span>
-            REALTOR Resources
+            REALTOR® Calculators &amp; Quick References
           </Link>
         </div>
       )}

@@ -96,6 +96,7 @@ const DRAWER_SECTIONS: NavSection[] = [
       { label: 'Communities', href: '/communities' },
       { label: 'Builders & Developers', href: '/builders' },
       { label: 'Partners', href: '/advertisers' },
+      { label: 'Curated Links', href: '/resources/links' },
     ],
   },
   {
@@ -111,7 +112,8 @@ const DRAWER_SECTIONS: NavSection[] = [
     authOnly: true,
     items: [
       { label: 'Testimonials HUB', href: '/testimonial-hub', authOnly: true },
-      { label: 'REALTOR® Resources', href: '/resources', authOnly: true },
+      { label: 'REALTOR® Calculators & Quick References', href: '/resources', authOnly: true },
+      { label: 'REALTOR® Downloadable Guides', href: '/resources/guides', authOnly: true },
     ],
   },
   {
