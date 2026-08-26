@@ -94,13 +94,13 @@ const STEP_BY_TAB: Record<TourStep['tab'], number> = {
   builders: 1,
 };
 
-function BrandMark({ inverse = false }: { inverse?: boolean }) {
+function BrandMark({ inverse = false, compact = false }: { inverse?: boolean; compact?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-2.5">
+    <span className={`inline-flex items-center ${compact ? 'gap-1.5' : 'gap-2.5'}`}>
       <svg
         viewBox="0 0 40 40"
-        width="36"
-        height="36"
+        width={compact ? 24 : 36}
+        height={compact ? 24 : 36}
         role="img"
         aria-label="Realty News Now"
         className={inverse ? 'text-white' : 'text-brand-700'}
@@ -109,10 +109,10 @@ function BrandMark({ inverse = false }: { inverse?: boolean }) {
         <path d="M11 28V12h8.1c4.2 0 6.9 2.2 6.9 5.7 0 2.3-1.2 4.1-3.3 5l5 5.3h-5.2l-4.2-4.7h-2.8V28H11Zm4.5-8.3h3.2c1.8 0 2.8-.7 2.8-2s-1-2-2.8-2h-3.2v4Z" fill="white" />
       </svg>
       <span className="leading-none">
-        <span className={`block text-sm font-bold tracking-tight ${inverse ? 'text-white' : 'text-brand-700'}`}>
+        <span className={`block font-bold tracking-tight ${compact ? 'text-[9px]' : 'text-sm'} ${inverse ? 'text-white' : 'text-brand-700'}`}>
           REALTY NEWS NOW
         </span>
-        <span className={`mt-1 block text-[9px] uppercase tracking-[0.22em] ${inverse ? 'text-white/60' : 'text-gray-500'}`}>
+        <span className={`block uppercase tracking-[0.22em] ${compact ? 'mt-0.5 text-[5px]' : 'mt-1 text-[9px]'} ${inverse ? 'text-white/60' : 'text-gray-500'}`}>
           Texas real estate, daily
         </span>
       </span>
@@ -264,13 +264,11 @@ function IssuesScreen() {
       name: 'RealtyLine',
       market: 'Austin',
       current: '/product-tour/realtyline-august-2026.jpg',
-      previous: '/product-tour/realtyline-july-2026.jpg',
     },
     {
       name: 'Newsline',
       market: 'San Antonio',
       current: '/product-tour/newsline-august-2026.jpg',
-      previous: '/product-tour/newsline-july-2026.jpg',
     },
   ];
 
@@ -280,38 +278,18 @@ function IssuesScreen() {
       <h3 className="mt-1 text-lg font-semibold text-gray-900">Latest issues</h3>
       <div className="mt-4 grid grid-cols-2 gap-3">
         {publications.map((publication) => (
-          <div key={publication.name} className="border border-gray-200 bg-gray-50 p-2">
-            <div className="h-8 overflow-hidden border border-gray-200 bg-white px-2">
+          <div key={publication.name} className="border border-gray-200 bg-white p-2 shadow-sm">
+            <div className="relative aspect-[720/804] overflow-hidden border border-gray-200 bg-[#f7f4ef]">
               <Image
                 src={publication.current}
-                alt={`${publication.name} logo`}
-                width={720}
-                height={804}
-                className="h-full w-full object-cover object-top"
+                alt={`${publication.name} August 2026 issue cover`}
+                fill
+                priority
+                sizes="(max-width: 640px) 42vw, 260px"
+                className="object-contain"
               />
             </div>
-            <div className="relative mt-2 h-[152px]">
-              <div className="absolute right-0 top-3 h-[132px] w-[73%] overflow-hidden border border-white bg-white shadow-sm">
-                <Image
-                  src={publication.previous}
-                  alt={`${publication.name} July 2026 issue cover`}
-                  fill
-                  sizes="150px"
-                  className="object-contain"
-                />
-              </div>
-              <div className="absolute left-0 top-0 h-[142px] w-[78%] overflow-hidden border border-gray-200 bg-white shadow-md">
-                <Image
-                  src={publication.current}
-                  alt={`${publication.name} August 2026 issue cover`}
-                  fill
-                  priority
-                  sizes="170px"
-                  className="object-contain"
-                />
-              </div>
-            </div>
-            <p className="mt-1 text-[10px] font-semibold text-gray-900">{publication.name}</p>
+            <p className="mt-2 text-[10px] font-semibold text-gray-900">{publication.name}</p>
             <p className="text-[8px] uppercase tracking-[0.12em] text-gray-500">{publication.market} · August 2026</p>
           </div>
         ))}
@@ -422,11 +400,9 @@ function AppPreview({
           <button type="button" aria-label="Preview menu" onClick={() => onSelectTab('more')} className="p-1 text-gray-500">
             <Menu size={17} aria-hidden />
           </button>
-          <button type="button" onClick={() => onSelectTab('feed')} className="flex flex-col items-center leading-none">
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-gray-900">
-              RealtyLine <ChevronDown size={11} aria-hidden />
-            </span>
-            <span className="mt-1 text-[7px] font-semibold uppercase tracking-[0.16em] text-gray-400">Realty News Now</span>
+          <button type="button" onClick={() => onSelectTab('feed')} className="flex items-center gap-1 leading-none">
+            <BrandMark compact />
+            <ChevronDown size={10} className="text-gray-400" aria-hidden />
           </button>
           <span className="h-6 w-6" aria-hidden />
         </div>
@@ -694,13 +670,14 @@ export default function ProductTourClient() {
               <RotateCcw size={13} aria-hidden /> Replay
             </button>
           </div>
+          <div className="mb-3 flex items-center justify-center gap-2 border border-brand-700/15 bg-white/70 px-3 py-2 text-center text-[9px] font-semibold uppercase tracking-[0.14em] text-brand-700 shadow-sm">
+            <span className="h-1.5 w-1.5 rounded-full bg-orange-600" aria-hidden />
+            Interactive preview · Select any navigation tab
+          </div>
           <AppPreview
             step={step}
             onSelectTab={(tab) => selectStep(STEP_BY_TAB[tab], 'preview_navigation')}
           />
-          <p className="mt-5 text-center text-[10px] uppercase tracking-[0.16em] text-gray-500">
-            Interactive preview · Select any navigation tab
-          </p>
         </div>
       </section>
 
