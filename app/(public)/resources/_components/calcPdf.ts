@@ -62,7 +62,7 @@ const GREY_700: [number, number, number] = [55, 65, 81];
 const GREY_500: [number, number, number] = [107, 114, 128];
 const ROSE_700: [number, number, number] = [190, 18, 60];
 
-export async function downloadCalcReport(report: CalcReport): Promise<void> {
+export async function createCalcReportPdf(report: CalcReport): Promise<jsPDF> {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 48;
@@ -250,7 +250,19 @@ export async function downloadCalcReport(report: CalcReport): Promise<void> {
     doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin, pageH - 12, { align: 'right' });
   }
 
+  return doc;
+}
+
+export async function downloadCalcReport(report: CalcReport): Promise<void> {
+  const doc = await createCalcReportPdf(report);
   doc.save(`${report.filename}.pdf`);
+}
+
+export async function createCalcReportFile(report: CalcReport): Promise<File> {
+  const doc = await createCalcReportPdf(report);
+  return new File([doc.output('blob')], `${report.filename}.pdf`, {
+    type: 'application/pdf',
+  });
 }
 
 /** Build a human-readable timestamp string for the meta header. */

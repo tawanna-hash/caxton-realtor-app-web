@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { getApiBase } from '@/lib/api-base';
 import PasswordSection from '@/components/PasswordSection';
 import DeleteAccountSection from '@/components/DeleteAccountSection';
+import CalculatorBrandingSection from './CalculatorBrandingSection';
 
 const API = getApiBase();
 
@@ -108,7 +109,7 @@ export default function ProfileClient() {
   const fullName = `${first} ${last}`.trim() || 'Your account';
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-2xl mx-auto">
       <div className="px-5 py-6" style={{ backgroundColor: accent }}>
         <p className="text-xs uppercase tracking-[0.2em] text-white/70">My Profile</p>
         <h1 className="text-lg text-white font-medium truncate">{fullName}</h1>
@@ -118,13 +119,11 @@ export default function ProfileClient() {
       </div>
 
       <div className="p-5 space-y-5">
+        <CalculatorBrandingSection accentColor={accent} />
+
         <PasswordSection accentColor={accent} hasPassword={!!user.hasPassword} />
 
         <DeleteAccountSection accentColor={accent} email={user.email ?? ''} />
-
-        <p className="text-xs text-gray-400 font-light text-center">
-          More profile settings coming soon.
-        </p>
       </div>
     </div>
   );

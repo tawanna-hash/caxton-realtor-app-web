@@ -6,6 +6,7 @@
 // lib/realtor-resources.ts. No fetches, no state beyond expand/collapse.
 
 import PageTitle from '@/components/ui/PageTitle';
+import Link from 'next/link';
 import {
   RESOURCE_GUIDES,
   RESOURCE_LINKS,
@@ -22,7 +23,7 @@ const VIEW_COPY: Record<ResourcesView, { eyebrow: string; title: string; descrip
   tools: {
     eyebrow: 'REALTOR® Platinum Tools',
     title: 'Calculators & Quick References',
-    description: 'Practical calculators and transaction references built for REALTORS® to use during client conversations.',
+    description: 'Practical calculators and transaction references built for REALTORS®.',
   },
   guides: {
     eyebrow: 'REALTOR® Platinum Tools',
@@ -46,16 +47,38 @@ export default function ResourcesClient({ view = 'tools' }: { view?: ResourcesVi
         <p className={EYEBROW}>{copy.eyebrow}</p>
         <PageTitle size="md">{copy.title}</PageTitle>
         <p className="text-base text-gray-700 font-light leading-relaxed max-w-3xl mt-4">
-          {copy.description} Have something to add?{' '}
-          <a
-            href="mailto:hello@myrealtyline.com?subject=Resources%20Page%20Suggestion"
-            className="text-brand-700 font-medium underline underline-offset-2"
-          >
-            Send us a suggestion
-          </a>
-          .
+          {copy.description}
+          {view !== 'tools' && (
+            <>
+              {' '}Have something to add?{' '}
+              <a
+                href="mailto:hello@myrealtyline.com?subject=Resources%20Page%20Suggestion"
+                className="text-brand-700 font-medium underline underline-offset-2"
+              >
+                Send us a suggestion
+              </a>
+              .
+            </>
+          )}
         </p>
       </header>
+
+      {view === 'tools' && (
+      <aside className="mb-8 flex flex-col gap-3 rounded-md border border-brand-700/20 bg-brand-700/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-gray-900">Add your REALTOR® branding</p>
+          <p className="mt-1 text-sm leading-relaxed text-gray-600">
+            Your saved name, headshot, brokerage logo, and contact details are added to completed calculator sheets.
+          </p>
+        </div>
+        <Link
+          href="/profile#calculator-branding"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800"
+        >
+          Set up branding
+        </Link>
+      </aside>
+      )}
 
       {view === 'tools' && (
       <section id="tools" className="mb-16 scroll-mt-24">
