@@ -51,6 +51,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   // Classification + lifecycle
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS type text NOT NULL DEFAULT 'advertiser'`);
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'advertiser'`);
+  await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS is_locked boolean NOT NULL DEFAULT false`);
 
   // ── Status rename (Session 22) ───────────────────────────────────
   // Status vocabulary collapsed from {active, prospect, paused, archived}

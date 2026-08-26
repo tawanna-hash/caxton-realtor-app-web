@@ -855,6 +855,10 @@ function EditDrawer({
   };
 
   const deleteAdvertiser = async () => {
+    if (form.is_locked) {
+      onError('This partner record is locked. Unlock and save it before deleting.');
+      return;
+    }
     if (!window.confirm(`Delete "${row.name}"? Their hotspot links will be unlinked (hotspots remain).`)) {
       return;
     }
@@ -956,6 +960,7 @@ function EditDrawer({
   const [form, setForm] = useState({
     type:           row.type           ?? 'advertiser',
     status:         row.status         ?? 'prospect',
+    is_locked:      row.is_locked      ?? false,
     first_name:     row.first_name     ?? '',
     last_name:      row.last_name      ?? '',
     company:        row.company        ?? '',
@@ -1076,11 +1081,27 @@ function EditDrawer({
 
           {/* ── Status (top-level select, per spec) ─────────────────── */}
           <Section title="Status">
-            <Field label="Status">
-              <select value={form.status} onChange={(e) => update('status', e.target.value as AdvertiserStatus)} className={INPUT}>
-                {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-              </select>
-            </Field>
+            <div className="space-y-3">
+              <Field label="Status">
+                <select value={form.status} onChange={(e) => update('status', e.target.value as AdvertiserStatus)} className={INPUT}>
+                  {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+              </Field>
+              <label className="flex items-start gap-3 rounded-md border border-gray-200 bg-gray-50 p-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.is_locked}
+                  onChange={(e) => update('is_locked', e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-gray-900">Lock partner record</span>
+                  <span className="block text-xs text-gray-500">
+                    Locked records cannot be deleted until they are unlocked and saved.
+                  </span>
+                </span>
+              </label>
+            </div>
           </Section>
 
           {/* ── Section One: Company Details ─────────────────────────── */}
@@ -1516,11 +1537,11 @@ function EditDrawer({
               <button
                 type="button"
                 onClick={deleteAdvertiser}
-                disabled={deleting}
+                disabled={deleting || form.is_locked}
                 className="px-3 py-1.5 rounded-md border border-red-200 text-red-700 text-xs hover:bg-red-50 disabled:opacity-50"
-                title="Delete this partner (hotspots remain, links unlinked)"
+                title={form.is_locked ? 'Unlock and save this partner before deleting' : 'Delete this partner (hotspots remain, links unlinked)'}
               >
-                {deleting ? 'Deleting...' : 'Delete advertiser'}
+                {deleting ? 'Deleting...' : form.is_locked ? 'Partner locked' : 'Delete advertiser'}
               </button>
             </div>
             <div className="flex gap-2">
@@ -1844,4 +1865,3 @@ function CreateAdvertiserModal({
     </div>
   );
 }
-

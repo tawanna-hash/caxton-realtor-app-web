@@ -1043,6 +1043,59 @@ async function _runEnsureSchema(): Promise<void> {
   `;
 
   await ensureCrmSchema(sql);
+  await sql`
+    ALTER TABLE advertisers
+    ADD COLUMN IF NOT EXISTS publication TEXT NOT NULL DEFAULT 'austin'
+  `;
+
+  // Restore the accidentally deleted M/I Homes partner page and protect it
+  // from future deletion. This is intentionally idempotent: an existing row
+  // keeps its editorial/profile fields and is only locked.
+  await sql`
+    INSERT INTO advertisers (
+      name,
+      slug,
+      share_token,
+      company,
+      industry,
+      website,
+      type,
+      status,
+      publication,
+      is_locked,
+      tagline,
+      bio,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      'M/I Homes',
+      'mi-homes',
+      gen_random_uuid()::text,
+      'M/I Homes',
+      'Home Builder',
+      'https://www.mihomes.com/',
+      'advertiser',
+      'advertiser',
+      'austin',
+      true,
+      'New homes and communities from M/I Homes.',
+      'Explore M/I Homes communities, available homes, and current opportunities in the Austin area.',
+      NOW(),
+      NOW()
+    )
+    ON CONFLICT (slug) DO UPDATE
+      SET is_locked = true,
+          updated_at = NOW()
+  `;
+  await sql`
+    UPDATE magazine_hotspots
+    SET advertiser_id = (
+      SELECT id FROM advertisers WHERE slug = 'mi-homes' LIMIT 1
+    )
+    WHERE advertiser_id IS NULL
+      AND lower(trim(advertiser_name)) IN ('m/i homes', 'mi homes')
+  `;
 
   // Backfill: ensure every existing agreement has a linked advertiser
   // row so CRM contacts surface the full deal pipeline. Idempotent —

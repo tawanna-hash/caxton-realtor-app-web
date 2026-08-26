@@ -32,6 +32,8 @@ export interface Advertiser {
   submission_token?: string | null;
   contact_email: string | null;
   requires_email_gate: boolean;
+  /** Prevents accidental deletion from the CRM and API. */
+  is_locked?: boolean;
   /**
    * Which publication this advertiser primarily belongs to.
    * Drives branding on the public dashboard and outbound emails.
@@ -189,7 +191,7 @@ export interface AdvertiserCrmRow extends Advertiser {
 // Used by PATCH /api/admin/advertisers/[id] to gate which columns
 // clients may write.
 export const CRM_PATCHABLE_FIELDS = [
-  'type', 'status',
+  'type', 'status', 'is_locked',
   'first_name', 'last_name', 'company', 'title', 'industry',
   'license_number', 'avatar_url',
   'portal_email', 'phone', 'office_phone', 'website',

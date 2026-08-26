@@ -125,6 +125,9 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     if ('requires_email_gate' in body) {
       setClauses.push({ col: 'requires_email_gate', val: !!body.requires_email_gate });
     }
+    if ('is_locked' in body) {
+      setClauses.push({ col: 'is_locked', val: !!body.is_locked });
+    }
     if ('publication' in body) {
       const pub = normalizePublication(body.publication);
       if (pub) setClauses.push({ col: 'publication', val: pub });
@@ -169,6 +172,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         case 'slug':                await sql`UPDATE advertisers SET slug = ${val}                       WHERE id = ${idNum}`; break;
         case 'contact_email':       await sql`UPDATE advertisers SET contact_email = ${val}              WHERE id = ${idNum}`; break;
         case 'requires_email_gate': await sql`UPDATE advertisers SET requires_email_gate = ${val}        WHERE id = ${idNum}`; break;
+        case 'is_locked':           await sql`UPDATE advertisers SET is_locked = ${val}                  WHERE id = ${idNum}`; break;
         case 'publication':         await sql`UPDATE advertisers SET publication = ${val}                WHERE id = ${idNum}`; break;
         case 'type':                await sql`UPDATE advertisers SET type = ${val}                       WHERE id = ${idNum}`; break;
         case 'status':              await sql`UPDATE advertisers SET status = ${val}                     WHERE id = ${idNum}`; break;
@@ -282,6 +286,18 @@ export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, 
   try {
     await ensureSchema();
     const sql = getSql();
+    const existing = (await sql`
+      SELECT is_locked FROM advertisers WHERE id = ${idNum}
+    `) as unknown as Array<{ is_locked: boolean }>;
+    if (existing.length === 0) {
+      return NextResponse.json({ error: 'not found' }, { status: 404 });
+    }
+    if (existing[0].is_locked) {
+      return NextResponse.json(
+        { error: 'This partner record is locked. Unlock it before deleting.' },
+        { status: 423 },
+      );
+    }
     const result = (await sql`
       DELETE FROM advertisers WHERE id = ${idNum} RETURNING id
     `) as unknown as Array<{ id: number }>;
