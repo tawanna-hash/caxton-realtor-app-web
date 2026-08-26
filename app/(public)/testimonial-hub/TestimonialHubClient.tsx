@@ -120,6 +120,8 @@ export default function TestimonialHubClient() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<'headshot' | 'client' | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [embedLayout, setEmbedLayout] = useState<'grid' | 'carousel' | 'single'>('grid');
+  const [embedTheme, setEmbedTheme] = useState<'light' | 'dark'>('light');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -154,7 +156,7 @@ export default function TestimonialHubClient() {
     ? `${window.location.origin}/testimonials/${profile.slug}`
     : '';
   const embedCode = typeof window !== 'undefined' && profile
-    ? `<script async src="${window.location.origin}/api/testimonial-widget?slug=${encodeURIComponent(profile.slug)}"></script>`
+    ? `<script async src="${window.location.origin}/api/testimonial-widget?slug=${encodeURIComponent(profile.slug)}&layout=${embedLayout}&theme=${embedTheme}"></script>`
     : '';
 
   function startNew() {
@@ -518,7 +520,34 @@ export default function TestimonialHubClient() {
 
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <h2 className="text-base font-semibold text-gray-950">Embed anywhere</h2>
-            <p className="mt-2 text-sm leading-6 text-gray-500">Paste this single line into your website to display your published testimonials.</p>
+            <p className="mt-2 text-sm leading-6 text-gray-500">Paste this single line into your website. Newly published testimonials appear automatically without reloading the page.</p>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="text-sm font-medium text-gray-700">
+                Layout
+                <select
+                  value={embedLayout}
+                  onChange={(event) => setEmbedLayout(event.target.value as typeof embedLayout)}
+                  className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
+                  data-testid="select-testimonial-widget-layout"
+                >
+                  <option value="grid">Card grid</option>
+                  <option value="carousel">Carousel</option>
+                  <option value="single">Featured review</option>
+                </select>
+              </label>
+              <label className="text-sm font-medium text-gray-700">
+                Theme
+                <select
+                  value={embedTheme}
+                  onChange={(event) => setEmbedTheme(event.target.value as typeof embedTheme)}
+                  className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"
+                  data-testid="select-testimonial-widget-theme"
+                >
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </label>
+            </div>
             <pre className="mt-4 overflow-x-auto whitespace-pre-wrap break-all rounded-md bg-gray-950 p-3 text-xs leading-5 text-gray-100">{embedCode}</pre>
             <button onClick={() => void copy(embedCode, 'Embed code copied.')} className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"><Clipboard size={15} /> Copy embed code</button>
           </section>
