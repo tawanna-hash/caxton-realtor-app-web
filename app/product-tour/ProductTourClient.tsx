@@ -17,10 +17,12 @@ import {
   Megaphone,
   Menu,
   MessageSquareQuote,
+  Monitor,
   MoreHorizontal,
   Newspaper,
   RotateCcw,
   Share2,
+  Smartphone,
   Sparkles,
   Star,
   X,
@@ -57,6 +59,15 @@ const STEPS: TourStep[] = [
     tab: 'partners',
   },
   {
+    id: 'advertising',
+    eyebrow: 'Advertising opportunities',
+    title: 'Reach real estate professionals across every channel',
+    description:
+      'Build a coordinated presence through the printed publications, digital placements, and the Realty News Now app.',
+    points: ['Print and digital edition packages', 'High-visibility website placements', 'Native app and sponsored notification options'],
+    tab: 'partners',
+  },
+  {
     id: 'calendar',
     eyebrow: 'Never miss what matters',
     title: 'A professional calendar built around the industry',
@@ -88,9 +99,9 @@ const STEPS: TourStep[] = [
 const STEP_BY_TAB: Record<TourStep['tab'], number> = {
   issues: 0,
   partners: 1,
-  calendar: 2,
-  more: 3,
-  feed: 4,
+  calendar: 3,
+  more: 4,
+  feed: 5,
   builders: 1,
 };
 
@@ -170,51 +181,86 @@ function FeedScreen() {
 }
 
 function CalendarScreen() {
-  const days = [
-    ['MON', '24'],
-    ['TUE', '25'],
-    ['WED', '26'],
-    ['THU', '27'],
-    ['FRI', '28'],
+  const fallbackEvents = [
+    {
+      id: 30416,
+      title: 'ABoR: Appraisals Gone Wild: Taming the 3.6 Update',
+      startDate: '2026-08-27T13:00:00.000Z',
+      location: 'Grand Hyatt San Antonio River Walk',
+    },
+    {
+      id: 18122,
+      title: 'ABoR: Forewarn Training',
+      startDate: '2026-08-27T18:00:00.000Z',
+      location: 'Virtual',
+    },
+    {
+      id: 529,
+      title: 'Five Points: CTXMLS New Member Orientation',
+      startDate: '2026-08-28T15:00:00.000Z',
+      location: 'Virtual',
+    },
   ];
+  const [events, setEvents] = useState(fallbackEvents);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/events/austin', { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error('Calendar unavailable');
+        return response.json() as Promise<{ events?: typeof fallbackEvents }>;
+      })
+      .then((payload) => {
+        if (!active || !Array.isArray(payload.events)) return;
+        const upcoming = payload.events
+          .filter((event) => new Date(event.startDate).getTime() >= Date.now())
+          .slice(0, 3);
+        if (upcoming.length) setEvents(upcoming);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <div className="px-3 py-4" data-tour-screen="calendar">
       <div className="flex items-end justify-between">
         <div>
           <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Industry calendar</p>
-          <h3 className="mt-1 text-lg font-semibold text-gray-900">August 2026</h3>
+          <h3 className="mt-1 text-lg font-semibold text-gray-900">Upcoming in Austin</h3>
         </div>
-        <span className="border border-gray-200 px-2.5 py-1.5 text-[10px] font-semibold text-gray-600">Event view</span>
-      </div>
-      <div className="mt-4 grid grid-cols-5 gap-1.5">
-        {days.map(([day, date], index) => (
-          <div
-            key={day}
-            className={`py-2 text-center ${index === 2 ? 'bg-brand-700 text-white' : 'border border-gray-200 bg-white text-gray-500'}`}
-          >
-            <p className="text-[8px] font-semibold">{day}</p>
-            <p className="mt-1 text-sm font-bold">{date}</p>
-          </div>
-        ))}
+        <span className="border border-gray-200 px-2.5 py-1.5 text-[10px] font-semibold text-gray-600">Live calendar</span>
       </div>
       <div className="mt-4 space-y-2">
-        {[
-          ['9:00 AM', 'Broker Breakfast & Market Update', 'Austin Board of REALTORS®'],
-          ['12:00 PM', 'New Community Preview', 'West Austin'],
-          ['5:30 PM', 'Women in Real Estate Networking', 'Downtown Austin'],
-        ].map(([time, title, place], index) => (
-          <div key={title} className="grid grid-cols-[64px_1fr] border border-gray-200 bg-white">
+        {events.map((event, index) => {
+          const date = new Date(event.startDate);
+          const dateLabel = new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+            timeZone: 'America/Chicago',
+          }).format(date);
+          const timeLabel = new Intl.DateTimeFormat('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            timeZone: 'America/Chicago',
+          }).format(date);
+          return (
+          <div key={event.id} className="grid grid-cols-[76px_1fr] border border-gray-200 bg-white">
             <div className={`p-3 text-[9px] font-bold ${index === 0 ? 'bg-orange-50 text-orange-700' : 'bg-gray-50 text-gray-500'}`}>
-              {time}
+              <span className="block uppercase">{dateLabel}</span>
+              <span className="mt-1 block font-medium">{timeLabel}</span>
             </div>
             <div className="p-3">
-              <p className="text-xs font-semibold text-gray-900">{title}</p>
+              <p className="line-clamp-2 text-xs font-semibold text-gray-900">{event.title}</p>
               <p className="mt-1 flex items-center gap-1 text-[9px] text-gray-500">
-                <MapPin size={10} aria-hidden /> {place}
+                <MapPin size={10} className="shrink-0" aria-hidden />
+                <span className="truncate">{event.location || 'Online event'}</span>
               </p>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -303,6 +349,13 @@ function IssuesScreen() {
 }
 
 function PartnersScreen() {
+  const partners = [
+    ['Independence Title', 'Title Services', '/product-tour/partner-independence-title.png'],
+    ['Stewart Title', 'Title Services', '/product-tour/partner-stewart-title.png'],
+    ['Austin Title', 'Title Services', '/product-tour/partner-austin-title.png'],
+    ['KB Home', 'Homebuilder', '/product-tour/partner-kb-home.png'],
+  ];
+
   return (
     <div className="px-3 py-4" data-tour-screen="partners">
       <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Professional directory</p>
@@ -312,20 +365,63 @@ function PartnersScreen() {
         <span className="text-[10px] text-gray-400">Search builders, lenders, title companies...</span>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2">
-        {[
-          ['M/I Homes', 'Homebuilder', 'MI'],
-          ['Austin Title', 'Title Services', 'AT'],
-          ['UFCU Mortgage', 'Lending', 'UF'],
-          ['Heritage Land', 'Development', 'HL'],
-        ].map(([name, category, initials], index) => (
+        {partners.map(([name, category, logo]) => (
           <div key={name} className="border border-gray-200 bg-white p-3">
-            <div className={`flex h-9 w-9 items-center justify-center text-[10px] font-bold ${index % 2 ? 'bg-orange-50 text-orange-700' : 'bg-brand-50 text-brand-700'}`}>
-              {initials}
+            <div className="relative flex h-10 w-full items-center justify-center overflow-hidden bg-white">
+              <Image src={logo} alt={`${name} logo`} fill sizes="180px" className="object-contain object-left" />
             </div>
             <p className="mt-3 text-[11px] font-semibold text-gray-900">{name}</p>
             <p className="mt-0.5 text-[9px] text-gray-500">{category}</p>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function AdvertisingScreen() {
+  const opportunities = [
+    {
+      Icon: Newspaper,
+      label: 'Print',
+      title: 'RealtyLine & Newsline editions',
+      detail: 'Full, half, and quarter-page advertising',
+    },
+    {
+      Icon: Monitor,
+      label: 'Digital',
+      title: 'Web, articles & e-Blasts',
+      detail: 'Banners, sponsored cards, and email placements',
+    },
+    {
+      Icon: Smartphone,
+      label: 'App',
+      title: 'High-visibility app placements',
+      detail: 'Welcome screens, feed placements, and sponsored pushes',
+    },
+  ];
+
+  return (
+    <div className="px-3 py-4" data-tour-screen="advertising">
+      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-orange-700">Advertising opportunities</p>
+      <h3 className="mt-1 text-lg font-semibold text-gray-900">Print, digital & app</h3>
+      <div className="mt-4 space-y-2">
+        {opportunities.map(({ Icon, label, title, detail }, index) => (
+          <div key={label} className={`flex gap-3 border p-3 ${index === 1 ? 'border-brand-200 bg-brand-50' : 'border-gray-200 bg-white'}`}>
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center ${index === 1 ? 'bg-brand-700 text-white' : 'bg-orange-50 text-orange-700'}`}>
+              <Icon size={18} strokeWidth={1.8} aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-gray-500">{label}</p>
+              <p className="mt-0.5 text-xs font-semibold text-gray-900">{title}</p>
+              <p className="mt-1 text-[9px] leading-relaxed text-gray-500">{detail}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 flex items-center justify-between bg-brand-700 px-3 py-2.5 text-white">
+        <span className="text-[9px] font-medium">Build a cross-channel campaign</span>
+        <ArrowRight size={14} aria-hidden />
       </div>
     </div>
   );
@@ -374,6 +470,7 @@ function MockScreen({ step }: { step: TourStep }) {
   if (step.id === 'builders') return <BuildersScreen />;
   if (step.id === 'issues') return <IssuesScreen />;
   if (step.id === 'partners') return <PartnersScreen />;
+  if (step.id === 'advertising') return <AdvertisingScreen />;
   if (step.id === 'platinum') return <PlatinumScreen />;
   return <FeedScreen />;
 }
