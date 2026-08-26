@@ -14,6 +14,7 @@ export interface CalculatorBrandingInput {
   brokerage_name: string | null;
   email: string | null;
   phone: string | null;
+  office_phone: string | null;
   website: string | null;
   logo_url: string | null;
   photo_url: string | null;
@@ -33,6 +34,7 @@ interface BrandingRow {
   brokerage_name: string | null;
   email: string | null;
   phone: string | null;
+  office_phone: string | null;
   website: string | null;
   logo_url: string | null;
   photo_url: string | null;
@@ -56,6 +58,7 @@ async function ensureCalculatorBrandingTable(): Promise<void> {
       brokerage_name TEXT,
       email TEXT,
       phone TEXT,
+      office_phone TEXT,
       website TEXT,
       logo_url TEXT,
       photo_url TEXT,
@@ -70,6 +73,10 @@ async function ensureCalculatorBrandingTable(): Promise<void> {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
+  `);
+  await query(`
+    ALTER TABLE realtor_calculator_branding
+    ADD COLUMN IF NOT EXISTS office_phone TEXT
   `);
 }
 
@@ -87,7 +94,7 @@ function toCalculatorBranding(row: BrandingRow): CalculatorBranding {
       title: row.professional_title,
       email: row.email,
       phone: row.phone,
-      office_phone: null,
+      office_phone: row.office_phone,
       website: row.website,
       logo_url: row.logo_url,
       photo_url: row.photo_url,
@@ -112,6 +119,7 @@ export async function getCalculatorBranding(realtorId: string): Promise<Calculat
        COALESCE(NULLIF(b.brokerage_name, ''), r.brokerage_name) AS brokerage_name,
        COALESCE(NULLIF(b.email, ''), r.email) AS email,
        COALESCE(NULLIF(b.phone, ''), r.mobile) AS phone,
+       b.office_phone,
        b.website,
        b.logo_url,
        b.photo_url,
@@ -142,12 +150,12 @@ export async function updateCalculatorBranding(
   await query(
     `INSERT INTO realtor_calculator_branding (
        realtor_id, display_name, professional_title, brokerage_name,
-       email, phone, website, logo_url, photo_url,
+       email, phone, office_phone, website, logo_url, photo_url,
        address, address_2, city, state, zip, license_number,
        tagline, footer_template, updated_at
      ) VALUES (
-       $1, $2, $3, $4, $5, $6, $7, $8, $9,
-       $10, $11, $12, $13, $14, $15, $16, $17, NOW()
+       $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+       $11, $12, $13, $14, $15, $16, $17, $18, NOW()
      )
      ON CONFLICT (realtor_id) DO UPDATE SET
        display_name = EXCLUDED.display_name,
@@ -155,6 +163,7 @@ export async function updateCalculatorBranding(
        brokerage_name = EXCLUDED.brokerage_name,
        email = EXCLUDED.email,
        phone = EXCLUDED.phone,
+       office_phone = EXCLUDED.office_phone,
        website = EXCLUDED.website,
        logo_url = EXCLUDED.logo_url,
        photo_url = EXCLUDED.photo_url,
@@ -174,6 +183,7 @@ export async function updateCalculatorBranding(
       input.brokerage_name,
       input.email,
       input.phone,
+      input.office_phone,
       input.website,
       input.logo_url,
       input.photo_url,

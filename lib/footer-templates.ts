@@ -10,25 +10,18 @@
 // IDs are stored verbatim in the DB column advertisers.footer_template
 // (admin-set default) and in localStorage key
 // 'rnn:footer-template' (per-device override picked at download time).
-// Unknown / legacy values coerce back to 'minimal' on read.
+// Unknown / removed legacy values coerce back to Layout 1 on read.
 
 export const FOOTER_TEMPLATE_IDS = [
   'business-card',
   'banner',
-  'minimal',
   'signature',
   'two-column',
-  'stacked',
 ] as const;
 
 export type FooterTemplateId = (typeof FOOTER_TEMPLATE_IDS)[number];
 
-export const FOOTER_TEMPLATE_PICKER_IDS: readonly FooterTemplateId[] = [
-  'business-card',
-  'banner',
-  'signature',
-  'two-column',
-];
+export const FOOTER_TEMPLATE_PICKER_IDS = FOOTER_TEMPLATE_IDS;
 
 const FOOTER_TEMPLATE_DEFAULT: FooterTemplateId = 'business-card';
 
@@ -111,44 +104,30 @@ export const FOOTER_TEMPLATE_META: Record<FooterTemplateId, FooterTemplateMeta> 
   'business-card': {
     id: 'business-card',
     label: 'PDF Layout 1',
-    blurb: 'Brokerage logo, agent identity, and two-column contact details.',
-    heightPt: 108,
+    blurb: 'Logo left, agent identity centered, contact details right.',
+    heightPt: 106,
     placement: 'every-page',
   },
   banner: {
     id: 'banner',
     label: 'PDF Layout 2',
-    blurb: 'Portrait panel on the left, contact details centered, brokerage logo on the right.',
-    heightPt: 112,
-    placement: 'every-page',
-  },
-  minimal: {
-    id: 'minimal',
-    label: 'Minimal',
-    blurb: 'Compact two-line card. Lightest touch, still on every page.',
-    heightPt: 72,
+    blurb: 'Navy portrait card, contact details centered, logo right.',
+    heightPt: 126,
     placement: 'every-page',
   },
   signature: {
     id: 'signature',
     label: 'PDF Layout 3',
-    blurb: 'Curved portrait panel, vertical contact bar, and brokerage identity.',
-    heightPt: 112,
-    placement: 'last-page',
+    blurb: 'Circular portrait feature, cyan contact bar, logo right.',
+    heightPt: 124,
+    placement: 'every-page',
   },
   'two-column': {
     id: 'two-column',
     label: 'PDF Layout 4',
-    blurb: 'Brokerage-led layout with agent details and a full-width tagline bar.',
-    heightPt: 116,
+    blurb: 'Logo and agent details above a full-width black tagline bar.',
+    heightPt: 120,
     placement: 'every-page',
-  },
-  stacked: {
-    id: 'stacked',
-    label: 'Stacked',
-    blurb: 'Centered - photo, logo, name, contact, license & date.',
-    heightPt: 128,
-    placement: 'last-page',
   },
 };
 

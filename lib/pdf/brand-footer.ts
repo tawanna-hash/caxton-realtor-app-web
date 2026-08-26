@@ -41,9 +41,11 @@ const MARGIN = 48;
 // Neutral colors are shared across publications.
 const WHITE: [number, number, number] = [255, 255, 255];
 const GREY_900: [number, number, number] = [17, 24, 39];
-const GREY_700: [number, number, number] = [55, 65, 81];
 const GREY_500: [number, number, number] = [107, 114, 128];
 const GREY_200: [number, number, number] = [229, 231, 235];
+const DESIGN_NAVY: [number, number, number] = [21, 63, 131];
+const DESIGN_CYAN: [number, number, number] = [8, 172, 224];
+const DESIGN_BLACK: [number, number, number] = [34, 34, 34];
 
 /** Browser-only: fetch an image URL and return its base64 data URL.
  *  Returns null on any failure so the renderer can gracefully skip it. */
@@ -95,14 +97,6 @@ function formatPreparedDate(d: Date): string {
   }
 }
 
-function licenseLabel(b: FooterBrand): string | null {
-  const lic = (b.license_number || '').trim();
-  if (!lic) return null;
-  // Already prefixed? Don't double-stamp.
-  if (/trec|license|lic\./i.test(lic)) return lic;
-  return `TREC #${lic}`;
-}
-
 export interface BrandFooterOptions {
   template: FooterTemplateId;
   brand: FooterBrand;
@@ -147,17 +141,11 @@ export async function applyBrandFooter(
       case 'banner':
         renderBanner(doc, brand, palette, logo, photo, prepared, footerTop, pageWidth, meta.heightPt);
         break;
-      case 'minimal':
-        renderMinimal(doc, brand, palette, logo, photo, prepared, footerTop, pageWidth);
-        break;
       case 'signature':
         renderSignature(doc, brand, palette, logo, photo, prepared, footerTop, pageWidth);
         break;
       case 'two-column':
         renderTwoColumn(doc, brand, palette, logo, photo, prepared, footerTop, pageWidth);
-        break;
-      case 'stacked':
-        renderStacked(doc, brand, palette, logo, photo, prepared, footerTop, pageWidth);
         break;
     }
   }
@@ -167,413 +155,257 @@ export async function applyBrandFooter(
 
 type ImgRef = Awaited<ReturnType<typeof loadImage>>;
 
-function drawHairline(doc: jsPDF, y: number, pageWidth: number) {
-  doc.setDrawColor(...GREY_200);
-  doc.setLineWidth(0.5);
-  doc.line(MARGIN, y, pageWidth - MARGIN, y);
+function drawSocialIcons(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  color: [number, number, number],
+  onDark = false,
+) {
+  const labels = ['f', 'ig', 't', 'in'];
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6);
+  doc.setDrawColor(...color);
+  doc.setTextColor(...color);
+  labels.forEach((label, index) => {
+    const cx = x + index * 18;
+    doc.circle(cx, y, 6);
+    doc.text(label, cx, y + 2, { align: 'center' });
+  });
+  if (onDark) doc.setTextColor(...WHITE);
 }
 
 function renderBusinessCard(
   doc: jsPDF,
   b: FooterBrand,
-  palette: FooterPalette,
+  _palette: FooterPalette,
   logo: ImgRef,
   _photo: ImgRef,
-  prepared: string,
+  _prepared: string,
   top: number,
   pageWidth: number,
 ) {
   const left = MARGIN;
   const width = pageWidth - MARGIN * 2;
-  const height = 92;
-  const col1 = left + 142;
-  const col2 = left + 322;
+  const height = 90;
+  const logoWidth = 142;
+  const identityWidth = 154;
+  const identityX = left + logoWidth;
+  const contactX = identityX + identityWidth;
   doc.setDrawColor(...GREY_200);
   doc.rect(left, top, width, height);
-  doc.line(col1, top + 12, col1, top + height - 12);
-  doc.line(col2, top + 12, col2, top + height - 12);
 
   if (logo) {
     try {
-      doc.addImage(logo.dataUrl, logo.format, left + 18, top + 14, 28, 28, undefined, 'FAST');
+      doc.addImage(logo.dataUrl, logo.format, left + 48, top + 17, 44, 30, undefined, 'FAST');
     } catch { /* ignore */ }
   }
   const company = brokerName(b);
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(...GREY_900);
+  if (company) doc.text(doc.splitTextToSize(company.toUpperCase(), 112), left + logoWidth / 2, top + 62, { align: 'center' });
+
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
-  doc.setTextColor(...GREY_900);
-  if (company) doc.text(doc.splitTextToSize(company, 88), left + 18, top + 60);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.setTextColor(...palette.primary);
+  doc.setTextColor(...DESIGN_NAVY);
   const name = primaryName(b);
-  if (name) doc.text(name, col1 + 18, top + 25);
+  if (name) doc.text(name, identityX + 12, top + 22);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(...GREY_700);
-  if (b.title) doc.text(b.title.toUpperCase(), col1 + 18, top + 40);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  if (company) doc.text(company, col1 + 18, top + 56);
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY_900);
+  doc.text((b.title || 'REALTOR®').toUpperCase(), identityX + 12, top + 35);
+  doc.setFillColor(...DESIGN_CYAN);
+  doc.rect(identityX + 12, top + 48, 28, 7, 'F');
+  doc.setFillColor(...DESIGN_NAVY);
+  doc.rect(identityX + 12, top + 55, 28, 35, 'F');
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setTextColor(...GREY_900);
-  let cy = top + 22;
-  for (const value of [b.phone, b.office_phone, b.email, b.website]) {
-    if (!value) continue;
-    doc.text(value, col2 + 16, cy);
-    cy += 14;
-  }
-  doc.setFontSize(7);
-  doc.setTextColor(...GREY_500);
-  const tail = [licenseLabel(b), prepared].filter(Boolean).join('  -  ');
-  doc.text(tail, col2 + 16, top + height - 10);
+  if (b.phone) doc.text(`C: ${b.phone}`, contactX + 10, top + 62);
+  if (b.office_phone) doc.text(`O: ${b.office_phone}`, contactX + 10, top + 76);
+  if (b.email) doc.text(b.email, contactX + 142, top + 62);
+  if (b.website) doc.text(b.website, contactX + 142, top + 76);
+  doc.setFillColor(...DESIGN_NAVY);
+  doc.rect(pageWidth - MARGIN - 116, top + 10, 116, 25, 'F');
+  drawSocialIcons(doc, pageWidth - MARGIN - 91, top + 22.5, DESIGN_CYAN, true);
 }
 
 function renderBanner(
   doc: jsPDF,
   b: FooterBrand,
-  palette: FooterPalette,
+  _palette: FooterPalette,
   logo: ImgRef,
   photo: ImgRef,
-  prepared: string,
+  _prepared: string,
   top: number,
   pageWidth: number,
   height: number,
 ) {
   const left = MARGIN;
   const width = pageWidth - MARGIN * 2;
-  const panelWidth = 142;
+  const panelWidth = 138;
   doc.setDrawColor(...GREY_200);
   doc.rect(left, top, width, height);
-  doc.setFillColor(...palette.primary);
+  doc.setFillColor(...DESIGN_NAVY);
   doc.rect(left, top, panelWidth, height, 'F');
 
   if (photo) {
     try {
-      doc.addImage(photo.dataUrl, photo.format, left + 44, top + 10, 54, 54, undefined, 'FAST');
+      doc.addImage(photo.dataUrl, photo.format, left + 39, top + 12, 60, 60, undefined, 'FAST');
       doc.setDrawColor(...WHITE);
-      doc.setLineWidth(2);
-      doc.circle(left + 71, top + 37, 28);
+      doc.setLineWidth(3);
+      doc.circle(left + 69, top + 42, 31);
     } catch { /* ignore */ }
   }
   const name = primaryName(b);
   const company = brokerName(b);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
+  doc.setFontSize(13);
   doc.setTextColor(...WHITE);
-  if (name) doc.text(name, left + panelWidth / 2, top + 78, { align: 'center' });
-  doc.setFontSize(10);
-  if (company) doc.text(company, left + panelWidth / 2, top + 93, { align: 'center' });
+  if (name) doc.text(name, left + panelWidth / 2, top + 91, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text((b.title || 'REALTOR®').toUpperCase(), left + panelWidth / 2, top + 106, { align: 'center' });
 
   const contactX = left + panelWidth + 22;
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
+  doc.setFontSize(10.5);
   doc.setTextColor(...GREY_900);
-  let y = top + 24;
-  for (const value of [b.phone, b.office_phone, b.email, b.website]) {
-    if (!value) continue;
-    doc.text(value, contactX, y);
-    y += 17;
-  }
+  if (b.phone) doc.text(`C: ${b.phone}`, contactX, top + 27);
+  if (b.office_phone) doc.text(`O: ${b.office_phone}`, contactX, top + 47);
+  if (b.email) doc.text(b.email, contactX, top + 67);
+  if (b.website) doc.text(b.website, contactX, top + 87);
+  drawSocialIcons(doc, contactX + 5, top + 108, DESIGN_NAVY);
 
-  const logoX = pageWidth - MARGIN - 92;
+  const logoX = pageWidth - MARGIN - 122;
   if (logo) {
     try {
-      doc.addImage(logo.dataUrl, logo.format, logoX + 31, top + 18, 30, 30, undefined, 'FAST');
+      doc.addImage(logo.dataUrl, logo.format, logoX + 39, top + 22, 44, 34, undefined, 'FAST');
     } catch { /* ignore */ }
   }
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setTextColor(...GREY_900);
-  if (company) doc.text(doc.splitTextToSize(company, 92), logoX + 46, top + 66, { align: 'center' });
-  doc.setFontSize(7);
-  doc.setTextColor(...GREY_500);
-  doc.text(prepared, pageWidth - MARGIN - 10, top + height - 9, { align: 'right' });
-}
-
-function renderMinimal(
-  doc: jsPDF,
-  b: FooterBrand,
-  palette: FooterPalette,
-  logo: ImgRef,
-  photo: ImgRef,
-  prepared: string,
-  top: number,
-  pageWidth: number,
-) {
-  drawHairline(doc, top, pageWidth);
-  const y = top + 12;
-
-  // Small headshot + tiny logo on the left
-  let textX = MARGIN;
-  if (photo) {
-    try {
-      const size = 36;
-      doc.addImage(photo.dataUrl, photo.format, MARGIN, y, size, size, undefined, 'FAST');
-      doc.setDrawColor(...palette.accent);
-      doc.setLineWidth(0.6);
-      doc.rect(MARGIN, y, size, size);
-      textX = MARGIN + size + 10;
-    } catch { /* ignore */ }
-  }
-  if (logo) {
-    try {
-      const size = 18;
-      doc.addImage(logo.dataUrl, logo.format, textX, y + 16, size, size, undefined, 'FAST');
-      textX += size + 8;
-    } catch { /* ignore */ }
-  }
-
-  // Identity lines keep the broker name prominent for TREC compliance.
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(...GREY_900);
-  const name = primaryName(b);
-  if (name) doc.text(name, textX, y + 10);
-
-  const company = brokerName(b);
-  if (company) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(...GREY_900);
-    doc.text(company, textX, y + 22);
-  }
-
-  // Final line: title and contact channels.
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(...GREY_700);
-  const contact: string[] = [];
-  if (b.title) contact.push(b.title);
-  if (b.phone) contact.push(b.phone);
-  if (b.email) contact.push(b.email);
-  if (contact.length > 0) doc.text(contact.join('  -  '), textX, y + 36);
-
-  // Right side: license + prepared
-  doc.setFontSize(8);
-  doc.setTextColor(...GREY_500);
-  const rx = pageWidth - MARGIN;
-  const lic = licenseLabel(b);
-  if (lic) doc.text(lic, rx, y + 22, { align: 'right' });
-  doc.text(prepared, rx, y + 36, { align: 'right' });
+  if (company) doc.text(doc.splitTextToSize(company.toUpperCase(), 104), logoX + 61, top + 78, { align: 'center' });
 }
 
 function renderSignature(
   doc: jsPDF,
   b: FooterBrand,
-  palette: FooterPalette,
+  _palette: FooterPalette,
   logo: ImgRef,
   photo: ImgRef,
-  prepared: string,
+  _prepared: string,
   top: number,
   pageWidth: number,
 ) {
   const left = MARGIN;
   const width = pageWidth - MARGIN * 2;
-  const panelWidth = 142;
+  const panelWidth = 150;
   doc.setDrawColor(...GREY_200);
-  doc.rect(left, top, width, 100);
-  doc.setFillColor(...palette.primary);
-  doc.rect(left, top, panelWidth, 100, 'F');
-  doc.setDrawColor(...palette.accent);
-  doc.setLineWidth(5);
-  doc.circle(left + 78, top + 50, 36);
+  doc.rect(left, top, width, 112);
+  doc.setFillColor(...DESIGN_NAVY);
+  doc.rect(left, top, panelWidth, 112, 'F');
+  doc.setDrawColor(...DESIGN_CYAN);
+  doc.setLineWidth(6);
+  doc.circle(left + 82, top + 56, 39);
   if (photo) {
     try {
-      doc.addImage(photo.dataUrl, photo.format, left + 48, top + 20, 60, 60, undefined, 'FAST');
+      doc.addImage(photo.dataUrl, photo.format, left + 49, top + 23, 66, 66, undefined, 'FAST');
     } catch { /* ignore */ }
   }
 
   const name = primaryName(b);
   const company = brokerName(b);
-  const textX = left + panelWidth + 28;
+  const textX = left + panelWidth + 34;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(15);
-  doc.setTextColor(...palette.primary);
-  if (name) doc.text(name, textX, top + 24);
+  doc.setFontSize(14);
+  doc.setTextColor(...DESIGN_NAVY);
+  if (name) doc.text(name, textX, top + 21);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.setTextColor(...GREY_700);
-  if (b.title) doc.text(b.title.toUpperCase(), textX, top + 38);
-  doc.setFillColor(...palette.accent);
-  doc.rect(textX - 8, top + 47, 16, 43, 'F');
-  doc.setFontSize(9);
   doc.setTextColor(...GREY_900);
-  let y = top + 56;
-  for (const value of [b.phone, b.office_phone, b.email, b.website]) {
-    if (!value) continue;
-    doc.text(value, textX + 18, y);
-    y += 13;
-  }
+  doc.text((b.title || 'REALTOR®').toUpperCase(), textX, top + 34);
+  doc.setFillColor(...DESIGN_CYAN);
+  doc.rect(textX, top + 41, 30, 2, 'F');
+  doc.rect(textX, top + 51, 20, 52, 'F');
+  doc.setFontSize(9.5);
+  doc.setTextColor(...GREY_900);
+  if (b.phone) doc.text(`C: ${b.phone}`, textX + 30, top + 62);
+  if (b.office_phone) doc.text(`O: ${b.office_phone}`, textX + 30, top + 77);
+  if (b.email) doc.text(b.email, textX + 30, top + 92);
+  if (b.website) doc.text(b.website, textX + 30, top + 107);
 
-  const logoX = pageWidth - MARGIN - 86;
+  const logoX = pageWidth - MARGIN - 118;
   if (logo) {
     try {
-      doc.addImage(logo.dataUrl, logo.format, logoX + 28, top + 16, 30, 30, undefined, 'FAST');
+      doc.addImage(logo.dataUrl, logo.format, logoX + 37, top + 18, 44, 34, undefined, 'FAST');
     } catch { /* ignore */ }
   }
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
+  doc.setFontSize(12);
   doc.setTextColor(...GREY_900);
-  if (company) doc.text(doc.splitTextToSize(company, 86), logoX + 43, top + 62, { align: 'center' });
-  doc.setFontSize(7);
-  doc.setTextColor(...GREY_500);
-  doc.text([licenseLabel(b), prepared].filter(Boolean).join('  -  '), pageWidth - MARGIN - 8, top + 92, { align: 'right' });
+  if (company) doc.text(doc.splitTextToSize(company.toUpperCase(), 104), logoX + 59, top + 71, { align: 'center' });
+  drawSocialIcons(doc, logoX + 30, top + 99, DESIGN_CYAN);
 }
 
 function renderTwoColumn(
   doc: jsPDF,
   b: FooterBrand,
-  palette: FooterPalette,
+  _palette: FooterPalette,
   logo: ImgRef,
   _photo: ImgRef,
-  prepared: string,
+  _prepared: string,
   top: number,
   pageWidth: number,
 ) {
   const left = MARGIN;
   const width = pageWidth - MARGIN * 2;
-  const bodyHeight = 78;
+  const bodyHeight = 82;
   doc.setDrawColor(...GREY_200);
-  doc.rect(left, top, width, 104);
-  const col1 = left + 180;
-  const col2 = left + 382;
+  doc.rect(left, top, width, 110);
+  const col1 = left + 190;
+  const col2 = left + 392;
+  doc.setDrawColor(...GREY_500);
   doc.line(col1, top + 12, col1, top + bodyHeight - 10);
 
   if (logo) {
     try {
-      doc.addImage(logo.dataUrl, logo.format, left + 18, top + 20, 28, 28, undefined, 'FAST');
+      doc.addImage(logo.dataUrl, logo.format, left + 22, top + 25, 44, 32, undefined, 'FAST');
     } catch { /* ignore */ }
   }
   const company = brokerName(b);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setTextColor(...GREY_900);
-  if (company) doc.text(doc.splitTextToSize(company, 112), left + 56, top + 31);
+  if (company) doc.text(doc.splitTextToSize(company.toUpperCase(), 104), left + 76, top + 40);
 
   const name = primaryName(b);
   doc.setFontSize(14);
-  doc.setTextColor(...palette.primary);
-  if (name) doc.text(name.toUpperCase(), col1 + 22, top + 20);
+  doc.setTextColor(...DESIGN_NAVY);
+  if (name) doc.text(name.toUpperCase(), col1 + 28, top + 20);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.setTextColor(...GREY_700);
-  if (b.title) doc.text(b.title.toUpperCase(), col1 + 22, top + 34);
-  let y = top + 48;
-  for (const value of [b.phone, b.office_phone, b.email, b.website]) {
-    if (!value) continue;
-    doc.text(value, col1 + 22, y);
-    y += 11;
-  }
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...GREY_500);
-  doc.text('CONNECT WITH ME', col2 + 22, top + 36);
+  doc.setTextColor(...GREY_900);
+  doc.text((b.title || 'REALTOR®').toUpperCase(), col1 + 28, top + 32);
+  doc.setFontSize(9);
+  if (b.phone) doc.text(`C: ${b.phone}`, col1 + 28, top + 47);
+  if (b.office_phone) doc.text(`O: ${b.office_phone}`, col1 + 28, top + 59);
+  if (b.email) doc.text(b.email, col1 + 28, top + 71);
+  if (b.website) doc.text(b.website, col1 + 28, top + 81);
+  drawSocialIcons(doc, col2 + 28, top + 43, DESIGN_BLACK);
 
-  doc.setFillColor(...GREY_900);
-  doc.rect(left, top + bodyHeight, width, 26, 'F');
+  doc.setFillColor(...DESIGN_BLACK);
+  doc.rect(left, top + bodyHeight, width, 28, 'F');
   doc.setFont('times', 'italic');
   doc.setFontSize(12);
   doc.setTextColor(...WHITE);
-  doc.text(b.tagline || 'Your trusted real estate professional', left + width / 2, top + bodyHeight + 17, { align: 'center' });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6);
-  doc.setTextColor(...GREY_500);
-  doc.text([licenseLabel(b), prepared].filter(Boolean).join('  -  '), pageWidth - MARGIN, top + 112, { align: 'right' });
-}
-
-function renderStacked(
-  doc: jsPDF,
-  b: FooterBrand,
-  palette: FooterPalette,
-  logo: ImgRef,
-  photo: ImgRef,
-  prepared: string,
-  top: number,
-  pageWidth: number,
-) {
-  drawHairline(doc, top, pageWidth);
-  const cx = pageWidth / 2;
-  let y = top + 10;
-
-  // Centered headshot with logo chip beside it
-  if (photo) {
-    try {
-      const size = 46;
-      const px = cx - size / 2;
-      doc.addImage(photo.dataUrl, photo.format, px, y, size, size, undefined, 'FAST');
-      doc.setDrawColor(...palette.accent);
-      doc.setLineWidth(0.8);
-      doc.rect(px, y, size, size);
-      if (logo) {
-        try {
-          const ls = 20;
-          doc.addImage(
-            logo.dataUrl,
-            logo.format,
-            px + size + 8,
-            y + size - ls,
-            ls,
-            ls,
-            undefined,
-            'FAST',
-          );
-        } catch { /* ignore */ }
-      }
-      y += size + 16;
-    } catch {
-      // fall through to logo-only block
-    }
-  } else if (logo) {
-    try {
-      const size = 20;
-      doc.addImage(logo.dataUrl, logo.format, cx - size / 2, y, size, size, undefined, 'FAST');
-      y += size + 16;
-    } catch { /* ignore */ }
-  }
-
-  doc.setFont('times', 'normal');
-  doc.setFontSize(13);
-  doc.setTextColor(...GREY_900);
-  const name = primaryName(b);
-  if (name) {
-    doc.text(name, cx, y, { align: 'center' });
-    y += 13;
-  }
-
-  const company = brokerName(b);
-  if (company) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(...GREY_900);
-    doc.text(company, cx, y, { align: 'center' });
-    y += 12;
-  }
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(...GREY_700);
-  if (b.title) {
-    doc.text(b.title, cx, y, { align: 'center' });
-    y += 12;
-  }
-
-  const contactLine: string[] = [];
-  if (b.phone) contactLine.push(b.phone);
-  if (b.email) contactLine.push(b.email);
-  if (contactLine.length > 0) {
-    doc.text(contactLine.join('  -  '), cx, y, { align: 'center' });
-    y += 12;
-  }
-
-  doc.setFontSize(8);
-  doc.setTextColor(...GREY_500);
-  const tail: string[] = [];
-  const lic = licenseLabel(b);
-  if (lic) tail.push(lic);
-  tail.push(prepared);
-  doc.text(tail.join('  -  '), cx, y, { align: 'center' });
+  doc.text(
+    b.tagline || 'As your trusted real estate agent, I provide results that move you',
+    left + width / 2,
+    top + bodyHeight + 18,
+    { align: 'center' },
+  );
 }

@@ -25,6 +25,7 @@ type FormState = {
   brokerage_name: string;
   email: string;
   phone: string;
+  office_phone: string;
   website: string;
   logo_url: string;
   photo_url: string;
@@ -44,6 +45,7 @@ const EMPTY_FORM: FormState = {
   brokerage_name: '',
   email: '',
   phone: '',
+  office_phone: '',
   website: '',
   logo_url: '',
   photo_url: '',
@@ -67,6 +69,7 @@ function formFromResponse(data: BrandingResponse): FormState {
     brokerage_name: brand.company ?? '',
     email: brand.email ?? '',
     phone: brand.phone ?? '',
+    office_phone: brand.office_phone ?? '',
     website: brand.website ?? '',
     logo_url: brand.logo_url ?? '',
     photo_url: brand.photo_url ?? '',
@@ -197,125 +200,131 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
         <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: accentColor }}>
           REALTOR® branding
         </p>
-        <h2 className="mt-1 text-lg font-semibold text-gray-900">Calculator sheet branding</h2>
+        <h2 className="mt-1 text-lg font-semibold text-gray-900">Calculator branding designer</h2>
         <p className="mt-1 text-sm leading-relaxed text-gray-600">
-          Added automatically when you print, download, email, or text a completed calculator sheet.
+          Personalize one of the four approved designs. Your saved design is added automatically when you print, download, email, or text a calculator sheet.
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-6 p-5">
-        <fieldset>
-          <legend className="text-sm font-semibold text-gray-900">Photos and logo</legend>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2">
-            <ImageUpload
-              label="Professional headshot"
-              value={form.photo_url}
-              uploading={uploading === 'headshot'}
-              onChange={onFileChange('headshot')}
-              round
-            />
-            <ImageUpload
-              label="Brokerage logo"
-              value={form.logo_url}
-              uploading={uploading === 'logo'}
-              onChange={onFileChange('logo')}
-            />
+      <form onSubmit={onSubmit} className="bg-[#eef2f6]">
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-[#078fca] px-4 py-3 text-white">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em]">Choose a design</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {FOOTER_TEMPLATE_PICKER_IDS.map((templateId) => {
+                const template = FOOTER_TEMPLATE_META[templateId];
+                const selected = form.footer_template === template.id;
+                return (
+                  <label
+                    key={template.id}
+                    className={`cursor-pointer rounded px-3 py-1.5 text-xs font-bold transition ${
+                      selected ? 'bg-white text-[#153f83] shadow-sm' : 'bg-[#087fb3] text-white hover:bg-[#0876a6]'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="footer-template"
+                      value={template.id}
+                      checked={selected}
+                      onChange={() => setField('footer_template', template.id)}
+                      className="sr-only"
+                    />
+                    {template.label}
+                  </label>
+                );
+              })}
+            </div>
           </div>
-        </fieldset>
+          <button
+            type="submit"
+            disabled={saving || uploading !== null}
+            className="flex min-h-10 items-center justify-center gap-2 rounded bg-[#79bd35] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#68aa2b] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
+            {saving ? 'Saving…' : 'Save design'}
+          </button>
+        </div>
 
-        <fieldset>
-          <legend className="text-sm font-semibold text-gray-900">Professional identity</legend>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2">
-            <Field label="Display name" value={form.display_name} onChange={(v) => setField('display_name', v)} required />
-            <Field label="Professional title" value={form.professional_title} onChange={(v) => setField('professional_title', v)} placeholder="REALTOR®, Broker Associate" />
+        <div className="grid lg:grid-cols-[320px_minmax(0,1fr)]">
+          <aside className="space-y-5 border-r border-gray-200 bg-white p-4">
             <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Images</p>
+              <div className="mt-2 grid gap-2">
+                <ImageUpload
+                  label="Professional headshot"
+                  value={form.photo_url}
+                  uploading={uploading === 'headshot'}
+                  onChange={onFileChange('headshot')}
+                  round
+                />
+                <ImageUpload
+                  label="Brokerage logo"
+                  value={form.logo_url}
+                  uploading={uploading === 'logo'}
+                  onChange={onFileChange('logo')}
+                />
+              </div>
+            </div>
+
+            <fieldset className="space-y-3">
+              <legend className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Quick fill</legend>
+              <Field label="Name" value={form.display_name} onChange={(v) => setField('display_name', v)} required />
+              <Field label="Title" value={form.professional_title} onChange={(v) => setField('professional_title', v)} placeholder="REALTOR®" />
+              <Field label="Cell phone" type="tel" value={form.phone} onChange={(v) => setField('phone', v)} />
+              <Field label="Office phone" type="tel" value={form.office_phone} onChange={(v) => setField('office_phone', v)} />
+              <Field label="Email" type="email" value={form.email} onChange={(v) => setField('email', v)} />
+              <Field label="Website" type="url" value={form.website} onChange={(v) => setField('website', v)} placeholder="https://yourwebsite.com" />
               <Field
-                label="Broker licensed or registered assumed business name"
+                label="Broker licensed or registered name"
                 value={form.brokerage_name}
                 onChange={(v) => setField('brokerage_name', v)}
                 required
               />
-              <p className="mt-1.5 text-xs leading-relaxed text-gray-500">
-                Required on branded materials. Use the full licensed broker name or an assumed business name registered with TREC.
+              <Field label="Tagline" value={form.tagline} onChange={(v) => setField('tagline', v)} />
+            </fieldset>
+
+            <details className="rounded-md border border-gray-200 bg-gray-50 p-3">
+              <summary className="cursor-pointer text-xs font-bold uppercase tracking-[0.12em] text-gray-600">Additional details</summary>
+              <div className="mt-3 space-y-3">
+                <Field label="TREC license number" value={form.license_number} onChange={(v) => setField('license_number', v)} />
+                <Field label="Office address" value={form.address} onChange={(v) => setField('address', v)} />
+                <Field label="Address line 2" value={form.address_2} onChange={(v) => setField('address_2', v)} />
+                <Field label="City" value={form.city} onChange={(v) => setField('city', v)} />
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="State" value={form.state} onChange={(v) => setField('state', v)} />
+                  <Field label="ZIP" value={form.zip} onChange={(v) => setField('zip', v)} />
+                </div>
+              </div>
+            </details>
+
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-relaxed text-amber-950">
+              <p className="font-semibold">Texas advertising compliance</p>
+              <p className="mt-1">
+                The broker name remains clearly displayed at no less than 50% of the largest agent contact or logo treatment.
               </p>
             </div>
-            <Field label="TREC license number" value={form.license_number} onChange={(v) => setField('license_number', v)} />
-            <div className="sm:col-span-2">
-              <Field label="Tagline" value={form.tagline} onChange={(v) => setField('tagline', v)} placeholder="Your trusted Central Texas real estate advisor" />
+          </aside>
+
+          <div className="flex min-h-[620px] flex-col p-4 sm:p-6 lg:p-8">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Live PDF canvas</p>
+                <p className="mt-1 text-sm text-gray-600">Changes appear here instantly.</p>
+              </div>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#153f83] shadow-sm">
+                {FOOTER_TEMPLATE_META[form.footer_template].label}
+              </span>
             </div>
+            <div className="flex flex-1 items-center justify-center rounded-lg border border-gray-200 bg-[#f7f8fa] p-3 shadow-inner sm:p-8">
+              <div className="w-full max-w-4xl">
+                <BrandPreview form={form} />
+              </div>
+            </div>
+
+            {error && <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+            {message && <p className="mt-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{message}</p>}
           </div>
-        </fieldset>
-
-        <fieldset>
-          <legend className="text-sm font-semibold text-gray-900">Contact details</legend>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2">
-            <Field label="Email" type="email" value={form.email} onChange={(v) => setField('email', v)} />
-            <Field label="Mobile phone" type="tel" value={form.phone} onChange={(v) => setField('phone', v)} />
-            <div className="sm:col-span-2">
-              <Field label="Website" type="url" value={form.website} onChange={(v) => setField('website', v)} placeholder="https://yourwebsite.com" />
-            </div>
-            <div className="sm:col-span-2">
-              <Field label="Office address" value={form.address} onChange={(v) => setField('address', v)} />
-            </div>
-            <div className="sm:col-span-2">
-              <Field label="Address line 2" value={form.address_2} onChange={(v) => setField('address_2', v)} />
-            </div>
-            <Field label="City" value={form.city} onChange={(v) => setField('city', v)} />
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="State" value={form.state} onChange={(v) => setField('state', v)} />
-              <Field label="ZIP" value={form.zip} onChange={(v) => setField('zip', v)} />
-            </div>
-          </div>
-        </fieldset>
-
-        <fieldset>
-          <legend className="text-sm font-semibold text-gray-900">PDF layout</legend>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {FOOTER_TEMPLATE_PICKER_IDS.map((templateId) => FOOTER_TEMPLATE_META[templateId]).map((template) => (
-              <label
-                key={template.id}
-                className={`cursor-pointer rounded-md border p-3 transition ${
-                  form.footer_template === template.id
-                    ? 'border-[#301D5D] bg-[#301D5D]/5'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="footer-template"
-                  value={template.id}
-                  checked={form.footer_template === template.id}
-                  onChange={() => setField('footer_template', template.id)}
-                  className="sr-only"
-                />
-                <span className="block text-sm font-semibold text-gray-900">{template.label}</span>
-                <span className="mt-1 block text-xs leading-relaxed text-gray-500">{template.blurb}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        <BrandPreview form={form} />
-
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
-          <p className="font-semibold">Texas advertising compliance</p>
-          <p className="mt-1">
-            Branded calculator sheets always display the broker name as a dedicated line at no less than 50% of the largest agent contact or logo treatment. Confirm that any assumed business or team name is registered with TREC before use.
-          </p>
         </div>
-
-        {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-        {message && <p className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{message}</p>}
-
-        <button
-          type="submit"
-          disabled={saving || uploading !== null}
-          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-          style={{ backgroundColor: accentColor }}
-        >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
-          {saving ? 'Saving…' : 'Save calculator branding'}
-        </button>
       </form>
     </section>
   );
@@ -390,143 +399,162 @@ function ImageUpload({
 }
 
 function BrandPreview({ form }: { form: FormState }) {
-  const contact = [form.phone, form.email, form.website].filter(Boolean).join('  •  ');
   const name = form.display_name || 'Your name';
   const company = form.brokerage_name || 'Broker licensed or registered assumed business name';
+  const title = form.professional_title || 'REALTOR®';
+  const mobile = form.phone || 'Mobile phone';
+  const office = form.office_phone || 'Office phone';
+  const email = form.email || 'Email address';
+  const website = form.website || 'Website';
 
-  const headshot = form.photo_url ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={form.photo_url} alt="" className="h-14 w-14 shrink-0 rounded-full object-cover" />
-  ) : null;
+  const headshot = (
+    <div className="h-20 w-20 overflow-hidden rounded-full border-4 border-white bg-gray-200">
+      {form.photo_url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={form.photo_url} alt="" className="h-full w-full object-cover" />
+      ) : (
+        <span className="flex h-full items-center justify-center text-[10px] font-semibold uppercase text-gray-500">Headshot</span>
+      )}
+    </div>
+  );
   const logo = form.logo_url ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={form.logo_url} alt="" className="h-8 w-12 shrink-0 object-contain" />
-  ) : null;
+    <img src={form.logo_url} alt="" className="h-12 w-20 object-contain" />
+  ) : (
+    <span className="grid grid-cols-3 gap-1" aria-label="Brokerage logo">
+      {Array.from({ length: 9 }, (_, index) => (
+        <span key={index} className="h-2.5 w-2.5 rounded-[2px] bg-[#08ace0]" />
+      ))}
+    </span>
+  );
+  const companyBlock = (
+    <div className="flex flex-col items-center text-center">
+      {logo}
+      <p className="mt-2 max-w-44 text-base font-black uppercase leading-none text-black">{company}</p>
+    </div>
+  );
+  const socialIcons = (
+    <div className="flex items-center justify-center gap-2" aria-label="Social media">
+      {['f', '◎', 't', 'in'].map((social) => (
+        <span key={social} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-current text-[11px] font-bold">
+          {social}
+        </span>
+      ))}
+    </div>
+  );
+  const contactLines = (
+    <div className="space-y-1 text-xs font-semibold leading-tight text-black">
+      <p><span className="font-black text-[#079bce]">C:</span> {mobile}</p>
+      <p><span className="font-black text-[#079bce]">O:</span> {office}</p>
+      <p><span className="font-black text-[#079bce]">@</span> {email}</p>
+      <p><span className="font-black text-[#079bce]">W:</span> {website}</p>
+    </div>
+  );
 
   let preview: ReactNode;
   switch (form.footer_template) {
     case 'banner':
       preview = (
-        <div className="grid min-h-32 overflow-hidden border border-gray-200 bg-white shadow-sm sm:grid-cols-[0.8fr_1.35fr_0.85fr]">
-          <div className="flex flex-col items-center justify-center bg-[#173f82] p-4 text-center text-white">
+        <div className="grid min-h-44 overflow-hidden border border-gray-300 bg-white shadow-sm sm:grid-cols-[0.78fr_1.35fr_0.9fr]">
+          <div className="flex flex-col items-center justify-center bg-[#153f83] px-4 py-3 text-center text-white">
             {headshot}
-            <p className="mt-2 truncate text-sm font-bold">{name}</p>
-            {form.professional_title && <p className="truncate text-[10px] uppercase tracking-[0.18em] text-white/80">{form.professional_title}</p>}
-            <p className="mt-1 max-w-full truncate text-xs font-bold">{company}</p>
+            <p className="mt-2 max-w-full truncate text-sm font-black">{name}</p>
+            <p className="truncate text-[10px] uppercase tracking-[0.28em] text-white">{title}</p>
           </div>
-          <div className="flex items-center p-4">
-            <p className="break-words text-sm leading-7 text-gray-800">{contact || 'Your phone, email, and website'}</p>
+          <div className="flex flex-col justify-center gap-5 px-5 py-4">
+            {contactLines}
+            <div className="text-[#153f83]">{socialIcons}</div>
           </div>
-          <div className="flex flex-col items-center justify-center border-t border-gray-200 p-4 text-center sm:border-l sm:border-t-0">
-            {logo}
-            <p className="mt-2 text-sm font-bold text-gray-900">{company}</p>
-          </div>
-        </div>
-      );
-      break;
-    case 'minimal':
-      preview = (
-        <div className="flex min-h-20 items-center gap-3 border-t border-gray-300 bg-white px-4 py-3 shadow-sm">
-          {logo}
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-gray-900">{name}</p>
-            <p className="truncate text-sm font-bold text-gray-800">{company}</p>
-            <p className="truncate text-xs text-gray-500">
-              {[form.professional_title, contact].filter(Boolean).join('  •  ') || 'Your title and contact details'}
-            </p>
+          <div className="flex items-center justify-center border-t border-gray-200 p-4 sm:border-l-0 sm:border-t-0">
+            {companyBlock}
           </div>
         </div>
       );
       break;
     case 'signature':
       preview = (
-        <div className="grid min-h-32 overflow-hidden border border-gray-200 bg-white shadow-sm sm:grid-cols-[0.82fr_1.3fr_0.88fr]">
-          <div className="relative flex items-center justify-center overflow-hidden bg-[#173f82] p-4">
-            <span className="absolute -right-10 h-36 w-36 rounded-full border-[8px] border-cyan-500" aria-hidden />
-            <div className="relative z-10">{headshot}</div>
+        <div className="grid min-h-44 overflow-hidden border border-gray-300 bg-white shadow-sm sm:grid-cols-[0.88fr_1.35fr_0.9fr]">
+          <div className="relative flex items-center justify-center overflow-hidden bg-[#153f83] p-4">
+            <span className="absolute -right-9 h-48 w-48 rounded-full border-[10px] border-[#08ace0]" aria-hidden />
+            <div className="relative z-10 scale-110">{headshot}</div>
           </div>
-          <div className="flex items-center gap-3 p-4">
-            <span className="hidden h-full w-8 bg-cyan-500 sm:block" aria-hidden />
-            <div className="min-w-0">
-              <p className="truncate text-base font-bold text-[#173f82]">{name}</p>
-              {form.professional_title && <p className="truncate text-[10px] uppercase tracking-[0.18em] text-gray-700">{form.professional_title}</p>}
-              <p className="mt-2 break-words text-xs leading-6 text-gray-700">{contact || 'Your phone, email, and website'}</p>
+          <div className="flex flex-col justify-center p-4">
+            <div className="min-w-0 pb-2">
+              <p className="truncate text-base font-black text-[#153f83]">{name}</p>
+              <p className="truncate text-[10px] uppercase tracking-[0.25em] text-gray-800">{title}</p>
+              <span className="mt-1 block h-0.5 w-10 bg-[#08ace0]" />
+            </div>
+            <div className="mt-1 flex items-stretch gap-3">
+              <span className="w-7 shrink-0 bg-[#08ace0]" aria-hidden />
+              {contactLines}
             </div>
           </div>
-          <div className="flex flex-col items-center justify-center border-t border-gray-200 p-4 text-center sm:border-l sm:border-t-0">
-            {logo}
-            <p className="mt-2 text-sm font-bold text-gray-900">{company}</p>
+          <div className="flex flex-col items-center justify-center border-t border-gray-200 p-4 sm:border-t-0">
+            {companyBlock}
+            <div className="mt-5 text-[#079bce]">{socialIcons}</div>
           </div>
         </div>
       );
       break;
     case 'two-column':
       preview = (
-        <div className="overflow-hidden border border-gray-200 bg-white shadow-sm">
-          <div className="grid min-h-28 gap-4 p-4 sm:grid-cols-[1fr_1.15fr_0.7fr]">
-            <div className="flex min-w-0 items-center gap-3 border-b border-gray-200 pb-3 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-4">
-            {logo}
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-gray-800">{company}</p>
+        <div className="overflow-hidden border border-gray-300 bg-white shadow-sm">
+          <div className="grid min-h-36 gap-5 px-5 py-4 sm:grid-cols-[1fr_1.25fr_0.75fr]">
+            <div className="flex items-center justify-center border-b border-gray-300 pb-4 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-5">
+              <div className="flex items-center gap-3">
+                {logo}
+                <p className="max-w-40 text-base font-black uppercase leading-tight text-black">{company}</p>
+              </div>
+          </div>
+            <div className="flex min-w-0 flex-col justify-center">
+              <p className="truncate text-base font-black uppercase text-[#064ca7]">{name}</p>
+              <p className="truncate text-[10px] uppercase tracking-[0.28em] text-black">{title}</p>
+              <div className="mt-2 space-y-1 text-xs font-semibold leading-tight text-black">
+                <p>C: {mobile}</p>
+                <p>O: {office}</p>
+                <p>{email}</p>
+                <p>{website}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center text-black">
+              {socialIcons}
             </div>
           </div>
-            <div className="min-w-0">
-              <p className="truncate text-base font-bold uppercase text-[#173f82]">{name}</p>
-              {form.professional_title && <p className="truncate text-xs uppercase tracking-[0.18em] text-gray-700">{form.professional_title}</p>}
-              <p className="mt-2 break-words text-xs leading-5 text-gray-700">{contact || 'Your phone, email, and website'}</p>
-            </div>
-            <div className="flex items-center justify-center text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">
-              Connect with me
-            </div>
+          <div className="bg-[#222] px-4 py-2.5 text-center font-serif text-base italic text-white">
+            {form.tagline || 'As your trusted real estate agent, I provide results that move you'}
           </div>
-          <div className="bg-gray-900 px-4 py-2 text-center font-serif text-sm italic text-white">
-            {form.tagline || 'Your trusted real estate professional'}
-          </div>
-        </div>
-      );
-      break;
-    case 'stacked':
-      preview = (
-        <div className="flex min-h-36 flex-col items-center justify-center border-t-2 border-[#c4a35a] bg-white p-4 text-center shadow-sm">
-          <div className="flex items-end gap-2">
-            {headshot}
-            {logo}
-          </div>
-          <p className="mt-2 font-serif text-lg text-gray-900">{name}</p>
-          <p className="text-sm font-bold text-gray-800">{company}</p>
-          {form.professional_title && <p className="text-xs text-gray-600">{form.professional_title}</p>}
-          <p className="mt-1 text-xs text-gray-500">{contact || 'Your contact details'}</p>
         </div>
       );
       break;
     case 'business-card':
     default:
       preview = (
-        <div className="grid min-h-28 gap-4 border border-gray-200 bg-white p-4 shadow-sm sm:grid-cols-[0.9fr_1fr_1.35fr]">
-          <div className="flex min-w-0 flex-col items-center justify-center text-center">
-            {logo}
-            <p className="mt-2 text-sm font-bold text-gray-900">{company}</p>
+        <div className="relative grid min-h-44 overflow-hidden border border-gray-300 bg-white shadow-sm sm:grid-cols-[0.9fr_1.05fr_1.65fr]">
+          <div className="flex items-center justify-center p-4">
+            {companyBlock}
           </div>
-          <div className="min-w-0 border-t border-gray-200 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
-            <p className="truncate text-lg font-semibold text-[#173f82]">{name}</p>
-            {form.professional_title && <p className="truncate text-xs uppercase tracking-[0.2em] text-gray-700">{form.professional_title}</p>}
-            <p className="mt-2 truncate text-sm font-bold text-gray-800">{company}</p>
+          <div className="flex min-w-0 flex-col justify-center px-5 py-4">
+            <p className="truncate text-lg font-bold text-[#153f83]">{name}</p>
+            <p className="truncate text-[11px] uppercase tracking-[0.32em] text-black">{title}</p>
+            <span className="mt-5 block h-16 w-8 border-t-[10px] border-[#08ace0] bg-[#153f83]" aria-hidden />
           </div>
-          <div className="flex items-center border-t border-gray-200 pt-3 text-sm leading-7 text-gray-800 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
-            <p className="break-words">{contact || 'Your phone, email, and website'}</p>
+          <div className="grid grid-cols-2 items-end gap-4 px-4 pb-5 pt-14">
+            <div className="space-y-2 text-xs font-semibold text-black">
+              <p><span className="text-[#079bce]">◉</span> C: {mobile}</p>
+              <p><span className="text-[#079bce]">◉</span> O: {office}</p>
+            </div>
+            <div className="space-y-2 text-xs font-semibold text-black">
+              <p className="truncate"><span className="text-[#079bce]">✉</span> {email}</p>
+              <p className="truncate"><span className="text-[#079bce]">◎</span> {website}</p>
+            </div>
+          </div>
+          <div className="absolute right-0 top-3 bg-[#153f83] px-5 py-2 text-[#08ace0]">
+            {socialIcons}
           </div>
         </div>
       );
       break;
   }
 
-  return (
-    <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Print and PDF preview</p>
-        <p className="text-xs font-medium text-[#301D5D]">{FOOTER_TEMPLATE_META[form.footer_template].label}</p>
-      </div>
-      <div className="mt-3">{preview}</div>
-    </div>
-  );
+  return <div className="w-full">{preview}</div>;
 }
