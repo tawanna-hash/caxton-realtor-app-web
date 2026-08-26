@@ -627,13 +627,15 @@ export default function ProductTourClient() {
             <BrandMark />
           </Link>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={replay}
-              className="hidden min-h-11 items-center gap-2 border border-brand-700/20 px-3 text-xs font-semibold text-brand-700 transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 sm:inline-flex"
-            >
-              <RotateCcw size={15} aria-hidden /> Replay
-            </button>
+            {!complete ? (
+              <button
+                type="button"
+                onClick={replay}
+                className="hidden min-h-11 items-center gap-2 border border-brand-700/20 px-3 text-xs font-semibold text-brand-700 transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700 sm:inline-flex"
+              >
+                <RotateCcw size={15} aria-hidden /> Replay
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={shareTour}
@@ -760,9 +762,11 @@ export default function ProductTourClient() {
         <div className="order-1 lg:order-2">
           <div className="mb-4 flex items-center justify-between lg:hidden">
             <span className="text-[10px] font-bold uppercase tracking-[0.17em] text-gray-500">Live app preview</span>
-            <button type="button" onClick={replay} className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700">
-              <RotateCcw size={13} aria-hidden /> Replay
-            </button>
+            {!complete ? (
+              <button type="button" onClick={replay} className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700">
+                <RotateCcw size={13} aria-hidden /> Replay
+              </button>
+            ) : null}
           </div>
           <div className="mb-3 flex items-center justify-center gap-2 border border-brand-700/15 bg-white/70 px-3 py-2 text-center text-[9px] font-semibold uppercase tracking-[0.14em] text-brand-700 shadow-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-orange-600" aria-hidden />
