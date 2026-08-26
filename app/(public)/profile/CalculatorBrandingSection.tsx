@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { ImageUp, Loader2, Save } from 'lucide-react';
 import { getApiBase } from '@/lib/api-base';
 import {
@@ -151,6 +151,10 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!form.brokerage_name.trim()) {
+      setError('Enter the broker’s licensed name or TREC-registered assumed business name.');
+      return;
+    }
     setSaving(true);
     setError(null);
     setMessage(null);
@@ -223,7 +227,17 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <Field label="Display name" value={form.display_name} onChange={(v) => setField('display_name', v)} required />
             <Field label="Professional title" value={form.professional_title} onChange={(v) => setField('professional_title', v)} placeholder="REALTOR®, Broker Associate" />
-            <Field label="Brokerage" value={form.brokerage_name} onChange={(v) => setField('brokerage_name', v)} />
+            <div>
+              <Field
+                label="Broker licensed or registered assumed business name"
+                value={form.brokerage_name}
+                onChange={(v) => setField('brokerage_name', v)}
+                required
+              />
+              <p className="mt-1.5 text-xs leading-relaxed text-gray-500">
+                Required on branded materials. Use the full licensed broker name or an assumed business name registered with TREC.
+              </p>
+            </div>
             <Field label="TREC license number" value={form.license_number} onChange={(v) => setField('license_number', v)} />
             <div className="sm:col-span-2">
               <Field label="Tagline" value={form.tagline} onChange={(v) => setField('tagline', v)} placeholder="Your trusted Central Texas real estate advisor" />
@@ -281,6 +295,13 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
         </fieldset>
 
         <BrandPreview form={form} />
+
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
+          <p className="font-semibold">Texas advertising compliance</p>
+          <p className="mt-1">
+            Branded calculator sheets always display the broker name as a dedicated line at no less than 50% of the largest agent contact or logo treatment. Confirm that any assumed business or team name is registered with TREC before use.
+          </p>
+        </div>
 
         {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         {message && <p className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{message}</p>}
@@ -369,26 +390,121 @@ function ImageUpload({
 
 function BrandPreview({ form }: { form: FormState }) {
   const contact = [form.phone, form.email, form.website].filter(Boolean).join('  •  ');
+  const name = form.display_name || 'Your name';
+  const company = form.brokerage_name || 'Broker licensed or registered assumed business name';
+
+  const headshot = form.photo_url ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={form.photo_url} alt="" className="h-14 w-14 shrink-0 rounded-full object-cover" />
+  ) : null;
+  const logo = form.logo_url ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={form.logo_url} alt="" className="h-8 w-12 shrink-0 object-contain" />
+  ) : null;
+
+  let preview: ReactNode;
+  switch (form.footer_template) {
+    case 'banner':
+      preview = (
+        <div className="flex min-h-24 items-center gap-4 border-t-2 border-[#c4a35a] bg-[#301D5D] p-4 text-white shadow-sm">
+          {headshot}
+          {logo}
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-serif text-lg">{name}</p>
+            <p className="truncate text-sm font-bold">{company}</p>
+            {form.professional_title && <p className="truncate text-xs text-white/75">{form.professional_title}</p>}
+          </div>
+          <p className="hidden max-w-[44%] text-right text-xs leading-relaxed text-white/80 sm:block">
+            {contact || 'Your contact details'}
+          </p>
+        </div>
+      );
+      break;
+    case 'minimal':
+      preview = (
+        <div className="flex min-h-20 items-center gap-3 border-t border-gray-300 bg-white px-4 py-3 shadow-sm">
+          {logo}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold text-gray-900">{name}</p>
+            <p className="truncate text-sm font-bold text-gray-800">{company}</p>
+            <p className="truncate text-xs text-gray-500">
+              {[form.professional_title, contact].filter(Boolean).join('  •  ') || 'Your title and contact details'}
+            </p>
+          </div>
+        </div>
+      );
+      break;
+    case 'signature':
+      preview = (
+        <div className="flex min-h-28 items-center gap-4 border-t-2 border-[#c4a35a] bg-white p-4 shadow-sm">
+          {headshot}
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-serif text-2xl italic text-[#301D5D]">{name}</p>
+            <p className="truncate text-sm font-bold text-gray-900">{company}</p>
+            {form.professional_title && <p className="truncate text-xs text-gray-600">{form.professional_title}</p>}
+            <p className="mt-1 truncate text-xs text-gray-500">{contact || 'Your contact details'}</p>
+          </div>
+          {logo}
+        </div>
+      );
+      break;
+    case 'two-column':
+      preview = (
+        <div className="grid min-h-28 gap-4 border-t-2 border-[#c4a35a] bg-white p-4 shadow-sm sm:grid-cols-2">
+          <div className="flex min-w-0 items-center gap-3">
+            {headshot}
+            {logo}
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-gray-900">{name}</p>
+              <p className="truncate text-sm font-bold text-gray-800">{company}</p>
+              {form.professional_title && <p className="truncate text-xs text-gray-500">{form.professional_title}</p>}
+            </div>
+          </div>
+          <div className="border-t border-gray-200 pt-3 text-xs sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+            <p className="font-bold uppercase tracking-[0.12em] text-[#301D5D]">Contact</p>
+            <p className="mt-2 break-words leading-relaxed text-gray-600">{contact || 'Your phone, email, and website'}</p>
+          </div>
+        </div>
+      );
+      break;
+    case 'stacked':
+      preview = (
+        <div className="flex min-h-36 flex-col items-center justify-center border-t-2 border-[#c4a35a] bg-white p-4 text-center shadow-sm">
+          <div className="flex items-end gap-2">
+            {headshot}
+            {logo}
+          </div>
+          <p className="mt-2 font-serif text-lg text-gray-900">{name}</p>
+          <p className="text-sm font-bold text-gray-800">{company}</p>
+          {form.professional_title && <p className="text-xs text-gray-600">{form.professional_title}</p>}
+          <p className="mt-1 text-xs text-gray-500">{contact || 'Your contact details'}</p>
+        </div>
+      );
+      break;
+    case 'business-card':
+    default:
+      preview = (
+        <div className="flex min-h-24 items-center gap-3 border-t-2 border-[#c4a35a] bg-white p-4 shadow-sm">
+          {headshot}
+          {logo}
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold text-gray-900">{name}</p>
+            <p className="truncate text-sm font-bold text-gray-800">{company}</p>
+            {form.professional_title && <p className="truncate text-xs text-gray-600">{form.professional_title}</p>}
+            <p className="mt-1 truncate text-xs text-gray-500">{contact || 'Your contact details'}</p>
+          </div>
+        </div>
+      );
+      break;
+  }
+
   return (
     <div className="rounded-md border border-gray-200 bg-gray-50 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Print and PDF preview</p>
-      <div className="mt-3 flex items-center gap-3 border-t-2 border-[#c4a35a] bg-white p-4 shadow-sm">
-        {form.photo_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={form.photo_url} alt="" className="h-14 w-14 rounded-full object-cover" />
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-gray-900">{form.display_name || 'Your name'}</p>
-          <p className="truncate text-xs text-gray-600">
-            {[form.professional_title, form.brokerage_name].filter(Boolean).join(' · ') || 'Your title and brokerage'}
-          </p>
-          <p className="mt-1 truncate text-xs text-gray-500">{contact || 'Your contact details'}</p>
-        </div>
-        {form.logo_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={form.logo_url} alt="" className="h-12 w-16 object-contain" />
-        )}
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">Print and PDF preview</p>
+        <p className="text-xs font-medium text-[#301D5D]">{FOOTER_TEMPLATE_META[form.footer_template].label}</p>
       </div>
+      <div className="mt-3">{preview}</div>
     </div>
   );
 }

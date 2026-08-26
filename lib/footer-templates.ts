@@ -33,8 +33,9 @@ export function coerceFooterTemplateId(value: unknown): FooterTemplateId {
 }
 
 /**
- * Brand fields the renderer can pull from. All optional - the renderer
- * skips blank lines so a partially-filled profile still looks tidy.
+ * Brand fields the renderer can pull from. Calculator branding requires
+ * `company` at save time so every public-facing export identifies the
+ * broker. Other blank fields are skipped by the renderer.
  *
  * `publication` controls the color palette: 'austin' (RealtyLine) uses
  * navy + gold, 'san_antonio' (Newsline San Antonio) uses plum + gold, 'both' falls
@@ -118,7 +119,7 @@ export const FOOTER_TEMPLATE_META: Record<FooterTemplateId, FooterTemplateMeta> 
     id: 'minimal',
     label: 'Minimal',
     blurb: 'Compact two-line card. Lightest touch, still on every page.',
-    heightPt: 60,
+    heightPt: 72,
     placement: 'every-page',
   },
   signature: {

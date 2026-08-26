@@ -84,6 +84,10 @@ function primaryName(b: FooterBrand): string {
   return (b.company || '').trim();
 }
 
+function brokerName(b: FooterBrand): string {
+  return (b.company || '').trim();
+}
+
 function formatPreparedDate(d: Date): string {
   // "Prepared June 13, 2026"
   try {
@@ -228,7 +232,7 @@ function renderBusinessCard(
   drawHairline(doc, top, pageWidth);
   const y = top + 12;
   const photoSize = 60;
-  const logoSize = 32;
+  const logoSize = 24;
   const textX = drawPhotoAndLogo(doc, palette, photo, logo, MARGIN, y, photoSize, logoSize);
 
   const name = primaryName(b);
@@ -239,21 +243,22 @@ function renderBusinessCard(
     doc.text(name, textX, y + 11);
   }
 
-  if (b.title || b.company) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(...GREY_700);
-    const sub = [b.title, b.name ? b.company : null].filter(Boolean).join(' - ');
-    if (sub) doc.text(sub, textX, y + 24);
+  const company = brokerName(b);
+  if (company) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(...GREY_900);
+    doc.text(company, textX, y + 25);
   }
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...GREY_700);
+  if (b.title) doc.text(b.title, textX, y + 38);
   const line: string[] = [];
   if (b.phone) line.push(b.phone);
   if (b.email) line.push(b.email);
-  if (line.length > 0) doc.text(line.join('  -  '), textX, y + 37);
+  if (line.length > 0) doc.text(line.join('  -  '), textX, y + 50);
 
   // License + prepared date on a final small line
   doc.setFontSize(8);
@@ -262,7 +267,7 @@ function renderBusinessCard(
   const lic = licenseLabel(b);
   if (lic) tail.push(lic);
   tail.push(prepared);
-  doc.text(tail.join('  -  '), textX, y + 50);
+  doc.text(tail.join('  -  '), textX, y + 62);
 }
 
 function renderBanner(
@@ -298,7 +303,7 @@ function renderBanner(
   }
   if (logo) {
     try {
-      const size = 30;
+      const size = 24;
       doc.addImage(logo.dataUrl, logo.format, textX, y + 22, size, size, undefined, 'FAST');
       textX += size + 10;
     } catch { /* ignore */ }
@@ -310,17 +315,23 @@ function renderBanner(
   const name = primaryName(b);
   if (name) doc.text(name, textX, y + 14);
 
+  const company = brokerName(b);
+  if (company) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(...WHITE);
+    doc.text(company, textX, y + 29);
+  }
+
+  const lic = licenseLabel(b);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(230, 235, 245);
-  const sub = [b.title, b.name ? b.company : null].filter(Boolean).join(' - ');
-  if (sub) doc.text(sub, textX, y + 28);
-
-  const lic = licenseLabel(b);
+  if (b.title) doc.text(b.title, textX, y + 42);
   if (lic) {
     doc.setFontSize(8);
     doc.setTextColor(210, 218, 235);
-    doc.text(lic, textX, y + 42);
+    doc.text(lic, textX, y + 54);
   }
 
   // Right side: contact stack
@@ -363,30 +374,36 @@ function renderMinimal(
   }
   if (logo) {
     try {
-      const size = 20;
+      const size = 18;
       doc.addImage(logo.dataUrl, logo.format, textX, y + 16, size, size, undefined, 'FAST');
       textX += size + 8;
     } catch { /* ignore */ }
   }
 
-  // Line 1: name - title - company
+  // Identity lines keep the broker name prominent for TREC compliance.
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(...GREY_900);
   const name = primaryName(b);
   if (name) doc.text(name, textX, y + 10);
 
+  const company = brokerName(b);
+  if (company) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...GREY_900);
+    doc.text(company, textX, y + 22);
+  }
+
+  // Final line: title and contact channels.
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...GREY_700);
-  const sub = [b.title, b.name ? b.company : null].filter(Boolean).join(' - ');
-  if (sub) doc.text(sub, textX, y + 22);
-
-  // Line 3: phone - email
   const contact: string[] = [];
+  if (b.title) contact.push(b.title);
   if (b.phone) contact.push(b.phone);
   if (b.email) contact.push(b.email);
-  if (contact.length > 0) doc.text(contact.join('  -  '), textX, y + 34);
+  if (contact.length > 0) doc.text(contact.join('  -  '), textX, y + 36);
 
   // Right side: license + prepared
   doc.setFontSize(8);
@@ -394,7 +411,7 @@ function renderMinimal(
   const rx = pageWidth - MARGIN;
   const lic = licenseLabel(b);
   if (lic) doc.text(lic, rx, y + 22, { align: 'right' });
-  doc.text(prepared, rx, y + 34, { align: 'right' });
+  doc.text(prepared, rx, y + 36, { align: 'right' });
 }
 
 function renderSignature(
@@ -430,18 +447,23 @@ function renderSignature(
   const name = primaryName(b);
   if (name) doc.text(name, textX, y + 22);
 
-  // Title - company
+  const company = brokerName(b);
+  if (company) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(...GREY_900);
+    doc.text(company, textX, y + 37);
+  }
+
+  // Title and contact lines.
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...GREY_700);
-  const sub = [b.title, b.name ? b.company : null].filter(Boolean).join(' - ');
-  if (sub) doc.text(sub, textX, y + 36);
-
-  // Contact line
+  if (b.title) doc.text(b.title, textX, y + 50);
   const contact: string[] = [];
   if (b.phone) contact.push(b.phone);
   if (b.email) contact.push(b.email);
-  if (contact.length > 0) doc.text(contact.join('  -  '), textX, y + 50);
+  if (contact.length > 0) doc.text(contact.join('  -  '), textX, y + 63);
 
   // License + prepared
   doc.setFontSize(8);
@@ -450,12 +472,12 @@ function renderSignature(
   const lic = licenseLabel(b);
   if (lic) tail.push(lic);
   tail.push(prepared);
-  doc.text(tail.join('  -  '), textX, y + 62);
+  doc.text(tail.join('  -  '), textX, y + 76);
 
   // Logo on the far right of the headline row
   if (logo) {
     try {
-      const size = 36;
+      const size = 24;
       doc.addImage(
         logo.dataUrl,
         logo.format,
@@ -498,7 +520,7 @@ function renderTwoColumn(
   }
   if (logo) {
     try {
-      const size = 26;
+      const size = 20;
       doc.addImage(logo.dataUrl, logo.format, leftTextX, y + 26, size, size, undefined, 'FAST');
       leftTextX += size + 8;
     } catch { /* ignore */ }
@@ -510,13 +532,20 @@ function renderTwoColumn(
   const name = primaryName(b);
   if (name) doc.text(name, leftTextX, y + 10);
 
+  const company = brokerName(b);
+  if (company) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...GREY_900);
+    doc.text(company, leftTextX, y + 24);
+  }
+
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...GREY_700);
-  const sub = [b.title, b.name ? b.company : null].filter(Boolean).join(' - ');
-  if (sub) doc.text(sub, leftTextX, y + 24);
+  if (b.title) doc.text(b.title, leftTextX, y + 36);
 
-  let leftY = y + 38;
+  let leftY = y + 49;
   const addr = joinAddress(b);
   if (addr) {
     doc.setFontSize(8);
@@ -586,7 +615,7 @@ function renderStacked(
       doc.rect(px, y, size, size);
       if (logo) {
         try {
-          const ls = 22;
+          const ls = 20;
           doc.addImage(
             logo.dataUrl,
             logo.format,
@@ -605,7 +634,7 @@ function renderStacked(
     }
   } else if (logo) {
     try {
-      const size = 32;
+      const size = 20;
       doc.addImage(logo.dataUrl, logo.format, cx - size / 2, y, size, size, undefined, 'FAST');
       y += size + 16;
     } catch { /* ignore */ }
@@ -620,12 +649,20 @@ function renderStacked(
     y += 13;
   }
 
+  const company = brokerName(b);
+  if (company) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...GREY_900);
+    doc.text(company, cx, y, { align: 'center' });
+    y += 12;
+  }
+
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...GREY_700);
-  const sub = [b.title, b.name ? b.company : null].filter(Boolean).join(' - ');
-  if (sub) {
-    doc.text(sub, cx, y, { align: 'center' });
+  if (b.title) {
+    doc.text(b.title, cx, y, { align: 'center' });
     y += 12;
   }
 

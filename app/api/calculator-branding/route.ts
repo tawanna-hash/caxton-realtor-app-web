@@ -13,11 +13,13 @@ export const dynamic = 'force-dynamic';
 
 const nullableText = (max: number) => z.string().trim().max(max).nullable();
 const nullableUrl = z.union([z.literal(''), z.url().max(2_000)]).nullable();
+const requiredText = (label: string, max: number) =>
+  z.string().trim().min(1, `${label} is required.`).max(max);
 
 const calculatorBrandingSchema = z.object({
-  display_name: nullableText(160),
+  display_name: requiredText('Display name', 160),
   professional_title: nullableText(160),
-  brokerage_name: nullableText(200),
+  brokerage_name: requiredText('Broker licensed or registered assumed business name', 200),
   email: z.union([z.literal(''), z.email().max(320)]).nullable(),
   phone: nullableText(60),
   website: nullableUrl,
