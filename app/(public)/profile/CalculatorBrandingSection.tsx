@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
-import { ImageUp, Loader2, Save } from 'lucide-react';
+import { Check, Copy, Download, ImageUp, Loader2, Save } from 'lucide-react';
 import { getApiBase } from '@/lib/api-base';
 import {
   FOOTER_TEMPLATE_META,
@@ -27,6 +27,10 @@ type FormState = {
   phone: string;
   office_phone: string;
   website: string;
+  facebook_url: string;
+  instagram_url: string;
+  x_url: string;
+  linkedin_url: string;
   logo_url: string;
   photo_url: string;
   address: string;
@@ -47,6 +51,10 @@ const EMPTY_FORM: FormState = {
   phone: '',
   office_phone: '',
   website: '',
+  facebook_url: '',
+  instagram_url: '',
+  x_url: '',
+  linkedin_url: '',
   logo_url: '',
   photo_url: '',
   address: '',
@@ -71,6 +79,10 @@ function formFromResponse(data: BrandingResponse): FormState {
     phone: brand.phone ?? '',
     office_phone: brand.office_phone ?? '',
     website: brand.website ?? '',
+    facebook_url: brand.facebook_url ?? '',
+    instagram_url: brand.instagram_url ?? '',
+    x_url: brand.x_url ?? '',
+    linkedin_url: brand.linkedin_url ?? '',
     logo_url: brand.logo_url ?? '',
     photo_url: brand.photo_url ?? '',
     address: brand.address ?? '',
@@ -87,6 +99,55 @@ function formFromResponse(data: BrandingResponse): FormState {
 const inputClass =
   'mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15';
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  })[character] ?? character);
+}
+
+function emailSignatureHtml(form: FormState): string {
+  const name = escapeHtml(form.display_name || 'Your name');
+  const title = escapeHtml(form.professional_title || 'REALTOR®');
+  const company = escapeHtml(form.brokerage_name);
+  const logo = form.logo_url
+    ? `<img src="${escapeHtml(form.logo_url)}" alt="${company}" width="96" style="display:block;max-width:96px;max-height:58px;object-fit:contain;border:0">`
+    : '';
+  const photo = form.photo_url
+    ? `<img src="${escapeHtml(form.photo_url)}" alt="${name}" width="92" height="92" style="display:block;width:92px;height:92px;border-radius:50%;object-fit:cover;border:4px solid #ffffff">`
+    : '';
+  const lines = [
+    form.phone && `<b style="color:#079bce">C:</b> ${escapeHtml(form.phone)}`,
+    form.office_phone && `<b style="color:#079bce">O:</b> ${escapeHtml(form.office_phone)}`,
+    form.email && `<a href="mailto:${escapeHtml(form.email)}" style="color:#111827;text-decoration:none">${escapeHtml(form.email)}</a>`,
+    form.website && `<a href="${escapeHtml(form.website)}" style="color:#111827;text-decoration:none">${escapeHtml(form.website)}</a>`,
+  ].filter(Boolean).join('<br>');
+  const socials = [
+    ['f', form.facebook_url],
+    ['ig', form.instagram_url],
+    ['x', form.x_url],
+    ['in', form.linkedin_url],
+  ].filter((entry): entry is [string, string] => Boolean(entry[1])).map(([label, url]) =>
+    `<a href="${escapeHtml(url)}" style="display:inline-block;margin-right:7px;color:#153f83;text-decoration:none;font-weight:700">${label}</a>`,
+  ).join('');
+  const companyCell = `<td style="padding:18px 22px;text-align:center;vertical-align:middle">${logo}<div style="margin-top:8px;font:700 15px Arial,sans-serif;text-transform:uppercase;color:#111">${company}</div></td>`;
+  const identityCell = `<td style="padding:18px 22px;vertical-align:middle"><div style="font:700 17px Arial,sans-serif;color:#153f83">${name}</div><div style="margin-top:3px;font:11px Arial,sans-serif;letter-spacing:3px;color:#111">${title.toUpperCase()}</div><div style="margin-top:13px;font:12px/1.7 Arial,sans-serif;color:#111">${lines}</div>${socials ? `<div style="margin-top:9px">${socials}</div>` : ''}</td>`;
+  const tagline = escapeHtml(form.tagline || 'As your trusted real estate agent, I provide results that move you');
+
+  if (form.footer_template === 'banner' || form.footer_template === 'signature') {
+    return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;border:1px solid #d1d5db;background:#fff"><tr><td style="width:150px;padding:18px;text-align:center;vertical-align:middle;background:#153f83">${photo}<div style="margin-top:9px;font:700 15px Arial,sans-serif;color:#fff">${name}</div><div style="font:10px Arial,sans-serif;letter-spacing:2px;color:#fff">${title.toUpperCase()}</div></td>${identityCell}${companyCell}</tr></table>`;
+  }
+
+  if (form.footer_template === 'two-column') {
+    return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;border:1px solid #d1d5db;background:#fff"><tr>${companyCell}${identityCell}<td style="padding:18px;vertical-align:middle;text-align:center">${socials}</td></tr><tr><td colspan="3" style="padding:10px 18px;background:#222;color:#fff;text-align:center;font:italic 15px Georgia,serif">${tagline}</td></tr></table>`;
+  }
+
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;border:1px solid #d1d5db;background:#fff"><tr>${companyCell}${identityCell}<td style="padding:18px 22px;vertical-align:middle;font:12px/1.8 Arial,sans-serif;color:#111">${lines}${socials ? `<div style="margin-top:10px">${socials}</div>` : ''}</td></tr></table>`;
+}
+
 export default function CalculatorBrandingSection({ accentColor }: { accentColor: string }) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
@@ -94,6 +155,8 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
   const [uploading, setUploading] = useState<'headshot' | 'logo' | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [designSurface, setDesignSurface] = useState<'email' | 'calculator'>('email');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -119,6 +182,45 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
     setMessage(null);
+  }
+
+  async function copyEmailSignature() {
+    const html = emailSignatureHtml(form);
+    const plainText = [
+      form.display_name,
+      form.professional_title,
+      form.brokerage_name,
+      form.phone,
+      form.office_phone,
+      form.email,
+      form.website,
+    ].filter(Boolean).join('\n');
+    try {
+      if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': new Blob([html], { type: 'text/html' }),
+            'text/plain': new Blob([plainText], { type: 'text/plain' }),
+          }),
+        ]);
+      } else {
+        await navigator.clipboard.writeText(html);
+      }
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError('Could not copy the signature. Download the HTML file instead.');
+    }
+  }
+
+  function downloadEmailSignature() {
+    const documentHtml = `<!doctype html><html><head><meta charset="utf-8"><title>Email signature</title></head><body>${emailSignatureHtml(form)}</body></html>`;
+    const url = URL.createObjectURL(new Blob([documentHtml], { type: 'text/html' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'realty-news-now-email-signature.html';
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   async function uploadImage(kind: 'headshot' | 'logo', file: File) {
@@ -172,7 +274,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || 'Could not save calculator branding.');
       setForm(formFromResponse(data));
-      setMessage('Calculator branding saved.');
+      setMessage('Custom branding saved.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save calculator branding.');
     } finally {
@@ -200,16 +302,36 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
         <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: accentColor }}>
           REALTOR® branding
         </p>
-        <h2 className="mt-1 text-lg font-semibold text-gray-900">Calculator branding designer</h2>
+        <h2 className="mt-1 text-lg font-semibold text-gray-900">Custom branding designer</h2>
         <p className="mt-1 text-sm leading-relaxed text-gray-600">
-          Personalize one of the four approved designs. Your saved design is added automatically when you print, download, email, or text a calculator sheet.
+          Design email signatures and calculator sheets from one saved professional profile.
         </p>
       </div>
 
       <form onSubmit={onSubmit} className="bg-[#eef2f6]">
         <div className="flex flex-wrap items-center justify-between gap-3 bg-[#078fca] px-4 py-3 text-white">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em]">Choose a design</p>
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setDesignSurface('email')}
+                className={`rounded px-3 py-1.5 text-xs font-bold transition ${
+                  designSurface === 'email' ? 'bg-[#153f83] text-white' : 'bg-white/15 text-white hover:bg-white/25'
+                }`}
+              >
+                Email signature
+              </button>
+              <button
+                type="button"
+                onClick={() => setDesignSurface('calculator')}
+                className={`rounded px-3 py-1.5 text-xs font-bold transition ${
+                  designSurface === 'calculator' ? 'bg-[#153f83] text-white' : 'bg-white/15 text-white hover:bg-white/25'
+                }`}
+              >
+                Calculator PDF
+              </button>
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/80">Choose a design</p>
             <div className="mt-2 flex flex-wrap gap-2">
               {FOOTER_TEMPLATE_PICKER_IDS.map((templateId) => {
                 const template = FOOTER_TEMPLATE_META[templateId];
@@ -235,14 +357,36 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
               })}
             </div>
           </div>
-          <button
-            type="submit"
-            disabled={saving || uploading !== null}
-            className="flex min-h-10 items-center justify-center gap-2 rounded bg-[#79bd35] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#68aa2b] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
-            {saving ? 'Saving…' : 'Save design'}
-          </button>
+          <div className="flex flex-wrap justify-end gap-2">
+            {designSurface === 'email' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => void copyEmailSignature()}
+                  className="flex min-h-10 items-center gap-2 rounded bg-white px-4 py-2 text-sm font-bold text-[#153f83] shadow-sm"
+                >
+                  {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
+                  {copied ? 'Copied' : 'Copy signature'}
+                </button>
+                <button
+                  type="button"
+                  onClick={downloadEmailSignature}
+                  className="flex min-h-10 items-center gap-2 rounded bg-[#087fb3] px-4 py-2 text-sm font-bold text-white shadow-sm"
+                >
+                  <Download className="h-4 w-4" aria-hidden="true" />
+                  Download HTML
+                </button>
+              </>
+            )}
+            <button
+              type="submit"
+              disabled={saving || uploading !== null}
+              className="flex min-h-10 items-center justify-center gap-2 rounded bg-[#79bd35] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#68aa2b] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
+              {saving ? 'Saving…' : 'Save design'}
+            </button>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-[320px_minmax(0,1fr)]">
@@ -287,6 +431,10 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
               <summary className="cursor-pointer text-xs font-bold uppercase tracking-[0.12em] text-gray-600">Additional details</summary>
               <div className="mt-3 space-y-3">
                 <Field label="TREC license number" value={form.license_number} onChange={(v) => setField('license_number', v)} />
+                <Field label="Facebook URL" type="url" value={form.facebook_url} onChange={(v) => setField('facebook_url', v)} />
+                <Field label="Instagram URL" type="url" value={form.instagram_url} onChange={(v) => setField('instagram_url', v)} />
+                <Field label="X URL" type="url" value={form.x_url} onChange={(v) => setField('x_url', v)} />
+                <Field label="LinkedIn URL" type="url" value={form.linkedin_url} onChange={(v) => setField('linkedin_url', v)} />
                 <Field label="Office address" value={form.address} onChange={(v) => setField('address', v)} />
                 <Field label="Address line 2" value={form.address_2} onChange={(v) => setField('address_2', v)} />
                 <Field label="City" value={form.city} onChange={(v) => setField('city', v)} />
@@ -308,8 +456,14 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
           <div className="flex min-h-[620px] flex-col p-4 sm:p-6 lg:p-8">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Live PDF canvas</p>
-                <p className="mt-1 text-sm text-gray-600">Changes appear here instantly.</p>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">
+                  Live {designSurface === 'email' ? 'email signature' : 'calculator PDF'} canvas
+                </p>
+                <p className="mt-1 text-sm text-gray-600">
+                  {designSurface === 'email'
+                    ? 'Copy the finished signature into Gmail, Outlook, or Apple Mail.'
+                    : 'This exact branding is applied to generated calculator sheets.'}
+                </p>
               </div>
               <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#153f83] shadow-sm">
                 {FOOTER_TEMPLATE_META[form.footer_template].label}

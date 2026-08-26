@@ -72,7 +72,7 @@ export default function ResourcesClient({ view = 'tools' }: { view?: ResourcesVi
           </p>
         </div>
         <Link
-          href="/profile#calculator-branding"
+          href="/custom-designer"
           className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800"
         >
           Set up branding

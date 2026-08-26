@@ -49,6 +49,10 @@ export interface FooterBrand {
   phone: string | null;
   office_phone: string | null;
   website: string | null;
+  facebook_url?: string | null;
+  instagram_url?: string | null;
+  x_url?: string | null;
+  linkedin_url?: string | null;
   logo_url: string | null;
   photo_url: string | null;
   address: string | null;
@@ -103,28 +107,28 @@ export interface FooterTemplateMeta {
 export const FOOTER_TEMPLATE_META: Record<FooterTemplateId, FooterTemplateMeta> = {
   'business-card': {
     id: 'business-card',
-    label: 'PDF Layout 1',
+    label: 'Design 1',
     blurb: 'Logo left, agent identity centered, contact details right.',
     heightPt: 106,
     placement: 'every-page',
   },
   banner: {
     id: 'banner',
-    label: 'PDF Layout 2',
+    label: 'Design 2',
     blurb: 'Navy portrait card, contact details centered, logo right.',
     heightPt: 126,
     placement: 'every-page',
   },
   signature: {
     id: 'signature',
-    label: 'PDF Layout 3',
+    label: 'Design 3',
     blurb: 'Circular portrait feature, cyan contact bar, logo right.',
     heightPt: 124,
     placement: 'every-page',
   },
   'two-column': {
     id: 'two-column',
-    label: 'PDF Layout 4',
+    label: 'Design 4',
     blurb: 'Logo and agent details above a full-width black tagline bar.',
     heightPt: 120,
     placement: 'every-page',
