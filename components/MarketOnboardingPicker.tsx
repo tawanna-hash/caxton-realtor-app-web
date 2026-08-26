@@ -32,6 +32,9 @@ export default function MarketOnboardingPicker() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    // The shareable product tour must open cleanly for prospects and partners.
+    // It demonstrates all markets and does not need a persisted publication.
+    if (window.location.pathname === '/product-tour') return;
     // Skip the onboarding picker when opened for printing (?print=1).
     // The in-app Safari (SFSafariViewController) doesn't share localStorage
     // with the native app, so the picker would intercept the page load.

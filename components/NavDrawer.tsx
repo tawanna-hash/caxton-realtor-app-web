@@ -129,6 +129,7 @@ const DRAWER_SECTIONS: NavSection[] = [
         ],
       },
       { label: 'Support', href: '/support' },
+      { label: 'Interactive Product Tour', href: '/product-tour' },
       { label: 'My Profile', href: '/profile', authOnly: true },
     ],
   },

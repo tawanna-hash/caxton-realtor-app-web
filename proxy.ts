@@ -240,6 +240,7 @@ const REALTOR_PUBLIC_EXACT = new Set<string>([
   '/',
   '/login',
   '/magazine',
+  '/product-tour',
   '/manifest.webmanifest',
 ]);
 
