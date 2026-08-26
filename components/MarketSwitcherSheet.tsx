@@ -16,8 +16,8 @@
 
 import { useEffect } from 'react';
 import {
-  PUB_ACTIVE,
-  PUB_COMING_SOON,
+  PUBLIC_PUB_ACTIVE,
+  PUBLIC_PUB_COMING_SOON,
   persistPub,
   type PubId,
 } from '@/lib/publications';
@@ -106,7 +106,7 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
 
         {/* Active markets */}
         <ul className="py-1">
-          {PUB_ACTIVE.map((p) => {
+          {PUBLIC_PUB_ACTIVE.map((p) => {
             const isCurrent = currentPub === p.id;
             return (
               <li key={p.id}>
@@ -149,13 +149,13 @@ export default function MarketSwitcherSheet({ open, currentPub, onClose }: Props
         </ul>
 
         {/* Coming soon */}
-        {PUB_COMING_SOON.length > 0 && (
+        {PUBLIC_PUB_COMING_SOON.length > 0 && (
         <div className="border-t border-gray-100 pt-2">
           <p className="px-5 text-[11px] uppercase tracking-[0.15em] text-gray-400 font-medium pb-1">
             Coming soon
           </p>
           <ul className="pb-1">
-            {PUB_COMING_SOON.map((p) => (
+            {PUBLIC_PUB_COMING_SOON.map((p) => (
               <li key={p.id}>
                 <button
                   type="button"

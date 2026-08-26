@@ -37,7 +37,7 @@ import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
 import PendingGmailBadge from '@/components/PendingGmailBadge';
 import MarketSwitcherSheet from '@/components/MarketSwitcherSheet';
-import { getActivePub } from '@/lib/publications';
+import { getPublicActivePub, isPubId, isPublicActivePubId } from '@/lib/publications';
 
 // ============================================================
 // Types + constants
@@ -114,7 +114,7 @@ export default function AppShell({
   // Null when the user hasn't picked yet (first launch) or when the
   // stored id isn't a known active pub — in which case the header falls
   // back to the plain 'Realty News Now' brand link.
-  const currentPubMeta = getActivePub(pub);
+  const currentPubMeta = getPublicActivePub(pub);
   useEffect(() => {
     // Defer the localStorage read into a microtask so the first commit lands
     // before this setState — avoids react-hooks/set-state-in-effect.
@@ -128,8 +128,14 @@ export default function AppShell({
       // Defer setState so React commits the initial render first — mirrors
       // the queueMicrotask pattern used by the openMenu / pathname effect
       // below. Satisfies react-hooks/set-state-in-effect.
-      if (saved === 'realtyline' || saved === 'newsline' || saved === 'realtyline-houston' || saved === 'realtyline-dallas') {
+      if (isPublicActivePubId(saved)) {
         queueMicrotask(() => { setPub(saved); });
+      } else if (isPubId(saved)) {
+        // Houston and Dallas/Ft. Worth remain available in admin but are
+        // currently disabled in the public app. Reset stale public choices.
+        const maxAge = 60 * 60 * 24 * 365;
+        document.cookie = `caxton_pub=realtyline; path=/; max-age=${maxAge}; SameSite=Lax`;
+        localStorage.setItem('caxton_pub', 'realtyline');
       }
     } catch {}
 
@@ -137,7 +143,7 @@ export default function AppShell({
     function onPubChange() {
       try {
         const saved = localStorage.getItem('caxton_pub');
-        if (saved) setPub(saved);
+        if (isPublicActivePubId(saved)) setPub(saved);
       } catch {}
     }
     window.addEventListener('savedPubChange', onPubChange);

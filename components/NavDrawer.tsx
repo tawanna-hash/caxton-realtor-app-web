@@ -20,8 +20,8 @@ import PendingGmailBadge from '@/components/PendingGmailBadge';
 import PushOptInButton from '@/components/PushOptInButton';
 import { isNative } from '@/lib/native/runtime';
 import {
-  PUB_ACTIVE as SHARED_PUB_ACTIVE,
-  PUB_COMING_SOON as SHARED_PUB_COMING_SOON,
+  PUBLIC_PUB_ACTIVE as SHARED_PUB_ACTIVE,
+  PUBLIC_PUB_COMING_SOON as SHARED_PUB_COMING_SOON,
 } from '@/lib/publications';
 
 // Push notifications work in: the native iOS app (Capacitor + APNs) and any

@@ -203,10 +203,35 @@ export const PUB_ACTIVE: PubMeta[] = [
 
 export const PUB_COMING_SOON: ComingSoonPub[] = [];
 
+// Public launch availability is intentionally separate from PUB_ACTIVE.
+// Admin tools need all four publications while the public app currently
+// allows readers to enter only Austin and San Antonio.
+export const PUBLIC_PUB_ACTIVE: PubMeta[] = PUB_ACTIVE.filter(
+  (publication) => publication.id === 'realtyline' || publication.id === 'newsline',
+);
+
+export const PUBLIC_PUB_COMING_SOON: ComingSoonPub[] = PUB_ACTIVE
+  .filter(
+    (publication) =>
+      publication.id === 'realtyline-houston'
+      || publication.id === 'realtyline-dallas',
+  )
+  .map((publication) => ({ ...publication }));
+
+export function isPublicActivePubId(value: unknown): value is PubId {
+  return value === 'realtyline' || value === 'newsline';
+}
+
 /** Resolve a PubMeta by id. Returns null for coming-soon or unknown ids. */
 export function getActivePub(id: string | null | undefined): PubMeta | null {
   if (!id) return null;
   return PUB_ACTIVE.find((p) => p.id === id) ?? null;
+}
+
+/** Resolve only publications currently selectable in the public app. */
+export function getPublicActivePub(id: string | null | undefined): PubMeta | null {
+  if (!id) return null;
+  return PUBLIC_PUB_ACTIVE.find((p) => p.id === id) ?? null;
 }
 
 /** Persist the chosen publication and notify all listeners.

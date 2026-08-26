@@ -15,8 +15,8 @@
 
 import { useEffect, useState } from 'react';
 import {
-  PUB_ACTIVE,
-  PUB_COMING_SOON,
+  PUBLIC_PUB_ACTIVE,
+  PUBLIC_PUB_COMING_SOON,
   persistPub,
   type PubId,
 } from '@/lib/publications';
@@ -97,7 +97,7 @@ export default function MarketOnboardingPicker() {
           </p>
 
           <ul className="space-y-3">
-            {PUB_ACTIVE.map((p) => (
+            {PUBLIC_PUB_ACTIVE.map((p) => (
               <li key={p.id}>
                 <button
                   type="button"
@@ -133,13 +133,13 @@ export default function MarketOnboardingPicker() {
             ))}
           </ul>
 
-          {PUB_COMING_SOON.length > 0 && (
+          {PUBLIC_PUB_COMING_SOON.length > 0 && (
           <>
           <p className="text-[11px] uppercase tracking-[0.18em] text-gray-400 font-medium text-center mt-8 mb-3">
             Coming soon
           </p>
           <ul className="space-y-2">
-            {PUB_COMING_SOON.map((p) => (
+            {PUBLIC_PUB_COMING_SOON.map((p) => (
               <li key={p.id}>
                 <button
                   type="button"
