@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { getApiBase } from '@/lib/api-base';
 import PasswordSection from '@/components/PasswordSection';
 import DeleteAccountSection from '@/components/DeleteAccountSection';
-import CalculatorBrandingSection from './CalculatorBrandingSection';
 
 const API = getApiBase();
 
@@ -119,8 +118,6 @@ export default function ProfileClient() {
       </div>
 
       <div className="p-5 space-y-5">
-        <CalculatorBrandingSection accentColor={accent} />
-
         <PasswordSection accentColor={accent} hasPassword={!!user.hasPassword} />
 
         <DeleteAccountSection accentColor={accent} email={user.email ?? ''} />

@@ -17,6 +17,7 @@ import {
   type FooterTemplateId,
   getFooterTemplateMeta,
 } from '@/lib/footer-templates';
+import type { CustomDesignConfig } from '@/lib/custom-design';
 
 interface CalcReportRow {
   label: string;
@@ -52,6 +53,7 @@ export interface CalcReport {
   brandFooter?: {
     template: FooterTemplateId;
     brand: FooterBrand;
+    customDesign?: CustomDesignConfig;
   };
 }
 

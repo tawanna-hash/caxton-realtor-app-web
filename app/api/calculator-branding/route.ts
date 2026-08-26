@@ -7,6 +7,7 @@ import {
   updateCalculatorBranding,
 } from '@/lib/server/calculator-branding-store';
 import { FOOTER_TEMPLATE_IDS } from '@/lib/footer-templates';
+import { normalizeCustomDesign } from '@/lib/custom-design';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,6 +39,7 @@ const calculatorBrandingSchema = z.object({
   license_number: nullableText(80),
   tagline: nullableText(240),
   footer_template: z.enum(FOOTER_TEMPLATE_IDS),
+  custom_design: z.unknown().optional(),
 });
 
 function normalize(value: string | null): string | null {
@@ -55,6 +57,7 @@ export const GET = withErrorHandling(async () => {
 export const PUT = withErrorHandling(async (req: Request) => {
   const user = await requireUser();
   const input = calculatorBrandingSchema.parse(await req.json());
+  const customDesign = normalizeCustomDesign(input.custom_design, input.footer_template);
   const branding = await updateCalculatorBranding(user.realtorId, {
     ...input,
     display_name: normalize(input.display_name),
@@ -77,6 +80,7 @@ export const PUT = withErrorHandling(async (req: Request) => {
     zip: normalize(input.zip),
     license_number: normalize(input.license_number),
     tagline: normalize(input.tagline),
+    custom_design: { ...customDesign, layout: input.footer_template },
   });
   return NextResponse.json({ branding });
 });

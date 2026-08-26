@@ -3,6 +3,12 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { Check, Copy, Download, ImageUp, Loader2, Save } from 'lucide-react';
 import { getApiBase } from '@/lib/api-base';
+import CustomDesignerCanvas from '../custom-designer/CustomDesignerCanvas';
+import {
+  createCustomDesignPreset,
+  normalizeCustomDesign,
+  type CustomDesignConfig,
+} from '@/lib/custom-design';
 import {
   FOOTER_TEMPLATE_META,
   FOOTER_TEMPLATE_PICKER_IDS,
@@ -16,6 +22,7 @@ type BrandingResponse = {
   branding: {
     template: FooterTemplateId;
     brand: FooterBrand;
+    customDesign?: CustomDesignConfig;
   } | null;
 };
 
@@ -41,6 +48,7 @@ type FormState = {
   license_number: string;
   tagline: string;
   footer_template: FooterTemplateId;
+  custom_design: CustomDesignConfig;
 };
 
 const EMPTY_FORM: FormState = {
@@ -65,6 +73,7 @@ const EMPTY_FORM: FormState = {
   license_number: '',
   tagline: '',
   footer_template: 'business-card',
+  custom_design: createCustomDesignPreset('business-card'),
 };
 
 function formFromResponse(data: BrandingResponse): FormState {
@@ -93,6 +102,7 @@ function formFromResponse(data: BrandingResponse): FormState {
     license_number: brand.license_number ?? '',
     tagline: brand.tagline ?? '',
     footer_template: branding.template,
+    custom_design: normalizeCustomDesign(branding.customDesign, branding.template),
   };
 }
 
@@ -110,6 +120,10 @@ function escapeHtml(value: string): string {
 }
 
 function emailSignatureHtml(form: FormState): string {
+  const design = normalizeCustomDesign(form.custom_design, form.footer_template);
+  const primary = escapeHtml(design.textColor);
+  const accent = escapeHtml(design.accentColor);
+  const background = escapeHtml(design.backgroundColor);
   const name = escapeHtml(form.display_name || 'Your name');
   const title = escapeHtml(form.professional_title || 'REALTOR®');
   const company = escapeHtml(form.brokerage_name);
@@ -120,10 +134,10 @@ function emailSignatureHtml(form: FormState): string {
     ? `<img src="${escapeHtml(form.photo_url)}" alt="${name}" width="92" height="92" style="display:block;width:92px;height:92px;border-radius:50%;object-fit:cover;border:4px solid #ffffff">`
     : '';
   const lines = [
-    form.phone && `<b style="color:#079bce">C:</b> ${escapeHtml(form.phone)}`,
-    form.office_phone && `<b style="color:#079bce">O:</b> ${escapeHtml(form.office_phone)}`,
-    form.email && `<a href="mailto:${escapeHtml(form.email)}" style="color:#111827;text-decoration:none">${escapeHtml(form.email)}</a>`,
-    form.website && `<a href="${escapeHtml(form.website)}" style="color:#111827;text-decoration:none">${escapeHtml(form.website)}</a>`,
+    form.phone && `<b style="color:${accent}">C:</b> ${escapeHtml(form.phone)}`,
+    form.office_phone && `<b style="color:${accent}">O:</b> ${escapeHtml(form.office_phone)}`,
+    form.email && `<a href="mailto:${escapeHtml(form.email)}" style="color:${primary};text-decoration:none">${escapeHtml(form.email)}</a>`,
+    form.website && `<a href="${escapeHtml(form.website)}" style="color:${primary};text-decoration:none">${escapeHtml(form.website)}</a>`,
   ].filter(Boolean).join('<br>');
   const socials = [
     ['f', form.facebook_url],
@@ -131,21 +145,28 @@ function emailSignatureHtml(form: FormState): string {
     ['x', form.x_url],
     ['in', form.linkedin_url],
   ].filter((entry): entry is [string, string] => Boolean(entry[1])).map(([label, url]) =>
-    `<a href="${escapeHtml(url)}" style="display:inline-block;margin-right:7px;color:#153f83;text-decoration:none;font-weight:700">${label}</a>`,
+    `<a href="${escapeHtml(url)}" style="display:inline-block;margin-right:7px;color:${primary};text-decoration:none;font-weight:700">${label}</a>`,
   ).join('');
-  const companyCell = `<td style="padding:18px 22px;text-align:center;vertical-align:middle">${logo}<div style="margin-top:8px;font:700 15px Arial,sans-serif;text-transform:uppercase;color:#111">${company}</div></td>`;
-  const identityCell = `<td style="padding:18px 22px;vertical-align:middle"><div style="font:700 17px Arial,sans-serif;color:#153f83">${name}</div><div style="margin-top:3px;font:11px Arial,sans-serif;letter-spacing:3px;color:#111">${title.toUpperCase()}</div><div style="margin-top:13px;font:12px/1.7 Arial,sans-serif;color:#111">${lines}</div>${socials ? `<div style="margin-top:9px">${socials}</div>` : ''}</td>`;
+  const companyCell = `<td style="padding:18px 22px;text-align:center;vertical-align:middle">${logo}<div style="margin-top:8px;font:700 15px Arial,sans-serif;text-transform:uppercase;color:${primary}">${company}</div></td>`;
+  const identityCell = `<td style="padding:18px 22px;vertical-align:middle"><div style="font:700 17px Arial,sans-serif;color:${primary}">${name}</div><div style="margin-top:3px;font:11px Arial,sans-serif;letter-spacing:3px;color:${primary}">${title.toUpperCase()}</div><div style="margin-top:13px;font:12px/1.7 Arial,sans-serif;color:${primary}">${lines}</div>${socials ? `<div style="margin-top:9px">${socials}</div>` : ''}</td>`;
   const tagline = escapeHtml(form.tagline || 'As your trusted real estate agent, I provide results that move you');
+  const customText = design.elements
+    .filter((element) => element.kind === 'text' && element.text?.trim())
+    .map((element) => escapeHtml(element.text!.trim()))
+    .join(' &nbsp;•&nbsp; ');
+  const customRow = customText
+    ? `<tr><td colspan="3" style="padding:8px 18px;background:${accent};color:${background};font:600 12px Arial,sans-serif;text-align:center">${customText}</td></tr>`
+    : '';
 
   if (form.footer_template === 'banner' || form.footer_template === 'signature') {
-    return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;border:1px solid #d1d5db;background:#fff"><tr><td style="width:150px;padding:18px;text-align:center;vertical-align:middle;background:#153f83">${photo}<div style="margin-top:9px;font:700 15px Arial,sans-serif;color:#fff">${name}</div><div style="font:10px Arial,sans-serif;letter-spacing:2px;color:#fff">${title.toUpperCase()}</div></td>${identityCell}${companyCell}</tr></table>`;
+    return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;border:1px solid #d1d5db;background:${background}"><tr><td style="width:150px;padding:18px;text-align:center;vertical-align:middle;background:${primary}">${photo}<div style="margin-top:9px;font:700 15px Arial,sans-serif;color:${background}">${name}</div><div style="font:10px Arial,sans-serif;letter-spacing:2px;color:${background}">${title.toUpperCase()}</div></td>${identityCell}${companyCell}</tr>${customRow}</table>`;
   }
 
   if (form.footer_template === 'two-column') {
-    return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;border:1px solid #d1d5db;background:#fff"><tr>${companyCell}${identityCell}<td style="padding:18px;vertical-align:middle;text-align:center">${socials}</td></tr><tr><td colspan="3" style="padding:10px 18px;background:#222;color:#fff;text-align:center;font:italic 15px Georgia,serif">${tagline}</td></tr></table>`;
+    return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;border:1px solid #d1d5db;background:${background}"><tr>${companyCell}${identityCell}<td style="padding:18px;vertical-align:middle;text-align:center">${socials}</td></tr><tr><td colspan="3" style="padding:10px 18px;background:${accent};color:${background};text-align:center;font:italic 15px Georgia,serif">${customText || tagline}</td></tr></table>`;
   }
 
-  return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;border:1px solid #d1d5db;background:#fff"><tr>${companyCell}${identityCell}<td style="padding:18px 22px;vertical-align:middle;font:12px/1.8 Arial,sans-serif;color:#111">${lines}${socials ? `<div style="margin-top:10px">${socials}</div>` : ''}</td></tr></table>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;border:1px solid #d1d5db;background:${background}"><tr>${companyCell}${identityCell}<td style="padding:18px 22px;vertical-align:middle;font:12px/1.8 Arial,sans-serif;color:${primary}">${lines}${socials ? `<div style="margin-top:10px">${socials}</div>` : ''}</td></tr>${customRow}</table>`;
 }
 
 export default function CalculatorBrandingSection({ accentColor }: { accentColor: string }) {
@@ -181,6 +202,15 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
+    setMessage(null);
+  }
+
+  function setLayout(layout: FooterTemplateId) {
+    setForm((current) => ({
+      ...current,
+      footer_template: layout,
+      custom_design: createCustomDesignPreset(layout),
+    }));
     setMessage(null);
   }
 
@@ -348,7 +378,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
                       name="footer-template"
                       value={template.id}
                       checked={selected}
-                      onChange={() => setField('footer_template', template.id)}
+                      onChange={() => setLayout(template.id)}
                       className="sr-only"
                     />
                     {template.label}
@@ -470,8 +500,17 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
               </span>
             </div>
             <div className="flex flex-1 items-center justify-center rounded-lg border border-gray-200 bg-[#f7f8fa] p-3 shadow-inner sm:p-8">
-              <div className="w-full max-w-4xl">
-                <BrandPreview form={form} />
+              <div className="w-full max-w-5xl">
+                <div className="mb-4 grid grid-cols-3 gap-3 rounded-lg border border-gray-200 bg-white p-3">
+                  <ColorField label="Text" value={form.custom_design.textColor} onChange={(textColor) => setField('custom_design', { ...form.custom_design, textColor })} />
+                  <ColorField label="Background" value={form.custom_design.backgroundColor} onChange={(backgroundColor) => setField('custom_design', { ...form.custom_design, backgroundColor })} />
+                  <ColorField label="Accent" value={form.custom_design.accentColor} onChange={(accentColor) => setField('custom_design', { ...form.custom_design, accentColor })} />
+                </div>
+                <CustomDesignerCanvas
+                  value={form.custom_design}
+                  brand={form}
+                  onChange={(custom_design) => setField('custom_design', custom_design)}
+                />
               </div>
             </div>
 
@@ -509,6 +548,28 @@ function Field({
         placeholder={placeholder}
         required={required}
         className={inputClass}
+      />
+    </label>
+  );
+}
+
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="text-xs font-semibold text-gray-600">
+      {label}
+      <input
+        type="color"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="mt-1 block h-10 w-full cursor-pointer rounded-md border border-gray-300 bg-white p-1"
       />
     </label>
   );
@@ -552,7 +613,7 @@ function ImageUpload({
   );
 }
 
-function BrandPreview({ form }: { form: FormState }) {
+function _BrandPreview({ form }: { form: FormState }) {
   const name = form.display_name || 'Your name';
   const company = form.brokerage_name || 'Broker licensed or registered assumed business name';
   const title = form.professional_title || 'REALTOR®';
