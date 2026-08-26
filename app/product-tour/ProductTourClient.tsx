@@ -123,9 +123,6 @@ function BrandMark({ inverse = false, compact = false }: { inverse?: boolean; co
         <span className={`block font-bold tracking-tight ${compact ? 'text-[9px]' : 'text-sm'} ${inverse ? 'text-white' : 'text-brand-700'}`}>
           REALTY NEWS NOW
         </span>
-        <span className={`block uppercase tracking-[0.22em] ${compact ? 'mt-0.5 text-[5px]' : 'mt-1 text-[9px]'} ${inverse ? 'text-white/60' : 'text-gray-500'}`}>
-          Texas real estate, daily
-        </span>
       </span>
     </span>
   );
@@ -656,9 +653,9 @@ export default function ProductTourClient() {
         />
       </div>
 
-      <section className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-8 sm:px-8 lg:min-h-[calc(100dvh-78px)] lg:grid-cols-[minmax(300px,.78fr)_minmax(500px,1.22fr)] lg:gap-16 lg:py-12">
+      <section className="mx-auto grid max-w-7xl items-center gap-8 px-5 py-7 sm:px-8 lg:min-h-[calc(100dvh-70px)] lg:grid-cols-[minmax(300px,.78fr)_minmax(500px,1.22fr)] lg:gap-14 lg:py-10">
         <div className="order-2 lg:order-1">
-          <div className="mb-7 flex items-center gap-2" aria-label={`Step ${index + 1} of ${STEPS.length}`}>
+          <div className="mb-6 flex items-center gap-2" aria-label={`Step ${index + 1} of ${STEPS.length}`}>
             {STEPS.map((item, itemIndex) => (
               <button
                 key={item.id}
@@ -689,17 +686,17 @@ export default function ProductTourClient() {
             >
               {complete ? 'Tour complete' : step.eyebrow}
             </p>
-            <h1 className="mt-4 max-w-xl font-serif text-[clamp(2.25rem,5vw,4.5rem)] leading-[0.98] tracking-[-0.035em] text-brand-700">
+            <h1 className="mt-3 max-w-xl font-serif text-[clamp(2rem,4vw,3.75rem)] leading-[1.02] tracking-[-0.03em] text-brand-700">
               {complete ? 'Ready to see what comes next?' : step.title}
             </h1>
-            <p className="mt-5 max-w-lg text-base leading-7 text-gray-600">
+            <p className="mt-4 max-w-lg text-base leading-7 text-gray-600">
               {complete
                 ? 'You have seen how Realty News Now brings local intelligence, industry connections, and practical REALTOR® tools into one focused experience.'
                 : step.description}
             </p>
 
             {!complete ? (
-              <ul className="mt-6 space-y-2.5">
+              <ul className="mt-5 space-y-2.5">
                 {step.points.map((point) => (
                   <li key={point} className="flex items-start gap-2.5 text-sm text-gray-700">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center bg-brand-700 text-white">
@@ -727,7 +724,7 @@ export default function ProductTourClient() {
             )}
           </div>
 
-          <div className="mt-8 flex items-center gap-3 border-t border-brand-700/15 pt-6">
+          <div className="mt-7 flex items-center gap-3 border-t border-brand-700/15 pt-5">
             <button
               type="button"
               onClick={previous}
