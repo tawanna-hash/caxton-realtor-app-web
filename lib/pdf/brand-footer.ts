@@ -71,13 +71,6 @@ async function loadImage(url: string | null): Promise<{
   }
 }
 
-function joinAddress(b: FooterBrand): string {
-  const line1 = [b.address, b.address_2].filter(Boolean).join(', ');
-  const cityZip = [b.city, b.state].filter(Boolean).join(', ');
-  const tail = [cityZip, b.zip].filter(Boolean).join(' ').trim();
-  return [line1, tail].filter(Boolean).join(' - ');
-}
-
 function primaryName(b: FooterBrand): string {
   const trimmed = (b.name || '').trim();
   if (trimmed) return trimmed;
@@ -180,94 +173,63 @@ function drawHairline(doc: jsPDF, y: number, pageWidth: number) {
   doc.line(MARGIN, y, pageWidth - MARGIN, y);
 }
 
-/** Helper: draw a photo + logo pair on the left side. Photo is the
- *  larger square (headshot), logo is a smaller chip below it.
- *  Returns the X coordinate where text should start. */
-function drawPhotoAndLogo(
-  doc: jsPDF,
-  palette: FooterPalette,
-  photo: ImgRef,
-  logo: ImgRef,
-  x: number,
-  y: number,
-  photoSize: number,
-  logoSize: number,
-): number {
-  let drawn = false;
-  if (photo) {
-    try {
-      doc.addImage(photo.dataUrl, photo.format, x, y, photoSize, photoSize, undefined, 'FAST');
-      doc.setDrawColor(...palette.accent);
-      doc.setLineWidth(0.8);
-      doc.rect(x, y, photoSize, photoSize);
-      drawn = true;
-    } catch { /* ignore */ }
-  }
-  if (logo) {
-    try {
-      // Logo sits to the right of the photo when both present, otherwise in photo's spot.
-      const lx = drawn ? x + photoSize + 6 : x;
-      const ly = drawn ? y + photoSize - logoSize : y;
-      doc.addImage(logo.dataUrl, logo.format, lx, ly, logoSize, logoSize, undefined, 'FAST');
-      if (!drawn) {
-        drawn = true;
-        return x + logoSize + 12;
-      }
-      return x + photoSize + logoSize + 14;
-    } catch { /* ignore */ }
-  }
-  return drawn ? x + photoSize + 14 : x;
-}
-
 function renderBusinessCard(
   doc: jsPDF,
   b: FooterBrand,
   palette: FooterPalette,
   logo: ImgRef,
-  photo: ImgRef,
+  _photo: ImgRef,
   prepared: string,
   top: number,
   pageWidth: number,
 ) {
-  drawHairline(doc, top, pageWidth);
-  const y = top + 12;
-  const photoSize = 60;
-  const logoSize = 24;
-  const textX = drawPhotoAndLogo(doc, palette, photo, logo, MARGIN, y, photoSize, logoSize);
+  const left = MARGIN;
+  const width = pageWidth - MARGIN * 2;
+  const height = 92;
+  const col1 = left + 142;
+  const col2 = left + 322;
+  doc.setDrawColor(...GREY_200);
+  doc.rect(left, top, width, height);
+  doc.line(col1, top + 12, col1, top + height - 12);
+  doc.line(col2, top + 12, col2, top + height - 12);
 
-  const name = primaryName(b);
-  if (name) {
-    doc.setFont('times', 'normal');
-    doc.setFontSize(14);
-    doc.setTextColor(...GREY_900);
-    doc.text(name, textX, y + 11);
+  if (logo) {
+    try {
+      doc.addImage(logo.dataUrl, logo.format, left + 18, top + 14, 28, 28, undefined, 'FAST');
+    } catch { /* ignore */ }
   }
-
   const company = brokerName(b);
-  if (company) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.setTextColor(...GREY_900);
-    doc.text(company, textX, y + 25);
-  }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(...GREY_900);
+  if (company) doc.text(doc.splitTextToSize(company, 88), left + 18, top + 60);
 
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(...palette.primary);
+  const name = primaryName(b);
+  if (name) doc.text(name, col1 + 18, top + 25);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...GREY_700);
-  if (b.title) doc.text(b.title, textX, y + 38);
-  const line: string[] = [];
-  if (b.phone) line.push(b.phone);
-  if (b.email) line.push(b.email);
-  if (line.length > 0) doc.text(line.join('  -  '), textX, y + 50);
+  if (b.title) doc.text(b.title.toUpperCase(), col1 + 18, top + 40);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  if (company) doc.text(company, col1 + 18, top + 56);
 
-  // License + prepared date on a final small line
-  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...GREY_900);
+  let cy = top + 22;
+  for (const value of [b.phone, b.office_phone, b.email, b.website]) {
+    if (!value) continue;
+    doc.text(value, col2 + 16, cy);
+    cy += 14;
+  }
+  doc.setFontSize(7);
   doc.setTextColor(...GREY_500);
-  const tail: string[] = [];
-  const lic = licenseLabel(b);
-  if (lic) tail.push(lic);
-  tail.push(prepared);
-  doc.text(tail.join('  -  '), textX, y + 62);
+  const tail = [licenseLabel(b), prepared].filter(Boolean).join('  -  ');
+  doc.text(tail, col2 + 16, top + height - 10);
 }
 
 function renderBanner(
@@ -281,70 +243,55 @@ function renderBanner(
   pageWidth: number,
   height: number,
 ) {
+  const left = MARGIN;
+  const width = pageWidth - MARGIN * 2;
+  const panelWidth = 142;
+  doc.setDrawColor(...GREY_200);
+  doc.rect(left, top, width, height);
   doc.setFillColor(...palette.primary);
-  doc.rect(0, top, pageWidth, height, 'F');
+  doc.rect(left, top, panelWidth, height, 'F');
 
-  // Gold accent strip
-  doc.setFillColor(...palette.accent);
-  doc.rect(0, top, pageWidth, 2, 'F');
-
-  const y = top + 10;
-  let textX = MARGIN;
-  // Photo first (round-ish look via gold border), then logo to its right.
   if (photo) {
     try {
-      const size = 52;
-      doc.addImage(photo.dataUrl, photo.format, MARGIN, y, size, size, undefined, 'FAST');
-      doc.setDrawColor(...palette.accent);
-      doc.setLineWidth(0.8);
-      doc.rect(MARGIN, y, size, size);
-      textX = MARGIN + size + 10;
+      doc.addImage(photo.dataUrl, photo.format, left + 44, top + 10, 54, 54, undefined, 'FAST');
+      doc.setDrawColor(...WHITE);
+      doc.setLineWidth(2);
+      doc.circle(left + 71, top + 37, 28);
     } catch { /* ignore */ }
   }
+  const name = primaryName(b);
+  const company = brokerName(b);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(...WHITE);
+  if (name) doc.text(name, left + panelWidth / 2, top + 78, { align: 'center' });
+  doc.setFontSize(10);
+  if (company) doc.text(company, left + panelWidth / 2, top + 93, { align: 'center' });
+
+  const contactX = left + panelWidth + 22;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(...GREY_900);
+  let y = top + 24;
+  for (const value of [b.phone, b.office_phone, b.email, b.website]) {
+    if (!value) continue;
+    doc.text(value, contactX, y);
+    y += 17;
+  }
+
+  const logoX = pageWidth - MARGIN - 92;
   if (logo) {
     try {
-      const size = 24;
-      doc.addImage(logo.dataUrl, logo.format, textX, y + 22, size, size, undefined, 'FAST');
-      textX += size + 10;
+      doc.addImage(logo.dataUrl, logo.format, logoX + 31, top + 18, 30, 30, undefined, 'FAST');
     } catch { /* ignore */ }
   }
-
-  doc.setFont('times', 'normal');
-  doc.setFontSize(13);
-  doc.setTextColor(...WHITE);
-  const name = primaryName(b);
-  if (name) doc.text(name, textX, y + 14);
-
-  const company = brokerName(b);
-  if (company) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.setTextColor(...WHITE);
-    doc.text(company, textX, y + 29);
-  }
-
-  const lic = licenseLabel(b);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(230, 235, 245);
-  if (b.title) doc.text(b.title, textX, y + 42);
-  if (lic) {
-    doc.setFontSize(8);
-    doc.setTextColor(210, 218, 235);
-    doc.text(lic, textX, y + 54);
-  }
-
-  // Right side: contact stack
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(230, 235, 245);
-  const rx = pageWidth - MARGIN;
-  let ry = y + 14;
-  if (b.phone) { doc.text(b.phone, rx, ry, { align: 'right' }); ry += 12; }
-  if (b.email) { doc.text(b.email, rx, ry, { align: 'right' }); ry += 12; }
-  doc.setFontSize(8);
-  doc.setTextColor(210, 218, 235);
-  doc.text(prepared, rx, ry, { align: 'right' });
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(...GREY_900);
+  if (company) doc.text(doc.splitTextToSize(company, 92), logoX + 46, top + 66, { align: 'center' });
+  doc.setFontSize(7);
+  doc.setTextColor(...GREY_500);
+  doc.text(prepared, pageWidth - MARGIN - 10, top + height - 9, { align: 'right' });
 }
 
 function renderMinimal(
@@ -424,72 +371,57 @@ function renderSignature(
   top: number,
   pageWidth: number,
 ) {
-  drawHairline(doc, top, pageWidth);
-  const y = top + 12;
-
-  // Headshot
-  let textX = MARGIN;
+  const left = MARGIN;
+  const width = pageWidth - MARGIN * 2;
+  const panelWidth = 142;
+  doc.setDrawColor(...GREY_200);
+  doc.rect(left, top, width, 100);
+  doc.setFillColor(...palette.primary);
+  doc.rect(left, top, panelWidth, 100, 'F');
+  doc.setDrawColor(...palette.accent);
+  doc.setLineWidth(5);
+  doc.circle(left + 78, top + 50, 36);
   if (photo) {
     try {
-      const size = 62;
-      doc.addImage(photo.dataUrl, photo.format, MARGIN, y, size, size, undefined, 'FAST');
-      doc.setDrawColor(...palette.accent);
-      doc.setLineWidth(1.2);
-      doc.rect(MARGIN, y, size, size);
-      textX = MARGIN + size + 14;
+      doc.addImage(photo.dataUrl, photo.format, left + 48, top + 20, 60, 60, undefined, 'FAST');
     } catch { /* ignore */ }
   }
 
-  // Italic-script name
-  doc.setFont('times', 'italic');
-  doc.setFontSize(20);
-  doc.setTextColor(...palette.primary);
   const name = primaryName(b);
-  if (name) doc.text(name, textX, y + 22);
-
   const company = brokerName(b);
-  if (company) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.setTextColor(...GREY_900);
-    doc.text(company, textX, y + 37);
+  const textX = left + panelWidth + 28;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.setTextColor(...palette.primary);
+  if (name) doc.text(name, textX, top + 24);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...GREY_700);
+  if (b.title) doc.text(b.title.toUpperCase(), textX, top + 38);
+  doc.setFillColor(...palette.accent);
+  doc.rect(textX - 8, top + 47, 16, 43, 'F');
+  doc.setFontSize(9);
+  doc.setTextColor(...GREY_900);
+  let y = top + 56;
+  for (const value of [b.phone, b.office_phone, b.email, b.website]) {
+    if (!value) continue;
+    doc.text(value, textX + 18, y);
+    y += 13;
   }
 
-  // Title and contact lines.
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(...GREY_700);
-  if (b.title) doc.text(b.title, textX, y + 50);
-  const contact: string[] = [];
-  if (b.phone) contact.push(b.phone);
-  if (b.email) contact.push(b.email);
-  if (contact.length > 0) doc.text(contact.join('  -  '), textX, y + 63);
-
-  // License + prepared
-  doc.setFontSize(8);
-  doc.setTextColor(...GREY_500);
-  const tail: string[] = [];
-  const lic = licenseLabel(b);
-  if (lic) tail.push(lic);
-  tail.push(prepared);
-  doc.text(tail.join('  -  '), textX, y + 76);
-
-  // Logo on the far right of the headline row
+  const logoX = pageWidth - MARGIN - 86;
   if (logo) {
     try {
-      const size = 24;
-      doc.addImage(
-        logo.dataUrl,
-        logo.format,
-        pageWidth - MARGIN - size,
-        y + 4,
-        size,
-        size,
-        undefined,
-        'FAST',
-      );
+      doc.addImage(logo.dataUrl, logo.format, logoX + 28, top + 16, 30, 30, undefined, 'FAST');
     } catch { /* ignore */ }
   }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(...GREY_900);
+  if (company) doc.text(doc.splitTextToSize(company, 86), logoX + 43, top + 62, { align: 'center' });
+  doc.setFontSize(7);
+  doc.setTextColor(...GREY_500);
+  doc.text([licenseLabel(b), prepared].filter(Boolean).join('  -  '), pageWidth - MARGIN - 8, top + 92, { align: 'right' });
 }
 
 function renderTwoColumn(
@@ -497,97 +429,60 @@ function renderTwoColumn(
   b: FooterBrand,
   palette: FooterPalette,
   logo: ImgRef,
-  photo: ImgRef,
+  _photo: ImgRef,
   prepared: string,
   top: number,
   pageWidth: number,
 ) {
-  drawHairline(doc, top, pageWidth);
-  const y = top + 12;
-  const midX = pageWidth / 2;
+  const left = MARGIN;
+  const width = pageWidth - MARGIN * 2;
+  const bodyHeight = 78;
+  doc.setDrawColor(...GREY_200);
+  doc.rect(left, top, width, 104);
+  const col1 = left + 180;
+  const col2 = left + 382;
+  doc.line(col1, top + 12, col1, top + bodyHeight - 10);
 
-  // Left column: photo + logo + name + title + company + address
-  let leftTextX = MARGIN;
-  if (photo) {
-    try {
-      const size = 52;
-      doc.addImage(photo.dataUrl, photo.format, MARGIN, y, size, size, undefined, 'FAST');
-      doc.setDrawColor(...palette.accent);
-      doc.setLineWidth(0.8);
-      doc.rect(MARGIN, y, size, size);
-      leftTextX = MARGIN + size + 10;
-    } catch { /* ignore */ }
-  }
   if (logo) {
     try {
-      const size = 20;
-      doc.addImage(logo.dataUrl, logo.format, leftTextX, y + 26, size, size, undefined, 'FAST');
-      leftTextX += size + 8;
+      doc.addImage(logo.dataUrl, logo.format, left + 18, top + 20, 28, 28, undefined, 'FAST');
     } catch { /* ignore */ }
   }
-
-  doc.setFont('times', 'normal');
-  doc.setFontSize(12);
-  doc.setTextColor(...GREY_900);
-  const name = primaryName(b);
-  if (name) doc.text(name, leftTextX, y + 10);
-
   const company = brokerName(b);
-  if (company) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(...GREY_900);
-    doc.text(company, leftTextX, y + 24);
-  }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(...GREY_900);
+  if (company) doc.text(doc.splitTextToSize(company, 112), left + 56, top + 31);
 
+  const name = primaryName(b);
+  doc.setFontSize(14);
+  doc.setTextColor(...palette.primary);
+  if (name) doc.text(name.toUpperCase(), col1 + 22, top + 20);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setTextColor(...GREY_700);
-  if (b.title) doc.text(b.title, leftTextX, y + 36);
-
-  let leftY = y + 49;
-  const addr = joinAddress(b);
-  if (addr) {
-    doc.setFontSize(8);
-    doc.setTextColor(...GREY_500);
-    const addrLines = doc.splitTextToSize(addr, midX - leftTextX - 12);
-    doc.text(addrLines, leftTextX, leftY);
-    const lineCount = Array.isArray(addrLines) ? addrLines.length : 1;
-    leftY += lineCount * 10;
+  if (b.title) doc.text(b.title.toUpperCase(), col1 + 22, top + 34);
+  let y = top + 48;
+  for (const value of [b.phone, b.office_phone, b.email, b.website]) {
+    if (!value) continue;
+    doc.text(value, col1 + 22, y);
+    y += 11;
   }
-
-  const lic = licenseLabel(b);
-  if (lic) {
-    doc.setFontSize(8);
-    doc.setTextColor(...GREY_500);
-    doc.text(lic, leftTextX, leftY + 2);
-  }
-
-  // Right column: contact channels + prepared date
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.setTextColor(...palette.primary);
-  doc.text('CONTACT', midX + 8, y + 10);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  let ry = y + 24;
-  const labelX = midX + 8;
-  const valueX = midX + 60;
-  const drawRow = (label: string, value: string | null) => {
-    if (!value) return;
-    doc.setTextColor(...GREY_500);
-    doc.text(label, labelX, ry);
-    doc.setTextColor(...GREY_900);
-    doc.text(value, valueX, ry);
-    ry += 13;
-  };
-  drawRow('Mobile', b.phone);
-  drawRow('Email',  b.email);
-
-  doc.setFontSize(8);
   doc.setTextColor(...GREY_500);
-  doc.text(prepared, midX + 8, ry + 4);
+  doc.text('CONNECT WITH ME', col2 + 22, top + 36);
+
+  doc.setFillColor(...GREY_900);
+  doc.rect(left, top + bodyHeight, width, 26, 'F');
+  doc.setFont('times', 'italic');
+  doc.setFontSize(12);
+  doc.setTextColor(...WHITE);
+  doc.text(b.tagline || 'Your trusted real estate professional', left + width / 2, top + bodyHeight + 17, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6);
+  doc.setTextColor(...GREY_500);
+  doc.text([licenseLabel(b), prepared].filter(Boolean).join('  -  '), pageWidth - MARGIN, top + 112, { align: 'right' });
 }
 
 function renderStacked(

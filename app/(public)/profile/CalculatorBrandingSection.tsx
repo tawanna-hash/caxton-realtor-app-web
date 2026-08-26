@@ -5,6 +5,7 @@ import { ImageUp, Loader2, Save } from 'lucide-react';
 import { getApiBase } from '@/lib/api-base';
 import {
   FOOTER_TEMPLATE_META,
+  FOOTER_TEMPLATE_PICKER_IDS,
   type FooterBrand,
   type FooterTemplateId,
 } from '@/lib/footer-templates';
@@ -270,7 +271,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
         <fieldset>
           <legend className="text-sm font-semibold text-gray-900">PDF layout</legend>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {Object.values(FOOTER_TEMPLATE_META).map((template) => (
+            {FOOTER_TEMPLATE_PICKER_IDS.map((templateId) => FOOTER_TEMPLATE_META[templateId]).map((template) => (
               <label
                 key={template.id}
                 className={`cursor-pointer rounded-md border p-3 transition ${
@@ -406,17 +407,20 @@ function BrandPreview({ form }: { form: FormState }) {
   switch (form.footer_template) {
     case 'banner':
       preview = (
-        <div className="flex min-h-24 items-center gap-4 border-t-2 border-[#c4a35a] bg-[#301D5D] p-4 text-white shadow-sm">
-          {headshot}
-          {logo}
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-serif text-lg">{name}</p>
-            <p className="truncate text-sm font-bold">{company}</p>
-            {form.professional_title && <p className="truncate text-xs text-white/75">{form.professional_title}</p>}
+        <div className="grid min-h-32 overflow-hidden border border-gray-200 bg-white shadow-sm sm:grid-cols-[0.8fr_1.35fr_0.85fr]">
+          <div className="flex flex-col items-center justify-center bg-[#173f82] p-4 text-center text-white">
+            {headshot}
+            <p className="mt-2 truncate text-sm font-bold">{name}</p>
+            {form.professional_title && <p className="truncate text-[10px] uppercase tracking-[0.18em] text-white/80">{form.professional_title}</p>}
+            <p className="mt-1 max-w-full truncate text-xs font-bold">{company}</p>
           </div>
-          <p className="hidden max-w-[44%] text-right text-xs leading-relaxed text-white/80 sm:block">
-            {contact || 'Your contact details'}
-          </p>
+          <div className="flex items-center p-4">
+            <p className="break-words text-sm leading-7 text-gray-800">{contact || 'Your phone, email, and website'}</p>
+          </div>
+          <div className="flex flex-col items-center justify-center border-t border-gray-200 p-4 text-center sm:border-l sm:border-t-0">
+            {logo}
+            <p className="mt-2 text-sm font-bold text-gray-900">{company}</p>
+          </div>
         </div>
       );
       break;
@@ -436,33 +440,47 @@ function BrandPreview({ form }: { form: FormState }) {
       break;
     case 'signature':
       preview = (
-        <div className="flex min-h-28 items-center gap-4 border-t-2 border-[#c4a35a] bg-white p-4 shadow-sm">
-          {headshot}
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-serif text-2xl italic text-[#301D5D]">{name}</p>
-            <p className="truncate text-sm font-bold text-gray-900">{company}</p>
-            {form.professional_title && <p className="truncate text-xs text-gray-600">{form.professional_title}</p>}
-            <p className="mt-1 truncate text-xs text-gray-500">{contact || 'Your contact details'}</p>
+        <div className="grid min-h-32 overflow-hidden border border-gray-200 bg-white shadow-sm sm:grid-cols-[0.82fr_1.3fr_0.88fr]">
+          <div className="relative flex items-center justify-center overflow-hidden bg-[#173f82] p-4">
+            <span className="absolute -right-10 h-36 w-36 rounded-full border-[8px] border-cyan-500" aria-hidden />
+            <div className="relative z-10">{headshot}</div>
           </div>
-          {logo}
+          <div className="flex items-center gap-3 p-4">
+            <span className="hidden h-full w-8 bg-cyan-500 sm:block" aria-hidden />
+            <div className="min-w-0">
+              <p className="truncate text-base font-bold text-[#173f82]">{name}</p>
+              {form.professional_title && <p className="truncate text-[10px] uppercase tracking-[0.18em] text-gray-700">{form.professional_title}</p>}
+              <p className="mt-2 break-words text-xs leading-6 text-gray-700">{contact || 'Your phone, email, and website'}</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-center justify-center border-t border-gray-200 p-4 text-center sm:border-l sm:border-t-0">
+            {logo}
+            <p className="mt-2 text-sm font-bold text-gray-900">{company}</p>
+          </div>
         </div>
       );
       break;
     case 'two-column':
       preview = (
-        <div className="grid min-h-28 gap-4 border-t-2 border-[#c4a35a] bg-white p-4 shadow-sm sm:grid-cols-2">
-          <div className="flex min-w-0 items-center gap-3">
-            {headshot}
+        <div className="overflow-hidden border border-gray-200 bg-white shadow-sm">
+          <div className="grid min-h-28 gap-4 p-4 sm:grid-cols-[1fr_1.15fr_0.7fr]">
+            <div className="flex min-w-0 items-center gap-3 border-b border-gray-200 pb-3 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-4">
             {logo}
             <div className="min-w-0">
-              <p className="truncate font-semibold text-gray-900">{name}</p>
               <p className="truncate text-sm font-bold text-gray-800">{company}</p>
-              {form.professional_title && <p className="truncate text-xs text-gray-500">{form.professional_title}</p>}
             </div>
           </div>
-          <div className="border-t border-gray-200 pt-3 text-xs sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
-            <p className="font-bold uppercase tracking-[0.12em] text-[#301D5D]">Contact</p>
-            <p className="mt-2 break-words leading-relaxed text-gray-600">{contact || 'Your phone, email, and website'}</p>
+            <div className="min-w-0">
+              <p className="truncate text-base font-bold uppercase text-[#173f82]">{name}</p>
+              {form.professional_title && <p className="truncate text-xs uppercase tracking-[0.18em] text-gray-700">{form.professional_title}</p>}
+              <p className="mt-2 break-words text-xs leading-5 text-gray-700">{contact || 'Your phone, email, and website'}</p>
+            </div>
+            <div className="flex items-center justify-center text-xs font-semibold uppercase tracking-[0.14em] text-gray-500">
+              Connect with me
+            </div>
+          </div>
+          <div className="bg-gray-900 px-4 py-2 text-center font-serif text-sm italic text-white">
+            {form.tagline || 'Your trusted real estate professional'}
           </div>
         </div>
       );
@@ -484,14 +502,18 @@ function BrandPreview({ form }: { form: FormState }) {
     case 'business-card':
     default:
       preview = (
-        <div className="flex min-h-24 items-center gap-3 border-t-2 border-[#c4a35a] bg-white p-4 shadow-sm">
-          {headshot}
-          {logo}
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-semibold text-gray-900">{name}</p>
-            <p className="truncate text-sm font-bold text-gray-800">{company}</p>
-            {form.professional_title && <p className="truncate text-xs text-gray-600">{form.professional_title}</p>}
-            <p className="mt-1 truncate text-xs text-gray-500">{contact || 'Your contact details'}</p>
+        <div className="grid min-h-28 gap-4 border border-gray-200 bg-white p-4 shadow-sm sm:grid-cols-[0.9fr_1fr_1.35fr]">
+          <div className="flex min-w-0 flex-col items-center justify-center text-center">
+            {logo}
+            <p className="mt-2 text-sm font-bold text-gray-900">{company}</p>
+          </div>
+          <div className="min-w-0 border-t border-gray-200 pt-3 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+            <p className="truncate text-lg font-semibold text-[#173f82]">{name}</p>
+            {form.professional_title && <p className="truncate text-xs uppercase tracking-[0.2em] text-gray-700">{form.professional_title}</p>}
+            <p className="mt-2 truncate text-sm font-bold text-gray-800">{company}</p>
+          </div>
+          <div className="flex items-center border-t border-gray-200 pt-3 text-sm leading-7 text-gray-800 sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+            <p className="break-words">{contact || 'Your phone, email, and website'}</p>
           </div>
         </div>
       );

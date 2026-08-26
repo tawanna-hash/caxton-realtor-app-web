@@ -23,6 +23,13 @@ export const FOOTER_TEMPLATE_IDS = [
 
 export type FooterTemplateId = (typeof FOOTER_TEMPLATE_IDS)[number];
 
+export const FOOTER_TEMPLATE_PICKER_IDS: readonly FooterTemplateId[] = [
+  'business-card',
+  'banner',
+  'signature',
+  'two-column',
+];
+
 const FOOTER_TEMPLATE_DEFAULT: FooterTemplateId = 'business-card';
 
 export function coerceFooterTemplateId(value: unknown): FooterTemplateId {
@@ -103,16 +110,16 @@ export interface FooterTemplateMeta {
 export const FOOTER_TEMPLATE_META: Record<FooterTemplateId, FooterTemplateMeta> = {
   'business-card': {
     id: 'business-card',
-    label: 'Business card',
-    blurb: 'Headshot + logo on the left, full contact card on the right.',
-    heightPt: 88,
+    label: 'PDF Layout 1',
+    blurb: 'Brokerage logo, agent identity, and two-column contact details.',
+    heightPt: 108,
     placement: 'every-page',
   },
   banner: {
     id: 'banner',
-    label: 'Brand banner',
-    blurb: 'Navy bar - headshot and logo on the left, contact stack on the right.',
-    heightPt: 80,
+    label: 'PDF Layout 2',
+    blurb: 'Portrait panel on the left, contact details centered, brokerage logo on the right.',
+    heightPt: 112,
     placement: 'every-page',
   },
   minimal: {
@@ -124,16 +131,16 @@ export const FOOTER_TEMPLATE_META: Record<FooterTemplateId, FooterTemplateMeta> 
   },
   signature: {
     id: 'signature',
-    label: 'Signature',
-    blurb: 'Headshot, italic name, full contact - feels personal.',
-    heightPt: 100,
+    label: 'PDF Layout 3',
+    blurb: 'Curved portrait panel, vertical contact bar, and brokerage identity.',
+    heightPt: 112,
     placement: 'last-page',
   },
   'two-column': {
     id: 'two-column',
-    label: 'Two-column',
-    blurb: 'Photo + identity on the left, labeled contact rows on the right.',
-    heightPt: 100,
+    label: 'PDF Layout 4',
+    blurb: 'Brokerage-led layout with agent details and a full-width tagline bar.',
+    heightPt: 116,
     placement: 'every-page',
   },
   stacked: {

@@ -107,14 +107,19 @@ const STEP_BY_TAB: Record<TourStep['tab'], number> = {
 
 function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
-    <Image
-      src="/brand/rnn-logo.jpg"
-      alt="Realty News Now"
-      width={compact ? 30 : 40}
-      height={compact ? 30 : 40}
-      className={`${compact ? 'h-[30px] w-[30px]' : 'h-10 w-10'} shrink-0 object-cover`}
-      priority={!compact}
-    />
+    <span className={`inline-flex items-center ${compact ? 'gap-2' : 'gap-3'}`}>
+      <Image
+        src="/brand/rnn-logo.jpg"
+        alt=""
+        width={compact ? 30 : 40}
+        height={compact ? 30 : 40}
+        className={`${compact ? 'h-[30px] w-[30px]' : 'h-10 w-10'} shrink-0 object-cover`}
+        priority={!compact}
+      />
+      <span className={`font-bold tracking-tight text-brand-700 ${compact ? 'text-[10px]' : 'text-sm'}`}>
+        REALTY NEWS NOW
+      </span>
+    </span>
   );
 }
 
