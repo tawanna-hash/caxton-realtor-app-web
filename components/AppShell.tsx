@@ -44,6 +44,9 @@ import { getActivePub } from '@/lib/publications';
 // ============================================================
 
 type User = { id?: string; email?: string } | null;
+type ContentTab = 'Editorial' | 'Events' | 'Listings' | 'Tools';
+
+const CONTENT_TABS: readonly ContentTab[] = ['Editorial', 'Events', 'Listings', 'Tools'];
 
 const PUB_COLORS: Record<string, string> = {
   realtyline: '#301D5D',
@@ -262,6 +265,7 @@ export default function AppShell({
   // Dropdown menu state — which admin group is currently open. null = none.
   // Declared before any early return to keep hook order stable.
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [contentTab, setContentTab] = useState<ContentTab>('Editorial');
   const navRef = useRef<HTMLDivElement | null>(null);
 
   // Close menus on outside click or Escape
@@ -394,7 +398,15 @@ export default function AppShell({
                     <div key={group.label} className="relative">
                       <button
                         type="button"
-                        onClick={() => setOpenMenu(isOpen ? null : group.label)}
+                        onClick={() => {
+                          if (!isOpen && group.label === 'Content') {
+                            const activeSection = group.links.find(
+                              (link) => pathname === link.href || pathname.startsWith(link.href + '/'),
+                            )?.section;
+                            setContentTab(activeSection ?? 'Editorial');
+                          }
+                          setOpenMenu(isOpen ? null : group.label);
+                        }}
                         onMouseEnter={() => { if (openMenu) setOpenMenu(group.label); }}
                         aria-haspopup="menu"
                         aria-expanded={isOpen}
@@ -437,14 +449,69 @@ export default function AppShell({
                         </svg>
                       </button>
                       {isOpen && (
-                        <div
-                          role="menu"
-                          className={`absolute ${menuAlign} mt-1.5 min-w-[16rem] rounded-md bg-white text-gray-900 shadow-lg border border-gray-200 py-1.5 z-50`}
-                        >
-                          <div className="px-3 pt-1.5 pb-1 text-[10px] uppercase tracking-[0.15em] text-gray-400 font-semibold">
-                            {group.label}
+                        group.label === 'Content' ? (
+                          <div
+                            role="menu"
+                            className={`absolute ${menuAlign} mt-1.5 w-[32rem] max-w-[calc(100vw-2rem)] rounded-lg bg-white text-gray-900 shadow-xl border border-gray-200 p-2 z-50`}
+                          >
+                            <div className="flex items-center gap-1 border-b border-gray-200 pb-2" role="tablist" aria-label="Content sections">
+                              {CONTENT_TABS.map((tab) => (
+                                <button
+                                  key={tab}
+                                  type="button"
+                                  role="tab"
+                                  aria-selected={contentTab === tab}
+                                  onClick={() => setContentTab(tab)}
+                                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition ${
+                                    contentTab === tab
+                                      ? 'bg-[#301D5D] text-white'
+                                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                  }`}
+                                >
+                                  {tab}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="grid grid-cols-2 gap-1 pt-2" role="tabpanel">
+                              {group.links.filter((link) => link.section === contentTab).map((link) => {
+                                const linkActive = pathname === link.href || pathname.startsWith(link.href + '/');
+                                return (
+                                  <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    role="menuitem"
+                                    onClick={() => setOpenMenu(null)}
+                                    className={`rounded-md px-3 py-2 text-sm transition ${
+                                      linkActive
+                                        ? 'bg-gray-100 text-gray-900'
+                                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                                    }`}
+                                  >
+                                    <div className="font-medium flex items-center">
+                                      <span>{link.label}</span>
+                                      {link.href === '/admin/events/gmail' && (
+                                        <PendingGmailBadge variant="inline" />
+                                      )}
+                                    </div>
+                                    {link.description && (
+                                      <div className="text-[11px] leading-4 text-gray-500 mt-0.5">
+                                        {link.description}
+                                      </div>
+                                    )}
+                                  </Link>
+                                );
+                              })}
+                            </div>
                           </div>
-                          {group.links.map((link) => {
+                        ) : (
+                          <div
+                            role="menu"
+                            className={`absolute ${menuAlign} mt-1.5 min-w-[16rem] rounded-md bg-white text-gray-900 shadow-lg border border-gray-200 py-1.5 z-50`}
+                          >
+                            <div className="px-3 pt-1.5 pb-1 text-[10px] uppercase tracking-[0.15em] text-gray-400 font-semibold">
+                              {group.label}
+                            </div>
+                            {group.links.map((link) => {
                             const linkActive = pathname.startsWith(link.href);
                             return (
                               <Link
@@ -482,7 +549,8 @@ export default function AppShell({
                               </Link>
                             );
                           })}
-                        </div>
+                          </div>
+                        )
                       )}
                     </div>
                   );

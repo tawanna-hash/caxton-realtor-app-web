@@ -9,6 +9,8 @@ type AdminNavLink = {
   label: string;
   href: string;
   description?: string;
+  /** Optional desktop-menu tab. Mobile keeps rendering one flat list. */
+  section?: 'Editorial' | 'Events' | 'Listings' | 'Tools';
 };
 
 export type AdminNavGroup = {
@@ -68,22 +70,22 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: 'Content',
     links: [
-      { label: 'Trending',  href: '/admin/content/trending', description: 'Rotating feed ticker CTAs' },
-      { label: 'Articles',  href: '/admin/articles',  description: 'WordPress feeds & sync' },
-      { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions' },
-      { label: 'Events',    href: '/admin/events',    description: 'Calendar publications' },
-      { label: 'Gmail Events', href: '/admin/events/gmail', description: 'Scanned advertiser & association event mail' },
-      { label: 'FastEmail Realtor Review', href: '/admin/content/fastemail-realtors', description: 'Review realtor contacts scanned from FastEmail flyers' },
-      { label: 'Event Images', href: '/admin/event-images', description: 'Event photo gallery' },
-      { label: 'Feature Articles', href: '/admin/feature-articles', description: 'Editorial features on advertiser pages' },
-      { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries' },
-      { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes' },
-      { label: 'Scraper Hub', href: '/admin/content/scrapers', description: 'Run & monitor all scrapers' },
-      { label: 'Promotions', href: '/admin/inventory/promotions', description: 'Builder offers & rate buydowns' },
-      { label: 'Partner Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility' },
-      { label: 'SABOR Report', href: '/admin/content/saborreport', description: 'San Antonio MLS monthly report card' },
-      { label: 'ABOR Report', href: '/admin/content/realtylinereport', description: 'Austin (ABOR) MLS monthly report card' },
-      { label: 'Notifications', href: '/admin/notifications', description: 'Web push to subscribers' },
+      { label: 'Trending',  href: '/admin/content/trending', description: 'Rotating feed ticker CTAs', section: 'Editorial' },
+      { label: 'Articles',  href: '/admin/articles',  description: 'WordPress feeds & sync', section: 'Editorial' },
+      { label: 'Magazines', href: '/admin/magazines', description: 'Digital editions', section: 'Editorial' },
+      { label: 'Feature Articles', href: '/admin/feature-articles', description: 'Editorial features on advertiser pages', section: 'Editorial' },
+      { label: 'Events',    href: '/admin/events',    description: 'Calendar publications', section: 'Events' },
+      { label: 'Gmail Events', href: '/admin/events/gmail', description: 'Scanned advertiser & association event mail', section: 'Events' },
+      { label: 'Event Images', href: '/admin/event-images', description: 'Event photo gallery', section: 'Events' },
+      { label: 'Inventory', href: '/admin/inventory', description: 'Listings & homes', section: 'Listings' },
+      { label: 'Promotions', href: '/admin/inventory/promotions', description: 'Builder offers & rate buydowns', section: 'Listings' },
+      { label: 'Partner Pages', href: '/admin/inventory/builders', description: 'Builder/developer on-off & visibility', section: 'Listings' },
+      { label: 'Giveaways', href: '/admin/giveaways', description: 'Promotions & entries', section: 'Listings' },
+      { label: 'Scraper Hub', href: '/admin/content/scrapers', description: 'Run & monitor all scrapers', section: 'Tools' },
+      { label: 'FastEmail Realtor Review', href: '/admin/content/fastemail-realtors', description: 'Review contacts scanned from FastEmail flyers', section: 'Tools' },
+      { label: 'SABOR Report', href: '/admin/content/saborreport', description: 'San Antonio MLS monthly report card', section: 'Tools' },
+      { label: 'ABOR Report', href: '/admin/content/realtylinereport', description: 'Austin MLS monthly report card', section: 'Tools' },
+      { label: 'Notifications', href: '/admin/notifications', description: 'Web push to subscribers', section: 'Tools' },
     ],
   },
   {
