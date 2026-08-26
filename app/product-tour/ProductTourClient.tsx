@@ -39,33 +39,6 @@ type TourStep = {
 
 const STEPS: TourStep[] = [
   {
-    id: 'feed',
-    eyebrow: 'Your daily starting point',
-    title: 'Local real estate news, organized for your market',
-    description:
-      'Open the app to a focused feed of market headlines, trending stories, and timely industry updates.',
-    points: ['Market-specific coverage', 'Trending stories at a glance', 'A focused feed without the noise'],
-    tab: 'feed',
-  },
-  {
-    id: 'calendar',
-    eyebrow: 'Never miss what matters',
-    title: 'A professional calendar built around the industry',
-    description:
-      'Find association meetings, education, networking, builder events, and important local dates in one place.',
-    points: ['Browse by date and event type', 'Open full event details', 'Save relevant dates to your calendar'],
-    tab: 'calendar',
-  },
-  {
-    id: 'builders',
-    eyebrow: 'Opportunity, easier to find',
-    title: 'Explore builders, communities, inventory, and promotions',
-    description:
-      'Move from market intelligence to client-ready opportunities with searchable local development information.',
-    points: ['Builder and developer directory', 'Quick move-in inventory', 'Current communities and promotions'],
-    tab: 'builders',
-  },
-  {
     id: 'issues',
     eyebrow: 'The publication, reimagined',
     title: 'Read every issue wherever business takes you',
@@ -84,6 +57,15 @@ const STEPS: TourStep[] = [
     tab: 'partners',
   },
   {
+    id: 'calendar',
+    eyebrow: 'Never miss what matters',
+    title: 'A professional calendar built around the industry',
+    description:
+      'Find association meetings, education, networking, builder events, and important local dates in one place.',
+    points: ['Browse by date and event type', 'Open full event details', 'Save relevant dates to your calendar'],
+    tab: 'calendar',
+  },
+  {
     id: 'platinum',
     eyebrow: 'Platinum Tools',
     title: 'Turn everyday client service into a branded experience',
@@ -92,15 +74,24 @@ const STEPS: TourStep[] = [
     points: ['Live testimonial collection and widgets', 'Custom-branded calculator sheets', 'Client-ready guides and references'],
     tab: 'more',
   },
+  {
+    id: 'feed',
+    eyebrow: 'Your daily starting point',
+    title: 'Local real estate news, organized for your market',
+    description:
+      'Open the app to a focused feed of market headlines, trending stories, and timely industry updates.',
+    points: ['Market-specific coverage', 'Trending stories at a glance', 'A focused feed without the noise'],
+    tab: 'feed',
+  },
 ];
 
 const STEP_BY_TAB: Record<TourStep['tab'], number> = {
-  feed: 0,
-  calendar: 1,
-  builders: 2,
-  issues: 3,
-  partners: 4,
-  more: 5,
+  issues: 0,
+  partners: 1,
+  calendar: 2,
+  more: 3,
+  feed: 4,
+  builders: 1,
 };
 
 function BrandMark({ inverse = false }: { inverse?: boolean }) {
@@ -268,28 +259,60 @@ function BuildersScreen() {
 }
 
 function IssuesScreen() {
+  const publications = [
+    {
+      name: 'RealtyLine',
+      market: 'Austin',
+      current: '/product-tour/realtyline-august-2026.jpg',
+      previous: '/product-tour/realtyline-july-2026.jpg',
+    },
+    {
+      name: 'Newsline',
+      market: 'San Antonio',
+      current: '/product-tour/newsline-august-2026.jpg',
+      previous: '/product-tour/newsline-july-2026.jpg',
+    },
+  ];
+
   return (
     <div className="px-3 py-4" data-tour-screen="issues">
       <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-gray-400">Digital editions</p>
       <h3 className="mt-1 text-lg font-semibold text-gray-900">Latest issues</h3>
       <div className="mt-4 grid grid-cols-2 gap-3">
-        {[
-          ['REALTYLINE', 'AUSTIN', 'AUGUST 2026', 'bg-brand-700'],
-          ['NEWSLINE', 'SAN ANTONIO', 'AUGUST 2026', 'bg-orange-600'],
-        ].map(([name, city, month, color]) => (
-          <div key={name}>
-            <div className={`relative aspect-[3/4] overflow-hidden ${color} p-3 text-white shadow-md`}>
-              <div className="border-y border-white/40 py-2 text-center">
-                <p className="text-[8px] tracking-[0.18em]">{city}</p>
-                <p className="mt-1 font-serif text-base font-bold">{name}</p>
+        {publications.map((publication) => (
+          <div key={publication.name} className="border border-gray-200 bg-gray-50 p-2">
+            <div className="h-8 overflow-hidden border border-gray-200 bg-white px-2">
+              <Image
+                src={publication.current}
+                alt={`${publication.name} logo`}
+                width={720}
+                height={804}
+                className="h-full w-full object-cover object-top"
+              />
+            </div>
+            <div className="relative mt-2 h-[152px]">
+              <div className="absolute right-0 top-3 h-[132px] w-[73%] overflow-hidden border border-white bg-white shadow-sm">
+                <Image
+                  src={publication.previous}
+                  alt={`${publication.name} July 2026 issue cover`}
+                  fill
+                  sizes="150px"
+                  className="object-contain"
+                />
               </div>
-              <div className="absolute inset-x-3 bottom-3">
-                <p className="font-serif text-xl leading-none">The market<br />in motion</p>
-                <p className="mt-3 text-[8px] tracking-[0.15em] text-white/70">{month}</p>
+              <div className="absolute left-0 top-0 h-[142px] w-[78%] overflow-hidden border border-gray-200 bg-white shadow-md">
+                <Image
+                  src={publication.current}
+                  alt={`${publication.name} August 2026 issue cover`}
+                  fill
+                  priority
+                  sizes="170px"
+                  className="object-contain"
+                />
               </div>
             </div>
-            <p className="mt-2 text-[10px] font-semibold text-gray-900">{name}</p>
-            <p className="text-[9px] text-gray-500">{month}</p>
+            <p className="mt-1 text-[10px] font-semibold text-gray-900">{publication.name}</p>
+            <p className="text-[8px] uppercase tracking-[0.12em] text-gray-500">{publication.market} · August 2026</p>
           </div>
         ))}
       </div>
@@ -385,12 +408,11 @@ function AppPreview({
   onSelectTab: (tab: TourStep['tab']) => void;
 }) {
   const tabs: Array<[TourStep['tab'], string, typeof Home]> = [
-    ['feed', 'Feed', Home],
-    ['calendar', 'Calendar', CalendarDays],
-    ['builders', 'Builders', Building2],
     ['issues', 'Issues', BookOpen],
     ['partners', 'Partners', Megaphone],
-    ['more', 'More', MoreHorizontal],
+    ['calendar', 'Calendar', CalendarDays],
+    ['more', 'Tools', MoreHorizontal],
+    ['feed', 'Feed', Home],
   ];
   return (
     <div className="relative mx-auto w-full max-w-[620px]">
@@ -414,7 +436,7 @@ function AppPreview({
         >
           <MockScreen step={step} />
         </div>
-        <nav aria-label="Demo app navigation" className="grid grid-cols-6 border-t border-gray-200 bg-white px-1 py-2">
+        <nav aria-label="Demo app navigation" className="grid grid-cols-5 border-t border-gray-200 bg-white px-1 py-2">
           {tabs.map(([id, label, Icon]) => {
             const active = step.tab === id;
             return (
