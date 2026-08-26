@@ -60,6 +60,7 @@ interface NavSection {
   title?: string;
   items: NavItem[];
   adminOnly?: boolean;
+  authOnly?: boolean;
   groups?: { label: string; links: NavItem[] }[];
 }
 
@@ -95,7 +96,6 @@ const DRAWER_SECTIONS: NavSection[] = [
       { label: 'Communities', href: '/communities' },
       { label: 'Builders & Developers', href: '/builders' },
       { label: 'Partners', href: '/advertisers' },
-      { label: 'REALTOR® Resources', href: '/resources' },
     ],
   },
   {
@@ -107,17 +107,17 @@ const DRAWER_SECTIONS: NavSection[] = [
     ],
   },
   {
+    title: 'Platinum Tools',
+    authOnly: true,
+    items: [
+      { label: 'Testimonials HUB', href: '/testimonial-hub', authOnly: true },
+      { label: 'REALTOR® Resources', href: '/resources', authOnly: true },
+    ],
+  },
+  {
     title: 'About',
     items: [
       { label: 'My Feed', href: '/dashboard', authOnly: true },
-      {
-        label: 'Platinum Tools',
-        href: '/rnn-platinum',
-        authOnly: true,
-        subitems: [
-          { label: 'Testimonials HUB', href: '/testimonial-hub', authOnly: true },
-        ],
-      },
       { label: 'About Us', href: '/about' },
       {
         label: 'Advertise',
@@ -328,6 +328,7 @@ export default function NavDrawer({
             return ordered;
           })().map((section) => {
             if (section.adminOnly && !isAdmin) return null;
+            if (section.authOnly && !user) return null;
 
             const renderItem = (item: NavItem) => {
               if (item.adminOnly && !isAdmin) return null;
