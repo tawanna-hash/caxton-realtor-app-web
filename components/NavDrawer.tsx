@@ -110,6 +110,7 @@ const DRAWER_SECTIONS: NavSection[] = [
     title: 'About',
     items: [
       { label: 'My Feed', href: '/dashboard', authOnly: true },
+      { label: 'Testimonial Hub', href: '/testimonial-hub', authOnly: true },
       { label: 'About Us', href: '/about' },
       {
         label: 'Advertise',

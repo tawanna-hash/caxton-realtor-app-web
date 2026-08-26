@@ -203,6 +203,8 @@ async function isValidAdminToken(
 //   /support                — support contact (must be reachable without sign-in)
 //   /subscribe              — newsletter signup (top-of-funnel)
 //   /submit-event           — public event submission form
+//   /testimonial/submit/*   — public testimonial collection links
+//   /testimonials/*         — approved public testimonial showcases
 //   /magazine, /magazine/*  — published issues are top-of-funnel content;
 //                             everything else (feed, calendar, advertisers,
 //                             builders, etc.) still requires an account
@@ -222,6 +224,8 @@ const REALTOR_PUBLIC_PREFIXES: ReadonlyArray<string> = [
   '/support',
   '/subscribe',
   '/submit-event',
+  '/testimonial/submit/',
+  '/testimonials/',
   '/magazine/',
   '/communities/',
   '/inventory/',
