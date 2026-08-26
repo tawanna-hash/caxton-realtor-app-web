@@ -105,26 +105,16 @@ const STEP_BY_TAB: Record<TourStep['tab'], number> = {
   builders: 1,
 };
 
-function BrandMark({ inverse = false, compact = false }: { inverse?: boolean; compact?: boolean }) {
+function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
-    <span className={`inline-flex items-center ${compact ? 'gap-1.5' : 'gap-2.5'}`}>
-      <svg
-        viewBox="0 0 40 40"
-        width={compact ? 24 : 36}
-        height={compact ? 24 : 36}
-        role="img"
-        aria-label="Realty News Now"
-        className={inverse ? 'text-white' : 'text-brand-700'}
-      >
-        <rect x="2" y="2" width="36" height="36" rx="9" fill="currentColor" />
-        <path d="M11 28V12h8.1c4.2 0 6.9 2.2 6.9 5.7 0 2.3-1.2 4.1-3.3 5l5 5.3h-5.2l-4.2-4.7h-2.8V28H11Zm4.5-8.3h3.2c1.8 0 2.8-.7 2.8-2s-1-2-2.8-2h-3.2v4Z" fill="white" />
-      </svg>
-      <span className="leading-none">
-        <span className={`block font-bold tracking-tight ${compact ? 'text-[9px]' : 'text-sm'} ${inverse ? 'text-white' : 'text-brand-700'}`}>
-          REALTY NEWS NOW
-        </span>
-      </span>
-    </span>
+    <Image
+      src="/brand/rnn-logo.jpg"
+      alt="Realty News Now"
+      width={compact ? 30 : 40}
+      height={compact ? 30 : 40}
+      className={`${compact ? 'h-[30px] w-[30px]' : 'h-10 w-10'} shrink-0 object-cover`}
+      priority={!compact}
+    />
   );
 }
 
@@ -488,7 +478,7 @@ function AppPreview({
   ];
   return (
     <div className="relative mx-auto w-full max-w-[620px]">
-      <div className="pointer-events-none absolute -inset-4 border border-brand-100 bg-white/45 sm:-inset-7" aria-hidden />
+      <div className="pointer-events-none absolute -inset-2 border border-brand-100 bg-white/45 sm:-inset-3" aria-hidden />
       <div className="relative overflow-hidden border border-gray-300 bg-white shadow-[0_24px_70px_rgba(48,29,93,0.18)]">
         <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2.5">
           <button type="button" aria-label="Preview menu" onClick={() => onSelectTab('more')} className="p-1 text-gray-500">
