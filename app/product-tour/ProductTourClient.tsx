@@ -768,7 +768,7 @@ export default function ProductTourClient() {
               </button>
             ) : null}
           </div>
-          <div className="mb-3 flex items-center justify-center gap-2 border border-brand-700/15 bg-white/70 px-3 py-2 text-center text-[9px] font-semibold uppercase tracking-[0.14em] text-brand-700 shadow-sm">
+          <div className="relative z-10 mx-auto flex max-w-[620px] items-center justify-center gap-2 border border-b-0 border-brand-700/15 bg-white/80 px-3 py-2 text-center text-[9px] font-semibold uppercase tracking-[0.14em] text-brand-700 shadow-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-orange-600" aria-hidden />
             Interactive preview · Select any navigation tab
           </div>
