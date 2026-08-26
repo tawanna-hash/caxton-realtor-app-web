@@ -5,7 +5,9 @@
 //
 // Stripe Dashboard → Developers → Webhooks → Add endpoint:
 //   URL:    https://realtynewsnow.app/api/stripe/webhook
-//   Events: payment_intent.succeeded, payment_intent.payment_failed, charge.refunded
+//   Events: payment_intent.succeeded, payment_intent.payment_failed, charge.refunded,
+//           checkout.session.completed, customer.subscription.updated,
+//           customer.subscription.deleted
 // Then set STRIPE_WEBHOOK_SECRET in Vercel env to the whsec_... value Stripe gives.
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -13,6 +15,10 @@ import type Stripe from 'stripe';
 import { getSql, ensureSchema } from '@/lib/db';
 import { getStripe, isStripeConfigured, getWebhookSecret } from '@/lib/stripe';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
+import {
+  syncStripePlatinumBySubscription,
+  syncStripePlatinumSubscription,
+} from '@/lib/server/platinum-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -81,6 +87,25 @@ export async function POST(req: NextRequest) {
       case 'charge.refunded': {
         const charge = event.data.object as Stripe.Charge;
         await handleRefund(sql, charge);
+        break;
+      }
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.metadata?.source === 'rnn_platinum' && session.metadata.realtor_id) {
+          const subscriptionId = typeof session.subscription === 'string'
+            ? session.subscription
+            : session.subscription?.id;
+          if (subscriptionId) {
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+            await syncStripePlatinumSubscription(session.metadata.realtor_id, subscription);
+          }
+        }
+        break;
+      }
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription;
+        await syncStripePlatinumBySubscription(subscription);
         break;
       }
       default:

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireUser } from '@/lib/server/auth/user';
+import { requirePlatinumUser } from '@/lib/server/auth/platinum';
 import { ApiError, withErrorHandling } from '@/lib/server/error';
 import {
   deleteOwnerTestimonial,
@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 type Ctx = { params: Promise<{ id: string }> };
 
 export const PUT = withErrorHandling(async (req: Request, ctx: Ctx) => {
-  const user = await requireUser();
+  const user = await requirePlatinumUser();
   const { id } = await ctx.params;
   const parsed = testimonialInputSchema.parse(await req.json());
   const testimonial = await updateOwnerTestimonial(id, user.realtorId, {
@@ -35,7 +35,7 @@ export const PUT = withErrorHandling(async (req: Request, ctx: Ctx) => {
 });
 
 export const DELETE = withErrorHandling(async (_req: Request, ctx: Ctx) => {
-  const user = await requireUser();
+  const user = await requirePlatinumUser();
   const { id } = await ctx.params;
   const deleted = await deleteOwnerTestimonial(id, user.realtorId);
   if (!deleted) throw new ApiError(404, 'Testimonial not found');

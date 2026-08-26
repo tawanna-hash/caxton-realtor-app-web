@@ -110,7 +110,14 @@ const DRAWER_SECTIONS: NavSection[] = [
     title: 'About',
     items: [
       { label: 'My Feed', href: '/dashboard', authOnly: true },
-      { label: 'Testimonial Hub', href: '/testimonial-hub', authOnly: true },
+      {
+        label: 'Platinum Tools',
+        href: '/rnn-platinum',
+        authOnly: true,
+        subitems: [
+          { label: 'Testimonials HUB', href: '/testimonial-hub', authOnly: true },
+        ],
+      },
       { label: 'About Us', href: '/about' },
       {
         label: 'Advertise',
@@ -398,6 +405,8 @@ export default function NavDrawer({
                       <div className="mt-1 ml-3 pl-3 border-l border-white/15 space-y-0.5">
                         {item.subitems.map((sub) => {
                           if (sub.adminOnly && !isAdmin) return null;
+                          if (sub.authOnly && !user) return null;
+                          if (sub.pubOnly && !sub.pubOnly.includes(pub)) return null;
                           const subActive =
                             pathname === sub.href ||
                             pathname.startsWith(sub.href + '/');

@@ -15,6 +15,12 @@ import { formatPhone, formatPhoneInput } from '@/lib/format-phone';
 
 import PageTitle from '@/components/ui/PageTitle';
 type Subscriber = Record<string, any> & { id: string };
+type PlatinumAccess = {
+  active: boolean;
+  status: 'active' | 'inactive' | 'canceled';
+  source: 'admin' | 'stripe';
+  current_period_end: string | null;
+};
 
 type EditableState = {
   first_name: string;
@@ -219,6 +225,8 @@ export default function SubscriberDetailPage({ params }: { params: Promise<{ id:
   const [form, setForm] = useState<EditableState | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [platinum, setPlatinum] = useState<PlatinumAccess | null>(null);
+  const [updatingPlatinum, setUpdatingPlatinum] = useState(false);
 
   const [actionMsg, setActionMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [sendingLink, setSendingLink] = useState(false);
@@ -232,8 +240,18 @@ export default function SubscriberDetailPage({ params }: { params: Promise<{ id:
   useEffect(() => {
     if (!admin) return;
     queueMicrotask(() => setLoading(true));
-    adminApi.getSubscriber(id)
-      .then((res: { subscriber: Subscriber }) => { setSub(res.subscriber); setLoading(false); })
+    Promise.all([
+      adminApi.getSubscriber(id),
+      adminApi.getSubscriberPlatinum(id),
+    ])
+      .then(([subscriberResult, platinumResult]: [
+        { subscriber: Subscriber },
+        { platinum: PlatinumAccess },
+      ]) => {
+        setSub(subscriberResult.subscriber);
+        setPlatinum(platinumResult.platinum);
+        setLoading(false);
+      })
       .catch((err) => { setError(err.message); setLoading(false); });
   }, [admin, id]);
 
@@ -310,6 +328,24 @@ export default function SubscriberDetailPage({ params }: { params: Promise<{ id:
       setActionMsg({ kind: 'err', text: err instanceof Error ? err.message : 'Failed to deactivate' });
     } finally {
       setDeactivating(false); setDeactivateConfirm(false);
+    }
+  }
+
+  async function togglePlatinumAccess() {
+    if (!platinum) return;
+    setUpdatingPlatinum(true);
+    setActionMsg(null);
+    try {
+      const res: { platinum: PlatinumAccess } = await adminApi.updateSubscriberPlatinum(id, !platinum.active);
+      setPlatinum(res.platinum);
+      setActionMsg({
+        kind: 'ok',
+        text: res.platinum.active ? 'Platinum Tools access granted.' : 'Platinum Tools access revoked.',
+      });
+    } catch (err: unknown) {
+      setActionMsg({ kind: 'err', text: err instanceof Error ? err.message : 'Unable to update Platinum Tools access.' });
+    } finally {
+      setUpdatingPlatinum(false);
     }
   }
 
@@ -416,6 +452,8 @@ return (
                 <EditableSelect label="Market" name="market" value={f.market} onChange={updateField} options={[
                   { value: 'austin', label: 'RealtyLine Austin' },
                   { value: 'san_antonio', label: 'Newsline San Antonio' },
+                  { value: 'houston', label: 'RealtyLine Houston' },
+                  { value: 'dallas', label: 'RealtyLine Dallas / Ft. Worth' },
                 ]} />
                 <EditableSelect label="Status" name="status" value={f.status} onChange={updateField} options={[
                   { value: 'active', label: 'active' },
@@ -515,7 +553,7 @@ return (
               </>
             )}
           </Section>
-<Section title="Subscriptions">
+          <Section title="Subscriptions">
             {editing && f ? (
               <EditableField
                 label="Active subscriptions (comma-separated)"
@@ -527,6 +565,29 @@ return (
             ) : (
               <Field label="Active subscriptions" value={sub.subscriptions} />
             )}
+          </Section>
+
+          <Section title="Platinum Tools">
+            <Field label="Access" value={platinum?.active ? 'Active' : 'Inactive'} />
+            <Field label="Access source" value={platinum?.source} />
+            <Field label="Current period ends" value={platinum?.current_period_end ? fmtDate(platinum.current_period_end) : null} />
+            <div className="py-2">
+              <dt className="text-xs uppercase tracking-wide text-gray-500">Admin control</dt>
+              <dd className="mt-2">
+                <button
+                  type="button"
+                  onClick={() => void togglePlatinumAccess()}
+                  disabled={!platinum || updatingPlatinum}
+                  className={`min-h-11 rounded-md px-4 text-sm font-semibold disabled:opacity-50 ${
+                    platinum?.active
+                      ? 'border border-red-300 bg-white text-red-700 hover:bg-red-50'
+                      : 'bg-brand-700 text-white hover:bg-brand-800'
+                  }`}
+                >
+                  {updatingPlatinum ? 'Updating…' : platinum?.active ? 'Revoke access' : 'Grant access'}
+                </button>
+              </dd>
+            </div>
           </Section>
 
           <Section title="Consent (read-only)">

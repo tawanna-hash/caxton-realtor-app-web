@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   Archive,
+  AudioLines,
   Check,
   ExternalLink,
   FileText,
@@ -25,7 +26,7 @@ type AdminTestimonial = {
   client_title: string | null;
   client_company: string | null;
   rating: number | null;
-  format: 'text' | 'video';
+  format: 'text' | 'audio' | 'video';
   video_url: string | null;
   tags: string[];
   markets: PublicationId[];
@@ -197,7 +198,7 @@ export default function AdminTestimonialsPage() {
               <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_240px]">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    {item.format === 'video' ? <Video size={17} className="text-[#301D5D]" /> : <FileText size={17} className="text-[#301D5D]" />}
+                    {item.format === 'video' ? <Video size={17} className="text-[#301D5D]" /> : item.format === 'audio' ? <AudioLines size={17} className="text-[#301D5D]" /> : <FileText size={17} className="text-[#301D5D]" />}
                     <span className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${badge(item.status)}`}>{item.status}</span>
                     <span className="text-xs text-gray-500">{item.submitted_via === 'collection_link' ? 'Client submitted' : 'Subscriber added'}</span>
                   </div>

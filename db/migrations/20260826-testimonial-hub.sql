@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS testimonials (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT testimonials_rating_check CHECK (rating IS NULL OR (rating >= 1 AND rating <= 5)),
-  CONSTRAINT testimonials_format_check CHECK (format IN ('text', 'video')),
+  CONSTRAINT testimonials_format_check CHECK (format IN ('text', 'audio', 'video')),
   CONSTRAINT testimonials_status_check CHECK (status IN ('pending', 'published', 'archived')),
   CONSTRAINT testimonials_source_check CHECK (submitted_via IN ('owner', 'collection_link', 'admin'))
 );
@@ -45,3 +45,7 @@ CREATE INDEX IF NOT EXISTS testimonials_owner_idx
   ON testimonials (realtor_id, status, sort_order, created_at DESC);
 CREATE INDEX IF NOT EXISTS testimonials_status_idx
   ON testimonials (status, created_at DESC);
+
+ALTER TABLE testimonials DROP CONSTRAINT IF EXISTS testimonials_format_check;
+ALTER TABLE testimonials
+  ADD CONSTRAINT testimonials_format_check CHECK (format IN ('text', 'audio', 'video'));

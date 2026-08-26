@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/server/auth/user';
+import { getPlatinumAccess } from '@/lib/server/platinum-store';
+import RnnPlatinumPaywall from '@/components/RnnPlatinumPaywall';
 import TestimonialHubClient from './TestimonialHubClient';
 
 export const metadata = {
@@ -12,5 +14,18 @@ export const dynamic = 'force-dynamic';
 export default async function TestimonialHubPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login?next=%2Ftestimonial-hub');
+  const access = await getPlatinumAccess(user.realtorId);
+  if (!access.active) {
+    const checkoutAvailable = Boolean(
+      process.env.STRIPE_SECRET_KEY?.trim()
+      && process.env.STRIPE_RNN_PLATINUM_PRICE_ID?.trim(),
+    );
+    return (
+      <RnnPlatinumPaywall
+        checkoutAvailable={checkoutAvailable}
+        trialAvailable={!access.trial_started_at}
+      />
+    );
+  }
   return <TestimonialHubClient />;
 }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Archive,
+  AudioLines,
   Check,
   Clipboard,
   ExternalLink,
@@ -19,7 +20,6 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { getApiBase } from '@/lib/api-base';
-import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
 type Profile = {
   realtor_id: string;
@@ -28,10 +28,15 @@ type Profile = {
   display_name: string;
   professional_title: string | null;
   company: string | null;
+  location: string | null;
   bio: string | null;
   headshot_url: string | null;
-  default_market: PublicationId;
-  default_global: boolean;
+  website_url: string | null;
+  instagram_url: string | null;
+  x_url: string | null;
+  youtube_url: string | null;
+  linkedin_url: string | null;
+  featured_links: Array<{ label: string; url: string }>;
   is_published: boolean;
 };
 
@@ -42,14 +47,12 @@ type Testimonial = {
   client_title: string | null;
   client_company: string | null;
   rating: number | null;
-  format: 'text' | 'video';
+  format: 'text' | 'audio' | 'video';
   video_url: string | null;
   image_url: string | null;
   transcript: string | null;
   source_url: string | null;
   tags: string[];
-  markets: PublicationId[];
-  is_global: boolean;
   status: 'pending' | 'published' | 'archived';
   sort_order: number;
   submitted_via: 'owner' | 'collection_link' | 'admin';
@@ -62,14 +65,12 @@ type FormState = {
   clientTitle: string;
   clientCompany: string;
   rating: string;
-  format: 'text' | 'video';
+  format: 'text' | 'audio' | 'video';
   videoUrl: string;
   imageUrl: string;
   transcript: string;
   sourceUrl: string;
   tags: string;
-  markets: PublicationId[];
-  isGlobal: boolean;
   status: 'pending' | 'published' | 'archived';
   sortOrder: number;
 };
@@ -87,8 +88,6 @@ const EMPTY_FORM: FormState = {
   transcript: '',
   sourceUrl: '',
   tags: '',
-  markets: ['austin'],
-  isGlobal: false,
   status: 'published',
   sortOrder: 0,
 };
@@ -154,14 +153,13 @@ export default function TestimonialHubClient() {
   const showcaseUrl = typeof window !== 'undefined' && profile
     ? `${window.location.origin}/testimonials/${profile.slug}`
     : '';
+  const embedCode = typeof window !== 'undefined' && profile
+    ? `<script async src="${window.location.origin}/api/testimonial-widget?slug=${encodeURIComponent(profile.slug)}"></script>`
+    : '';
 
   function startNew() {
     setEditingId(null);
-    setForm({
-      ...EMPTY_FORM,
-      markets: profile?.default_global ? [] : [profile?.default_market ?? 'austin'],
-      isGlobal: profile?.default_global ?? false,
-    });
+    setForm(EMPTY_FORM);
     setShowEditor(true);
     setNotice('');
   }
@@ -180,23 +178,11 @@ export default function TestimonialHubClient() {
       transcript: item.transcript ?? '',
       sourceUrl: item.source_url ?? '',
       tags: item.tags.join(', '),
-      markets: item.markets,
-      isGlobal: item.is_global,
       status: item.status,
       sortOrder: item.sort_order,
     });
     setShowEditor(true);
     setNotice('');
-  }
-
-  function toggleMarket(market: PublicationId) {
-    setForm((current) => ({
-      ...current,
-      isGlobal: false,
-      markets: current.markets.includes(market)
-        ? current.markets.filter((item) => item !== market)
-        : [...current.markets, market],
-    }));
   }
 
   async function saveTestimonial(event: React.FormEvent) {
@@ -208,6 +194,8 @@ export default function TestimonialHubClient() {
         ...form,
         rating: form.rating ? Number(form.rating) : null,
         tags: form.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+        markets: [],
+        isGlobal: true,
       };
       await request(
         editingId ? `/testimonial-hub/testimonials/${editingId}` : '/testimonial-hub/testimonials',
@@ -231,13 +219,19 @@ export default function TestimonialHubClient() {
       const data = await request('/testimonial-hub', {
         method: 'PUT',
         body: JSON.stringify({
+          slug: profile.slug,
           display_name: profile.display_name,
           professional_title: profile.professional_title,
           company: profile.company,
+          location: profile.location,
           bio: profile.bio,
           headshot_url: profile.headshot_url,
-          default_market: profile.default_market,
-          default_global: profile.default_global,
+          website_url: profile.website_url,
+          instagram_url: profile.instagram_url,
+          x_url: profile.x_url,
+          youtube_url: profile.youtube_url,
+          linkedin_url: profile.linkedin_url,
+          featured_links: profile.featured_links,
           is_published: profile.is_published,
         }),
       });
@@ -287,6 +281,22 @@ export default function TestimonialHubClient() {
     const data = await request('/testimonial-hub', { method: 'POST' });
     setProfile(data.profile);
     setNotice('A new collection link is ready.');
+  }
+
+  function updateFeaturedLink(index: number, key: 'label' | 'url', value: string) {
+    if (!profile) return;
+    const featuredLinks = profile.featured_links.map((link, linkIndex) => (
+      linkIndex === index ? { ...link, [key]: value } : link
+    ));
+    setProfile({ ...profile, featured_links: featuredLinks });
+  }
+
+  function removeFeaturedLink(index: number) {
+    if (!profile) return;
+    setProfile({
+      ...profile,
+      featured_links: profile.featured_links.filter((_, linkIndex) => linkIndex !== index),
+    });
   }
 
   async function remove(item: Testimonial) {
@@ -368,7 +378,7 @@ export default function TestimonialHubClient() {
                 <article key={item.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      {item.format === 'video' ? <Video size={17} className="text-[#301D5D]" /> : <FileText size={17} className="text-[#301D5D]" />}
+                      {item.format === 'video' ? <Video size={17} className="text-[#301D5D]" /> : item.format === 'audio' ? <AudioLines size={17} className="text-[#301D5D]" /> : <FileText size={17} className="text-[#301D5D]" />}
                       <span className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${statusClass(item.status)}`}>{item.status}</span>
                       {item.submitted_via === 'collection_link' && <span className="text-xs text-gray-500">Client submitted</span>}
                     </div>
@@ -386,7 +396,6 @@ export default function TestimonialHubClient() {
                   <div className="mt-4 text-sm font-semibold text-gray-950">{item.client_name}</div>
                   {(item.client_title || item.client_company) && <div className="mt-0.5 text-sm text-gray-500">{[item.client_title, item.client_company].filter(Boolean).join(', ')}</div>}
                   <div className="mt-4 flex flex-wrap gap-1.5">
-                    <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">{item.is_global ? 'Global' : item.markets.map((market) => PUBLICATIONS.find((pub) => pub.id === market)?.market).join(', ')}</span>
                     {item.tags.map((tag) => <span key={tag} className="rounded bg-gray-50 px-2 py-1 text-xs text-gray-500">#{tag}</span>)}
                   </div>
                 </article>
@@ -407,7 +416,7 @@ export default function TestimonialHubClient() {
           </section>
 
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-semibold text-gray-950">Public showcase</h2>
+            <h2 className="text-base font-semibold text-gray-950">Profile settings</h2>
             <label className="mt-4 flex items-center justify-between gap-3 text-sm font-medium text-gray-800">
               Published
               <input type="checkbox" checked={profile.is_published} onChange={(event) => setProfile({ ...profile, is_published: event.target.checked })} className="h-5 w-5 accent-[#301D5D]" />
@@ -417,12 +426,23 @@ export default function TestimonialHubClient() {
               <input value={profile.display_name} onChange={(event) => setProfile({ ...profile, display_name: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" />
             </label>
             <label className="mt-4 block text-sm font-medium text-gray-700">
+              Username
+              <div className="mt-1.5 flex min-h-11 overflow-hidden rounded-md border border-gray-300 bg-white">
+                <span className="flex items-center border-r border-gray-200 bg-gray-50 px-3 text-xs text-gray-500">/testimonials/</span>
+                <input value={profile.slug} onChange={(event) => setProfile({ ...profile, slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} className="min-w-0 flex-1 px-3 text-sm outline-none" />
+              </div>
+            </label>
+            <label className="mt-4 block text-sm font-medium text-gray-700">
               Professional title
               <input value={profile.professional_title ?? ''} onChange={(event) => setProfile({ ...profile, professional_title: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" />
             </label>
             <label className="mt-4 block text-sm font-medium text-gray-700">
               Company
               <input value={profile.company ?? ''} onChange={(event) => setProfile({ ...profile, company: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" />
+            </label>
+            <label className="mt-4 block text-sm font-medium text-gray-700">
+              Location
+              <input value={profile.location ?? ''} onChange={(event) => setProfile({ ...profile, location: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="Austin, Texas" />
             </label>
             <label className="mt-4 block text-sm font-medium text-gray-700">
               Headshot URL
@@ -448,21 +468,59 @@ export default function TestimonialHubClient() {
               <textarea rows={3} value={profile.bio ?? ''} onChange={(event) => setProfile({ ...profile, bio: event.target.value })} className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
             </label>
             <label className="mt-4 block text-sm font-medium text-gray-700">
-              Default market
-              <select value={profile.default_market} onChange={(event) => setProfile({ ...profile, default_market: event.target.value as PublicationId })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm">
-                {PUBLICATIONS.map((publication) => <option key={publication.id} value={publication.id}>{publication.market}</option>)}
-              </select>
+              Subscriber website
+              <input type="url" value={profile.website_url ?? ''} onChange={(event) => setProfile({ ...profile, website_url: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://yourwebsite.com" />
             </label>
-            <label className="mt-4 flex items-center gap-2 text-sm text-gray-700">
-              <input type="checkbox" checked={profile.default_global} onChange={(event) => setProfile({ ...profile, default_global: event.target.checked })} className="h-5 w-5 accent-[#301D5D]" />
-              Default new testimonials to global
-            </label>
-            <button onClick={() => void saveProfile()} disabled={saving} className="mt-5 min-h-11 w-full rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white disabled:opacity-50">Save showcase</button>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {([
+                ['Instagram', 'instagram_url', 'https://instagram.com/…'],
+                ['X / Twitter', 'x_url', 'https://x.com/…'],
+                ['YouTube', 'youtube_url', 'https://youtube.com/…'],
+                ['LinkedIn', 'linkedin_url', 'https://linkedin.com/in/…'],
+              ] as const).map(([label, key, placeholder]) => (
+                <label key={key} className="block text-sm font-medium text-gray-700">
+                  {label}
+                  <input type="url" value={profile[key] ?? ''} onChange={(event) => setProfile({ ...profile, [key]: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder={placeholder} />
+                </label>
+              ))}
+            </div>
+            <div className="mt-5">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-medium text-gray-700">Featured links</h3>
+                <button
+                  type="button"
+                  onClick={() => setProfile({ ...profile, featured_links: [...profile.featured_links, { label: '', url: '' }] })}
+                  disabled={profile.featured_links.length >= 8}
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-sm font-semibold text-[#301D5D] disabled:opacity-50"
+                >
+                  <Plus size={15} /> Add link
+                </button>
+              </div>
+              <div className="space-y-3">
+                {profile.featured_links.map((link, index) => (
+                  <div key={index} className="grid gap-2 rounded-lg border border-gray-200 p-3">
+                    <input value={link.label} onChange={(event) => updateFeaturedLink(index, 'label', event.target.value)} className="min-h-11 rounded-md border border-gray-300 px-3 text-sm" placeholder="Link title" />
+                    <div className="flex gap-2">
+                      <input type="url" value={link.url} onChange={(event) => updateFeaturedLink(index, 'url', event.target.value)} className="min-h-11 min-w-0 flex-1 rounded-md border border-gray-300 px-3 text-sm" placeholder="https://…" />
+                      <button type="button" onClick={() => removeFeaturedLink(index)} aria-label={`Remove featured link ${index + 1}`} className="flex min-h-11 min-w-11 items-center justify-center rounded-md border border-gray-300 text-gray-500 hover:bg-red-50 hover:text-red-700"><Trash2 size={16} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <button onClick={() => void saveProfile()} disabled={saving} className="mt-5 min-h-11 w-full rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white disabled:opacity-50">Save profile</button>
             {profile.is_published && (
               <a href={showcaseUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 <ExternalLink size={15} /> View public page
               </a>
             )}
+          </section>
+
+          <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <h2 className="text-base font-semibold text-gray-950">Embed anywhere</h2>
+            <p className="mt-2 text-sm leading-6 text-gray-500">Paste this single line into your website to display your published testimonials.</p>
+            <pre className="mt-4 overflow-x-auto whitespace-pre-wrap break-all rounded-md bg-gray-950 p-3 text-xs leading-5 text-gray-100">{embedCode}</pre>
+            <button onClick={() => void copy(embedCode, 'Embed code copied.')} className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"><Clipboard size={15} /> Copy embed code</button>
           </section>
         </aside>
       </section>
@@ -473,7 +531,7 @@ export default function TestimonialHubClient() {
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4">
               <div>
                 <h2 id="testimonial-editor-title" className="text-lg font-semibold text-gray-950">{editingId ? 'Edit testimonial' : 'Add testimonial'}</h2>
-                <p className="mt-0.5 text-sm text-gray-500">Save text, video, rating, attribution, and market details.</p>
+                <p className="mt-0.5 text-sm text-gray-500">Save text, audio, video, rating, and client attribution.</p>
               </div>
               <button onClick={() => setShowEditor(false)} aria-label="Close testimonial editor" className="flex min-h-11 min-w-11 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100"><X size={20} /></button>
             </div>
@@ -489,10 +547,10 @@ export default function TestimonialHubClient() {
               <fieldset className="sm:col-span-2">
                 <legend className="text-sm font-medium text-gray-700">Format</legend>
                 <div className="mt-2 flex gap-2">
-                  {(['text', 'video'] as const).map((format) => <button key={format} type="button" onClick={() => setForm({ ...form, format })} className={`inline-flex min-h-11 items-center gap-2 rounded-md border px-4 text-sm font-medium capitalize ${form.format === format ? 'border-[#301D5D] bg-[#301D5D]/5 text-[#301D5D]' : 'border-gray-300 text-gray-600'}`}>{format === 'video' ? <Video size={16} /> : <FileText size={16} />}{format}</button>)}
+                  {(['text', 'audio', 'video'] as const).map((format) => <button key={format} type="button" onClick={() => setForm({ ...form, format })} className={`inline-flex min-h-11 items-center gap-2 rounded-md border px-4 text-sm font-medium capitalize ${form.format === format ? 'border-[#301D5D] bg-[#301D5D]/5 text-[#301D5D]' : 'border-gray-300 text-gray-600'}`}>{format === 'video' ? <Video size={16} /> : format === 'audio' ? <AudioLines size={16} /> : <FileText size={16} />}{format}</button>)}
                 </div>
               </fieldset>
-              {form.format === 'video' && <label className="sm:col-span-2 text-sm font-medium text-gray-700">Video URL<input required type="url" value={form.videoUrl} onChange={(event) => setForm({ ...form, videoUrl: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://…" /></label>}
+              {form.format !== 'text' && <label className="sm:col-span-2 text-sm font-medium text-gray-700">{form.format === 'audio' ? 'Audio URL' : 'Video URL'}<input required type="url" value={form.videoUrl} onChange={(event) => setForm({ ...form, videoUrl: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://…" /></label>}
               <div>
                 <label className="text-sm font-medium text-gray-700">Client photo URL<input type="url" value={form.imageUrl} onChange={(event) => setForm({ ...form, imageUrl: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://…" /></label>
                 <label className="mt-2 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50">
@@ -512,21 +570,13 @@ export default function TestimonialHubClient() {
                 </label>
               </div>
               <label className="text-sm font-medium text-gray-700">Original source URL<input type="url" value={form.sourceUrl} onChange={(event) => setForm({ ...form, sourceUrl: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="https://…" /></label>
-              <label className="sm:col-span-2 text-sm font-medium text-gray-700">Video transcript or notes<textarea rows={3} value={form.transcript} onChange={(event) => setForm({ ...form, transcript: event.target.value })} className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" /></label>
+              <label className="sm:col-span-2 text-sm font-medium text-gray-700">Transcript or notes<textarea rows={3} value={form.transcript} onChange={(event) => setForm({ ...form, transcript: event.target.value })} className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" /></label>
               <label className="sm:col-span-2 text-sm font-medium text-gray-700">Tags<input value={form.tags} onChange={(event) => setForm({ ...form, tags: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" placeholder="buyer, first-time homebuyer, relocation" /></label>
-              <fieldset className="sm:col-span-2">
-                <legend className="text-sm font-medium text-gray-700">Visibility</legend>
-                <label className="mt-2 flex min-h-11 items-center gap-2 rounded-md border border-gray-200 px-3 text-sm text-gray-700">
-                  <input type="checkbox" checked={form.isGlobal} onChange={(event) => setForm({ ...form, isGlobal: event.target.checked, markets: event.target.checked ? [] : form.markets })} className="h-5 w-5 accent-[#301D5D]" />
-                  Show in every market
-                </label>
-                {!form.isGlobal && <div className="mt-2 grid gap-2 sm:grid-cols-2">{PUBLICATIONS.map((publication) => <label key={publication.id} className="flex min-h-11 items-center gap-2 rounded-md border border-gray-200 px-3 text-sm text-gray-700"><input type="checkbox" checked={form.markets.includes(publication.id)} onChange={() => toggleMarket(publication.id)} className="h-5 w-5 accent-[#301D5D]" />{publication.market}</label>)}</div>}
-              </fieldset>
               <label className="text-sm font-medium text-gray-700">Status<select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value as FormState['status'] })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 bg-white px-3 text-sm"><option value="published">Published</option><option value="pending">Pending</option><option value="archived">Archived</option></select></label>
               <label className="text-sm font-medium text-gray-700">Display order<input type="number" min={0} value={form.sortOrder} onChange={(event) => setForm({ ...form, sortOrder: Number(event.target.value) })} className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3 text-sm" /></label>
               <div className="flex justify-end gap-2 border-t border-gray-200 pt-5 sm:col-span-2">
                 <button type="button" onClick={() => setShowEditor(false)} className="min-h-11 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700">Cancel</button>
-                <button disabled={saving || (!form.isGlobal && form.markets.length === 0)} className="min-h-11 rounded-md bg-[#301D5D] px-5 text-sm font-semibold text-white disabled:opacity-50">{saving ? 'Saving…' : 'Save testimonial'}</button>
+                <button disabled={saving} className="min-h-11 rounded-md bg-[#301D5D] px-5 text-sm font-semibold text-white disabled:opacity-50">{saving ? 'Saving…' : 'Save testimonial'}</button>
               </div>
             </form>
           </div>

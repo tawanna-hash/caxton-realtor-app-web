@@ -134,6 +134,15 @@ export const adminApi = {
   // Subscribers (realtors)
   getSubscriber: (id: string) => adminFetch('/admin/subscribers/' + encodeURIComponent(id)),
 
+  getSubscriberPlatinum: (id: string) =>
+    adminFetch(`/admin/subscribers/${encodeURIComponent(id)}/platinum`),
+
+  updateSubscriberPlatinum: (id: string, active: boolean) =>
+    adminFetch(`/admin/subscribers/${encodeURIComponent(id)}/platinum`, {
+      method: 'PATCH',
+      body: { active },
+    }),
+
   updateSubscriber: (id: string, patch: Record<string, unknown>) =>
     adminFetch(`/admin/subscribers/${encodeURIComponent(id)}`, { method: 'PATCH', body: patch }),
 

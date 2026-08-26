@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
-import { ExternalLink, Quote, Star, Video } from 'lucide-react';
+import { AudioLines, ExternalLink, Quote, Star, Video } from 'lucide-react';
 import { getPublicShowcase } from '@/lib/server/testimonials-store';
-import { PUBLICATIONS } from '@/lib/publications';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +21,12 @@ export default async function TestimonialShowcasePage({ params }: Ctx) {
   const showcase = await getPublicShowcase(slug);
   if (!showcase) notFound();
   const { profile, testimonials } = showcase;
+  const socialLinks = [
+    { label: 'Instagram', url: profile.instagram_url },
+    { label: 'X / Twitter', url: profile.x_url },
+    { label: 'YouTube', url: profile.youtube_url },
+    { label: 'LinkedIn', url: profile.linkedin_url },
+  ].filter((item): item is { label: string; url: string } => Boolean(item.url));
 
   return (
     <main className="bg-[#faf8f4]">
@@ -39,7 +44,19 @@ export default async function TestimonialShowcasePage({ params }: Ctx) {
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#301D5D]">Client stories</p>
               <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950">{profile.display_name}</h1>
               {(profile.professional_title || profile.company) && <p className="mt-2 text-base text-gray-600">{[profile.professional_title, profile.company].filter(Boolean).join(' · ')}</p>}
+              {profile.location && <p className="mt-1 text-sm text-gray-500">{profile.location}</p>}
               {profile.bio && <p className="mt-4 max-w-2xl text-base leading-7 text-gray-600">{profile.bio}</p>}
+              <div className="mt-5 flex flex-wrap gap-2">
+                {profile.website_url && <a href={profile.website_url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#301D5D] px-4 text-sm font-semibold text-white"><ExternalLink size={15} /> Visit website</a>}
+                {socialLinks.map(({ label, url }) => (
+                  <a key={label} href={url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center rounded-md border border-stone-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-stone-50">{label}</a>
+                ))}
+              </div>
+              {profile.featured_links.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {profile.featured_links.map((link) => <a key={`${link.label}-${link.url}`} href={link.url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-[#301D5D] underline underline-offset-4">{link.label}</a>)}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -65,10 +82,12 @@ export default async function TestimonialShowcasePage({ params }: Ctx) {
                 <div className="flex items-center justify-between gap-3">
                   <Quote size={22} className="text-[#301D5D]" />
                   {testimonial.format === 'video' && <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600"><Video size={13} /> Video</span>}
+                  {testimonial.format === 'audio' && <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600"><AudioLines size={13} /> Audio</span>}
                 </div>
                 {testimonial.rating && <div className="mt-4 flex gap-0.5 text-amber-500" aria-label={`${testimonial.rating} out of 5 stars`}>{Array.from({ length: testimonial.rating }).map((_, index) => <Star key={index} size={15} fill="currentColor" />)}</div>}
                 <blockquote className="mt-4 text-lg leading-8 text-gray-800">“{testimonial.quote}”</blockquote>
                 {testimonial.format === 'video' && testimonial.video_url && <a href={testimonial.video_url} target="_blank" rel="noreferrer" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#301D5D] underline underline-offset-4"><Video size={16} /> Watch testimonial</a>}
+                {testimonial.format === 'audio' && testimonial.video_url && <a href={testimonial.video_url} target="_blank" rel="noreferrer" className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-[#301D5D] underline underline-offset-4"><AudioLines size={16} /> Listen to testimonial</a>}
                 <footer className="mt-5 border-t border-stone-100 pt-4">
                   <div className="flex items-center gap-3">
                     {testimonial.image_url && (
@@ -82,7 +101,6 @@ export default async function TestimonialShowcasePage({ params }: Ctx) {
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                    <span>{testimonial.is_global ? 'All markets' : testimonial.markets.map((id) => PUBLICATIONS.find((publication) => publication.id === id)?.market).filter(Boolean).join(', ')}</span>
                     {testimonial.source_url && <a href={testimonial.source_url} target="_blank" rel="noreferrer" aria-label="View original testimonial" className="inline-flex min-h-11 items-center gap-1 font-medium text-[#301D5D]"><ExternalLink size={13} /> Original</a>}
                   </div>
                 </footer>

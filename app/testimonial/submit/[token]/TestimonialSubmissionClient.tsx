@@ -1,17 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, FileText, Quote, Star, Video } from 'lucide-react';
+import { AudioLines, Check, FileText, Quote, Star, Video } from 'lucide-react';
 import { getApiBase } from '@/lib/api-base';
-import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
 type Preview = {
   display_name: string;
   professional_title: string | null;
   company: string | null;
   headshot_url: string | null;
-  default_market: PublicationId;
-  default_global: boolean;
+  website_url: string | null;
 };
 
 const API_BASE = getApiBase();
@@ -22,10 +20,8 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [format, setFormat] = useState<'text' | 'video'>('text');
+  const [format, setFormat] = useState<'text' | 'audio' | 'video'>('text');
   const [rating, setRating] = useState<number | null>(5);
-  const [isGlobal, setIsGlobal] = useState(false);
-  const [markets, setMarkets] = useState<PublicationId[]>([]);
 
   useEffect(() => {
     fetch(`${API_BASE}/testimonial-hub/submit/${encodeURIComponent(token)}`)
@@ -33,19 +29,10 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'This collection link is not available.');
         setProfile(data.profile);
-        setIsGlobal(data.profile.default_global);
-        setMarkets(data.profile.default_global ? [] : [data.profile.default_market]);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Unable to open this form.'))
       .finally(() => setLoading(false));
   }, [token]);
-
-  function toggleMarket(market: PublicationId) {
-    setIsGlobal(false);
-    setMarkets((current) => current.includes(market)
-      ? current.filter((item) => item !== market)
-      : [...current, market]);
-  }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -65,8 +52,6 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
       transcript: String(form.get('transcript') || ''),
       sourceUrl: String(form.get('sourceUrl') || ''),
       tags: [],
-      markets,
-      isGlobal,
       consent: form.get('consent') === 'on',
       hp: String(form.get('website') || ''),
     };
@@ -109,6 +94,7 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
           <Check className="mx-auto text-emerald-600" size={38} />
           <h1 className="mt-5 text-2xl font-semibold text-gray-950">Thank you for sharing</h1>
           <p className="mt-3 text-base leading-7 text-gray-600">Your testimonial has been sent to {profile?.display_name} for review.</p>
+          {profile?.website_url && <a href={profile.website_url} className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-[#301D5D] px-5 text-sm font-semibold text-white">Return to {profile.display_name}&apos;s website</a>}
         </div>
       </main>
     );
@@ -126,6 +112,7 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
           <p className="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#301D5D]">Client testimonial</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-gray-950">Share your experience with {profile?.display_name}</h1>
           {(profile?.professional_title || profile?.company) && <p className="mt-2 text-sm text-gray-600">{[profile.professional_title, profile.company].filter(Boolean).join(' · ')}</p>}
+          {profile?.website_url && <a href={profile.website_url} className="mt-3 inline-block text-sm font-semibold text-[#301D5D] underline underline-offset-4">Visit {profile.display_name}&apos;s website</a>}
         </header>
 
         <form onSubmit={submit} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
@@ -155,18 +142,18 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
 
           <fieldset className="mt-6">
             <legend className="text-sm font-semibold text-gray-800">Testimonial format</legend>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {(['text', 'video'] as const).map((value) => (
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {(['text', 'audio', 'video'] as const).map((value) => (
                 <button key={value} type="button" onClick={() => setFormat(value)} className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-4 text-sm font-medium capitalize ${format === value ? 'border-[#301D5D] bg-[#301D5D]/5 text-[#301D5D]' : 'border-gray-300 text-gray-600'}`}>
-                  {value === 'video' ? <Video size={16} /> : <FileText size={16} />}{value}
+                  {value === 'video' ? <Video size={16} /> : value === 'audio' ? <AudioLines size={16} /> : <FileText size={16} />}{value}
                 </button>
               ))}
             </div>
           </fieldset>
 
-          {format === 'video' && (
+          {format !== 'text' && (
             <div className="mt-5 space-y-4">
-              <label className="block text-sm font-medium text-gray-700">Video URL<input required type="url" name="videoUrl" className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3" placeholder="YouTube, Vimeo, or hosted video URL" /></label>
+              <label className="block text-sm font-medium text-gray-700">{format === 'audio' ? 'Audio URL' : 'Video URL'}<input required type="url" name="videoUrl" className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3" placeholder={format === 'audio' ? 'Hosted audio or podcast URL' : 'YouTube, Vimeo, or hosted video URL'} /></label>
               <label className="block text-sm font-medium text-gray-700">Transcript or summary<textarea name="transcript" rows={3} className="mt-1.5 w-full rounded-md border border-gray-300 px-3 py-2" /></label>
             </div>
           )}
@@ -174,19 +161,13 @@ export default function TestimonialSubmissionClient({ token }: { token: string }
           <label className="mt-5 block text-sm font-medium text-gray-700">Photo URL, optional<input type="url" name="imageUrl" className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
           <label className="mt-5 block text-sm font-medium text-gray-700">Original review URL, optional<input type="url" name="sourceUrl" className="mt-1.5 min-h-11 w-full rounded-md border border-gray-300 px-3" /></label>
 
-          <fieldset className="mt-6">
-            <legend className="text-sm font-semibold text-gray-800">Where may this be shown?</legend>
-            <label className="mt-2 flex min-h-11 items-center gap-2 rounded-md border border-gray-200 px-3 text-sm text-gray-700"><input type="checkbox" checked={isGlobal} onChange={(event) => { setIsGlobal(event.target.checked); if (event.target.checked) setMarkets([]); }} className="h-5 w-5 accent-[#301D5D]" />All Realty News Now markets</label>
-            {!isGlobal && <div className="mt-2 grid gap-2 sm:grid-cols-2">{PUBLICATIONS.map((publication) => <label key={publication.id} className="flex min-h-11 items-center gap-2 rounded-md border border-gray-200 px-3 text-sm text-gray-700"><input type="checkbox" checked={markets.includes(publication.id)} onChange={() => toggleMarket(publication.id)} className="h-5 w-5 accent-[#301D5D]" />{publication.market}</label>)}</div>}
-          </fieldset>
-
           <label className="mt-6 flex items-start gap-3 text-sm leading-6 text-gray-600">
             <input required name="consent" type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-[#301D5D]" />
             I confirm this testimonial reflects my experience and may be displayed publicly after review.
           </label>
           <input name="website" tabIndex={-1} autoComplete="off" className="sr-only" aria-hidden="true" />
 
-          <button disabled={saving || (!isGlobal && markets.length === 0)} className="mt-7 min-h-12 w-full rounded-md bg-[#301D5D] px-5 text-sm font-semibold text-white hover:bg-[#241547] disabled:opacity-50">
+          <button disabled={saving} className="mt-7 min-h-12 w-full rounded-md bg-[#301D5D] px-5 text-sm font-semibold text-white hover:bg-[#241547] disabled:opacity-50">
             {saving ? 'Submitting…' : 'Submit testimonial'}
           </button>
           <p className="mt-4 text-center text-xs leading-5 text-gray-500">Your submission is reviewed before it appears publicly.</p>

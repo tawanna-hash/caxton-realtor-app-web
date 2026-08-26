@@ -5,7 +5,7 @@ const nullableUrl = z.string().trim().url().max(2_000).nullable().optional().or(
 const nullableShortText = z.string().trim().max(300).nullable().optional();
 
 type TestimonialRefinementValue = {
-  format: 'text' | 'video';
+  format: 'text' | 'audio' | 'video';
   videoUrl?: string | null;
   markets: Array<(typeof PUBLICATION_IDS)[number]>;
   isGlobal: boolean;
@@ -19,11 +19,11 @@ function validateTestimonial(value: TestimonialRefinementValue, ctx: z.Refinemen
       message: 'Select at least one market or mark the testimonial global.',
     });
   }
-  if (value.format === 'video' && !value.videoUrl) {
+  if (value.format !== 'text' && !value.videoUrl) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['videoUrl'],
-      message: 'A video URL is required for video testimonials.',
+      message: 'A media URL is required for audio and video testimonials.',
     });
   }
 }
@@ -34,7 +34,7 @@ const testimonialInputObjectSchema = z.object({
   clientTitle: nullableShortText,
   clientCompany: nullableShortText,
   rating: z.number().int().min(1).max(5).nullable().optional(),
-  format: z.enum(['text', 'video']),
+  format: z.enum(['text', 'audio', 'video']),
   videoUrl: nullableUrl,
   imageUrl: nullableUrl,
   transcript: z.string().trim().max(10_000).nullable().optional(),
@@ -49,22 +49,39 @@ const testimonialInputObjectSchema = z.object({
 export const testimonialInputSchema = testimonialInputObjectSchema.superRefine(validateTestimonial);
 
 export const publicTestimonialSubmissionSchema = testimonialInputObjectSchema
-  .omit({ status: true, sortOrder: true })
+  .omit({ status: true, sortOrder: true, markets: true, isGlobal: true })
   .extend({
     email: z.string().trim().email().max(320).optional().or(z.literal('')),
     consent: z.literal(true),
     hp: z.string().optional(),
   })
-  .superRefine(validateTestimonial);
+  .superRefine((value, ctx) => {
+    if (value.format !== 'text' && !value.videoUrl) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['videoUrl'],
+        message: 'A media URL is required for audio and video testimonials.',
+      });
+    }
+  });
 
 export const testimonialProfileSchema = z.object({
+  slug: z.string().trim().toLowerCase().min(3).max(64).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   display_name: z.string().trim().min(2).max(200),
   professional_title: nullableShortText,
   company: nullableShortText,
+  location: nullableShortText,
   bio: z.string().trim().max(2_000).nullable().optional(),
   headshot_url: nullableUrl,
-  default_market: z.enum(PUBLICATION_IDS),
-  default_global: z.boolean(),
+  website_url: nullableUrl,
+  instagram_url: nullableUrl,
+  x_url: nullableUrl,
+  youtube_url: nullableUrl,
+  linkedin_url: nullableUrl,
+  featured_links: z.array(z.object({
+    label: z.string().trim().min(1).max(80),
+    url: z.string().trim().url().max(2_000),
+  })).max(8),
   is_published: z.boolean(),
 });
 

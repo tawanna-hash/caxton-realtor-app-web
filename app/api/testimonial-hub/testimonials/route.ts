@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireUser } from '@/lib/server/auth/user';
+import { requirePlatinumUser } from '@/lib/server/auth/platinum';
 import { withErrorHandling } from '@/lib/server/error';
 import { createTestimonial } from '@/lib/server/testimonials-store';
 import { nullableValue, testimonialInputSchema } from '@/lib/testimonials';
@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export const POST = withErrorHandling(async (req: Request) => {
-  const user = await requireUser();
+  const user = await requirePlatinumUser();
   const parsed = testimonialInputSchema.parse(await req.json());
   const testimonial = await createTestimonial(user.realtorId, {
     ...parsed,

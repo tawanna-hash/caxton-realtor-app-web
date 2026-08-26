@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { put } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
-import { requireUser } from '@/lib/server/auth/user';
+import { requirePlatinumUser } from '@/lib/server/auth/platinum';
 import { withErrorHandling } from '@/lib/server/error';
 
 export const runtime = 'nodejs';
@@ -15,7 +15,7 @@ const ALLOWED_TYPES = new Map([
 ]);
 
 export const POST = withErrorHandling(async function POST(req: NextRequest) {
-  const session = await requireUser();
+  const session = await requirePlatinumUser();
   const formData = await req.formData();
   const file = formData.get('file');
   const kind = formData.get('kind') === 'headshot' ? 'headshot' : 'client';

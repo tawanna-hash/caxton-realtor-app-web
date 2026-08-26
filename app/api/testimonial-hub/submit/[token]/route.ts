@@ -31,8 +31,7 @@ export const GET = withErrorHandling(async (_req: Request, ctx: Ctx) => {
       professional_title: profile.professional_title,
       company: profile.company,
       headshot_url: profile.headshot_url,
-      default_market: profile.default_market,
-      default_global: profile.default_global,
+      website_url: profile.website_url,
     },
   });
 });
@@ -53,6 +52,8 @@ export const POST = withErrorHandling(async (req: Request, ctx: Ctx) => {
     imageUrl: nullableValue(parsed.imageUrl),
     transcript: nullableValue(parsed.transcript),
     sourceUrl: nullableValue(parsed.sourceUrl),
+    markets: [],
+    isGlobal: true,
     status: 'pending',
     sortOrder: 0,
   }, 'collection_link');
