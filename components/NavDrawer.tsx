@@ -112,6 +112,7 @@ const DRAWER_SECTIONS: NavSection[] = [
     authOnly: true,
     items: [
       { label: 'Testimonials HUB', href: '/testimonial-hub', authOnly: true },
+      { label: 'Custom Designer', href: '/custom-designer', authOnly: true },
       { label: 'REALTOR® Calculators & Quick References', href: '/resources', authOnly: true },
       { label: 'REALTOR® Downloadable Guides', href: '/resources/guides', authOnly: true },
     ],

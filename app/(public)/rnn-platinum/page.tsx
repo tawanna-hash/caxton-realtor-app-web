@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { Crown, ExternalLink } from 'lucide-react';
+import { Crown, ExternalLink, Palette } from 'lucide-react';
 import { getCurrentUser } from '@/lib/server/auth/user';
 import { getPlatinumAccess } from '@/lib/server/platinum-store';
 import { PLATINUM_PAYWALL_ENABLED } from '@/lib/server/auth/platinum';
@@ -49,9 +49,14 @@ export default async function RnnPlatinumPage() {
             Trial access ends {new Intl.DateTimeFormat('en-US', { dateStyle: 'long' }).format(new Date(access.current_period_end))}.
           </p>
         )}
-        <Link href="/testimonial-hub" className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-[#301D5D]">
-          Open Testimonials HUB <ExternalLink size={15} />
-        </Link>
+        <div className="mt-7 flex flex-wrap gap-3">
+          <Link href="/testimonial-hub" className="inline-flex min-h-11 items-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-[#301D5D]">
+            Open Testimonials HUB <ExternalLink size={15} />
+          </Link>
+          <Link href="/custom-designer" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-white/30 px-5 text-sm font-semibold text-white hover:bg-white/10">
+            <Palette size={15} /> Open Custom Designer
+          </Link>
+        </div>
       </section>
     </main>
   );
