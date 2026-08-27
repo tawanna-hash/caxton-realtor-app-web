@@ -77,7 +77,7 @@ export default function DesignerClient() {
 
   const presets = product === 'signature' ? SIGNATURE_PRESETS : FLYER_PRESETS;
   const dimensions = product === 'signature'
-    ? { width: 560, height: 180 }
+    ? { width: 760, height: 220 }
     : FLYER_SIZES[flyerSize];
 
   const switchProduct = (next: Product) => {
@@ -402,54 +402,78 @@ function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, 
   fontSize: number;
   fontWeight: number;
 }) {
+  const headshot = fields.photo ? (
+    // User-supplied headshot artwork must render directly in the signature.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={fields.photo} alt={`${fields.name} headshot`} className="h-24 w-24 rounded-full object-cover" />
+  ) : (
+    <div className="flex h-24 w-24 items-center justify-center rounded-full bg-slate-200 text-2xl font-bold text-slate-500">
+      {initials(fields.name)}
+    </div>
+  );
+
+  const companyLogo = fields.logo ? (
+    // User-supplied logo artwork must render directly in the signature.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={fields.logo} alt={`${fields.company} logo`} className="max-h-20 w-full object-contain" />
+  ) : (
+    <div className="text-center text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+      Company logo
+    </div>
+  );
+
   if (preset === 1) {
     return (
-      <div className="flex h-full w-full items-center p-5" style={{ fontFamily: font, color: secondary }}>
-        <div className="flex w-full items-center justify-between gap-5 rounded bg-white/90 p-4">
-          <div className="min-w-0">
+      <div className="grid h-full w-full grid-cols-[170px_minmax(0,1fr)_190px] gap-3 p-4" style={{ fontFamily: font, color: secondary }}>
+        <SignatureArtboard label="Headshot image">
+          {headshot}
+        </SignatureArtboard>
+        <SignatureArtboard label="Personal details">
+          <div className="w-full">
             <div>
               <span style={{ color: '#0f172a', fontSize, fontWeight }}>{fields.name}</span>
-              <span className="ml-3 text-xs font-semibold" style={{ color: primary }}>| &nbsp; {fields.title}</span>
+              <span className="mt-1 block text-xs font-semibold" style={{ color: primary }}>{fields.title}</span>
             </div>
             <div className="mt-2 border-t border-slate-200 pt-2 text-[11px]">
               <strong className="text-slate-900">{fields.company}</strong> &nbsp;·&nbsp; ☎ {fields.phone}
             </div>
           </div>
-          {fields.logo && (
-            // User-supplied logo artwork must render directly in the signature.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={fields.logo} alt={`${fields.company} logo`} className="max-h-12 w-28 shrink-0 object-contain" />
-          )}
-        </div>
+        </SignatureArtboard>
+        <SignatureArtboard label="Company logo">
+          {companyLogo}
+        </SignatureArtboard>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full w-full items-center p-5" style={{ fontFamily: font, color: secondary }}>
-      <div className="flex w-full items-center rounded bg-white/90 p-3">
-        {fields.photo ? (
-          // User-supplied URLs must render directly in the generated signature.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={fields.photo} alt="" className="mr-4 h-[76px] w-[76px] rounded-full object-cover" />
-        ) : (
-          <div className="mr-4 flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-full bg-slate-200 text-xl font-bold text-slate-500">
-            {initials(fields.name)}
-          </div>
-        )}
-        <div className="min-w-0 flex-1 border-l-[3px] pl-4" style={{ borderColor: primary }}>
+    <div className="grid h-full w-full grid-cols-[170px_minmax(0,1fr)_190px] gap-3 p-4" style={{ fontFamily: font, color: secondary }}>
+      <SignatureArtboard label="Headshot image">
+        {headshot}
+      </SignatureArtboard>
+      <SignatureArtboard label="Personal details">
+        <div className="w-full border-l-[3px] pl-4" style={{ borderColor: primary }}>
           <div className="leading-tight text-slate-900" style={{ fontSize, fontWeight }}>{fields.name}</div>
           <div className="mt-1 text-[13px] font-semibold" style={{ color: primary }}>{fields.title}</div>
           <div className="mt-0.5 text-xs font-medium">{fields.company}</div>
           <div className="mt-1 text-[11px]">☎ {fields.phone}</div>
         </div>
-        {fields.logo && (
-          // User-supplied logo artwork must render directly in the signature.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={fields.logo} alt={`${fields.company} logo`} className="ml-4 max-h-14 w-28 shrink-0 object-contain" />
-        )}
-      </div>
+      </SignatureArtboard>
+      <SignatureArtboard label="Company logo">
+        {companyLogo}
+      </SignatureArtboard>
     </div>
+  );
+}
+
+function SignatureArtboard({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <section className="relative flex min-w-0 items-center justify-center rounded-md border border-slate-300 bg-white/95 p-4 shadow-sm">
+      <span className="absolute left-2 top-2 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">
+        {label}
+      </span>
+      <div className="mt-3 flex w-full items-center justify-center">{children}</div>
+    </section>
   );
 }
 
@@ -593,15 +617,19 @@ function backgroundStyle(background: string) {
 
 function signatureMarkup(fields: SignatureFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string) {
   const data = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, escapeHtml(value)])) as SignatureFields;
-  if (preset === 1) {
-    const logo = data.logo ? `<img src="${data.logo}" alt="${data.company} logo" width="112" style="display:block;max-height:48px;object-fit:contain;margin-left:20px">` : '';
-    return `<div style="font-family:${font};color:${secondary};line-height:1.3;width:560px;padding:20px;box-sizing:border-box;${backgroundStyle(background)}"><div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.92);padding:14px"><div><span style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;margin-right:8px">${data.name}</span><span style="font-size:12px;color:${primary};font-weight:600">| &nbsp;${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:6px;margin-top:6px;font-size:11px"><strong style="color:#0f172a">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}</div></div>${logo}</div></div>`;
-  }
+  const labelStyle = 'display:block;font-size:9px;line-height:1;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700;margin-bottom:16px';
+  const cellStyle = 'vertical-align:middle;background:rgba(255,255,255,.95);border:1px solid #cbd5e1;border-radius:6px;padding:12px';
   const avatar = data.photo
-    ? `<img src="${data.photo}" alt="" width="76" height="76" style="border-radius:50%;display:block;object-fit:cover">`
-    : `<div style="width:76px;height:76px;border-radius:50%;background:#e2e8f0"></div>`;
-  const logo = data.logo ? `<td style="vertical-align:middle;padding:12px;width:112px"><img src="${data.logo}" alt="${data.company} logo" width="112" style="display:block;max-height:56px;object-fit:contain"></td>` : '';
-  return `<table cellpadding="0" cellspacing="0" border="0" style="font-family:${font};color:${secondary};line-height:1.4;width:560px;padding:20px;box-sizing:border-box;${backgroundStyle(background)}"><tr style="background:rgba(255,255,255,.92)"><td style="vertical-align:middle;padding:12px 16px 12px 12px;width:76px">${avatar}</td><td style="vertical-align:middle;border-left:3px solid ${primary};padding:12px 12px 12px 16px"><div style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:13px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:12px;font-weight:500">${data.company}</div><div style="font-size:11px;margin-top:4px">☎ ${data.phone}</div></td>${logo}</tr></table>`;
+    ? `<img src="${data.photo}" alt="${data.name} headshot" width="96" height="96" style="border-radius:50%;display:block;object-fit:cover;margin:auto">`
+    : `<div style="width:96px;height:96px;border-radius:50%;background:#e2e8f0;margin:auto"></div>`;
+  const logo = data.logo
+    ? `<img src="${data.logo}" alt="${data.company} logo" width="150" style="display:block;max-height:80px;object-fit:contain;margin:auto">`
+    : `<div style="font-size:11px;text-align:center;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700">Company logo</div>`;
+
+  if (preset === 1) {
+    return `<table cellpadding="0" cellspacing="10" border="0" style="font-family:${font};color:${secondary};line-height:1.3;width:760px;height:220px;padding:6px;box-sizing:border-box;border-collapse:separate;${backgroundStyle(background)}"><tr><td width="170" style="${cellStyle}"><span style="${labelStyle}">Headshot image</span>${avatar}</td><td style="${cellStyle}"><span style="${labelStyle}">Personal details</span><span style="display:block;font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a">${data.name}</span><span style="display:block;font-size:12px;color:${primary};font-weight:600;margin-top:4px">${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:7px;margin-top:7px;font-size:11px"><strong style="color:#0f172a">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}</div></td><td width="190" style="${cellStyle}"><span style="${labelStyle}">Company logo</span>${logo}</td></tr></table>`;
+  }
+  return `<table cellpadding="0" cellspacing="10" border="0" style="font-family:${font};color:${secondary};line-height:1.4;width:760px;height:220px;padding:6px;box-sizing:border-box;border-collapse:separate;${backgroundStyle(background)}"><tr><td width="170" style="${cellStyle}"><span style="${labelStyle}">Headshot image</span>${avatar}</td><td style="${cellStyle}"><span style="${labelStyle}">Personal details</span><div style="border-left:3px solid ${primary};padding-left:14px"><div style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:13px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:12px;font-weight:500">${data.company}</div><div style="font-size:11px;margin-top:4px">☎ ${data.phone}</div></div></td><td width="190" style="${cellStyle}"><span style="${labelStyle}">Company logo</span>${logo}</td></tr></table>`;
 }
 
 function flyerMarkup(fields: FlyerFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string, dimensions: { width: number; height: number }) {
