@@ -87,6 +87,15 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
     return () => window.removeEventListener('keydown', h);
   }, [onClose]);
 
+  // Keep the page behind the dialog stationary while its form body scrolls.
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
   const toggleMarket = useCallback((m: TrendingMarket) => {
     setMarkets((cur) => cur.includes(m) ? cur.filter((x) => x !== m) : [...cur, m]);
   }, []);
@@ -155,13 +164,20 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-start sm:items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/50 p-2 sm:p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl my-8">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="trending-editor-title"
+        className="flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-xl sm:max-h-[calc(100dvh-2rem)]"
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white p-4">
           <h3 className="text-lg font-semibold text-gray-900">
+            <span id="trending-editor-title">
             {isEdit ? 'Edit trending item' : 'New trending item'}
+            </span>
           </h3>
           <button
             type="button"
@@ -173,7 +189,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
           </button>
         </div>
 
-        <div className="p-4 sm:p-6 space-y-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4 sm:p-6">
           {/* Headline */}
           <div>
             <label className="block text-sm font-medium text-gray-900 mb-1">
@@ -356,7 +372,7 @@ export default function TrendingEditorModal({ item, onClose, onSaved }: Props) {
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+        <div className="flex shrink-0 items-center justify-end gap-2 rounded-b-lg border-t border-gray-200 bg-gray-50 p-4">
           <button
             type="button"
             onClick={onClose}
