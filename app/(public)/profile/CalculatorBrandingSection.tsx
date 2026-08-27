@@ -1,15 +1,11 @@
 'use client';
 
 import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
-import { Check, Copy, Download, ImageUp, Loader2, Save } from 'lucide-react';
+import { ImageUp, Loader2, Save } from 'lucide-react';
 import { getApiBase } from '@/lib/api-base';
-import CustomDesignerCanvas from '../custom-designer/CustomDesignerCanvas';
 import {
-  createCustomDesignPreset,
-  normalizeCustomDesign,
-  type CustomDesignConfig,
-} from '@/lib/custom-design';
-import {
+  FOOTER_TEMPLATE_META,
+  FOOTER_TEMPLATE_PICKER_IDS,
   type FooterBrand,
   type FooterTemplateId,
 } from '@/lib/footer-templates';
@@ -20,7 +16,6 @@ type BrandingResponse = {
   branding: {
     template: FooterTemplateId;
     brand: FooterBrand;
-    customDesign?: CustomDesignConfig;
   } | null;
 };
 
@@ -32,10 +27,6 @@ type FormState = {
   phone: string;
   office_phone: string;
   website: string;
-  facebook_url: string;
-  instagram_url: string;
-  x_url: string;
-  linkedin_url: string;
   logo_url: string;
   photo_url: string;
   address: string;
@@ -46,7 +37,6 @@ type FormState = {
   license_number: string;
   tagline: string;
   footer_template: FooterTemplateId;
-  custom_design: CustomDesignConfig;
 };
 
 const EMPTY_FORM: FormState = {
@@ -57,10 +47,6 @@ const EMPTY_FORM: FormState = {
   phone: '',
   office_phone: '',
   website: '',
-  facebook_url: '',
-  instagram_url: '',
-  x_url: '',
-  linkedin_url: '',
   logo_url: '',
   photo_url: '',
   address: '',
@@ -71,7 +57,6 @@ const EMPTY_FORM: FormState = {
   license_number: '',
   tagline: '',
   footer_template: 'business-card',
-  custom_design: createCustomDesignPreset('business-card'),
 };
 
 function formFromResponse(data: BrandingResponse): FormState {
@@ -86,10 +71,6 @@ function formFromResponse(data: BrandingResponse): FormState {
     phone: brand.phone ?? '',
     office_phone: brand.office_phone ?? '',
     website: brand.website ?? '',
-    facebook_url: brand.facebook_url ?? '',
-    instagram_url: brand.instagram_url ?? '',
-    x_url: brand.x_url ?? '',
-    linkedin_url: brand.linkedin_url ?? '',
     logo_url: brand.logo_url ?? '',
     photo_url: brand.photo_url ?? '',
     address: brand.address ?? '',
@@ -100,72 +81,11 @@ function formFromResponse(data: BrandingResponse): FormState {
     license_number: brand.license_number ?? '',
     tagline: brand.tagline ?? '',
     footer_template: branding.template,
-    custom_design: normalizeCustomDesign(branding.customDesign, branding.template),
   };
 }
 
 const inputClass =
   'mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/15';
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
-  })[character] ?? character);
-}
-
-function emailSignatureHtml(form: FormState): string {
-  const design = normalizeCustomDesign(form.custom_design, form.footer_template);
-  const primary = escapeHtml(design.textColor);
-  const accent = escapeHtml(design.accentColor);
-  const background = escapeHtml(design.backgroundColor);
-  const name = escapeHtml(form.display_name || 'Your name');
-  const title = escapeHtml(form.professional_title || 'REALTOR®');
-  const company = escapeHtml(form.brokerage_name);
-  const logo = form.logo_url
-    ? `<img src="${escapeHtml(form.logo_url)}" alt="${company}" width="96" style="display:block;max-width:96px;max-height:58px;object-fit:contain;border:0">`
-    : '';
-  const photo = form.photo_url
-    ? `<img src="${escapeHtml(form.photo_url)}" alt="${name}" width="92" height="92" style="display:block;width:92px;height:92px;border-radius:50%;object-fit:cover;border:4px solid #ffffff">`
-    : '';
-  const lines = [
-    form.phone && `<b style="color:${accent}">C:</b> ${escapeHtml(form.phone)}`,
-    form.office_phone && `<b style="color:${accent}">O:</b> ${escapeHtml(form.office_phone)}`,
-    form.email && `<a href="mailto:${escapeHtml(form.email)}" style="color:${primary};text-decoration:none">${escapeHtml(form.email)}</a>`,
-    form.website && `<a href="${escapeHtml(form.website)}" style="color:${primary};text-decoration:none">${escapeHtml(form.website)}</a>`,
-  ].filter(Boolean).join('<br>');
-  const socials = [
-    ['f', form.facebook_url],
-    ['ig', form.instagram_url],
-    ['x', form.x_url],
-    ['in', form.linkedin_url],
-  ].filter((entry): entry is [string, string] => Boolean(entry[1])).map(([label, url]) =>
-    `<a href="${escapeHtml(url)}" style="display:inline-block;margin-right:7px;color:${primary};text-decoration:none;font-weight:700">${label}</a>`,
-  ).join('');
-  const companyCell = `<td style="padding:18px 22px;text-align:center;vertical-align:middle">${logo}<div style="margin-top:8px;font:700 15px Arial,sans-serif;text-transform:uppercase;color:${primary}">${company}</div></td>`;
-  const identityCell = `<td style="padding:18px 22px;vertical-align:middle"><div style="font:700 17px Arial,sans-serif;color:${primary}">${name}</div><div style="margin-top:3px;font:11px Arial,sans-serif;letter-spacing:3px;color:${primary}">${title.toUpperCase()}</div><div style="margin-top:13px;font:12px/1.7 Arial,sans-serif;color:${primary}">${lines}</div>${socials ? `<div style="margin-top:9px">${socials}</div>` : ''}</td>`;
-  const tagline = escapeHtml(form.tagline || 'As your trusted real estate agent, I provide results that move you');
-  const customText = design.elements
-    .filter((element) => element.kind === 'text' && element.text?.trim())
-    .map((element) => escapeHtml(element.text!.trim()))
-    .join(' &nbsp;•&nbsp; ');
-  const customRow = customText
-    ? `<tr><td colspan="3" style="padding:8px 18px;background:${accent};color:${background};font:600 12px Arial,sans-serif;text-align:center">${customText}</td></tr>`
-    : '';
-
-  if (form.footer_template === 'banner' || form.footer_template === 'signature') {
-    return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;border:1px solid #d1d5db;background:${background}"><tr><td style="width:150px;padding:18px;text-align:center;vertical-align:middle;background:${primary}">${photo}<div style="margin-top:9px;font:700 15px Arial,sans-serif;color:${background}">${name}</div><div style="font:10px Arial,sans-serif;letter-spacing:2px;color:${background}">${title.toUpperCase()}</div></td>${identityCell}${companyCell}</tr>${customRow}</table>`;
-  }
-
-  if (form.footer_template === 'two-column') {
-    return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;border:1px solid #d1d5db;background:${background}"><tr>${companyCell}${identityCell}<td style="padding:18px;vertical-align:middle;text-align:center">${socials}</td></tr><tr><td colspan="3" style="padding:10px 18px;background:${accent};color:${background};text-align:center;font:italic 15px Georgia,serif">${customText || tagline}</td></tr></table>`;
-  }
-
-  return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:640px;max-width:100%;border:1px solid #d1d5db;background:${background}"><tr>${companyCell}${identityCell}<td style="padding:18px 22px;vertical-align:middle;font:12px/1.8 Arial,sans-serif;color:${primary}">${lines}${socials ? `<div style="margin-top:10px">${socials}</div>` : ''}</td></tr>${customRow}</table>`;
-}
 
 export default function CalculatorBrandingSection({ accentColor }: { accentColor: string }) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -174,8 +94,6 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
   const [uploading, setUploading] = useState<'headshot' | 'logo' | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [designSurface, setDesignSurface] = useState<'email' | 'calculator'>('email');
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -201,54 +119,6 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
     setMessage(null);
-  }
-
-  function setLayout(layout: FooterTemplateId) {
-    setForm((current) => ({
-      ...current,
-      footer_template: layout,
-      custom_design: createCustomDesignPreset(layout),
-    }));
-    setMessage(null);
-  }
-
-  async function copyEmailSignature() {
-    const html = emailSignatureHtml(form);
-    const plainText = [
-      form.display_name,
-      form.professional_title,
-      form.brokerage_name,
-      form.phone,
-      form.office_phone,
-      form.email,
-      form.website,
-    ].filter(Boolean).join('\n');
-    try {
-      if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            'text/html': new Blob([html], { type: 'text/html' }),
-            'text/plain': new Blob([plainText], { type: 'text/plain' }),
-          }),
-        ]);
-      } else {
-        await navigator.clipboard.writeText(html);
-      }
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setError('Could not copy the signature. Download the HTML file instead.');
-    }
-  }
-
-  function downloadEmailSignature() {
-    const documentHtml = `<!doctype html><html><head><meta charset="utf-8"><title>Email signature</title></head><body>${emailSignatureHtml(form)}</body></html>`;
-    const url = URL.createObjectURL(new Blob([documentHtml], { type: 'text/html' }));
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = 'realty-news-now-email-signature.html';
-    anchor.click();
-    URL.revokeObjectURL(url);
   }
 
   async function uploadImage(kind: 'headshot' | 'logo', file: File) {
@@ -302,7 +172,7 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
       const data = await response.json();
       if (!response.ok) throw new Error(data?.error || 'Could not save calculator branding.');
       setForm(formFromResponse(data));
-      setMessage('Custom branding saved.');
+      setMessage('Calculator branding saved.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save calculator branding.');
     } finally {
@@ -330,109 +200,130 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
         <p className="text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: accentColor }}>
           REALTOR® branding
         </p>
-        <h2 className="mt-1 text-lg font-semibold text-gray-900">Custom branding designer</h2>
+        <h2 className="mt-1 text-lg font-semibold text-gray-900">Calculator branding designer</h2>
         <p className="mt-1 text-sm leading-relaxed text-gray-600">
-          Design email signatures and calculator sheets from one saved professional profile.
+          Personalize one of the four approved designs. Your saved design is added automatically when you print, download, email, or text a calculator sheet.
         </p>
       </div>
 
       <form onSubmit={onSubmit} className="bg-[#eef2f6]">
         <div className="flex flex-wrap items-center justify-between gap-3 bg-[#078fca] px-4 py-3 text-white">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/80">Output</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em]">Choose a design</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              <button type="button" onClick={() => setDesignSurface('email')} className={`rounded px-3 py-1.5 text-xs font-bold transition ${designSurface === 'email' ? 'bg-[#153f83] text-white' : 'bg-white/15 text-white hover:bg-white/25'}`} data-testid="button-output-email">Email signature</button>
-              <button type="button" onClick={() => setDesignSurface('calculator')} className={`rounded px-3 py-1.5 text-xs font-bold transition ${designSurface === 'calculator' ? 'bg-[#153f83] text-white' : 'bg-white/15 text-white hover:bg-white/25'}`} data-testid="button-output-calculator">Calculator PDF</button>
+              {FOOTER_TEMPLATE_PICKER_IDS.map((templateId) => {
+                const template = FOOTER_TEMPLATE_META[templateId];
+                const selected = form.footer_template === template.id;
+                return (
+                  <label
+                    key={template.id}
+                    className={`cursor-pointer rounded px-3 py-1.5 text-xs font-bold transition ${
+                      selected ? 'bg-white text-[#153f83] shadow-sm' : 'bg-[#087fb3] text-white hover:bg-[#0876a6]'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="footer-template"
+                      value={template.id}
+                      checked={selected}
+                      onChange={() => setField('footer_template', template.id)}
+                      className="sr-only"
+                    />
+                    {template.label}
+                  </label>
+                );
+              })}
             </div>
           </div>
-          <div className="flex flex-wrap justify-end gap-2">
-            {designSurface === 'email' && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => void copyEmailSignature()}
-                  className="flex min-h-10 items-center gap-2 rounded bg-white px-4 py-2 text-sm font-bold text-[#153f83] shadow-sm"
-                >
-                  {copied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
-                  {copied ? 'Copied' : 'Copy signature'}
-                </button>
-                <button
-                  type="button"
-                  onClick={downloadEmailSignature}
-                  className="flex min-h-10 items-center gap-2 rounded bg-[#087fb3] px-4 py-2 text-sm font-bold text-white shadow-sm"
-                >
-                  <Download className="h-4 w-4" aria-hidden="true" />
-                  Download HTML
-                </button>
-              </>
-            )}
-            <button
-              type="submit"
-              disabled={saving || uploading !== null}
-              className="flex min-h-10 items-center justify-center gap-2 rounded bg-[#79bd35] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#68aa2b] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
-              {saving ? 'Saving…' : 'Save design'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={saving || uploading !== null}
+            className="flex min-h-10 items-center justify-center gap-2 rounded bg-[#79bd35] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#68aa2b] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
+            {saving ? 'Saving…' : 'Save design'}
+          </button>
         </div>
 
-        <div className="space-y-4 p-3 sm:p-5">
-          <details className="rounded-lg border border-gray-200 bg-white" open>
-            <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-gray-800">
-              Professional profile & assets
-              <span className="ml-2 text-xs font-normal text-gray-500">Content used by the protected and linked canvas layers</span>
-            </summary>
-            <div className="grid gap-5 border-t border-gray-200 p-4 lg:grid-cols-[260px_minmax(0,1fr)]">
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                <ImageUpload label="Professional headshot" value={form.photo_url} uploading={uploading === 'headshot'} onChange={onFileChange('headshot')} round />
-                <ImageUpload label="Brokerage logo" value={form.logo_url} uploading={uploading === 'logo'} onChange={onFileChange('logo')} />
+        <div className="grid lg:grid-cols-[320px_minmax(0,1fr)]">
+          <aside className="space-y-5 border-r border-gray-200 bg-white p-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Images</p>
+              <div className="mt-2 grid gap-2">
+                <ImageUpload
+                  label="Professional headshot"
+                  value={form.photo_url}
+                  uploading={uploading === 'headshot'}
+                  onChange={onFileChange('headshot')}
+                  round
+                />
+                <ImageUpload
+                  label="Brokerage logo"
+                  value={form.logo_url}
+                  uploading={uploading === 'logo'}
+                  onChange={onFileChange('logo')}
+                />
               </div>
-              <fieldset>
-                <legend className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Identity & contact</legend>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <Field label="Name" value={form.display_name} onChange={(v) => setField('display_name', v)} required />
-                  <Field label="Title" value={form.professional_title} onChange={(v) => setField('professional_title', v)} placeholder="REALTOR®" />
-                  <Field label="Cell phone" type="tel" value={form.phone} onChange={(v) => setField('phone', v)} />
-                  <Field label="Office phone" type="tel" value={form.office_phone} onChange={(v) => setField('office_phone', v)} />
-                  <Field label="Email" type="email" value={form.email} onChange={(v) => setField('email', v)} />
-                  <Field label="Website" type="url" value={form.website} onChange={(v) => setField('website', v)} placeholder="https://yourwebsite.com" />
-                  <Field label="Broker licensed or registered name" value={form.brokerage_name} onChange={(v) => setField('brokerage_name', v)} required />
-                  <Field label="TREC license number" value={form.license_number} onChange={(v) => setField('license_number', v)} />
-                </div>
-              </fieldset>
             </div>
-          </details>
 
-          <CustomDesignerCanvas
-            value={form.custom_design}
-            brand={form}
-            onChange={(custom_design) => setField('custom_design', custom_design)}
-            onLayoutChange={setLayout}
-          />
-
-          <details className="rounded-lg border border-gray-200 bg-white">
-            <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-gray-800">Additional signature details</summary>
-            <div className="grid gap-3 border-t border-gray-200 p-4 sm:grid-cols-2 lg:grid-cols-4">
+            <fieldset className="space-y-3">
+              <legend className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Quick fill</legend>
+              <Field label="Name" value={form.display_name} onChange={(v) => setField('display_name', v)} required />
+              <Field label="Title" value={form.professional_title} onChange={(v) => setField('professional_title', v)} placeholder="REALTOR®" />
+              <Field label="Cell phone" type="tel" value={form.phone} onChange={(v) => setField('phone', v)} />
+              <Field label="Office phone" type="tel" value={form.office_phone} onChange={(v) => setField('office_phone', v)} />
+              <Field label="Email" type="email" value={form.email} onChange={(v) => setField('email', v)} />
+              <Field label="Website" type="url" value={form.website} onChange={(v) => setField('website', v)} placeholder="https://yourwebsite.com" />
+              <Field
+                label="Broker licensed or registered name"
+                value={form.brokerage_name}
+                onChange={(v) => setField('brokerage_name', v)}
+                required
+              />
               <Field label="Tagline" value={form.tagline} onChange={(v) => setField('tagline', v)} />
-              <Field label="Facebook URL" type="url" value={form.facebook_url} onChange={(v) => setField('facebook_url', v)} />
-              <Field label="Instagram URL" type="url" value={form.instagram_url} onChange={(v) => setField('instagram_url', v)} />
-              <Field label="X URL" type="url" value={form.x_url} onChange={(v) => setField('x_url', v)} />
-              <Field label="LinkedIn URL" type="url" value={form.linkedin_url} onChange={(v) => setField('linkedin_url', v)} />
-              <Field label="Office address" value={form.address} onChange={(v) => setField('address', v)} />
-              <Field label="Address line 2" value={form.address_2} onChange={(v) => setField('address_2', v)} />
-              <Field label="City" value={form.city} onChange={(v) => setField('city', v)} />
-              <Field label="State" value={form.state} onChange={(v) => setField('state', v)} />
-              <Field label="ZIP" value={form.zip} onChange={(v) => setField('zip', v)} />
-            </div>
-          </details>
+            </fieldset>
 
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-relaxed text-amber-950">
-            <p className="font-semibold">Texas advertising compliance</p>
-            <p className="mt-1">The broker licensed or registered assumed business name is a protected, always-visible layer and cannot be deleted or covered by another object.</p>
+            <details className="rounded-md border border-gray-200 bg-gray-50 p-3">
+              <summary className="cursor-pointer text-xs font-bold uppercase tracking-[0.12em] text-gray-600">Additional details</summary>
+              <div className="mt-3 space-y-3">
+                <Field label="TREC license number" value={form.license_number} onChange={(v) => setField('license_number', v)} />
+                <Field label="Office address" value={form.address} onChange={(v) => setField('address', v)} />
+                <Field label="Address line 2" value={form.address_2} onChange={(v) => setField('address_2', v)} />
+                <Field label="City" value={form.city} onChange={(v) => setField('city', v)} />
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="State" value={form.state} onChange={(v) => setField('state', v)} />
+                  <Field label="ZIP" value={form.zip} onChange={(v) => setField('zip', v)} />
+                </div>
+              </div>
+            </details>
+
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-relaxed text-amber-950">
+              <p className="font-semibold">Texas advertising compliance</p>
+              <p className="mt-1">
+                The broker name remains clearly displayed at no less than 50% of the largest agent contact or logo treatment.
+              </p>
+            </div>
+          </aside>
+
+          <div className="flex min-h-[620px] flex-col p-4 sm:p-6 lg:p-8">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Live PDF canvas</p>
+                <p className="mt-1 text-sm text-gray-600">Changes appear here instantly.</p>
+              </div>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#153f83] shadow-sm">
+                {FOOTER_TEMPLATE_META[form.footer_template].label}
+              </span>
+            </div>
+            <div className="flex flex-1 items-center justify-center rounded-lg border border-gray-200 bg-[#f7f8fa] p-3 shadow-inner sm:p-8">
+              <div className="w-full max-w-4xl">
+                <BrandPreview form={form} />
+              </div>
+            </div>
+
+            {error && <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+            {message && <p className="mt-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{message}</p>}
           </div>
-          {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-          {message && <p className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{message}</p>}
         </div>
       </form>
     </section>
@@ -507,7 +398,7 @@ function ImageUpload({
   );
 }
 
-function _BrandPreview({ form }: { form: FormState }) {
+function BrandPreview({ form }: { form: FormState }) {
   const name = form.display_name || 'Your name';
   const company = form.brokerage_name || 'Broker licensed or registered assumed business name';
   const title = form.professional_title || 'REALTOR®';

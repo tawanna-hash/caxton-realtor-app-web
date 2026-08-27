@@ -49,10 +49,6 @@ export interface FooterBrand {
   phone: string | null;
   office_phone: string | null;
   website: string | null;
-  facebook_url?: string | null;
-  instagram_url?: string | null;
-  x_url?: string | null;
-  linkedin_url?: string | null;
   logo_url: string | null;
   photo_url: string | null;
   address: string | null;
@@ -74,22 +70,18 @@ export interface FooterPalette {
   primarySoft: [number, number, number];
   /** Gold accent stays the same across publications. */
   accent: [number, number, number];
-  /** Footer canvas background. */
-  background: [number, number, number];
 }
 
 const PALETTE_NAVY: FooterPalette = {
   primary: [48, 29, 93],       // #301D5D RealtyLine Austin
   primarySoft: [220, 226, 238],
   accent: [196, 163, 90],     // #fb923c gold
-  background: [255, 255, 255],
 };
 
 const PALETTE_PLUM: FooterPalette = {
   primary: [48, 29, 93],       // #301D5D Newsline San Antonio
   primarySoft: [232, 220, 234],
   accent: [196, 163, 90],     // shared gold
-  background: [255, 255, 255],
 };
 
 export function getFooterPalette(b: Pick<FooterBrand, 'publication'>): FooterPalette {
@@ -111,28 +103,28 @@ export interface FooterTemplateMeta {
 export const FOOTER_TEMPLATE_META: Record<FooterTemplateId, FooterTemplateMeta> = {
   'business-card': {
     id: 'business-card',
-    label: 'Design 1',
+    label: 'PDF Layout 1',
     blurb: 'Logo left, agent identity centered, contact details right.',
     heightPt: 106,
     placement: 'every-page',
   },
   banner: {
     id: 'banner',
-    label: 'Design 2',
+    label: 'PDF Layout 2',
     blurb: 'Navy portrait card, contact details centered, logo right.',
     heightPt: 126,
     placement: 'every-page',
   },
   signature: {
     id: 'signature',
-    label: 'Design 3',
+    label: 'PDF Layout 3',
     blurb: 'Circular portrait feature, cyan contact bar, logo right.',
     heightPt: 124,
     placement: 'every-page',
   },
   'two-column': {
     id: 'two-column',
-    label: 'Design 4',
+    label: 'PDF Layout 4',
     blurb: 'Logo and agent details above a full-width black tagline bar.',
     heightPt: 120,
     placement: 'every-page',

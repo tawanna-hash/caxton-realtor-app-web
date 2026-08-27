@@ -111,7 +111,6 @@ const DRAWER_SECTIONS: NavSection[] = [
     title: 'Platinum Tools',
     authOnly: true,
     items: [
-      { label: 'Custom Designer', href: '/custom-designer', authOnly: true },
       { label: 'Testimonials HUB', href: '/testimonial-hub', authOnly: true },
       { label: 'REALTOR® Calculators & Quick References', href: '/resources', authOnly: true },
       { label: 'REALTOR® Downloadable Guides', href: '/resources/guides', authOnly: true },

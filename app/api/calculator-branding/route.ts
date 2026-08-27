@@ -7,7 +7,6 @@ import {
   updateCalculatorBranding,
 } from '@/lib/server/calculator-branding-store';
 import { FOOTER_TEMPLATE_IDS } from '@/lib/footer-templates';
-import { normalizeCustomDesign } from '@/lib/custom-design';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -25,10 +24,6 @@ const calculatorBrandingSchema = z.object({
   phone: nullableText(60),
   office_phone: nullableText(60),
   website: nullableUrl,
-  facebook_url: nullableUrl,
-  instagram_url: nullableUrl,
-  x_url: nullableUrl,
-  linkedin_url: nullableUrl,
   logo_url: nullableUrl,
   photo_url: nullableUrl,
   address: nullableText(240),
@@ -39,7 +34,6 @@ const calculatorBrandingSchema = z.object({
   license_number: nullableText(80),
   tagline: nullableText(240),
   footer_template: z.enum(FOOTER_TEMPLATE_IDS),
-  custom_design: z.unknown().optional(),
 });
 
 function normalize(value: string | null): string | null {
@@ -57,7 +51,6 @@ export const GET = withErrorHandling(async () => {
 export const PUT = withErrorHandling(async (req: Request) => {
   const user = await requireUser();
   const input = calculatorBrandingSchema.parse(await req.json());
-  const customDesign = normalizeCustomDesign(input.custom_design, input.footer_template);
   const branding = await updateCalculatorBranding(user.realtorId, {
     ...input,
     display_name: normalize(input.display_name),
@@ -67,10 +60,6 @@ export const PUT = withErrorHandling(async (req: Request) => {
     phone: normalize(input.phone),
     office_phone: normalize(input.office_phone),
     website: normalize(input.website),
-    facebook_url: normalize(input.facebook_url),
-    instagram_url: normalize(input.instagram_url),
-    x_url: normalize(input.x_url),
-    linkedin_url: normalize(input.linkedin_url),
     logo_url: normalize(input.logo_url),
     photo_url: normalize(input.photo_url),
     address: normalize(input.address),
@@ -80,7 +69,6 @@ export const PUT = withErrorHandling(async (req: Request) => {
     zip: normalize(input.zip),
     license_number: normalize(input.license_number),
     tagline: normalize(input.tagline),
-    custom_design: { ...customDesign, layout: input.footer_template },
   });
   return NextResponse.json({ branding });
 });

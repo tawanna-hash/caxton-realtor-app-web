@@ -35,7 +35,6 @@ import {
   getFooterPalette,
   getFooterTemplateMeta,
 } from '@/lib/footer-templates';
-import { hexToRgb, normalizeCustomDesign, type CustomDesignConfig } from '@/lib/custom-design';
 
 const MARGIN = 48;
 
@@ -44,6 +43,8 @@ const WHITE: [number, number, number] = [255, 255, 255];
 const GREY_900: [number, number, number] = [17, 24, 39];
 const GREY_500: [number, number, number] = [107, 114, 128];
 const GREY_200: [number, number, number] = [229, 231, 235];
+const DESIGN_NAVY: [number, number, number] = [21, 63, 131];
+const DESIGN_CYAN: [number, number, number] = [8, 172, 224];
 const DESIGN_BLACK: [number, number, number] = [34, 34, 34];
 
 /** Browser-only: fetch an image URL and return its base64 data URL.
@@ -99,7 +100,6 @@ function formatPreparedDate(d: Date): string {
 export interface BrandFooterOptions {
   template: FooterTemplateId;
   brand: FooterBrand;
-  customDesign?: CustomDesignConfig;
   /** Date stamped onto every footer. Defaults to "now" at render time. */
   preparedAt?: Date;
 }
@@ -114,14 +114,7 @@ export async function applyBrandFooter(
   const meta = getFooterTemplateMeta(opts.template);
   const brand = opts.brand;
   const prepared = formatPreparedDate(opts.preparedAt ?? new Date());
-  const defaultPalette = getFooterPalette(brand);
-  const customDesign = normalizeCustomDesign(opts.customDesign, opts.template);
-  const palette: FooterPalette = opts.customDesign ? {
-    primary: hexToRgb(customDesign.textColor, defaultPalette.primary),
-    primarySoft: defaultPalette.primarySoft,
-    accent: hexToRgb(customDesign.accentColor, defaultPalette.accent),
-    background: hexToRgb(customDesign.backgroundColor, defaultPalette.background),
-  } : defaultPalette;
+  const palette = getFooterPalette(brand);
 
   // Preload images once
   const logo = await loadImage(brand.logo_url);
@@ -185,7 +178,7 @@ function drawSocialIcons(
 function renderBusinessCard(
   doc: jsPDF,
   b: FooterBrand,
-  palette: FooterPalette,
+  _palette: FooterPalette,
   logo: ImgRef,
   _photo: ImgRef,
   _prepared: string,
@@ -200,8 +193,7 @@ function renderBusinessCard(
   const identityX = left + logoWidth;
   const contactX = identityX + identityWidth;
   doc.setDrawColor(...GREY_200);
-  doc.setFillColor(...palette.background);
-  doc.rect(left, top, width, height, 'FD');
+  doc.rect(left, top, width, height);
 
   if (logo) {
     try {
@@ -216,16 +208,16 @@ function renderBusinessCard(
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
-  doc.setTextColor(...palette.primary);
+  doc.setTextColor(...DESIGN_NAVY);
   const name = primaryName(b);
   if (name) doc.text(name, identityX + 12, top + 22);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...GREY_900);
   doc.text((b.title || 'REALTOR®').toUpperCase(), identityX + 12, top + 35);
-  doc.setFillColor(...palette.accent);
+  doc.setFillColor(...DESIGN_CYAN);
   doc.rect(identityX + 12, top + 48, 28, 7, 'F');
-  doc.setFillColor(...palette.primary);
+  doc.setFillColor(...DESIGN_NAVY);
   doc.rect(identityX + 12, top + 55, 28, 35, 'F');
 
   doc.setFont('helvetica', 'normal');
@@ -235,15 +227,15 @@ function renderBusinessCard(
   if (b.office_phone) doc.text(`O: ${b.office_phone}`, contactX + 10, top + 76);
   if (b.email) doc.text(b.email, contactX + 142, top + 62);
   if (b.website) doc.text(b.website, contactX + 142, top + 76);
-  doc.setFillColor(...palette.primary);
+  doc.setFillColor(...DESIGN_NAVY);
   doc.rect(pageWidth - MARGIN - 116, top + 10, 116, 25, 'F');
-  drawSocialIcons(doc, pageWidth - MARGIN - 91, top + 22.5, palette.accent, true);
+  drawSocialIcons(doc, pageWidth - MARGIN - 91, top + 22.5, DESIGN_CYAN, true);
 }
 
 function renderBanner(
   doc: jsPDF,
   b: FooterBrand,
-  palette: FooterPalette,
+  _palette: FooterPalette,
   logo: ImgRef,
   photo: ImgRef,
   _prepared: string,
@@ -255,9 +247,8 @@ function renderBanner(
   const width = pageWidth - MARGIN * 2;
   const panelWidth = 138;
   doc.setDrawColor(...GREY_200);
-  doc.setFillColor(...palette.background);
-  doc.rect(left, top, width, height, 'FD');
-  doc.setFillColor(...palette.primary);
+  doc.rect(left, top, width, height);
+  doc.setFillColor(...DESIGN_NAVY);
   doc.rect(left, top, panelWidth, height, 'F');
 
   if (photo) {
@@ -286,7 +277,7 @@ function renderBanner(
   if (b.office_phone) doc.text(`O: ${b.office_phone}`, contactX, top + 47);
   if (b.email) doc.text(b.email, contactX, top + 67);
   if (b.website) doc.text(b.website, contactX, top + 87);
-  drawSocialIcons(doc, contactX + 5, top + 108, palette.primary);
+  drawSocialIcons(doc, contactX + 5, top + 108, DESIGN_NAVY);
 
   const logoX = pageWidth - MARGIN - 122;
   if (logo) {
@@ -303,7 +294,7 @@ function renderBanner(
 function renderSignature(
   doc: jsPDF,
   b: FooterBrand,
-  palette: FooterPalette,
+  _palette: FooterPalette,
   logo: ImgRef,
   photo: ImgRef,
   _prepared: string,
@@ -314,11 +305,10 @@ function renderSignature(
   const width = pageWidth - MARGIN * 2;
   const panelWidth = 150;
   doc.setDrawColor(...GREY_200);
-  doc.setFillColor(...palette.background);
-  doc.rect(left, top, width, 112, 'FD');
-  doc.setFillColor(...palette.primary);
+  doc.rect(left, top, width, 112);
+  doc.setFillColor(...DESIGN_NAVY);
   doc.rect(left, top, panelWidth, 112, 'F');
-  doc.setDrawColor(...palette.accent);
+  doc.setDrawColor(...DESIGN_CYAN);
   doc.setLineWidth(6);
   doc.circle(left + 82, top + 56, 39);
   if (photo) {
@@ -332,13 +322,13 @@ function renderSignature(
   const textX = left + panelWidth + 34;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
-  doc.setTextColor(...palette.primary);
+  doc.setTextColor(...DESIGN_NAVY);
   if (name) doc.text(name, textX, top + 21);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...GREY_900);
   doc.text((b.title || 'REALTOR®').toUpperCase(), textX, top + 34);
-  doc.setFillColor(...palette.accent);
+  doc.setFillColor(...DESIGN_CYAN);
   doc.rect(textX, top + 41, 30, 2, 'F');
   doc.rect(textX, top + 51, 20, 52, 'F');
   doc.setFontSize(9.5);
@@ -358,13 +348,13 @@ function renderSignature(
   doc.setFontSize(12);
   doc.setTextColor(...GREY_900);
   if (company) doc.text(doc.splitTextToSize(company.toUpperCase(), 104), logoX + 59, top + 71, { align: 'center' });
-  drawSocialIcons(doc, logoX + 30, top + 99, palette.accent);
+  drawSocialIcons(doc, logoX + 30, top + 99, DESIGN_CYAN);
 }
 
 function renderTwoColumn(
   doc: jsPDF,
   b: FooterBrand,
-  palette: FooterPalette,
+  _palette: FooterPalette,
   logo: ImgRef,
   _photo: ImgRef,
   _prepared: string,
@@ -375,8 +365,7 @@ function renderTwoColumn(
   const width = pageWidth - MARGIN * 2;
   const bodyHeight = 82;
   doc.setDrawColor(...GREY_200);
-  doc.setFillColor(...palette.background);
-  doc.rect(left, top, width, 110, 'FD');
+  doc.rect(left, top, width, 110);
   const col1 = left + 190;
   const col2 = left + 392;
   doc.setDrawColor(...GREY_500);
@@ -395,7 +384,7 @@ function renderTwoColumn(
 
   const name = primaryName(b);
   doc.setFontSize(14);
-  doc.setTextColor(...palette.primary);
+  doc.setTextColor(...DESIGN_NAVY);
   if (name) doc.text(name.toUpperCase(), col1 + 28, top + 20);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
@@ -408,7 +397,7 @@ function renderTwoColumn(
   if (b.website) doc.text(b.website, col1 + 28, top + 81);
   drawSocialIcons(doc, col2 + 28, top + 43, DESIGN_BLACK);
 
-  doc.setFillColor(...palette.accent);
+  doc.setFillColor(...DESIGN_BLACK);
   doc.rect(left, top + bodyHeight, width, 28, 'F');
   doc.setFont('times', 'italic');
   doc.setFontSize(12);

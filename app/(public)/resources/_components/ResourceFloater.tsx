@@ -16,14 +16,12 @@ import { createCalcReportFile, downloadCalcReport, type CalcReport } from './cal
 import { printCurrentPage } from '@/lib/native/print';
 import { getApiBase } from '@/lib/api-base';
 import type { FooterBrand, FooterTemplateId } from '@/lib/footer-templates';
-import type { CustomDesignConfig } from '@/lib/custom-design';
 
 const API = getApiBase();
 
 type BrandFooter = {
   template: FooterTemplateId;
   brand: FooterBrand;
-  customDesign?: CustomDesignConfig;
 };
 
 interface Props {
