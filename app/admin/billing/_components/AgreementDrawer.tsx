@@ -173,7 +173,7 @@ export function AgreementDrawer({
     page_position:        seed?.page_position ?? '',
     ad_timing_months:     initTimingChecked(seed),
     ad_timing_years:      initTimingYears(seed),
-    bill_to:              seed?.bill_to ?? 'Advertiser',
+    bill_to:              seed?.bill_to ?? 'Partner',
     billing_email:        seed?.billing_email ?? seed?.advertiser_email ?? '',
     billing_contact_name: seed?.billing_contact_name ?? '',
     billing_contact_phone:formatPhone(seed?.billing_contact_phone),
@@ -966,7 +966,7 @@ export function AgreementDrawer({
             <div className="text-xs text-amber-800 font-medium">A 3% surcharge applies to credit card transactions</div>
             <div className="text-xs text-amber-900 bg-amber-100 border border-amber-300 rounded-md p-2 leading-relaxed">
               <strong>The actual card charge happens on the signing link.</strong>{' '}
-              These fields below are reference metadata only — the advertiser will enter their
+              These fields below are reference metadata only — the partner will enter their
               card securely via Stripe on the Sign Wizard. Click <em>{sendStageLabel}</em>{' '}
               (or <em>Copy Link</em>) instead of <em>Sign &amp; Save</em>.
             </div>
@@ -1141,7 +1141,7 @@ export function AgreementDrawer({
       {/* ── Legacy fields (Advertiser link, Type, payment mode, campaign) ── */}
       <Section title="System fields">
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Linked advertiser">
+          <Field label="Linked partner">
             <select value={form.advertiser_id ?? ''} onChange={(e) => upd('advertiser_id', e.target.value ? +e.target.value : null)} className={INPUT}>
               <option value="">— none —</option>
               {advertisers.map((a) => <option key={a.id} value={a.id}>{a.name} · {a.publication}</option>)}
@@ -1291,7 +1291,7 @@ export function AgreementDrawer({
               onClick={sendTestEmail}
               disabled={saving}
               className="px-4 py-2 rounded-md border border-purple-300 text-purple-700 text-sm hover:bg-purple-50 disabled:opacity-50 whitespace-nowrap"
-              title="Send the notification email to yourself (does not touch advertiser record)"
+              title="Send the notification email to yourself (does not touch partner record)"
             >
               Email me a test
             </button>
@@ -1315,7 +1315,7 @@ export function AgreementDrawer({
             onClick={saveAndSendAmended}
             disabled={saving || sendingAmended}
             className="px-4 py-2 rounded-md border border-amber-400 bg-amber-50 text-amber-800 text-sm hover:bg-amber-100 disabled:opacity-50 whitespace-nowrap"
-            title="Save current edits, regenerate the PDF, and email it to the advertiser as an FYI"
+            title="Save current edits, regenerate the PDF, and email it to the partner as an FYI"
           >
             {sendingAmended ? 'Sending…' : 'Save & send amended PDF'}
           </button>

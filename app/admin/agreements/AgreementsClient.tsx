@@ -266,7 +266,7 @@ export default function AgreementsClient({
         <div>
           <div className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Admin · Agreements</div>
           <PageTitle size="md">Agreements</PageTitle>
-          <p className="text-sm text-gray-600 mt-1">Contracts and renewals for every advertiser. Stripe charges land via the public Sign Wizard &mdash; see each agreement for payment status.</p>
+          <p className="text-sm text-gray-600 mt-1">Contracts and renewals for every partner. Stripe charges land via the public Sign Wizard &mdash; see each agreement for payment status.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <a href="/admin/ads/orders" className="whitespace-nowrap px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm hover:bg-gray-50">Ad pipeline &rarr;</a>
@@ -395,7 +395,7 @@ export default function AgreementsClient({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search advertiser, ad size&hellip;"
+            placeholder="Search partner, ad size&hellip;"
             className="flex-1 min-w-[240px] px-3 py-2 rounded-md border border-gray-300 text-sm"
           />
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-md border border-gray-300 text-sm">

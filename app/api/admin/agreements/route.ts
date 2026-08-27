@@ -173,7 +173,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
         ${totalMonthlyRateCents},
         ${(body.page_position as string | null | undefined) ?? null},
         ${adTimingMonths ? adTimingMonths : null}::jsonb,
-        ${(body.bill_to                as string | null | undefined) ?? 'Advertiser'},
+        ${(body.bill_to                as string | null | undefined) ?? 'Partner'},
         ${(body.billing_contact_name   as string | null | undefined) ?? null},
         ${(body.billing_contact_phone  as string | null | undefined) ?? null},
         ${(body.card_type              as string | null | undefined) ?? null},

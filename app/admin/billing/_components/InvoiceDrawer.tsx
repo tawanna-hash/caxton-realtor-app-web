@@ -130,7 +130,7 @@ export function InvoiceDrawer({
   );
 
   const submit = async () => {
-    if (isCreate && !form.advertiser_id) { onError('advertiser required'); return; }
+    if (isCreate && !form.advertiser_id) { onError('partner required'); return; }
     setSaving(true);
     try {
       const payload: Record<string, unknown> = {

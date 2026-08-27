@@ -146,7 +146,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
       <div className="px-5 py-4 border-b border-gray-200 flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <p className="text-[10px] uppercase tracking-wider text-gray-500">
-            Advertiser dashboard
+            Partner dashboard
           </p>
           <h2 className="text-lg font-semibold text-gray-900 truncate">{advertiser.name}</h2>
           <p className="text-xs text-gray-500 truncate">
@@ -191,7 +191,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
             disabled={!advertiser.contact_email}
             title={advertiser.contact_email
               ? 'Preview and send the performance report email'
-              : 'Add a contact email on the Advertisers page to send a report'}
+              : 'Add a contact email on the Partners page to send a report'}
             className="px-3 py-1.5 text-xs font-medium rounded-md bg-brand-700 text-white hover:bg-brand-800 disabled:opacity-40"
           >
             Send report email
@@ -278,7 +278,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
               {/* mobile card list */}
               <ul className="sm:hidden divide-y divide-gray-100">
                 {data.hotspot_breakdown.length === 0 ? (
-                  <li className="px-4 py-8 text-center text-sm text-gray-500">No hotspots linked to this advertiser yet.</li>
+                  <li className="px-4 py-8 text-center text-sm text-gray-500">No hotspots linked to this partner yet.</li>
                 ) : (
                   data.hotspot_breakdown.map((h) => (
                     <li key={`m-${h.hotspot_id}`} className="p-3">
@@ -326,7 +326,7 @@ export default function AdvertiserDashboardPane({ advertiser }: Props) {
                     {data.hotspot_breakdown.length === 0 && (
                       <tr>
                         <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
-                          No hotspots linked to this advertiser yet.
+                          No hotspots linked to this partner yet.
                         </td>
                       </tr>
                     )}

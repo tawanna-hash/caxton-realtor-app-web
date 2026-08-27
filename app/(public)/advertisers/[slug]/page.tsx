@@ -60,13 +60,13 @@ export async function generateMetadata({ params }: PageProps) {
       AND COALESCE(status, 'advertiser') IN ('advertiser', 'active')
     LIMIT 1
   `) as unknown as Array<{ name: string; tagline: string | null }>;
-  if (rows.length === 0) return { title: 'Advertiser not found' };
+  if (rows.length === 0) return { title: 'Partner not found' };
   const r = rows[0];
   // Per-page canonical — without this the root layout's `alternates.canonical:
   // '/'` propagates and every advertiser page tells Google its canonical URL
   // is the homepage. That made all advertiser pages compete with `/` in the
   // index instead of standing on their own (PSI SEO flag on every page).
-  const canonical = `/advertisers/${slug}`;
+  const canonical = `/partners/${slug}`;
   return {
     title: `${r.name} — Realty News Now`,
     description: r.tagline ?? `${r.name} on Realty News Now.`,
@@ -163,7 +163,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
       location_ids: staffLocMap.get(s.id) ?? [],
     }));
   } catch (err) {
-    console.warn('[advertiser detail] locations/staff load failed:', err);
+    console.warn('[partner detail] locations/staff load failed:', err);
   }
 
   // Event photo coverage the admin tagged with this advertiser. Best-effort:
@@ -172,7 +172,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
   try {
     eventPhotos = await listEventPhotosByAdvertiser(advertiser.id, advertiser.name);
   } catch (err) {
-    console.warn('[advertiser detail] event photos load failed:', err);
+    console.warn('[partner detail] event photos load failed:', err);
   }
 
   // Editorial features the admin wrote for this advertiser. Best-effort for the
@@ -181,7 +181,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
   try {
     featureArticles = await listFeatureArticlesByAdvertiser(advertiser.id);
   } catch (err) {
-    console.warn('[advertiser detail] feature articles load failed:', err);
+    console.warn('[partner detail] feature articles load failed:', err);
   }
 
   // Auto-match WordPress news articles whose headline or summary mentions
@@ -228,7 +228,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
       });
     }
   } catch (err) {
-    console.warn('[advertiser detail] WP news auto-match failed:', err);
+    console.warn('[partner detail] WP news auto-match failed:', err);
   }
 
   const theme = getPublicationTheme(advertiser.publication);
@@ -248,8 +248,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
             ? 'Newsline San Antonio'
             : 'RealtyLine Austin',
       }}
-      backHref="/advertisers"
+      backHref="/partners"
     />
   );
 }
-

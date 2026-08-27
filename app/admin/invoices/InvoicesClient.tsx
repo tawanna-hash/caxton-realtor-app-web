@@ -157,7 +157,7 @@ export default function InvoicesClient({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search invoice #, advertiser&hellip;"
+          placeholder="Search invoice #, partner&hellip;"
           className="flex-1 min-w-[240px] px-3 py-2 rounded-md border border-gray-300 text-sm"
         />
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2 rounded-md border border-gray-300 text-sm">

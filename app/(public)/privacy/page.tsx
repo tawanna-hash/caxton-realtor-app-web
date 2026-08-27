@@ -102,7 +102,7 @@ export default function PrivacyPage() {
           <p className="mb-3">
             <strong className="font-semibold text-gray-900">
               We do not sell, rent, or share your subscriber information with
-              advertisers, sponsors, or any third party for marketing purposes.
+              partners, sponsors, or any third party for marketing purposes.
             </strong>{' '}
             Your contact information stays with us.
           </p>
@@ -129,9 +129,9 @@ export default function PrivacyPage() {
           </ul>
           <p className="mt-3">
             If you choose to enter a giveaway, RSVP to an event, or otherwise
-            interact directly with an advertiser through a clearly labeled
+            interact directly with an partner through a clearly labeled
             opt-in, only the information you provide in that specific
-            interaction is shared with that advertiser — and only because you
+            interaction is shared with that partner — and only because you
             chose to share it.
           </p>
         </div>

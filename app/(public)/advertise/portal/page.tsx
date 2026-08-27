@@ -271,7 +271,7 @@ export default function SelfServicePortalPage() {
               Already booked with us?
             </p>
             <p className="text-base text-gray-900 font-medium">
-              Sign in to your advertiser portal to view orders, files, invoices,
+              Sign in to your partner portal to view orders, files, invoices,
               and active agreements.
             </p>
           </div>
@@ -280,7 +280,7 @@ export default function SelfServicePortalPage() {
             className="shrink-0 inline-flex items-center gap-2 border border-brand-700 text-brand-700 hover:bg-brand-700 hover:text-white transition font-semibold px-5 py-2.5 rounded-full text-sm"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
-            Open advertiser portal
+            Open partner portal
             <svg viewBox="0 0 20 20" className="w-4 h-4" aria-hidden="true">
               <path fill="currentColor" d="M10.293 4.293a1 1 0 0 1 1.414 0l5 5a1 1 0 0 1 0 1.414l-5 5a1 1 0 1 1-1.414-1.414L13.586 11H4a1 1 0 1 1 0-2h9.586l-3.293-3.293a1 1 0 0 1 0-1.414Z" />
             </svg>

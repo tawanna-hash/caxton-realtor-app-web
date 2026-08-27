@@ -46,7 +46,7 @@ type Props = {
 
 // Destination routes the bar can navigate to. /dashboard isn't included
 // because Feed taps usually fire a same-page event rather than a route push.
-const PREFETCH_ROUTES = ['/calendar', '/builders', '/magazine', '/advertisers', '/dashboard'] as const;
+const PREFETCH_ROUTES = ['/calendar', '/builders', '/magazine', '/partners', '/dashboard'] as const;
 
 export default function BottomNav({ info, onMoreClick }: Props) {
   const pathname = usePathname();
@@ -88,7 +88,7 @@ export default function BottomNav({ info, onMoreClick }: Props) {
   const isCalendar = matches('/calendar');
   const isBuilders = matches('/builders');
   const isMagazine = matches('/magazine');
-  const isAdvertisers = matches('/advertisers');
+  const isAdvertisers = matches('/partners') || matches('/advertisers');
 
   function navigate(target: string) {
     if (pathname === target) return;
@@ -147,7 +147,7 @@ export default function BottomNav({ info, onMoreClick }: Props) {
         <Tab label="Issues" active={isMagazine} accent={accent} onClick={() => navigate('/magazine')}>
           <BookOpen strokeWidth={1.75} size={22} />
         </Tab>
-        <Tab label="Partners" active={isAdvertisers} accent={accent} onClick={() => navigate('/advertisers')}>
+        <Tab label="Partners" active={isAdvertisers} accent={accent} onClick={() => navigate('/partners')}>
           <Megaphone strokeWidth={1.75} size={22} />
         </Tab>
         <Tab label="More" active={false} accent={accent} onClick={onMoreClick}>

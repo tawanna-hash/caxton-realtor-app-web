@@ -102,7 +102,7 @@ export function CampaignForm({ initial }: Props) {
     setError(null);
 
     // Client-side validation
-    if (!advertiserName.trim()) return setError('Advertiser name is required');
+    if (!advertiserName.trim()) return setError('Partner name is required');
     if (!adSpaceSlug) return setError('Ad slot is required');
     if (!creativeId) return setError('Creative is required');
     if (!startDate) return setError('Start date is required');
@@ -282,7 +282,7 @@ export function CampaignForm({ initial }: Props) {
                 onUploaded={handleCreativeUploaded}
               />
               <p className="text-xs text-gray-600">
-                Fill advertiser name + click URL above before choosing a file.
+                Fill partner name + click URL above before choosing a file.
               </p>
             </div>
           )}

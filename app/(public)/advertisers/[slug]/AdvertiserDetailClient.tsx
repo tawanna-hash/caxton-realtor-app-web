@@ -131,7 +131,7 @@ export default function AdvertiserDetailClient({
           href={backHref}
           className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mb-6"
         >
-          ← All advertisers
+          ← All partners
         </Link>
 
         {/* Header is one of six layouts; admin picks per-advertiser. */}

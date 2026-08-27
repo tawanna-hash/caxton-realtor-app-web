@@ -149,7 +149,7 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
         // Save the payment method for future off-session issue charges
         setup_future_usage: 'off_session',
         automatic_payment_methods: { enabled: true },
-        description: `${ag.company_name ?? 'Advertiser'} \u2014 ${ag.ad_size ?? 'ad'} \u2014 first issue`,
+        description: `${ag.company_name ?? 'Partner'} \u2014 ${ag.ad_size ?? 'ad'} \u2014 first issue`,
         statement_descriptor: 'REALTYLINE AUSTIN',
         receipt_email: ag.advertiser_email ?? ag.billing_email ?? undefined,
         metadata: {

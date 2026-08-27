@@ -107,7 +107,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       city: string | null; state: string | null; zip: string | null;
     }>;
     if (advRows.length === 0) {
-      return NextResponse.json({ error: 'advertiser not found' }, { status: 400 });
+      return NextResponse.json({ error: 'partner not found' }, { status: 400 });
     }
     const adv = advRows[0];
 

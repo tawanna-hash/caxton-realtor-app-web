@@ -80,7 +80,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       SELECT id, name, portal_email, email FROM advertisers WHERE id = ${advertiserId}
     `) as unknown as { id: number; name: string; portal_email: string | null; email: string | null }[];
     if (adv.length === 0) {
-      return NextResponse.json({ error: 'advertiser not found' }, { status: 404 });
+      return NextResponse.json({ error: 'partner not found' }, { status: 404 });
     }
     const a = adv[0];
     const sendTo = (typeof body.email === 'string' && body.email) || a.portal_email || a.email;

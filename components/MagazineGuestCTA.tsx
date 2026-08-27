@@ -79,7 +79,7 @@ export default function MagazineGuestCTA({ brandColor }: { brandColor: string })
             Create a free account for the full experience.
           </p>
           <p className="text-xs text-gray-600 font-light mt-1 leading-snug">
-            Sign in to access the advertiser directory, events calendar, builder communities, and the weekly feed.
+            Sign in to access the partner directory, events calendar, builder communities, and the weekly feed.
           </p>
           <div className="flex items-center gap-2 mt-2.5">
             <Link

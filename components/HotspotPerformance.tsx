@@ -69,7 +69,7 @@ export default function HotspotPerformance() {
           href="/admin/crm"
           className="text-[10px] text-blue-600 uppercase tracking-wider self-start sm:self-auto hover:underline"
         >
-          All advertisers
+          All partners
         </Link>
       </div>
 
@@ -81,7 +81,7 @@ export default function HotspotPerformance() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Top advertisers */}
           <div>
-            <p className="text-[11px] font-medium text-gray-500 mb-2">Top advertisers</p>
+            <p className="text-[11px] font-medium text-gray-500 mb-2">Top partners</p>
             {loading ? (
               <TableSkeleton rows={5} cols={3} />
             ) : (

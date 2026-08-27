@@ -20,6 +20,8 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { upsertAdvertiserMailingByAdvertiserId } from '@/lib/mailing';
 import { syncAdvertiserToAgreement } from '@/lib/server/billing-crm-sync';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { revalidatePath } from 'next/cache';
+import { partnerDeletionTombstoneKey } from '@/lib/advertiser-deletion-tombstones';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -308,19 +310,18 @@ export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, 
       );
     }
 
-    const email = advertiser.contact_email?.trim().toLowerCase();
+    const tombstoneKey = partnerDeletionTombstoneKey({
+      email: advertiser.contact_email,
+      name: advertiser.name,
+      slug: advertiser.slug,
+    });
     const statements = [
-      // Preserve issued invoices while removing their CRM relationship.
-      sql`UPDATE invoices SET advertiser_id = NULL WHERE advertiser_id = ${idNum}`,
-      sql`DELETE FROM advertisers WHERE id = ${idNum} AND is_locked = false RETURNING id`,
-    ];
-    if (email) {
-      statements.push(sql`
+      sql`
         INSERT INTO advertiser_deletion_tombstones (
           normalized_email, original_advertiser_id, original_name,
           original_slug, deleted_at
         ) VALUES (
-          ${email}, ${advertiser.id}, ${advertiser.name},
+          ${tombstoneKey}, ${advertiser.id}, ${advertiser.name},
           ${advertiser.slug}, now()
         )
         ON CONFLICT (normalized_email) DO UPDATE SET
@@ -328,8 +329,11 @@ export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, 
           original_name = EXCLUDED.original_name,
           original_slug = EXCLUDED.original_slug,
           deleted_at = now()
-      `);
-    }
+      `,
+      // Preserve issued invoices while removing their CRM relationship.
+      sql`UPDATE invoices SET advertiser_id = NULL WHERE advertiser_id = ${idNum}`,
+      sql`DELETE FROM advertisers WHERE id = ${idNum} AND is_locked = false RETURNING id`,
+    ];
 
     // Use Neon's HTTP transaction path, which is already proven in this
     // serverless app and rolls every statement back if one fails.
@@ -338,13 +342,17 @@ export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, 
       statements,
       { isolationLevel: 'Serializable' },
     );
-    const deleted = results[1] as Array<{ id: number }> | undefined;
+    const deleted = results[2] as Array<{ id: number }> | undefined;
     if (!Array.isArray(deleted) || deleted.length === 0) {
       return NextResponse.json(
         { error: 'The partner changed while deleting. Refresh and try again.' },
         { status: 409 },
       );
     }
+    revalidatePath('/advertisers');
+    revalidatePath(`/advertisers/${advertiser.slug}`);
+    revalidatePath('/partners');
+    revalidatePath(`/partners/${advertiser.slug}`);
     return NextResponse.json({ ok: true, deleted_id: idNum });
   } catch (err) {
     console.error('[admin/advertisers DELETE]', errMessage(err));

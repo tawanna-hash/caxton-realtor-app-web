@@ -888,6 +888,16 @@ async function _runEnsureSchema(): Promise<void> {
         .slice(0, 80);
       if (!slug) continue;
 
+      const deleted = (await sql`
+        SELECT 1
+        FROM advertiser_deletion_tombstones
+        WHERE normalized_email IN (${`__slug__:${slug}`}, ${`__name__:${name.toLowerCase()}`})
+           OR LOWER(COALESCE(original_slug, '')) = ${slug}
+           OR LOWER(COALESCE(original_name, '')) = ${name.toLowerCase()}
+        LIMIT 1
+      `) as unknown as Array<{ '?column?': number }>;
+      if (deleted.length > 0) continue;
+
       const existing = (await sql`
         SELECT id FROM advertisers WHERE slug = ${slug} LIMIT 1
       `) as unknown as { id: number }[];

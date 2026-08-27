@@ -345,11 +345,11 @@ function AdvertiserPicker({
     (async () => {
       try {
         const res = await fetch('/api/admin/advertisers/picker', { credentials: 'include' });
-        if (!res.ok) throw new Error('Failed to load advertisers');
+        if (!res.ok) throw new Error('Failed to load partners');
         const data = await res.json() as { advertisers: PickerAdvertiser[] };
         if (!cancelled) setAdvertisers(data.advertisers ?? []);
       } catch (err) {
-        if (!cancelled) onError(err instanceof Error ? err.message : 'Failed to load advertisers');
+        if (!cancelled) onError(err instanceof Error ? err.message : 'Failed to load partners');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -373,7 +373,7 @@ function AdvertiserPicker({
   const handleCreate = async () => {
     const name = newName.trim();
     if (!name) {
-      onError('Advertiser name is required');
+      onError('Partner name is required');
       return;
     }
     setCreating(true);
@@ -396,7 +396,7 @@ function AdvertiserPicker({
       }
       const data = (await res.json()) as { advertiser?: PickerAdvertiser };
       const created = data.advertiser;
-      if (!created) throw new Error('No advertiser returned');
+      if (!created) throw new Error('No partner returned');
       setAdvertisers((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
       onChange(created);
       setShowNewForm(false);
@@ -434,9 +434,9 @@ function AdvertiserPicker({
       <div className="mt-1 flex items-start justify-between gap-2">
         <p className="text-xs text-gray-500 flex-1">
           {showLegacyHint ? (
-            <>Legacy text: <em>{legacyName}</em>. Pick an advertiser above (or create one) to link click tracking and reports.</>
+            <>Legacy text: <em>{legacyName}</em>. Pick an partner above (or create one) to link click tracking and reports.</>
           ) : (
-            'Used for advertiser performance reports and dashboard access.'
+            'Used for partner performance reports and dashboard access.'
           )}
         </p>
         {!showNewForm && (
@@ -445,7 +445,7 @@ function AdvertiserPicker({
             onClick={() => setShowNewForm(true)}
             className="text-xs text-blue-600 hover:underline whitespace-nowrap"
           >
-            + New advertiser…
+            + New partner…
           </button>
         )}
       </div>

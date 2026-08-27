@@ -58,7 +58,7 @@ export function CreativeUpload({ advertiserName, clickUrl, altText, onUploaded, 
 
     try {
       // Validate inputs first — better to fail fast than after a Blob upload.
-      if (!advertiserName.trim()) throw new Error('Advertiser name is required before uploading');
+      if (!advertiserName.trim()) throw new Error('Partner name is required before uploading');
       if (!clickUrl.trim()) throw new Error('Click URL is required before uploading');
       try {
         new URL(clickUrl);

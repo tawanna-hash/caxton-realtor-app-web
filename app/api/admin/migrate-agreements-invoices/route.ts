@@ -117,7 +117,7 @@ export const POST = withAdminTracking(async function POST() {
     )
   `);
 
-  await step('idx agreements advertiser',     () => sql`CREATE INDEX IF NOT EXISTS idx_agreements_advertiser_id ON agreements(advertiser_id)`);
+  await step('idx agreements partner',     () => sql`CREATE INDEX IF NOT EXISTS idx_agreements_advertiser_id ON agreements(advertiser_id)`);
   await step('idx agreements status',         () => sql`CREATE INDEX IF NOT EXISTS idx_agreements_status        ON agreements(status)`);
   await step('idx agreements end_date',       () => sql`CREATE INDEX IF NOT EXISTS idx_agreements_end_date      ON agreements(end_date)`);
   await step('idx agreements stripe_customer',() => sql`CREATE INDEX IF NOT EXISTS idx_agreements_stripe_cust   ON agreements(stripe_customer_id)`);
@@ -177,7 +177,7 @@ export const POST = withAdminTracking(async function POST() {
       updated_at               timestamptz NOT NULL DEFAULT now()
     )
   `);
-  await step('idx invoices advertiser',  () => sql`CREATE INDEX IF NOT EXISTS idx_invoices_advertiser_id ON invoices(advertiser_id)`);
+  await step('idx invoices partner',  () => sql`CREATE INDEX IF NOT EXISTS idx_invoices_advertiser_id ON invoices(advertiser_id)`);
   await step('idx invoices agreement',   () => sql`CREATE INDEX IF NOT EXISTS idx_invoices_agreement_id  ON invoices(agreement_id)`);
   await step('idx invoices status',      () => sql`CREATE INDEX IF NOT EXISTS idx_invoices_status        ON invoices(status)`);
   await step('idx invoices due_date',    () => sql`CREATE INDEX IF NOT EXISTS idx_invoices_due_date      ON invoices(due_date)`);

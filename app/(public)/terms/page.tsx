@@ -142,9 +142,9 @@ export default function TermsPage() {
           </h2>
           <p>
             The Service includes advertising and sponsored content from our
-            advertising partners. Inclusion of an advertiser does not
+            advertising partners. Inclusion of an partner does not
             constitute endorsement. We are not responsible for the products,
-            services, or representations of advertisers — your dealings with
+            services, or representations of partners — your dealings with
             them are between you and them.
           </p>
         </div>

@@ -1028,7 +1028,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               onClick={handleSendTest}
               disabled={sending || sendingTest}
               className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-purple-300 bg-white text-purple-700 hover:bg-purple-50 disabled:opacity-60"
-              title="Send the notification email to yourself. Does not touch advertiser record."
+              title="Send the notification email to yourself. Does not touch partner record."
             >
               {sendingTest ? 'Sending…' : 'Email me a test'}
             </button>
@@ -1164,7 +1164,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         <section className="border border-gray-200 rounded-md p-3 bg-gray-50">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs uppercase tracking-wider text-gray-600 font-semibold">
-              Advertiser
+              Partner
             </p>
             <button
               type="button"
@@ -1209,7 +1209,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                 <ul className="mt-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md bg-white text-sm divide-y divide-gray-100">
                   {filteredAdvertisers.length === 0 ? (
                     <li className="px-2 py-2 text-xs text-gray-500 italic">
-                      No matches. Try &ldquo;+ Create new advertiser&rdquo;.
+                      No matches. Try &ldquo;+ Create new partner&rdquo;.
                     </li>
                   ) : (
                     filteredAdvertisers.map((a) => (
@@ -1575,7 +1575,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                 </label>
                 <div className="sm:col-span-2 border-t border-gray-200 pt-3 mt-1">
                   <p className="text-[11px] uppercase tracking-wider text-gray-600 font-semibold mb-1">
-                    Preferred send dates <span className="normal-case font-normal text-gray-500">(optional — leave blank if advertiser will choose)</span>
+                    Preferred send dates <span className="normal-case font-normal text-gray-500">(optional — leave blank if partner will choose)</span>
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <label className="text-xs text-gray-700">
@@ -1686,7 +1686,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
               <ul className="mt-1 space-y-0.5 text-[11px] text-yellow-900">
                 {appCollisions.slice(0, 3).map((c, i) => (
                   <li key={i}>
-                    · {c.advertiser_name ?? 'Unknown advertiser'} — {c.start_date} → {c.end_date}
+                    · {c.advertiser_name ?? 'Unknown partner'} — {c.start_date} → {c.end_date}
                   </li>
                 ))}
                 {appCollisions.length > 3 && (
@@ -1719,15 +1719,15 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         {/* Notes to advertiser */}
         <section className="border border-gray-200 rounded-md p-3">
           <p className="text-xs uppercase tracking-wider text-gray-600 font-semibold mb-1">
-            Notes to advertiser
+            Notes to partner
           </p>
           <p className="text-[11px] text-gray-500 mb-2">
-            Shown on the agreement when the advertiser reviews and signs.
+            Shown on the agreement when the partner reviews and signs.
           </p>
           <textarea
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
-            placeholder="Add a note for the advertiser (e.g. proof due date, placement details, special terms)…"
+            placeholder="Add a note for the partner (e.g. proof due date, placement details, special terms)…"
             rows={4}
             className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm resize-y"
           />

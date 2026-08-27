@@ -348,7 +348,7 @@ function GuestArticleGateModal({
           Create a free account to read articles.
         </h3>
         <p className="text-sm text-gray-600 leading-relaxed mb-5">
-          Magazine PDFs are free to read. Full articles, the advertiser
+          Magazine PDFs are free to read. Full articles, the partner
           directory, events calendar, and the weekly feed are unlocked
           with a free realtor account.
         </p>

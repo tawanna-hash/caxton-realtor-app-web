@@ -147,7 +147,7 @@ export default function AdminFeatureArticlesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.advertiserId) { setError('Pick an advertiser for this article.'); return; }
+    if (!form.advertiserId) { setError('Pick an partner for this article.'); return; }
     if (!form.title.trim()) { setError('Title is required.'); return; }
     setSubmitting(true);
     setError(null);
@@ -205,8 +205,8 @@ export default function AdminFeatureArticlesPage() {
           <p className="text-sm uppercase tracking-[0.2em] text-gray-500 font-medium mb-1">Admin</p>
           <PageTitle size="md">Feature Articles</PageTitle>
           <p className="text-sm text-gray-600 font-light mt-2 max-w-2xl">
-            Editorial pieces tied to an advertiser. Published articles appear on that
-            advertiser&apos;s public detail page beneath their event photos.
+            Editorial pieces tied to an partner. Published articles appear on that
+            partner&apos;s public detail page beneath their event photos.
           </p>
         </div>
         <button onClick={openCreate}
@@ -283,7 +283,7 @@ export default function AdminFeatureArticlesPage() {
                       )}
                       {adv && (
                         <a href={`/advertisers/${adv.slug}`} target="_blank" rel="noopener"
-                          className="text-gray-400 hover:text-gray-700" title="View advertiser page">
+                          className="text-gray-400 hover:text-gray-700" title="View partner page">
                           <ExternalLink size={15} />
                         </a>
                       )}

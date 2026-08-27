@@ -66,10 +66,9 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   // column exists, so it can't update an existing default).
   await step(() => sql`ALTER TABLE advertisers ALTER COLUMN status SET DEFAULT 'advertiser'`);
 
-  // Keep an explicit record of administrator deletions by normalized email.
-  // Marketing outreach auto-adds previously unseen recipients to the CRM; this
-  // tombstone prevents that background sync from recreating a partner the
-  // administrator intentionally removed.
+  // Keep an explicit record of administrator deletions. Email is preferred;
+  // records without email use a synthetic slug/name key. Every automatic
+  // partner creation path consults this table before recreating a record.
   await step(() => sql`
     CREATE TABLE IF NOT EXISTS advertiser_deletion_tombstones (
       normalized_email       text PRIMARY KEY,

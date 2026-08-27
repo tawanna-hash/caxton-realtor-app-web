@@ -283,7 +283,7 @@ export default function AdvertisersReportTab() {
                           </span>
                         </p>
                         <p className="text-xs text-gray-500 truncate">
-                          {canSend ? email : 'No contact email — add one on the Advertisers page to send'}
+                          {canSend ? email : 'No contact email — add one on the Partners page to send'}
                         </p>
                       </div>
                       {isActive ? (
@@ -354,7 +354,7 @@ export default function AdvertisersReportTab() {
             />
           ) : (
             <div className="bg-white border border-gray-200 border-dashed rounded-md p-10 text-center text-sm text-gray-500">
-              {loading ? 'Loading advertisers…' : 'Select an advertiser to view their dashboard.'}
+              {loading ? 'Loading partners…' : 'Select an advertiser to view their dashboard.'}
             </div>
           )}
         </div>

@@ -186,7 +186,7 @@ export default function IosTable() {
         </select>
         <input
           type="search"
-          placeholder="Search IO number, notes, advertiser…"
+          placeholder="Search IO number, notes, partner…"
           value={qInput}
           onChange={(e) => setQInput(e.target.value)}
           onKeyDown={(e) => {

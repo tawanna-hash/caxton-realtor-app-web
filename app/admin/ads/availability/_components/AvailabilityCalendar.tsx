@@ -356,7 +356,7 @@ export default function AvailabilityCalendar() {
                       key={`${b.id}-${iso}`}
                       href={detailHref(b)}
                       className={`block truncate rounded-md px-1.5 py-0.5 text-[10px] border ${CHANNEL_BADGE_CLASS[b.channel]} hover:opacity-80`}
-                      title={`${b.advertiser_name ?? 'Unknown advertiser'} — ${b.slot_or_size ?? ''}`}
+                      title={`${b.advertiser_name ?? 'Unknown partner'} — ${b.slot_or_size ?? ''}`}
                     >
                       {b.advertiser_name ?? '—'}
                     </Link>

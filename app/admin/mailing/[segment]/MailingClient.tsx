@@ -706,7 +706,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
               className="px-3 py-1.5 text-sm rounded-md border border-brand-700 text-brand-700 hover:bg-brand-700/5 disabled:opacity-50"
               title="Walk every row and fill in blank address fields from the linked advertiser's locations (preferring each staff member's assigned location). Preserves admin edits."
             >
-              Refresh addresses from advertisers
+              Refresh addresses from partners
             </button>
             <div className="absolute right-0 top-full mt-1 hidden group-hover:block z-10 bg-white border border-gray-200 rounded-md shadow-sm py-1 min-w-[220px]">
               <button
@@ -808,7 +808,7 @@ export default function MailingClient({ segment, slug, label, accent }: Props) {
             <FilterChip
               active={tagFilter === 'active-advertiser'}
               onClick={() => { setTagFilter('active-advertiser'); setOffset(0); }}
-              label="Active Advertiser"
+              label="Active Partner"
               count={tagFilter === 'active-advertiser' ? total : 0}
               accent="#c2410c"
             />
@@ -1395,7 +1395,7 @@ function TagChips({ tags }: { tags: string[] | null | undefined }) {
         let bg = '#e5e7eb';
         let fg = '#374151';
         if (t === 'active-advertiser') {
-          label = 'Active Advertiser';
+          label = 'Active Partner';
           bg = '#ffedd5';
           fg = '#c2410c';
         } else if (t === 'non-advertiser') {
@@ -1974,7 +1974,7 @@ function EditDrawer({
 // it just becomes a new tag in the library on save.
 
 const TAG_STYLES: Record<string, { bg: string; fg: string; label?: string }> = {
-  'active-advertiser':    { bg: '#ffedd5', fg: '#c2410c', label: 'Active Advertiser' },
+  'active-advertiser':    { bg: '#ffedd5', fg: '#c2410c', label: 'Active Partner' },
   'non-advertiser':       { bg: '#fed7aa', fg: '#9a3412', label: 'Non-Advertiser' },
   'manual':               { bg: '#ede9fe', fg: '#301D5D', label: 'Manual' },
   'REALTOR':              { bg: '#dcfce7', fg: '#16a34a' },

@@ -752,7 +752,7 @@ export default function HotspotsAdminClient({ magazine, initialHotspots, prevIss
                 Added <strong>{extractResult.inserted}</strong> hotspot{extractResult.inserted === 1 ? '' : 's'}
                 {' '}({extractResult.findings.pdf_links} embedded, {extractResult.findings.text_scan} text-scan,{' '}
                 {extractResult.findings.qr_codes} QR, {extractResult.findings.logo_matches} logo){extractResult.auto_linked_advertisers > 0 && (
-                  <>. Linked <strong>{extractResult.auto_linked_advertisers}</strong> to advertisers.</>
+                  <>. Linked <strong>{extractResult.auto_linked_advertisers}</strong> to partners.</>
                 )}
               </>
             ) : (

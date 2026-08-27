@@ -619,11 +619,11 @@ export default function CheckoutForm({
           5 · Agreement terms
         </h2>
         <div className="rounded-md bg-gray-50 border border-gray-200 p-4 text-xs text-gray-700 leading-relaxed max-h-44 overflow-y-auto mb-4">
-          <p className="mb-2"><strong>Insertion Order — Self-Serve.</strong> By checking the box below and authorizing payment, you (&quot;Advertiser&quot;) agree to the following:</p>
+          <p className="mb-2"><strong>Insertion Order — Self-Serve.</strong> By checking the box below and authorizing payment, you (&quot;Partner&quot;) agree to the following:</p>
           <p className="mb-2">1. <strong>Creative Approval.</strong> RealtyLine Austin & Newsline San Antonio (&quot;Publisher&quot;) reserves the right to reject any creative that does not meet spec, contains misleading claims, or conflicts with editorial standards. If rejected, Publisher will issue a full refund within 5 business days.</p>
           <p className="mb-2">2. <strong>Placement & Delivery.</strong> The campaign runs from the start date through the end date selected, displayed in the placement and publication you selected. Impressions are best-effort against committed inventory; Publisher does not guarantee CTR or conversion outcomes.</p>
           <p className="mb-2">3. <strong>Payment.</strong> Card payment includes a 3% processing surcharge (shown above) and is charged in full at booking. No refunds after creative goes live except for verified delivery failures.</p>
-          <p className="mb-2">4. <strong>Indemnification.</strong> Advertiser warrants it owns or has license to all creative content, including images, logos, and trademarks, and agrees to indemnify Publisher against third-party IP claims.</p>
+          <p className="mb-2">4. <strong>Indemnification.</strong> Partner warrants it owns or has license to all creative content, including images, logos, and trademarks, and agrees to indemnify Publisher against third-party IP claims.</p>
           <p>5. <strong>Cancellation.</strong> Pre-launch cancellations get a full refund. Mid-flight cancellations are pro-rated minus a 15% restocking fee.</p>
         </div>
         <label className="flex items-start gap-3 cursor-pointer">

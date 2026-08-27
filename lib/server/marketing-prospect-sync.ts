@@ -14,6 +14,7 @@
 //     still get last_contacted_at bumped, but nothing else changes.
 
 import { ensureSchema, getSql } from '@/lib/db';
+import { isPartnerDeletionTombstoned } from '@/lib/advertiser-deletion-tombstones';
 
 export type ProspectSyncInput = {
   email: string;
@@ -31,13 +32,9 @@ export async function syncProspectFromOutreach(
   const email = input.email.trim().toLowerCase();
   if (!email) return { inserted: false };
 
-  const deleted = (await sql`
-    SELECT 1
-    FROM advertiser_deletion_tombstones
-    WHERE normalized_email = ${email}
-    LIMIT 1
-  `) as unknown as Array<{ '?column?': number }>;
-  if (deleted.length > 0) return { inserted: false };
+  if (await isPartnerDeletionTombstoned({ email, name: input.company })) {
+    return { inserted: false };
+  }
 
   const existing = (await sql`
     SELECT id FROM advertisers WHERE lower(contact_email) = ${email} LIMIT 1

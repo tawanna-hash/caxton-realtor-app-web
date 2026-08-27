@@ -1293,7 +1293,7 @@ function EditDrawer({
                     </label>
                   ))}
                   <p className="text-[11px] text-gray-500 mt-1">
-                    Pick one or more. Advertisers tagged to a publication appear
+                    Pick one or more. Partners tagged to a publication appear
                     in that publication&apos;s mailing list and filters.
                   </p>
                 </div>
@@ -1346,7 +1346,7 @@ function EditDrawer({
           {/* ── Public Profile (kept as-is) ──────────────────────────── */}
           <Section title="Public profile">
             <p className="text-xs text-gray-500 mb-3">
-              Shown on the public advertiser page at <span className="font-mono">/advertisers/{row.slug}</span>.
+              Shown on the public partner page at <span className="font-mono">/partners/{row.slug}</span>.
             </p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Company logo" className="col-span-2">
@@ -1464,7 +1464,7 @@ function EditDrawer({
                 <div>
                   <div className="text-sm font-medium text-gray-900">Public submission form</div>
                   <div className="text-xs text-gray-500 mt-0.5">
-                    Share this URL with the advertiser so they can submit
+                    Share this URL with the partner so they can submit
                     events directly into the review queue. Each submission
                     lands in the Events queue for your approval.
                   </div>
@@ -1570,7 +1570,7 @@ function EditDrawer({
                 }`}
                 title={row.is_locked ? 'Unlock this partner from the Partners list before deleting' : 'Mark this partner for deletion'}
               >
-                {row.is_locked ? 'Partner locked' : deleteRequested ? 'Undo deletion' : 'Delete advertiser'}
+                {row.is_locked ? 'Partner locked' : deleteRequested ? 'Undo deletion' : 'Delete partner'}
               </button>
             </div>
             <div className="flex gap-2">
@@ -1682,7 +1682,7 @@ function CurrentContractPanel({ row }: { row: AdvertiserCrmRow }) {
       ) : (
         <>
           <p className="text-xs text-gray-500 mb-3">
-            Read-only mirror of the advertiser&rsquo;s most recent active-ish agreement.
+            Read-only mirror of the partner&rsquo;s most recent active-ish agreement.
             To edit, open{' '}
             {row.current_agreement_id ? (
               <a href={`/admin/agreements?id=${row.current_agreement_id}`} className="text-blue-600 hover:underline">/admin/agreements</a>

@@ -325,7 +325,7 @@ export default function AdvertiserReportDrawer({
                   disabled={sending || !canSend || loadingPreview}
                   className="bg-brand-700 hover:bg-brand-800 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-40 whitespace-nowrap"
                 >
-                  {sending ? 'Sending…' : 'Send to this advertiser'}
+                  {sending ? 'Sending…' : 'Send to this partner'}
                 </button>
               </div>
             </div>

@@ -8,6 +8,7 @@
 import { randomUUID } from 'crypto';
 import { getSql } from '@/lib/db';
 import type { AdChannel } from '@/lib/ad-channels';
+import { isPartnerDeletionTombstoned } from '@/lib/advertiser-deletion-tombstones';
 
 export type AdInquiryStatus =
   | 'new'
@@ -102,6 +103,11 @@ async function upsertAdvertiserContact(input: {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '') || 'contact';
+    if (await isPartnerDeletionTombstoned({
+      email,
+      name: input.company || input.name,
+      slug: baseSlug,
+    })) return null;
     const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 8)}`;
 
     const ins = (await sql`

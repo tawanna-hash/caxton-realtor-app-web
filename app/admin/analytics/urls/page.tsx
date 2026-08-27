@@ -130,7 +130,7 @@ export default function UrlAnalyticsPage() {
       <PageTitle size="md">URL analytics</PageTitle>
       <p className="mt-1 mb-6 text-sm text-gray-600">
         Click totals grouped by outbound URL. Includes every clickable hotspot
-        regardless of advertiser link status — useful for publisher, partner,
+        regardless of partner link status — useful for publisher, partner,
         and non-CRM destinations.
       </p>
 

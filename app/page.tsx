@@ -64,7 +64,7 @@ export default async function HomePage({ searchParams }: PageProps) {
           Realty News Now
         </h1>
         <p className="mt-4 max-w-md text-base text-slate-600 sm:text-lg">
-          The real estate community hub for news, events, advertisers, and
+          The real estate community hub for news, events, partners, and
           magazines across Texas. Sign in to access the full app.
         </p>
 

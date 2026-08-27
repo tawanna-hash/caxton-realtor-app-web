@@ -151,7 +151,7 @@ export default function AdminBuilderPagesPage() {
           </p>
           <PageTitle size="md">Partner Pages</PageTitle>
           <p className="text-sm text-gray-600 font-light mt-2 max-w-2xl">
-            Enable or disable individual builder (advertiser) public pages.
+            Enable or disable individual builder (partner) public pages.
             Developers show their child builders as nested rows.
           </p>
         </div>

@@ -354,7 +354,7 @@ function GmailEventsQueue() {
         <div>
           <PageTitle size="md">Gmail Event Review</PageTitle>
           <p className="text-sm text-gray-500 mt-1">
-            Events the scanner found in mail from advertisers and curated association
+            Events the scanner found in mail from partners and curated association
             domains. Approving publishes to the public calendar for the selected publication.
           </p>
         </div>

@@ -205,7 +205,7 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
                   aria-hidden="true"
                 />
                 <Link
-                  href={`/advertisers/${a.slug}`}
+                  href={`/partners/${a.slug}`}
                   className="flex-1 min-w-0 block hover:underline underline-offset-2"
                 >
                   <span className="block text-base text-gray-900 font-medium leading-tight truncate">
@@ -251,12 +251,12 @@ export default function AdvertisersDirectoryClient({ advertisers, themes }: Prop
         </ul>
       ) : inPub.length > 0 ? (
         <p className="text-center text-gray-500 font-light py-12 border-t border-b border-gray-200">
-          No advertisers match{query.trim() ? ` \u201c${query.trim()}\u201d` : ''}
+          No partners match{query.trim() ? ` \u201c${query.trim()}\u201d` : ''}
           {activeCategory ? ` in ${activeCategory}` : ''}.
         </p>
       ) : (
         <p className="text-center text-gray-500 font-light py-12 border-t border-b border-gray-200">
-          No advertisers to display for {theme.label} right now.
+          No partners to display for {theme.label} right now.
         </p>
       )}
     </section>

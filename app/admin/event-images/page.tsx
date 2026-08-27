@@ -513,7 +513,7 @@ export default function AdminEventImagesPage() {
                   Partner <span className="text-gray-400">(optional)</span>
                 </label>
                 <AdvertiserPicker advertisers={advertisers} value={bulkAdvertiser} onChange={setBulkAdvertiser} />
-                <p className="mt-1 text-xs text-gray-400">Shown on that advertiser&apos;s public page.</p>
+                <p className="mt-1 text-xs text-gray-400">Shown on that partner&apos;s public page.</p>
               </div>
             </div>
 
@@ -620,7 +620,7 @@ export default function AdminEventImagesPage() {
                             advertisers={advertisers}
                             value={group.photos[0]?.advertiserId ?? null}
                             onChange={(id) => saveFolderAdvertiser(group, id)}
-                            placeholder="Assign advertiser..."
+                            placeholder="Assign partner..."
                             compact
                           />
                         </div>
@@ -692,7 +692,7 @@ export default function AdminEventImagesPage() {
                                 )}
                                 {/* Advertiser association — set per folder above */}
                                 {advName && (
-                                  <p className="text-xs text-brand-700 truncate" title="Associated advertiser">
+                                  <p className="text-xs text-brand-700 truncate" title="Associated partner">
                                     {advName}
                                   </p>
                                 )}
@@ -738,7 +738,7 @@ function AdvertiserPicker({
   advertisers,
   value,
   onChange,
-  placeholder = 'No advertiser',
+  placeholder = 'No partner',
   compact = false,
 }: {
   advertisers: PickerAdvertiser[];

@@ -182,7 +182,7 @@ export default function AdminAdsPlacementsPage() {
         <p className="text-sm text-gray-600 mt-2 max-w-3xl">
           Visual reference for every digital ad slot in the app. Each card shows
           a wireframe of the host page with the placement highlighted in green.
-          Use this to walk advertisers through inventory or to verify a slot
+          Use this to walk partners through inventory or to verify a slot
           renders where you expect after a code change.
         </p>
         <p className="text-sm text-gray-600 mt-2 max-w-3xl">

@@ -73,7 +73,7 @@ export function CreativesGallery({ creatives, campaigns, onChange }: Props) {
     const advertiser_name = draft.advertiser_name.trim();
     const click_url = draft.click_url.trim();
     if (!advertiser_name) {
-      setError('Advertiser name is required');
+      setError('Partner name is required');
       return;
     }
     if (!click_url) {

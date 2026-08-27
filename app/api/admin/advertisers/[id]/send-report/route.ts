@@ -103,7 +103,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       SELECT * FROM advertisers WHERE id = ${idNum}
     `) as unknown as Advertiser[];
     if (advRows.length === 0) {
-      return NextResponse.json({ error: 'advertiser not found' }, { status: 404 });
+      return NextResponse.json({ error: 'partner not found' }, { status: 404 });
     }
     const advertiser = advRows[0];
     const theme = getPublicationTheme(advertiser.publication);
@@ -112,7 +112,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     const recipient = (advertiser.contact_email || '').trim();
     if (!preview && !recipient) {
       return NextResponse.json(
-        { error: 'no contact email set for this advertiser' },
+        { error: 'no contact email set for this partner' },
         { status: 400 },
       );
     }
@@ -216,9 +216,9 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     // Send via shared email provider (honors EMAIL_PROVIDER + EMAIL_FROM_*)
     const subject = `Your ${advertiser.name} performance report — ${theme.name}`;
     if (!RESEND_KEY && process.env.EMAIL_PROVIDER === 'resend') {
-      console.warn('[advertiser-report] RESEND_API_KEY not configured');
-      console.log('[advertiser-report] would have sent to:', recipient);
-      console.log('[advertiser-report] subject:', subject);
+      console.warn('[partner-report] RESEND_API_KEY not configured');
+      console.log('[partner-report] would have sent to:', recipient);
+      console.log('[partner-report] subject:', subject);
       return NextResponse.json(
         { error: 'Resend not configured', detail: 'RESEND_API_KEY env var missing' },
         { status: 500 },
@@ -238,7 +238,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       from: { name: fromName },
     });
     if (!result.success) {
-      console.error('[advertiser-report] send failed:', result.error);
+      console.error('[partner-report] send failed:', result.error);
       return NextResponse.json(
         { error: 'send failed', detail: result.error },
         { status: 502 },

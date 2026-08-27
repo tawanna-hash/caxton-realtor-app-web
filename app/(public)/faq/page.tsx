@@ -105,7 +105,7 @@ export default function FaqPage() {
             <p className="text-gray-700 font-light leading-relaxed">
               You can opt in during sign-up or in settings. You control which
               types of notifications you receive — new issues, upcoming events,
-              giveaways, breaking news, or advertiser features.
+              giveaways, breaking news, or partner features.
             </p>
           </div>
 

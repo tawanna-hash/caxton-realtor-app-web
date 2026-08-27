@@ -67,7 +67,7 @@ export const GET = withAdminTracking(async (req: Request, ctx: RouteCtx) => {
       FROM advertisers WHERE id = ${idNum}
     `) as unknown as Advertiser[];
     if (advRows.length === 0) {
-      throw new ApiError(404, 'advertiser not found');
+      throw new ApiError(404, 'partner not found');
     }
     const advertiser = advRows[0];
 

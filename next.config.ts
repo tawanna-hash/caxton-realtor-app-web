@@ -125,6 +125,7 @@ const nextConfig: NextConfig = {
       { source: '/subscriptions', destination: '/newsletter', permanent: false },
       { source: '/contact', destination: '/about', permanent: false },
       { source: '/five-points', destination: '/communities', permanent: false },
+      { source: '/advertisers/:path*', destination: '/partners/:path*', permanent: true },
       // Legacy /auth/* pages replaced by the /dashboard modal auth pattern.
       // Everything routes through the dashboard, which drives the Auth.js flow.
       { source: '/auth/sign-in', destination: '/dashboard?auth=login', permanent: false },

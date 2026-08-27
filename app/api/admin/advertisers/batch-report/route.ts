@@ -78,10 +78,10 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     ? body.advertiserIds.filter((n) => Number.isInteger(n) && n > 0)
     : [];
   if (ids.length === 0) {
-    return NextResponse.json({ error: 'no advertiser ids provided' }, { status: 400 });
+    return NextResponse.json({ error: 'no partner ids provided' }, { status: 400 });
   }
   if (ids.length > 100) {
-    return NextResponse.json({ error: 'too many advertisers in one batch (max 100)' }, { status: 400 });
+    return NextResponse.json({ error: 'too many partners in one batch (max 100)' }, { status: 400 });
   }
 
   const personalMessage = (body.message || '').toString().trim() || undefined;
@@ -133,7 +133,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       try {
         const advertiser = advById.get(idNum);
         if (!advertiser) {
-          results.push({ id: idNum, name: `#${idNum}`, sent: false, error: 'advertiser not found' });
+          results.push({ id: idNum, name: `#${idNum}`, sent: false, error: 'partner not found' });
           continue;
         }
         const recipient = (advertiser.contact_email || '').trim();

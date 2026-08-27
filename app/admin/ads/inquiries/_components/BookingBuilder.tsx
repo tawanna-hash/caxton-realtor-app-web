@@ -371,7 +371,7 @@ export default function BookingBuilder({ inquiry, onBooked }: Props) {
           />
           <p className="mt-1 text-[11px] text-gray-600">
             Create the link in Stripe Dashboard, then paste it here. The
-            advertiser will see it on the invoice.
+            partner will see it on the invoice.
           </p>
         </div>
       )}

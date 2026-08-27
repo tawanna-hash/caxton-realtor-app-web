@@ -95,7 +95,7 @@ const DRAWER_SECTIONS: NavSection[] = [
       { label: 'Inventory & Promotions', href: '/inventory' },
       { label: 'Communities', href: '/communities' },
       { label: 'Builders & Developers', href: '/builders' },
-      { label: 'Partners', href: '/advertisers' },
+      { label: 'Partners', href: '/partners' },
       { label: 'Curated Links', href: '/resources/links' },
     ],
   },

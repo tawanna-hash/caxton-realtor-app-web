@@ -77,8 +77,8 @@ export const EVENT_LABELS: Record<string, string> = {
   ad_click: 'Ad clicks',
   // Server-side CRM / lifecycle events (fired from API routes via
   // lib/server/posthog.ts captureServerEvent).
-  advertiser_linked: 'CRM — Advertiser linked to agreement',
-  advertiser_signed: 'CRM — Advertiser signed agreement',
+  advertiser_linked: 'CRM — Partner linked to agreement',
+  advertiser_signed: 'CRM — Partner signed agreement',
   agreement_create_failed: 'CRM — Agreement create failed',
   amended_pdf_sent: 'CRM — Amended agreement PDF sent',
   dispatch_failed: 'Email — Dispatch failed',

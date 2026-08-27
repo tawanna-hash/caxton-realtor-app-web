@@ -619,7 +619,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
             </div>
             {ios.length === 0 ? (
               <div className="text-xs text-gray-500 py-2">
-                No insertion orders yet. Upload a PDF from the advertiser or agency.
+                No insertion orders yet. Upload a PDF from the partner or agency.
               </div>
             ) : (
               <div className="rounded-md border border-gray-200 divide-y divide-gray-100 bg-white">
@@ -655,7 +655,7 @@ export default function AdvertiserChannelTabs({ advertiserId }: Props) {
                           ? 'opacity-50 pointer-events-none border-gray-300 text-gray-500'
                           : 'border-gray-300 text-gray-700 hover:bg-gray-50')
                       }
-                      title={io.pdf_url ? 'Replace uploaded PDF' : 'Upload advertiser PDF'}
+                      title={io.pdf_url ? 'Replace uploaded PDF' : 'Upload partner PDF'}
                     >
                       {io.pdf_url ? 'Replace' : 'Upload'}
                       <input

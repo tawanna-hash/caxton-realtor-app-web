@@ -171,7 +171,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     attention.push({
       kind: 'bounce',
       count: bounceTotal,
-      label: `${bounceTotal} advertiser${bounceTotal === 1 ? '' : 's'} with recent bounce${bounceTotal === 1 ? '' : 's'}`,
+      label: `${bounceTotal} partner${bounceTotal === 1 ? '' : 's'} with recent bounce${bounceTotal === 1 ? '' : 's'}`,
       href: '/admin/crm',
     });
   }

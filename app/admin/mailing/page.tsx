@@ -140,8 +140,8 @@ export default async function MailingHubPage() {
         <PageTitle size="md">Mailing List HUB</PageTitle>
         <p className="mt-2 text-sm text-gray-600 max-w-2xl">
           Every audience source in one place — segments, board mirrors, app
-          signups, and manual entries. Active advertisers and their staff sync
-          into the Advertisers segment automatically.
+          signups, and manual entries. Active partners and their staff sync
+          into the Partners segment automatically.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <span className="text-xs uppercase tracking-[0.15em] text-gray-500 font-medium">

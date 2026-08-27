@@ -550,7 +550,7 @@ export default function SignWizard({
   const canEditPlacementDate = hasDateEditableLines || singleLineEditable;
 
   // ── Billing ────────────────────────────────────────────────────────────────
-  const [billTo, setBillTo] = useState<string>(ag.bill_to ?? 'Advertiser');
+  const [billTo, setBillTo] = useState<string>(ag.bill_to ?? 'Partner');
   const [billingEmail, setBillingEmail] = useState(ag.billing_email ?? '');
   const [billingContactName, setBillingContactName] = useState(ag.billing_contact_name ?? '');
   const [billingContactPhone, setBillingContactPhone] = useState(formatPhone(ag.billing_contact_phone ?? ''));

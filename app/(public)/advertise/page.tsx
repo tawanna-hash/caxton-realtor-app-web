@@ -290,7 +290,7 @@ export default function AdvertisePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-900 mb-1">
-                    Featured advertiser article
+                    Featured partner article
                   </p>
                   <p className="text-gray-700 font-light leading-relaxed">
                     Our editorial team interviews you or your team and

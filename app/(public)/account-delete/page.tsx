@@ -54,7 +54,7 @@ export default function AccountDeletePage() {
           for aggregate reporting.
         </li>
         <li>
-          <strong>Advertising billing records</strong> (if you were an advertiser) — retained for
+          <strong>Advertising billing records</strong> (if you were an partner) — retained for
           7 years to comply with tax and financial recordkeeping laws.
         </li>
         <li>
@@ -68,7 +68,7 @@ export default function AccountDeletePage() {
         <li><strong>Immediately:</strong> Account is deactivated and sign-in disabled</li>
         <li><strong>Within 30 days:</strong> Personal data permanently removed</li>
         <li><strong>Within 90 days:</strong> Backups scrubbed</li>
-        <li><strong>7 years:</strong> Only anonymized billing records retained (advertisers only)</li>
+        <li><strong>7 years:</strong> Only anonymized billing records retained (partners only)</li>
       </ul>
 
       <p className="text-sm text-neutral-500">

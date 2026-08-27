@@ -3,7 +3,7 @@ import PageTitle from '@/components/ui/PageTitle';
 export const metadata = {
   title: 'Support — Realty News Now',
   description:
-    'Get help with Realty News Now: account access, app issues, advertiser questions, or anything else. We respond within one business day.',
+    'Get help with Realty News Now: account access, app issues, partner questions, or anything else. We respond within one business day.',
 };
 
 const SUPPORT_EMAIL = 'tawanna@myrealtyline.com';
@@ -89,7 +89,7 @@ export default function SupportPage() {
 
           <div>
             <p className="font-semibold text-gray-900 mb-1">
-              I&apos;m an advertiser with a billing question.
+              I&apos;m an partner with a billing question.
             </p>
             <p className="text-gray-700 font-light leading-relaxed">
               Email us at {SUPPORT_EMAIL} with your business name and we&apos;ll

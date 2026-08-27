@@ -34,7 +34,7 @@ const CONTENT: Entry[] = [
   { path: '/communities',         changeFrequency: 'weekly',  priority: 0.7 },
   { path: '/builders',            changeFrequency: 'weekly',  priority: 0.7 },
   { path: '/inventory',           changeFrequency: 'daily',   priority: 0.8 },
-  { path: '/advertisers',         changeFrequency: 'weekly',  priority: 0.6 },
+  { path: '/partners',            changeFrequency: 'weekly',  priority: 0.6 },
   { path: '/giveaways',           changeFrequency: 'weekly',  priority: 0.7 },
 ];
 
