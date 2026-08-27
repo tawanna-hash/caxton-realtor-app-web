@@ -843,6 +843,7 @@ function EditDrawer({
   const [shareBusy, setShareBusy] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteRequested, setDeleteRequested] = useState(false);
 
   // Staff lifted from <LocationsStaffEditor> so we can hide company-level
   // Person/Contact fields when they would duplicate an existing staff row.
@@ -927,9 +928,6 @@ function EditDrawer({
   const deleteAdvertiser = async () => {
     if (row.is_locked) {
       onError('This partner record is locked. Unlock it from the Partners list before deleting.');
-      return;
-    }
-    if (!window.confirm(`Delete "${row.name}"? Their hotspot links will be unlinked (hotspots remain).`)) {
       return;
     }
     setDeleting(true);
@@ -1108,6 +1106,10 @@ function EditDrawer({
   const officeMatch = matchStaffByPhone(form.office_phone);
 
   const submit = async () => {
+    if (deleteRequested) {
+      await deleteAdvertiser();
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
@@ -1587,6 +1589,15 @@ function EditDrawer({
             </Field>
           </Section>
 
+          {deleteRequested && (
+            <div
+              role="alert"
+              className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+            >
+              <strong>{row.name}</strong> is marked for deletion. Click <strong>Save &amp; delete</strong> to permanently remove the record, or undo the deletion.
+            </div>
+          )}
+
           <div className="sticky bottom-0 -mx-6 px-6 py-4 bg-white border-t border-gray-200 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="text-xs text-gray-500">
@@ -1594,12 +1605,16 @@ function EditDrawer({
               </div>
               <button
                 type="button"
-                onClick={deleteAdvertiser}
+                onClick={() => setDeleteRequested((requested) => !requested)}
                 disabled={deleting || row.is_locked}
-                className="px-3 py-1.5 rounded-md border border-red-200 text-red-700 text-xs hover:bg-red-50 disabled:opacity-50"
-                title={row.is_locked ? 'Unlock this partner from the Partners list before deleting' : 'Delete this partner (hotspots remain, links unlinked)'}
+                className={`px-3 py-1.5 rounded-md border text-xs disabled:opacity-50 ${
+                  deleteRequested
+                    ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    : 'border-red-200 text-red-700 hover:bg-red-50'
+                }`}
+                title={row.is_locked ? 'Unlock this partner from the Partners list before deleting' : 'Mark this partner for deletion'}
               >
-                {deleting ? 'Deleting...' : row.is_locked ? 'Partner locked' : 'Delete advertiser'}
+                {row.is_locked ? 'Partner locked' : deleteRequested ? 'Undo deletion' : 'Delete advertiser'}
               </button>
             </div>
             <div className="flex gap-2">
@@ -1608,10 +1623,14 @@ function EditDrawer({
               </button>
               <button
                 onClick={submit}
-                disabled={saving}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+                disabled={saving || deleting}
+                className={`px-4 py-2 rounded-md text-white text-sm disabled:opacity-50 whitespace-nowrap ${
+                  deleteRequested
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
               >
-                {saving ? 'Saving...' : 'Save changes'}
+                {deleting ? 'Deleting...' : saving ? 'Saving...' : deleteRequested ? 'Save & delete' : 'Save changes'}
               </button>
             </div>
           </div>

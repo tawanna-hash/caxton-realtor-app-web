@@ -20,7 +20,6 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { upsertAdvertiserMailingByAdvertiserId } from '@/lib/mailing';
 import { syncAdvertiserToAgreement } from '@/lib/server/billing-crm-sync';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
-import { withNeonTransaction } from '@/lib/server/db/neon';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -286,61 +285,64 @@ export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, 
   }
   try {
     await ensureSchema();
-    const outcome = await withNeonTransaction(async (client) => {
-      const existing = await client.query<{
-        id: number;
-        is_locked: boolean;
-        name: string;
-        slug: string;
-        contact_email: string | null;
-      }>(
-        `SELECT id, is_locked, name, slug, contact_email
-         FROM advertisers
-         WHERE id = $1
-         FOR UPDATE`,
-        [idNum],
-      );
-      const advertiser = existing.rows[0];
-      if (!advertiser) return 'not_found' as const;
-      if (advertiser.is_locked) return 'locked' as const;
-
-      // Preserve issued invoices while removing their CRM relationship.
-      await client.query(
-        'UPDATE invoices SET advertiser_id = NULL WHERE advertiser_id = $1',
-        [idNum],
-      );
-
-      const result = await client.query<{ id: number }>(
-        'DELETE FROM advertisers WHERE id = $1 RETURNING id',
-        [idNum],
-      );
-      if (result.rowCount === 0) return 'not_found' as const;
-
-      const email = advertiser.contact_email?.trim().toLowerCase();
-      if (email) {
-        await client.query(
-          `INSERT INTO advertiser_deletion_tombstones (
-             normalized_email, original_advertiser_id, original_name,
-             original_slug, deleted_at
-           ) VALUES ($1, $2, $3, $4, now())
-           ON CONFLICT (normalized_email) DO UPDATE SET
-             original_advertiser_id = EXCLUDED.original_advertiser_id,
-             original_name = EXCLUDED.original_name,
-             original_slug = EXCLUDED.original_slug,
-             deleted_at = now()`,
-          [email, advertiser.id, advertiser.name, advertiser.slug],
-        );
-      }
-      return 'deleted' as const;
-    });
-
-    if (outcome === 'not_found') {
+    const sql = getSql();
+    const existing = (await sql`
+      SELECT id, is_locked, name, slug, contact_email
+      FROM advertisers
+      WHERE id = ${idNum}
+    `) as unknown as Array<{
+      id: number;
+      is_locked: boolean;
+      name: string;
+      slug: string;
+      contact_email: string | null;
+    }>;
+    const advertiser = existing[0];
+    if (!advertiser) {
       return NextResponse.json({ error: 'not found' }, { status: 404 });
     }
-    if (outcome === 'locked') {
+    if (advertiser.is_locked) {
       return NextResponse.json(
         { error: 'This partner record is locked. Unlock it before deleting.' },
         { status: 423 },
+      );
+    }
+
+    const email = advertiser.contact_email?.trim().toLowerCase();
+    const statements = [
+      // Preserve issued invoices while removing their CRM relationship.
+      sql`UPDATE invoices SET advertiser_id = NULL WHERE advertiser_id = ${idNum}`,
+      sql`DELETE FROM advertisers WHERE id = ${idNum} AND is_locked = false RETURNING id`,
+    ];
+    if (email) {
+      statements.push(sql`
+        INSERT INTO advertiser_deletion_tombstones (
+          normalized_email, original_advertiser_id, original_name,
+          original_slug, deleted_at
+        ) VALUES (
+          ${email}, ${advertiser.id}, ${advertiser.name},
+          ${advertiser.slug}, now()
+        )
+        ON CONFLICT (normalized_email) DO UPDATE SET
+          original_advertiser_id = EXCLUDED.original_advertiser_id,
+          original_name = EXCLUDED.original_name,
+          original_slug = EXCLUDED.original_slug,
+          deleted_at = now()
+      `);
+    }
+
+    // Use Neon's HTTP transaction path, which is already proven in this
+    // serverless app and rolls every statement back if one fails.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const results = await (sql as any).transaction(
+      statements,
+      { isolationLevel: 'Serializable' },
+    );
+    const deleted = results[1] as Array<{ id: number }> | undefined;
+    if (!Array.isArray(deleted) || deleted.length === 0) {
+      return NextResponse.json(
+        { error: 'The partner changed while deleting. Refresh and try again.' },
+        { status: 409 },
       );
     }
     return NextResponse.json({ ok: true, deleted_id: idNum });
