@@ -68,14 +68,14 @@ export default function ResourcesClient({ view = 'tools' }: { view?: ResourcesVi
         <div>
           <p className="text-sm font-semibold text-gray-900">Add your REALTOR® branding</p>
           <p className="mt-1 text-sm leading-relaxed text-gray-600">
-            Your saved name, headshot, brokerage logo, and contact details are added to completed calculator sheets.
+            Build your email signature once in Custom Designer. Its name, headshot, logo, and contact details are automatically added to calculator and quick-reference sheets.
           </p>
         </div>
         <Link
-          href="/profile#calculator-branding"
+          href="/custom-designer"
           className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-800"
         >
-          Set up branding
+          Open Custom Designer
         </Link>
       </aside>
       )}

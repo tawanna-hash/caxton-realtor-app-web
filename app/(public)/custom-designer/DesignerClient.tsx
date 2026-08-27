@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowLeft, ArrowRight, Download, FileCode2, GripVertical, ImagePlus, RotateCcw } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Product = 'signature' | 'flyer';
 type FlyerSize = 'us-letter' | 'insta-square' | 'insta-story' | 'fb-banner' | 'linkedin-banner';
@@ -171,13 +171,16 @@ const BRAND_TYPOGRAPHY_PRESETS = [
   },
 ];
 const GOOGLE_FONTS_URL = 'https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,600;6..96,700&family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Libre+Franklin:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;900&family=Oswald:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;900&display=swap';
+const DESIGNER_SIGNATURE_STORAGE_KEY = 'rnn:custom-designer-signature';
+const APP_BRAND_PRIMARY = '#301D5D';
+const APP_BRAND_SECONDARY = '#7a1f7e';
 
 export default function DesignerClient() {
   const [product, setProduct] = useState<Product>('signature');
   const [preset, setPreset] = useState(0);
   const [flyerSize, setFlyerSize] = useState<FlyerSize>('us-letter');
-  const [primary, setPrimary] = useState('#0284c7');
-  const [secondary, setSecondary] = useState('#475569');
+  const [primary, setPrimary] = useState(APP_BRAND_PRIMARY);
+  const [secondary, setSecondary] = useState(APP_BRAND_SECONDARY);
   const [font, setFont] = useState(FONT_OPTIONS[0].value);
   const [headlineFont, setHeadlineFont] = useState(FONT_OPTIONS[0].value);
   const [fontWeight, setFontWeight] = useState(700);
@@ -191,6 +194,7 @@ export default function DesignerClient() {
   const [bodyLineHeight, setBodyLineHeight] = useState(1.45);
   const [background, setBackground] = useState('');
   const [signature, setSignature] = useState(DEFAULT_SIGNATURE);
+  const [signatureStorageReady, setSignatureStorageReady] = useState(false);
   const [flyer, setFlyer] = useState(DEFAULT_FLYER);
   const [artboardOrder, setArtboardOrder] = useState<ArtboardKey[]>(DEFAULT_ARTBOARD_ORDER);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -198,6 +202,7 @@ export default function DesignerClient() {
   const logoRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const selectedArtboardElementRef = useRef<HTMLElement | null>(null);
+  const skipFirstSignatureSaveRef = useRef(true);
 
   const dimensions = product === 'signature'
     ? { width: 760, height: 220 }
@@ -210,6 +215,37 @@ export default function DesignerClient() {
     '--designer-headline-leading': headlineLineHeight,
     '--designer-body-leading': bodyLineHeight,
   } as React.CSSProperties;
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      const appStyles = window.getComputedStyle(document.documentElement);
+      setPrimary(appStyles.getPropertyValue('--color-brand-700').trim() || APP_BRAND_PRIMARY);
+      setSecondary(appStyles.getPropertyValue('--color-brand-500').trim() || APP_BRAND_SECONDARY);
+      try {
+        const saved = window.localStorage.getItem(DESIGNER_SIGNATURE_STORAGE_KEY);
+        if (saved) {
+          setSignature((current) => ({ ...current, ...JSON.parse(saved) }));
+        }
+      } catch {}
+      setSignatureStorageReady(true);
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => {
+    if (!signatureStorageReady) return;
+    if (skipFirstSignatureSaveRef.current) {
+      skipFirstSignatureSaveRef.current = false;
+      return;
+    }
+    try {
+      if (
+        !window.localStorage.getItem(DESIGNER_SIGNATURE_STORAGE_KEY)
+        && JSON.stringify(signature) === JSON.stringify(DEFAULT_SIGNATURE)
+      ) return;
+      window.localStorage.setItem(DESIGNER_SIGNATURE_STORAGE_KEY, JSON.stringify(signature));
+    } catch {}
+  }, [signature, signatureStorageReady]);
 
   const applyBrandTypography = (index: number) => {
     const brand = BRAND_TYPOGRAPHY_PRESETS[index];
@@ -324,8 +360,9 @@ export default function DesignerClient() {
   const reset = () => {
     setPreset(0);
     setFlyerSize('us-letter');
-    setPrimary('#0284c7');
-    setSecondary('#475569');
+    const appStyles = window.getComputedStyle(document.documentElement);
+    setPrimary(appStyles.getPropertyValue('--color-brand-700').trim() || APP_BRAND_PRIMARY);
+    setSecondary(appStyles.getPropertyValue('--color-brand-500').trim() || APP_BRAND_SECONDARY);
     setFont(FONT_OPTIONS[0].value);
     setHeadlineFont(FONT_OPTIONS[0].value);
     setFontWeight(700);
@@ -500,6 +537,9 @@ export default function DesignerClient() {
               <ColorControl label="Primary brand color" value={primary} onChange={setPrimary} />
               <ColorControl label="Secondary accent" value={secondary} onChange={setSecondary} />
             </div>
+            <p className="-mt-2 text-[10px] leading-relaxed text-slate-400">
+              Synced from the Realty News Now app palette. Both colors remain editable.
+            </p>
 
             {product === 'flyer' && (
               <div className="space-y-3">

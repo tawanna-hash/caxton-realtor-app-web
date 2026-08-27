@@ -18,6 +18,7 @@ import { getApiBase } from '@/lib/api-base';
 import type { FooterBrand, FooterTemplateId } from '@/lib/footer-templates';
 
 const API = getApiBase();
+const DESIGNER_SIGNATURE_STORAGE_KEY = 'rnn:custom-designer-signature';
 
 type BrandFooter = {
   template: FooterTemplateId;
@@ -47,6 +48,51 @@ export default function ResourceFloater({
 
   useEffect(() => {
     let cancelled = false;
+    let designerBrandingTimeout: number | undefined;
+    let designerBranding: BrandFooter | null = null;
+    try {
+      const saved = window.localStorage.getItem(DESIGNER_SIGNATURE_STORAGE_KEY);
+      if (saved) {
+        const signature = JSON.parse(saved) as {
+          name?: string;
+          title?: string;
+          company?: string;
+          phone?: string;
+          email?: string;
+          website?: string;
+          photo?: string;
+          logo?: string;
+        };
+        if (signature.name?.trim() && signature.company?.trim()) {
+          designerBranding = {
+            template: 'signature',
+            brand: {
+              name: signature.name,
+              company: signature.company,
+              title: signature.title || null,
+              email: signature.email || null,
+              phone: signature.phone || null,
+              office_phone: null,
+              website: signature.website || null,
+              logo_url: signature.logo || null,
+              photo_url: signature.photo || null,
+              address: null,
+              address_2: null,
+              city: null,
+              state: null,
+              zip: null,
+              license_number: null,
+              tagline: null,
+              publication: null,
+            },
+          };
+          designerBrandingTimeout = window.setTimeout(() => {
+            if (!cancelled) setBrandFooter(designerBranding);
+          }, 0);
+        }
+      }
+    } catch {}
+
     fetch(`${API}/calculator-branding`, { credentials: 'include' })
       .then(async (response) => {
         if (!response.ok) return null;
@@ -54,13 +100,16 @@ export default function ResourceFloater({
         return (data?.branding ?? null) as BrandFooter | null;
       })
       .then((branding) => {
-        if (!cancelled) setBrandFooter(branding);
+        if (!cancelled && !designerBranding) setBrandFooter(branding);
       })
       .catch(() => {
-        if (!cancelled) setBrandFooter(null);
+        if (!cancelled && !designerBranding) setBrandFooter(null);
       });
     return () => {
       cancelled = true;
+      if (designerBrandingTimeout !== undefined) {
+        window.clearTimeout(designerBrandingTimeout);
+      }
     };
   }, []);
 
