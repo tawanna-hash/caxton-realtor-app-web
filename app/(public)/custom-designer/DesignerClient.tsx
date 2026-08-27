@@ -1,489 +1,505 @@
 'use client';
 
-import {
-  ArrowDown,
-  ArrowUp,
-  Download,
-  Image as ImageIcon,
-  Minus,
-  MousePointer2,
-  RotateCcw,
-  Square,
-  Trash2,
-  Type,
-} from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { Download, FileCode2, ImagePlus, RotateCcw } from 'lucide-react';
+import { useRef, useState } from 'react';
 
-type Format = 'signature' | 'flyer' | 'social' | 'card';
-type LayerType = 'text' | 'shape' | 'image' | 'line';
+type Product = 'signature' | 'flyer';
+type FlyerSize = 'us-letter' | 'insta-square' | 'insta-story' | 'fb-banner' | 'linkedin-banner';
 
-type Layer = {
-  id: string;
-  type: LayerType;
+type SignatureFields = {
   name: string;
-  x: number;
-  y: number;
-  z: number;
-  width: number;
-  height: number;
-  text?: string;
-  fontSize?: number;
-  fontWeight?: number;
-  color: string;
-  background?: string;
-  radius?: number;
-  src?: string;
+  title: string;
+  company: string;
+  phone: string;
+  photo: string;
 };
 
-const FORMATS: Record<Format, { label: string; width: number; height: number }> = {
-  signature: { label: 'Email Signature (450 × 150 px)', width: 450, height: 150 },
-  flyer: { label: 'Marketing Flyer (600 × 750 px)', width: 600, height: 750 },
-  social: { label: 'Square Promotion (500 × 500 px)', width: 500, height: 500 },
-  card: { label: 'Modern Business Card (550 × 320 px)', width: 550, height: 320 },
+type FlyerFields = {
+  title: string;
+  meta: string;
+  body: string;
+  image: string;
 };
 
-const INITIAL_LAYERS: Layer[] = [
-  {
-    id: 'profile-avatar',
-    type: 'image',
-    name: 'Profile Avatar',
-    src: '',
-    width: 80,
-    height: 80,
-    radius: 50,
-    x: 30,
-    y: 35,
-    z: 5,
-    color: '#e4e4e7',
-  },
-  {
-    id: 'name-title',
-    type: 'text',
-    name: 'Name Title',
-    text: 'Sarah Jenkins',
-    fontSize: 22,
-    fontWeight: 700,
-    width: 220,
-    height: 28,
-    x: 135,
-    y: 32,
-    z: 10,
-    color: '#1f2937',
-  },
-  {
-    id: 'job-role',
-    type: 'text',
-    name: 'Job Role',
-    text: 'Senior VP of Product Design',
-    fontSize: 13,
-    fontWeight: 400,
-    width: 230,
-    height: 20,
-    x: 135,
-    y: 64,
-    z: 9,
-    color: '#6366f1',
-  },
-  {
-    id: 'divider',
-    type: 'line',
-    name: 'Structural Divider',
-    width: 280,
-    height: 1,
-    x: 135,
-    y: 92,
-    z: 4,
-    color: '#e5e7eb',
-  },
-  {
-    id: 'action-button',
-    type: 'shape',
-    name: 'Action Button',
-    text: 'Schedule Sync',
-    width: 110,
-    height: 26,
-    radius: 4,
-    x: 135,
-    y: 105,
-    z: 8,
-    color: '#ffffff',
-    background: '#18181b',
-  },
+const FLYER_SIZES: Record<FlyerSize, { label: string; width: number; height: number }> = {
+  'us-letter': { label: 'US Letter Print (8.5 × 11 in)', width: 420, height: 544 },
+  'insta-square': { label: 'Instagram Post (1:1)', width: 450, height: 450 },
+  'insta-story': { label: 'Mobile Portrait / Story (9:16)', width: 340, height: 604 },
+  'fb-banner': { label: 'Facebook Cover Display (16:9)', width: 520, height: 292 },
+  'linkedin-banner': { label: 'LinkedIn Profile Header (4:1)', width: 560, height: 140 },
+};
+
+const SIGNATURE_PRESETS = ['Split Column (Classic)', 'Minimal Rows (Stack)'];
+const FLYER_PRESETS = ['Editorial Poster', 'Impact Display'];
+
+const DEFAULT_SIGNATURE: SignatureFields = {
+  name: 'Sarah Jenkins',
+  title: 'VP of Enterprise Infrastructure',
+  company: 'Acme Cloud Systems',
+  phone: '+1 (555) 839-2011',
+  photo: '',
+};
+
+const DEFAULT_FLYER: FlyerFields = {
+  title: 'ENTERPRISE SCALE INFRASTRUCTURE',
+  meta: 'THURS, NOV 12 · 09:00 AM CST',
+  body: 'Deploy multi-format digital experiences, cross-channel design distribution parameters, and modular client layout pipelines across your infrastructure.',
+  image: '',
+};
+
+const FONT_OPTIONS = [
+  { label: 'Modern Sans-Serif', value: 'Arial, Helvetica, sans-serif' },
+  { label: 'Classic Serif (Georgia)', value: 'Georgia, Times, serif' },
+  { label: 'Technical Monospace', value: "'Courier New', monospace" },
+  { label: 'Montserrat', value: 'Montserrat, Arial, sans-serif' },
+  { label: 'Playfair Display', value: "'Playfair Display', Georgia, serif" },
+  { label: 'Oswald Display', value: 'Oswald, Arial, sans-serif' },
+  { label: 'Inter UI', value: 'Inter, Arial, sans-serif' },
 ];
 
-const cloneInitialLayers = () => INITIAL_LAYERS.map((layer) => ({ ...layer }));
-
 export default function DesignerClient() {
-  const [format, setFormat] = useState<Format>('signature');
-  const [layers, setLayers] = useState<Layer[]>(cloneInitialLayers);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [boardColor, setBoardColor] = useState('#ffffff');
-  const boardRef = useRef<HTMLDivElement>(null);
-  const counterRef = useRef(INITIAL_LAYERS.length);
-  const dragRef = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
-  const dimensions = FORMATS[format];
-  const selected = layers.find((layer) => layer.id === selectedId) ?? null;
-  const orderedLayers = useMemo(() => [...layers].sort((a, b) => b.z - a.z), [layers]);
+  const [product, setProduct] = useState<Product>('signature');
+  const [preset, setPreset] = useState(0);
+  const [flyerSize, setFlyerSize] = useState<FlyerSize>('us-letter');
+  const [primary, setPrimary] = useState('#0284c7');
+  const [secondary, setSecondary] = useState('#475569');
+  const [font, setFont] = useState(FONT_OPTIONS[0].value);
+  const [fontWeight, setFontWeight] = useState(700);
+  const [fontSize, setFontSize] = useState(16);
+  const [background, setBackground] = useState('');
+  const [signature, setSignature] = useState(DEFAULT_SIGNATURE);
+  const [flyer, setFlyer] = useState(DEFAULT_FLYER);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  const updateLayer = (id: string, patch: Partial<Layer>) => {
-    setLayers((current) => current.map((layer) => (layer.id === id ? { ...layer, ...patch } : layer)));
+  const presets = product === 'signature' ? SIGNATURE_PRESETS : FLYER_PRESETS;
+  const dimensions = product === 'signature'
+    ? { width: 560, height: 180 }
+    : FLYER_SIZES[flyerSize];
+
+  const switchProduct = (next: Product) => {
+    setProduct(next);
+    setPreset(0);
+    setFontSize(next === 'signature' ? 16 : 24);
   };
 
-  const addLayer = (type: LayerType) => {
-    counterRef.current += 1;
-    const number = counterRef.current;
-    const base = {
-      id: `layer-${number}`,
-      type,
-      x: 40,
-      y: 40,
-      z: Math.max(10, ...layers.map((layer) => layer.z)) + 1,
-      color: '#18181b',
-    };
-    let layer: Layer;
-    if (type === 'text') {
-      layer = { ...base, name: `Typography ${number}`, text: 'New Text Block', width: 190, height: 30, fontSize: 18, fontWeight: 700 };
-    } else if (type === 'shape') {
-      layer = { ...base, name: `Block ${number}`, text: 'View Portfolio', width: 120, height: 36, radius: 4, color: '#ffffff', background: '#6366f1' };
-    } else if (type === 'image') {
-      layer = { ...base, name: `Graphic ${number}`, src: '', width: 80, height: 80, radius: 12, color: '#e4e4e7' };
-    } else {
-      layer = { ...base, name: `Line ${number}`, width: 160, height: 2, color: '#e4e4e7' };
-    }
-    setLayers((current) => [...current, layer]);
-    setSelectedId(layer.id);
+  const uploadBackground = (file?: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setBackground(typeof reader.result === 'string' ? reader.result : '');
+    reader.readAsDataURL(file);
+  };
+
+  const clearBackground = () => {
+    setBackground('');
+    if (fileRef.current) fileRef.current.value = '';
   };
 
   const reset = () => {
-    setLayers(cloneInitialLayers());
-    setSelectedId(null);
-    setBoardColor('#ffffff');
+    setPreset(0);
+    setFlyerSize('us-letter');
+    setPrimary('#0284c7');
+    setSecondary('#475569');
+    setFont(FONT_OPTIONS[0].value);
+    setFontWeight(700);
+    setFontSize(product === 'signature' ? 16 : 24);
+    setBackground('');
+    setSignature(DEFAULT_SIGNATURE);
+    setFlyer(DEFAULT_FLYER);
+    if (fileRef.current) fileRef.current.value = '';
   };
 
-  const changeFormat = (next: Format) => {
-    setFormat(next);
-    reset();
+  const exportHtml = () => {
+    const markup = product === 'signature'
+      ? signatureMarkup(signature, preset, primary, secondary, font, fontSize, fontWeight, background)
+      : flyerMarkup(flyer, preset, primary, secondary, font, fontSize, fontWeight, background, dimensions);
+    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RNN Custom Design</title></head><body style="margin:0">${markup}</body></html>`;
+    downloadBlob(html, `rnn-${product}.html`, 'text/html');
   };
 
-  const startDrag = (event: React.PointerEvent, layer: Layer) => {
-    if (!boardRef.current) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    const rect = boardRef.current.getBoundingClientRect();
-    const scaleX = dimensions.width / rect.width;
-    const scaleY = dimensions.height / rect.height;
-    dragRef.current = {
-      id: layer.id,
-      offsetX: (event.clientX - rect.left) * scaleX - layer.x,
-      offsetY: (event.clientY - rect.top) * scaleY - layer.y,
-    };
-    setSelectedId(layer.id);
-  };
+  const exportPdf = async () => {
+    if (product !== 'flyer') return;
+    const { jsPDF } = await import('jspdf');
+    const landscape = dimensions.width > dimensions.height;
+    const pdf = new jsPDF({
+      orientation: landscape ? 'landscape' : 'portrait',
+      unit: 'px',
+      format: [dimensions.width, dimensions.height],
+    });
 
-  const moveDrag = (event: React.PointerEvent) => {
-    const drag = dragRef.current;
-    const board = boardRef.current;
-    if (!drag || !board) return;
-    const rect = board.getBoundingClientRect();
-    const scaleX = dimensions.width / rect.width;
-    const scaleY = dimensions.height / rect.height;
-    const layer = layers.find((item) => item.id === drag.id);
-    if (!layer) return;
-    const nextX = Math.max(0, Math.min(dimensions.width - layer.width, (event.clientX - rect.left) * scaleX - drag.offsetX));
-    const nextY = Math.max(0, Math.min(dimensions.height - layer.height, (event.clientY - rect.top) * scaleY - drag.offsetY));
-    updateLayer(drag.id, { x: Math.round(nextX), y: Math.round(nextY) });
-  };
-
-  const shiftDepth = (id: string, amount: number) => {
-    const layer = layers.find((item) => item.id === id);
-    if (layer) updateLayer(id, { z: Math.max(1, layer.z + amount) });
-  };
-
-  const removeLayer = (id: string) => {
-    setLayers((current) => current.filter((layer) => layer.id !== id));
-    if (selectedId === id) setSelectedId(null);
-  };
-
-  const exportPng = async () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = dimensions.width;
-    canvas.height = dimensions.height;
-    const context = canvas.getContext('2d');
-    if (!context) return;
-    context.fillStyle = boardColor;
-    context.fillRect(0, 0, dimensions.width, dimensions.height);
-
-    for (const layer of [...layers].sort((a, b) => a.z - b.z)) {
-      if (layer.type === 'text') {
-        context.fillStyle = layer.color;
-        context.font = `${layer.fontWeight ?? 400} ${layer.fontSize ?? 16}px Arial, sans-serif`;
-        context.textBaseline = 'top';
-        context.fillText(layer.text ?? '', layer.x, layer.y);
-      } else if (layer.type === 'line') {
-        context.fillStyle = layer.color;
-        context.fillRect(layer.x, layer.y, layer.width, layer.height);
-      } else if (layer.type === 'shape') {
-        context.fillStyle = layer.background ?? '#6366f1';
-        context.beginPath();
-        context.roundRect(layer.x, layer.y, layer.width, layer.height, layer.radius ?? 0);
-        context.fill();
-        context.fillStyle = layer.color;
-        context.font = '600 12px Arial, sans-serif';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-        context.fillText(layer.text ?? '', layer.x + layer.width / 2, layer.y + layer.height / 2);
-        context.textAlign = 'left';
-        context.textBaseline = 'top';
-      } else if (layer.src) {
-        await new Promise<void>((resolve) => {
-          const image = new Image();
-          image.crossOrigin = 'anonymous';
-          image.onload = () => {
-            context.save();
-            if ((layer.radius ?? 0) >= 50) {
-              context.beginPath();
-              context.ellipse(layer.x + layer.width / 2, layer.y + layer.height / 2, layer.width / 2, layer.height / 2, 0, 0, Math.PI * 2);
-              context.clip();
-            }
-            context.drawImage(image, layer.x, layer.y, layer.width, layer.height);
-            context.restore();
-            resolve();
-          };
-          image.onerror = () => resolve();
-          image.src = layer.src ?? '';
-        });
-      } else {
-        context.fillStyle = layer.color;
-        context.fillRect(layer.x, layer.y, layer.width, layer.height);
-      }
+    if (background) {
+      try {
+        const imageFormat = background.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+        pdf.addImage(background, imageFormat, 0, 0, dimensions.width, dimensions.height);
+      } catch {}
     }
-
-    const anchor = document.createElement('a');
-    anchor.download = `rnn-${format}-${Date.now()}.png`;
-    anchor.href = canvas.toDataURL('image/png');
-    anchor.click();
+    if (preset === 1) {
+      pdf.setFillColor(15, 23, 42);
+      pdf.rect(0, dimensions.height * 0.45, dimensions.width, dimensions.height * 0.55, 'F');
+      pdf.setTextColor(255, 255, 255);
+    } else {
+      pdf.setFillColor(255, 255, 255);
+      if (!background) pdf.rect(0, 0, dimensions.width, dimensions.height, 'F');
+      pdf.setTextColor(15, 23, 42);
+    }
+    const margin = Math.max(20, Math.round(dimensions.width * 0.05));
+    const startY = preset === 1 ? Math.round(dimensions.height * 0.64) : margin + 36;
+    pdf.setFont('helvetica', fontWeight >= 700 ? 'bold' : 'normal');
+    pdf.setFontSize(fontSize);
+    const titleLines = pdf.splitTextToSize(flyer.title, dimensions.width - margin * 2);
+    pdf.text(titleLines, margin, startY);
+    const titleDepth = titleLines.length * fontSize * 1.1;
+    pdf.setTextColor(primary);
+    pdf.setFontSize(11);
+    pdf.text(flyer.meta, margin, startY + titleDepth + 8);
+    pdf.setTextColor(preset === 1 ? secondary : '#475569');
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(11);
+    pdf.text(pdf.splitTextToSize(flyer.body, dimensions.width - margin * 2), margin, startY + titleDepth + 28);
+    pdf.save(`rnn-${flyerSize}.pdf`);
   };
 
   return (
-    <main className="min-h-[calc(100vh-64px)] bg-[#0f0f11] text-zinc-100">
-      <div className="border-b border-zinc-700 bg-[#18181b] px-4 py-3 sm:px-5">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-indigo-400">Platinum Tools</p>
-            <h1 className="text-lg font-bold">Studio Collateral Workspace</h1>
-          </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={reset} className="inline-flex min-h-10 items-center gap-2 rounded-md border border-zinc-700 px-3 text-sm font-semibold hover:bg-zinc-800">
-              <RotateCcw size={15} /> Reset
-            </button>
-            <button type="button" onClick={exportPng} className="inline-flex min-h-10 items-center gap-2 rounded-md bg-indigo-500 px-4 text-sm font-semibold text-white hover:bg-indigo-600">
-              <Download size={15} /> Export PNG
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-auto grid max-w-[1600px] lg:grid-cols-[280px_minmax(0,1fr)_300px]">
-        <aside className="border-b border-zinc-700 bg-[#18181b] lg:min-h-[calc(100vh-129px)] lg:border-b-0 lg:border-r">
-          <PanelHeading>Canvas Framework</PanelHeading>
-          <div className="space-y-5 p-4">
-            <Field label="Layout dimensions">
-              <select value={format} onChange={(event) => changeFormat(event.target.value as Format)} className="studio-input">
-                {Object.entries(FORMATS).map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}
-              </select>
-            </Field>
+    <main className="min-h-[calc(100vh-64px)] bg-slate-300">
+      <div className="grid min-h-[calc(100vh-64px)] xl:grid-cols-[410px_minmax(0,1fr)]">
+        <aside className="overflow-y-auto border-r border-slate-800 bg-[#090d16] p-5 text-slate-100 xl:max-h-[calc(100vh-64px)]">
+          <div className="mb-5 flex items-center justify-between gap-3">
             <div>
-              <SectionLabel>Insert elements</SectionLabel>
-              <div className="grid grid-cols-2 gap-2">
-                <InsertButton icon={<Type size={18} />} label="Text Node" onClick={() => addLayer('text')} />
-                <InsertButton icon={<Square size={18} />} label="Block Shape" onClick={() => addLayer('shape')} />
-                <InsertButton icon={<ImageIcon size={18} />} label="Avatar / Graphic" onClick={() => addLayer('image')} />
-                <InsertButton icon={<Minus size={18} />} label="Line Matrix" onClick={() => addLayer('line')} />
-              </div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sky-400">Platinum Tools</p>
+              <h1 className="text-lg font-extrabold tracking-tight">Design Engine Pro</h1>
             </div>
-            <div>
-              <SectionLabel>Layers deck</SectionLabel>
-              <div className="space-y-1.5">
-                {orderedLayers.map((layer) => (
-                  <button
-                    key={layer.id}
-                    type="button"
-                    onClick={() => setSelectedId(layer.id)}
-                    className={`flex min-h-10 w-full items-center justify-between rounded-md border px-3 text-left text-xs ${selectedId === layer.id ? 'border-indigo-500 bg-indigo-500/10' : 'border-zinc-700 bg-zinc-800 hover:border-zinc-500'}`}
-                  >
-                    <span className="truncate font-medium">{layer.name}</span>
-                    <span className="ml-2 font-mono text-zinc-500">Z:{layer.z}</span>
-                  </button>
-                ))}
+            <button type="button" onClick={reset} className="studio-secondary-button">
+              <RotateCcw size={14} /> Reset
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <Control label="Product category">
+              <select value={product} onChange={(event) => switchProduct(event.target.value as Product)} className="studio-control">
+                <option value="signature">Email Signature Template</option>
+                <option value="flyer">Marketing Flyer / Poster</option>
+              </select>
+            </Control>
+
+            <Control label="Canvas background image">
+              <div className="flex gap-2">
+                <label className="flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-slate-800 bg-[#111729] px-3 text-xs font-semibold text-slate-300 hover:border-sky-500">
+                  <ImagePlus size={15} />
+                  {background ? 'Replace image' : 'Upload image'}
+                  <input ref={fileRef} type="file" accept="image/*" onChange={(event) => uploadBackground(event.target.files?.[0])} className="sr-only" />
+                </label>
+                <button type="button" onClick={clearBackground} className="studio-secondary-button">Clear</button>
               </div>
+            </Control>
+
+            <div className="grid grid-cols-2 gap-3">
+              <ColorControl label="Primary brand color" value={primary} onChange={setPrimary} />
+              <ColorControl label="Secondary accent" value={secondary} onChange={setSecondary} />
+            </div>
+
+            <Control label="Font family">
+              <select value={font} onChange={(event) => setFont(event.target.value)} className="studio-control">
+                {FONT_OPTIONS.map((option) => <option key={option.label} value={option.value}>{option.label}</option>)}
+              </select>
+            </Control>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Control label="Headline weight">
+                <select value={fontWeight} onChange={(event) => setFontWeight(Number(event.target.value))} className="studio-control">
+                  <option value={300}>Light (300)</option>
+                  <option value={400}>Regular (400)</option>
+                  <option value={700}>Bold (700)</option>
+                  <option value={900}>Black (900)</option>
+                </select>
+              </Control>
+              <Control label={`Headline scale (${fontSize}px)`}>
+                <input
+                  type="range"
+                  min={product === 'signature' ? 14 : 18}
+                  max={product === 'signature' ? 22 : 36}
+                  value={fontSize}
+                  onChange={(event) => setFontSize(Number(event.target.value))}
+                  className="studio-control accent-sky-500"
+                />
+              </Control>
+            </div>
+
+            {product === 'flyer' && (
+              <Control label="Target medium / aspect ratio">
+                <select value={flyerSize} onChange={(event) => setFlyerSize(event.target.value as FlyerSize)} className="studio-control">
+                  {Object.entries(FLYER_SIZES).map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}
+                </select>
+              </Control>
+            )}
+
+            <DividerLabel>Baseline layout presets</DividerLabel>
+            <div className="grid grid-cols-2 gap-2">
+              {presets.map((name, index) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => setPreset(index)}
+                  className={`min-h-14 rounded-md border-2 px-2 py-2 text-xs font-semibold ${preset === index ? 'border-sky-400 bg-sky-950 text-white' : 'border-slate-800 bg-[#111729] text-slate-400 hover:border-slate-600 hover:text-white'}`}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+
+            <DividerLabel>Content data fields</DividerLabel>
+            {product === 'signature' ? (
+              <div className="space-y-3">
+                <TextControl label="Full name" value={signature.name} onChange={(name) => setSignature((value) => ({ ...value, name }))} />
+                <TextControl label="Job title" value={signature.title} onChange={(title) => setSignature((value) => ({ ...value, title }))} />
+                <TextControl label="Company" value={signature.company} onChange={(company) => setSignature((value) => ({ ...value, company }))} />
+                <TextControl label="Direct phone" value={signature.phone} onChange={(phone) => setSignature((value) => ({ ...value, phone }))} />
+                <TextControl label="Avatar image URL" value={signature.photo} onChange={(photo) => setSignature((value) => ({ ...value, photo }))} placeholder="https://…" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <TextControl label="Main headline" value={flyer.title} onChange={(title) => setFlyer((value) => ({ ...value, title }))} />
+                <TextControl label="Schedule matrix" value={flyer.meta} onChange={(meta) => setFlyer((value) => ({ ...value, meta }))} />
+                <Control label="Body summary copy">
+                  <textarea value={flyer.body} onChange={(event) => setFlyer((value) => ({ ...value, body: event.target.value }))} rows={4} className="studio-control resize-y" />
+                </Control>
+                <TextControl label="Hero content graphic URL" value={flyer.image} onChange={(image) => setFlyer((value) => ({ ...value, image }))} placeholder="https://…" />
+              </div>
+            )}
+
+            <DividerLabel>Export distributions</DividerLabel>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={exportHtml} className="studio-export-button bg-sky-600 hover:bg-sky-700">
+                <FileCode2 size={15} /> Download HTML
+              </button>
+              <button type="button" onClick={exportPdf} disabled={product !== 'flyer'} className="studio-export-button bg-emerald-600 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-35">
+                <Download size={15} /> Generate PDF
+              </button>
             </div>
           </div>
         </aside>
 
-        <section className="flex min-h-[460px] items-center justify-center overflow-auto bg-[#0f0f11] p-5 sm:p-10" onPointerMove={moveDrag} onPointerUp={() => { dragRef.current = null; }}>
-          <div className="rounded-md bg-[radial-gradient(#3f3f46_1px,transparent_1px)] bg-[size:16px_16px] p-5">
+        <section className="flex min-h-[560px] flex-col">
+          <div className="border-b border-slate-200 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+            Multi-format workspace preview
+          </div>
+          <div className="flex flex-1 items-center justify-center overflow-auto p-5 sm:p-10">
             <div
-              ref={boardRef}
-              className="relative max-w-full overflow-hidden shadow-2xl touch-none"
-              style={{ width: dimensions.width, aspectRatio: `${dimensions.width}/${dimensions.height}`, backgroundColor: boardColor }}
-              onPointerDown={(event) => {
-                if (event.target === event.currentTarget) setSelectedId(null);
+              className="relative max-w-full overflow-hidden rounded shadow-2xl transition-[width,height] duration-300"
+              style={{
+                width: dimensions.width,
+                height: dimensions.height,
+                backgroundColor: '#ffffff',
+                backgroundImage: background ? `url(${background})` : undefined,
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: 'cover',
               }}
             >
-              {[...layers].sort((a, b) => a.z - b.z).map((layer) => (
-                <div
-                  key={layer.id}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Select ${layer.name}`}
-                  onPointerDown={(event) => startDrag(event, layer)}
-                  onKeyDown={(event) => {
-                    const delta = event.shiftKey ? 10 : 1;
-                    if (event.key === 'ArrowLeft') updateLayer(layer.id, { x: Math.max(0, layer.x - delta) });
-                    if (event.key === 'ArrowRight') updateLayer(layer.id, { x: Math.min(dimensions.width - layer.width, layer.x + delta) });
-                    if (event.key === 'ArrowUp') updateLayer(layer.id, { y: Math.max(0, layer.y - delta) });
-                    if (event.key === 'ArrowDown') updateLayer(layer.id, { y: Math.min(dimensions.height - layer.height, layer.y + delta) });
-                  }}
-                  className={`absolute cursor-move select-none ${selectedId === layer.id ? 'ring-2 ring-indigo-500 ring-offset-1' : 'hover:ring-1 hover:ring-indigo-400'}`}
-                  style={{ left: layer.x, top: layer.y, width: layer.width, height: layer.height, zIndex: layer.z }}
-                >
-                  <LayerVisual layer={layer} />
-                </div>
-              ))}
+              {product === 'signature' ? (
+                <SignaturePreview fields={signature} preset={preset} primary={primary} secondary={secondary} font={font} fontSize={fontSize} fontWeight={fontWeight} />
+              ) : (
+                <FlyerPreview fields={flyer} preset={preset} primary={primary} secondary={secondary} font={font} fontSize={fontSize} fontWeight={fontWeight} />
+              )}
             </div>
           </div>
         </section>
-
-        <aside className="border-t border-zinc-700 bg-[#18181b] lg:min-h-[calc(100vh-129px)] lg:border-l lg:border-t-0">
-          <PanelHeading>Properties Inspector</PanelHeading>
-          <div className="p-4">
-            {!selected ? (
-              <div className="rounded-lg border border-dashed border-zinc-700 p-6 text-center">
-                <MousePointer2 className="mx-auto mb-3 text-zinc-500" size={24} />
-                <p className="text-sm leading-6 text-zinc-400">Select an element on the canvas or in the layer deck to edit it.</p>
-                <Field label="Canvas color">
-                  <input type="color" value={boardColor} onChange={(event) => setBoardColor(event.target.value)} className="studio-color" />
-                </Field>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <Field label="Layer label">
-                  <input value={selected.name} onChange={(event) => updateLayer(selected.id, { name: event.target.value })} className="studio-input" />
-                </Field>
-                <div className="grid grid-cols-2 gap-2">
-                  <NumberField label="Position X" value={selected.x} onChange={(x) => updateLayer(selected.id, { x })} />
-                  <NumberField label="Position Y" value={selected.y} onChange={(y) => updateLayer(selected.id, { y })} />
-                  <NumberField label="Width" value={selected.width} min={1} onChange={(width) => updateLayer(selected.id, { width })} />
-                  <NumberField label="Height" value={selected.height} min={1} onChange={(height) => updateLayer(selected.id, { height })} />
-                </div>
-                {(selected.type === 'text' || selected.type === 'shape') && (
-                  <Field label={selected.type === 'text' ? 'Typography content' : 'Inner label'}>
-                    <input value={selected.text ?? ''} onChange={(event) => updateLayer(selected.id, { text: event.target.value })} className="studio-input" />
-                  </Field>
-                )}
-                {selected.type === 'text' && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <NumberField label="Font size" value={selected.fontSize ?? 16} min={8} onChange={(fontSize) => updateLayer(selected.id, { fontSize })} />
-                    <Field label="Weight">
-                      <select value={selected.fontWeight} onChange={(event) => updateLayer(selected.id, { fontWeight: Number(event.target.value) })} className="studio-input">
-                        <option value={400}>Regular</option>
-                        <option value={700}>Bold</option>
-                      </select>
-                    </Field>
-                  </div>
-                )}
-                {selected.type === 'image' && (
-                  <>
-                    <Field label="Image resource URL">
-                      <input value={selected.src ?? ''} onChange={(event) => updateLayer(selected.id, { src: event.target.value })} placeholder="https://…" className="studio-input" />
-                    </Field>
-                    <NumberField label="Corner masking (%)" value={selected.radius ?? 0} min={0} max={50} onChange={(radius) => updateLayer(selected.id, { radius })} />
-                  </>
-                )}
-                {selected.type === 'shape' && (
-                  <>
-                    <Field label="Background color">
-                      <input type="color" value={selected.background} onChange={(event) => updateLayer(selected.id, { background: event.target.value })} className="studio-color" />
-                    </Field>
-                    <NumberField label="Corner radius" value={selected.radius ?? 0} min={0} onChange={(radius) => updateLayer(selected.id, { radius })} />
-                  </>
-                )}
-                <Field label={selected.type === 'shape' ? 'Text color' : selected.type === 'image' ? 'Fallback color' : 'Color'}>
-                  <input type="color" value={selected.color} onChange={(event) => updateLayer(selected.id, { color: event.target.value })} className="studio-color" />
-                </Field>
-                <div className="grid grid-cols-3 gap-2 border-t border-zinc-700 pt-4">
-                  <IconButton label="Move forward" icon={<ArrowUp size={15} />} onClick={() => shiftDepth(selected.id, 1)} />
-                  <IconButton label="Move backward" icon={<ArrowDown size={15} />} onClick={() => shiftDepth(selected.id, -1)} />
-                  <IconButton label="Delete" icon={<Trash2 size={15} />} onClick={() => removeLayer(selected.id)} destructive />
-                </div>
-              </div>
-            )}
-          </div>
-        </aside>
       </div>
+
       <style jsx global>{`
-        .studio-input {
+        .studio-control {
           width: 100%;
           min-height: 40px;
-          border: 1px solid #3f3f46;
+          border: 1px solid #1e293b;
           border-radius: 6px;
-          background: #27272a;
-          padding: 8px 10px;
-          color: #f4f4f5;
+          background: #111729;
+          padding: 8px;
+          color: white;
           font-size: 13px;
+          outline: none;
         }
-        .studio-input:focus { border-color: #6366f1; outline: none; }
-        .studio-color {
-          width: 100%;
-          height: 40px;
-          cursor: pointer;
-          border: 1px solid #3f3f46;
+        .studio-control:focus { border-color: #38bdf8; }
+        .studio-secondary-button {
+          display: inline-flex;
+          min-height: 40px;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
           border-radius: 6px;
-          background: #27272a;
-          padding: 3px;
+          background: #1e293b;
+          padding: 0 12px;
+          color: white;
+          font-size: 12px;
+          font-weight: 600;
+        }
+        .studio-secondary-button:hover { background: #334155; }
+        .studio-export-button {
+          display: inline-flex;
+          min-height: 44px;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          border-radius: 6px;
+          padding: 8px;
+          color: white;
+          font-size: 12px;
+          font-weight: 700;
         }
       `}</style>
     </main>
   );
 }
 
-function LayerVisual({ layer }: { layer: Layer }) {
-  if (layer.type === 'text') {
-    return <div className="h-full whitespace-nowrap font-sans leading-tight" style={{ color: layer.color, fontSize: layer.fontSize, fontWeight: layer.fontWeight }}>{layer.text}</div>;
+function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, fontWeight }: {
+  fields: SignatureFields;
+  preset: number;
+  primary: string;
+  secondary: string;
+  font: string;
+  fontSize: number;
+  fontWeight: number;
+}) {
+  if (preset === 1) {
+    return (
+      <div className="flex h-full w-full items-center p-5" style={{ fontFamily: font, color: secondary }}>
+        <div className="w-full rounded bg-white/90 p-4">
+          <div>
+            <span style={{ color: '#0f172a', fontSize, fontWeight }}>{fields.name}</span>
+            <span className="ml-3 text-xs font-semibold" style={{ color: primary }}>| &nbsp; {fields.title}</span>
+          </div>
+          <div className="mt-2 border-t border-slate-200 pt-2 text-[11px]">
+            <strong className="text-slate-900">{fields.company}</strong> &nbsp;·&nbsp; ☎ {fields.phone}
+          </div>
+        </div>
+      </div>
+    );
   }
-  if (layer.type === 'shape') {
-    return <div className="flex h-full w-full items-center justify-center text-center font-sans text-xs font-semibold" style={{ color: layer.color, backgroundColor: layer.background, borderRadius: layer.radius }}>{layer.text}</div>;
+
+  return (
+    <div className="flex h-full w-full items-center p-5" style={{ fontFamily: font, color: secondary }}>
+      <div className="flex w-full items-center rounded bg-white/90 p-3">
+        {fields.photo ? (
+          // User-supplied URLs must render directly in the generated signature.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={fields.photo} alt="" className="mr-4 h-[76px] w-[76px] rounded-full object-cover" />
+        ) : (
+          <div className="mr-4 flex h-[76px] w-[76px] shrink-0 items-center justify-center rounded-full bg-slate-200 text-xl font-bold text-slate-500">
+            {initials(fields.name)}
+          </div>
+        )}
+        <div className="border-l-[3px] pl-4" style={{ borderColor: primary }}>
+          <div className="leading-tight text-slate-900" style={{ fontSize, fontWeight }}>{fields.name}</div>
+          <div className="mt-1 text-[13px] font-semibold" style={{ color: primary }}>{fields.title}</div>
+          <div className="mt-0.5 text-xs font-medium">{fields.company}</div>
+          <div className="mt-1 text-[11px]">☎ {fields.phone}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FlyerPreview({ fields, preset, primary, secondary, font, fontSize, fontWeight }: {
+  fields: FlyerFields;
+  preset: number;
+  primary: string;
+  secondary: string;
+  font: string;
+  fontSize: number;
+  fontWeight: number;
+}) {
+  if (preset === 1) {
+    return (
+      <div className="flex h-full w-full flex-col justify-end bg-gradient-to-b from-slate-900/5 via-slate-900/20 to-slate-950/95 p-5 text-white" style={{ fontFamily: font }}>
+        <h2 className="m-0 leading-[1.1] text-white drop-shadow" style={{ fontSize, fontWeight }}>{fields.title}</h2>
+        <p className="mt-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: primary }}>{fields.meta}</p>
+        <p className="mt-3 max-w-none text-[11px] leading-relaxed" style={{ color: '#cbd5e1' }}>{fields.body}</p>
+      </div>
+    );
   }
-  if (layer.type === 'line') {
-    return <div className="h-full w-full" style={{ backgroundColor: layer.color }} />;
+
+  return (
+    <div className="flex h-full w-full flex-col justify-between p-5" style={{ fontFamily: font, color: secondary }}>
+      <div>
+        <span className="inline-block rounded px-2.5 py-1 text-[10px] font-bold tracking-wider text-white" style={{ backgroundColor: primary }}>INDUSTRY SYMPOSIUM</span>
+        <h2 className="mt-3 uppercase leading-[1.1] tracking-tight text-slate-900" style={{ fontSize, fontWeight }}>{fields.title}</h2>
+        <p className="mt-2 text-[11px] font-bold tracking-wide" style={{ color: primary }}>{fields.meta}</p>
+        {fields.image && (
+          // User-supplied URLs must render directly in the design preview.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={fields.image} alt="" className="mt-3 max-h-36 w-full rounded object-cover" />
+        )}
+        <p className="mt-3 max-w-none rounded border border-slate-100 bg-white/90 p-3 text-xs leading-relaxed">{fields.body}</p>
+      </div>
+      <div className="border-t border-slate-200 pt-2 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">Corporate Resource Hub Access</div>
+    </div>
+  );
+}
+
+function Control({ label, children }: { label: string; children: React.ReactNode }) {
+  return <label className="block"><span className="mb-1 block text-[11px] font-bold uppercase tracking-[0.05em] text-slate-400">{label}</span>{children}</label>;
+}
+
+function TextControl({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
+  return <Control label={label}><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="studio-control" /></Control>;
+}
+
+function ColorControl({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <Control label={label}>
+      <div className="flex items-center gap-2">
+        <input type="color" value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-10 shrink-0 cursor-pointer rounded border border-slate-800 bg-transparent" />
+        <input value={value.toUpperCase()} onChange={(event) => /^#[0-9a-fA-F]{6}$/.test(event.target.value) && onChange(event.target.value)} className="studio-control font-mono" />
+      </div>
+    </Control>
+  );
+}
+
+function DividerLabel({ children }: { children: React.ReactNode }) {
+  return <p className="border-t border-slate-800 pt-4 text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">{children}</p>;
+}
+
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'RNN';
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  })[character] ?? character);
+}
+
+function backgroundStyle(background: string) {
+  return background ? `background-image:url('${background}');background-size:cover;background-position:center;` : '';
+}
+
+function signatureMarkup(fields: SignatureFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string) {
+  const data = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, escapeHtml(value)])) as SignatureFields;
+  if (preset === 1) {
+    return `<div style="font-family:${font};color:${secondary};line-height:1.3;width:560px;padding:20px;box-sizing:border-box;${backgroundStyle(background)}"><div style="background:rgba(255,255,255,.92);padding:14px"><span style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;margin-right:8px">${data.name}</span><span style="font-size:12px;color:${primary};font-weight:600">| &nbsp;${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:6px;margin-top:6px;font-size:11px"><strong style="color:#0f172a">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}</div></div></div>`;
   }
-  if (layer.src) {
-    // User-supplied URLs must render directly so the same source can be drawn to the export canvas.
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={layer.src} alt="" draggable={false} className="h-full w-full object-cover" style={{ borderRadius: `${layer.radius ?? 0}%` }} />;
+  const avatar = data.photo
+    ? `<img src="${data.photo}" alt="" width="76" height="76" style="border-radius:50%;display:block;object-fit:cover">`
+    : `<div style="width:76px;height:76px;border-radius:50%;background:#e2e8f0"></div>`;
+  return `<table cellpadding="0" cellspacing="0" border="0" style="font-family:${font};color:${secondary};line-height:1.4;width:560px;padding:20px;box-sizing:border-box;${backgroundStyle(background)}"><tr style="background:rgba(255,255,255,.92)"><td style="vertical-align:middle;padding:12px 16px 12px 12px;width:76px">${avatar}</td><td style="vertical-align:middle;border-left:3px solid ${primary};padding:12px 12px 12px 16px"><div style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:13px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:12px;font-weight:500">${data.company}</div><div style="font-size:11px;margin-top:4px">☎ ${data.phone}</div></td></tr></table>`;
+}
+
+function flyerMarkup(fields: FlyerFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string, dimensions: { width: number; height: number }) {
+  const data = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, escapeHtml(value)])) as FlyerFields;
+  const image = data.image ? `<img src="${data.image}" alt="" style="width:100%;max-height:140px;object-fit:cover;border-radius:4px;margin-top:12px">` : '';
+  if (preset === 1) {
+    const imageBackground = background || data.image;
+    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;box-sizing:border-box;padding:20px;background:linear-gradient(to bottom,rgba(15,23,42,.1),rgba(15,23,42,.95))${imageBackground ? `,url('${imageBackground}')` : ''};background-size:cover;background-position:center"><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};line-height:1.1;margin:0">${data.title}</h1><div style="font-size:11px;font-weight:700;color:${primary};margin-top:8px">${data.meta}</div><p style="font-size:11px;color:#cbd5e1;line-height:1.4;margin:10px 0 0">${data.body}</p></div>`;
   }
-  return <div className="flex h-full w-full items-center justify-center bg-zinc-200 text-zinc-400" style={{ borderRadius: `${layer.radius ?? 0}%` }}><ImageIcon size={24} /></div>;
+  return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:${secondary};display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box;padding:20px;${backgroundStyle(background)}"><div><span style="background:${primary};color:#fff;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:1px;border-radius:3px">INDUSTRY SYMPOSIUM</span><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.1;margin:12px 0 6px;text-transform:uppercase">${data.title}</h1><div style="font-size:11px;font-weight:700;color:${primary}">${data.meta}</div>${image}<p style="font-size:12px;line-height:1.4;background:rgba(255,255,255,.9);padding:8px;border:1px solid #f1f5f9;border-radius:4px">${data.body}</p></div><div style="font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:8px;font-weight:600">CORPORATE RESOURCE HUB ACCESS</div></div>`;
 }
 
-function PanelHeading({ children }: { children: React.ReactNode }) {
-  return <div className="border-b border-zinc-700 px-4 py-4 text-[11px] font-bold uppercase tracking-[0.08em] text-zinc-400">{children}</div>;
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="mb-2 border-b border-zinc-700 pb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-zinc-400">{children}</p>;
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="block"><span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-zinc-400">{label}</span>{children}</label>;
-}
-
-function NumberField({ label, value, onChange, min, max }: { label: string; value: number; onChange: (value: number) => void; min?: number; max?: number }) {
-  return <Field label={label}><input type="number" value={value} min={min} max={max} onChange={(event) => onChange(Number(event.target.value) || 0)} className="studio-input" /></Field>;
-}
-
-function InsertButton({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
-  return <button type="button" onClick={onClick} className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-lg border border-transparent bg-zinc-800 px-2 text-xs font-medium text-zinc-200 hover:border-indigo-500 hover:bg-zinc-700">{icon}{label}</button>;
-}
-
-function IconButton({ icon, label, onClick, destructive = false }: { icon: React.ReactNode; label: string; onClick: () => void; destructive?: boolean }) {
-  return <button type="button" title={label} aria-label={label} onClick={onClick} className={`flex min-h-10 items-center justify-center rounded-md border ${destructive ? 'border-red-900 text-red-400 hover:bg-red-950' : 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'}`}>{icon}</button>;
+function downloadBlob(content: string, filename: string, type: string) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
