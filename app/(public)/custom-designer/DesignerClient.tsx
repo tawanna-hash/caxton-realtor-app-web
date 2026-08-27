@@ -17,10 +17,23 @@ type SignatureFields = {
 };
 
 type FlyerFields = {
+  eyebrow: string;
   title: string;
   meta: string;
   body: string;
   image: string;
+  image2: string;
+  image3: string;
+  image4: string;
+  listing1Title: string;
+  listing1Meta: string;
+  listing2Title: string;
+  listing2Meta: string;
+  listing3Title: string;
+  listing3Meta: string;
+  features: string;
+  contact: string;
+  footer: string;
 };
 
 const FLYER_SIZES: Record<FlyerSize, { label: string; width: number; height: number }> = {
@@ -32,7 +45,7 @@ const FLYER_SIZES: Record<FlyerSize, { label: string; width: number; height: num
 };
 
 const SIGNATURE_PRESETS = ['Split Column (Classic)', 'Minimal Rows (Stack)'];
-const FLYER_PRESETS = ['Editorial Poster', 'Impact Display'];
+const FLYER_PRESETS = ['Editorial Poster', 'Impact Display', 'Luxury Listings', 'Property Showcase'];
 const DEFAULT_ARTBOARD_ORDER: ArtboardKey[] = ['headshot', 'details', 'logo'];
 
 const DEFAULT_SIGNATURE: SignatureFields = {
@@ -45,10 +58,23 @@ const DEFAULT_SIGNATURE: SignatureFields = {
 };
 
 const DEFAULT_FLYER: FlyerFields = {
-  title: 'ENTERPRISE SCALE INFRASTRUCTURE',
-  meta: 'THURS, NOV 12 · 09:00 AM CST',
-  body: 'Deploy multi-format digital experiences, cross-channel design distribution parameters, and modular client layout pipelines across your infrastructure.',
+  eyebrow: 'FEATURED COLLECTION',
+  title: 'MODERN HOME FOR SALE',
+  meta: '$3.5M · 4 Bed · 4 Bath · 3,200 sq ft',
+  body: 'Discover thoughtfully selected properties with refined architecture, generous interiors, and exceptional locations.',
   image: '',
+  image2: '',
+  image3: '',
+  image4: '',
+  listing1Title: 'Residence One',
+  listing1Meta: '$850,000 · 3 Bed · 2 Bath',
+  listing2Title: 'Residence Two',
+  listing2Meta: '$1.2M · 4 Bed · 3 Bath',
+  listing3Title: 'Residence Three',
+  listing3Meta: '$2M · 5 Bed · 4 Bath',
+  features: 'Expert local guidance\nPremium property access\nMarket insight and support\nA tailored search experience',
+  contact: 'Contact us\n(512) 555-0147\nhello@example.com',
+  footer: 'Schedule a private tour or request complete property details.',
 };
 
 const FONT_OPTIONS = [
@@ -77,6 +103,7 @@ export default function DesignerClient() {
   const fileRef = useRef<HTMLInputElement>(null);
   const headshotRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const presets = product === 'signature' ? SIGNATURE_PRESETS : FLYER_PRESETS;
   const dimensions = product === 'signature'
@@ -105,6 +132,29 @@ export default function DesignerClient() {
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const uploadFlyerArtwork = (key: 'image' | 'image2' | 'image3' | 'image4', file?: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setFlyer((value) => ({ ...value, [key]: reader.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const selectPreset = (index: number) => {
+    setPreset(index);
+    if (product === 'flyer' && index >= 2) {
+      setFlyerSize('us-letter');
+      setPrimary('#d8cdb9');
+      setSecondary('#1c2d42');
+      setFont(FONT_OPTIONS[1].value);
+      setFontWeight(400);
+      setFontSize(30);
+    }
   };
 
   const clearSignatureArtwork = (kind: 'photo' | 'logo') => {
@@ -184,6 +234,18 @@ export default function DesignerClient() {
       unit: 'px',
       format: [dimensions.width, dimensions.height],
     });
+
+    if (preset >= 2 && previewRef.current) {
+      await pdf.html(previewRef.current, {
+        callback: (document) => document.save(`rnn-${flyerSize}.pdf`),
+        x: 0,
+        y: 0,
+        width: dimensions.width,
+        windowWidth: dimensions.width,
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      });
+      return;
+    }
 
     if (background) {
       try {
@@ -306,7 +368,7 @@ export default function DesignerClient() {
                 <button
                   key={name}
                   type="button"
-                  onClick={() => setPreset(index)}
+                  onClick={() => selectPreset(index)}
                   className={`min-h-14 rounded-md border-2 px-2 py-2 text-xs font-semibold ${preset === index ? 'border-sky-400 bg-sky-950 text-white' : 'border-slate-800 bg-[#111729] text-slate-400 hover:border-slate-600 hover:text-white'}`}
                 >
                   {name}
@@ -349,12 +411,61 @@ export default function DesignerClient() {
               </div>
             ) : (
               <div className="space-y-3">
-                <TextControl label="Main headline" value={flyer.title} onChange={(title) => setFlyer((value) => ({ ...value, title }))} />
-                <TextControl label="Schedule matrix" value={flyer.meta} onChange={(meta) => setFlyer((value) => ({ ...value, meta }))} />
+                <TextControl label={preset >= 2 ? 'Eyebrow / label' : 'Main headline'} value={preset >= 2 ? flyer.eyebrow : flyer.title} onChange={(value) => setFlyer((current) => ({ ...current, [preset >= 2 ? 'eyebrow' : 'title']: value }))} />
+                {preset >= 2 && (
+                  <TextControl label="Main headline" value={flyer.title} onChange={(title) => setFlyer((value) => ({ ...value, title }))} />
+                )}
+                <TextControl label={preset >= 2 ? 'Price and property details' : 'Schedule matrix'} value={flyer.meta} onChange={(meta) => setFlyer((value) => ({ ...value, meta }))} />
                 <Control label="Body summary copy">
                   <textarea value={flyer.body} onChange={(event) => setFlyer((value) => ({ ...value, body: event.target.value }))} rows={4} className="studio-control resize-y" />
                 </Control>
-                <TextControl label="Hero content graphic URL" value={flyer.image} onChange={(image) => setFlyer((value) => ({ ...value, image }))} placeholder="https://…" />
+                {preset < 2 ? (
+                  <TextControl label="Hero content graphic URL" value={flyer.image} onChange={(image) => setFlyer((value) => ({ ...value, image }))} placeholder="https://…" />
+                ) : (
+                  <>
+                    <ArtworkPanel title="Property photography" description="Upload the hero and three supporting property images.">
+                      <div className="grid grid-cols-2 gap-2">
+                        {([
+                          ['image', 'Hero photo'],
+                          ['image2', 'Property photo 1'],
+                          ['image3', 'Property photo 2'],
+                          ['image4', 'Property photo 3'],
+                        ] as const).map(([key, label]) => (
+                          <FlyerImageUpload
+                            key={key}
+                            label={label}
+                            value={flyer[key]}
+                            onUpload={(file) => uploadFlyerArtwork(key, file)}
+                            onClear={() => setFlyer((value) => ({ ...value, [key]: '' }))}
+                          />
+                        ))}
+                      </div>
+                    </ArtworkPanel>
+                    <ArtworkPanel title="Property cards" description="Edit the three listing names and their price/detail lines.">
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          <TextControl label="Property 1" value={flyer.listing1Title} onChange={(listing1Title) => setFlyer((value) => ({ ...value, listing1Title }))} />
+                          <TextControl label="Details 1" value={flyer.listing1Meta} onChange={(listing1Meta) => setFlyer((value) => ({ ...value, listing1Meta }))} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <TextControl label="Property 2" value={flyer.listing2Title} onChange={(listing2Title) => setFlyer((value) => ({ ...value, listing2Title }))} />
+                          <TextControl label="Details 2" value={flyer.listing2Meta} onChange={(listing2Meta) => setFlyer((value) => ({ ...value, listing2Meta }))} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <TextControl label="Property 3" value={flyer.listing3Title} onChange={(listing3Title) => setFlyer((value) => ({ ...value, listing3Title }))} />
+                          <TextControl label="Details 3" value={flyer.listing3Meta} onChange={(listing3Meta) => setFlyer((value) => ({ ...value, listing3Meta }))} />
+                        </div>
+                      </div>
+                    </ArtworkPanel>
+                    <Control label="Feature list (one per line)">
+                      <textarea value={flyer.features} onChange={(event) => setFlyer((value) => ({ ...value, features: event.target.value }))} rows={4} className="studio-control resize-y" />
+                    </Control>
+                    <Control label="Contact block">
+                      <textarea value={flyer.contact} onChange={(event) => setFlyer((value) => ({ ...value, contact: event.target.value }))} rows={3} className="studio-control resize-y" />
+                    </Control>
+                    <TextControl label="Footer call to action" value={flyer.footer} onChange={(footer) => setFlyer((value) => ({ ...value, footer }))} />
+                  </>
+                )}
                 <ArtworkPanel title="TREC advertising identification" description="Protected identification appears on every flyer and cannot be removed from exports.">
                   <div className="space-y-3">
                     <TextControl label="License holder name (required)" value={signature.name} onChange={(name) => setSignature((value) => ({ ...value, name }))} />
@@ -385,6 +496,7 @@ export default function DesignerClient() {
           </div>
           <div className="flex flex-1 items-center justify-center overflow-auto p-5 sm:p-10">
             <div
+              ref={previewRef}
               className={`relative max-w-full overflow-hidden rounded shadow-2xl transition-[width,height] duration-300 ${product === 'signature' ? 'signature-preview-board' : ''}`}
               style={{
                 width: product === 'signature' ? '100%' : dimensions.width,
@@ -643,6 +755,94 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
     </div>
   );
 
+  if (preset === 2) {
+    const listings = [
+      { image: fields.image2, title: fields.listing1Title, meta: fields.listing1Meta },
+      { image: fields.image3, title: fields.listing2Title, meta: fields.listing2Meta },
+      { image: fields.image4, title: fields.listing3Title, meta: fields.listing3Meta },
+    ];
+    return (
+      <div className="flex h-full w-full flex-col bg-white" style={{ fontFamily: font, color: secondary }}>
+        <div className="relative h-[43%] overflow-hidden" style={{ backgroundColor: secondary }}>
+          <FlyerPhoto src={fields.image} className="absolute inset-0 h-full w-full opacity-55" label="Hero property photo" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/55 to-transparent" />
+          <div className="relative z-10 flex h-full max-w-[72%] flex-col justify-center px-6 text-white">
+            <div className="mb-3 flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: primary }}>
+              {identity.logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={identity.logo} alt="" className="h-5 max-w-20 object-contain brightness-0 invert" />
+              ) : identity.company}
+            </div>
+            <p className="text-[10px] uppercase tracking-[0.14em]" style={{ color: primary }}>{fields.eyebrow}</p>
+            <h2 className="mt-1 whitespace-pre-line leading-[0.9] tracking-[-0.035em]" style={{ fontSize, fontWeight }}>{fields.title}</h2>
+            <p className="mt-3 max-w-[240px] text-[9px] leading-relaxed text-slate-200">{fields.body}</p>
+          </div>
+        </div>
+        <div className="grid flex-1 grid-cols-3 gap-3 px-5 py-4">
+          {listings.map((listing, index) => (
+            <div key={index} className="min-w-0">
+              <FlyerPhoto src={listing.image} className="h-24 w-full" label={`Property ${index + 1}`} />
+              <h3 className="mt-2 truncate text-[11px] font-semibold">{listing.title}</h3>
+              <p className="mt-0.5 text-[8px] leading-snug text-slate-500">{listing.meta}</p>
+              <div className="mt-2 border-t border-slate-200 pt-1 text-[7px] uppercase tracking-wide text-slate-400">Property details</div>
+            </div>
+          ))}
+        </div>
+        <div className="px-5 py-2 text-[8px]" style={{ backgroundColor: primary, color: secondary }}>
+          <div>{fields.footer}</div>
+          <div className="mt-1 font-semibold">License holder: {identity.name} · Broker: {identity.company}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (preset === 3) {
+    const features = fields.features.split('\n').map((item) => item.trim()).filter(Boolean);
+    return (
+      <div className="grid h-full w-full grid-cols-[44%_56%]" style={{ fontFamily: font }}>
+        <div className="flex h-full flex-col justify-between p-4" style={{ backgroundColor: primary, color: secondary }}>
+          <div>
+            <FlyerPhoto src={fields.image2} className="h-32 w-full" label="Property photo 1" />
+            <div className="mt-2 flex items-start gap-2">
+              <span className="text-2xl leading-none">01</span>
+              <div className="min-w-0">
+                <h3 className="text-[10px] font-bold uppercase">{fields.listing1Title}</h3>
+                <p className="text-[8px]">{fields.listing1Meta}</p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <FlyerPhoto src={fields.image3} className="h-32 w-full" label="Property photo 2" />
+            <div className="mt-2 flex items-start gap-2">
+              <span className="text-2xl leading-none">02</span>
+              <div className="min-w-0">
+                <h3 className="text-[10px] font-bold uppercase">{fields.listing2Title}</h3>
+                <p className="text-[8px]">{fields.listing2Meta}</p>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-slate-500/30 pt-2 text-[7px] font-semibold">
+            License holder: {identity.name}<br />Broker: {identity.company}
+          </div>
+        </div>
+        <div className="flex h-full flex-col text-white" style={{ backgroundColor: secondary }}>
+          <FlyerPhoto src={fields.image} className="h-[35%] w-full" label="Hero property photo" />
+          <div className="flex flex-1 flex-col p-5">
+            <p className="text-[8px] uppercase tracking-[0.14em]" style={{ color: primary }}>{fields.eyebrow}</p>
+            <h2 className="mt-1 leading-none" style={{ fontSize: Math.max(22, fontSize - 4), fontWeight }}>{fields.title}</h2>
+            <p className="mt-1 text-[9px]" style={{ color: primary }}>{fields.meta}</p>
+            <p className="mt-4 text-[9px] leading-relaxed text-slate-200">{fields.body}</p>
+            <h3 className="mt-4 text-base">Why choose us?</h3>
+            <ul className="mt-2 space-y-1.5 text-[8px] text-slate-200">
+              {features.map((feature) => <li key={feature}>○ &nbsp;{feature}</li>)}
+            </ul>
+            <div className="mt-auto whitespace-pre-line border-t border-white/20 pt-3 text-[8px] leading-relaxed">{fields.contact}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (preset === 1) {
     return (
       <div className="flex h-full w-full flex-col justify-end bg-gradient-to-b from-slate-900/5 via-slate-900/20 to-slate-950/95 p-5 text-white" style={{ fontFamily: font }}>
@@ -671,6 +871,20 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
         <div className="border-t border-slate-200 pt-2 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">Corporate Resource Hub Access</div>
         {complianceBlock}
       </div>
+    </div>
+  );
+}
+
+function FlyerPhoto({ src, className, label }: { src: string; className: string; label: string }) {
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={src} alt="" className={`${className} object-cover`} />
+    );
+  }
+  return (
+    <div className={`flex items-center justify-center bg-slate-200 text-center text-[8px] font-bold uppercase tracking-wider text-slate-500 ${className}`}>
+      {label}
     </div>
   );
 }
@@ -758,6 +972,35 @@ function ArtworkUpload({
   );
 }
 
+function FlyerImageUpload({ label, value, onUpload, onClear }: {
+  label: string;
+  value: string;
+  onUpload: (file?: File) => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="rounded-md border border-slate-700 bg-[#090d16] p-2">
+      <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</div>
+      <label className="block cursor-pointer">
+        <div className="flex h-20 items-center justify-center overflow-hidden rounded bg-slate-800 text-center text-[10px] font-semibold text-slate-400 hover:ring-1 hover:ring-sky-500">
+          {value ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={value} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="px-2">Upload image</span>
+          )}
+        </div>
+        <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => onUpload(event.target.files?.[0])} className="sr-only" />
+      </label>
+      {value && (
+        <button type="button" onClick={onClear} className="mt-2 w-full text-[10px] font-semibold text-slate-400 hover:text-white">
+          Clear
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ColorControl({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
     <Control label={label}>
@@ -822,6 +1065,64 @@ function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: num
   const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
   const compliance = `<div style="margin-top:12px;border-top:1px solid #cbd5e1;background:rgba(255,255,255,.95);padding:8px 10px;color:#0f172a"><div style="font-size:${Math.max(9, Math.ceil(brokerSize * 0.75))}px;font-weight:600">License holder: ${licenseHolderName}</div><div style="font-size:${brokerSize}px;font-weight:800">Broker: ${brokerName}</div></div>`;
   const image = data.image ? `<img src="${data.image}" alt="" style="width:100%;max-height:140px;object-fit:cover;border-radius:4px;margin-top:12px">` : '';
+  const photo = (src: string, label: string, style: string) => src
+    ? `<img src="${src}" alt="" style="display:block;object-fit:cover;${style}">`
+    : `<div style="display:flex;align-items:center;justify-content:center;background:#e2e8f0;color:#64748b;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;text-align:center;${style}">${label}</div>`;
+
+  if (preset === 2) {
+    const listings = [
+      [data.image2, data.listing1Title, data.listing1Meta],
+      [data.image3, data.listing2Title, data.listing2Meta],
+      [data.image4, data.listing3Title, data.listing3Meta],
+    ].map(([src, title, meta], index) => `
+      <div style="min-width:0">
+        ${photo(src, `Property ${index + 1}`, 'width:100%;height:96px')}
+        <div style="font-size:11px;font-weight:600;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${title}</div>
+        <div style="font-size:8px;color:#64748b;line-height:1.35;margin-top:2px">${meta}</div>
+        <div style="font-size:7px;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;border-top:1px solid #e2e8f0;margin-top:8px;padding-top:4px">Property details</div>
+      </div>`).join('');
+    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:${secondary};display:flex;flex-direction:column;background:#fff;overflow:hidden">
+      <div style="position:relative;height:43%;overflow:hidden;background:${secondary}">
+        ${photo(data.image, 'Hero property photo', 'position:absolute;inset:0;width:100%;height:100%;opacity:.55')}
+        <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(2,6,23,.9),rgba(2,6,23,.55),transparent)"></div>
+        <div style="position:relative;color:#fff;height:100%;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box;padding:24px;max-width:72%">
+          <div style="font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:${primary};margin-bottom:12px">${brokerName}</div>
+          <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:${primary}">${data.eyebrow}</div>
+          <h1 style="font-size:${fontSize}px;font-weight:${fontWeight};line-height:.9;letter-spacing:-.035em;margin:4px 0 0">${data.title}</h1>
+          <p style="font-size:9px;line-height:1.45;color:#e2e8f0;margin:12px 0 0">${data.body}</p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;flex:1;padding:16px 20px;box-sizing:border-box">${listings}</div>
+      <div style="font-size:8px;background:${primary};color:${secondary};padding:8px 20px">
+        <div>${data.footer}</div><div style="font-weight:600;margin-top:4px">License holder: ${licenseHolderName} · Broker: ${brokerName}</div>
+      </div>
+    </div>`;
+  }
+
+  if (preset === 3) {
+    const featureItems = data.features.split('\n').map((item) => item.trim()).filter(Boolean)
+      .map((item) => `<li style="margin-bottom:6px">○ &nbsp;${item}</li>`).join('');
+    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:44% 56%;overflow:hidden">
+      <div style="background:${primary};color:${secondary};padding:16px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between">
+        <div>${photo(data.image2, 'Property photo 1', 'width:100%;height:128px')}<div style="display:flex;gap:8px;margin-top:8px"><span style="font-size:24px;line-height:1">01</span><div><b style="font-size:10px;text-transform:uppercase">${data.listing1Title}</b><div style="font-size:8px">${data.listing1Meta}</div></div></div></div>
+        <div>${photo(data.image3, 'Property photo 2', 'width:100%;height:128px')}<div style="display:flex;gap:8px;margin-top:8px"><span style="font-size:24px;line-height:1">02</span><div><b style="font-size:10px;text-transform:uppercase">${data.listing2Title}</b><div style="font-size:8px">${data.listing2Meta}</div></div></div></div>
+        <div style="font-size:7px;font-weight:600;border-top:1px solid rgba(15,23,42,.25);padding-top:8px">License holder: ${licenseHolderName}<br>Broker: ${brokerName}</div>
+      </div>
+      <div style="background:${secondary};color:#fff;display:flex;flex-direction:column">
+        ${photo(data.image, 'Hero property photo', 'width:100%;height:35%')}
+        <div style="padding:20px;display:flex;flex:1;flex-direction:column;box-sizing:border-box">
+          <div style="font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:${primary}">${data.eyebrow}</div>
+          <h1 style="font-size:${Math.max(22, fontSize - 4)}px;font-weight:${fontWeight};line-height:1;margin:4px 0 0">${data.title}</h1>
+          <div style="font-size:9px;color:${primary};margin-top:4px">${data.meta}</div>
+          <p style="font-size:9px;line-height:1.5;color:#e2e8f0;margin:16px 0 0">${data.body}</p>
+          <h2 style="font-size:16px;margin:16px 0 0">Why choose us?</h2>
+          <ul style="font-size:8px;color:#e2e8f0;list-style:none;padding:0;margin:8px 0 0">${featureItems}</ul>
+          <div style="font-size:8px;line-height:1.5;white-space:pre-line;border-top:1px solid rgba(255,255,255,.2);padding-top:12px;margin-top:auto">${data.contact}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
   if (preset === 1) {
     const imageBackground = background || data.image;
     return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;box-sizing:border-box;padding:20px;background:linear-gradient(to bottom,rgba(15,23,42,.1),rgba(15,23,42,.95))${imageBackground ? `,url('${imageBackground}')` : ''};background-size:cover;background-position:center"><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};line-height:1.1;margin:0">${data.title}</h1><div style="font-size:11px;font-weight:700;color:${primary};margin-top:8px">${data.meta}</div><p style="font-size:11px;color:#cbd5e1;line-height:1.4;margin:10px 0 0">${data.body}</p>${compliance}</div>`;
