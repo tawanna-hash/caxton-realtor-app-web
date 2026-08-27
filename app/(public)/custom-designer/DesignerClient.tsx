@@ -47,7 +47,21 @@ const FLYER_SIZES: Record<FlyerSize, { label: string; width: number; height: num
 };
 
 const SIGNATURE_PRESETS = ['Split Column (Classic)', 'Minimal Rows (Stack)'];
-const FLYER_PRESETS = ['Editorial Poster', 'Impact Display', 'Luxury Listings', 'Property Showcase'];
+const FLYER_PRESETS = [
+  'Editorial Poster',
+  'Impact Display',
+  'Luxury Listings',
+  'Property Showcase',
+  'Modern House Listing',
+  'New Listing',
+  'Modern House Grid',
+];
+const SOCIAL_PREVIEW_SIZES: Array<{ key: FlyerSize; label: string }> = [
+  { key: 'insta-square', label: 'Instagram Post' },
+  { key: 'insta-story', label: 'Instagram Story' },
+  { key: 'fb-banner', label: 'Facebook Cover' },
+  { key: 'linkedin-banner', label: 'LinkedIn Header' },
+];
 const DEFAULT_ARTBOARD_ORDER: ArtboardKey[] = ['headshot', 'details', 'logo'];
 
 const DEFAULT_SIGNATURE: SignatureFields = {
@@ -85,11 +99,17 @@ const FONT_OPTIONS = [
   { label: 'Modern Sans-Serif', value: 'Arial, Helvetica, sans-serif' },
   { label: 'Classic Serif (Georgia)', value: 'Georgia, Times, serif' },
   { label: 'Technical Monospace', value: "'Courier New', monospace" },
+  { label: 'DM Sans', value: "'DM Sans', Arial, sans-serif" },
+  { label: 'Manrope', value: 'Manrope, Arial, sans-serif' },
+  { label: 'Libre Franklin', value: "'Libre Franklin', Arial, sans-serif" },
   { label: 'Montserrat', value: 'Montserrat, Arial, sans-serif' },
   { label: 'Playfair Display', value: "'Playfair Display', Georgia, serif" },
+  { label: 'Cormorant Garamond', value: "'Cormorant Garamond', Georgia, serif" },
+  { label: 'Bodoni Moda', value: "'Bodoni Moda', Georgia, serif" },
   { label: 'Oswald Display', value: 'Oswald, Arial, sans-serif' },
   { label: 'Inter UI', value: 'Inter, Arial, sans-serif' },
 ];
+const GOOGLE_FONTS_URL = 'https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,600;6..96,700&family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Libre+Franklin:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;900&family=Oswald:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;900&display=swap';
 
 export default function DesignerClient() {
   const [product, setProduct] = useState<Product>('signature');
@@ -216,7 +236,7 @@ export default function DesignerClient() {
     const markup = product === 'signature'
       ? signatureMarkup(signature, preset, primary, secondary, font, fontSize, fontWeight, background, artboardOrder)
       : flyerMarkup(flyer, signature, preset, primary, secondary, font, fontSize, fontWeight, background, dimensions);
-    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RNN Custom Design</title></head><body style="margin:0">${markup}</body></html>`;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RNN Custom Design</title><link rel="stylesheet" href="${GOOGLE_FONTS_URL}"></head><body style="margin:0">${markup}</body></html>`;
     downloadBlob(html, `rnn-${product}.html`, 'text/html');
   };
 
@@ -301,6 +321,9 @@ export default function DesignerClient() {
 
   return (
     <main className="min-h-[calc(100vh-64px)] bg-slate-300">
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link rel="stylesheet" href={GOOGLE_FONTS_URL} />
       <div className="grid min-h-[calc(100vh-64px)] xl:grid-cols-[410px_minmax(0,1fr)]">
         <aside className="overflow-y-auto border-r border-slate-800 bg-[#090d16] p-5 text-slate-100 xl:max-h-[calc(100vh-64px)]">
           <div className="mb-5 flex items-center justify-between gap-3">
@@ -369,11 +392,33 @@ export default function DesignerClient() {
             </div>
 
             {product === 'flyer' && (
-              <Control label="Target medium / aspect ratio">
-                <select value={flyerSize} onChange={(event) => setFlyerSize(event.target.value as FlyerSize)} className="studio-control">
-                  {Object.entries(FLYER_SIZES).map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}
-                </select>
-              </Control>
+              <div className="space-y-2">
+                <Control label="Target medium / aspect ratio">
+                  <select value={flyerSize} onChange={(event) => setFlyerSize(event.target.value as FlyerSize)} className="studio-control">
+                    {Object.entries(FLYER_SIZES).map(([key, value]) => <option key={key} value={key}>{value.label}</option>)}
+                  </select>
+                </Control>
+                <div>
+                  <div className="mb-1 text-[11px] font-bold uppercase tracking-[0.05em] text-slate-400">Quick social previews</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {SOCIAL_PREVIEW_SIZES.map((size) => (
+                      <button
+                        key={size.key}
+                        type="button"
+                        onClick={() => setFlyerSize(size.key)}
+                        aria-pressed={flyerSize === size.key}
+                        className={`min-h-10 rounded-md border px-2 py-2 text-[11px] font-semibold transition-colors ${
+                          flyerSize === size.key
+                            ? 'border-sky-400 bg-sky-950 text-white'
+                            : 'border-slate-700 bg-[#111729] text-slate-300 hover:border-sky-500 hover:text-white'
+                        }`}
+                      >
+                        Preview {size.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             )}
 
             <DividerLabel>Content data fields</DividerLabel>
@@ -934,6 +979,156 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
     );
   }
 
+  if (preset === 4) {
+    if (wide) {
+      return (
+        <div className="grid h-full w-full grid-cols-[42%_58%]" style={{ fontFamily: font }}>
+          <div className="flex flex-col justify-center p-4 text-white" style={{ backgroundColor: secondary }}>
+            <p className="text-[7px] uppercase tracking-widest" style={{ color: primary }}>{fields.eyebrow}</p>
+            <h2 className="mt-1 leading-[0.88]" style={{ fontSize: compact ? 21 : 31, fontWeight }}>{fields.title}</h2>
+            {!compact && <p className="mt-3 text-[8px] leading-relaxed text-slate-200">{fields.body}</p>}
+            <p className="mt-2 text-[9px] font-bold" style={{ color: primary }}>{fields.meta}</p>
+          </div>
+          <div className="grid grid-cols-3 gap-1 bg-white p-2">
+            {[fields.image, fields.image2, fields.image3].map((src, index) => (
+              <FlyerPhoto key={index} src={src} className="h-full w-full" label={`Property photo ${index + 1}`} />
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="grid h-full w-full grid-cols-[56%_44%]" style={{ fontFamily: font }}>
+        <div className="flex flex-col p-5 text-white" style={{ backgroundColor: secondary }}>
+          <div className="text-[8px] font-bold uppercase tracking-widest" style={{ color: primary }}>{identity.company}</div>
+          <h2 className="mt-6 whitespace-pre-line leading-[0.88]" style={{ fontSize: Math.max(38, fontSize + 10), fontWeight }}>{fields.title}</h2>
+          <p className="mt-7 text-[11px] leading-relaxed text-slate-200">{fields.body}</p>
+          <div className="mt-6 space-y-2 border-y border-white/50 py-3 text-[10px] uppercase">
+            {fields.features.split('\n').slice(0, 4).map((feature) => <div key={feature}>{feature}</div>)}
+          </div>
+          <div className="mt-auto">
+            <div className="text-[8px] uppercase text-slate-300">Price offered at</div>
+            <div className="mt-1 text-2xl font-bold">{fields.meta}</div>
+          </div>
+        </div>
+        <div className="flex flex-col" style={{ backgroundColor: primary, color: secondary }}>
+          <div className="p-4 text-center">
+            {identity.logo && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={identity.logo} alt="" className="mx-auto mb-2 max-h-8 w-20 object-contain" />
+            )}
+            <div className="text-[8px] font-bold uppercase">{fields.eyebrow}</div>
+            <div className="mt-1 text-[11px]">{fields.listing1Title}</div>
+          </div>
+          <div className="grid flex-1 grid-rows-3 gap-1">
+            {[fields.image, fields.image2, fields.image3].map((src, index) => (
+              <FlyerPhoto key={index} src={src} className="h-full w-full" label={`Property photo ${index + 1}`} />
+            ))}
+          </div>
+          <div className="p-3 text-center text-[8px]">{identity.email}<br />{identity.website}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (preset === 5) {
+    if (wide) {
+      return (
+        <div className="grid h-full w-full grid-cols-[42%_38%_20%] overflow-hidden" style={{ fontFamily: font }}>
+          <FlyerPhoto src={fields.image} className="h-full w-full" label="Hero property photo" />
+          <div className="flex flex-col justify-center p-4" style={{ backgroundColor: primary, color: secondary }}>
+            {identity.logo && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={identity.logo} alt="" className="mb-2 max-h-7 w-20 object-contain" />
+            )}
+            <p className="text-[7px] font-bold uppercase tracking-widest">{fields.eyebrow}</p>
+            <h2 className="mt-1 leading-none" style={{ fontSize: compact ? 18 : 28, fontWeight }}>{fields.title}</h2>
+            <p className="mt-1 text-[8px]">{fields.listing1Meta}</p>
+          </div>
+          <div className="flex flex-col justify-center p-3 text-white" style={{ backgroundColor: secondary }}>
+            <div className="text-[7px]">Offered at</div>
+            <div className="mt-1 text-lg font-bold">{fields.meta}</div>
+            <div className="mt-3 text-[6px]">{identity.phone}<br />{identity.email}</div>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="flex h-full w-full flex-col overflow-hidden rounded-[22px] bg-white" style={{ fontFamily: font, color: secondary }}>
+        <FlyerPhoto src={fields.image} className="h-[48%] w-full" label="Hero property photo" />
+        <div className="grid min-h-0 flex-1 grid-cols-[62%_38%]">
+          <div className="relative p-5" style={{ backgroundColor: primary }}>
+            <div className="absolute -top-12 left-5 flex gap-2">
+              <FlyerPhoto src={fields.image2} className="h-20 w-28 border-4 border-white shadow" label="Interior 1" />
+              <FlyerPhoto src={fields.image3} className="h-20 w-28 border-4 border-white shadow" label="Interior 2" />
+            </div>
+            <div className="mt-9">
+              {identity.logo && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={identity.logo} alt="" className="mb-3 max-h-9 w-24 object-contain" />
+              )}
+              <p className="text-[8px] font-bold uppercase tracking-widest">{fields.eyebrow}</p>
+              <h2 className="mt-1 leading-none" style={{ fontSize: Math.max(25, fontSize), fontWeight }}>{fields.title}</h2>
+              <p className="mt-2 whitespace-pre-line text-[10px] leading-relaxed">{fields.listing1Meta}</p>
+              <div className="mt-4 text-[8px] font-bold">{identity.phone} · {identity.email}</div>
+            </div>
+          </div>
+          <div className="flex flex-col text-white" style={{ backgroundColor: secondary }}>
+            <div className="p-4">
+              <div className="text-[9px]">Offered at</div>
+              <div className="mt-1 text-2xl font-bold">{fields.meta}</div>
+            </div>
+            <div className="flex-1 bg-white p-4 text-[8px] leading-relaxed" style={{ color: secondary }}>
+              <div className="mb-2 font-bold uppercase">Features</div>
+              <ul className="list-disc space-y-1 pl-3">
+                {fields.features.split('\n').filter(Boolean).map((feature) => <li key={feature}>{feature}</li>)}
+              </ul>
+            </div>
+            <div className="p-3 text-center text-[7px]">{identity.website}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (preset === 6) {
+    if (wide) {
+      return (
+        <div className="grid h-full w-full grid-cols-[40%_38%_22%]" style={{ fontFamily: font }}>
+          <FlyerPhoto src={fields.image} className="h-full w-full" label="Hero property photo" />
+          <div className="flex flex-col justify-center p-4 text-white" style={{ backgroundColor: secondary }}>
+            <p className="text-[7px] uppercase tracking-widest" style={{ color: primary }}>{fields.eyebrow}</p>
+            <h2 className="mt-1 leading-none" style={{ fontSize: compact ? 20 : 30, fontWeight }}>{fields.title}</h2>
+            {!compact && <p className="mt-2 text-[8px] leading-relaxed text-slate-200">{fields.body}</p>}
+          </div>
+          <div className="grid grid-rows-3 gap-1 bg-white p-1">
+            {[fields.image2, fields.image3, fields.image4].map((src, index) => <FlyerPhoto key={index} src={src} className="h-full w-full" label={`Detail ${index + 1}`} />)}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="flex h-full w-full flex-col overflow-hidden bg-white" style={{ fontFamily: font, color: secondary }}>
+        <FlyerPhoto src={fields.image} className="h-[44%] w-full" label="Hero property photo" />
+        <div className="grid min-h-0 flex-1 grid-cols-[68%_32%]">
+          <div className="flex flex-col p-5 text-white" style={{ backgroundColor: secondary }}>
+            <p className="text-[8px] uppercase tracking-widest" style={{ color: primary }}>{fields.eyebrow}</p>
+            <h2 className="mt-2 leading-[0.95]" style={{ fontSize: Math.max(35, fontSize + 5), fontWeight }}>{fields.title}</h2>
+            <p className="mt-5 text-[9px] leading-relaxed text-slate-200">{fields.body}</p>
+            <div className="mt-auto text-[8px]">{identity.email} · {identity.phone}</div>
+          </div>
+          <div className="grid grid-rows-3 gap-1 bg-white p-1">
+            {[fields.image2, fields.image3, fields.image4].map((src, index) => <FlyerPhoto key={index} src={src} className="h-full w-full" label={`Detail ${index + 1}`} />)}
+          </div>
+        </div>
+        <div className="flex items-center justify-between px-5 py-2 text-[8px]">
+          <span>{identity.name} · {identity.company}</span>
+          <span>{identity.website}</span>
+        </div>
+      </div>
+    );
+  }
+
   if (preset === 1) {
     return (
       <div className="flex h-full w-full flex-col justify-end bg-gradient-to-b from-slate-900/5 via-slate-900/20 to-slate-950/95 p-5 text-white" style={{ fontFamily: font }}>
@@ -1237,6 +1432,28 @@ function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: num
         </div>
       </div>
     </div>`;
+  }
+
+  if (preset === 4) {
+    if (wide) {
+      return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:42% 58%;overflow:hidden"><div style="background:${secondary};color:#fff;padding:16px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box"><div style="font-size:7px;color:${primary};text-transform:uppercase;letter-spacing:.14em">${data.eyebrow}</div><h1 style="font-size:${compact ? 21 : 31}px;line-height:.88;margin:4px 0 0">${data.title}</h1>${compact ? '' : `<p style="font-size:8px;color:#e2e8f0">${data.body}</p>`}<b style="font-size:9px;color:${primary};margin-top:8px">${data.meta}</b></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:8px;background:#fff">${[data.image, data.image2, data.image3].map((src, index) => photo(src, `Property ${index + 1}`, 'width:100%;height:100%')).join('')}</div></div>`;
+    }
+    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:56% 44%;overflow:hidden"><div style="background:${secondary};color:#fff;padding:20px;display:flex;flex-direction:column;box-sizing:border-box"><div style="font-size:8px;color:${primary};text-transform:uppercase">${brokerName}</div><h1 style="font-size:${Math.max(38, fontSize + 10)}px;line-height:.88;margin:24px 0 0">${data.title}</h1><p style="font-size:11px;color:#e2e8f0;line-height:1.5;margin-top:28px">${data.body}</p><div style="font-size:10px;text-transform:uppercase;border-top:1px solid #fff;border-bottom:1px solid #fff;padding:12px 0;white-space:pre-line">${data.features}</div><div style="margin-top:auto;font-size:8px">Price offered at<div style="font-size:24px;font-weight:700">${data.meta}</div></div></div><div style="background:${primary};display:flex;flex-direction:column;color:${secondary}"><div style="padding:16px;text-align:center">${logo}<b style="font-size:8px">${data.eyebrow}</b></div><div style="display:grid;grid-template-rows:repeat(3,1fr);gap:4px;flex:1">${[data.image, data.image2, data.image3].map((src, index) => photo(src, `Property ${index + 1}`, 'width:100%;height:100%')).join('')}</div><div style="font-size:8px;text-align:center;padding:12px">${email}<br>${website}</div></div></div>`;
+  }
+
+  if (preset === 5) {
+    if (wide) {
+      return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:42% 38% 20%;overflow:hidden">${photo(data.image, 'Hero property photo', 'width:100%;height:100%')}<div style="background:${primary};color:${secondary};padding:16px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box">${logo}<div style="font-size:7px;text-transform:uppercase">${data.eyebrow}</div><h1 style="font-size:${compact ? 18 : 28}px;line-height:1;margin:4px 0 0">${data.title}</h1><div style="font-size:8px;margin-top:4px">${data.listing1Meta}</div></div><div style="background:${secondary};color:#fff;padding:12px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box"><div style="font-size:7px">Offered at</div><b style="font-size:18px">${data.meta}</b><div style="font-size:6px;margin-top:12px">${phone}<br>${email}</div></div></div>`;
+    }
+    const features = data.features.split('\n').filter(Boolean).map((feature) => `<li>${feature}</li>`).join('');
+    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:flex;flex-direction:column;overflow:hidden;border-radius:22px;background:#fff;color:${secondary}">${photo(data.image, 'Hero property photo', 'width:100%;height:48%')}<div style="display:grid;grid-template-columns:62% 38%;flex:1;min-height:0"><div style="background:${primary};padding:20px;box-sizing:border-box">${logo}<div style="font-size:8px;text-transform:uppercase">${data.eyebrow}</div><h1 style="font-size:${Math.max(25, fontSize)}px;line-height:1;margin:4px 0">${data.title}</h1><div style="font-size:10px;white-space:pre-line">${data.listing1Meta}</div><b style="font-size:8px;display:block;margin-top:16px">${phone} · ${email}</b></div><div style="background:${secondary};color:#fff;display:flex;flex-direction:column"><div style="padding:16px"><div style="font-size:9px">Offered at</div><b style="font-size:24px">${data.meta}</b></div><div style="background:#fff;color:${secondary};padding:16px;flex:1;font-size:8px"><b>FEATURES</b><ul style="padding-left:14px">${features}</ul></div><div style="font-size:7px;padding:10px;text-align:center">${website}</div></div></div></div>`;
+  }
+
+  if (preset === 6) {
+    if (wide) {
+      return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:40% 38% 22%;overflow:hidden">${photo(data.image, 'Hero property photo', 'width:100%;height:100%')}<div style="background:${secondary};color:#fff;padding:16px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box"><div style="font-size:7px;color:${primary};text-transform:uppercase">${data.eyebrow}</div><h1 style="font-size:${compact ? 20 : 30}px;line-height:1;margin:4px 0">${data.title}</h1>${compact ? '' : `<p style="font-size:8px;color:#e2e8f0">${data.body}</p>`}</div><div style="display:grid;grid-template-rows:repeat(3,1fr);gap:3px;padding:3px;background:#fff">${[data.image2, data.image3, data.image4].map((src, index) => photo(src, `Detail ${index + 1}`, 'width:100%;height:100%')).join('')}</div></div>`;
+    }
+    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:flex;flex-direction:column;overflow:hidden;background:#fff;color:${secondary}">${photo(data.image, 'Hero property photo', 'width:100%;height:44%')}<div style="display:grid;grid-template-columns:68% 32%;flex:1;min-height:0"><div style="background:${secondary};color:#fff;padding:20px;display:flex;flex-direction:column;box-sizing:border-box"><div style="font-size:8px;color:${primary};text-transform:uppercase">${data.eyebrow}</div><h1 style="font-size:${Math.max(35, fontSize + 5)}px;line-height:.95;margin:8px 0">${data.title}</h1><p style="font-size:9px;color:#e2e8f0;line-height:1.5">${data.body}</p><div style="font-size:8px;margin-top:auto">${email} · ${phone}</div></div><div style="display:grid;grid-template-rows:repeat(3,1fr);gap:4px;padding:4px">${[data.image2, data.image3, data.image4].map((src, index) => photo(src, `Detail ${index + 1}`, 'width:100%;height:100%')).join('')}</div></div><div style="font-size:8px;padding:8px 20px;display:flex;justify-content:space-between"><span>${licenseHolderName} · ${brokerName}</span><span>${website}</span></div></div>`;
   }
 
   if (preset === 1) {
