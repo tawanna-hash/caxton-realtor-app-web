@@ -3,7 +3,10 @@
 // Doren & Tawanna animated email signature — HTML block appended to
 // outgoing marketing emails from the CRM composer.
 
-const GIF_URL = process.env.NEXT_PUBLIC_SIGNATURE_GIF_URL ?? '';
+// Versioned pathname prevents Gmail's image proxy from reusing the legacy
+// 640x380 signature that previously lived at email/signature.gif.
+const GIF_URL =
+  'https://b2lqsyyhvbkewrwf.public.blob.vercel-storage.com/email/signature-compact-20260827.gif';
 const APP_STORE_BADGE =
   'https://b2lqsyyhvbkewrwf.public.blob.vercel-storage.com/email/app-store-badge.png';
 const GOOGLE_PLAY_BADGE =
