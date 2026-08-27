@@ -10,6 +10,9 @@ export const CUSTOM_DESIGN_ELEMENT_KINDS = [
   'photo',
   'text',
   'qr',
+  'block',
+  'image',
+  'line',
 ] as const;
 
 export type CustomDesignElementKind = (typeof CUSTOM_DESIGN_ELEMENT_KINDS)[number];
@@ -24,6 +27,14 @@ export interface CustomDesignElement {
   fontSize?: number;
   color?: string;
   text?: string;
+  zIndex?: number;
+  fontFamily?: string;
+  fontWeight?: number;
+  textAlign?: 'left' | 'center' | 'right';
+  backgroundColor?: string;
+  borderRadius?: number;
+  opacity?: number;
+  src?: string;
 }
 
 export interface CustomDesignConfig {
@@ -40,6 +51,8 @@ export const PROTECTED_BROKER_ELEMENT_ID = 'brokerage';
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 const VALID_LAYOUTS: readonly FooterTemplateId[] = ['business-card', 'banner', 'signature', 'two-column'];
 const VALID_KINDS: readonly CustomDesignElementKind[] = CUSTOM_DESIGN_ELEMENT_KINDS;
+const VALID_FONT_FAMILIES = ['Arial', 'Georgia', 'Helvetica', 'Times New Roman', 'Verdana'] as const;
+const VALID_TEXT_ALIGNMENTS = ['left', 'center', 'right'] as const;
 
 const layouts: Record<FooterTemplateId, CustomDesignElement[]> = {
   'business-card': [
@@ -93,7 +106,7 @@ export function createCustomDesignPreset(layout: FooterTemplateId): CustomDesign
     version: CUSTOM_DESIGN_VERSION,
     layout,
     ...palette,
-    elements: layouts[layout].map((element) => ({ ...element })),
+    elements: layouts[layout].map((element, index) => ({ ...element, zIndex: index + 1 })),
   };
 }
 
@@ -110,6 +123,16 @@ function safeColor(value: unknown, fallback: string): string {
 function safeText(value: unknown, max: number): string | undefined {
   if (typeof value !== 'string') return undefined;
   return value.slice(0, max);
+}
+
+function safeUrl(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim().slice(0, 2_000);
+  if (!trimmed) return undefined;
+  if (/^https?:\/\//i.test(trimmed) || /^data:image\/(?:png|jpeg|webp|gif);base64,/i.test(trimmed)) {
+    return trimmed;
+  }
+  return undefined;
 }
 
 export function normalizeCustomDesign(
@@ -131,9 +154,11 @@ export function normalizeCustomDesign(
     if (!VALID_KINDS.includes(candidate.kind as CustomDesignElementKind)) continue;
     const kind = candidate.kind as CustomDesignElementKind;
     const isBrokerage = kind === 'brokerage';
-    const requestedId = typeof candidate.id === 'string'
+    let requestedId = typeof candidate.id === 'string'
       ? candidate.id.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 60)
       : '';
+    if (isBrokerage) requestedId = PROTECTED_BROKER_ELEMENT_ID;
+    else if (requestedId === PROTECTED_BROKER_ELEMENT_ID) requestedId = `${kind}-${index + 1}`;
     const id = requestedId && !ids.has(requestedId) ? requestedId : `${kind}-${index + 1}`;
     if (ids.has(id)) continue;
     ids.add(id);
@@ -151,13 +176,36 @@ export function normalizeCustomDesign(
         ? safeColor(candidate.color, fallback.textColor)
         : undefined,
       text: kind === 'text' || kind === 'qr' ? safeText(candidate.text, 500) : undefined,
+      zIndex: finiteNumber(candidate.zIndex, index + 1, 0, 999),
+      fontFamily: typeof candidate.fontFamily === 'string'
+        && VALID_FONT_FAMILIES.includes(candidate.fontFamily as (typeof VALID_FONT_FAMILIES)[number])
+        ? candidate.fontFamily
+        : undefined,
+      fontWeight: finiteNumber(candidate.fontWeight, kind === 'name' || kind === 'brokerage' ? 700 : 400, 300, 900),
+      textAlign: typeof candidate.textAlign === 'string'
+        && VALID_TEXT_ALIGNMENTS.includes(candidate.textAlign as (typeof VALID_TEXT_ALIGNMENTS)[number])
+        ? candidate.textAlign as CustomDesignElement['textAlign']
+        : undefined,
+      backgroundColor: typeof candidate.backgroundColor === 'string'
+        ? safeColor(candidate.backgroundColor, fallback.accentColor)
+        : undefined,
+      borderRadius: finiteNumber(candidate.borderRadius, 0, 0, 100),
+      opacity: finiteNumber(candidate.opacity, 1, 0.1, 1),
+      src: kind === 'image' ? safeUrl(candidate.src) : undefined,
     });
   }
 
   // TREC requires the broker's licensed/registered name to remain visible.
   if (!elements.some((element) => element.kind === 'brokerage')) {
     const broker = fallback.elements.find((element) => element.kind === 'brokerage');
-    if (broker) elements.push({ ...broker });
+    if (broker) elements.push({ ...broker, zIndex: 999 });
+  }
+
+  const protectedBroker = elements.find((element) => element.kind === 'brokerage');
+  if (protectedBroker) {
+    protectedBroker.id = PROTECTED_BROKER_ELEMENT_ID;
+    protectedBroker.zIndex = 999;
+    protectedBroker.opacity = 1;
   }
 
   return {

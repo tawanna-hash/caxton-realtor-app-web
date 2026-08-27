@@ -10,8 +10,6 @@ import {
   type CustomDesignConfig,
 } from '@/lib/custom-design';
 import {
-  FOOTER_TEMPLATE_META,
-  FOOTER_TEMPLATE_PICKER_IDS,
   type FooterBrand,
   type FooterTemplateId,
 } from '@/lib/footer-templates';
@@ -340,51 +338,11 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
 
       <form onSubmit={onSubmit} className="bg-[#eef2f6]">
         <div className="flex flex-wrap items-center justify-between gap-3 bg-[#078fca] px-4 py-3 text-white">
-          <div className="space-y-2">
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setDesignSurface('email')}
-                className={`rounded px-3 py-1.5 text-xs font-bold transition ${
-                  designSurface === 'email' ? 'bg-[#153f83] text-white' : 'bg-white/15 text-white hover:bg-white/25'
-                }`}
-              >
-                Email signature
-              </button>
-              <button
-                type="button"
-                onClick={() => setDesignSurface('calculator')}
-                className={`rounded px-3 py-1.5 text-xs font-bold transition ${
-                  designSurface === 'calculator' ? 'bg-[#153f83] text-white' : 'bg-white/15 text-white hover:bg-white/25'
-                }`}
-              >
-                Calculator PDF
-              </button>
-            </div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/80">Choose a design</p>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/80">Output</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {FOOTER_TEMPLATE_PICKER_IDS.map((templateId) => {
-                const template = FOOTER_TEMPLATE_META[templateId];
-                const selected = form.footer_template === template.id;
-                return (
-                  <label
-                    key={template.id}
-                    className={`cursor-pointer rounded px-3 py-1.5 text-xs font-bold transition ${
-                      selected ? 'bg-white text-[#153f83] shadow-sm' : 'bg-[#087fb3] text-white hover:bg-[#0876a6]'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="footer-template"
-                      value={template.id}
-                      checked={selected}
-                      onChange={() => setLayout(template.id)}
-                      className="sr-only"
-                    />
-                    {template.label}
-                  </label>
-                );
-              })}
+              <button type="button" onClick={() => setDesignSurface('email')} className={`rounded px-3 py-1.5 text-xs font-bold transition ${designSurface === 'email' ? 'bg-[#153f83] text-white' : 'bg-white/15 text-white hover:bg-white/25'}`} data-testid="button-output-email">Email signature</button>
+              <button type="button" onClick={() => setDesignSurface('calculator')} className={`rounded px-3 py-1.5 text-xs font-bold transition ${designSurface === 'calculator' ? 'bg-[#153f83] text-white' : 'bg-white/15 text-white hover:bg-white/25'}`} data-testid="button-output-calculator">Calculator PDF</button>
             </div>
           </div>
           <div className="flex flex-wrap justify-end gap-2">
@@ -419,104 +377,62 @@ export default function CalculatorBrandingSection({ accentColor }: { accentColor
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-[320px_minmax(0,1fr)]">
-          <aside className="space-y-5 border-r border-gray-200 bg-white p-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Images</p>
-              <div className="mt-2 grid gap-2">
-                <ImageUpload
-                  label="Professional headshot"
-                  value={form.photo_url}
-                  uploading={uploading === 'headshot'}
-                  onChange={onFileChange('headshot')}
-                  round
-                />
-                <ImageUpload
-                  label="Brokerage logo"
-                  value={form.logo_url}
-                  uploading={uploading === 'logo'}
-                  onChange={onFileChange('logo')}
-                />
+        <div className="space-y-4 p-3 sm:p-5">
+          <details className="rounded-lg border border-gray-200 bg-white" open>
+            <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-gray-800">
+              Professional profile & assets
+              <span className="ml-2 text-xs font-normal text-gray-500">Content used by the protected and linked canvas layers</span>
+            </summary>
+            <div className="grid gap-5 border-t border-gray-200 p-4 lg:grid-cols-[260px_minmax(0,1fr)]">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                <ImageUpload label="Professional headshot" value={form.photo_url} uploading={uploading === 'headshot'} onChange={onFileChange('headshot')} round />
+                <ImageUpload label="Brokerage logo" value={form.logo_url} uploading={uploading === 'logo'} onChange={onFileChange('logo')} />
               </div>
+              <fieldset>
+                <legend className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Identity & contact</legend>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <Field label="Name" value={form.display_name} onChange={(v) => setField('display_name', v)} required />
+                  <Field label="Title" value={form.professional_title} onChange={(v) => setField('professional_title', v)} placeholder="REALTOR®" />
+                  <Field label="Cell phone" type="tel" value={form.phone} onChange={(v) => setField('phone', v)} />
+                  <Field label="Office phone" type="tel" value={form.office_phone} onChange={(v) => setField('office_phone', v)} />
+                  <Field label="Email" type="email" value={form.email} onChange={(v) => setField('email', v)} />
+                  <Field label="Website" type="url" value={form.website} onChange={(v) => setField('website', v)} placeholder="https://yourwebsite.com" />
+                  <Field label="Broker licensed or registered name" value={form.brokerage_name} onChange={(v) => setField('brokerage_name', v)} required />
+                  <Field label="TREC license number" value={form.license_number} onChange={(v) => setField('license_number', v)} />
+                </div>
+              </fieldset>
             </div>
+          </details>
 
-            <fieldset className="space-y-3">
-              <legend className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">Quick fill</legend>
-              <Field label="Name" value={form.display_name} onChange={(v) => setField('display_name', v)} required />
-              <Field label="Title" value={form.professional_title} onChange={(v) => setField('professional_title', v)} placeholder="REALTOR®" />
-              <Field label="Cell phone" type="tel" value={form.phone} onChange={(v) => setField('phone', v)} />
-              <Field label="Office phone" type="tel" value={form.office_phone} onChange={(v) => setField('office_phone', v)} />
-              <Field label="Email" type="email" value={form.email} onChange={(v) => setField('email', v)} />
-              <Field label="Website" type="url" value={form.website} onChange={(v) => setField('website', v)} placeholder="https://yourwebsite.com" />
-              <Field
-                label="Broker licensed or registered name"
-                value={form.brokerage_name}
-                onChange={(v) => setField('brokerage_name', v)}
-                required
-              />
+          <CustomDesignerCanvas
+            value={form.custom_design}
+            brand={form}
+            onChange={(custom_design) => setField('custom_design', custom_design)}
+            onLayoutChange={setLayout}
+          />
+
+          <details className="rounded-lg border border-gray-200 bg-white">
+            <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-gray-800">Additional signature details</summary>
+            <div className="grid gap-3 border-t border-gray-200 p-4 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Tagline" value={form.tagline} onChange={(v) => setField('tagline', v)} />
-            </fieldset>
-
-            <details className="rounded-md border border-gray-200 bg-gray-50 p-3">
-              <summary className="cursor-pointer text-xs font-bold uppercase tracking-[0.12em] text-gray-600">Additional details</summary>
-              <div className="mt-3 space-y-3">
-                <Field label="TREC license number" value={form.license_number} onChange={(v) => setField('license_number', v)} />
-                <Field label="Facebook URL" type="url" value={form.facebook_url} onChange={(v) => setField('facebook_url', v)} />
-                <Field label="Instagram URL" type="url" value={form.instagram_url} onChange={(v) => setField('instagram_url', v)} />
-                <Field label="X URL" type="url" value={form.x_url} onChange={(v) => setField('x_url', v)} />
-                <Field label="LinkedIn URL" type="url" value={form.linkedin_url} onChange={(v) => setField('linkedin_url', v)} />
-                <Field label="Office address" value={form.address} onChange={(v) => setField('address', v)} />
-                <Field label="Address line 2" value={form.address_2} onChange={(v) => setField('address_2', v)} />
-                <Field label="City" value={form.city} onChange={(v) => setField('city', v)} />
-                <div className="grid grid-cols-2 gap-2">
-                  <Field label="State" value={form.state} onChange={(v) => setField('state', v)} />
-                  <Field label="ZIP" value={form.zip} onChange={(v) => setField('zip', v)} />
-                </div>
-              </div>
-            </details>
-
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-relaxed text-amber-950">
-              <p className="font-semibold">Texas advertising compliance</p>
-              <p className="mt-1">
-                The broker name remains clearly displayed at no less than 50% of the largest agent contact or logo treatment.
-              </p>
+              <Field label="Facebook URL" type="url" value={form.facebook_url} onChange={(v) => setField('facebook_url', v)} />
+              <Field label="Instagram URL" type="url" value={form.instagram_url} onChange={(v) => setField('instagram_url', v)} />
+              <Field label="X URL" type="url" value={form.x_url} onChange={(v) => setField('x_url', v)} />
+              <Field label="LinkedIn URL" type="url" value={form.linkedin_url} onChange={(v) => setField('linkedin_url', v)} />
+              <Field label="Office address" value={form.address} onChange={(v) => setField('address', v)} />
+              <Field label="Address line 2" value={form.address_2} onChange={(v) => setField('address_2', v)} />
+              <Field label="City" value={form.city} onChange={(v) => setField('city', v)} />
+              <Field label="State" value={form.state} onChange={(v) => setField('state', v)} />
+              <Field label="ZIP" value={form.zip} onChange={(v) => setField('zip', v)} />
             </div>
-          </aside>
+          </details>
 
-          <div className="flex min-h-[620px] flex-col p-4 sm:p-6 lg:p-8">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-gray-500">
-                  Live {designSurface === 'email' ? 'email signature' : 'calculator PDF'} canvas
-                </p>
-                <p className="mt-1 text-sm text-gray-600">
-                  {designSurface === 'email'
-                    ? 'Copy the finished signature into Gmail, Outlook, or Apple Mail.'
-                    : 'This exact branding is applied to generated calculator sheets.'}
-                </p>
-              </div>
-              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#153f83] shadow-sm">
-                {FOOTER_TEMPLATE_META[form.footer_template].label}
-              </span>
-            </div>
-            <div className="flex flex-1 items-center justify-center rounded-lg border border-gray-200 bg-[#f7f8fa] p-3 shadow-inner sm:p-8">
-              <div className="w-full max-w-5xl">
-                <div className="mb-4 grid grid-cols-3 gap-3 rounded-lg border border-gray-200 bg-white p-3">
-                  <ColorField label="Text" value={form.custom_design.textColor} onChange={(textColor) => setField('custom_design', { ...form.custom_design, textColor })} />
-                  <ColorField label="Background" value={form.custom_design.backgroundColor} onChange={(backgroundColor) => setField('custom_design', { ...form.custom_design, backgroundColor })} />
-                  <ColorField label="Accent" value={form.custom_design.accentColor} onChange={(accentColor) => setField('custom_design', { ...form.custom_design, accentColor })} />
-                </div>
-                <CustomDesignerCanvas
-                  value={form.custom_design}
-                  brand={form}
-                  onChange={(custom_design) => setField('custom_design', custom_design)}
-                />
-              </div>
-            </div>
-
-            {error && <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-            {message && <p className="mt-4 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{message}</p>}
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-relaxed text-amber-950">
+            <p className="font-semibold">Texas advertising compliance</p>
+            <p className="mt-1">The broker licensed or registered assumed business name is a protected, always-visible layer and cannot be deleted or covered by another object.</p>
           </div>
+          {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          {message && <p className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">{message}</p>}
         </div>
       </form>
     </section>
@@ -548,28 +464,6 @@ function Field({
         placeholder={placeholder}
         required={required}
         className={inputClass}
-      />
-    </label>
-  );
-}
-
-function ColorField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="text-xs font-semibold text-gray-600">
-      {label}
-      <input
-        type="color"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-1 block h-10 w-full cursor-pointer rounded-md border border-gray-300 bg-white p-1"
       />
     </label>
   );
