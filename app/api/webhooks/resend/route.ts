@@ -181,6 +181,28 @@ export async function POST(req: NextRequest) {
             WHERE message_id = $1`,
           [emailId],
         );
+        await exec(
+          `UPDATE advertisers a
+              SET open_count = totals.open_count,
+                  last_opened_at = totals.last_opened_at
+             FROM (
+               SELECT
+                 recipient_id,
+                 COALESCE(SUM(open_count), 0)::int AS open_count,
+                 MAX(opened_at) AS last_opened_at
+               FROM marketing_campaign_outreach_recipients
+               WHERE recipient_type = 'advertiser'
+                 AND recipient_id = (
+                   SELECT recipient_id
+                   FROM marketing_campaign_outreach_recipients
+                   WHERE message_id = $1
+                   LIMIT 1
+                 )
+               GROUP BY recipient_id
+             ) totals
+            WHERE a.id = totals.recipient_id`,
+          [emailId],
+        );
         logger.info(
           { emailId, rows: result.rowCount, svixId, eventType: event.type },
           '[resend-webhook] email.opened processed',

@@ -72,8 +72,11 @@ export default async function CrmPage() {
       a.current_agreement_id, a.current_ad_size, a.current_frequency,
       a.current_ad_rate_cents, a.current_amount_cents, a.current_exp_date,
       a.last_contacted_at, a.outreach_count,
-      COALESCE(a.open_count, 0)::int         AS open_count,
-      a.last_opened_at,
+      GREATEST(
+        COALESCE(a.open_count, 0),
+        COALESCE(engagement.open_count, 0)
+      )::int                                 AS open_count,
+      GREATEST(a.last_opened_at, engagement.last_opened_at) AS last_opened_at,
       a.last_bounced_at, a.bounce_count, a.last_bounce_type,
       COALESCE(stats.hotspot_count, 0)::int AS hotspot_count,
       COALESCE(stats.clicks_30d, 0)::int    AS clicks_30d,
@@ -92,6 +95,19 @@ export default async function CrmPage() {
       LEFT JOIN magazine_hotspot_clicks c ON c.hotspot_id = h.id
       GROUP BY h.advertiser_id
     ) stats ON stats.advertiser_id = a.id
+    LEFT JOIN (
+      -- Campaign recipient rows are the authoritative engagement ledger.
+      -- Joining by advertiser id keeps partner opens visible even when a
+      -- webhook updates the recipient before the cached advertiser rollup.
+      SELECT
+        recipient_id AS advertiser_id,
+        COALESCE(SUM(open_count), 0)::int AS open_count,
+        MAX(opened_at) AS last_opened_at
+      FROM marketing_campaign_outreach_recipients
+      WHERE recipient_type = 'advertiser'
+        AND recipient_id IS NOT NULL
+      GROUP BY recipient_id
+    ) engagement ON engagement.advertiser_id = a.id
     ORDER BY a.updated_at DESC
   `.catch(() => [])) as unknown as AdvertiserCrmRow[];
 
