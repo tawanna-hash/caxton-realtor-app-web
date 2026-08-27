@@ -48,7 +48,6 @@ export default function ResourceFloater({
 
   useEffect(() => {
     let cancelled = false;
-    let designerBrandingTimeout: number | undefined;
     let designerBranding: BrandFooter | null = null;
     try {
       const saved = window.localStorage.getItem(DESIGNER_SIGNATURE_STORAGE_KEY);
@@ -86,9 +85,6 @@ export default function ResourceFloater({
               publication: null,
             },
           };
-          designerBrandingTimeout = window.setTimeout(() => {
-            if (!cancelled) setBrandFooter(designerBranding);
-          }, 0);
         }
       }
     } catch {}
@@ -100,16 +96,13 @@ export default function ResourceFloater({
         return (data?.branding ?? null) as BrandFooter | null;
       })
       .then((branding) => {
-        if (!cancelled && !designerBranding) setBrandFooter(branding);
+        if (!cancelled) setBrandFooter(branding ?? designerBranding);
       })
       .catch(() => {
-        if (!cancelled && !designerBranding) setBrandFooter(null);
+        if (!cancelled) setBrandFooter(designerBranding);
       });
     return () => {
       cancelled = true;
-      if (designerBrandingTimeout !== undefined) {
-        window.clearTimeout(designerBrandingTimeout);
-      }
     };
   }, []);
 

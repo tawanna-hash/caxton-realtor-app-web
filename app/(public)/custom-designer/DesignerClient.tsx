@@ -2,6 +2,7 @@
 
 import { ArrowLeft, ArrowRight, Download, FileCode2, GripVertical, ImagePlus, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { getApiBase } from '@/lib/api-base';
 
 type Product = 'signature' | 'flyer';
 type FlyerSize = 'us-letter' | 'insta-square' | 'insta-story' | 'fb-banner' | 'linkedin-banner';
@@ -174,6 +175,44 @@ const GOOGLE_FONTS_URL = 'https://fonts.googleapis.com/css2?family=Bodoni+Moda:o
 const DESIGNER_SIGNATURE_STORAGE_KEY = 'rnn:custom-designer-signature';
 const APP_BRAND_PRIMARY = '#301D5D';
 const APP_BRAND_SECONDARY = '#7a1f7e';
+const API = getApiBase();
+
+type AccountBrandingResponse = {
+  branding: {
+    template: string;
+    brand: {
+      name: string | null;
+      company: string | null;
+      title: string | null;
+      email: string | null;
+      phone: string | null;
+      website: string | null;
+      logo_url: string | null;
+      photo_url: string | null;
+    };
+  } | null;
+};
+
+function normalizeWebsiteForAccount(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+function signatureFromAccount(data: AccountBrandingResponse, fallback: SignatureFields): SignatureFields {
+  const brand = data.branding?.brand;
+  if (!brand) return fallback;
+  return {
+    name: brand.name || fallback.name,
+    company: brand.company || fallback.company,
+    title: brand.title || fallback.title,
+    email: brand.email || fallback.email,
+    phone: brand.phone || fallback.phone,
+    website: brand.website || fallback.website,
+    logo: brand.logo_url || fallback.logo,
+    photo: brand.photo_url || fallback.photo,
+  };
+}
 
 export default function DesignerClient() {
   const [product, setProduct] = useState<Product>('signature');
@@ -195,6 +234,10 @@ export default function DesignerClient() {
   const [background, setBackground] = useState('');
   const [signature, setSignature] = useState(DEFAULT_SIGNATURE);
   const [signatureStorageReady, setSignatureStorageReady] = useState(false);
+  const [accountSyncReady, setAccountSyncReady] = useState(false);
+  const [accountConnected, setAccountConnected] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'loading' | 'local' | 'saving' | 'saved' | 'error'>('loading');
+  const [artworkUploading, setArtworkUploading] = useState(false);
   const [flyer, setFlyer] = useState(DEFAULT_FLYER);
   const [artboardOrder, setArtboardOrder] = useState<ArtboardKey[]>(DEFAULT_ARTBOARD_ORDER);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -203,6 +246,7 @@ export default function DesignerClient() {
   const previewRef = useRef<HTMLDivElement>(null);
   const selectedArtboardElementRef = useRef<HTMLElement | null>(null);
   const skipFirstSignatureSaveRef = useRef(true);
+  const skipFirstAccountSaveRef = useRef(true);
 
   const dimensions = product === 'signature'
     ? { width: 760, height: 220 }
@@ -217,19 +261,52 @@ export default function DesignerClient() {
   } as React.CSSProperties;
 
   useEffect(() => {
+    let cancelled = false;
     const timeout = window.setTimeout(() => {
       const appStyles = window.getComputedStyle(document.documentElement);
       setPrimary(appStyles.getPropertyValue('--color-brand-700').trim() || APP_BRAND_PRIMARY);
       setSecondary(appStyles.getPropertyValue('--color-brand-500').trim() || APP_BRAND_SECONDARY);
+      let localSignature = DEFAULT_SIGNATURE;
       try {
         const saved = window.localStorage.getItem(DESIGNER_SIGNATURE_STORAGE_KEY);
         if (saved) {
-          setSignature((current) => ({ ...current, ...JSON.parse(saved) }));
+          localSignature = { ...DEFAULT_SIGNATURE, ...JSON.parse(saved) };
+          setSignature(localSignature);
         }
       } catch {}
-      setSignatureStorageReady(true);
+
+      fetch(`${API}/calculator-branding`, { credentials: 'include' })
+        .then(async (response) => {
+          if (!response.ok) throw new Error('Could not load account branding.');
+          return response.json() as Promise<AccountBrandingResponse>;
+        })
+        .then((data) => {
+          if (cancelled) return;
+          if (data.branding) {
+            const accountSignature = signatureFromAccount(data, localSignature);
+            setSignature(accountSignature);
+            try {
+              window.localStorage.setItem(DESIGNER_SIGNATURE_STORAGE_KEY, JSON.stringify(accountSignature));
+            } catch {}
+            setAccountConnected(true);
+            setSyncStatus('saved');
+          } else {
+            setSyncStatus('local');
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setSyncStatus('local');
+        })
+        .finally(() => {
+          if (cancelled) return;
+          setSignatureStorageReady(true);
+          setAccountSyncReady(true);
+        });
     }, 0);
-    return () => window.clearTimeout(timeout);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
   }, []);
 
   useEffect(() => {
@@ -247,6 +324,51 @@ export default function DesignerClient() {
     } catch {}
   }, [signature, signatureStorageReady]);
 
+  useEffect(() => {
+    if (!accountSyncReady || !accountConnected || artworkUploading) return;
+    if (skipFirstAccountSaveRef.current) {
+      skipFirstAccountSaveRef.current = false;
+      return;
+    }
+    if (!signature.name.trim() || !signature.company.trim()) return;
+
+    const timeout = window.setTimeout(() => {
+      setSyncStatus('saving');
+      fetch(`${API}/calculator-branding`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          display_name: signature.name,
+          professional_title: signature.title || null,
+          brokerage_name: signature.company,
+          email: signature.email || null,
+          phone: signature.phone || null,
+          office_phone: null,
+          website: normalizeWebsiteForAccount(signature.website),
+          logo_url: /^https?:\/\//i.test(signature.logo) ? signature.logo : null,
+          photo_url: /^https?:\/\//i.test(signature.photo) ? signature.photo : null,
+          address: null,
+          address_2: null,
+          city: null,
+          state: null,
+          zip: null,
+          license_number: null,
+          tagline: null,
+          footer_template: 'signature',
+        }),
+      })
+        .then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) throw new Error(data?.error || 'Could not save account branding.');
+          return data as AccountBrandingResponse;
+        })
+        .then(() => setSyncStatus('saved'))
+        .catch(() => setSyncStatus('error'));
+    }, 800);
+    return () => window.clearTimeout(timeout);
+  }, [accountConnected, accountSyncReady, artworkUploading, signature]);
+
   const applyBrandTypography = (index: number) => {
     const brand = BRAND_TYPOGRAPHY_PRESETS[index];
     if (!brand) return;
@@ -263,6 +385,27 @@ export default function DesignerClient() {
     setBodyLineHeight(brand.bodyLeading);
   };
 
+  const commitArtboardText = (event: React.FocusEvent<HTMLDivElement>) => {
+    if (product !== 'flyer') return;
+    const target = (event.target as HTMLElement).closest<HTMLElement>('[data-type-role]');
+    if (!target || !previewRef.current?.contains(target)) return;
+    const role = target.dataset.typeRole;
+    const value = target.innerText.replace(/\u00a0/g, ' ').trim();
+    const field = role === 'headline'
+      ? 'title'
+      : role === 'subheadline'
+        ? 'meta'
+        : role === 'eyebrow'
+          ? 'eyebrow'
+          : role === 'body'
+            ? 'body'
+            : null;
+    if (field) {
+      setFlyer((current) => ({ ...current, [field]: value }));
+    }
+    target.removeAttribute('contenteditable');
+  };
+
   const selectArtboardElement = (event: React.MouseEvent<HTMLDivElement>) => {
     const directTarget = (event.target as HTMLElement).closest<HTMLElement>('img, [data-type-role]');
     const target = directTarget ?? document
@@ -273,6 +416,20 @@ export default function DesignerClient() {
     selectedArtboardElementRef.current?.classList.remove('designer-selected-element');
     target.classList.add('designer-selected-element');
     selectedArtboardElementRef.current = target;
+
+    if (product === 'flyer' && target.dataset.typeRole && target.dataset.typeRole !== 'asset') {
+      const isAlreadyEditing = target.getAttribute('contenteditable') === 'true';
+      target.setAttribute('contenteditable', 'true');
+      target.setAttribute('spellcheck', 'true');
+      target.focus({ preventScroll: true });
+      if (!isAlreadyEditing) {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(target);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }
   };
 
   const uploadBackground = (file?: File) => {
@@ -291,6 +448,29 @@ export default function DesignerClient() {
       }
     };
     reader.readAsDataURL(file);
+
+    if (!accountConnected) return;
+    setArtworkUploading(true);
+    setSyncStatus('saving');
+    const payload = new FormData();
+    payload.set('file', file);
+    payload.set('kind', kind === 'logo' ? 'logo' : 'headshot');
+    fetch(`${API}/calculator-branding/upload-image`, {
+      method: 'POST',
+      credentials: 'include',
+      body: payload,
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data?.error || 'Image upload failed.');
+        return data as { url: string };
+      })
+      .then((data) => {
+        setSignature((value) => ({ ...value, [kind]: data.url }));
+        setSyncStatus('saving');
+      })
+      .catch(() => setSyncStatus('error'))
+      .finally(() => setArtworkUploading(false));
   };
 
   const uploadFlyerArtwork = (key: 'image' | 'image2' | 'image3' | 'image4', file?: File) => {
@@ -494,15 +674,15 @@ export default function DesignerClient() {
   };
 
   return (
-    <main className="min-h-[calc(100vh-64px)] bg-slate-300">
+    <main className="min-h-[calc(100vh-64px)] bg-[#eee8f4]">
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link rel="stylesheet" href={GOOGLE_FONTS_URL} />
       <div className="grid min-h-[calc(100vh-64px)] xl:grid-cols-[410px_minmax(0,1fr)]">
-        <aside className="overflow-y-auto border-r border-slate-800 bg-[#090d16] p-5 text-slate-100 xl:max-h-[calc(100vh-64px)]">
+        <aside className="overflow-y-auto border-r border-[#3f2a5f] bg-[#120b22] p-5 text-slate-100 xl:max-h-[calc(100vh-64px)]">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-sky-400">Platinum Tools</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#c9a7ef]">Platinum Tools</p>
               <h1 className="text-lg font-extrabold tracking-tight">Design Engine Pro</h1>
             </div>
             <button type="button" onClick={reset} className="studio-secondary-button">
@@ -524,7 +704,7 @@ export default function DesignerClient() {
 
             <Control label="Canvas background image">
               <div className="flex gap-2">
-                <label className="flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-slate-800 bg-[#111729] px-3 text-xs font-semibold text-slate-300 hover:border-sky-500">
+                <label className="flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-[#3f2a5f] bg-[#1b1130] px-3 text-xs font-semibold text-slate-300 hover:border-[#9d68d6]">
                   <ImagePlus size={15} />
                   {background ? 'Replace image' : 'Upload image'}
                   <input ref={fileRef} type="file" accept="image/*" onChange={(event) => uploadBackground(event.target.files?.[0])} className="sr-only" />
@@ -540,6 +720,22 @@ export default function DesignerClient() {
             <p className="-mt-2 text-[10px] leading-relaxed text-slate-400">
               Synced from the Realty News Now app palette. Both colors remain editable.
             </p>
+            <p
+              className={`-mt-2 text-[10px] font-semibold ${
+                syncStatus === 'error'
+                  ? 'text-red-300'
+                  : syncStatus === 'saved'
+                    ? 'text-emerald-300'
+                    : 'text-slate-400'
+              }`}
+              aria-live="polite"
+            >
+              {syncStatus === 'loading' && 'Checking account sync…'}
+              {syncStatus === 'local' && 'Saved on this device. Sign in to sync across devices.'}
+              {syncStatus === 'saving' && 'Saving branding to your account…'}
+              {syncStatus === 'saved' && 'Branding synced to your account.'}
+              {syncStatus === 'error' && 'Device copy saved. Account sync will retry after your next change.'}
+            </p>
 
             {product === 'flyer' && (
               <div className="space-y-3">
@@ -550,7 +746,7 @@ export default function DesignerClient() {
                         key={brand.label}
                         type="button"
                         onClick={() => applyBrandTypography(index)}
-                        className="min-h-16 rounded-md border border-slate-700 bg-[#111729] px-2 py-2 text-left transition-colors hover:border-sky-400 hover:bg-sky-950"
+                        className="min-h-16 rounded-md border border-[#493368] bg-[#1b1130] px-2 py-2 text-left transition-colors hover:border-[#b184df] hover:bg-[#2a1747]"
                       >
                         <span className="block text-[11px] font-bold text-white">{brand.label}</span>
                         <span className="mt-1 block text-[9px] leading-tight text-slate-400">{brand.description}</span>
@@ -602,7 +798,7 @@ export default function DesignerClient() {
                   max={product === 'signature' ? 22 : 36}
                   value={fontSize}
                   onChange={(event) => setFontSize(Number(event.target.value))}
-                  className="studio-control accent-sky-500"
+                  className="studio-control accent-[#7a1f7e]"
                 />
               </Control>
               <Control label={`Text size (${bodyFontSize}px)`}>
@@ -612,7 +808,7 @@ export default function DesignerClient() {
                   max={product === 'signature' ? 16 : 18}
                   value={bodyFontSize}
                   onChange={(event) => setBodyFontSize(Number(event.target.value))}
-                  className="studio-control accent-sky-500"
+                  className="studio-control accent-[#7a1f7e]"
                 />
               </Control>
             </div>
@@ -621,10 +817,10 @@ export default function DesignerClient() {
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <Control label={`Eyebrow size (${eyebrowFontSize}px)`}>
-                    <input type="range" min={7} max={16} value={eyebrowFontSize} onChange={(event) => setEyebrowFontSize(Number(event.target.value))} className="studio-control accent-sky-500" />
+                    <input type="range" min={7} max={16} value={eyebrowFontSize} onChange={(event) => setEyebrowFontSize(Number(event.target.value))} className="studio-control accent-[#7a1f7e]" />
                   </Control>
                   <Control label={`Subheadline size (${subheadlineFontSize}px)`}>
-                    <input type="range" min={9} max={24} value={subheadlineFontSize} onChange={(event) => setSubheadlineFontSize(Number(event.target.value))} className="studio-control accent-sky-500" />
+                    <input type="range" min={9} max={24} value={subheadlineFontSize} onChange={(event) => setSubheadlineFontSize(Number(event.target.value))} className="studio-control accent-[#7a1f7e]" />
                   </Control>
                   <Control label={`Headline spacing (${headlineLetterSpacing}px)`}>
                     <input type="number" min={-3} max={12} step={0.1} value={headlineLetterSpacing} onChange={(event) => setHeadlineLetterSpacing(Number(event.target.value))} className="studio-control" />
@@ -643,7 +839,7 @@ export default function DesignerClient() {
                 <div className="rounded-lg border border-slate-700 bg-white p-4 text-slate-900 shadow-inner">
                   <div className="mb-3 text-[9px] font-extrabold uppercase tracking-[0.14em] text-slate-400">Live type preview</div>
                   <div style={{ fontFamily: font }}>
-                    <div className="font-bold uppercase text-sky-700" style={{ fontSize: eyebrowFontSize, letterSpacing: Math.max(1, bodyLetterSpacing) }}>
+                    <div className="font-bold uppercase text-[#61236f]" style={{ fontSize: eyebrowFontSize, letterSpacing: Math.max(1, bodyLetterSpacing) }}>
                       {flyer.eyebrow || 'Featured collection'}
                     </div>
                     <div className="mt-1" style={{ fontFamily: headlineFont, fontSize, fontWeight, letterSpacing: headlineLetterSpacing, lineHeight: headlineLineHeight }}>
@@ -678,8 +874,8 @@ export default function DesignerClient() {
                         aria-pressed={flyerSize === size.key}
                         className={`min-h-10 rounded-md border px-2 py-2 text-[11px] font-semibold transition-colors ${
                           flyerSize === size.key
-                            ? 'border-sky-400 bg-sky-950 text-white'
-                            : 'border-slate-700 bg-[#111729] text-slate-300 hover:border-sky-500 hover:text-white'
+                            ? 'border-[#b184df] bg-[#351b59] text-white'
+                            : 'border-[#493368] bg-[#1b1130] text-slate-300 hover:border-[#9d68d6] hover:text-white'
                         }`}
                       >
                         Preview {size.label}
@@ -812,7 +1008,7 @@ export default function DesignerClient() {
 
             <DividerLabel>Export distributions</DividerLabel>
             <div className="grid grid-cols-2 gap-2">
-              <button type="button" onClick={exportHtml} className="studio-export-button bg-sky-600 hover:bg-sky-700">
+              <button type="button" onClick={exportHtml} className="studio-export-button bg-[#63206f] hover:bg-[#4d1758]">
                 <FileCode2 size={15} /> Download HTML
               </button>
               <button type="button" onClick={exportPdf} disabled={product !== 'flyer'} className="studio-export-button bg-emerald-600 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-35">
@@ -830,6 +1026,7 @@ export default function DesignerClient() {
             <div
               ref={previewRef}
               onClick={selectArtboardElement}
+              onBlurCapture={commitArtboardText}
               className={`custom-designer-preview relative max-w-full overflow-hidden rounded shadow-2xl transition-[width,height] duration-300 ${product === 'signature' ? 'signature-preview-board' : ''}`}
               style={{
                 ...typographyVariables,
@@ -879,7 +1076,10 @@ export default function DesignerClient() {
           font-size: 13px;
           outline: none;
         }
-        .studio-control:focus { border-color: #38bdf8; }
+        .studio-control:focus {
+          border-color: #9d68d6;
+          box-shadow: 0 0 0 2px rgba(122, 31, 126, 0.22);
+        }
         .studio-secondary-button {
           display: inline-flex;
           min-height: 40px;
@@ -927,11 +1127,16 @@ export default function DesignerClient() {
         .custom-designer-preview [data-type-role] {
           cursor: pointer;
         }
+        .custom-designer-preview [data-type-role][contenteditable='true'] {
+          cursor: text;
+          caret-color: #7a1f7e;
+          user-select: text;
+        }
         .custom-designer-preview .designer-selected-element {
           position: relative;
-          outline: 2px solid #0ea5e9 !important;
+          outline: 2px solid #7a1f7e !important;
           outline-offset: 3px;
-          box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.18);
+          box-shadow: 0 0 0 5px rgba(122, 31, 126, 0.2);
         }
         @media (max-width: 640px) {
           .signature-preview-board {
@@ -1527,7 +1732,7 @@ function ArtworkUpload({
           event.preventDefault();
           onUpload(event.dataTransfer.files?.[0]);
         }}
-        className="rounded-md border border-dashed border-slate-700 bg-[#090d16] p-3 transition-colors hover:border-sky-500"
+        className="rounded-md border border-dashed border-[#493368] bg-[#150d25] p-3 transition-colors hover:border-[#9d68d6]"
       >
         {value && (
           <div className="mb-3 flex h-20 items-center justify-center rounded bg-white p-2">
@@ -1540,7 +1745,7 @@ function ArtworkUpload({
           Drag and drop an image here, or use the upload control.
         </p>
         <div className="flex gap-2">
-          <label className="flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md bg-sky-600 px-3 text-xs font-bold text-white hover:bg-sky-700">
+          <label className="flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md bg-[#63206f] px-3 text-xs font-bold text-white hover:bg-[#4d1758]">
             <ImagePlus size={15} />
             {value ? `Replace ${actionLabel.replace('Upload ', '')}` : actionLabel}
             <input
@@ -1572,7 +1777,7 @@ function FlyerImageUpload({ label, value, onUpload, onClear }: {
     <div className="rounded-md border border-slate-700 bg-[#090d16] p-2">
       <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-slate-400">{label}</div>
       <label className="block cursor-pointer">
-        <div className="flex h-20 items-center justify-center overflow-hidden rounded bg-slate-800 text-center text-[10px] font-semibold text-slate-400 hover:ring-1 hover:ring-sky-500">
+        <div className="flex h-20 items-center justify-center overflow-hidden rounded bg-[#2a1a3e] text-center text-[10px] font-semibold text-slate-400 hover:ring-1 hover:ring-[#9d68d6]">
           {value ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={value} alt="" className="h-full w-full object-cover" />
