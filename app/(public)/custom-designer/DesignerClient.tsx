@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 import { getApiBase } from '@/lib/api-base';
 
 type Product = 'signature' | 'flyer';
-type FlyerSize = 'us-letter' | 'insta-square' | 'insta-story' | 'fb-banner' | 'linkedin-banner';
 type ArtboardKey = 'headshot' | 'details' | 'logo';
+type FlyerSize = 'us-letter' | 'insta-square' | 'insta-story' | 'fb-banner' | 'linkedin-banner';
 
 type SignatureFields = {
   name: string;
@@ -47,7 +47,7 @@ const FLYER_SIZES: Record<FlyerSize, { label: string; width: number; height: num
   'linkedin-banner': { label: 'LinkedIn Profile Header (4:1)', width: 560, height: 140 },
 };
 
-const SIGNATURE_PRESETS = ['Split Column (Classic)', 'Minimal Rows (Stack)'];
+const SIGNATURE_PRESETS = ['RealtyLine Branded Signature'];
 const FLYER_PRESETS = [
   'Editorial Event Flyer',
   'Impact Photo Flyer',
@@ -63,7 +63,6 @@ const SOCIAL_PREVIEW_SIZES: Array<{ key: FlyerSize; label: string }> = [
   { key: 'fb-banner', label: 'Facebook Cover' },
   { key: 'linkedin-banner', label: 'LinkedIn Header' },
 ];
-const DEFAULT_ARTBOARD_ORDER: ArtboardKey[] = ['headshot', 'details', 'logo'];
 
 const DEFAULT_SIGNATURE: SignatureFields = {
   name: 'Sarah Jenkins',
@@ -239,7 +238,6 @@ export default function DesignerClient() {
   const [syncStatus, setSyncStatus] = useState<'loading' | 'local' | 'saving' | 'saved' | 'error'>('loading');
   const [artworkUploading, setArtworkUploading] = useState(false);
   const [flyer, setFlyer] = useState(DEFAULT_FLYER);
-  const [artboardOrder, setArtboardOrder] = useState<ArtboardKey[]>(DEFAULT_ARTBOARD_ORDER);
   const fileRef = useRef<HTMLInputElement>(null);
   const headshotRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
@@ -508,30 +506,6 @@ export default function DesignerClient() {
     if (target.current) target.current.value = '';
   };
 
-  const reorderArtboards = (source: ArtboardKey, target: ArtboardKey) => {
-    if (source === target) return;
-    setArtboardOrder((current) => {
-      const next = [...current];
-      const sourceIndex = next.indexOf(source);
-      const targetIndex = next.indexOf(target);
-      if (sourceIndex < 0 || targetIndex < 0) return current;
-      next.splice(sourceIndex, 1);
-      next.splice(targetIndex, 0, source);
-      return next;
-    });
-  };
-
-  const moveArtboard = (key: ArtboardKey, direction: -1 | 1) => {
-    setArtboardOrder((current) => {
-      const index = current.indexOf(key);
-      const nextIndex = index + direction;
-      if (index < 0 || nextIndex < 0 || nextIndex >= current.length) return current;
-      const next = [...current];
-      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
-      return next;
-    });
-  };
-
   const clearBackground = () => {
     setBackground('');
     if (fileRef.current) fileRef.current.value = '';
@@ -557,7 +531,6 @@ export default function DesignerClient() {
     setBackground('');
     setSignature(DEFAULT_SIGNATURE);
     setFlyer(DEFAULT_FLYER);
-    setArtboardOrder(DEFAULT_ARTBOARD_ORDER);
     if (fileRef.current) fileRef.current.value = '';
     if (headshotRef.current) headshotRef.current.value = '';
     if (logoRef.current) logoRef.current.value = '';
@@ -569,7 +542,7 @@ export default function DesignerClient() {
       return;
     }
     const markup = product === 'signature'
-      ? signatureMarkup(signature, preset, primary, secondary, font, headlineFont, fontSize, bodyFontSize, fontWeight, background, artboardOrder)
+      ? signatureMarkup(signature, primary, secondary, font, headlineFont, fontSize, bodyFontSize, fontWeight, background)
       : flyerMarkup(
           flyer,
           signature,
@@ -1044,7 +1017,6 @@ export default function DesignerClient() {
               {product === 'signature' ? (
                 <SignaturePreview
                   fields={signature}
-                  preset={preset}
                   primary={primary}
                   secondary={secondary}
                   font={font}
@@ -1052,9 +1024,6 @@ export default function DesignerClient() {
                   fontSize={fontSize}
                   bodyFontSize={bodyFontSize}
                   fontWeight={fontWeight}
-                  order={artboardOrder}
-                  onReorder={reorderArtboards}
-                  onMove={moveArtboard}
                 />
               ) : (
                 <FlyerPreview fields={flyer} identity={signature} preset={preset} primary={primary} secondary={secondary} font={font} headlineFont={headlineFont} fontSize={fontSize} bodyFontSize={bodyFontSize} fontWeight={fontWeight} dimensions={dimensions} />
@@ -1154,9 +1123,8 @@ export default function DesignerClient() {
   );
 }
 
-function SignaturePreview({ fields, preset, primary, secondary, font, headlineFont, fontSize, bodyFontSize, fontWeight, order, onReorder, onMove }: {
+function SignaturePreview({ fields, primary, secondary, font, headlineFont, fontSize, bodyFontSize, fontWeight }: {
   fields: SignatureFields;
-  preset: number;
   primary: string;
   secondary: string;
   font: string;
@@ -1164,10 +1132,57 @@ function SignaturePreview({ fields, preset, primary, secondary, font, headlineFo
   fontSize: number;
   bodyFontSize: number;
   fontWeight: number;
-  order: ArtboardKey[];
-  onReorder: (source: ArtboardKey, target: ArtboardKey) => void;
-  onMove: (key: ArtboardKey, direction: -1 | 1) => void;
 }) {
+  const preset: number = 0;
+  const order: ArtboardKey[] = ['logo', 'details', 'headshot'];
+  const onReorder = () => {};
+  const onMove = () => {};
+  const approvedSignature = (
+    <div
+      className="grid min-h-[180px] w-full grid-cols-[180px_minmax(0,1fr)_220px] items-stretch overflow-hidden border border-slate-200 bg-white"
+      style={{ fontFamily: font, color: secondary }}
+    >
+      <div className="flex items-center justify-center border-r border-slate-200 p-5">
+        {fields.logo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={fields.logo} alt={`${fields.company} logo`} className="max-h-24 max-w-[145px] object-contain" />
+        ) : (
+          <div className="text-center">
+            <div className="text-4xl font-black leading-none" style={{ color: primary }}>R</div>
+            <div className="mt-1 text-sm font-black uppercase tracking-tight text-slate-900">RealtyLine</div>
+          </div>
+        )}
+      </div>
+      <div className="relative flex min-w-0 items-center px-6 py-5">
+        <div className="absolute bottom-0 left-6 h-12 w-9" style={{ backgroundColor: primary }} />
+        <div className="pb-8">
+          <div className="leading-tight" style={{ color: secondary, fontFamily: headlineFont, fontSize: Math.max(20, fontSize), fontWeight }}>
+            {fields.name}
+          </div>
+          <div className="mt-1 font-semibold uppercase tracking-wide text-slate-700" style={{ fontSize: Math.max(10, bodyFontSize) }}>
+            {fields.title}
+          </div>
+          <div className="mt-3 text-slate-500" style={{ fontSize: Math.max(9, bodyFontSize - 1) }}>
+            {fields.company || 'Broker name required'}
+          </div>
+        </div>
+      </div>
+      <div className="flex min-w-0 flex-col">
+        <div className="flex h-10 items-center justify-center gap-3 text-[10px] font-bold text-white" style={{ backgroundColor: primary }}>
+          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-white/40">f</span>
+          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-white/40">ig</span>
+          <span className="flex h-5 w-5 items-center justify-center rounded-full border border-white/40">in</span>
+        </div>
+        <div className="flex flex-1 flex-col justify-center gap-2 px-5 py-4 text-right text-slate-800" style={{ fontSize: Math.max(9, bodyFontSize) }}>
+          {fields.phone && <div><strong>C:</strong> {fields.phone}</div>}
+          {fields.email && <div className="break-all">{fields.email}</div>}
+          {fields.website && <div className="break-all">{fields.website}</div>}
+        </div>
+      </div>
+    </div>
+  );
+  if (SIGNATURE_PRESETS.length === 1) return approvedSignature;
+
   const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
   const headshot = fields.photo ? (
     // User-supplied headshot artwork must render directly in the signature.
@@ -1829,15 +1844,24 @@ function backgroundStyle(background: string) {
   return background ? `background-image:url('${background}');background-size:cover;background-position:center;` : '';
 }
 
-function signatureMarkup(fields: SignatureFields, preset: number, primary: string, secondary: string, font: string, headlineFont: string, fontSize: number, bodyFontSize: number, fontWeight: number, background: string, order: ArtboardKey[]) {
+function signatureMarkup(fields: SignatureFields, primary: string, secondary: string, font: string, headlineFont: string, fontSize: number, bodyFontSize: number, fontWeight: number, background: string) {
   const data = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, escapeHtml(value)])) as SignatureFields;
+  const preset: number = 0;
+  const order: ArtboardKey[] = ['logo', 'details', 'headshot'];
+  const logo = data.logo
+    ? `<img src="${data.logo}" alt="${data.company} logo" width="145" style="display:block;max-height:96px;max-width:145px;object-fit:contain;margin:auto">`
+    : `<div style="text-align:center"><div style="font-size:38px;line-height:1;font-weight:900;color:${primary}">R</div><div style="font-size:13px;font-weight:900;text-transform:uppercase;color:#0f172a">RealtyLine</div></div>`;
+  const socialIcon = (label: string) => `<span style="display:inline-block;width:20px;height:20px;line-height:20px;border:1px solid rgba(255,255,255,.45);border-radius:50%;text-align:center;font-size:9px;font-weight:700;margin:0 4px">${label}</span>`;
+  const approvedSignature = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="font-family:${font};color:${secondary};width:760px;min-height:180px;border:1px solid #e2e8f0;border-collapse:collapse;background:#fff;${backgroundStyle(background)}"><tr><td width="180" style="padding:20px;text-align:center;vertical-align:middle;border-right:1px solid #e2e8f0">${logo}</td><td style="position:relative;padding:20px 24px;vertical-align:middle"><div style="font-family:${headlineFont};font-size:${Math.max(20, fontSize)}px;font-weight:${fontWeight};line-height:1.15;color:${secondary}">${data.name}</div><div style="font-size:${Math.max(10, bodyFontSize)}px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#334155;margin-top:4px">${data.title}</div><div style="font-size:${Math.max(9, bodyFontSize - 1)}px;color:#64748b;margin-top:12px">${data.company}</div><div style="width:36px;height:46px;background:${primary};margin-top:14px"></div></td><td width="220" style="vertical-align:top"><div style="height:40px;line-height:40px;text-align:center;background:${primary};color:#fff">${socialIcon('f')}${socialIcon('ig')}${socialIcon('in')}</div><div style="padding:18px 20px;text-align:right;font-size:${Math.max(9, bodyFontSize)}px;line-height:1.6;color:#1e293b">${data.phone ? `<div><strong>C:</strong> ${data.phone}</div>` : ''}${data.email ? `<div>${data.email}</div>` : ''}${data.website ? `<div>${data.website}</div>` : ''}</div></td></tr></table>`;
+  if (SIGNATURE_PRESETS.length === 1) return approvedSignature;
+
   const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
   const labelStyle = 'display:block;font-size:9px;line-height:1;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700;margin-bottom:16px';
   const cellStyle = 'vertical-align:middle;background:rgba(255,255,255,.95);border:1px solid #cbd5e1;border-radius:6px;padding:12px';
   const avatar = data.photo
     ? `<img src="${data.photo}" alt="${data.name} headshot" width="96" height="96" style="border-radius:50%;display:block;object-fit:cover;margin:auto">`
     : `<div style="width:96px;height:96px;border-radius:50%;background:#e2e8f0;margin:auto"></div>`;
-  const logo = data.logo
+  const legacyLogo = data.logo
     ? `<img src="${data.logo}" alt="${data.company} logo" width="150" style="display:block;max-height:80px;object-fit:contain;margin:auto">`
     : `<div style="font-size:11px;text-align:center;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700">Company logo</div>`;
   const details = preset === 1
@@ -1846,7 +1870,7 @@ function signatureMarkup(fields: SignatureFields, preset: number, primary: strin
   const cells: Record<ArtboardKey, string> = {
     headshot: `<td width="170" style="${cellStyle}"><span style="${labelStyle}">Headshot image</span>${avatar}</td>`,
     details: `<td style="${cellStyle}"><span style="${labelStyle}">Personal details</span>${details}</td>`,
-    logo: `<td width="190" style="${cellStyle}"><span style="${labelStyle}">Company logo</span>${logo}</td>`,
+    logo: `<td width="190" style="${cellStyle}"><span style="${labelStyle}">Company logo</span>${legacyLogo}</td>`,
   };
   const orderedCells = order.map((key) => cells[key]).join('');
 
