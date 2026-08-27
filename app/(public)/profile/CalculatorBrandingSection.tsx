@@ -56,7 +56,7 @@ const EMPTY_FORM: FormState = {
   zip: '',
   license_number: '',
   tagline: '',
-  footer_template: 'business-card',
+  footer_template: 'split-column',
 };
 
 function formFromResponse(data: BrandingResponse): FormState {
@@ -433,15 +433,6 @@ function BrandPreview({ form }: { form: FormState }) {
       <p className="mt-2 max-w-44 text-base font-black uppercase leading-none text-black">{company}</p>
     </div>
   );
-  const socialIcons = (
-    <div className="flex items-center justify-center gap-2" aria-label="Social media">
-      {['f', '◎', 't', 'in'].map((social) => (
-        <span key={social} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-current text-[11px] font-bold">
-          {social}
-        </span>
-      ))}
-    </div>
-  );
   const contactLines = (
     <div className="space-y-1 text-xs font-semibold leading-tight text-black">
       <p><span className="font-black text-[#079bce]">C:</span> {mobile}</p>
@@ -453,103 +444,47 @@ function BrandPreview({ form }: { form: FormState }) {
 
   let preview: ReactNode;
   switch (form.footer_template) {
-    case 'banner':
+    case 'minimal-rows':
       preview = (
-        <div className="grid min-h-44 overflow-hidden border border-gray-300 bg-white shadow-sm sm:grid-cols-[0.78fr_1.35fr_0.9fr]">
-          <div className="flex flex-col items-center justify-center bg-[#153f83] px-4 py-3 text-center text-white">
+        <div className="grid min-h-44 overflow-hidden border border-gray-300 bg-white shadow-sm sm:grid-cols-[0.8fr_1.6fr_0.9fr]">
+          <div className="flex items-center justify-center border-b border-gray-200 p-4 sm:border-b-0 sm:border-r">
             {headshot}
-            <p className="mt-2 max-w-full truncate text-sm font-black">{name}</p>
-            <p className="truncate text-[10px] uppercase tracking-[0.28em] text-white">{title}</p>
           </div>
-          <div className="flex flex-col justify-center gap-5 px-5 py-4">
-            {contactLines}
-            <div className="text-[#153f83]">{socialIcons}</div>
-          </div>
-          <div className="flex items-center justify-center border-t border-gray-200 p-4 sm:border-l-0 sm:border-t-0">
-            {companyBlock}
-          </div>
-        </div>
-      );
-      break;
-    case 'signature':
-      preview = (
-        <div className="grid min-h-44 overflow-hidden border border-gray-300 bg-white shadow-sm sm:grid-cols-[0.88fr_1.35fr_0.9fr]">
-          <div className="relative flex items-center justify-center overflow-hidden bg-[#153f83] p-4">
-            <span className="absolute -right-9 h-48 w-48 rounded-full border-[10px] border-[#08ace0]" aria-hidden />
-            <div className="relative z-10 scale-110">{headshot}</div>
-          </div>
-          <div className="flex flex-col justify-center p-4">
-            <div className="min-w-0 pb-2">
-              <p className="truncate text-base font-black text-[#153f83]">{name}</p>
-              <p className="truncate text-[10px] uppercase tracking-[0.25em] text-gray-800">{title}</p>
-              <span className="mt-1 block h-0.5 w-10 bg-[#08ace0]" />
+          <div className="flex min-w-0 flex-col justify-center px-5 py-4">
+            <div>
+              <p className="truncate text-lg font-bold text-slate-900">{name}</p>
+              <p className="truncate text-xs font-semibold text-[#301D5D]">{title}</p>
             </div>
-            <div className="mt-1 flex items-stretch gap-3">
-              <span className="w-7 shrink-0 bg-[#08ace0]" aria-hidden />
+            <div className="mt-3 border-t border-gray-200 pt-3">
+              <p className="truncate text-sm font-bold text-slate-900">{company}</p>
               {contactLines}
             </div>
           </div>
-          <div className="flex flex-col items-center justify-center border-t border-gray-200 p-4 sm:border-t-0">
+          <div className="flex items-center justify-center border-t border-gray-200 p-4 sm:border-l sm:border-t-0">
             {companyBlock}
-            <div className="mt-5 text-[#079bce]">{socialIcons}</div>
           </div>
         </div>
       );
       break;
-    case 'two-column':
-      preview = (
-        <div className="overflow-hidden border border-gray-300 bg-white shadow-sm">
-          <div className="grid min-h-36 gap-5 px-5 py-4 sm:grid-cols-[1fr_1.25fr_0.75fr]">
-            <div className="flex items-center justify-center border-b border-gray-300 pb-4 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-5">
-              <div className="flex items-center gap-3">
-                {logo}
-                <p className="max-w-40 text-base font-black uppercase leading-tight text-black">{company}</p>
-              </div>
-          </div>
-            <div className="flex min-w-0 flex-col justify-center">
-              <p className="truncate text-base font-black uppercase text-[#064ca7]">{name}</p>
-              <p className="truncate text-[10px] uppercase tracking-[0.28em] text-black">{title}</p>
-              <div className="mt-2 space-y-1 text-xs font-semibold leading-tight text-black">
-                <p>C: {mobile}</p>
-                <p>O: {office}</p>
-                <p>{email}</p>
-                <p>{website}</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-center text-black">
-              {socialIcons}
-            </div>
-          </div>
-          <div className="bg-[#222] px-4 py-2.5 text-center font-serif text-base italic text-white">
-            {form.tagline || 'As your trusted real estate agent, I provide results that move you'}
-          </div>
-        </div>
-      );
-      break;
-    case 'business-card':
+    case 'split-column':
     default:
       preview = (
-        <div className="relative grid min-h-44 overflow-hidden border border-gray-300 bg-white shadow-sm sm:grid-cols-[0.9fr_1.05fr_1.65fr]">
-          <div className="flex items-center justify-center p-4">
+        <div className="grid min-h-44 overflow-hidden border border-gray-300 bg-white shadow-sm sm:grid-cols-[0.8fr_1.7fr_0.9fr]">
+          <div className="flex items-center justify-center border-b border-gray-200 p-4 sm:border-b-0 sm:border-r">
+            {headshot}
+          </div>
+          <div className="flex min-w-0 items-center px-5 py-4">
+            <div className="w-full border-l-[3px] border-[#301D5D] pl-4">
+              <p className="truncate text-lg font-bold text-slate-900">{name}</p>
+              <p className="truncate text-xs font-semibold text-[#301D5D]">{title}</p>
+              <p className="mt-1 truncate text-sm font-bold text-slate-900">{company}</p>
+              <div className="mt-2">
+                {contactLines}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-center border-t border-gray-200 p-4 sm:border-l sm:border-t-0">
             {companyBlock}
-          </div>
-          <div className="flex min-w-0 flex-col justify-center px-5 py-4">
-            <p className="truncate text-lg font-bold text-[#153f83]">{name}</p>
-            <p className="truncate text-[11px] uppercase tracking-[0.32em] text-black">{title}</p>
-            <span className="mt-5 block h-16 w-8 border-t-[10px] border-[#08ace0] bg-[#153f83]" aria-hidden />
-          </div>
-          <div className="grid grid-cols-2 items-end gap-4 px-4 pb-5 pt-14">
-            <div className="space-y-2 text-xs font-semibold text-black">
-              <p><span className="text-[#079bce]">◉</span> C: {mobile}</p>
-              <p><span className="text-[#079bce]">◉</span> O: {office}</p>
-            </div>
-            <div className="space-y-2 text-xs font-semibold text-black">
-              <p className="truncate"><span className="text-[#079bce]">✉</span> {email}</p>
-              <p className="truncate"><span className="text-[#079bce]">◎</span> {website}</p>
-            </div>
-          </div>
-          <div className="absolute right-0 top-3 bg-[#153f83] px-5 py-2 text-[#08ace0]">
-            {socialIcons}
           </div>
         </div>
       );

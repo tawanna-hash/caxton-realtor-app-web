@@ -772,7 +772,15 @@ async function _runEnsureSchema(): Promise<void> {
   // lib/footer-templates.ts; the app coerces unknown values back to
   // the default on read so adding a new template requires no migration.
   await sql`
-    ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS footer_template TEXT NOT NULL DEFAULT 'business-card'
+    ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS footer_template TEXT NOT NULL DEFAULT 'split-column'
+  `;
+  await sql`
+    ALTER TABLE advertisers ALTER COLUMN footer_template SET DEFAULT 'split-column'
+  `;
+  await sql`
+    UPDATE advertisers
+    SET footer_template = 'split-column'
+    WHERE footer_template NOT IN ('split-column', 'minimal-rows')
   `;
 
   // Event-pipeline metadata (advertiser submissions + Gemini-detected from FB).

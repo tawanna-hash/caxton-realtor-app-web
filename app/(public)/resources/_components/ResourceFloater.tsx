@@ -19,6 +19,7 @@ import type { FooterBrand, FooterTemplateId } from '@/lib/footer-templates';
 
 const API = getApiBase();
 const DESIGNER_SIGNATURE_STORAGE_KEY = 'rnn:custom-designer-signature';
+const DESIGNER_SIGNATURE_TEMPLATE_STORAGE_KEY = 'rnn:custom-designer-signature-template';
 
 type BrandFooter = {
   template: FooterTemplateId;
@@ -63,8 +64,9 @@ export default function ResourceFloater({
           logo?: string;
         };
         if (signature.name?.trim() && signature.company?.trim()) {
+          const savedTemplate = window.localStorage.getItem(DESIGNER_SIGNATURE_TEMPLATE_STORAGE_KEY);
           designerBranding = {
-            template: 'signature',
+            template: savedTemplate === 'minimal-rows' ? 'minimal-rows' : 'split-column',
             brand: {
               name: signature.name,
               company: signature.company,
@@ -222,12 +224,12 @@ export default function ResourceFloater({
           bottomOffsetClass={bottomOffsetClass}
         />
       </div>
-      {brandFooter && <PrintBrandFooter brand={brandFooter.brand} />}
+      {brandFooter && <PrintBrandFooter template={brandFooter.template} brand={brandFooter.brand} />}
     </>
   );
 }
 
-function PrintBrandFooter({ brand }: { brand: FooterBrand }) {
+function PrintBrandFooter({ template, brand }: BrandFooter) {
   const contact = [brand.phone, brand.email, brand.website].filter(Boolean).join('  •  ');
   const location = [
     [brand.address, brand.address_2].filter(Boolean).join(', '),
@@ -236,7 +238,11 @@ function PrintBrandFooter({ brand }: { brand: FooterBrand }) {
   return (
     <aside
       aria-label="REALTOR contact information"
-      className="hidden print:fixed print:inset-x-0 print:bottom-0 print:z-50 print:flex print:items-center print:gap-4 print:border-t-2 print:border-[#c4a35a] print:bg-white print:px-8 print:py-3 print:text-gray-900"
+      className={`hidden print:fixed print:inset-x-0 print:bottom-0 print:z-50 print:bg-white print:px-8 print:py-3 print:text-gray-900 ${
+        template === 'minimal-rows'
+          ? 'print:flex print:items-center print:gap-5 print:border-t-2 print:border-[#301D5D]'
+          : 'print:grid print:grid-cols-[72px_minmax(0,1fr)_100px] print:items-center print:gap-4 print:border-t print:border-gray-300'
+      }`}
     >
       {brand.photo_url && (
         // eslint-disable-next-line @next/next/no-img-element

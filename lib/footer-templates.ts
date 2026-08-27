@@ -12,18 +12,13 @@
 // 'rnn:footer-template' (per-device override picked at download time).
 // Unknown / removed legacy values coerce back to Layout 1 on read.
 
-export const FOOTER_TEMPLATE_IDS = [
-  'business-card',
-  'banner',
-  'signature',
-  'two-column',
-] as const;
+export const FOOTER_TEMPLATE_IDS = ['split-column', 'minimal-rows'] as const;
 
 export type FooterTemplateId = (typeof FOOTER_TEMPLATE_IDS)[number];
 
 export const FOOTER_TEMPLATE_PICKER_IDS = FOOTER_TEMPLATE_IDS;
 
-const FOOTER_TEMPLATE_DEFAULT: FooterTemplateId = 'business-card';
+const FOOTER_TEMPLATE_DEFAULT: FooterTemplateId = 'split-column';
 
 export function coerceFooterTemplateId(value: unknown): FooterTemplateId {
   if (typeof value !== 'string') return FOOTER_TEMPLATE_DEFAULT;
@@ -101,32 +96,18 @@ export interface FooterTemplateMeta {
 }
 
 export const FOOTER_TEMPLATE_META: Record<FooterTemplateId, FooterTemplateMeta> = {
-  'business-card': {
-    id: 'business-card',
-    label: 'PDF Layout 1',
-    blurb: 'Logo left, agent identity centered, contact details right.',
-    heightPt: 106,
+  'split-column': {
+    id: 'split-column',
+    label: 'Split Column (Classic)',
+    blurb: 'Headshot, contact details, and company logo in three clean columns.',
+    heightPt: 112,
     placement: 'every-page',
   },
-  banner: {
-    id: 'banner',
-    label: 'PDF Layout 2',
-    blurb: 'Navy portrait card, contact details centered, logo right.',
-    heightPt: 126,
-    placement: 'every-page',
-  },
-  signature: {
-    id: 'signature',
-    label: 'PDF Layout 3',
-    blurb: 'Circular portrait feature, cyan contact bar, logo right.',
-    heightPt: 124,
-    placement: 'every-page',
-  },
-  'two-column': {
-    id: 'two-column',
-    label: 'PDF Layout 4',
-    blurb: 'Logo and agent details above a full-width black tagline bar.',
-    heightPt: 120,
+  'minimal-rows': {
+    id: 'minimal-rows',
+    label: 'Minimal Rows (Stack)',
+    blurb: 'A compact stacked identity and contact layout with headshot and logo.',
+    heightPt: 112,
     placement: 'every-page',
   },
 };

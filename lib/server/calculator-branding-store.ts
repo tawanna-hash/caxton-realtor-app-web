@@ -69,7 +69,7 @@ async function ensureCalculatorBrandingTable(): Promise<void> {
       zip TEXT,
       license_number TEXT,
       tagline TEXT,
-      footer_template TEXT NOT NULL DEFAULT 'business-card',
+      footer_template TEXT NOT NULL DEFAULT 'split-column',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
@@ -77,6 +77,15 @@ async function ensureCalculatorBrandingTable(): Promise<void> {
   await query(`
     ALTER TABLE realtor_calculator_branding
     ADD COLUMN IF NOT EXISTS office_phone TEXT
+  `);
+  await query(`
+    ALTER TABLE realtor_calculator_branding
+    ALTER COLUMN footer_template SET DEFAULT 'split-column'
+  `);
+  await query(`
+    UPDATE realtor_calculator_branding
+    SET footer_template = 'split-column'
+    WHERE footer_template NOT IN ('split-column', 'minimal-rows')
   `);
 }
 
