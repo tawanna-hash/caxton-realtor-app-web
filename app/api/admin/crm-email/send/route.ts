@@ -20,6 +20,10 @@ import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// Bulk sends dispatch recipients serially and update the delivery ledger after
+// each message. Give the request the same runtime budget as the send cron so a
+// normal CRM audience cannot be cut off by the platform's default duration.
+export const maxDuration = 300;
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
