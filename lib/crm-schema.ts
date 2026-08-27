@@ -66,6 +66,20 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   // column exists, so it can't update an existing default).
   await step(() => sql`ALTER TABLE advertisers ALTER COLUMN status SET DEFAULT 'advertiser'`);
 
+  // Keep an explicit record of administrator deletions by normalized email.
+  // Marketing outreach auto-adds previously unseen recipients to the CRM; this
+  // tombstone prevents that background sync from recreating a partner the
+  // administrator intentionally removed.
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS advertiser_deletion_tombstones (
+      normalized_email       text PRIMARY KEY,
+      original_advertiser_id integer,
+      original_name          text,
+      original_slug          text,
+      deleted_at             timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+
   // Identity
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS first_name text`);
   await step(() => sql`ALTER TABLE advertisers ADD COLUMN IF NOT EXISTS last_name text`);
@@ -315,6 +329,9 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       updated_at               timestamptz NOT NULL DEFAULT now()
     )
   `);
+  // Financial history must survive a CRM deletion. The delete endpoint clears
+  // this reference inside the same transaction before removing the advertiser.
+  await step(() => sql`ALTER TABLE invoices ALTER COLUMN advertiser_id DROP NOT NULL`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_advertiser_id ON invoices(advertiser_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_agreement_id  ON invoices(agreement_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_status        ON invoices(status)`);

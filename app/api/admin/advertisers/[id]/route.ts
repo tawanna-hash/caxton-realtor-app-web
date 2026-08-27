@@ -20,6 +20,7 @@ import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { upsertAdvertiserMailingByAdvertiserId } from '@/lib/mailing';
 import { syncAdvertiserToAgreement } from '@/lib/server/billing-crm-sync';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { withNeonTransaction } from '@/lib/server/db/neon';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -285,26 +286,64 @@ export const DELETE = withAdminTracking(async function DELETE(req: NextRequest, 
   }
   try {
     await ensureSchema();
-    const sql = getSql();
-    const existing = (await sql`
-      SELECT is_locked FROM advertisers WHERE id = ${idNum}
-    `) as unknown as Array<{ is_locked: boolean }>;
-    if (existing.length === 0) {
+    const outcome = await withNeonTransaction(async (client) => {
+      const existing = await client.query<{
+        id: number;
+        is_locked: boolean;
+        name: string;
+        slug: string;
+        contact_email: string | null;
+      }>(
+        `SELECT id, is_locked, name, slug, contact_email
+         FROM advertisers
+         WHERE id = $1
+         FOR UPDATE`,
+        [idNum],
+      );
+      const advertiser = existing.rows[0];
+      if (!advertiser) return 'not_found' as const;
+      if (advertiser.is_locked) return 'locked' as const;
+
+      // Preserve issued invoices while removing their CRM relationship.
+      await client.query(
+        'UPDATE invoices SET advertiser_id = NULL WHERE advertiser_id = $1',
+        [idNum],
+      );
+
+      const result = await client.query<{ id: number }>(
+        'DELETE FROM advertisers WHERE id = $1 RETURNING id',
+        [idNum],
+      );
+      if (result.rowCount === 0) return 'not_found' as const;
+
+      const email = advertiser.contact_email?.trim().toLowerCase();
+      if (email) {
+        await client.query(
+          `INSERT INTO advertiser_deletion_tombstones (
+             normalized_email, original_advertiser_id, original_name,
+             original_slug, deleted_at
+           ) VALUES ($1, $2, $3, $4, now())
+           ON CONFLICT (normalized_email) DO UPDATE SET
+             original_advertiser_id = EXCLUDED.original_advertiser_id,
+             original_name = EXCLUDED.original_name,
+             original_slug = EXCLUDED.original_slug,
+             deleted_at = now()`,
+          [email, advertiser.id, advertiser.name, advertiser.slug],
+        );
+      }
+      return 'deleted' as const;
+    });
+
+    if (outcome === 'not_found') {
       return NextResponse.json({ error: 'not found' }, { status: 404 });
     }
-    if (existing[0].is_locked) {
+    if (outcome === 'locked') {
       return NextResponse.json(
         { error: 'This partner record is locked. Unlock it before deleting.' },
         { status: 423 },
       );
     }
-    const result = (await sql`
-      DELETE FROM advertisers WHERE id = ${idNum} RETURNING id
-    `) as unknown as Array<{ id: number }>;
-    if (result.length === 0) {
-      return NextResponse.json({ error: 'not found' }, { status: 404 });
-    }
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, deleted_id: idNum });
   } catch (err) {
     console.error('[admin/advertisers DELETE]', errMessage(err));
     return NextResponse.json({ error: 'delete failed', detail: errMessage(err) }, { status: 500 });

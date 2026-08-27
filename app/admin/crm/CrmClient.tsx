@@ -550,8 +550,10 @@ export default function CrmClient({ initialRows }: Props) {
             await reload();
           }}
           onDeleted={async () => {
+            const deletedId = editing.id;
+            setRows((prev) => prev.filter((item) => item.id !== deletedId));
             setEditing(null);
-            await reload();
+            flash('Partner deleted');
           }}
           onError={(msg) => setError(msg)}
         />
@@ -933,7 +935,10 @@ function EditDrawer({
     setDeleting(true);
     try {
       const res = await fetch(`/api/admin/advertisers/${row.id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.detail || data?.error || `Delete failed (HTTP ${res.status})`);
+      }
       await onDeleted();
     } catch (err) {
       onError(err instanceof Error ? err.message : 'delete failed');

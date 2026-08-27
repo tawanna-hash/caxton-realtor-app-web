@@ -13,7 +13,7 @@
 //   • Advertiser-source recipients (already have an advertisers.id)
 //     still get last_contacted_at bumped, but nothing else changes.
 
-import { getSql } from '@/lib/db';
+import { ensureSchema, getSql } from '@/lib/db';
 
 export type ProspectSyncInput = {
   email: string;
@@ -26,9 +26,18 @@ export type ProspectSyncInput = {
 export async function syncProspectFromOutreach(
   input: ProspectSyncInput,
 ): Promise<{ inserted: boolean }> {
+  await ensureSchema();
   const sql = getSql();
   const email = input.email.trim().toLowerCase();
   if (!email) return { inserted: false };
+
+  const deleted = (await sql`
+    SELECT 1
+    FROM advertiser_deletion_tombstones
+    WHERE normalized_email = ${email}
+    LIMIT 1
+  `) as unknown as Array<{ '?column?': number }>;
+  if (deleted.length > 0) return { inserted: false };
 
   const existing = (await sql`
     SELECT id FROM advertisers WHERE lower(contact_email) = ${email} LIMIT 1
