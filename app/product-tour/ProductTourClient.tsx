@@ -411,6 +411,45 @@ function AdvertisingScreen() {
           </div>
         ))}
       </div>
+      <div className="mt-3">
+        <p className="mb-2 text-[8px] font-bold uppercase tracking-[0.14em] text-gray-400">
+          Download Realty News Now
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            href="https://apps.apple.com/us/app/realty-news-now/id6782394889"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Download Realty News Now on the App Store"
+            onClick={() => trackEvent('product_tour_store_badge_clicked', { store: 'apple' })}
+            className="block rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
+          >
+            <Image
+              src="/product-tour/app-store-badge.png"
+              alt="Download on the App Store"
+              width={132}
+              height={45}
+              className="h-auto w-[116px] sm:w-[132px]"
+            />
+          </a>
+          <a
+            href="https://play.google.com/store/apps/details?id=com.realtynewsnow.myapp"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Get Realty News Now on Google Play"
+            onClick={() => trackEvent('product_tour_store_badge_clicked', { store: 'google_play' })}
+            className="block rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
+          >
+            <Image
+              src="/product-tour/google-play-badge.png"
+              alt="Get it on Google Play"
+              width={132}
+              height={45}
+              className="h-auto w-[116px] sm:w-[132px]"
+            />
+          </a>
+        </div>
+      </div>
       <div className="mt-3 flex items-center justify-between bg-brand-700 px-3 py-2.5 text-white">
         <span className="text-[9px] font-medium">Build a cross-channel campaign</span>
         <ArrowRight size={14} aria-hidden />
