@@ -70,6 +70,20 @@ export async function GET(req: NextRequest) {
         o.from_name, o.reply_to, o.preview_text, o.recipient_count,
         (o.stats->>'sent')::int  AS sent_count,
         (o.stats->>'failed')::int AS failed_count,
+        COALESCE((
+          SELECT jsonb_agg(jsonb_build_object(
+            'email', r.email,
+            'first_name', r.first_name,
+            'last_name', r.last_name,
+            'company', r.company,
+            'status', r.status,
+            'error', r.error
+          ) ORDER BY r.email)
+          FROM marketing_campaign_outreach_recipients r
+          JOIN marketing_campaign_outreach o2 ON o2.id = r.outreach_id
+          WHERE COALESCE(o2.recurrence_parent_id, o2.id) = agg.series_id
+            AND r.status IN ('failed', 'bounced')
+        ), '[]'::jsonb) AS failed_recipients,
         agg.runs_sent, agg.runs_total, agg.last_sent_at, agg.next_scheduled_for,
         (SELECT COALESCE(SUM(r.open_count), 0) FROM marketing_campaign_outreach_recipients r JOIN marketing_campaign_outreach o2 ON o2.id = r.outreach_id WHERE COALESCE(o2.recurrence_parent_id, o2.id) = agg.series_id) AS open_count,
         (SELECT COALESCE(SUM(r.click_count), 0) FROM marketing_campaign_outreach_recipients r JOIN marketing_campaign_outreach o2 ON o2.id = r.outreach_id WHERE COALESCE(o2.recurrence_parent_id, o2.id) = agg.series_id) AS click_count,
@@ -90,6 +104,19 @@ export async function GET(req: NextRequest) {
       from_name, reply_to, preview_text, recipient_count,
       (stats->>'sent')::int AS sent_count,
       (stats->>'failed')::int AS failed_count,
+      COALESCE((
+        SELECT jsonb_agg(jsonb_build_object(
+          'email', r.email,
+          'first_name', r.first_name,
+          'last_name', r.last_name,
+          'company', r.company,
+          'status', r.status,
+          'error', r.error
+        ) ORDER BY r.email)
+        FROM marketing_campaign_outreach_recipients r
+        WHERE r.outreach_id = marketing_campaign_outreach.id
+          AND r.status IN ('failed', 'bounced')
+      ), '[]'::jsonb) AS failed_recipients,
       (SELECT COALESCE(SUM(r.open_count), 0) FROM marketing_campaign_outreach_recipients r WHERE r.outreach_id = marketing_campaign_outreach.id) AS open_count,
       (SELECT COALESCE(SUM(r.click_count), 0) FROM marketing_campaign_outreach_recipients r WHERE r.outreach_id = marketing_campaign_outreach.id) AS click_count,
       (SELECT MIN(r.opened_at) FROM marketing_campaign_outreach_recipients r WHERE r.outreach_id = marketing_campaign_outreach.id) AS first_opened_at,

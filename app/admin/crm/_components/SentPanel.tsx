@@ -2,6 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+type FailedRecipient = {
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  company: string | null;
+  status: string;
+  error: string | null;
+};
+
 export type SentRow = {
   id: string;
   subject: string | null;
@@ -18,6 +27,7 @@ export type SentRow = {
   recipient_count: number | null;
   sent_count: number | null;
   failed_count: number | null;
+  failed_recipients?: FailedRecipient[];
   runs_sent?: number | null;
   runs_total?: number | null;
   last_sent_at?: string | null;
@@ -53,6 +63,43 @@ function StatusBadge({ status }: { status: string }) {
             : status === 'cancelled' ? 'bg-gray-200 text-gray-700'
               : 'bg-gray-100 text-gray-700';
   return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{status}</span>;
+}
+
+function FailedRecipientDropdown({ row }: { row: SentRow }) {
+  if (!row.failed_count) return null;
+  const failures = row.failed_recipients ?? [];
+
+  return (
+    <details className="mt-0.5 text-left">
+      <summary className="cursor-pointer select-none text-xs font-medium text-red-700 hover:text-red-900">
+        {row.failed_count} failed
+      </summary>
+      <div className="mt-1 w-72 max-w-[calc(100vw-3rem)] rounded-md border border-red-200 bg-red-50 p-2 text-xs text-gray-800 shadow-sm">
+        {failures.length === 0 ? (
+          <div className="text-red-800">Failure details are unavailable for this send.</div>
+        ) : (
+          <ul className="space-y-2">
+            {failures.map((failure, index) => {
+              const name = [failure.first_name, failure.last_name].filter(Boolean).join(' ');
+              return (
+                <li key={`${failure.email}-${index}`} className="break-words">
+                  <div className="font-semibold text-red-900">{failure.email}</div>
+                  {(name || failure.company) && (
+                    <div className="text-gray-600">
+                      {[name, failure.company].filter(Boolean).join(' · ')}
+                    </div>
+                  )}
+                  <div className="mt-0.5 text-red-800">
+                    {failure.error || (failure.status === 'bounced' ? 'Email bounced' : 'Provider did not return a reason')}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </details>
+  );
 }
 
 export default function SentPanel({ limit = 50, showFilters = true, onEditResend }: Props) {
@@ -188,8 +235,9 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
                 <dd className="text-gray-700 tabular-nums">
                   {row.recipient_count ?? '—'}
                   {row.sent_count != null && (
-                    <span className="text-gray-500"> · {row.sent_count} sent{row.failed_count ? ` · ${row.failed_count} failed` : ''}</span>
+                    <span className="text-gray-500"> · {row.sent_count} sent</span>
                   )}
+                  <FailedRecipientDropdown row={row} />
                 </dd>
                 <dt className="text-gray-500">{group === 'series' ? 'Last sent' : 'Sent at'}</dt>
                 <dd className="text-gray-700">{fmt(group === 'series' ? (row.last_sent_at ?? row.sent_at) : (row.sent_at ?? row.scheduled_for))}</dd>
@@ -277,9 +325,10 @@ export default function SentPanel({ limit = 50, showFilters = true, onEditResend
                     {row.recipient_count ?? '—'}
                     {row.sent_count != null && (
                       <div className="text-xs text-gray-500">
-                        {row.sent_count} sent{row.failed_count ? ` · ${row.failed_count} failed` : ''}
+                        {row.sent_count} sent
                       </div>
                     )}
+                    <FailedRecipientDropdown row={row} />
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-gray-700">
                     {fmt(group === 'series' ? (row.last_sent_at ?? row.sent_at) : (row.sent_at ?? row.scheduled_for))}
