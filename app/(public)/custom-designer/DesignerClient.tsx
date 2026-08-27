@@ -12,6 +12,7 @@ type SignatureFields = {
   company: string;
   phone: string;
   photo: string;
+  logo: string;
 };
 
 type FlyerFields = {
@@ -38,6 +39,7 @@ const DEFAULT_SIGNATURE: SignatureFields = {
   company: 'Acme Cloud Systems',
   phone: '+1 (555) 839-2011',
   photo: '',
+  logo: '',
 };
 
 const DEFAULT_FLYER: FlyerFields = {
@@ -70,6 +72,8 @@ export default function DesignerClient() {
   const [signature, setSignature] = useState(DEFAULT_SIGNATURE);
   const [flyer, setFlyer] = useState(DEFAULT_FLYER);
   const fileRef = useRef<HTMLInputElement>(null);
+  const headshotRef = useRef<HTMLInputElement>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
 
   const presets = product === 'signature' ? SIGNATURE_PRESETS : FLYER_PRESETS;
   const dimensions = product === 'signature'
@@ -89,6 +93,23 @@ export default function DesignerClient() {
     reader.readAsDataURL(file);
   };
 
+  const uploadSignatureArtwork = (kind: 'photo' | 'logo', file?: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setSignature((value) => ({ ...value, [kind]: reader.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const clearSignatureArtwork = (kind: 'photo' | 'logo') => {
+    setSignature((value) => ({ ...value, [kind]: '' }));
+    const target = kind === 'photo' ? headshotRef : logoRef;
+    if (target.current) target.current.value = '';
+  };
+
   const clearBackground = () => {
     setBackground('');
     if (fileRef.current) fileRef.current.value = '';
@@ -106,6 +127,8 @@ export default function DesignerClient() {
     setSignature(DEFAULT_SIGNATURE);
     setFlyer(DEFAULT_FLYER);
     if (fileRef.current) fileRef.current.value = '';
+    if (headshotRef.current) headshotRef.current.value = '';
+    if (logoRef.current) logoRef.current.value = '';
   };
 
   const exportHtml = () => {
@@ -247,12 +270,34 @@ export default function DesignerClient() {
 
             <DividerLabel>Content data fields</DividerLabel>
             {product === 'signature' ? (
-              <div className="space-y-3">
-                <TextControl label="Full name" value={signature.name} onChange={(name) => setSignature((value) => ({ ...value, name }))} />
-                <TextControl label="Job title" value={signature.title} onChange={(title) => setSignature((value) => ({ ...value, title }))} />
-                <TextControl label="Company" value={signature.company} onChange={(company) => setSignature((value) => ({ ...value, company }))} />
-                <TextControl label="Direct phone" value={signature.phone} onChange={(phone) => setSignature((value) => ({ ...value, phone }))} />
-                <TextControl label="Avatar image URL" value={signature.photo} onChange={(photo) => setSignature((value) => ({ ...value, photo }))} placeholder="https://…" />
+              <div className="space-y-4">
+                <ArtworkPanel title="Personal details" description="Contact information and personal headshot">
+                  <div className="space-y-3">
+                    <TextControl label="Full name" value={signature.name} onChange={(name) => setSignature((value) => ({ ...value, name }))} />
+                    <TextControl label="Job title" value={signature.title} onChange={(title) => setSignature((value) => ({ ...value, title }))} />
+                    <TextControl label="Company" value={signature.company} onChange={(company) => setSignature((value) => ({ ...value, company }))} />
+                    <TextControl label="Direct phone" value={signature.phone} onChange={(phone) => setSignature((value) => ({ ...value, phone }))} />
+                    <ArtworkUpload
+                      label="Personal headshot"
+                      value={signature.photo}
+                      inputRef={headshotRef}
+                      onUpload={(file) => uploadSignatureArtwork('photo', file)}
+                      onClear={() => clearSignatureArtwork('photo')}
+                      previewClassName="rounded-full object-cover"
+                    />
+                  </div>
+                </ArtworkPanel>
+
+                <ArtworkPanel title="Company logo" description="Upload the brokerage or company logo separately">
+                  <ArtworkUpload
+                    label="Company logo artwork"
+                    value={signature.logo}
+                    inputRef={logoRef}
+                    onUpload={(file) => uploadSignatureArtwork('logo', file)}
+                    onClear={() => clearSignatureArtwork('logo')}
+                    previewClassName="object-contain"
+                  />
+                </ArtworkPanel>
               </div>
             ) : (
               <div className="space-y-3">
@@ -360,14 +405,21 @@ function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, 
   if (preset === 1) {
     return (
       <div className="flex h-full w-full items-center p-5" style={{ fontFamily: font, color: secondary }}>
-        <div className="w-full rounded bg-white/90 p-4">
-          <div>
-            <span style={{ color: '#0f172a', fontSize, fontWeight }}>{fields.name}</span>
-            <span className="ml-3 text-xs font-semibold" style={{ color: primary }}>| &nbsp; {fields.title}</span>
+        <div className="flex w-full items-center justify-between gap-5 rounded bg-white/90 p-4">
+          <div className="min-w-0">
+            <div>
+              <span style={{ color: '#0f172a', fontSize, fontWeight }}>{fields.name}</span>
+              <span className="ml-3 text-xs font-semibold" style={{ color: primary }}>| &nbsp; {fields.title}</span>
+            </div>
+            <div className="mt-2 border-t border-slate-200 pt-2 text-[11px]">
+              <strong className="text-slate-900">{fields.company}</strong> &nbsp;·&nbsp; ☎ {fields.phone}
+            </div>
           </div>
-          <div className="mt-2 border-t border-slate-200 pt-2 text-[11px]">
-            <strong className="text-slate-900">{fields.company}</strong> &nbsp;·&nbsp; ☎ {fields.phone}
-          </div>
+          {fields.logo && (
+            // User-supplied logo artwork must render directly in the signature.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={fields.logo} alt={`${fields.company} logo`} className="max-h-12 w-28 shrink-0 object-contain" />
+          )}
         </div>
       </div>
     );
@@ -385,12 +437,17 @@ function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, 
             {initials(fields.name)}
           </div>
         )}
-        <div className="border-l-[3px] pl-4" style={{ borderColor: primary }}>
+        <div className="min-w-0 flex-1 border-l-[3px] pl-4" style={{ borderColor: primary }}>
           <div className="leading-tight text-slate-900" style={{ fontSize, fontWeight }}>{fields.name}</div>
           <div className="mt-1 text-[13px] font-semibold" style={{ color: primary }}>{fields.title}</div>
           <div className="mt-0.5 text-xs font-medium">{fields.company}</div>
           <div className="mt-1 text-[11px]">☎ {fields.phone}</div>
         </div>
+        {fields.logo && (
+          // User-supplied logo artwork must render directly in the signature.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={fields.logo} alt={`${fields.company} logo`} className="ml-4 max-h-14 w-28 shrink-0 object-contain" />
+        )}
       </div>
     </div>
   );
@@ -441,6 +498,66 @@ function TextControl({ label, value, onChange, placeholder }: { label: string; v
   return <Control label={label}><input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="studio-control" /></Control>;
 }
 
+function ArtworkPanel({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-lg border border-slate-700 bg-[#0d1321] p-3">
+      <div className="mb-3 border-b border-slate-800 pb-3">
+        <h3 className="text-sm font-bold text-white">{title}</h3>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{description}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function ArtworkUpload({
+  label,
+  value,
+  inputRef,
+  onUpload,
+  onClear,
+  previewClassName,
+}: {
+  label: string;
+  value: string;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  onUpload: (file?: File) => void;
+  onClear: () => void;
+  previewClassName: string;
+}) {
+  return (
+    <Control label={label}>
+      <div className="rounded-md border border-dashed border-slate-700 bg-[#090d16] p-3">
+        {value && (
+          <div className="mb-3 flex h-20 items-center justify-center rounded bg-white p-2">
+            {/* User-supplied artwork must render directly in its upload preview. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={value} alt="" className={`h-full max-w-full ${previewClassName}`} />
+          </div>
+        )}
+        <div className="flex gap-2">
+          <label className="flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md bg-sky-600 px-3 text-xs font-bold text-white hover:bg-sky-700">
+            <ImagePlus size={15} />
+            {value ? 'Replace artwork' : 'Upload artwork'}
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              onChange={(event) => onUpload(event.target.files?.[0])}
+              className="sr-only"
+            />
+          </label>
+          {value && (
+            <button type="button" onClick={onClear} className="studio-secondary-button">
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+    </Control>
+  );
+}
+
 function ColorControl({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
     <Control label={label}>
@@ -477,12 +594,14 @@ function backgroundStyle(background: string) {
 function signatureMarkup(fields: SignatureFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string) {
   const data = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, escapeHtml(value)])) as SignatureFields;
   if (preset === 1) {
-    return `<div style="font-family:${font};color:${secondary};line-height:1.3;width:560px;padding:20px;box-sizing:border-box;${backgroundStyle(background)}"><div style="background:rgba(255,255,255,.92);padding:14px"><span style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;margin-right:8px">${data.name}</span><span style="font-size:12px;color:${primary};font-weight:600">| &nbsp;${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:6px;margin-top:6px;font-size:11px"><strong style="color:#0f172a">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}</div></div></div>`;
+    const logo = data.logo ? `<img src="${data.logo}" alt="${data.company} logo" width="112" style="display:block;max-height:48px;object-fit:contain;margin-left:20px">` : '';
+    return `<div style="font-family:${font};color:${secondary};line-height:1.3;width:560px;padding:20px;box-sizing:border-box;${backgroundStyle(background)}"><div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.92);padding:14px"><div><span style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;margin-right:8px">${data.name}</span><span style="font-size:12px;color:${primary};font-weight:600">| &nbsp;${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:6px;margin-top:6px;font-size:11px"><strong style="color:#0f172a">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}</div></div>${logo}</div></div>`;
   }
   const avatar = data.photo
     ? `<img src="${data.photo}" alt="" width="76" height="76" style="border-radius:50%;display:block;object-fit:cover">`
     : `<div style="width:76px;height:76px;border-radius:50%;background:#e2e8f0"></div>`;
-  return `<table cellpadding="0" cellspacing="0" border="0" style="font-family:${font};color:${secondary};line-height:1.4;width:560px;padding:20px;box-sizing:border-box;${backgroundStyle(background)}"><tr style="background:rgba(255,255,255,.92)"><td style="vertical-align:middle;padding:12px 16px 12px 12px;width:76px">${avatar}</td><td style="vertical-align:middle;border-left:3px solid ${primary};padding:12px 12px 12px 16px"><div style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:13px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:12px;font-weight:500">${data.company}</div><div style="font-size:11px;margin-top:4px">☎ ${data.phone}</div></td></tr></table>`;
+  const logo = data.logo ? `<td style="vertical-align:middle;padding:12px;width:112px"><img src="${data.logo}" alt="${data.company} logo" width="112" style="display:block;max-height:56px;object-fit:contain"></td>` : '';
+  return `<table cellpadding="0" cellspacing="0" border="0" style="font-family:${font};color:${secondary};line-height:1.4;width:560px;padding:20px;box-sizing:border-box;${backgroundStyle(background)}"><tr style="background:rgba(255,255,255,.92)"><td style="vertical-align:middle;padding:12px 16px 12px 12px;width:76px">${avatar}</td><td style="vertical-align:middle;border-left:3px solid ${primary};padding:12px 12px 12px 16px"><div style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:13px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:12px;font-weight:500">${data.company}</div><div style="font-size:11px;margin-top:4px">☎ ${data.phone}</div></td>${logo}</tr></table>`;
 }
 
 function flyerMarkup(fields: FlyerFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string, dimensions: { width: number; height: number }) {
