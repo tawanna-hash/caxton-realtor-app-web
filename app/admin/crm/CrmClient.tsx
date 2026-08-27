@@ -21,7 +21,6 @@ import type {
   AdvertiserCrmRow,
   AdvertiserStaff,
   AdvertiserStatus,
-  AdvertiserType,
 } from '@/lib/advertisers';
 import type { Publication, PublicationKey } from '@/lib/publication-theme';
 import CrmComposer from './_components/CrmComposer';
@@ -54,13 +53,6 @@ const STATUS_OPTIONS: { value: AdvertiserStatus; label: string; tone: string }[]
   { value: 'archived',   label: 'Archived',   tone: 'bg-gray-100 text-gray-600 border-gray-200' },
 ];
 
-const TYPE_OPTIONS: { value: AdvertiserType; label: string }[] = [
-  { value: 'advertiser', label: 'Partner' },
-  { value: 'client',     label: 'Client' },
-  { value: 'prospect',   label: 'Prospect' },
-  { value: 'mailing',    label: 'Mailing only' },
-];
-
 // Sort options for the advertisers table. Value encodes field + direction.
 const SORT_OPTIONS: { value: string; label: string }[] = [
   { value: 'updated_desc', label: 'Recently updated' },
@@ -83,8 +75,6 @@ export default function CrmClient({ initialRows }: Props) {
     stringify: (v) => (v ? v : null),
   });
   const [statusFilter, setStatusFilter] = useUrlString<AdvertiserStatus | 'all'>('status', 'all');
-  const [typeFilter, setTypeFilter] = useUrlString<AdvertiserType | 'all'>('type', 'all');
-  const [pubFilter, setPubFilter] = useUrlString<PublicationKey | 'all'>('pub', 'all');
   const [sortBy, setSortBy] = useUrlString<string>('sort', 'updated_desc');
   const [editing, setEditing] = useState<AdvertiserCrmRow | null>(null);
   const [creating, setCreating] = useState(false);
@@ -108,56 +98,32 @@ export default function CrmClient({ initialRows }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Market tabs <-> ?market= URL param <-> pubFilter ─────────────
-  // Dashboard cards deep-link here with ?market=austin etc.; the tab
-  // reflects the current publication filter and pushes the URL when
-  // the user clicks a different tab. We keep pubFilter as the source
-  // of truth for filtering (chips already read from it).
-  //
-  // Rather than mirroring URL -> state with an effect (which triggers a
-  // cascading render and lints against react-hooks/set-state-in-effect),
-  // we derive activeMarket directly from either the URL or pubFilter
-  // per render and let handleMarketTab keep them in sync when the user
-  // clicks a tab.
-  // URL is source of truth for market. Both server and client derive
-  // activeMarket from searchParams identically -> no hydration mismatch.
-  // pubFilter mirrors the URL so downstream filtering keeps working.
-  const marketFromUrl: Market | 'all' = (() => {
-    const raw = searchParams?.get('market');
+  // ── Market tabs <-> ?market= URL param ───────────────────────────
+  // The market tabs are the only publication filter. Keeping one URL
+  // parameter avoids competing router updates from duplicate controls.
+  const activeMarket: Market | 'all' = (() => {
+    // Accept the retired `pub` parameter so old CRM links still open to
+    // the intended market. The next tab click cleans it from the URL.
+    const raw = searchParams?.get('market') ?? searchParams?.get('pub');
     if (!raw) return 'all';
     return (MARKETS as readonly string[]).includes(raw) ? (raw as Market) : 'all';
   })();
 
-  const activeMarket: Market | 'all' = marketFromUrl !== 'all'
-    ? marketFromUrl
-    : (() => {
-        if (pubFilter === 'all') return 'all';
-        for (const m of MARKETS) {
-          if ((m as string) === (pubFilter as string)) return m;
-        }
-        return 'all';
-      })();
-
   const handleMarketTab = useCallback(
     (market: Market | 'all') => {
-      // Preserve any other URL-backed filters (?status, ?type, ?view, ?sort,
-      // ?q) when switching markets — we only rewrite the `market` param.
+      // Preserve useful filters while removing retired duplicate controls.
       const params = new URLSearchParams(searchParams?.toString() ?? '');
+      params.delete('pub');
+      params.delete('type');
       if (market === 'all') {
-        setPubFilter('all');
         params.delete('market');
       } else {
-        // Store the market key directly. Market ids and PublicationKey
-        // values share strings ('austin', 'san_antonio', 'houston', 'dallas'),
-        // and parsePublications() returns PublicationKey — so comparing
-        // filter against advPubs works one-to-one.
-        setPubFilter(market as unknown as PublicationKey);
         params.set('market', market);
       }
       const qs = params.toString();
-      router.replace(qs ? `/admin/crm?${qs}` : '/admin/crm');
+      router.replace(qs ? `/admin/crm?${qs}` : '/admin/crm', { scroll: false });
     },
-    [router, searchParams, setPubFilter],
+    [router, searchParams],
   );
 
   const marketCounts = useMemo(() => {
@@ -191,10 +157,9 @@ export default function CrmClient({ initialRows }: Props) {
     const q = query.trim().toLowerCase();
     const out = rows.filter((r) => {
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
-      if (typeFilter !== 'all' && r.type !== typeFilter) return false;
-      if (pubFilter !== 'all') {
+      if (activeMarket !== 'all') {
         const advPubs = parsePublications(r.publication);
-        if (!advPubs.includes(pubFilter)) return false;
+        if (!advPubs.includes(activeMarket as unknown as PublicationKey)) return false;
       }
       if (!q) return true;
       const hay = [
@@ -226,22 +191,29 @@ export default function CrmClient({ initialRows }: Props) {
         : String(av).localeCompare(String(bv));
       return cmp * mul;
     });
-  }, [rows, query, statusFilter, typeFilter, pubFilter, sortBy]);
+  }, [rows, query, statusFilter, activeMarket, sortBy]);
 
   // ── counts for filter chips ─────────────────────────────────────
+  const marketRows = useMemo(() => {
+    if (activeMarket === 'all') return rows;
+    return rows.filter((r) =>
+      parsePublications(r.publication).includes(activeMarket as unknown as PublicationKey),
+    );
+  }, [rows, activeMarket]);
+
   // Recent bounces — any advertiser with a bounce flag set. We keep this
   // pure (no Date.now) so React can dedupe renders; the webhook sets the
   // flag and it stays visible until the user resolves the row.
   const recentBounces = useMemo(
-    () => rows.filter((r) => !!r.last_bounced_at),
-    [rows],
+    () => marketRows.filter((r) => !!r.last_bounced_at),
+    [marketRows],
   );
 
   const statusCounts = useMemo(() => {
     const c: Record<AdvertiserStatus, number> = { prospect: 0, advertiser: 0, archived: 0 };
-    for (const r of rows) c[r.status ?? 'prospect'] = (c[r.status ?? 'prospect'] ?? 0) + 1;
+    for (const r of marketRows) c[r.status ?? 'prospect'] = (c[r.status ?? 'prospect'] ?? 0) + 1;
     return c;
-  }, [rows]);
+  }, [marketRows]);
 
   const reload = useCallback(async () => {
     try {
@@ -389,6 +361,7 @@ export default function CrmClient({ initialRows }: Props) {
               role="tab"
               aria-selected={isActive}
               onClick={() => handleMarketTab(market)}
+              data-testid={`market-filter-${market}`}
               className={
                 'px-4 py-2 rounded-md text-sm font-medium border transition-colors ' +
                 (isActive
@@ -429,35 +402,25 @@ export default function CrmClient({ initialRows }: Props) {
 
       {view === 'audience' && <>
       {/* Filters ────────────────────────────────────────────────── */}
-      <div className="rounded-md border border-gray-200 bg-white p-4 space-y-3">
-        <div className="flex flex-wrap gap-2 items-center">
+      <div className="space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label htmlFor="partner-search" className="sr-only">Search partners</label>
           <input
+            id="partner-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name, email, phone, city, tags…"
-            className="flex-1 min-w-[240px] px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Search partners"
+            data-testid="input-partner-search"
+            className="min-h-11 flex-1 px-3 py-2 rounded-md border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <label htmlFor="partner-sort" className="sr-only">Sort partners</label>
           <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as AdvertiserType | 'all')}
-            className="px-3 py-2 rounded-md border border-gray-300 text-sm"
-          >
-            <option value="all">All types</option>
-            {TYPE_OPTIONS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
-          <select
-            value={pubFilter}
-            onChange={(e) => setPubFilter(e.target.value as PublicationKey | 'all')}
-            className="px-3 py-2 rounded-md border border-gray-300 text-sm"
-          >
-            <option value="all">All publications</option>
-            {PUBLICATION_OPTIONS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
-          </select>
-          <select
+            id="partner-sort"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-3 py-2 rounded-md border border-gray-300 text-sm"
+            className="min-h-11 px-3 py-2 rounded-md border border-gray-300 bg-white text-sm sm:w-auto"
             aria-label="Sort partners"
+            data-testid="select-partner-sort"
           >
             {SORT_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
@@ -479,7 +442,7 @@ export default function CrmClient({ initialRows }: Props) {
         )}
 
         <div className="flex flex-wrap gap-2">
-          <StatusChip label="All" active={statusFilter === 'all'} count={rows.length} onClick={() => setStatusFilter('all')} />
+          <StatusChip label="All" active={statusFilter === 'all'} count={marketRows.length} onClick={() => setStatusFilter('all')} />
           {STATUS_OPTIONS.map((s) => (
             <StatusChip
               key={s.value}
@@ -589,7 +552,7 @@ export default function CrmClient({ initialRows }: Props) {
         adminEmail={null}
         initialFilter={{
           statuses: statusFilter === 'all' ? [] : [statusFilter],
-          publications: pubFilter === 'all' ? [] : [pubFilter],
+          publications: activeMarket === 'all' ? [] : [activeMarket as unknown as PublicationKey],
           query,
         }}
       />
@@ -680,13 +643,6 @@ function CrmRow({
       >
         Copy link
       </button>
-      <Link
-        href={`/admin/reports?tab=advertisers&advertiserId=${row.id}`}
-        className="px-2 py-1 text-xs rounded-md border border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
-        title="Open partner analytics dashboard"
-      >
-        Open
-      </Link>
       <button
         type="button"
         onClick={onOpen}
