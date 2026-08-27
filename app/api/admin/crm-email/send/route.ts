@@ -171,8 +171,8 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
         manualEmails: seeds.filter((s) => s.recipient_type === 'manual').map((s) => s.email),
         publicationScope: input.publication_scope,
       })}::jsonb,
-      ${input.reply_to_list ? JSON.stringify(input.reply_to_list) : null}::jsonb,
-      ${input.attachments ? JSON.stringify(input.attachments) : null}::jsonb,
+      ${JSON.stringify(input.reply_to_list ?? [])}::jsonb,
+      ${JSON.stringify(input.attachments ?? [])}::jsonb,
       ${input.attachment_link_url ?? null},
       ${input.attachment_link_label ?? null},
       ${admin.email ?? null}
