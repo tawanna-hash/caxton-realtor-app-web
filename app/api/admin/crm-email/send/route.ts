@@ -69,6 +69,10 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  let stage = 'parse_request';
+  let outreachId: string | null = null;
+
+  try {
   const parsed = sendSchema.safeParse(await req.json());
   if (!parsed.success) {
     return NextResponse.json({ error: 'invalid input', detail: parsed.error.flatten() }, { status: 400 });
@@ -85,10 +89,12 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
   const bodyClean = bodyWithLinkEarly.replace(/<!--\s*signature-here\s*-->/g, '');
   const bodyFinal = appendSignature(bodyClean, { skip: !input.include_signature });
 
+  stage = 'ensure_schema';
   await ensureSchema();
   const sql = getSql();
 
   // Materialize the audience from the filter.
+  stage = 'resolve_audience';
   const audience = await resolveCrmAudience(input.filter as CrmAudienceFilter);
   const seen = new Set<string>();
   const seeds: RecipientSeed[] = [];
@@ -124,8 +130,10 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
   }
 
   // Ensure a synthetic campaign row (FK requirement).
+  stage = 'ensure_campaign';
   const campaignId = await ensureCrmOutreachCampaign(input.publication_scope);
 
+  stage = 'create_outreach';
   const initialStatus = input.mode === 'schedule' ? 'scheduled' : 'sending';
   const created = (await sql`
     INSERT INTO marketing_campaign_outreach (
@@ -170,8 +178,9 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       ${admin.email ?? null}
     ) RETURNING id
   `) as unknown as Array<{ id: string }>;
-  const outreachId = created[0].id;
+  outreachId = created[0].id;
 
+  stage = 'insert_recipient_ledger';
   await insertRecipientsLedger(outreachId, seeds);
 
   if (input.mode === 'schedule') {
@@ -195,10 +204,12 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     : undefined;
 
   // Prepare attachments (attachment link button + signature already applied above)
+  stage = 'resolve_attachments';
   const attachments = await resolveAttachments(
     input.attachments as AttachmentRef[] | undefined,
   );
 
+  stage = 'dispatch_recipients';
   const result = await dispatchOutreach({
     outreachId,
     subject: input.subject,
@@ -221,4 +232,26 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     sent: result.sent,
     failed: result.failed,
   });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error('[crm-email/send] failed', { stage, outreachId, detail });
+
+    if (outreachId) {
+      try {
+        const sql = getSql();
+        await sql`
+          UPDATE marketing_campaign_outreach
+          SET status = 'failed', error_message = ${`${stage}: ${detail}`}
+          WHERE id = ${outreachId}
+        `;
+      } catch (markErr) {
+        console.error('[crm-email/send] could not mark outreach failed', markErr);
+      }
+    }
+
+    return NextResponse.json(
+      { error: 'CRM email send failed', stage, detail, outreach_id: outreachId },
+      { status: 500 },
+    );
+  }
 });
