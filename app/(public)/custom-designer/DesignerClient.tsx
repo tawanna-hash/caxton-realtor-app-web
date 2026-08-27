@@ -1,10 +1,11 @@
 'use client';
 
-import { Download, FileCode2, ImagePlus, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Download, FileCode2, GripVertical, ImagePlus, RotateCcw } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 type Product = 'signature' | 'flyer';
 type FlyerSize = 'us-letter' | 'insta-square' | 'insta-story' | 'fb-banner' | 'linkedin-banner';
+type ArtboardKey = 'headshot' | 'details' | 'logo';
 
 type SignatureFields = {
   name: string;
@@ -32,6 +33,7 @@ const FLYER_SIZES: Record<FlyerSize, { label: string; width: number; height: num
 
 const SIGNATURE_PRESETS = ['Split Column (Classic)', 'Minimal Rows (Stack)'];
 const FLYER_PRESETS = ['Editorial Poster', 'Impact Display'];
+const DEFAULT_ARTBOARD_ORDER: ArtboardKey[] = ['headshot', 'details', 'logo'];
 
 const DEFAULT_SIGNATURE: SignatureFields = {
   name: 'Sarah Jenkins',
@@ -71,6 +73,7 @@ export default function DesignerClient() {
   const [background, setBackground] = useState('');
   const [signature, setSignature] = useState(DEFAULT_SIGNATURE);
   const [flyer, setFlyer] = useState(DEFAULT_FLYER);
+  const [artboardOrder, setArtboardOrder] = useState<ArtboardKey[]>(DEFAULT_ARTBOARD_ORDER);
   const fileRef = useRef<HTMLInputElement>(null);
   const headshotRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
@@ -110,6 +113,30 @@ export default function DesignerClient() {
     if (target.current) target.current.value = '';
   };
 
+  const reorderArtboards = (source: ArtboardKey, target: ArtboardKey) => {
+    if (source === target) return;
+    setArtboardOrder((current) => {
+      const next = [...current];
+      const sourceIndex = next.indexOf(source);
+      const targetIndex = next.indexOf(target);
+      if (sourceIndex < 0 || targetIndex < 0) return current;
+      next.splice(sourceIndex, 1);
+      next.splice(targetIndex, 0, source);
+      return next;
+    });
+  };
+
+  const moveArtboard = (key: ArtboardKey, direction: -1 | 1) => {
+    setArtboardOrder((current) => {
+      const index = current.indexOf(key);
+      const nextIndex = index + direction;
+      if (index < 0 || nextIndex < 0 || nextIndex >= current.length) return current;
+      const next = [...current];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      return next;
+    });
+  };
+
   const clearBackground = () => {
     setBackground('');
     if (fileRef.current) fileRef.current.value = '';
@@ -126,6 +153,7 @@ export default function DesignerClient() {
     setBackground('');
     setSignature(DEFAULT_SIGNATURE);
     setFlyer(DEFAULT_FLYER);
+    setArtboardOrder(DEFAULT_ARTBOARD_ORDER);
     if (fileRef.current) fileRef.current.value = '';
     if (headshotRef.current) headshotRef.current.value = '';
     if (logoRef.current) logoRef.current.value = '';
@@ -133,7 +161,7 @@ export default function DesignerClient() {
 
   const exportHtml = () => {
     const markup = product === 'signature'
-      ? signatureMarkup(signature, preset, primary, secondary, font, fontSize, fontWeight, background)
+      ? signatureMarkup(signature, preset, primary, secondary, font, fontSize, fontWeight, background, artboardOrder)
       : flyerMarkup(flyer, preset, primary, secondary, font, fontSize, fontWeight, background, dimensions);
     const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RNN Custom Design</title></head><body style="margin:0">${markup}</body></html>`;
     downloadBlob(html, `rnn-${product}.html`, 'text/html');
@@ -279,6 +307,7 @@ export default function DesignerClient() {
                     <TextControl label="Direct phone" value={signature.phone} onChange={(phone) => setSignature((value) => ({ ...value, phone }))} />
                     <ArtworkUpload
                       label="Personal headshot"
+                      actionLabel="Upload headshot"
                       value={signature.photo}
                       inputRef={headshotRef}
                       onUpload={(file) => uploadSignatureArtwork('photo', file)}
@@ -291,6 +320,7 @@ export default function DesignerClient() {
                 <ArtworkPanel title="Company logo" description="Upload the brokerage or company logo separately">
                   <ArtworkUpload
                     label="Company logo artwork"
+                    actionLabel="Upload company logo"
                     value={signature.logo}
                     inputRef={logoRef}
                     onUpload={(file) => uploadSignatureArtwork('logo', file)}
@@ -328,10 +358,12 @@ export default function DesignerClient() {
           </div>
           <div className="flex flex-1 items-center justify-center overflow-auto p-5 sm:p-10">
             <div
-              className="relative max-w-full overflow-hidden rounded shadow-2xl transition-[width,height] duration-300"
+              className={`relative max-w-full overflow-hidden rounded shadow-2xl transition-[width,height] duration-300 ${product === 'signature' ? 'signature-preview-board' : ''}`}
               style={{
-                width: dimensions.width,
-                height: dimensions.height,
+                width: product === 'signature' ? '100%' : dimensions.width,
+                maxWidth: product === 'signature' ? dimensions.width : undefined,
+                height: product === 'signature' ? 'auto' : dimensions.height,
+                minHeight: product === 'signature' ? dimensions.height : undefined,
                 backgroundColor: '#ffffff',
                 backgroundImage: background ? `url(${background})` : undefined,
                 backgroundPosition: 'center',
@@ -340,7 +372,18 @@ export default function DesignerClient() {
               }}
             >
               {product === 'signature' ? (
-                <SignaturePreview fields={signature} preset={preset} primary={primary} secondary={secondary} font={font} fontSize={fontSize} fontWeight={fontWeight} />
+                <SignaturePreview
+                  fields={signature}
+                  preset={preset}
+                  primary={primary}
+                  secondary={secondary}
+                  font={font}
+                  fontSize={fontSize}
+                  fontWeight={fontWeight}
+                  order={artboardOrder}
+                  onReorder={reorderArtboards}
+                  onMove={moveArtboard}
+                />
               ) : (
                 <FlyerPreview fields={flyer} preset={preset} primary={primary} secondary={secondary} font={font} fontSize={fontSize} fontWeight={fontWeight} />
               )}
@@ -388,12 +431,23 @@ export default function DesignerClient() {
           font-size: 12px;
           font-weight: 700;
         }
+        @media (max-width: 640px) {
+          .signature-preview-board {
+            min-height: 0 !important;
+          }
+          .signature-artboard-grid {
+            grid-template-columns: minmax(0, 1fr) !important;
+          }
+          .signature-artboard {
+            min-height: 170px;
+          }
+        }
       `}</style>
     </main>
   );
 }
 
-function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, fontWeight }: {
+function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, fontWeight, order, onReorder, onMove }: {
   fields: SignatureFields;
   preset: number;
   primary: string;
@@ -401,6 +455,9 @@ function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, 
   font: string;
   fontSize: number;
   fontWeight: number;
+  order: ArtboardKey[];
+  onReorder: (source: ArtboardKey, target: ArtboardKey) => void;
+  onMove: (key: ArtboardKey, direction: -1 | 1) => void;
 }) {
   const headshot = fields.photo ? (
     // User-supplied headshot artwork must render directly in the signature.
@@ -422,57 +479,115 @@ function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, 
     </div>
   );
 
-  if (preset === 1) {
-    return (
-      <div className="grid h-full w-full grid-cols-[170px_minmax(0,1fr)_190px] gap-3 p-4" style={{ fontFamily: font, color: secondary }}>
-        <SignatureArtboard label="Headshot image">
-          {headshot}
-        </SignatureArtboard>
-        <SignatureArtboard label="Personal details">
-          <div className="w-full">
-            <div>
-              <span style={{ color: '#0f172a', fontSize, fontWeight }}>{fields.name}</span>
-              <span className="mt-1 block text-xs font-semibold" style={{ color: primary }}>{fields.title}</span>
-            </div>
-            <div className="mt-2 border-t border-slate-200 pt-2 text-[11px]">
-              <strong className="text-slate-900">{fields.company}</strong> &nbsp;·&nbsp; ☎ {fields.phone}
-            </div>
-          </div>
-        </SignatureArtboard>
-        <SignatureArtboard label="Company logo">
-          {companyLogo}
-        </SignatureArtboard>
+  const details = preset === 1 ? (
+    <div className="w-full">
+      <div>
+        <span style={{ color: '#0f172a', fontSize, fontWeight }}>{fields.name}</span>
+        <span className="mt-1 block text-xs font-semibold" style={{ color: primary }}>{fields.title}</span>
       </div>
-    );
-  }
+      <div className="mt-2 border-t border-slate-200 pt-2 text-[11px]">
+        <strong className="text-slate-900">{fields.company}</strong> &nbsp;·&nbsp; ☎ {fields.phone}
+      </div>
+    </div>
+  ) : (
+    <div className="w-full border-l-[3px] pl-4" style={{ borderColor: primary }}>
+      <div className="leading-tight text-slate-900" style={{ fontSize, fontWeight }}>{fields.name}</div>
+      <div className="mt-1 text-[13px] font-semibold" style={{ color: primary }}>{fields.title}</div>
+      <div className="mt-0.5 text-xs font-medium">{fields.company}</div>
+      <div className="mt-1 text-[11px]">☎ {fields.phone}</div>
+    </div>
+  );
+
+  const artboards: Record<ArtboardKey, { label: string; content: React.ReactNode }> = {
+    headshot: { label: 'Headshot image', content: headshot },
+    details: { label: 'Personal details', content: details },
+    logo: { label: 'Company logo', content: companyLogo },
+  };
 
   return (
-    <div className="grid h-full w-full grid-cols-[170px_minmax(0,1fr)_190px] gap-3 p-4" style={{ fontFamily: font, color: secondary }}>
-      <SignatureArtboard label="Headshot image">
-        {headshot}
-      </SignatureArtboard>
-      <SignatureArtboard label="Personal details">
-        <div className="w-full border-l-[3px] pl-4" style={{ borderColor: primary }}>
-          <div className="leading-tight text-slate-900" style={{ fontSize, fontWeight }}>{fields.name}</div>
-          <div className="mt-1 text-[13px] font-semibold" style={{ color: primary }}>{fields.title}</div>
-          <div className="mt-0.5 text-xs font-medium">{fields.company}</div>
-          <div className="mt-1 text-[11px]">☎ {fields.phone}</div>
-        </div>
-      </SignatureArtboard>
-      <SignatureArtboard label="Company logo">
-        {companyLogo}
-      </SignatureArtboard>
+    <div
+      className="signature-artboard-grid grid w-full grid-cols-[170px_minmax(0,1fr)_190px] gap-3 p-4"
+      style={{ fontFamily: font, color: secondary }}
+    >
+      {order.map((key, index) => (
+        <SignatureArtboard
+          key={key}
+          artboardKey={key}
+          label={artboards[key].label}
+          index={index}
+          total={order.length}
+          onReorder={onReorder}
+          onMove={onMove}
+        >
+          {artboards[key].content}
+        </SignatureArtboard>
+      ))}
     </div>
   );
 }
 
-function SignatureArtboard({ label, children }: { label: string; children: React.ReactNode }) {
+function SignatureArtboard({
+  artboardKey,
+  label,
+  index,
+  total,
+  onReorder,
+  onMove,
+  children,
+}: {
+  artboardKey: ArtboardKey;
+  label: string;
+  index: number;
+  total: number;
+  onReorder: (source: ArtboardKey, target: ArtboardKey) => void;
+  onMove: (key: ArtboardKey, direction: -1 | 1) => void;
+  children: React.ReactNode;
+}) {
   return (
-    <section className="relative flex min-w-0 items-center justify-center rounded-md border border-slate-300 bg-white/95 p-4 shadow-sm">
-      <span className="absolute left-2 top-2 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">
-        {label}
-      </span>
-      <div className="mt-3 flex w-full items-center justify-center">{children}</div>
+    <section
+      draggable
+      onDragStart={(event) => {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', artboardKey);
+      }}
+      onDragOver={(event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        const source = event.dataTransfer.getData('text/plain') as ArtboardKey;
+        if (source) onReorder(source, artboardKey);
+      }}
+      className="signature-artboard relative flex min-w-0 cursor-grab items-center justify-center rounded-md border border-slate-300 bg-white/95 p-4 pt-10 shadow-sm active:cursor-grabbing"
+    >
+      <div className="absolute inset-x-2 top-2 flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-1 text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">
+          <GripVertical size={12} className="shrink-0" />
+          <span className="truncate">{label}</span>
+        </span>
+        <span className="flex shrink-0 gap-1">
+          <button
+            type="button"
+            onClick={() => onMove(artboardKey, -1)}
+            disabled={index === 0}
+            aria-label={`Move ${label} earlier`}
+            className="flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <ArrowLeft size={12} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMove(artboardKey, 1)}
+            disabled={index === total - 1}
+            aria-label={`Move ${label} later`}
+            className="flex h-6 w-6 items-center justify-center rounded border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <ArrowRight size={12} />
+          </button>
+        </span>
+      </div>
+      <div className="flex w-full items-center justify-center">{children}</div>
     </section>
   );
 }
@@ -536,6 +651,7 @@ function ArtworkPanel({ title, description, children }: { title: string; descrip
 
 function ArtworkUpload({
   label,
+  actionLabel,
   value,
   inputRef,
   onUpload,
@@ -543,6 +659,7 @@ function ArtworkUpload({
   previewClassName,
 }: {
   label: string;
+  actionLabel: string;
   value: string;
   inputRef: React.RefObject<HTMLInputElement | null>;
   onUpload: (file?: File) => void;
@@ -551,7 +668,17 @@ function ArtworkUpload({
 }) {
   return (
     <Control label={label}>
-      <div className="rounded-md border border-dashed border-slate-700 bg-[#090d16] p-3">
+      <div
+        onDragOver={(event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = 'copy';
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          onUpload(event.dataTransfer.files?.[0]);
+        }}
+        className="rounded-md border border-dashed border-slate-700 bg-[#090d16] p-3 transition-colors hover:border-sky-500"
+      >
         {value && (
           <div className="mb-3 flex h-20 items-center justify-center rounded bg-white p-2">
             {/* User-supplied artwork must render directly in its upload preview. */}
@@ -559,10 +686,13 @@ function ArtworkUpload({
             <img src={value} alt="" className={`h-full max-w-full ${previewClassName}`} />
           </div>
         )}
+        <p className="mb-2 text-center text-[11px] text-slate-500">
+          Drag and drop an image here, or use the upload control.
+        </p>
         <div className="flex gap-2">
           <label className="flex min-h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md bg-sky-600 px-3 text-xs font-bold text-white hover:bg-sky-700">
             <ImagePlus size={15} />
-            {value ? 'Replace artwork' : 'Upload artwork'}
+            {value ? `Replace ${actionLabel.replace('Upload ', '')}` : actionLabel}
             <input
               ref={inputRef}
               type="file"
@@ -615,7 +745,7 @@ function backgroundStyle(background: string) {
   return background ? `background-image:url('${background}');background-size:cover;background-position:center;` : '';
 }
 
-function signatureMarkup(fields: SignatureFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string) {
+function signatureMarkup(fields: SignatureFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string, order: ArtboardKey[]) {
   const data = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, escapeHtml(value)])) as SignatureFields;
   const labelStyle = 'display:block;font-size:9px;line-height:1;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700;margin-bottom:16px';
   const cellStyle = 'vertical-align:middle;background:rgba(255,255,255,.95);border:1px solid #cbd5e1;border-radius:6px;padding:12px';
@@ -625,11 +755,17 @@ function signatureMarkup(fields: SignatureFields, preset: number, primary: strin
   const logo = data.logo
     ? `<img src="${data.logo}" alt="${data.company} logo" width="150" style="display:block;max-height:80px;object-fit:contain;margin:auto">`
     : `<div style="font-size:11px;text-align:center;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700">Company logo</div>`;
+  const details = preset === 1
+    ? `<span style="display:block;font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a">${data.name}</span><span style="display:block;font-size:12px;color:${primary};font-weight:600;margin-top:4px">${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:7px;margin-top:7px;font-size:11px"><strong style="color:#0f172a">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}</div>`
+    : `<div style="border-left:3px solid ${primary};padding-left:14px"><div style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:13px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:12px;font-weight:500">${data.company}</div><div style="font-size:11px;margin-top:4px">☎ ${data.phone}</div></div>`;
+  const cells: Record<ArtboardKey, string> = {
+    headshot: `<td width="170" style="${cellStyle}"><span style="${labelStyle}">Headshot image</span>${avatar}</td>`,
+    details: `<td style="${cellStyle}"><span style="${labelStyle}">Personal details</span>${details}</td>`,
+    logo: `<td width="190" style="${cellStyle}"><span style="${labelStyle}">Company logo</span>${logo}</td>`,
+  };
+  const orderedCells = order.map((key) => cells[key]).join('');
 
-  if (preset === 1) {
-    return `<table cellpadding="0" cellspacing="10" border="0" style="font-family:${font};color:${secondary};line-height:1.3;width:760px;height:220px;padding:6px;box-sizing:border-box;border-collapse:separate;${backgroundStyle(background)}"><tr><td width="170" style="${cellStyle}"><span style="${labelStyle}">Headshot image</span>${avatar}</td><td style="${cellStyle}"><span style="${labelStyle}">Personal details</span><span style="display:block;font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a">${data.name}</span><span style="display:block;font-size:12px;color:${primary};font-weight:600;margin-top:4px">${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:7px;margin-top:7px;font-size:11px"><strong style="color:#0f172a">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}</div></td><td width="190" style="${cellStyle}"><span style="${labelStyle}">Company logo</span>${logo}</td></tr></table>`;
-  }
-  return `<table cellpadding="0" cellspacing="10" border="0" style="font-family:${font};color:${secondary};line-height:1.4;width:760px;height:220px;padding:6px;box-sizing:border-box;border-collapse:separate;${backgroundStyle(background)}"><tr><td width="170" style="${cellStyle}"><span style="${labelStyle}">Headshot image</span>${avatar}</td><td style="${cellStyle}"><span style="${labelStyle}">Personal details</span><div style="border-left:3px solid ${primary};padding-left:14px"><div style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:13px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:12px;font-weight:500">${data.company}</div><div style="font-size:11px;margin-top:4px">☎ ${data.phone}</div></div></td><td width="190" style="${cellStyle}"><span style="${labelStyle}">Company logo</span>${logo}</td></tr></table>`;
+  return `<table cellpadding="0" cellspacing="10" border="0" style="font-family:${font};color:${secondary};line-height:${preset === 1 ? '1.3' : '1.4'};width:760px;height:220px;padding:6px;box-sizing:border-box;border-collapse:separate;${backgroundStyle(background)}"><tr>${orderedCells}</tr></table>`;
 }
 
 function flyerMarkup(fields: FlyerFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string, dimensions: { width: number; height: number }) {
