@@ -35,8 +35,10 @@ export type CrmAudienceRow = {
 export async function resolveCrmAudience(f: CrmAudienceFilter): Promise<CrmAudienceRow[]> {
   const sql = getSql();
 
-  // Explicit id list — fast path, bypass filters
-  if (f.ids && f.ids.length > 0) {
+  // Explicit id list — fast path, bypass filters. An explicitly empty list
+  // means "no CRM recipients"; never fall through to the broad filter query.
+  if (Array.isArray(f.ids)) {
+    if (f.ids.length === 0) return [];
     const rows = (await sql`
       SELECT
         a.id,

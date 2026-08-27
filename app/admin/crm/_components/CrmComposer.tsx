@@ -92,6 +92,8 @@ type Draft = {
   query: string;
   tag: string;
   includeSignature: boolean;
+  manualEmails: string;
+  selectedRecipientIds: number[] | null;
 };
 
 function loadDraft(): Partial<Draft> {
@@ -125,6 +127,9 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
   const [publications, setPublications] = useState<PublicationKey[]>(initialFilter?.publications ?? []);
   const [query, setQuery] = useState(initialFilter?.query ?? '');
   const [tag, setTag] = useState('');
+  const [manualEmails, setManualEmails] = useState('');
+  // null means every recipient matching the current filter is selected.
+  const [selectedRecipientIds, setSelectedRecipientIds] = useState<number[] | null>(null);
 
   // Compose fields
   const [subject, setSubject] = useState('');
@@ -184,6 +189,10 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       if (d.publications) setPublications(d.publications);
       if (typeof d.query === 'string') setQuery(d.query);
       if (typeof d.tag === 'string') setTag(d.tag);
+      if (typeof d.manualEmails === 'string') setManualEmails(d.manualEmails);
+      if (d.selectedRecipientIds === null || Array.isArray(d.selectedRecipientIds)) {
+        setSelectedRecipientIds(d.selectedRecipientIds);
+      }
       setRestoredDraft(true);
       setTimeout(() => setRestoredDraft(false), 3500);
     });
@@ -225,6 +234,8 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
         recurrenceIntervalDays, recurrenceUntil, scheduledFor,
         publicationScope, statuses, publications, query, tag,
         includeSignature,
+        manualEmails,
+        selectedRecipientIds,
       });
     }, 600);
     return () => clearTimeout(t);
@@ -233,7 +244,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     attachmentLinkUrl, attachmentLinkLabel,
     recurrenceIntervalDays, recurrenceUntil, scheduledFor,
     publicationScope, statuses, publications, query, tag,
-    includeSignature,
+    includeSignature, manualEmails, selectedRecipientIds,
   ]);
 
   // ── Client-side audience preview (mirrors backend logic) ─────
@@ -321,6 +332,42 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
   const parseReplyToList = useCallback((): string[] => {
     return replyToList.split(',').map((s) => s.trim()).filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s));
   }, [replyToList]);
+
+  const parsedManualEmails = useMemo(() => {
+    const seen = new Set<string>();
+    return manualEmails
+      .split(/[\s,;]+/)
+      .map((value) => value.trim().toLowerCase())
+      .filter((value) => {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || seen.has(value)) return false;
+        seen.add(value);
+        return true;
+      });
+  }, [manualEmails]);
+
+  const selectedIds = useMemo(
+    () => selectedRecipientIds ?? (preview?.ids ?? localAudience.map((row) => row.id)),
+    [selectedRecipientIds, preview, localAudience],
+  );
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const selectedCrmEmails = useMemo(() => {
+    return new Set(
+      localAudience
+        .filter((row) => selectedIdSet.has(row.id))
+        .map((row) => row.email.trim().toLowerCase()),
+    );
+  }, [localAudience, selectedIdSet]);
+  const uniqueManualCount = parsedManualEmails.filter((email) => !selectedCrmEmails.has(email)).length;
+  const recipientCount = selectedIds.length + uniqueManualCount;
+
+  const toggleRecipient = useCallback((id: number) => {
+    setSelectedRecipientIds((current) => {
+      const base = new Set(current ?? (preview?.ids ?? localAudience.map((row) => row.id)));
+      if (base.has(id)) base.delete(id);
+      else base.add(id);
+      return Array.from(base);
+    });
+  }, [preview, localAudience]);
 
   const insertToken = useCallback((tok: string) => {
     setBody((prev) => `${prev}${tok}`);
@@ -411,8 +458,8 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       setSubmitErr('scheduled_for is required for scheduled sends');
       return;
     }
-    if ((preview?.count ?? 0) === 0) {
-      setSubmitErr('no recipients match the current filter');
+    if (recipientCount === 0) {
+      setSubmitErr('select at least one CRM recipient or add a valid email address');
       return;
     }
     setSubmitting(true);
@@ -420,11 +467,9 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     try {
       const payload = {
         filter: {
-          query: query || undefined,
-          status: statuses.length > 0 ? statuses : undefined,
-          publication: publications.length > 0 ? publications : undefined,
-          tag: tag || undefined,
+          ids: selectedIds,
         },
+        manual_emails: parsedManualEmails.length > 0 ? parsedManualEmails : undefined,
         subject,
         body,
         from_name: fromName || undefined,
@@ -459,7 +504,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       setSubmitting(false);
     }
   }, [
-    subject, body, mode, scheduledFor, preview, query, statuses, publications, tag,
+    subject, body, mode, scheduledFor, recipientCount, selectedIds, parsedManualEmails,
     fromName, replyTo, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel,
     publicationScope, includeSignature, recurrenceIntervalDays, recurrenceUntil, parseReplyToList, onSent, onClose,
   ]);
@@ -467,7 +512,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
   if (!open) return null;
 
   const serverCount = preview?.count ?? null;
-  const sampleForDisplay = preview?.sample ?? localAudience.slice(0, 25);
+  const sampleForDisplay = localAudience.length > 0 ? localAudience : (preview?.sample ?? []);
 
   return (
     <div className="fixed inset-0 z-50 flex items-stretch justify-stretch bg-black/40 backdrop-blur-sm">
@@ -518,7 +563,10 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                         <button
                           key={opt.value}
                           type="button"
-                          onClick={() => toggleFrom<AdvertiserStatus>(setStatuses, opt.value)}
+                          onClick={() => {
+                            setSelectedRecipientIds(null);
+                            toggleFrom<AdvertiserStatus>(setStatuses, opt.value);
+                          }}
                           className={`rounded-full border px-3 py-1 text-xs ${on ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'}`}
                         >
                           {opt.label}
@@ -537,7 +585,10 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                         <button
                           key={p}
                           type="button"
-                          onClick={() => toggleFrom<PublicationKey>(setPublications, p)}
+                          onClick={() => {
+                            setSelectedRecipientIds(null);
+                            toggleFrom<PublicationKey>(setPublications, p);
+                          }}
                           className={`rounded-full border px-3 py-1 text-xs ${on ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'}`}
                         >
                           {p}
@@ -553,7 +604,10 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                     <input
                       type="text"
                       value={query}
-                      onChange={(e) => setQuery(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedRecipientIds(null);
+                        setQuery(e.target.value);
+                      }}
                       placeholder="name / company / email"
                       className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
@@ -563,10 +617,29 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                     <input
                       type="text"
                       value={tag}
-                      onChange={(e) => setTag(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedRecipientIds(null);
+                        setTag(e.target.value);
+                      }}
                       placeholder="optional single tag"
                       className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Add emails manually
+                  </label>
+                  <textarea
+                    value={manualEmails}
+                    onChange={(e) => setManualEmails(e.target.value)}
+                    rows={2}
+                    placeholder="name@example.com, another@example.com"
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  />
+                  <div className="mt-1 text-xs text-gray-500">
+                    Separate addresses with commas, spaces, semicolons, or new lines. {parsedManualEmails.length} valid.
                   </div>
                 </div>
               </div>
@@ -832,7 +905,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
             <div className="mt-2 rounded-md border border-gray-200 bg-white px-3 py-2">
               <div className="text-xs uppercase tracking-wide text-gray-500">Recipients</div>
               <div className="mt-0.5 font-serif text-3xl text-gray-900">
-                {previewLoading ? '…' : serverCount ?? localAudience.length}
+                {previewLoading && selectedRecipientIds === null ? '…' : recipientCount}
               </div>
               {previewErr && <div className="mt-1 text-xs text-red-600">{previewErr}</div>}
               {!previewErr && serverCount != null && serverCount !== localAudience.length && (
@@ -842,11 +915,32 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
               )}
             </div>
 
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedRecipientIds(null)}
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+              >
+                Select all ({serverCount ?? localAudience.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedRecipientIds([])}
+                className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+              >
+                Clear all
+              </button>
+              <span className="text-xs text-gray-500">{selectedIds.length} CRM selected</span>
+            </div>
+
             <div className="mt-3 flex-1 overflow-y-auto rounded-md border border-gray-200 bg-white">
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead className="sticky top-0 bg-gray-100 text-gray-600">
                     <tr>
+                      <th className="w-9 px-2 py-1 text-left font-medium">
+                        <span className="sr-only">Selected</span>
+                      </th>
                       <th className="px-2 py-1 text-left font-medium">Email</th>
                       <th className="px-2 py-1 text-left font-medium">Name</th>
                       <th className="px-2 py-1 text-left font-medium">Pub</th>
@@ -854,10 +948,19 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                   </thead>
                   <tbody>
                     {sampleForDisplay.length === 0 && !previewLoading && (
-                      <tr><td colSpan={3} className="px-2 py-4 text-center text-gray-400">No recipients match this filter.</td></tr>
+                      <tr><td colSpan={4} className="px-2 py-4 text-center text-gray-400">No recipients match this filter.</td></tr>
                     )}
                     {sampleForDisplay.map((r) => (
                       <tr key={r.id} className="border-t border-gray-100">
+                        <td className="px-2 py-1">
+                          <input
+                            type="checkbox"
+                            checked={selectedIdSet.has(r.id)}
+                            onChange={() => toggleRecipient(r.id)}
+                            aria-label={`Select ${r.email}`}
+                            className="h-4 w-4 rounded border-gray-300 text-purple-700 focus:ring-purple-500"
+                          />
+                        </td>
                         <td className="px-2 py-1 font-mono text-gray-800">{r.email}</td>
                         <td className="px-2 py-1 text-gray-700">
                           {[r.first_name, r.last_name].filter(Boolean).join(' ') || r.company || '—'}
@@ -874,12 +977,12 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
               <button
                 type="button"
                 onClick={onSubmit}
-                disabled={submitting || (serverCount ?? localAudience.length) === 0}
+                disabled={submitting || recipientCount === 0}
                 className="w-full rounded-md bg-purple-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap"
               >
                 {submitting
                   ? (mode === 'schedule' ? 'Scheduling…' : 'Sending…')
-                  : (mode === 'schedule' ? `Schedule (${serverCount ?? localAudience.length})` : `Send now (${serverCount ?? localAudience.length})`)}
+                  : (mode === 'schedule' ? `Schedule (${recipientCount})` : `Send now (${recipientCount})`)}
               </button>
               <p className="text-[11px] text-gray-500">
                 Drafts autosave locally. Backend uses the exact same query as /admin/crm.

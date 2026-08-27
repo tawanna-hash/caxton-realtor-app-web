@@ -55,6 +55,7 @@ const sendSchema = z.object({
   scheduled_for: z.string().datetime({ offset: true }).optional(),
   recurrence_interval_days: z.number().int().positive().max(365).optional(),
   recurrence_until: z.string().datetime({ offset: true }).optional(),
+  manual_emails: z.array(z.string().regex(emailRe)).max(10000).optional(),
 }).strict().refine(
   (v) => v.mode !== 'schedule' || !!v.scheduled_for,
   { message: 'scheduled_for required when mode=schedule', path: ['scheduled_for'] },
@@ -85,18 +86,38 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
 
   // Materialize the audience from the filter.
   const audience = await resolveCrmAudience(input.filter as CrmAudienceFilter);
-  if (audience.length === 0) {
+  const seen = new Set<string>();
+  const seeds: RecipientSeed[] = [];
+  for (const r of audience) {
+    const key = r.email.trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    seeds.push({
+      recipient_type: 'advertiser',
+      recipient_id: r.id,
+      email: r.email,
+      first_name: r.first_name,
+      last_name: r.last_name,
+      company: r.company,
+    });
+  }
+  for (const raw of input.manual_emails ?? []) {
+    const email = raw.trim();
+    const key = email.toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    seeds.push({
+      recipient_type: 'manual',
+      recipient_id: null,
+      email,
+      first_name: null,
+      last_name: null,
+      company: null,
+    });
+  }
+  if (seeds.length === 0) {
     return NextResponse.json({ error: 'no recipients matched' }, { status: 422 });
   }
-
-  const seeds: RecipientSeed[] = audience.map((r) => ({
-    recipient_type: 'advertiser',
-    recipient_id: r.id,
-    email: r.email,
-    first_name: r.first_name,
-    last_name: r.last_name,
-    company: r.company,
-  }));
 
   // Ensure a synthetic campaign row (FK requirement).
   const campaignId = await ensureCrmOutreachCampaign(input.publication_scope);
@@ -116,19 +137,26 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       ${input.subject}, ${bodyFinal},
       ${initialStatus},
       ${input.scheduled_for ?? null},
-      ${JSON.stringify(seeds.map((s) => s.recipient_id))}::jsonb,
+      ${JSON.stringify(seeds.flatMap((s) => s.recipient_id == null ? [] : [s.recipient_id]))}::jsonb,
       ${seeds.length},
-      ${JSON.stringify(['advertisers'])}::jsonb,
+      ${JSON.stringify([
+        ...(seeds.some((s) => s.recipient_type === 'advertiser') ? ['advertisers'] : []),
+        ...(seeds.some((s) => s.recipient_type === 'manual') ? ['manual'] : []),
+      ])}::jsonb,
       ${JSON.stringify([])}::jsonb,
-      ${JSON.stringify([])}::jsonb,
+      ${JSON.stringify(seeds.filter((s) => s.recipient_type === 'manual').map((s) => s.email))}::jsonb,
       ${input.from_name ?? null},
       ${input.reply_to ?? null},
       ${input.preview_text ?? null},
       ${input.recurrence_interval_days ?? null},
       ${input.recurrence_until ?? null},
       ${JSON.stringify({
-        sources: ['advertisers'],
+        sources: [
+          ...(seeds.some((s) => s.recipient_type === 'advertiser') ? ['advertisers'] : []),
+          ...(seeds.some((s) => s.recipient_type === 'manual') ? ['manual'] : []),
+        ],
         crmFilter: input.filter,
+        manualEmails: seeds.filter((s) => s.recipient_type === 'manual').map((s) => s.email),
         publicationScope: input.publication_scope,
       })}::jsonb,
       ${input.reply_to_list ? JSON.stringify(input.reply_to_list) : null}::jsonb,
