@@ -1,6 +1,8 @@
 import type { jsPDF } from 'jspdf';
 import {
   type FooterBrand,
+  DEFAULT_FOOTER_COLUMN_WIDTHS,
+  type FooterColumnWidths,
   type FooterPalette,
   type FooterTemplateId,
   getFooterPalette,
@@ -111,12 +113,15 @@ function renderSplitColumn(
   photo: Awaited<ReturnType<typeof loadImage>>,
   top: number,
   pageWidth: number,
+  columns: FooterColumnWidths,
 ) {
   const left = MARGIN;
   const width = pageWidth - MARGIN * 2;
   const height = 96;
-  const photoWidth = 92;
-  const logoWidth = 106;
+  const availableWidth = width;
+  const requestedTotal = columns.headshot + columns.details + columns.logo;
+  const photoWidth = availableWidth * (columns.headshot / requestedTotal);
+  const logoWidth = availableWidth * (columns.logo / requestedTotal);
   const detailsX = left + photoWidth + 22;
   const detailsWidth = width - photoWidth - logoWidth - 44;
 
@@ -190,12 +195,14 @@ function renderMinimalRows(
 export interface BrandFooterOptions {
   template: FooterTemplateId;
   brand: FooterBrand;
+  columns?: FooterColumnWidths;
   preparedAt?: Date;
 }
 
 export async function applyBrandFooter(doc: jsPDF, opts: BrandFooterOptions): Promise<void> {
   const meta = getFooterTemplateMeta(opts.template);
   const palette = getFooterPalette(opts.brand);
+  const columns = opts.columns ?? DEFAULT_FOOTER_COLUMN_WIDTHS;
   const [logo, photo] = await Promise.all([
     loadImage(opts.brand.logo_url),
     loadImage(opts.brand.photo_url),
@@ -213,7 +220,7 @@ export async function applyBrandFooter(doc: jsPDF, opts: BrandFooterOptions): Pr
     if (opts.template === 'minimal-rows') {
       renderMinimalRows(doc, opts.brand, palette, logo, photo, top, pageWidth);
     } else {
-      renderSplitColumn(doc, opts.brand, palette, logo, photo, top, pageWidth);
+      renderSplitColumn(doc, opts.brand, palette, logo, photo, top, pageWidth, columns);
     }
   }
 }

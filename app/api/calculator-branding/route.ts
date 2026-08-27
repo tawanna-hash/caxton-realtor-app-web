@@ -34,6 +34,11 @@ const calculatorBrandingSchema = z.object({
   license_number: nullableText(80),
   tagline: nullableText(240),
   footer_template: z.enum(FOOTER_TEMPLATE_IDS),
+  footer_columns: z.object({
+    headshot: z.number().int().min(100).max(500),
+    details: z.number().int().min(100).max(500),
+    logo: z.number().int().min(100).max(500),
+  }).optional(),
 });
 
 function normalize(value: string | null): string | null {

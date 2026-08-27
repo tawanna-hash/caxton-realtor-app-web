@@ -15,15 +15,22 @@ import FloaterPill, { type FloaterAction } from '@/components/ui/FloaterPill';
 import { createCalcReportFile, downloadCalcReport, type CalcReport } from './calcPdf';
 import { printCurrentPage } from '@/lib/native/print';
 import { getApiBase } from '@/lib/api-base';
-import type { FooterBrand, FooterTemplateId } from '@/lib/footer-templates';
+import {
+  DEFAULT_FOOTER_COLUMN_WIDTHS,
+  type FooterBrand,
+  type FooterColumnWidths,
+  type FooterTemplateId,
+} from '@/lib/footer-templates';
 
 const API = getApiBase();
 const DESIGNER_SIGNATURE_STORAGE_KEY = 'rnn:custom-designer-signature';
 const DESIGNER_SIGNATURE_TEMPLATE_STORAGE_KEY = 'rnn:custom-designer-signature-template';
+const DESIGNER_SIGNATURE_COLUMNS_STORAGE_KEY = 'rnn:custom-designer-signature-columns';
 
 type BrandFooter = {
   template: FooterTemplateId;
   brand: FooterBrand;
+  columns?: FooterColumnWidths;
 };
 
 interface Props {
@@ -65,8 +72,12 @@ export default function ResourceFloater({
         };
         if (signature.name?.trim() && signature.company?.trim()) {
           const savedTemplate = window.localStorage.getItem(DESIGNER_SIGNATURE_TEMPLATE_STORAGE_KEY);
+          const savedColumns = window.localStorage.getItem(DESIGNER_SIGNATURE_COLUMNS_STORAGE_KEY);
           designerBranding = {
             template: savedTemplate === 'minimal-rows' ? 'minimal-rows' : 'split-column',
+            columns: savedColumns
+              ? { ...DEFAULT_FOOTER_COLUMN_WIDTHS, ...JSON.parse(savedColumns) }
+              : DEFAULT_FOOTER_COLUMN_WIDTHS,
             brand: {
               name: signature.name,
               company: signature.company,

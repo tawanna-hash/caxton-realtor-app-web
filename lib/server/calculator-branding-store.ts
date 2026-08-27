@@ -1,11 +1,15 @@
 import { query } from './db/neon';
-import type { FooterBrand, FooterTemplateId } from '@/lib/footer-templates';
-import { coerceFooterTemplateId } from '@/lib/footer-templates';
+import type { FooterBrand, FooterColumnWidths, FooterTemplateId } from '@/lib/footer-templates';
+import {
+  coerceFooterColumnWidths,
+  coerceFooterTemplateId,
+} from '@/lib/footer-templates';
 import type { PublicationScope } from '@/lib/publications';
 
 export interface CalculatorBranding {
   template: FooterTemplateId;
   brand: FooterBrand;
+  columns: FooterColumnWidths;
 }
 
 export interface CalculatorBrandingInput {
@@ -26,6 +30,7 @@ export interface CalculatorBrandingInput {
   license_number: string | null;
   tagline: string | null;
   footer_template: FooterTemplateId;
+  footer_columns?: FooterColumnWidths;
 }
 
 interface BrandingRow {
@@ -46,6 +51,9 @@ interface BrandingRow {
   license_number: string | null;
   tagline: string | null;
   footer_template: string | null;
+  footer_headshot_width: number | null;
+  footer_details_width: number | null;
+  footer_logo_width: number | null;
   market: string | null;
 }
 
@@ -70,6 +78,9 @@ async function ensureCalculatorBrandingTable(): Promise<void> {
       license_number TEXT,
       tagline TEXT,
       footer_template TEXT NOT NULL DEFAULT 'split-column',
+      footer_headshot_width INTEGER,
+      footer_details_width INTEGER,
+      footer_logo_width INTEGER,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
@@ -77,6 +88,12 @@ async function ensureCalculatorBrandingTable(): Promise<void> {
   await query(`
     ALTER TABLE realtor_calculator_branding
     ADD COLUMN IF NOT EXISTS office_phone TEXT
+  `);
+  await query(`
+    ALTER TABLE realtor_calculator_branding
+    ADD COLUMN IF NOT EXISTS footer_headshot_width INTEGER,
+    ADD COLUMN IF NOT EXISTS footer_details_width INTEGER,
+    ADD COLUMN IF NOT EXISTS footer_logo_width INTEGER
   `);
   await query(`
     ALTER TABLE realtor_calculator_branding
@@ -97,6 +114,11 @@ function publicationFromMarket(value: string | null): PublicationScope {
 function toCalculatorBranding(row: BrandingRow): CalculatorBranding {
   return {
     template: coerceFooterTemplateId(row.footer_template),
+    columns: coerceFooterColumnWidths({
+      headshot: row.footer_headshot_width,
+      details: row.footer_details_width,
+      logo: row.footer_logo_width,
+    }),
     brand: {
       name: row.display_name,
       company: row.brokerage_name,
@@ -140,6 +162,9 @@ export async function getCalculatorBranding(realtorId: string): Promise<Calculat
        COALESCE(NULLIF(b.license_number, ''), r.trec_license_number) AS license_number,
        b.tagline,
        b.footer_template,
+       b.footer_headshot_width,
+       b.footer_details_width,
+       b.footer_logo_width,
        r.market::text AS market
      FROM realtors r
      LEFT JOIN realtor_calculator_branding b ON b.realtor_id = r.id
@@ -161,10 +186,11 @@ export async function updateCalculatorBranding(
        realtor_id, display_name, professional_title, brokerage_name,
        email, phone, office_phone, website, logo_url, photo_url,
        address, address_2, city, state, zip, license_number,
-       tagline, footer_template, updated_at
+       tagline, footer_template, footer_headshot_width,
+       footer_details_width, footer_logo_width, updated_at
      ) VALUES (
        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-       $11, $12, $13, $14, $15, $16, $17, $18, NOW()
+       $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, NOW()
      )
      ON CONFLICT (realtor_id) DO UPDATE SET
        display_name = EXCLUDED.display_name,
@@ -184,6 +210,9 @@ export async function updateCalculatorBranding(
        license_number = EXCLUDED.license_number,
        tagline = EXCLUDED.tagline,
        footer_template = EXCLUDED.footer_template,
+       footer_headshot_width = COALESCE(EXCLUDED.footer_headshot_width, realtor_calculator_branding.footer_headshot_width),
+       footer_details_width = COALESCE(EXCLUDED.footer_details_width, realtor_calculator_branding.footer_details_width),
+       footer_logo_width = COALESCE(EXCLUDED.footer_logo_width, realtor_calculator_branding.footer_logo_width),
        updated_at = NOW()`,
     [
       realtorId,
@@ -204,6 +233,9 @@ export async function updateCalculatorBranding(
       input.license_number,
       input.tagline,
       input.footer_template,
+      input.footer_columns?.headshot ?? null,
+      input.footer_columns?.details ?? null,
+      input.footer_columns?.logo ?? null,
     ],
   );
   return getCalculatorBranding(realtorId);

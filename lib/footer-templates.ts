@@ -18,6 +18,35 @@ export type FooterTemplateId = (typeof FOOTER_TEMPLATE_IDS)[number];
 
 export const FOOTER_TEMPLATE_PICKER_IDS = FOOTER_TEMPLATE_IDS;
 
+export interface FooterColumnWidths {
+  headshot: number;
+  details: number;
+  logo: number;
+}
+
+export const DEFAULT_FOOTER_COLUMN_WIDTHS: FooterColumnWidths = {
+  headshot: 170,
+  details: 344,
+  logo: 190,
+};
+
+export function coerceFooterColumnWidths(value: unknown): FooterColumnWidths {
+  if (!value || typeof value !== 'object') return DEFAULT_FOOTER_COLUMN_WIDTHS;
+  const candidate = value as Partial<Record<keyof FooterColumnWidths, unknown>>;
+  const read = (key: keyof FooterColumnWidths) => {
+    if (candidate[key] === null || candidate[key] === undefined) {
+      return DEFAULT_FOOTER_COLUMN_WIDTHS[key];
+    }
+    const width = Number(candidate[key]);
+    return Number.isFinite(width) ? Math.min(500, Math.max(100, Math.round(width))) : DEFAULT_FOOTER_COLUMN_WIDTHS[key];
+  };
+  return {
+    headshot: read('headshot'),
+    details: read('details'),
+    logo: read('logo'),
+  };
+}
+
 const FOOTER_TEMPLATE_DEFAULT: FooterTemplateId = 'split-column';
 
 export function coerceFooterTemplateId(value: unknown): FooterTemplateId {

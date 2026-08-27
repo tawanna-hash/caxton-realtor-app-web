@@ -3,6 +3,10 @@
 import { ArrowLeft, ArrowRight, Download, FileCode2, GripVertical, ImagePlus, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { getApiBase } from '@/lib/api-base';
+import {
+  DEFAULT_FOOTER_COLUMN_WIDTHS,
+  type FooterColumnWidths,
+} from '@/lib/footer-templates';
 
 type Product = 'signature' | 'flyer';
 type ArtboardKey = 'headshot' | 'details' | 'logo';
@@ -174,6 +178,7 @@ const BRAND_TYPOGRAPHY_PRESETS = [
 const GOOGLE_FONTS_URL = 'https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,600;6..96,700&family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Libre+Franklin:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;900&family=Oswald:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;900&display=swap';
 const DESIGNER_SIGNATURE_STORAGE_KEY = 'rnn:custom-designer-signature';
 const DESIGNER_SIGNATURE_TEMPLATE_STORAGE_KEY = 'rnn:custom-designer-signature-template';
+const DESIGNER_SIGNATURE_COLUMNS_STORAGE_KEY = 'rnn:custom-designer-signature-columns';
 const APP_BRAND_PRIMARY = '#301D5D';
 const APP_BRAND_SECONDARY = '#7a1f7e';
 const API = getApiBase();
@@ -181,6 +186,7 @@ const API = getApiBase();
 type AccountBrandingResponse = {
   branding: {
     template: string;
+    columns?: FooterColumnWidths;
     brand: {
       name: string | null;
       company: string | null;
@@ -241,6 +247,7 @@ export default function DesignerClient() {
   const [artworkUploading, setArtworkUploading] = useState(false);
   const [flyer, setFlyer] = useState(DEFAULT_FLYER);
   const [artboardOrder, setArtboardOrder] = useState<ArtboardKey[]>(DEFAULT_ARTBOARD_ORDER);
+  const [artboardWidths, setArtboardWidths] = useState<FooterColumnWidths>(DEFAULT_FOOTER_COLUMN_WIDTHS);
   const fileRef = useRef<HTMLInputElement>(null);
   const headshotRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
@@ -276,6 +283,10 @@ export default function DesignerClient() {
         }
         const savedTemplate = window.localStorage.getItem(DESIGNER_SIGNATURE_TEMPLATE_STORAGE_KEY);
         if (savedTemplate === 'minimal-rows') setPreset(1);
+        const savedColumns = window.localStorage.getItem(DESIGNER_SIGNATURE_COLUMNS_STORAGE_KEY);
+        if (savedColumns) {
+          setArtboardWidths({ ...DEFAULT_FOOTER_COLUMN_WIDTHS, ...JSON.parse(savedColumns) });
+        }
       } catch {}
 
       fetch(`${API}/calculator-branding`, { credentials: 'include' })
@@ -290,11 +301,17 @@ export default function DesignerClient() {
             setSignature(accountSignature);
             const accountPreset = data.branding.template === 'minimal-rows' ? 1 : 0;
             setPreset(accountPreset);
+            const accountColumns = data.branding.columns ?? DEFAULT_FOOTER_COLUMN_WIDTHS;
+            setArtboardWidths(accountColumns);
             try {
               window.localStorage.setItem(DESIGNER_SIGNATURE_STORAGE_KEY, JSON.stringify(accountSignature));
               window.localStorage.setItem(
                 DESIGNER_SIGNATURE_TEMPLATE_STORAGE_KEY,
                 accountPreset === 1 ? 'minimal-rows' : 'split-column',
+              );
+              window.localStorage.setItem(
+                DESIGNER_SIGNATURE_COLUMNS_STORAGE_KEY,
+                JSON.stringify(accountColumns),
               );
             } catch {}
             setAccountConnected(true);
@@ -327,6 +344,7 @@ export default function DesignerClient() {
     try {
       if (
         !window.localStorage.getItem(DESIGNER_SIGNATURE_STORAGE_KEY)
+        && !window.localStorage.getItem(DESIGNER_SIGNATURE_COLUMNS_STORAGE_KEY)
         && JSON.stringify(signature) === JSON.stringify(DEFAULT_SIGNATURE)
       ) return;
       window.localStorage.setItem(DESIGNER_SIGNATURE_STORAGE_KEY, JSON.stringify(signature));
@@ -334,8 +352,12 @@ export default function DesignerClient() {
         DESIGNER_SIGNATURE_TEMPLATE_STORAGE_KEY,
         preset === 1 ? 'minimal-rows' : 'split-column',
       );
+      window.localStorage.setItem(
+        DESIGNER_SIGNATURE_COLUMNS_STORAGE_KEY,
+        JSON.stringify(artboardWidths),
+      );
     } catch {}
-  }, [preset, signature, signatureStorageReady]);
+  }, [artboardWidths, preset, signature, signatureStorageReady]);
 
   useEffect(() => {
     if (!accountSyncReady || !accountConnected || artworkUploading) return;
@@ -369,6 +391,7 @@ export default function DesignerClient() {
           license_number: null,
           tagline: null,
           footer_template: preset === 1 ? 'minimal-rows' : 'split-column',
+          footer_columns: artboardWidths,
         }),
       })
         .then(async (response) => {
@@ -380,7 +403,7 @@ export default function DesignerClient() {
         .catch(() => setSyncStatus('error'));
     }, 800);
     return () => window.clearTimeout(timeout);
-  }, [accountConnected, accountSyncReady, artworkUploading, preset, signature]);
+  }, [accountConnected, accountSyncReady, artboardWidths, artworkUploading, preset, signature]);
 
   const applyBrandTypography = (index: number) => {
     const brand = BRAND_TYPOGRAPHY_PRESETS[index];
@@ -545,6 +568,32 @@ export default function DesignerClient() {
     });
   };
 
+  const resizeArtboard = (key: ArtboardKey, event: React.PointerEvent<HTMLButtonElement>) => {
+    const index = artboardOrder.indexOf(key);
+    const nextKey = artboardOrder[index + 1];
+    if (!nextKey) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const startCurrent = artboardWidths[key];
+    const startNext = artboardWidths[nextKey];
+    const combined = startCurrent + startNext;
+    const onMove = (pointerEvent: PointerEvent) => {
+      const proposed = Math.max(100, Math.min(combined - 100, startCurrent + pointerEvent.clientX - startX));
+      setArtboardWidths((current) => ({
+        ...current,
+        [key]: Math.round(proposed),
+        [nextKey]: Math.round(combined - proposed),
+      }));
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp, { once: true });
+  };
+
   const clearBackground = () => {
     setBackground('');
     if (fileRef.current) fileRef.current.value = '';
@@ -571,6 +620,7 @@ export default function DesignerClient() {
     setSignature(DEFAULT_SIGNATURE);
     setFlyer(DEFAULT_FLYER);
     setArtboardOrder(DEFAULT_ARTBOARD_ORDER);
+    setArtboardWidths(DEFAULT_FOOTER_COLUMN_WIDTHS);
     if (fileRef.current) fileRef.current.value = '';
     if (headshotRef.current) headshotRef.current.value = '';
     if (logoRef.current) logoRef.current.value = '';
@@ -582,7 +632,7 @@ export default function DesignerClient() {
       return;
     }
     const markup = product === 'signature'
-      ? signatureMarkup(signature, preset, primary, secondary, font, headlineFont, fontSize, bodyFontSize, fontWeight, background, artboardOrder)
+      ? signatureMarkup(signature, preset, primary, secondary, font, headlineFont, fontSize, bodyFontSize, fontWeight, background, artboardOrder, artboardWidths)
       : flyerMarkup(
           flyer,
           signature,
@@ -1066,8 +1116,10 @@ export default function DesignerClient() {
                   bodyFontSize={bodyFontSize}
                   fontWeight={fontWeight}
                   order={artboardOrder}
+                  widths={artboardWidths}
                   onReorder={reorderArtboard}
                   onMove={moveArtboard}
+                  onResizeStart={resizeArtboard}
                 />
               ) : (
                 <FlyerPreview fields={flyer} identity={signature} preset={preset} primary={primary} secondary={secondary} font={font} headlineFont={headlineFont} fontSize={fontSize} bodyFontSize={bodyFontSize} fontWeight={fontWeight} dimensions={dimensions} />
@@ -1167,7 +1219,7 @@ export default function DesignerClient() {
   );
 }
 
-function SignaturePreview({ fields, preset, primary, secondary, font, headlineFont, fontSize, bodyFontSize, fontWeight, order, onReorder, onMove }: {
+function SignaturePreview({ fields, preset, primary, secondary, font, headlineFont, fontSize, bodyFontSize, fontWeight, order, widths, onReorder, onMove, onResizeStart }: {
   fields: SignatureFields;
   preset: number;
   primary: string;
@@ -1178,8 +1230,10 @@ function SignaturePreview({ fields, preset, primary, secondary, font, headlineFo
   bodyFontSize: number;
   fontWeight: number;
   order: ArtboardKey[];
+  widths: FooterColumnWidths;
   onReorder: (source: ArtboardKey, target: ArtboardKey) => void;
   onMove: (key: ArtboardKey, direction: -1 | 1) => void;
+  onResizeStart: (key: ArtboardKey, event: React.PointerEvent<HTMLButtonElement>) => void;
 }) {
   const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
   const headshot = fields.photo ? (
@@ -1233,7 +1287,11 @@ function SignaturePreview({ fields, preset, primary, secondary, font, headlineFo
   return (
     <div
       className="signature-artboard-grid grid w-full grid-cols-[170px_minmax(0,1fr)_190px] gap-3 p-4"
-      style={{ fontFamily: font, color: secondary }}
+      style={{
+        fontFamily: font,
+        color: secondary,
+        gridTemplateColumns: order.map((key) => `${widths[key]}fr`).join(' '),
+      }}
     >
       {order.map((key, index) => (
         <SignatureArtboard
@@ -1244,6 +1302,7 @@ function SignaturePreview({ fields, preset, primary, secondary, font, headlineFo
           total={order.length}
           onReorder={onReorder}
           onMove={onMove}
+          onResizeStart={preset === 0 && index < order.length - 1 ? onResizeStart : undefined}
         >
           {artboards[key].content}
         </SignatureArtboard>
@@ -1259,6 +1318,7 @@ function SignatureArtboard({
   total,
   onReorder,
   onMove,
+  onResizeStart,
   children,
 }: {
   artboardKey: ArtboardKey;
@@ -1267,6 +1327,7 @@ function SignatureArtboard({
   total: number;
   onReorder: (source: ArtboardKey, target: ArtboardKey) => void;
   onMove: (key: ArtboardKey, direction: -1 | 1) => void;
+  onResizeStart?: (key: ArtboardKey, event: React.PointerEvent<HTMLButtonElement>) => void;
   children: React.ReactNode;
 }) {
   return (
@@ -1314,6 +1375,18 @@ function SignatureArtboard({
         </span>
       </div>
       <div className="flex w-full items-center justify-center">{children}</div>
+      {onResizeStart && (
+        <button
+          type="button"
+          aria-label={`Resize ${label}`}
+          title="Drag to resize this box"
+          draggable={false}
+          onPointerDown={(event) => onResizeStart(artboardKey, event)}
+          className="absolute -right-2 top-1/2 z-20 flex h-14 w-4 -translate-y-1/2 touch-none cursor-col-resize items-center justify-center rounded-full border border-[#7a1f7e] bg-white text-[#7a1f7e] shadow-md"
+        >
+          <span className="h-7 w-0.5 rounded bg-current" />
+        </button>
+      )}
     </section>
   );
 }
@@ -1842,7 +1915,7 @@ function backgroundStyle(background: string) {
   return background ? `background-image:url('${background}');background-size:cover;background-position:center;` : '';
 }
 
-function signatureMarkup(fields: SignatureFields, preset: number, primary: string, secondary: string, font: string, headlineFont: string, fontSize: number, bodyFontSize: number, fontWeight: number, background: string, order: ArtboardKey[]) {
+function signatureMarkup(fields: SignatureFields, preset: number, primary: string, secondary: string, font: string, headlineFont: string, fontSize: number, bodyFontSize: number, fontWeight: number, background: string, order: ArtboardKey[], widths: FooterColumnWidths) {
   const data = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, escapeHtml(value)])) as SignatureFields;
   const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
   const labelStyle = 'display:block;font-size:9px;line-height:1;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700;margin-bottom:16px';
@@ -1857,9 +1930,9 @@ function signatureMarkup(fields: SignatureFields, preset: number, primary: strin
     ? `<span style="display:block;font-family:${headlineFont};font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a">${data.name}</span><span style="display:block;font-size:${bodyFontSize}px;color:${primary};font-weight:600;margin-top:4px">${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:7px;margin-top:7px;font-size:${bodyFontSize}px"><strong style="color:#0f172a;font-size:${brokerSize}px">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}<span style="display:block;margin-top:3px">${data.email} · ${data.website}</span></div>`
     : `<div style="border-left:3px solid ${primary};padding-left:14px"><div style="font-family:${headlineFont};font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:${bodyFontSize}px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:${brokerSize}px;font-weight:700">${data.company}</div><div style="font-size:${bodyFontSize}px;margin-top:4px">☎ ${data.phone}</div><div style="font-size:${bodyFontSize}px;margin-top:2px">${data.email} · ${data.website}</div></div>`;
   const cells: Record<ArtboardKey, string> = {
-    headshot: `<td width="170" style="${cellStyle}"><span style="${labelStyle}">Headshot image</span>${avatar}</td>`,
-    details: `<td style="${cellStyle}"><span style="${labelStyle}">Personal details</span>${details}</td>`,
-    logo: `<td width="190" style="${cellStyle}"><span style="${labelStyle}">Company logo</span>${legacyLogo}</td>`,
+    headshot: `<td width="${widths.headshot}" style="${cellStyle}"><span style="${labelStyle}">Headshot image</span>${avatar}</td>`,
+    details: `<td width="${widths.details}" style="${cellStyle}"><span style="${labelStyle}">Personal details</span>${details}</td>`,
+    logo: `<td width="${widths.logo}" style="${cellStyle}"><span style="${labelStyle}">Company logo</span>${legacyLogo}</td>`,
   };
   const orderedCells = order.map((key) => cells[key]).join('');
 

@@ -14,6 +14,7 @@ import autoTable from 'jspdf-autotable';
 import { applyBrandFooter } from '@/lib/pdf/brand-footer';
 import {
   type FooterBrand,
+  type FooterColumnWidths,
   type FooterTemplateId,
   getFooterTemplateMeta,
 } from '@/lib/footer-templates';
@@ -52,6 +53,7 @@ export interface CalcReport {
   brandFooter?: {
     template: FooterTemplateId;
     brand: FooterBrand;
+    columns?: FooterColumnWidths;
   };
 }
 
