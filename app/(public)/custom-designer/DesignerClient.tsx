@@ -123,6 +123,53 @@ const FONT_PAIRINGS = [
   { label: 'Refined Minimal', headline: 'Manrope, Arial, sans-serif', body: 'Inter, Arial, sans-serif' },
   { label: 'Classic Luxury', headline: "'Cormorant Garamond', Georgia, serif", body: "'DM Sans', Arial, sans-serif" },
 ];
+const BRAND_TYPOGRAPHY_PRESETS = [
+  {
+    label: 'RealtyLine',
+    description: 'Editorial authority',
+    headline: "'Playfair Display', Georgia, serif",
+    body: "'DM Sans', Arial, sans-serif",
+    weight: 700,
+    headlineSize: 31,
+    subheadlineSize: 12,
+    bodySize: 10,
+    eyebrowSize: 9,
+    headlineSpacing: -0.4,
+    bodySpacing: 0,
+    headlineLeading: 0.95,
+    bodyLeading: 1.45,
+  },
+  {
+    label: 'Newsline',
+    description: 'Bold local news',
+    headline: 'Oswald, Arial, sans-serif',
+    body: "'Libre Franklin', Arial, sans-serif",
+    weight: 600,
+    headlineSize: 32,
+    subheadlineSize: 13,
+    bodySize: 10,
+    eyebrowSize: 9,
+    headlineSpacing: 0.3,
+    bodySpacing: 0,
+    headlineLeading: 0.9,
+    bodyLeading: 1.4,
+  },
+  {
+    label: 'Realty News Now',
+    description: 'Clean digital-first',
+    headline: 'Manrope, Arial, sans-serif',
+    body: 'Inter, Arial, sans-serif',
+    weight: 700,
+    headlineSize: 30,
+    subheadlineSize: 12,
+    bodySize: 10,
+    eyebrowSize: 9,
+    headlineSpacing: -0.5,
+    bodySpacing: 0,
+    headlineLeading: 0.95,
+    bodyLeading: 1.5,
+  },
+];
 const GOOGLE_FONTS_URL = 'https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,600;6..96,700&family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Libre+Franklin:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;900&family=Oswald:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;900&display=swap';
 
 export default function DesignerClient() {
@@ -150,6 +197,7 @@ export default function DesignerClient() {
   const headshotRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const selectedArtboardElementRef = useRef<HTMLElement | null>(null);
 
   const dimensions = product === 'signature'
     ? { width: 760, height: 220 }
@@ -162,6 +210,34 @@ export default function DesignerClient() {
     '--designer-headline-leading': headlineLineHeight,
     '--designer-body-leading': bodyLineHeight,
   } as React.CSSProperties;
+
+  const applyBrandTypography = (index: number) => {
+    const brand = BRAND_TYPOGRAPHY_PRESETS[index];
+    if (!brand) return;
+    setHeadlineFont(brand.headline);
+    setFont(brand.body);
+    setFontWeight(brand.weight);
+    setFontSize(brand.headlineSize);
+    setSubheadlineFontSize(brand.subheadlineSize);
+    setBodyFontSize(brand.bodySize);
+    setEyebrowFontSize(brand.eyebrowSize);
+    setHeadlineLetterSpacing(brand.headlineSpacing);
+    setBodyLetterSpacing(brand.bodySpacing);
+    setHeadlineLineHeight(brand.headlineLeading);
+    setBodyLineHeight(brand.bodyLeading);
+  };
+
+  const selectArtboardElement = (event: React.MouseEvent<HTMLDivElement>) => {
+    const directTarget = (event.target as HTMLElement).closest<HTMLElement>('img, [data-type-role]');
+    const target = directTarget ?? document
+      .elementsFromPoint(event.clientX, event.clientY)
+      .map((element) => element.closest<HTMLElement>('img, [data-type-role]'))
+      .find((element): element is HTMLElement => Boolean(element && previewRef.current?.contains(element)));
+    if (!target || !previewRef.current?.contains(target)) return;
+    selectedArtboardElementRef.current?.classList.remove('designer-selected-element');
+    target.classList.add('designer-selected-element');
+    selectedArtboardElementRef.current = target;
+  };
 
   const uploadBackground = (file?: File) => {
     if (!file) return;
@@ -426,21 +502,38 @@ export default function DesignerClient() {
             </div>
 
             {product === 'flyer' && (
-              <Control label="Curated font pairing">
-                <select
-                  defaultValue=""
-                  onChange={(event) => {
-                    const pairing = FONT_PAIRINGS[Number(event.target.value)];
-                    if (!pairing) return;
-                    setHeadlineFont(pairing.headline);
-                    setFont(pairing.body);
-                  }}
-                  className="studio-control"
-                >
-                  <option value="" disabled>Choose a headline + text pair</option>
-                  {FONT_PAIRINGS.map((pairing, index) => <option key={pairing.label} value={index}>{pairing.label}</option>)}
-                </select>
-              </Control>
+              <div className="space-y-3">
+                <Control label="Saved brand typography">
+                  <div className="grid grid-cols-3 gap-2">
+                    {BRAND_TYPOGRAPHY_PRESETS.map((brand, index) => (
+                      <button
+                        key={brand.label}
+                        type="button"
+                        onClick={() => applyBrandTypography(index)}
+                        className="min-h-16 rounded-md border border-slate-700 bg-[#111729] px-2 py-2 text-left transition-colors hover:border-sky-400 hover:bg-sky-950"
+                      >
+                        <span className="block text-[11px] font-bold text-white">{brand.label}</span>
+                        <span className="mt-1 block text-[9px] leading-tight text-slate-400">{brand.description}</span>
+                      </button>
+                    ))}
+                  </div>
+                </Control>
+                <Control label="Curated font pairing">
+                  <select
+                    defaultValue=""
+                    onChange={(event) => {
+                      const pairing = FONT_PAIRINGS[Number(event.target.value)];
+                      if (!pairing) return;
+                      setHeadlineFont(pairing.headline);
+                      setFont(pairing.body);
+                    }}
+                    className="studio-control"
+                  >
+                    <option value="" disabled>Choose a headline + text pair</option>
+                    {FONT_PAIRINGS.map((pairing, index) => <option key={pairing.label} value={index}>{pairing.label}</option>)}
+                  </select>
+                </Control>
+              </div>
             )}
 
             <div className="grid grid-cols-2 gap-3">
@@ -696,6 +789,7 @@ export default function DesignerClient() {
           <div className="flex flex-1 items-center justify-center overflow-auto p-5 sm:p-10">
             <div
               ref={previewRef}
+              onClick={selectArtboardElement}
               className={`custom-designer-preview relative max-w-full overflow-hidden rounded shadow-2xl transition-[width,height] duration-300 ${product === 'signature' ? 'signature-preview-board' : ''}`}
               style={{
                 ...typographyVariables,
@@ -788,6 +882,16 @@ export default function DesignerClient() {
         .custom-designer-preview [data-type-role='body'] {
           letter-spacing: var(--designer-body-spacing) !important;
           line-height: var(--designer-body-leading) !important;
+        }
+        .custom-designer-preview img,
+        .custom-designer-preview [data-type-role] {
+          cursor: pointer;
+        }
+        .custom-designer-preview .designer-selected-element {
+          position: relative;
+          outline: 2px solid #0ea5e9 !important;
+          outline-offset: 3px;
+          box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.18);
         }
         @media (max-width: 640px) {
           .signature-preview-board {
@@ -1325,11 +1429,11 @@ function FlyerPhoto({ src, className, label }: { src: string; className: string;
   if (src) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt="" className={`${className} object-cover`} />
+      <img data-type-role="asset" src={src} alt="" className={`${className} object-cover`} />
     );
   }
   return (
-    <div className={`flex items-center justify-center bg-slate-200 text-center text-[8px] font-bold uppercase tracking-wider text-slate-500 ${className}`}>
+    <div data-type-role="asset" className={`flex items-center justify-center bg-slate-200 text-center text-[8px] font-bold uppercase tracking-wider text-slate-500 ${className}`}>
       {label}
     </div>
   );
