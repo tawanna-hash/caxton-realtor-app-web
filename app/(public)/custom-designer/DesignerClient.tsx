@@ -48,13 +48,13 @@ const FLYER_SIZES: Record<FlyerSize, { label: string; width: number; height: num
 
 const SIGNATURE_PRESETS = ['Split Column (Classic)', 'Minimal Rows (Stack)'];
 const FLYER_PRESETS = [
-  'Editorial Poster',
-  'Impact Display',
-  'Luxury Listings',
-  'Property Showcase',
-  'Modern House Listing',
-  'New Listing',
-  'Modern House Grid',
+  'Editorial Event Flyer',
+  'Impact Photo Flyer',
+  'Luxury Listings Flyer',
+  'Property Showcase Flyer',
+  'Modern Home Flyer',
+  'New Listing Flyer',
+  'Property Grid Flyer',
 ];
 const SOCIAL_PREVIEW_SIZES: Array<{ key: FlyerSize; label: string }> = [
   { key: 'insta-square', label: 'Instagram Post' },
@@ -109,6 +109,14 @@ const FONT_OPTIONS = [
   { label: 'Oswald Display', value: 'Oswald, Arial, sans-serif' },
   { label: 'Inter UI', value: 'Inter, Arial, sans-serif' },
 ];
+const FONT_PAIRINGS = [
+  { label: 'Modern Editorial', headline: "'Playfair Display', Georgia, serif", body: "'DM Sans', Arial, sans-serif" },
+  { label: 'Luxury Serif', headline: "'Cormorant Garamond', Georgia, serif", body: 'Manrope, Arial, sans-serif' },
+  { label: 'High Impact', headline: 'Oswald, Arial, sans-serif', body: "'Libre Franklin', Arial, sans-serif" },
+  { label: 'Contemporary Sans', headline: 'Montserrat, Arial, sans-serif', body: 'Inter, Arial, sans-serif' },
+  { label: 'Classic Property', headline: "'Bodoni Moda', Georgia, serif", body: "'Libre Franklin', Arial, sans-serif" },
+  { label: 'Clean Professional', headline: 'Manrope, Arial, sans-serif', body: "'DM Sans', Arial, sans-serif" },
+];
 const GOOGLE_FONTS_URL = 'https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,600;6..96,700&family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Libre+Franklin:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;900&family=Oswald:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;900&display=swap';
 
 export default function DesignerClient() {
@@ -118,8 +126,10 @@ export default function DesignerClient() {
   const [primary, setPrimary] = useState('#0284c7');
   const [secondary, setSecondary] = useState('#475569');
   const [font, setFont] = useState(FONT_OPTIONS[0].value);
+  const [headlineFont, setHeadlineFont] = useState(FONT_OPTIONS[0].value);
   const [fontWeight, setFontWeight] = useState(700);
   const [fontSize, setFontSize] = useState(16);
+  const [bodyFontSize, setBodyFontSize] = useState(11);
   const [background, setBackground] = useState('');
   const [signature, setSignature] = useState(DEFAULT_SIGNATURE);
   const [flyer, setFlyer] = useState(DEFAULT_FLYER);
@@ -168,10 +178,12 @@ export default function DesignerClient() {
     setProduct(nextProduct);
     setPreset(index);
     setFontSize(nextProduct === 'signature' ? 16 : index >= 2 ? 30 : 24);
+    setBodyFontSize(nextProduct === 'signature' ? 11 : 10);
     if (nextProduct === 'flyer' && index >= 2) {
       setPrimary('#d8cdb9');
       setSecondary('#1c2d42');
-      setFont(FONT_OPTIONS[1].value);
+      setHeadlineFont(FONT_PAIRINGS[1].headline);
+      setFont(FONT_PAIRINGS[1].body);
       setFontWeight(400);
     }
   };
@@ -217,8 +229,10 @@ export default function DesignerClient() {
     setPrimary('#0284c7');
     setSecondary('#475569');
     setFont(FONT_OPTIONS[0].value);
+    setHeadlineFont(FONT_OPTIONS[0].value);
     setFontWeight(700);
     setFontSize(product === 'signature' ? 16 : 24);
+    setBodyFontSize(product === 'signature' ? 11 : 10);
     setBackground('');
     setSignature(DEFAULT_SIGNATURE);
     setFlyer(DEFAULT_FLYER);
@@ -234,8 +248,8 @@ export default function DesignerClient() {
       return;
     }
     const markup = product === 'signature'
-      ? signatureMarkup(signature, preset, primary, secondary, font, fontSize, fontWeight, background, artboardOrder)
-      : flyerMarkup(flyer, signature, preset, primary, secondary, font, fontSize, fontWeight, background, dimensions);
+      ? signatureMarkup(signature, preset, primary, secondary, font, headlineFont, fontSize, bodyFontSize, fontWeight, background, artboardOrder)
+      : flyerMarkup(flyer, signature, preset, primary, secondary, font, headlineFont, fontSize, bodyFontSize, fontWeight, background, dimensions);
     const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RNN Custom Design</title><link rel="stylesheet" href="${GOOGLE_FONTS_URL}"></head><body style="margin:0">${markup}</body></html>`;
     downloadBlob(html, `rnn-${product}.html`, 'text/html');
   };
@@ -293,7 +307,7 @@ export default function DesignerClient() {
     pdf.text(flyer.meta, margin, startY + titleDepth + 8);
     pdf.setTextColor(preset === 1 ? secondary : '#475569');
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(11);
+    pdf.setFontSize(bodyFontSize);
     pdf.text(pdf.splitTextToSize(flyer.body, dimensions.width - margin * 2), margin, startY + titleDepth + 28);
     const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
     const complianceY = dimensions.height - margin;
@@ -342,7 +356,7 @@ export default function DesignerClient() {
                 <optgroup label="Email signatures">
                   {SIGNATURE_PRESETS.map((name, index) => <option key={`signature-${name}`} value={`signature:${index}`}>{name}</option>)}
                 </optgroup>
-                <optgroup label="Marketing flyers and social media">
+                <optgroup label="Flyer and social templates">
                   {FLYER_PRESETS.map((name, index) => <option key={`flyer-${name}`} value={`flyer:${index}`}>{name}</option>)}
                 </optgroup>
               </select>
@@ -364,13 +378,35 @@ export default function DesignerClient() {
               <ColorControl label="Secondary accent" value={secondary} onChange={setSecondary} />
             </div>
 
-            <Control label="Font family">
-              <select value={font} onChange={(event) => setFont(event.target.value)} className="studio-control">
-                {FONT_OPTIONS.map((option) => <option key={option.label} value={option.value}>{option.label}</option>)}
-              </select>
-            </Control>
+            {product === 'flyer' && (
+              <Control label="Curated font pairing">
+                <select
+                  defaultValue=""
+                  onChange={(event) => {
+                    const pairing = FONT_PAIRINGS[Number(event.target.value)];
+                    if (!pairing) return;
+                    setHeadlineFont(pairing.headline);
+                    setFont(pairing.body);
+                  }}
+                  className="studio-control"
+                >
+                  <option value="" disabled>Choose a headline + text pair</option>
+                  {FONT_PAIRINGS.map((pairing, index) => <option key={pairing.label} value={index}>{pairing.label}</option>)}
+                </select>
+              </Control>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
+              <Control label={product === 'flyer' ? 'Headline font' : 'Name font'}>
+                <select value={headlineFont} onChange={(event) => setHeadlineFont(event.target.value)} className="studio-control">
+                  {FONT_OPTIONS.map((option) => <option key={`headline-${option.label}`} value={option.value}>{option.label}</option>)}
+                </select>
+              </Control>
+              <Control label={product === 'flyer' ? 'Text font' : 'Detail font'}>
+                <select value={font} onChange={(event) => setFont(event.target.value)} className="studio-control">
+                  {FONT_OPTIONS.map((option) => <option key={`body-${option.label}`} value={option.value}>{option.label}</option>)}
+                </select>
+              </Control>
               <Control label="Headline weight">
                 <select value={fontWeight} onChange={(event) => setFontWeight(Number(event.target.value))} className="studio-control">
                   <option value={300}>Light (300)</option>
@@ -379,13 +415,23 @@ export default function DesignerClient() {
                   <option value={900}>Black (900)</option>
                 </select>
               </Control>
-              <Control label={`Headline scale (${fontSize}px)`}>
+              <Control label={`Headline size (${fontSize}px)`}>
                 <input
                   type="range"
                   min={product === 'signature' ? 14 : 18}
                   max={product === 'signature' ? 22 : 36}
                   value={fontSize}
                   onChange={(event) => setFontSize(Number(event.target.value))}
+                  className="studio-control accent-sky-500"
+                />
+              </Control>
+              <Control label={`Text size (${bodyFontSize}px)`}>
+                <input
+                  type="range"
+                  min={8}
+                  max={product === 'signature' ? 16 : 18}
+                  value={bodyFontSize}
+                  onChange={(event) => setBodyFontSize(Number(event.target.value))}
                   className="studio-control accent-sky-500"
                 />
               </Control>
@@ -580,14 +626,16 @@ export default function DesignerClient() {
                   primary={primary}
                   secondary={secondary}
                   font={font}
+                  headlineFont={headlineFont}
                   fontSize={fontSize}
+                  bodyFontSize={bodyFontSize}
                   fontWeight={fontWeight}
                   order={artboardOrder}
                   onReorder={reorderArtboards}
                   onMove={moveArtboard}
                 />
               ) : (
-                <FlyerPreview fields={flyer} identity={signature} preset={preset} primary={primary} secondary={secondary} font={font} fontSize={fontSize} fontWeight={fontWeight} dimensions={dimensions} />
+                <FlyerPreview fields={flyer} identity={signature} preset={preset} primary={primary} secondary={secondary} font={font} headlineFont={headlineFont} fontSize={fontSize} bodyFontSize={bodyFontSize} fontWeight={fontWeight} dimensions={dimensions} />
               )}
             </div>
           </div>
@@ -649,13 +697,15 @@ export default function DesignerClient() {
   );
 }
 
-function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, fontWeight, order, onReorder, onMove }: {
+function SignaturePreview({ fields, preset, primary, secondary, font, headlineFont, fontSize, bodyFontSize, fontWeight, order, onReorder, onMove }: {
   fields: SignatureFields;
   preset: number;
   primary: string;
   secondary: string;
   font: string;
+  headlineFont: string;
   fontSize: number;
+  bodyFontSize: number;
   fontWeight: number;
   order: ArtboardKey[];
   onReorder: (source: ArtboardKey, target: ArtboardKey) => void;
@@ -685,10 +735,10 @@ function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, 
   const details = preset === 1 ? (
     <div className="w-full">
       <div>
-        <span style={{ color: '#0f172a', fontSize, fontWeight }}>{fields.name}</span>
-        <span className="mt-1 block text-xs font-semibold" style={{ color: primary }}>{fields.title}</span>
+        <span style={{ color: '#0f172a', fontFamily: headlineFont, fontSize, fontWeight }}>{fields.name}</span>
+        <span className="mt-1 block font-semibold" style={{ color: primary, fontSize: bodyFontSize }}>{fields.title}</span>
       </div>
-      <div className="mt-2 border-t border-slate-200 pt-2 text-[11px]">
+      <div className="mt-2 border-t border-slate-200 pt-2" style={{ fontSize: bodyFontSize }}>
         <strong className="text-slate-900" style={{ fontSize: brokerSize }}>{fields.company || 'Broker name required'}</strong>
         <span> &nbsp;·&nbsp; ☎ {fields.phone}</span>
         <span className="mt-1 block">{fields.email} · {fields.website}</span>
@@ -696,11 +746,11 @@ function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, 
     </div>
   ) : (
     <div className="w-full border-l-[3px] pl-4" style={{ borderColor: primary }}>
-      <div className="leading-tight text-slate-900" style={{ fontSize, fontWeight }}>{fields.name}</div>
-      <div className="mt-1 text-[13px] font-semibold" style={{ color: primary }}>{fields.title}</div>
+      <div className="leading-tight text-slate-900" style={{ fontFamily: headlineFont, fontSize, fontWeight }}>{fields.name}</div>
+      <div className="mt-1 font-semibold" style={{ color: primary, fontSize: bodyFontSize }}>{fields.title}</div>
       <div className="mt-0.5 font-bold" style={{ fontSize: brokerSize }}>{fields.company || 'Broker name required'}</div>
-      <div className="mt-1 text-[11px]">☎ {fields.phone}</div>
-      <div className="mt-0.5 text-[11px]">{fields.email} · {fields.website}</div>
+      <div className="mt-1" style={{ fontSize: bodyFontSize }}>☎ {fields.phone}</div>
+      <div className="mt-0.5" style={{ fontSize: bodyFontSize }}>{fields.email} · {fields.website}</div>
     </div>
   );
 
@@ -798,14 +848,16 @@ function SignatureArtboard({
   );
 }
 
-function FlyerPreview({ fields, identity, preset, primary, secondary, font, fontSize, fontWeight, dimensions }: {
+function FlyerPreview({ fields, identity, preset, primary, secondary, font, headlineFont, fontSize, bodyFontSize, fontWeight, dimensions }: {
   fields: FlyerFields;
   identity: SignatureFields;
   preset: number;
   primary: string;
   secondary: string;
   font: string;
+  headlineFont: string;
   fontSize: number;
+  bodyFontSize: number;
   fontWeight: number;
   dimensions: { width: number; height: number };
 }) {
@@ -846,8 +898,8 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 to-slate-950/20" />
             <div className="relative z-10 flex h-full flex-col justify-center px-4 text-white">
               <p className="text-[7px] uppercase tracking-[0.14em]" style={{ color: primary }}>{fields.eyebrow}</p>
-              <h2 className="mt-1 leading-[0.9]" style={{ fontSize: compact ? 19 : 27, fontWeight }}>{fields.title}</h2>
-              {!compact && <p className="mt-2 text-[8px] leading-relaxed text-slate-200">{fields.body}</p>}
+              <h2 className="mt-1 leading-[0.9]" style={{ fontFamily: headlineFont, fontSize: compact ? 19 : fontSize, fontWeight }}>{fields.title}</h2>
+              {!compact && <p className="mt-2 leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>}
             </div>
           </div>
           <div className="flex min-w-0 flex-col px-3 py-2">
@@ -884,8 +936,8 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
               ) : identity.company}
             </div>
             <p className="text-[10px] uppercase tracking-[0.14em]" style={{ color: primary }}>{fields.eyebrow}</p>
-            <h2 className="mt-1 whitespace-pre-line leading-[0.9] tracking-[-0.035em]" style={{ fontSize, fontWeight }}>{fields.title}</h2>
-            <p className="mt-3 max-w-[240px] text-[9px] leading-relaxed text-slate-200">{fields.body}</p>
+            <h2 className="mt-1 whitespace-pre-line leading-[0.9] tracking-[-0.035em]" style={{ fontFamily: headlineFont, fontSize, fontWeight }}>{fields.title}</h2>
+            <p className="mt-3 max-w-[240px] leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>
           </div>
         </div>
         <div className="grid flex-1 grid-cols-3 gap-3 px-5 py-4">
@@ -914,9 +966,9 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
           <FlyerPhoto src={fields.image} className="h-full w-full" label="Hero property photo" />
           <div className="flex min-w-0 flex-col justify-center px-4 text-white" style={{ backgroundColor: secondary }}>
             <p className="text-[7px] uppercase tracking-[0.14em]" style={{ color: primary }}>{fields.eyebrow}</p>
-            <h2 className="mt-1 truncate leading-none" style={{ fontSize: compact ? 18 : 27, fontWeight }}>{fields.title}</h2>
+            <h2 className="mt-1 truncate leading-none" style={{ fontFamily: headlineFont, fontSize: compact ? 18 : fontSize, fontWeight }}>{fields.title}</h2>
             <p className="mt-1 truncate text-[7px]" style={{ color: primary }}>{fields.meta}</p>
-            {!compact && <p className="mt-2 line-clamp-3 text-[8px] leading-relaxed text-slate-200">{fields.body}</p>}
+            {!compact && <p className="mt-2 line-clamp-3 leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>}
           </div>
           <div className="flex min-w-0 flex-col justify-center p-3" style={{ backgroundColor: primary, color: secondary }}>
             {identity.logo && (
@@ -962,9 +1014,9 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
           <FlyerPhoto src={fields.image} className="h-[35%] w-full" label="Hero property photo" />
           <div className="flex flex-1 flex-col p-5">
             <p className="text-[8px] uppercase tracking-[0.14em]" style={{ color: primary }}>{fields.eyebrow}</p>
-            <h2 className="mt-1 leading-none" style={{ fontSize: Math.max(22, fontSize - 4), fontWeight }}>{fields.title}</h2>
+            <h2 className="mt-1 leading-none" style={{ fontFamily: headlineFont, fontSize: Math.max(22, fontSize - 4), fontWeight }}>{fields.title}</h2>
             <p className="mt-1 text-[9px]" style={{ color: primary }}>{fields.meta}</p>
-            <p className="mt-4 text-[9px] leading-relaxed text-slate-200">{fields.body}</p>
+            <p className="mt-4 leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>
             <h3 className="mt-4 text-base">Why choose us?</h3>
             <ul className="mt-2 space-y-1.5 text-[8px] text-slate-200">
               {features.map((feature) => <li key={feature}>○ &nbsp;{feature}</li>)}
@@ -985,8 +1037,8 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
         <div className="grid h-full w-full grid-cols-[42%_58%]" style={{ fontFamily: font }}>
           <div className="flex flex-col justify-center p-4 text-white" style={{ backgroundColor: secondary }}>
             <p className="text-[7px] uppercase tracking-widest" style={{ color: primary }}>{fields.eyebrow}</p>
-            <h2 className="mt-1 leading-[0.88]" style={{ fontSize: compact ? 21 : 31, fontWeight }}>{fields.title}</h2>
-            {!compact && <p className="mt-3 text-[8px] leading-relaxed text-slate-200">{fields.body}</p>}
+            <h2 className="mt-1 leading-[0.88]" style={{ fontFamily: headlineFont, fontSize: compact ? 21 : fontSize, fontWeight }}>{fields.title}</h2>
+            {!compact && <p className="mt-3 leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>}
             <p className="mt-2 text-[9px] font-bold" style={{ color: primary }}>{fields.meta}</p>
           </div>
           <div className="grid grid-cols-3 gap-1 bg-white p-2">
@@ -1001,8 +1053,8 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
       <div className="grid h-full w-full grid-cols-[56%_44%]" style={{ fontFamily: font }}>
         <div className="flex flex-col p-5 text-white" style={{ backgroundColor: secondary }}>
           <div className="text-[8px] font-bold uppercase tracking-widest" style={{ color: primary }}>{identity.company}</div>
-          <h2 className="mt-6 whitespace-pre-line leading-[0.88]" style={{ fontSize: Math.max(38, fontSize + 10), fontWeight }}>{fields.title}</h2>
-          <p className="mt-7 text-[11px] leading-relaxed text-slate-200">{fields.body}</p>
+          <h2 className="mt-6 whitespace-pre-line leading-[0.88]" style={{ fontFamily: headlineFont, fontSize: Math.max(38, fontSize + 10), fontWeight }}>{fields.title}</h2>
+          <p className="mt-7 leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>
           <div className="mt-6 space-y-2 border-y border-white/50 py-3 text-[10px] uppercase">
             {fields.features.split('\n').slice(0, 4).map((feature) => <div key={feature}>{feature}</div>)}
           </div>
@@ -1042,7 +1094,7 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
               <img src={identity.logo} alt="" className="mb-2 max-h-7 w-20 object-contain" />
             )}
             <p className="text-[7px] font-bold uppercase tracking-widest">{fields.eyebrow}</p>
-            <h2 className="mt-1 leading-none" style={{ fontSize: compact ? 18 : 28, fontWeight }}>{fields.title}</h2>
+            <h2 className="mt-1 leading-none" style={{ fontFamily: headlineFont, fontSize: compact ? 18 : fontSize, fontWeight }}>{fields.title}</h2>
             <p className="mt-1 text-[8px]">{fields.listing1Meta}</p>
           </div>
           <div className="flex flex-col justify-center p-3 text-white" style={{ backgroundColor: secondary }}>
@@ -1068,7 +1120,7 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
                 <img src={identity.logo} alt="" className="mb-3 max-h-9 w-24 object-contain" />
               )}
               <p className="text-[8px] font-bold uppercase tracking-widest">{fields.eyebrow}</p>
-              <h2 className="mt-1 leading-none" style={{ fontSize: Math.max(25, fontSize), fontWeight }}>{fields.title}</h2>
+              <h2 className="mt-1 leading-none" style={{ fontFamily: headlineFont, fontSize: Math.max(25, fontSize), fontWeight }}>{fields.title}</h2>
               <p className="mt-2 whitespace-pre-line text-[10px] leading-relaxed">{fields.listing1Meta}</p>
               <div className="mt-4 text-[8px] font-bold">{identity.phone} · {identity.email}</div>
             </div>
@@ -1098,8 +1150,8 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
           <FlyerPhoto src={fields.image} className="h-full w-full" label="Hero property photo" />
           <div className="flex flex-col justify-center p-4 text-white" style={{ backgroundColor: secondary }}>
             <p className="text-[7px] uppercase tracking-widest" style={{ color: primary }}>{fields.eyebrow}</p>
-            <h2 className="mt-1 leading-none" style={{ fontSize: compact ? 20 : 30, fontWeight }}>{fields.title}</h2>
-            {!compact && <p className="mt-2 text-[8px] leading-relaxed text-slate-200">{fields.body}</p>}
+            <h2 className="mt-1 leading-none" style={{ fontFamily: headlineFont, fontSize: compact ? 20 : fontSize, fontWeight }}>{fields.title}</h2>
+            {!compact && <p className="mt-2 leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>}
           </div>
           <div className="grid grid-rows-3 gap-1 bg-white p-1">
             {[fields.image2, fields.image3, fields.image4].map((src, index) => <FlyerPhoto key={index} src={src} className="h-full w-full" label={`Detail ${index + 1}`} />)}
@@ -1113,8 +1165,8 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
         <div className="grid min-h-0 flex-1 grid-cols-[68%_32%]">
           <div className="flex flex-col p-5 text-white" style={{ backgroundColor: secondary }}>
             <p className="text-[8px] uppercase tracking-widest" style={{ color: primary }}>{fields.eyebrow}</p>
-            <h2 className="mt-2 leading-[0.95]" style={{ fontSize: Math.max(35, fontSize + 5), fontWeight }}>{fields.title}</h2>
-            <p className="mt-5 text-[9px] leading-relaxed text-slate-200">{fields.body}</p>
+            <h2 className="mt-2 leading-[0.95]" style={{ fontFamily: headlineFont, fontSize: Math.max(35, fontSize + 5), fontWeight }}>{fields.title}</h2>
+            <p className="mt-5 leading-relaxed text-slate-200" style={{ fontSize: bodyFontSize }}>{fields.body}</p>
             <div className="mt-auto text-[8px]">{identity.email} · {identity.phone}</div>
           </div>
           <div className="grid grid-rows-3 gap-1 bg-white p-1">
@@ -1132,9 +1184,9 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
   if (preset === 1) {
     return (
       <div className="flex h-full w-full flex-col justify-end bg-gradient-to-b from-slate-900/5 via-slate-900/20 to-slate-950/95 p-5 text-white" style={{ fontFamily: font }}>
-        <h2 className="m-0 leading-[1.1] text-white drop-shadow" style={{ fontSize, fontWeight }}>{fields.title}</h2>
+        <h2 className="m-0 leading-[1.1] text-white drop-shadow" style={{ fontFamily: headlineFont, fontSize, fontWeight }}>{fields.title}</h2>
         <p className="mt-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: primary }}>{fields.meta}</p>
-        <p className="mt-3 max-w-none text-[11px] leading-relaxed" style={{ color: '#cbd5e1' }}>{fields.body}</p>
+        <p className="mt-3 max-w-none leading-relaxed" style={{ color: '#cbd5e1', fontSize: bodyFontSize }}>{fields.body}</p>
         {complianceBlock}
       </div>
     );
@@ -1144,14 +1196,14 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
     <div className="flex h-full w-full flex-col justify-between p-5" style={{ fontFamily: font, color: secondary }}>
       <div>
         <span className="inline-block rounded px-2.5 py-1 text-[10px] font-bold tracking-wider text-white" style={{ backgroundColor: primary }}>INDUSTRY SYMPOSIUM</span>
-        <h2 className="mt-3 uppercase leading-[1.1] tracking-tight text-slate-900" style={{ fontSize, fontWeight }}>{fields.title}</h2>
+        <h2 className="mt-3 uppercase leading-[1.1] tracking-tight text-slate-900" style={{ fontFamily: headlineFont, fontSize, fontWeight }}>{fields.title}</h2>
         <p className="mt-2 text-[11px] font-bold tracking-wide" style={{ color: primary }}>{fields.meta}</p>
         {fields.image && (
           // User-supplied URLs must render directly in the design preview.
           // eslint-disable-next-line @next/next/no-img-element
           <img src={fields.image} alt="" className="mt-3 max-h-36 w-full rounded object-cover" />
         )}
-        <p className="mt-3 max-w-none rounded border border-slate-100 bg-white/90 p-3 text-xs leading-relaxed">{fields.body}</p>
+        <p className="mt-3 max-w-none rounded border border-slate-100 bg-white/90 p-3 leading-relaxed" style={{ fontSize: bodyFontSize }}>{fields.body}</p>
       </div>
       <div>
         <div className="border-t border-slate-200 pt-2 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">Corporate Resource Hub Access</div>
@@ -1320,7 +1372,7 @@ function backgroundStyle(background: string) {
   return background ? `background-image:url('${background}');background-size:cover;background-position:center;` : '';
 }
 
-function signatureMarkup(fields: SignatureFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string, order: ArtboardKey[]) {
+function signatureMarkup(fields: SignatureFields, preset: number, primary: string, secondary: string, font: string, headlineFont: string, fontSize: number, bodyFontSize: number, fontWeight: number, background: string, order: ArtboardKey[]) {
   const data = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, escapeHtml(value)])) as SignatureFields;
   const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
   const labelStyle = 'display:block;font-size:9px;line-height:1;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700;margin-bottom:16px';
@@ -1332,8 +1384,8 @@ function signatureMarkup(fields: SignatureFields, preset: number, primary: strin
     ? `<img src="${data.logo}" alt="${data.company} logo" width="150" style="display:block;max-height:80px;object-fit:contain;margin:auto">`
     : `<div style="font-size:11px;text-align:center;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700">Company logo</div>`;
   const details = preset === 1
-    ? `<span style="display:block;font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a">${data.name}</span><span style="display:block;font-size:12px;color:${primary};font-weight:600;margin-top:4px">${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:7px;margin-top:7px;font-size:11px"><strong style="color:#0f172a;font-size:${brokerSize}px">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}<span style="display:block;margin-top:3px">${data.email} · ${data.website}</span></div>`
-    : `<div style="border-left:3px solid ${primary};padding-left:14px"><div style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:13px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:${brokerSize}px;font-weight:700">${data.company}</div><div style="font-size:11px;margin-top:4px">☎ ${data.phone}</div><div style="font-size:11px;margin-top:2px">${data.email} · ${data.website}</div></div>`;
+    ? `<span style="display:block;font-family:${headlineFont};font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a">${data.name}</span><span style="display:block;font-size:${bodyFontSize}px;color:${primary};font-weight:600;margin-top:4px">${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:7px;margin-top:7px;font-size:${bodyFontSize}px"><strong style="color:#0f172a;font-size:${brokerSize}px">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}<span style="display:block;margin-top:3px">${data.email} · ${data.website}</span></div>`
+    : `<div style="border-left:3px solid ${primary};padding-left:14px"><div style="font-family:${headlineFont};font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:${bodyFontSize}px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:${brokerSize}px;font-weight:700">${data.company}</div><div style="font-size:${bodyFontSize}px;margin-top:4px">☎ ${data.phone}</div><div style="font-size:${bodyFontSize}px;margin-top:2px">${data.email} · ${data.website}</div></div>`;
   const cells: Record<ArtboardKey, string> = {
     headshot: `<td width="170" style="${cellStyle}"><span style="${labelStyle}">Headshot image</span>${avatar}</td>`,
     details: `<td style="${cellStyle}"><span style="${labelStyle}">Personal details</span>${details}</td>`,
@@ -1344,7 +1396,7 @@ function signatureMarkup(fields: SignatureFields, preset: number, primary: strin
   return `<table cellpadding="0" cellspacing="10" border="0" style="font-family:${font};color:${secondary};line-height:${preset === 1 ? '1.3' : '1.4'};width:760px;height:220px;padding:6px;box-sizing:border-box;border-collapse:separate;${backgroundStyle(background)}"><tr>${orderedCells}</tr></table>`;
 }
 
-function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string, dimensions: { width: number; height: number }) {
+function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: number, primary: string, secondary: string, font: string, headlineFont: string, fontSize: number, bodyFontSize: number, fontWeight: number, background: string, dimensions: { width: number; height: number }) {
   const data = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, escapeHtml(value)])) as FlyerFields;
   const licenseHolderName = escapeHtml(identity.name);
   const brokerName = escapeHtml(identity.company);
@@ -1352,6 +1404,7 @@ function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: num
   const email = escapeHtml(identity.email);
   const website = escapeHtml(identity.website);
   const logoUrl = escapeHtml(identity.logo);
+  const headlineTitle = `<span style="font-family:${headlineFont}">${data.title}</span>`;
   const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
   const logo = logoUrl ? `<img src="${logoUrl}" alt="" style="display:block;max-width:64px;max-height:32px;object-fit:contain;margin-right:10px">` : '';
   const compliance = `<div style="margin-top:12px;border-top:1px solid #cbd5e1;background:rgba(255,255,255,.95);padding:8px 10px;color:#0f172a;display:flex;align-items:center">${logo}<div><div style="font-size:${Math.max(9, Math.ceil(brokerSize * 0.75))}px;font-weight:600">License holder: ${licenseHolderName}</div><div style="font-size:${brokerSize}px;font-weight:800">Broker: ${brokerName}</div><div style="font-size:8px;color:#475569">${phone} · ${email} · ${website}</div></div></div>`;
@@ -1370,7 +1423,7 @@ function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: num
         [data.image4, data.listing3Title, data.listing3Meta],
       ].map(([src, title, meta], index) => `<div style="min-width:0">${photo(src, `Property ${index + 1}`, `width:100%;height:${compact ? 48 : 96}px`)}<div style="font-size:8px;font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${title}</div><div style="font-size:6px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${meta}</div></div>`).join('');
       return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:${secondary};display:grid;grid-template-columns:46% 54%;background:#fff;overflow:hidden">
-        <div style="position:relative;overflow:hidden;background:${secondary}">${photo(data.image, 'Hero property photo', 'position:absolute;inset:0;width:100%;height:100%;opacity:.5')}<div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(2,6,23,.9),rgba(2,6,23,.2))"></div><div style="position:relative;height:100%;display:flex;flex-direction:column;justify-content:center;color:#fff;padding:16px;box-sizing:border-box"><div style="font-size:7px;text-transform:uppercase;letter-spacing:.14em;color:${primary}">${data.eyebrow}</div><h1 style="font-size:${compact ? 19 : 27}px;font-weight:${fontWeight};line-height:.9;margin:4px 0 0">${data.title}</h1>${compact ? '' : `<p style="font-size:8px;line-height:1.4;color:#e2e8f0">${data.body}</p>`}</div></div>
+        <div style="position:relative;overflow:hidden;background:${secondary}">${photo(data.image, 'Hero property photo', 'position:absolute;inset:0;width:100%;height:100%;opacity:.5')}<div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(2,6,23,.9),rgba(2,6,23,.2))"></div><div style="position:relative;height:100%;display:flex;flex-direction:column;justify-content:center;color:#fff;padding:16px;box-sizing:border-box"><div style="font-size:7px;text-transform:uppercase;letter-spacing:.14em;color:${primary}">${data.eyebrow}</div><h1 style="font-size:${compact ? 19 : 27}px;font-weight:${fontWeight};line-height:.9;margin:4px 0 0">${headlineTitle}</h1>${compact ? '' : `<p style="font-size:${bodyFontSize}px;line-height:1.4;color:#e2e8f0">${data.body}</p>`}</div></div>
         <div style="padding:8px 12px;display:flex;flex-direction:column;box-sizing:border-box;min-width:0"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-height:0;flex:1">${cards}</div><div style="font-size:6px;border-top:1px solid #e2e8f0;padding-top:4px;margin-top:4px;display:flex;justify-content:space-between;gap:8px"><span>${phone} · ${email} · ${website}</span>${logo}</div></div>
       </div>`;
     }
@@ -1392,8 +1445,8 @@ function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: num
         <div style="position:relative;color:#fff;height:100%;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box;padding:24px;max-width:72%">
           <div style="font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:${primary};margin-bottom:12px">${brokerName}</div>
           <div style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:${primary}">${data.eyebrow}</div>
-          <h1 style="font-size:${fontSize}px;font-weight:${fontWeight};line-height:.9;letter-spacing:-.035em;margin:4px 0 0">${data.title}</h1>
-          <p style="font-size:9px;line-height:1.45;color:#e2e8f0;margin:12px 0 0">${data.body}</p>
+          <h1 style="font-size:${fontSize}px;font-weight:${fontWeight};line-height:.9;letter-spacing:-.035em;margin:4px 0 0">${headlineTitle}</h1>
+          <p style="font-size:${bodyFontSize}px;line-height:1.45;color:#e2e8f0;margin:12px 0 0">${data.body}</p>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;flex:1;padding:16px 20px;box-sizing:border-box">${listings}</div>
@@ -1407,7 +1460,7 @@ function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: num
     if (wide) {
       return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:35% 37% 28%;overflow:hidden">
         ${photo(data.image, 'Hero property photo', 'width:100%;height:100%')}
-        <div style="background:${secondary};color:#fff;padding:12px 16px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box;min-width:0"><div style="font-size:7px;text-transform:uppercase;letter-spacing:.14em;color:${primary}">${data.eyebrow}</div><h1 style="font-size:${compact ? 18 : 27}px;font-weight:${fontWeight};line-height:1;margin:4px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${data.title}</h1><div style="font-size:7px;color:${primary};margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${data.meta}</div>${compact ? '' : `<p style="font-size:8px;line-height:1.4;color:#e2e8f0">${data.body}</p>`}</div>
+        <div style="background:${secondary};color:#fff;padding:12px 16px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box;min-width:0"><div style="font-size:7px;text-transform:uppercase;letter-spacing:.14em;color:${primary}">${data.eyebrow}</div><h1 style="font-size:${compact ? 18 : 27}px;font-weight:${fontWeight};line-height:1;margin:4px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${headlineTitle}</h1><div style="font-size:7px;color:${primary};margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${data.meta}</div>${compact ? '' : `<p style="font-size:${bodyFontSize}px;line-height:1.4;color:#e2e8f0">${data.body}</p>`}</div>
         <div style="background:${primary};color:${secondary};padding:12px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box">${logo}<div style="font-size:7px;line-height:1.4;white-space:pre-line">${data.contact}</div><div style="font-size:6px;border-top:1px solid rgba(15,23,42,.2);padding-top:4px;margin-top:8px">${licenseHolderName} · ${brokerName}<br>${phone} · ${email}</div></div>
       </div>`;
     }
@@ -1423,11 +1476,11 @@ function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: num
         ${photo(data.image, 'Hero property photo', 'width:100%;height:35%')}
         <div style="padding:20px;display:flex;flex:1;flex-direction:column;box-sizing:border-box">
           <div style="font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:${primary}">${data.eyebrow}</div>
-          <h1 style="font-size:${Math.max(22, fontSize - 4)}px;font-weight:${fontWeight};line-height:1;margin:4px 0 0">${data.title}</h1>
+          <h1 style="font-size:${Math.max(22, fontSize - 4)}px;font-weight:${fontWeight};line-height:1;margin:4px 0 0">${headlineTitle}</h1>
           <div style="font-size:9px;color:${primary};margin-top:4px">${data.meta}</div>
-          <p style="font-size:9px;line-height:1.5;color:#e2e8f0;margin:16px 0 0">${data.body}</p>
+          <p style="font-size:${bodyFontSize}px;line-height:1.5;color:#e2e8f0;margin:16px 0 0">${data.body}</p>
           <h2 style="font-size:16px;margin:16px 0 0">Why choose us?</h2>
-          <ul style="font-size:8px;color:#e2e8f0;list-style:none;padding:0;margin:8px 0 0">${featureItems}</ul>
+          <ul style="font-size:${bodyFontSize}px;color:#e2e8f0;list-style:none;padding:0;margin:8px 0 0">${featureItems}</ul>
           <div style="font-size:8px;line-height:1.5;white-space:pre-line;border-top:1px solid rgba(255,255,255,.2);padding-top:12px;margin-top:auto">${data.contact}<div style="margin-top:4px">${phone} · ${email} · ${website}</div></div>
         </div>
       </div>
@@ -1436,31 +1489,31 @@ function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: num
 
   if (preset === 4) {
     if (wide) {
-      return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:42% 58%;overflow:hidden"><div style="background:${secondary};color:#fff;padding:16px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box"><div style="font-size:7px;color:${primary};text-transform:uppercase;letter-spacing:.14em">${data.eyebrow}</div><h1 style="font-size:${compact ? 21 : 31}px;line-height:.88;margin:4px 0 0">${data.title}</h1>${compact ? '' : `<p style="font-size:8px;color:#e2e8f0">${data.body}</p>`}<b style="font-size:9px;color:${primary};margin-top:8px">${data.meta}</b></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:8px;background:#fff">${[data.image, data.image2, data.image3].map((src, index) => photo(src, `Property ${index + 1}`, 'width:100%;height:100%')).join('')}</div></div>`;
+      return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:42% 58%;overflow:hidden"><div style="background:${secondary};color:#fff;padding:16px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box"><div style="font-size:7px;color:${primary};text-transform:uppercase;letter-spacing:.14em">${data.eyebrow}</div><h1 style="font-size:${compact ? 21 : 31}px;line-height:.88;margin:4px 0 0">${headlineTitle}</h1>${compact ? '' : `<p style="font-size:${bodyFontSize}px;color:#e2e8f0">${data.body}</p>`}<b style="font-size:9px;color:${primary};margin-top:8px">${data.meta}</b></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:8px;background:#fff">${[data.image, data.image2, data.image3].map((src, index) => photo(src, `Property ${index + 1}`, 'width:100%;height:100%')).join('')}</div></div>`;
     }
-    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:56% 44%;overflow:hidden"><div style="background:${secondary};color:#fff;padding:20px;display:flex;flex-direction:column;box-sizing:border-box"><div style="font-size:8px;color:${primary};text-transform:uppercase">${brokerName}</div><h1 style="font-size:${Math.max(38, fontSize + 10)}px;line-height:.88;margin:24px 0 0">${data.title}</h1><p style="font-size:11px;color:#e2e8f0;line-height:1.5;margin-top:28px">${data.body}</p><div style="font-size:10px;text-transform:uppercase;border-top:1px solid #fff;border-bottom:1px solid #fff;padding:12px 0;white-space:pre-line">${data.features}</div><div style="margin-top:auto;font-size:8px">Price offered at<div style="font-size:24px;font-weight:700">${data.meta}</div></div></div><div style="background:${primary};display:flex;flex-direction:column;color:${secondary}"><div style="padding:16px;text-align:center">${logo}<b style="font-size:8px">${data.eyebrow}</b></div><div style="display:grid;grid-template-rows:repeat(3,1fr);gap:4px;flex:1">${[data.image, data.image2, data.image3].map((src, index) => photo(src, `Property ${index + 1}`, 'width:100%;height:100%')).join('')}</div><div style="font-size:8px;text-align:center;padding:12px">${email}<br>${website}</div></div></div>`;
+    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:56% 44%;overflow:hidden"><div style="background:${secondary};color:#fff;padding:20px;display:flex;flex-direction:column;box-sizing:border-box"><div style="font-size:8px;color:${primary};text-transform:uppercase">${brokerName}</div><h1 style="font-size:${Math.max(38, fontSize + 10)}px;line-height:.88;margin:24px 0 0">${headlineTitle}</h1><p style="font-size:${bodyFontSize}px;color:#e2e8f0;line-height:1.5;margin-top:28px">${data.body}</p><div style="font-size:10px;text-transform:uppercase;border-top:1px solid #fff;border-bottom:1px solid #fff;padding:12px 0;white-space:pre-line">${data.features}</div><div style="margin-top:auto;font-size:8px">Price offered at<div style="font-size:24px;font-weight:700">${data.meta}</div></div></div><div style="background:${primary};display:flex;flex-direction:column;color:${secondary}"><div style="padding:16px;text-align:center">${logo}<b style="font-size:8px">${data.eyebrow}</b></div><div style="display:grid;grid-template-rows:repeat(3,1fr);gap:4px;flex:1">${[data.image, data.image2, data.image3].map((src, index) => photo(src, `Property ${index + 1}`, 'width:100%;height:100%')).join('')}</div><div style="font-size:8px;text-align:center;padding:12px">${email}<br>${website}</div></div></div>`;
   }
 
   if (preset === 5) {
     if (wide) {
-      return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:42% 38% 20%;overflow:hidden">${photo(data.image, 'Hero property photo', 'width:100%;height:100%')}<div style="background:${primary};color:${secondary};padding:16px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box">${logo}<div style="font-size:7px;text-transform:uppercase">${data.eyebrow}</div><h1 style="font-size:${compact ? 18 : 28}px;line-height:1;margin:4px 0 0">${data.title}</h1><div style="font-size:8px;margin-top:4px">${data.listing1Meta}</div></div><div style="background:${secondary};color:#fff;padding:12px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box"><div style="font-size:7px">Offered at</div><b style="font-size:18px">${data.meta}</b><div style="font-size:6px;margin-top:12px">${phone}<br>${email}</div></div></div>`;
+      return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:42% 38% 20%;overflow:hidden">${photo(data.image, 'Hero property photo', 'width:100%;height:100%')}<div style="background:${primary};color:${secondary};padding:16px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box">${logo}<div style="font-size:7px;text-transform:uppercase">${data.eyebrow}</div><h1 style="font-size:${compact ? 18 : 28}px;line-height:1;margin:4px 0 0">${headlineTitle}</h1><div style="font-size:8px;margin-top:4px">${data.listing1Meta}</div></div><div style="background:${secondary};color:#fff;padding:12px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box"><div style="font-size:7px">Offered at</div><b style="font-size:18px">${data.meta}</b><div style="font-size:6px;margin-top:12px">${phone}<br>${email}</div></div></div>`;
     }
     const features = data.features.split('\n').filter(Boolean).map((feature) => `<li>${feature}</li>`).join('');
-    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:flex;flex-direction:column;overflow:hidden;border-radius:22px;background:#fff;color:${secondary}">${photo(data.image, 'Hero property photo', 'width:100%;height:48%')}<div style="display:grid;grid-template-columns:62% 38%;flex:1;min-height:0"><div style="background:${primary};padding:20px;box-sizing:border-box">${logo}<div style="font-size:8px;text-transform:uppercase">${data.eyebrow}</div><h1 style="font-size:${Math.max(25, fontSize)}px;line-height:1;margin:4px 0">${data.title}</h1><div style="font-size:10px;white-space:pre-line">${data.listing1Meta}</div><b style="font-size:8px;display:block;margin-top:16px">${phone} · ${email}</b></div><div style="background:${secondary};color:#fff;display:flex;flex-direction:column"><div style="padding:16px"><div style="font-size:9px">Offered at</div><b style="font-size:24px">${data.meta}</b></div><div style="background:#fff;color:${secondary};padding:16px;flex:1;font-size:8px"><b>FEATURES</b><ul style="padding-left:14px">${features}</ul></div><div style="font-size:7px;padding:10px;text-align:center">${website}</div></div></div></div>`;
+    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:flex;flex-direction:column;overflow:hidden;border-radius:22px;background:#fff;color:${secondary}">${photo(data.image, 'Hero property photo', 'width:100%;height:48%')}<div style="display:grid;grid-template-columns:62% 38%;flex:1;min-height:0"><div style="background:${primary};padding:20px;box-sizing:border-box">${logo}<div style="font-size:8px;text-transform:uppercase">${data.eyebrow}</div><h1 style="font-size:${Math.max(25, fontSize)}px;line-height:1;margin:4px 0">${headlineTitle}</h1><div style="font-size:10px;white-space:pre-line">${data.listing1Meta}</div><b style="font-size:8px;display:block;margin-top:16px">${phone} · ${email}</b></div><div style="background:${secondary};color:#fff;display:flex;flex-direction:column"><div style="padding:16px"><div style="font-size:9px">Offered at</div><b style="font-size:24px">${data.meta}</b></div><div style="background:#fff;color:${secondary};padding:16px;flex:1;font-size:8px"><b>FEATURES</b><ul style="padding-left:14px">${features}</ul></div><div style="font-size:7px;padding:10px;text-align:center">${website}</div></div></div></div>`;
   }
 
   if (preset === 6) {
     if (wide) {
-      return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:40% 38% 22%;overflow:hidden">${photo(data.image, 'Hero property photo', 'width:100%;height:100%')}<div style="background:${secondary};color:#fff;padding:16px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box"><div style="font-size:7px;color:${primary};text-transform:uppercase">${data.eyebrow}</div><h1 style="font-size:${compact ? 20 : 30}px;line-height:1;margin:4px 0">${data.title}</h1>${compact ? '' : `<p style="font-size:8px;color:#e2e8f0">${data.body}</p>`}</div><div style="display:grid;grid-template-rows:repeat(3,1fr);gap:3px;padding:3px;background:#fff">${[data.image2, data.image3, data.image4].map((src, index) => photo(src, `Detail ${index + 1}`, 'width:100%;height:100%')).join('')}</div></div>`;
+      return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:40% 38% 22%;overflow:hidden">${photo(data.image, 'Hero property photo', 'width:100%;height:100%')}<div style="background:${secondary};color:#fff;padding:16px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box"><div style="font-size:7px;color:${primary};text-transform:uppercase">${data.eyebrow}</div><h1 style="font-size:${compact ? 20 : 30}px;line-height:1;margin:4px 0">${headlineTitle}</h1>${compact ? '' : `<p style="font-size:${bodyFontSize}px;color:#e2e8f0">${data.body}</p>`}</div><div style="display:grid;grid-template-rows:repeat(3,1fr);gap:3px;padding:3px;background:#fff">${[data.image2, data.image3, data.image4].map((src, index) => photo(src, `Detail ${index + 1}`, 'width:100%;height:100%')).join('')}</div></div>`;
     }
-    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:flex;flex-direction:column;overflow:hidden;background:#fff;color:${secondary}">${photo(data.image, 'Hero property photo', 'width:100%;height:44%')}<div style="display:grid;grid-template-columns:68% 32%;flex:1;min-height:0"><div style="background:${secondary};color:#fff;padding:20px;display:flex;flex-direction:column;box-sizing:border-box"><div style="font-size:8px;color:${primary};text-transform:uppercase">${data.eyebrow}</div><h1 style="font-size:${Math.max(35, fontSize + 5)}px;line-height:.95;margin:8px 0">${data.title}</h1><p style="font-size:9px;color:#e2e8f0;line-height:1.5">${data.body}</p><div style="font-size:8px;margin-top:auto">${email} · ${phone}</div></div><div style="display:grid;grid-template-rows:repeat(3,1fr);gap:4px;padding:4px">${[data.image2, data.image3, data.image4].map((src, index) => photo(src, `Detail ${index + 1}`, 'width:100%;height:100%')).join('')}</div></div><div style="font-size:8px;padding:8px 20px;display:flex;justify-content:space-between"><span>${licenseHolderName} · ${brokerName}</span><span>${website}</span></div></div>`;
+    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:flex;flex-direction:column;overflow:hidden;background:#fff;color:${secondary}">${photo(data.image, 'Hero property photo', 'width:100%;height:44%')}<div style="display:grid;grid-template-columns:68% 32%;flex:1;min-height:0"><div style="background:${secondary};color:#fff;padding:20px;display:flex;flex-direction:column;box-sizing:border-box"><div style="font-size:8px;color:${primary};text-transform:uppercase">${data.eyebrow}</div><h1 style="font-size:${Math.max(35, fontSize + 5)}px;line-height:.95;margin:8px 0">${headlineTitle}</h1><p style="font-size:${bodyFontSize}px;color:#e2e8f0;line-height:1.5">${data.body}</p><div style="font-size:8px;margin-top:auto">${email} · ${phone}</div></div><div style="display:grid;grid-template-rows:repeat(3,1fr);gap:4px;padding:4px">${[data.image2, data.image3, data.image4].map((src, index) => photo(src, `Detail ${index + 1}`, 'width:100%;height:100%')).join('')}</div></div><div style="font-size:8px;padding:8px 20px;display:flex;justify-content:space-between"><span>${licenseHolderName} · ${brokerName}</span><span>${website}</span></div></div>`;
   }
 
   if (preset === 1) {
     const imageBackground = background || data.image;
-    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;box-sizing:border-box;padding:20px;background:linear-gradient(to bottom,rgba(15,23,42,.1),rgba(15,23,42,.95))${imageBackground ? `,url('${imageBackground}')` : ''};background-size:cover;background-position:center"><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};line-height:1.1;margin:0">${data.title}</h1><div style="font-size:11px;font-weight:700;color:${primary};margin-top:8px">${data.meta}</div><p style="font-size:11px;color:#cbd5e1;line-height:1.4;margin:10px 0 0">${data.body}</p>${compliance}</div>`;
+    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;box-sizing:border-box;padding:20px;background:linear-gradient(to bottom,rgba(15,23,42,.1),rgba(15,23,42,.95))${imageBackground ? `,url('${imageBackground}')` : ''};background-size:cover;background-position:center"><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};line-height:1.1;margin:0">${headlineTitle}</h1><div style="font-size:11px;font-weight:700;color:${primary};margin-top:8px">${data.meta}</div><p style="font-size:${bodyFontSize}px;color:#cbd5e1;line-height:1.4;margin:10px 0 0">${data.body}</p>${compliance}</div>`;
   }
-  return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:${secondary};display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box;padding:20px;${backgroundStyle(background)}"><div><span style="background:${primary};color:#fff;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:1px;border-radius:3px">INDUSTRY SYMPOSIUM</span><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.1;margin:12px 0 6px;text-transform:uppercase">${data.title}</h1><div style="font-size:11px;font-weight:700;color:${primary}">${data.meta}</div>${image}<p style="font-size:12px;line-height:1.4;background:rgba(255,255,255,.9);padding:8px;border:1px solid #f1f5f9;border-radius:4px">${data.body}</p></div><div><div style="font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:8px;font-weight:600">CORPORATE RESOURCE HUB ACCESS</div>${compliance}</div></div>`;
+  return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:${secondary};display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box;padding:20px;${backgroundStyle(background)}"><div><span style="background:${primary};color:#fff;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:1px;border-radius:3px">INDUSTRY SYMPOSIUM</span><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.1;margin:12px 0 6px;text-transform:uppercase">${headlineTitle}</h1><div style="font-size:11px;font-weight:700;color:${primary}">${data.meta}</div>${image}<p style="font-size:${bodyFontSize}px;line-height:1.4;background:rgba(255,255,255,.9);padding:8px;border:1px solid #f1f5f9;border-radius:4px">${data.body}</p></div><div><div style="font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:8px;font-weight:600">CORPORATE RESOURCE HUB ACCESS</div>${compliance}</div></div>`;
 }
 
 function downloadBlob(content: string, filename: string, type: string) {
