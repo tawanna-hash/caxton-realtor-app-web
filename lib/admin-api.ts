@@ -95,10 +95,10 @@ export const adminApi = {
     adminFetch(`/admin/events/${id}/hide`, { method: 'POST' }),
   unhideEvent: (id: number) =>
     adminFetch(`/admin/events/${id}/unhide`, { method: 'POST' }),
-  // Bulk soft-hide all events whose start date is in the past.
-  // Returns { hiddenCount: number }.
-  hideExpiredEvents: () =>
-    adminFetch('/admin/events/hide-expired', { method: 'POST' }),
+  // Permanently delete events whose end date (or start date when no end exists) is past.
+  // Returns { deletedCount: number }.
+  deleteExpiredEvents: () =>
+    adminFetch('/admin/events/delete-expired', { method: 'POST' }),
 
   // Pending-event review queue (advertiser submissions + Gemini FB scans)
   listPendingEvents: () => adminFetch('/admin/events/pending'),

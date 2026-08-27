@@ -66,8 +66,8 @@ export default function EventsPage() {
   const [sortKey, setSortKey] = useState<SortKey>('when');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
-  // "Expired" = start_date is in the past. Mirrors the server-side
-  // criterion in POST /admin/events/hide-expired. Stored as state and
+  // "Expired" = end_date is in the past, or start_date when no end exists.
+  // Mirrors the server-side criterion in POST /admin/events/delete-expired. Stored as state and
   // computed in the loader (see `reload`) so Date.now() never runs
   // during render — keeps react-hooks/purity happy.
   const [expiredVisibleCount, setExpiredVisibleCount] = useState(0);
@@ -107,9 +107,9 @@ export default function EventsPage() {
         setItems(events);
         const now = Date.now();
         const expired = events.reduce((n, ev) => {
-          if (ev.hidden) return n;
-          if (!ev.startDate) return n;
-          return new Date(ev.startDate).getTime() < now ? n + 1 : n;
+          const expiration = ev.endDate ?? ev.startDate;
+          if (!expiration) return n;
+          return new Date(expiration).getTime() < now ? n + 1 : n;
         }, 0);
         setExpiredVisibleCount(expired);
         setLoading(false);
@@ -157,22 +157,21 @@ export default function EventsPage() {
     }
   };
 
-  const handleHideExpired = async () => {
+  const handleDeleteExpired = async () => {
     if (expiredVisibleCount === 0) {
-      alert('No expired events to hide.');
+      alert('No expired events to delete.');
       return;
     }
     const msg =
-      `Hide ${expiredVisibleCount} expired event${expiredVisibleCount === 1 ? '' : 's'} ` +
-      `(start date in the past)? They will no longer appear on the public calendar. ` +
-      `You can unhide any of them individually afterwards.`;
+      `Permanently delete ${expiredVisibleCount} expired event${expiredVisibleCount === 1 ? '' : 's'}? ` +
+      `This includes hidden events and cannot be undone.`;
     if (!window.confirm(msg)) return;
     setBulkBusy(true);
     try {
-      const res = await adminApi.hideExpiredEvents();
-      const n = res?.hiddenCount ?? 0;
+      const res = await adminApi.deleteExpiredEvents();
+      const n = res?.deletedCount ?? 0;
       reload();
-      alert(`Hid ${n} expired event${n === 1 ? '' : 's'}.`);
+      alert(`Deleted ${n} expired event${n === 1 ? '' : 's'}.`);
     } catch (err) {
       alert(err instanceof Error ? err.message : String(err));
     } finally {
@@ -210,18 +209,18 @@ export default function EventsPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={handleHideExpired}
+            onClick={handleDeleteExpired}
             disabled={bulkBusy || expiredVisibleCount === 0}
             title={
               expiredVisibleCount === 0
-                ? 'No expired events to hide'
-                : `Hide ${expiredVisibleCount} event${expiredVisibleCount === 1 ? '' : 's'} whose start date is in the past`
+                ? 'No expired events to delete'
+                : `Permanently delete ${expiredVisibleCount} expired event${expiredVisibleCount === 1 ? '' : 's'}`
             }
-            className="px-4 py-2 bg-white text-brand-700 text-sm font-medium rounded-md border border-brand-700 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+            className="px-4 py-2 bg-white text-red-700 text-sm font-medium rounded-md border border-red-300 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
           >
             {bulkBusy
-              ? 'Hiding\u2026'
-              : `Hide expired${expiredVisibleCount > 0 ? ` (${expiredVisibleCount})` : ''}`}
+              ? 'Deleting\u2026'
+              : `Delete expired${expiredVisibleCount > 0 ? ` (${expiredVisibleCount})` : ''}`}
           </button>
           <Link
             href="/admin/events/new"

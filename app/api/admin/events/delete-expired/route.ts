@@ -1,25 +1,26 @@
 /**
- * POST /api/admin/events/hide-expired
- * Soft-hide every event whose start_date is in the past and not already hidden.
+ * POST /api/admin/events/delete-expired
+ * Permanently delete every event whose end date, or start date when no end
+ * date exists, is already in the past.
  */
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, getRequestIp } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
-import { hideExpired } from '@/lib/server/events-store';
+import { deleteExpired } from '@/lib/server/events-store';
 import { logEventAudit } from '@/lib/server/audit';
 
 export const runtime = 'nodejs';
 
 export const POST = withAdminTracking(async () => {
   const admin = await requireAdmin();
-  const hiddenCount = await hideExpired(admin.email);
+  const deletedCount = await deleteExpired();
   await logEventAudit({
     adminId: admin.adminId,
-    action: 'event.hide_expired',
+    action: 'event.delete_expired',
     eventId: null,
-    payload: { hiddenCount },
+    payload: { deletedCount },
     ipAddress: await getRequestIp(),
   });
-  return NextResponse.json({ hiddenCount });
+  return NextResponse.json({ deletedCount });
 });

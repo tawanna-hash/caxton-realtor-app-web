@@ -24,42 +24,39 @@ const PIXEL = Buffer.from(
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   if (UUID_RE.test(id)) {
-    // Fire-and-forget: never block the pixel response on the DB write.
-    void (async () => {
-      try {
-        await ensureSchema();
-        const sql = getSql();
-        const rows = await sql`
-          UPDATE marketing_campaign_outreach_recipients
-          SET opened_at = COALESCE(opened_at, now()),
-              open_count = open_count + 1
-          WHERE id = ${id}
-          RETURNING email, campaign_id
-        ` as unknown as { email: string | null; campaign_id: string | null }[];
-        const row = rows[0];
-        // Roll up to the CRM advertiser row (best-effort — silently no-ops
-        // for recipients whose email isn't in advertisers, e.g. one-off
-        // manual sends we haven't synced yet).
-        await sql`
-          UPDATE advertisers a
-          SET last_opened_at = now(),
-              open_count = COALESCE(a.open_count, 0) + 1
-          FROM marketing_campaign_outreach_recipients r
-          WHERE r.id = ${id}
-            AND lower(a.contact_email) = lower(r.email)
-        `;
-        // Fire PostHog event so email engagement shows up in analytics
-        if (row) {
-          captureServerEvent('email_opened', row.email || id, {
-            recipient_id: id,
-            campaign_id: row.campaign_id || undefined,
-            source: 'email_pixel',
-          });
-        }
-      } catch {
-        // Swallow — tracking failures must never error the pixel.
+    try {
+      await ensureSchema();
+      const sql = getSql();
+      const rows = await sql`
+        UPDATE marketing_campaign_outreach_recipients
+        SET opened_at = COALESCE(opened_at, now()),
+            open_count = open_count + 1
+        WHERE id = ${id}
+        RETURNING email, outreach_id AS campaign_id
+      ` as unknown as { email: string | null; campaign_id: string | null }[];
+      const row = rows[0];
+      // Roll up to the CRM advertiser row (best-effort — silently no-ops
+      // for recipients whose email isn't in advertisers, e.g. one-off
+      // manual sends we haven't synced yet).
+      await sql`
+        UPDATE advertisers a
+        SET last_opened_at = now(),
+            open_count = COALESCE(a.open_count, 0) + 1
+        FROM marketing_campaign_outreach_recipients r
+        WHERE r.id = ${id}
+          AND lower(a.contact_email) = lower(r.email)
+      `;
+      // Fire PostHog event so email engagement shows up in analytics
+      if (row) {
+        captureServerEvent('email_opened', row.email || id, {
+          recipient_id: id,
+          campaign_id: row.campaign_id || undefined,
+          source: 'email_pixel',
+        });
       }
-    })();
+    } catch {
+      // Swallow — tracking failures must never error the pixel.
+    }
   }
   return new Response(PIXEL, {
     status: 200,

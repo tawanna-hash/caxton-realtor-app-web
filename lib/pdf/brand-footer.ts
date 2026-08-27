@@ -18,6 +18,8 @@ const GREY_300: [number, number, number] = [209, 213, 219];
 async function loadImage(url: string | null): Promise<{
   dataUrl: string;
   format: 'PNG' | 'JPEG';
+  width: number;
+  height: number;
 } | null> {
   if (!url || typeof window === 'undefined') return null;
   try {
@@ -32,7 +34,16 @@ async function loadImage(url: string | null): Promise<{
       reader.onload = () => resolve(String(reader.result || ''));
       reader.readAsDataURL(blob);
     });
-    return { dataUrl, format };
+    const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+      const image = new Image();
+      image.onerror = () => reject(new Error('image dimensions unavailable'));
+      image.onload = () => resolve({
+        width: image.naturalWidth || image.width,
+        height: image.naturalHeight || image.height,
+      });
+      image.src = dataUrl;
+    });
+    return { dataUrl, format, ...dimensions };
   } catch {
     return null;
   }
@@ -52,7 +63,21 @@ function addImage(
 ) {
   if (!image) return;
   try {
-    doc.addImage(image.dataUrl, image.format, x, y, width, height, undefined, 'FAST');
+    const scale = Math.min(width / image.width, height / image.height);
+    const renderedWidth = image.width * scale;
+    const renderedHeight = image.height * scale;
+    const renderedX = x + (width - renderedWidth) / 2;
+    const renderedY = y + (height - renderedHeight) / 2;
+    doc.addImage(
+      image.dataUrl,
+      image.format,
+      renderedX,
+      renderedY,
+      renderedWidth,
+      renderedHeight,
+      undefined,
+      'FAST',
+    );
   } catch {
     // A broken or cross-origin brand image should not block the report.
   }

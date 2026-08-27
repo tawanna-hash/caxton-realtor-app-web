@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
         const result = await exec(
           `UPDATE marketing_campaign_outreach_recipients
               SET open_count = COALESCE(open_count, 0) + 1,
-                  opened_at  = NOW()
+                  opened_at  = COALESCE(opened_at, NOW())
             WHERE message_id = $1`,
           [emailId],
         );
@@ -191,7 +191,8 @@ export async function POST(req: NextRequest) {
       case 'email.clicked': {
         const result = await exec(
           `UPDATE marketing_campaign_outreach_recipients
-              SET click_count = COALESCE(click_count, 0) + 1
+              SET click_count = COALESCE(click_count, 0) + 1,
+                  clicked_at  = COALESCE(clicked_at, NOW())
             WHERE message_id = $1`,
           [emailId],
         );

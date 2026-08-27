@@ -584,19 +584,18 @@ export async function setHidden(
   return rows[0] ? rowToAdminEvent(rows[0]) : null;
 }
 
-/** Admin: bulk-hide every event whose start_date is in the past and not yet hidden. */
-export async function hideExpired(editedBy: string): Promise<number> {
+/**
+ * Admin: permanently delete expired events from every source.
+ *
+ * An event expires after its end_date when present, otherwise after its
+ * start_date. This preserves multi-day events until their actual end.
+ */
+export async function deleteExpired(): Promise<number> {
   const result = await query<{ id: number }>(
-    `UPDATE events SET
-       hidden = TRUE,
-       edited_by = $1,
-       edited_at = NOW(),
-       updated_at = NOW()
-     WHERE hidden = FALSE
-       AND start_date IS NOT NULL
-       AND start_date < NOW()
+    `DELETE FROM events
+     WHERE COALESCE(end_date, start_date) IS NOT NULL
+       AND COALESCE(end_date, start_date) < NOW()
      RETURNING id`,
-    [editedBy],
   );
   return result.length;
 }
