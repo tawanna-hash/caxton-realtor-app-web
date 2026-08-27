@@ -12,6 +12,8 @@ type SignatureFields = {
   title: string;
   company: string;
   phone: string;
+  email: string;
+  website: string;
   photo: string;
   logo: string;
 };
@@ -53,6 +55,8 @@ const DEFAULT_SIGNATURE: SignatureFields = {
   title: 'VP of Enterprise Infrastructure',
   company: 'Acme Cloud Systems',
   phone: '+1 (555) 839-2011',
+  email: 'sarah@example.com',
+  website: 'example.com',
   photo: '',
   logo: '',
 };
@@ -105,16 +109,9 @@ export default function DesignerClient() {
   const logoRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
-  const presets = product === 'signature' ? SIGNATURE_PRESETS : FLYER_PRESETS;
   const dimensions = product === 'signature'
     ? { width: 760, height: 220 }
     : FLYER_SIZES[flyerSize];
-
-  const switchProduct = (next: Product) => {
-    setProduct(next);
-    setPreset(0);
-    setFontSize(next === 'signature' ? 16 : 24);
-  };
 
   const uploadBackground = (file?: File) => {
     if (!file) return;
@@ -145,15 +142,17 @@ export default function DesignerClient() {
     reader.readAsDataURL(file);
   };
 
-  const selectPreset = (index: number) => {
+  const selectTemplate = (value: string) => {
+    const [nextProduct, rawPreset] = value.split(':') as [Product, string];
+    const index = Number(rawPreset);
+    setProduct(nextProduct);
     setPreset(index);
-    if (product === 'flyer' && index >= 2) {
-      setFlyerSize('us-letter');
+    setFontSize(nextProduct === 'signature' ? 16 : index >= 2 ? 30 : 24);
+    if (nextProduct === 'flyer' && index >= 2) {
       setPrimary('#d8cdb9');
       setSecondary('#1c2d42');
       setFont(FONT_OPTIONS[1].value);
       setFontWeight(400);
-      setFontSize(30);
     }
   };
 
@@ -279,13 +278,24 @@ export default function DesignerClient() {
     const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
     const complianceY = dimensions.height - margin;
     pdf.setFillColor(255, 255, 255);
-    pdf.rect(0, complianceY - brokerSize * 2.8, dimensions.width, brokerSize * 2.8 + margin, 'F');
+    pdf.rect(0, complianceY - brokerSize * 3.4, dimensions.width, brokerSize * 3.4 + margin, 'F');
+    let complianceX = margin;
+    if (signature.logo) {
+      try {
+        const logoFormat = signature.logo.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+        pdf.addImage(signature.logo, logoFormat, margin, complianceY - brokerSize * 2.3, 44, 22);
+        complianceX += 52;
+      } catch {}
+    }
     pdf.setTextColor(15, 23, 42);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(Math.max(9, Math.ceil(brokerSize * 0.75)));
-    pdf.text(`License holder: ${signature.name}`, margin, complianceY - brokerSize * 1.25);
+    pdf.text(`License holder: ${signature.name}`, complianceX, complianceY - brokerSize * 1.65);
     pdf.setFontSize(brokerSize);
-    pdf.text(`Broker: ${signature.company}`, margin, complianceY);
+    pdf.text(`Broker: ${signature.company}`, complianceX, complianceY - brokerSize * 0.65);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(7);
+    pdf.text([signature.phone, signature.email, signature.website].filter(Boolean).join(' · '), complianceX, complianceY);
     pdf.save(`rnn-${flyerSize}.pdf`);
   };
 
@@ -305,9 +315,13 @@ export default function DesignerClient() {
 
           <div className="space-y-4">
             <Control label="Product category">
-              <select value={product} onChange={(event) => switchProduct(event.target.value as Product)} className="studio-control">
-                <option value="signature">Email Signature Template</option>
-                <option value="flyer">Marketing Flyer / Poster</option>
+              <select value={`${product}:${preset}`} onChange={(event) => selectTemplate(event.target.value)} className="studio-control">
+                <optgroup label="Email signatures">
+                  {SIGNATURE_PRESETS.map((name, index) => <option key={`signature-${name}`} value={`signature:${index}`}>{name}</option>)}
+                </optgroup>
+                <optgroup label="Marketing flyers and social media">
+                  {FLYER_PRESETS.map((name, index) => <option key={`flyer-${name}`} value={`flyer:${index}`}>{name}</option>)}
+                </optgroup>
               </select>
             </Control>
 
@@ -362,20 +376,6 @@ export default function DesignerClient() {
               </Control>
             )}
 
-            <DividerLabel>Baseline layout presets</DividerLabel>
-            <div className="grid grid-cols-2 gap-2">
-              {presets.map((name, index) => (
-                <button
-                  key={name}
-                  type="button"
-                  onClick={() => selectPreset(index)}
-                  className={`min-h-14 rounded-md border-2 px-2 py-2 text-xs font-semibold ${preset === index ? 'border-sky-400 bg-sky-950 text-white' : 'border-slate-800 bg-[#111729] text-slate-400 hover:border-slate-600 hover:text-white'}`}
-                >
-                  {name}
-                </button>
-              ))}
-            </div>
-
             <DividerLabel>Content data fields</DividerLabel>
             {product === 'signature' ? (
               <div className="space-y-4">
@@ -385,6 +385,8 @@ export default function DesignerClient() {
                     <TextControl label="Job title" value={signature.title} onChange={(title) => setSignature((value) => ({ ...value, title }))} />
                     <TextControl label="Broker licensed or assumed business name (required)" value={signature.company} onChange={(company) => setSignature((value) => ({ ...value, company }))} />
                     <TextControl label="Direct phone" value={signature.phone} onChange={(phone) => setSignature((value) => ({ ...value, phone }))} />
+                    <TextControl label="Email" value={signature.email} onChange={(email) => setSignature((value) => ({ ...value, email }))} />
+                    <TextControl label="Website" value={signature.website} onChange={(website) => setSignature((value) => ({ ...value, website }))} />
                     <ArtworkUpload
                       label="Personal headshot"
                       actionLabel="Upload headshot"
@@ -460,12 +462,28 @@ export default function DesignerClient() {
                     <Control label="Feature list (one per line)">
                       <textarea value={flyer.features} onChange={(event) => setFlyer((value) => ({ ...value, features: event.target.value }))} rows={4} className="studio-control resize-y" />
                     </Control>
-                    <Control label="Contact block">
-                      <textarea value={flyer.contact} onChange={(event) => setFlyer((value) => ({ ...value, contact: event.target.value }))} rows={3} className="studio-control resize-y" />
-                    </Control>
                     <TextControl label="Footer call to action" value={flyer.footer} onChange={(footer) => setFlyer((value) => ({ ...value, footer }))} />
                   </>
                 )}
+                <ArtworkPanel title="Contact and brand" description="Shared contact information and logo for every flyer and social format.">
+                  <div className="space-y-3">
+                    <TextControl label="Phone" value={signature.phone} onChange={(phone) => setSignature((value) => ({ ...value, phone }))} />
+                    <TextControl label="Email" value={signature.email} onChange={(email) => setSignature((value) => ({ ...value, email }))} />
+                    <TextControl label="Website" value={signature.website} onChange={(website) => setSignature((value) => ({ ...value, website }))} />
+                    <Control label="Contact block copy">
+                      <textarea value={flyer.contact} onChange={(event) => setFlyer((value) => ({ ...value, contact: event.target.value }))} rows={3} className="studio-control resize-y" />
+                    </Control>
+                    <ArtworkUpload
+                      label="Company logo artwork"
+                      actionLabel="Upload company logo"
+                      value={signature.logo}
+                      inputRef={logoRef}
+                      onUpload={(file) => uploadSignatureArtwork('logo', file)}
+                      onClear={() => clearSignatureArtwork('logo')}
+                      previewClassName="object-contain"
+                    />
+                  </div>
+                </ArtworkPanel>
                 <ArtworkPanel title="TREC advertising identification" description="Protected identification appears on every flyer and cannot be removed from exports.">
                   <div className="space-y-3">
                     <TextControl label="License holder name (required)" value={signature.name} onChange={(name) => setSignature((value) => ({ ...value, name }))} />
@@ -524,7 +542,7 @@ export default function DesignerClient() {
                   onMove={moveArtboard}
                 />
               ) : (
-                <FlyerPreview fields={flyer} identity={signature} preset={preset} primary={primary} secondary={secondary} font={font} fontSize={fontSize} fontWeight={fontWeight} />
+                <FlyerPreview fields={flyer} identity={signature} preset={preset} primary={primary} secondary={secondary} font={font} fontSize={fontSize} fontWeight={fontWeight} dimensions={dimensions} />
               )}
             </div>
           </div>
@@ -628,6 +646,7 @@ function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, 
       <div className="mt-2 border-t border-slate-200 pt-2 text-[11px]">
         <strong className="text-slate-900" style={{ fontSize: brokerSize }}>{fields.company || 'Broker name required'}</strong>
         <span> &nbsp;·&nbsp; ☎ {fields.phone}</span>
+        <span className="mt-1 block">{fields.email} · {fields.website}</span>
       </div>
     </div>
   ) : (
@@ -636,6 +655,7 @@ function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, 
       <div className="mt-1 text-[13px] font-semibold" style={{ color: primary }}>{fields.title}</div>
       <div className="mt-0.5 font-bold" style={{ fontSize: brokerSize }}>{fields.company || 'Broker name required'}</div>
       <div className="mt-1 text-[11px]">☎ {fields.phone}</div>
+      <div className="mt-0.5 text-[11px]">{fields.email} · {fields.website}</div>
     </div>
   );
 
@@ -733,7 +753,7 @@ function SignatureArtboard({
   );
 }
 
-function FlyerPreview({ fields, identity, preset, primary, secondary, font, fontSize, fontWeight }: {
+function FlyerPreview({ fields, identity, preset, primary, secondary, font, fontSize, fontWeight, dimensions }: {
   fields: FlyerFields;
   identity: SignatureFields;
   preset: number;
@@ -742,15 +762,27 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
   font: string;
   fontSize: number;
   fontWeight: number;
+  dimensions: { width: number; height: number };
 }) {
   const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
+  const wide = dimensions.width / dimensions.height > 1.3;
+  const compact = dimensions.height < 350;
   const complianceBlock = (
-    <div className="mt-3 border-t border-slate-300 bg-white/95 px-3 py-2 text-slate-900">
-      <div className="font-semibold" style={{ fontSize: Math.max(9, Math.ceil(brokerSize * 0.75)) }}>
-        License holder: {identity.name || 'Name required'}
-      </div>
-      <div className="font-extrabold" style={{ fontSize: brokerSize }}>
-        Broker: {identity.company || 'Broker name required'}
+    <div className="mt-3 flex items-center gap-3 border-t border-slate-300 bg-white/95 px-3 py-2 text-slate-900">
+      {identity.logo && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={identity.logo} alt="" className="max-h-8 w-16 shrink-0 object-contain" />
+      )}
+      <div className="min-w-0">
+        <div className="font-semibold" style={{ fontSize: Math.max(9, Math.ceil(brokerSize * 0.75)) }}>
+          License holder: {identity.name || 'Name required'}
+        </div>
+        <div className="font-extrabold" style={{ fontSize: brokerSize }}>
+          Broker: {identity.company || 'Broker name required'}
+        </div>
+        <div className="truncate text-[8px] text-slate-600">
+          {[identity.phone, identity.email, identity.website].filter(Boolean).join(' · ')}
+        </div>
       </div>
     </div>
   );
@@ -761,6 +793,39 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
       { image: fields.image3, title: fields.listing2Title, meta: fields.listing2Meta },
       { image: fields.image4, title: fields.listing3Title, meta: fields.listing3Meta },
     ];
+    if (wide) {
+      return (
+        <div className="grid h-full w-full grid-cols-[46%_54%] bg-white" style={{ fontFamily: font, color: secondary }}>
+          <div className="relative overflow-hidden" style={{ backgroundColor: secondary }}>
+            <FlyerPhoto src={fields.image} className="absolute inset-0 h-full w-full opacity-50" label="Hero property photo" />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 to-slate-950/20" />
+            <div className="relative z-10 flex h-full flex-col justify-center px-4 text-white">
+              <p className="text-[7px] uppercase tracking-[0.14em]" style={{ color: primary }}>{fields.eyebrow}</p>
+              <h2 className="mt-1 leading-[0.9]" style={{ fontSize: compact ? 19 : 27, fontWeight }}>{fields.title}</h2>
+              {!compact && <p className="mt-2 text-[8px] leading-relaxed text-slate-200">{fields.body}</p>}
+            </div>
+          </div>
+          <div className="flex min-w-0 flex-col px-3 py-2">
+            <div className="grid min-h-0 flex-1 grid-cols-3 gap-2">
+              {listings.map((listing, index) => (
+                <div key={index} className="min-w-0">
+                  <FlyerPhoto src={listing.image} className={`${compact ? 'h-12' : 'h-24'} w-full`} label={`Property ${index + 1}`} />
+                  <h3 className="mt-1 truncate text-[8px] font-bold">{listing.title}</h3>
+                  <p className="truncate text-[6px] text-slate-500">{listing.meta}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-1 flex items-end justify-between gap-2 border-t border-slate-200 pt-1 text-[6px]">
+              <span className="truncate">{identity.phone} · {identity.email} · {identity.website}</span>
+              {identity.logo && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={identity.logo} alt="" className="max-h-5 w-12 shrink-0 object-contain" />
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex h-full w-full flex-col bg-white" style={{ fontFamily: font, color: secondary }}>
         <div className="relative h-[43%] overflow-hidden" style={{ backgroundColor: secondary }}>
@@ -790,7 +855,7 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
         </div>
         <div className="px-5 py-2 text-[8px]" style={{ backgroundColor: primary, color: secondary }}>
           <div>{fields.footer}</div>
-          <div className="mt-1 font-semibold">License holder: {identity.name} · Broker: {identity.company}</div>
+          <div className="mt-1 font-semibold">License holder: {identity.name} · Broker: {identity.company} · {identity.phone} · {identity.email}</div>
         </div>
       </div>
     );
@@ -798,6 +863,29 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
 
   if (preset === 3) {
     const features = fields.features.split('\n').map((item) => item.trim()).filter(Boolean);
+    if (wide) {
+      return (
+        <div className="grid h-full w-full grid-cols-[35%_37%_28%]" style={{ fontFamily: font }}>
+          <FlyerPhoto src={fields.image} className="h-full w-full" label="Hero property photo" />
+          <div className="flex min-w-0 flex-col justify-center px-4 text-white" style={{ backgroundColor: secondary }}>
+            <p className="text-[7px] uppercase tracking-[0.14em]" style={{ color: primary }}>{fields.eyebrow}</p>
+            <h2 className="mt-1 truncate leading-none" style={{ fontSize: compact ? 18 : 27, fontWeight }}>{fields.title}</h2>
+            <p className="mt-1 truncate text-[7px]" style={{ color: primary }}>{fields.meta}</p>
+            {!compact && <p className="mt-2 line-clamp-3 text-[8px] leading-relaxed text-slate-200">{fields.body}</p>}
+          </div>
+          <div className="flex min-w-0 flex-col justify-center p-3" style={{ backgroundColor: primary, color: secondary }}>
+            {identity.logo && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={identity.logo} alt="" className="mb-2 max-h-7 w-16 object-contain" />
+            )}
+            <div className="whitespace-pre-line text-[7px] leading-relaxed">{fields.contact}</div>
+            <div className="mt-2 border-t border-slate-700/20 pt-1 text-[6px]">
+              {identity.name} · {identity.company}<br />{identity.phone} · {identity.email}
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="grid h-full w-full grid-cols-[44%_56%]" style={{ fontFamily: font }}>
         <div className="flex h-full flex-col justify-between p-4" style={{ backgroundColor: primary, color: secondary }}>
@@ -836,7 +924,10 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, font
             <ul className="mt-2 space-y-1.5 text-[8px] text-slate-200">
               {features.map((feature) => <li key={feature}>○ &nbsp;{feature}</li>)}
             </ul>
-            <div className="mt-auto whitespace-pre-line border-t border-white/20 pt-3 text-[8px] leading-relaxed">{fields.contact}</div>
+            <div className="mt-auto whitespace-pre-line border-t border-white/20 pt-3 text-[8px] leading-relaxed">
+              {fields.contact}
+              <div className="mt-1">{identity.phone} · {identity.email} · {identity.website}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -1046,8 +1137,8 @@ function signatureMarkup(fields: SignatureFields, preset: number, primary: strin
     ? `<img src="${data.logo}" alt="${data.company} logo" width="150" style="display:block;max-height:80px;object-fit:contain;margin:auto">`
     : `<div style="font-size:11px;text-align:center;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700">Company logo</div>`;
   const details = preset === 1
-    ? `<span style="display:block;font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a">${data.name}</span><span style="display:block;font-size:12px;color:${primary};font-weight:600;margin-top:4px">${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:7px;margin-top:7px;font-size:11px"><strong style="color:#0f172a;font-size:${brokerSize}px">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}</div>`
-    : `<div style="border-left:3px solid ${primary};padding-left:14px"><div style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:13px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:${brokerSize}px;font-weight:700">${data.company}</div><div style="font-size:11px;margin-top:4px">☎ ${data.phone}</div></div>`;
+    ? `<span style="display:block;font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a">${data.name}</span><span style="display:block;font-size:12px;color:${primary};font-weight:600;margin-top:4px">${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:7px;margin-top:7px;font-size:11px"><strong style="color:#0f172a;font-size:${brokerSize}px">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}<span style="display:block;margin-top:3px">${data.email} · ${data.website}</span></div>`
+    : `<div style="border-left:3px solid ${primary};padding-left:14px"><div style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:13px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:${brokerSize}px;font-weight:700">${data.company}</div><div style="font-size:11px;margin-top:4px">☎ ${data.phone}</div><div style="font-size:11px;margin-top:2px">${data.email} · ${data.website}</div></div>`;
   const cells: Record<ArtboardKey, string> = {
     headshot: `<td width="170" style="${cellStyle}"><span style="${labelStyle}">Headshot image</span>${avatar}</td>`,
     details: `<td style="${cellStyle}"><span style="${labelStyle}">Personal details</span>${details}</td>`,
@@ -1062,14 +1153,32 @@ function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: num
   const data = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, escapeHtml(value)])) as FlyerFields;
   const licenseHolderName = escapeHtml(identity.name);
   const brokerName = escapeHtml(identity.company);
+  const phone = escapeHtml(identity.phone);
+  const email = escapeHtml(identity.email);
+  const website = escapeHtml(identity.website);
+  const logoUrl = escapeHtml(identity.logo);
   const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
-  const compliance = `<div style="margin-top:12px;border-top:1px solid #cbd5e1;background:rgba(255,255,255,.95);padding:8px 10px;color:#0f172a"><div style="font-size:${Math.max(9, Math.ceil(brokerSize * 0.75))}px;font-weight:600">License holder: ${licenseHolderName}</div><div style="font-size:${brokerSize}px;font-weight:800">Broker: ${brokerName}</div></div>`;
+  const logo = logoUrl ? `<img src="${logoUrl}" alt="" style="display:block;max-width:64px;max-height:32px;object-fit:contain;margin-right:10px">` : '';
+  const compliance = `<div style="margin-top:12px;border-top:1px solid #cbd5e1;background:rgba(255,255,255,.95);padding:8px 10px;color:#0f172a;display:flex;align-items:center">${logo}<div><div style="font-size:${Math.max(9, Math.ceil(brokerSize * 0.75))}px;font-weight:600">License holder: ${licenseHolderName}</div><div style="font-size:${brokerSize}px;font-weight:800">Broker: ${brokerName}</div><div style="font-size:8px;color:#475569">${phone} · ${email} · ${website}</div></div></div>`;
   const image = data.image ? `<img src="${data.image}" alt="" style="width:100%;max-height:140px;object-fit:cover;border-radius:4px;margin-top:12px">` : '';
   const photo = (src: string, label: string, style: string) => src
     ? `<img src="${src}" alt="" style="display:block;object-fit:cover;${style}">`
     : `<div style="display:flex;align-items:center;justify-content:center;background:#e2e8f0;color:#64748b;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;text-align:center;${style}">${label}</div>`;
+  const wide = dimensions.width / dimensions.height > 1.3;
+  const compact = dimensions.height < 350;
 
   if (preset === 2) {
+    if (wide) {
+      const cards = [
+        [data.image2, data.listing1Title, data.listing1Meta],
+        [data.image3, data.listing2Title, data.listing2Meta],
+        [data.image4, data.listing3Title, data.listing3Meta],
+      ].map(([src, title, meta], index) => `<div style="min-width:0">${photo(src, `Property ${index + 1}`, `width:100%;height:${compact ? 48 : 96}px`)}<div style="font-size:8px;font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${title}</div><div style="font-size:6px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${meta}</div></div>`).join('');
+      return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:${secondary};display:grid;grid-template-columns:46% 54%;background:#fff;overflow:hidden">
+        <div style="position:relative;overflow:hidden;background:${secondary}">${photo(data.image, 'Hero property photo', 'position:absolute;inset:0;width:100%;height:100%;opacity:.5')}<div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(2,6,23,.9),rgba(2,6,23,.2))"></div><div style="position:relative;height:100%;display:flex;flex-direction:column;justify-content:center;color:#fff;padding:16px;box-sizing:border-box"><div style="font-size:7px;text-transform:uppercase;letter-spacing:.14em;color:${primary}">${data.eyebrow}</div><h1 style="font-size:${compact ? 19 : 27}px;font-weight:${fontWeight};line-height:.9;margin:4px 0 0">${data.title}</h1>${compact ? '' : `<p style="font-size:8px;line-height:1.4;color:#e2e8f0">${data.body}</p>`}</div></div>
+        <div style="padding:8px 12px;display:flex;flex-direction:column;box-sizing:border-box;min-width:0"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-height:0;flex:1">${cards}</div><div style="font-size:6px;border-top:1px solid #e2e8f0;padding-top:4px;margin-top:4px;display:flex;justify-content:space-between;gap:8px"><span>${phone} · ${email} · ${website}</span>${logo}</div></div>
+      </div>`;
+    }
     const listings = [
       [data.image2, data.listing1Title, data.listing1Meta],
       [data.image3, data.listing2Title, data.listing2Meta],
@@ -1094,12 +1203,19 @@ function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: num
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;flex:1;padding:16px 20px;box-sizing:border-box">${listings}</div>
       <div style="font-size:8px;background:${primary};color:${secondary};padding:8px 20px">
-        <div>${data.footer}</div><div style="font-weight:600;margin-top:4px">License holder: ${licenseHolderName} · Broker: ${brokerName}</div>
+        <div>${data.footer}</div><div style="font-weight:600;margin-top:4px">License holder: ${licenseHolderName} · Broker: ${brokerName} · ${phone} · ${email}</div>
       </div>
     </div>`;
   }
 
   if (preset === 3) {
+    if (wide) {
+      return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:35% 37% 28%;overflow:hidden">
+        ${photo(data.image, 'Hero property photo', 'width:100%;height:100%')}
+        <div style="background:${secondary};color:#fff;padding:12px 16px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box;min-width:0"><div style="font-size:7px;text-transform:uppercase;letter-spacing:.14em;color:${primary}">${data.eyebrow}</div><h1 style="font-size:${compact ? 18 : 27}px;font-weight:${fontWeight};line-height:1;margin:4px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${data.title}</h1><div style="font-size:7px;color:${primary};margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${data.meta}</div>${compact ? '' : `<p style="font-size:8px;line-height:1.4;color:#e2e8f0">${data.body}</p>`}</div>
+        <div style="background:${primary};color:${secondary};padding:12px;display:flex;flex-direction:column;justify-content:center;box-sizing:border-box">${logo}<div style="font-size:7px;line-height:1.4;white-space:pre-line">${data.contact}</div><div style="font-size:6px;border-top:1px solid rgba(15,23,42,.2);padding-top:4px;margin-top:8px">${licenseHolderName} · ${brokerName}<br>${phone} · ${email}</div></div>
+      </div>`;
+    }
     const featureItems = data.features.split('\n').map((item) => item.trim()).filter(Boolean)
       .map((item) => `<li style="margin-bottom:6px">○ &nbsp;${item}</li>`).join('');
     return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;display:grid;grid-template-columns:44% 56%;overflow:hidden">
@@ -1117,7 +1233,7 @@ function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: num
           <p style="font-size:9px;line-height:1.5;color:#e2e8f0;margin:16px 0 0">${data.body}</p>
           <h2 style="font-size:16px;margin:16px 0 0">Why choose us?</h2>
           <ul style="font-size:8px;color:#e2e8f0;list-style:none;padding:0;margin:8px 0 0">${featureItems}</ul>
-          <div style="font-size:8px;line-height:1.5;white-space:pre-line;border-top:1px solid rgba(255,255,255,.2);padding-top:12px;margin-top:auto">${data.contact}</div>
+          <div style="font-size:8px;line-height:1.5;white-space:pre-line;border-top:1px solid rgba(255,255,255,.2);padding-top:12px;margin-top:auto">${data.contact}<div style="margin-top:4px">${phone} · ${email} · ${website}</div></div>
         </div>
       </div>
     </div>`;
