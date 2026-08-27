@@ -93,6 +93,7 @@ export default function CrmClient({ initialRows }: Props) {
   const [prefillOutreachId, setPrefillOutreachId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [lockingIds, setLockingIds] = useState<Set<number>>(() => new Set());
   const router = useRouter();
   const searchParams = useSearchParams();
   useEffect(() => {
@@ -266,6 +267,47 @@ export default function CrmClient({ initialRows }: Props) {
       setError(err instanceof Error ? err.message : 'reload failed');
     }
   }, [router]);
+
+  const toggleRecordLock = useCallback(async (row: AdvertiserCrmRow) => {
+    if (lockingIds.has(row.id)) return;
+    const nextLocked = !row.is_locked;
+
+    setLockingIds((prev) => new Set(prev).add(row.id));
+    setRows((prev) => prev.map((item) => (
+      item.id === row.id ? { ...item, is_locked: nextLocked } : item
+    )));
+
+    try {
+      const res = await fetch(`/api/admin/advertisers/${row.id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ is_locked: nextLocked }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || data?.detail || `HTTP ${res.status}`);
+
+      const saved = data?.advertiser as AdvertiserCrmRow | undefined;
+      if (saved) {
+        setRows((prev) => prev.map((item) => (
+          item.id === row.id
+            ? { ...item, ...saved, hotspot_count: item.hotspot_count, clicks_30d: item.clicks_30d, last_click_at: item.last_click_at }
+            : item
+        )));
+      }
+      flash(nextLocked ? 'Partner record locked' : 'Partner record unlocked');
+    } catch (err) {
+      setRows((prev) => prev.map((item) => (
+        item.id === row.id ? { ...item, is_locked: row.is_locked } : item
+      )));
+      setError(err instanceof Error ? err.message : 'lock update failed');
+    } finally {
+      setLockingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(row.id);
+        return next;
+      });
+    }
+  }, [flash, lockingIds]);
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8 space-y-5">
@@ -474,6 +516,8 @@ export default function CrmClient({ initialRows }: Props) {
                 key={r.id}
                 row={r}
                 onOpen={() => setEditing(r)}
+                lockBusy={lockingIds.has(r.id)}
+                onToggleLock={() => toggleRecordLock(r)}
                 onCopyLink={async () => {
                   const origin = typeof window !== 'undefined' ? window.location.origin : '';
                   const url = `${origin}/r/advertiser/${r.slug}?t=${r.share_token}`;
@@ -495,8 +539,14 @@ export default function CrmClient({ initialRows }: Props) {
         <EditDrawer
           row={editing}
           onClose={() => setEditing(null)}
-          onSaved={async () => {
+          onSaved={async (saved) => {
+            setRows((prev) => prev.map((item) => (
+              item.id === saved.id
+                ? { ...item, ...saved, hotspot_count: item.hotspot_count, clicks_30d: item.clicks_30d, last_click_at: item.last_click_at }
+                : item
+            )));
             setEditing(null);
+            flash('Partner changes saved');
             await reload();
           }}
           onDeleted={async () => {
@@ -549,10 +599,14 @@ export default function CrmClient({ initialRows }: Props) {
 function CrmRow({
   row,
   onOpen,
+  lockBusy,
+  onToggleLock,
   onCopyLink,
 }: {
   row: AdvertiserCrmRow;
   onOpen: () => void;
+  lockBusy: boolean;
+  onToggleLock: () => void | Promise<void>;
   onCopyLink: () => void | Promise<void>;
 }) {
   // Shared cells so mobile card and desktop grid stay in sync.
@@ -602,6 +656,20 @@ function CrmRow({
 
   const actionsCell = (
     <div className="flex items-center justify-end gap-1.5 flex-wrap">
+      <button
+        type="button"
+        onClick={onToggleLock}
+        disabled={lockBusy}
+        aria-pressed={!!row.is_locked}
+        className={`px-2 py-1 text-xs rounded-md border font-medium disabled:opacity-50 ${
+          row.is_locked
+            ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+        }`}
+        title={row.is_locked ? 'Unlock this partner record' : 'Lock this partner record against deletion'}
+      >
+        {lockBusy ? 'Saving…' : row.is_locked ? 'Locked' : 'Lock'}
+      </button>
       <button
         type="button"
         onClick={onCopyLink}
@@ -746,7 +814,7 @@ function EditDrawer({
 }: {
   row: AdvertiserCrmRow;
   onClose: () => void;
-  onSaved: () => Promise<void>;
+  onSaved: (saved: AdvertiserCrmRow) => Promise<void>;
   onDeleted: () => Promise<void>;
   onError: (msg: string) => void;
 }) {
@@ -855,8 +923,8 @@ function EditDrawer({
   };
 
   const deleteAdvertiser = async () => {
-    if (form.is_locked) {
-      onError('This partner record is locked. Unlock and save it before deleting.');
+    if (row.is_locked) {
+      onError('This partner record is locked. Unlock it from the Partners list before deleting.');
       return;
     }
     if (!window.confirm(`Delete "${row.name}"? Their hotspot links will be unlinked (hotspots remain).`)) {
@@ -960,7 +1028,6 @@ function EditDrawer({
   const [form, setForm] = useState({
     type:           row.type           ?? 'advertiser',
     status:         row.status         ?? 'prospect',
-    is_locked:      row.is_locked      ?? false,
     first_name:     row.first_name     ?? '',
     last_name:      row.last_name      ?? '',
     company:        row.company        ?? '',
@@ -1051,8 +1118,10 @@ function EditDrawer({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      await onSaved();
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || data?.detail || `HTTP ${res.status}`);
+      if (!data?.advertiser) throw new Error('The partner saved, but the updated record was not returned.');
+      await onSaved(data.advertiser as AdvertiserCrmRow);
     } catch (err) {
       onError(err instanceof Error ? err.message : 'save failed');
     } finally {
@@ -1081,27 +1150,11 @@ function EditDrawer({
 
           {/* ── Status (top-level select, per spec) ─────────────────── */}
           <Section title="Status">
-            <div className="space-y-3">
-              <Field label="Status">
-                <select value={form.status} onChange={(e) => update('status', e.target.value as AdvertiserStatus)} className={INPUT}>
-                  {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-                </select>
-              </Field>
-              <label className="flex items-start gap-3 rounded-md border border-gray-200 bg-gray-50 p-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.is_locked}
-                  onChange={(e) => update('is_locked', e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span>
-                  <span className="block text-sm font-medium text-gray-900">Lock partner record</span>
-                  <span className="block text-xs text-gray-500">
-                    Locked records cannot be deleted until they are unlocked and saved.
-                  </span>
-                </span>
-              </label>
-            </div>
+            <Field label="Status">
+              <select value={form.status} onChange={(e) => update('status', e.target.value as AdvertiserStatus)} className={INPUT}>
+                {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+              </select>
+            </Field>
           </Section>
 
           {/* ── Section One: Company Details ─────────────────────────── */}
@@ -1537,11 +1590,11 @@ function EditDrawer({
               <button
                 type="button"
                 onClick={deleteAdvertiser}
-                disabled={deleting || form.is_locked}
+                disabled={deleting || row.is_locked}
                 className="px-3 py-1.5 rounded-md border border-red-200 text-red-700 text-xs hover:bg-red-50 disabled:opacity-50"
-                title={form.is_locked ? 'Unlock and save this partner before deleting' : 'Delete this partner (hotspots remain, links unlinked)'}
+                title={row.is_locked ? 'Unlock this partner from the Partners list before deleting' : 'Delete this partner (hotspots remain, links unlinked)'}
               >
-                {deleting ? 'Deleting...' : form.is_locked ? 'Partner locked' : 'Delete advertiser'}
+                {deleting ? 'Deleting...' : row.is_locked ? 'Partner locked' : 'Delete advertiser'}
               </button>
             </div>
             <div className="flex gap-2">
