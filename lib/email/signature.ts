@@ -3,7 +3,7 @@
 const HEADSHOT_URL =
   'https://realtynewsnow.app/email/tawanna-verock-headshot-uncropped-20260827.jpg';
 const WORDMARK_GIF_URL =
-  'https://realtynewsnow.app/email/tawanna-switzer.gif';
+  'https://realtynewsnow.app/email/tawanna-boss-signature.gif';
 const APP_STORE_BADGE_URL =
   'https://realtynewsnow.app/product-tour/app-store-badge.png';
 const GOOGLE_PLAY_BADGE_URL =
