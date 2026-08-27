@@ -564,7 +564,167 @@ function AppPreview({
   );
 }
 
+function AnnouncementScreen({ onStart }: { onStart: () => void }) {
+  return (
+    <main className="min-h-dvh overflow-hidden bg-[#f4eee4] text-gray-900">
+      <header className="border-b border-brand-700/15">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
+          <Link href="/" aria-label="Realty News Now home">
+            <BrandMark />
+          </Link>
+          <Link
+            href="/"
+            className="inline-flex min-h-11 items-center px-3 text-xs font-semibold text-brand-700 transition-colors hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
+          >
+            Visit Realty News Now
+          </Link>
+        </div>
+      </header>
+
+      <section className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-10 sm:px-8 sm:py-14 lg:min-h-[calc(100dvh-77px)] lg:grid-cols-[minmax(340px,.82fr)_minmax(500px,1.18fr)] lg:gap-16 lg:py-12">
+        <div className="order-1">
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-orange-700">
+            We are excited to announce
+          </p>
+          <h1 className="mt-4 max-w-xl font-serif text-[clamp(2.25rem,4.5vw,4.25rem)] leading-[1.01] tracking-[-0.035em] text-brand-700">
+            The Realty News Now app is here.
+          </h1>
+          <p className="mt-5 max-w-xl text-base leading-7 text-gray-600">
+            We are excited to announce the Realty News Now app, bringing Texas real estate news, local market
+            insights, industry events, trusted partners and professional tools together in one convenient
+            experience. Stay informed, connected and ready for what&apos;s next wherever business takes you.
+          </p>
+
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={onStart}
+              className="inline-flex min-h-12 items-center gap-2 bg-brand-700 px-6 text-sm font-semibold text-white transition-colors hover:bg-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
+            >
+              Take the App Tour <ArrowRight size={17} aria-hidden />
+            </button>
+            <span className="text-xs font-medium text-gray-500">6 guided stops · About 2 minutes</span>
+          </div>
+
+          <div className="mt-8 border-t border-brand-700/15 pt-5">
+            <p className="mb-3 text-[9px] font-bold uppercase tracking-[0.16em] text-gray-500">
+              Download Realty News Now
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <a
+                href="https://apps.apple.com/us/app/realty-news-now/id6782394889"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Download Realty News Now on the App Store"
+                onClick={() => trackEvent('product_tour_store_badge_clicked', { store: 'apple', placement: 'announcement' })}
+                className="block rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
+              >
+                <Image
+                  src="/product-tour/app-store-badge.png"
+                  alt="Download on the App Store"
+                  width={132}
+                  height={45}
+                  className="h-auto w-[124px] sm:w-[132px]"
+                />
+              </a>
+              <a
+                href="https://play.google.com/store/apps/details?id=com.realtynewsnow.myapp"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Get Realty News Now on Google Play"
+                onClick={() =>
+                  trackEvent('product_tour_store_badge_clicked', {
+                    store: 'google_play',
+                    placement: 'announcement',
+                  })
+                }
+                className="block rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-700"
+              >
+                <Image
+                  src="/product-tour/google-play-badge.png"
+                  alt="Get it on Google Play"
+                  width={132}
+                  height={45}
+                  className="h-auto w-[124px] sm:w-[132px]"
+                />
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="order-2">
+          <div className="relative mx-auto max-w-[620px]">
+            <div className="absolute -inset-3 border border-brand-700/10 bg-white/35 sm:-inset-5" aria-hidden />
+            <div className="relative border border-brand-700/20 bg-white p-3 shadow-[0_28px_80px_rgba(48,29,93,0.2)] sm:p-5">
+              <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-3">
+                <BrandMark compact />
+                <span className="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-orange-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-orange-600" aria-hidden />
+                  Now available
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={onStart}
+                aria-label="Start the app tour from the interactive app preview"
+                className="block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-700"
+              >
+                <div className="relative aspect-[16/8.2] overflow-hidden bg-[#f3eadb]">
+                  <Image
+                    src="/hero/austin-skyline.jpg"
+                    alt="Austin skyline artwork shown in the Realty News Now app"
+                    fill
+                    priority
+                    sizes="(max-width: 768px) 100vw, 620px"
+                    className="object-cover object-bottom"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-brand-950/70 via-transparent to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-4 sm:p-5">
+                    <div>
+                      <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-orange-200">Your market at a glance</p>
+                      <p className="mt-1 max-w-sm text-base font-semibold leading-snug text-white sm:text-xl">
+                        News and resources built for Texas real estate professionals
+                      </p>
+                    </div>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-white text-brand-700">
+                      <ArrowRight size={18} aria-hidden />
+                    </span>
+                  </div>
+                </div>
+              </button>
+              <div className="mt-3 grid grid-cols-3 gap-2">
+                {[
+                  [BookOpen, 'Issues'],
+                  [Megaphone, 'Partners'],
+                  [CalendarDays, 'Calendar'],
+                  [CircleDollarSign, 'Tools'],
+                  [Home, 'Feed'],
+                  [Smartphone, 'App'],
+                ].map(([Icon, label], itemIndex) => {
+                  const FeatureIcon = Icon as typeof BookOpen;
+                  return (
+                    <div
+                      key={String(label)}
+                      className={`flex min-h-16 items-center gap-2 px-2.5 ${
+                        itemIndex === 0 ? 'bg-brand-700 text-white' : 'border border-gray-200 bg-[#fbfaf8] text-brand-700'
+                      }`}
+                    >
+                      <FeatureIcon size={16} strokeWidth={1.8} aria-hidden />
+                      <span className="text-[9px] font-bold uppercase tracking-[0.08em]">{String(label)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 export default function ProductTourClient() {
+  const [started, setStarted] = useState(false);
   const [index, setIndex] = useState(0);
   const [complete, setComplete] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -606,10 +766,11 @@ export default function ProductTourClient() {
   }, []);
 
   useEffect(() => {
-    trackEvent('product_tour_started', { entry: 'public_share' });
+    trackEvent('product_tour_announcement_viewed', { entry: 'public_share' });
   }, []);
 
   useEffect(() => {
+    if (!started) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'ArrowRight') next();
       if (event.key === 'ArrowLeft') previous();
@@ -617,11 +778,19 @@ export default function ProductTourClient() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [next, previous]);
+  }, [next, previous, started]);
 
   useEffect(() => {
+    if (!started) return;
     announcedRef.current?.focus();
-  }, [index, complete]);
+  }, [index, complete, started]);
+
+  const startTour = () => {
+    setStarted(true);
+    setComplete(false);
+    setIndex(0);
+    trackEvent('product_tour_started', { entry: 'announcement' });
+  };
 
   const shareTour = async () => {
     const shareData = {
@@ -643,6 +812,10 @@ export default function ProductTourClient() {
       // Cancelled share sheets are intentionally silent.
     }
   };
+
+  if (!started) {
+    return <AnnouncementScreen onStart={startTour} />;
+  }
 
   return (
     <main className="min-h-dvh overflow-hidden bg-[#f4eee4] text-gray-900">
