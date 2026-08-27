@@ -160,15 +160,23 @@ export default function DesignerClient() {
   };
 
   const exportHtml = () => {
+    if (!signature.name.trim() || !signature.company.trim()) {
+      window.alert('TREC identification is required. Enter the license holder name and the broker licensed or assumed business name before exporting.');
+      return;
+    }
     const markup = product === 'signature'
       ? signatureMarkup(signature, preset, primary, secondary, font, fontSize, fontWeight, background, artboardOrder)
-      : flyerMarkup(flyer, preset, primary, secondary, font, fontSize, fontWeight, background, dimensions);
+      : flyerMarkup(flyer, signature, preset, primary, secondary, font, fontSize, fontWeight, background, dimensions);
     const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RNN Custom Design</title></head><body style="margin:0">${markup}</body></html>`;
     downloadBlob(html, `rnn-${product}.html`, 'text/html');
   };
 
   const exportPdf = async () => {
     if (product !== 'flyer') return;
+    if (!signature.name.trim() || !signature.company.trim()) {
+      window.alert('TREC identification is required. Enter the license holder name and the broker licensed or assumed business name before exporting.');
+      return;
+    }
     const { jsPDF } = await import('jspdf');
     const landscape = dimensions.width > dimensions.height;
     const pdf = new jsPDF({
@@ -206,6 +214,16 @@ export default function DesignerClient() {
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(11);
     pdf.text(pdf.splitTextToSize(flyer.body, dimensions.width - margin * 2), margin, startY + titleDepth + 28);
+    const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
+    const complianceY = dimensions.height - margin;
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, complianceY - brokerSize * 2.8, dimensions.width, brokerSize * 2.8 + margin, 'F');
+    pdf.setTextColor(15, 23, 42);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(Math.max(9, Math.ceil(brokerSize * 0.75)));
+    pdf.text(`License holder: ${signature.name}`, margin, complianceY - brokerSize * 1.25);
+    pdf.setFontSize(brokerSize);
+    pdf.text(`Broker: ${signature.company}`, margin, complianceY);
     pdf.save(`rnn-${flyerSize}.pdf`);
   };
 
@@ -303,7 +321,7 @@ export default function DesignerClient() {
                   <div className="space-y-3">
                     <TextControl label="Full name" value={signature.name} onChange={(name) => setSignature((value) => ({ ...value, name }))} />
                     <TextControl label="Job title" value={signature.title} onChange={(title) => setSignature((value) => ({ ...value, title }))} />
-                    <TextControl label="Company" value={signature.company} onChange={(company) => setSignature((value) => ({ ...value, company }))} />
+                    <TextControl label="Broker licensed or assumed business name (required)" value={signature.company} onChange={(company) => setSignature((value) => ({ ...value, company }))} />
                     <TextControl label="Direct phone" value={signature.phone} onChange={(phone) => setSignature((value) => ({ ...value, phone }))} />
                     <ArtworkUpload
                       label="Personal headshot"
@@ -337,6 +355,15 @@ export default function DesignerClient() {
                   <textarea value={flyer.body} onChange={(event) => setFlyer((value) => ({ ...value, body: event.target.value }))} rows={4} className="studio-control resize-y" />
                 </Control>
                 <TextControl label="Hero content graphic URL" value={flyer.image} onChange={(image) => setFlyer((value) => ({ ...value, image }))} placeholder="https://…" />
+                <ArtworkPanel title="TREC advertising identification" description="Protected identification appears on every flyer and cannot be removed from exports.">
+                  <div className="space-y-3">
+                    <TextControl label="License holder name (required)" value={signature.name} onChange={(name) => setSignature((value) => ({ ...value, name }))} />
+                    <TextControl label="Broker licensed or assumed business name (required)" value={signature.company} onChange={(company) => setSignature((value) => ({ ...value, company }))} />
+                    <p className="text-[11px] leading-relaxed text-slate-400">
+                      Broker text automatically renders at no less than 50% of the largest agent or contact text.
+                    </p>
+                  </div>
+                </ArtworkPanel>
               </div>
             )}
 
@@ -385,7 +412,7 @@ export default function DesignerClient() {
                   onMove={moveArtboard}
                 />
               ) : (
-                <FlyerPreview fields={flyer} preset={preset} primary={primary} secondary={secondary} font={font} fontSize={fontSize} fontWeight={fontWeight} />
+                <FlyerPreview fields={flyer} identity={signature} preset={preset} primary={primary} secondary={secondary} font={font} fontSize={fontSize} fontWeight={fontWeight} />
               )}
             </div>
           </div>
@@ -459,6 +486,7 @@ function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, 
   onReorder: (source: ArtboardKey, target: ArtboardKey) => void;
   onMove: (key: ArtboardKey, direction: -1 | 1) => void;
 }) {
+  const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
   const headshot = fields.photo ? (
     // User-supplied headshot artwork must render directly in the signature.
     // eslint-disable-next-line @next/next/no-img-element
@@ -486,14 +514,15 @@ function SignaturePreview({ fields, preset, primary, secondary, font, fontSize, 
         <span className="mt-1 block text-xs font-semibold" style={{ color: primary }}>{fields.title}</span>
       </div>
       <div className="mt-2 border-t border-slate-200 pt-2 text-[11px]">
-        <strong className="text-slate-900">{fields.company}</strong> &nbsp;·&nbsp; ☎ {fields.phone}
+        <strong className="text-slate-900" style={{ fontSize: brokerSize }}>{fields.company || 'Broker name required'}</strong>
+        <span> &nbsp;·&nbsp; ☎ {fields.phone}</span>
       </div>
     </div>
   ) : (
     <div className="w-full border-l-[3px] pl-4" style={{ borderColor: primary }}>
       <div className="leading-tight text-slate-900" style={{ fontSize, fontWeight }}>{fields.name}</div>
       <div className="mt-1 text-[13px] font-semibold" style={{ color: primary }}>{fields.title}</div>
-      <div className="mt-0.5 text-xs font-medium">{fields.company}</div>
+      <div className="mt-0.5 font-bold" style={{ fontSize: brokerSize }}>{fields.company || 'Broker name required'}</div>
       <div className="mt-1 text-[11px]">☎ {fields.phone}</div>
     </div>
   );
@@ -592,8 +621,9 @@ function SignatureArtboard({
   );
 }
 
-function FlyerPreview({ fields, preset, primary, secondary, font, fontSize, fontWeight }: {
+function FlyerPreview({ fields, identity, preset, primary, secondary, font, fontSize, fontWeight }: {
   fields: FlyerFields;
+  identity: SignatureFields;
   preset: number;
   primary: string;
   secondary: string;
@@ -601,12 +631,25 @@ function FlyerPreview({ fields, preset, primary, secondary, font, fontSize, font
   fontSize: number;
   fontWeight: number;
 }) {
+  const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
+  const complianceBlock = (
+    <div className="mt-3 border-t border-slate-300 bg-white/95 px-3 py-2 text-slate-900">
+      <div className="font-semibold" style={{ fontSize: Math.max(9, Math.ceil(brokerSize * 0.75)) }}>
+        License holder: {identity.name || 'Name required'}
+      </div>
+      <div className="font-extrabold" style={{ fontSize: brokerSize }}>
+        Broker: {identity.company || 'Broker name required'}
+      </div>
+    </div>
+  );
+
   if (preset === 1) {
     return (
       <div className="flex h-full w-full flex-col justify-end bg-gradient-to-b from-slate-900/5 via-slate-900/20 to-slate-950/95 p-5 text-white" style={{ fontFamily: font }}>
         <h2 className="m-0 leading-[1.1] text-white drop-shadow" style={{ fontSize, fontWeight }}>{fields.title}</h2>
         <p className="mt-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: primary }}>{fields.meta}</p>
         <p className="mt-3 max-w-none text-[11px] leading-relaxed" style={{ color: '#cbd5e1' }}>{fields.body}</p>
+        {complianceBlock}
       </div>
     );
   }
@@ -624,7 +667,10 @@ function FlyerPreview({ fields, preset, primary, secondary, font, fontSize, font
         )}
         <p className="mt-3 max-w-none rounded border border-slate-100 bg-white/90 p-3 text-xs leading-relaxed">{fields.body}</p>
       </div>
-      <div className="border-t border-slate-200 pt-2 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">Corporate Resource Hub Access</div>
+      <div>
+        <div className="border-t border-slate-200 pt-2 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">Corporate Resource Hub Access</div>
+        {complianceBlock}
+      </div>
     </div>
   );
 }
@@ -747,6 +793,7 @@ function backgroundStyle(background: string) {
 
 function signatureMarkup(fields: SignatureFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string, order: ArtboardKey[]) {
   const data = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, escapeHtml(value)])) as SignatureFields;
+  const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
   const labelStyle = 'display:block;font-size:9px;line-height:1;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700;margin-bottom:16px';
   const cellStyle = 'vertical-align:middle;background:rgba(255,255,255,.95);border:1px solid #cbd5e1;border-radius:6px;padding:12px';
   const avatar = data.photo
@@ -756,8 +803,8 @@ function signatureMarkup(fields: SignatureFields, preset: number, primary: strin
     ? `<img src="${data.logo}" alt="${data.company} logo" width="150" style="display:block;max-height:80px;object-fit:contain;margin:auto">`
     : `<div style="font-size:11px;text-align:center;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;font-weight:700">Company logo</div>`;
   const details = preset === 1
-    ? `<span style="display:block;font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a">${data.name}</span><span style="display:block;font-size:12px;color:${primary};font-weight:600;margin-top:4px">${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:7px;margin-top:7px;font-size:11px"><strong style="color:#0f172a">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}</div>`
-    : `<div style="border-left:3px solid ${primary};padding-left:14px"><div style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:13px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:12px;font-weight:500">${data.company}</div><div style="font-size:11px;margin-top:4px">☎ ${data.phone}</div></div>`;
+    ? `<span style="display:block;font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a">${data.name}</span><span style="display:block;font-size:12px;color:${primary};font-weight:600;margin-top:4px">${data.title}</span><div style="border-top:1px solid #e2e8f0;padding-top:7px;margin-top:7px;font-size:11px"><strong style="color:#0f172a;font-size:${brokerSize}px">${data.company}</strong> &nbsp;·&nbsp; ☎ ${data.phone}</div>`
+    : `<div style="border-left:3px solid ${primary};padding-left:14px"><div style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.2">${data.name}</div><div style="font-size:13px;color:${primary};font-weight:600;margin-top:3px">${data.title}</div><div style="font-size:${brokerSize}px;font-weight:700">${data.company}</div><div style="font-size:11px;margin-top:4px">☎ ${data.phone}</div></div>`;
   const cells: Record<ArtboardKey, string> = {
     headshot: `<td width="170" style="${cellStyle}"><span style="${labelStyle}">Headshot image</span>${avatar}</td>`,
     details: `<td style="${cellStyle}"><span style="${labelStyle}">Personal details</span>${details}</td>`,
@@ -768,14 +815,18 @@ function signatureMarkup(fields: SignatureFields, preset: number, primary: strin
   return `<table cellpadding="0" cellspacing="10" border="0" style="font-family:${font};color:${secondary};line-height:${preset === 1 ? '1.3' : '1.4'};width:760px;height:220px;padding:6px;box-sizing:border-box;border-collapse:separate;${backgroundStyle(background)}"><tr>${orderedCells}</tr></table>`;
 }
 
-function flyerMarkup(fields: FlyerFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string, dimensions: { width: number; height: number }) {
+function flyerMarkup(fields: FlyerFields, identity: SignatureFields, preset: number, primary: string, secondary: string, font: string, fontSize: number, fontWeight: number, background: string, dimensions: { width: number; height: number }) {
   const data = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, escapeHtml(value)])) as FlyerFields;
+  const licenseHolderName = escapeHtml(identity.name);
+  const brokerName = escapeHtml(identity.company);
+  const brokerSize = Math.max(10, Math.ceil(fontSize * 0.5));
+  const compliance = `<div style="margin-top:12px;border-top:1px solid #cbd5e1;background:rgba(255,255,255,.95);padding:8px 10px;color:#0f172a"><div style="font-size:${Math.max(9, Math.ceil(brokerSize * 0.75))}px;font-weight:600">License holder: ${licenseHolderName}</div><div style="font-size:${brokerSize}px;font-weight:800">Broker: ${brokerName}</div></div>`;
   const image = data.image ? `<img src="${data.image}" alt="" style="width:100%;max-height:140px;object-fit:cover;border-radius:4px;margin-top:12px">` : '';
   if (preset === 1) {
     const imageBackground = background || data.image;
-    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;box-sizing:border-box;padding:20px;background:linear-gradient(to bottom,rgba(15,23,42,.1),rgba(15,23,42,.95))${imageBackground ? `,url('${imageBackground}')` : ''};background-size:cover;background-position:center"><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};line-height:1.1;margin:0">${data.title}</h1><div style="font-size:11px;font-weight:700;color:${primary};margin-top:8px">${data.meta}</div><p style="font-size:11px;color:#cbd5e1;line-height:1.4;margin:10px 0 0">${data.body}</p></div>`;
+    return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;box-sizing:border-box;padding:20px;background:linear-gradient(to bottom,rgba(15,23,42,.1),rgba(15,23,42,.95))${imageBackground ? `,url('${imageBackground}')` : ''};background-size:cover;background-position:center"><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};line-height:1.1;margin:0">${data.title}</h1><div style="font-size:11px;font-weight:700;color:${primary};margin-top:8px">${data.meta}</div><p style="font-size:11px;color:#cbd5e1;line-height:1.4;margin:10px 0 0">${data.body}</p>${compliance}</div>`;
   }
-  return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:${secondary};display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box;padding:20px;${backgroundStyle(background)}"><div><span style="background:${primary};color:#fff;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:1px;border-radius:3px">INDUSTRY SYMPOSIUM</span><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.1;margin:12px 0 6px;text-transform:uppercase">${data.title}</h1><div style="font-size:11px;font-weight:700;color:${primary}">${data.meta}</div>${image}<p style="font-size:12px;line-height:1.4;background:rgba(255,255,255,.9);padding:8px;border:1px solid #f1f5f9;border-radius:4px">${data.body}</p></div><div style="font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:8px;font-weight:600">CORPORATE RESOURCE HUB ACCESS</div></div>`;
+  return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:${secondary};display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box;padding:20px;${backgroundStyle(background)}"><div><span style="background:${primary};color:#fff;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:1px;border-radius:3px">INDUSTRY SYMPOSIUM</span><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.1;margin:12px 0 6px;text-transform:uppercase">${data.title}</h1><div style="font-size:11px;font-weight:700;color:${primary}">${data.meta}</div>${image}<p style="font-size:12px;line-height:1.4;background:rgba(255,255,255,.9);padding:8px;border:1px solid #f1f5f9;border-radius:4px">${data.body}</p></div><div><div style="font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:8px;font-weight:600">CORPORATE RESOURCE HUB ACCESS</div>${compliance}</div></div>`;
 }
 
 function downloadBlob(content: string, filename: string, type: string) {
