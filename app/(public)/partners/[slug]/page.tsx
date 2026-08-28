@@ -2,5 +2,6 @@ export {
   default,
   generateMetadata,
   generateStaticParams,
-  revalidate,
 } from '../../advertisers/[slug]/page';
+
+export const revalidate = 600;

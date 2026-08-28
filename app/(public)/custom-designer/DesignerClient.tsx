@@ -1748,10 +1748,7 @@ function FlyerPreview({ fields, identity, preset, primary, secondary, font, head
         )}
         <p data-type-role="body" className="mt-3 max-w-none rounded border border-slate-100 bg-white/90 p-3 leading-relaxed" style={{ fontSize: bodyFontSize }}>{fields.body}</p>
       </div>
-      <div>
-        <div className="border-t border-slate-200 pt-2 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">Corporate Resource Hub Access</div>
-        {complianceBlock}
-      </div>
+      <div>{complianceBlock}</div>
     </div>
   );
 }
@@ -2078,7 +2075,7 @@ function flyerMarkup(
     const imageBackground = background || data.image;
     return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;box-sizing:border-box;padding:20px;background:linear-gradient(to bottom,rgba(15,23,42,.1),rgba(15,23,42,.95))${imageBackground ? `,url('${imageBackground}')` : ''};background-size:cover;background-position:center"><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};line-height:1.1;margin:0">${headlineTitle}</h1><div style="font-weight:700;color:${primary};margin-top:8px">${subheadlineCopy}</div><p style="font-size:${bodyFontSize}px;color:#cbd5e1;line-height:1.4;margin:10px 0 0">${bodyCopy}</p>${compliance}</div>`;
   }
-  return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:${secondary};display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box;padding:20px;${backgroundStyle(background)}"><div><span style="background:${primary};color:#fff;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:1px;border-radius:3px">INDUSTRY SYMPOSIUM</span><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.1;margin:12px 0 6px;text-transform:uppercase">${headlineTitle}</h1><div style="font-weight:700;color:${primary}">${subheadlineCopy}</div>${image}<p style="font-size:${bodyFontSize}px;line-height:1.4;background:rgba(255,255,255,.9);padding:8px;border:1px solid #f1f5f9;border-radius:4px">${bodyCopy}</p></div><div><div style="font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:8px;font-weight:600">CORPORATE RESOURCE HUB ACCESS</div>${compliance}</div></div>`;
+  return `<div style="font-family:${font};width:${dimensions.width}px;height:${dimensions.height}px;color:${secondary};display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box;padding:20px;${backgroundStyle(background)}"><div><span style="background:${primary};color:#fff;padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:1px;border-radius:3px">INDUSTRY SYMPOSIUM</span><h1 style="font-size:${fontSize}px;font-weight:${fontWeight};color:#0f172a;line-height:1.1;margin:12px 0 6px;text-transform:uppercase">${headlineTitle}</h1><div style="font-weight:700;color:${primary}">${subheadlineCopy}</div>${image}<p style="font-size:${bodyFontSize}px;line-height:1.4;background:rgba(255,255,255,.9);padding:8px;border:1px solid #f1f5f9;border-radius:4px">${bodyCopy}</p></div><div>${compliance}</div></div>`;
 }
 
 function downloadBlob(content: string, filename: string, type: string) {

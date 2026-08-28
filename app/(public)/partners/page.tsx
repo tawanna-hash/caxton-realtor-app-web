@@ -1,1 +1,3 @@
-export { default, dynamic, metadata } from '../advertisers/page';
+export { default, metadata } from '../advertisers/page';
+
+export const dynamic = 'force-dynamic';
