@@ -45,7 +45,10 @@ import {
   coerceHeaderStyle,
 } from '@/lib/advertiser-header-styles';
 
-type Props = { initialRows: AdvertiserCrmRow[] };
+type Props = {
+  initialRows: AdvertiserCrmRow[];
+  renderedAt: number;
+};
 
 const STATUS_OPTIONS: { value: AdvertiserStatus; label: string; tone: string }[] = [
   { value: 'prospect',   label: 'Prospect',   tone: 'bg-sky-50 text-sky-700 border-sky-200' },
@@ -66,7 +69,7 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
   { value: 'clicks_asc',   label: 'Fewest clicks (30d)' },
 ];
 
-export default function CrmClient({ initialRows }: Props) {
+export default function CrmClient({ initialRows, renderedAt }: Props) {
   const [rows, setRows] = useState(initialRows);
   // Filters / view / sort are URL-backed so refresh restores them.
   // Defaults are stripped from the URL to keep it clean.
@@ -478,6 +481,7 @@ export default function CrmClient({ initialRows }: Props) {
               <CrmRow
                 key={r.id}
                 row={r}
+                renderedAt={renderedAt}
                 onOpen={() => setEditing(r)}
                 lockBusy={lockingIds.has(r.id)}
                 onToggleLock={() => toggleRecordLock(r)}
@@ -563,12 +567,14 @@ export default function CrmClient({ initialRows }: Props) {
 // CrmRow: list-row UI with quick actions (copy share link, analytics, edit).
 function CrmRow({
   row,
+  renderedAt,
   onOpen,
   lockBusy,
   onToggleLock,
   onCopyLink,
 }: {
   row: AdvertiserCrmRow;
+  renderedAt: number;
   onOpen: () => void;
   lockBusy: boolean;
   onToggleLock: () => void | Promise<void>;
@@ -594,7 +600,7 @@ function CrmRow({
       <span className="text-gray-500">{row.clicks_30d} clicks</span>
       {row.last_click_at && (
         <div className="text-xs text-gray-400">
-          last touch {relativeTime(row.last_click_at)}
+          last touch {relativeTime(row.last_click_at, renderedAt)}
         </div>
       )}
     </div>
@@ -691,7 +697,11 @@ function formatShortDate(iso: string | null | undefined): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'America/Chicago',
+  });
 }
 
 function publicationTone(key: PublicationKey): string {
@@ -753,9 +763,9 @@ function StatusBadge({ status }: { status: AdvertiserStatus }) {
   );
 }
 
-function relativeTime(iso: string): string {
+function relativeTime(iso: string, renderedAt: number): string {
   const then = new Date(iso).getTime();
-  const diff = Date.now() - then;
+  const diff = renderedAt - then;
   const day = 1000 * 60 * 60 * 24;
   if (diff < day) return 'today';
   if (diff < 2 * day) return 'yesterday';

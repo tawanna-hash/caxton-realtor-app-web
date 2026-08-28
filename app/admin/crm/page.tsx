@@ -30,6 +30,10 @@ export default async function CrmPage() {
 
   await ensureSchema();
   const sql = getSql();
+  const clockRows = await sql`
+    SELECT (EXTRACT(EPOCH FROM NOW()) * 1000)::bigint AS rendered_at
+  `;
+  const renderedAt = Number(clockRows[0]?.rendered_at ?? 0);
 
   // Single query joins all CRM stats. COALESCE on the new columns so
   // rows from before the migration applied (none, but defensive) still
@@ -111,5 +115,5 @@ export default async function CrmPage() {
     ORDER BY a.updated_at DESC
   `.catch(() => [])) as unknown as AdvertiserCrmRow[];
 
-  return <CrmClient initialRows={rows} />;
+  return <CrmClient initialRows={rows} renderedAt={renderedAt} />;
 }
