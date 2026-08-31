@@ -10,10 +10,12 @@
  *   - event_source_orgs (active=true) — associations and boards
  *   - advertisers.contact_email domains — anyone we already do business with
  *
- * Idempotency has two layers: messages already scanned are skipped before we
- * spend a Gemini call, and the events_external_uniq constraint on
- * (external_source, external_id) catches anything that slips past. That makes
- * overlapping cron windows safe.
+ * Idempotency has three layers: messages already scanned are skipped before we
+ * spend a Gemini call, the events_external_uniq constraint on
+ * (external_source, external_id) catches repeated message/event pairs, and the
+ * event store rejects matching normalized titles on the same Central-time
+ * event date. Rejected Gmail rows remain as hidden tombstones, so deleting a
+ * queue item cannot cause it to reappear during the next overlapping scan.
  *
  * Never throws for a single bad message — per-message failures increment the
  * `errors` count and the scan continues.

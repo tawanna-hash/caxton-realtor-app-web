@@ -14,6 +14,8 @@ import { query } from './db/neon';
 import { geocodeAddress } from '@/lib/geocode';
 import { logger } from './logger';
 
+const GMAIL_REJECTED_TAG = '__gmail_rejected__';
+
 /**
  * Best-effort geocode of a free-form venue/location string. Returns null
  * on any failure (network, no match, malformed) so the caller can still
@@ -335,7 +337,9 @@ export async function createSubmittedEvent(input: {
  * external_id is `gmail-<messageId>`, so the events_external_uniq constraint
  * makes re-scanning the same message idempotent across overlapping cron
  * windows. A message that yields several events disambiguates with
- * `eventIndex`.
+ * `eventIndex`. The INSERT also rejects a matching normalized title on the
+ * same Central-time calendar date, preventing duplicate announcements from
+ * separate Gmail messages from creating duplicate queue entries.
  *
  * Returns null when this message/event pair was already inserted.
  */
@@ -359,16 +363,42 @@ export async function createGmailDetectedEvent(input: {
   const externalId = `gmail-${input.messageId}${suffix}`;
   const coords = await geocodeEventLocation(input.location);
   const rows = await query<EventRow>(
-    `INSERT INTO events (
+    `WITH dedupe_lock AS MATERIALIZED (
+       SELECT pg_advisory_xact_lock(
+         hashtextextended(
+           CASE
+             WHEN $6::timestamptz IS NULL THEN $1::text
+             ELSE
+               REGEXP_REPLACE(LOWER($3::text), '[^a-z0-9]+', '', 'g')
+               || ':'
+               || (($6::timestamptz AT TIME ZONE 'America/Chicago')::date)::text
+           END,
+           0
+         )
+       )
+     )
+     INSERT INTO events (
        external_source, external_id, publication, title, description, link,
        start_date, end_date, location, organizer, organizer_email,
        confidence, lat, lng, hidden,
        last_synced_at, updated_at
-     ) VALUES (
+     )
+     SELECT
        'gmail', $1, $2, $3, $4, $5,
        $6, $7, $8, $9, $10,
        $11, $12, $13, true,
        NOW(), NOW()
+     FROM dedupe_lock
+     WHERE NOT EXISTS (
+       SELECT 1
+       FROM events existing
+       WHERE existing.external_source = 'gmail'
+         AND $6::timestamptz IS NOT NULL
+         AND existing.start_date IS NOT NULL
+         AND REGEXP_REPLACE(LOWER(existing.title), '[^a-z0-9]+', '', 'g')
+             = REGEXP_REPLACE(LOWER($3::text), '[^a-z0-9]+', '', 'g')
+         AND (existing.start_date AT TIME ZONE 'America/Chicago')::date
+             = ($6::timestamptz AT TIME ZONE 'America/Chicago')::date
      )
      ON CONFLICT ON CONSTRAINT events_external_uniq DO NOTHING
      RETURNING ${SELECT_COLS}`,
@@ -420,8 +450,9 @@ export async function listPendingEvents(): Promise<AdminCalendarEvent[]> {
     `SELECT ${SELECT_COLS} FROM events
       WHERE hidden = true
         AND external_source = ANY($1)
+        AND COALESCE(tags, '') <> $2
       ORDER BY created_at DESC`,
-    [REVIEW_QUEUE_SOURCES],
+    [REVIEW_QUEUE_SOURCES, GMAIL_REJECTED_TAG],
   );
   return rows.map(rowToAdminEvent);
 }
@@ -432,7 +463,9 @@ export async function listPendingGmailEvents(): Promise<AdminCalendarEvent[]> {
     `SELECT ${SELECT_COLS} FROM events
       WHERE hidden = true
         AND external_source = 'gmail'
+        AND COALESCE(tags, '') <> $1
       ORDER BY created_at DESC`,
+    [GMAIL_REJECTED_TAG],
   );
   return rows.map(rowToAdminEvent);
 }
@@ -442,8 +475,9 @@ export async function countPendingEvents(): Promise<number> {
   const rows = await query<{ count: string }>(
     `SELECT COUNT(*)::text AS count FROM events
       WHERE hidden = true
-        AND external_source = ANY($1)`,
-    [REVIEW_QUEUE_SOURCES],
+        AND external_source = ANY($1)
+        AND COALESCE(tags, '') <> $2`,
+    [REVIEW_QUEUE_SOURCES, GMAIL_REJECTED_TAG],
   );
   return rows[0] ? parseInt(rows[0].count, 10) : 0;
 }
@@ -452,7 +486,10 @@ export async function countPendingEvents(): Promise<number> {
 export async function countPendingGmailEvents(): Promise<number> {
   const rows = await query<{ count: string }>(
     `SELECT COUNT(*)::text AS count FROM events
-      WHERE hidden = true AND external_source = 'gmail'`,
+      WHERE hidden = true
+        AND external_source = 'gmail'
+        AND COALESCE(tags, '') <> $1`,
+    [GMAIL_REJECTED_TAG],
   );
   return rows[0] ? parseInt(rows[0].count, 10) : 0;
 }
@@ -466,8 +503,9 @@ export async function approvePendingEvent(
     `UPDATE events SET hidden = false, edited_by = $1, edited_at = NOW(), updated_at = NOW()
       WHERE id = $2 AND hidden = true
         AND external_source = ANY($3)
+        AND COALESCE(tags, '') <> $4
       RETURNING ${SELECT_COLS}`,
-    [editedBy, id, REVIEW_QUEUE_SOURCES],
+    [editedBy, id, REVIEW_QUEUE_SOURCES, GMAIL_REJECTED_TAG],
   );
   return rows[0] ? rowToAdminEvent(rows[0]) : null;
 }
@@ -475,21 +513,35 @@ export async function approvePendingEvent(
 /**
  * Admin: reject a pending review-queue event.
  *
- * Hard delete rather than a `rejected` flag: the queue's whole purpose is to
- * stay empty, and the unique (external_source, external_id) constraint is what
- * would normally suppress a re-detection. Deleting therefore means a rescan of
- * the same Gmail message CAN re-surface the event — acceptable because the
- * cron's lookback window is only a few days, and the audit log records the
- * rejection. Guarded to the review-queue sources so this can never delete a
- * live scraped or manual event.
+ * Gmail rows become hidden tombstones instead of being deleted. Keeping their
+ * external_id means the same message remains permanently recognized as
+ * scanned, so a rejected event cannot reappear on the next overlapping scan.
+ * Other review sources retain the existing hard-delete behavior. Both paths
+ * are guarded to hidden review-queue rows and can never delete a live event.
  */
 export async function rejectPendingEvent(id: number): Promise<AdminCalendarEvent | null> {
   const rows = await query<EventRow>(
-    `DELETE FROM events
-      WHERE id = $1 AND hidden = true
-        AND external_source = ANY($2)
-      RETURNING ${SELECT_COLS}`,
-    [id, REVIEW_QUEUE_SOURCES],
+    `WITH gmail_tombstone AS (
+       UPDATE events
+       SET tags = $2, updated_at = NOW()
+       WHERE id = $1
+         AND hidden = true
+         AND external_source = 'gmail'
+         AND COALESCE(tags, '') <> $2
+       RETURNING ${SELECT_COLS}
+     ),
+     deleted_other AS (
+       DELETE FROM events
+       WHERE id = $1
+         AND hidden = true
+         AND external_source = ANY($3)
+         AND external_source <> 'gmail'
+       RETURNING ${SELECT_COLS}
+     )
+     SELECT * FROM gmail_tombstone
+     UNION ALL
+     SELECT * FROM deleted_other`,
+    [id, GMAIL_REJECTED_TAG, REVIEW_QUEUE_SOURCES],
   );
   return rows[0] ? rowToAdminEvent(rows[0]) : null;
 }
