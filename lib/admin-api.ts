@@ -116,6 +116,10 @@ export const adminApi = {
       method: 'POST',
       body: { ids },
     }) as Promise<{ deleted: number; missing: number; ids: number[] }>,
+  deleteDuplicateGmailEvents: () =>
+    adminFetch('/admin/events/gmail/delete-duplicates', { method: 'POST' }) as Promise<{
+      deletedCount: number;
+    }>,
   getGmailEventSource: (id: number) => adminFetch(`/admin/events/gmail/${id}/source`),
   scanGmailNow: () => adminFetch('/admin/events/gmail/scan', { method: 'POST' }),
   createGmailShareLink: () =>

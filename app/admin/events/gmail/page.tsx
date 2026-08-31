@@ -4,7 +4,8 @@
 //
 // The scanner (lib/server/gmail-event-scanner.ts) drops Gemini detections here
 // as hidden events; approving one flips hidden=false and it appears on the
-// public calendar for its publication. Rejecting deletes the row.
+// public calendar for its publication. Rejecting removes the row from review
+// while retaining its source-message tombstone so it cannot be queued again.
 //
 // Styling and data-loading follow app/admin/events/page.tsx so the two review
 // surfaces stay visually consistent.
@@ -140,6 +141,7 @@ function GmailEventsQueue() {
   const [toast, setToast] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [scanning, setScanning] = useState(false);
+  const [dedupeBusy, setDedupeBusy] = useState(false);
 
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>('when');
@@ -191,7 +193,7 @@ function GmailEventsQueue() {
   };
 
   const handleReject = async (ev: GmailEvent) => {
-    if (!window.confirm(`Reject "${ev.title}"? The queued event is deleted.`)) return;
+    if (!window.confirm(`Reject "${ev.title}" and remove it from the review queue?`)) return;
     setBusyId(ev.id);
     try {
       await adminApi.rejectGmailEvent(ev.id);
@@ -333,6 +335,31 @@ function GmailEventsQueue() {
     }
   };
 
+  const handleDeleteDuplicates = async () => {
+    if (
+      !window.confirm(
+        'Permanently remove duplicate Gmail-detected events? One published or oldest event will be kept for each matching title and date.',
+      )
+    ) {
+      return;
+    }
+    setDedupeBusy(true);
+    setToast(null);
+    try {
+      const result = await adminApi.deleteDuplicateGmailEvents();
+      setToast(
+        result.deletedCount === 0
+          ? 'No duplicate Gmail events were found.'
+          : `Removed ${result.deletedCount} duplicate Gmail event${result.deletedCount === 1 ? '' : 's'}.`,
+      );
+      reload();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDedupeBusy(false);
+    }
+  };
+
   const openDrawer = async (ev: GmailEvent) => {
     setDrawerFor(ev);
     setSource(null);
@@ -359,6 +386,14 @@ function GmailEventsQueue() {
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleDeleteDuplicates}
+            disabled={dedupeBusy}
+            className="px-4 py-2 bg-white text-red-700 text-sm font-medium rounded-md border border-red-300 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+          >
+            {dedupeBusy ? 'Removing…' : 'Remove duplicates'}
+          </button>
           <div className="relative">
             <button
               type="button"

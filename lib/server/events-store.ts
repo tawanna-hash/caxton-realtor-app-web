@@ -652,6 +652,40 @@ export async function deleteExpired(): Promise<number> {
   return result.length;
 }
 
+/**
+ * Admin: permanently remove duplicate Gmail-detected events.
+ *
+ * Events are duplicates when their normalized titles and Central-time event
+ * dates match. Keep a published event in preference to a hidden review item,
+ * then keep the oldest record. Rejected tombstones are deliberately excluded:
+ * their external IDs prevent rejected messages from being queued again.
+ */
+export async function deleteDuplicateGmailEvents(): Promise<number> {
+  const result = await query<{ id: number }>(
+    `WITH ranked AS (
+       SELECT
+         id,
+         ROW_NUMBER() OVER (
+           PARTITION BY
+             REGEXP_REPLACE(LOWER(title), '[^a-z0-9]+', '', 'g'),
+             (start_date AT TIME ZONE 'America/Chicago')::date
+           ORDER BY hidden ASC, created_at ASC, id ASC
+         ) AS duplicate_rank
+       FROM events
+       WHERE external_source = 'gmail'
+         AND start_date IS NOT NULL
+         AND COALESCE(tags, '') <> $1
+     )
+     DELETE FROM events AS event
+     USING ranked
+     WHERE event.id = ranked.id
+       AND ranked.duplicate_rank > 1
+     RETURNING event.id`,
+    [GMAIL_REJECTED_TAG],
+  );
+  return result.length;
+}
+
 /** Admin: hard-delete a manual event only. Returns true if a row was deleted. */
 export async function deleteEvent(id: number): Promise<boolean> {
   const result = await query<{ id: number }>(
