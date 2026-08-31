@@ -159,6 +159,22 @@ export async function resolveAudience<Row extends { id: number }>(
   filter: AudienceFilter | null | undefined,
 ): Promise<number[]> {
   const f: AudienceFilter = filter ?? {};
+  // Older recurring snapshots sometimes stored a single string where the
+  // current composer stores an array. Normalize both shapes before binding
+  // them as native Postgres arrays; jsonb_array_elements_text('null') and the
+  // scalar legacy shape both raise "cannot extract elements from a scalar".
+  const stringArray = (value: unknown): string[] | null => {
+    if (Array.isArray(value)) {
+      const values = value.filter((item): item is string => typeof item === 'string' && item.length > 0);
+      return values.length > 0 ? values : null;
+    }
+    return typeof value === 'string' && value.length > 0 ? [value] : null;
+  };
+  const statuses = stringArray(f.status);
+  const types = stringArray(f.type);
+  const publications = stringArray(f.publication);
+  const industries = stringArray(f.industry);
+  const tags = stringArray(f.tags);
   // We build with multiple chained predicates because Caxton uses
   // the Neon tagged-template driver (no interpolated SQL fragments).
   // Each conditional clause runs as part of a single SELECT, so we
@@ -171,11 +187,11 @@ export async function resolveAudience<Row extends { id: number }>(
     SELECT a.id
     FROM advertisers a
     WHERE
-      (${JSON.stringify(f.status ?? null)}::jsonb IS NULL OR a.status = ANY(SELECT jsonb_array_elements_text(${JSON.stringify(f.status ?? null)}::jsonb)))
-      AND (${JSON.stringify(f.type ?? null)}::jsonb IS NULL OR a.type = ANY(SELECT jsonb_array_elements_text(${JSON.stringify(f.type ?? null)}::jsonb)))
-      AND (${JSON.stringify(f.publication ?? null)}::jsonb IS NULL OR string_to_array(COALESCE(a.publication, ''), ',') && ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(f.publication ?? null)}::jsonb)))
-      AND (${JSON.stringify(f.industry ?? null)}::jsonb IS NULL OR a.industry = ANY(SELECT jsonb_array_elements_text(${JSON.stringify(f.industry ?? null)}::jsonb)))
-      AND (${JSON.stringify(f.tags ?? null)}::jsonb IS NULL OR a.tags ?| ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(f.tags ?? null)}::jsonb)))
+      (${statuses}::text[] IS NULL OR a.status = ANY(${statuses}::text[]))
+      AND (${types}::text[] IS NULL OR a.type = ANY(${types}::text[]))
+      AND (${publications}::text[] IS NULL OR string_to_array(COALESCE(a.publication, ''), ',') && ${publications}::text[])
+      AND (${industries}::text[] IS NULL OR a.industry = ANY(${industries}::text[]))
+      AND (${tags}::text[] IS NULL OR a.tags ?| ${tags}::text[])
       AND (${f.has_active_agreement ?? null}::boolean IS NULL OR ${f.has_active_agreement ?? null}::boolean = EXISTS (
         SELECT 1 FROM agreements ag WHERE ag.advertiser_id = a.id AND ag.status = 'active'
       ))

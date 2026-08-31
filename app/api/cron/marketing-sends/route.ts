@@ -20,8 +20,13 @@ import {
   materializeAudience,
   insertRecipientsLedger,
   buildMediaKitTokens,
+  type RecipientSeed,
 } from '@/lib/server/marketing-send';
 import { fetchAttachmentContent, type AttachmentRef } from '@/lib/server/email-attachments';
+import {
+  resolveCrmAudience,
+  type CrmAudienceFilter,
+} from '@/app/api/admin/crm-email/_shared';
 
 export const runtime     = 'nodejs';
 export const dynamic     = 'force-dynamic';
@@ -57,6 +62,7 @@ interface DueRow {
 interface AudienceSnapshot {
   sources?: Array<'advertisers' | 'subscribers' | 'segment' | 'manual'>;
   advertiserFilter?: Record<string, unknown>;
+  crmFilter?: CrmAudienceFilter;
   subscriberFilter?: {
     publication?: 'realtyline' | 'newsline';
     status?: 'active' | 'unsubscribed';
@@ -109,13 +115,55 @@ export async function GET(req: Request) {
       // Re-materialize audience on each fire when a snapshot is present.
       // This picks up newly-added prospects and drops recent unsubscribes.
       const snapshot = o.audience_snapshot as AudienceSnapshot | null;
-      if (snapshot && Array.isArray(snapshot.sources) && snapshot.sources.length > 0) {
-        const seeds = await materializeAudience({
-          sources: snapshot.sources,
-          advertiserFilter: snapshot.advertiserFilter,
-          subscriberFilter: snapshot.subscriberFilter,
-          manualEmails: snapshot.manualEmails,
-        });
+      const ledgerRows = (await sql`
+        SELECT count(*)::int AS count
+        FROM marketing_campaign_outreach_recipients
+        WHERE outreach_id = ${o.id}
+      `) as unknown as Array<{ count: number }>;
+      const hasStoredRecipients = (ledgerRows[0]?.count ?? 0) > 0;
+      if (
+        !hasStoredRecipients
+        && snapshot
+        && Array.isArray(snapshot.sources)
+        && snapshot.sources.length > 0
+      ) {
+        let seeds: RecipientSeed[];
+        if (snapshot.crmFilter) {
+          const crmRows = await resolveCrmAudience(snapshot.crmFilter);
+          const seen = new Set<string>();
+          seeds = crmRows.map((row) => {
+            seen.add(row.email.trim().toLowerCase());
+            return {
+              recipient_type: 'advertiser' as const,
+              recipient_id: row.id,
+              email: row.email,
+              first_name: row.first_name,
+              last_name: row.last_name,
+              company: row.company,
+            };
+          });
+          for (const raw of snapshot.manualEmails ?? []) {
+            const email = raw.trim();
+            const key = email.toLowerCase();
+            if (!email || seen.has(key)) continue;
+            seen.add(key);
+            seeds.push({
+              recipient_type: 'manual',
+              recipient_id: null,
+              email,
+              first_name: null,
+              last_name: null,
+              company: null,
+            });
+          }
+        } else {
+          seeds = await materializeAudience({
+            sources: snapshot.sources,
+            advertiserFilter: snapshot.advertiserFilter,
+            subscriberFilter: snapshot.subscriberFilter,
+            manualEmails: snapshot.manualEmails,
+          });
+        }
         if (seeds.length > 0) {
           await insertRecipientsLedger(o.id, seeds);
         }
