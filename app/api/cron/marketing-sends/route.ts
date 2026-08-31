@@ -180,36 +180,45 @@ export async function GET(req: Request) {
 
       // Chain-insert the next occurrence if within window.
       let nextIso: string | null = null;
-      if (o.recurrence_interval_days && o.recurrence_interval_days > 0) {
-        const nextTs = (await sql`
-          SELECT (${o.scheduled_for}::timestamptz + (${o.recurrence_interval_days}::int || ' days')::interval) AS next
-        `) as unknown as Array<{ next: string }>;
-        const nextRun = nextTs[0]?.next;
-        const until = o.recurrence_until ? new Date(o.recurrence_until) : null;
-        const nextDate = nextRun ? new Date(nextRun) : null;
-        if (nextRun && (!until || (nextDate && nextDate <= until))) {
-          const parentId = o.recurrence_parent_id ?? o.id;
-          await sql`
-            INSERT INTO marketing_campaign_outreach (
-              campaign_id, channel, subject, body, status, scheduled_for,
-              from_name, reply_to, preview_text,
-              recurrence_interval_days, recurrence_until, recurrence_parent_id,
-              audience_snapshot, reply_to_list, attachments,
-              attachment_link_url, attachment_link_label,
-              created_by
-            ) VALUES (
-              ${o.campaign_id}, 'email', ${o.subject}, ${o.body}, 'scheduled', ${nextRun},
-              ${o.from_name}, ${o.reply_to}, ${o.preview_text},
-              ${o.recurrence_interval_days}, ${o.recurrence_until}, ${parentId},
-              ${o.audience_snapshot ? JSON.stringify(o.audience_snapshot) : null}::jsonb,
-              ${o.reply_to_list ? JSON.stringify(o.reply_to_list) : null}::jsonb,
-              ${o.attachments ? JSON.stringify(o.attachments) : null}::jsonb,
-              ${o.attachment_link_url}, ${o.attachment_link_label},
-              'cron:recurrence'
-            )
-          `;
-          nextIso = nextRun;
+      try {
+        if (o.recurrence_interval_days && o.recurrence_interval_days > 0) {
+          const nextTs = (await sql`
+            SELECT (${o.scheduled_for}::timestamptz + (${o.recurrence_interval_days}::int || ' days')::interval) AS next
+          `) as unknown as Array<{ next: string }>;
+          const nextRun = nextTs[0]?.next;
+          const until = o.recurrence_until ? new Date(o.recurrence_until) : null;
+          const nextDate = nextRun ? new Date(nextRun) : null;
+          if (nextRun && (!until || (nextDate && nextDate <= until))) {
+            const parentId = o.recurrence_parent_id ?? o.id;
+            await sql`
+              INSERT INTO marketing_campaign_outreach (
+                campaign_id, channel, subject, body, status, scheduled_for,
+                from_name, reply_to, preview_text,
+                recurrence_interval_days, recurrence_until, recurrence_parent_id,
+                audience_snapshot, reply_to_list, attachments,
+                attachment_link_url, attachment_link_label,
+                created_by
+              ) VALUES (
+                ${o.campaign_id}, 'email', ${o.subject}, ${o.body}, 'scheduled', ${nextRun},
+                ${o.from_name}, ${o.reply_to}, ${o.preview_text},
+                ${o.recurrence_interval_days}, ${o.recurrence_until}, ${parentId},
+                ${o.audience_snapshot ? JSON.stringify(o.audience_snapshot) : null}::jsonb,
+                ${o.reply_to_list ? JSON.stringify(o.reply_to_list) : null}::jsonb,
+                ${o.attachments ? JSON.stringify(o.attachments) : null}::jsonb,
+                ${o.attachment_link_url}, ${o.attachment_link_label},
+                'cron:recurrence'
+              )
+            `;
+            nextIso = nextRun;
+          }
         }
+      } catch (err) {
+        const recurrenceError = err instanceof Error ? err.message : 'unknown recurrence scheduling error';
+        await sql`
+          UPDATE marketing_campaign_outreach
+          SET error_message = ${`Next recurring send was not scheduled: ${recurrenceError}`}
+          WHERE id = ${o.id}
+        `;
       }
 
       results.push({ outreach_id: o.id, ...r, next: nextIso });

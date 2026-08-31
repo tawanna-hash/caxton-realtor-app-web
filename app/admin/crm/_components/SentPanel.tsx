@@ -27,6 +27,7 @@ export type SentRow = {
   recipient_count: number | null;
   sent_count: number | null;
   failed_count: number | null;
+  error_message?: string | null;
   failed_recipients?: FailedRecipient[];
   runs_sent?: number | null;
   runs_total?: number | null;
@@ -66,17 +67,27 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function FailedRecipientDropdown({ row }: { row: SentRow }) {
-  if (!row.failed_count) return null;
+  if (!row.failed_count && !row.error_message) return null;
   const failures = row.failed_recipients ?? [];
+  const label = row.failed_count
+    ? `${row.failed_count} failed`
+    : 'View failure reason';
 
   return (
     <details className="mt-0.5 text-left">
       <summary className="cursor-pointer select-none text-xs font-medium text-red-700 hover:text-red-900">
-        {row.failed_count} failed
+        {label}
       </summary>
       <div className="mt-1 w-72 max-w-[calc(100vw-3rem)] rounded-md border border-red-200 bg-red-50 p-2 text-xs text-gray-800 shadow-sm">
+        {row.error_message && (
+          <div className="mb-2 break-words font-medium text-red-900">
+            Campaign error: {row.error_message}
+          </div>
+        )}
         {failures.length === 0 ? (
-          <div className="text-red-800">Failure details are unavailable for this send.</div>
+          !row.error_message && (
+            <div className="text-red-800">Failure details are unavailable for this send.</div>
+          )
         ) : (
           <ul className="space-y-2">
             {failures.map((failure, index) => {

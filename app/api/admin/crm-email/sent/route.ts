@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       SELECT
         o.id, o.subject, o.status, o.scheduled_for, o.sent_at, o.created_at,
         o.recurrence_interval_days, o.recurrence_until, o.recurrence_parent_id,
-        o.from_name, o.reply_to, o.preview_text, o.recipient_count,
+        o.from_name, o.reply_to, o.preview_text, o.recipient_count, o.error_message,
         (o.stats->>'sent')::int  AS sent_count,
         (o.stats->>'failed')::int AS failed_count,
         COALESCE((
@@ -101,7 +101,7 @@ export async function GET(req: NextRequest) {
     SELECT
       id, subject, status, scheduled_for, sent_at, created_at,
       recurrence_interval_days, recurrence_until, recurrence_parent_id,
-      from_name, reply_to, preview_text, recipient_count,
+      from_name, reply_to, preview_text, recipient_count, error_message,
       (stats->>'sent')::int AS sent_count,
       (stats->>'failed')::int AS failed_count,
       COALESCE((
