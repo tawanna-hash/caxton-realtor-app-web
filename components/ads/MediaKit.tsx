@@ -1,6 +1,6 @@
 'use client';
 
-// app/admin/ads/media-kit/MediaKitClient.tsx
+// Shared media kit used by both the protected admin reference and /advertise.
 //
 // Live, on-screen Media Kit. Single source of truth: lib/media-kit.ts.
 // Publication tabs let sales pitch by market. Houston + Dallas render
@@ -62,20 +62,38 @@ function fmtUSD(n: number | null): string {
   return '$' + n.toLocaleString('en-US');
 }
 
-export default function MediaKitClient() {
+export default function MediaKit({ mode = 'admin' }: { mode?: 'admin' | 'public' }) {
   const [activePubId, setActivePubId] = useState<PubTab['id']>('austin');
   const activePub = PUB_TABS.find((p) => p.id === activePubId) ?? PUB_TABS[0]!;
+  const isPublic = mode === 'public';
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-4">
-        <PageTitle size="md">Media Kit — 2026</PageTitle>
+        <PageTitle size="md">{isPublic ? 'Advertising Media Kit — 2026' : 'Media Kit — 2026'}</PageTitle>
         <p className="text-sm text-gray-700 mt-1">
-          Reference sheet for sales. Packages, ad rates, e-blasts, print
-          deadlines, and contract policies. Rates match the Sign Wizard and
-          the generated agreement PDF.
+          {isPublic
+            ? 'Compare audience reach, print packages, digital placements, e-blasts, deadlines, and advertising policies by market.'
+            : 'Reference sheet for sales. Packages, ad rates, e-blasts, print deadlines, and contract policies. Rates match the Sign Wizard and the generated agreement PDF.'}
         </p>
       </div>
+
+      {isPublic && (
+        <div className="mb-6 flex flex-wrap gap-3 rounded-md bg-brand-50 p-4 ring-1 ring-brand-200">
+          <Link
+            href="/advertise/portal"
+            className="inline-flex items-center rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-800"
+          >
+            Buy a digital placement
+          </Link>
+          <a
+            href="mailto:hello@myrealtyline.com?subject=Media%20Kit%20Request"
+            className="inline-flex items-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-brand-800 ring-1 ring-brand-300 transition-colors hover:bg-brand-100"
+          >
+            Request a recommendation
+          </a>
+        </div>
+      )}
 
       <PubTabs active={activePubId} onChange={setActivePubId} />
 
@@ -84,10 +102,11 @@ export default function MediaKitClient() {
         <ExpansionSection />
         {activePub.hasPrint && <RateMatrixSection />}
         {activePub.hasPrint && <PackagesSection />}
-        <DigitalSlotsSection activePub={activePub} />
+        <DigitalSlotsSection activePub={activePub} mode={mode} />
         <EblastsSection activePub={activePub} />
         {activePub.hasPrint && <DeadlinesSection />}
         <PolicySection />
+        {isPublic && <ContactSection />}
       </div>
     </div>
   );
@@ -275,7 +294,13 @@ function PackageCard({ pkg }: { pkg: Package }) {
   );
 }
 
-function DigitalSlotsSection({ activePub }: { activePub: PubTab }) {
+function DigitalSlotsSection({
+  activePub,
+  mode,
+}: {
+  activePub: PubTab;
+  mode: 'admin' | 'public';
+}) {
   const slots = useMemo(
     () => APP_AD_SLOTS.filter((s) => getSlotAvailablePubs(s).includes(activePub.mediaKitPub)),
     [activePub.mediaKitPub],
@@ -289,7 +314,12 @@ function DigitalSlotsSection({ activePub }: { activePub: PubTab }) {
             {slots.length} placement{slots.length === 1 ? '' : 's'} available on {activePub.label}. Weekly + monthly rates shown for 1 market; multi-market multipliers below.
           </p>
         </div>
-        <Link href="/admin/ads/placements" className="text-sm text-blue-700 hover:underline">View wireframes {'\u2192'}</Link>
+        <Link
+          href={mode === 'public' ? '/advertise/placements' : '/admin/ads/placements'}
+          className="text-sm text-blue-700 hover:underline"
+        >
+          {mode === 'public' ? 'View placement guide' : 'View wireframes'} {'\u2192'}
+        </Link>
       </div>
       {slots.length === 0 ? (
         <div className="mt-4 rounded-md bg-amber-50 ring-1 ring-amber-200 p-4 text-sm text-amber-900">No digital placements are configured for {activePub.label} yet.</div>
@@ -477,6 +507,29 @@ function PolicySection() {
             <p className="text-sm text-gray-700 mt-1">{n.body}</p>
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function ContactSection() {
+  return (
+    <section className="rounded-md bg-gray-900 p-6 text-white">
+      <h2 className="text-lg font-semibold">Ready to build your campaign?</h2>
+      <p className="mt-1 max-w-3xl text-sm text-gray-200">
+        Tell us which market you want to reach and what you want to accomplish.
+        We will recommend the best print, email, and digital mix.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        <a className="font-semibold text-brand-300 hover:underline" href="mailto:hello@myrealtyline.com?subject=RealtyLine%20Media%20Kit%20Request">
+          RealtyLine Austin
+        </a>
+        <a className="font-semibold text-brand-300 hover:underline" href="mailto:hello@newslinesa.com?subject=Newsline%20Media%20Kit%20Request">
+          Newsline San Antonio
+        </a>
+        <Link className="font-semibold text-brand-300 hover:underline" href="/advertise/portal">
+          Self-service digital booking
+        </Link>
       </div>
     </section>
   );

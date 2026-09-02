@@ -3,7 +3,7 @@
 // Canonical Media Kit route (rendered by MediaKitClient). The legacy
 // /admin/media-kit route redirects here. Linked from the "Sales" nav group.
 
-import MediaKitClient from './MediaKitClient';
+import MediaKit from '@/components/ads/MediaKit';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,5 +12,5 @@ export const metadata = {
 };
 
 export default function MediaKitPage() {
-  return <MediaKitClient />;
+  return <MediaKit />;
 }
