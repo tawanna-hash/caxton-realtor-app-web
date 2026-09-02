@@ -7,7 +7,6 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import MagazineCarousel from '@/components/MagazineCarousel';
 import MagazineReaderRouter from '@/components/MagazineReaderRouter';
 import MagazineFeatured from '@/components/MagazineFeatured';
-import MagazineGuestCTA from '@/components/MagazineGuestCTA';
 import type { Magazine } from '@/lib/magazines';
 
 // Local pub type mirrors CalendarClient. Values are the dashboard SPA's
@@ -145,15 +144,6 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
       router.replace(url, { scroll: false });
     } catch {}
   }, [router]);
-  // Guest article gate: probe /api/auth/me once on mount so we know
-  // whether to intercept article link clicks with a sign-up modal.
-  // Defaults to 'guest' so a network failure errs on showing the modal
-  // (worst case: a signed-in user sees an account-creation pitch they
-  // can dismiss; better than letting guests through to a route that
-  // does not exist yet).
-  const [authState, setAuthState] = useState<'loading' | 'guest' | 'authed'>('loading');
-  const [showArticleGate, setShowArticleGate] = useState(false);
-
   // Honor caxton:openLatestMagazine if the user lands here from the existing
   // BottomNav dispatch (will be removed in C2 once nav routes here directly).
   useEffect(() => {
@@ -212,26 +202,6 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Probe /api/auth/me once on mount to decide whether article clicks
-  // should pass through (authed) or open the create-account gate (guest).
-  // Endpoint returns { realtor: null } for guests, { realtor: {...} } for
-  // signed-in users (always 200, never 401 -- BUG-23 contract).
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/auth/me', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((j) => {
-        if (cancelled) return;
-        setAuthState(j && j.realtor ? 'authed' : 'guest');
-      })
-      .catch(() => {
-        if (!cancelled) setAuthState('guest');
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-white" style={{ paddingBottom: 96 }}>
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-3 py-3 flex items-center justify-between">
@@ -250,7 +220,6 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
             users still see which market they're viewing. */}
         <span className="text-xs uppercase tracking-[0.2em] text-gray-400 font-medium">{info.city}</span>
       </div>
-      <MagazineGuestCTA brandColor={info.color} />
       {/* Quick-jump pill: scrolls to the issues archive below the current
           issue spotlight. Hidden until currentMag has loaded so the page
           doesn't show a jump-to-nothing affordance during the initial
@@ -276,15 +245,7 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
           magazine={currentMag}
           brandColor={info.color}
           onOpenMagazine={() => setOpenMag(currentMag)}
-          onOpenArticle={() => {
-            // Guests must create an account to read full articles; the
-            // gate modal below renders the brand-colored Create account
-            // and Sign in CTAs. Signed-in users currently no-op until
-            // /article/[id] is wired (S23-followup).
-            if (authState !== 'authed') {
-              setShowArticleGate(true);
-            }
-          }}
+          onOpenArticle={() => {}}
         />
       )}
       <div id="archives" style={{ scrollMarginTop: 72 }}>
@@ -304,70 +265,6 @@ export default function MagazineClient({ initialMagazine }: MagazineClientProps 
           onPageChange={handleReaderPageChange}
         />
       )}
-      {showArticleGate && (
-        <GuestArticleGateModal
-          brandColor={info.color}
-          onClose={() => setShowArticleGate(false)}
-        />
-      )}
-    </div>
-  );
-}
-
-function GuestArticleGateModal({
-  brandColor,
-  onClose,
-}: {
-  brandColor: string;
-  onClose: () => void;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-md bg-white rounded-md shadow-2xl p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-2xl leading-none w-8 h-8 flex items-center justify-center"
-        >
-          {'\u00D7'}
-        </button>
-        <p
-          className="text-[10px] uppercase tracking-[0.25em] font-semibold mb-3"
-          style={{ color: brandColor }}
-        >
-          Realtor Account Required
-        </p>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">
-          Create a free account to read articles.
-        </h3>
-        <p className="text-sm text-gray-600 leading-relaxed mb-5">
-          Magazine PDFs are free to read. Full articles, the partner
-          directory, events calendar, and the weekly feed are unlocked
-          with a free realtor account.
-        </p>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/auth/sign-up"
-            className="inline-flex items-center justify-center px-4 py-2.5 text-xs font-medium uppercase tracking-[0.1em] text-white rounded-md"
-            style={{ backgroundColor: brandColor }}
-          >
-            Create Account
-          </Link>
-          <Link
-            href="/auth/sign-in"
-            className="inline-flex items-center justify-center px-4 py-2.5 text-xs font-medium uppercase tracking-[0.1em] text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            Sign In
-          </Link>
-        </div>
-      </div>
     </div>
   );
 }

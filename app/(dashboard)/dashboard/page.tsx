@@ -24,6 +24,7 @@ import { openExternal } from '@/lib/native/external-link';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import MarketSwitcherSheet from '@/components/MarketSwitcherSheet';
 import TrendingTicker from '@/components/feed/TrendingTicker';
+import { isNative } from '@/lib/native/runtime';
 
 const API = getApiBase();
 
@@ -910,6 +911,15 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
           <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
           <div className="flex-1 h-px bg-gray-200" />
         </div>
+        <button
+          onClick={() => {
+            void haptics.light();
+            onAuth({ guest: true });
+          }}
+          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-gray-700 border border-gray-300 rounded-md"
+        >
+          Continue as a Guest
+        </button>
       </div>
       </div>
     </div>
@@ -960,12 +970,8 @@ export default function DashboardPage() {
       }
     } catch {}
 
-    // Check if we already have a server session. If there is NO realtor on
-    // the server, we must override any saved localStorage phase that would
-    // render protected content (feed/article). The edge proxy already
-    // blocks unauthenticated access to /dashboard, but when the dashboard
-    // is reached via the documented ?auth=login|signup bypass for the
-    // sign-in form, the AuthGate must be the only thing visible.
+    // The downloaded iOS/Android app keeps its account gate. The browser
+    // website is public and sends signed-out visitors straight to the feed.
     fetch(`${API}/auth/me`, { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -981,20 +987,35 @@ export default function DashboardPage() {
             setPhase('feed');
           }
         } else {
-          // No server session — force the AuthGate regardless of saved phase.
-          // This closes a content-leak window where a stale localStorage
-          // 'caxton_phase=feed' could briefly render feed components for a
-          // signed-out visitor who reached /dashboard?auth=login.
           setUser(null);
-          setPhase('auth');
-          try { localStorage.removeItem('caxton_phase'); } catch {}
+          const savedPubForGuest = (() => {
+            try { return localStorage.getItem('caxton_pub'); } catch { return null; }
+          })();
+          setPhase(
+            isNative()
+              ? 'auth'
+              : isPubKey(savedPubForGuest)
+                ? 'feed'
+                : 'select',
+          );
+          if (isNative()) {
+            try { localStorage.removeItem('caxton_phase'); } catch {}
+          }
         }
       })
       .catch(() => {
-        // Treat /api/auth/me network failures as logged-out for safety.
         if (cancelled) return;
         setUser(null);
-        setPhase('auth');
+        const savedPubForGuest = (() => {
+          try { return localStorage.getItem('caxton_pub'); } catch { return null; }
+        })();
+        setPhase(
+          isNative()
+            ? 'auth'
+            : isPubKey(savedPubForGuest)
+              ? 'feed'
+              : 'select',
+        );
       });
 
     setHydrated(true);
@@ -1149,7 +1170,7 @@ export default function DashboardPage() {
   }, [phase]);
 
   if (phase === 'splash') return <SplashScreen onDone={() => { trackEvent('splash_dismissed'); setPhase('select'); }} />;
-  if (phase === 'select') return <PubSelector onSelect={(id) => { trackEvent('pub_selected', { pub: id }); setPub(id); setPhase('auth'); }} />;
+  if (phase === 'select') return <PubSelector onSelect={(id) => { trackEvent('pub_selected', { pub: id }); setPub(id); setPhase(isNative() ? 'auth' : 'feed'); }} />;
   if (phase === 'auth') return <AuthGate pub={pub} onAuth={(u) => { setUser(u); identifyUser(u?.id || null, { email: u?.email }); trackEvent('auth_completed', { is_guest: !!u?.guest, pub }); setPhase('feed'); }} />;
 
   

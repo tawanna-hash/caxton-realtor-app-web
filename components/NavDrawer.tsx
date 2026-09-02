@@ -109,18 +109,17 @@ const DRAWER_SECTIONS: NavSection[] = [
   },
   {
     title: 'Platinum Tools',
-    authOnly: true,
     items: [
-      { label: 'Testimonials HUB', href: '/testimonial-hub', authOnly: true },
-      { label: 'Custom Designer', href: '/custom-designer', authOnly: true },
-      { label: 'REALTOR® Calculators & Quick References', href: '/resources', authOnly: true },
-      { label: 'REALTOR® Downloadable Guides', href: '/resources/guides', authOnly: true },
+      { label: 'Testimonials HUB', href: '/testimonial-hub' },
+      { label: 'Custom Designer', href: '/custom-designer' },
+      { label: 'REALTOR® Calculators & Quick References', href: '/resources' },
+      { label: 'REALTOR® Downloadable Guides', href: '/resources/guides' },
     ],
   },
   {
     title: 'About',
     items: [
-      { label: 'My Feed', href: '/dashboard', authOnly: true },
+      { label: 'My Feed', href: '/dashboard' },
       { label: 'About Us', href: '/about' },
       {
         label: 'Advertise',
