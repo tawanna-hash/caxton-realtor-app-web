@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import Image from 'next/image';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ImagePlus, Loader2, UploadCloud, X } from 'lucide-react';
 import { adminApi } from '@/lib/admin-api';
 import { PUBLICATIONS, type PublicationId } from '@/lib/publications';
 
@@ -118,9 +120,52 @@ export function EventForm({
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [hp, setHp] = useState('');
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadingFlyer, setUploadingFlyer] = useState(false);
+  const flyerInputRef = useRef<HTMLInputElement>(null);
 
   const update = <K extends keyof EventFormData>(key: K, value: EventFormData[K]) => {
     setData((d) => ({ ...d, [key]: value }));
+  };
+
+  const uploadFlyer = async (file: File | undefined) => {
+    if (!file) return;
+    setError(null);
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Flyer must be a JPG, PNG, or WebP image');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Flyer image must be 10 MB or smaller');
+      return;
+    }
+
+    setUploadingFlyer(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch('/api/events/upload-flyer', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+      if (!response.ok || !result.url) {
+        throw new Error(result.error ?? `Upload failed (${response.status})`);
+      }
+      setData((current) => ({
+        ...current,
+        imageUrl: result.url ?? '',
+        imageThumb: result.url ?? '',
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Flyer upload failed');
+    } finally {
+      setUploadingFlyer(false);
+      if (flyerInputRef.current) flyerInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -440,6 +485,103 @@ export function EventForm({
       {/* Media + tags */}
       <div className={sectionClass}>
         <div className={sectionTitleClass}>Media & Tags</div>
+        {mode === 'public' && (
+          <div className="mb-5">
+            <label className={labelClass}>Event Flyer or Image</label>
+            {data.imageUrl ? (
+              <div className="overflow-hidden rounded-md border border-gray-200 bg-gray-50">
+                <div className="relative aspect-[16/9] w-full max-w-xl bg-gray-100">
+                  <Image
+                    src={data.imageUrl}
+                    alt="Uploaded event flyer preview"
+                    fill
+                    unoptimized
+                    className="object-contain"
+                  />
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <ImagePlus size={16} />
+                    Flyer uploaded
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => flyerInputRef.current?.click()}
+                      className="text-sm font-medium text-brand-700 hover:text-brand-800"
+                    >
+                      Replace
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        update('imageUrl', '');
+                        update('imageThumb', '');
+                      }}
+                      className="inline-flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700"
+                    >
+                      <X size={15} />
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => !uploadingFlyer && flyerInputRef.current?.click()}
+                onKeyDown={(event) => {
+                  if ((event.key === 'Enter' || event.key === ' ') && !uploadingFlyer) {
+                    event.preventDefault();
+                    flyerInputRef.current?.click();
+                  }
+                }}
+                onDragEnter={(event) => {
+                  event.preventDefault();
+                  setDragActive(true);
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDragActive(true);
+                }}
+                onDragLeave={(event) => {
+                  event.preventDefault();
+                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                    setDragActive(false);
+                  }
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDragActive(false);
+                  void uploadFlyer(event.dataTransfer.files[0]);
+                }}
+                className={`flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-8 text-center transition-colors ${
+                  dragActive
+                    ? 'border-brand-700 bg-brand-50'
+                    : 'border-gray-300 bg-gray-50 hover:border-brand-700 hover:bg-brand-50/50'
+                }`}
+              >
+                {uploadingFlyer ? (
+                  <Loader2 className="mb-3 animate-spin text-brand-700" size={28} />
+                ) : (
+                  <UploadCloud className="mb-3 text-brand-700" size={30} />
+                )}
+                <p className="text-sm font-medium text-gray-900">
+                  {uploadingFlyer ? 'Uploading flyer...' : 'Drop your flyer here or click to browse'}
+                </p>
+                <p className="mt-1 text-xs text-gray-500">JPG, PNG, or WebP up to 10 MB</p>
+              </div>
+            )}
+            <input
+              ref={flyerInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(event) => void uploadFlyer(event.target.files?.[0])}
+            />
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Image URL</label>
