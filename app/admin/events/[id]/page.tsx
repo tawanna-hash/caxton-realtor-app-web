@@ -75,6 +75,7 @@ export default function EditEventPage() {
   const [event, setEvent] = useState<AdminEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [approving, setApproving] = useState(false);
 
   useEffect(() => {
     if (!admin || !Number.isFinite(id)) return;
@@ -110,6 +111,20 @@ export default function EditEventPage() {
   }
 
   const isManual = event.externalSource === 'manual';
+  const isPendingSubmission = event.externalSource === 'submission' && event.hidden;
+
+  const approveAndPublish = async () => {
+    setApproving(true);
+    setError(null);
+    try {
+      await adminApi.approvePendingEvent(event.id);
+      setEvent((current) => current ? { ...current, hidden: false } : current);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Approval failed');
+    } finally {
+      setApproving(false);
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
@@ -132,6 +147,34 @@ export default function EditEventPage() {
           <p className="text-xs text-gray-500 mt-2">
             Last edited {new Date(event.editedAt).toLocaleString()}{event.editedBy ? ` by ${event.editedBy}` : ''}.
           </p>
+        )}
+        {isPendingSubmission && (
+          <div className="mt-4 flex flex-col gap-3 rounded-md border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-amber-950">Pending public submission</p>
+              <p className="mt-1 text-xs text-amber-800">
+                Review the details below, then approve to publish this event to the Calendar.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={approveAndPublish}
+              disabled={approving}
+              className="shrink-0 rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-800 disabled:opacity-50"
+            >
+              {approving ? 'Publishing...' : 'Approve and Publish'}
+            </button>
+          </div>
+        )}
+        {!event.hidden && event.externalSource === 'submission' && (
+          <div className="mt-4 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800">
+            Approved and published to the Calendar.
+          </div>
+        )}
+        {error && (
+          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
         )}
       </div>
       <EventForm initial={eventToForm(event)} mode="edit" />

@@ -291,20 +291,39 @@ export async function createSubmittedEvent(input: {
   link: string | null;
   imageUrl: string | null;
   organizer: string;
-  advertiserId: number;
+  organizerEmail?: string | null;
+  tags?: string | null;
+  format?: string | null;
+  courseNumber?: string | null;
+  memberPrice?: string | null;
+  nonmemberPrice?: string | null;
+  imageThumb?: string | null;
+  instructorName?: string | null;
+  instructorBio?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  advertiserId: number | null;
 }): Promise<AdminCalendarEvent> {
   const externalId = crypto.randomUUID();
-  const coords = await geocodeEventLocation(input.location);
+  const suppliedCoords =
+    typeof input.lat === 'number' && typeof input.lng === 'number'
+      ? { lat: input.lat, lng: input.lng }
+      : null;
+  const coords = suppliedCoords ?? await geocodeEventLocation(input.location);
   const rows = await query<EventRow>(
     `INSERT INTO events (
        external_source, external_id, publication, title, description, link,
-       start_date, end_date, location, organizer, website, image_url,
+       start_date, end_date, location, organizer, organizer_email, website,
+       tags, format, course_number, member_price, nonmember_price,
+       image_url, image_thumb, instructor_name, instructor_bio,
        submitted_by_advertiser_id, lat, lng, hidden,
        last_synced_at, updated_at
      ) VALUES (
        'submission', $1, $2, $3, $4, $5,
        $6, $7, $8, $9, $10, $11,
-       $12, $13, $14, true,
+       $12, $13, $14, $15, $16,
+       $17, $18, $19, $20,
+       $21, $22, $23, true,
        NOW(), NOW()
      )
      RETURNING ${SELECT_COLS}`,
@@ -318,8 +337,17 @@ export async function createSubmittedEvent(input: {
       input.endDate,
       input.location,
       input.organizer,
+      input.organizerEmail ?? null,
       input.website,
+      input.tags ?? null,
+      input.format ?? null,
+      input.courseNumber ?? null,
+      input.memberPrice ?? null,
+      input.nonmemberPrice ?? null,
       input.imageUrl,
+      input.imageThumb ?? null,
+      input.instructorName ?? null,
+      input.instructorBio ?? null,
       input.advertiserId,
       coords?.lat ?? null,
       coords?.lng ?? null,

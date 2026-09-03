@@ -110,12 +110,14 @@ export function EventForm({
   mode,
 }: {
   initial: EventFormData;
-  mode: 'create' | 'edit';
+  mode: 'create' | 'edit' | 'public';
 }) {
   const router = useRouter();
   const [data, setData] = useState<EventFormData>(initial);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [hp, setHp] = useState('');
 
   const update = <K extends keyof EventFormData>(key: K, value: EventFormData[K]) => {
     setData((d) => ({ ...d, [key]: value }));
@@ -129,12 +131,33 @@ export function EventForm({
       setError('Title is required');
       return;
     }
+    if (mode === 'public' && !data.startDate) {
+      setError('Start date and time are required');
+      return;
+    }
+    if (mode === 'public' && (!data.organizer.trim() || !data.organizerEmail.trim())) {
+      setError('Organizer name and email are required');
+      return;
+    }
 
     const payload = fieldsToPayload(data);
 
     setSubmitting(true);
     try {
-      if (mode === 'create') {
+      if (mode === 'public') {
+        const response = await fetch('/api/events/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...payload, hp }),
+        });
+        const result = (await response.json().catch(() => ({}))) as { error?: string };
+        if (!response.ok) {
+          throw new Error(result.error ?? `Submission failed (${response.status})`);
+        }
+        setSubmitted(true);
+        setSubmitting(false);
+        return;
+      } else if (mode === 'create') {
         await adminApi.createEvent(payload);
       } else if (data.id) {
         await adminApi.updateEvent(data.id, payload);
@@ -152,6 +175,41 @@ export function EventForm({
   const labelClass = 'block text-xs font-medium text-gray-700 mb-1';
   const sectionClass = 'bg-white border border-gray-200 rounded-md p-6';
   const sectionTitleClass = 'text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide';
+
+  if (submitted) {
+    return (
+      <div className="max-w-4xl rounded-md border border-emerald-200 bg-white p-8">
+        <p className="text-xs font-medium uppercase tracking-[0.2em] text-emerald-700">
+          Submitted for review
+        </p>
+        <h2 className="mt-2 text-2xl font-semibold text-gray-900">Thank you for sharing your event</h2>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-600">
+          The Realty News Now team has been notified. Your event will appear on the
+          Calendar after an administrator reviews and approves it.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setData(initial);
+              setHp('');
+              setSubmitted(false);
+            }}
+            className="rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-800"
+          >
+            Submit another event
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push('/calendar')}
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Return to Calendar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
@@ -226,8 +284,11 @@ export function EventForm({
         <div className={sectionTitleClass}>When</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Start</label>
+            <label className={labelClass}>
+              Start {mode === 'public' && <span className="text-red-500">*</span>}
+            </label>
             <input
+              required={mode === 'public'}
               type="datetime-local"
               value={data.startDate}
               onChange={(e) => update('startDate', e.target.value)}
@@ -287,8 +348,11 @@ export function EventForm({
         <div className={sectionTitleClass}>Who</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Organizer</label>
+            <label className={labelClass}>
+              Organizer {mode === 'public' && <span className="text-red-500">*</span>}
+            </label>
             <input
+              required={mode === 'public'}
               type="text"
               value={data.organizer}
               onChange={(e) => update('organizer', e.target.value)}
@@ -296,8 +360,11 @@ export function EventForm({
             />
           </div>
           <div>
-            <label className={labelClass}>Organizer Email</label>
+            <label className={labelClass}>
+              Organizer Email {mode === 'public' && <span className="text-red-500">*</span>}
+            </label>
             <input
+              required={mode === 'public'}
               type="email"
               value={data.organizerEmail}
               onChange={(e) => update('organizerEmail', e.target.value)}
@@ -407,11 +474,26 @@ export function EventForm({
         </div>
       </div>
 
+      {mode === 'public' && (
+        <div aria-hidden="true" className="absolute left-[-10000px] h-0 overflow-hidden">
+          <label>
+            Company website
+            <input
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={hp}
+              onChange={(event) => setHp(event.target.value)}
+            />
+          </label>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex items-center justify-between gap-4 pt-2">
         <button
           type="button"
-          onClick={() => router.push('/admin/events')}
+          onClick={() => router.push(mode === 'public' ? '/calendar' : '/admin/events')}
           className="text-sm text-gray-600 hover:text-gray-900"
         >
           Cancel
@@ -421,7 +503,13 @@ export function EventForm({
           disabled={submitting}
           className="px-4 py-2 bg-brand-700 text-white text-sm font-medium rounded-md hover:bg-brand-700 transition-colors disabled:opacity-50 whitespace-nowrap"
         >
-          {submitting ? 'Saving...' : mode === 'create' ? 'Create Event' : 'Save Changes'}
+          {submitting
+            ? mode === 'public' ? 'Submitting...' : 'Saving...'
+            : mode === 'public'
+              ? 'Submit Event for Approval'
+              : mode === 'create'
+                ? 'Create Event'
+                : 'Save Changes'}
         </button>
       </div>
     </form>

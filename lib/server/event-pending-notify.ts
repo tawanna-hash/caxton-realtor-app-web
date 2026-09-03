@@ -20,8 +20,9 @@ interface Args {
   eventId: number;
   title: string;
   organizer: string | null;
-  source: 'submission' | 'facebook-llm' | 'facebook-graph';
+  source: 'submission' | 'public-submission' | 'facebook-llm' | 'facebook-graph';
   startDate: string | null;
+  recipients?: string[];
 }
 
 function originForLink(): string {
@@ -61,17 +62,22 @@ export async function notifyAdminsPendingEvent({
   organizer,
   source,
   startDate,
+  recipients,
 }: Args): Promise<void> {
-  const to = pickAdminAddress();
-  const reviewUrl = `${originForLink()}/admin/events/pending`;
+  const to = recipients?.length ? recipients : pickAdminAddress();
+  const reviewUrl = `${originForLink()}/admin/events/${eventId}`;
   const sourceLabel =
-    source === 'submission'
+    source === 'public-submission'
+      ? 'a public Calendar submission'
+      : source === 'submission'
       ? 'an advertiser self-submission'
       : source === 'facebook-graph'
         ? 'a native Facebook Page event (Graph API)'
         : 'Gemini auto-detection from the RealtyLine Facebook Page';
   const sourceDisplay =
-    source === 'submission'
+    source === 'public-submission'
+      ? 'Public Calendar form'
+      : source === 'submission'
       ? 'Advertiser submission'
       : source === 'facebook-graph'
         ? 'Facebook Page (Graph API)'
@@ -115,5 +121,4 @@ export async function notifyAdminsPendingEvent({
     console.warn('[notifyAdminsPendingEvent]', result.error);
   }
 }
-
 
