@@ -5,6 +5,7 @@
 // builder_inventory (see builder_page_visibility join in lib/builder-inventory).
 
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { ensureSchema, getSql } from '@/lib/db';
 import { requireAdmin } from '@/lib/server/auth/admin';
@@ -99,6 +100,7 @@ export const GET = withAdminTracking(async () => {
 
 export const PATCH = withAdminTracking(async (req: Request) => {
   await requireAdmin();
+  await ensureSchema();
   await ensureBuilderInventorySchema();
   const sql = getSql();
 
@@ -113,6 +115,19 @@ export const PATCH = withAdminTracking(async (req: Request) => {
     ON CONFLICT (builder_name)
     DO UPDATE SET public_enabled = EXCLUDED.public_enabled, updated_at = NOW()
   `;
+
+  const partners = (await sql`
+    SELECT slug
+    FROM advertisers
+    WHERE LOWER(TRIM(name)) = LOWER(TRIM(${builderName}))
+  `) as { slug: string }[];
+  revalidatePath('/advertisers');
+  revalidatePath('/partners');
+  for (const partner of partners) {
+    revalidatePath(`/advertisers/${partner.slug}`);
+    revalidatePath(`/partners/${partner.slug}`);
+    revalidatePath(`/r/advertiser/${partner.slug}`);
+  }
 
   return NextResponse.json({ builderName, publicEnabled });
 });

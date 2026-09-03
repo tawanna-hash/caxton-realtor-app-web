@@ -71,14 +71,14 @@ export default function AdminBuilderPagesPage() {
     }
   }, []);
 
-  const handleDelete = useCallback(async (builderName: string) => {
-    if (!confirm(`Delete all rows for "${builderName}"?\nThis removes all inventory and community rows. This cannot be undone.`)) {
+  const handleDelete = useCallback(async (builder: BuilderVisibility) => {
+    if (!confirm(`Delete all rows for "${builder.builder_name}"?\nThis removes all inventory and community rows. This cannot be undone.`)) {
       return;
     }
-    setDeleting(builderName);
+    setDeleting(builder.builder_name);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/inventory/builders?builderName=${encodeURIComponent(builderName)}`, {
+      const res = await fetch(`/api/admin/inventory/builders?builderName=${encodeURIComponent(builder.builder_name)}`, {
         method: 'DELETE',
       });
       if (!res.ok) {
@@ -86,7 +86,17 @@ export default function AdminBuilderPagesPage() {
         throw new Error(`Failed to delete (${res.status}) ${txt}`);
       }
       setBuilders((prev) =>
-        (prev ?? []).filter((b) => b.builder_name !== builderName),
+        (prev ?? []).flatMap((b) => {
+          if (b.builder_name !== builder.builder_name) return [b];
+          if (!b.is_advertising_partner) return [];
+          return [{
+            ...b,
+            developer_name: null,
+            total_count: 0,
+            active_count: 0,
+            is_developer: false,
+          }];
+        }),
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to delete');
@@ -137,7 +147,7 @@ export default function AdminBuilderPagesPage() {
     return (
       <button
         type="button"
-        onClick={() => handleDelete(b.builder_name)}
+        onClick={() => handleDelete(b)}
         disabled={isDeleting}
         className="text-red-600 hover:text-red-700 disabled:opacity-40 transition-colors"
         title={`Delete ${b.builder_name}`}
