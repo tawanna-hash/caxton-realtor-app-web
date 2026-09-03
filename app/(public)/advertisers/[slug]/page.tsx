@@ -12,7 +12,7 @@ import { notFound } from 'next/navigation';
 import { ensureSchema, getSql } from '@/lib/db';
 import { ensurePublicationColumn, getPublicationTheme } from '@/lib/publication-theme';
 import type { Advertiser, AdvertiserLocation, AdvertiserStaff } from '@/lib/advertisers';
-import { listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
+import { ensureBuilderInventorySchema, listBuilderInventory, type BuilderInventoryRow } from '@/lib/builder-inventory';
 import { listEventPhotosByAdvertiser, type EventPhotoMonth } from '@/lib/event-photos';
 import { listFeatureArticlesByAdvertiser, type FeatureArticle } from '@/lib/feature-articles';
 import { getNews, type NewsArticle } from '@/lib/server/wp-news';
@@ -32,10 +32,16 @@ export const revalidate = 600;
 export async function generateStaticParams() {
   try {
     await ensureSchema();
+    await ensureBuilderInventorySchema();
     const sql = getSql();
     const rows = (await sql`
       SELECT slug FROM advertisers
       WHERE COALESCE(status, 'advertiser') IN ('advertiser', 'active')
+        AND NOT EXISTS (
+          SELECT 1 FROM builder_page_visibility v
+          WHERE LOWER(TRIM(v.builder_name)) = LOWER(TRIM(advertisers.name))
+            AND v.public_enabled = false
+        )
     `) as unknown as Array<{ slug: string }>;
     return rows.map((r) => ({ slug: r.slug }));
   } catch {
@@ -53,11 +59,17 @@ type PageProps = {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   await ensureSchema();
+  await ensureBuilderInventorySchema();
   const sql = getSql();
   const rows = (await sql`
     SELECT name, tagline FROM advertisers
     WHERE slug = ${slug}
       AND COALESCE(status, 'advertiser') IN ('advertiser', 'active')
+      AND NOT EXISTS (
+        SELECT 1 FROM builder_page_visibility v
+        WHERE LOWER(TRIM(v.builder_name)) = LOWER(TRIM(advertisers.name))
+          AND v.public_enabled = false
+      )
     LIMIT 1
   `) as unknown as Array<{ name: string; tagline: string | null }>;
   if (rows.length === 0) return { title: 'Partner not found' };
@@ -83,6 +95,7 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
   const { slug } = await params;
 
   await ensureSchema();
+  await ensureBuilderInventorySchema();
   await ensurePublicationColumn();
   const sql = getSql();
 
@@ -92,6 +105,11 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
     SELECT * FROM advertisers
     WHERE slug = ${slug}
       AND COALESCE(status, 'advertiser') IN ('advertiser', 'active')
+      AND NOT EXISTS (
+        SELECT 1 FROM builder_page_visibility v
+        WHERE LOWER(TRIM(v.builder_name)) = LOWER(TRIM(advertisers.name))
+          AND v.public_enabled = false
+      )
     LIMIT 1
   `) as unknown as Advertiser[];
   if (rows.length === 0) notFound();

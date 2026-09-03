@@ -11,6 +11,7 @@ import { grantCookieName, isCookieGrantValid } from '@/lib/advertiser-grants';
 import { ensurePublicationColumn, getPublicationTheme } from '@/lib/publication-theme';
 import type { Advertiser } from '@/lib/advertisers';
 import PublicReportClient from './PublicReportClient';
+import { ensureBuilderInventorySchema } from '@/lib/builder-inventory';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -30,6 +31,7 @@ export default async function PublicAdvertiserPage({ params, searchParams }: Pag
   const { t } = await searchParams;
 
   await ensureSchema();
+  await ensureBuilderInventorySchema();
   await ensurePublicationColumn();
   const sql = getSql();
 
@@ -40,6 +42,11 @@ export default async function PublicAdvertiserPage({ params, searchParams }: Pag
     SELECT * FROM advertisers
     WHERE slug = ${slug}
       AND COALESCE(status, 'advertiser') IN ('advertiser', 'active')
+      AND NOT EXISTS (
+        SELECT 1 FROM builder_page_visibility v
+        WHERE LOWER(TRIM(v.builder_name)) = LOWER(TRIM(advertisers.name))
+          AND v.public_enabled = false
+      )
   `) as unknown as Advertiser[];
   if (rows.length === 0) notFound();
   const advertiser = rows[0];

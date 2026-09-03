@@ -18,6 +18,7 @@ import { ensurePublicationColumn, getPublicationTheme } from '@/lib/publication-
 import PageTitle from '@/components/ui/PageTitle';
 import { AdSlot } from '@/components/ads/AdSlot';
 import AdvertisersDirectoryClient from './AdvertisersDirectoryClient';
+import { ensureBuilderInventorySchema } from '@/lib/builder-inventory';
 
 export const metadata = {
   title: 'Partners \u2014 Realty News Now',
@@ -39,6 +40,7 @@ type AdvertiserRow = {
 
 export default async function AdvertisersDirectoryPage() {
   await ensureSchema();
+  await ensureBuilderInventorySchema();
   await ensurePublicationColumn();
   const sql = getSql();
 
@@ -49,6 +51,12 @@ export default async function AdvertisersDirectoryPage() {
     SELECT id, name, slug, website, publication, industry, tagline
     FROM advertisers
     WHERE COALESCE(status, 'advertiser') IN ('advertiser', 'active')
+      AND NOT EXISTS (
+        SELECT 1
+        FROM builder_page_visibility v
+        WHERE LOWER(TRIM(v.builder_name)) = LOWER(TRIM(advertisers.name))
+          AND v.public_enabled = false
+      )
     ORDER BY name ASC
   `) as unknown as AdvertiserRow[];
 
