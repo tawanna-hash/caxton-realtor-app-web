@@ -35,6 +35,14 @@ export default function MarketOnboardingPicker() {
     // The shareable product tour must open cleanly for prospects and partners.
     // It demonstrates all markets and does not need a persisted publication.
     if (window.location.pathname === '/product-tour') return;
+    // Dashboard owns its sign-in and publication flow. Showing this global
+    // picker there created two stacked market-selection screens and hid the
+    // account actions underneath.
+    if (
+      window.location.pathname === '/dashboard' ||
+      window.location.pathname === '/login' ||
+      window.location.pathname.startsWith('/auth/')
+    ) return;
     // Skip the onboarding picker when opened for printing (?print=1).
     // The in-app Safari (SFSafariViewController) doesn't share localStorage
     // with the native app, so the picker would intercept the page load.

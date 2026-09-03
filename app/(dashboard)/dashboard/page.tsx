@@ -403,10 +403,20 @@ function PubSelector({ onSelect }: { onSelect: (id: string) => void }) {
   );
 }
 
-function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void }) {
+function AuthGate({
+  pub,
+  onAuth,
+  onNeedMarket,
+  initialMode = 'login',
+}: {
+  pub: string;
+  onAuth: (user: any) => void;
+  onNeedMarket: () => void;
+  initialMode?: 'login' | 'signup';
+}) {
   // Honor /auth/sign-in and /auth/sign-up aliases via ?auth=login|signup so
   // visitors land directly on the right form instead of the 'choice' screen.
-  const [mode, setMode] = useState<'choice' | 'signup' | 'login' | 'sent'>('choice');
+  const [mode, setMode] = useState<'choice' | 'signup' | 'login' | 'sent'>(initialMode);
   const [step, setStep] = useState(1);
   const [licenseType, setLicenseType] = useState('TREC #');
   const [licenseNum, setLicenseNum] = useState('');
@@ -727,7 +737,7 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
                 </select>
 
                 <button onClick={() => { void haptics.light(); setStep(2); }} disabled={!fullName} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mt-4 disabled:opacity-40" style={{ backgroundColor: info.color }}>Continue</button>
-                <button onClick={() => setMode('choice')} className="w-full text-center py-2 text-base text-gray-400 font-light mt-2">Back</button>
+                <button onClick={() => setMode('login')} className="w-full text-center py-2 text-base text-gray-400 font-light mt-2">Back to sign in</button>
               </div>
             )}
 
@@ -858,33 +868,122 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
   if (mode === 'login') {
     return (
       <div
-        className="fixed inset-0 bg-white z-50 overflow-y-auto"
+        className="fixed inset-0 z-50 overflow-y-auto bg-[#f7f5fa]"
         style={{
           ...SW,
-          paddingTop: 'calc(env(safe-area-inset-top) + 24px)',
+          paddingTop: 'calc(env(safe-area-inset-top) + 32px)',
           paddingBottom:
-            'calc(env(safe-area-inset-bottom) + var(--kb-inset-bottom, 0px) + 40px)',
+            'calc(env(safe-area-inset-bottom) + var(--kb-inset-bottom, 0px) + 32px)',
         }}
       >
         <div className="min-h-full flex flex-col items-center justify-center">
-        <div className="w-full max-w-md px-8">
-          <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
-          <h2 className="text-2xl text-gray-900 font-semibold text-center mb-6">Welcome Back</h2>
-          {error && <p className="text-base text-red-500 text-center mb-4 font-light">{error}</p>}
-          <input type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} className={ic} autoComplete="username" />
-          <div className="relative mb-3">
-            <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className={ic + ' pr-16'} autoComplete="current-password" onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordLogin(); }} />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-xs uppercase tracking-wider text-gray-400">{showPassword ? 'Hide' : 'Show'}</button>
+          <div className="w-full max-w-md px-5">
+            <div className="rounded-2xl border border-[#e5dfec] bg-white px-6 py-8 shadow-[0_18px_55px_rgba(48,29,93,0.10)] sm:px-8">
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#301D5D] text-sm font-bold tracking-wide text-white">
+                RNN
+              </div>
+              <p className="mb-2 text-center text-xs font-semibold uppercase tracking-[0.24em]" style={{ color: info.color }}>
+                Realty News Now
+              </p>
+              <h1 className="text-center text-3xl font-semibold tracking-tight text-gray-900">
+                Welcome back
+              </h1>
+              <p className="mb-7 mt-2 text-center text-sm font-light leading-relaxed text-gray-500">
+                Sign in for your saved profile, preferences, and subscriptions.
+              </p>
+
+              {error && (
+                <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
+              <label className="mb-1.5 block text-sm font-medium text-gray-700" htmlFor="dashboard-login-email">
+                Email address
+              </label>
+              <input
+                id="dashboard-login-email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-3.5 text-base text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/10"
+                autoComplete="username"
+              />
+
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700" htmlFor="dashboard-login-password">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') window.location.href = '/auth/forgot-password';
+                  }}
+                  className="text-xs font-medium text-[#301D5D] hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div className="relative mb-4">
+                <input
+                  id="dashboard-login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3.5 pr-16 text-base text-gray-900 outline-none transition focus:border-[#301D5D] focus:ring-2 focus:ring-[#301D5D]/10"
+                  autoComplete="current-password"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void handlePasswordLogin();
+                  }}
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-4 text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  void haptics.medium();
+                  void handlePasswordLogin();
+                }}
+                disabled={loading || !email || !password}
+                className="mb-3 w-full rounded-lg bg-[#301D5D] py-3.5 text-base font-semibold text-white transition hover:bg-[#241646] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {loading ? 'Signing in…' : 'Sign in'}
+              </button>
+
+              <button
+                onClick={() => {
+                  if (isPubKey(pub)) setMode('signup');
+                  else onNeedMarket();
+                }}
+                className="w-full rounded-lg border border-[#301D5D] py-3.5 text-base font-semibold text-[#301D5D] transition hover:bg-[#f7f5fa]"
+              >
+                Create an account
+              </button>
+
+              <div className="my-5 flex items-center" aria-hidden="true">
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="px-3 text-xs uppercase tracking-[0.18em] text-gray-400">or</span>
+                <div className="h-px flex-1 bg-gray-200" />
+              </div>
+
+              <button
+                onClick={() => {
+                  void haptics.light();
+                  onAuth({ guest: true });
+                }}
+                className="w-full py-2 text-center text-sm font-semibold text-gray-600 hover:text-[#301D5D]"
+              >
+                Continue as a guest
+              </button>
+              <p className="mt-2 text-center text-xs font-light text-gray-400">
+                No account is required to browse news, events, builders, partners, and resources.
+              </p>
+            </div>
           </div>
-          <button onClick={() => { void haptics.medium(); void handlePasswordLogin(); }} disabled={loading || !email || !password} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3 disabled:opacity-40" style={{ backgroundColor: info.color }}>{loading ? 'Signing in…' : 'Sign In'}</button>
-          <div className="flex items-center my-3" aria-hidden="true">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="px-3 text-xs uppercase tracking-wider text-gray-400">or</span>
-            <div className="flex-1 h-px bg-gray-200" />
-          </div>
-          <button onClick={() => { if (typeof window !== 'undefined') window.location.href = '/auth/forgot-password'; }} className="w-full text-center py-2 text-sm text-gray-500 font-light">Forgot password?</button>
-          <button onClick={() => setMode('choice')} className="w-full text-center py-2 text-base text-gray-400 font-light">Back</button>
-        </div>
         </div>
       </div>
     );
@@ -904,7 +1003,16 @@ function AuthGate({ pub, onAuth }: { pub: string; onAuth: (user: any) => void })
       <div className="w-full max-w-md px-8">
         <p className="text-sm uppercase tracking-[0.2em] font-medium mb-2 text-center" style={{ color: info.color }}>Realty News Now</p>
         <h2 className="text-2xl text-gray-900 font-semibold text-center mb-2">Sign In to Continue</h2>
-        <button onClick={() => setMode('signup')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3" style={{ backgroundColor: info.color }}>Create Your Account</button>
+        <button
+          onClick={() => {
+            if (isPubKey(pub)) setMode('signup');
+            else onNeedMarket();
+          }}
+          className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider text-white mb-3"
+          style={{ backgroundColor: info.color }}
+        >
+          Create Your Account
+        </button>
         <button onClick={() => setMode('login')} className="w-full text-center py-3.5 text-base font-medium uppercase tracking-wider border border-gray-300 text-gray-700 mb-3 rounded-md">I Already Have an Account</button>
         <div className="flex items-center my-4" aria-hidden="true">
           <div className="flex-1 h-px bg-gray-200" />
@@ -935,6 +1043,7 @@ export default function DashboardPage() {
   const [newsRefreshNonce, setNewsRefreshNonce] = useState(0);
   const [pub, setPub] = useState('');
   const [user, setUser] = useState<any>(null);
+  const [authEntry, setAuthEntry] = useState<'login' | 'signup'>('login');
   const [hydrated, setHydrated] = useState(false);
 
   // Rehydrate from localStorage so refresh stays where the user was.
@@ -988,16 +1097,8 @@ export default function DashboardPage() {
           }
         } else {
           setUser(null);
-          const savedPubForGuest = (() => {
-            try { return localStorage.getItem('caxton_pub'); } catch { return null; }
-          })();
-          setPhase(
-            isNative()
-              ? 'auth'
-              : isPubKey(savedPubForGuest)
-                ? 'feed'
-                : 'select',
-          );
+          setAuthEntry('login');
+          setPhase('auth');
           if (isNative()) {
             try { localStorage.removeItem('caxton_phase'); } catch {}
           }
@@ -1006,16 +1107,8 @@ export default function DashboardPage() {
       .catch(() => {
         if (cancelled) return;
         setUser(null);
-        const savedPubForGuest = (() => {
-          try { return localStorage.getItem('caxton_pub'); } catch { return null; }
-        })();
-        setPhase(
-          isNative()
-            ? 'auth'
-            : isPubKey(savedPubForGuest)
-              ? 'feed'
-              : 'select',
-        );
+        setAuthEntry('login');
+        setPhase('auth');
       });
 
     setHydrated(true);
@@ -1169,9 +1262,33 @@ export default function DashboardPage() {
     }
   }, [phase]);
 
-  if (phase === 'splash') return <SplashScreen onDone={() => { trackEvent('splash_dismissed'); setPhase('select'); }} />;
-  if (phase === 'select') return <PubSelector onSelect={(id) => { trackEvent('pub_selected', { pub: id }); setPub(id); setPhase(isNative() ? 'auth' : 'feed'); }} />;
-  if (phase === 'auth') return <AuthGate pub={pub} onAuth={(u) => { setUser(u); identifyUser(u?.id || null, { email: u?.email }); trackEvent('auth_completed', { is_guest: !!u?.guest, pub }); setPhase('feed'); }} />;
+  if (phase === 'splash') return <SplashScreen onDone={() => { trackEvent('splash_dismissed'); setPhase('auth'); }} />;
+  if (phase === 'select') return <PubSelector onSelect={(id) => {
+    trackEvent('pub_selected', { pub: id });
+    setPub(id);
+    setPhase(authEntry === 'signup' ? 'auth' : 'feed');
+  }} />;
+  if (phase === 'auth') return (
+    <AuthGate
+      pub={pub}
+      initialMode={authEntry}
+      onNeedMarket={() => {
+        setAuthEntry('signup');
+        setPhase('select');
+      }}
+      onAuth={(u) => {
+        setUser(u);
+        identifyUser(u?.id || null, { email: u?.email });
+        trackEvent('auth_completed', { is_guest: !!u?.guest, pub });
+        if (isPubKey(pub)) {
+          setPhase('feed');
+        } else {
+          setAuthEntry('login');
+          setPhase('select');
+        }
+      }}
+    />
+  );
 
   
   // caxton-article-reader-b1-phase
