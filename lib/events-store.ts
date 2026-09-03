@@ -16,6 +16,7 @@ export type EventSource =
   | 'sabuilders'
   | 'tmbsa'
   | 'nahrep'
+  | 'realtyline'
   | 'submission'
   | 'facebook-llm';
 
@@ -253,6 +254,102 @@ export async function upsertEvents(
   }
 
   return { inserted, updated };
+}
+
+/**
+ * Upsert a scraper feed without duplicating an event already supplied by a
+ * different source. A source's own stable external IDs are always updated.
+ * New rows are skipped when their normalized title and Central calendar date
+ * already exist for the same publication.
+ */
+export async function upsertMissingEventsByTitleDate(
+  events: EventInput[],
+): Promise<{ inserted: number; updated: number; skippedExisting: number }> {
+  await ensureSchema();
+  if (events.length === 0) {
+    return { inserted: 0, updated: 0, skippedExisting: 0 };
+  }
+
+  const sql = getSql();
+  const existing = (await sql`
+    SELECT
+      external_source,
+      external_id,
+      publication,
+      title,
+      (start_date AT TIME ZONE 'America/Chicago')::date::text AS event_date
+    FROM events
+    WHERE start_date IS NOT NULL
+      AND start_date >= NOW() - INTERVAL '1 day'
+  `) as unknown as Array<{
+    external_source: string;
+    external_id: string;
+    publication: Publication;
+    title: string;
+    event_date: string;
+  }>;
+
+  const normalizeTitle = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/®/g, '')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+      .replace(/^(abor|hba)\s+/, '');
+
+  const ownIds = new Set(
+    existing.map((row) => `${row.external_source}:${row.external_id}`),
+  );
+  const titlesByPublicationDate = new Map<string, string[]>();
+  for (const row of existing) {
+    const key = `${row.publication}:${row.event_date}`;
+    const titles = titlesByPublicationDate.get(key) || [];
+    titles.push(normalizeTitle(row.title));
+    titlesByPublicationDate.set(key, titles);
+  }
+
+  const toUpsert: EventInput[] = [];
+  let skippedExisting = 0;
+
+  for (const event of events) {
+    const ownKey = `${event.externalSource}:${event.externalId}`;
+    const eventDate = event.startDate?.slice(0, 10);
+    const publicationDateKey = eventDate
+      ? `${event.publication}:${eventDate}`
+      : null;
+    const normalizedTitle = normalizeTitle(event.title);
+
+    if (ownIds.has(ownKey)) {
+      toUpsert.push(event);
+      continue;
+    }
+    if (publicationDateKey) {
+      const sameDayTitles =
+        titlesByPublicationDate.get(publicationDateKey) || [];
+      const duplicate = sameDayTitles.some(
+        (candidate) =>
+          candidate === normalizedTitle ||
+          candidate.includes(normalizedTitle) ||
+          normalizedTitle.includes(candidate),
+      );
+      if (duplicate) {
+        skippedExisting += 1;
+        continue;
+      }
+    }
+
+    toUpsert.push(event);
+    ownIds.add(ownKey);
+    if (publicationDateKey) {
+      const titles =
+        titlesByPublicationDate.get(publicationDateKey) || [];
+      titles.push(normalizedTitle);
+      titlesByPublicationDate.set(publicationDateKey, titles);
+    }
+  }
+
+  const counts = await upsertEvents(toUpsert);
+  return { ...counts, skippedExisting };
 }
 
 /**

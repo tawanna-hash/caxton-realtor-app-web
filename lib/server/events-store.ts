@@ -48,6 +48,7 @@ type EventSource =
   | 'manual'
   | 'fpr'
   | 'hba'
+  | 'realtyline'
   | 'submission'    // Advertiser self-submission via /submit-event/[token]
   | 'facebook-llm'  // Gemini-detected event from RealtyLine FB Page post
   | 'facebook-graph' // Native Facebook Page event pulled via Graph API

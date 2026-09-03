@@ -5,6 +5,7 @@
 
 import { listEvents } from '@/lib/events-store';
 import { isPublicationId } from '@/lib/publications';
+import { ensureRealtyLineCalendarInitialized } from '@/lib/realtyline-calendar-scraper';
 
 // Always serve a fresh DB read; dashboard does its own client-side caching.
 export const dynamic = 'force-dynamic';
@@ -25,6 +26,11 @@ export async function GET(
     );
   }
   try {
+    if (publication === 'austin') {
+      await ensureRealtyLineCalendarInitialized().catch((error) => {
+        console.error('[/api/events] RealtyLine bootstrap failed', error);
+      });
+    }
     const events = await listEvents(publication);
     return Response.json(
       { events },

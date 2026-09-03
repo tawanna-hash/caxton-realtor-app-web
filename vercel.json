@@ -21,6 +21,10 @@
       "schedule": "0 13 * * *"
     },
     {
+      "path": "/api/cron/scrape-realtyline",
+      "schedule": "10 13 * * *"
+    },
+    {
       "path": "/api/cron/scrape-sabor",
       "schedule": "30 13 * * *"
     },
