@@ -172,6 +172,8 @@ export interface DrafterInput {
    */
   start_date?: string;
   end_date?: string;
+  /** e-Blast: preferred send date followed by up to three alternatives. */
+  preferred_send_dates?: string[];
   /** Admin identity for created_by columns + CRM mirror. */
   actor_email: string | null;
   /**
@@ -420,7 +422,7 @@ export async function draftQuote(
       start_date, end_date, ad_size, frequency, ad_rate_cents,
       amount_cents, notes, created_by,
       address, city, state, zip,
-      billing_email, linked_inquiry_id
+      billing_email, linked_inquiry_id, preferred_send_dates
     ) VALUES (
       ${advertiser.id},
       ${advertiser.name},
@@ -443,7 +445,10 @@ export async function draftQuote(
       ${advertiser.state ?? null},
       ${advertiser.zip ?? null},
       ${advertiser.contact_email},
-      ${input.linked_inquiry_id ?? null}
+      ${input.linked_inquiry_id ?? null},
+      ${input.preferred_send_dates && input.preferred_send_dates.length > 0
+        ? JSON.stringify(input.preferred_send_dates.slice(0, 4))
+        : null}::jsonb
     )
     RETURNING *
   `) as unknown as Agreement[];

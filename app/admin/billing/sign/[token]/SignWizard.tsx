@@ -181,7 +181,7 @@ function Shell({
             RealtyLine
           </div>
           <h1 className="text-2xl text-gray-900">
-            Advertising Agreement
+            Advertising Insertion Order
           </h1>
           <p className="text-sm text-gray-500 mt-1">Secure digital signing powered by RealtyLine</p>
         </div>
@@ -438,6 +438,7 @@ type SignWizardLineItem = {
   end_date: string | null;
   pay_now: boolean;
   meta: Record<string, unknown>;
+  preferred_send_dates: string[] | null;
 };
 
 export default function SignWizard({
@@ -515,15 +516,48 @@ export default function SignWizard({
   // its own picker — an app run and an e-Blast send may start on different days.
   const [lineStarts, setLineStarts] = useState<Record<number, string>>(() => {
     const m: Record<number, string> = {};
-    for (const li of editableLineItems) m[li.line_no] = li.start_date ?? '';
+    for (const li of editableLineItems) {
+      m[li.line_no] = li.channel === 'email'
+        ? li.preferred_send_dates?.[0] ?? li.start_date ?? ''
+        : li.start_date ?? '';
+    }
     return m;
+  });
+  const [emailLineAlternates, setEmailLineAlternates] = useState<Record<number, string[]>>(() => {
+    const dates: Record<number, string[]> = {};
+    for (const li of editableLineItems.filter((item) => item.channel === 'email')) {
+      dates[li.line_no] = [
+        li.preferred_send_dates?.[1] ?? '',
+        li.preferred_send_dates?.[2] ?? '',
+        li.preferred_send_dates?.[3] ?? '',
+      ];
+    }
+    return dates;
   });
   const setLineStart = (lineNo: number, v: string) =>
     setLineStarts((prev) => ({ ...prev, [lineNo]: v }));
+  const setEmailLineDate = (lineNo: number, index: number, value: string) => {
+    if (index === 0) {
+      setLineStart(lineNo, value);
+      return;
+    }
+    setEmailLineAlternates((prev) => {
+      const next = [...(prev[lineNo] ?? ['', '', ''])];
+      next[index - 1] = value;
+      return { ...prev, [lineNo]: next };
+    });
+  };
   // Single-line (non-bundle) agreement: one placement start on the agreement row.
   const [placementStart, setPlacementStart] = useState<string>(
-    isSingleLine && isNonPrint ? isoDate(ag.start_date) : '',
+    isSingleLine && isNonPrint
+      ? (channel === 'email' ? ag.preferred_send_dates?.[0] : null) ?? isoDate(ag.start_date)
+      : '',
   );
+  const [singleEmailAlternates, setSingleEmailAlternates] = useState<string[]>([
+    ag.preferred_send_dates?.[1] ?? '',
+    ag.preferred_send_dates?.[2] ?? '',
+    ag.preferred_send_dates?.[3] ?? '',
+  ]);
   // Resolved line items: app/email lines adopt their per-line start; print unchanged.
   const displayLines = lineItems.map((li) => {
     const start = lineStarts[li.line_no];
@@ -535,7 +569,19 @@ export default function SignWizard({
   // Patches sent to the server for app/email bundle lines (Step 3).
   const lineItemDatePatches = displayLines
     .filter((li) => (li.channel === 'app' || li.channel === 'email') && li.start_date && li.end_date)
-    .map((li) => ({ line_no: li.line_no, start_date: li.start_date, end_date: li.end_date }));
+    .map((li) => ({
+      line_no: li.line_no,
+      start_date: li.start_date,
+      end_date: li.end_date,
+      ...(li.channel === 'email'
+        ? {
+            preferred_send_dates: [
+              lineStarts[li.line_no] ?? '',
+              ...(emailLineAlternates[li.line_no] ?? ['', '', '']),
+            ].filter(Boolean),
+          }
+        : {}),
+    }));
   // Single-line agreement resolved window. Restricted to email + app (digital
   // cadence isn't guaranteed to be 4wk/3mo-style, so skip it for now).
   const singleLineEditable = isSingleLine && isNonPrint && (channel === 'email' || channel === 'app');
@@ -548,6 +594,36 @@ export default function SignWizard({
       : null;
   // Whether the advertiser can change placement dates on this Step 3 view.
   const canEditPlacementDate = hasDateEditableLines || singleLineEditable;
+  const missingPreferredEmailDate =
+    lineItems.some((li) => li.channel === 'email' && !lineStarts[li.line_no]) ||
+    (lineItems.length === 0 && channel === 'email' && !placementStart);
+  const emailDateLabels = [
+    'Preferred send date',
+    'Optional send date 1',
+    'Optional send date 2',
+    'Optional send date 3',
+  ];
+  const renderEmailDateFields = (
+    values: string[],
+    onChange: (index: number, value: string) => void,
+    idPrefix: string,
+  ) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      {emailDateLabels.map((label, index) => (
+        <label key={label} htmlFor={`${idPrefix}-${index}`} className="text-xs text-gray-700">
+          {label}{index === 0 && <span className="text-red-500"> *</span>}
+          <input
+            id={`${idPrefix}-${index}`}
+            type="date"
+            value={values[index] ?? ''}
+            onChange={(event) => onChange(index, event.target.value)}
+            required={index === 0}
+            className="mt-1 w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+          />
+        </label>
+      ))}
+    </div>
+  );
 
   // ── Billing ────────────────────────────────────────────────────────────────
   const [billTo, setBillTo] = useState<string>(ag.bill_to ?? 'Partner');
@@ -632,7 +708,17 @@ export default function SignWizard({
               if (d.lineStarts && typeof d.lineStarts === 'object') {
                 setLineStarts(d.lineStarts as Record<number, string>);
               }
+              if (d.emailLineAlternates && typeof d.emailLineAlternates === 'object') {
+                setEmailLineAlternates(d.emailLineAlternates as Record<number, string[]>);
+              }
               applyStr('placementStart', setPlacementStart);
+              if (Array.isArray(d.singleEmailAlternates)) {
+                setSingleEmailAlternates(
+                  (d.singleEmailAlternates as unknown[])
+                    .filter((value): value is string => typeof value === 'string')
+                    .slice(0, 3),
+                );
+              }
               applyStr('billTo', setBillTo);
               applyStr('billingEmail', setBillingEmail);
               applyStr('billingContactName', setBillingContactName);
@@ -663,7 +749,7 @@ export default function SignWizard({
           companyName, repName, advertiserEmail, advertiserPhone, address, city, stateVal, zip,
           adSize, frequency, adRate, discount, adPremium, pagePosition, applyPagePremium,
           timing, markets: [...markets],
-          lineStarts, placementStart,
+          lineStarts, emailLineAlternates, placementStart, singleEmailAlternates,
           billTo, billingEmail, billingContactName, billingContactPhone, paymentType,
           confirmedPaymentIntentId,
         }),
@@ -673,7 +759,7 @@ export default function SignWizard({
     draftReady, DRAFT_KEY,
     step, companyName, repName, advertiserEmail, advertiserPhone, address, city, stateVal, zip,
     adSize, frequency, adRate, discount, adPremium, pagePosition, applyPagePremium,
-    timing, markets, lineStarts, placementStart,
+    timing, markets, lineStarts, emailLineAlternates, placementStart, singleEmailAlternates,
     billTo, billingEmail, billingContactName, billingContactPhone, paymentType,
     confirmedPaymentIntentId,
   ]);
@@ -757,6 +843,9 @@ export default function SignWizard({
       billing_contact_name: billingContactName || null,
       billing_contact_phone: billingContactPhone || null,
       payment_mode: paymentType === 'Credit Card' ? 'card' : paymentType === 'Check' && checkAllowed ? 'check' : null,
+      ...(isSingleLine && channel === 'email'
+        ? { preferred_send_dates: [placementStart, ...singleEmailAlternates].filter(Boolean) }
+        : {}),
       // Advertiser-chosen placement dates for app bundle lines (Step 3).
       ...(lineItemDatePatches.length > 0 ? { line_item_dates: lineItemDatePatches } : {}),
       // Advertiser-chosen placement date for single-line (non-bundle) agreements.
@@ -788,6 +877,10 @@ export default function SignWizard({
   }
 
   async function handleNext() {
+    if (step === 3 && missingPreferredEmailDate) {
+      setError('A preferred e-Blast send date is required. The other three dates are optional.');
+      return;
+    }
     const ok = await saveEdits();
     if (!ok) return;
     // Special case: leaving Step 4 with Credit Card selected → authorize the
@@ -931,7 +1024,12 @@ export default function SignWizard({
     setApproving(true);
     setError(null);
     if (!companyName.trim()) {
-      setError('Company name is required before approving the proposal.');
+      setError('Company name is required before approving the insertion order.');
+      setApproving(false);
+      return;
+    }
+    if (missingPreferredEmailDate) {
+      setError('A preferred e-Blast send date is required. The other three dates are optional.');
       setApproving(false);
       return;
     }
@@ -981,16 +1079,16 @@ export default function SignWizard({
       <div className="min-h-screen bg-white flex flex-col items-center py-8 px-4">
         <div className="w-full max-w-2xl text-center">
           <div className="inline-block px-4 py-1 rounded-md text-white text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ background: ACCENT }}>RealtyLine</div>
-          <h1 className="text-2xl text-gray-900">Proposal received</h1>
-          <p className="text-sm text-gray-500 mt-1">Thank you — your advertising proposal has been approved.</p>
+          <h1 className="text-2xl text-gray-900">Insertion order received</h1>
+          <p className="text-sm text-gray-500 mt-1">Thank you — your advertising insertion order has been approved.</p>
           <div className="bg-white rounded-md border border-gray-200 shadow-sm p-8 mt-6 text-left">
             <p className="text-sm text-gray-700 leading-relaxed">
-              We&apos;ve received your approval for <strong>{ag.company_name || 'your advertising proposal'}</strong>.
-              Your representative will prepare the final advertising agreement and email it to you for signature.
-              Nothing is binding until you sign the final agreement.
+              We&apos;ve received your approval for <strong>{ag.company_name || 'your advertising insertion order'}</strong>.
+              Your representative will prepare the final insertion order and email it to you for signature.
+              The insertion order becomes a binding advertising agreement only after you sign it.
             </p>
             <p className="text-sm text-gray-500 mt-4">
-              Questions? Reply to your proposal email or contact your representative.
+              Questions? Reply to your insertion order email or contact your representative.
             </p>
           </div>
         </div>
@@ -1021,8 +1119,8 @@ export default function SignWizard({
         <div className="w-full max-w-2xl">
           <div className="text-center mb-6">
             <div className="inline-block px-4 py-1 rounded-md text-white text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ background: ACCENT }}>RealtyLine</div>
-            <h1 className="text-2xl text-gray-900">Advertising Proposal</h1>
-            <p className="text-sm text-gray-500 mt-1">Proposal — not yet an agreement. Adjust your insertion order and approve to continue.</p>
+            <h1 className="text-2xl text-gray-900">Advertising Insertion Order</h1>
+            <p className="text-sm text-gray-500 mt-1">This is not yet an agreement. Review the insertion order and approve it to continue.</p>
           </div>
           <div className="bg-white rounded-md border border-gray-200 shadow-sm p-8 space-y-5">
             {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
@@ -1112,7 +1210,37 @@ export default function SignWizard({
             ) : (
               <>
                 <h2 className="text-lg text-gray-900">Your quoted placement</h2>
-                <p className="text-sm text-gray-600">The details below were prepared by your sales rep. Approve to convert this proposal into your advertising agreement.</p>
+                <p className="text-sm text-gray-600">The details below were prepared by your sales rep. Review and approve this insertion order before the final signature step.</p>
+                {lineItems.filter((item) => item.channel === 'email').map((item) => (
+                  <div key={`email-dates-${item.line_no}`} className="rounded-md border border-purple-200 bg-purple-50/40 p-4">
+                    <div className="text-sm font-medium text-gray-900 mb-2">{item.package_label} send dates</div>
+                    {renderEmailDateFields(
+                      [
+                        lineStarts[item.line_no] ?? '',
+                        ...(emailLineAlternates[item.line_no] ?? ['', '', '']),
+                      ],
+                      (index, value) => setEmailLineDate(item.line_no, index, value),
+                      `proposal-email-${item.line_no}`,
+                    )}
+                  </div>
+                ))}
+                {lineItems.length === 0 && channel === 'email' && (
+                  <div className="rounded-md border border-purple-200 bg-purple-50/40 p-4">
+                    <div className="text-sm font-medium text-gray-900 mb-2">e-Blast send dates</div>
+                    {renderEmailDateFields(
+                      [placementStart, ...singleEmailAlternates],
+                      (index, value) => {
+                        if (index === 0) setPlacementStart(value);
+                        else setSingleEmailAlternates((current) => {
+                          const next = [...current];
+                          next[index - 1] = value;
+                          return next;
+                        });
+                      },
+                      'proposal-email-single',
+                    )}
+                  </div>
+                )}
                 {lineItems.length > 0 ? (
                   <ul className="space-y-2">
                     {displayLines.map((li) => (
@@ -1148,7 +1276,7 @@ export default function SignWizard({
 
             <div className="rounded-md bg-gray-50 border border-gray-200 p-4 text-xs text-gray-600 leading-relaxed">
               <span className="font-semibold text-gray-700">Billing terms (fixed):</span> Net monthly invoice · Credit card / ACH / check to Caxton Publications, Inc.
-              Approving sends this proposal to your representative, who will email the final agreement for your signature.
+              Approving sends this insertion order to your representative. It does not become a binding advertising agreement until the final insertion order is signed.
             </div>
 
             <div className="flex justify-end">
@@ -1158,7 +1286,7 @@ export default function SignWizard({
                 style={{ background: ACCENT }}
                 className="px-6 py-2 rounded-md text-white text-sm font-medium hover:opacity-90 disabled:opacity-50"
               >
-                {approving ? 'Submitting…' : 'Approve Proposal'}
+                {approving ? 'Submitting…' : 'Approve Insertion Order'}
               </button>
             </div>
           </div>
@@ -1178,7 +1306,7 @@ export default function SignWizard({
             Welcome, {ag.rep_name ?? 'Partner'}
           </h2>
           <p className="text-sm text-gray-600 max-w-md mx-auto leading-relaxed">
-            You&apos;re about to sign an <strong>Advertising Agreement</strong> with{' '}
+            You&apos;re about to sign an <strong>Advertising Insertion Order</strong> with{' '}
             <strong>RealtyLine</strong> for{' '}
             <strong>{ag.company_name ?? 'your company'}</strong>.
           </p>
@@ -1186,7 +1314,7 @@ export default function SignWizard({
             <p className="font-semibold mb-1">⚠️ Legal Notice</p>
             <p>
               This is a legally binding digital signature. By completing this process, you agree to
-              the terms and conditions of the advertising agreement.
+              the terms and conditions in this insertion order, which becomes a binding advertising agreement when signed.
             </p>
           </div>
           <p className="text-xs text-gray-400">This wizard takes approximately 2 minutes to complete.</p>
@@ -1309,19 +1437,32 @@ export default function SignWizard({
                 <div className="mb-3 pb-3 border-b border-purple-100 space-y-2">
                   {editableLineItems.map((li) => (
                     <div key={li.line_no}>
-                      <label
-                        htmlFor={`placementStart-${li.line_no}`}
-                        className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1"
-                      >
-                        {li.package_label} — start date
-                      </label>
-                      <input
-                        id={`placementStart-${li.line_no}`}
-                        type="date"
-                        value={lineStarts[li.line_no] ?? ''}
-                        onChange={(e) => setLineStart(li.line_no, e.target.value)}
-                        className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                      />
+                      <div className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">
+                        {li.package_label}
+                      </div>
+                      {li.channel === 'email' ? (
+                        renderEmailDateFields(
+                          [
+                            lineStarts[li.line_no] ?? '',
+                            ...(emailLineAlternates[li.line_no] ?? ['', '', '']),
+                          ],
+                          (index, value) => setEmailLineDate(li.line_no, index, value),
+                          `placement-email-${li.line_no}`,
+                        )
+                      ) : (
+                        <>
+                          <label htmlFor={`placementStart-${li.line_no}`} className="block text-xs text-gray-700 mb-1">
+                            Placement start date
+                          </label>
+                          <input
+                            id={`placementStart-${li.line_no}`}
+                            type="date"
+                            value={lineStarts[li.line_no] ?? ''}
+                            onChange={(e) => setLineStart(li.line_no, e.target.value)}
+                            className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                          />
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1359,16 +1500,33 @@ export default function SignWizard({
             <div className="space-y-4">
               {singleLineEditable && (
                 <div className="rounded-md border border-purple-200 bg-purple-50/40 p-4">
-                  <label htmlFor="placementStartSingle" className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">
-                    Placement start date
-                  </label>
-                  <input
-                    id="placementStartSingle"
-                    type="date"
-                    value={placementStart}
-                    onChange={(e) => setPlacementStart(e.target.value)}
-                    className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  />
+                  {channel === 'email' ? (
+                    renderEmailDateFields(
+                      [placementStart, ...singleEmailAlternates],
+                      (index, value) => {
+                        if (index === 0) setPlacementStart(value);
+                        else setSingleEmailAlternates((current) => {
+                          const next = [...current];
+                          next[index - 1] = value;
+                          return next;
+                        });
+                      },
+                      'placement-email-single',
+                    )
+                  ) : (
+                    <>
+                      <label htmlFor="placementStartSingle" className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1">
+                        Placement start date
+                      </label>
+                      <input
+                        id="placementStartSingle"
+                        type="date"
+                        value={placementStart}
+                        onChange={(e) => setPlacementStart(e.target.value)}
+                        className="px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                      />
+                    </>
+                  )}
                 </div>
               )}
               <QuoteSummaryCard ag={ag} channel={channel} overrideStart={singleLineStart} overrideEnd={singleLineEnd} />
@@ -1714,21 +1872,21 @@ export default function SignWizard({
         setStep(4);
       }}
       onNext={submitSignature}
-      nextLabel="Accept Proposal & Sign"
+      nextLabel="Approve & Sign Insertion Order"
       nextDisabled={!canSign}
       saving={saving}
     >
       <div className="space-y-5">
         <Eyebrow>Terms &amp; Digital Signature</Eyebrow>
         <h2 className="text-lg text-gray-900">
-          Review &amp; accept the proposal
+          Review and sign the insertion order
         </h2>
 
         {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
 
         {paymentType === 'Credit Card' && confirmedPaymentIntentId && (
           <div className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-md p-3">
-            ✓ Card authorized. Your card will be charged the moment you click <strong>Accept Proposal &amp; Sign</strong> below.
+            ✓ Card authorized. Your card will be charged the moment you click <strong>Approve &amp; Sign Insertion Order</strong> below.
           </div>
         )}
 
@@ -1746,8 +1904,8 @@ export default function SignWizard({
             required
           />
           <span className="text-sm text-gray-700">
-            I accept this proposal and agree to the Terms &amp; Conditions above. I understand that
-            accepting converts this proposal into a legally binding advertising agreement.
+            I approve this insertion order and agree to the Terms &amp; Conditions above. I understand that
+            signing converts this insertion order into a legally binding advertising agreement.
           </span>
         </label>
 
@@ -1770,7 +1928,7 @@ export default function SignWizard({
 
         {canSign && (
           <p className="text-xs text-gray-500 text-center">
-            Clicking &ldquo;Accept Proposal &amp; Sign&rdquo; constitutes your legally binding digital
+            Clicking &ldquo;Approve &amp; Sign Insertion Order&rdquo; constitutes your legally binding digital
             signature.
           </p>
         )}

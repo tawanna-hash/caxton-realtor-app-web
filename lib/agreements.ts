@@ -60,6 +60,7 @@ export interface Agreement {
   ad_rate_cents: number | null;
   ad_timing: AgreementAdTiming | null;
   eblast_packages: string[];
+  preferred_send_dates: string[] | null;
 
   // Pressbook pricing
   discount_cents: number | null;

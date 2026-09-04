@@ -941,6 +941,7 @@ async function _runEnsureSchema(): Promise<void> {
   // status can follow the agreement lifecycle. Nullable — existing
   // Pressbook-imported agreements have no originating inquiry.
   await sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS linked_inquiry_id uuid`;
+  await sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS preferred_send_dates jsonb`;
   await sql`
     CREATE INDEX IF NOT EXISTS agreements_linked_inquiry_idx
     ON agreements(linked_inquiry_id)

@@ -161,10 +161,11 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
   const [appMarkets, setAppMarkets] = useState<MarketCount>(1);
 
   const [publication, setPublication] = useState<Publication>('austin');
-  // Email preferred send dates (up to 3, all optional; blank ⇒ advertiser picks)
+  // Email send dates: one preferred date plus up to three optional alternatives.
   const [ebDate1, setEbDate1] = useState<string>('');
   const [ebDate2, setEbDate2] = useState<string>('');
   const [ebDate3, setEbDate3] = useState<string>('');
+  const [ebDate4, setEbDate4] = useState<string>('');
   // Review overlay
   const [showReview, setShowReview] = useState<boolean>(false);
   const [dueDate, setDueDate] = useState<string>('');
@@ -303,6 +304,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     setEbDate1('');
     setEbDate2('');
     setEbDate3('');
+    setEbDate4('');
     setShowReview(false);
     setDueDate('');
     setMemo('');
@@ -612,7 +614,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       ioTimingMonths: channel === 'print' ? ioTimingMonths : undefined,
       ioTimingYears: channel === 'print' ? ioTimingYears : undefined,
       preferredSendDates: channel === 'email'
-        ? [ebDate1, ebDate2, ebDate3].filter(Boolean)
+        ? [ebDate1, ebDate2, ebDate3, ebDate4].filter(Boolean)
         : undefined,
       publication: channel === 'email' ? publication : undefined,
       runStart: runMode === 'dates' ? runStart : undefined,
@@ -664,6 +666,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       setEbDate1(line.preferredSendDates?.[0] ?? '');
       setEbDate2(line.preferredSendDates?.[1] ?? '');
       setEbDate3(line.preferredSendDates?.[2] ?? '');
+      setEbDate4(line.preferredSendDates?.[3] ?? '');
     } else {
       setAppCadence(line.appCadence ?? 'weekly');
       setAppWeeks(line.appWeeks ?? 1);
@@ -715,6 +718,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
       appWeeks,
       appMarkets,
       publication,
+      preferredSendDates: channel === 'email'
+        ? [ebDate1, ebDate2, ebDate3, ebDate4].filter(Boolean)
+        : undefined,
       runMode,
       runStart,
       runEnd,
@@ -734,6 +740,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     } else if (src.channel === 'email') {
       payload.sends = src.sends ?? 1;
       payload.publication = src.publication;
+      if (src.preferredSendDates && src.preferredSendDates.length > 0) {
+        payload.preferred_send_dates = src.preferredSendDates;
+      }
     } else {
       payload.app_cadence = src.appCadence;
       payload.app_markets = src.appMarkets;
@@ -1577,9 +1586,9 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                   <p className="text-[11px] uppercase tracking-wider text-gray-600 font-semibold mb-1">
                     Preferred send dates <span className="normal-case font-normal text-gray-500">(optional — leave blank if partner will choose)</span>
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <label className="text-xs text-gray-700">
-                      1st choice
+                      Preferred send date
                       <input
                         type="date"
                         value={ebDate1}
@@ -1588,7 +1597,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       />
                     </label>
                     <label className="text-xs text-gray-700">
-                      2nd choice
+                      Optional date 1
                       <input
                         type="date"
                         value={ebDate2}
@@ -1597,11 +1606,20 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
                       />
                     </label>
                     <label className="text-xs text-gray-700">
-                      3rd choice
+                      Optional date 2
                       <input
                         type="date"
                         value={ebDate3}
                         onChange={(e) => setEbDate3(e.target.value)}
+                        className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
+                      />
+                    </label>
+                    <label className="text-xs text-gray-700">
+                      Optional date 3
+                      <input
+                        type="date"
+                        value={ebDate4}
+                        onChange={(e) => setEbDate4(e.target.value)}
                         className="mt-1 w-full px-2 py-1.5 border border-gray-300 rounded-md text-sm"
                       />
                     </label>

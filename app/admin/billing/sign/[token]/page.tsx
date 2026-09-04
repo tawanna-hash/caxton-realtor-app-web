@@ -58,6 +58,7 @@ export default async function SignPage({ params }: PageProps) {
     end_date: string | null;
     pay_now: boolean;
     meta: Record<string, unknown>;
+    preferred_send_dates: string[] | null;
   }> = [];
   try {
     const sql = getSql();
@@ -72,7 +73,7 @@ export default async function SignPage({ params }: PageProps) {
         pay_now, meta,
         to_char(expiration_date, 'YYYY-MM-DD') AS expiration_date,
         to_char(renewal_reminder_date, 'YYYY-MM-DD') AS renewal_reminder_date,
-        ad_timing_months, ad_timing_years
+        ad_timing_months, ad_timing_years, preferred_send_dates
       FROM agreement_line_items
       WHERE agreement_id = ${agreementId}
       ORDER BY line_no ASC
@@ -93,6 +94,7 @@ export default async function SignPage({ params }: PageProps) {
     end_date: string | null;
     pay_now: boolean;
     meta: Record<string, unknown>;
+    preferred_send_dates: string[] | null;
   }>;
     ag = rows[0] ?? null;
   } catch {
@@ -126,4 +128,3 @@ export default async function SignPage({ params }: PageProps) {
 
   return <SignWizard ag={ag} token={token} lineItems={lineItemRows} />;
 }
-

@@ -532,13 +532,13 @@ export function AgreementDrawer({
 
   // Build the body for /api/admin/agreements/:id/send. Includes the
   // admin’s optional custom pitch when one is filled in.
-  // Two-stage flow: drafts / proposal_sent send as a PROPOSAL (no signature);
-  // proposal_approved / sent / signed send as the final AGREEMENT (signature).
+  // Two-stage flow: drafts / proposal_sent send an insertion order for review;
+  // proposal_approved / sent / signed send the insertion order for signature.
   const sendStage: 'proposal' | 'agreement' =
     form.status === 'proposal_approved' || form.status === 'sent' || form.status === 'signed'
       ? 'agreement'
       : 'proposal';
-  const sendStageLabel = sendStage === 'proposal' ? 'Send Proposal' : 'Send Final Agreement';
+  const sendStageLabel = sendStage === 'proposal' ? 'Send Insertion Order' : 'Send Insertion Order for Signature';
 
   const buildSendBody = (): Record<string, unknown> => {
     const out: Record<string, unknown> = { stage: sendStage };

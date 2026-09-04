@@ -60,9 +60,9 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     // message typed into the drawer. Falls back to the boilerplate.
     const brand = brandForPublication(ag.publication);
 
-    // Two-stage proposal->agreement flow:
+    // Two-stage insertion-order flow:
     //   stage='proposal'  -> status proposal_sent  (client reviews/edits IO, no signature)
-    //   stage='agreement' -> status sent          (final agreement, legal terms + sign)
+    //   stage='agreement' -> status sent          (final IO, legal terms + sign)
     const stage = body.stage === 'proposal' ? 'proposal' : 'agreement';
     const isProposalStage = stage === 'proposal';
     const customMessage =
@@ -70,8 +70,8 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
         ? body.customMessage.trim()
         : null;
     const defaultMessage = isProposalStage
-      ? `Your ${brand.brandName} advertising proposal is ready for review. You can adjust your ad package, placement dates, and markets, then approve to convert it into your advertising agreement. Nothing is binding until you sign the final agreement I'll send after you approve. As always, I'm happy to help should you have any questions or concerns.`
-      : `Your ${brand.brandName} advertising agreement is ready for your review and signature. Click below to open your secure portal, confirm your placement start date, and sign. If you need to change your preferred date after signing, just let me know and I will update it for you. As always, I'm happy to help should you have any questions or concerns.`;
+      ? `Your ${brand.brandName} advertising insertion order is ready for review. Confirm the company name, select your preferred send date and up to three optional dates when applicable, review the placement and markets, then approve it. Nothing is binding until the final insertion order is signed. As always, I'm happy to help should you have any questions or concerns.`
+      : `Your ${brand.brandName} advertising insertion order is ready for your review and signature. Click below to open your secure portal, confirm your preferred send date and up to three optional dates when applicable, and sign. The insertion order becomes a binding advertising agreement when signed. As always, I'm happy to help should you have any questions or concerns.`;
 
     // Fetch line items so bundles show all lines in the email recap.
     type LineItemRow = {
@@ -123,12 +123,17 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     });
 
     const subject = isTest
-      ? `[TEST] ${brand.brandName} ${isProposalStage ? 'Proposal' : 'Agreement'} — ${ag.company_name ?? (isProposalStage ? 'Proposal' : 'Agreement')}`
+      ? `[TEST] ${brand.brandName} Insertion Order — ${ag.company_name ?? 'Insertion Order'}`
       : isProposalStage
-        ? `Action Required: Review Your ${brand.brandName} Advertising Proposal — ${ag.company_name ?? 'Proposal'}`
-        : `Action Required: Sign Your ${brand.brandName} Advertising Agreement — ${ag.company_name ?? 'Agreement'}`;
+        ? `Action Required: Review Your ${brand.brandName} Advertising Insertion Order — ${ag.company_name ?? 'Insertion Order'}`
+        : `Action Required: Sign Your ${brand.brandName} Advertising Insertion Order — ${ag.company_name ?? 'Insertion Order'}`;
+    const isNewslineSender =
+      ag.publication === 'san_antonio'
+      || ag.company_name?.trim().toLowerCase() === 'newsline san antonio';
     const result = await sendEmail({
       to: recipient,
+      from: isNewslineSender ? 'Newsline San Antonio <hello@newslinesa.com>' : undefined,
+      replyTo: isNewslineSender ? 'hello@newslinesa.com' : undefined,
       subject,
       html,
     });
@@ -153,8 +158,8 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       timestamp: new Date().toISOString(),
       user_email: admin.email,
       details: isTest
-        ? `Test ${isProposalStage ? 'proposal' : 'agreement'} email sent to admin ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`
-        : `${isProposalStage ? 'Proposal' : 'Agreement'} notification sent to ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`,
+        ? `Test insertion order email sent to admin ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`
+        : `Insertion order notification sent to ${recipient}. Resend messageId: ${result.messageId ?? 'n/a'}`,
     });
     await sql`UPDATE agreements SET audit_log = ${JSON.stringify(newLog)}::jsonb WHERE id = ${id}`;
 

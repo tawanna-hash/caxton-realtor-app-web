@@ -69,6 +69,7 @@ const quotesSchema = z
     // drafter uses them verbatim instead of computing from today.
     start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
     end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    preferred_send_dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(4).optional(),
     // Custom pricing overrides — rep-facing. Server accepts either the
     // full total or a per-unit price (mutually exclusive).
     override_total_cents: z.number().int().min(0).max(100_000_000).optional(),
@@ -102,7 +103,7 @@ const quotesSchema = z
     pos_premium_active: z.boolean().optional(),
     ad_timing_months: z.record(z.string(), z.boolean()).optional(),
     ad_timing_years: z.record(z.string(), z.string()).optional(),
-    preferred_send_dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(3).optional(),
+    preferred_send_dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(4).optional(),
   })).optional(),
   memo: z.string().max(2000).optional(),
     advertiser: z.union([advertiserExistingSchema, advertiserNewSchema]),
@@ -257,4 +258,3 @@ export const POST = withAdminTracking(async (req: Request) => {
     { status: 201 },
   );
 });
-
