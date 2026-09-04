@@ -55,6 +55,11 @@ export function isAdChannel(v: unknown): v is AdChannel {
   return v === 'print' || v === 'digital' || v === 'email' || v === 'app';
 }
 
+/** Check payments are reserved for print agreements. */
+export function allowsCheckPayment(channel: AdChannel): boolean {
+  return channel === 'print';
+}
+
 /**
  * Map an agreement's `type` (print_ad / eblast / sponsored_content /
  * package / other) to the funnel `channel` tag used everywhere else.

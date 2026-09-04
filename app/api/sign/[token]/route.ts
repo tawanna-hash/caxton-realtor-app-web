@@ -20,6 +20,7 @@ import { rateLimit } from '@/lib/server/rate-limit';
 import { ApiError } from '@/lib/server/error';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 import { applyPatches } from '@/lib/server/agreement-patches';
+import { allowsCheckPayment, deriveChannelFromAgreementType, isAdChannel } from '@/lib/ad-channels';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -185,6 +186,17 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json(
         { error: 'agreement already signed', signed_at: ag.signed_at },
         { status: 409 },
+      );
+    }
+
+    const storedChannel = (ag as Agreement & { channel?: string | null }).channel;
+    const channel = isAdChannel(storedChannel)
+      ? storedChannel
+      : deriveChannelFromAgreementType(ag.type);
+    if (patches?.payment_mode === 'check' && !allowsCheckPayment(channel)) {
+      return NextResponse.json(
+        { error: 'check payment is only available for print agreements' },
+        { status: 400 },
       );
     }
 
@@ -376,7 +388,14 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     await ensureSchema();
     const sql = getSql();
 
-    const rows = await sql`SELECT id, signed_at FROM agreements WHERE id = ${id}` as unknown as { id: string; signed_at: string | null }[];
+    const rows = await sql`
+      SELECT id, signed_at, type, channel FROM agreements WHERE id = ${id}
+    ` as unknown as {
+      id: string;
+      signed_at: string | null;
+      type: string | null;
+      channel: string | null;
+    }[];
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
 
     // F-edge: don't allow field patches on an already-signed agreement.
@@ -384,6 +403,16 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json(
         { error: 'agreement already signed', signed_at: rows[0].signed_at },
         { status: 409 },
+      );
+    }
+
+    const channel = isAdChannel(rows[0].channel)
+      ? rows[0].channel
+      : deriveChannelFromAgreementType(rows[0].type);
+    if (body.payment_mode === 'check' && !allowsCheckPayment(channel)) {
+      return NextResponse.json(
+        { error: 'check payment is only available for print agreements' },
+        { status: 400 },
       );
     }
 

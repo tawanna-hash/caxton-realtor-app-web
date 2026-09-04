@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 import type { Agreement } from '@/lib/agreements';
 import { termsForChannel } from '@/lib/agreement-terms';
 import { cleanRepNote } from '@/lib/agreement-notes';
-import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
+import { allowsCheckPayment, deriveChannelFromAgreementType } from '@/lib/ad-channels';
 import {
   AD_SIZES,
   FREQUENCIES,
@@ -556,9 +556,9 @@ export default function SignWizard({
   const [billingContactPhone, setBillingContactPhone] = useState(formatPhone(ag.billing_contact_phone ?? ''));
   // Digital/e-Blast/App require prepayment by credit card before placement;
   // Check is only offered for print agreements.
-  const checkDisabled = false;
+  const checkAllowed = allowsCheckPayment(channel);
   const [paymentType, setPaymentType] = useState<string>(
-    checkDisabled
+    !checkAllowed
       ? 'Credit Card'
       : (ag.card_type || ag.payment_mode === 'card'
           ? 'Credit Card'
@@ -637,7 +637,9 @@ export default function SignWizard({
               applyStr('billingEmail', setBillingEmail);
               applyStr('billingContactName', setBillingContactName);
               applyStr('billingContactPhone', setBillingContactPhone);
-              applyStr('paymentType', setPaymentType);
+              if (typeof d.paymentType === 'string' && (checkAllowed || d.paymentType !== 'Check')) {
+                setPaymentType(d.paymentType);
+              }
               if (typeof d.confirmedPaymentIntentId === 'string') {
                 setConfirmedPaymentIntentId(d.confirmedPaymentIntentId);
               }
@@ -648,7 +650,7 @@ export default function SignWizard({
     }
     /* eslint-enable react-hooks/set-state-in-effect */
     setDraftReady(true);
-  }, [DRAFT_KEY, ag.status]);
+  }, [DRAFT_KEY, ag.status, checkAllowed]);
 
   useEffect(() => {
     if (!draftReady || typeof window === 'undefined') return;
@@ -754,7 +756,7 @@ export default function SignWizard({
       billing_email: billingEmail || null,
       billing_contact_name: billingContactName || null,
       billing_contact_phone: billingContactPhone || null,
-      payment_mode: paymentType === 'Credit Card' ? 'card' : paymentType === 'Check' ? 'check' : null,
+      payment_mode: paymentType === 'Credit Card' ? 'card' : paymentType === 'Check' && checkAllowed ? 'check' : null,
       // Advertiser-chosen placement dates for app bundle lines (Step 3).
       ...(lineItemDatePatches.length > 0 ? { line_item_dates: lineItemDatePatches } : {}),
       // Advertiser-chosen placement date for single-line (non-bundle) agreements.
@@ -796,20 +798,26 @@ export default function SignWizard({
       setError(null);
       try {
         if (!stripeRef.current) {
-          setError('Card payment form is not ready. Reload the page and try again, or choose Check.');
+          setError(checkAllowed
+            ? 'Card payment form is not ready. Reload the page and try again, or choose Check.'
+            : 'Card payment form is not ready. Reload the page and try again.');
           setSaving(false);
           return;
         }
         const result = await stripeRef.current.confirm();
         if ('skipped' in result) {
-          setError('Card payment did not process. The secure payment form was not initialized. Reload the page and try again, or choose Check.');
+          setError(checkAllowed
+            ? 'Card payment did not process. The secure payment form was not initialized. Reload the page and try again, or choose Check.'
+            : 'Card payment did not process. The secure payment form was not initialized. Reload the page and try again.');
           setSaving(false);
           return;
         }
         setConfirmedPaymentIntentId(result.paymentIntentId);
       } catch (e) {
         const msg = e instanceof Error ? e.message : 'card authorization failed';
-        setError(`Card payment failed: ${msg}. Update card details or choose Check.`);
+        setError(checkAllowed
+          ? `Card payment failed: ${msg}. Update card details or choose Check.`
+          : `Card payment failed: ${msg}. Update the card details and try again.`);
         setSaving(false);
         return;
       } finally {
@@ -1599,17 +1607,15 @@ export default function SignWizard({
           <div>
             <Eyebrow>Payment Type</Eyebrow>
             <div className="flex gap-4">
-              {PAYMENT_TYPES.map((p) => {
-                const disabled = p === 'Check' && checkDisabled;
+              {PAYMENT_TYPES.filter((p) => checkAllowed || p !== 'Check').map((p) => {
                 return (
-                  <label key={p} className={`flex items-center gap-2 ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                  <label key={p} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
                       name="paymentType"
                       value={p}
                       checked={paymentType === p}
                       onChange={() => setPaymentType(p)}
-                      disabled={disabled}
                       className="accent-purple-600"
                     />
                     <span className="text-sm text-gray-800">{p}</span>
@@ -1617,11 +1623,9 @@ export default function SignWizard({
                 );
               })}
             </div>
-            {checkDisabled && (
+            {!checkAllowed && (
               <p className="text-xs text-gray-500 mt-1">
-                Prepayment by credit card is required for digital, e-Blast, and App ad placements before they go live. If paying by check is preferred, please contact Tawanna at{' '}
-                <a href="mailto:tawanna@myrealtyline.com" className="text-[#5a0e5f] hover:underline">tawanna@myrealtyline.com</a>{' '}
-                for consideration.
+                Prepayment by credit card is required for digital, e-Blast, and App ad placements before they go live.
               </p>
             )}
           </div>

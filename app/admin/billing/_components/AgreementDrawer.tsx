@@ -17,7 +17,11 @@ import {
   AD_SIZES, FREQUENCIES, PAYMENT_TYPES, CARD_TYPES, BILL_TO,
 } from '@/lib/pressbook-constants';
 import { termsForChannel } from '@/lib/agreement-terms';
-import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
+import {
+  allowsCheckPayment,
+  deriveChannelFromAgreementType,
+  deriveChannelFromLineItems,
+} from '@/lib/ad-channels';
 import {
   lookupRate, applyCcSurcharge, pagePositionPremium, computeExp,
 } from '@/lib/agreement-pricing';
@@ -237,6 +241,31 @@ export function AgreementDrawer({
     return () => { alive = false; };
   }, [existing?.id]);
 
+  const agreementChannel = useMemo(
+    () => deriveChannelFromLineItems(lineItems.map((li) => li.channel), form.type),
+    [lineItems, form.type],
+  );
+  const checkAllowed = allowsCheckPayment(agreementChannel);
+  const paymentTypes = checkAllowed
+    ? PAYMENT_TYPES
+    : PAYMENT_TYPES.filter((type) => type !== 'Check');
+  const paymentModes = checkAllowed
+    ? PAY_MODES
+    : PAY_MODES.filter((mode) => mode.value !== 'check');
+
+  useEffect(() => {
+    if (checkAllowed) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- enforce card-only state when a record resolves to a non-print channel
+    setForm((current) => {
+      if (current.payment_type === 'Credit Card' && current.payment_mode === 'card') return current;
+      return {
+        ...current,
+        payment_type: 'Credit Card',
+        payment_mode: 'card',
+      };
+    });
+  }, [checkAllowed]);
+
   const upd = <K extends keyof AgForm>(k: K, v: AgForm[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   /**
@@ -417,7 +446,7 @@ export function AgreementDrawer({
       billing_email:           form.billing_email || null,
       billing_contact_name:    form.billing_contact_name || null,
       billing_contact_phone:   form.billing_contact_phone || null,
-      payment_type:            form.payment_type || null,
+      payment_type:            (!checkAllowed ? 'Credit Card' : form.payment_type) || null,
       card_type:               form.payment_type === 'Credit Card' ? form.card_type : null,
       cardholder_name:         form.payment_type === 'Credit Card' ? form.cardholder_name || null : null,
       card_number_last4:       form.payment_type === 'Credit Card' ? form.card_number_last4 || null : null,
@@ -427,7 +456,7 @@ export function AgreementDrawer({
       status:                  isSigning ? 'signed' : form.status,
       advertiser_id:           form.advertiser_id,
       type:                    form.type || null,
-      payment_mode:            form.payment_mode || null,
+      payment_mode:            !checkAllowed ? 'card' : form.payment_mode || null,
       publication:             form.publication || null,
       exp_date:                expPreview || null,
       end_date:                expPreview || null,
@@ -951,7 +980,7 @@ export function AgreementDrawer({
 
         <div>
           <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">Payment Type</div>
-          {PAYMENT_TYPES.map((pt) => (
+          {paymentTypes.map((pt) => (
             <label key={pt} className="flex items-center gap-2 text-sm cursor-pointer mb-2">
               <input type="radio" name="ag_pay_type" value={pt} checked={form.payment_type === pt}
                 onChange={() => onPayTypeChange(pt)}
@@ -1161,7 +1190,7 @@ export function AgreementDrawer({
           <Field label="Payment mode">
             <select value={form.payment_mode ?? ''} onChange={(e) => upd('payment_mode', (e.target.value || null) as PaymentMode | null)} className={INPUT}>
               <option value="">—</option>
-              {PAY_MODES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+              {paymentModes.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
             </select>
           </Field>
           <Field label="Publication / Market">

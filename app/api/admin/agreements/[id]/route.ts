@@ -24,7 +24,7 @@ import {
   syncAgreementToAdvertiser,
   syncAgreementToLocationsAndStaff,
 } from '@/lib/server/billing-crm-sync';
-import { deriveChannelFromAgreementType } from '@/lib/ad-channels';
+import { allowsCheckPayment, deriveChannelFromAgreementType, isAdChannel } from '@/lib/ad-channels';
 import { captureServerEvent } from '@/lib/server/posthog';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 
@@ -79,13 +79,29 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
 
     // Fetch existing for status-change detection + audit log merge
     const existingRows = await sql`SELECT * FROM agreements WHERE id = ${id}` as unknown as Array<{
-      status: string; audit_log: AgreementAuditEntry[] | null;
+      status: string;
+      type: string | null;
+      channel: string | null;
+      audit_log: AgreementAuditEntry[] | null;
     }>;
     if (existingRows.length === 0) {
       return NextResponse.json({ error: 'not found' }, { status: 404 });
     }
     const existing = existingRows[0];
     const prevStatus = existing.status;
+    const requestedType = typeof body.type === 'string' ? body.type : existing.type;
+    const effectiveChannel =
+      typeof body.type === 'string'
+        ? deriveChannelFromAgreementType(requestedType)
+        : isAdChannel(existing.channel)
+          ? existing.channel
+          : deriveChannelFromAgreementType(requestedType);
+    if (body.payment_mode === 'check' && !allowsCheckPayment(effectiveChannel)) {
+      return NextResponse.json(
+        { error: 'check payment is only available for print agreements' },
+        { status: 400 },
+      );
+    }
 
     const updated: string[] = [];
     const apply = async (col: string, val: unknown, exec: () => Promise<unknown>) => {
@@ -124,6 +140,9 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
             const derivedChannel = deriveChannelFromAgreementType(raw);
             try {
               await sql`UPDATE agreements SET channel = ${derivedChannel} WHERE id = ${id}`;
+              if (!allowsCheckPayment(derivedChannel)) {
+                await sql`UPDATE agreements SET payment_mode = 'card' WHERE id = ${id} AND payment_mode = 'check'`;
+              }
               updated.push('channel');
             } catch (e) {
               console.error('[admin/agreements PATCH] channel write failed', e instanceof Error ? e.message : 'unknown');
