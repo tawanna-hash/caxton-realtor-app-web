@@ -627,7 +627,7 @@ export function AgreementDrawer({
         throw new Error(sendBody?.detail || sendBody?.error || `Test send failed HTTP ${sendRes.status}`);
       }
       const sendData = await sendRes.json();
-      setSigningMsg(`Test email sent to ${sendData.sentTo ?? 'hello@realtynewsnow.app'}`);
+      setSigningMsg(`Test email sent to ${sendData.sentTo ?? 'tawanna@realtynewsnow.app'}`);
       await onSaved();
     } catch (e) {
       onError(e instanceof Error ? e.message : 'test send failed');
