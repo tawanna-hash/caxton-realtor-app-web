@@ -130,13 +130,31 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     const isNewslineSender =
       ag.publication === 'san_antonio'
       || ag.company_name?.trim().toLowerCase() === 'newsline san antonio';
-    const result = await sendEmail({
+    let result = await sendEmail({
       to: recipient,
       from: isNewslineSender ? 'Newsline San Antonio <hello@newslinesa.com>' : undefined,
       replyTo: isNewslineSender ? 'hello@newslinesa.com' : undefined,
       subject,
       html,
     });
+
+    // Keep Newsline mail deliverable while its Resend domain verification is
+    // pending. The rejected attempt does not send; retry once from the verified
+    // RealtyLine default while preserving Newsline branding and reply handling.
+    // As soon as newslinesa.com is verified, the first attempt succeeds and this
+    // fallback is bypassed automatically.
+    const newslineDomainUnverified =
+      isNewslineSender
+      && !result.ok
+      && /newslinesa\.com domain is not verified/i.test(result.error ?? '');
+    if (newslineDomainUnverified) {
+      result = await sendEmail({
+        to: recipient,
+        replyTo: 'hello@newslinesa.com',
+        subject,
+        html,
+      });
+    }
 
     if (!result.ok) {
       return NextResponse.json({ error: 'email send failed', detail: result.error }, { status: 502 });
