@@ -129,6 +129,12 @@ export const POST = withAdminTracking(async (req: Request) => {
 
   const body = quotesSchema.parse(await req.json());
   const sql = getSql();
+  // Do not rely exclusively on the broad schema bootstrap for these new
+  // scheduling fields. ensureSchema intentionally suppresses and caches a
+  // bootstrap failure, which can leave later migrations unapplied while the
+  // request continues. These idempotent guards keep quote creation self-healing.
+  await sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS preferred_send_dates jsonb`;
+  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS preferred_send_dates jsonb`;
 
   // ── Resolve advertiser ─────────────────────────────────────────────
   let advertiser: DrafterAdvertiser | null = null;
@@ -218,6 +224,7 @@ export const POST = withAdminTracking(async (req: Request) => {
     line_items: body.line_items,
     start_date: body.start_date,
     end_date: body.end_date,
+    preferred_send_dates: body.preferred_send_dates,
     publication: body.publication,
     due_date: body.due_date,
     memo: body.memo,
