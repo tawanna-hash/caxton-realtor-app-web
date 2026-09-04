@@ -622,7 +622,10 @@ export function AgreementDrawer({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ ...buildSendBody(), test: true }),
       });
-      if (!sendRes.ok) throw new Error(`Test send failed HTTP ${sendRes.status}`);
+      if (!sendRes.ok) {
+        const sendBody = await sendRes.json().catch(() => null) as { error?: string; detail?: string } | null;
+        throw new Error(sendBody?.detail || sendBody?.error || `Test send failed HTTP ${sendRes.status}`);
+      }
       const sendData = await sendRes.json();
       setSigningMsg(`Test email sent to ${sendData.sentTo ?? 'admin'}`);
       await onSaved();

@@ -37,7 +37,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const ag = rows[0];
 
-    // Test-mode: recipient is FORCED to the current admin's email.
+    // Test-mode: recipient is always Tawanna's monitored test inbox.
     // Never touches agreement.status / sent_to_email.
     const urlObj = new URL(req.url);
     const isTest =
@@ -46,10 +46,10 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       body.test === true;
 
     const recipient = isTest
-      ? admin.email
+      ? 'tawanna@myrealtyline.com'
       : ((body.to as string | undefined) || ag.advertiser_email || ag.billing_email);
     if (!recipient) {
-      return NextResponse.json({ error: isTest ? 'admin has no email in session' : 'no email address on agreement' }, { status: 400 });
+      return NextResponse.json({ error: 'no email address on agreement' }, { status: 400 });
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';

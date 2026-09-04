@@ -946,7 +946,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     }
   }
 
-  // Test-mode send: server forces recipient to admin.email, does NOT
+  // Test-mode send: server forces recipient to Tawanna's test inbox, does NOT
   // update agreement.status / sent_to_email. Endpoint added in 4155b71.
   async function handleSendTest() {
     if (!createdAgreement) return;
@@ -964,8 +964,8 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
         },
       );
       if (!res.ok) {
-        const j = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(j?.error || `Test send failed (${res.status})`);
+        const j = (await res.json().catch(() => null)) as { error?: string; detail?: string } | null;
+        throw new Error(j?.detail || j?.error || `Test send failed (${res.status})`);
       }
       setTestSent(true);
     } catch (err) {
