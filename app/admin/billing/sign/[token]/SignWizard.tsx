@@ -930,6 +930,11 @@ export default function SignWizard({
   async function approveProposal() {
     setApproving(true);
     setError(null);
+    if (!companyName.trim()) {
+      setError('Company name is required before approving the proposal.');
+      setApproving(false);
+      return;
+    }
     try {
       // Persist the client's IO edits (ad size, frequency, position, timing,
       // markets) before flipping to proposal_approved.
@@ -1021,6 +1026,25 @@ export default function SignWizard({
           </div>
           <div className="bg-white rounded-md border border-gray-200 shadow-sm p-8 space-y-5">
             {error && <div className="text-sm text-red-600 bg-red-50 rounded-md p-3">{error}</div>}
+
+            <div>
+              <Eyebrow>Partner Information</Eyebrow>
+              <label htmlFor="proposal-company-name" className="block text-sm font-medium text-gray-800 mb-1">
+                Company Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="proposal-company-name"
+                type="text"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                required
+                autoComplete="organization"
+                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Update the company name exactly as it should appear on the agreement and insertion order.
+              </p>
+            </div>
 
             {isPrint ? (
               <>
