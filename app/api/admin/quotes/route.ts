@@ -133,8 +133,19 @@ export const POST = withAdminTracking(async (req: Request) => {
   // scheduling fields. ensureSchema intentionally suppresses and caches a
   // bootstrap failure, which can leave later migrations unapplied while the
   // request continues. These idempotent guards keep quote creation self-healing.
-  await sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS preferred_send_dates jsonb`;
-  await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS preferred_send_dates jsonb`;
+  try {
+    await sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS preferred_send_dates jsonb`;
+    // A single insertion order never writes agreement_line_items. Do not make
+    // it depend on that optional bundle table existing in older databases.
+    if (body.line_items && body.line_items.length > 0) {
+      await sql`ALTER TABLE agreement_line_items ADD COLUMN IF NOT EXISTS preferred_send_dates jsonb`;
+    }
+  } catch (err) {
+    throw new ApiError(500, 'quote_schema_update_failed', {
+      stage: 'scheduling_schema',
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
 
   // ── Resolve advertiser ─────────────────────────────────────────────
   let advertiser: DrafterAdvertiser | null = null;
@@ -210,29 +221,41 @@ export const POST = withAdminTracking(async (req: Request) => {
   }
 
   // ── Draft the quote ────────────────────────────────────────────────
-  const result = await draftQuote(advertiser, {
-    channel: body.channel,
-    package_id: body.package_id,
-    size: body.size,
-    months: body.months,
-    sends: body.sends,
-    app_cadence: body.app_cadence,
-    app_weeks: body.app_weeks,
-    app_markets: body.app_markets,
-    override_total_cents: body.override_total_cents,
-    override_unit_cents: body.override_unit_cents,
-    line_items: body.line_items,
-    start_date: body.start_date,
-    end_date: body.end_date,
-    preferred_send_dates: body.preferred_send_dates,
-    publication: body.publication,
-    due_date: body.due_date,
-    memo: body.memo,
-    rep_name: body.rep_name ?? null,
-    advertiser_phone: suppliedPhone,
-    linked_inquiry_id: null,
-    actor_email: admin.email ?? null,
-  });
+  let result: Awaited<ReturnType<typeof draftQuote>>;
+  try {
+    result = await draftQuote(advertiser, {
+      channel: body.channel,
+      package_id: body.package_id,
+      size: body.size,
+      months: body.months,
+      sends: body.sends,
+      app_cadence: body.app_cadence,
+      app_weeks: body.app_weeks,
+      app_markets: body.app_markets,
+      override_total_cents: body.override_total_cents,
+      override_unit_cents: body.override_unit_cents,
+      line_items: body.line_items,
+      start_date: body.start_date,
+      end_date: body.end_date,
+      preferred_send_dates: body.preferred_send_dates,
+      publication: body.publication,
+      due_date: body.due_date,
+      memo: body.memo,
+      rep_name: body.rep_name ?? null,
+      advertiser_phone: suppliedPhone,
+      linked_inquiry_id: null,
+      actor_email: admin.email ?? null,
+    });
+  } catch (err) {
+    if (err instanceof ApiError) throw err;
+    const databaseError = err as Error & { code?: string; constraint?: string };
+    throw new ApiError(500, 'quote_draft_failed', {
+      stage: 'agreement_or_invoice',
+      message: databaseError instanceof Error ? databaseError.message : String(err),
+      code: databaseError?.code,
+      constraint: databaseError?.constraint,
+    });
+  }
 
   try {
     await logAudit({
