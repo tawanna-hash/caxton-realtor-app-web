@@ -46,7 +46,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       body.test === true;
 
     const recipient = isTest
-      ? 'tawanna@realtynewsnow.app'
+      ? 'tawanna@myrealtyline.com'
       : ((body.to as string | undefined) || ag.advertiser_email || ag.billing_email);
     if (!recipient) {
       return NextResponse.json({ error: 'no email address on agreement' }, { status: 400 });
