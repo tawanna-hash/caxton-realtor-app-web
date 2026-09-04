@@ -51,6 +51,7 @@ export interface AgreementNotificationParams {
   repName?: string;
   adSize?: string;
   adRate?: number | null;
+  adRateUnit?: 'issue' | 'send';
   status?: string;
   message?: string;
   notes?: string | null;
@@ -128,8 +129,10 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
     const adSizeRow = params.adSize
       ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Ad Size:</strong> ${escapeHtml(params.adSize)}</td></tr>`
       : '';
+    const adRateUnit = params.adRateUnit ?? 'issue';
+    const adRateLabel = adRateUnit === 'send' ? 'Rate per Send' : 'Ad Rate';
     const adRateRow = params.adRate != null
-      ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Ad Rate:</strong> $${Number(params.adRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/issue</td></tr>`
+      ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>${adRateLabel}:</strong> $${Number(params.adRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/${adRateUnit}</td></tr>`
       : '';
     const statusRow = params.status
       ? `<tr><td style="font-family:Arial,sans-serif;font-size:14px;color:#444;padding:4px 0"><strong>Status:</strong> ${escapeHtml(params.status)}</td></tr>`

@@ -114,6 +114,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       repName: ag.rep_name ?? undefined,
       adSize: ag.ad_size ?? undefined,
       adRate: ag.ad_rate_cents != null ? ag.ad_rate_cents / 100 : null,
+      adRateUnit: ag.type === 'eblast' ? 'send' : 'issue',
       status: isProposalStage ? 'proposal_sent' : 'sent',
       message: customMessage ?? defaultMessage,
       notes: repNote ?? undefined,

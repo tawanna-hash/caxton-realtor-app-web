@@ -1605,7 +1605,7 @@ export default function SignWizard({
           {/* Rate + Discount */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <EditableField
-              label="Ad Rate ($)"
+              label={ag.type === 'eblast' ? 'Rate per Send ($)' : 'Ad Rate ($)'}
               value={effectiveAdRate}
               onChange={(v) => {
                 setAdRate(v);

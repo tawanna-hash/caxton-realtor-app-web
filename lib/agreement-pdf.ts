@@ -321,7 +321,7 @@ async function generateAgreementPdfBufferInner(ag: Agreement): Promise<Uint8Arra
   if (bundleTotal != null) {
     drawLabelValue(ctx, 'Total', fmt$(bundleTotal));
   } else {
-    drawLabelValue(ctx, 'Ad Rate', fmt$(ag.ad_rate_cents));
+    drawLabelValue(ctx, ag.type === 'eblast' ? 'Rate per Send' : 'Ad Rate', fmt$(ag.ad_rate_cents));
     if (ag.discount_cents) drawLabelValue(ctx, 'Discount', fmt$(ag.discount_cents));
     if (ag.ad_premium_cents) drawLabelValue(ctx, 'Page Position Premium', fmt$(ag.ad_premium_cents));
     if (ag.total_monthly_rate_cents) drawLabelValue(ctx, 'Total Monthly Rate', fmt$(ag.total_monthly_rate_cents));
