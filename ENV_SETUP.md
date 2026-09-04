@@ -51,13 +51,13 @@ unset. Set one only when you want to deviate from the default.
 - **Verdict**: ✅ Safe to leave unset.
 
 ### `EMAIL_REPLY_TO`
-- **Default**: Resend send omits the `reply_to` field, so replies go back to the From address (`tawanna@myrealtyline.com`).
+- **Default**: Resend send omits the `reply_to` field, so replies go back to the From address (`tawanna@realtynewsnow.app`).
 - **Source**: `lib/server/email/resend-provider.ts:40` — `input.replyTo ?? process.env.EMAIL_REPLY_TO` then `if (replyTo) payload.reply_to = replyTo`.
 - **When to set**: If you want replies to go somewhere other than the From address (e.g. `support@myrealtyline.com`).
 - **Verdict**: ✅ Safe to leave unset.
 
 ### `INVENTORY_NOTIFY_TO`
-- **Default**: `'tawanna@myrealtyline.com'`
+- **Default**: `'tawanna@realtynewsnow.app'`
 - **Source**: `app/api/inventory/submit/route.ts:27`.
 - **What it does**: Email recipient for new inventory submissions.
 - **When to set**: If notifications should go to a shared inbox (e.g. `submissions@…`).
@@ -140,7 +140,7 @@ primary name is already set; the alias is redundant.
 
 ## 4. What changed in this branch
 
-- Added `EMAIL_PROVIDER=resend`, `EMAIL_FROM_ADDRESS=tawanna@myrealtyline.com`,
+- Added `EMAIL_PROVIDER=resend`, `EMAIL_FROM_ADDRESS=tawanna@realtynewsnow.app`,
   `EMAIL_FROM_NAME="Tawanna Verock, publisher"` to Vercel (production + preview).
   Verified with a real password-reset send recorded as `provider=resend` in
   `email_log` at `2026-05-29 01:10:36 UTC`.

@@ -30,8 +30,8 @@ export default function AccountDeletePage() {
       <h2>Alternative: request deletion by email</h2>
       <p>
         If you cannot sign in, email{' '}
-        <a href="mailto:tawanna@myrealtyline.com?subject=Account%20Deletion%20Request">
-          tawanna@myrealtyline.com
+        <a href="mailto:tawanna@realtynewsnow.app?subject=Account%20Deletion%20Request">
+          tawanna@realtynewsnow.app
         </a>{' '}
         from the address on file. We respond within 5 business days.
       </p>
@@ -72,7 +72,7 @@ export default function AccountDeletePage() {
       </ul>
 
       <p className="text-sm text-neutral-500">
-        Contact <a href="mailto:tawanna@myrealtyline.com">tawanna@myrealtyline.com</a> with any
+        Contact <a href="mailto:tawanna@realtynewsnow.app">tawanna@realtynewsnow.app</a> with any
         questions.
       </p>
     </main>

@@ -156,7 +156,7 @@ preference storage.
 >
 > Caxton has published RealtyLine in Austin since 2008 and Newsline in San Antonio since 2015. Realty News Now is our digital home for both communities — and the foundation for new markets coming to Houston, Dallas/Fort Worth, and beyond.
 >
-> Questions or feedback? Email tawanna@myrealtyline.com — we read everything.
+> Questions or feedback? Email tawanna@realtynewsnow.app — we read everything.
 
 (2,115 characters — well under the 4,000 cap, leaves room to expand later.)
 
@@ -237,7 +237,7 @@ modify other users' data, send emails, or access billing.
 | **First Name** | Tawanna |
 | **Last Name** | Verock |
 | **Phone** | _(fill in your direct line)_ |
-| **Email** | tawanna@myrealtyline.com |
+| **Email** | tawanna@realtynewsnow.app |
 
 ### Notes (paste this verbatim into the Notes field)
 
@@ -269,7 +269,7 @@ What's NOT in v1.0 (planned for future updates):
   physical/non-digital services)
 
 If anything looks unclear during review, please email
-tawanna@myrealtyline.com — we respond within hours.
+tawanna@realtynewsnow.app — we respond within hours.
 ```
 
 ---

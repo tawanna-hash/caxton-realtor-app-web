@@ -19,7 +19,7 @@ const recentSubmissions = new Map<string, number[]>();
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 4;
 const APPROVAL_RECIPIENTS = [
-  'tawanna@myrealtyline.com',
+  'tawanna@realtynewsnow.app',
   'caroline@myrealtyline.com',
 ];
 

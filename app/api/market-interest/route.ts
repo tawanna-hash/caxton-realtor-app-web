@@ -37,7 +37,7 @@ const schema = z.object({
 const ADMIN_EMAIL =
   process.env.MARKET_INTEREST_ADMIN_EMAIL ||
   process.env.RENEWAL_ADMIN_EMAIL ||
-  'tawanna@myrealtyline.com';
+  'tawanna@realtynewsnow.app';
 
 export async function POST(req: NextRequest) {
   let body: unknown;

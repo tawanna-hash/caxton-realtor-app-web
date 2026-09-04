@@ -243,7 +243,7 @@ export default function AdminInventoryCreateForm() {
         kind,
         publication,
         submittedByName: 'Admin',
-        submittedByEmail: 'tawanna@myrealtyline.com',
+        submittedByEmail: 'tawanna@realtynewsnow.app',
         builderName: builderName.trim(),
         title: title.trim(),
         city: city.trim(),

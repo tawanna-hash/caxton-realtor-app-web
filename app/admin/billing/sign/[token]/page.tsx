@@ -28,8 +28,8 @@ export default async function SignPage({ params }: PageProps) {
           </h1>
           <p className="text-sm text-gray-600">
             This signing link has expired or is not valid. Please contact{' '}
-            <a href="mailto:tawanna@myrealtyline.com" className="text-[#5a0e5f] hover:underline">
-              tawanna@myrealtyline.com
+            <a href="mailto:tawanna@realtynewsnow.app" className="text-[#5a0e5f] hover:underline">
+              tawanna@realtynewsnow.app
             </a>{' '}
             to request a new link.
           </p>

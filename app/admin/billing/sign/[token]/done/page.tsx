@@ -61,8 +61,8 @@ export default async function SignDonePage({ params, searchParams }: PageProps) 
 
           <p className="text-xs text-gray-400">
             Questions? Contact{' '}
-            <a href="mailto:tawanna@myrealtyline.com" className="text-[#5a0e5f] hover:underline">
-              tawanna@myrealtyline.com
+            <a href="mailto:tawanna@realtynewsnow.app" className="text-[#5a0e5f] hover:underline">
+              tawanna@realtynewsnow.app
             </a>
           </p>
 

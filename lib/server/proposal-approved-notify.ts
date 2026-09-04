@@ -7,7 +7,7 @@
  *   1. AGREEMENT_SIGNED_NOTIFICATION_EMAIL env var
  *   2. ADMIN_NOTIFICATION_EMAIL env var
  *   3. EMAIL_REPLY_TO env var
- *   4. tawanna@myrealtyline.com (hard-coded fallback)
+ *   4. tawanna@realtynewsnow.app (hard-coded fallback)
  */
 
 import { sendEmail } from '@/lib/email';
@@ -25,7 +25,7 @@ function pickRecipient(): string {
     process.env.AGREEMENT_SIGNED_NOTIFICATION_EMAIL ||
     process.env.ADMIN_NOTIFICATION_EMAIL ||
     process.env.EMAIL_REPLY_TO ||
-    'tawanna@myrealtyline.com'
+    'tawanna@realtynewsnow.app'
   );
 }
 

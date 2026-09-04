@@ -72,7 +72,7 @@ All notices under this Agreement must be in writing.
 Notices to Publisher must be sent by one of the following methods:
 • personal delivery;
 • U.S. mail to: Caxton Publications, Inc., P.O. Box 81366, Austin, Texas 78708-1366; or
-• email to tawanna@myrealtyline.com or tawanna@newslinesa.com, provided that Publisher confirms receipt.
+• email to tawanna@realtynewsnow.app or tawanna@realtynewsnow.app, provided that Publisher confirms receipt.
 7.2 Notices to Advertiser or Agency
 Publisher may send notices to the email address, mailing address, or other contact information listed in the Insertion Order. Notice to Agency constitutes notice to Advertiser, and notice to Advertiser constitutes notice to Agency.
 7.3 Effectiveness

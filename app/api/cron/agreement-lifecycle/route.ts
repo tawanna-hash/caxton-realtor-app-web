@@ -308,7 +308,7 @@ export async function GET(req: Request) {
   const adminEmail =
     process.env.RENEWAL_ADMIN_EMAIL ??
     process.env.EMAIL_FROM_ADMIN ??
-    'tawanna@myrealtyline.com';
+    'tawanna@realtynewsnow.app';
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://realtynewsnow.app';
 
   // Sort within each section: expired first by how recently they expired,

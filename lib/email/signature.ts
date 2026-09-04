@@ -38,7 +38,7 @@ function buildSignatureHtml(): string {
       </div>
 
       <div style="padding-top:6px;font-size:11px;line-height:17px;color:#4b4653;">
-        <a href="mailto:tawanna@myrealtyline.com" style="color:#4b4653;text-decoration:none;">tawanna@myrealtyline.com</a>
+        <a href="mailto:tawanna@realtynewsnow.app" style="color:#4b4653;text-decoration:none;">tawanna@realtynewsnow.app</a>
         <span style="color:#9b96a2;">&nbsp; | &nbsp;</span>
         <a href="tel:+15129650057" style="color:#4b4653;text-decoration:none;">(512) 965-0057</a><br>
         P.O. Box 81366, Austin, TX 78708

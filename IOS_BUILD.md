@@ -10,7 +10,7 @@ You need ALL of these before submitting. Most can run in parallel.
 
 ### 0.1 Apple Developer Program enrollment ($99/year)
 1. Go to <https://developer.apple.com/programs/enroll/>
-2. Sign in with the Apple ID you want to own the app (recommend a business Apple ID like `tawanna@myrealtyline.com`, not personal).
+2. Sign in with the Apple ID you want to own the app (recommend a business Apple ID like `tawanna@realtynewsnow.app`, not personal).
 3. **Choose enrollment type**:
    - **Individual** — faster (sometimes same-day), seller name = your name on the App Store. Recommended for v1.
    - **Organization** — requires a D-U-N-S number (free, ~24-48h to get), seller name = your business name. We can transfer later.

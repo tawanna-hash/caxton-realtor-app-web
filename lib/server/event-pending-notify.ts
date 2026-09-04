@@ -7,7 +7,7 @@
  *   2. Gemini Facebook event detector → /api/cron/scan-fb-events
  *
  * Sends to whichever address ADMIN_NOTIFICATION_EMAIL points to, falling
- * back to EMAIL_REPLY_TO and then tawanna@myrealtyline.com so a missing
+ * back to EMAIL_REPLY_TO and then tawanna@realtynewsnow.app so a missing
  * env var doesn't silently drop notifications.
  *
  * Wrapped in try/catch in the caller — never throws.
@@ -36,7 +36,7 @@ function pickAdminAddress(): string {
   return (
     process.env.ADMIN_NOTIFICATION_EMAIL ||
     process.env.EMAIL_REPLY_TO ||
-    'tawanna@myrealtyline.com'
+    'tawanna@realtynewsnow.app'
   );
 }
 

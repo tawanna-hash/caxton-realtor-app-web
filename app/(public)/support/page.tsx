@@ -6,7 +6,7 @@ export const metadata = {
     'Get help with Realty News Now: account access, app issues, partner questions, or anything else. We respond within one business day.',
 };
 
-const SUPPORT_EMAIL = 'tawanna@myrealtyline.com';
+const SUPPORT_EMAIL = 'tawanna@realtynewsnow.app';
 
 export default function SupportPage() {
   return (

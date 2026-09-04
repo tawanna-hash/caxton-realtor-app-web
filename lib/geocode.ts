@@ -215,7 +215,7 @@ async function geocodeViaNominatim(
       headers: {
         Accept:       'application/json',
         // Nominatim policy requires a descriptive UA.
-        'User-Agent': 'CaxtonRealtorApp/1.0 (contact: tawanna@myrealtyline.com)',
+        'User-Agent': 'CaxtonRealtorApp/1.0 (contact: tawanna@realtynewsnow.app)',
       },
       signal:  AbortSignal.timeout(8000),
     });

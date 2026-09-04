@@ -9,7 +9,7 @@
 //      consumers in app/(public)/inventory|builders|communities|advertisers),
 //      so flipping the status hides the row everywhere automatically.
 //   2. Once per day at 13:00 UTC (8am Central), if any rows were flipped
-//      in the last 24h, email a digest to tawanna@myrealtyline.com.
+//      in the last 24h, email a digest to tawanna@realtynewsnow.app.
 //      Other hours just do the flip silently — no email noise.
 //
 // Grace period:
@@ -223,7 +223,7 @@ export async function GET(req: Request) {
   const subject = `${recent.length} promotion${recent.length === 1 ? '' : 's'} auto-expired \u2014 RealtyLine`;
 
   const emailResult = await sendEmail({
-    to: 'tawanna@myrealtyline.com',
+    to: 'tawanna@realtynewsnow.app',
     subject,
     html,
   });

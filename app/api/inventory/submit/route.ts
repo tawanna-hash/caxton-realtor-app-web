@@ -26,10 +26,10 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30; // seconds — covers the PDF upload + DB inserts
 
-const NOTIFY_TO = process.env.INVENTORY_NOTIFY_TO || 'tawanna@myrealtyline.com';
+const NOTIFY_TO = process.env.INVENTORY_NOTIFY_TO || 'tawanna@realtynewsnow.app';
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
 const MAX_IMG_BYTES = 10 * 1024 * 1024;
-const ADMIN_EMAIL = 'admin:tawanna@myrealtyline.com';
+const ADMIN_EMAIL = 'admin:tawanna@realtynewsnow.app';
 
 // Vercel Blob host allowlist for validating URLs submitted in the
 // admin JSON path.  The client uploads directly to blob.vercel-storage.com
