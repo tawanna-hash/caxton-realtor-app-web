@@ -946,7 +946,7 @@ export default function NewQuoteModal({ open, onClose, onDrafted }: Props) {
     }
   }
 
-  // Test-mode send: server forces recipient to Tawanna's test inbox, does NOT
+  // Test-mode send: server forces recipient to the Realty News Now test inbox, does NOT
   // update agreement.status / sent_to_email. Endpoint added in 4155b71.
   async function handleSendTest() {
     if (!createdAgreement) return;
