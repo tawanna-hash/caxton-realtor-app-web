@@ -23,6 +23,12 @@ import AdvertiserHeader from '@/components/AdvertiserHeader';
 
 type ThemeInfo = { accent: string; label: string };
 
+type CommunityMap = {
+  title: string;
+  pdfUrl: string;
+  previewImageUrl: string;
+};
+
 type Props = {
   advertiser: Advertiser;
   inventory: BuilderInventoryRow[];
@@ -30,6 +36,8 @@ type Props = {
   staff?: AdvertiserStaff[];
   eventPhotos?: EventPhotoMonth[];
   featureArticles?: FeatureArticle[];
+  isBuilderDeveloper?: boolean;
+  communityMap?: CommunityMap | null;
   theme: ThemeInfo;
   backHref: string;
 };
@@ -81,6 +89,8 @@ export default function AdvertiserDetailClient({
   staff = [],
   eventPhotos = [],
   featureArticles = [],
+  isBuilderDeveloper = false,
+  communityMap = null,
   theme,
   backHref,
 }: Props) {
@@ -164,6 +174,13 @@ export default function AdvertiserDetailClient({
           hasStaff={sortedStaff.length > 0}
           hasPromotions={promotions.length > 0}
           hasMoveInReady={listings.length > 0}
+          communityMapHref={
+            isBuilderDeveloper
+              ? communityMap
+                ? '#community-map'
+                : `/communities?builder=${encodeURIComponent(a.name)}`
+              : null
+          }
           accent={BRAND_PURPLE}
         />
 
@@ -360,6 +377,59 @@ export default function AdvertiserDetailClient({
           </section>
         )}
 
+        {communityMap && (
+          <section id="community-map" className="border-t border-gray-200 pt-8 mb-10 scroll-mt-4">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight mb-5">
+              Community Map
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-[220px_1fr] gap-5 items-center rounded-md border border-gray-200 bg-gray-50 p-4 sm:p-5">
+              <a
+                href={communityMap.pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block overflow-hidden rounded-md border border-gray-200 bg-white hover:border-gray-400 transition-colors"
+                aria-label={`Open ${communityMap.title}`}
+              >
+                {/* Static partner asset; a plain image avoids unnecessary optimization work. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={communityMap.previewImageUrl}
+                  alt={`${a.name} community map preview`}
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+              </a>
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium mb-2">
+                  Map &amp; Community Guide
+                </p>
+                <h3 className="text-lg font-semibold text-gray-900">{communityMap.title}</h3>
+                <p className="mt-2 text-sm text-gray-600 font-light leading-relaxed">
+                  View the full community map and location guide, or save the PDF for later.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <a
+                    href={communityMap.pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                    style={{ backgroundColor: BRAND_PURPLE }}
+                  >
+                    View Community Map
+                  </a>
+                  <a
+                    href={communityMap.pdfUrl}
+                    download
+                    className="inline-flex items-center justify-center rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
+                  >
+                    Download PDF
+                  </a>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
 
         {(listings.length > 0 || promotions.length > 0) && (
           <section id="listings" className="border-t border-gray-200 pt-8 mb-10 scroll-mt-4">
@@ -504,6 +574,7 @@ function SectionPills({
   hasStaff,
   hasPromotions,
   hasMoveInReady,
+  communityMapHref,
   accent,
 }: {
   advertiser: Advertiser;
@@ -514,25 +585,29 @@ function SectionPills({
   hasStaff: boolean;
   hasPromotions: boolean;
   hasMoveInReady: boolean;
+  communityMapHref: string | null;
   accent: string;
 }) {
-  const pills: { id: string; label: string }[] = [];
+  const pills: { id: string; label: string; href?: string }[] = [];
   if (hasBio) pills.push({ id: 'about', label: 'About' });
   if (hasEventPhotos) pills.push({ id: 'event-photos', label: 'Event Photos' });
   if (hasArticles) pills.push({ id: 'feature-articles', label: 'Articles' });
   if (hasLocations) pills.push({ id: 'locations', label: 'Locations' });
   if (hasStaff) pills.push({ id: 'team', label: 'Team' });
+  if (communityMapHref) {
+    pills.push({ id: 'community-map', label: 'Community Map', href: communityMapHref });
+  }
   if (hasPromotions) pills.push({ id: 'promotions', label: 'Promotions' });
   if (hasMoveInReady) pills.push({ id: 'move-in-ready-homes', label: 'Move-in Ready Homes' });
 
-  if (pills.length <= 1) return null;
+  if (pills.length === 0) return null;
 
   return (
     <nav className="flex flex-wrap gap-2 mb-8" aria-label="Section navigation">
       {pills.map((pill) => (
         <a
           key={pill.id}
-          href={`#${pill.id}`}
+          href={pill.href ?? `#${pill.id}`}
           className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium border transition-colors hover:bg-gray-50"
           style={{
             color: accent,

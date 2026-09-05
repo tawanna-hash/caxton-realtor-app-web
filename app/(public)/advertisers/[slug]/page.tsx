@@ -16,6 +16,7 @@ import { ensureBuilderInventorySchema, listBuilderInventory, type BuilderInvento
 import { listEventPhotosByAdvertiser, type EventPhotoMonth } from '@/lib/event-photos';
 import { listFeatureArticlesByAdvertiser, type FeatureArticle } from '@/lib/feature-articles';
 import { getNews, type NewsArticle } from '@/lib/server/wp-news';
+import { BUILDER_CLIENTS } from '@/lib/builder-clients';
 import AdvertiserDetailClient from './AdvertiserDetailClient';
 
 // Advertiser detail pages change infrequently (edits happen via /admin, not
@@ -25,6 +26,17 @@ import AdvertiserDetailClient from './AdvertiserDetailClient';
 // serial Neon queries on every visit. The page still revalidates in the
 // background so edits surface within ~10 min without a manual purge.
 export const revalidate = 600;
+
+const COMMUNITY_MAPS: Record<
+  string,
+  { title: string; pdfUrl: string; previewImageUrl: string }
+> = {
+  'kb-home': {
+    title: 'KB Home Communities in the Austin Area',
+    pdfUrl: '/partners/kb-home/kb-home-austin-community-map.pdf',
+    previewImageUrl: '/partners/kb-home/kb-home-austin-community-map-preview.png',
+  },
+};
 
 // Pre-render the active advertiser slugs at build time. This makes the very
 // first visit after a deploy fast too — no on-demand render. New advertisers
@@ -250,6 +262,11 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
   }
 
   const theme = getPublicationTheme(advertiser.publication);
+  const isBuilderDeveloper =
+    inventoryRows.length > 0 ||
+    BUILDER_CLIENTS.some(
+      (client) => client.value !== 'other' && client.value === advertiser.slug,
+    );
 
   return (
     <AdvertiserDetailClient
@@ -259,6 +276,8 @@ export default async function AdvertiserDetailPage({ params }: PageProps) {
       staff={staff}
       eventPhotos={eventPhotos}
       featureArticles={featureArticles}
+      isBuilderDeveloper={isBuilderDeveloper}
+      communityMap={COMMUNITY_MAPS[advertiser.slug] ?? null}
       theme={{
         accent: theme.primaryColor,
         label:
