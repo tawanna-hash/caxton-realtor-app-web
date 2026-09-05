@@ -2511,104 +2511,117 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
           ~62px pill) plus the BottomNav underneath, with breathing room.
           Was pb-44 — the bar overlapped the last paragraph on short
           articles and the "Read on website" link (BUG-18). */}
-      <div className="px-5 pt-6 pb-52 max-w-2xl mx-auto">
-        {/* Top leaderboard ad — first thing in the article column */}
-        <AdLeaderboard pub={pub} articleId={articleId} />
+      <div className="px-5 pt-6 pb-52">
+        <div className="mx-auto flex max-w-[1040px] items-start justify-center gap-10">
+          <main className="w-full min-w-0 max-w-2xl">
+            {/* Top leaderboard ad — first thing in the article column */}
+            <AdLeaderboard pub={pub} articleId={articleId} />
 
-        {/* Eyebrow */}
-        {(article.cat || article.category) && (
-          <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: info.color }}>
-            {article.cat || article.category}
-          </p>
-        )}
-
-        {/* Headline */}
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight leading-tight mb-3">
-          {headline}
-        </h1>
-
-        {/* Byline */}
-        {(author?.name || dateLong) && (
-          <div className="flex items-center gap-3 mb-2 pb-6 border-b border-gray-200">
-            {author?.avatar && (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={author.avatar}
-                alt=""
-                width={96}
-                height={96}
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  // Hide the avatar element entirely when Gravatar 404s
-                  // (author has no registered Gravatar). Avoids broken-image icon.
-                  (e.currentTarget as HTMLImageElement).style.display = 'none';
-                }}
-                className="w-16 h-16 rounded-full object-cover bg-gray-100 flex-shrink-0"
-              />
+            {/* Eyebrow */}
+            {(article.cat || article.category) && (
+              <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: info.color }}>
+                {article.cat || article.category}
+              </p>
             )}
-            <div className="min-w-0 flex-1">
-              {author?.name && (
-                <p className="text-sm text-gray-900 font-medium leading-tight">By {author.name}</p>
-              )}
-              {dateLong && (
-                <p className="text-xs text-gray-500 font-light leading-tight mt-0.5">{dateLong}</p>
-              )}
+
+            {/* Headline */}
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight leading-tight mb-3">
+              {headline}
+            </h1>
+
+            {/* Byline */}
+            {(author?.name || dateLong) && (
+              <div className="flex items-center gap-3 mb-2 pb-6 border-b border-gray-200">
+                {author?.avatar && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={author.avatar}
+                    alt=""
+                    width={96}
+                    height={96}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      // Hide the avatar element entirely when Gravatar 404s
+                      // (author has no registered Gravatar). Avoids broken-image icon.
+                      (e.currentTarget as HTMLImageElement).style.display = 'none';
+                    }}
+                    className="w-16 h-16 rounded-full object-cover bg-gray-100 flex-shrink-0"
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  {author?.name && (
+                    <p className="text-sm text-gray-900 font-medium leading-tight">By {author.name}</p>
+                  )}
+                  {dateLong && (
+                    <p className="text-xs text-gray-500 font-light leading-tight mt-0.5">{dateLong}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Article body — chunked with mid-article ads if long enough */}
+            {cleanedHtml ? (
+              showMidAds ? (
+                <>
+                  <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: chunks[0] }} />
+                  <AdRectangle pub={pub} articleId={articleId} idx={1} />
+                  <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: chunks[1] }} />
+                  <AdRectangle pub={pub} articleId={articleId} idx={2} />
+                  <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: chunks[2] }} />
+                </>
+              ) : (
+                <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: cleanedHtml }} />
+              )
+            ) : (
+              <p className="text-base text-gray-700 leading-relaxed font-light">
+                {decodeHtmlEntities(article.sum || '')}
+              </p>
+            )}
+
+            {/* Tags */}
+            <TagsRow article={article} pubColor={info.color} />
+
+            {/* Share row (icons) */}
+            <div className="mt-6">
+              <ShareRow article={article} pubColor={info.color} onCopied={() => flashToast('Link copied')} />
             </div>
-          </div>
-        )}
 
-        {/* Article body — chunked with mid-article ads if long enough */}
-        {cleanedHtml ? (
-          showMidAds ? (
-            <>
-              <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: chunks[0] }} />
-              <AdRectangle pub={pub} articleId={articleId} idx={1} />
-              <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: chunks[1] }} />
-              <AdRectangle pub={pub} articleId={articleId} idx={2} />
-              <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: chunks[2] }} />
-            </>
-          ) : (
-            <div className="caxton-article-prose" dangerouslySetInnerHTML={{ __html: cleanedHtml }} />
-          )
-        ) : (
-          <p className="text-base text-gray-700 leading-relaxed font-light">
-            {decodeHtmlEntities(article.sum || '')}
-          </p>
-        )}
+            {/* Read Next */}
+            <ReadNext
+              allArticles={allArticles || []}
+              currentId={article.id}
+              onSelect={(a) => { if (onSelectArticle) onSelectArticle(a); }}
+              pubColor={info.color}
+            />
 
-        {/* Tags */}
-        <TagsRow article={article} pubColor={info.color} />
+            {/* Read on website fallback */}
+            {article.link && (
+              <div className="mt-10 pt-6 border-t border-gray-200">
+                <a
+                  href={article.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm uppercase tracking-wider font-medium"
+                  style={{ color: info.color }}
+                >
+                  Read on {info.name} →
+                </a>
+              </div>
+            )}
 
-        {/* Share row (icons) */}
-        <div className="mt-6">
-          <ShareRow article={article} pubColor={info.color} onCopied={() => flashToast('Link copied')} />
+            {/* Article bottom ad slot (renders only when a campaign is active) */}
+            <AdSlotComponent slug="article_bottom" className="mt-10" />
+          </main>
+
+          {/* Desktop article-sidebar inventory. The bare variant preserves the
+              uploaded creative's natural aspect ratio instead of stretching it
+              to fill the rail. Hidden on mobile and tablet by design. */}
+          <aside className="hidden w-[320px] shrink-0 lg:block" aria-label="Article advertising partner">
+            <div className="sticky top-24">
+              <AdSlotComponent slug="article_sidebar_desktop" variant="bare" />
+            </div>
+          </aside>
         </div>
-
-        {/* Read Next */}
-        <ReadNext
-          allArticles={allArticles || []}
-          currentId={article.id}
-          onSelect={(a) => { if (onSelectArticle) onSelectArticle(a); }}
-          pubColor={info.color}
-        />
-
-        {/* Read on website fallback */}
-        {article.link && (
-          <div className="mt-10 pt-6 border-t border-gray-200">
-            <a
-              href={article.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm uppercase tracking-wider font-medium"
-              style={{ color: info.color }}
-            >
-              Read on {info.name} →
-            </a>
-          </div>
-        )}
-
-        {/* Article bottom ad slot (renders only when a campaign is active) */}
-        <AdSlotComponent slug="article_bottom" className="mt-10" />
       </div>
 
       {/* Sticky action bar */}
