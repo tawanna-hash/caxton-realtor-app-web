@@ -41,6 +41,9 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
   // Filter and search live in the URL so refresh preserves them.
   const [filter, setFilter] = useUrlString<PubFilter>('filter', 'all');
   const [search, setSearch] = useUrlState<string>('q', '', {
@@ -89,12 +92,48 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
     }
   }
 
+  async function handleRealtyLineImport() {
+    setImporting(true);
+    setImportError(null);
+    setImportProgress('Preparing archive…');
+    try {
+      let offset = 0;
+      let finalCount = 0;
+      while (offset < 89) {
+        const res = await fetch('/api/admin/articles/import-realtyline-archive', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ offset, limit: 15 }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(body?.error || `Import failed (${res.status})`);
+        }
+        if (Array.isArray(body?.failures) && body.failures.length > 0) {
+          throw new Error(
+            `${body.failures.length} article(s) failed in batch starting at ${offset}`,
+          );
+        }
+        offset = Number(body?.nextOffset) || offset + 15;
+        finalCount = Number(body?.database?.count) || finalCount;
+        setImportProgress(`Imported ${Math.min(offset, 89)} of 89 articles…`);
+      }
+      setImportProgress(`${finalCount || 89} RealtyLine articles imported successfully`);
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Import failed');
+    } finally {
+      setImporting(false);
+    }
+  }
+
   function handleSaved() {
     setEditing(null);
     startTransition(() => router.refresh());
   }
 
-  const busy = syncing || pending;
+  const busy = syncing || importing || pending;
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
@@ -110,43 +149,60 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <button
-            type="button"
-            onClick={handleSync}
-            disabled={busy}
-            className="inline-flex items-center gap-2 rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700/90 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] whitespace-nowrap"
-          >
-            {busy ? (
-              <>
-                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                Syncing…
-              </>
-            ) : (
-              <>
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <polyline points="23 4 23 10 17 10" />
-                  <polyline points="1 20 1 14 7 14" />
-                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
-                  <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" />
-                </svg>
-                Sync now
-              </>
-            )}
-          </button>
+          <div className="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              onClick={handleRealtyLineImport}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-md border border-brand-700 px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-700/5 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] whitespace-nowrap"
+            >
+              {importing && (
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-brand-700/30 border-t-brand-700" />
+              )}
+              {importing ? 'Importing…' : 'Import RealtyLine archive'}
+            </button>
+            <button
+              type="button"
+              onClick={handleSync}
+              disabled={busy}
+              className="inline-flex items-center gap-2 rounded-md bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700/90 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] whitespace-nowrap"
+            >
+              {syncing || pending ? (
+                <>
+                  <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  Syncing…
+                </>
+              ) : (
+                <>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="23 4 23 10 17 10" />
+                    <polyline points="1 20 1 14 7 14" />
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
+                    <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" />
+                  </svg>
+                  Sync now
+                </>
+              )}
+            </button>
+          </div>
           {syncedAt && !syncError && (
             <span className="text-xs text-gray-500">Last sync: {syncedAt}</span>
           )}
           {syncError && <span className="text-xs text-red-600">{syncError}</span>}
+          {importProgress && !importError && (
+            <span className="text-xs text-emerald-700">{importProgress}</span>
+          )}
+          {importError && <span className="text-xs text-red-600">{importError}</span>}
         </div>
       </div>
 
