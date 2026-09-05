@@ -148,7 +148,6 @@ export default function EventGallery({ months }: Props) {
               className="max-w-full max-h-[85vh] object-contain rounded"
             />
             <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-              <p className="text-white font-medium">{photos[lightboxIndex].title}</p>
               {photos[lightboxIndex].description && (
                 <p className="text-white/70 text-sm mt-1">{photos[lightboxIndex].description}</p>
               )}
