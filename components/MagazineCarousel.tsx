@@ -21,7 +21,6 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('all');
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
   // PTR nonce — see hooks/use-ptr-refresh. Bumps on every pull-to-refresh
   // so the fetch effect below re-runs.
   const ptrNonce = usePtrRefresh();
@@ -60,13 +59,6 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
     // ptrNonce intentionally retriggers the fetch on pull-to-refresh.
   }, [publication, ptrNonce]);
 
-  function scrollByCards(direction: 1 | -1) {
-    trackEvent('magazine_carousel_arrow_clicked', { direction: direction === 1 ? 'next' : 'prev', publication });
-    const el = scrollerRef.current;
-    if (!el) return;
-    el.scrollBy({ left: direction * 650, behavior: 'smooth' });
-  }
-
   if (loading) {
     return (
       <div className="px-4 py-12 bg-gray-50">
@@ -96,15 +88,67 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   }
 
   const current = magazines[0];
-  // Reorder so current issue sits in the middle of the carousel,
-  // with older issues fanning out to both sides (Texas Monthly style).
-  function centerCurrent(mags: Magazine[]): Magazine[] {
-    if (mags.length <= 1) return mags;
-    const [first, ...rest] = mags;
-    const mid = Math.floor(rest.length / 2);
-    return [...rest.slice(0, mid), first, ...rest.slice(mid)];
+  const issuesByYear = magazines.reduce<Array<{ year: number; issues: Magazine[] }>>(
+    (groups, magazine) => {
+      const group = groups.find((item) => item.year === magazine.year);
+      if (group) group.issues.push(magazine);
+      else groups.push({ year: magazine.year, issues: [magazine] });
+      return groups;
+    },
+    [],
+  );
+
+  function issueCard(magazine: Magazine, featured = false) {
+    const isCurrent = magazine.id === current.id;
+    return (
+      <div
+        key={magazine.id}
+        className={featured ? 'w-full max-w-[240px] mx-auto' : 'w-full min-w-0'}
+      >
+        <button
+          onClick={() => {
+            trackEvent('magazine_archive_issue_opened', {
+              magazine_id: magazine.id,
+              issue_label: magazine.issue_label,
+              publication,
+            });
+            onOpen(magazine);
+          }}
+          className="group block w-full text-left"
+          aria-label={`Open ${magazine.issue_label}`}
+        >
+          <div className="relative w-full aspect-[3/4] overflow-hidden border border-gray-200 bg-white shadow-sm transition duration-200 group-hover:-translate-y-1 group-hover:shadow-lg group-focus-visible:ring-2 group-focus-visible:ring-offset-2 active:scale-[0.98]">
+            {magazine.cover_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={magazine.cover_url}
+                alt={`${magazine.issue_label} cover`}
+                className="h-full w-full object-contain"
+                loading={featured ? 'eager' : 'lazy'}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-wider text-gray-400">
+                No cover
+              </div>
+            )}
+          </div>
+          <div className="mt-3 text-center">
+            <p className="text-[11px] font-medium uppercase leading-5 tracking-[0.16em] text-gray-800 sm:text-xs">
+              {magazine.issue_label}
+            </p>
+            {isCurrent && (
+              <p
+                className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                style={{ color: brandColor }}
+              >
+                Current Issue
+              </p>
+            )}
+          </div>
+        </button>
+      </div>
+    );
   }
-  const display = tab === 'current' ? [current] : centerCurrent(magazines);
 
   return (
     <div className="bg-gray-50 pt-10 pb-12">
@@ -127,69 +171,31 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
         </button>
       </div>
 
-      <div className="relative">
-        {tab === 'all' && magazines.length > 4 && (
-          <button
-            onClick={() => scrollByCards(-1)}
-            aria-label="Scroll left"
-            className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md items-center justify-center text-gray-700 hover:bg-gray-50 active:scale-95"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-          </button>
-        )}
-        {tab === 'all' && magazines.length > 4 && (
-          <button
-            onClick={() => scrollByCards(1)}
-            aria-label="Scroll right"
-            className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white shadow-md items-center justify-center text-gray-700 hover:bg-gray-50 active:scale-95"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-        )}
-
-        <div
-          ref={scrollerRef}
-          className="flex gap-4 overflow-x-auto px-6 md:px-16 pb-2 items-end"
-          style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}
-        >
-          {display.map((m) => {
-            const isCurrent = m.id === current.id;
-            return (
-              <div key={m.id} className="flex-shrink-0 flex flex-col items-center">
-                <button
-                  onClick={() => onOpen(m)}
-                  className="group block"
-                  aria-label={`Open ${m.issue_label}`}
+      {tab === 'current' ? (
+        <div className="px-5">{issueCard(current, true)}</div>
+      ) : (
+        <div className="mx-auto max-w-7xl space-y-10 px-4 sm:px-6 lg:px-8">
+          {issuesByYear.map((group) => (
+            <section key={group.year} aria-labelledby={`issues-${group.year}`}>
+              <div className="mb-5 flex items-center gap-4">
+                <h2
+                  id={`issues-${group.year}`}
+                  className="shrink-0 text-sm font-semibold tracking-[0.18em] text-gray-700"
                 >
-                  <div
-                    className={
-                      isCurrent
-                        ? 'relative w-52 h-72 overflow-hidden shadow-xl transition-transform duration-300 ease-out origin-bottom hover:-translate-y-2 hover:shadow-2xl active:scale-95 bg-white'
-                        : 'relative w-44 h-60 overflow-hidden shadow-md transition-transform duration-300 ease-out origin-bottom hover:-translate-y-2 hover:shadow-xl active:scale-95 bg-white'
-                    }
-                    style={{ transform: isCurrent ? 'scale(1.1)' : 'scale(1)' }}
-                  >
-                    {m.cover_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={m.cover_url} alt={`${m.issue_label} cover`} className="w-full h-full object-contain" loading="lazy" />
-                    ) : (
-                      <div className="flex items-center justify-center w-full h-full text-white/60 text-xs uppercase tracking-wider">No cover</div>
-                    )}
-                  </div>
-                </button>
-                <div className="mt-3 text-center" style={{ paddingTop: isCurrent ? 8 : 0 }}>
-                  <p className="text-xs uppercase tracking-[0.2em] text-gray-700 font-medium">{m.issue_label}</p>
-                  {isCurrent && (
-                    <p className="text-[10px] uppercase tracking-[0.2em] font-semibold mt-1" style={{ color: brandColor }}>
-                      Current Issue
-                    </p>
-                  )}
-                </div>
+                  {group.year}
+                </h2>
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="shrink-0 text-xs text-gray-400">
+                  {group.issues.length} {group.issues.length === 1 ? 'issue' : 'issues'}
+                </span>
               </div>
-            );
-          })}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {group.issues.map((magazine) => issueCard(magazine))}
+              </div>
+            </section>
+          ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }
