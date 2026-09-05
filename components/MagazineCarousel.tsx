@@ -21,6 +21,8 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('all');
+  const [search, setSearch] = useState('');
+  const [yearFilter, setYearFilter] = useState<string>('all');
   // PTR nonce — see hooks/use-ptr-refresh. Bumps on every pull-to-refresh
   // so the fetch effect below re-runs.
   const ptrNonce = usePtrRefresh();
@@ -88,7 +90,19 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   }
 
   const current = magazines[0];
-  const issuesByYear = magazines.reduce<Array<{ year: number; issues: Magazine[] }>>(
+  const availableYears = Array.from(new Set(magazines.map((magazine) => magazine.year))).sort(
+    (a, b) => b - a,
+  );
+  const query = search.trim().toLowerCase();
+  const filteredMagazines = magazines.filter((magazine) => {
+    if (yearFilter !== 'all' && magazine.year !== Number(yearFilter)) return false;
+    if (!query) return true;
+    return (
+      magazine.issue_label.toLowerCase().includes(query) ||
+      String(magazine.year).includes(query)
+    );
+  });
+  const issuesByYear = filteredMagazines.reduce<Array<{ year: number; issues: Magazine[] }>>(
     (groups, magazine) => {
       const group = groups.find((item) => item.year === magazine.year);
       if (group) group.issues.push(magazine);
@@ -174,26 +188,88 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
       {tab === 'current' ? (
         <div className="px-5">{issueCard(current, true)}</div>
       ) : (
-        <div className="mx-auto max-w-7xl space-y-10 px-4 sm:px-6 lg:px-8">
-          {issuesByYear.map((group) => (
-            <section key={group.year} aria-labelledby={`issues-${group.year}`}>
-              <div className="mb-5 flex items-center gap-4">
-                <h2
-                  id={`issues-${group.year}`}
-                  className="shrink-0 text-sm font-semibold tracking-[0.18em] text-gray-700"
-                >
-                  {group.year}
-                </h2>
-                <div className="h-px flex-1 bg-gray-200" />
-                <span className="shrink-0 text-xs text-gray-400">
-                  {group.issues.length} {group.issues.length === 1 ? 'issue' : 'issues'}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                {group.issues.map((magazine) => issueCard(magazine))}
-              </div>
-            </section>
-          ))}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
+            <label className="relative block">
+              <span className="sr-only">Search issues</span>
+              <svg
+                aria-hidden="true"
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search issues by month or year"
+                className="min-h-12 w-full rounded-md border border-gray-300 bg-white py-3 pl-11 pr-4 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
+              />
+            </label>
+            <label className="block">
+              <span className="sr-only">Filter issues by year</span>
+              <select
+                value={yearFilter}
+                onChange={(event) => setYearFilter(event.target.value)}
+                className="min-h-12 w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
+              >
+                <option value="all">All Years</option>
+                {availableYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {issuesByYear.length === 0 ? (
+            <div className="rounded-md border border-gray-200 bg-white px-6 py-12 text-center">
+              <p className="text-sm font-medium text-gray-700">No issues match your search.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('');
+                  setYearFilter('all');
+                }}
+                className="mt-3 text-sm font-medium underline underline-offset-4"
+                style={{ color: brandColor }}
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-10">
+              {issuesByYear.map((group) => (
+                <section key={group.year} aria-labelledby={`issues-${group.year}`}>
+                  <div className="mb-5 flex items-center gap-4">
+                    <h2
+                      id={`issues-${group.year}`}
+                      className="shrink-0 text-sm font-semibold tracking-[0.18em] text-gray-700"
+                    >
+                      {group.year}
+                    </h2>
+                    <div className="h-px flex-1 bg-gray-200" />
+                    <span className="shrink-0 text-xs text-gray-400">
+                      {group.issues.length} {group.issues.length === 1 ? 'issue' : 'issues'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                    {group.issues.map((magazine) => issueCard(magazine))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
