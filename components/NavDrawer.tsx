@@ -9,7 +9,7 @@
 // Presentational: parent owns drawerOpen state, user/auth state, and the pub
 // switch + logout handlers. This component just renders.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -165,6 +165,9 @@ type Props = {
   onPubSwitch: () => void;
 };
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
 export default function NavDrawer({
   open,
   onClose,
@@ -178,6 +181,76 @@ export default function NavDrawer({
   const pathname = usePathname();
   const router = useRouter();
   const pushSupported = usePushSupported();
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  // Element that had focus when the drawer opened (the hamburger button, in
+  // practice). Focus returns here on close so keyboard/VoiceOver users don't
+  // get dumped back at the top of the document.
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+
+  // Lock body scroll so the page underneath doesn't move while the drawer is
+  // up — matches FloaterOverflowSheet / MarketSwitcherSheet.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  // Escape closes; Tab cycles within the panel so focus can't escape behind
+  // the scrim into the page underneath.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const items = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || !panel.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  // Move focus into the panel on open, restore it on close.
+  useEffect(() => {
+    if (!open) {
+      restoreFocusRef.current?.focus();
+      restoreFocusRef.current = null;
+      return;
+    }
+    const previous = document.activeElement;
+    restoreFocusRef.current = previous instanceof HTMLElement ? previous : null;
+    // The panel animates in from translate-x-full; focus after the commit so
+    // the browser doesn't scroll the offscreen panel into view.
+    const raf = requestAnimationFrame(() => {
+      panelRef.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [open]);
+
+  // Navigating to a new route dismisses the drawer. Individual links already
+  // call onClose, but this also covers programmatic navigation (logout
+  // redirect, swipe-back gesture) so the drawer never survives a route change.
+  // Relies on the parent passing a stable onClose.
+  useEffect(() => {
+    queueMicrotask(() => { onClose(); });
+  }, [pathname, onClose]);
 
   // Collapsible parent state. Auto-open any parent whose subitem matches the
   // current pathname so users see where they are without a manual click.
@@ -200,6 +273,10 @@ export default function NavDrawer({
   return (
     <div
       className={`fixed inset-0 z-50 ${open ? 'visible' : 'invisible'}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Navigation menu"
+      aria-hidden={!open}
       style={{
         transitionDelay: open ? '0ms' : '300ms',
         transitionProperty: 'visibility',
@@ -210,28 +287,88 @@ export default function NavDrawer({
       <div
         className={`absolute inset-0 bg-black transition-opacity duration-300 ${open ? 'opacity-40' : 'opacity-0'}`}
         onClick={onClose}
+        data-testid="nav-drawer-scrim"
       />
 
-      {/* Drawer panel */}
+      {/* Drawer panel. Safe-area padding keeps the panel clear of the notch
+          (top), the home indicator (bottom) and, in landscape, the rounded
+          display corner on the leading edge — the app ships as a Capacitor
+          WebView with viewportFit=cover, so env() returns real insets. */}
       <div
-        className={`absolute inset-y-0 left-0 w-80 max-w-[85vw] overflow-y-auto shadow-2xl transition-transform duration-300 ease-out ${open ? 'translate-x-0' : '-translate-x-full'}`}
-        style={{ backgroundColor: drawerBg }}
+        ref={panelRef}
+        data-testid="nav-drawer-panel"
+        className={`absolute inset-y-0 left-0 w-80 max-w-[85vw] overflow-y-auto overscroll-contain shadow-2xl transition-transform duration-300 ease-out ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        style={{
+          backgroundColor: drawerBg,
+          paddingLeft: 'env(safe-area-inset-left, 0px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        }}
       >
         {/* Drawer header */}
-        <div className="sticky top-0 bg-black/30 backdrop-blur-sm px-4 py-3 flex items-center justify-between border-b border-white/10 z-10">
+        <div
+          className="sticky top-0 bg-black/30 backdrop-blur-sm px-4 py-3 flex items-center justify-between border-b border-white/10 z-10"
+          style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}
+        >
           <span className="text-xs uppercase tracking-[0.2em] text-white/50 font-medium">
             Realty News Now
           </span>
           <button
             onClick={onClose}
             aria-label="Close menu"
-            className="text-white/70 hover:text-white p-1.5 rounded-md hover:bg-white/10 transition"
+            className="text-white/70 hover:text-white min-h-11 min-w-11 -mr-2 flex items-center justify-center rounded-md hover:bg-white/10 transition"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
           </button>
         </div>
+
+        {/* Admin shortcut — the first thing an admin sees when the drawer
+            opens, so staff can jump straight to the dashboard instead of
+            scanning the ADMIN_GROUPS sections below. Targets
+            /admin/dashboard directly because /admin only redirects there. */}
+        {isAdmin && (
+          <div className="px-5 pt-6 pb-2">
+            <Link
+              href="/admin/dashboard"
+              onClick={onClose}
+              className="flex items-center gap-3 min-h-11 px-3 py-3 rounded-md bg-white/15 ring-1 ring-white/25 text-sm uppercase tracking-[0.1em] text-white font-medium hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 transition"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="flex-shrink-0"
+                aria-hidden
+              >
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+              <span className="flex-1">Go to Admin</span>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="flex-shrink-0 text-white/70"
+                aria-hidden
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Link>
+          </div>
+        )}
 
         {/* Publication switcher — always visible (except admin) so users
             can change markets from any page, not only /dashboard. */}
@@ -550,6 +687,34 @@ export default function NavDrawer({
                   Login
                 </Link>
               </>
+            )}
+
+            {/* Admin login — staff reach /admin/login straight from the public
+                drawer instead of bookmarking it. Shown to signed-in realtors
+                too, since staff browse the public app under their own account.
+                Deliberately muted, but a full-width 44px row so it's tappable. */}
+            {!isAdmin && (
+              <Link
+                href="/admin/login"
+                onClick={onClose}
+                className="flex w-full items-center gap-2 min-h-11 px-3 py-2.5 text-sm uppercase tracking-[0.1em] text-white/60 font-medium rounded-md hover:bg-white/10 hover:text-white/90 active:bg-white/15 transition"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                Admin Login
+              </Link>
             )}
           </div>
 

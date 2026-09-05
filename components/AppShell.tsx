@@ -32,7 +32,7 @@ import NativeAppLifecycle from '@/components/NativeAppLifecycle';
 import SwipeBackShell from '@/components/SwipeBackShell';
 import { AdSlot } from '@/components/ads/AdSlot';
 import NewsletterCTA from '@/components/NewsletterCTA';
-import { ADMIN_NAV as ADMIN_GROUPS, isAdminGroupActive as isGroupActive } from '@/lib/admin-nav';
+import { ADMIN_NAV as ADMIN_GROUPS, getAdminNavTitle, isAdminGroupActive as isGroupActive } from '@/lib/admin-nav';
 import UnreadAdsBadge from '@/components/UnreadAdsBadge';
 import BillingAlertsBadge from '@/components/BillingAlertsBadge';
 import PendingGmailBadge from '@/components/PendingGmailBadge';
@@ -228,6 +228,10 @@ export default function AppShell({
     };
   }, [pathname]);
 
+  // Stable so NavDrawer's close-on-route-change effect doesn't re-fire on
+  // every AppShell render.
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
+
   const handleLogout = useCallback(async () => {
     const logoutUrl = isAdmin ? `${API}/admin/auth/logout` : `${API}/auth/logout`;
     try {
@@ -322,13 +326,26 @@ export default function AppShell({
   return (
     <div className="min-h-screen bg-white">
       {/* ======== TOP BAR ======== */}
-      <header className={`sticky top-0 z-40 ${isAdmin ? 'bg-brand-700 text-white' : 'bg-white text-gray-900 border-b border-gray-200'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      {/* Safe-area padding keeps the sticky bar out from under the notch on
+          notched iPhones (the app ships as a Capacitor WebView with
+          viewportFit=cover, so env() resolves to real insets). Resolves to 0
+          on desktop and non-notched devices, leaving those layouts untouched. */}
+      <header
+        className={`sticky top-0 z-40 ${isAdmin ? 'bg-brand-700 text-white' : 'bg-white text-gray-900 border-b border-gray-200'}`}
+        style={{
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingLeft: 'env(safe-area-inset-left, 0px)',
+          paddingRight: 'env(safe-area-inset-right, 0px)',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-2">
           {/* Left: hamburger */}
           <button
             onClick={() => setDrawerOpen(true)}
             aria-label="Open menu"
-            className={`p-2 rounded-md transition lg:hidden ${
+            aria-expanded={drawerOpen}
+            data-testid="nav-hamburger"
+            className={`min-h-11 min-w-11 -ml-2 shrink-0 flex items-center justify-center rounded-md transition lg:hidden ${
               isAdmin
                 ? 'text-white/70 hover:text-white hover:bg-white/10'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-gray-200'
@@ -345,14 +362,23 @@ export default function AppShell({
               For signed-in (non-admin) users the title is the
               title-as-switcher (iOS HIG pattern). Tapping it opens the
               MarketSwitcherSheet. Admin keeps the static brand. */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {isAdmin ? (
               <>
-                <Link href="/admin" className="text-sm sm:text-base font-semibold tracking-tight">
+                {/* Desktop keeps the full brand lockup. Below lg the dropdown
+                    bar is behind the hamburger, so the header carries the
+                    current section title instead — otherwise every admin page
+                    looks identical on a phone. */}
+                <Link href="/admin" className="hidden lg:block text-sm sm:text-base font-semibold tracking-tight">
                   Realty News Now Admin
                 </Link>
-                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/10 text-white/60">
+                <span className="hidden lg:inline text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/10 text-white/60">
                   Internal
+                </span>
+                {/* Not a heading — every admin page already renders its own
+                    h1, and a second one would muddle the outline. */}
+                <span className="lg:hidden text-sm font-semibold tracking-tight truncate">
+                  {getAdminNavTitle(pathname)}
                 </span>
               </>
             ) : (() => {
@@ -612,7 +638,7 @@ export default function AppShell({
       {/* ======== DRAWER (extracted to NavDrawer in S18) ======== */}
       <NavDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={closeDrawer}
         pub={pub}
         drawerBg={drawerBg}
         isAdmin={isAdmin}
@@ -644,7 +670,17 @@ export default function AppShell({
           (header, drawer, BottomNav) intentionally stays put while only
           the page contents track the finger. The shell maps the AppShell
           variant to the area the swipe-back rules expect. */}
-      <main className="flex-1 pb-20">
+      {/* min-w-0 / max-w-full stop a single wide descendant (a raw table, a
+          long unbroken string) from stretching the whole document and giving
+          every page a horizontal scrollbar. Wide content should opt into
+          ResponsiveTableScroll rather than widening the shell. */}
+      <main
+        className="flex-1 pb-20 min-w-0 max-w-full"
+        style={{
+          paddingLeft: 'env(safe-area-inset-left, 0px)',
+          paddingRight: 'env(safe-area-inset-right, 0px)',
+        }}
+      >
         <SwipeBackShell area={isAdmin ? 'admin' : 'public'}>
           {children}
         </SwipeBackShell>
