@@ -488,7 +488,21 @@ const cachedSanAntonio = unstable_cache(
  * 30-minute cache.
  */
 export async function getNewsRaw(publication: Publication): Promise<NewsArticle[]> {
-  return fetchNewsArticles(publication);
+  const [archiveResult, upstreamResult] = await Promise.allSettled([
+    import('./article-archive').then(({ getArchivedArticles }) =>
+      getArchivedArticles(publication),
+    ),
+    fetchNewsArticles(publication),
+  ]);
+
+  const archived = archiveResult.status === 'fulfilled' ? archiveResult.value : [];
+  const upstream = upstreamResult.status === 'fulfilled' ? upstreamResult.value : [];
+  if (archived.length === 0 && upstreamResult.status === 'rejected') {
+    throw upstreamResult.reason;
+  }
+
+  const { mergeArchivedAndUpstream } = await import('./article-archive');
+  return mergeArchivedAndUpstream(archived, upstream);
 }
 
 /** Public-cached variant used by the public feed (kept on unstable_cache). */
@@ -497,7 +511,21 @@ async function getNewsCached(publication: Publication): Promise<NewsArticle[]> {
 }
 
 export async function getNews(publication: Publication): Promise<NewsArticle[]> {
-  const upstream = await getNewsCached(publication);
+  const [archiveResult, upstreamResult] = await Promise.allSettled([
+    import('./article-archive').then(({ getArchivedArticles }) =>
+      getArchivedArticles(publication),
+    ),
+    getNewsCached(publication),
+  ]);
+
+  const archived = archiveResult.status === 'fulfilled' ? archiveResult.value : [];
+  const upstream = upstreamResult.status === 'fulfilled' ? upstreamResult.value : [];
+  if (archived.length === 0 && upstreamResult.status === 'rejected') {
+    throw upstreamResult.reason;
+  }
+
+  const { mergeArchivedAndUpstream } = await import('./article-archive');
+  const combined = mergeArchivedAndUpstream(archived, upstream);
 
   // Apply admin overrides on top of upstream. Overrides are NOT inside the
   // unstable_cache wrapper above, so edits take effect immediately without
@@ -505,12 +533,12 @@ export async function getNews(publication: Publication): Promise<NewsArticle[]> 
   try {
     const { getAllOverridesForPublication, applyOverride } = await import('./article-overrides');
     const overrides = await getAllOverridesForPublication(publication);
-    if (overrides.size === 0) return upstream;
-    const merged = upstream.map((a) => applyOverride(a, overrides.get(a.id)));
+    if (overrides.size === 0) return combined;
+    const merged = combined.map((a) => applyOverride(a, overrides.get(a.id)));
     // Filter out hidden articles for public consumers.
     return merged.filter((a) => !(a as { hidden?: boolean }).hidden);
   } catch (err) {
     logger.warn({ err, publication }, 'Article overrides merge failed; serving upstream');
-    return upstream;
+    return combined;
   }
 }
