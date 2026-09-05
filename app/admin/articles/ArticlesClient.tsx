@@ -112,7 +112,8 @@ export default function ArticlesClient({ initialArticles, initialErrors }: Props
         }
         if (Array.isArray(body?.failures) && body.failures.length > 0) {
           throw new Error(
-            `${body.failures.length} article(s) failed in batch starting at ${offset}`,
+            body.failures[0]?.error ||
+              `${body.failures.length} article(s) failed in batch starting at ${offset}`,
           );
         }
         offset = Number(body?.nextOffset) || offset + 15;

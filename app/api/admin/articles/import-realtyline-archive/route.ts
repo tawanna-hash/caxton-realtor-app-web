@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
   const pool = getPool();
   const client = await pool.connect();
   const failures: Array<{ id: string; error: string }> = [];
+  const mediaWarnings: Array<{ id: string; url: string; error: string }> = [];
   let imported = 0;
   let uploaded = 0;
 
@@ -122,9 +123,17 @@ export async function POST(req: NextRequest) {
         const replacements = new Map<string, string>();
         await Promise.all(
           mediaUrls(article).map(async (url) => {
-            const migrated = await migrateMedia(url);
-            replacements.set(url, migrated);
-            uploaded += 1;
+            try {
+              const migrated = await migrateMedia(url);
+              replacements.set(url, migrated);
+              uploaded += 1;
+            } catch (error) {
+              mediaWarnings.push({
+                id: source.wpPostId,
+                url,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
           }),
         );
         if (article.imageUrl) article.imageUrl = replacements.get(article.imageUrl) || article.imageUrl;
@@ -199,6 +208,7 @@ export async function POST(req: NextRequest) {
       imported,
       uploaded,
       failures,
+      mediaWarnings,
       nextOffset: offset + batch.length,
       complete: offset + batch.length >= articles.length,
       database: result.rows[0],
