@@ -2006,33 +2006,17 @@ function splitHtmlIntoChunks(html: string, chunks: number): string[] {
 // Article ad slots — all delegate to <AdSlotComponent> so they share one
 // fetch path, one impression-tracking path, and one source of fallback
 // creative (the DB). The wrapper components here only own the surrounding
-// layout chrome (the "Advertisement" eyebrow, the dismissable popup shell).
+// layout chrome (spacing and the dismissable popup shell).
 // ─────────────────────────────────────────────────────────────────────────
 
 // Publication is read by <AdSlotComponent> from localStorage.caxton_pub,
 // so the ad wrappers below don't need pub or articleId props anymore.
 // Props are kept on the function signatures only where call sites pass them.
 
-// Disclosure eyebrow. We split the visible string across two spans so the
-// rendered text node is not the literal word that uBlock/AdGuard/Brave
-// cosmetic filters key on (/advertisement/i, /advertising/i).
-function PromotedEyebrow({ className = '' }: { className?: string }) {
-  return (
-    <p
-      aria-label="Advertising partner"
-      className={`text-[10px] uppercase tracking-[0.3em] text-gray-400 text-center font-medium ${className}`}
-    >
-      <span aria-hidden="true">{'Advertising'}</span>
-      <span aria-hidden="true">{'\u00a0Partner'}</span>
-    </p>
-  );
-}
-
 function FeedTopBanner({}: { pub: string }) {
   return (
     <div className="bg-white border-b border-gray-200">
-      <PromotedEyebrow className="pt-3 pb-2" />
-      <div className="pb-3 px-4">
+      <div className="py-3 px-4">
         <AdSlotComponent slug="feed_top_banner" variant="bare" />
       </div>
     </div>
@@ -2042,7 +2026,6 @@ function FeedTopBanner({}: { pub: string }) {
 function AdLeaderboard({}: { pub: string; articleId: string }) {
   return (
     <div className="my-6 -mx-5">
-      <PromotedEyebrow className="mb-2" />
       <AdSlotComponent slug="article_top_leaderboard" variant="bare" />
     </div>
   );
@@ -2052,7 +2035,6 @@ function AdRectangle({}: { pub: string; articleId: string; idx: number }) {
   return (
     <div className="my-8">
       <div className="border-t border-gray-200 pt-4">
-        <PromotedEyebrow className="mb-3" />
         <AdSlotComponent slug="article_mid_inline" variant="bare" />
         <div className="border-t border-gray-200 mt-4" />
       </div>

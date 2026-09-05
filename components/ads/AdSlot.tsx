@@ -187,6 +187,19 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
   const isInquireForm = /\/advertise\/inquire(\?|$|#)/i.test(safeHref);
   const showInquireBadge = isMailto || isInquireForm;
 
+  // Keep disclosure consistent across every app placement. Splitting the
+  // visible text preserves the existing resistance to cosmetic ad-blocker
+  // filters that key on a single literal "advertising" text node.
+  const partnerLabel = (
+    <p
+      aria-label="Advertising partner"
+      className="mb-2 text-center text-[10px] font-medium uppercase tracking-[0.3em] text-gray-400"
+    >
+      <span aria-hidden="true">{'Advertising'}</span>
+      <span aria-hidden="true">{'\u00a0Partner'}</span>
+    </p>
+  );
+
   // Note: intentionally omitting rel="sponsored" here — ad blockers (uBlock,
   // AdGuard, Brave Shields) use it as a hide selector. The link is still
   // marked rel="noopener" and the FTC disclosure is delivered via the
@@ -237,24 +250,28 @@ export function AdSlot({ slug, className = '', fallback = null, variant = 'defau
     // proportionally and visually buries adjacent content).
     return (
       <div className={`mx-auto ${className}`} style={{ maxWidth: w }}>
+        {partnerLabel}
         {creative}
       </div>
     );
   }
 
   return (
-    <div
-      className={`relative mx-auto w-full max-w-3xl overflow-hidden rounded-md border border-gray-200 bg-white ${className}`}
-    >
-      {/* Disclosure badge — split text so blocker cosmetic filters that
-          match the literal word "Ad" don't hide the whole container. */}
-      <span
-        aria-label="Promoted"
-        className="absolute right-2 top-2 z-10 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-white"
+    <div className={`mx-auto w-full max-w-3xl ${className}`}>
+      {partnerLabel}
+      <div
+        className="relative overflow-hidden rounded-md border border-gray-200 bg-white"
       >
-        <span aria-hidden="true">{'A' + 'd'}</span>
-      </span>
-      {creative}
+        {/* Disclosure badge — split text so blocker cosmetic filters that
+            match the literal word "Ad" don't hide the whole container. */}
+        <span
+          aria-label="Promoted"
+          className="absolute right-2 top-2 z-10 rounded-md bg-black/60 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-white"
+        >
+          <span aria-hidden="true">{'A' + 'd'}</span>
+        </span>
+        {creative}
+      </div>
     </div>
   );
 }
