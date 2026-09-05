@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import archiveData from '@/data/imports/realtyline-articles-20260905.json';
 import { getPool } from '@/lib/server/db/neon';
+import { requireAdmin } from '@/lib/server/auth/admin';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -26,13 +27,18 @@ interface ImportArticle {
 
 const articles = archiveData as ImportArticle[];
 
-function isAuthorized(req: NextRequest): boolean {
+async function isAuthorized(req: NextRequest): Promise<boolean> {
   const expected = process.env.BACKFILL_TOKEN;
-  if (!expected) return false;
   const supplied =
     req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ||
     req.headers.get('x-backfill-token');
-  return supplied === expected;
+  if (expected && supplied === expected) return true;
+  try {
+    await requireAdmin();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function mediaUrls(article: ImportArticle): string[] {
@@ -64,7 +70,7 @@ async function migrateMedia(url: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -201,4 +207,3 @@ export async function POST(req: NextRequest) {
     client.release();
   }
 }
-
