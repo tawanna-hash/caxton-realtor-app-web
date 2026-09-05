@@ -1437,7 +1437,9 @@ function Feed({ pub, user, onSwitch, newsRefreshNonce, onRefresh }: { pub: strin
     setNewsLoading(true);
     setNewsError(null);
     const market = pub === 'realtyline' ? 'austin' : 'san_antonio';
-    fetch(`${API}/news/${market}`)
+    // Always request the latest merged article payload. WordPress itself is
+    // cached server-side, while local admin overrides must appear immediately.
+    fetch(`${API}/news/${market}`, { cache: 'no-store' })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();

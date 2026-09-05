@@ -42,7 +42,11 @@ export const GET = withErrorHandling(async (_req: Request, ctx: Ctx) => {
     },
     {
       headers: {
-        'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+        // The WordPress portion is already protected by unstable_cache in
+        // getNews(). Do not cache this merged response: admin overrides
+        // (featured images, headlines, body edits, visibility) must be
+        // reflected immediately instead of waiting on a browser/CDN copy.
+        'Cache-Control': 'no-store, max-age=0',
       },
     },
   );
