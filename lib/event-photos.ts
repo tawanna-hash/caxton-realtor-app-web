@@ -146,7 +146,7 @@ export async function listEventPhotosGrouped(opts: {
   publication?: string;
   advertiserId?: number | null;
 }): Promise<EventPhotoMonth[]> {
-  const photos = await listEventPhotos(opts);
+  const photos = await listEventPhotos({ ...opts, limit: 2000 });
   return groupByMonth(photos);
 }
 

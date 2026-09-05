@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Trash2, Plus, ExternalLink, Upload, FolderOpen, Image as ImageIcon, ChevronDown, Folder, CheckSquare, Square, MinusSquare, X } from 'lucide-react';
 import PageTitle from '@/components/ui/PageTitle';
 import MonthPicker from './MonthPicker';
+import RealtyLineEventImageImport from './RealtyLineEventImageImport';
 import { PUB_ACTIVE, type PubId } from '@/lib/publications';
 
 type EventPhoto = {
@@ -426,6 +427,8 @@ export default function AdminEventImagesPage() {
           <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600"><X size={16} /></button>
         </div>
       )}
+
+      <RealtyLineEventImageImport onComplete={load} />
 
       {/* Selection bar */}
       {selectedPhotos.size > 0 && (

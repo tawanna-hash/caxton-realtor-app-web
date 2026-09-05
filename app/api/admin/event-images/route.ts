@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic';
 
 export const GET = withAdminTracking(async () => {
   await requireAdmin();
-  const photos = await listEventPhotos({ limit: 1000 });
+  const photos = await listEventPhotos({ limit: 2000 });
   return NextResponse.json({ photos });
 });
 
