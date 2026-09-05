@@ -1172,6 +1172,41 @@ export default function DashboardPage() {
     } catch {}
   }, [selectedArticle, hydrated]);
 
+  // A refreshed reader is initially restored from localStorage so users keep
+  // their place. That saved object can predate an admin edit (for example, a
+  // newly uploaded featured image), so replace it with the latest merged API
+  // record every time an article reader opens or is restored.
+  useEffect(() => {
+    if (!hydrated || phase !== 'article' || !selectedArticle?.id) return;
+
+    let cancelled = false;
+    const articleId = String(selectedArticle.id);
+    const market = articleId.startsWith('san_antonio-') ? 'san_antonio' : 'austin';
+
+    fetch(`${API}/news/${market}`, { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        const articles = Array.isArray(data?.articles) ? data.articles : [];
+        const freshArticle = articles.find((item: any) => String(item?.id) === articleId);
+        if (!freshArticle) return;
+
+        setSelectedArticle(freshArticle);
+        setGlobalArticles(articles);
+      })
+      .catch((error) => {
+        // Keep the saved article readable during a transient network failure.
+        console.warn(`[Article] Fresh lookup failed for ${articleId}:`, error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, phase, selectedArticle?.id]);
+
 
 
 
