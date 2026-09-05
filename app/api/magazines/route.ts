@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       WHERE publication = ${publication}
         AND page_count > 0
       ORDER BY sort_date DESC
-      LIMIT 50
+      LIMIT 200
     `;
     return NextResponse.json(rows);
   } catch (err) {

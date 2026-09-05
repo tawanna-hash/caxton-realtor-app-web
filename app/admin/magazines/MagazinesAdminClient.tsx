@@ -60,6 +60,8 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
   const [magazines, setMagazines] = useState<Magazine[]>(initialMagazines);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<string | null>(null);
 
   // Per-(magazine,variant) UI state for the GIF buttons.
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -84,6 +86,60 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
       setError(msg);
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function handleRealtyLineArchiveImport() {
+    setImporting(true);
+    setError(null);
+    setImportProgress('Preparing 87 RealtyLine issues…');
+    const failures: string[] = [];
+    let inserted = 0;
+    let updated = 0;
+    let preserved = 0;
+
+    try {
+      for (let index = 0; index < 87; index++) {
+        setImportProgress(
+          `Processing issue ${index + 1} of 87 · ${inserted} new · ${updated} updated · ${preserved} preserved`,
+        );
+        try {
+          const response = await fetch('/api/admin/magazines/import-realtyline-archive', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ index }),
+          });
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(body?.error || `Import failed (${response.status})`);
+          }
+          if (body?.status === 'inserted') inserted += 1;
+          else if (body?.status === 'updated') updated += 1;
+          else if (body?.status === 'preserved') preserved += 1;
+          if (Array.isArray(body?.warnings) && body.warnings.length > 0) {
+            failures.push(`${body.issue}: ${body.warnings.join('; ')}`);
+          }
+        } catch (issueError) {
+          failures.push(
+            `Issue ${index + 1}: ${
+              issueError instanceof Error ? issueError.message : 'unknown error'
+            }`,
+          );
+        }
+      }
+
+      setImportProgress(
+        `Finished · ${inserted} new · ${updated} updated · ${preserved} preserved${
+          failures.length ? ` · ${failures.length} warning(s)` : ''
+        }`,
+      );
+      if (failures.length) {
+        setError(`Import completed with warnings: ${failures.slice(0, 5).join(' | ')}`);
+      }
+      window.setTimeout(() => window.location.reload(), 1200);
+    } finally {
+      setImporting(false);
     }
   }
 
@@ -149,6 +205,14 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
         <div className="flex items-center justify-between mb-6">
           <PageTitle size="md">Magazines</PageTitle>
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleRealtyLineArchiveImport}
+              disabled={importing}
+              className="text-sm text-brand-700 hover:text-brand-800 px-3 py-2 border border-brand-700 rounded-md hover:bg-brand-50 disabled:opacity-60"
+            >
+              {importing ? 'Importing RealtyLine…' : 'Import RealtyLine past issues'}
+            </button>
             <Link
               href="/admin/magazines/settings"
               className="text-sm text-gray-700 hover:text-gray-900 px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
@@ -167,6 +231,12 @@ export default function MagazinesAdminClient({ initialMagazines }: Props) {
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-md mb-4">
             {error}
+          </div>
+        )}
+
+        {importProgress && (
+          <div className="bg-brand-50 border border-brand-200 text-brand-900 px-4 py-3 rounded-md mb-4">
+            {importProgress}
           </div>
         )}
 
