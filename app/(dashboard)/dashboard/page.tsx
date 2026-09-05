@@ -2508,6 +2508,14 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
       </div>
 
 
+      {/* Featured article ad — shown before the editorial image so paid
+          placement remains the first content unit beneath the app header. */}
+      <div className="px-5">
+        <div className="max-w-2xl mx-auto">
+          <AdLeaderboard pub={pub} articleId={articleId} />
+        </div>
+      </div>
+
       {/* Featured image — constrained to the same max-w-2xl column as the
           article body, so it doesn't stretch edge-to-edge on wide desktop
           windows (which also upscaled smaller source images and made them
@@ -2533,9 +2541,6 @@ function ArticleReader({ pub, article, allArticles, onBack, onLatest, onSelectAr
       <div className="px-5 pt-6 pb-52">
         <div className="mx-auto flex max-w-[1040px] items-start justify-center gap-10">
           <main className="w-full min-w-0 max-w-2xl">
-            {/* Top leaderboard ad — first thing in the article column */}
-            <AdLeaderboard pub={pub} articleId={articleId} />
-
             {/* Eyebrow */}
             {(article.cat || article.category) && (
               <p className="text-xs uppercase tracking-[0.2em] font-semibold mb-3" style={{ color: info.color }}>
