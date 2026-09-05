@@ -18,6 +18,7 @@ type ArchiveIssue = {
   sourcePdfUrl: string | null;
   sourceCoverUrl: string;
   legacyViewerUrl: string;
+  forceCover?: boolean;
 };
 
 const issues = (archiveData as ArchiveIssue[]).slice().sort(
@@ -98,6 +99,7 @@ export async function POST(req: NextRequest) {
 
   if (
     existing &&
+    !issue.forceCover &&
     isBlobUrl(existing.cover_url) &&
     (isBlobUrl(existing.reader_url) || !issue.sourcePdfUrl) &&
     Number(existing.page_count) > 0
@@ -119,7 +121,7 @@ export async function POST(req: NextRequest) {
   const warnings: string[] = [];
 
   let coverUrl = String(existing?.cover_url || '');
-  if (!isBlobUrl(coverUrl)) {
+  if (issue.forceCover || !isBlobUrl(coverUrl)) {
     const coverExt = extensionFor(issue.sourceCoverUrl, 'jpg');
     const migratedCover = await migrateAsset(
       issue.sourceCoverUrl,

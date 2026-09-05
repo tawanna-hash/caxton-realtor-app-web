@@ -73,8 +73,9 @@
     "issueLabel": "July 2011",
     "sortDate": "2011-07-01",
     "sourcePdfUrl": "https://www.realtyline.us/wp-content/uploads/2025/02/RealtyLine_July_11.pdf",
-    "sourceCoverUrl": "https://www.realtyline.us/wp-content/uploads/2025/02/RealtyLine_July_11_Page_01-1.jpg",
-    "legacyViewerUrl": "https://www.realtyline.us/pdfviewer/july-2011/"
+    "sourceCoverUrl": "https://realtynewsnow.app/imports/realtyline/covers/RealtyLine_July_11_Page_01.jpg",
+    "legacyViewerUrl": "https://www.realtyline.us/pdfviewer/july-2011/",
+    "forceCover": true
   },
   {
     "legacyId": "987508840",
