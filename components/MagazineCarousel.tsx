@@ -15,6 +15,7 @@ interface MagazineCarouselProps {
 }
 
 type Tab = 'current' | 'all';
+type SortOrder = 'newest' | 'oldest';
 
 export default function MagazineCarousel({ publication, brandColor, onOpen, onMagazinesLoaded }: MagazineCarouselProps) {
   const [magazines, setMagazines] = useState<Magazine[]>([]);
@@ -23,6 +24,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
   const [tab, setTab] = useState<Tab>('all');
   const [search, setSearch] = useState('');
   const [yearFilter, setYearFilter] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   // PTR nonce — see hooks/use-ptr-refresh. Bumps on every pull-to-refresh
   // so the fetch effect below re-runs.
   const ptrNonce = usePtrRefresh();
@@ -94,14 +96,20 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
     (a, b) => b - a,
   );
   const query = search.trim().toLowerCase();
-  const filteredMagazines = magazines.filter((magazine) => {
-    if (yearFilter !== 'all' && magazine.year !== Number(yearFilter)) return false;
-    if (!query) return true;
-    return (
-      magazine.issue_label.toLowerCase().includes(query) ||
-      String(magazine.year).includes(query)
-    );
-  });
+  const filteredMagazines = magazines
+    .filter((magazine) => {
+      if (yearFilter !== 'all' && magazine.year !== Number(yearFilter)) return false;
+      if (!query) return true;
+      return (
+        magazine.issue_label.toLowerCase().includes(query) ||
+        String(magazine.year).includes(query)
+      );
+    })
+    .sort((a, b) => {
+      const aValue = a.year * 12 + a.month;
+      const bValue = b.year * 12 + b.month;
+      return sortOrder === 'newest' ? bValue - aValue : aValue - bValue;
+    });
   const issuesByYear = filteredMagazines.reduce<Array<{ year: number; issues: Magazine[] }>>(
     (groups, magazine) => {
       const group = groups.find((item) => item.year === magazine.year);
@@ -189,7 +197,7 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
         <div className="px-5">{issueCard(current, true)}</div>
       ) : (
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 grid gap-3 sm:grid-cols-[minmax(0,1fr)_180px]">
+          <div className="mb-10 grid grid-cols-1 gap-3 md:grid-cols-3">
             <label className="relative block">
               <span className="sr-only">Search issues</span>
               <svg
@@ -215,12 +223,12 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
                 className="min-h-12 w-full rounded-md border border-gray-300 bg-white py-3 pl-11 pr-4 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
               />
             </label>
-            <label className="block">
+            <label className="relative block">
               <span className="sr-only">Filter issues by year</span>
               <select
                 value={yearFilter}
                 onChange={(event) => setYearFilter(event.target.value)}
-                className="min-h-12 w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
+                className="min-h-12 w-full appearance-none rounded-md border border-gray-300 bg-white px-4 py-3 pr-11 text-base text-gray-900 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
               >
                 <option value="all">All Years</option>
                 {availableYears.map((year) => (
@@ -229,6 +237,45 @@ export default function MagazineCarousel({ publication, brandColor, onOpen, onMa
                   </option>
                 ))}
               </select>
+              <svg
+                aria-hidden="true"
+                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </label>
+            <label className="relative block">
+              <span className="sr-only">Sort issues</span>
+              <select
+                value={sortOrder}
+                onChange={(event) => setSortOrder(event.target.value as SortOrder)}
+                className="min-h-12 w-full appearance-none rounded-md border border-gray-300 bg-white px-4 py-3 pr-11 text-base text-gray-900 outline-none transition focus:border-gray-500 focus:ring-2 focus:ring-gray-200"
+              >
+                <option value="newest">Newest to Oldest</option>
+                <option value="oldest">Oldest to Newest</option>
+              </select>
+              <svg
+                aria-hidden="true"
+                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
             </label>
           </div>
 
