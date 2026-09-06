@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { useAdmin } from '@/hooks/use-admin';
 import { adminApi } from '@/lib/admin-api';
 import { EventForm, isoToLocalInput, type EventFormData } from '../_components/EventForm';
+import EventRegistrationRegistry from '../_components/EventRegistrationRegistry';
 import type { PublicationId } from '@/lib/publications';
 
 import PageTitle from '@/components/ui/PageTitle';
@@ -177,6 +178,11 @@ export default function EditEventPage() {
           </div>
         )}
       </div>
+      <EventRegistrationRegistry
+        eventId={event.id}
+        eventTitle={event.title}
+        organizerEmail={event.organizerEmail}
+      />
       <EventForm initial={eventToForm(event)} mode="edit" />
     </div>
   );

@@ -170,6 +170,32 @@ async function _runEnsureSchema(): Promise<void> {
       ON event_registration_clicks(event_id, occurred_at DESC)
   `;
 
+  // First-party attendee registry for events that do not provide an
+  // external registration link. This contains private contact information
+  // and is only exposed through admin-authenticated routes.
+  await sql`
+    CREATE TABLE IF NOT EXISTS event_registrations (
+      id                    BIGSERIAL PRIMARY KEY,
+      event_id              INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      full_name             TEXT NOT NULL,
+      company               TEXT NOT NULL,
+      is_realtor            BOOLEAN NOT NULL DEFAULT false,
+      license_number        TEXT,
+      email                 TEXT NOT NULL,
+      mobile                TEXT NOT NULL,
+      consented_at          TIMESTAMPTZ NOT NULL,
+      notification_sent_at  TIMESTAMPTZ,
+      ip                    TEXT,
+      user_agent            TEXT,
+      registered_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CONSTRAINT event_registrations_event_email_uniq UNIQUE (event_id, email)
+    )
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_event_registrations_event
+      ON event_registrations(event_id, registered_at DESC)
+  `;
+
   // ============================================================
   // Ads dashboard (Phase 1 — May 9, 2026)
   // 15-slot ad inventory catalog, uploaded creatives, scheduled
