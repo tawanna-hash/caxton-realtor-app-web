@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import type { ArticleListItem, ArticleReport, EventListItem, EventReport, ReportOverrides } from './_types';
 import { ReportPreview, buildReportHtml, buildReportPlainText } from './_components/ReportPreview';
 import { EventReportPreview, buildEventReportHtml, buildEventReportPlainText } from './_components/EventReportPreview';
+import EventClickLog from './_components/EventClickLog';
 import AdvertisersReportTab from './_components/AdvertisersReportTab';
 import EditReportDrawer from './_components/EditReportDrawer';
 import ReportPicker, { type PickerItem } from './_components/ReportPicker';
@@ -643,6 +644,8 @@ function AdminReportsPageInner() {
               <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">Preview</p>
               <EventReportPreview report={r} overrides={overrides} />
             </div>
+
+            <EventClickLog eventId={selectedEventId} days={eventDays} />
 
             <EditReportDrawer
               open={eventEditOpen}

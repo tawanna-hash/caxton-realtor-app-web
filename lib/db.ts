@@ -140,6 +140,37 @@ async function _runEnsureSchema(): Promise<void> {
   await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ`;
 
   // ============================================================
+  // Event registration short-link clicks (Sep 2026)
+  // Every tap of the public "Register" button routes through
+  // /e/[id], which logs a row here before redirecting to the
+  // organizer's URL with UTM params. visitor_id is the PostHog
+  // anonymous distinct_id read from the ph_*_posthog cookie when
+  // present, so repeat clicks from the same browser share an id
+  // without requiring a login. Falls back to a per-request random
+  // id when the cookie is absent (e.g. ad blockers, first-party
+  // cookie disabled).
+  // ============================================================
+  await sql`
+    CREATE TABLE IF NOT EXISTS event_registration_clicks (
+      id            BIGSERIAL PRIMARY KEY,
+      event_id      INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+      visitor_id    TEXT NOT NULL,
+      ip            TEXT,
+      city          TEXT,
+      region        TEXT,
+      country       TEXT,
+      user_agent    TEXT,
+      referrer      TEXT,
+      destination_host TEXT,
+      occurred_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_event_reg_clicks_event
+      ON event_registration_clicks(event_id, occurred_at DESC)
+  `;
+
+  // ============================================================
   // Ads dashboard (Phase 1 — May 9, 2026)
   // 15-slot ad inventory catalog, uploaded creatives, scheduled
   // campaigns. See DECISIONS.md #10 (ads dashboard scope).
