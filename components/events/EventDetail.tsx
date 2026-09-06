@@ -79,13 +79,8 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
   const onRegister = () => {
     if (!registrationUrl) return;
     const trackedUrl = new URL(`/e/${event.id}`, window.location.origin).toString();
-    trackEvent('event_register_clicked', {
-      event_id: event.id,
-      event_title: event.title,
-      website: registrationUrl,
-      tracked_url: trackedUrl,
-      pub,
-    });
+    // The /e/[id] redirect records the authoritative registration click.
+    // Do not also emit it here or admin reports will double-count one tap.
     // Use the in-app browser on iOS so users stay inside Realty News Now.
     void openExternal(trackedUrl);
   };

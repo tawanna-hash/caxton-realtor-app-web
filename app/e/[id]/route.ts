@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ensureSchema, getSql } from '@/lib/db';
-import { captureServerEvent } from '@/lib/server/posthog';
+import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -57,13 +57,19 @@ export async function GET(
   destination.searchParams.set('utm_campaign', 'calendar');
   destination.searchParams.set('utm_content', `event_${event.id}`);
 
-  captureServerEvent('event_registration_redirected', `event-${event.id}`, {
+  // Use the same event name consumed by Admin > Reports > Events. Recording
+  // at the redirect makes the count authoritative and avoids browser-side
+  // analytics blockers or duplicate client/server events.
+  captureServerEvent('event_register_clicked', `event-${event.id}`, {
     event_id: event.id,
     event_title: event.title,
-    publication: event.publication,
+    pub: event.publication,
+    website: event.destination,
+    tracked_url: new URL(`/e/${event.id}`, req.url).toString(),
     destination_host: destination.hostname,
     source: 'event_short_link',
   });
+  await flushServerEvents();
 
   return NextResponse.redirect(destination, 302);
 }
