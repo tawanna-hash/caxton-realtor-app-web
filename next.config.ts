@@ -125,10 +125,6 @@ const nextConfig: NextConfig = {
       { source: '/subscriptions', destination: '/newsletter', permanent: false },
       { source: '/contact', destination: '/about', permanent: false },
       { source: '/five-points', destination: '/communities', permanent: false },
-      // Short link for sharing the public event-submission form (e.g. in
-      // flyers, social bios, email signatures) instead of the long
-      // /calendar/submit-event path.
-      { source: '/submit', destination: '/calendar/submit-event', permanent: false },
       { source: '/advertisers/:path*', destination: '/partners/:path*', permanent: true },
       // Legacy /auth/* pages replaced by the /dashboard modal auth pattern.
       // Everything routes through the dashboard, which drives the Auth.js flow.

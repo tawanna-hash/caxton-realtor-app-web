@@ -59,6 +59,7 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
   const sponsored = isSponsored(event);
   const title = decodeEntities(event.title);
   const description = decodeEntities(event.description);
+  const registrationUrl = event.link || event.website;
 
   // Action handlers
   const onAddToCalendar = () => {
@@ -76,10 +77,17 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
   };
 
   const onRegister = () => {
-    if (!event.website) return;
-    trackEvent('event_register_clicked', { event_id: event.id, event_title: event.title, website: event.website, pub });
+    if (!registrationUrl) return;
+    const trackedUrl = new URL(`/e/${event.id}`, window.location.origin).toString();
+    trackEvent('event_register_clicked', {
+      event_id: event.id,
+      event_title: event.title,
+      website: registrationUrl,
+      tracked_url: trackedUrl,
+      pub,
+    });
     // Use the in-app browser on iOS so users stay inside Realty News Now.
-    void openExternal(event.website);
+    void openExternal(trackedUrl);
   };
 
   const onShare = async () => {
@@ -255,7 +263,7 @@ export function EventDetail({ pub, event, onBack }: EventDetailProps) {
         className="fixed left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex gap-2 z-50"
         style={{ ...SW, bottom: 'calc(68px + env(safe-area-inset-bottom, 0px))' }}
       >
-        {event.website && (
+        {registrationUrl && (
           <button
             onClick={onRegister}
             className="w-full py-3 text-white text-sm font-semibold uppercase tracking-wider rounded-md"
