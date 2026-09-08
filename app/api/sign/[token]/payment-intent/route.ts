@@ -85,8 +85,18 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const totalCents = withSurcharge(baseCents);
     const surchargeCents = totalCents - baseCents;
 
-    // 1. Customer (idempotent: reuse if already on agreement; else find/create by email)
+    // 1. Customer (idempotent: reuse if already on agreement; else find/create by email).
+    // Validate stored IDs before reuse because rotating to a different Stripe account
+    // leaves agreements pointing at customers that do not exist in the active account.
     let customerId = ag.stripe_customer_id ?? null;
+    if (customerId) {
+      try {
+        const existingCustomer = await stripe.customers.retrieve(customerId);
+        if (existingCustomer.deleted) customerId = null;
+      } catch {
+        customerId = null;
+      }
+    }
     if (!customerId) {
       const email = ag.advertiser_email ?? ag.billing_email ?? undefined;
       // Search before creating to dedupe across agreements
