@@ -36,7 +36,7 @@ export function EventRegistrationModal({ eventId, eventTitle, color, onClose }: 
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch(`/api/events/${eventId}/register`, {
+      const res = await fetch(`/api/events/register/${eventId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

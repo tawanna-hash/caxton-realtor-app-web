@@ -1257,6 +1257,57 @@ async function _runEnsureSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS email_suppressions_suppressed_at_idx ON email_suppressions(suppressed_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS email_suppressions_reason_idx ON email_suppressions(reason)`;
 
+  // ---- QuickBooks Online accounting integration -------------------------
+  // Tokens are encrypted by the application before they reach these tables.
+  // One connection is stored per environment so sandbox data can never be
+  // mistaken for the later production connection.
+  await sql`
+    CREATE TABLE IF NOT EXISTS quickbooks_connections (
+      environment TEXT PRIMARY KEY CHECK (environment IN ('sandbox', 'production')),
+      realm_id TEXT NOT NULL,
+      company_name TEXT,
+      access_token_encrypted TEXT NOT NULL,
+      refresh_token_encrypted TEXT NOT NULL,
+      access_token_expires_at TIMESTAMPTZ NOT NULL,
+      refresh_token_expires_at TIMESTAMPTZ,
+      scope TEXT NOT NULL,
+      connected_by TEXT,
+      connected_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS quickbooks_entity_links (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      environment TEXT NOT NULL REFERENCES quickbooks_connections(environment) ON DELETE CASCADE,
+      local_entity_type TEXT NOT NULL CHECK (local_entity_type IN ('advertiser','invoice','payment','refund')),
+      local_entity_id TEXT NOT NULL,
+      qbo_entity_type TEXT NOT NULL CHECK (qbo_entity_type IN ('Customer','Invoice','Payment','RefundReceipt')),
+      qbo_entity_id TEXT NOT NULL,
+      qbo_sync_token TEXT,
+      last_synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (environment, local_entity_type, local_entity_id, qbo_entity_type)
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS quickbooks_entity_links_qbo_idx ON quickbooks_entity_links(environment, qbo_entity_type, qbo_entity_id)`;
+  await sql`
+    CREATE TABLE IF NOT EXISTS quickbooks_sync_log (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      environment TEXT NOT NULL,
+      operation TEXT NOT NULL,
+      local_entity_type TEXT,
+      local_entity_id TEXT,
+      qbo_entity_type TEXT,
+      qbo_entity_id TEXT,
+      status TEXT NOT NULL CHECK (status IN ('started','succeeded','failed','skipped')),
+      detail TEXT,
+      created_by TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `;
+  await sql`CREATE INDEX IF NOT EXISTS quickbooks_sync_log_created_idx ON quickbooks_sync_log(environment, created_at DESC)`;
+
   // ---- giveaway_rules.deadline_at ----------------------------------------
   // Optional per-rule cutoff. When set, autoEnrollSignupGiveaways() only
   // creates the entry if NOW() <= deadline_at. Used for "early bird" bonus
