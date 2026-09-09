@@ -51,6 +51,7 @@ export type QuickBooksStatus = {
   updatedAt: string | null;
   invoiceSyncReady: boolean;
   paymentSyncReady: boolean;
+  productionSyncEnabled: boolean;
   missingConfiguration: string[];
 };
 
@@ -68,6 +69,10 @@ const MINOR_VERSION = '75';
 
 function environment(): QuickBooksEnvironment {
   return process.env.QUICKBOOKS_ENVIRONMENT === 'production' ? 'production' : 'sandbox';
+}
+
+function productionSyncEnabled(): boolean {
+  return process.env.QUICKBOOKS_ALLOW_PRODUCTION_SYNC === 'true';
 }
 
 function siteUrl(): string {
@@ -238,6 +243,7 @@ export async function getQuickBooksStatus(): Promise<QuickBooksStatus> {
     updatedAt: iso(row?.updated_at ?? null),
     invoiceSyncReady,
     paymentSyncReady,
+    productionSyncEnabled: env === 'sandbox' || productionSyncEnabled(),
     missingConfiguration,
   };
 }
@@ -616,9 +622,15 @@ async function logSync(input: {
 export async function syncInvoiceToQuickBooks(
   invoiceId: string,
   createdBy: string,
+  confirmProduction = false,
 ): Promise<QuickBooksSyncResult> {
-  if (environment() !== 'sandbox') {
-    throw new Error('Automatic accounting sync is locked to the QuickBooks sandbox.');
+  if (environment() === 'production' && !productionSyncEnabled()) {
+    throw new Error(
+      'Live QuickBooks writes are locked. Set QUICKBOOKS_ALLOW_PRODUCTION_SYNC=true only after validation.',
+    );
+  }
+  if (environment() === 'production' && !confirmProduction) {
+    throw new Error('Live QuickBooks sync requires explicit confirmation for each invoice.');
   }
   await logSync({ operation: 'sync_invoice', invoiceId, status: 'started', createdBy });
   try {

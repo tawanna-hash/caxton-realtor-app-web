@@ -15,6 +15,7 @@ type Status = {
   updatedAt: string | null;
   invoiceSyncReady: boolean;
   paymentSyncReady: boolean;
+  productionSyncEnabled: boolean;
   missingConfiguration: string[];
 };
 
@@ -62,7 +63,7 @@ export default function QuickBooksClient() {
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(
-    params.get('connected') === '1' ? 'QuickBooks sandbox connected successfully.' : null,
+    params.get('connected') === '1' ? 'QuickBooks connected successfully.' : null,
   );
   const [error, setError] = useState<string | null>(
     params.get('error') ? `QuickBooks connection failed: ${params.get('error')}.` : null,
@@ -90,12 +91,16 @@ export default function QuickBooksClient() {
     return () => window.clearTimeout(timer);
   }, [load]);
 
-  async function post(path: string, key: string) {
+  async function post(path: string, key: string, requestBody?: Record<string, unknown>) {
     setWorking(key);
     setError(null);
     setMessage(null);
     try {
-      const response = await fetch(path, { method: 'POST' });
+      const response = await fetch(path, {
+        method: 'POST',
+        headers: requestBody ? { 'Content-Type': 'application/json' } : undefined,
+        body: requestBody ? JSON.stringify(requestBody) : undefined,
+      });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || body.message || `Request failed (${response.status})`);
       setMessage(
@@ -103,7 +108,7 @@ export default function QuickBooksClient() {
           ? `Connection verified for ${body.company?.companyName || 'QuickBooks'}.`
           : key === 'disconnect'
             ? 'QuickBooks disconnected.'
-            : 'Invoice synced to the QuickBooks sandbox.',
+            : `Invoice synced to QuickBooks ${data?.status.environment || 'company'}.`,
       );
       await load();
     } catch (err) {
@@ -115,9 +120,24 @@ export default function QuickBooksClient() {
 
   async function disconnect() {
     if (!window.confirm(
-      'Disconnect QuickBooks? Stored OAuth tokens and sync mappings for this sandbox will be removed.',
+      `Disconnect QuickBooks? Stored OAuth tokens and sync mappings for this ${
+        data?.status.environment || 'company'
+      } connection will be removed.`,
     )) return;
     await post('/api/admin/integrations/quickbooks/disconnect', 'disconnect');
+  }
+
+  async function syncInvoice(invoice: InvoiceRow) {
+    const isProduction = data?.status.environment === 'production';
+    if (isProduction && !data.status.productionSyncEnabled) return;
+    if (isProduction && !window.confirm(
+      `Create or update invoice ${invoice.number || invoice.id} in the live QuickBooks company?`,
+    )) return;
+    await post(
+      `/api/admin/integrations/quickbooks/invoices/${invoice.id}/sync`,
+      invoice.id,
+      isProduction ? { confirmProduction: true } : undefined,
+    );
   }
 
   const connectionTone = useMemo(() => {
@@ -135,12 +155,16 @@ export default function QuickBooksClient() {
           </div>
           <PageTitle size="md">QuickBooks Online</PageTitle>
           <p className="mt-1 max-w-2xl text-sm text-gray-600">
-            Connect the Intuit sandbox, then sync Realty News Now partners, invoices,
-            and Stripe payments into a controlled accounting test company.
+            Connect Realty News Now to QuickBooks, verify the company, and control
+            invoice and Stripe payment synchronization from one place.
           </p>
         </div>
-        <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-800">
-          Sandbox only
+        <span className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${
+          data?.status.environment === 'production'
+            ? 'border-red-300 bg-red-50 text-red-800'
+            : 'border-amber-300 bg-amber-50 text-amber-800'
+        }`}>
+          {data?.status.environment === 'production' ? 'Live company' : 'Sandbox'}
         </span>
       </header>
 
@@ -175,7 +199,7 @@ export default function QuickBooksClient() {
                   {data.status.connected
                     ? `Realm ${data.status.realmId} · Connected ${formatDate(data.status.connectedAt)}`
                     : data.status.configured
-                      ? 'OAuth credentials are loaded. Connect an Intuit sandbox company to continue.'
+                      ? `OAuth credentials are loaded. Connect an Intuit ${data.status.environment} company to continue.`
                       : 'Add the required server environment variables before starting OAuth.'}
                 </p>
               </div>
@@ -227,9 +251,15 @@ export default function QuickBooksClient() {
             <div className="rounded-md border border-gray-200 bg-white p-4">
               <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Invoices</div>
               <div className="mt-2 text-sm font-medium text-gray-900">
-                {data.status.invoiceSyncReady ? 'Ready' : 'Needs service item'}
+                {data.status.environment === 'production' && !data.status.productionSyncEnabled
+                  ? 'Live writes locked'
+                  : data.status.invoiceSyncReady ? 'Ready' : 'Needs service item'}
               </div>
-              <p className="mt-1 text-xs text-gray-500">Requires one QuickBooks service item for Realty News Now sales.</p>
+              <p className="mt-1 text-xs text-gray-500">
+                {data.status.environment === 'production' && !data.status.productionSyncEnabled
+                  ? 'Connection testing is read-only until production sync is explicitly enabled.'
+                  : 'Requires one QuickBooks service item for Realty News Now sales.'}
+              </p>
             </div>
             <div className="rounded-md border border-gray-200 bg-white p-4">
               <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">Stripe payments</div>
@@ -258,7 +288,9 @@ export default function QuickBooksClient() {
             <div className="border-b border-gray-200 px-5 py-4">
               <h2 className="font-semibold text-gray-900">Recent invoices</h2>
               <p className="mt-1 text-sm text-gray-600">
-                Manual sandbox sync only. Draft and void invoices are excluded.
+                {data.status.environment === 'production'
+                  ? 'Live sync requires a separate confirmation for every invoice. Draft and void invoices are excluded.'
+                  : 'Manual sandbox sync only. Draft and void invoices are excluded.'}
               </p>
             </div>
             {data.recentInvoices.length === 0 ? (
@@ -284,19 +316,19 @@ export default function QuickBooksClient() {
                         working !== null
                         || !data.status.connected
                         || !data.status.invoiceSyncReady
+                        || (data.status.environment === 'production' && !data.status.productionSyncEnabled)
                         || (invoice.status === 'paid' && !data.status.paymentSyncReady)
                       }
-                      onClick={() => post(
-                        `/api/admin/integrations/quickbooks/invoices/${invoice.id}/sync`,
-                        invoice.id,
-                      )}
+                      onClick={() => void syncInvoice(invoice)}
                       className="rounded-md bg-blue-700 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-gray-300"
                     >
                       {working === invoice.id
                         ? 'Syncing…'
                         : invoice.quickbooks_invoice_id
                           ? 'Verify sync'
-                          : 'Sync to sandbox'}
+                          : data.status.environment === 'production'
+                            ? 'Sync to live'
+                            : 'Sync to sandbox'}
                     </button>
                   </div>
                 ))}
