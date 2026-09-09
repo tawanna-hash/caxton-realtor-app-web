@@ -39,6 +39,19 @@ type QboFault = {
   };
 };
 
+export class QuickBooksApiError extends Error {
+  readonly status: number;
+  readonly intuitTid: string | null;
+
+  constructor(detail: string, status: number, intuitTid: string | null) {
+    const requestId = intuitTid ? ` (intuit_tid: ${intuitTid})` : '';
+    super(`QuickBooks request failed: ${detail}${requestId}`);
+    this.name = 'QuickBooksApiError';
+    this.status = status;
+    this.intuitTid = intuitTid;
+  }
+}
+
 export type QuickBooksStatus = {
   configured: boolean;
   environment: QuickBooksEnvironment;
@@ -131,12 +144,16 @@ function basicAuthorization(): string {
   return `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`;
 }
 
-async function parseJsonResponse<T>(response: Response): Promise<T> {
+export async function parseQuickBooksJsonResponse<T>(response: Response): Promise<T> {
   const json = await response.json().catch(() => ({})) as T & QboFault;
   if (!response.ok) {
     const first = json.Fault?.Error?.[0];
     const detail = first?.Detail || first?.Message || `HTTP ${response.status}`;
-    throw new Error(`QuickBooks request failed: ${detail}`);
+    throw new QuickBooksApiError(
+      detail,
+      response.status,
+      response.headers.get('intuit_tid'),
+    );
   }
   return json;
 }
@@ -176,7 +193,7 @@ export async function exchangeQuickBooksCode(code: string): Promise<TokenRespons
     body,
     cache: 'no-store',
   });
-  return parseJsonResponse<TokenResponse>(response);
+  return parseQuickBooksJsonResponse<TokenResponse>(response);
 }
 
 async function refreshQuickBooksTokens(refreshToken: string): Promise<TokenResponse> {
@@ -193,7 +210,7 @@ async function refreshQuickBooksTokens(refreshToken: string): Promise<TokenRespo
     }),
     cache: 'no-store',
   });
-  return parseJsonResponse<TokenResponse>(response);
+  return parseQuickBooksJsonResponse<TokenResponse>(response);
 }
 
 async function connectionRow(): Promise<ConnectionRow | null> {
@@ -340,7 +357,7 @@ async function qboRequest<T>(
       return qboRequest<T>(path, init, false);
     }
   }
-  return parseJsonResponse<T>(response);
+  return parseQuickBooksJsonResponse<T>(response);
 }
 
 export async function connectQuickBooksCompany(input: {
