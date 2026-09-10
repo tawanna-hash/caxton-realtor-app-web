@@ -146,17 +146,24 @@ function renderEmail(opts: RenderOptions): string {
     : '';
 
   const attachmentsHtml = opts.attachmentLinks && opts.attachmentLinks.length > 0
-    ? `<p style="margin: 24px 0 8px; font-size: 14px; font-weight: 600;">Attachments:</p>
-${opts.attachmentLinks.map((a) => `    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 10px;width:100%;">
+    ? `${opts.attachmentLinks.map((a) => `    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:18px 0 10px;width:auto;">
       <tr>
-        <td align="center" bgcolor="${accent}" style="border-radius:8px;">
-          <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener" style="display:block;padding:14px 20px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;line-height:20px;">
+        <td align="center" bgcolor="${accent}" style="border-radius:6px;">
+          <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener" style="display:block;padding:9px 16px;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;line-height:18px;">
             Download ${escapeHtml(a.filename)}
           </a>
         </td>
       </tr>
     </table>`).join('\n')}`
     : '';
+
+  const signatureMarker = '<!-- BEGIN Tawanna Verock signature -->';
+  const signatureStart = opts.bodyHtml.indexOf(signatureMarker);
+  const bodyWithAttachments = !attachmentsHtml
+    ? opts.bodyHtml
+    : signatureStart >= 0
+      ? `${opts.bodyHtml.slice(0, signatureStart)}${attachmentsHtml}\n${opts.bodyHtml.slice(signatureStart)}`
+      : `${opts.bodyHtml}\n${attachmentsHtml}`;
 
   return `<!doctype html>
 <html lang="en">
@@ -175,8 +182,7 @@ ${preheader}
         <div style="font-size:12px;opacity:0.85;margin-top:2px;">${tagline}</div>
       </td></tr>
       <tr><td style="padding:28px;">
-        ${opts.bodyHtml}
-        ${attachmentsHtml}
+        ${bodyWithAttachments}
       </td></tr>
       <tr><td style="padding:16px 28px 24px;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;line-height:1.6;">
         <div>You're receiving this email because you're connected with ${wordmark}.</div>
