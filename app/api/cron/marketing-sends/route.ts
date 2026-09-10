@@ -53,6 +53,8 @@ interface DueRow {
   recurrence_parent_id: string | null;
   audience_snapshot: unknown;
   reply_to_list: unknown;
+  cc: unknown;
+  bcc: unknown;
   attachments: unknown;
   attachment_link_url: string | null;
   attachment_link_label: string | null;
@@ -92,6 +94,7 @@ export async function GET(req: Request) {
     RETURNING o.id, o.campaign_id, o.subject, o.body, o.from_name, o.reply_to,
               o.preview_text, o.recurrence_interval_days, o.recurrence_until,
               o.recurrence_parent_id, o.audience_snapshot, o.reply_to_list,
+              o.cc, o.bcc,
               o.attachments, o.attachment_link_url, o.attachment_link_label, o.scheduled_for
   `) as unknown as DueRow[];
 
@@ -174,6 +177,8 @@ export async function GET(req: Request) {
       const replyTo: string | string[] | null =
         replyToList && replyToList.length > 0 ? replyToList
         : (o.reply_to ?? null);
+      const cc = Array.isArray(o.cc) ? (o.cc as string[]).filter((s) => typeof s === 'string' && s.length > 0) : [];
+      const bcc = Array.isArray(o.bcc) ? (o.bcc as string[]).filter((s) => typeof s === 'string' && s.length > 0) : [];
 
       // Attachments: fetch each from Blob URL (or inline content) at send time.
       const attachmentRefs = Array.isArray(o.attachments) ? (o.attachments as AttachmentRef[]) : [];
@@ -219,6 +224,8 @@ export async function GET(req: Request) {
         previewText: o.preview_text,
         fromName: o.from_name,
         replyTo,
+        cc,
+        bcc,
         brand,
         attachments: attachments.length > 0 ? attachments : undefined,
         attachmentLinks: attachmentRefs.length > 0
@@ -243,7 +250,7 @@ export async function GET(req: Request) {
                 campaign_id, channel, subject, body, status, scheduled_for,
                 from_name, reply_to, preview_text,
                 recurrence_interval_days, recurrence_until, recurrence_parent_id,
-                audience_snapshot, reply_to_list, attachments,
+                audience_snapshot, reply_to_list, cc, bcc, attachments,
                 attachment_link_url, attachment_link_label,
                 created_by
               ) VALUES (
@@ -252,6 +259,8 @@ export async function GET(req: Request) {
                 ${o.recurrence_interval_days}, ${o.recurrence_until}, ${parentId},
                 ${o.audience_snapshot ? JSON.stringify(o.audience_snapshot) : null}::jsonb,
                 ${o.reply_to_list ? JSON.stringify(o.reply_to_list) : null}::jsonb,
+                ${JSON.stringify(cc)}::jsonb,
+                ${JSON.stringify(bcc)}::jsonb,
                 ${o.attachments ? JSON.stringify(o.attachments) : null}::jsonb,
                 ${o.attachment_link_url}, ${o.attachment_link_label},
                 'cron:recurrence'

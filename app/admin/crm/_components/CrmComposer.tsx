@@ -97,6 +97,8 @@ type Draft = {
   fromName: string;
   replyTo: string;
   replyToList: string;
+  cc: string;
+  bcc: string;
   previewText: string;
   attachmentLinkUrl: string;
   attachmentLinkLabel: string;
@@ -154,6 +156,8 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
   const [fromName, setFromName] = useState('');
   const [replyTo, setReplyTo] = useState('');
   const [replyToList, setReplyToList] = useState(''); // comma-separated
+  const [cc, setCc] = useState('');
+  const [bcc, setBcc] = useState('');
   const [previewText, setPreviewText] = useState('');
 
   // Attachments + link
@@ -200,6 +204,8 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
       setFromName(d.fromName ?? '');
       setReplyTo(d.replyTo ?? '');
       setReplyToList(d.replyToList ?? '');
+      setCc(d.cc ?? '');
+      setBcc(d.bcc ?? '');
       setPreviewText(d.previewText ?? '');
       setAttachmentLinkUrl(d.attachmentLinkUrl ?? '');
       setAttachmentLinkLabel(d.attachmentLinkLabel ?? '');
@@ -236,6 +242,8 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
         if (typeof row.body === 'string') setBody(row.body);
         if (typeof row.from_name === 'string') setFromName(row.from_name);
         if (typeof row.reply_to === 'string') setReplyTo(row.reply_to);
+        if (Array.isArray(row.cc)) setCc(row.cc.join(', '));
+        if (Array.isArray(row.bcc)) setBcc(row.bcc.join(', '));
         if (typeof row.preview_text === 'string') setPreviewText(row.preview_text);
         if (typeof row.attachment_link_url === 'string') setAttachmentLinkUrl(row.attachment_link_url);
         if (typeof row.attachment_link_label === 'string') setAttachmentLinkLabel(row.attachment_link_label);
@@ -252,7 +260,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     if (!open) return;
     const t = setTimeout(() => {
       saveDraft({
-        subject, body, fromName, replyTo, replyToList, previewText,
+        subject, body, fromName, replyTo, replyToList, cc, bcc, previewText,
         attachmentLinkUrl, attachmentLinkLabel,
         recurrenceIntervalDays, recurrenceUntil, scheduledFor,
         publicationScope, statuses, publications, query, tag,
@@ -263,7 +271,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     }, 600);
     return () => clearTimeout(t);
   }, [
-    open, subject, body, fromName, replyTo, replyToList, previewText,
+    open, subject, body, fromName, replyTo, replyToList, cc, bcc, previewText,
     attachmentLinkUrl, attachmentLinkLabel,
     recurrenceIntervalDays, recurrenceUntil, scheduledFor,
     publicationScope, statuses, publications, query, tag,
@@ -355,6 +363,15 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
   const parseReplyToList = useCallback((): string[] => {
     return replyToList.split(',').map((s) => s.trim()).filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s));
   }, [replyToList]);
+
+  const parseCopyList = useCallback((value: string): string[] => {
+    return Array.from(new Set(
+      value
+        .split(/[\s,;]+/)
+        .map((item) => item.trim().toLowerCase())
+        .filter((item) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(item)),
+    )).slice(0, 10);
+  }, []);
 
   const parsedManualEmails = useMemo(() => {
     const seen = new Set<string>();
@@ -497,6 +514,8 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
           from_name: fromName || undefined,
           reply_to: replyTo || undefined,
           reply_to_list: parseReplyToList().length > 0 ? parseReplyToList() : undefined,
+          cc: parseCopyList(cc).length > 0 ? parseCopyList(cc) : undefined,
+          bcc: parseCopyList(bcc).length > 0 ? parseCopyList(bcc) : undefined,
           preview_text: previewText || undefined,
           attachments: attachments.length > 0
             ? attachments.map(({ filename, url, content_type }) => ({ filename, url, content_type }))
@@ -518,7 +537,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     } finally {
       setTestSending(false);
     }
-  }, [testTo, subject, body, fromName, replyTo, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel, publicationScope, includeSignature, parseReplyToList]);
+  }, [testTo, subject, body, fromName, replyTo, cc, bcc, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel, publicationScope, includeSignature, parseReplyToList, parseCopyList]);
 
   const onSubmit = useCallback(async () => {
     if (!subject || !body) {
@@ -546,6 +565,8 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
         from_name: fromName || undefined,
         reply_to: replyTo || undefined,
         reply_to_list: parseReplyToList().length > 0 ? parseReplyToList() : undefined,
+        cc: parseCopyList(cc).length > 0 ? parseCopyList(cc) : undefined,
+        bcc: parseCopyList(bcc).length > 0 ? parseCopyList(bcc) : undefined,
         preview_text: previewText || undefined,
         attachments: attachments.length > 0 ? attachments.map(({ filename, url, content_type }) => ({ filename, url, content_type })) : undefined,
         attachment_link_url: attachmentLinkUrl || undefined,
@@ -576,8 +597,8 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
     }
   }, [
     subject, body, mode, scheduledFor, recipientCount, selectedIds, parsedManualEmails,
-    fromName, replyTo, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel,
-    publicationScope, includeSignature, recurrenceIntervalDays, recurrenceUntil, parseReplyToList, onSent, onClose,
+    fromName, replyTo, cc, bcc, previewText, attachments, attachmentLinkUrl, attachmentLinkLabel,
+    publicationScope, includeSignature, recurrenceIntervalDays, recurrenceUntil, parseReplyToList, parseCopyList, onSent, onClose,
   ]);
 
   if (!open) return null;
@@ -974,6 +995,28 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                       value={replyToList}
                       onChange={(e) => setReplyToList(e.target.value)}
                       placeholder="a@x.com, b@y.com"
+                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">CC (comma separated)</label>
+                    <input
+                      type="text"
+                      value={cc}
+                      onChange={(e) => setCc(e.target.value)}
+                      placeholder="person@example.com"
+                      autoComplete="off"
+                      className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">BCC (comma separated)</label>
+                    <input
+                      type="text"
+                      value={bcc}
+                      onChange={(e) => setBcc(e.target.value)}
+                      placeholder="private-copy@example.com"
+                      autoComplete="off"
                       className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                     />
                   </div>

@@ -22,6 +22,7 @@ export interface SendEmailOptions {
   html: string;
   replyTo?: string | string[];
   cc?: string | string[];
+  bcc?: string | string[];
   attachments?: EmailAttachment[];
 }
 
@@ -53,6 +54,7 @@ export async function sendEmail(opts: SendEmailOptions): Promise<SendEmailResult
   };
   if (opts.replyTo) payload.reply_to = opts.replyTo;
   if (opts.cc) payload.cc = Array.isArray(opts.cc) ? opts.cc : [opts.cc];
+  if (opts.bcc) payload.bcc = Array.isArray(opts.bcc) ? opts.bcc : [opts.bcc];
   if (opts.attachments && opts.attachments.length > 0) {
     // Resend expects { filename, content, content_type? } with content
     // already base64-encoded by the caller.

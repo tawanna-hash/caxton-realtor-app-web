@@ -169,6 +169,8 @@ export interface DispatchInput {
   previewText?: string | null;
   fromName?: string | null;
   replyTo?: string | string[] | null;
+  cc?: string[] | null;
+  bcc?: string[] | null;
   repName?: string | null;
   brand?: 'realtyline' | 'newsline' | 'caxton';
   attachments?: Array<{ filename: string; content: string; contentType?: string }>;
@@ -215,6 +217,8 @@ export async function dispatchOutreach(input: DispatchInput): Promise<DispatchRe
       brand: input.brand,
       from,
       replyTo: input.replyTo ?? undefined,
+      cc: input.cc ?? undefined,
+      bcc: input.bcc ?? undefined,
       attachments: input.attachments,
       attachmentLinks: input.attachmentLinks,
     });

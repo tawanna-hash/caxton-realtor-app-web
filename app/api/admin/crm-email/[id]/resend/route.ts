@@ -75,7 +75,7 @@ export const POST = withAdminTracking(async function POST(_req: NextRequest, { p
     INSERT INTO marketing_campaign_outreach (
       campaign_id, channel, subject, body, status,
       recipient_ids, recipient_count, audience_sources, subscriber_ids, manual_emails,
-      from_name, reply_to, reply_to_list, preview_text,
+      from_name, reply_to, reply_to_list, cc, bcc, preview_text,
       attachments, attachment_link_url, attachment_link_label,
       audience_snapshot,
       created_by
@@ -96,6 +96,8 @@ export const POST = withAdminTracking(async function POST(_req: NextRequest, { p
       ${orig.from_name},
       ${orig.reply_to},
       ${JSON.stringify(orig.reply_to_list ?? [])}::jsonb,
+      ${JSON.stringify(orig.cc ?? [])}::jsonb,
+      ${JSON.stringify(orig.bcc ?? [])}::jsonb,
       ${orig.preview_text},
       ${JSON.stringify(orig.attachments ?? [])}::jsonb,
       ${orig.attachment_link_url},
@@ -111,6 +113,8 @@ export const POST = withAdminTracking(async function POST(_req: NextRequest, { p
   const origAttachments = (orig.attachments as AttachmentRef[] | undefined) ?? undefined;
   const attachments = await resolveAttachments(origAttachments);
   const replyToList = Array.isArray(orig.reply_to_list) ? (orig.reply_to_list as string[]) : null;
+  const cc = Array.isArray(orig.cc) ? (orig.cc as string[]) : [];
+  const bcc = Array.isArray(orig.bcc) ? (orig.bcc as string[]) : [];
 
   const result = await dispatchOutreach({
     outreachId: newId,
@@ -119,6 +123,8 @@ export const POST = withAdminTracking(async function POST(_req: NextRequest, { p
     previewText: (orig.preview_text as string | null) ?? undefined,
     fromName: (orig.from_name as string | null) ?? undefined,
     replyTo: replyToList ?? ((orig.reply_to as string | null) ?? undefined),
+    cc,
+    bcc,
     attachments: attachments.length > 0 ? attachments : undefined,
     attachmentLinks: origAttachments && origAttachments.length > 0
       ? origAttachments

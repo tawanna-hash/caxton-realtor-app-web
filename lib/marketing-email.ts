@@ -272,6 +272,8 @@ export function buildEmail(input: BuildEmailInput): BuiltEmail {
 export async function sendOneRecipient(input: BuildEmailInput & {
   from?: string;
   replyTo?: string | string[];
+  cc?: string | string[];
+  bcc?: string | string[];
   attachments?: Array<{ filename: string; content: string; contentType?: string }>;
 }) {
   const built = buildEmail(input);
@@ -279,6 +281,8 @@ export async function sendOneRecipient(input: BuildEmailInput & {
     to: input.recipient.email,
     from: input.from,
     replyTo: input.replyTo,
+    cc: input.cc,
+    bcc: input.bcc,
     subject: built.subject,
     html: built.html,
     attachments: input.attachments,
