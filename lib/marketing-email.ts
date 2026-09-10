@@ -147,11 +147,15 @@ function renderEmail(opts: RenderOptions): string {
 
   const attachmentsHtml = opts.attachmentLinks && opts.attachmentLinks.length > 0
     ? `<p style="margin: 24px 0 8px; font-size: 14px; font-weight: 600;">Attachments:</p>
-    <ul style="margin: 0 0 16px 20px; padding: 0; font-size: 14px;">
-${opts.attachmentLinks.map((a) => `      <li style="margin: 4px 0;">
-        <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener" style="color: ${accent}; text-decoration: underline;">${escapeHtml(a.filename)}</a>
-      </li>`).join('\n')}
-    </ul>`
+${opts.attachmentLinks.map((a) => `    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 10px;width:100%;">
+      <tr>
+        <td align="center" bgcolor="${accent}" style="border-radius:8px;">
+          <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener" style="display:block;padding:14px 20px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;line-height:20px;">
+            Download ${escapeHtml(a.filename)}
+          </a>
+        </td>
+      </tr>
+    </table>`).join('\n')}`
     : '';
 
   return `<!doctype html>

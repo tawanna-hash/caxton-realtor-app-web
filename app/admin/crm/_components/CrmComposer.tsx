@@ -984,7 +984,9 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
             {/* Attachments */}
             <section className="mb-5 border-t border-gray-200 pt-5">
               <h3 className="text-sm font-semibold text-gray-900">Attachments</h3>
-              <p className="mt-0.5 text-xs text-gray-500">Files upload to Vercel Blob and are linked in the email (no 4.5 MB body limit).</p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                Uploaded files automatically appear as download buttons in the email.
+              </p>
               <div className="mt-2 space-y-2">
                 {attachments.map((a, i) => (
                   <div key={a.url} className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs">
@@ -1009,7 +1011,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
 
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">Attachment link URL (button)</label>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">Additional button URL (optional)</label>
                   <input
                     type="url"
                     value={attachmentLinkUrl}
@@ -1019,7 +1021,7 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">Button label</label>
+                  <label className="block text-xs font-medium uppercase tracking-wide text-gray-500">Additional button label</label>
                   <input
                     type="text"
                     value={attachmentLinkLabel}
