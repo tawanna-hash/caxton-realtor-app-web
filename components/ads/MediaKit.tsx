@@ -13,6 +13,7 @@ import {
   APP_AD_SLOTS,
   PACKAGES,
   EBLASTS,
+  PRINT_AD_SPECS,
   PRINT_DEADLINES,
   RATE_MATRIX,
   FREQ_LABELS,
@@ -101,6 +102,7 @@ export default function MediaKit({ mode = 'admin' }: { mode?: 'admin' | 'public'
         <AudienceSection activePub={activePub} />
         <ExpansionSection />
         {activePub.hasPrint && <RateMatrixSection />}
+        {activePub.hasPrint && <PrintSpecsSection />}
         {activePub.hasPrint && <PackagesSection />}
         <DigitalSlotsSection activePub={activePub} mode={mode} />
         <EblastsSection activePub={activePub} />
@@ -253,6 +255,40 @@ function RateMatrixSection() {
             ))}
           </tbody>
         </table>
+      </div>
+    </section>
+  );
+}
+
+function PrintSpecsSection() {
+  return (
+    <section className="rounded-md bg-white p-6 ring-1 ring-gray-200">
+      <div className="mb-4">
+        <div className="text-xs font-semibold uppercase tracking-wider text-brand-700">Creative requirements</div>
+        <h2 className="mt-1 text-lg font-semibold text-gray-900">Print ad specifications</h2>
+        <p className="mt-1 text-sm text-gray-700">
+          Submit finished artwork at the exact dimensions below. Measurements are listed as width across by height down.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {PRINT_AD_SPECS.map((spec) => (
+          <article key={spec.size} className="rounded-md bg-gray-50 p-4 ring-1 ring-gray-200">
+            <h3 className="text-base font-semibold text-brand-700">{spec.size}</h3>
+            <div className="mt-3 space-y-3">
+              {spec.layouts.map((layout) => (
+                <div key={layout.orientation}>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    {layout.orientation}
+                  </div>
+                  <div className="mt-0.5 text-sm font-medium leading-5 text-gray-900">
+                    {layout.dimensions}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   );

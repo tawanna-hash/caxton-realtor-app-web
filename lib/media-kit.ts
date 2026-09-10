@@ -23,6 +23,36 @@ export interface Package {
   sizes: AdSizeRate[];
 }
 
+export interface PrintAdSpec {
+  size: string;
+  layouts: Array<{
+    orientation: string;
+    dimensions: string;
+  }>;
+}
+
+export const PRINT_AD_SPECS: PrintAdSpec[] = [
+  {
+    size: 'Full page',
+    layouts: [
+      { orientation: 'Full page', dimensions: '10 inches across × 11 inches down' },
+    ],
+  },
+  {
+    size: '1/2 page',
+    layouts: [
+      { orientation: 'Vertical', dimensions: '5 inches across × 11 inches down' },
+      { orientation: 'Horizontal', dimensions: '10 inches across × 5.25 inches down' },
+    ],
+  },
+  {
+    size: '1/4 page',
+    layouts: [
+      { orientation: 'Quarter page', dimensions: '5 inches across × 5.25 inches down' },
+    ],
+  },
+];
+
 export interface EBlast {
   name: string;
   /** Default / Austin / Newsline San Antonio price (legacy single-market value). */
@@ -466,9 +496,9 @@ export const PACKAGES: Package[] = [
     popular: false,
     features: ['Ad Creative in Print & Digital Editions'],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11.0833 in',                        price: 1440 },
-      { size: 'Half-Page',     dim: '10 × 5.25 in or 4.8333 × 11.0833 in',    price: 1150 },
-      { size: 'Quarter-Page',  dim: '4.8333 × 5.25 in',                       price:  880 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1440 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price: 1150 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  880 },
     ],
   },
   {
@@ -483,9 +513,9 @@ export const PACKAGES: Package[] = [
       'Unlimited Calendar of Events Entries Online',
     ],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11.0833 in',                        price: 1205 },
-      { size: 'Half-Page',     dim: '10 × 5.25 in or 4.8333 × 11.0833 in',    price:  915 },
-      { size: 'Quarter-Page',  dim: '4.8333 × 5.25 in',                       price:  645 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1205 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  915 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  645 },
     ],
   },
   {
@@ -505,9 +535,9 @@ export const PACKAGES: Package[] = [
       'Builder/Developer Inventory in Weekly e-Blast',
     ],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11.0833 in',                        price: 1140 },
-      { size: 'Half-Page',     dim: '10 × 5.25 in or 4.8333 × 11.0833 in',    price:  845 },
-      { size: 'Quarter-Page',  dim: '4.8333 × 5.25 in',                       price:  575 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1140 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  845 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  575 },
     ],
   },
   {
@@ -527,9 +557,9 @@ export const PACKAGES: Package[] = [
       'Builder/Developer Inventory in Weekly e-Blast',
     ],
     sizes: [
-      { size: 'Full Page',     dim: '10 × 11.0833 in',                        price: 1050 },
-      { size: 'Half-Page',     dim: '10 × 5.25 in or 4.8333 × 11.0833 in',    price:  755 },
-      { size: 'Quarter-Page',  dim: '4.8333 × 5.25 in',                       price:  485 },
+      { size: 'Full Page',     dim: '10 × 11 in',                  price: 1050 },
+      { size: 'Half-Page',     dim: '5 × 11 in or 10 × 5.25 in',   price:  755 },
+      { size: 'Quarter-Page',  dim: '5 × 5.25 in',                 price:  485 },
     ],
   },
   {
@@ -552,7 +582,7 @@ export const PACKAGES: Package[] = [
       'Logo & Link — Weekly Emails',
     ],
     sizes: [
-      { size: 'Full Page', dim: '10 × 11.0833 in', price: 1680 },
+      { size: 'Full Page', dim: '10 × 11 in', price: 1680 },
     ],
   },
 ];
