@@ -36,6 +36,16 @@ type Attachment = {
   size?: number;
 };
 
+type RewriteMode = 'polish' | 'shorten' | 'friendly' | 'persuasive';
+
+type RewriteSuggestion = {
+  subject: string;
+  previewText: string;
+  body: string;
+};
+
+type OriginalMessage = RewriteSuggestion;
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -70,6 +80,13 @@ const STATUS_OPTIONS: Array<{ value: AdvertiserStatus; label: string }> = [
 ];
 
 const PUB_OPTIONS: PublicationKey[] = [...PUBLICATION_KEYS];
+
+const REWRITE_OPTIONS: Array<{ value: RewriteMode; label: string; description: string }> = [
+  { value: 'polish', label: 'Polish', description: 'Clearer and more professional' },
+  { value: 'shorten', label: 'Shorten', description: 'Tighter and easier to scan' },
+  { value: 'friendly', label: 'Friendlier', description: 'Warmer and more conversational' },
+  { value: 'persuasive', label: 'More persuasive', description: 'Stronger value and call to action' },
+];
 
 const DRAFT_KEY = 'crm-composer-draft-v1';
 
@@ -165,6 +182,12 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
   const [submitErr, setSubmitErr] = useState<string | null>(null);
   const [showTokenMenu, setShowTokenMenu] = useState(false);
   const [restoredDraft, setRestoredDraft] = useState(false);
+  const [rewriteOpen, setRewriteOpen] = useState(false);
+  const [rewriteMode, setRewriteMode] = useState<RewriteMode>('polish');
+  const [rewriteLoading, setRewriteLoading] = useState(false);
+  const [rewriteError, setRewriteError] = useState<string | null>(null);
+  const [rewriteSuggestion, setRewriteSuggestion] = useState<RewriteSuggestion | null>(null);
+  const [originalMessage, setOriginalMessage] = useState<OriginalMessage | null>(null);
 
   // ── Restore draft on open ─────────────────────────────────────
   useEffect(() => {
@@ -379,6 +402,54 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
 
 <!-- signature-here -->`);
   }, []);
+
+  const requestRewrite = useCallback(async () => {
+    if (!subject.trim() && !body.replace(/<[^>]*>/g, '').trim()) {
+      setRewriteError('Add a subject or message before requesting a rewrite.');
+      return;
+    }
+
+    setRewriteLoading(true);
+    setRewriteError(null);
+    try {
+      const response = await fetch('/api/admin/crm-email/rewrite', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mode: rewriteMode, subject, previewText, body }),
+      });
+      const data = await response.json().catch(() => null) as
+        | { suggestion?: RewriteSuggestion; error?: string }
+        | null;
+      if (!response.ok || !data?.suggestion) {
+        throw new Error(data?.error ?? 'Could not create a rewrite suggestion.');
+      }
+      setRewriteSuggestion(data.suggestion);
+    } catch (error) {
+      setRewriteSuggestion(null);
+      setRewriteError(error instanceof Error ? error.message : 'Could not create a rewrite suggestion.');
+    } finally {
+      setRewriteLoading(false);
+    }
+  }, [body, previewText, rewriteMode, subject]);
+
+  const applyRewrite = useCallback(() => {
+    if (!rewriteSuggestion) return;
+    setOriginalMessage({ subject, previewText, body });
+    setSubject(rewriteSuggestion.subject);
+    setPreviewText(rewriteSuggestion.previewText);
+    setBody(rewriteSuggestion.body);
+    setRewriteSuggestion(null);
+    setRewriteError(null);
+    setRewriteOpen(false);
+  }, [body, previewText, rewriteSuggestion, subject]);
+
+  const undoRewrite = useCallback(() => {
+    if (!originalMessage) return;
+    setSubject(originalMessage.subject);
+    setPreviewText(originalMessage.previewText);
+    setBody(originalMessage.body);
+    setOriginalMessage(null);
+  }, [originalMessage]);
 
   const onUpload = useCallback(async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -671,9 +742,25 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <label className="text-xs font-medium uppercase tracking-wide text-gray-500">Body</label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        data-testid="crm-rewrite-toggle"
+                        aria-expanded={rewriteOpen}
+                        onClick={() => {
+                          setRewriteOpen((current) => !current);
+                          setRewriteError(null);
+                        }}
+                        className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
+                          rewriteOpen
+                            ? 'border-purple-600 bg-purple-50 text-purple-700'
+                            : 'border-purple-300 bg-white text-purple-700 hover:bg-purple-50'
+                        }`}
+                      >
+                        Rewrite
+                      </button>
                       <button
                         type="button"
                         onClick={insertSignatureNow}
@@ -708,6 +795,139 @@ export default function CrmComposer({ open, onClose, rows, adminEmail, onSent, i
                     </div>
                     </div>
                   </div>
+                  {originalMessage && (
+                    <div
+                      className="mt-2 flex items-center justify-between gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900"
+                      role="status"
+                    >
+                      <span>Rewrite applied to this draft.</span>
+                      <button
+                        type="button"
+                        data-testid="crm-rewrite-undo"
+                        onClick={undoRewrite}
+                        className="shrink-0 font-semibold underline decoration-emerald-400 underline-offset-2 hover:text-emerald-700"
+                      >
+                        Undo
+                      </button>
+                    </div>
+                  )}
+                  {rewriteOpen && (
+                    <div
+                      data-testid="crm-rewrite-panel"
+                      className="mt-2 rounded-lg border border-purple-200 bg-purple-50/60 p-3"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <div className="text-sm font-semibold text-gray-900">Rewrite suggestion</div>
+                          <p className="mt-0.5 text-xs text-gray-600">
+                            Choose a direction. Your draft stays unchanged until you apply it.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRewriteOpen(false);
+                            setRewriteSuggestion(null);
+                            setRewriteError(null);
+                          }}
+                          className="rounded px-2 py-1 text-xs text-gray-600 hover:bg-white hover:text-gray-900"
+                          aria-label="Close rewrite suggestions"
+                        >
+                          Close
+                        </button>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {REWRITE_OPTIONS.map((option) => {
+                          const selected = rewriteMode === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              data-testid={`crm-rewrite-mode-${option.value}`}
+                              aria-pressed={selected}
+                              onClick={() => {
+                                setRewriteMode(option.value);
+                                setRewriteSuggestion(null);
+                                setRewriteError(null);
+                              }}
+                              className={`rounded-md border px-2 py-2 text-left transition-colors ${
+                                selected
+                                  ? 'border-purple-600 bg-white text-purple-800 shadow-sm'
+                                  : 'border-gray-200 bg-white/70 text-gray-700 hover:border-purple-300'
+                              }`}
+                            >
+                              <span className="block text-xs font-semibold">{option.label}</span>
+                              <span className="mt-0.5 block text-[11px] leading-4 text-gray-500">{option.description}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          data-testid="crm-rewrite-generate"
+                          onClick={requestRewrite}
+                          disabled={rewriteLoading}
+                          className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {rewriteLoading ? 'Writing suggestion…' : rewriteSuggestion ? 'Try again' : 'Suggest rewrite'}
+                        </button>
+                        <span className="text-[11px] text-gray-500">Tokens, links, and signature placement are protected.</span>
+                      </div>
+
+                      {rewriteError && (
+                        <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
+                          {rewriteError}
+                        </div>
+                      )}
+
+                      {rewriteSuggestion && (
+                        <div data-testid="crm-rewrite-result" className="mt-3 overflow-hidden rounded-md border border-gray-200 bg-white">
+                          <div className="border-b border-gray-200 px-3 py-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Suggested subject</div>
+                            <div className="mt-0.5 text-sm font-medium text-gray-900">{rewriteSuggestion.subject || 'No subject'}</div>
+                          </div>
+                          {rewriteSuggestion.previewText && (
+                            <div className="border-b border-gray-200 px-3 py-2">
+                              <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Suggested preview text</div>
+                              <div className="mt-0.5 text-xs text-gray-700">{rewriteSuggestion.previewText}</div>
+                            </div>
+                          )}
+                          <div className="px-3 py-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Suggested body</div>
+                            <div
+                              className="mt-1 max-h-56 overflow-y-auto text-sm leading-6 text-gray-800 [&_a]:text-purple-700 [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
+                              dangerouslySetInnerHTML={{ __html: rewriteSuggestion.body }}
+                            />
+                          </div>
+                          <div className="flex flex-wrap justify-end gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2">
+                            <button
+                              type="button"
+                              data-testid="crm-rewrite-keep-original"
+                              onClick={() => {
+                                setRewriteSuggestion(null);
+                                setRewriteOpen(false);
+                                setRewriteError(null);
+                              }}
+                              className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+                            >
+                              Keep original
+                            </button>
+                            <button
+                              type="button"
+                              data-testid="crm-rewrite-apply"
+                              onClick={applyRewrite}
+                              className="rounded-md bg-purple-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-800"
+                            >
+                              Apply suggestion
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="mt-1">
                     <RichTextEditor value={body} onChange={setBody} />
                   </div>
