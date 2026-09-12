@@ -5,6 +5,10 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/cron/recurring-invoices",
+      "schedule": "0 8 * * *"
+    },
+    {
       "path": "/api/cron/sync-advertisers",
       "schedule": "0 * * * *"
     },

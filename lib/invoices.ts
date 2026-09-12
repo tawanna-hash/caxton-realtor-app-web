@@ -48,9 +48,11 @@ export const INVOICE_PATCHABLE_FIELDS = [
   'amount_cents','tax_cents',
   'status',
   'stripe_invoice_id','stripe_payment_intent_id','stripe_payment_link_url',
+  'stripe_checkout_session_id','stripe_customer_id',
   'issued_at','due_date','paid_at','voided_at',
   'bill_to_name','bill_to_email','bill_to_address',
   'memo','line_items',
+  'last_reminder_sent_at','reminder_count',
 ] as const;
 export const INVOICE_STATUS_VALUES = new Set<InvoiceStatus>([
   'draft','sent','paid','overdue','void',
@@ -80,3 +82,36 @@ export function formatCents(cents: number | null | undefined): string {
   if (cents == null) return '—';
   return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
+
+// ── Accounts Receivable aging ──────────────────────────────────────
+
+export type AgingBucket = 'current' | 'd1_30' | 'd31_60' | 'd61_90' | 'd90_plus';
+
+export interface AgingBucketTotals {
+  current: number;   // not yet due, cents
+  d1_30: number;      // 1-30 days past due, cents
+  d31_60: number;     // 31-60 days past due, cents
+  d61_90: number;     // 61-90 days past due, cents
+  d90_plus: number;   // 90+ days past due, cents
+}
+
+export function emptyAgingTotals(): AgingBucketTotals {
+  return { current: 0, d1_30: 0, d31_60: 0, d61_90: 0, d90_plus: 0 };
+}
+
+/** Classify an unpaid invoice's outstanding balance into an aging bucket, given days past due (negative = not yet due). */
+export function agingBucketForDaysPastDue(daysPastDue: number): AgingBucket {
+  if (daysPastDue <= 0) return 'current';
+  if (daysPastDue <= 30) return 'd1_30';
+  if (daysPastDue <= 60) return 'd31_60';
+  if (daysPastDue <= 90) return 'd61_90';
+  return 'd90_plus';
+}
+
+export const AGING_BUCKET_LABELS: Record<AgingBucket, string> = {
+  current: 'Current',
+  d1_30: '1–30 days',
+  d31_60: '31–60 days',
+  d61_90: '61–90 days',
+  d90_plus: '90+ days',
+};

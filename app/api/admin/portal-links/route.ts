@@ -71,6 +71,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       ? (body.purpose as PortalLinkPurpose)
       : 'login';
   const sendEmail = body.send_email !== false; // default true
+  const entityId = typeof body.entity_id === 'string' && body.entity_id ? body.entity_id : null;
 
   try {
     await ensureSchema();
@@ -96,14 +97,15 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     const inserted = (await sql`
       INSERT INTO portal_magic_links (
         advertiser_id, token_hash, purpose, link_expires_at,
-        sent_to_email, created_by
+        sent_to_email, created_by, entity_id
       ) VALUES (
         ${advertiserId},
         ${tokenHash},
         ${purpose},
         ${linkExpires},
         ${sendTo},
-        ${admin.email ?? null}
+        ${admin.email ?? null},
+        ${entityId}
       )
       RETURNING id
     `) as unknown as { id: string }[];

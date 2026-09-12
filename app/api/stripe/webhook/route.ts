@@ -133,6 +133,13 @@ async function handlePaymentSucceeded(
     return;
   }
 
+  // Invoice payment branch — embedded/hosted Checkout created by
+  // /api/portal/invoices/[id]/checkout, keyed by metadata.invoice_id.
+  if (pi.metadata?.source === 'invoice_payment') {
+    await handleInvoicePaymentSucceeded(sql, pi);
+    return;
+  }
+
   const agreementId = pi.metadata?.agreement_id;
   if (!agreementId) {
     console.warn('[stripe-webhook] payment_intent.succeeded missing agreement_id metadata; pi:', pi.id);
@@ -329,10 +336,55 @@ async function handleSelfServePaymentSucceeded(
   console.log('[stripe-webhook] self-serve paid, pending approval \u2014 agreement', ag.id, 'pi:', pi.id);
 }
 
+async function handleInvoicePaymentSucceeded(
+  sql: ReturnType<typeof getSql>,
+  pi: Stripe.PaymentIntent,
+): Promise<void> {
+  const invoiceId = pi.metadata?.invoice_id;
+  if (!invoiceId) {
+    console.warn('[stripe-webhook] invoice_payment succeeded missing invoice_id metadata; pi:', pi.id);
+    return;
+  }
+
+  const rows = (await sql`
+    SELECT id, status, paid_at FROM invoices WHERE id = ${invoiceId}
+  `) as unknown as Array<{ id: string; status: string; paid_at: string | null }>;
+  if (rows.length === 0) {
+    console.warn('[stripe-webhook] invoice not found for pi:', pi.id, 'invoice_id:', invoiceId);
+    return;
+  }
+  const inv = rows[0];
+  if (inv.paid_at) {
+    console.log('[stripe-webhook] invoice already paid, skipping. id:', inv.id);
+    return;
+  }
+
+  const customerId = typeof pi.customer === 'string' ? pi.customer : pi.customer?.id ?? null;
+
+  await sql`
+    UPDATE invoices SET
+      status = 'paid',
+      paid_at = NOW(),
+      stripe_payment_intent_id = ${pi.id},
+      stripe_customer_id = COALESCE(${customerId}, stripe_customer_id),
+      updated_at = NOW()
+    WHERE id = ${inv.id}
+  `;
+
+  console.log('[stripe-webhook] invoice paid \u2014 invoice', inv.id, 'pi:', pi.id);
+}
+
 async function handlePaymentFailed(
   sql: ReturnType<typeof getSql>,
   pi: Stripe.PaymentIntent,
 ): Promise<void> {
+  if (pi.metadata?.source === 'invoice_payment') {
+    // Nothing to roll back on the invoice row itself — it stays in its
+    // current status (sent/overdue) so the advertiser can simply retry.
+    console.warn('[stripe-webhook] invoice payment failed. invoice_id:', pi.metadata.invoice_id, 'pi:', pi.id);
+    return;
+  }
+
   const agreementId = pi.metadata?.agreement_id;
   if (!agreementId) return;
 
@@ -364,6 +416,23 @@ async function handleRefund(sql: ReturnType<typeof getSql>, charge: Stripe.Charg
          SET active = false, approval_status = 'draft', updated_at = NOW()
        WHERE notes LIKE ${'%' + piId + '%'}
     `;
+  }
+
+  const chargeSource =
+    typeof charge.payment_intent === 'string' ? null : charge.payment_intent?.metadata?.source;
+  const invoiceId =
+    (typeof charge.payment_intent === 'string' ? null : charge.payment_intent?.metadata?.invoice_id) ??
+    (chargeSource === 'invoice_payment' ? charge.metadata?.invoice_id : null);
+  if (invoiceId) {
+    await sql`
+      UPDATE invoices SET
+        status = 'sent',
+        paid_at = NULL,
+        updated_at = NOW()
+      WHERE id = ${invoiceId} AND status = 'paid'
+    `;
+    console.log('[stripe-webhook] invoice refunded, reopened \u2014 invoice', invoiceId, 'charge:', charge.id);
+    return;
   }
 
   const agreementId =

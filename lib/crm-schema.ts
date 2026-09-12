@@ -348,6 +348,75 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       FOR EACH ROW EXECUTE FUNCTION trg_invoices_set_updated_at()
   `);
 
+  // ── Accounts Receivable: recurring invoices + Stripe checkout tracking ──
+  await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS recurring_schedule_id   uuid`);
+  await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_checkout_session_id text`);
+  await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_customer_id      text`);
+  await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS last_reminder_sent_at   timestamptz`);
+  await step(() => sql`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS reminder_count          integer NOT NULL DEFAULT 0`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_recurring_schedule ON invoices(recurring_schedule_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_invoices_stripe_checkout ON invoices(stripe_checkout_session_id)`);
+
+  await step(() => sql`
+    CREATE TABLE IF NOT EXISTS recurring_invoice_schedules (
+      id                       uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      advertiser_id            integer NOT NULL REFERENCES advertisers(id) ON DELETE CASCADE,
+      agreement_id             uuid    REFERENCES agreements(id) ON DELETE SET NULL,
+      name                     text NOT NULL,
+      status                   text NOT NULL DEFAULT 'active'
+                                 CHECK (status IN ('active','paused','ended')),
+      -- Cadence
+      frequency                text NOT NULL DEFAULT 'monthly'
+                                 CHECK (frequency IN ('weekly','biweekly','monthly','quarterly','annually')),
+      interval_count           integer NOT NULL DEFAULT 1,
+      day_of_month             integer,          -- 1-28, for monthly/quarterly/annually anchors
+      -- Template for generated invoices
+      amount_cents             integer NOT NULL,
+      tax_cents                integer NOT NULL DEFAULT 0,
+      line_items               jsonb NOT NULL DEFAULT '[]'::jsonb,
+      memo                     text,
+      bill_to_name             text,
+      bill_to_email            text,
+      bill_to_address          text,
+      auto_send                boolean NOT NULL DEFAULT true,   -- auto status='sent' + email on generation
+      due_days                 integer NOT NULL DEFAULT 15,     -- due_date = issued_at + due_days
+      -- Schedule bounds
+      start_date               date NOT NULL,
+      end_date                 date,                -- null = runs indefinitely
+      max_occurrences          integer,             -- null = unlimited
+      occurrences_generated    integer NOT NULL DEFAULT 0,
+      next_run_at              timestamptz NOT NULL,
+      last_run_at              timestamptz,
+      source                   text NOT NULL DEFAULT 'standalone'
+                                 CHECK (source IN ('standalone','agreement')),
+      created_by               text,
+      created_at               timestamptz NOT NULL DEFAULT now(),
+      updated_at               timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_rec_invoice_sched_advertiser ON recurring_invoice_schedules(advertiser_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_rec_invoice_sched_agreement  ON recurring_invoice_schedules(agreement_id)`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_rec_invoice_sched_next_run   ON recurring_invoice_schedules(next_run_at) WHERE status = 'active'`);
+  await step(() => sql`
+    DO $$ BEGIN
+      ALTER TABLE invoices
+        ADD CONSTRAINT fk_invoices_recurring_schedule
+        FOREIGN KEY (recurring_schedule_id) REFERENCES recurring_invoice_schedules(id) ON DELETE SET NULL;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END $$;
+  `);
+
+  await step(() => sql`
+    CREATE OR REPLACE FUNCTION trg_rec_invoice_sched_set_updated_at()
+    RETURNS trigger AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql
+  `);
+  await step(() => sql`DROP TRIGGER IF EXISTS rec_invoice_sched_set_updated_at ON recurring_invoice_schedules`);
+  await step(() => sql`
+    CREATE TRIGGER rec_invoice_sched_set_updated_at
+      BEFORE UPDATE ON recurring_invoice_schedules
+      FOR EACH ROW EXECUTE FUNCTION trg_rec_invoice_sched_set_updated_at()
+  `);
+
   // ad_campaigns linkage
   await step(() => sql`
     ALTER TABLE ad_campaigns
@@ -565,6 +634,8 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   `);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_magic_links_advertiser ON portal_magic_links(advertiser_id)`);
   await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_magic_links_session    ON portal_magic_links(session_expires_at) WHERE session_expires_at IS NOT NULL`);
+  await step(() => sql`ALTER TABLE portal_magic_links ADD COLUMN IF NOT EXISTS entity_id uuid`);
+  await step(() => sql`CREATE INDEX IF NOT EXISTS idx_portal_magic_links_entity ON portal_magic_links(entity_id) WHERE entity_id IS NOT NULL`);
 
   await step(() => sql`
     CREATE TABLE IF NOT EXISTS portal_files (
