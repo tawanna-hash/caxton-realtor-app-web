@@ -79,7 +79,7 @@ export async function findDueSchedules(sql: Sql, asOf: Date = new Date()): Promi
  */
 export async function generateInvoiceFromSchedule(sql: Sql, schedule: DueScheduleRow): Promise<GenerationResult> {
   if (schedule.status !== 'active') {
-    return { schedule_id: schedule.id, invoice_id: null, skipped_reason: 'not active' };
+    return { schedule_id: schedule.id, invoice_id: null, invoice_number: null, skipped_reason: 'not active' };
   }
 
   const publication = await resolvePublicationForAdvertiser(sql, schedule.advertiser_id);
