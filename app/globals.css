@@ -474,6 +474,34 @@ textarea::placeholder {
   h1, h2, h3 {
     color: #301D5D !important;
   }
+
+  /* Deposit report: use the full sheet and keep every detail column inside
+     the table border. Fixed print widths prevent the right-aligned amount
+     column from being pushed into the page margin by long partner names. */
+  .deposit-date-summary {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .deposit-detail-table {
+    table-layout: fixed !important;
+    font-size: 9px !important;
+    line-height: 1.25 !important;
+  }
+
+  .deposit-detail-table th,
+  .deposit-detail-table td {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  .deposit-detail-table th:nth-child(1) { width: 9%; }
+  .deposit-detail-table th:nth-child(2) { width: 24%; }
+  .deposit-detail-table th:nth-child(3) { width: 15%; }
+  .deposit-detail-table th:nth-child(4) { width: 10%; }
+  .deposit-detail-table th:nth-child(5) { width: 10%; }
+  .deposit-detail-table th:nth-child(6) { width: 8%; }
+  .deposit-detail-table th:nth-child(7) { width: 15%; }
+  .deposit-detail-table th:nth-child(8) { width: 9%; }
 }
 
 /* Mailing administration — aligned with the compact Get Paid workspace. */

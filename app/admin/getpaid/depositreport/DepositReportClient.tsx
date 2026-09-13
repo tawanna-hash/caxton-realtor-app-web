@@ -181,7 +181,7 @@ export default function DepositReportClient({
           </div>
         ) : (
           <>
-            <div className="mb-6 grid gap-4 lg:grid-cols-2">
+            <div className="deposit-date-summary mb-6 grid gap-4 lg:grid-cols-2">
               <div className="overflow-hidden rounded-md border border-gray-200">
                 <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-600 print:bg-white">
                   Deposit by date
@@ -211,7 +211,7 @@ export default function DepositReportClient({
               <div className="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-600 print:bg-white">
                 Check detail
               </div>
-              <table className="w-full min-w-[980px] text-left text-xs print:min-w-0">
+              <table className="deposit-detail-table w-full min-w-[980px] text-left text-xs print:min-w-0">
                 <thead className="border-b border-gray-200 text-gray-600">
                   <tr>
                     <th className="px-3 py-2 font-semibold">Date</th>
