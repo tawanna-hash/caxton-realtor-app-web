@@ -8,6 +8,10 @@ import { verifyToken } from '@/lib/sign-token';
 import { getSql } from '@/lib/db';
 import type { Agreement } from '@/lib/agreements';
 import SignWizard from './SignWizard';
+import {
+  formatRenewalOfferDeadline,
+  isRenewalOfferExpired,
+} from '@/lib/renewal-offer';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -102,6 +106,35 @@ export default async function SignPage({ params }: PageProps) {
   }
 
   if (!ag) return notFound();
+
+  if (isRenewalOfferExpired(ag)) {
+    const deadline = ag.renewal_offer_expires_at
+      ? formatRenewalOfferDeadline(ag.renewal_offer_expires_at)
+      : '';
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white px-4">
+        <div className="bg-white rounded-md border border-orange-200 p-10 max-w-lg text-center shadow-sm">
+          <div className="text-xs font-bold tracking-[0.2em] uppercase text-orange-700 mb-3">
+            Renewal offer expired
+          </div>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-3">
+            This renewal rate is no longer available
+          </h1>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            The 72-hour rate window{deadline ? ` ended ${deadline}` : ' has ended'}.
+            Signing is now disabled. Please contact RealtyLine for an updated renewal
+            agreement reflecting the applicable current rate.
+          </p>
+          <a
+            href="mailto:tawanna@realtynewsnow.app?subject=Updated%20Renewal%20Agreement%20Request"
+            className="inline-block mt-6 px-5 py-2.5 rounded-md bg-[#5a0e5f] text-white text-sm font-medium hover:opacity-90"
+          >
+            Request an Updated Renewal
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   if (ag.status === 'signed' || ag.status === 'active') {
     return (

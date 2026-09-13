@@ -1097,6 +1097,8 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
   await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS attachments           jsonb DEFAULT '{"files":[]}'::jsonb`);
   await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS is_renewal            boolean DEFAULT false`);
   await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS renewed_from_id       uuid REFERENCES agreements(id)`);
+  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS renewal_offer_expires_at timestamptz`);
+  await step(() => sql`ALTER TABLE agreements ADD COLUMN IF NOT EXISTS renewal_offer_reminder_sent_at timestamptz`);
   await step(() => sql`
     CREATE TABLE IF NOT EXISTS renewal_reminders (
       id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),

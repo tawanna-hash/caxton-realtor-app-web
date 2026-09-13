@@ -17,6 +17,10 @@ import { applyPatches } from '@/lib/server/agreement-patches';
 import { notifyProposalApproved } from '@/lib/server/proposal-approved-notify';
 import { rateLimit } from '@/lib/server/rate-limit';
 import { ApiError } from '@/lib/server/error';
+import {
+  isRenewalOfferExpired,
+  RENEWAL_OFFER_EXPIRED_MESSAGE,
+} from '@/lib/renewal-offer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -53,6 +57,13 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const rows = await sql`SELECT * FROM agreements WHERE id = ${id}` as unknown as Agreement[];
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const ag = rows[0];
+
+    if (isRenewalOfferExpired(ag)) {
+      return NextResponse.json(
+        { error: RENEWAL_OFFER_EXPIRED_MESSAGE, code: 'renewal_offer_expired' },
+        { status: 410 },
+      );
+    }
 
     // Only a proposal that has been sent to the client can be approved.
     if (ag.status !== 'proposal_sent') {

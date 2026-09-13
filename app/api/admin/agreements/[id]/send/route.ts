@@ -11,6 +11,10 @@ import { sendEmail } from '@/lib/email';
 import { agreementNotificationEmail, brandForPublication } from '@/lib/email-templates';
 import { appendAudit, type Agreement, type AgreementAuditEntry } from '@/lib/agreements';
 import { cleanRepNote } from '@/lib/agreement-notes';
+import {
+  formatRenewalOfferDeadline,
+  renewalOfferDeadline,
+} from '@/lib/renewal-offer';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 
 export const runtime = 'nodejs';
@@ -65,6 +69,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     //   stage='agreement' -> status sent          (final IO, legal terms + sign)
     const stage = body.stage === 'proposal' ? 'proposal' : 'agreement';
     const isProposalStage = stage === 'proposal';
+    const renewalDeadline = ag.is_renewal ? renewalOfferDeadline() : null;
     const customMessage =
       typeof body.customMessage === 'string' && body.customMessage.trim().length > 0
         ? body.customMessage.trim()
@@ -126,6 +131,9 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
       signingLink,
       lines: notificationLines,
       totalCents,
+      renewalOfferDeadline: renewalDeadline
+        ? formatRenewalOfferDeadline(renewalDeadline)
+        : undefined,
     });
 
     const subject = ag.is_renewal
@@ -176,7 +184,19 @@ export const POST = withAdminTracking(async function POST(req: NextRequest, ctx:
     // Test send: skip both; just audit the test.
     if (!isTest) {
       const newStatus = isProposalStage ? 'proposal_sent' : 'sent';
-      await sql`UPDATE agreements SET status = ${newStatus}, sent_to_email = ${recipient}, updated_at = NOW() WHERE id = ${id}`;
+      if (ag.is_renewal && renewalDeadline) {
+        await sql`
+          UPDATE agreements
+          SET status = ${newStatus},
+              sent_to_email = ${recipient},
+              renewal_offer_expires_at = ${renewalDeadline.toISOString()},
+              renewal_offer_reminder_sent_at = NULL,
+              updated_at = NOW()
+          WHERE id = ${id}
+        `;
+      } else {
+        await sql`UPDATE agreements SET status = ${newStatus}, sent_to_email = ${recipient}, updated_at = NOW() WHERE id = ${id}`;
+      }
     }
 
     // Append audit entry (different event label for tests).

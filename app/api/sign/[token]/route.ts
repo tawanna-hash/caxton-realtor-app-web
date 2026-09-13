@@ -21,6 +21,10 @@ import { ApiError } from '@/lib/server/error';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 import { applyPatches } from '@/lib/server/agreement-patches';
 import { allowsCheckPayment, deriveChannelFromAgreementType, isAdChannel } from '@/lib/ad-channels';
+import {
+  isRenewalOfferExpired,
+  RENEWAL_OFFER_EXPIRED_MESSAGE,
+} from '@/lib/renewal-offer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -178,6 +182,13 @@ export async function POST(req: NextRequest, ctx: RouteCtx) {
     const rows = await sql`SELECT * FROM agreements WHERE id = ${id}` as unknown as Agreement[];
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const ag = rows[0];
+
+    if (isRenewalOfferExpired(ag)) {
+      return NextResponse.json(
+        { error: RENEWAL_OFFER_EXPIRED_MESSAGE, code: 'renewal_offer_expired' },
+        { status: 410 },
+      );
+    }
 
     // F-edge: replay guard. Once an agreement is signed, the sign wizard
     // should not re-sign it. The admin's amend/re-sign flow goes through
@@ -389,12 +400,16 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     const sql = getSql();
 
     const rows = await sql`
-      SELECT id, signed_at, type, channel FROM agreements WHERE id = ${id}
+      SELECT id, signed_at, type, channel, is_renewal, renewal_offer_expires_at
+      FROM agreements
+      WHERE id = ${id}
     ` as unknown as {
       id: string;
       signed_at: string | null;
       type: string | null;
       channel: string | null;
+      is_renewal: boolean | null;
+      renewal_offer_expires_at: string | null;
     }[];
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
 
@@ -403,6 +418,13 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json(
         { error: 'agreement already signed', signed_at: rows[0].signed_at },
         { status: 409 },
+      );
+    }
+
+    if (isRenewalOfferExpired(rows[0])) {
+      return NextResponse.json(
+        { error: RENEWAL_OFFER_EXPIRED_MESSAGE, code: 'renewal_offer_expired' },
+        { status: 410 },
       );
     }
 

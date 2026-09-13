@@ -59,6 +59,7 @@ export interface AgreementNotificationParams {
   signingLink?: string;
   lines?: AgreementNotificationLine[];
   totalCents?: number | null;
+  renewalOfferDeadline?: string;
 }
 
 export function agreementNotificationEmail(params: AgreementNotificationParams): string {
@@ -152,7 +153,7 @@ export function agreementNotificationEmail(params: AgreementNotificationParams):
     : '';
 
   const renewalBanner = isRenewal
-    ? `<tr><td style="padding:0 40px 24px 40px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:6px"><tr><td style="padding:16px 20px"><p style="margin:0 0 6px 0;font-family:Arial,sans-serif;font-size:12px;font-weight:800;color:#9a3412;text-transform:uppercase;letter-spacing:.8px">Continue Your Advertising Partnership</p><p style="margin:0;font-family:Arial,sans-serif;font-size:14px;color:#7c2d12;line-height:1.6">Completing your renewal promptly helps maintain uninterrupted market visibility and reserves your planned advertising placement. The rate, schedule, and placement shown are the terms offered for this renewal.</p></td></tr></table></td></tr>`
+    ? `<tr><td style="padding:0 40px 24px 40px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#fff7ed;border:2px solid #f97316;border-radius:6px"><tr><td style="padding:16px 20px"><p style="margin:0 0 6px 0;font-family:Arial,sans-serif;font-size:12px;font-weight:800;color:#9a3412;text-transform:uppercase;letter-spacing:.8px">72-Hour Renewal Rate</p><p style="margin:0 0 8px 0;font-family:Arial,sans-serif;font-size:14px;color:#7c2d12;line-height:1.6"><strong>${isReviewStage ? 'Review and approve' : 'Review and sign'} this renewal within the next 72 hours to keep the rate shown.</strong> After the window expires, this offer will close, signing will be disabled, and the renewal will need to be reissued at the applicable higher rate.</p>${params.renewalOfferDeadline ? `<p style="margin:0;font-family:Arial,sans-serif;font-size:13px;color:#9a3412;line-height:1.5"><strong>Complete by:</strong> ${escapeHtml(params.renewalOfferDeadline)}</p>` : ''}<p style="margin:8px 0 0;font-family:Arial,sans-serif;font-size:13px;color:#7c2d12;line-height:1.5">Acting promptly helps maintain uninterrupted market visibility and reserves your planned advertising placement.</p></td></tr></table></td></tr>`
     : '';
 
   // Rep's typed note to the advertiser (auto-fallback + override-pricing
@@ -176,6 +177,47 @@ ${ctaButton}
 <tr><td style="background:#f3f4f6;border-top:1px solid #e5e7eb;padding:20px 40px;text-align:center">
 <p style="margin:0;font-family:Arial,sans-serif;font-size:12px;color:#888">Sent by ${brand.brandName} | <a href="${websiteUrl}" style="color:#888;text-decoration:none">${websiteUrl}</a></p>
 </td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+export interface RenewalRateReminderEmailParams {
+  brand?: BrandConfig;
+  companyName?: string;
+  repName?: string;
+  adRateCents?: number | null;
+  deadline: string;
+  signingLink: string;
+  isReviewStage: boolean;
+}
+
+/** One-time follow-up sent 48 hours into a renewal's 72-hour rate window. */
+export function renewalRateReminderEmail(params: RenewalRateReminderEmailParams): string {
+  const brand = params.brand ?? REALTYLINE_BRAND;
+  const websiteUrl = brand.websiteUrl ?? 'https://realtynewsnow.app';
+  const advertiserName = params.repName?.trim() || 'Advertising Partner';
+  const companyName = params.companyName?.trim() || 'your company';
+  const action = params.isReviewStage ? 'review and approve' : 'review and sign';
+  const cta = params.isReviewStage
+    ? 'Review &amp; Approve Renewal'
+    : 'Review &amp; Sign Renewal';
+  const rate = params.adRateCents != null
+    ? `$${(params.adRateCents / 100).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`
+    : 'the rate shown in your renewal agreement';
+
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>24 Hours Left to Renew</title></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,sans-serif">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f3f4f6;padding:32px 0"><tr><td align="center">
+<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+<tr><td style="background:${brand.brandColor};padding:28px 40px;text-align:center"><h1 style="margin:0;color:#fff;font-family:Arial,sans-serif;font-size:25px;font-weight:bold;letter-spacing:.5px">${escapeHtml(brand.brandName)} Renewal Reminder</h1><p style="margin:7px 0 0;color:rgba(255,255,255,.88);font-family:Arial,sans-serif;font-size:13px;letter-spacing:.7px">ONLY 24 HOURS REMAIN</p></td></tr>
+<tr><td style="padding:34px 40px 14px"><p style="margin:0;font-family:Arial,sans-serif;font-size:16px;color:#222">Dear ${escapeHtml(advertiserName)},</p></td></tr>
+<tr><td style="padding:0 40px 24px"><p style="margin:0;font-family:Arial,sans-serif;font-size:15px;color:#444;line-height:1.7">This is a friendly reminder that only 24 hours remain to ${action} the ${escapeHtml(brand.brandName)} advertising renewal for ${escapeHtml(companyName)} and keep your current renewal rate.</p></td></tr>
+<tr><td style="padding:0 40px 24px"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#fff7ed;border:2px solid #f97316;border-radius:6px"><tr><td style="padding:18px 20px"><p style="margin:0 0 10px;font-family:Arial,sans-serif;font-size:12px;font-weight:800;color:#9a3412;text-transform:uppercase;letter-spacing:.8px">Renew at the current rate</p><p style="margin:0 0 7px;font-family:Arial,sans-serif;font-size:15px;color:#7c2d12;line-height:1.6"><strong>Current renewal rate:</strong> ${escapeHtml(rate)}</p><p style="margin:0;font-family:Arial,sans-serif;font-size:14px;color:#7c2d12;line-height:1.6"><strong>Complete by:</strong> ${escapeHtml(params.deadline)}</p></td></tr></table></td></tr>
+<tr><td style="padding:0 40px 10px"><p style="margin:0;font-family:Arial,sans-serif;font-size:14px;color:#444;line-height:1.7">After the deadline, this rate offer will expire and online approval and signing will be disabled. The renewal will then need to be reissued at the applicable higher rate. Please complete it now to preserve your rate and avoid an interruption in your advertising schedule.</p></td></tr>
+<tr><td align="center" style="padding:24px 40px 32px"><a href="${escapeHtml(params.signingLink)}" style="display:inline-block;background:${brand.brandColor};color:#fff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;text-decoration:none;padding:14px 36px;border-radius:4px;letter-spacing:.3px">${cta}</a></td></tr>
+<tr><td style="background:#f3f4f6;border-top:1px solid #e5e7eb;padding:20px 40px;text-align:center"><p style="margin:0;font-family:Arial,sans-serif;font-size:12px;color:#888">Sent by ${escapeHtml(brand.brandName)} | <a href="${escapeHtml(websiteUrl)}" style="color:#888;text-decoration:none">${escapeHtml(websiteUrl)}</a></p></td></tr>
 </table></td></tr></table></body></html>`;
 }
 

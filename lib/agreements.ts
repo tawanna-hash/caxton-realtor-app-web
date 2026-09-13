@@ -115,6 +115,8 @@ export interface Agreement {
   // Renewals
   is_renewal: boolean | null;
   renewed_from_id: string | null;
+  renewal_offer_expires_at: string | null;
+  renewal_offer_reminder_sent_at: string | null;
 
   notes: string | null;
 
