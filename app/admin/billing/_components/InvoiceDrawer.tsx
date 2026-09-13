@@ -169,7 +169,9 @@ export function InvoiceDrawer({
       title={isCreate ? 'New invoice' : (existing?.number ?? 'Invoice')}
       subtitle={existing?.advertiser_name ?? 'Auto-numbered on save'}
       onClose={onClose}
+      wide
     >
+      <div className="grid gap-4 xl:grid-cols-2">
       <Section title="Linkage">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Partner">
@@ -191,7 +193,7 @@ export function InvoiceDrawer({
         </div>
       </Section>
 
-      <Section title="Line items">
+      <Section title="Line items" className="xl:col-span-2">
         {form.line_items.length === 0 && <div className="text-xs text-gray-500">No line items — invoice will use the manual amount below.</div>}
         {form.line_items.map((li, i) => (
           <div key={i} className="grid grid-cols-12 gap-2 items-center">
@@ -250,6 +252,7 @@ export function InvoiceDrawer({
           </p>
         </Section>
       )}
+      </div>
 
       <DrawerFooter saving={saving} onCancel={onClose} onSubmit={submit} submitLabel={isCreate ? 'Create' : 'Save changes'} tone="orange" />
     </DrawerShell>

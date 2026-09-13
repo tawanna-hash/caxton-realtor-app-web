@@ -16,6 +16,7 @@ function todayIso() {
 type CommonProps = {
   invoices: InvoiceWithAdvertiser[];
   advertisers: AdvertiserOption[];
+  initialInvoiceId?: string;
   onClose: () => void;
   onSaved: () => Promise<void>;
   onError: (message: string) => void;
@@ -116,9 +117,13 @@ function PdfPreview({
   );
 }
 
-export function PaymentLinkDrawer({ invoices, onClose, onSaved, onError }: CommonProps) {
+export function PaymentLinkDrawer({ invoices, initialInvoiceId, onClose, onSaved, onError }: CommonProps) {
   const eligible = invoices.filter((invoice) => !['paid', 'void'].includes(invoice.status) && invoice.total_cents > 0);
-  const [invoiceId, setInvoiceId] = useState(eligible[0]?.id ?? '');
+  const [invoiceId, setInvoiceId] = useState(
+    initialInvoiceId && eligible.some((invoice) => invoice.id === initialInvoiceId)
+      ? initialInvoiceId
+      : eligible[0]?.id ?? '',
+  );
   const [linkType, setLinkType] = useState<'one-time' | 'multi-use'>('one-time');
   const [sendEmail, setSendEmail] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -336,13 +341,14 @@ export function SalesReceiptDrawer({ advertisers, onClose, onSaved, onError }: C
   );
 }
 
-export function RecordPaymentDrawer({ invoices, advertisers, onClose, onSaved, onError }: CommonProps) {
-  const [advertiserId, setAdvertiserId] = useState<number | null>(null);
+export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, onClose, onSaved, onError }: CommonProps) {
+  const initialInvoice = invoices.find((invoice) => invoice.id === initialInvoiceId);
+  const [advertiserId, setAdvertiserId] = useState<number | null>(initialInvoice?.advertiser_id ?? null);
   const eligible = useMemo(
     () => invoices.filter((invoice) => !['paid', 'void'].includes(invoice.status) && (!advertiserId || invoice.advertiser_id === advertiserId)),
     [advertiserId, invoices],
   );
-  const [invoiceId, setInvoiceId] = useState('');
+  const [invoiceId, setInvoiceId] = useState(initialInvoice?.id ?? '');
   const [paymentDate, setPaymentDate] = useState(todayIso());
   const [paymentMethod, setPaymentMethod] = useState('Check');
   const [reference, setReference] = useState('');

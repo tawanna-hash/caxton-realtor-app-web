@@ -35,6 +35,7 @@ interface InvoiceRow {
   bill_to_name: string | null;
   bill_to_email: string | null;
   memo: string | null;
+  due_date: string | null;
 }
 
 export const POST = withAdminTracking(async function POST(
@@ -52,12 +53,13 @@ export const POST = withAdminTracking(async function POST(
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* optional body */ }
   const sendEmail = body.send_email !== false;
+  const emailMode = body.email_mode === 'reminder' ? 'reminder' : 'invoice';
 
   try {
     await ensureSchema();
     const sql = getSql();
     const rows = (await sql`
-      SELECT id, number, status, total_cents, advertiser_id, bill_to_name, bill_to_email, memo
+      SELECT id, number, status, total_cents, advertiser_id, bill_to_name, bill_to_email, memo, due_date
       FROM invoices WHERE id = ${id}
     `) as unknown as InvoiceRow[];
     if (rows.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
@@ -132,7 +134,9 @@ export const POST = withAdminTracking(async function POST(
     let emailStatus: 'sent' | 'skipped' | 'failed' | 'no_advertiser' | 'no_email' = 'skipped';
     let consumeUrl: string | null = null;
     if (sendEmail && inv.advertiser_id) {
-      const sendTo = inv.bill_to_email;
+      const sendTo = typeof body.email_to === 'string' && body.email_to.trim()
+        ? body.email_to.trim()
+        : inv.bill_to_email;
       if (!sendTo) {
         emailStatus = 'no_email';
       } else {
@@ -148,14 +152,43 @@ export const POST = withAdminTracking(async function POST(
         if (process.env.RESEND_API_KEY) {
           try {
             const resend = new Resend(process.env.RESEND_API_KEY);
+            const subject = typeof body.email_subject === 'string' && body.email_subject.trim()
+              ? body.email_subject.trim()
+              : emailMode === 'reminder'
+                ? `Reminder: Invoice ${inv.number} from Caxton Publications is due`
+                : `Invoice ${inv.number} from Caxton Publications`;
+            const customMessage = typeof body.email_message === 'string' ? body.email_message.trim() : '';
             await resend.emails.send({
               from: PORTAL_FROM_EMAIL,
               to: sendTo,
-              subject: `Invoice ${inv.number} from RealtyLine`,
-              html: invoiceEmailHtml({ name: inv.bill_to_name ?? 'there', number: inv.number, consumeUrl }),
-              text: invoiceEmailText({ name: inv.bill_to_name ?? 'there', number: inv.number, consumeUrl }),
+              subject,
+              html: invoiceEmailHtml({
+                name: inv.bill_to_name ?? 'there',
+                number: inv.number,
+                consumeUrl,
+                amountCents: inv.total_cents,
+                customMessage,
+                reminder: emailMode === 'reminder',
+              }),
+              text: invoiceEmailText({
+                name: inv.bill_to_name ?? 'there',
+                number: inv.number,
+                consumeUrl,
+                amountCents: inv.total_cents,
+                customMessage,
+                reminder: emailMode === 'reminder',
+              }),
             });
             emailStatus = 'sent';
+            if (emailMode === 'reminder') {
+              await sql`
+                UPDATE invoices
+                SET last_reminder_sent_at = NOW(),
+                    reminder_count = COALESCE(reminder_count, 0) + 1,
+                    updated_at = NOW()
+                WHERE id = ${inv.id}
+              `;
+            }
           } catch (err) {
             emailStatus = 'failed';
             console.error('invoice payment-link email failed', err);
@@ -181,34 +214,90 @@ export const POST = withAdminTracking(async function POST(
   }
 });
 
-function invoiceEmailText({ name, number, consumeUrl }: { name: string; number: string; consumeUrl: string }): string {
+function invoiceEmailText({
+  name,
+  number,
+  consumeUrl,
+  amountCents,
+  customMessage,
+  reminder,
+}: {
+  name: string;
+  number: string;
+  consumeUrl: string;
+  amountCents: number;
+  customMessage: string;
+  reminder: boolean;
+}): string {
   return [
-    `Hi ${name},`,
+    `Dear ${name},`,
     '',
-    `Your RealtyLine invoice ${number} is ready. View and pay it securely here:`,
+    customMessage || (reminder
+      ? `This is a reminder that invoice ${number} has not been paid. If you have any questions, please reach out to our office.`
+      : `We appreciate your business. Your invoice ${number} is ready to review and pay.`),
+    '',
+    `Balance due: ${formatEmailCents(amountCents)}`,
     '',
     consumeUrl,
     '',
     'This link is valid for 24 hours and may only be used once.',
     '',
-    '— RealtyLine',
+    'Sincerely,',
+    'Caxton Publications Inc.',
   ].join('\n');
 }
 
-function invoiceEmailHtml({ name, number, consumeUrl }: { name: string; number: string; consumeUrl: string }): string {
+function invoiceEmailHtml({
+  name,
+  number,
+  consumeUrl,
+  amountCents,
+  customMessage,
+  reminder,
+}: {
+  name: string;
+  number: string;
+  consumeUrl: string;
+  amountCents: number;
+  customMessage: string;
+  reminder: boolean;
+}): string {
+  const message = customMessage || (reminder
+    ? `This is a reminder that invoice ${number} has not been paid. If you have any questions, please reach out to our office.`
+    : `We appreciate your business. Your invoice ${number} is ready to review and pay.`);
   return `
-  <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;padding:32px;color:#111">
-    <h2 style="font-family:Georgia,serif;font-size:22px;margin:0 0 12px">Invoice ${number}</h2>
-    <p style="font-family:system-ui,sans-serif;color:#444;font-size:15px;line-height:1.5">Hi ${name},</p>
-    <p style="font-family:system-ui,sans-serif;color:#444;font-size:15px;line-height:1.5">
-      Your RealtyLine invoice is ready. Use the secure link below to view the details and pay online.
-      The link is valid for 24 hours and may only be used once.
-    </p>
-    <p style="margin:24px 0">
-      <a href="${consumeUrl}" style="display:inline-block;background:#111;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-family:system-ui,sans-serif;font-weight:500">
-        View &amp; pay invoice
+  <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#202124;background:#fff">
+    <div style="text-align:center;padding:12px 0 24px">
+      <img src="${APP_BASE_URL}/brand/caxton-logo.jpg" width="125" alt="Caxton Publications Inc." style="display:inline-block;max-height:105px;object-fit:contain">
+    </div>
+    <div style="background:#eef6fb;padding:28px;text-align:center">
+      <h2 style="font-size:24px;margin:0 0 18px">${reminder ? 'Payment reminder' : 'Your invoice is ready!'}</h2>
+      <div style="font-size:11px;color:#667085;text-transform:uppercase;letter-spacing:.08em">Balance due</div>
+      <div style="font-size:38px;font-weight:600;margin-top:4px">${formatEmailCents(amountCents)}</div>
+    </div>
+    <div style="padding:28px 12px">
+      <p style="font-size:15px;line-height:1.6">Dear ${escapeEmailHtml(name)},</p>
+      <p style="font-size:15px;line-height:1.6;white-space:pre-line">${escapeEmailHtml(message)}</p>
+      <p style="margin:26px 0;text-align:center">
+      <a href="${consumeUrl}" style="display:inline-block;background:#ea580c;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none;font-weight:600">
+        View &amp; pay invoice ${escapeEmailHtml(number)}
       </a>
-    </p>
-    <p style="font-family:system-ui,sans-serif;color:#888;font-size:13px">If you didn't expect this email, please ignore it.</p>
+      </p>
+      <p style="font-size:13px;color:#667085">This secure link is valid for 24 hours and may only be used once.</p>
+      <p style="font-size:14px;line-height:1.6">Sincerely,<br><strong>Caxton Publications Inc.</strong></p>
+    </div>
   </div>`;
+}
+
+function formatEmailCents(cents: number): string {
+  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function escapeEmailHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
 }

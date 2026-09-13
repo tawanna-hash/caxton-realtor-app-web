@@ -19,8 +19,8 @@ export function DrawerShell({
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-black/30" onClick={onClose} />
-      <div className={`w-full ${wide ? 'max-w-5xl' : 'max-w-xl'} bg-white shadow-xl overflow-y-auto`}>
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <div className={`flex h-dvh w-full flex-col bg-white shadow-xl ${wide ? 'max-w-[min(1180px,calc(100vw-48px))]' : 'max-w-xl'}`}>
+        <div className="z-10 flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
           <div>
             <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">Billing</div>
             <h2 className="text-xl text-gray-900">{title}</h2>
@@ -28,7 +28,7 @@ export function DrawerShell({
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl leading-none">×</button>
         </div>
-        <div className="p-6 space-y-6">{children}</div>
+        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">{children}</div>
       </div>
     </div>
   );
@@ -57,11 +57,11 @@ export function DrawerFooter({
   );
 }
 
-export function Section({ title, children }: { title: string; children: React.ReactNode }) {
+export function Section({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <section className="space-y-3">
+    <section className={`space-y-2 rounded-md border border-gray-200 bg-white p-3 ${className}`}>
       <div className="text-xs uppercase tracking-[0.2em] text-gray-500 font-medium">{title}</div>
-      <div className="space-y-3">{children}</div>
+      <div className="space-y-2">{children}</div>
     </section>
   );
 }

@@ -176,7 +176,7 @@ export function RecurringScheduleDrawer({
       </div>
 
       {activeTab === 'edit' && (
-        <>
+        <div className="grid gap-4 xl:grid-cols-2">
       <Section title="Recurring invoice template">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Template name">
@@ -368,7 +368,7 @@ export function RecurringScheduleDrawer({
           <textarea className={INPUT} rows={2} value={statementMemo} onChange={(e) => setStatementMemo(e.target.value)} placeholder="This memo appears on customer statements." />
         </Field>
       </Section>
-        </>
+        </div>
       )}
 
       {activeTab === 'email' && (
