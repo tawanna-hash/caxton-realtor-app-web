@@ -377,6 +377,7 @@ export function SalesTransactionsClient({
     await reload();
     setCreatingInvoice(false);
     setEditingInvoice(null);
+    setError('');
     setMessage('Sales transactions updated.');
   };
 
