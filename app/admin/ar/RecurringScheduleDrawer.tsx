@@ -20,7 +20,7 @@ import { DrawerShell, DrawerFooter, Section, Field } from '@/app/admin/billing/_
 import { INPUT } from '@/app/admin/billing/_components/constants';
 import { ProductServiceSearch } from '@/app/admin/billing/_components/ProductServiceSearch';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
-import { toISODateString } from '@/app/admin/billing/_components/helpers';
+import { shortDate, toISODateString } from '@/app/admin/billing/_components/helpers';
 
 const FREQ_OPTIONS: { value: RecurringFrequency; label: string }[] = [
   { value: 'daily', label: 'Daily' },
@@ -68,6 +68,14 @@ export function RecurringScheduleDrawer({
   const [memo, setMemo] = useState(existing?.memo ?? '');
   const [billToName, setBillToName] = useState(existing?.bill_to_name ?? '');
   const [billToEmail, setBillToEmail] = useState(existing?.bill_to_email ?? '');
+  const [emailFrom, setEmailFrom] = useState<'tawanna@myrealtyline.com' | 'hello@myrealtyline.com'>('tawanna@myrealtyline.com');
+  const [emailCcBcc, setEmailCcBcc] = useState('');
+  const [emailSubject, setEmailSubject] = useState(
+    `Set up recurring payment by ${shortDate(existing?.start_date ?? new Date())}`,
+  );
+  const [emailBody, setEmailBody] = useState(
+    `Dear ${existing?.bill_to_name || existing?.advertiser_name || 'customer'},\n\nWe appreciate your business. Please set up the recurring payment before ${shortDate(existing?.start_date ?? new Date())}. You only need to set it up once and, after that, you'll get charged automatically. Feel free to contact us if you have any questions.\n\nHave a great day,\nCaxton Publications Inc.`,
+  );
   const [templateMode, setTemplateMode] = useState<'scheduled' | 'reminder' | 'unscheduled'>(existing?.template_mode ?? 'scheduled');
   const [includeUnbilledCharges, setIncludeUnbilledCharges] = useState(existing?.include_unbilled_charges ?? false);
   const [printLater, setPrintLater] = useState(existing?.print_later ?? false);
@@ -79,6 +87,13 @@ export function RecurringScheduleDrawer({
   const [saving, setSaving] = useState(false);
 
   const total = useMemo(() => lineItemsTotal(lineItems) + (taxCents || 0), [lineItems, taxCents]);
+  const customerName = billToName || advertisers.find((advertiser) => advertiser.id === advertiserId)?.name || 'Customer';
+  const firstChargeDate = shortDate(startDate);
+  const recurringDescription = useMemo(() => {
+    if (frequency === 'monthly' && dayOfMonth) return `Monthly on the ${dayOfMonth}${dayOfMonth === 1 || dayOfMonth === 21 || dayOfMonth === 31 ? 'st' : dayOfMonth === 2 || dayOfMonth === 22 ? 'nd' : dayOfMonth === 3 || dayOfMonth === 23 ? 'rd' : 'th'} day`;
+    const label = frequencyLabel(frequency);
+    return intervalCount > 1 ? `Every ${intervalCount} ${label.toLowerCase().replace(/ly$/, '')} periods` : label;
+  }, [dayOfMonth, frequency, intervalCount]);
 
   const agreementOptions = useMemo(
     () => agreements.filter((a) => !advertiserId || a.advertiser_id === advertiserId),
@@ -373,24 +388,105 @@ export function RecurringScheduleDrawer({
       )}
 
       {activeTab === 'email' && (
-        <div className="mx-auto max-w-md overflow-hidden rounded-lg border border-gray-200 bg-white text-center shadow-sm">
-          <div className="p-6">
-            <Image src="/brand/caxton-logo.jpg" alt="Caxton Publications" width={150} height={170} className="mx-auto h-28 w-auto object-contain" />
-          </div>
-          <div className="bg-blue-50 px-6 py-5">
-            <h3 className="text-lg font-semibold text-gray-900">Your invoice is ready!</h3>
-            <div className="mt-4 text-xs uppercase tracking-wider text-gray-500">Balance due</div>
-            <div className="text-2xl font-semibold text-gray-900">{formatCents(total)}</div>
-          </div>
-          <div className="space-y-4 px-6 py-5">
-            <button type="button" className="rounded-full bg-orange-600 px-8 py-2.5 text-sm font-semibold text-white hover:bg-orange-700">View and pay</button>
-            {paymentInstructions && <p className="text-sm text-gray-600">{paymentInstructions}</p>}
-            <p className="border-t border-gray-200 pt-4 text-sm text-gray-600">{noteToClient || 'Your invoice is attached and ready for review.'}</p>
-          </div>
-          <div className="bg-blue-50 px-6 py-5 text-xs leading-5 text-gray-600">
-            <strong>Caxton Publications Inc.</strong><br />
-            PO Box 81366<br />Austin, TX 78708-1366<br />
-            tawanna@myrealtyline.com<br />www.realtynewsnow.app
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50 shadow-sm">
+          <div className="grid min-h-[610px] xl:grid-cols-[0.95fr_1.2fr]">
+            <div className="border-b border-gray-200 bg-white p-5 xl:border-b-0 xl:border-r">
+              <div className="space-y-3">
+                <Field label="From">
+                  <select className={INPUT} value={emailFrom} onChange={(event) => setEmailFrom(event.target.value as typeof emailFrom)}>
+                    <option value="tawanna@myrealtyline.com">Caxton Publications Inc. &lt;tawanna@myrealtyline.com&gt;</option>
+                    <option value="hello@myrealtyline.com">Caxton Publications Inc. &lt;hello@myrealtyline.com&gt;</option>
+                  </select>
+                </Field>
+                <div className="grid grid-cols-[1fr_auto] gap-2">
+                  <Field label="To">
+                    <input
+                      type="email"
+                      className={INPUT}
+                      value={billToEmail}
+                      onChange={(event) => setBillToEmail(event.target.value)}
+                      placeholder="customer@example.com"
+                    />
+                  </Field>
+                  <button
+                    type="button"
+                    onClick={() => setEmailCcBcc((value) => value ? '' : ' ')}
+                    className="mt-6 h-9 rounded-md px-2 text-xs font-medium text-orange-700 hover:bg-orange-50"
+                  >
+                    Cc/Bcc
+                  </button>
+                </div>
+                {emailCcBcc !== '' && (
+                  <Field label="Cc/Bcc">
+                    <input className={INPUT} value={emailCcBcc.trimStart()} onChange={(event) => setEmailCcBcc(` ${event.target.value}`)} placeholder="Optional recipients" />
+                  </Field>
+                )}
+                <Field label="Subject">
+                  <input className={INPUT} value={emailSubject} onChange={(event) => setEmailSubject(event.target.value)} />
+                </Field>
+                <Field label="Email body">
+                  <textarea
+                    className={`${INPUT} min-h-[305px] resize-y leading-6`}
+                    value={emailBody}
+                    onChange={(event) => setEmailBody(event.target.value)}
+                  />
+                </Field>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-gray-500">
+                The recurring payment authorization and notices are informational. Customers can cancel according to the terms shown in their secure payment page.
+              </p>
+            </div>
+
+            <div className="overflow-auto bg-white p-5 sm:p-8">
+              <div className="mx-auto max-w-[520px] border border-gray-200 bg-white text-gray-800 shadow-sm">
+                <div className="px-8 pb-3 pt-7 text-center">
+                  <Image src="/brand/caxton-logo.jpg" alt="Caxton Publications" width={120} height={135} className="mx-auto h-20 w-auto object-contain" />
+                </div>
+                <div className="mx-8 bg-orange-50 px-6 py-7 text-center">
+                  <h3 className="mx-auto max-w-sm text-xl font-semibold leading-7 text-gray-900">
+                    Set up recurring payment to Caxton Publications Inc. by {firstChargeDate}
+                  </h3>
+                  <div className="mt-3 text-sm text-gray-600">{recurringDescription}</div>
+                  <div className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{formatCents(total)}</div>
+                  <button type="button" className="mt-5 rounded-md bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-700">
+                    Set up recurring payment
+                  </button>
+                </div>
+                <div className="space-y-5 px-10 py-7">
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900">{emailSubject}</div>
+                    <div className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-600">{emailBody}</div>
+                  </div>
+                  <div className="border-t border-gray-200 pt-5">
+                    <h4 className="text-center text-sm font-semibold text-gray-900">Here are the details of your recurring payment</h4>
+                    <dl className="mx-auto mt-4 grid max-w-sm grid-cols-[1fr_auto] gap-x-8 gap-y-2 text-sm">
+                      <dt className="font-medium text-gray-700">Repeats</dt>
+                      <dd className="text-right text-gray-600">{recurringDescription}</dd>
+                      <dt className="font-medium text-gray-700">First charge date</dt>
+                      <dd className="text-right text-gray-600">{firstChargeDate}</dd>
+                      <dt className="font-medium text-gray-700">Payment amount</dt>
+                      <dd className="text-right font-semibold text-gray-900">{formatCents(total)}</dd>
+                      <dt className="font-medium text-gray-700">Due by</dt>
+                      <dd className="text-right text-gray-600">{firstChargeDate}</dd>
+                    </dl>
+                    <div className="mt-6 text-center">
+                      <button type="button" className="rounded-md bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-orange-700">
+                        Set up recurring payment
+                      </button>
+                      <p className="mt-2 text-xs text-gray-500">You can cancel at any time.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="border-t border-gray-200 bg-gray-50 px-8 py-4 text-center text-xs leading-5 text-gray-500">
+                  <strong className="text-gray-700">Caxton Publications Inc.</strong><br />
+                  PO Box 81366 · Austin, TX 78708-1366<br />
+                  {emailFrom} · realtynewsnow.app
+                </div>
+              </div>
+              <div className="mx-auto mt-3 max-w-[520px] text-right text-xs text-gray-500">
+                Preview for {customerName}
+              </div>
+            </div>
           </div>
         </div>
       )}
