@@ -19,6 +19,7 @@ import { InvoiceDrawer } from '@/app/admin/billing/_components/InvoiceDrawer';
 import PageTitle from '@/components/ui/PageTitle';
 import { RecurringScheduleDrawer } from './RecurringScheduleDrawer';
 import { PaymentLinkDrawer, RecordPaymentDrawer, SalesReceiptDrawer } from './PaymentActionDrawers';
+import { CreatePartnerDrawer } from './CreatePartnerDrawer';
 
 type Props = {
   initialInvoices: InvoiceWithAdvertiser[];
@@ -35,6 +36,7 @@ const QUICK_ACTIONS = [
   { label: 'Create recurring payment', action: 'recurring' },
   { label: 'Create sales receipt', action: 'sales-receipt' },
   { label: 'Record payment', action: 'record-payment' },
+  { label: 'Create partner', action: 'create-partner' },
 ] as const;
 
 const INCOME_PERIODS = [
@@ -126,7 +128,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   const [durationMenuOpen, setDurationMenuOpen] = useState(false);
   const [incomePeriod, setIncomePeriod] = useState<IncomePeriod>('this-month');
   const [createInvoice, setCreateInvoice] = useState(false);
-  const [paymentAction, setPaymentAction] = useState<'payment-link' | 'sales-receipt' | 'record-payment' | null>(null);
+  const [paymentAction, setPaymentAction] = useState<'payment-link' | 'sales-receipt' | 'record-payment' | 'create-partner' | null>(null);
 
   const openQuickAction = (action: (typeof QUICK_ACTIONS)[number]['action']) => {
     if (action === 'invoice') setCreateInvoice(true);
@@ -392,7 +394,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
             </button>
             {requestMenuOpen && (
               <div role="menu" className="absolute left-4 top-[82px] z-30 min-w-52 overflow-hidden rounded-md border border-gray-200 bg-white py-1 shadow-lg">
-                {QUICK_ACTIONS.map((action) => (
+                {QUICK_ACTIONS.filter((action) => action.action !== 'create-partner').map((action) => (
                   <button
                     type="button"
                     role="menuitem"
@@ -663,6 +665,13 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
           advertisers={advertisers}
           onClose={() => setPaymentAction(null)}
           onSaved={reloadAll}
+          onError={setError}
+        />
+      )}
+      {paymentAction === 'create-partner' && (
+        <CreatePartnerDrawer
+          onClose={() => setPaymentAction(null)}
+          onSaved={() => router.refresh()}
           onError={setError}
         />
       )}
