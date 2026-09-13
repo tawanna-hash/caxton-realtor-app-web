@@ -31,6 +31,10 @@ interface InvoiceRow {
   advertiser_id: number | null;
 }
 
+interface BalanceRow {
+  balance_forward_cents: number | string;
+}
+
 export default async function InvoicePayPage({
   params,
   searchParams,
@@ -58,10 +62,31 @@ export default async function InvoicePayPage({
     redirect('/portal/error?code=forbidden');
   }
 
+  const balanceRows = invoice.advertiser_id
+    ? (await sql`
+        SELECT COALESCE(SUM(total_cents), 0)::bigint AS balance_forward_cents
+        FROM invoices
+        WHERE advertiser_id = ${invoice.advertiser_id}
+          AND id <> ${invoice.id}
+          AND status NOT IN ('paid', 'void')
+          AND issued_at IS NOT NULL
+          AND (${invoice.issued_at}::timestamptz IS NULL OR issued_at < ${invoice.issued_at}::timestamptz)
+      `) as unknown as BalanceRow[]
+    : [];
+  const balanceForwardCents = Number(balanceRows[0]?.balance_forward_cents ?? 0);
+  const paymentsCreditsCents = invoice.status === 'paid' ? invoice.total_cents : 0;
+  const totalAmountDueCents = balanceForwardCents + invoice.total_cents - paymentsCreditsCents;
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 print:max-w-none print:px-0 print:py-0">
       <InvoicePayClient
         invoice={invoice}
+        accountSummary={{
+          balanceForwardCents,
+          paymentsCreditsCents,
+          newChargesCents: invoice.total_cents,
+          totalAmountDueCents,
+        }}
         justPaid={sp.paid === '1'}
         justCanceled={sp.canceled === '1'}
       />

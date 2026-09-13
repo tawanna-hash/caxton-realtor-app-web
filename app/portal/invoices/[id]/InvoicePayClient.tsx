@@ -31,6 +31,13 @@ interface InvoiceData {
   bill_to_address: string | null;
 }
 
+interface AccountSummary {
+  balanceForwardCents: number;
+  paymentsCreditsCents: number;
+  newChargesCents: number;
+  totalAmountDueCents: number;
+}
+
 function fmtUsd(cents: number): string {
   return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -74,10 +81,12 @@ function getStripePromise(pk: string) {
 
 export default function InvoicePayClient({
   invoice,
+  accountSummary,
   justPaid,
   justCanceled,
 }: {
   invoice: InvoiceData;
+  accountSummary: AccountSummary;
   justPaid: boolean;
   justCanceled: boolean;
 }) {
@@ -194,6 +203,24 @@ export default function InvoicePayClient({
             <dt className="mt-2 bg-neutral-100 px-2 py-2 font-semibold">Amount Due (USD):</dt>
             <dd className="mt-2 bg-neutral-100 px-2 py-2 font-semibold">{alreadyPaid ? '$0.00' : fmtUsd(invoice.total_cents)}</dd>
           </dl>
+        </section>
+
+        <section className="mb-5">
+          <div className="border-b border-neutral-300 pb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-600">Account summary</div>
+          <div className="grid grid-cols-[90px_1fr_auto] gap-x-3 border-b border-neutral-200 py-1.5">
+            <div>{fmtDate(invoice.issued_at)}</div>
+            <div>Balance Forward</div>
+            <div className="text-right">{fmtUsd(accountSummary.balanceForwardCents)}</div>
+            <div />
+            <div>Payments and credits</div>
+            <div className="text-right">{accountSummary.paymentsCreditsCents > 0 ? `-${fmtUsd(accountSummary.paymentsCreditsCents)}` : fmtUsd(0)}</div>
+            <div />
+            <div>New charges</div>
+            <div className="text-right">{fmtUsd(accountSummary.newChargesCents)}</div>
+            <div />
+            <div className="font-semibold">Total Amount Due</div>
+            <div className="text-right font-semibold">{fmtUsd(accountSummary.totalAmountDueCents)}</div>
+          </div>
         </section>
 
         <section>

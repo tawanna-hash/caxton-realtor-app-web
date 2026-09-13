@@ -24,7 +24,9 @@ type InvoiceRow = {
   bill_to_email: string | null;
   bill_to_address: string | null;
   advertiser_name: string | null;
+  advertiser_id: number | null;
 };
+type BalanceRow = { balance_forward_cents: number | string };
 
 const TERMS = [
   ['FREQUENCY DISCOUNT', 'An advertiser who does not complete a committed consecutive-month insertion schedule will be subject to the one-time insertion rate.'],
@@ -73,6 +75,20 @@ export default async function InvoicePreviewPage({
   if (!invoice) notFound();
 
   const paid = invoice.status === 'paid';
+  const balanceRows = invoice.advertiser_id
+    ? (await sql`
+        SELECT COALESCE(SUM(total_cents), 0)::bigint AS balance_forward_cents
+        FROM invoices
+        WHERE advertiser_id = ${invoice.advertiser_id}
+          AND id <> ${invoice.id}
+          AND status NOT IN ('paid', 'void')
+          AND issued_at IS NOT NULL
+          AND (${invoice.issued_at}::timestamptz IS NULL OR issued_at < ${invoice.issued_at}::timestamptz)
+      `) as unknown as BalanceRow[]
+    : [];
+  const balanceForwardCents = Number(balanceRows[0]?.balance_forward_cents ?? 0);
+  const paymentsCreditsCents = paid ? invoice.total_cents : 0;
+  const accountTotalDueCents = balanceForwardCents + invoice.total_cents - paymentsCreditsCents;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 print:max-w-none print:px-0 print:py-0">
@@ -118,6 +134,24 @@ export default async function InvoicePreviewPage({
             <dt className="mt-2 bg-neutral-100 px-2 py-2 font-semibold">Amount Due (USD):</dt>
             <dd className="mt-2 bg-neutral-100 px-2 py-2 font-semibold">{paid ? '$0.00' : money(invoice.total_cents)}</dd>
           </dl>
+        </section>
+
+        <section className="mb-5">
+          <div className="border-b border-neutral-300 pb-1 text-[10px] font-semibold uppercase tracking-wider text-neutral-600">Account summary</div>
+          <div className="grid grid-cols-[90px_1fr_auto] gap-x-3 border-b border-neutral-200 py-1.5">
+            <div>{date(invoice.issued_at)}</div>
+            <div>Balance Forward</div>
+            <div className="text-right">{money(balanceForwardCents)}</div>
+            <div />
+            <div>Payments and credits</div>
+            <div className="text-right">{paymentsCreditsCents > 0 ? `-${money(paymentsCreditsCents)}` : money(0)}</div>
+            <div />
+            <div>New charges</div>
+            <div className="text-right">{money(invoice.total_cents)}</div>
+            <div />
+            <div className="font-semibold">Total Amount Due</div>
+            <div className="text-right font-semibold">{money(accountTotalDueCents)}</div>
+          </div>
         </section>
 
         <section>
