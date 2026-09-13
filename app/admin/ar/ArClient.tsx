@@ -366,7 +366,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} width={48} />
-                <Tooltip formatter={(v: number) => [`$${v.toFixed(2)}`, 'Income']} />
+                <Tooltip formatter={(v) => [`$${Number(v).toFixed(2)}`, 'Income']} />
                 <Area type="monotone" dataKey="amount" stroke="#059669" strokeWidth={2} fill="url(#incomeFill)" />
               </AreaChart>
             </ResponsiveContainer>
