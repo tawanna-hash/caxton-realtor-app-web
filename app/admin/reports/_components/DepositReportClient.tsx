@@ -100,7 +100,7 @@ export default function DepositReportClient({
       {/* Screen-only controls */}
       <div className="no-print mb-6 flex flex-wrap items-end justify-between gap-4 print:hidden">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Checks received for deposit</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Deposit Slip</h1>
           <p className="mt-1 text-sm text-gray-600">
             Every check recorded against an invoice in the selected range, totalled for the bank deposit slip.
           </p>
@@ -126,7 +126,7 @@ export default function DepositReportClient({
             onClick={() => window.print()}
             className="rounded-md bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-700"
           >
-            Print report
+            Print deposit slip
           </button>
         </div>
       </div>
@@ -135,7 +135,7 @@ export default function DepositReportClient({
       <div className="rounded border border-gray-200 bg-white p-6 shadow-sm print:rounded-none print:border-0 print:p-0 print:shadow-none">
         <div className="mb-6 border-b border-gray-200 pb-4">
           <div className="text-xs uppercase tracking-[0.2em] text-gray-500">Caxton Publications, Inc.</div>
-          <h2 className="mt-1 text-xl font-semibold text-gray-900">Checks Received for Deposit</h2>
+          <h2 className="mt-1 text-xl font-semibold text-gray-900">Deposit Slip</h2>
           <div className="mt-2 grid gap-x-8 gap-y-1 text-xs text-gray-600 sm:grid-cols-2">
             <div>Period: <span className="font-medium text-gray-900">{rangeLabel}</span></div>
             <div>Checks included: <span className="font-medium text-gray-900">{rows.length}</span></div>
