@@ -42,11 +42,20 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Partners',     href: '/admin/crm',           description: 'Accounts, contacts, share links' },
       { label: 'Inquiries',    href: '/admin/ads/inquiries', description: 'Print / Digital / Email leads' },
       { label: 'Agreements',   href: '/admin/agreements',    description: 'Contracts, renewals & pipeline' },
-      { label: 'Invoices',     href: '/admin/invoices',      description: 'Billable charges & payment status' },
-      { label: 'Accounts Receivable', href: '/admin/ar',      description: 'Aging, outstanding balances & recurring invoices' },
-      { label: 'Products & Services', href: '/admin/products-services', description: 'Ad slots, packages & billable items catalog' },
       { label: 'QuickBooks',   href: '/admin/integrations/quickbooks', description: 'Accounting connection & sandbox sync' },
       { label: 'Media Kit',    href: '/admin/ads/media-kit',   description: '2026 packages, rates & deadlines' },
+    ],
+  },
+  {
+    label: 'Get Paid',
+    links: [
+      { label: 'Accounts Receivable', href: '/admin/getpaid/accountsreceivables', description: 'Aging and outstanding balances' },
+      { label: 'Sales Transactions', href: '/admin/getpaid/salestransactions', description: 'All customer sales activity' },
+      { label: 'Invoices', href: '/admin/getpaid/invoices', description: 'Billable charges and payment status' },
+      { label: 'Payment Links', href: '/admin/getpaid/paymentlinks', description: 'Create and manage payment links' },
+      { label: 'Recurring Payments', href: '/admin/getpaid/reoccuringpayments', description: 'Recurring invoice schedules' },
+      { label: 'Stripe Payouts', href: '/admin/getpaid/stripepayouts', description: 'Paid and deposited Stripe activity' },
+      { label: 'Products & Services', href: '/admin/getpaid/product&services', description: 'Ad slots, packages and billable items' },
     ],
   },
   {
