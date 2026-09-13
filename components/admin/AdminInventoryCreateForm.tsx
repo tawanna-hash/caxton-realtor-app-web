@@ -2,7 +2,13 @@
 
 import { upload } from '@vercel/blob/client';
 
-import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import {
+  useState,
+  useEffect,
+  type FormEvent,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from 'react';
 import { useRouter } from 'next/navigation';
 
 type Kind = 'listing' | 'promotion';
@@ -32,6 +38,10 @@ export default function AdminInventoryCreateForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [builderName, setBuilderName] = useState<string>('');
+  const [builderSuggestions, setBuilderSuggestions] = useState<string[]>([]);
+  const [builderSuggestionsOpen, setBuilderSuggestionsOpen] = useState(false);
+  const [builderSuggestionsLoading, setBuilderSuggestionsLoading] = useState(false);
+  const [activeBuilderSuggestion, setActiveBuilderSuggestion] = useState(0);
   const [title, setTitle] = useState<string>('');
   const [city, setCity] = useState<string>('Greater Austin');
   const [state, setState] = useState<string>('TX');
@@ -81,6 +91,80 @@ export default function AdminInventoryCreateForm() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time URL param read on mount
     if (k === 'listing' || k === 'promotion') setKind(k);
   }, []);
+
+  // Look up existing builder and developer names as the admin types. This
+  // remains a free-text field so a new builder can still be entered directly.
+  useEffect(() => {
+    const query = builderName.trim();
+    if (!query) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset lookup state when the search field clears
+      setBuilderSuggestions([]);
+      setBuilderSuggestionsOpen(false);
+      setBuilderSuggestionsLoading(false);
+      setActiveBuilderSuggestion(0);
+      return;
+    }
+
+    const controller = new AbortController();
+    const debounce = window.setTimeout(async () => {
+      setBuilderSuggestionsLoading(true);
+      try {
+        const response = await fetch(
+          `/api/admin/inventory/builder-suggestions?q=${encodeURIComponent(query)}`,
+          { credentials: 'include', signal: controller.signal },
+        );
+        const body = (await response.json().catch(() => null)) as
+          | { builders?: string[] }
+          | null;
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const suggestions = body?.builders ?? [];
+        setBuilderSuggestions(suggestions);
+        setActiveBuilderSuggestion(0);
+        setBuilderSuggestionsOpen(true);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setBuilderSuggestions([]);
+        setBuilderSuggestionsOpen(false);
+      } finally {
+        if (!controller.signal.aborted) setBuilderSuggestionsLoading(false);
+      }
+    }, 150);
+
+    return () => {
+      window.clearTimeout(debounce);
+      controller.abort();
+    };
+  }, [builderName]);
+
+  function chooseBuilderSuggestion(name: string) {
+    setBuilderName(name);
+    setBuilderSuggestionsOpen(false);
+  }
+
+  function handleBuilderNameKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Escape') {
+      setBuilderSuggestionsOpen(false);
+      return;
+    }
+
+    if (!builderSuggestions.length) return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setBuilderSuggestionsOpen(true);
+      setActiveBuilderSuggestion((index) => (index + 1) % builderSuggestions.length);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setBuilderSuggestionsOpen(true);
+      setActiveBuilderSuggestion((index) =>
+        (index - 1 + builderSuggestions.length) % builderSuggestions.length,
+      );
+    } else if (event.key === 'Enter' && builderSuggestionsOpen) {
+      event.preventDefault();
+      chooseBuilderSuggestion(builderSuggestions[activeBuilderSuggestion]);
+    }
+  }
 
   function onImageChange(e: ChangeEvent<HTMLInputElement>) {
     setImageError(null);
@@ -357,8 +441,8 @@ export default function AdminInventoryCreateForm() {
         />
       </div>
 
-      {/* Builder name (free text) */}
-      <div>
+      {/* Builder name (existing names are suggested, but free text remains allowed). */}
+      <div className="relative">
         <label htmlFor="builderName" className={labelStyle}>
           Builder / developer name
         </label>
@@ -366,12 +450,64 @@ export default function AdminInventoryCreateForm() {
           id="builderName"
           type="text"
           value={builderName}
-          onChange={(e) => setBuilderName(e.target.value)}
+          onChange={(e) => {
+            setBuilderName(e.target.value);
+            setBuilderSuggestionsOpen(true);
+          }}
+          onFocus={() => {
+            if (builderName.trim()) setBuilderSuggestionsOpen(true);
+          }}
+          onBlur={() => {
+            window.setTimeout(() => setBuilderSuggestionsOpen(false), 120);
+          }}
+          onKeyDown={handleBuilderNameKeyDown}
           required
           disabled={submitting}
           className={fieldStyle}
           placeholder="e.g. M/I Homes, Lennar, KB Home"
+          autoComplete="off"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={builderSuggestionsOpen && builderSuggestions.length > 0}
+          aria-controls="builderNameSuggestions"
+          aria-activedescendant={
+            builderSuggestionsOpen && builderSuggestions.length > 0
+              ? `builderNameSuggestion-${activeBuilderSuggestion}`
+              : undefined
+          }
         />
+        {builderSuggestionsOpen && (builderSuggestionsLoading || builderSuggestions.length > 0) && (
+          <div
+            id="builderNameSuggestions"
+            role="listbox"
+            aria-label="Builder and developer suggestions"
+            className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg"
+          >
+            {builderSuggestionsLoading && builderSuggestions.length === 0 ? (
+              <div className="px-4 py-2 text-sm text-gray-500">Searching builders…</div>
+            ) : (
+              builderSuggestions.map((name, index) => (
+                <button
+                  key={name}
+                  id={`builderNameSuggestion-${index}`}
+                  type="button"
+                  role="option"
+                  aria-selected={index === activeBuilderSuggestion}
+                  className={
+                    'block w-full px-4 py-2 text-left text-sm transition-colors ' +
+                    (index === activeBuilderSuggestion
+                      ? 'bg-brand-50 text-brand-800'
+                      : 'text-gray-800 hover:bg-gray-50')
+                  }
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => chooseBuilderSuggestion(name)}
+                >
+                  {name}
+                </button>
+              ))
+            )}
+          </div>
+        )}
       </div>
 
       {/* Publication + city + state */}
