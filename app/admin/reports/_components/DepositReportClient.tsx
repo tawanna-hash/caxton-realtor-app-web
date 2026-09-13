@@ -1,6 +1,6 @@
 'use client';
 
-// app/admin/getpaid/depositreport/DepositReportClient.tsx
+// app/admin/reports/_components/DepositReportClient.tsx
 //
 // Deposit-ready view of received checks. Checks are the only tender that
 // reaches a bank deposit slip, so the server query admits check payments only
@@ -12,7 +12,10 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatCents } from '@/lib/invoices';
 import { PUBLICATION_OPTIONS } from '@/lib/publication-theme';
+import type { DepositPaymentRow } from '@/lib/server/deposit-reports';
 import { shortDate } from '@/app/admin/billing/_components/helpers';
+
+export type { DepositPaymentRow } from '@/lib/server/deposit-reports';
 
 const PUB_LABELS = new Map(PUBLICATION_OPTIONS.map((option) => [option.id as string, option.label]));
 
@@ -28,25 +31,6 @@ function publicationLabel(publication: string | null): string {
     .filter(Boolean);
   if (!keys.length) return '';
   return keys.map((key) => PUB_LABELS.get(key) ?? key).join(' · ');
-}
-
-export interface DepositPaymentRow {
-  id: string;
-  payment_date: string | null;
-  amount_cents: number;
-  payment_method: string | null;
-  reference: string | null;
-  memo: string | null;
-  source: string | null;
-  created_by: string | null;
-  created_at: string | null;
-  invoice_id: string;
-  invoice_number: string | null;
-  invoice_status: string | null;
-  invoice_total_cents: number | null;
-  invoice_due_date: string | null;
-  partner_name: string | null;
-  publication: string | null;
 }
 
 const CONTROL =
@@ -106,7 +90,7 @@ export default function DepositReportClient({
 
   const applyRange = () => {
     const query = new URLSearchParams({ from: fromDate, to: toDate });
-    router.push(`/admin/getpaid/depositreport?${query.toString()}`);
+    router.push(`/admin/reports/deposits?${query.toString()}`);
   };
 
   const rangeLabel = `${shortDate(from)} – ${shortDate(to)}`;
