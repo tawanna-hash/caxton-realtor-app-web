@@ -37,8 +37,6 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
   const [showInactive, setShowInactive] = useState(false);
   const [editing, setEditing] = useState<ProductService | 'new' | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [importing, setImporting] = useState(false);
 
   const reload = useCallback(async () => {
     const res = await fetch('/api/admin/products-services', { cache: 'no-store' });
@@ -77,21 +75,6 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
     });
   }, [filtered]);
 
-  const handleImport = useCallback(async () => {
-    setImporting(true); setError(null); setNotice(null);
-    try {
-      const res = await fetch('/api/admin/products-services/import', { method: 'POST' });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) { setError(j.error ?? 'Import failed'); return; }
-      setNotice(`Imported catalog: ${j.inserted} added, ${j.updated} updated of ${j.total} total.`);
-      await reload();
-    } catch {
-      setError('Network error during import');
-    } finally {
-      setImporting(false);
-    }
-  }, [reload]);
-
   const handleToggleActive = useCallback(async (p: ProductService) => {
     setError(null);
     const res = await fetch(`/api/admin/products-services/${p.id}`, {
@@ -120,13 +103,6 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
           <p className="text-sm text-gray-600 mt-1">{products.length} items · ad slots, packages, and billable services used on invoices.</p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={handleImport}
-            disabled={importing}
-            className="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
-          >
-            {importing ? 'Importing…' : 'Import from QuickBooks'}
-          </button>
           <button onClick={() => setEditing('new')} className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700 whitespace-nowrap">
             + New item
           </button>
@@ -134,7 +110,6 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
       </div>
 
       {error && <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
-      {notice && <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</div>}
 
       <GetPaidSearchBar value={query} onChange={setQuery} placeholder="Search product, service, or category…">
         <select aria-label="Market" value={marketFilter} onChange={(e) => setMarketFilter(e.target.value)} className={getPaidSearchSelectClassName}>
