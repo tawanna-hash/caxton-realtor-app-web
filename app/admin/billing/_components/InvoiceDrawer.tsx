@@ -67,8 +67,10 @@ export function InvoiceDrawer({
 }) {
   const initialAdvertiserId = existing?.advertiser_id ?? seed?.advertiser_id ?? null;
   const initialAgreementId = (existing?.agreement_id ?? seed?.agreement_id ?? '') as string;
+  const initialLineItems = existing?.line_items ?? [];
   const initialAmountDollars =
-    existing?.amount_cents != null ? (existing.amount_cents / 100).toString()
+    initialLineItems.length > 0 ? ''
+    : existing?.amount_cents != null ? (existing.amount_cents / 100).toString()
     : seed?.amount_cents != null ? (seed.amount_cents / 100).toString()
     : '';
 
@@ -88,7 +90,7 @@ export function InvoiceDrawer({
       ? formatDateISO(existing.due_date as string | Date)
       : defaultDueDate,
     memo: existing?.memo ?? (seed ? 'Generated from agreement' : ''),
-    line_items: existing?.line_items ?? [] as InvoiceLineItem[],
+    line_items: initialLineItems as InvoiceLineItem[],
   });
   const [saving, setSaving] = useState(false);
   const isCreate = !existing;
@@ -117,10 +119,13 @@ export function InvoiceDrawer({
 
   const update = <K extends keyof typeof form>(k: K, v: typeof form[K]) => setForm((f) => ({ ...f, [k]: v }));
 
-  const addLineItem = () => update('line_items', [...form.line_items, { description: '', qty: 1, unit_cents: 0 }]);
-  const removeLineItem = (i: number) => update('line_items', form.line_items.filter((_, idx) => idx !== i));
+  const updateLineItems = (lineItems: InvoiceLineItem[]) =>
+    setForm((f) => ({ ...f, line_items: lineItems, amount_dollars: '' }));
+
+  const addLineItem = () => updateLineItems([...form.line_items, { description: '', qty: 1, unit_cents: 0 }]);
+  const removeLineItem = (i: number) => updateLineItems(form.line_items.filter((_, idx) => idx !== i));
   const updateLineItem = (i: number, key: keyof InvoiceLineItem, val: string | number) =>
-    update('line_items', form.line_items.map((li, idx) => idx === i ? { ...li, [key]: typeof val === 'number' ? val : (key === 'description' ? val : Number(val) || 0) } : li));
+    updateLineItems(form.line_items.map((li, idx) => idx === i ? { ...li, [key]: typeof val === 'number' ? val : (key === 'description' ? val : Number(val) || 0) } : li));
 
   const linesTotal = lineItemsTotal(form.line_items);
   const effectiveAmount = form.amount_dollars ? Math.round(parseFloat(form.amount_dollars) * 100) : linesTotal;
@@ -194,7 +199,7 @@ export function InvoiceDrawer({
               className="col-span-6"
               value={li.description}
               onChange={(value) => updateLineItem(i, 'description', value)}
-              onSelect={(item) => update('line_items', form.line_items.map((line, index) => index === i ? {
+              onSelect={(item) => updateLineItems(form.line_items.map((line, index) => index === i ? {
                 ...line,
                 description: item.sales_description || item.name,
                 unit_cents: item.price_cents ?? 0,

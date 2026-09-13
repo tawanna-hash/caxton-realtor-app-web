@@ -75,17 +75,18 @@ export default async function InvoicePreviewPage({
   if (!invoice) notFound();
 
   const paid = invoice.status === 'paid';
-  const balanceRows = invoice.advertiser_id
-    ? (await sql`
+  let balanceRows: BalanceRow[] = [];
+  if (invoice.advertiser_id && invoice.issued_at) {
+    balanceRows = (await sql`
         SELECT COALESCE(SUM(total_cents), 0)::bigint AS balance_forward_cents
         FROM invoices
         WHERE advertiser_id = ${invoice.advertiser_id}
           AND id <> ${invoice.id}
           AND status NOT IN ('paid', 'void')
           AND issued_at IS NOT NULL
-          AND (${invoice.issued_at}::timestamptz IS NULL OR issued_at < ${invoice.issued_at}::timestamptz)
-      `) as unknown as BalanceRow[]
-    : [];
+          AND issued_at < ${invoice.issued_at}
+      `) as unknown as BalanceRow[];
+  }
   const balanceForwardCents = Number(balanceRows[0]?.balance_forward_cents ?? 0);
   const paymentsCreditsCents = paid ? invoice.total_cents : 0;
   const accountTotalDueCents = balanceForwardCents + invoice.total_cents - paymentsCreditsCents;

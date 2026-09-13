@@ -15,6 +15,7 @@ import {
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { captureServerEvent, flushServerEvents } from '@/lib/server/posthog';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -164,6 +165,7 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       )
       RETURNING *
     `;
+    revalidateInvoiceViews(rows[0]?.id as string | undefined);
     return NextResponse.json({ invoice: rows[0] }, { status: 201 });
   } catch (err) {
     console.error('[admin/invoices POST]', errMessage(err));

@@ -10,10 +10,13 @@ import { getSql, ensureSchema } from '@/lib/db';
 import {
   INVOICE_PATCHABLE_FIELDS,
   INVOICE_STATUS_VALUES,
+  lineItemsTotal,
+  type InvoiceLineItem,
   type InvoiceWithAdvertiser,
 } from '@/lib/invoices';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
+import { revalidateInvoiceViews } from '@/lib/server/revalidate-invoice-views';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -65,6 +68,12 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
     if (existing.length === 0) return NextResponse.json({ error: 'not found' }, { status: 404 });
     const prevStatus = existing[0].status;
 
+    // Keep totals synchronized for API clients that update line items without
+    // also supplying a calculated amount.
+    if (Array.isArray(body.line_items) && typeof body.amount_cents !== 'number') {
+      body.amount_cents = lineItemsTotal(body.line_items as InvoiceLineItem[]);
+    }
+
     // Auto-stamp status lifecycle timestamps
     if ('status' in body && typeof body.status === 'string' && INVOICE_STATUS_VALUES.has(body.status as never)) {
       const next = body.status as string;
@@ -111,6 +120,7 @@ export const PATCH = withAdminTracking(async function PATCH(req: NextRequest, ct
     if (updated.length === 0) return NextResponse.json({ error: 'no patchable fields' }, { status: 400 });
     await sql`UPDATE invoices SET updated_at = NOW() WHERE id = ${id}`;
     const rows = await sql`SELECT * FROM invoices WHERE id = ${id}`;
+    revalidateInvoiceViews(id);
     return NextResponse.json({ invoice: rows[0], updated_fields: updated });
   } catch (err) {
     console.error('[admin/invoices PATCH]', errMessage(err));
@@ -135,6 +145,7 @@ export const DELETE = withAdminTracking(async function DELETE(_req: NextRequest,
       return NextResponse.json({ error: 'only draft invoices may be deleted; use status=void instead' }, { status: 400 });
     }
     await sql`DELETE FROM invoices WHERE id = ${id}`;
+    revalidateInvoiceViews(id);
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ error: 'delete failed', detail: errMessage(err) }, { status: 500 });
