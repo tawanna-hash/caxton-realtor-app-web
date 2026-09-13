@@ -42,13 +42,19 @@ export async function GET(req: NextRequest) {
       const rows = await sql`
         SELECT (
           GREATEST(
-            COALESCE(MAX(number::bigint) FILTER (WHERE number ~ '^[0-9]+$'), 0),
+            COALESCE(MAX(
+              CASE
+                WHEN number ~ '^INV #[0-9]+$' THEN substring(number from '[0-9]+')::bigint
+                WHEN number ~ '^[0-9]+$' THEN number::bigint
+                ELSE NULL
+              END
+            ), 0),
             16200
           ) + 1
-        )::text AS next_number
+        )::text AS next_sequence
         FROM invoices
-      ` as unknown as Array<{ next_number: string }>;
-      return NextResponse.json({ next_number: rows[0]?.next_number ?? '16201' });
+      ` as unknown as Array<{ next_sequence: string }>;
+      return NextResponse.json({ next_number: `INV #${rows[0]?.next_sequence ?? '16201'}` });
     }
     let rows: unknown[];
     if (advertiserId !== null) {
@@ -181,13 +187,19 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
       const numberRows = await sql`
         SELECT (
           GREATEST(
-            COALESCE(MAX(number::bigint) FILTER (WHERE number ~ '^[0-9]+$'), 0),
+            COALESCE(MAX(
+              CASE
+                WHEN number ~ '^INV #[0-9]+$' THEN substring(number from '[0-9]+')::bigint
+                WHEN number ~ '^[0-9]+$' THEN number::bigint
+                ELSE NULL
+              END
+            ), 0),
             16200
           ) + 1
-        )::text AS next_number
+        )::text AS next_sequence
         FROM invoices
-      ` as unknown as Array<{ next_number: string }>;
-      number = numberRows[0]?.next_number ?? '16201';
+      ` as unknown as Array<{ next_sequence: string }>;
+      number = `INV #${numberRows[0]?.next_sequence ?? '16201'}`;
     }
 
     const billTo = {
