@@ -220,6 +220,22 @@ export function InvoiceDrawer({
         <textarea value={form.memo} onChange={(e) => update('memo', e.target.value)} rows={2} className={INPUT + ' resize-y'} />
       </Section>
 
+      {existing && (
+        <Section title="Final invoice">
+          <a
+            href={`/admin/invoices/${existing.id}/preview`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50"
+          >
+            Preview final invoice
+          </a>
+          <p className="text-xs text-gray-500">
+            Opens the customer-facing Caxton invoice in a print-ready view.
+          </p>
+        </Section>
+      )}
+
       <DrawerFooter saving={saving} onCancel={onClose} onSubmit={submit} submitLabel={isCreate ? 'Create' : 'Save changes'} />
     </DrawerShell>
   );
