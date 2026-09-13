@@ -368,7 +368,7 @@ export function RecordPaymentDrawer({ invoices, advertisers, initialInvoiceId, o
       if (!Number.isInteger(amountCents) || amountCents <= 0) {
         throw new Error('Enter a valid payment amount.');
       }
-      const response = await fetch(`/api/admin/invoices/${selectedInvoice.id}/payments`, {
+      const response = await fetch('/api/admin/invoice-payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
