@@ -69,7 +69,12 @@ export default function ProductsServicesClient({ initialProducts }: Props) {
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(p);
     }
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    return Array.from(map.entries()).sort((a, b) => {
+      const featuredCategory = 'Print & Digital Replica Packages';
+      if (a[0] === featuredCategory) return -1;
+      if (b[0] === featuredCategory) return 1;
+      return a[0].localeCompare(b[0]);
+    });
   }, [filtered]);
 
   const handleImport = useCallback(async () => {
