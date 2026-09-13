@@ -41,13 +41,13 @@ export default async function MailingHubPage() {
   //    dedicated page reports, so the HUB tiles agree with their
   //    destination pages.
   const [
-    counts,
-    sources,
-    realtylineCount,
-    newslineCount,
-    houstonCount,
-    dallasCount,
-  ] = await Promise.all([
+    countsResult,
+    sourcesResult,
+    realtylineResult,
+    newslineResult,
+    houstonResult,
+    dallasResult,
+  ] = await Promise.allSettled([
     countBySegment(),
     countAudienceSources(),
     countPublicationList('realtyline'),
@@ -55,6 +55,21 @@ export default async function MailingHubPage() {
     countPublicationList('realtyline-houston'),
     countPublicationList('realtyline-dallas'),
   ]);
+  const emptyCounts = Object.fromEntries([
+    ['total', 0],
+    ...SEGMENTS.map((segment) => [segment.segment, 0] as const),
+  ]) as Awaited<ReturnType<typeof countBySegment>>;
+  const counts = countsResult.status === 'fulfilled' ? countsResult.value : emptyCounts;
+  const sources = sourcesResult.status === 'fulfilled'
+    ? sourcesResult.value
+    : { aborMembers: 0, saborMembers: 0, appSubscribers: 0 };
+  const publicationTotal = (
+    result: PromiseSettledResult<Awaited<ReturnType<typeof countPublicationList>>>,
+  ) => result.status === 'fulfilled' ? result.value.total : 0;
+  const realtylineCount = publicationTotal(realtylineResult);
+  const newslineCount = publicationTotal(newslineResult);
+  const houstonCount = publicationTotal(houstonResult);
+  const dallasCount = publicationTotal(dallasResult);
 
   // Accents: each tile uses a distinct palette hue so they remain visually
   // distinguishable while staying in the 4-color lockdown.
@@ -154,9 +169,9 @@ export default async function MailingHubPage() {
             <span>RealtyLine (Austin)</span>
             <span
               className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-700/10 text-brand-700 group-hover/dl:bg-white/20 group-hover/dl:text-white"
-              title={`${realtylineCount.total.toLocaleString()} unique deliverable emails`}
+              title={`${realtylineCount.toLocaleString()} unique deliverable emails`}
             >
-              {realtylineCount.total.toLocaleString()}
+              {realtylineCount.toLocaleString()}
             </span>
           </Link>
           <Link
@@ -166,9 +181,9 @@ export default async function MailingHubPage() {
             <span>Newsline (San Antonio)</span>
             <span
               className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#c2410c]/10 text-[#c2410c] group-hover/dl:bg-white/20 group-hover/dl:text-white"
-              title={`${newslineCount.total.toLocaleString()} unique deliverable emails`}
+              title={`${newslineCount.toLocaleString()} unique deliverable emails`}
             >
-              {newslineCount.total.toLocaleString()}
+              {newslineCount.toLocaleString()}
             </span>
           </Link>
           <Link
@@ -178,9 +193,9 @@ export default async function MailingHubPage() {
             <span>RealtyLine Houston</span>
             <span
               className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-700/10 text-brand-700 group-hover/dl:bg-white/20 group-hover/dl:text-white"
-              title={`${houstonCount.total.toLocaleString()} unique deliverable emails`}
+              title={`${houstonCount.toLocaleString()} unique deliverable emails`}
             >
-              {houstonCount.total.toLocaleString()}
+              {houstonCount.toLocaleString()}
             </span>
           </Link>
           <Link
@@ -190,9 +205,9 @@ export default async function MailingHubPage() {
             <span>RealtyLine Dallas/Ft. Worth</span>
             <span
               className="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-0.5 rounded-full text-[11px] font-semibold bg-brand-700/10 text-brand-700 group-hover/dl:bg-white/20 group-hover/dl:text-white"
-              title={`${dallasCount.total.toLocaleString()} unique deliverable emails`}
+              title={`${dallasCount.toLocaleString()} unique deliverable emails`}
             >
-              {dallasCount.total.toLocaleString()}
+              {dallasCount.toLocaleString()}
             </span>
           </Link>
           <span className="text-xs text-gray-500">
