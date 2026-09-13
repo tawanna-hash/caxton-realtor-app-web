@@ -321,7 +321,6 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
         </div>
         <div className="flex gap-2">
           <a href="/admin/invoices" className="px-4 py-2 rounded-md border border-gray-300 text-sm hover:bg-gray-50">All invoices</a>
-          <button onClick={() => setCreateSchedule(true)} className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">+ Recurring schedule</button>
         </div>
       </div>
 
