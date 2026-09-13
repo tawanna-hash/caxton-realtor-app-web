@@ -168,7 +168,8 @@ function Pagination({
 
 function daysPastDue(dueDate: string | null): number {
   if (!dueDate) return -9999; // no due date yet ⇒ treat as current
-  const due = new Date(dueDate + 'T00:00:00Z').getTime();
+  const due = new Date(`${dueDate.slice(0, 10)}T00:00:00Z`).getTime();
+  if (!Number.isFinite(due)) return -9999;
   const today = new Date(); today.setUTCHours(0, 0, 0, 0);
   return Math.round((today.getTime() - due) / 86400000);
 }
@@ -222,7 +223,8 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
       if (inv.status === 'paid' || inv.status === 'void') continue;
       const days = daysPastDue(inv.due_date);
       const bucket = agingBucketForDaysPastDue(days);
-      const amt = inv.total_cents ?? 0;
+      const amt = inv.balance_cents ?? inv.total_cents ?? 0;
+      if (amt <= 0) continue;
       totals[bucket] += amt;
 
       const key = inv.advertiser_name ?? `#${inv.advertiser_id}`;
@@ -297,7 +299,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
     for (const inv of invoices) {
       if (inv.status === 'void') continue;
       if (inv.status !== 'paid') {
-        notPaidTotal += inv.total_cents ?? 0;
+        notPaidTotal += inv.balance_cents ?? inv.total_cents ?? 0;
         notPaidCount += 1;
       } else {
         const paidAt = inv.paid_at ? new Date(inv.paid_at) : null;
@@ -334,7 +336,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
 
   const overdueCount = useMemo(() => unpaidInvoices.filter((i) => i.days > 0).length, [unpaidInvoices]);
   const overdueTotal = useMemo(
-    () => unpaidInvoices.filter((i) => i.days > 0).reduce((s, i) => s + (i.total_cents ?? 0), 0),
+    () => unpaidInvoices.filter((i) => i.days > 0).reduce((s, i) => s + (i.balance_cents ?? i.total_cents ?? 0), 0),
     [unpaidInvoices],
   );
 
@@ -556,7 +558,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
                 <tr key={invoice.id} className="hover:bg-orange-50/40">
                   <td className="truncate px-4 py-2.5 font-medium text-gray-800">{invoice.number ?? 'Draft'}</td>
                   <td className="truncate px-3 py-2.5 text-gray-800">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td>
-                  <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium tabular-nums text-gray-900">{formatCents(invoice.total_cents)}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium tabular-nums text-gray-900">{formatCents(invoice.balance_cents ?? invoice.total_cents)}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-gray-600">{invoice.due_date ? shortDate(invoice.due_date) : 'No due date'}</td>
                   <td className="px-3 py-2.5">
                     <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-gray-700">
