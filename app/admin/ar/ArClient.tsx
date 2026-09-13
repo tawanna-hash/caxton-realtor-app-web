@@ -168,7 +168,7 @@ function Pagination({
 
 function daysPastDue(dueDate: string | null): number {
   if (!dueDate) return -9999; // no due date yet ⇒ treat as current
-  const due = new Date(`${dueDate.slice(0, 10)}T00:00:00Z`).getTime();
+  const due = new Date(dueDate).getTime();
   if (!Number.isFinite(due)) return -9999;
   const today = new Date(); today.setUTCHours(0, 0, 0, 0);
   return Math.round((today.getTime() - due) / 86400000);
