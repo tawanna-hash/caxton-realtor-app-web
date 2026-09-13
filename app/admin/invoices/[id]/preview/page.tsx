@@ -15,9 +15,9 @@ type InvoiceRow = {
   amount_cents: number;
   tax_cents: number;
   total_cents: number;
-  issued_at: string | null;
-  due_date: string | null;
-  paid_at: string | null;
+  issued_at: string | Date | null;
+  due_date: string | Date | null;
+  paid_at: string | Date | null;
   memo: string | null;
   line_items: LineItem[];
   bill_to_name: string | null;
@@ -43,10 +43,11 @@ function money(cents: number) {
   })}`;
 }
 
-function date(value: string | null) {
+function date(value: string | Date | null) {
   if (!value) return '—';
-  const [year, month, day] = value.slice(0, 10).split('-').map(Number);
-  return new Date(Date.UTC(year, (month ?? 1) - 1, day ?? 1)).toLocaleDateString('en-US', {
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '—';
+  return parsed.toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
