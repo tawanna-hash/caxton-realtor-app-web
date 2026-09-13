@@ -11,7 +11,24 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatCents } from '@/lib/invoices';
+import { PUBLICATION_OPTIONS } from '@/lib/publication-theme';
 import { shortDate } from '@/app/admin/billing/_components/helpers';
+
+const PUB_LABELS = new Map(PUBLICATION_OPTIONS.map((option) => [option.id as string, option.label]));
+
+/**
+ * `advertisers.publication` stores keys and may be comma-separated for
+ * multi-market advertisers, so render the reader-facing titles instead of
+ * raw keys like `san_antonio`.
+ */
+function publicationLabel(publication: string | null): string {
+  const keys = (publication ?? '')
+    .split(',')
+    .map((key) => key.trim())
+    .filter(Boolean);
+  if (!keys.length) return '';
+  return keys.map((key) => PUB_LABELS.get(key) ?? key).join(' · ');
+}
 
 export interface DepositPaymentRow {
   id: string;
@@ -200,7 +217,7 @@ export default function DepositReportClient({
                     <th className="px-3 py-2 font-semibold">Date</th>
                     <th className="px-3 py-2 font-semibold">Partner</th>
                     <th className="px-3 py-2 font-semibold">Invoice</th>
-                    <th className="px-3 py-2 font-semibold">Check no.</th>
+                    <th className="whitespace-nowrap px-3 py-2 font-semibold">Check no.</th>
                     <th className="px-3 py-2 font-semibold">Memo</th>
                     <th className="px-3 py-2 font-semibold">Source</th>
                     <th className="px-3 py-2 font-semibold">Recorded</th>
@@ -211,9 +228,13 @@ export default function DepositReportClient({
                   {rows.map((payment) => (
                     <tr key={payment.id} className="align-top">
                       <td className="whitespace-nowrap px-3 py-2 text-gray-800">{shortDate(payment.payment_date)}</td>
-                      <td className="px-3 py-2 text-gray-900">
+                      {/* Kept on one line: a wrapped partner name pushes every
+                          row taller and spills the sheet onto a second page. */}
+                      <td className="px-3 py-2 text-gray-900 print:whitespace-nowrap">
                         <div className="font-medium">{payment.partner_name ?? '—'}</div>
-                        {payment.publication && <div className="text-gray-500">{payment.publication}</div>}
+                        {publicationLabel(payment.publication) && (
+                          <div className="text-gray-500">{publicationLabel(payment.publication)}</div>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 text-gray-800">
                         <div className="font-medium">{payment.invoice_number ?? 'Draft'}</div>
@@ -226,7 +247,8 @@ export default function DepositReportClient({
                       <td className="whitespace-nowrap px-3 py-2 text-gray-700">{sourceLabel(payment.source)}</td>
                       <td className="whitespace-nowrap px-3 py-2 text-gray-600">
                         <div>{timestamp(payment.created_at)}</div>
-                        {payment.created_by && <div className="text-gray-500">{payment.created_by}</div>}
+                        {/* Preparer is already named in the printed header. */}
+                        {payment.created_by && <div className="text-gray-500 print:hidden">{payment.created_by}</div>}
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 text-right font-semibold tabular-nums text-gray-900">
                         {formatCents(payment.amount_cents)}
@@ -245,7 +267,7 @@ export default function DepositReportClient({
               </table>
             </div>
 
-            <div className="mt-6 grid gap-6 border-t border-gray-200 pt-6 text-xs text-gray-600 sm:grid-cols-2">
+            <div className="mt-6 grid gap-6 border-t border-gray-200 pt-6 text-xs text-gray-600 sm:grid-cols-2 print:break-inside-avoid">
               <div>
                 <div className="mb-6">Prepared by</div>
                 <div className="border-t border-gray-400 pt-1">{preparedBy ?? ''}</div>

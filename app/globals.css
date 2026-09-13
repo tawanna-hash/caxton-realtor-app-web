@@ -411,6 +411,14 @@ textarea::placeholder {
    Hides all app chrome (nav bars, floaters, buttons, CTAs) and shows
    only the page content. */
 @media print {
+  /* Zero the sheet margin so the browser has no gutter in which to draw its
+     own header and footer (page title, date, URL, "Page 1 of 2"). Readable
+     margins come from the 0.5in content padding set further down, so the
+     printed sheet carries only our own report chrome. */
+  @page {
+    margin: 0;
+  }
+
   /* Hide app chrome */
   nav,
   header,

@@ -14,7 +14,9 @@ const GET_PAID_LINKS = [
 export default function GetPaidLayout({ children }: { children: React.ReactNode }) {
   return (
     <div>
-      <div className="border-b border-gray-200 bg-white">
+      {/* Section tabs are screen chrome. Marked no-print so report pages in
+          this section (e.g. the deposit report) print as just the report. */}
+      <div className="no-print border-b border-gray-200 bg-white print:hidden">
         <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-6 py-2">
           {GET_PAID_LINKS.map(([label, href]) => (
             <Link
