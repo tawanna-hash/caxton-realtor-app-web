@@ -26,7 +26,7 @@ type InvoiceRow = {
   advertiser_name: string | null;
   advertiser_id: number | null;
 };
-type BalanceRow = { balance_forward_cents: number | string };
+type BalanceRow = { total_cents: number; issued_at: string | Date };
 
 const TERMS = [
   ['FREQUENCY DISCOUNT', 'An advertiser who does not complete a committed consecutive-month insertion schedule will be subject to the one-time insertion rate.'],
@@ -78,16 +78,19 @@ export default async function InvoicePreviewPage({
   let balanceRows: BalanceRow[] = [];
   if (invoice.advertiser_id && invoice.issued_at) {
     balanceRows = (await sql`
-        SELECT COALESCE(SUM(total_cents), 0)::bigint AS balance_forward_cents
+        SELECT total_cents, issued_at
         FROM invoices
         WHERE advertiser_id = ${invoice.advertiser_id}
           AND id <> ${invoice.id}
           AND status NOT IN ('paid', 'void')
           AND issued_at IS NOT NULL
-          AND issued_at < ${invoice.issued_at}
       `) as unknown as BalanceRow[];
   }
-  const balanceForwardCents = Number(balanceRows[0]?.balance_forward_cents ?? 0);
+  const invoiceIssuedAt = invoice.issued_at ? new Date(invoice.issued_at).getTime() : null;
+  const balanceForwardCents = balanceRows.reduce((sum, row) => {
+    const rowIssuedAt = new Date(row.issued_at).getTime();
+    return invoiceIssuedAt !== null && rowIssuedAt < invoiceIssuedAt ? sum + Number(row.total_cents) : sum;
+  }, 0);
   const paymentsCreditsCents = paid ? invoice.total_cents : 0;
   const accountTotalDueCents = balanceForwardCents + invoice.total_cents - paymentsCreditsCents;
 

@@ -7,7 +7,7 @@
 // create drawer pre-populated when arriving via "Generate invoice".
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import { formatCents } from '@/lib/invoices';
@@ -32,6 +32,7 @@ export default function InvoicesClient({
   advertisers,
 }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   // Derive any inbound seed from query params synchronously. The effect
@@ -49,12 +50,16 @@ export default function InvoicesClient({
       amount_cents: amt ? Number(amt) : null,
     };
   }, [searchParams]);
+  const editFromUrl = useMemo(() => {
+    const editId = searchParams.get('edit');
+    return editId ? initialInvoices.find((invoice) => invoice.id === editId) ?? null : null;
+  }, [initialInvoices, searchParams]);
 
   const [invoices, setInvoices] = useState(initialInvoices);
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [createInv, setCreateInv] = useState<boolean>(() => seedFromUrl !== null);
-  const [editInv, setEditInv] = useState<InvoiceWithAdvertiser | null>(null);
+  const [editInv, setEditInv] = useState<InvoiceWithAdvertiser | null>(() => editFromUrl);
   const [error, setError] = useState<string | null>(null);
   const [invoiceSeed, setInvoiceSeed] = useState<{
     advertiser_id: number | null;
@@ -87,11 +92,11 @@ export default function InvoicesClient({
   // refresh doesn't re-open the drawer. Runs once per mount.
   const cleanedRef = useRef(false);
   useEffect(() => {
-    if (!cleanedRef.current && seedFromUrl) {
+    if (!cleanedRef.current && (seedFromUrl || editFromUrl)) {
       cleanedRef.current = true;
-      router.replace('/admin/invoices');
+      router.replace(pathname);
     }
-  }, [seedFromUrl, router]);
+  }, [editFromUrl, pathname, seedFromUrl, router]);
 
   const filteredInv = useMemo(() => {
     const q = query.trim().toLowerCase();
