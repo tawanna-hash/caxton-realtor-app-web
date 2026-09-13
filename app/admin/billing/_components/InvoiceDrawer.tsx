@@ -13,6 +13,7 @@ import { DrawerShell, DrawerFooter, Section, Field } from './DrawerShell';
 import { INPUT, INV_STATUS } from './constants';
 import { formatDateISO } from './helpers';
 import type { AdvertiserOption } from './types';
+import { ProductServiceSearch } from './ProductServiceSearch';
 
 // Minimal shape of an agreement_line_items row, as returned by
 // GET /api/admin/agreements/[id]/line-items.
@@ -189,7 +190,16 @@ export function InvoiceDrawer({
         {form.line_items.length === 0 && <div className="text-xs text-gray-500">No line items — invoice will use the manual amount below.</div>}
         {form.line_items.map((li, i) => (
           <div key={i} className="grid grid-cols-12 gap-2 items-center">
-            <input className={`${INPUT} col-span-6`} value={li.description} placeholder="Description" onChange={(e) => updateLineItem(i, 'description', e.target.value)} />
+            <ProductServiceSearch
+              className="col-span-6"
+              value={li.description}
+              onChange={(value) => updateLineItem(i, 'description', value)}
+              onSelect={(item) => update('line_items', form.line_items.map((line, index) => index === i ? {
+                ...line,
+                description: item.sales_description || item.name,
+                unit_cents: item.price_cents ?? 0,
+              } : line))}
+            />
             <input className={`${INPUT} col-span-2`} value={li.qty} type="number" min={1} onChange={(e) => updateLineItem(i, 'qty', e.target.value)} />
             <input className={`${INPUT} col-span-3`} value={li.unit_cents / 100} type="number" step="0.01" onChange={(e) => updateLineItem(i, 'unit_cents', Math.round(parseFloat(e.target.value || '0') * 100))} placeholder="Unit $" />
             <button type="button" onClick={() => removeLineItem(i)} className="col-span-1 text-xs text-rose-600 hover:underline">×</button>

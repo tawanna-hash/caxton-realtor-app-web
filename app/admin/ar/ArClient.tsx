@@ -392,28 +392,18 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
             </button>
             {requestMenuOpen && (
               <div role="menu" className="absolute left-4 top-[82px] z-30 min-w-52 overflow-hidden rounded-md border border-gray-200 bg-white py-1 shadow-lg">
-                {[
-                  ['Invoice', '/admin/invoices'],
-                  ['Payment link', '/admin/invoices'],
-                  ['Recurring payment', 'recurring'],
-                  ['Charge a payment', '/admin/invoices'],
-                  ['Tap to Pay on iPhone', '/admin/invoices'],
-                ].map(([label, destination]) => (
+                {QUICK_ACTIONS.map((action) => (
                   <button
                     type="button"
                     role="menuitem"
-                    key={label}
+                    key={action.label}
                     onClick={() => {
                       setRequestMenuOpen(false);
-                      if (destination === 'recurring') setCreateSchedule(true);
-                      else if (label === 'Invoice') setCreateInvoice(true);
-                      else if (label === 'Payment link') setPaymentAction('payment-link');
-                      else if (label === 'Charge a payment') setPaymentAction('record-payment');
-                      else router.push(destination);
+                      openQuickAction(action.action);
                     }}
                     className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
                   >
-                    {label}
+                    {action.label}
                   </button>
                 ))}
               </div>

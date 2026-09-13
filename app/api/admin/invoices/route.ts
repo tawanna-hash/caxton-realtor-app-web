@@ -111,15 +111,26 @@ export const POST = withAdminTracking(async function POST(req: NextRequest) {
     }
     const adv = advRows[0];
 
-    // Generate invoice number per publication per year
+    // Keep sales receipts on their own SR sequence instead of consuming invoice numbers.
     const year = new Date().getFullYear();
-    const seqRows = await sql`
-      SELECT count(*)::int AS n FROM invoices i
-      JOIN advertisers a ON a.id = i.advertiser_id
-      WHERE a.publication = ${adv.publication}
-        AND EXTRACT(YEAR FROM i.created_at) = ${year}
-    ` as unknown as Array<{ n: number }>;
-    const number = (body.number as string | undefined) || formatInvoiceNumber(adv.publication, year, (seqRows[0]?.n ?? 0) + 1);
+    let number = body.number as string | undefined;
+    if (!number && body.document_type === 'sales_receipt') {
+      const receiptSeqRows = await sql`
+        SELECT count(*)::int AS n
+        FROM invoices
+        WHERE number LIKE ${`SR-${year}-%`}
+      ` as unknown as Array<{ n: number }>;
+      number = `SR-${year}-${String((receiptSeqRows[0]?.n ?? 0) + 1).padStart(4, '0')}`;
+    }
+    if (!number) {
+      const seqRows = await sql`
+        SELECT count(*)::int AS n FROM invoices i
+        JOIN advertisers a ON a.id = i.advertiser_id
+        WHERE a.publication = ${adv.publication}
+          AND EXTRACT(YEAR FROM i.created_at) = ${year}
+      ` as unknown as Array<{ n: number }>;
+      number = formatInvoiceNumber(adv.publication, year, (seqRows[0]?.n ?? 0) + 1);
+    }
 
     const billTo = {
       name:    (body.bill_to_name    as string | undefined) ?? adv.name,

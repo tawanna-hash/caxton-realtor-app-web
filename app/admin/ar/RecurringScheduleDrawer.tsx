@@ -18,6 +18,7 @@ import { formatCents, lineItemsTotal } from '@/lib/invoices';
 import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import { DrawerShell, DrawerFooter, Section, Field } from '@/app/admin/billing/_components/DrawerShell';
 import { INPUT } from '@/app/admin/billing/_components/constants';
+import { ProductServiceSearch } from '@/app/admin/billing/_components/ProductServiceSearch';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
 
 const FREQ_OPTIONS: { value: RecurringFrequency; label: string }[] = [
@@ -307,11 +308,14 @@ export function RecurringScheduleDrawer({
       <Section title="Line items">
         {lineItems.map((li, i) => (
           <div key={i} className="grid grid-cols-12 gap-2 items-center">
-            <input
-              className={`${INPUT} col-span-6`}
-              placeholder="Description"
+            <ProductServiceSearch
+              className="col-span-6"
               value={li.description}
-              onChange={(e) => updateLine(i, { description: e.target.value })}
+              onChange={(value) => updateLine(i, { description: value })}
+              onSelect={(item) => updateLine(i, {
+                description: item.sales_description || item.name,
+                unit_cents: item.price_cents ?? 0,
+              })}
             />
             <input
               type="number" min={1}
