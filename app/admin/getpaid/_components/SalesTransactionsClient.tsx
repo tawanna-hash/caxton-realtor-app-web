@@ -5,12 +5,14 @@ import { useMemo, useState } from 'react';
 import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import { formatCents } from '@/lib/invoices';
 import PageTitle from '@/components/ui/PageTitle';
+import { toISODateString } from '@/app/admin/billing/_components/helpers';
 import { GetPaidSearchBar, getPaidSearchSelectClassName } from './GetPaidSearchBar';
 
 function formatTransactionDate(value: string | Date | null | undefined) {
   if (!value) return '—';
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
+  const [year, month, day] = toISODateString(value).split('-').map(Number);
+  if (!year || !month || !day) return '—';
+  const date = new Date(year, month - 1, day);
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',

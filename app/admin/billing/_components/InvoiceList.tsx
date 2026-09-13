@@ -9,6 +9,7 @@ import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import { formatCents } from '@/lib/invoices';
 import { StatusPill, PaidStamp, UnpaidBadge } from './Badges';
 import { INV_STATUS } from './constants';
+import { shortDate } from './helpers';
 
 export function InvoiceList({
   rows, onOpen, onDelete,
@@ -53,7 +54,7 @@ export function InvoiceList({
                 </div>
                 <div className="col-span-2 text-sm text-gray-900">{formatCents(r.total_cents)}</div>
                 <div className="col-span-2 text-sm text-gray-700">
-                  {r.due_date ? new Date(r.due_date).toLocaleDateString() : '—'}
+                  {shortDate(r.due_date)}
                 </div>
                 <div className="col-span-2">
                   {isPaid
@@ -77,7 +78,7 @@ export function InvoiceList({
                   <dt className="text-gray-500 uppercase tracking-wider">Total</dt>
                   <dd className="text-gray-900 text-right font-medium">{formatCents(r.total_cents)}</dd>
                   <dt className="text-gray-500 uppercase tracking-wider">Due</dt>
-                  <dd className="text-gray-800 text-right">{r.due_date ? new Date(r.due_date).toLocaleDateString() : '—'}</dd>
+                  <dd className="text-gray-800 text-right">{shortDate(r.due_date)}</dd>
                   <dt className="text-gray-500 uppercase tracking-wider">Payment</dt>
                   <dd className="text-right">
                     {isPaid

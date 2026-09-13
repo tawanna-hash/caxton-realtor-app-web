@@ -16,6 +16,7 @@ import type { AgreementWithAdvertiser } from '@/lib/agreements';
 import type { AdvertiserOption } from '@/app/admin/billing/_components/types';
 import { Kpi } from '@/app/admin/billing/_components/Badges';
 import { InvoiceDrawer } from '@/app/admin/billing/_components/InvoiceDrawer';
+import { shortDate } from '@/app/admin/billing/_components/helpers';
 import PageTitle from '@/components/ui/PageTitle';
 import { RecurringScheduleDrawer } from './RecurringScheduleDrawer';
 import { PaymentLinkDrawer, RecordPaymentDrawer, SalesReceiptDrawer } from './PaymentActionDrawers';
@@ -554,7 +555,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
                 <div className="sm:col-span-3 truncate text-gray-900">{inv.advertiser_name ?? '—'}</div>
                 <div className="sm:col-span-2 text-gray-900">{formatCents(inv.total_cents)}</div>
                 <div className="sm:col-span-2 text-xs text-gray-600">
-                  {inv.due_date ? new Date(inv.due_date).toLocaleDateString() : 'No due date'}
+                  {inv.due_date ? shortDate(inv.due_date) : 'No due date'}
                 </div>
                 <div className="sm:col-span-2 text-xs">
                   <span className={`px-2 py-0.5 rounded-full border ${inv.days > 0 ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-gray-100 text-gray-600 border-gray-200'}`}>

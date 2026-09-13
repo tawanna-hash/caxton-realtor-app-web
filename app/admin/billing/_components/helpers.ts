@@ -31,6 +31,15 @@ export function humanDate(iso: string | Date | null | undefined): string {
   } catch { return s; }
 }
 
+/** Format a calendar date without shifting it across time zones. */
+export function shortDate(value: string | Date | null | undefined): string {
+  const iso = toISODateString(value);
+  if (!iso) return '—';
+  const [year, month, day] = iso.split('-').map(Number);
+  if (!year || !month || !day) return iso;
+  return new Date(year, month - 1, day).toLocaleDateString('en-US');
+}
+
 /** Format a DATE column value as YYYY-MM-DD (display version returns em-dash for null). */
 export function formatDateISO(d: string | Date | null | undefined): string {
   if (d == null) return '—';
