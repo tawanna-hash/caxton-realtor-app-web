@@ -40,8 +40,6 @@ type Props = {
 };
 
 const QUICK_ACTIONS = [
-  { label: 'Get paid online', action: 'invoice' },
-  { label: 'Create invoice', action: 'invoice' },
   { label: 'Create payment link', action: 'payment-link' },
   { label: 'Create recurring payment', action: 'recurring' },
   { label: 'Create sales receipt', action: 'sales-receipt' },
@@ -187,7 +185,6 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   const [feedDismissed, setFeedDismissed] = useState(false);
   const [compareLastYear, setCompareLastYear] = useState(false);
   const [requestMenuOpen, setRequestMenuOpen] = useState(false);
-  const [showAllCreateActions, setShowAllCreateActions] = useState(false);
   const [durationMenuOpen, setDurationMenuOpen] = useState(false);
   const [incomePeriod, setIncomePeriod] = useState<IncomePeriod>('this-month');
   const [createInvoice, setCreateInvoice] = useState(false);
@@ -201,8 +198,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
   const [schedulePage, setSchedulePage] = useState(1);
 
   const openQuickAction = (action: (typeof QUICK_ACTIONS)[number]['action']) => {
-    if (action === 'invoice') setCreateInvoice(true);
-    else if (action === 'recurring') setCreateSchedule(true);
+    if (action === 'recurring') setCreateSchedule(true);
     else {
       setPaymentInvoiceId(null);
       setPaymentAction(action);
@@ -484,7 +480,7 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
       <section aria-label="Create actions" className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <div className="text-sm font-semibold text-gray-800">Create actions</div>
         <div className="flex flex-wrap items-center gap-2">
-          {(showAllCreateActions ? QUICK_ACTIONS : QUICK_ACTIONS.slice(0, 6)).map((action) => (
+          {QUICK_ACTIONS.map((action) => (
             <button
               type="button"
               key={action.label}
@@ -494,15 +490,6 @@ export default function ArClient({ initialInvoices, initialSchedules, advertiser
               {action.label}
             </button>
           ))}
-          {QUICK_ACTIONS.length > 6 && (
-            <button
-              type="button"
-              onClick={() => setShowAllCreateActions((shown) => !shown)}
-              className="px-1 py-1.5 text-sm font-medium text-orange-700 hover:underline"
-            >
-              {showAllCreateActions ? 'Show less' : 'Show all'}
-            </button>
-          )}
         </div>
       </section>
 
