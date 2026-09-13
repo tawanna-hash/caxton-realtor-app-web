@@ -12,6 +12,11 @@ import {
   EmbeddedCheckout,
 } from '@stripe/react-stripe-js';
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
+import {
+  INVOICE_PAYMENT_METHODS,
+  processingFeeCents,
+  type InvoicePaymentMethod,
+} from '@/lib/payment-processing-fees';
 
 interface LineItem { description: string; qty: number; unit_cents: number }
 interface InvoiceData {
@@ -93,10 +98,11 @@ export default function InvoicePayClient({
   const [mode, setMode] = useState<'idle' | 'embedded' | 'redirecting'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [pk, setPk] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<InvoicePaymentMethod>('card');
 
   const alreadyPaid = invoice.status === 'paid' || justPaid;
   const isVoid = invoice.status === 'void';
-  const surchargeCents = Math.round(invoice.total_cents * 0.03);
+  const surchargeCents = processingFeeCents(invoice.total_cents, paymentMethod);
   const chargeTotalCents = invoice.total_cents + surchargeCents;
 
   const startEmbedded = useCallback(async () => {
@@ -121,7 +127,7 @@ export default function InvoicePayClient({
       const res = await fetch(`/api/portal/invoices/${invoice.id}/checkout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ui_mode: 'hosted' }),
+        body: JSON.stringify({ ui_mode: 'hosted', payment_method: paymentMethod }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) {
@@ -134,20 +140,20 @@ export default function InvoicePayClient({
       setError('Could not start checkout. Please try again.');
       setMode('idle');
     }
-  }, [invoice.id]);
+  }, [invoice.id, paymentMethod]);
 
   const fetchClientSecret = useCallback(async () => {
     const res = await fetch(`/api/portal/invoices/${invoice.id}/checkout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ui_mode: 'embedded' }),
+      body: JSON.stringify({ ui_mode: 'embedded', payment_method: paymentMethod }),
     });
     const data = await res.json();
     if (!res.ok || !data.client_secret) {
       throw new Error(data.error ?? 'Could not start checkout.');
     }
     return data.client_secret as string;
-  }, [invoice.id]);
+  }, [invoice.id, paymentMethod]);
 
   return (
     <div className="space-y-6">
@@ -285,9 +291,43 @@ export default function InvoicePayClient({
               <EmbeddedCheckout />
             </EmbeddedCheckoutProvider>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
+              <fieldset>
+                <legend className="mb-2 text-sm font-semibold text-gray-900">Payment method</legend>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {INVOICE_PAYMENT_METHODS.map((option) => {
+                    const selected = paymentMethod === option.value;
+                    const fee = processingFeeCents(invoice.total_cents, option.value);
+                    return (
+                      <label
+                        key={option.value}
+                        className={`cursor-pointer rounded-lg border p-3 transition ${
+                          selected
+                            ? 'border-gray-900 bg-gray-50 ring-1 ring-gray-900'
+                            : 'border-gray-200 bg-white hover:border-gray-400'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="invoice-payment-method"
+                          value={option.value}
+                          checked={selected}
+                          onChange={() => setPaymentMethod(option.value)}
+                          className="sr-only"
+                        />
+                        <span className="block text-sm font-medium text-gray-900">{option.shortLabel}</span>
+                        <span className="mt-1 block text-xs text-gray-500">{option.feeLabel}</span>
+                        <span className="mt-2 block text-xs font-medium text-gray-700">
+                          Fee {fmtUsd(fee)}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
               <p className="text-sm text-gray-600">
-                Card payments include a 3% processing fee ({fmtUsd(surchargeCents)}), for a total charge of{' '}
+                A {INVOICE_PAYMENT_METHODS.find((option) => option.value === paymentMethod)?.label.toLowerCase()} processing fee of{' '}
+                {fmtUsd(surchargeCents)} is added before payment. Your total charge will be{' '}
                 <strong>{fmtUsd(chargeTotalCents)}</strong>.
               </p>
               <button

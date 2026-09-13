@@ -5,12 +5,18 @@
 //   - the embedded/hosted pay page at /portal/invoices/[id]
 //   - the admin "Get payment link" action (ui_mode='hosted')
 //
-// Body: { ui_mode?: 'hosted' | 'embedded' }
+// Body: { ui_mode?: 'hosted' | 'embedded', payment_method?: 'card' | 'ach' | 'bnpl' }
 // Returns: { url } for hosted, { client_secret } for embedded.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
-import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
+import { getStripe, isStripeConfigured } from '@/lib/stripe';
+import {
+  isInvoicePaymentMethod,
+  paymentMethodLabel,
+  processingFeeCents,
+  type InvoicePaymentMethod,
+} from '@/lib/payment-processing-fees';
 import { getCurrentPortalUser } from '@/lib/server/portal-session';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 
@@ -46,6 +52,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* empty body is fine */ }
   const uiMode = body.ui_mode === 'embedded' ? 'embedded' : 'hosted';
+  const paymentMethod: InvoicePaymentMethod = isInvoicePaymentMethod(body.payment_method)
+    ? body.payment_method
+    : 'card';
 
   try {
     await ensureSchema();
@@ -72,22 +81,40 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
 
     const stripe = getStripe();
-    const chargeCents = withSurcharge(inv.total_cents);
+    const feeCents = processingFeeCents(inv.total_cents, paymentMethod);
+    const chargeCents = inv.total_cents + feeCents;
     const successUrl = `${APP_BASE_URL}/portal/invoices/${inv.id}?paid=1`;
     const cancelUrl = `${APP_BASE_URL}/portal/invoices/${inv.id}?canceled=1`;
+    const stripePaymentMethodTypes = paymentMethod === 'ach'
+      ? ['us_bank_account']
+      : paymentMethod === 'bnpl'
+        ? ['affirm', 'afterpay_clearpay', 'klarna']
+        : ['card'];
 
     const sessionParams: Record<string, unknown> = {
       mode: 'payment' as const,
+      payment_method_types: stripePaymentMethodTypes,
       customer: inv.stripe_customer_id ?? undefined,
       customer_email: inv.stripe_customer_id ? undefined : (inv.bill_to_email ?? undefined),
       line_items: [
         {
           price_data: {
             currency: 'usd',
-            unit_amount: chargeCents,
+            unit_amount: inv.total_cents,
             product_data: {
               name: `Invoice ${inv.number}`,
-              description: inv.memo ?? 'RealtyLine advertising invoice (includes 3% card processing fee)',
+              description: inv.memo ?? 'RealtyLine advertising invoice',
+            },
+          },
+          quantity: 1,
+        },
+        {
+          price_data: {
+            currency: 'usd',
+            unit_amount: feeCents,
+            product_data: {
+              name: `${paymentMethodLabel(paymentMethod)} processing fee`,
+              description: 'Processing fee disclosed before payment authorization',
             },
           },
           quantity: 1,
@@ -97,12 +124,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         source: 'invoice_payment',
         invoice_id: inv.id,
         invoice_number: inv.number,
+        payment_method_selection: paymentMethod,
+        base_amount_cents: String(inv.total_cents),
+        processing_fee_cents: String(feeCents),
+        charge_total_cents: String(chargeCents),
       },
       payment_intent_data: {
         metadata: {
           source: 'invoice_payment',
           invoice_id: inv.id,
           invoice_number: inv.number,
+          payment_method_selection: paymentMethod,
+          base_amount_cents: String(inv.total_cents),
+          processing_fee_cents: String(feeCents),
+          charge_total_cents: String(chargeCents),
         },
       },
     };
@@ -125,9 +160,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     `;
 
     if (uiMode === 'embedded') {
-      return NextResponse.json({ client_secret: session.client_secret });
+      return NextResponse.json({
+        client_secret: session.client_secret,
+        processing_fee_cents: feeCents,
+        total_cents: chargeCents,
+      });
     }
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({
+      url: session.url,
+      processing_fee_cents: feeCents,
+      total_cents: chargeCents,
+    });
   } catch (err) {
     console.error('invoice checkout failed', err);
     return NextResponse.json(

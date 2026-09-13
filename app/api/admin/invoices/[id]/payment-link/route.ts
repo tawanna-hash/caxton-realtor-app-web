@@ -8,7 +8,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getSql, ensureSchema } from '@/lib/db';
-import { getStripe, isStripeConfigured, withSurcharge } from '@/lib/stripe';
+import { getStripe, isStripeConfigured } from '@/lib/stripe';
+import { paymentMethodLabel, processingFeeCents } from '@/lib/payment-processing-fees';
 import { getCurrentAdmin } from '@/lib/server/auth/admin';
 import { withAdminTracking } from '@/lib/server/admin-tracking';
 import {
@@ -68,18 +69,31 @@ export const POST = withAdminTracking(async function POST(
     }
 
     const stripe = getStripe();
-    const chargeCents = withSurcharge(inv.total_cents);
+    const feeCents = processingFeeCents(inv.total_cents, 'card');
+    const chargeCents = inv.total_cents + feeCents;
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
+      payment_method_types: ['card'],
       customer_email: inv.bill_to_email ?? undefined,
       line_items: [
         {
           price_data: {
             currency: 'usd',
-            unit_amount: chargeCents,
+            unit_amount: inv.total_cents,
             product_data: {
               name: `Invoice ${inv.number}`,
-              description: inv.memo ?? 'RealtyLine advertising invoice (includes 3% card processing fee)',
+              description: inv.memo ?? 'RealtyLine advertising invoice',
+            },
+          },
+          quantity: 1,
+        },
+        {
+          price_data: {
+            currency: 'usd',
+            unit_amount: feeCents,
+            product_data: {
+              name: `${paymentMethodLabel('card')} processing fee`,
+              description: 'Processing fee disclosed before payment authorization',
             },
           },
           quantity: 1,
@@ -87,9 +101,25 @@ export const POST = withAdminTracking(async function POST(
       ],
       success_url: `${APP_BASE_URL}/portal/invoices/${inv.id}?paid=1`,
       cancel_url: `${APP_BASE_URL}/portal/invoices/${inv.id}?canceled=1`,
-      metadata: { source: 'invoice_payment', invoice_id: inv.id, invoice_number: inv.number },
+      metadata: {
+        source: 'invoice_payment',
+        invoice_id: inv.id,
+        invoice_number: inv.number,
+        payment_method_selection: 'card',
+        base_amount_cents: String(inv.total_cents),
+        processing_fee_cents: String(feeCents),
+        charge_total_cents: String(chargeCents),
+      },
       payment_intent_data: {
-        metadata: { source: 'invoice_payment', invoice_id: inv.id, invoice_number: inv.number },
+        metadata: {
+          source: 'invoice_payment',
+          invoice_id: inv.id,
+          invoice_number: inv.number,
+          payment_method_selection: 'card',
+          base_amount_cents: String(inv.total_cents),
+          processing_fee_cents: String(feeCents),
+          charge_total_cents: String(chargeCents),
+        },
       },
     });
 
