@@ -6,18 +6,41 @@ import type { InvoiceWithAdvertiser } from '@/lib/invoices';
 import { formatCents } from '@/lib/invoices';
 import PageTitle from '@/components/ui/PageTitle';
 
+function formatTransactionDate(value: string | Date | null | undefined) {
+  if (!value) return '—';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date);
+}
+
 export function SalesTransactionsClient({ invoices }: { invoices: InvoiceWithAdvertiser[] }) {
   const [query, setQuery] = useState('');
   const [type, setType] = useState('all');
   const [status, setStatus] = useState('all');
+  const [sort, setSort] = useState('recently-updated');
 
-  const rows = useMemo(() => invoices.filter((invoice) => {
-    const documentType = invoice.number?.startsWith('SR-') ? 'receipt' : 'invoice';
-    if (type !== 'all' && documentType !== type) return false;
-    if (status !== 'all' && invoice.status !== status) return false;
-    const haystack = [invoice.number, invoice.advertiser_name, invoice.bill_to_name, invoice.memo].filter(Boolean).join(' ').toLowerCase();
-    return !query.trim() || haystack.includes(query.trim().toLowerCase());
-  }), [invoices, query, status, type]);
+  const rows = useMemo(() => {
+    const filtered = invoices.filter((invoice) => {
+      const documentType = invoice.number?.startsWith('SR-') ? 'receipt' : 'invoice';
+      if (type !== 'all' && documentType !== type) return false;
+      if (status !== 'all' && invoice.status !== status) return false;
+      const haystack = [invoice.number, invoice.advertiser_name, invoice.bill_to_name, invoice.memo].filter(Boolean).join(' ').toLowerCase();
+      return !query.trim() || haystack.includes(query.trim().toLowerCase());
+    });
+
+    return [...filtered].sort((a, b) => {
+      if (sort === 'amount-high') return b.total_cents - a.total_cents;
+      if (sort === 'amount-low') return a.total_cents - b.total_cents;
+      if (sort === 'oldest') {
+        return new Date(a.issued_at ?? a.created_at).getTime() - new Date(b.issued_at ?? b.created_at).getTime();
+      }
+      return new Date(b.issued_at ?? b.created_at).getTime() - new Date(a.issued_at ?? a.created_at).getTime();
+    });
+  }, [invoices, query, sort, status, type]);
 
   const summary = useMemo(() => invoices.reduce((totals, invoice) => {
     if (invoice.status === 'paid') totals.paid += invoice.total_cents;
@@ -37,16 +60,37 @@ export function SalesTransactionsClient({ invoices }: { invoices: InvoiceWithAdv
         <div className="border-b border-gray-200 p-4 md:border-b-0 md:border-r"><div className="text-xs text-gray-500">Overdue invoices</div><div className="mt-1 text-xl font-semibold">{formatCents(summary.overdue)}</div><div className="mt-3 h-2 rounded bg-amber-500" /></div>
         <div className="p-4"><div className="text-xs text-gray-500">Paid</div><div className="mt-1 text-xl font-semibold">{formatCents(summary.paid)}</div><div className="mt-3 h-2 rounded bg-emerald-500" /></div>
       </div>
-      <div className="flex flex-wrap gap-2 rounded-md border border-gray-200 bg-white p-3">
-        <select className="rounded border border-gray-300 px-3 py-2 text-sm" value={type} onChange={(event) => setType(event.target.value)}><option value="all">All transactions</option><option value="invoice">Invoices</option><option value="receipt">Sales receipts</option></select>
-        <select className="rounded border border-gray-300 px-3 py-2 text-sm" value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option><option value="draft">Draft</option><option value="sent">Sent</option><option value="overdue">Overdue</option><option value="paid">Paid</option><option value="void">Void</option></select>
-        <input className="min-w-60 flex-1 rounded border border-gray-300 px-3 py-2 text-sm" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by number, client, or memo" />
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          <select className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700" value={type} onChange={(event) => setType(event.target.value)}><option value="all">All transactions</option><option value="invoice">Invoices</option><option value="receipt">Sales receipts</option></select>
+          <select className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700" value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">All statuses</option><option value="draft">Draft</option><option value="sent">Sent</option><option value="overdue">Overdue</option><option value="paid">Paid</option><option value="void">Void</option></select>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="search"
+            className="h-12 min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-4 text-base text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-700 focus:ring-1 focus:ring-violet-700"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search transactions"
+          />
+          <select
+            aria-label="Sort transactions"
+            className="h-9 shrink-0 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800"
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+          >
+            <option value="recently-updated">Recently updated</option>
+            <option value="oldest">Oldest first</option>
+            <option value="amount-high">Amount: high to low</option>
+            <option value="amount-low">Amount: low to high</option>
+          </select>
+        </div>
       </div>
       <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-50 text-xs uppercase tracking-wider text-gray-500"><tr><th className="px-4 py-3">Date</th><th className="px-4 py-3">Type</th><th className="px-4 py-3">No.</th><th className="px-4 py-3">Client</th><th className="px-4 py-3">Memo</th><th className="px-4 py-3 text-right">Amount</th><th className="px-4 py-3">Status</th><th className="px-4 py-3 text-right">Action</th></tr></thead>
           <tbody className="divide-y divide-gray-100">
-            {rows.map((invoice) => <tr key={invoice.id} className="hover:bg-gray-50"><td className="px-4 py-3">{(invoice.issued_at ?? invoice.created_at).slice(0, 10)}</td><td className="px-4 py-3">{invoice.number?.startsWith('SR-') ? 'Sales receipt' : 'Invoice'}</td><td className="px-4 py-3">{invoice.number ?? 'Draft'}</td><td className="px-4 py-3">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td><td className="max-w-xs truncate px-4 py-3 text-gray-500">{invoice.memo ?? '—'}</td><td className="px-4 py-3 text-right">{formatCents(invoice.total_cents)}</td><td className="px-4 py-3 capitalize">{invoice.is_overdue ? 'Overdue' : invoice.status}</td><td className="px-4 py-3 text-right"><Link className="text-blue-700 hover:underline" href={`/admin/invoices/${invoice.id}/preview`}>View</Link></td></tr>)}
+            {rows.map((invoice) => <tr key={invoice.id} className="hover:bg-gray-50"><td className="whitespace-nowrap px-4 py-3">{formatTransactionDate(invoice.issued_at ?? invoice.created_at)}</td><td className="px-4 py-3">{invoice.number?.startsWith('SR-') ? 'Sales receipt' : 'Invoice'}</td><td className="px-4 py-3">{invoice.number ?? 'Draft'}</td><td className="px-4 py-3">{invoice.advertiser_name ?? invoice.bill_to_name ?? '—'}</td><td className="max-w-xs truncate px-4 py-3 text-gray-500">{invoice.memo ?? '—'}</td><td className="px-4 py-3 text-right">{formatCents(invoice.total_cents)}</td><td className="px-4 py-3 capitalize">{invoice.is_overdue ? 'Overdue' : invoice.status}</td><td className="px-4 py-3 text-right"><Link className="text-blue-700 hover:underline" href={`/admin/invoices/${invoice.id}/preview`}>View</Link></td></tr>)}
           </tbody>
         </table>
         {rows.length === 0 && <div className="p-10 text-center text-sm text-gray-500">No sales transactions match these filters.</div>}
