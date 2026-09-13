@@ -42,7 +42,6 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { label: 'Partners',     href: '/admin/crm',           description: 'Accounts, contacts, share links' },
       { label: 'Inquiries',    href: '/admin/ads/inquiries', description: 'Print / Digital / Email leads' },
       { label: 'Agreements',   href: '/admin/agreements',    description: 'Contracts, renewals & pipeline' },
-      { label: 'QuickBooks',   href: '/admin/integrations/quickbooks', description: 'Accounting connection & sandbox sync' },
       { label: 'Media Kit',    href: '/admin/ads/media-kit',   description: '2026 packages, rates & deadlines' },
     ],
   },

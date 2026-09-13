@@ -461,7 +461,7 @@ export async function ensureCrmSchema(sql: Sql): Promise<void> {
       FOR EACH ROW EXECUTE FUNCTION trg_rec_invoice_sched_set_updated_at()
   `);
 
-  // ── Products & Services catalog (QuickBooks-style item list) ──────
+  // ── Native Products & Services catalog ─────────────────────────────
   await step(() => sql`
     CREATE TABLE IF NOT EXISTS products_services (
       id                       uuid PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -1,7 +1,7 @@
 // lib/products-services.ts
 //
-// Types + helpers for the `products_services` table — a QuickBooks-style
-// item list used to populate invoice / recurring-schedule line items and
+// Types + helpers for the native `products_services` catalog used to
+// populate invoice / recurring-schedule line items and
 // to power the Products & Services admin manager.
 
 export type ProductServiceType = 'service' | 'non_inventory' | 'inventory' | 'bundle';

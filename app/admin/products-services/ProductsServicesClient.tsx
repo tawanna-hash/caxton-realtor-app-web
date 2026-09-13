@@ -2,9 +2,8 @@
 
 // app/admin/products-services/ProductsServicesClient.tsx
 //
-// Products & Services catalog manager. Search/filter by market + category,
-// inline drawer to create/edit an item, and a one-click "Import from
-// QuickBooks" action that re-syncs the seeded CSV catalog.
+// Products & Services catalog manager. Search/filter by market + category
+// and use the inline drawer to create or edit an item.
 
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';

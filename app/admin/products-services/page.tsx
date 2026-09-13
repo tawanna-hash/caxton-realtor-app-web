@@ -1,6 +1,6 @@
 // app/admin/products-services/page.tsx
 //
-// Products & Services catalog — QuickBooks-style item list. Powers invoice
+// Native Products & Services catalog. Powers invoice
 // and recurring-schedule line-item pickers.
 
 import { redirect } from 'next/navigation';
